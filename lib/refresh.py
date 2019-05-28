@@ -25,13 +25,13 @@
 
 
 # Import other modules
-import constants
 import os
 import threading
 
 
 # Import our modules
-import media
+from . import constants
+from . import media
 
 
 # Classes
@@ -80,7 +80,7 @@ class RefreshManager(threading.Thread):
 
     # Public class methods
 
-
+    
     def run(self):
 
         """Called by mainapp.TartubeApp.refresh_manager_start().

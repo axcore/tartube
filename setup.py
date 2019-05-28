@@ -21,27 +21,30 @@
 
 
 # Import modules
-from setuptools import setup, find_packages
+import setuptools
 
 
 # Import documents
-with open('README.rst') as f:
-    readme = f.read()
-
-with open('LICENSE') as f:
-    license = f.read()
+#with open('README.rst', 'r') as f:
+#    long_description = f.read()
+#
+#with open('LICENSE') as f:
+#    license = f.read()
 
 
 # Setup
-setup(
+setuptools.setup(
     name='tartube',
-    version='0.1.000',
+    version='0.1.007',
     description='GUI front-end for youtube-dl',
-    long_description=readme,
+#    long_description=long_description,
+    long_description="""Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui and written in Python 3 / Gtk 3""",
+    long_description_content_type='text/markdown',    
     author='A S Lewis',
     author_email='aslewis@cpan.org',
     url='https://github.com/axcore/tartube',
-    license=license,
-    packages=find_packages(exclude=('tests', 'docs'))
+#    license=license,
+    license="""GPL3+""",
+    packages=setuptools.find_packages()
 )
 

@@ -49,8 +49,8 @@ FILESIZE_METRIC_LIST = [
 # Main stages of the download operation
 MAIN_STAGE_QUEUED = 'Queued'
 MAIN_STAGE_ACTIVE = 'Active'
-MAIN_STAGE_PAUSED = 'Paused'
-MAIN_STAGE_COMPLETED = 'Completed'
+MAIN_STAGE_PAUSED = 'Paused'                # (not actually used)
+MAIN_STAGE_COMPLETED = 'Completed'          # (not actually used)
 MAIN_STAGE_ERROR = 'Error'
 # Sub-stages of the 'Active' stage
 ACTIVE_STAGE_PRE_PROCESS = 'Pre-processing'
