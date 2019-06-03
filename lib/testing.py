@@ -51,7 +51,7 @@ def add_test_media(app_obj):
     Args:
 
         app_obj (mainapp.TartubeApp): The main application
-        
+
     """
 
     # Test videos

@@ -121,7 +121,7 @@ class GenericContainer(GenericMedia):
             video_list (list): A list of media.Video objects
 
         Returns:
-        
+
             The modified video_list
 
         """
@@ -139,7 +139,7 @@ class GenericContainer(GenericMedia):
     def count_descendants(self, count_list):
 
         """Can be called by anything. Currently called by
-        mainwin.DeleteContainerDialogue.__init__(), and then again by this 
+        mainwin.DeleteContainerDialogue.__init__(), and then again by this
         function recursively.
 
         Counts the number of child objects, and then calls this function
@@ -155,7 +155,7 @@ class GenericContainer(GenericMedia):
                     )
 
         Returns:
-        
+
             The modified count_list
 
         """
@@ -196,7 +196,7 @@ class GenericContainer(GenericMedia):
                 was not a child of this object
 
         """
-        
+
         # Check this is really one of our children
         index = self.find_child_index(child_obj)
         if index is None:
@@ -227,7 +227,7 @@ class GenericContainer(GenericMedia):
 
             An integer describing the position in self.child_list, or None of
                 the child object is not found in self.child_list
-                
+
         """
 
         try:
@@ -252,7 +252,7 @@ class GenericContainer(GenericMedia):
         Returns:
 
             The container object's level
-            
+
         """
 
         if self.parent_obj is None:
@@ -283,7 +283,7 @@ class GenericContainer(GenericMedia):
         can't be hidden directly.)
 
         Returns:
-        
+
             True or False.
 
         """
@@ -357,7 +357,7 @@ class GenericContainer(GenericMedia):
         Returns:
 
             The full path to the directory
-            
+
         """
 
         dir_list = [self.name]
@@ -401,40 +401,6 @@ class GenericRemoteContainer(GenericContainer):
                 self.vid_count += 1
 
 
-    def OLDdo_sort(self, obj1, obj2):
-
-        """Sorting function used by functools.cmp_to_key(), and called by
-        self.sort_children().
-
-        Sort videos by upload time, with the most recent video first.
-
-        When downloading a channel or playlist, we assume that YouTube (etc)
-        supplies us with the most recent upload first. Therefore, when the
-        upload time is the same, sort by the order in youtube-dl fetches the
-        videos.
-
-        Args:
-        
-            obj1, obj2 (media.Video) - Video objects being sorted
-
-        Returns:
-        
-            -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-            
-        """
-
-        if obj1.upload_time < obj2.upload_time:
-            return 1
-        elif obj1.upload_time == obj2.upload_time:
-            if obj1.receive_time < obj2.receive_time:
-                return -1
-            elif obj1.receive_time == obj2.receive_time:
-                return 0
-            else:
-                return 1
-        else:
-            return -1
-
     def do_sort(self, obj1, obj2):
 
         """Sorting function used by functools.cmp_to_key(), and called by
@@ -448,13 +414,13 @@ class GenericRemoteContainer(GenericContainer):
         videos.
 
         Args:
-        
+
             obj1, obj2 (media.Video) - Video objects being sorted
 
         Returns:
-        
+
             -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-            
+
         """
 
 #       # Convert Python2 to Python3
@@ -659,7 +625,7 @@ class Video(GenericMedia):
         favourite.
 
         Returns:
-        
+
             True if the parent (or the parent's parent, and so on) is marked
             favourite, False otherwise
 
@@ -688,7 +654,7 @@ class Video(GenericMedia):
 
             max_length (int): When storing the description in this object's
                 IVs, the maximum line length to use
-                
+
         """
 
         descrip_path = os.path.join(
@@ -813,7 +779,7 @@ class Video(GenericMedia):
             max_length (int): A maximum line size
 
         """
-        
+
         if descrip:
 
             self.descrip = utils.tidy_up_long_descrip(descrip, max_length)
@@ -836,7 +802,7 @@ class Video(GenericMedia):
         Returns:
 
             The converted string, or None if self.file_size is not set
-            
+
         """
 
         if self.file_size:
@@ -855,7 +821,7 @@ class Video(GenericMedia):
         Returns:
 
             The formatted string, or None if self.receive_time is not set
-            
+
         """
 
         if self.receive_time:
@@ -874,7 +840,7 @@ class Video(GenericMedia):
         Returns:
 
             The formatted string, or None if self.receive_time is not set
-                    
+
         """
 
         if self.receive_time:
@@ -893,7 +859,7 @@ class Video(GenericMedia):
         Returns:
 
             The formatted string, or None if self.upload_time is not set
-                    
+
         """
 
         if self.upload_time:
@@ -912,7 +878,7 @@ class Video(GenericMedia):
         Returns:
 
             The formatted string, or None if self.upload_time is not set
-                    
+
         """
 
         if self.upload_time:
@@ -1326,70 +1292,6 @@ class Folder(GenericContainer):
 #   def del_child():            # Inherited from GenericContainer
 
 
-    def OLDdo_sort(self, obj1, obj2):
-
-        """Sorting function used by functools.cmp_to_key(), and called by
-        self.sort_children().
-
-        Sorts the child media.Video, media.Channel, media.Playlist and
-        media.Folder objects.
-
-        Firstly, sort by class - folders, channels/playlists, then videos.
-
-        Within folders, channels and playlists, sort alphabetically. Within
-        videos, sort by upload time.
-
-        Args:
-        
-            obj1, obj2 (media.Video, media.Channel, media.Playlist or
-                media.Folder) - Media data objects being sorted
-
-        Returns:
-        
-            -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-                        
-        """
-
-        if str(obj1.__class__) == str(obj2.__class__) \
-        or (
-            isinstance(obj1, GenericRemoteContainer) \
-            and isinstance(obj2, GenericRemoteContainer)
-        ):
-            if isinstance(obj1, Video):
-
-                if obj1.upload_time < obj2.upload_time:
-                    return 1
-                elif obj1.upload_time == obj2.upload_time:
-                    if obj1.receive_time < obj2.receive_time:
-                        return -1
-                    elif obj1.receive_time == obj2.receive_time:
-                        return 0
-                    else:
-                        return 1
-                else:
-                    return -1
-
-            else:
-                if obj1.name.lower() < obj2.name.lower:
-                    return -1
-                elif obj1.name.lower() == obj2.name.lower:
-                    return 0
-                else:
-                    return 1
-
-        else:
-
-            if isinstance(obj1, Folder):
-                return -1
-            elif isinstance(obj2, Folder):
-                return 1
-            elif isinstance(obj1, Channel) or isinstance(obj1, Playlist):
-                return -1
-            elif isinstance(obj2, Channel) or isinstance(obj2, Playlist):
-                return 1
-            else:
-                return 0
-
     def do_sort(self, obj1, obj2):
 
         """Sorting function used by functools.cmp_to_key(), and called by
@@ -1404,14 +1306,14 @@ class Folder(GenericContainer):
         videos, sort by upload time.
 
         Args:
-        
+
             obj1, obj2 (media.Video, media.Channel, media.Playlist or
                 media.Folder) - Media data objects being sorted
 
         Returns:
-        
+
             -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-                        
+
         """
 
         if str(obj1.__class__) == str(obj2.__class__) \

@@ -77,6 +77,8 @@ class TartubeApp(Gtk.Application):
 
     def __init__(self, *args, **kwargs):
 
+        print('ap 80 __init__')
+
         super(TartubeApp, self).__init__(
             *args,
             application_id=__main__.__app_id__,
@@ -350,7 +352,8 @@ class TartubeApp(Gtk.Application):
         self.operation_save_flag = True
         # Flag set to True if a dialogue window should be shown at the end of
         #   each download/update/refresh operation
-        self.operation_dialogue_flag = True
+#        self.operation_dialogue_flag = True
+        self.operation_dialogue_flag = False
         # Flag set to True if self.update_video_from_filesystem() should get
         #   the video duration, if not already known, using the moviepy.editor
         #   module (which may be slow)
@@ -366,7 +369,8 @@ class TartubeApp(Gtk.Application):
         #   and then waits for the results, an increase in this number is
         #   applied to a download operation immediately, but a decrease is not
         #   applied until one of the download jobs has finished
-        self.num_worker_default = 2
+#        self.num_worker_default = 2
+        self.num_worker_default = 1
         # (Absoute minimum and maximum values)
         self.num_worker_max = 10
         self.num_worker_min = 1
@@ -415,39 +419,37 @@ class TartubeApp(Gtk.Application):
         # Debugging flags (can only be set by editing the source code)
         # Delete the config file and the contents of Tartube's data directory
         #   on startup
-#        self.debug_delete_data_flag = False
-        self.debug_delete_data_flag = True
+        self.debug_delete_data_flag = False
         # In the main window's menu, show a menu item for adding a set of
         #   media data objects for testing
-#        self.debug_test_media_menu_flag = False
-        self.debug_test_media_menu_flag = True
+        self.debug_test_media_menu_flag = False
         # In the main window's toolbar, show a toolbar item for adding a set of
         #   media data objects for testing
         self.debug_test_media_toolbar_flag = False
         # Show an dialogue window with 'Tartube is already running!' if the
         #   user tries to open a second instance of Tartube
-#        self.debug_warn_multiple_flag = False
-        self.debug_warn_multiple_flag = True
+        self.debug_warn_multiple_flag = False
         # Open the main window in the top-left corner of the desktop
-#        self.debug_open_top_left_flag = False
-        self.debug_open_top_left_flag = True
+        self.debug_open_top_left_flag = False
         # Automatically open the system preferences window on startup
         self.debug_open_pref_win_flag = False
         # For Tartube developers who don't want to manually change
         #   self.ytdl_path and self.ytdl_update_current on every startup
         #   (assuming that self.debug_delete_data_flag is True), modify those
         #   IVs
-#        self.debug_modify_ytdl_flag = False
-#        self.debug_ytdl_path = None
-#        self.debug_ytdl_update_current = None
-        self.debug_modify_ytdl_flag = True
-        self.debug_ytdl_path = 'youtube-dl'
-        self.debug_ytdl_update_current = 'Update using pip'
+        self.debug_modify_ytdl_flag = False
+        self.debug_ytdl_path = None
+        self.debug_ytdl_update_current = None
+#        self.debug_modify_ytdl_flag = True
+#        self.debug_ytdl_path = 'youtube-dl'
+#        self.debug_ytdl_update_current = 'Update using pip'
 
 
     def do_startup(self):
 
         """Gio.Application standard function."""
+
+        print('ap 454 do_startup')
 
         GObject.threads_init()
         Gtk.Application.do_startup(self)
@@ -681,6 +683,8 @@ class TartubeApp(Gtk.Application):
 
         """Gio.Application standard function."""
 
+        print('ap 684 do_activate')
+
         # Only allow a single main window (raise any existing main windows)
         if not self.main_win_obj:
             self.start()
@@ -698,7 +702,7 @@ class TartubeApp(Gtk.Application):
                 self.show_msg_dialogue(
                     utils.upper_case_first(__main__.__packagename__) \
                     + ' is already running!',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'warning',
                     'ok',
                 )
@@ -711,6 +715,8 @@ class TartubeApp(Gtk.Application):
         Clean shutdowns (for example, from the main window's toolbar) are
         handled by self.stop().
         """
+
+        print('ap 721 do_shutdown')
 
         # Don't prompt the user before halting a download/update/refresh
         #   operation, as we would do in calls to self.stop()
@@ -734,6 +740,8 @@ class TartubeApp(Gtk.Application):
 
         Performs general initialisation.
         """
+
+        print('ap 746 start')
 
         # Delete Tartube's config file and data directory, if the debugging
         #   flag is set
@@ -859,6 +867,8 @@ class TartubeApp(Gtk.Application):
         self.do_shutdown().
         """
 
+        print('ap 872 stop')
+
         # If a download/update/refresh operation is in progress, get
         #   confirmation before stopping
         if self.current_manager_obj:
@@ -874,7 +884,7 @@ class TartubeApp(Gtk.Application):
                 'There is ' + string + ' operation in progress.\n' \
                 + 'Are you sure you want to quit ' \
                 + utils.upper_case_first(__main__.__packagename__) + '?',
-                True,		        # Modal
+                True,               # Modal
                 'question',
                 'yes-no',
             )
@@ -929,8 +939,10 @@ class TartubeApp(Gtk.Application):
             200-299: mainwin.py     (in use: 201-234)
             300-399: downloads.py   (in use: 301-303)
             400-499: config.py      (in use: 401-404)
-            
+
         """
+
+        print('ap 947 system_error')
 
         if self.main_win_obj:
             self.main_win_obj.errors_list_add_system_error(error_code, msg)
@@ -949,6 +961,8 @@ class TartubeApp(Gtk.Application):
         Loads the Tartube config file. If loading fails, disables all file
         loading/saving.
         """
+
+        print('ap 967 load_config')
 
         # Sanity check
         if self.current_manager_obj \
@@ -1049,6 +1063,8 @@ class TartubeApp(Gtk.Application):
         loading/saving.
         """
 
+        print('ap 1068 save_config')
+
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
             return
@@ -1117,6 +1133,8 @@ class TartubeApp(Gtk.Application):
         Loads the Tartube database file. If loading fails, disables all file
         loading/saving.
         """
+
+        print('ap 1139 load_db')
 
         # Sanity check
         path = os.path.join(self.data_dir, self.db_file_name)
@@ -1204,6 +1222,8 @@ class TartubeApp(Gtk.Application):
         loading/saving.
         """
 
+        print('ap 1227 save_db')
+
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
             return
@@ -1285,6 +1305,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 1310 switch_db')
+
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
             return
@@ -1351,7 +1373,10 @@ class TartubeApp(Gtk.Application):
         """Called by self.switch_db().
 
         Resets media registry IVs, so that a new Tartube database file can be
-        created."""
+        created.
+        """
+
+        print('ap 1381 reset_db')
 
         # Reset IVs to their default states
         self.general_options_obj = options.OptionsManager()
@@ -1377,6 +1402,8 @@ class TartubeApp(Gtk.Application):
         Creates the fixed (system) media.Folder objects that can't be
         destroyed by the user.
         """
+
+        print('ap 1408 create_system_folders')
 
         self.fixed_all_folder = self.add_folder(
             'All Videos',
@@ -1434,6 +1461,8 @@ class TartubeApp(Gtk.Application):
         window's menu item.
         """
 
+        print('ap 1466 disable_load_save')
+
         self.disable_load_save_flag = True
         self.main_win_obj.save_db_menu_item.set_sensitive(False)
 
@@ -1449,13 +1478,15 @@ class TartubeApp(Gtk.Application):
         Args:
 
             msg (string): The message to display
-            
+
         """
+
+        print('ap 1486 file_error_dialogue')
 
         if self.main_win_obj:
             self.show_msg_dialogue(
                 msg,
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -1471,6 +1502,8 @@ class TartubeApp(Gtk.Application):
         Deletes the contents of any folders marked temporary, such as the
         'Temporary Videos' folder. (The folders themselves are not deleted).
         """
+
+        print('ap 1508 delete_temp_folders')
 
         for name in self.media_name_dict:
 
@@ -1514,6 +1547,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 1552 convert_version')
+
         num_list = version.split('.')
         if len(num_list) != 3:
             return None
@@ -1556,6 +1591,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 1596 download_manager_start')
+
         if self.current_manager_obj:
             # Download, update or refresh operation already in progress
             return self.system_error(
@@ -1569,7 +1606,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'A download operation cannot start\nif one or more' \
                 + ' configuration\nwindows are still open',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -1605,7 +1642,7 @@ class TartubeApp(Gtk.Application):
 
             return self.show_msg_dialogue(
                 msg,
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -1656,6 +1693,8 @@ class TartubeApp(Gtk.Application):
         continue running for a few seconds more.
         """
 
+        print('ap 1698 download_manager_halt_timer')
+
         if self.timer_id:
             self.timer_check_time = time.time() + self.timer_final_time
 
@@ -1667,6 +1706,8 @@ class TartubeApp(Gtk.Application):
         The download operation has finished, so update IVs and main window
         widgets.
         """
+
+        print('ap 1712 download_manager_finished')
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
@@ -1727,6 +1768,8 @@ class TartubeApp(Gtk.Application):
         self.update_manager_finished() is called.
         """
 
+        print('ap 1773 update_manager_start')
+
         if self.current_manager_obj:
             # Download, update or refresh operation already in progress
             return self.system_error(
@@ -1740,7 +1783,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'An update operation cannot start\nif one or more' \
                 + ' configuration\nwindows are still open',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -1767,8 +1810,10 @@ class TartubeApp(Gtk.Application):
 
             success_flag (True or False): True if the update operation
                 succeeded, False if not
-                
+
         """
+
+        print('ap 1818 update_manager_finished')
 
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
@@ -1796,7 +1841,7 @@ class TartubeApp(Gtk.Application):
 
             self.show_msg_dialogue(
                 msg,
-                False,		        # Not modal
+                False,              # Not modal
                 'info',
                 'ok',
             )
@@ -1838,6 +1883,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 1888 refresh_manager_start')
+
         if self.current_manager_obj:
             # Download, update or refresh operation already in progress
             return self.system_error(
@@ -1858,7 +1905,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'A refresh operation cannot start\nif one or more' \
                 + ' configuration\nwindows are still open',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -1884,6 +1931,8 @@ class TartubeApp(Gtk.Application):
         widgets.
         """
 
+        print('ap 1936 refresh_manager_finished')
+
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
         self.current_manager_obj = None
@@ -1908,7 +1957,7 @@ class TartubeApp(Gtk.Application):
 
             self.show_msg_dialogue(
                 msg,
-                False,		        # Not modal
+                False,              # Not modal
                 'info',
                 'ok',
             )
@@ -1947,6 +1996,8 @@ class TartubeApp(Gtk.Application):
             video_obj (media.Video) - The video object created
 
         """
+
+        print('ap 2002 create_video_from_download')
 
         # The downloads.DownloadItem handles a download for a video, a channel
         #   or a playlist
@@ -2019,6 +2070,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2075 announce_video_download')
+
         # If the video's parent media data object (a channel, playlist or
         #   folder) is selected in the Video Index, update the Video Catalogue
         #   for the downloaded video
@@ -2069,6 +2122,8 @@ class TartubeApp(Gtk.Application):
                 the .mp4 file it was expecting, and has set this flag to True
 
         """
+
+        print('ap 2128 update_video_when_file_found')
 
         # Only set the .name IV if the video is currently unnamed
         if video_obj.name == self.default_video_name:
@@ -2150,6 +2205,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2210 update_video_from_json')
+
         json_path = os.path.join(
             video_obj.file_dir,
             video_obj.file_name + '.info.json',
@@ -2195,6 +2252,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2257 update_video_from_filesystem')
+
         if video_obj.upload_time is None:
             video_obj.set_upload_time(os.path.getmtime(video_path))
 
@@ -2237,6 +2296,8 @@ class TartubeApp(Gtk.Application):
             The new media.Video object
 
         """
+
+        print('ap 2302 add_video')
 
         # Videos can't be placed inside other videos
         if parent_obj and isinstance(parent_obj, media.Video):
@@ -2303,8 +2364,10 @@ class TartubeApp(Gtk.Application):
         Returns:
 
             The new media.Channel object
-            
+
         """
+
+        print('ap 2372 add_channel')
 
         # Channels can only be placed inside an unrestricted media.Folder
         #   object (if they have a parent at all)
@@ -2384,6 +2447,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2452 add_playlist')
+
         # Playlists can only be place inside an unrestricted media.Folder
         #   object (if they have a parent at all)
         if parent_obj \
@@ -2460,6 +2525,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2530 add_folder')
+
         # Folders can only be placed inside an unrestricted media.Folder object
         #   (if they have a parent at all)
         if parent_obj \
@@ -2527,6 +2594,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2599 move_container_to_top')
+
         # Do some basic checks
         if media_data_obj is None or isinstance(media_data_obj, media.Video) \
         or self.current_manager_obj or not media_data_obj.parent_obj:
@@ -2550,7 +2619,7 @@ class TartubeApp(Gtk.Application):
             + 'to the top level of ' \
             + utils.upper_case_first(__main__.__packagename__) \
             + '\'s data directory',
-            False,		        # Not modal
+            False,              # Not modal
             'question',
             'yes-no',
         )
@@ -2591,6 +2660,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2665 move_container')
+
         # Do some basic checks
         if source_obj is None or isinstance(source_obj, media.Video) \
         or dest_obj is None or isinstance(dest_obj, media.Video) \
@@ -2610,7 +2681,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'Channels, playlists and folders can\nonly be dragged into' \
                 + ' a folder',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -2620,7 +2691,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'The fixed folder \'' + dest_obj.name \
                 + '\'\ncannot be moved (but it can still\nbe hidden)',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -2630,7 +2701,7 @@ class TartubeApp(Gtk.Application):
             return self.show_msg_dialogue(
                 'The folder \'' + dest_obj.name \
                 + '\'\ncan only contain videos',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -2659,7 +2730,7 @@ class TartubeApp(Gtk.Application):
             + 'This procedure will move all downloaded files\n' \
             + 'to the new location' \
             + temp_string,
-            False,		        # Not modal
+            False,              # Not modal
             'question',
             'yes-no',
         )
@@ -2710,6 +2781,8 @@ class TartubeApp(Gtk.Application):
                 updated (because the calling function wants to do that)
 
         """
+
+        print('ap 2787 delete_video')
 
         if not isinstance(video_obj, media.Video):
             return self.system_error(
@@ -2769,6 +2842,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 2847 delete_container')
+
         # Check this isn't a video or a fixed folder (which cannot be removed)
         if isinstance(media_data_obj, media.Video) \
         or (
@@ -2814,7 +2889,7 @@ class TartubeApp(Gtk.Application):
                 response2 = self.show_msg_dialogue(
                     'Are you SURE you want to delete files?\nThis procedure' \
                     ' cannot be reversed!',
-                    True,		        # Modal
+                    True,               # Modal
                     'question',
                     'yes-no',
                 )
@@ -2878,8 +2953,10 @@ class TartubeApp(Gtk.Application):
             no_update_index_flag (True or False): False if the Video Index
                 should not be updated, because the calling function wants to do
                 that itself.
-                
+
         """
+
+        print('ap 2961 mark_video_new')
 
         # (List of Video Index rows to update, at the end of this function)
         update_list = [self.fixed_new_folder]
@@ -2966,7 +3043,7 @@ class TartubeApp(Gtk.Application):
 
         Marks a video object as downloaded (i.e. the video file exists on the
         user's filesystem) or not downloaded.
-        
+
         The video object's .dl_flag IV is updated.
 
         Args:
@@ -2975,8 +3052,10 @@ class TartubeApp(Gtk.Application):
 
             flag (True or False): True to mark the video as downloaded, False
                 to mark it as not downloaded.
-                
+
         """
+
+        print('ap 3060 mark_video_downloaded')
 
         # (List of Video Index rows to update, at the end of this function)
         update_list = [video_obj.parent_obj, self.fixed_all_folder]
@@ -3052,7 +3131,7 @@ class TartubeApp(Gtk.Application):
         """Can be called by anything.
 
         Marks a video object as favourite or not favourite.
-        
+
         The video object's .fav_flag IV is updated.
 
         Args:
@@ -3065,8 +3144,10 @@ class TartubeApp(Gtk.Application):
             no_update_index_flag (True or False): False if the Video Index
                 should not be updated, because the calling function wants to do
                 that itself.
-                                
+
         """
+
+        print('ap 3152 mark_video_favourite')
 
         # (List of Video Index rows to update, at the end of this function)
         update_list = [self.fixed_fav_folder]
@@ -3170,6 +3251,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 3256 mark_folder_hidden')
+
         if not isinstance(folder_obj, media.Folder):
             return self.system_error(
                 120,
@@ -3225,6 +3308,8 @@ class TartubeApp(Gtk.Application):
                 not favourite
 
         """
+
+        print('ap 3314 mark_container_favourite')
 
         if isinstance(media_data_obj, media.Video):
             return self.system_error(
@@ -3303,8 +3388,10 @@ class TartubeApp(Gtk.Application):
             media_data_obj (media.Video, media.Channel, media.Playlist or
                 media.Folder): The media data object to which the download
                 options are applied.
-                
+
         """
+
+        print('ap 3396 apply_download_options')
 
         if self.current_manager_obj \
         or media_data_obj.options_obj\
@@ -3338,8 +3425,10 @@ class TartubeApp(Gtk.Application):
             media_data_obj (media.Video, media.Channel, media.Playlist or
                 media.Folder): The media data object from which the download
                 options are removed.
-                
+
         """
+
+        print('ap 3433 remove_download_options')
 
         if self.current_manager_obj or not media_data_obj.options_obj:
             return self.system_error(
@@ -3371,6 +3460,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 3465 watch_video_in_player')
+
         path = os.path.join(
             video_obj.file_dir,
             video_obj.file_name + video_obj.file_ext,
@@ -3382,7 +3473,7 @@ class TartubeApp(Gtk.Application):
                 'The video file is missing from ' \
                 + utils.upper_case_first(__main__.__packagename__) \
                 + '\'s\ndata directory (try downloading the\nvideo again!',
-                False,		        # Not modal
+                False,              # Not modal
                 'error',
                 'ok',
             )
@@ -3420,6 +3511,8 @@ class TartubeApp(Gtk.Application):
                 the X in the top corner, returns the string 'cancel'
 
         """
+
+        print('ap 3517 show_msg_dialogue')
 
         # Prepare arguments
         main_win_obj = self.main_win_obj
@@ -3470,9 +3563,9 @@ class TartubeApp(Gtk.Application):
 
 
     # (Download operation timer)
-    
 
-    def timer_callback(self):       
+
+    def timer_callback(self):
 
         """Called by gobject timer created by self.download_manager_start().
 
@@ -3487,8 +3580,10 @@ class TartubeApp(Gtk.Application):
         Returns:
 
             1 to keep the timer going, or None to halt it
-            
+
         """
+
+        print('ap 3588 timer_callback')
 
         if self.timer_check_time is None:
             self.main_win_obj.progress_list_display_dl_stats()
@@ -3506,16 +3601,16 @@ class TartubeApp(Gtk.Application):
                 # Not all downloaded files confirmed to exist yet, so return 1
                 #   to keep the timer going a little longer
                 return 1
-        
+
         # The download operation has finished. The call to
         #   self.download_manager_finished() destroys the timer
         self.download_manager_finished()
 
 
     # (Menu item and toolbar button callbacks)
-    
 
-    def on_button_stop_operation(self, action, par):        
+
+    def on_button_stop_operation(self, action, par):
 
         """Called from a callback in self.do_startup().
 
@@ -3526,8 +3621,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-            
+
         """
+
+        print('ap 3629 on_button_stop_operation')
 
         self.operation_halted_flag = True
 
@@ -3539,7 +3636,7 @@ class TartubeApp(Gtk.Application):
             self.refresh_manager_obj.stop_refresh_operation()
 
 
-    def on_button_switch_view(self, action, par):           
+    def on_button_switch_view(self, action, par):
 
         """Called from a callback in self.do_startup().
 
@@ -3550,8 +3647,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 3655 on_button_switch_view')
 
         if not self.complex_catalogue_flag:
             self.complex_catalogue_flag = True
@@ -3565,7 +3664,7 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_current,
             )
 
-            
+
     def on_menu_about(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -3577,8 +3676,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-            
+
         """
+
+        print('ap 3684 on_menu_about')
 
         dialogue_win = Gtk.AboutDialog()
         dialogue_win.set_transient_for(self.main_win_obj)
@@ -3614,8 +3715,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 3723 on_menu_about_close')
 
         action.destroy()
 
@@ -3634,6 +3737,8 @@ class TartubeApp(Gtk.Application):
             par (None): Ignored
 
         """
+
+        print('ap 3743 on_menu_add_channel')
 
         dialogue_win = mainwin.AddChannelDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -3658,7 +3763,7 @@ class TartubeApp(Gtk.Application):
 
                 self.show_msg_dialogue(
                     'You must give the channel a name',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'error',
                     'ok',
                 )
@@ -3671,7 +3776,7 @@ class TartubeApp(Gtk.Application):
             ):
                 self.show_msg_dialogue(
                     'You must enter a valid URL',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'error',
                     'ok',
                 )
@@ -3716,8 +3821,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 3829 on_menu_add_folder')
 
         dialogue_win = mainwin.AddFolderDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -3740,7 +3847,7 @@ class TartubeApp(Gtk.Application):
 
                 self.show_msg_dialogue(
                     'You must give the folder a name',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'error',
                     'ok',
                 )
@@ -3780,8 +3887,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 3895 on_menu_add_playlist')
 
         dialogue_win = mainwin.AddPlaylistDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -3806,7 +3915,7 @@ class TartubeApp(Gtk.Application):
 
                 self.show_msg_dialogue(
                     'You must give the playlist a name',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'error',
                     'ok',
                 )
@@ -3819,7 +3928,7 @@ class TartubeApp(Gtk.Application):
             ):
                 self.show_msg_dialogue(
                     'You must enter a valid URL',
-                    False,		        # Not modal
+                    False,              # Not modal
                     'error',
                     'ok',
                 )
@@ -3864,8 +3973,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 3981 on_menu_add_video')
 
         dialogue_win = mainwin.AddVideoDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -3922,8 +4033,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4041 on_menu_check_all')
 
         self.download_manager_start(True)
 
@@ -3939,8 +4052,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4060 on_menu_download_all')
 
         self.download_manager_start(False)
 
@@ -3956,8 +4071,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4079 on_menu_general_options')
 
         config.OptionsEditWin(self, self.general_options_obj, None)
 
@@ -3973,8 +4090,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4098 on_menu_refresh_db')
 
         self.refresh_manager_start()
 
@@ -3990,8 +4109,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4117 on_menu_save_db')
 
         self.save_db()
 
@@ -4001,7 +4122,7 @@ class TartubeApp(Gtk.Application):
 
             self.show_msg_dialogue(
                 'Database saved',
-                False,		        # Not modal
+                False,              # Not modal
                 'info',
                 'ok',
             )
@@ -4018,8 +4139,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4147 on_menu_show_hidden')
 
         for name in self.media_name_dict:
 
@@ -4042,8 +4165,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4173 on_menu_system_preferences')
 
         config.SystemPrefWin(self)
 
@@ -4060,8 +4185,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-            
+
         """
+
+        print('ap 4193 on_menu_test')
 
         # Add media data objects for testing: videos, channels, playlists and/
         #   or folders
@@ -4094,8 +4221,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-                    
+
         """
+
+        print('ap 4229 on_menu_update_ytdl')
 
         self.update_manager_start()
 
@@ -4111,8 +4240,10 @@ class TartubeApp(Gtk.Application):
             action (Gio.SimpleAction): Object generated by Gio
 
             par (None): Ignored
-            
+
         """
+
+        print('ap 4248 on_menu_quit')
 
         self.stop()
 
@@ -4135,6 +4266,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 4271 reject_media_name')
+
         # Get the existing media data object with this name
         dbid = self.media_name_dict[name]
         media_data_obj = self.media_reg_dict[dbid]
@@ -4149,7 +4282,7 @@ class TartubeApp(Gtk.Application):
         self.show_msg_dialogue(
             'There is already a ' + string + ' with that name\n' \
             + '(so please choose a different name)',
-            False,		        # Not modal
+            False,              # Not modal
             'error',
             'ok',
         )
@@ -4171,6 +4304,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 4309 set_bandwidth_default')
+
         if value < self.bandwidth_min or value > self.bandwidth_max:
             return self.system_error(
                 124,
@@ -4188,6 +4323,8 @@ class TartubeApp(Gtk.Application):
         progress, the new setting is applied to the next download job.
         """
 
+        print('ap 4328 set_bandwidth_apply_flag')
+
         if not flag:
             self.bandwidth_apply_flag = False
         else:
@@ -4195,6 +4332,8 @@ class TartubeApp(Gtk.Application):
 
 
     def set_complex_index_flag(self, flag):
+
+        print('ap 4338 set_complex_index_flag')
 
         if not flag:
             self.complex_index = False
@@ -4204,15 +4343,21 @@ class TartubeApp(Gtk.Application):
 
     def set_match_first_chars(self, num_chars):
 
+        print('ap 4348 set_match_first_chars')
+
         self.match_first_chars = num_chars
 
 
     def set_match_ignore_chars(self, num_chars):
 
+        print('ap 4355 set_match_ignore_chars')
+
         self.match_ignore_chars = num_chars
 
 
     def set_match_method(self, method):
+
+        print('ap 4362 set_match_method')
 
         self.match_method = method
 
@@ -4223,8 +4368,10 @@ class TartubeApp(Gtk.Application):
 
         Applies or releases the simultaneous download limit. If a download
         operation is in progress, the new setting is applied to the next
-        download job.            
+        download job.
         """
+
+        print('ap 4376 set_num_worker_apply_flag')
 
         if not flag:
             self.bandwidth_apply_flag = False
@@ -4247,6 +4394,8 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        print('ap 4399 set_num_worker_default')
+
         if value < self.num_worker_min or value > self.num_worker_max:
             return self.system_error(
                 125,
@@ -4262,6 +4411,8 @@ class TartubeApp(Gtk.Application):
 
     def set_operation_auto_update_flag(self, flag):
 
+        print('ap 4416 set_operation_auto_update_flag')
+
         if not flag:
             self.operation_auto_update_flag = False
         else:
@@ -4269,6 +4420,8 @@ class TartubeApp(Gtk.Application):
 
 
     def set_operation_dialogue_flag(self, flag):
+
+        print('ap 4426 set_operation_dialogue_flag')
 
         if not flag:
             self.operation_dialogue_flag = False
@@ -4278,6 +4431,8 @@ class TartubeApp(Gtk.Application):
 
     def set_operation_save_flag(self, flag):
 
+        print('ap 4436 set_operation_save_flag')
+
         if not flag:
             self.operation_save_flag = False
         else:
@@ -4285,6 +4440,8 @@ class TartubeApp(Gtk.Application):
 
 
     def set_use_module_moviepy_flag(self, flag):
+
+        print('ap 4446 set_use_module_moviepy_flag')
 
         if not flag:
             self.use_module_moviepy_flag = False
@@ -4294,6 +4451,8 @@ class TartubeApp(Gtk.Application):
 
     def set_use_module_moviepy_flag(self, flag):
 
+        print('ap 4456 set_use_module_moviepy_flag')
+
         if not flag:
             self.use_module_validators_flag = False
         else:
@@ -4302,15 +4461,21 @@ class TartubeApp(Gtk.Application):
 
     def set_ytdl_path(self, path):
 
+        print('ap 4466 set_ytdl_path')
+
         self.ytdl_path = path
 
 
     def set_ytdl_update_current(self, string):
 
+        print('ap 4473 set_ytdl_update_current')
+
         self.ytdl_update_current = string
 
 
     def set_ytdl_write_stderr_flag(self, flag):
+
+        print('ap 4480 set_ytdl_write_stderr_flag')
 
         if not flag:
             self.ytdl_write_stderr_flag = False
@@ -4320,6 +4485,8 @@ class TartubeApp(Gtk.Application):
 
     def set_ytdl_write_stdout_flag(self, flag):
 
+        print('ap 4490 set_ytdl_write_stdout_flag')
+
         if not flag:
             self.ytdl_write_stdout_flag = False
         else:
@@ -4327,6 +4494,8 @@ class TartubeApp(Gtk.Application):
 
 
     def set_ytdl_write_verbose_flag(self, flag):
+
+        print('ap 4500 set_ytdl_write_verbose_flag')
 
         if not flag:
             self.ytdl_write_verbose_flag = False

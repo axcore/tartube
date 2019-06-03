@@ -90,7 +90,7 @@ def convert_item(item, to_unicode=False):
     Convert item between 'unicode' and 'str'.
 
     Args:
-    
+
         item (-): Can be any python item.
 
         to_unicode (boolean): When True it will convert all the 'str' types
@@ -98,7 +98,7 @@ def convert_item(item, to_unicode=False):
             back to 'str'.
 
     Returns:
-    
+
         The converted item
 
     """
@@ -310,7 +310,7 @@ def format_bytes(num_bytes):
     Returns:
 
         The formatted string
-        
+
     """
 
     if num_bytes == 0.0:
@@ -332,7 +332,7 @@ def get_encoding():
     Returns:
 
         The system encoding.
-        
+
     """
 
     try:
@@ -354,7 +354,7 @@ def open_file(uri):
     Args:
 
         uri (string): The URI to open
-        
+
     """
 
     if sys.platform == "win32":
@@ -378,7 +378,7 @@ def remove_shortcuts(path):
     Returns:
 
         The converted path
-        
+
     """
 
     return path.replace('~', os.path.expanduser('~'))
@@ -399,7 +399,7 @@ def shorten_string(string, num_chars):
     Returns:
 
         The converted string
-        
+
     """
 
     if string and len(string) > num_chars:
@@ -423,7 +423,7 @@ def to_string(data):
     Returns:
 
         The converted string
-        
+
     """
 
     return '%s' % data
@@ -441,7 +441,7 @@ def upper_case_first(string):
     Returns:
 
         The converted string
-        
+
     """
 
     return string[0].upper() + string[1:]

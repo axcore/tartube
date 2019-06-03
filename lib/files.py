@@ -57,7 +57,7 @@ class FileManager(threading.Thread):
 
     # Public class methods
 
-    
+
     def load_json(self, full_path):
 
         """Can be called by anything.
@@ -66,7 +66,7 @@ class FileManager(threading.Thread):
         dictionary and returns the dictionary.
 
         Args:
-        
+
             full_path (string): The full path to the JSON file
 
         Returns:
@@ -95,20 +95,20 @@ class FileManager(threading.Thread):
         Args:
 
             full_path (string): The full path to the text file
-        
+
         Returns:
 
             The contents of the text file as a string, or or None if the file
                 is missing or can't be loaded
-            
+
         """
 
         if not os.path.isfile(full_path):
             return None
-            
+
         with open(full_path, 'r') as text_file:
             text = text_file.read()
-            
+
         return text
 
 
@@ -129,7 +129,7 @@ class FileManager(threading.Thread):
         Returns:
 
             A GdkPixbuf, or None if the file is missing or can't be loaded
-            
+
         """
 
         if not os.path.isfile(full_path):

@@ -98,6 +98,8 @@ class DownloadManager(threading.Thread):
 
     def __init__(self, app_obj, force_sim_flag, download_list_obj):
 
+        print('dl 101 __init__')
+
         super(DownloadManager, self).__init__()
 
         # IV list - class objects
@@ -171,6 +173,8 @@ class DownloadManager(threading.Thread):
         downloads.DownloadWorker object, as they become available, until the
         download operation is complete.
         """
+
+        print('dl 177 run')
 
         # Perform the download operation until there is nothing left to
         #   download, or until something has called
@@ -267,6 +271,8 @@ class DownloadManager(threading.Thread):
 
         """
 
+        print('dl 274 change_worker_count')
+
         # How many workers do we have already?
         current = len(self.worker_list)
         # If this object hasn't set up its worker pool yet, let the setup code
@@ -319,8 +325,10 @@ class DownloadManager(threading.Thread):
 
             True if all downloads.DownloadWorker objects have finished their
                 jobs, otherwise returns False
-                
+
         """
+
+        print('dl 331 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -339,8 +347,10 @@ class DownloadManager(threading.Thread):
 
             The first available downloads.DownloadWorker, or None if there are
                 no available workers.
-                
+
         """
+
+        print('dl 353 get_available_worker')
 
         for worker_obj in self.worker_list:
             if worker_obj.available_flag:
@@ -362,6 +372,8 @@ class DownloadManager(threading.Thread):
 
         """
 
+        print('dl 375 remove_worker')
+
         new_list = []
 
         for other_obj in self.worker_list:
@@ -381,6 +393,8 @@ class DownloadManager(threading.Thread):
         Stops the download operation. On the next iteration of self.run()'s
         loop, the downloads.DownloadWorker objects are cleaned up.
         """
+
+        print('dl 397 stop_download_operation')
 
         self.running_flag = False
 
@@ -410,6 +424,8 @@ class DownloadWorker(threading.Thread):
 
 
     def __init__(self, download_manager_obj):
+
+        print('dl 428 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -464,6 +480,8 @@ class DownloadWorker(threading.Thread):
         Waits until this worker has been assigned a job, at which time we
         create a new downloads.VideoDownloader object and wait for the result.
         """
+
+        print('dl 484 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -534,6 +552,8 @@ class DownloadWorker(threading.Thread):
         Tidy up IVs and stop any child processes.
         """
 
+        print('dl 555 close')
+
         self.running_flag = False
         if self.video_downloader_obj:
             self.video_downloader_obj.stop()
@@ -552,8 +572,10 @@ class DownloadWorker(threading.Thread):
             download_item_obj (downloads.DownloadItem): The download item
                 object describing the URL from which youtube-dl should download
                 video(s).
- 
+
         """
+
+        print('dl 578 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -568,6 +590,8 @@ class DownloadWorker(threading.Thread):
     def set_doomed_flag(self, flag):
 
         """Called by downloads.DownloadManager.change_worker_count()."""
+
+        print('dl 594 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -594,6 +618,8 @@ class DownloadWorker(threading.Thread):
                 above
 
         """
+
+        print('dl 622 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
         app_obj.main_win_obj.progress_list_receive_dl_stats(
@@ -634,6 +660,8 @@ class DownloadList(object):
 
 
     def __init__(self, app_obj, media_data_obj):
+
+        print('dl 664 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -711,6 +739,8 @@ class DownloadList(object):
 
         """
 
+        print('dl 742 change_item_stage')
+
         self.download_item_dict[dbid].stage = new_stage
 
 
@@ -742,6 +772,8 @@ class DownloadList(object):
                 its parent is a channel or a playlist
 
         """
+
+        print('dl 776 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -805,8 +837,10 @@ class DownloadList(object):
 
             The next downloads.DownloadItem object, or None if there are none
                 left.
-                
+
         """
+
+        print('dl 843 fetch_next_item')
 
         for dbid in self.download_item_list:
             this_item = self.download_item_dict[dbid]
@@ -840,6 +874,8 @@ class DownloadList(object):
                 media data object
 
         """
+
+        print('dl 878 get_options_manager')
 
         if media_data_obj.options_obj:
             return media_data_obj.options_obj
@@ -876,6 +912,8 @@ class DownloadItem(object):
 
 
     def __init__(self, dbid, media_data_obj, options_manager_obj):
+
+        print('dl 916 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -964,6 +1002,8 @@ class VideoDownloader(object):
 
     def __init__(self, download_manager_obj, download_worker_obj, \
     download_item_obj):
+
+        print('dl 1006 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1059,126 +1099,6 @@ class VideoDownloader(object):
     # Public class methods
 
 
-    def OLDdo_download(self):
-
-        """Called by downloads.DownloadWorker.run().
-
-        Based on YoutubeDLDownloader.download().
-
-        Downloads video(s) from a URL described by self.download_item_obj.
-
-        Returns:
-
-            The final return code, a value in the range 0-5 (as described
-            above)
-
-        """
-
-        # Import the main application (for convenience)
-        app_obj = self.download_manager_obj.app_obj
-
-        # Set the default return code. Everything is OK unless we encounter
-        #   any problems
-        self.return_code = self.OK
-
-        # Reset the errors/warnings stored in the media data object, the last
-        #   time it was checked/downloaded
-        self.download_item_obj.media_data_obj.reset_error_warning()
-
-        # Prepare a system command...
-        cmd_list = self.get_system_cmd()
-        # ...and create a new child process using that command
-        self.create_child_process(cmd_list)
-
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
-        if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
-
-        # While downloading the video, update the callback function with
-        #   the status of the current job
-        while self.is_child_process_alive():
-
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
-
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                stdout = utils.convert_item(stdout, to_unicode=True)
-
-                if stdout:
-                    # Convert the statistics into a python dictionary in a
-                    #   standard format, specified in the comments for
-                    #   self.extract_stdout_data()
-                    dl_stat_dict = self.extract_stdout_data(stdout)
-                    # If the job's status is constants.COMPLETED_STAGE_ALREADY
-                    #   or constants.ERROR_STAGE_ABORT, set our
-                    #   self.return_code IV
-                    self.extract_stdout_status(dl_stat_dict)
-                    # Pass the dictionary on to self.download_worker_obj so the
-                    #   main window can be updated
-                    self.download_worker_obj.data_callback(dl_stat_dict)
-
-                    if (app_obj.ytdl_write_stdout_flag):
-                        print(stdout)
-
-        # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            stderr = utils.convert_item(stderr, to_unicode=True)
-
-            if self.is_warning(stderr):
-                self.set_return_code(self.WARNING)
-                self.download_item_obj.media_data_obj.set_warning(stderr)
-
-            else:
-                self.set_return_code(self.ERROR)
-                self.download_item_obj.media_data_obj.set_error(stderr)
-
-            if (app_obj.ytdl_write_stderr_flag):
-                print(stderr)
-
-        # We also set the return code to self.ERROR if the download didn't
-        #   start or if the child process return code is greater than 0
-        # Original notes from youtube-dl-gui:
-        #   NOTE: In Linux if the called script is just empty Python exits
-        #       normally (ret=0), so we cant detect this or similar cases
-        #       using the code below
-        #   NOTE: In Unix a negative return code (-N) indicates that the child
-        #       was terminated by signal N (e.g. -9 = SIGKILL)
-        if self.child_process is None:
-            self.set_return_code(self.ERROR)
-            self.download_item_obj.media_data_obj.set_error(
-                'Download did not start',
-            )
-
-        elif self.child_process.returncode > 0:
-            self.set_return_code(self.ERROR)
-            self.download_item_obj.media_data_obj.set_error(
-                'Child process exited with non-zero code: {}'.format(
-                    self.child_process.returncode,
-                )
-            )
-
-        # Pass a dictionary of values to downloads.DownloadWorker, confirming
-        #   the result of the job. The values are passed on to the main
-        #   window
-        self.last_data_callback()
-
-        # Pass the result back to the parent downloads.DownloadWorker object
-        return self.return_code
-
     def do_download(self):
 
         """Called by downloads.DownloadWorker.run().
@@ -1193,6 +1113,8 @@ class VideoDownloader(object):
             above)
 
         """
+
+        print('dl 1117 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1257,11 +1179,11 @@ class VideoDownloader(object):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-#           # (Convert Python2 to Python3)            
+#           # (Convert Python2 to Python3)
 #           stderr = self.stderr_queue.get_nowait().rstrip()
 #           stderr = utils.convert_item(stderr, to_unicode=True)
             stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
-            
+
             if self.is_warning(stderr):
                 self.set_return_code(self.WARNING)
                 self.download_item_obj.media_data_obj.set_warning(stderr)
@@ -1311,6 +1233,8 @@ class VideoDownloader(object):
         Destructor function for this object.
         """
 
+        print('dl 1236 close')
+
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
         self.stderr_reader.join()
@@ -1336,6 +1260,8 @@ class VideoDownloader(object):
             extension (string): The video's extension, e.g. '.mp4'
 
         """
+
+        print('dl 1264 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
             self.video_check_dict[self.video_num] = filename
@@ -1386,6 +1312,8 @@ class VideoDownloader(object):
 
         """
 
+        print('dl 1315 confirm_old_video')
+
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
@@ -1435,206 +1363,6 @@ class VideoDownloader(object):
                 )
 
 
-    def OLDconfirm_sim_video(self, json_dict):
-
-        """Called by self.extract_stdout_data().
-
-        After a successful simulated download, youtube-dl presents us with JSON
-        data for the video. Use that data to update everything.
-
-        Args:
-
-            json_dict (dict): JSON data from STDOUT, converted into a python
-                dictionary
-
-        """
-
-        # IMport the main application (for convenience)
-        app_obj = self.download_manager_obj.app_obj
-
-        # From the JSON dictionary, extract the data we need
-        if '_filename' in json_dict:
-            full_path = json_dict['_filename']
-            path, filename, extension = self.extract_filename(full_path)
-        else:
-            return app_obj.system_error(
-                302,
-                'Missing filename in JSON data',
-            )
-
-        if 'upload_date' in json_dict:
-            # date_string in form YYYYMMDD
-            date_string = json_dict['upload_date']
-            dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-            upload_time = dt_obj.strftime('%s')
-        else:
-            upload_time = None
-
-        if 'duration' in json_dict:
-            duration = json_dict['duration']
-        else:
-            duration = None
-
-        if 'title' in json_dict:
-            name = json_dict['title']
-        else:
-            name = None
-
-        if 'description' in json_dict:
-            descrip = json_dict['description']
-        else:
-            descrip = None
-
-        if 'thumbnail' in json_dict:
-            thumbnail = json_dict['thumbnail']
-        else:
-            thumbnail = None
-
-        if 'webpage_url' in json_dict:
-            source = json_dict['webpage_url']
-        else:
-            source = None
-
-        if 'playlist_index' in json_dict:
-            playlist_index = json_dict['playlist_index']
-        else:
-            playlist_index = None
-
-        # Does an existing media.Video object match this video?
-        media_data_obj = self.download_item_obj.media_data_obj
-        video_obj = None
-        if isinstance(media_data_obj, media.Video):
-            video_obj = media_data_obj
-        else:
-            # media_data_obj is a media.Channel or media.Playlist object. Check
-            #   its child objects, looking for a matching video
-            # (video_obj is set to None, if no match is found)
-            video_obj = media_data_obj.find_matching_video(app_obj, filename)
-
-        if not video_obj:
-
-            # No matching media.Video object found, so create a new one
-            video_obj = app_obj.create_video_from_download(
-                self.download_item_obj,
-                path,
-                filename,
-                extension,
-            )
-
-            # Update its IVs with the JSON information we extracted
-            if name is not None:
-                video_obj.set_name(name)
-
-            if upload_time is not None:
-                video_obj.set_upload_time(upload_time)
-
-            if duration is not None:
-                video_obj.set_duration(duration)
-
-            if source is not None:
-                video_obj.set_source(source)
-
-            if descrip is not None:
-                video_obj.set_video_descrip(
-                    descrip,
-                    app_obj.main_win_obj.long_string_max_len,
-                )
-
-            # Only save the playlist index when this video is actually stored
-            #   inside a media.Playlist object
-            if isinstance(video_obj.parent_obj, media.Playlist) \
-            and playlist_index is not None:
-                video_obj.set_index(playlist_index)
-
-        else:
-
-            # If the 'Add videos' button was used, the path/filename/extension
-            #   won't be set yet
-            if not video_obj.file_dir and full_path:
-                video_obj.set_file(path, filename, extension)
-
-            # Update any video object IVs that are not set
-            if video_obj.name == app_obj.default_video_name \
-            and name is not None:
-                video_obj.set_name(name)
-
-            if not video_obj.upload_time and upload_time is not None:
-               video_obj.set_upload_time(upload_time)
-
-            if not video_obj.duration and duration is not None:
-                video_obj.set_duration(duration)
-
-            if not video_obj.source and source is not None:
-                video_obj.set_source(source)
-
-            if not video_obj.descrip and descrip is not None:
-                video_obj.set_video_descrip(
-                    descrip,
-                    app_obj.main_win_obj.long_string_max_len,
-                )
-
-            # Only save the playlist index when this video is actually stored
-            #   inside a media.Playlist object
-            if not video_obj.index \
-            and isinstance(video_obj.parent_obj, media.Playlist) \
-            and playlist_index is not None:
-                video_obj.set_index(playlist_index)
-
-        # Deal with the video description, JSON data and thumbnail, according
-        #   to the settings in options.OptionsManager
-        options_dict =self.download_worker_obj.options_manager_obj.options_dict
-
-        if descrip and options_dict['write_description']:
-            descrip_path = os.path.join(path, filename + '.description')
-            if not options_dict['sim_keep_description']:
-                descrip_path = utils.convert_path_to_temp(
-                    app_obj,
-                    descrip_path,
-                )
-
-            # (Don't replace a file that already exists)
-            if not os.path.isfile(descrip_path):
-                fh = open(descrip_path, 'w')
-                fh.write(descrip.encode('utf-8'))
-                fh.close()
-
-        if options_dict['write_info']:
-            json_path = os.path.join(path, filename + '.info.json')
-            if not options_dict['sim_keep_info']:
-                json_path = utils.convert_path_to_temp(app_obj, json_path)
-
-            if not os.path.isfile(json_path):
-                with open(json_path, 'w') as outfile:
-                    json.dump(json_dict, outfile, indent=4)
-
-        if thumbnail and options_dict['write_thumbnail']:
-
-            # Download the thumbnail, if we don't already have it
-            # The thumbnail's URL is something like
-            #   'https://i.ytimg.com/vi/abcdefgh/maxresdefault.jpg'
-            # When saved to disc by youtube-dl, the file is given the same name
-            #   as the video (but with a different extension)
-            # Get the thumbnail's extension...
-            remote_file, remote_ext = os.path.splitext(thumbnail)
-
-            # ...and thus get the filename used by youtube-dl when storing the
-            #   thumbnail locally
-            thumb_path = os.path.join(
-                video_obj.file_dir,
-                video_obj.file_name + remote_ext,
-            )
-
-            if not options_dict['sim_keep_thumbnail']:
-                thumb_path = utils.convert_path_to_temp(app_obj, thumb_path)
-
-            if not os.path.isfile(thumb_path):
-                request_obj = requests.get(thumbnail)
-                with open(thumb_path, 'wb') as outfile:
-                    outfile.write(request_obj.content)
-
-        # Update the main window
-        app_obj.announce_video_download(self.download_item_obj, video_obj)
-
     def confirm_sim_video(self, json_dict):
 
         """Called by self.extract_stdout_data().
@@ -1649,7 +1377,9 @@ class VideoDownloader(object):
 
         """
 
-        # IMport the main application (for convenience)
+        print('dl 1380 confirm_sim_video')
+
+        # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
         # From the JSON dictionary, extract the data we need
@@ -1859,6 +1589,8 @@ class VideoDownloader(object):
 
         """
 
+        print('dl 1592 create_child_process')
+
         info = preexec = None
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
@@ -1911,6 +1643,8 @@ class VideoDownloader(object):
 
         """
 
+        print('dl 1646 extract_filename')
+
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
 
@@ -1956,6 +1690,8 @@ class VideoDownloader(object):
 
         """
 
+        print('dl 1693 extract_stdout_data')
+
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
         #   value pairs as this function interprets the STDOUT message
@@ -1981,7 +1717,7 @@ class VideoDownloader(object):
         # Extract the data
         stdout_list[0] = stdout_list[0].lstrip('\r')
         if stdout_list[0] == '[download]':
-            
+
             dl_stat_dict['status'] = constants.ACTIVE_STAGE_DOWNLOAD
 
             # Get path, filename and extension
@@ -2043,7 +1779,7 @@ class VideoDownloader(object):
                 dl_stat_dict['status'] = constants.ERROR_STAGE_ABORT
 
         elif stdout_list[0] == '[hlsnative]':
-            
+
             # Get information from the native HLS extractor (see
             #   https://github.com/rg3/youtube-dl/blob/master/youtube_dl/
             #       downloader/hls.py#L54
@@ -2058,7 +1794,7 @@ class VideoDownloader(object):
                 dl_stat_dict['percent'] = percent
 
         elif stdout_list[0] == '[ffmpeg]':
-            
+
             # Using FFmpeg, not the the native HLS extractor
             # A successful video download is announced in one of several ways.
             #   Use the first announcement to update self.video_check_dict, and
@@ -2104,7 +1840,7 @@ class VideoDownloader(object):
                 self.confirm_new_video(path, filename, extension)
 
         elif stdout_list[0][0] == '{':
-            
+
             # JSON data, the result of a simulated download. Convert to a
             #   python dictionary
             if self.dl_sim_flag:
@@ -2130,12 +1866,12 @@ class VideoDownloader(object):
                 dl_stat_dict['status'] = constants.ACTIVE_STAGE_CHECKING
 
         elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
-            
+
             # (Just ignore this output)
             return dl_stat_dict
 
         else:
-            
+
             # The download has started
             dl_stat_dict['status'] = constants.ACTIVE_STAGE_PRE_PROCESS
 
@@ -2155,12 +1891,14 @@ class VideoDownloader(object):
         (which halts the download).
 
         Args:
-        
+
             dl_stat_dict (dict): The Python dictionary returned by the call to
                 self.extract_stdout_data(), in the standard form described by
                 the comments for that function
 
         """
+
+        print('dl 1901 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == constants.COMPLETED_STAGE_ALREADY:
@@ -2182,10 +1920,12 @@ class VideoDownloader(object):
         youtube-dl.
 
         Returns:
-        
+
             Python list that contains the system command to execute.
 
         """
+
+        print('dl 1928 get_system_cmd')
 
         options_list = self.download_worker_obj.options_list
 
@@ -2220,6 +1960,8 @@ class VideoDownloader(object):
 
         """
 
+        print('dl 1963 is_child_process_alive')
+
         if self.child_process is None:
             return False
 
@@ -2236,7 +1978,7 @@ class VideoDownloader(object):
         checks the STERR message to see if it's an error or just a warning.
 
         Args:
-        
+
             stderr (string): A message from the child process STDERR.
 
         Returns:
@@ -2244,6 +1986,8 @@ class VideoDownloader(object):
             True if the STDERR message is a warning, False if it's an error
 
         """
+
+        print('dl 1990 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -2263,6 +2007,8 @@ class VideoDownloader(object):
 
         The new key-value pairs are used to update the main window.
         """
+
+        print('dl 2011 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -2308,10 +2054,12 @@ class VideoDownloader(object):
         is higher in the hierarchy of return codes than the current value.
 
         Args:
-        
+
             code (int): A return code in the range 0-5
 
         """
+
+        print('dl 2062 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -2324,6 +2072,8 @@ class VideoDownloader(object):
         Terminates the child process and sets this object's return code to
         self.STOPPED.
         """
+
+        print('dl 2076 stop')
 
         if self.is_child_process_alive():
 
@@ -2371,6 +2121,8 @@ class PipeReader(threading.Thread):
 
     def __init__(self, queue):
 
+        print('dl 2124 __init__')
+
         super(PipeReader, self).__init__()
 
         # IV list - other
@@ -2398,40 +2150,14 @@ class PipeReader(threading.Thread):
     # Public class methods
 
 
-    def OLDOLDrun(self):
-
-        """Called as a result of self.__init__().
-
-        Reads from STDOUT or STERR using the attached filed descriptor.
-        """
-
-        # Use this flag so that the loop can ignore FFmpeg error messsages
-        #   (because the parent VideoDownloader object shouldn't use that as a
-        #   serious error)
-        ignore_line = False
-
-        while self.running_flag:
-
-            if self.file_descriptor is not None:
-                for line in iter(self.file_descriptor.readline, str('')):
-
-                    if str('ffmpeg version') in line:
-                        ignore_line = True
-
-                    if not ignore_line:
-                        self.output_queue.put_nowait(line)
-
-                self.file_descriptor = None
-                ignore_line = False
-
-            time.sleep(self.sleep_time)
-
     def run(self):
 
         """Called as a result of self.__init__().
 
         Reads from STDOUT or STERR using the attached filed descriptor.
         """
+
+        print('dl 2160 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -2472,9 +2198,11 @@ class PipeReader(threading.Thread):
         Args:
 
             filedesc (filehandle): The open filehandle for STDOUT or STDERR
-            
+
         """
-        
+
+        print('dl 2204 attach_file_descriptor')
+
         self.file_descriptor = filedesc
 
 
@@ -2488,8 +2216,10 @@ class PipeReader(threading.Thread):
         Args:
 
             timeout (-): No calling code sets a timeout
-            
+
         """
+
+        print('dl 2222 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)

@@ -539,7 +539,7 @@ class OptionsParser(object):
                 taken from options.OptionsManager.options_dict
 
         Returns:
-        
+
             List of strings with all the youtube-dl command line options
 
         """
@@ -822,11 +822,11 @@ class OptionHolder(object):
         Check if options required by another option are enabled, or not.
 
         Args:
-        
+
             copy_dict (dict): Copy of the original options dictionary.
 
         Returns:
-        
+
             True if any of the required options is enabled, otherwise returns
                 False.
 
@@ -845,7 +845,7 @@ class OptionHolder(object):
         Returns:
 
             True if the option is a boolean switch, otherwise returns False
-            
+
         """
 
         return type(self.default_value) is bool

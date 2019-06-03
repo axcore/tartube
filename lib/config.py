@@ -179,7 +179,7 @@ class GenericConfigWin(Gtk.Window):
 
             also_self (an object inheriting from config.GenericConfigWin):
                 another copy of self
-                
+
         """
 
         self.app_obj.main_win_obj.del_child_window(self)
@@ -825,9 +825,9 @@ class GenericEditWin(GenericConfigWin):
         showing their original values.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
-        
+
         """
 
         # Destroy the window
@@ -841,7 +841,7 @@ class GenericEditWin(GenericConfigWin):
         Destroys any changes made by the user and then closes the window.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
 
         """
@@ -861,7 +861,7 @@ class GenericEditWin(GenericConfigWin):
         showing their original values.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
 
         """
@@ -891,11 +891,11 @@ class GenericEditWin(GenericConfigWin):
         selected, False if not.
 
         Args:
-        
+
             checkbutton (Gtk.CheckButton): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         if not checkbutton.get_active():
@@ -911,11 +911,11 @@ class GenericEditWin(GenericConfigWin):
         Temporarily stores the contents of the widget in self.edit_dict.
 
         Args:
-        
+
             combo (Gtk.ComboBox): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -931,11 +931,11 @@ class GenericEditWin(GenericConfigWin):
         value, and stores the later in self.edit_dict.
 
         Args:
-        
+
             combo (Gtk.ComboBox): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -950,11 +950,11 @@ class GenericEditWin(GenericConfigWin):
         Temporarily stores the contents of the widget in self.edit_dict.
 
         Args:
-        
+
             entry (Gtk.Entry): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         self.edit_dict[prop] = entry.get_text()
@@ -968,13 +968,13 @@ class GenericEditWin(GenericConfigWin):
         (from those in the group) is the selected one.
 
         Args:
-        
+
             checkbutton (Gtk.CheckButton): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
 
             value (-): The attribute's new value
-                    
+
         """
 
         if radiobutton.get_active():
@@ -988,11 +988,11 @@ class GenericEditWin(GenericConfigWin):
         Temporarily stores the contents of the widget in self.edit_dict.
 
         Args:
-        
+
             spinbutton (Gtk.SpinkButton): The widget clicked
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         self.edit_dict[prop] = int(spinbutton.get_value())
@@ -1005,11 +1005,11 @@ class GenericEditWin(GenericConfigWin):
         Temporarily stores the contents of the widget in self.edit_dict.
 
         Args:
-        
+
             textbuffer (Gtk.TextBuffer): The widget modified
 
             prop (string): The attribute in self.edit_obj to modify
-                    
+
         """
 
         self.edit_dict[prop] = textbuffer.get_text(
@@ -1030,9 +1030,9 @@ class GenericEditWin(GenericConfigWin):
         Apply download options to the media data object.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
-                    
+
         """
 
         if self.edit_obj.options_obj:
@@ -1056,9 +1056,9 @@ class GenericEditWin(GenericConfigWin):
         Edit download options for the media data object.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
-                    
+
         """
 
         if not self.edit_obj.options_obj:
@@ -1082,9 +1082,9 @@ class GenericEditWin(GenericConfigWin):
         Remove download options from the media data object.
 
         Args:
-        
+
             button (Gtk.Button): The widget clicked
-                    
+
         """
 
         if not self.edit_obj.options_obj:
@@ -1567,7 +1567,7 @@ class OptionsEditWin(GenericEditWin):
         Returns:
 
             The original or modified value of that attribute.
-            
+
         """
 
         if name in self.edit_dict:
@@ -2452,7 +2452,7 @@ class OptionsEditWin(GenericEditWin):
             button (Gtk.Button): The widget clicked
 
             entry (Gtk.Entry): Another widget to be modified by this function
-            
+
             combo (Gtk.ComboBox): Another widget to be modified by this
                 function
 
@@ -2489,7 +2489,7 @@ class OptionsEditWin(GenericEditWin):
             combo (Gtk.ComboBox): The widget clicked
 
             entry (Gtk.Entry): Another widget to be modified by this function
-                
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -2514,7 +2514,7 @@ class OptionsEditWin(GenericEditWin):
         Args:
 
             entry (Gtk.Entry): The widget clicked
-            
+
         """
 
         # Only set 'output_template' when option 3 is selected, which is when
@@ -2540,7 +2540,7 @@ class OptionsEditWin(GenericEditWin):
 
             other_liststore (Gtk.ListStore): Another widget to be modified by
                 this function
-            
+
         """
 
         selection = treeview.get_selection()
@@ -2592,7 +2592,7 @@ class OptionsEditWin(GenericEditWin):
 
             treeview (Gtk.TreeView): Another widget to be modified by this
                 function
-            
+
         """
 
         selection = treeview.get_selection()
@@ -2647,11 +2647,11 @@ class OptionsEditWin(GenericEditWin):
 
             add_button, up_button, down_button (Gtk.Button): Other widgets to
                 be modified by this function
-                
+
 
             treeview (Gtk.TreeView): Another widget to be modified by this
                 function
-                
+
         """
 
         selection = treeview.get_selection()
@@ -2702,7 +2702,7 @@ class OptionsEditWin(GenericEditWin):
 
             treeview (Gtk.TreeView): Another widget to be modified by this
                 function
-            
+
         """
 
         selection = treeview.get_selection()
@@ -2758,7 +2758,7 @@ class OptionsEditWin(GenericEditWin):
                 function
 
             prop (string): The attribute in self.edit_obj to modify
-                
+
         """
 
         if radiobutton.get_active():
@@ -4361,7 +4361,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                        
+
         """
 
         other_flag = self.app_obj.main_win_obj.checkbutton2.get_active()
@@ -4398,7 +4398,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                        
+
         """
 
         redraw_flag = False
@@ -4430,7 +4430,7 @@ class SystemPrefWin(GenericPrefWin):
             button (Gtk.Button): The widget clicked
 
             entry (Gtk.Entry): Another widget to be modified by this function
-                        
+
         """
 
         dialogue_win = Gtk.FileChooserDialog(
@@ -4488,7 +4488,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             radiobutton (Gtk.RadioButton): The widget clicked
-                    
+
         """
 
         default_val = self.app_obj.match_default_chars
@@ -4526,7 +4526,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             spinbutton (Gtk.SpinButton): The widget clicked
-        
+
         """
 
         if spinbutton == self.spinbutton:
@@ -4544,7 +4544,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() \
@@ -4565,7 +4565,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() and not self.app_obj.operation_save_flag:
@@ -4584,7 +4584,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() \
@@ -4605,7 +4605,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() \
@@ -4615,7 +4615,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.ytdl_write_stdout_flag:
             self.app_obj.set_ytdl_write_stdout_flag(False)
 
-            
+
     def on_update_combo_changed(self, combo):
 
         """Called from a callback in self.setup_ytdl_tab().
@@ -4626,7 +4626,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             combo (Gtk.ComboBox): The widget clicked
-                    
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -4643,7 +4643,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() \
@@ -4663,7 +4663,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         if checkbutton.get_active() \
@@ -4685,7 +4685,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-                    
+
         """
 
         other_flag = self.app_obj.main_win_obj.checkbutton.get_active()
@@ -4707,7 +4707,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             spinbutton (Gtk.SpinButton): The widget clicked
-                    
+
         """
 
         self.app_obj.main_win_obj.spinbutton.set_value(spinbutton.get_value())
@@ -4723,10 +4723,10 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             combo (Gtk.ComboBox): The widget clicked
-                    
+
         """
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         self.app_obj.set_ytdl_path(model[tree_iter][1])
-        
+

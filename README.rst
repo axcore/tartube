@@ -10,6 +10,12 @@ Tartube is **alpha software**. It crashes a lot. If you find this
 frustrating, find a solution and then `send it to
 me <https://github.com/axcore/tartube/issues>`__.
 
+Screenshots
+-----------
+
+.. image:: screenshots/tartube.png
+  :alt: Tartube screenshot
+
 Why should I use Tartube?
 -------------------------
 
@@ -20,8 +26,7 @@ Why should I use Tartube?
 -  Tartube will organise your videos into convenient folders
 -  Certain popular video websites manipulate search results, repeatedly
    unsubscribe people from their favourite channels and/or deliberately
-   conceal videos which challenge the Californian political consensus.
-   Tartube won't do any of those things
+   conceal videos which challenge their preferred political views. Tartube won't do any of those things
 -  Tartube can, in some circumstances, see videos that are
    region-blocked and age-restricted
 
@@ -50,7 +55,7 @@ Install from source
 
 1. Download & extract the source
 2. Change directory into the Tartube directory
-3. Run ``python setup.py install``
+3. Run ``python3 setup.py install``
 
 Install using PyPI
 ~~~~~~~~~~~~~~~~~~
@@ -67,7 +72,7 @@ Run without installing
 
 1. Download & extract the source
 2. Change directory into the Tartube directory
-3. Run 'python tartube.py'
+3. Run 'python3 tartube.py'
 
 Frequently-Asked Questions
 --------------------------

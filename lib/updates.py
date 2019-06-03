@@ -104,90 +104,6 @@ class UpdateManager(threading.Thread):
 
     # Public class methods
 
-    
-    def OLDrun(self):
-
-        """Called as a result of self.__init__().
-
-        Based on code from downloads.VideoDownloader.do_download().
-
-        Creates a child process to run the youtube-dl update.
-
-        Reads from the child process STDOUT and STDERR, and calls the main
-        application with the result of the update (success or failure).
-        """
-
-        # Prepare the system command
-        
-        # The user can change the system command for updating youtube-dl,
-        #   depending on how it was installed
-        # (For example, if youtube-dl was installed via pip, then it must be
-        #   updated via pip)
-        cmd_list \
-        = self.app_obj.ytdl_update_dict[self.app_obj.ytdl_update_current]
-
-        #  Create a new child process using that command
-        self.create_child_process(cmd_list)
-
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
-        if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
-
-        while self.is_child_process_alive():
-
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
-
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                stdout = utils.convert_item(stdout, to_unicode=True)
-
-                if stdout:
-                    # "It looks like you installed youtube-dl with a package
-                    #   manager, pip, setup.py or a tarball. Please use that to
-                    #   update."
-                    if re.search('It looks like you installed', stdout):
-                        self.stderr_list.append(stdout)
-                    else:
-                        self.stdout_list.append(stdout)
-
-        # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            stderr = utils.convert_item(stderr, to_unicode=True)
-
-            if stderr:
-                self.stderr_list.append(stderr)
-
-        # (Generate our own error messages for debugging purposes, in certain
-        #   situations)
-        if self.child_process is None:
-            self.stderr_list.append('Download did not start')
-
-        elif self.child_process.returncode > 0:
-            self.stderr_list.append(
-                'Child process exited with non-zero code: {}'.format(
-                    self.child_process.returncode,
-                )
-            )
-
-        # Operation complete; inform the main application of success or failure
-        if self.stderr_list:
-            self.app_obj.update_manager_finished(False)
-        else:
-            self.app_obj.update_manager_finished(True)
 
     def run(self):
 
@@ -202,7 +118,7 @@ class UpdateManager(threading.Thread):
         """
 
         # Prepare the system command
-        
+
         # The user can change the system command for updating youtube-dl,
         #   depending on how it was installed
         # (For example, if youtube-dl was installed via pip, then it must be
@@ -251,11 +167,11 @@ class UpdateManager(threading.Thread):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-#           # (Convert Python2 to Python3)            
+#           # (Convert Python2 to Python3)
 #           stderr = self.stderr_queue.get_nowait().rstrip()
 #           stderr = utils.convert_item(stderr, to_unicode=True)
             stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
-            
+
             if stderr:
                 self.stderr_list.append(stderr)
 
@@ -351,7 +267,7 @@ class UpdateManager(threading.Thread):
 
         """Called by mainapp.TartubeApp.on_button_stop_operation(), .stop() and
         a callback in .on_button_stop_operation().
-        
+
         Based on code from downloads.VideoDownloader.stop().
 
         Terminates the child process.

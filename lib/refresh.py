@@ -80,7 +80,7 @@ class RefreshManager(threading.Thread):
 
     # Public class methods
 
-    
+
     def run(self):
 
         """Called by mainapp.TartubeApp.refresh_manager_start().
