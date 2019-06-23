@@ -167,7 +167,7 @@ class GenericContainer(GenericMedia):
             if isinstance(child_obj, Video):
                 count_list[1] += 1
             else:
-                count_list = child_obj.count_children(count_list)
+                count_list = child_obj.count_descendants(count_list)
                 if isinstance(child_obj, Channel):
                     count_list[2] += 1
                 elif isinstance(child_obj, Playlist):
@@ -423,9 +423,6 @@ class GenericRemoteContainer(GenericContainer):
 
         """
 
-#       # Convert Python2 to Python3
-#        if obj1.upload_time < obj2.upload_time:
-#            return 1
         if obj1.upload_time is None or obj2.upload_time is None:
             return 0
         elif obj1.upload_time < obj2.upload_time:
@@ -488,7 +485,8 @@ class GenericRemoteContainer(GenericContainer):
 
         """Can be called by anything. For example, called by self.add_child().
 
-        Sorts the child media.Video objects by upload time."""
+        Sorts the child media.Video objects by upload time.
+        """
 
         self.child_list.sort(key=functools.cmp_to_key(self.do_sort))
 
@@ -730,7 +728,8 @@ class Video(GenericMedia):
         of an unnamed video, replacing the default name (specified by
         mainapp.TartubeApp.default_video_name).
 
-        Also called by media.VideoDownloader.confirm_sim_video()."""
+        Also called by media.VideoDownloader.confirm_sim_video().
+        """
 
         self.name = name
 
@@ -1323,9 +1322,6 @@ class Folder(GenericContainer):
         ):
             if isinstance(obj1, Video):
 
-#               # Convert Python2 to Python3
-#               if obj1.upload_time < obj2.upload_time:
-#                    return 1
                 if obj1.upload_time is None or obj2.upload_time is None:
                     return 0
                 elif obj1.upload_time < obj2.upload_time:
@@ -1405,5 +1401,3 @@ class Folder(GenericContainer):
         collapse neatly in my IDE."""
 
         pass
-
-

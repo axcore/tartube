@@ -24,7 +24,7 @@
 #   ...
 
 
-# Import other modul6es
+# Import other modules
 import sys
 
 
@@ -34,9 +34,9 @@ from lib import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '0.1.015'
-__date__ = '3 Jun 2019'
-__copyright__ = 'Copyright \xc2\xa9 2019 A S Lewis'
+__version__ = '0.2.0'
+__date__ = '23 Jun 2019'
+__copyright__ = 'Copyright \xa9 2019 A S Lewis'
 __license__ = """
 Copyright \xc2\xa9 2019 A S Lewis.
 

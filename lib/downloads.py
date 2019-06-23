@@ -32,6 +32,7 @@ import json
 import signal
 import os
 import queue
+import re
 import requests
 import subprocess
 import sys
@@ -45,6 +46,10 @@ from . import mainapp
 from . import media
 from . import options
 from . import utils
+
+
+# !!! Debugging flag
+DEBUG_FUNC_FLAG = False
 
 
 # Decorator to add thread synchronisation to some functions in the
@@ -79,6 +84,7 @@ class DownloadManager(threading.Thread):
     download and then waits for another assignment.
 
     Args:
+
         app_obj: The mainapp.TartubeApp object
 
         force_sim_flag (True/False): True if playlists/channels should just be
@@ -98,7 +104,8 @@ class DownloadManager(threading.Thread):
 
     def __init__(self, app_obj, force_sim_flag, download_list_obj):
 
-        print('dl 101 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 108 __init__')
 
         super(DownloadManager, self).__init__()
 
@@ -174,7 +181,8 @@ class DownloadManager(threading.Thread):
         download operation is complete.
         """
 
-        print('dl 177 run')
+        if DEBUG_FUNC_FLAG:
+            print('dl 185 run')
 
         # Perform the download operation until there is nothing left to
         #   download, or until something has called
@@ -266,12 +274,14 @@ class DownloadManager(threading.Thread):
         current download is completed, the download manager destroys it.
 
         Args:
+
             number (int): The new value of
                 mainapp.TartubeApp.num_worker_default
 
         """
 
-        print('dl 274 change_worker_count')
+        if DEBUG_FUNC_FLAG:
+            print('dl 284 change_worker_count')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -328,7 +338,8 @@ class DownloadManager(threading.Thread):
 
         """
 
-        print('dl 331 check_workers_all_finished')
+        if DEBUG_FUNC_FLAG:
+            print('dl 342 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -350,7 +361,8 @@ class DownloadManager(threading.Thread):
 
         """
 
-        print('dl 353 get_available_worker')
+        if DEBUG_FUNC_FLAG:
+            print('dl 365 get_available_worker')
 
         for worker_obj in self.worker_list:
             if worker_obj.available_flag:
@@ -372,7 +384,8 @@ class DownloadManager(threading.Thread):
 
         """
 
-        print('dl 375 remove_worker')
+        if DEBUG_FUNC_FLAG:
+            print('dl 388 remove_worker')
 
         new_list = []
 
@@ -394,7 +407,8 @@ class DownloadManager(threading.Thread):
         loop, the downloads.DownloadWorker objects are cleaned up.
         """
 
-        print('dl 397 stop_download_operation')
+        if DEBUG_FUNC_FLAG:
+            print('dl 411 stop_download_operation')
 
         self.running_flag = False
 
@@ -414,7 +428,8 @@ class DownloadWorker(threading.Thread):
     completes that download and then waits for another assignment.
 
     Args:
-        download_manager_obj(downloads.DownloadManager): The parent download
+
+        download_manager_obj (downloads.DownloadManager): The parent download
             manager object.
 
     """
@@ -425,7 +440,8 @@ class DownloadWorker(threading.Thread):
 
     def __init__(self, download_manager_obj):
 
-        print('dl 428 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 444 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -481,7 +497,8 @@ class DownloadWorker(threading.Thread):
         create a new downloads.VideoDownloader object and wait for the result.
         """
 
-        print('dl 484 run')
+        if DEBUG_FUNC_FLAG:
+            print('dl 501 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -552,7 +569,8 @@ class DownloadWorker(threading.Thread):
         Tidy up IVs and stop any child processes.
         """
 
-        print('dl 555 close')
+        if DEBUG_FUNC_FLAG:
+            print('dl 573 close')
 
         self.running_flag = False
         if self.video_downloader_obj:
@@ -575,7 +593,8 @@ class DownloadWorker(threading.Thread):
 
         """
 
-        print('dl 578 prepare_download')
+        if DEBUG_FUNC_FLAG:
+            print('dl 597 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -591,7 +610,8 @@ class DownloadWorker(threading.Thread):
 
         """Called by downloads.DownloadManager.change_worker_count()."""
 
-        print('dl 594 set_doomed_flag')
+        if DEBUG_FUNC_FLAG:
+            print('dl 614 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -619,7 +639,8 @@ class DownloadWorker(threading.Thread):
 
         """
 
-        print('dl 622 data_callback')
+        if DEBUG_FUNC_FLAG:
+            print('dl 643 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
         app_obj.main_win_obj.progress_list_receive_dl_stats(
@@ -645,7 +666,7 @@ class DownloadList(object):
 
     Args:
 
-        app_obj (mainapp.AxtubeApp): The main application
+        app_obj (mainapp.TartubeApp): The main application
 
         media_data_obj (media.Video, media.Channel, media.Playlist,
             media.Folder or None): The media data object to download. If
@@ -661,7 +682,8 @@ class DownloadList(object):
 
     def __init__(self, app_obj, media_data_obj):
 
-        print('dl 664 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 686 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -739,7 +761,8 @@ class DownloadList(object):
 
         """
 
-        print('dl 742 change_item_stage')
+        if DEBUG_FUNC_FLAG:
+            print('dl 765 change_item_stage')
 
         self.download_item_dict[dbid].stage = new_stage
 
@@ -773,7 +796,8 @@ class DownloadList(object):
 
         """
 
-        print('dl 776 create_item')
+        if DEBUG_FUNC_FLAG:
+            print('dl 800 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -840,7 +864,8 @@ class DownloadList(object):
 
         """
 
-        print('dl 843 fetch_next_item')
+        if DEBUG_FUNC_FLAG:
+            print('dl 868 fetch_next_item')
 
         for dbid in self.download_item_list:
             this_item = self.download_item_dict[dbid]
@@ -875,7 +900,8 @@ class DownloadList(object):
 
         """
 
-        print('dl 878 get_options_manager')
+        if DEBUG_FUNC_FLAG:
+            print('dl 904 get_options_manager')
 
         if media_data_obj.options_obj:
             return media_data_obj.options_obj
@@ -896,6 +922,7 @@ class DownloadItem(object):
     in a downloads.DownloadList object.
 
     Args:
+
         dbid (int) - The number of downloads.DownloadItem objects created, used
             to give each one a unique ID
 
@@ -913,7 +940,8 @@ class DownloadItem(object):
 
     def __init__(self, dbid, media_data_obj, options_manager_obj):
 
-        print('dl 916 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 944 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -967,6 +995,7 @@ class VideoDownloader(object):
             describing the URL from which youtube-dl should download video(s).
 
     Warnings:
+
         The calling function is responsible for calling the close() method
         when it's finished with this object, in order for this object to
         properly close down.
@@ -1003,7 +1032,8 @@ class VideoDownloader(object):
     def __init__(self, download_manager_obj, download_worker_obj, \
     download_item_obj):
 
-        print('dl 1006 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1036 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1068,6 +1098,20 @@ class VideoDownloader(object):
         #       value = the video name (not actually used by anything at the
         #           moment)
         self.video_check_dict = {}
+        # The code imported from youtube-dl-gui doesn't recognise a downloaded
+        #   video, if Ffmpeg isn't used to extract it (because Ffmpeg is not
+        #   installed, or because the website doesn't support it, or whatever)
+        # In this situation, youtube-dl's STDOUT messages don't definitively
+        #   establish when it has finished downloading a video
+        # When a file destination is announced; it is temporarily stored in
+        #   these IVs. When STDOUT receives a message in the form
+        #       [download] 100% of 2.06MiB in 00:02
+        #   ...and the filename isn't one that Ffmpeg would use (e.g.
+        #       'myvideo.f136.mp4' or 'myvideo.f136.m4a', then assume that the
+        #       video has finished downloading
+        self.temp_path = None
+        self.temp_filename = None
+        self.temp_extension = None
 
 
         # Code
@@ -1114,7 +1158,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1117 do_download')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1162 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1152,10 +1197,8 @@ class VideoDownloader(object):
             #   Python's convenience
             while not self.stdout_queue.empty():
 
-#               # (Convert Python2 to Python3)
-#               stdout = self.stdout_queue.get_nowait().rstrip()
-#               stdout = utils.convert_item(stdout, to_unicode=True)
-                stdout = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
+                stdout \
+                = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
 
                 if stdout:
                     # Convert the statistics into a python dictionary in a
@@ -1179,18 +1222,17 @@ class VideoDownloader(object):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-#           # (Convert Python2 to Python3)
-#           stderr = self.stderr_queue.get_nowait().rstrip()
-#           stderr = utils.convert_item(stderr, to_unicode=True)
             stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
 
-            if self.is_warning(stderr):
-                self.set_return_code(self.WARNING)
-                self.download_item_obj.media_data_obj.set_warning(stderr)
+            if not self.is_ignorable(stderr):
 
-            else:
-                self.set_return_code(self.ERROR)
-                self.download_item_obj.media_data_obj.set_error(stderr)
+                if self.is_warning(stderr):
+                    self.set_return_code(self.WARNING)
+                    self.download_item_obj.media_data_obj.set_warning(stderr)
+
+                elif not self.is_debug(stderr):
+                    self.set_return_code(self.ERROR)
+                    self.download_item_obj.media_data_obj.set_error(stderr)
 
             if (app_obj.ytdl_write_stderr_flag):
                 print(stderr)
@@ -1233,7 +1275,8 @@ class VideoDownloader(object):
         Destructor function for this object.
         """
 
-        print('dl 1236 close')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1279 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -1261,7 +1304,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1264 confirm_new_video')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1308 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
             self.video_check_dict[self.video_num] = filename
@@ -1312,7 +1356,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1315 confirm_old_video')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1360 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1377,7 +1422,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1380 confirm_sim_video')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1426 confirm_sim_video')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1524,8 +1570,6 @@ class VideoDownloader(object):
 
             # (Don't replace a file that already exists)
             if not os.path.isfile(descrip_path):
-#               # Convert Python2 to Python3
-#               fh = open(descrip_path, 'w')
                 fh = open(descrip_path, 'wb')
                 fh.write(descrip.encode('utf-8'))
                 fh.close()
@@ -1589,7 +1633,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1592 create_child_process')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1637 create_child_process')
 
         info = preexec = None
         if os.name == 'nt':
@@ -1638,12 +1683,14 @@ class VideoDownloader(object):
                 and saved to the filesystem
 
         Returns:
+
             Returns the path, filename and extension components of the full
                 file path.
 
         """
 
-        print('dl 1646 extract_filename')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1693 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -1690,7 +1737,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1693 extract_stdout_data')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1741 extract_stdout_data')
 
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
@@ -1726,24 +1774,39 @@ class VideoDownloader(object):
                     ' '.join(stdout_with_spaces_list[2:]),
                 )
 
-                # ('filename' is something like 'My video.mpetg.f135', which
-                #   is not what we want, so don't update self.video_check_dict)
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
+                self.set_temp_destination(path, filename, extension)
 
             # Get progress information
             if '%' in stdout_list[1]:
-                if stdout_list[1] == '100%':
-                    dl_stat_dict['percent'] = '100%'
-                    dl_stat_dict['eta'] = ''
-                    dl_stat_dict['speed'] = ''
-                    dl_stat_dict['filesize'] = stdout_list[3]
-                else:
+                if stdout_list[1] != '100%':
                     dl_stat_dict['percent'] = stdout_list[1]
                     dl_stat_dict['eta'] = stdout_list[7]
                     dl_stat_dict['speed'] = stdout_list[5]
                     dl_stat_dict['filesize'] = stdout_list[3]
+
+                else:
+                    dl_stat_dict['percent'] = '100%'
+                    dl_stat_dict['eta'] = ''
+                    dl_stat_dict['speed'] = ''
+                    dl_stat_dict['filesize'] = stdout_list[3]
+
+                    # If the most recently-received filename isn't one used by
+                    #   Ffmpeg, then this marks the end of a video download
+                    # (See the comments in self.__init__)
+                    if stdout_list[4] == 'in' \
+                    and self.temp_filename is not None \
+                    and not re.match(r'.*\.f\d{1,3}$', self.temp_filename):
+
+                        self.confirm_new_video(
+                            self.temp_path,
+                            self.temp_filename,
+                            self.temp_extension,
+                        )
+
+                        self.reset_temp_destination()
 
             # Get playlist information (when downloading a channel or a
             #   playlist, this line is received once per video)
@@ -1771,6 +1834,7 @@ class VideoDownloader(object):
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
+                self.reset_temp_destination()
 
                 self.confirm_old_video(path, filename, extension)
 
@@ -1811,6 +1875,7 @@ class VideoDownloader(object):
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
+                self.reset_temp_destination()
 
                 self.confirm_new_video(path, filename, extension)
 
@@ -1824,6 +1889,7 @@ class VideoDownloader(object):
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
+                self.reset_temp_destination()
 
                 self.confirm_new_video(path, filename, extension)
 
@@ -1836,6 +1902,7 @@ class VideoDownloader(object):
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
+                self.reset_temp_destination()
 
                 self.confirm_new_video(path, filename, extension)
 
@@ -1898,7 +1965,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1901 extract_stdout_status')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1969 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == constants.COMPLETED_STAGE_ALREADY:
@@ -1925,7 +1993,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1928 get_system_cmd')
+        if DEBUG_FUNC_FLAG:
+            print('dl 1997 get_system_cmd')
 
         options_list = self.download_worker_obj.options_list
 
@@ -1960,12 +2029,68 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1963 is_child_process_alive')
+#        if DEBUG_FUNC_FLAG:
+#            print('dl 2033 is_child_process_alive')
 
         if self.child_process is None:
             return False
 
         return self.child_process.poll() is None
+
+
+    def is_debug(self, stderr):
+
+        """Called by self.do_download().
+
+        Based on YoutubeDLDownloader._is_warning().
+
+        After the child process has terminated with an error of some kind,
+        checks the STERR message to see if it's an error or just a debug
+        message (generated then youtube-dl verbose output is turned on).
+
+        Args:
+
+            stderr (string): A message from the child process STDERR.
+
+        Returns:
+
+            True if the STDERR message is a youtube-dl debug message, False if
+                it's an error
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('dl 2063 is_debug')
+
+        return stderr.split(' ')[0] == '[debug]'
+
+
+    def is_ignorable(self, stderr):
+
+        """Called by self.do_download().
+
+        Before testing a STDERR message, see if it's one of the frequent
+        messages which the user has opted to ignore (if any).
+
+        Args:
+
+            stderr (string): A message from the child process STDERR.
+
+        Returns:
+
+            True if the STDERR message is ignorable, False if it should be
+                tested further.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('dl 2087 is_ignorable')
+
+        if self.download_manager_obj.app_obj.ignore_merge_warning_flag \
+        and re.search(r'Requested formats are incompatible for merge', stderr):
+            return True
+        else:
+            return False
 
 
     def is_warning(self, stderr):
@@ -1987,7 +2112,8 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 1990 is_warning')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2116 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -2008,7 +2134,8 @@ class VideoDownloader(object):
         The new key-value pairs are used to update the main window.
         """
 
-        print('dl 2011 last_data_callback')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2138 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -2059,10 +2186,29 @@ class VideoDownloader(object):
 
         """
 
-        print('dl 2062 set_return_code')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2190 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
+
+
+    def set_temp_destination(self, path, filename, extension):
+
+        """Called by self.extract_stdout_data()."""
+
+        self.temp_path = path
+        self.temp_filename = filename
+        self.temp_extension = extension
+
+
+    def reset_temp_destination(self):
+
+        """Called by self.extract_stdout_data()."""
+
+        self.temp_path = None
+        self.temp_filename = None
+        self.temp_extension = None
 
 
     def stop(self):
@@ -2073,7 +2219,8 @@ class VideoDownloader(object):
         self.STOPPED.
         """
 
-        print('dl 2076 stop')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2223 stop')
 
         if self.is_child_process_alive():
 
@@ -2106,10 +2253,12 @@ class PipeReader(threading.Thread):
     process pipes in an asynchronous way.
 
     Args:
+
         queue (queue.Queue): Python queue to store the output of the child
             process.
 
     Warnings:
+
         All the operations are based on 'str' types. The calling function must
         convert the queued items back to 'unicode', if necessary.
 
@@ -2121,7 +2270,8 @@ class PipeReader(threading.Thread):
 
     def __init__(self, queue):
 
-        print('dl 2124 __init__')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2274 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -2157,7 +2307,8 @@ class PipeReader(threading.Thread):
         Reads from STDOUT or STERR using the attached filed descriptor.
         """
 
-        print('dl 2160 run')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2311 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -2167,16 +2318,12 @@ class PipeReader(threading.Thread):
         while self.running_flag:
 
             if self.file_descriptor is not None:
-#               # Convert Python2 to Python3 - the for loop no longer
-#               #   terminates, but produces endless <b''> strings instead
-#                for line in iter(self.file_descriptor.readline, str('')):
+
                 for line in iter(self.file_descriptor.readline, str('')):
 
                     if line == b'':
                         break
 
-#                   # Convert Python2 to Python3
-#                   if str('ffmpeg version') in line:
                     if str.encode('ffmpeg version') in line:
                         ignore_line = True
 
@@ -2201,7 +2348,8 @@ class PipeReader(threading.Thread):
 
         """
 
-        print('dl 2204 attach_file_descriptor')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2352 attach_file_descriptor')
 
         self.file_descriptor = filedesc
 
@@ -2219,8 +2367,8 @@ class PipeReader(threading.Thread):
 
         """
 
-        print('dl 2222 join')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2371 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)
-

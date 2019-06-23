@@ -134,5 +134,3 @@ def add_test_media(app_obj):
                 folder2,
             )
             app_obj.main_win_obj.video_index_add_row(folder4)
-
-

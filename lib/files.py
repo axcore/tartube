@@ -148,4 +148,3 @@ class FileManager(threading.Thread):
             )
 
         return pixbuf
-

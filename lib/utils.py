@@ -231,6 +231,7 @@ def convert_youtube_to_hooktube(url):
         url (string): The weblink to convert
 
     Returns:
+
         The converted string
 
     """
@@ -414,7 +415,7 @@ def to_string(data):
     """Based on the to_string() function in youtube-dl-gui. Now called by
     by options.OptionsParser.parse(), .build_file_sizes() and so on.
 
-    Convert any data type to a string. Works for both Python2 and Python3.
+    Convert any data type to a string.
 
     Args:
 
@@ -560,5 +561,3 @@ def tidy_up_long_descrip(string, max_length=80):
 
         # Empty string
         return string
-
-

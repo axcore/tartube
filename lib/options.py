@@ -779,6 +779,7 @@ class OptionHolder(object):
     this object.
 
     Args:
+
         name (string): Option name. Must be a valid option name
             from the optionsmanager.OptionsManager class (see the list in
             at the beginning of the options.OptionsManager class).
@@ -849,5 +850,3 @@ class OptionHolder(object):
         """
 
         return type(self.default_value) is bool
-
-

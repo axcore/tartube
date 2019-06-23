@@ -239,4 +239,3 @@ class RefreshManager(threading.Thread):
         """
 
         self.running_flag = False
-

@@ -147,10 +147,8 @@ class UpdateManager(threading.Thread):
             #   Python's convenience
             while not self.stdout_queue.empty():
 
-#               # (Convert Python2 to Python3)
-#               stdout = self.stdout_queue.get_nowait().rstrip()
-#               stdout = utils.convert_item(stdout, to_unicode=True)
-                stdout = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
+                stdout \
+                = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
 
                 if stdout:
                     # "It looks like you installed youtube-dl with a package
@@ -167,9 +165,6 @@ class UpdateManager(threading.Thread):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-#           # (Convert Python2 to Python3)
-#           stderr = self.stderr_queue.get_nowait().rstrip()
-#           stderr = utils.convert_item(stderr, to_unicode=True)
             stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
 
             if stderr:
@@ -287,4 +282,3 @@ class UpdateManager(threading.Thread):
 
             else:
                 os.killpg(self.child_process.pid, signal.SIGKILL)
-

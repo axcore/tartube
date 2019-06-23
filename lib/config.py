@@ -104,7 +104,8 @@ class GenericConfigWin(Gtk.Window):
         """Called by self.setup().
 
         Sets up a Gtk.Grid, on which a notebook and a button strip will be
-        placed. (Each of the notebook's tabs also has its own Gtk.Grid.)"""
+        placed. (Each of the notebook's tabs also has its own Gtk.Grid.)
+        """
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -115,7 +116,8 @@ class GenericConfigWin(Gtk.Window):
         """Called by self.setup().
 
         Sets up a Gtk.Notebook, after which self.setup_tabs() is called to fill
-        it with tabs."""
+        it with tabs.
+        """
 
         self.notebook = Gtk.Notebook()
         self.grid.attach(self.notebook, 0, 1, 1, 1)
@@ -318,6 +320,7 @@ class GenericEditWin(GenericConfigWin):
         Returns:
 
             The original or modified value of that attribute.
+
         """
 
         if name in self.edit_dict:
@@ -1979,13 +1982,13 @@ class OptionsEditWin(GenericEditWin):
         self.add_checkbutton(grid,
             'Prefer HLS (HTTP Live Streaming) over FFmpeg',
             'native_hls',
-            0, 1, (grid_width - 2), 1,
+            0, 1, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             'Ignore errors and continue the download operation',
             'ignore_errors',
-            0, 2, (grid_width - 2), 1,
+            0, 2, grid_width, 1,
         )
 
         self.add_label(grid,
@@ -4019,33 +4022,41 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton3.connect('toggled', self.on_dialogue_button_toggled)
 
+        checkbutton4 = self.add_checkbutton(grid,
+            'Ignore \'Requested formats are incompatible for merge\' warnings',
+            self.app_obj.ignore_merge_warning_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
+        )
+        checkbutton4.connect('toggled', self.on_merge_button_toggled)
+
         # Module preferences
         self.add_label(grid,
             '<u>Module preferences</u>',
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             'Use \'moviepy\' module to get a video\'s duration, if not known'
             + ' (may be slow)',
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton4.connect('toggled', self.on_moviepy_button_toggled)
+        checkbutton5.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
-            checkbutton4.set_sensitive(False)
+            checkbutton5.set_sensitive(False)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             'Use \'validators\' module to check URLs are valid before using'
             + ' them',
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_validators_button_toggled)
+        checkbutton6.connect('toggled', self.on_validators_button_toggled)
         if not mainapp.HAVE_VALIDATORS_FLAG:
-            checkbutton5.set_sensitive(False)
+            checkbutton6.set_sensitive(False)
 
 
     def setup_videos_tab(self):
@@ -4533,6 +4544,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_match_first_chars(spinbutton.get_value())
         else:
             self.app_obj.set_match_ignore_chars(spinbutton.get_value())
+
+
+    def on_merge_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables ignoring of 'Requested formats are incompatible for
+        merge and will be merged into mkv' warning messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_merge_warning_flag:
+            self.app_obj.set_ignore_merge_warning_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_merge_warning_flag:
+            self.app_obj.set_ignore_merge_warning_flag(False)
 
 
     def on_moviepy_button_toggled(self, checkbutton):

@@ -35,10 +35,11 @@ import setuptools
 # Setup
 setuptools.setup(
     name='tartube',
-    version='0.1.015',
+    version='0.2.0',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
-    long_description="""Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui and written in Python 3 / Gtk 3""",
+    long_description="""Tartube is a GUI front-end for youtube-dl, partly based
+        on youtube-dl-gui and written in Python 3 / Gtk 3""",
     long_description_content_type='text/markdown',
     author='A S Lewis',
     author_email='aslewis@cpan.org',
@@ -47,4 +48,3 @@ setuptools.setup(
     license="""GPL3+""",
     packages=setuptools.find_packages()
 )
-
