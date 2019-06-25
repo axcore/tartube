@@ -221,7 +221,13 @@ class DownloadManager(threading.Thread):
                         )
                         # Update the main window's progress bar
                         self.job_count += 1
-                        self.app_obj.main_win_obj.update_progress_bar(
+                        # Throughout the downloads.py code, instead calling a
+                        #   mainapp.py or mainwin.py function directly (which
+                        #   is not thread-safe), set a Glib timeout to handle
+                        #   it
+                        GObject.timeout_add(
+                            0, 
+                            self.app_obj.main_win_obj.update_progress_bar,
                             download_item_obj.media_data_obj.name,
                             self.job_count,
                             len(self.download_list_obj.download_item_list),
@@ -245,8 +251,11 @@ class DownloadManager(threading.Thread):
 
         # Tell the Progress Tab to display any remaining download statistics
         #   immediately
-        self.app_obj.main_win_obj.progress_list_display_dl_stats()
-
+        GObject.timeout_add(
+            0, 
+            self.app_obj.main_win_obj.progress_list_display_dl_stats,
+        )
+        
         # When youtube-dl reports it is finished, there is a short delay before
         #   the final downloaded video(s) actually exist in the filesystem
         # Therefore, mainwin.MainWin.progress_list_display_dl_stats() may not
@@ -255,12 +264,18 @@ class DownloadManager(threading.Thread):
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
         if not self.force_sim_flag:
-            self.app_obj.download_manager_halt_timer()
+            GObject.timeout_add(
+                0, 
+                self.app_obj.download_manager_halt_timer,
+            )
         else:
             # If we're only simulating downloads, we don't need to wait at all
-            self.app_obj.download_manager_finished()
+            GObject.timeout_add(
+                0, 
+                self.app_obj.download_manager_finished,
+            )
 
-
+            
     def change_worker_count(self, number):
 
         """Called by mainapp.TartubeApp.set_num_worker_default().
@@ -506,7 +521,7 @@ class DownloadWorker(threading.Thread):
         # Handle a job, or wait for the downloads.DownloadManager to assign
         #   this worker a job
         while self.running_flag:
-
+            
             # If this worker is currently assigned a job...
             if not self.available_flag:
 
@@ -525,13 +540,17 @@ class DownloadWorker(threading.Thread):
                 # Then execute the assigned job
                 return_code = self.video_downloader_obj.do_download()
 
+                # Import the media data object (for convenience)
+                media_data_obj = self.download_item_obj.media_data_obj
+
                 # If the downloads.VideoDownloader object collected any
                 #   youtube-dl error/warning messages, display them in the
                 #   Error List
-                if self.download_item_obj.media_data_obj.error_list \
-                or self.download_item_obj.media_data_obj.warning_list:
-                    app_obj.main_win_obj.errors_list_add_row(
-                        self.download_item_obj.media_data_obj,
+                if media_data_obj.error_list or media_data_obj.warning_list:
+                    GObject.timeout_add(
+                        0, 
+                        app_obj.main_win_obj.errors_list_add_row,
+                        media_data_obj,
                     )
 
                 # In the event of an error, nothing updates the video's row in
@@ -540,9 +559,12 @@ class DownloadWorker(threading.Thread):
                 # Do that now (but don't both if mainwin.ComplexCatalogueItem
                 #   aren't being used in the Video Catalogue)
                 if return_code == VideoDownloader.ERROR \
+                and isinstance(media_data_obj, media.Video) \
                 and app_obj.complex_catalogue_flag:
-                    app_obj.main_win_obj.video_catalogue_update_row(
-                        self.download_item_obj.media_data_obj,
+                    GObject.timeout_add(
+                        0, 
+                        app_obj.main_win_obj.video_catalogue_update_row,
+                        media_data_obj,
                     )
 
                 # Call the destructor function of VideoDownloader object
@@ -643,11 +665,13 @@ class DownloadWorker(threading.Thread):
             print('dl 643 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
-        app_obj.main_win_obj.progress_list_receive_dl_stats(
+        GObject.timeout_add(
+            0,
+            app_obj.main_win_obj.progress_list_receive_dl_stats,
             self.download_item_obj,
             dl_stat_dict,
         )
-
+        
 
 class DownloadList(object):
 
@@ -1197,10 +1221,14 @@ class VideoDownloader(object):
             #   Python's convenience
             while not self.stdout_queue.empty():
 
-                stdout \
-                = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
-
+                stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
+
+                    if sys.platform == "win32":
+                        stdout = stdout.decode('cp1252')
+                    else:
+                        stdout = stdout.decode('utf-8')                
+                
                     # Convert the statistics into a python dictionary in a
                     #   standard format, specified in the comments for
                     #   self.extract_stdout_data()
@@ -1222,8 +1250,12 @@ class VideoDownloader(object):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
-
+            stderr = self.stderr_queue.get_nowait().rstrip()
+            if sys.platform == "win32":
+                stderr = stderr.decode('cp1252')
+            else:
+                stderr = stderr.decode('utf-8') 
+            
             if not self.is_ignorable(stderr):
 
                 if self.is_warning(stderr):
@@ -1328,7 +1360,9 @@ class VideoDownloader(object):
             options_manager_obj = self.download_worker_obj.options_manager_obj
 
             # Update the main window
-            app_obj.announce_video_download(
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
                 options_manager_obj.options_dict['keep_description'],
@@ -1368,7 +1402,11 @@ class VideoDownloader(object):
             if not media_data_obj.dl_flag:
 
                 media_data_obj.set_dl_flag(True)
-                app_obj.main_win_obj.video_catalogue_update_row(media_data_obj)
+                GObject.timeout_add(
+                    0, 
+                    app_obj.main_win_obj.video_catalogue_update_row,
+                    media_data_obj,
+                )
 
         else:
 
@@ -1378,7 +1416,11 @@ class VideoDownloader(object):
             if match_obj:
 
                 match_obj.set_dl_flag(True)
-                app_obj.main_win_obj.video_catalogue_update_row(match_obj)
+                GObject.timeout_add(
+                    0, 
+                    app_obj.main_win_obj.video_catalogue_update_row,
+                    match_obj,
+                )
 
             else:
 
@@ -1399,7 +1441,9 @@ class VideoDownloader(object):
                 = self.download_worker_obj.options_manager_obj
 
                 # Update the main window
-                app_obj.announce_video_download(
+                GObject.timeout_add(
+                    0, 
+                    app_obj.announce_video_download,
                     self.download_item_obj,
                     video_obj,
                     options_manager_obj.options_dict['keep_description'],
@@ -1442,7 +1486,7 @@ class VideoDownloader(object):
             # date_string in form YYYYMMDD
             date_string = json_dict['upload_date']
             dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-            upload_time = dt_obj.strftime('%s')
+            upload_time = dt_obj.timestamp()
         else:
             upload_time = None
 
@@ -1609,7 +1653,12 @@ class VideoDownloader(object):
                     outfile.write(request_obj.content)
 
         # Update the main window
-        app_obj.announce_video_download(self.download_item_obj, video_obj)
+        GObject.timeout_add(
+            0,
+            app_obj.announce_video_download,
+            self.download_item_obj,
+            video_obj,
+        )
 
 
     def create_child_process(self, cmd_list):
@@ -2011,6 +2060,13 @@ class VideoDownloader(object):
         cmd_list = [self.download_manager_obj.app_obj.ytdl_path] \
         + options_list + [self.download_item_obj.media_data_obj.source]
 
+        # If the user installed Tartube with the standard MSWin installer,
+        #   which uses MSYS2 (msys2.org) and includes a copy of youtube-dl,
+        #   then we need to add an extra argument (otherwise, it won't work)
+        if self.download_manager_obj.app_obj.ytdl_update_current \
+        == 'Automatic installation update':
+            cmd_list.insert(0, 'python3')
+            
         return cmd_list
 
 

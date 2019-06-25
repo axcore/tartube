@@ -6,33 +6,54 @@ partly based on
 `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ and
 written in Python 3 / Gtk 3.
 
+It runs on MS Windows, Linux and BSD. It probably works on MacOS, but the
+authors have not been able to confirm this.
+
 **Tartube** is **alpha software**. It might not behave in the way you're
 expecting. If you find this frustrating, 
 `report the problem to the authors <https://github.com/axcore/tartube/issues>`__.
 
+Why should I use Tartube?
+-------------------------
+
+-  You can download individual videos, and even whole channels and playlists,
+   from YouTube and hundreds of other sites (see
+   `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__
+   for a full list)
+-  You can fetch information about those videos, channels and playlists,
+   without actually downloading anything
+-  **Tartube** will organise your videos into convenient folders
+-  Certain popular websites manipulate search results, repeatedly unsubscribe
+   people from their favourite channels and/or deliberately conceal videos that
+   they don't like. **Tartube** won't do any of those things
+-  **Tartube** can, in some circumstances, see videos that are region-blocked
+   and/or age-restricted
+   
 Screenshots
 -----------
 
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
 
-Why should I use Tartube?
--------------------------
+Downloads
+---------
 
--  You can download individual videos, and even whole channels and playlists,
-   from hundreds of different websites
--  You can fetch information about those videos, channels and playlists,
-   without actually downloading anything
--  **Tartube** will organise your videos into convenient folders
--  Certain popular video websites manipulate search results, repeatedly
-   unsubscribe people from their favourite channels and/or deliberately conceal
-   videos which challenge their preferred political views. **Tartube** won't do
-   any of those things
--  **Tartube** can, in some circumstances, see videos that are region-blocked
-   and/or age-restricted
+-  `Source and MS Windows installer <http://tartube.sourceforge.io/>`__ from sourceforge.io
+-  `Source <https://github.com/axcore/tarbue>`__ from github
 
-Requirements
+Installation
 ------------
+
+MS Windows users should use the installer available at the Tartube website. The installer contains everything you need to run Tartube, including Python, the Gtk libraries and even a copy of youtube-dl. You must be using Windows Vista or above; the installer will not work on Windows XP.
+
+Tartube should run on MacOS, but the authors don't have access a MacOS system.
+If you are a MacOS user, open an issue at our Github page, and we'll work out
+the installation procedure together.
+
+Linux/BSD users can use any of the following installation methods.
+
+Linux/BSD Installation requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `youtube-dl <https://youtube-dl.org/>`__ must already be installed
 -  `Python 3 <https://www.python.org/downloads>`__
@@ -46,14 +67,10 @@ Optional dependencies
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ 
 -  `Ffmpeg <https://ffmpeg.org/>`__ 
 
-Downloads
----------
+Install using PyPI
+~~~~~~~~~~~~~~~~~~
 
--  `Source <http://tartube.sourceforge.io/>`__ from sourceforge.io
--  `Source <https://github.com/axcore/tarbue>`__ from github
-
-Installation
-------------
+1. Run ``pip3 install tartube``
 
 Install from source
 ~~~~~~~~~~~~~~~~~~~
@@ -61,16 +78,6 @@ Install from source
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
 3. Run ``python3 setup.py install``
-
-Install using PyPI
-~~~~~~~~~~~~~~~~~~
-
-1. Run ``pip3 install tartube``
-
-Install using MS Windows Installer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There is no installer for MS Windows yet.
 
 Run without installing
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -321,7 +328,7 @@ A: Most of the crashes are fixed now. Are you using the most recent version?
 Future plans
 ------------
 
--  Fix the endless crashes, somehow **DONE**
+-  Fix the endless crashes **DONE**
 -  Support for multiple databases (so you can store videos on two external hard
    drives at the same time)
 -  Add download scheduling

@@ -147,10 +147,14 @@ class UpdateManager(threading.Thread):
             #   Python's convenience
             while not self.stdout_queue.empty():
 
-                stdout \
-                = self.stdout_queue.get_nowait().rstrip().decode('utf-8')
-
+                stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
+
+                    if sys.platform == "win32":
+                        stdout = stdout.decode('cp1252')
+                    else:
+                        stdout = stdout.decode('utf-8')
+                
                     # "It looks like you installed youtube-dl with a package
                     #   manager, pip, setup.py or a tarball. Please use that to
                     #   update."
@@ -165,8 +169,12 @@ class UpdateManager(threading.Thread):
             # Read from the child process STDERR queue (we don't need to read
             #   it in real time), and convert into unicode for python's
             #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip().decode('utf-8')
-
+            stderr = self.stderr_queue.get_nowait().rstrip()
+            if sys.platform == "win32":
+                stderr = stderr.decode('cp1252')
+            else:
+                stderr = stderr.decode('utf-8')
+                            
             if stderr:
                 self.stderr_list.append(stderr)
 

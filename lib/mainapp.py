@@ -770,16 +770,27 @@ class TartubeApp(Gtk.Application):
         self.general_options_obj = options.OptionsManager()
 
         if os.name == 'nt':
-            self.ytdl_bin = 'youtube-dl.exe'
-            self.ytdl_path_default = self.ytdl_bin
+            self.ytdl_bin = 'youtube-dl'
+            # The default values assume the user is using the standard MSWin
+            #   installer, which uses MSYS2 (msys2.org) and includes a copy of
+            #   youtube-dl
+            self.ytdl_path_default = '../youtube-dl/bin/youtube-dl'
             self.ytdl_path = self.ytdl_path_default
             self.ytdl_update_dict = {
-                'Standard MS Windows update': [self.ytdl_bin, '-U'],
+                'Automatic installation update': [
+                    self.ytdl_path_default,
+                    '-U',
+                ],
+                'Manual installation update': ['youtube-dl', '-U'],
             }
             self.ytdl_update_list = [
-                'Standard MS Windows update',
+                'Automatic installation update',
+                'Manual installation update',
             ]
-            self.ytdl_update_current = 'Standard MS Windows update'
+            # NB downloads.VideoDownloader.get_system_cmd() checks for the
+            #   value of this string; if the value is changed, so must that
+            #   function be changed
+            self.ytdl_update_current = 'Automatic installation update'
 
         else:
             self.ytdl_bin = 'youtube-dl'
@@ -2282,7 +2293,7 @@ class TartubeApp(Gtk.Application):
                 # date_string in form YYYYMMDD
                 date_string = json_dict['upload_date']
                 dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-                video_obj.set_upload_time(dt_obj.strftime('%s'))
+                video_obj.set_upload_time(dt_obj.timestamp())
 
             if 'duration' in json_dict:
                 video_obj.set_duration(json_dict['duration'])

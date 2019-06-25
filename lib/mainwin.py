@@ -5535,14 +5535,16 @@ class ComplexCatalogueItem(object):
 
             # Work with a list of lines, displaying either the fist line, or
             #   all of them, as the user clicks the More/Less button
-            descrip = cgi.escape(self.video_obj.descrip, quote=True)
-            line_list = descrip.split('\n')
+            line_list = self.video_obj.descrip.split('\n')
 
             if not self.expand_descrip_flag:
 
-                string = utils.shorten_string(
-                    line_list[0],
-                    self.main_win_obj.long_string_max_len,
+                string = cgi.escape(
+                    utils.shorten_string(
+                        line_list[0],
+                        self.main_win_obj.long_string_max_len,
+                    ),
+                    quote=True,
                 )
 
                 if len(line_list) > 1:
@@ -5553,6 +5555,8 @@ class ComplexCatalogueItem(object):
                     self.descrip_label.set_text(string)
 
             else:
+
+                descrip = cgi.escape(self.video_obj.descrip, quote=True)
 
                 if len(line_list) > 1:
                     self.descrip_label.set_markup(

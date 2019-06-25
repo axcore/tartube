@@ -1,5 +1,24 @@
+v0.3.0 (25 Jun 2019)
+------------------------------------------------------------------------------
+
+- Tartube will now run on MS Windows
+- Fixed some more crashes
+- Fixed some issues with video descriptions containing quotes and ampersand
+    characters
+    
+v0.2.0 (23 Jun 2019)
+------------------------------------------------------------------------------
+
+- Corrected old Python2 code to work on Python3
+- Greatly expanded the README file
+- Fixed the constant crashes
+- Fixed some Gtk problems (but others remain unfixed)
+- Fixed downloads for users who haven't installed Ffmpeg, and for sites that
+    don't support Ffmpeg
+- Several other minor tweaks/fixes
+
 v0.1.0 (27 May 2019)
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 - This is the first public release of Tartube
 

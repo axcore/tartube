@@ -4180,67 +4180,63 @@ class SystemPrefWin(GenericPrefWin):
         )
         entry.set_sensitive(False)
 
-        # The other youtube-dl IVs can't be modified on MS Windows, so there's
-        #   no point displaying them
-        if os.name != 'nt':
+        label2 = self.add_label(grid,
+            'Default path to youtube-dl executable',
+            0, 2, 1, 1,
+        )
 
-            label2 = self.add_label(grid,
-                'Default path to youtube-dl executable',
-                0, 2, 1, 1,
-            )
+        entry2 = self.add_entry(grid,
+            self.app_obj.ytdl_path_default,
+            False,
+            1, 2, 1, 1,
+        )
+        entry2.set_sensitive(False)
 
-            entry2 = self.add_entry(grid,
+        label3 = self.add_label(grid,
+            'Actual path to use during download/update/refresh operations',
+            0, 3, 1, 1,
+        )
+
+        combo_list = [
+            [
+                'Use default path (' + self.app_obj.ytdl_path_default \
+                + ')',
                 self.app_obj.ytdl_path_default,
-                False,
-                1, 2, 1, 1,
-            )
-            entry2.set_sensitive(False)
+            ],
+            [
+                'Use local path (' + self.app_obj.ytdl_bin + ')',
+                self.app_obj.ytdl_bin,
+            ],
+        ]
 
-            label3 = self.add_label(grid,
-                'Actual path to use during download/update/refresh operations',
-                0, 3, 1, 1,
-            )
+        store = Gtk.ListStore(str, str)
+        for mini_list in combo_list:
+            store.append( [ mini_list[0], mini_list[1] ] )
 
-            combo_list = [
-                [
-                    'Use default path (' + self.app_obj.ytdl_path_default \
-                    + ')',
-                    self.app_obj.ytdl_path_default,
-                ],
-                [
-                    'Use local path (' + self.app_obj.ytdl_bin + ')',
-                    self.app_obj.ytdl_bin,
-                ],
-            ]
+        # !!! TODO BUG: Work out how to replace this with
+        #   .new_with_model(), so mischievous users can't type in the entry
+        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        grid.attach(combo, 1, 3, 1, 1)
+        combo.set_entry_text_column(0)
 
-            store = Gtk.ListStore(str, str)
-            for mini_list in combo_list:
-                store.append( [ mini_list[0], mini_list[1] ] )
+        if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
+            combo.set_active(0)
+        else:
+            combo.set_active(1)
 
-            # !!! TODO BUG: Work out how to replace this with
-            #   .new_with_model(), so mischievous users can't type in the entry
-            combo = Gtk.ComboBox.new_with_model_and_entry(store)
-            grid.attach(combo, 1, 3, 1, 1)
-            combo.set_entry_text_column(0)
+        combo.connect('changed', self.on_ytdl_path_combo_changed)
 
-            if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
-                combo.set_active(0)
-            else:
-                combo.set_active(1)
+        label4 = self.add_label(grid,
+            'Shell command for update operations',
+            0, 4, 1, 1,
+        )
 
-            combo.connect('changed', self.on_ytdl_path_combo_changed)
-
-            label4 = self.add_label(grid,
-                'Shell command for update operations',
-                0, 4, 1, 1,
-            )
-
-            combo2 = self.add_combo(grid,
-                self.app_obj.ytdl_update_list,
-                self.app_obj.ytdl_update_current,
-                1, 4, 1, 1,
-            )
-            combo2.connect('changed', self.on_update_combo_changed)
+        combo2 = self.add_combo(grid,
+            self.app_obj.ytdl_update_list,
+            self.app_obj.ytdl_update_current,
+            1, 4, 1, 1,
+        )
+        combo2.connect('changed', self.on_update_combo_changed)
 
         # Debugging options
         self.add_label(grid,
