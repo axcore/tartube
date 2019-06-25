@@ -13,6 +13,13 @@ authors have not been able to confirm this.
 expecting. If you find this frustrating, 
 `report the problem to the authors <https://github.com/axcore/tartube/issues>`__.
 
+Downloads
+---------
+
+-  `MS Windows installer <https://sourceforge.net/projects/tartube/files/v0.3.0/install-tartube-0.3.0.exe/download>`__ from sourceforge.io
+-  `Source code <https://sourceforge.net/projects/tartube/files/v0.3.0/tartube_v0.3.0.tar.gz/download>`__ from sourceforge.io
+-  `Source code and support <https://github.com/axcore/tarbue>`__ from github
+
 Why should I use Tartube?
 -------------------------
 
@@ -34,12 +41,6 @@ Screenshots
 
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
-
-Downloads
----------
-
--  `Source and MS Windows installer <http://tartube.sourceforge.io/>`__ from sourceforge.io
--  `Source <https://github.com/axcore/tarbue>`__ from github
 
 Installation
 ------------
