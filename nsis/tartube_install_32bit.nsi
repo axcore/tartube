@@ -1,4 +1,4 @@
-# Tartube v0.3.003 installer script for MS Windows
+# Tartube v0.3.005 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -176,7 +176,7 @@
 #
 #   - In other words, its new location is
 #
-#       C:\msys32\home\YOURNAME\dist\msys32\home\YOURNAME\tartube\tartube.bat
+#       C:\msys32\home\YOURNAME\dist\msys32\home\YOURNAME\tartube\tartube_32bit.bat
 #
 #   - Now copy all of the remaining files in this folder
 #
@@ -206,7 +206,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.3.003-32bit.exe"
+    OutFile "install-tartube-0.3.005-32bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -252,7 +252,7 @@
 
     !insertmacro MUI_PAGE_INSTFILES
 
-    !define MUI_FINISHPAGE_RUN "$INSTDIR\msys32\home\user\tartube\tartube.bat"
+    !define MUI_FINISHPAGE_RUN "$INSTDIR\msys32\home\user\tartube\tartube_32bit.bat"
     !define MUI_FINISHPAGE_RUN_TEXT "Run Tartube"
     !define MUI_FINISHPAGE_RUN_NOTCHECKED
     !define MUI_FINISHPAGE_LINK "Visit the Tartube website for the latest news \
@@ -283,13 +283,13 @@ Section "Tartube" SecClient
 
     # Start Menu
     CreateShortCut "$SMPROGRAMS\Tartube.lnk" \
-        "$INSTDIR\msys32\home\user\tartube\tartube.bat" \
+        "$INSTDIR\msys32\home\user\tartube\tartube_32bit.bat" \
         "" \
         "$INSTDIR\tartube_icon.ico"
 
     # Desktop icon
     CreateShortcut "$DESKTOP\Tartube.lnk" \
-        "$INSTDIR\msys32\home\user\tartube\tartube.bat" \
+        "$INSTDIR\msys32\home\user\tartube\tartube_32bit.bat" \
         "" \
         "$INSTDIR\tartube_icon.ico"
 
