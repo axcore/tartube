@@ -1668,7 +1668,7 @@ class OptionsEditWin(GenericEditWin):
             entry2.set_text(self.media_data_obj.name)
 
         self.add_label(grid,
-            'Extra youtub-dl command line options (e.g. --help; do not use' \
+            'Extra youtube-dl command line options (e.g. --help; do not use' \
             + ' -o or --output)',
             0, 3, 2, 1,
         )

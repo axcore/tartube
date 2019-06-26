@@ -35,7 +35,7 @@ import setuptools
 # Setup
 setuptools.setup(
     name='tartube',
-    version='0.3.0',
+    version='0.3.003',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

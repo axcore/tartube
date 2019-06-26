@@ -1,4 +1,4 @@
-# Tartube v0.3.0 installer script for MS Windows
+# Tartube v0.3.003 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -16,9 +16,10 @@
 #
 #
 # Build instructions:
-#   These instructions describe how to create an installer for Tartube on an
-#       MS Windows machine, Windows Vista or higher. The instructions are based
-#       on the method described in
+#   These instructions describe how to create an installer for Tartube on a
+#       64-bit MS Windows machine, Windows Vista or higher. For 32-bit machines
+#       see the tartube_install_32bit.nsi file
+#   The instructions are based on the method described in
 #
 #       https://bitbucket.org/sirdeniel/deploy-python-gtk3-apps-for-windows/
 #
@@ -31,8 +32,8 @@
 #
 #       http://nsis.sourceforge.io/Download/
 #
-#   - Download the 64-bit version of MSYS2 (even on a 32-bit computer). The
-#       downloadable file should look something like 'msys2-x86-64-nnn.exe'
+#   - Download the 64-bit version of MSYS2. The downloadable file should look
+#       something like 'msys2-x86-64-nnn.exe'
 #
 #       http://www.msys2.org/
 #   
@@ -158,8 +159,8 @@
 #   - This creates a folder called 'dist'
 #   - You can now close the mingw64 terminal window
 #
-#   - DELETE this entire folder, and replace it with the original source code
-#       (as described above)
+#   - DELETE the following folder in its entirety, and replace it with the
+#       original source code (as described above)
 #
 #       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube
 #
@@ -171,7 +172,7 @@
 #
 #   - Now move the following file into its parent folder:
 #
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube\nsis\tartube.bat
+#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube\nsis\tartube_64bit.bat
 #
 #   - In other words, its new location is
 #
@@ -187,7 +188,7 @@
 #
 #   - The installer script (this file) is now at the following location
 #
-#       C:\msys64\home\YOURNAME\dist\tartube_install.nsi
+#       C:\msys64\home\YOURNAME\dist\tartube_install_64bit.nsi
 #
 #   - Open the file in an editor, change the version number just below (in the
 #       line starting 'OutFile'), and save it
@@ -205,7 +206,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.3.0.exe"
+    OutFile "install-tartube-0.3.003-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"

@@ -16,9 +16,12 @@ expecting. If you find this frustrating,
 Downloads
 ---------
 
--  `MS Windows installer <https://sourceforge.net/projects/tartube/files/v0.3.0/install-tartube-0.3.0.exe/download>`__ from sourceforge.io
--  `Source code <https://sourceforge.net/projects/tartube/files/v0.3.0/tartube_v0.3.0.tar.gz/download>`__ from sourceforge.io
--  `Source code and support <https://github.com/axcore/tarbue>`__ from github
+Latest version: **v0.3.003 (26 June 2019)**
+
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.3.003/install-tartube-0.3.003-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.3.003/install-tartube-0.3.003-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v0.3.003/tartube_v0.3.003.tar.gz/download>`__ from Sourceforge
+-  `Source code and support <https://github.com/axcore/tartube>`__ from GitHub
 
 Why should I use Tartube?
 -------------------------
