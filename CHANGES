@@ -1,3 +1,47 @@
+v0.4.0 (29 Jun 2019)
+------------------------------------------------------------------------------
+
+- Drastic improvements to overall performance. Download operations are now much
+    smoother. You should notice a much lighter burden on your machine's CPU
+- The graphics libraries struggled to draw lists containing hundreds (or
+    thousands!) of videos, so the Video Catalogue has been split into pages. It
+    typically takes less then a second to show the 'All Videos' folder, if it
+    contains hundreds of videos, rather than several minutes
+- If you just want to find new videos, you can now tell Tartube to stop
+    checking/downloading channels/playlists as soon as notifications of videos
+    you've already checked/downloaded start arriving. This works well on
+    YouTube, which sends the newest videos first, but might not work well on
+    all websites. The new functionality is turned off by default. Click
+    'Edit > System preferences > Performance > Time-saving preferences' to turn
+    it on
+- The installer for 32-bit MS Windows failed under all circumstances. Applied a
+    fix
+- On MS Windows, the uninstaller was invisible. It can now be executed from the
+    Start Menu
+- On MS Windows, fixed a crash whenever the user tried to changed the location
+    of Tartube's data directory (#6)
+- Fixed some problems with the 'Add videos' dialogue window, which tried to add
+    all sorts of invalid URLs (such as lines containing only empty space). The
+    other 'Add' dialogue windows were also fixed
+- A limit to the length of a channel/playlist/folder name now applies
+- Leading/trailing whitespace is now removed from URLs and channel/playlist/
+    folder names
+- The 'Add videos' dialogue window now checks for duplicate URLs, and when
+    found, doesn't add them to the database
+- Fixed various problems caused by deleting a video/channel/playlist/folder
+    (such as the numbers visible in the Video Index). If you've been using an
+    earlier version of Tartube, any such problems with the database will be
+    automatically repaired for you (#8)
+- Videos which haven't actually been downloaded can now be deleted from the
+    database by right-clicking them
+- Added new options for making backups of the Tartube database file, in case it
+    becomes corrupted. See the settings in
+    'Edit > System preferences... > Backups'
+- The 'Switch' button now switches between four 'skins' (instead of the
+    previous two). Two of them show the name of a video's parent channel/
+    playlist/folder; the other two show the video's description
+- Fixed incorrect formatting in the DASH and 3D file formats (#3)
+
 v0.3.0 (25 Jun 2019)
 ------------------------------------------------------------------------------
 
@@ -5,7 +49,7 @@ v0.3.0 (25 Jun 2019)
 - Fixed some more crashes
 - Fixed some issues with video descriptions containing quotes and ampersand
     characters
-    
+
 v0.2.0 (23 Jun 2019)
 ------------------------------------------------------------------------------
 

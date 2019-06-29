@@ -104,7 +104,7 @@ class MainWin(Gtk.ApplicationWindow):
         # (from self.setup_menubar)
         self.menubar = None                     # Gtk.MenuBar
         # (from self.setup_toolbar)
-        self.toolbar = None                     # Gtk.Toolbar
+        self.main_toolbar = None                # Gtk.Toolbar
         # (from self.setup_notebook)
         self.notebook = None                    # Gtk.Notebook
         self.videos_tab = None                  # Gtk.Box
@@ -124,6 +124,15 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_scrolled = None    # Gtk.ScrolledWindow
         self.video_catalogue_frame = None       # Gtk.Frame
         self.video_catalogue_listbox = None     # Gtk.ListBox
+        self.catalogue_toolbar = None           # Gtk.Toolbar
+        self.catalogue_page_entry = None        # Gtk.Entry
+        self.catalogue_last_entry = None        # Gtk.Entry
+        self.catalogue_size_entry = None        # Gtk.Entry
+        self.catalogue_size_button = None       # Gtk.ToolButton
+        self.catalogue_first_button = None      # Gtk.ToolButton
+        self.catalogue_back_button = None       # Gtk.ToolButton
+        self.catalogue_forwards_button = None   # Gtk.ToolButton
+        self.catalogue_last_button = None       # Gtk.ToolButton
         # (from self.setup_progress_tab)
         self.progress_paned = None              # Gtk.VPaned
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
@@ -198,11 +207,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Standard limits for the length of strings displayed in various
         #   widgets
-        self.long_string_max_len = 60
+        self.long_string_max_len = 64
         self.medium_string_max_len = 45
         self.string_max_len = 32
         self.short_string_max_len = 24
         self.tiny_string_max_len = 16
+        # Use a separate IV for video descriptions (so we can tweak it
+        #   specifically)
+        # The value is low, because descriptions in ALL CAPS are too big for
+        #   the Video Catalogue, otherwise
+        self.descrip_line_max_len = 50
 
         # List of configuration windows (anything inheriting from
         #   config.GenericConfigWin) that are currently open. A download/
@@ -234,7 +248,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   previous contents)
         # Dictionary of mainwin.SimpleCatalogueItem or
         #   mainwin.ComplexCatalogueItem objects (depending on the current
-        #   value of self.complex_catalogue_flag)
+        #   value of self.catalogue_mode)
         # There is one catalogue item object for each row that's currently
         #   visible in the Video Catalogue
         # Dictionary in the form
@@ -247,6 +261,15 @@ class MainWin(Gtk.ApplicationWindow):
         #   mainwin.ComplexCatalogueItem objects (in the order they're
         #   displayed)
         self.video_catalogue_list = []
+
+        # The video catalogue splits its video list into pages (as Gtk
+        #   struggles with a list of hundreds, or thousands, of videos)
+        # The number of videos per page is specified by
+        #   mainapp.TartubeApp.catalogue_page_size
+        # The current page number (minimum 1, maximum 9999)
+        self.catalogue_toolbar_current_page = 1
+        # The number of pages currently in use (minimum 1, maximum 9999)
+        self.catalogue_toolbar_last_page = 1
 
         # Progress Tab IVs
         # The Progress List uses a Gtk.TreeView display download jobs, whether
@@ -413,7 +436,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Create main window widgets
         self.setup_grid()
         self.setup_menubar()
-        self.setup_toolbar()
+        self.setup_main_toolbar()
         self.setup_notebook()
         self.setup_videos_tab()
         self.setup_progress_tab()
@@ -596,7 +619,7 @@ class MainWin(Gtk.ApplicationWindow):
         about_menu_item.set_action_name('app.about_menu')
 
 
-    def setup_toolbar(self):
+    def setup_main_toolbar(self):
 
         """Called by self.setup_win().
 
@@ -604,101 +627,87 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 607 setup_toolbar')
+            print('mw 607 setup_main_toolbar')
 
-        self.toolbar = Gtk.Toolbar()
-        self.grid.attach(self.toolbar, 0, 1, 1, 1)
-
-        count = 0;
+        self.main_toolbar = Gtk.Toolbar()
+        self.grid.attach(self.main_toolbar, 0, 1, 1, 1)
 
         # Toolbar items
         add_video_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
-        self.toolbar.insert(add_video_button, count)
+        self.main_toolbar.insert(add_video_button, -1)
         add_video_button.set_label('Videos')
         add_video_button.set_is_important(True)
         add_video_button.set_action_name('app.add_video_toolbutton')
-        count += 1
 
         add_channel_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
-        self.toolbar.insert(add_channel_button, count)
+        self.main_toolbar.insert(add_channel_button, -1)
         add_channel_button.set_label('Channel')
         add_channel_button.set_is_important(True)
         add_channel_button.set_action_name('app.add_channel_toolbutton')
-        count += 1
 
         add_playlist_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
-        self.toolbar.insert(add_playlist_button, count)
+        self.main_toolbar.insert(add_playlist_button, -1)
         add_playlist_button.set_label('Playlist')
         add_playlist_button.set_is_important(True)
         add_playlist_button.set_action_name('app.add_playlist_toolbutton')
-        count += 1
 
         add_folder_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
-        self.toolbar.insert(add_folder_button, count)
+        self.main_toolbar.insert(add_folder_button, -1)
         add_folder_button.set_label('Folder')
         add_folder_button.set_is_important(True)
         add_folder_button.set_action_name('app.add_folder_toolbutton')
-        count += 1
 
-#        self.toolbar.insert(Gtk.SeparatorToolItem(), count)
-#        count += 1
+#        self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         self.check_all_toolbutton = Gtk.ToolButton.new_from_stock(
             Gtk.STOCK_REFRESH,
         )
-        self.toolbar.insert(self.check_all_toolbutton, count)
+        self.main_toolbar.insert(self.check_all_toolbutton, -1)
         self.check_all_toolbutton.set_label('Check')
         self.check_all_toolbutton.set_is_important(True)
         self.check_all_toolbutton.set_action_name('app.check_all_toolbutton')
-        count += 1
 
         self.download_all_toolbutton = Gtk.ToolButton.new_from_stock(
             Gtk.STOCK_EXECUTE,
         )
-        self.toolbar.insert(self.download_all_toolbutton, count)
+        self.main_toolbar.insert(self.download_all_toolbutton, -1)
         self.download_all_toolbutton.set_label('Download')
         self.download_all_toolbutton.set_is_important(True)
         self.download_all_toolbutton.set_action_name(
             'app.download_all_toolbutton',
         )
-        count += 1
 
         self.stop_download_toolbutton = Gtk.ToolButton.new_from_stock(
             Gtk.STOCK_STOP,
         )
-        self.toolbar.insert(self.stop_download_toolbutton, count)
+        self.main_toolbar.insert(self.stop_download_toolbutton, -1)
         self.stop_download_toolbutton.set_label('Stop')
         self.stop_download_toolbutton.set_is_important(True)
         self.stop_download_toolbutton.set_sensitive(False)
         self.stop_download_toolbutton.set_action_name(
             'app.stop_download_toolbutton',
         )
-        count += 1
 
-#        self.toolbar.insert(Gtk.SeparatorToolItem(), count)
-#        count += 1
+#        self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         switch_view_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CONVERT)
-        self.toolbar.insert(switch_view_button, count)
+        self.main_toolbar.insert(switch_view_button, -1)
         switch_view_button.set_label('Switch')
         switch_view_button.set_is_important(True)
         switch_view_button.set_action_name('app.switch_view_toolbutton')
-        count += 1
 
         if self.app_obj.debug_test_media_toolbar_flag:
             self.test_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CDROM)
-            self.toolbar.insert(self.test_button, count)
+            self.main_toolbar.insert(self.test_button, -1)
             self.test_button.set_label('Test')
             self.test_button.set_is_important(True)
             self.test_button.set_action_name('app.test_toolbutton')
-            count += 1
 
         quit_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CLOSE)
-        self.toolbar.insert(quit_button, count)
+        self.main_toolbar.insert(quit_button, -1)
         quit_button.set_label('Quit')
         quit_button.set_is_important(True)
         quit_button.set_action_name('app.quit_toolbutton')
-        count += 1
 
 
     def setup_notebook(self):
@@ -794,8 +803,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.download_button.set_action_name('app.download_all_button')
 
         # Right-hand side
+        vbox2 = Gtk.VBox()
+        self.videos_paned.add2(vbox2)
+
+        # Video catalogue
         self.video_catalogue_scrolled = Gtk.ScrolledWindow()
-        self.videos_paned.add2(self.video_catalogue_scrolled)
+        vbox2.pack_start(self.video_catalogue_scrolled, True, True, 0)
         self.video_catalogue_scrolled.set_policy(
             Gtk.PolicyType.AUTOMATIC,
             Gtk.PolicyType.AUTOMATIC,
@@ -804,6 +817,97 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_frame = Gtk.Frame()
         self.video_catalogue_scrolled.add_with_viewport(
             self.video_catalogue_frame,
+        )
+
+        # Video catalogue toolbar
+        self.catalogue_toolbar = Gtk.Toolbar()
+        vbox2.pack_start(self.catalogue_toolbar, False, False, 0)
+
+        toolitem = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem, -1)
+        label = Gtk.Label('Page  ')
+        toolitem.add(label)
+
+        toolitem2 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem2, -1)
+        self.catalogue_page_entry = Gtk.Entry()
+        toolitem2.add(self.catalogue_page_entry)
+        self.catalogue_page_entry.set_text(
+            str(self.catalogue_toolbar_current_page),
+        )
+        self.catalogue_page_entry.set_width_chars(4)
+        self.catalogue_page_entry.set_editable(False)
+
+        toolitem3 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem3, -1)
+        label2 = Gtk.Label('  of  ')
+        toolitem3.add(label2)
+
+        toolitem4 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem4, -1)
+        self.catalogue_last_entry = Gtk.Entry()
+        toolitem4.add(self.catalogue_last_entry)
+        self.catalogue_last_entry.set_text(
+            str(self.catalogue_toolbar_last_page),
+        )
+        self.catalogue_last_entry.set_width_chars(4)
+        self.catalogue_last_entry.set_editable(False)
+
+        self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+
+        toolitem5 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem5, -1)
+        label3 = Gtk.Label('  Page size  ')
+        toolitem5.add(label3)
+
+        toolitem6 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem6, -1)
+        self.catalogue_size_entry = Gtk.Entry()
+        toolitem6.add(self.catalogue_size_entry)
+        self.catalogue_size_entry.set_text(
+            str(self.app_obj.catalogue_page_size),
+        )
+        self.catalogue_size_entry.set_width_chars(4)
+
+        self.catalogue_size_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_EDIT)
+        self.catalogue_toolbar.insert(self.catalogue_size_button, -1)
+        self.catalogue_size_button.set_action_name(
+            'app.catalogue_size_toolbutton',
+        )
+
+        self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+
+        self.catalogue_first_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_FIRST)
+        self.catalogue_toolbar.insert(self.catalogue_first_button, -1)
+        self.catalogue_first_button.set_sensitive(False)
+        self.catalogue_first_button.set_action_name(
+            'app.first_page_toolbutton',
+        )
+
+        self.catalogue_back_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_BACK)
+        self.catalogue_toolbar.insert(self.catalogue_back_button, -1)
+        self.catalogue_back_button.set_sensitive(False)
+        self.catalogue_back_button.set_action_name(
+            'app.previous_page_toolbutton',
+        )
+
+        self.catalogue_forwards_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_FORWARD)
+        self.catalogue_toolbar.insert(self.catalogue_forwards_button, -1)
+        self.catalogue_forwards_button.set_sensitive(False)
+        self.catalogue_forwards_button.set_action_name(
+            'app.next_page_toolbutton',
+        )
+
+        self.catalogue_last_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_LAST)
+        self.catalogue_toolbar.insert(self.catalogue_last_button, -1)
+        self.catalogue_last_button.set_sensitive(False)
+        self.catalogue_last_button.set_action_name(
+            'app.last_page_toolbutton',
         )
 
         # Video catalogue
@@ -2136,8 +2240,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            print('mw 2140 video_index_render_text')
+#        if DEBUG_FUNC_FLAG:
+#            print('mw 2140 video_index_render_text')
 
         dbid = model.get_value(tree_iter, 0)
         media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -2471,33 +2575,48 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_frame.show_all()
 
 
-    def video_catalogue_redraw_all(self, name):
+    def video_catalogue_redraw_all(self, name, page_num=1):
 
         """Called from callbacks in self.on_video_index_selection_changed(),
         mainapp.TartubeApp.on_button_switch_view(),
         .on_menu_add_video() and on_menu_test().
 
+        Also called from callbacks in
+        mainapp.TartubeApp.on_button_catalogue_size(),
+        .on_button_first_page(), .on_button_last_page(),
+        .on_button_next_page() and .on_button_previous_page().
+
         When the user clicks on a media data object in the Video Index (a
         channel, playlist or folder), this function is called to replace the
-        contents of the Video Catalogue with all the video objects stored as
-        children in that channel, playlist or folder.
+        contents of the Video Catalogue with some or all of the video objects
+        stored as children in that channel, playlist or folder.
 
-        Depending on the value of self.complex_catalogue_flag, the Video
-        Catalogue consists of a list of mainwin.SimpleCatalogueItem or
+        Depending on the value of self.catalogue_mode, the Video Catalogue
+        consists of a list of mainwin.SimpleCatalogueItem or
         mainwin.ComplexCatalogueItem objects, one for each row in the
         Gtk.ListBox (corresponding to a single video).
+
+        The video catalogue splits its video list into pages (as Gtk struggles
+        with a list of hundreds, or thousands, of videos). Only videos on the
+        specified page (or on the current page, if no page is specified) are
+        drawn. If mainapp.TartubeApp.catalogue_page_size is set to zero, all
+        videos are drawn on a single page.
 
         This function clears the previous contents of the Gtk.ListBox and
         resets IVs.
 
         Then, it adds new rows to the Gtk.ListBox and creates a new
         mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem object for
-        each video.
+        each video on the page.
 
         Args:
 
             name (string): The selected media data object's name; one of the
                 keys in self.media_name_dict
+
+            page_num (int): The number of the page to be drawn (a value in the
+                range 1 to self.catalogue_toolbar_last_page). If None, the
+                current page is drawn
 
         """
 
@@ -2521,14 +2640,37 @@ class MainWin(Gtk.ApplicationWindow):
         #   IVs
         self.video_catalogue_reset()
 
-        # The parent media data object has any number of child media data
-        #   objects, but we only respond to those that are media.Video objects
-        for child_obj in parent_obj.child_list:
+        # Temporarily reset widgets in the Video Catalogue toolbar (in case
+        #   something goes wrong, or in case drawing the page takes a long
+        #   time)
+        self.video_catalogue_toolbar_reset()
 
+        # The parent media data object has any number of child media data
+        #   objects, but this function is only interested in those that are
+        #   media.Video objects
+        video_count = 0
+        page_size = self.app_obj.catalogue_page_size
+
+        for child_obj in parent_obj.child_list:
             if isinstance(child_obj, media.Video):
 
-                # Create a new catalogue item object for each video
-                if not self.app_obj.complex_catalogue_flag:
+                # (We need the number of child videos when we update widgets in
+                #   the toolbar)
+                video_count += 1
+
+                # Only draw videos on this page. If the page size is zero, all
+                #   videos are drawn on a single page
+                if page_size \
+                and (
+                    video_count <= ((page_num - 1) * page_size) \
+                    or video_count > (page_num * page_size)
+                ):
+                    # Don't draw the video on this page
+                    continue
+
+                # Create a new catalogue item object for the video
+                if self.app_obj.catalogue_mode == 'simple_hide_parent' \
+                or self.app_obj.catalogue_mode == 'simple_show_parent':
                     catalogue_item_obj = SimpleCatalogueItem(
                         self,
                         child_obj,
@@ -2556,6 +2698,10 @@ class MainWin(Gtk.ApplicationWindow):
                 # ...and give them their initial appearance
                 catalogue_item_obj.update_widgets()
 
+        # Update widgets in the toolbar, now that we know the number of child
+        #   videos
+        self.video_catalogue_toolbar_update(page_num, video_count)
+
         # Procedure complete
         self.video_catalogue_listbox.show_all()
 
@@ -2574,9 +2720,10 @@ class MainWin(Gtk.ApplicationWindow):
         mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem (which
         updates the widgets in the Gtk.ListBox).
 
-        If the video is now yet visible in the Video Catalogue, creates a new
-        mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem object and
-        adds a row to the Gtk.ListBox.
+        If the video is now yet visible in the Video Catalogue, but should be
+        drawn on the current page, creates a new mainwin.SimpleCatalogueItem or
+        mainwin.ComplexCatalogueItem object and adds a row to the Gtk.ListBox,
+        removing an existing catalogue item to make room, if necessary.
 
         Args:
 
@@ -2612,35 +2759,85 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
 
-            # Create a new catalogue item object
-            if not self.app_obj.complex_catalogue_flag:
+            # Find the video's position in the parent container's list of
+            #   child objects, ignoring any child objects that aren't videos
+            # At the same time, count the number of child video object so that
+            #   we can update the toolbar widgets
+            video_count = 0
+            page_num = 1
+            page_size = self.app_obj.catalogue_page_size
 
-                catalogue_item_obj = SimpleCatalogueItem(
-                    self,
-                    video_obj,
-                )
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            container_obj = self.app_obj.media_reg_dict[dbid]
 
-            else:
-                catalogue_item_obj = ComplexCatalogueItem(
-                    self,
-                    video_obj,
-                )
+            for child_obj in container_obj.child_list:
+                if isinstance(child_obj, media.Video):
+                    video_count += 1
+                    # If the page size is 0, then all videos are drawn on one
+                    #   page
+                    if child_obj == video_obj and page_size:
+                        page_num = int((video_count - 1) / page_size) + 1
 
-            self.video_catalogue_list.append(catalogue_item_obj.dbid)
-            self.video_catalogue_dict[catalogue_item_obj.dbid] \
-            = catalogue_item_obj
+            # If the video should be drawn on the current page...
+            if page_num == self.catalogue_toolbar_current_page:
 
-            # Add a row to the Gtk.ListBox
+                # If the current page isn't the last page, and if the current
+                #   page is already full, destroy the last catalogue item on
+                #   the page to make room for a new one
+                # If the page size is 0, then all videos are drawn on one page
+                if page_size and len(self.video_catalogue_dict) >= page_size:
 
-            # Instead of using Gtk.ListBoxRow directly, use a wrapper class
-            #   so we can quickly retrieve the video displayed on each row
-            wrapper_obj = CatalogueRow(video_obj)
-            self.video_catalogue_listbox.add(wrapper_obj)
+                    last_obj = None
+                    for other_obj in self.video_catalogue_dict.values():
+                        if last_obj is None or other_obj.dbid > last_obj.dbid:
+                            last_obj = other_obj
 
-            # Populate the row with widgets...
-            catalogue_item_obj.draw_widgets(wrapper_obj)
-            # ...and give them their initial appearance
-            catalogue_item_obj.update_widgets()
+                    if last_obj:
+
+                        self.video_catalogue_listbox.remove(
+                            last_obj.catalogue_row,
+                        )
+
+                        index = self.video_catalogue_list.index(last_obj.dbid)
+                        del self.video_catalogue_list[index]
+                        del self.video_catalogue_dict[last_obj.dbid]
+
+                # Create a new catalogue item object
+                if self.app_obj.catalogue_mode == 'simple_hide_parent' \
+                or self.app_obj.catalogue_mode == 'simple_show_parent':
+
+                    catalogue_item_obj = SimpleCatalogueItem(
+                        self,
+                        video_obj,
+                    )
+
+                else:
+                    catalogue_item_obj = ComplexCatalogueItem(
+                        self,
+                        video_obj,
+                    )
+
+                self.video_catalogue_list.append(catalogue_item_obj.dbid)
+                self.video_catalogue_dict[catalogue_item_obj.dbid] \
+                = catalogue_item_obj
+
+                # Add a row to the Gtk.ListBox
+
+                # Instead of using Gtk.ListBoxRow directly, use a wrapper class
+                #   so we can quickly retrieve the video displayed on each row
+                wrapper_obj = CatalogueRow(video_obj)
+                self.video_catalogue_listbox.add(wrapper_obj)
+
+                # Populate the row with widgets...
+                catalogue_item_obj.draw_widgets(wrapper_obj)
+                # ...and give them their initial appearance
+                catalogue_item_obj.update_widgets()
+
+            # Update widgets in the toolbar
+            self.video_catalogue_toolbar_update(
+                self.catalogue_toolbar_current_page,
+                video_count,
+            )
 
         # Force the Gtk.ListBox to sort its rows, so that videos are displayed
         #   in the correct order
@@ -2709,6 +2906,60 @@ class MainWin(Gtk.ApplicationWindow):
 
             del self.video_catalogue_list[index]
             del self.video_catalogue_dict[video_obj.dbid]
+
+            # If the current page is not the last one, we can create a new
+            #   catalogue item to replace the removed one
+            move_obj = None
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            container_obj = self.app_obj.media_reg_dict[dbid]
+
+            if self.video_catalogue_dict \
+            and self.catalogue_toolbar_current_page \
+            < self.catalogue_toolbar_last_page:
+
+                # Find the last catalogue item on this page
+                last_obj = None
+                for other_obj in self.video_catalogue_dict.values():
+                    if not last_obj or other_obj.dbid > last_obj.dbid:
+                        last_obj = other_obj
+
+                # Find the video object that would be drawn after that, if the
+                #   videos were all drawn on a single page
+                # At the same time, count the number of remaining child video
+                #   objects so we can update the toolbar
+                video_count = 0
+                next_flag = False
+
+                for child_obj in container_obj.child_list:
+                    if isinstance(child_obj, media.Video):
+                        video_count += 1
+                        if child_obj.dbid == last_obj.dbid:
+                            # (Use the next video after this one)
+                            next_flag = True
+
+                        elif next_flag == True:
+                            # (Use this video)
+                            move_obj = child_obj
+                            next_flag = False
+
+                # Create the new catalogue item
+                if move_obj:
+                    self.video_catalogue_update_row(move_obj)
+
+            else:
+
+                # We're already on the last (or only) page, so no need to
+                #   replace anything. Just count the number of remanining child
+                #   video objects
+                for child_obj in container_obj.child_list:
+                    if isinstance(child_obj, media.Video):
+                        video_count += 1
+
+            # Update widgets in the Video Catalogue toolbar
+            self.video_catalogue_toolbar_update(
+                self.catalogue_toolbar_current_page,
+                video_count,
+            )
 
             # Procedure complete
             self.video_catalogue_listbox.show_all()
@@ -2955,13 +3206,86 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_catalogue_delete_video,
             video_obj,
         )
-        if not video_obj.dl_flag:
-            delete_menu_item.set_sensitive(False)
         popup_menu.append(delete_menu_item)
 
         # Create the popup menu
         popup_menu.show_all()
         popup_menu.popup(None, None, None, None, event.button, event.time)
+
+
+    def video_catalogue_toolbar_reset(self):
+
+        """Called by self.video_catalogue_redraw_all().
+
+        Just before completely redrawing the Video Catalogue, temporarily reset
+        widgets in the Video Catalogue toolbar (in case something goes wrong,
+        or in case drawing the page takes a long time).
+        """
+
+        self.catalogue_toolbar_current_page = 1
+        self.catalogue_toolbar_last_page = 1
+
+        self.catalogue_page_entry.set_text(
+            str(self.catalogue_toolbar_current_page),
+        )
+        self.catalogue_last_entry.set_text(
+            str(self.catalogue_toolbar_last_page),
+        )
+
+        self.catalogue_first_button.set_sensitive(False)
+        self.catalogue_back_button.set_sensitive(False)
+        self.catalogue_forwards_button.set_sensitive(False)
+        self.catalogue_last_button.set_sensitive(False)
+
+
+    def video_catalogue_toolbar_update(self, page_num, video_count):
+
+        """Called by self.video_catalogue_redraw_all(),
+        self.video_catalogue_update_row() and
+        self.video_catalogue_delete_row().
+
+        After the Video Catalogue is redrawn or updated, update widgets in the
+        Video Catalogue toolbar.
+
+        Args:
+
+            page_num (int): The page number to draw (a value in the range 1 to
+                self.catalogue_toolbar_last_page)
+
+            video_count (int): The number of videos that are children of the
+                selected channel, playlist or folder (may be 0)
+
+         """
+
+        self.catalogue_toolbar_current_page = page_num
+
+        # If the page size is 0, then all videos are drawn on one page
+        if not self.app_obj.catalogue_page_size:
+            self.catalogue_toolbar_last_page = page_num
+        else:
+            self.catalogue_toolbar_last_page \
+            = int((video_count - 1) / self.app_obj.catalogue_page_size) + 1
+
+        self.catalogue_page_entry.set_text(
+            str(self.catalogue_toolbar_current_page),
+        )
+        self.catalogue_last_entry.set_text(
+            str(self.catalogue_toolbar_last_page),
+        )
+
+        if page_num == 1:
+            self.catalogue_first_button.set_sensitive(False)
+            self.catalogue_back_button.set_sensitive(False)
+        else:
+            self.catalogue_first_button.set_sensitive(True)
+            self.catalogue_back_button.set_sensitive(True)
+
+        if page_num == self.catalogue_toolbar_last_page:
+            self.catalogue_forwards_button.set_sensitive(False)
+            self.catalogue_last_button.set_sensitive(False)
+        else:
+            self.catalogue_forwards_button.set_sensitive(True)
+            self.catalogue_last_button.set_sensitive(True)
 
 
     # (Progress List)
@@ -4971,6 +5295,7 @@ class SimpleCatalogueItem(object):
         self.catalogue_row = None           # mainwin.CatalogueRow
         self.status_image = None            # Gtk.Image
         self.name_label = None              # Gtk.Label
+        self.parent_label = None            # Gtk.Label
         self.stats_label = None             # Gtk.Label
 
 
@@ -5016,7 +5341,8 @@ class SimpleCatalogueItem(object):
             spacing=0,
         )
         event_box.add(hbox)
-        hbox.set_border_width(self.spacing_size)
+#        hbox.set_border_width(self.spacing_size)
+        hbox.set_border_width(0)
 
         self.status_image = Gtk.Image()
         hbox.pack_start(self.status_image, False, False, self.spacing_size)
@@ -5030,6 +5356,11 @@ class SimpleCatalogueItem(object):
         # Video name
         self.name_label = Gtk.Label('', xalign = 0)
         vbox.pack_start(self.name_label, True, True, 0)
+
+        # Parent channel/playlist/folder name (if allowed)
+        if self.main_win_obj.app_obj.catalogue_mode == 'simple_show_parent':
+            self.parent_label = Gtk.Label('', xalign = 0)
+            vbox.pack_start(self.parent_label, True, True, 0)
 
         # Video stats
         self.stats_label = Gtk.Label('', xalign=0)
@@ -5049,6 +5380,7 @@ class SimpleCatalogueItem(object):
 
         self.update_status_image()
         self.update_video_name()
+        self.update_parent_name()
         self.update_video_stats()
 
 
@@ -5081,7 +5413,31 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 5084 update_video_name')
+            print('mw 5446 update_video_name')
+
+        # For videos whose name is unknown, display the URL, rather than the
+        #   usual '(video with no name)' string
+        name = self.video_obj.name
+        if name is None \
+        or name == self.main_win_obj.app_obj.default_video_name:
+
+            if self.video_obj.source is not None:
+
+                # Using pango markup to display a URL is too risky, so just use
+                #   ordinary text
+                self.name_label.set_text(
+                    utils.shorten_string(
+                        self.video_obj.source,
+                        self.main_win_obj.long_string_max_len,
+                    ),
+                )
+
+                return
+
+            else:
+
+                # No URL to show, so we're forced to use '(video with no name)'
+                name = self.main_win_obj.app_obj.default_video_name
 
         string = ''
         if self.video_obj.new_flag:
@@ -5094,12 +5450,44 @@ class SimpleCatalogueItem(object):
             '<span font_size="large"' + string + '>' + \
             cgi.escape(
                 utils.shorten_string(
-                    self.video_obj.name,
+                    name,
                     self.main_win_obj.long_string_max_len,
                 ),
                 quote=True,
             ) + '</span>'
         )
+
+
+    def update_parent_name(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the Gtk.Label widget to display the name of the parent channel,
+        playlist or folder.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5447 update_parent_name')
+
+        if self.main_win_obj.app_obj.catalogue_mode != 'simple_show_parent':
+            return
+
+        if isinstance(self.video_obj.parent_obj, media.Channel):
+            string = 'From channel \''
+        elif isinstance(self.video_obj.parent_obj, media.Playlist):
+            string = 'From playlist \''
+        else:
+            string = 'From folder \''
+
+        string2 = cgi.escape(
+            utils.shorten_string(
+                self.video_obj.parent_obj.name,
+                self.main_win_obj.medium_string_max_len,
+            ),
+            quote=True,
+        )
+
+        self.parent_label.set_markup(string + string2 + '\'')
 
 
     def update_video_stats(self):
@@ -5278,7 +5666,7 @@ class ComplexCatalogueItem(object):
         self.thumb_image = Gtk.Image()
         vbox.pack_start(self.thumb_image, False, False, 0)
 
-        # Everything to the right of the thumbnail is in a vbox2
+        # Everything to the right of the thumbnail is in vbox2
         vbox2 = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=0,
@@ -5305,7 +5693,8 @@ class ComplexCatalogueItem(object):
         self.error_image = Gtk.Image()
         hbox2.pack_end(self.error_image, False, False, self.spacing_size)
 
-        # Video description (incorporating the the More/Less label)
+        # Video description (incorporating the the More/Less label), or the
+        #   name of the parent channel/playlist/folder, depending on settings
         self.descrip_label = Gtk.Label('', xalign=0)
         vbox2.pack_start(self.descrip_label, True, True, 0)
         self.descrip_label.connect(
@@ -5445,6 +5834,30 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             print('mw 5446 update_video_name')
 
+        # For videos whose name is unknown, display the URL, rather than the
+        #   usual '(video with no name)' string
+        name = self.video_obj.name
+        if name is None \
+        or name == self.main_win_obj.app_obj.default_video_name:
+
+            if self.video_obj.source is not None:
+
+                # Using pango markup to display a URL is too risky, so just use
+                #   ordinary text
+                self.name_label.set_text(
+                    utils.shorten_string(
+                        self.video_obj.source,
+                        self.main_win_obj.medium_string_max_len,
+                    ),
+                )
+
+                return
+
+            else:
+
+                # No URL to show, so we're forced to use '(video with no name)'
+                name = self.main_win_obj.app_obj.default_video_name
+
         string = ''
         if self.video_obj.new_flag:
             string += ' font_weight="bold"'
@@ -5456,7 +5869,7 @@ class ComplexCatalogueItem(object):
             '<span font_size="large"' + string + '>' + \
             cgi.escape(
                 utils.shorten_string(
-                    self.video_obj.name,
+                    name,
                     self.main_win_obj.medium_string_max_len,
                 ),
                 quote=True,
@@ -5531,42 +5944,81 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             print('mw 5532 update_video_descrip')
 
-        if self.video_obj.short:
+        if self.main_win_obj.app_obj.catalogue_mode == 'complex_hide_parent':
 
-            # Work with a list of lines, displaying either the fist line, or
-            #   all of them, as the user clicks the More/Less button
-            line_list = self.video_obj.descrip.split('\n')
+            # Show the first line of the video description, or all of it,
+            #   depending on settings
+            if self.video_obj.short:
 
-            if not self.expand_descrip_flag:
+                # Work with a list of lines, displaying either the fist line,
+                #   or all of them, as the user clicks the More/Less button
+                line_list = self.video_obj.descrip.split('\n')
 
-                string = cgi.escape(
-                    utils.shorten_string(
-                        line_list[0],
-                        self.main_win_obj.long_string_max_len,
-                    ),
-                    quote=True,
-                )
+                if not self.expand_descrip_flag:
 
-                if len(line_list) > 1:
-                    self.descrip_label.set_markup(
-                        '<a href="more">More</a>   ' + string,
+                    string = cgi.escape(
+                        utils.shorten_string(
+                            line_list[0],
+                            self.main_win_obj.long_string_max_len,
+                        ),
+                        quote=True,
                     )
+
+                    if len(line_list) > 1:
+                        self.descrip_label.set_markup(
+                            '<a href="more">More</a>   ' + string,
+                        )
+                    else:
+                        self.descrip_label.set_text(string)
+
                 else:
-                    self.descrip_label.set_text(string)
+
+                    descrip = cgi.escape(self.video_obj.descrip, quote=True)
+
+                    if len(line_list) > 1:
+                        self.descrip_label.set_markup(
+                            '<a href="less">Less</a>   ' + descrip,
+                        )
+                    else:
+                        self.descrip_label.set_text(descrip)
+
+            else:
+                self.descrip_label.set_markup('<i>No description set</i>')
+
+        else:
+
+            # Show the name of the parent channel/playlist/folder, optionally
+            #   followed by the whole video description, depending on settings
+            if isinstance(self.video_obj.parent_obj, media.Channel):
+                string = 'From channel \''
+            elif isinstance(self.video_obj.parent_obj, media.Playlist):
+                string = 'From playlist \''
+            else:
+                string = 'From folder \''
+
+            string += cgi.escape(
+                utils.shorten_string(
+                    self.video_obj.parent_obj.name,
+                    self.main_win_obj.long_string_max_len,
+                ),
+                quote=True,
+            ) + '\''
+
+            if not self.video_obj.descrip:
+                self.descrip_label.set_text(string)
+
+            elif not self.expand_descrip_flag:
+
+                self.descrip_label.set_markup(
+                    '<a href="more">More</a>   ' + string,
+                )
 
             else:
 
                 descrip = cgi.escape(self.video_obj.descrip, quote=True)
-
-                if len(line_list) > 1:
-                    self.descrip_label.set_markup(
-                        '<a href="less">Less</a>   ' + descrip,
-                    )
-                else:
-                    self.descrip_label.set_text(descrip)
-
-        else:
-            self.descrip_label.set_markup('<i>No description set</i>')
+                self.descrip_label.set_markup(
+                    '<a href="less">Less</a>   ' + string + '\n' + descrip,
+                )
 
 
     def update_video_stats(self):

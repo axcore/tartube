@@ -16,11 +16,11 @@ expecting. If you find this frustrating,
 Downloads
 ---------
 
-Latest version: **v0.3.005 (26 June 2019)**
+Latest version: **v0.4.0 (29 June 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.3.005/install-tartube-0.3.005-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.3.005/install-tartube-0.3.005-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v0.3.005/tartube_v0.3.005.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.4.0/install-tartube-0.4.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.4.0/install-tartube-0.4.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v0.4.0/tartube_v0.4.0.tar.gz/download>`__ from Sourceforge
 -  `Source code and support <https://github.com/axcore/tartube>`__ from GitHub
 
 Why should I use Tartube?
@@ -62,6 +62,7 @@ Linux/BSD Installation requirements
 -  `youtube-dl <https://youtube-dl.org/>`__ must already be installed
 -  `Python 3 <https://www.python.org/downloads>`__
 -  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
+-  `Python Requests module <https://3.python-requests.org/>`__
 
 Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~
@@ -310,24 +311,53 @@ without restrictions on the **HookTube** website.
 Frequently-Asked Questions
 --------------------------
 
-**Q: I can't install Tartube!**
+**Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work 
+properly / Tartube keeps crashing!**
 
-A: I have little experience of writing in Python and I'm still working it out
-for myself. Contact me on the `Github
-issues <https://github.com/axcore/tartube/issues>`__ page if you can do
-better than me.
+A: Tartube is alpha software. Please report any problems to the authors at our
+`Github page <https://github.com/axcore/tartube/issues>`__ 
 
-**Q: I can't run Tartube!**
+**Q: After I downloaded some videos, Tartube crashed, and now all my videos are
+missing!**
 
-A: See above.
+A: Tartube creates a backup copy of the database, before trying to save a new
+copy. In the unlikely event of a failure, you can replace the broken database file with the backup file. 
 
-**Q: Tartube doesn't work properly!**
+To find Tartube's data directory (folder), click
+**Edit > System preferences... > General**.
 
-A: See above.
+- You can discard the broken **tartube.db** file
+- Find the **tartube_TEMP_BU.db** file, and rename it **tartube.db**
+- Restart Tartube
+- Click the **Check All** button. Tartube will find all the last set of videos you downloaded, and add them to its database (without having to re-download them)
 
-**Q: Tartube keeps crashing!**
+Tartube can make more frequent backups of your database file, if you want. See
+the options in **Edit > System preferences... > Backups**.
 
-A: Most of the crashes are fixed now. Are you using the most recent version?
+Note that Tartube does not create backup copies of the videos you've
+downloaded. That is your responsibility!
+
+**Q: The videos/channels/playlists folders are in the wrong order!**
+
+A: This is because of a Gtk we haven't been able to resolve yet.
+
+**Q: I want to see all the videos on a single page, not spread over several pages!**
+
+A: At the bottom of the Tartube window, set the page size to zero. Click the adjacent edit button to apply the change.
+
+**Q: I just want to check for new videos, but it takes so long!**
+
+A: By default, the underlying **youtube-dl** software checks an entire channel, even if it contains hundreds of videos. 
+
+You can drastically reduce the time this takes by telling Tartube to stop checking/downloading videos, if it receives (for example) notifications for three videos it has already checked/downloaded.
+
+This works well on sites like YouTube, which send information about videos in the order they were uploaded, newest first. We can't guarantee it works at all sites.
+
+- Click **Edit > System preferences... > Performance**
+- Select the checkbox **Stop checking/downloading a channel/playlist when it starts sending vidoes we already have**
+- In the **Stop after this many videos (when checking)** box, enter the value 3
+- In the **Stop after this many videos (when downloading)** box, enter the value 3
+- Click **OK** to close the window
 
 Future plans
 ------------

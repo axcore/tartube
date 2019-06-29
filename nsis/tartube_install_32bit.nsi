@@ -1,4 +1,4 @@
-# Tartube v0.3.005 installer script for MS Windows
+# Tartube v0.4.0 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -23,7 +23,7 @@
 #
 #       https://bitbucket.org/sirdeniel/deploy-python-gtk3-apps-for-windows/
 #
-#   - If you don't have a suitable editor (Notepad is not good enough), 
+#   - If you don't have a suitable editor (Notepad is not good enough),
 #       download and install one, e.g. Notepad++ from
 #
 #       https://notepad-plus-plus.org/
@@ -36,11 +36,11 @@
 #       something like 'msys2-i686-nnn.exe'
 #
 #       http://www.msys2.org/
-#   
+#
 #   - Run the file to install MSYS2. Let it install in its default location
 #   - Run the mingw32 terminal, i.e.
 #
-#       C:\msys32\mingw32.exe       
+#       C:\msys32\mingw32.exe
 #
 #   - We need to install various dependencies. In the terminal window, type
 #       this command
@@ -52,15 +52,16 @@
 #   - In the new window, type these commands
 #
 #       pacman -Su
-#       pacman -S mingw-w64-i686-gtk3 
-#       pacman -S mingw-w64-i686-python3 
+#       pacman -S mingw-w64-i686-gtk3
+#       pacman -S mingw-w64-i686-gsettings-desktop-schemas
+#       pacman -S mingw-w64-i686-python3
 #       pacman -S mingw-w64-i686-python3-gobject
 #       pacman -S mingw-w64-i686-python3-requests
 #
 #   - Optional step: you can check that the dependencies are working by typing
 #       this command (if you like):
 #
-#       gtk3-demo       
+#       gtk3-demo
 #
 #   - Now download youtube-dl. DO NOT use the installer for MS Windows; instead
 #       download the source code from
@@ -92,7 +93,7 @@
 #
 #       C:\msys32\home\YOURNAME
 #
-#   - Now download the deployment package from 
+#   - Now download the deployment package from
 #
 #       https://bitbucket.org/sirdeniel/deploy-python-gtk3-apps-for-windows/
 #
@@ -206,7 +207,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.3.005-32bit.exe"
+    OutFile "install-tartube-0.4.0-32bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -282,8 +283,18 @@ Section "Tartube" SecClient
     SetOutPath "$INSTDIR\msys32\home\user\tartube"
 
     # Start Menu
-    CreateShortCut "$SMPROGRAMS\Tartube.lnk" \
+    CreateDirectory "$SMPROGRAMS\Tartube"
+    CreateShortCut "$SMPROGRAMS\Tartube\Tartube.lnk" \
         "$INSTDIR\msys32\home\user\tartube\tartube_32bit.bat" \
+        "" \
+        "$INSTDIR\tartube_icon.ico"
+    CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" \
+        "$INSTDIR\Uninstall.exe" \
+        "" \
+        "$INSTDIR\tartube_icon.ico"
+    # Temporary Start Menu link for bugfixing on MS Windows 10
+    CreateShortCut "$SMPROGRAMS\Tartube\Gtk graphics test.lnk" \
+        "$INSTDIR\msys64\home\user\tartube\hello_world_64bit.bat" \
         "" \
         "$INSTDIR\tartube_icon.ico"
 
@@ -294,7 +305,18 @@ Section "Tartube" SecClient
         "$INSTDIR\tartube_icon.ico"
 
     # Store installation folder
-    WriteRegStr HKCU "Software\Tartube" "" $INSTDIR
+    WriteRegStr HKLM \
+        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+        "DisplayName" "Tartube"
+    WriteRegStr HKLM \
+        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+        "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+    WriteRegStr HKLM \
+        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+        "Publisher" "A S Lewis"
+    WriteRegStr HKLM \
+        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+        "DisplayVersion" "0.4.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -306,10 +328,16 @@ SectionEnd
 
 Section "Uninstall"
 
-    Delete "$INSTDIR\Uninstall.exe"
+    Delete "$SMPROGRAMS\Tartube\Tartube.lnk"
+    Delete "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk"
+    Delete "$SMPROGRAMS\Tartube\Gtk graphics test.lnk"
+    RmDir "$SMPROGRAMS\Tartube"
+    Delete "$DESKTOP\Tartube.lnk"
 
     RMDir "$INSTDIR"
+    Delete "$INSTDIR\Uninstall.exe"
 
-    DeleteRegKey /ifempty HKCU "Software\Tartube"
+    DeleteRegKey HKLM \
+        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
 
 SectionEnd

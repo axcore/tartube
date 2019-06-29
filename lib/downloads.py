@@ -141,8 +141,8 @@ class DownloadManager(threading.Thread):
         # The time at which the download operation completed (in seconds since
         #   epoch)
         self.stop_time = None
-        # The time (in seconds) between iterations of the loop in self.run
-        self.sleep_time = 0.1
+        # The time (in seconds) between iterations of the loop in self.run()
+        self.sleep_time = 0.25
 
         # Flag set to False if self.stop_download_operation() is called
         # The False value halts the main loop in self.run()
@@ -226,7 +226,7 @@ class DownloadManager(threading.Thread):
                         #   is not thread-safe), set a Glib timeout to handle
                         #   it
                         GObject.timeout_add(
-                            0, 
+                            0,
                             self.app_obj.main_win_obj.update_progress_bar,
                             download_item_obj.media_data_obj.name,
                             self.job_count,
@@ -252,10 +252,10 @@ class DownloadManager(threading.Thread):
         # Tell the Progress Tab to display any remaining download statistics
         #   immediately
         GObject.timeout_add(
-            0, 
+            0,
             self.app_obj.main_win_obj.progress_list_display_dl_stats,
         )
-        
+
         # When youtube-dl reports it is finished, there is a short delay before
         #   the final downloaded video(s) actually exist in the filesystem
         # Therefore, mainwin.MainWin.progress_list_display_dl_stats() may not
@@ -265,17 +265,17 @@ class DownloadManager(threading.Thread):
         #   have been already marked)
         if not self.force_sim_flag:
             GObject.timeout_add(
-                0, 
+                0,
                 self.app_obj.download_manager_halt_timer,
             )
         else:
             # If we're only simulating downloads, we don't need to wait at all
             GObject.timeout_add(
-                0, 
+                0,
                 self.app_obj.download_manager_finished,
             )
 
-            
+
     def change_worker_count(self, number):
 
         """Called by mainapp.TartubeApp.set_num_worker_default().
@@ -474,8 +474,8 @@ class DownloadWorker(threading.Thread):
 
         # IV list - other
         # ---------------
-        # The time (in seconds) between iterations of the loop in self.run
-        self.sleep_time = 0.1
+        # The time (in seconds) between iterations of the loop in self.run()
+        self.sleep_time = 0.25
 
         # Flag set to False if self.close() is called
         # The False value halts the main loop in self.run()
@@ -521,7 +521,7 @@ class DownloadWorker(threading.Thread):
         # Handle a job, or wait for the downloads.DownloadManager to assign
         #   this worker a job
         while self.running_flag:
-            
+
             # If this worker is currently assigned a job...
             if not self.available_flag:
 
@@ -548,7 +548,7 @@ class DownloadWorker(threading.Thread):
                 #   Error List
                 if media_data_obj.error_list or media_data_obj.warning_list:
                     GObject.timeout_add(
-                        0, 
+                        0,
                         app_obj.main_win_obj.errors_list_add_row,
                         media_data_obj,
                     )
@@ -560,9 +560,12 @@ class DownloadWorker(threading.Thread):
                 #   aren't being used in the Video Catalogue)
                 if return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
-                and app_obj.complex_catalogue_flag:
+                and (
+                    app_obj.catalogue_mode == 'complex_hide_parent' \
+                    or app_obj.catalogue_mode == 'complex_show_parent'
+                ):
                     GObject.timeout_add(
-                        0, 
+                        0,
                         app_obj.main_win_obj.video_catalogue_update_row,
                         media_data_obj,
                     )
@@ -671,7 +674,7 @@ class DownloadWorker(threading.Thread):
             self.download_item_obj,
             dl_stat_dict,
         )
-        
+
 
 class DownloadList(object):
 
@@ -1093,6 +1096,9 @@ class VideoDownloader(object):
         #   Codes lower in the hierarchy (with a smaller number) cannot
         #   overwrite higher in the hierarchy (with a bigger number)
         self.return_code = self.OK
+        # The time (in seconds) between iterations of the loop in
+        #   self.do_download()
+        self.sleep_time = 0.1
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
@@ -1136,6 +1142,22 @@ class VideoDownloader(object):
         self.temp_path = None
         self.temp_filename = None
         self.temp_extension = None
+
+        # When checking a channel/playlist, this number is incremented every
+        #   time youtube-dl gives us the details of a video which the Tartube
+        #   database already contains (with a minimum number of IVs already
+        #   set)
+        # When downloading a channel/playlist, this number is incremented every
+        #   time youtube-dl gives us a 'video already downloaded' message
+        #   (unless the Tartube database hasn't actually marked the video as
+        #   downloaded)
+        # Every time the value is incremented, we check the limits specified by
+        #   mainapp.TartubeApp.operation_check_limit or
+        #   .operation_download_limit. If the limit has been reached, we stop
+        #   checking/downloading the channel/playlist
+        # No check is carried out if self.download_item_obj represents an
+        #   individual media.Video object (and not a whole channel or playlist)
+        self.video_limit_count = 0
 
 
         # Code
@@ -1227,8 +1249,8 @@ class VideoDownloader(object):
                     if sys.platform == "win32":
                         stdout = stdout.decode('cp1252')
                     else:
-                        stdout = stdout.decode('utf-8')                
-                
+                        stdout = stdout.decode('utf-8')
+
                     # Convert the statistics into a python dictionary in a
                     #   standard format, specified in the comments for
                     #   self.extract_stdout_data()
@@ -1244,6 +1266,10 @@ class VideoDownloader(object):
                     if (app_obj.ytdl_write_stdout_flag):
                         print(stdout)
 
+            # Pause a moment, before the next iteration of the loop (don't want
+            #   to hog resources)
+            time.sleep(self.sleep_time)
+
         # The child process has finished
         while not self.stderr_queue.empty():
 
@@ -1254,8 +1280,8 @@ class VideoDownloader(object):
             if sys.platform == "win32":
                 stderr = stderr.decode('cp1252')
             else:
-                stderr = stderr.decode('utf-8') 
-            
+                stderr = stderr.decode('utf-8')
+
             if not self.is_ignorable(stderr):
 
                 if self.is_warning(stderr):
@@ -1403,7 +1429,7 @@ class VideoDownloader(object):
 
                 media_data_obj.set_dl_flag(True)
                 GObject.timeout_add(
-                    0, 
+                    0,
                     app_obj.main_win_obj.video_catalogue_update_row,
                     media_data_obj,
                 )
@@ -1415,12 +1441,32 @@ class VideoDownloader(object):
             match_obj = media_data_obj.find_matching_video(app_obj, filename)
             if match_obj:
 
-                match_obj.set_dl_flag(True)
-                GObject.timeout_add(
-                    0, 
-                    app_obj.main_win_obj.video_catalogue_update_row,
-                    match_obj,
-                )
+                if not match_obj.dl_flag:
+
+                    match_obj.set_dl_flag(True)
+                    GObject.timeout_add(
+                        0,
+                        app_obj.main_win_obj.video_catalogue_update_row,
+                        match_obj,
+                    )
+
+                else:
+
+                    # This video applies towards the limit (if any) specified
+                    #   by mainapp.TartubeApp.operation_download_limit
+                    self.video_limit_count += 1
+
+                    if not isinstance(
+                        self.download_item_obj.media_data_obj,
+                        media.Video,
+                    ) \
+                    and app_obj.operation_limit_flag \
+                    and app_obj.operation_download_limit \
+                    and self.video_limit_count >= \
+                    app_obj.operation_download_limit:
+                        # Limit reached; stop downloading videos in this
+                        #   channel/playlist
+                        self.stop()
 
             else:
 
@@ -1442,7 +1488,7 @@ class VideoDownloader(object):
 
                 # Update the main window
                 GObject.timeout_add(
-                    0, 
+                    0,
                     app_obj.announce_video_download,
                     self.download_item_obj,
                     video_obj,
@@ -1471,6 +1517,9 @@ class VideoDownloader(object):
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
+        # Call self.stop(), if the limit described in the comments for
+        #   self.__init__() have been reached
+        stop_flag = False
 
         # From the JSON dictionary, extract the data we need
         if '_filename' in json_dict:
@@ -1557,7 +1606,7 @@ class VideoDownloader(object):
             if descrip is not None:
                 video_obj.set_video_descrip(
                     descrip,
-                    app_obj.main_win_obj.long_string_max_len,
+                    app_obj.main_win_obj.descrip_line_max_len,
                 )
 
             # Only save the playlist index when this video is actually stored
@@ -1567,6 +1616,24 @@ class VideoDownloader(object):
                 video_obj.set_index(playlist_index)
 
         else:
+
+            if video_obj.file_dir \
+            and video_obj.name != app_obj.default_video_name:
+
+                # This video applies towards the limit (if any) specified by
+                #   mainapp.TartubeApp.operation_check_limit
+                self.video_limit_count += 1
+
+                if not isinstance(
+                    self.download_item_obj.media_data_obj,
+                    media.Video,
+                ) \
+                and app_obj.operation_limit_flag \
+                and app_obj.operation_check_limit \
+                and self.video_limit_count >= app_obj.operation_check_limit:
+                    # Limit reached. When we reach the end of this function,
+                    #   stop checking videos in this channel playlist
+                    stop_flag = True
 
             # If the 'Add videos' button was used, the path/filename/extension
             #   won't be set yet
@@ -1590,7 +1657,7 @@ class VideoDownloader(object):
             if not video_obj.descrip and descrip is not None:
                 video_obj.set_video_descrip(
                     descrip,
-                    app_obj.main_win_obj.long_string_max_len,
+                    app_obj.main_win_obj.descrip_line_max_len,
                 )
 
             # Only save the playlist index when this video is actually stored
@@ -1659,6 +1726,11 @@ class VideoDownloader(object):
             self.download_item_obj,
             video_obj,
         )
+
+        # Stop checking videos in this channel/playlist, if a limit has been
+        #   reached
+        if stop_flag:
+            self.stop()
 
 
     def create_child_process(self, cmd_list):
@@ -1845,7 +1917,8 @@ class VideoDownloader(object):
                     # If the most recently-received filename isn't one used by
                     #   Ffmpeg, then this marks the end of a video download
                     # (See the comments in self.__init__)
-                    if stdout_list[4] == 'in' \
+                    if len(stdout_list) > 4 \
+                    and stdout_list[4] == 'in' \
                     and self.temp_filename is not None \
                     and not re.match(r'.*\.f\d{1,3}$', self.temp_filename):
 
@@ -2066,7 +2139,7 @@ class VideoDownloader(object):
         if self.download_manager_obj.app_obj.ytdl_update_current \
         == 'Automatic installation update':
             cmd_list.insert(0, 'python3')
-            
+
         return cmd_list
 
 
@@ -2085,8 +2158,8 @@ class VideoDownloader(object):
 
         """
 
-#        if DEBUG_FUNC_FLAG:
-#            print('dl 2033 is_child_process_alive')
+        if DEBUG_FUNC_FLAG:
+            print('dl 2033 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -2337,7 +2410,7 @@ class PipeReader(threading.Thread):
         self.output_queue = queue
 
         # The time (in seconds) between iterations of the loop in self.run()
-        self.sleep_time = 0.1
+        self.sleep_time = 0.25
         # Flag that is set to False by self.join(), which enables the loop in
         #   self.run() to terminate
         self.running_flag = True

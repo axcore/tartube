@@ -224,6 +224,8 @@ class MessageDialogue(Gtk.MessageDialog):
 
         # If the calling code requires a response, provide it
         if response_dict is not None:
+
+            func = None
             if response == Gtk.ResponseType.OK and 'ok' in response_dict:
                 func = response_dict['ok']
             elif response == Gtk.ResponseType.CANCEL \

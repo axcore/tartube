@@ -154,7 +154,7 @@ class UpdateManager(threading.Thread):
                         stdout = stdout.decode('cp1252')
                     else:
                         stdout = stdout.decode('utf-8')
-                
+
                     # "It looks like you installed youtube-dl with a package
                     #   manager, pip, setup.py or a tarball. Please use that to
                     #   update."
@@ -174,7 +174,7 @@ class UpdateManager(threading.Thread):
                 stderr = stderr.decode('cp1252')
             else:
                 stderr = stderr.decode('utf-8')
-                            
+
             if stderr:
                 self.stderr_list.append(stderr)
 

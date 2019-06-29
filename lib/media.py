@@ -207,6 +207,15 @@ class GenericContainer(GenericMedia):
             if isinstance(child_obj, Video):
                 self.vid_count -= 1
 
+                if child_obj.new_flag:
+                    self.new_count -= 1
+
+                if child_obj.fav_flag:
+                    self.fav_count -= 1
+
+                if child_obj.dl_flag:
+                    self.dl_count -= 1
+
             return True
 
 
@@ -1288,6 +1297,38 @@ class Folder(GenericContainer):
                 self.vid_count += 1
 
 
+    def check_duplicate_video(self, source):
+
+        """Called by mainapp.TartubeApp.on_menu_add_video().
+
+        When the user adds new videos using the 'Add Videos' dialogue window,
+        the calling function calls this function to check that the folder
+        doesn't contain a duplicate video (i.e., one whose source URL is the
+        same).
+
+        Args:
+
+            source (string): The video URL to check
+
+        Returns:
+
+            True if any of the child media.Video objects in this folder have
+                the same source URL; False otherwise
+
+        """
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video) \
+            and child_obj.source is not None \
+            and child_obj.source == source:
+                # Duplicate found
+                return True
+
+        # No duplicate found
+        return False
+
+
 #   def del_child():            # Inherited from GenericContainer
 
 
@@ -1373,6 +1414,23 @@ class Folder(GenericContainer):
 
 
     # Set accessors
+
+
+    def reset_counts(self, vid_count, new_count, fav_count, dl_count):
+
+        """Called by mainapp.TartubeApp.update_db().
+
+        When a database created by an earlier version of Tartube is loaded,
+        the calling function updates IVs as required.
+
+        This function is called if this object's video counts need to be
+        changed.
+        """
+
+        self.vid_count = vid_count
+        self.new_count = new_count
+        self.fav_count = fav_count
+        self.dl_count = dl_count
 
 
 #   def set_dl_sim_flag():      # Inherited from GenericMedia

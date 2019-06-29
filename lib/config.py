@@ -3919,6 +3919,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.setup_general_tab()
+        self.setup_backups_tab()
         self.setup_videos_tab()
         self.setup_ytdl_tab()
         self.setup_performance_tab()
@@ -4057,6 +4058,89 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton6.connect('toggled', self.on_validators_button_toggled)
         if not mainapp.HAVE_VALIDATORS_FLAG:
             checkbutton6.set_sensitive(False)
+
+
+    def setup_backups_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Backups' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_Backups')
+
+        # General preferences
+        self.add_label(grid,
+            '<u>Backup preferences</u>',
+            0, 0, 1, 1,
+        )
+        self.add_label(grid,
+            'When saving a database file, ' \
+            + utils.upper_case_first(__main__. __packagename__) \
+            + ' makes a backup copy of it (in case something goes wrong)',
+            0, 1, 1, 1,
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            'Delete the backup file as soon as the save procedure is' \
+            + ' finished',
+            0, 2, 1, 1,
+        )
+        # Signal connect appears below
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            'Keep the backup file, replacing any previous backup file',
+            0, 3, 1, 1,
+        )
+        if self.app_obj.db_backup_mode == 'single':
+            radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        radiobutton3 = self.add_radiobutton(grid,
+            radiobutton2,
+            'Make a new backup file once per day, after the day\'s first' \
+            + ' save procedure',
+            0, 4, 1, 1,
+        )
+        if self.app_obj.db_backup_mode == 'daily':
+            radiobutton3.set_active(True)
+        # Signal connect appears below
+
+        radiobutton4 = self.add_radiobutton(grid,
+            radiobutton3,
+            'Make a new backup file for every save procedure',
+            0, 5, 1, 1,
+        )
+        if self.app_obj.db_backup_mode == 'always':
+            radiobutton4.set_active(True)
+        # Signal connect appears below
+
+        # Signal connects from above
+        radiobutton.connect(
+            'toggled',
+            self.on_backup_button_toggled,
+            'default',
+        )
+
+        radiobutton2.connect(
+            'toggled',
+            self.on_backup_button_toggled,
+            'single',
+        )
+
+        radiobutton3.connect(
+            'toggled',
+            self.on_backup_button_toggled,
+            'daily',
+        )
+
+        radiobutton4.connect(
+            'toggled',
+            self.on_backup_button_toggled,
+            'always',
+        )
 
 
     def setup_videos_tab(self):
@@ -4332,6 +4416,62 @@ class SystemPrefWin(GenericPrefWin):
             2, 2, 1, 1,
         )
 
+        # Time-saving preferences
+        self.add_label(grid,
+            '<u>Time-saving preferences</u>',
+            0, 3, grid_width, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'Stop checking/downloading a channel/playlist when it starts' \
+            + ' sending videos we already have',
+            self.app_obj.operation_limit_flag,
+            True,               # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        # Signal connect appears below
+
+        self.add_label(grid,
+            'Stop after this many videos (when checking)',
+            0, 5, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.operation_check_limit,
+            True,
+            1, 5, 1, 1,
+        )
+        entry.set_hexpand(False)
+        entry.set_width_chars(4)
+        entry.connect('changed', self.on_check_limit_changed)
+        if not self.app_obj.operation_limit_flag:
+            entry.set_sensitive(False)
+
+        self.add_label(grid,
+            'Stop after this many videos (when downloading)',
+            0, 6, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            self.app_obj.operation_download_limit,
+            True,
+            1, 6, 1, 1,
+        )
+        entry2.set_hexpand(False)
+        entry2.set_width_chars(4)
+        entry2.connect('changed', self.on_download_limit_changed)
+        if not self.app_obj.operation_limit_flag:
+            entry2.set_sensitive(False)
+
+        # Signal connect from above
+        checkbutton3.connect(
+            'toggled',
+            self.on_limit_button_toggled,
+            entry,
+            entry2,
+        )
+
 
     # Callback class methods
 
@@ -4355,6 +4495,24 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.operation_auto_update_flag:
             self.app_obj.set_operation_auto_update_flag(False)
+
+
+    def on_backup_button_toggled(self, radiobutton, value):
+
+        """Called from callback in self.setup_backups_tab().
+
+        Updates IVs in the main application.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+            value (string): The new value of the IV
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_db_backup_mode(value)
 
 
     def on_bandwidth_button_toggled(self, checkbutton):
@@ -4394,6 +4552,24 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.main_win_obj.spinbutton2.set_value(spinbutton.get_value())
+
+
+    def on_check_limit_changed(self, entry):
+
+        """Called from callback in self.setup_performance_tab().
+
+        Sets the limit at which a download operation will stop checking a
+        channel or playlist.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+        """
+
+        text = entry.get_text()
+        if text.isdigit() and int(text) >= 0:
+            self.app_obj.set_operation_check_limit(int(text))
 
 
     def on_complex_button_toggled(self, checkbutton):
@@ -4486,9 +4662,54 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_dialogue_flag(False)
 
 
+    def on_download_limit_changed(self, entry):
+
+        """Called from callback in self.setup_performance_tab().
+
+        Sets the limit at which a download operation will stop downloading a
+        channel or playlist.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+        """
+
+        text = entry.get_text()
+        if text.isdigit() and int(text) >= 0:
+            self.app_obj.set_operation_download_limit(int(text))
+
+
+    def on_limit_button_toggled(self, checkbutton, entry, entry2):
+
+        """Called from callback in self.setup_performance_tab().
+
+        Sets the limit at which a download operation will stop downloading a
+        channel or playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+            entry, entry2 (Gtk.Entry): The entry boxes which must be
+                sensitised/desensitised, according to the new setting of the IV
+
+        """
+
+        if checkbutton.get_active() and not self.app_obj.operation_limit_flag:
+            self.app_obj.set_operation_limit_flag(True)
+            entry.set_sensitive(True)
+            entry2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.operation_limit_flag:
+            self.app_obj.set_operation_limit_flag(False)
+            entry.set_sensitive(False)
+            entry2.set_sensitive(False)
+
+
     def on_match_button_toggled(self, radiobutton):
 
-        """Called from callback in self.setup_general_tab().
+        """Called from callback in self.setup_videos_tab().
 
         Updates IVs in the main application and sensities/desensities widgets.
 

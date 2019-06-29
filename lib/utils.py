@@ -177,6 +177,11 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     # Move the file now, if the calling code requires that
     if move_flag:
+
+        # (On MSWin, can't do os.rename if the destination file already exists)
+        if os.path.isfile(new_path):
+            os.remove(new_path)
+
         os.rename(old_path, new_path)
 
     # Return the converted file path
@@ -410,16 +415,15 @@ def shorten_string(string, num_chars):
     return string
 
 
-def to_string(data):
+def strip_whitespace(string):
 
-    """Based on the to_string() function in youtube-dl-gui. Now called by
-    by options.OptionsParser.parse(), .build_file_sizes() and so on.
+    """Called by anything.
 
-    Convert any data type to a string.
+    Removes any leading/trailing whitespace from a string.
 
     Args:
 
-        data (-): The data type
+        string (str): The string to convert
 
     Returns:
 
@@ -427,17 +431,29 @@ def to_string(data):
 
     """
 
-    return '%s' % data
+    if string:
+        string = re.sub(r'^\s+', '', string)
+        string = re.sub(r'\s+$', '', string)
+
+    return string
 
 
-def upper_case_first(string):
+def tidy_up_container_name(string, max_length):
 
-    """Can be called by anything, but mainly used to capitalise
-    __main__.__packagename__.
+    """Called by mainapp.TartubeApp.on_menu_add_channel(),
+    .on_menu_add_playlist() and .on_menu_add_folder().
+
+    Before creating a channel, playlist or folder, tidies up the name.
+
+    Removes any leading/trailing whitespace. Reduces multiple whitespace
+    characters to a single space character. Applies a maximum length.
 
     Args:
 
-        string (string): The string to capitalise
+        string (str): The string to convert
+
+        max_length (int): The maximum length of the converted string (should be
+            mainapp.TartubeApp.container_name_max_len)
 
     Returns:
 
@@ -445,7 +461,18 @@ def upper_case_first(string):
 
     """
 
-    return string[0].upper() + string[1:]
+    if string:
+
+        string = re.sub(r'^\s+', '', string)
+        string = re.sub(r'\s+$', '', string)
+        string = re.sub(r'\s+', ' ', string)
+
+        return string[0:max_length]
+
+    else:
+
+        # Empty string
+        return string
 
 
 def tidy_up_long_string(string, max_length=80, reduce_flag=True):
@@ -469,7 +496,7 @@ def tidy_up_long_string(string, max_length=80, reduce_flag=True):
 
         string (str): The string to convert
 
-        max_length (int): The maximum lenght of lines, before they are
+        max_length (int): The maximum length of lines, before they are
             recombined into a single string
 
         reduce_flag (True, False): If True, initial and final whitespace is
@@ -487,9 +514,9 @@ def tidy_up_long_string(string, max_length=80, reduce_flag=True):
         string = re.sub(r'\r\n', ' ', string)
 
         if reduce_flag:
-            string = re.sub(r'\s+', ' ', string)
             string = re.sub(r'^\s+', '', string)
             string = re.sub(r'\s+$', '', string)
+            string = re.sub(r'\s+', ' ', string)
 
         line_list = []
         for line in string.split('\n'):
@@ -530,7 +557,7 @@ def tidy_up_long_descrip(string, max_length=80):
 
         string (str): The string to convert
 
-        max_length (int): The maximum lenght of lines, before they are
+        max_length (int): The maximum length of lines, before they are
             recombined into a single string
 
     Returns:
@@ -561,3 +588,42 @@ def tidy_up_long_descrip(string, max_length=80):
 
         # Empty string
         return string
+
+
+def to_string(data):
+
+    """Based on the to_string() function in youtube-dl-gui. Now called by
+    by options.OptionsParser.parse(), .build_file_sizes() and so on.
+
+    Convert any data type to a string.
+
+    Args:
+
+        data (-): The data type
+
+    Returns:
+
+        The converted string
+
+    """
+
+    return '%s' % data
+
+
+def upper_case_first(string):
+
+    """Can be called by anything, but mainly used to capitalise
+    __main__.__packagename__.
+
+    Args:
+
+        string (string): The string to capitalise
+
+    Returns:
+
+        The converted string
+
+    """
+
+    return string[0].upper() + string[1:]
+
