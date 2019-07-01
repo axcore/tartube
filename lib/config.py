@@ -337,8 +337,8 @@ class GenericEditWin(GenericConfigWin):
 
         # Render the changes
         self.show_all()
-
-
+                
+    
     def retrieve_val(self, name):
 
         """Can be called by anything.
@@ -1226,7 +1226,7 @@ class GenericPrefWin(GenericConfigWin):
         # Render the changes
         self.show_all()
 
-
+     
     # (Add widgets)
 
 
@@ -1753,7 +1753,7 @@ class OptionsEditWin(GenericEditWin):
         grid.attach(button, 0, 5, 2, 1)
         button.connect('clicked', self.on_reset_options_clicked)
 
-
+        
     def setup_files_tab(self):
 
         """Called by self.setup_tabs().
@@ -2641,12 +2641,12 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
-
+        
             # Nothing selected
             return
-
+            
         else:
-
+        
             name = model[iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
@@ -2699,17 +2699,17 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
-
+        
             # Nothing selected
             return
-
+            
         else:
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-
+            
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2763,7 +2763,7 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
-
+        
             # Nothing selected
             return
 
@@ -2772,7 +2772,7 @@ class OptionsEditWin(GenericEditWin):
             name = model[iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-
+            
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2819,17 +2819,17 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
-
+        
             # Nothing selected
             return
-
+            
         else:
-
+        
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-
+            
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2884,23 +2884,23 @@ class OptionsEditWin(GenericEditWin):
                 {
                     'yes': 'reset_options_manager',
                     # (Reset this edit window, if the user clicks 'yes')
-                    'data': [self],
+                    'data': [self],              
                 },
             )
 
         else:
 
             # Editing an Options Manager object attached to a particular media
-            #   data object
+            #   data object 
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 'This operation cannot be reversed.\n' \
                 + 'Are you sure you want to continue?',
                 'question',
                 'yes-no',
-                self,           # Parent window is this window
+                self,           # Parent window is this window                
                 {
                     'yes': 'reset_options_manager',
-                    'data': [self, self.media_data_obj],
+                    'data': [self, self.media_data_obj], 
                 },
             )
 
@@ -4236,7 +4236,7 @@ class SystemPrefWin(GenericPrefWin):
             + ' makes a backup copy of it (in case something goes wrong)',
             0, 1, 1, 1,
         )
-
+            
         radiobutton = self.add_radiobutton(grid,
             None,
             'Delete the backup file as soon as the save procedure is' \
@@ -4251,7 +4251,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 3, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'single':
-            radiobutton2.set_active(True)
+            radiobutton2.set_active(True)            
         # Signal connect appears below
 
         radiobutton3 = self.add_radiobutton(grid,
@@ -4261,7 +4261,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'daily':
-            radiobutton3.set_active(True)
+            radiobutton3.set_active(True)            
         # Signal connect appears below
 
         radiobutton4 = self.add_radiobutton(grid,
@@ -4270,7 +4270,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 5, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'always':
-            radiobutton4.set_active(True)
+            radiobutton4.set_active(True)            
         # Signal connect appears below
 
         # Signal connects from above
@@ -4576,7 +4576,7 @@ class SystemPrefWin(GenericPrefWin):
         self.add_label(grid,
             '<u>Time-saving preferences</u>',
             0, 3, grid_width, 1,
-        )
+        )        
 
         checkbutton3 = self.add_checkbutton(grid,
             'Stop checking/downloading a channel/playlist when it starts' \
@@ -4627,7 +4627,7 @@ class SystemPrefWin(GenericPrefWin):
             entry,
             entry2,
         )
-
+        
 
     # Callback class methods
 
@@ -4667,7 +4667,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if radiobutton.get_active():
+        if radiobutton.get_active():            
             self.app_obj.set_db_backup_mode(value)
 
 
@@ -4716,7 +4716,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Sets the limit at which a download operation will stop checking a
         channel or playlist.
-
+        
         Args:
 
             entry (Gtk.Entry): The widget changed
@@ -4727,7 +4727,7 @@ class SystemPrefWin(GenericPrefWin):
         if text.isdigit() and int(text) >= 0:
             self.app_obj.set_operation_check_limit(int(text))
 
-
+        
     def on_complex_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
@@ -4812,7 +4812,7 @@ class SystemPrefWin(GenericPrefWin):
                 )
 
             # Database file already exists, so load it now
-            elif not self.app_obj.switch_db(new_path):
+            elif not self.app_obj.switch_db([new_path, self]):
 
                 if self.app_obj.disable_load_save_flag:
                     button.set_sensitive(False)
@@ -4865,7 +4865,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
-
+        
         Args:
 
             entry (Gtk.Entry): The widget changed
@@ -4876,14 +4876,14 @@ class SystemPrefWin(GenericPrefWin):
         if text.isdigit() and int(text) >= 0:
             self.app_obj.set_operation_download_limit(int(text))
 
-
+        
     def on_limit_button_toggled(self, checkbutton, entry, entry2):
 
         """Called from callback in self.setup_performance_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
-
+        
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -4896,14 +4896,14 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_limit_flag(True)
             entry.set_sensitive(True)
             entry2.set_sensitive(True)
-
+            
         elif not checkbutton.get_active() \
         and self.app_obj.operation_limit_flag:
             self.app_obj.set_operation_limit_flag(False)
             entry.set_sensitive(False)
             entry2.set_sensitive(False)
 
-
+        
     def on_match_button_toggled(self, radiobutton):
 
         """Called from callback in self.setup_videos_tab().
