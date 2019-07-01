@@ -29,7 +29,7 @@ import os
 
 
 # Import our modules
-from . import constants
+from . import formats
 from . import mainapp
 from . import media
 from . import utils
@@ -138,7 +138,7 @@ class OptionsManager(object):
         video_format (string): Video format to download. When this option is
             set to '0' youtube-dl will choose the best video format available
             for the given URL. Otherwise, this option is set to one of the
-            keys in constants.VIDEO_FORMAT_DICT, in which case youtube-dl will
+            keys in formats.VIDEO_FORMAT_DICT, in which case youtube-dl will
             use the corresponding value to select the video format. See also
             the options 'second_video_format' and 'third_video_format'.
 
@@ -198,7 +198,7 @@ class OptionsManager(object):
 
         output_format (int): Option in the range 0-5, which is converted into
             a youtube-dl output template using
-            constants.FILE_OUTPUT_CONVERT_DICT. If the value is 3, then the
+            formats.FILE_OUTPUT_CONVERT_DICT. If the value is 3, then the
             custom 'output_template' is used instead
 
         output_template (string): Can be any output template supported by
@@ -210,14 +210,14 @@ class OptionsManager(object):
             specified by the 'video_format' option isn't available. This option
             is ignored when its value is '0' (or when the value of the
             'video_format' option is '0'). Otherwise, its value is one of the
-            keys in constants.VIDEO_FORMAT_DICT
+            keys in formats.VIDEO_FORMAT_DICT
 
         third_video_format (string): Video format to download, if the formats
             specified by the 'video_format' and 'second_video_format' options
             aren't available. This option is ignored when its value is '0' (or
             when the value of the 'video_format' and 'second_video_format'
             options are '0'). Otherwise, its value is one of the keys in
-            constants.VIDEO_FORMAT_DICT
+            formats.VIDEO_FORMAT_DICT
 
         [used in conjunction with the 'min_filesize' and 'max_filesize' options
 
@@ -731,8 +731,7 @@ class OptionsParser(object):
             )
 
         # Set the youtube-dl output template for the video's file
-        template \
-        = constants.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
+        template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
         # In the case of copy_dict['output_format'] = 3
         if template is None:
             template = copy_dict['output_template']

@@ -57,6 +57,7 @@ from . import config
 from . import dialogue
 from . import downloads
 from . import files
+from . import formats
 from . import mainwin
 from . import media
 from . import options
@@ -720,16 +721,6 @@ class TartubeApp(Gtk.Application):
         # Video catalogue toolbar actions
         # -------------------------------
 
-        catalogue_size_toolbutton_action = Gio.SimpleAction.new(
-            'catalogue_size_toolbutton',
-            None,
-        )
-        catalogue_size_toolbutton_action.connect(
-            'activate',
-            self.on_button_catalogue_size,
-        )
-        self.add_action(catalogue_size_toolbutton_action)
-
         first_page_toolbutton_action = Gio.SimpleAction.new(
             'first_page_toolbutton',
             None,
@@ -769,6 +760,26 @@ class TartubeApp(Gtk.Application):
             self.on_button_last_page,
         )
         self.add_action(last_page_toolbutton_action)
+
+        scroll_up_toolbutton_action = Gio.SimpleAction.new(
+            'scroll_up_toolbutton',
+            None,
+        )
+        scroll_up_toolbutton_action.connect(
+            'activate',
+            self.on_button_scroll_up,
+        )
+        self.add_action(scroll_up_toolbutton_action)
+
+        scroll_down_toolbutton_action = Gio.SimpleAction.new(
+            'scroll_down_toolbutton',
+            None,
+        )
+        scroll_down_toolbutton_action.connect(
+            'activate',
+            self.on_button_scroll_down,
+        )
+        self.add_action(scroll_down_toolbutton_action)
 
         # Videos Tab actions
         # ------------------
@@ -1026,6 +1037,7 @@ class TartubeApp(Gtk.Application):
                 + utils.upper_case_first(__main__.__packagename__) + '?',
                 'question',
                 'yes-no',
+                None,                   # Parent window is main window
                 {
                     'yes': 'stop_continue',
                 }
@@ -1311,6 +1323,11 @@ class TartubeApp(Gtk.Application):
 
         Loads the Tartube database file. If loading fails, disables all file
         loading/saving.
+
+        Returns:
+
+            True on success, False on failure
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -1321,7 +1338,7 @@ class TartubeApp(Gtk.Application):
         if self.current_manager_obj \
         or not os.path.isfile(path) \
         or self.disable_load_save_flag:
-            return
+            return False
 
         # Reset main window tabs now so the user can't manipulate their widgets
         #   during the load
@@ -1340,11 +1357,13 @@ class TartubeApp(Gtk.Application):
 
         except:
             self.disable_load_save()
-            return self.file_error_dialogue(
+            self.file_error_dialogue(
                 'Failed to load the ' \
                 + utils.upper_case_first(__main__.__packagename__) \
                 + ' database file',
             )
+
+            return False
 
         # Do some basic checks on the loaded data
         if not load_dict \
@@ -1353,10 +1372,12 @@ class TartubeApp(Gtk.Application):
         or not 'save_date' in load_dict \
         or not 'save_time' in load_dict \
         or load_dict['script_name'] != __main__.__packagename__:
-            return self.file_error_dialogue(
+            self.file_error_dialogue(
                 'The ' + utils.upper_case_first(__main__.__packagename__) \
                 + ' database file is invalid',
             )
+
+            return False
 
         # Convert a version, e.g. 1.234.567, into a simple number, e.g.
         #   1234567, that can be compared with other versions
@@ -1367,10 +1388,12 @@ class TartubeApp(Gtk.Application):
         if version is None \
         or version > self.convert_version(__main__.__version__):
             self.disable_load_save()
-            return self.file_error_dialogue(
+            self.file_error_dialogue(
                 'Database file can\'t be read\nby this version of ' \
                 + utils.upper_case_first(__main__.__packagename__),
             )
+
+            return False
 
         # Set IVs to their new values
         self.general_options_obj = load_dict['general_options_obj']
@@ -1401,6 +1424,8 @@ class TartubeApp(Gtk.Application):
         # Repopulate the Video Index, showing the new data
         if self.main_win_obj:
             self.main_win_obj.video_index_populate()
+
+        return True
 
 
     def update_db(self, version):
@@ -1464,6 +1489,76 @@ class TartubeApp(Gtk.Application):
                     fav_count,
                     dl_count,
                 )
+
+        if version < 4003:  # v0.4.002
+
+            # This version fixes video format options, which were stored
+            #   incorrectly in options.OptionsManager
+            key_list = [
+                'video_format',
+                'second_video_format',
+                'third_video_format',
+            ]
+
+            options_obj_list = [self.general_options_obj]
+            for media_data_obj in self.media_reg_dict.values():
+                if media_data_obj.options_obj is not None:
+                    options_obj_list.append(media_data_obj.options_obj)
+
+            for options_obj in options_obj_list:
+                for key in key_list:
+
+                    val = options_obj.options_dict[key]
+                    if val != '0':
+
+                        if val in formats.VIDEO_OPTION_DICT:
+                            # Invert the key-value pair used before v0.4.002
+                            options_obj.options_dict[key] \
+                            = formats.VIDEO_OPTION_DICT[val]
+
+                        else:
+                            # Completely invalid format description, so
+                            #   just reset it
+                            options_obj.options_dict[key] = '0'
+
+        if version < 4004:  # v0.4.004
+
+            # This version fixes a bug in which moving a channel, playlist or
+            #   folder to a new location in the media data registry's tree
+            #   failed to update all the videos that moved with it
+            # To be safe, update every video in the registry
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.reset_file_dir(self)
+
+        if version < 4015:  # v0.4.015
+
+            # This version fixes issues with sorting videos. Channels,
+            #   playlists and folders in a loaded database might not be sorted
+            #   correctly, so just sort them all using the new algorithms
+            container_list = [
+                self.fixed_all_folder,
+                self.fixed_new_folder,
+                self.fixed_fav_folder,
+                self.fixed_misc_folder,
+                self.fixed_temp_folder,
+            ]
+
+            for dbid in self.media_name_dict.values():
+                container_list.append(self.media_reg_dict[dbid])
+
+            for container_obj in container_list:
+                container_obj.sort_children()
+
+        if version < 4022:  # v0.4.022
+
+            # This version fixes a rare issue in which media.Video.index was
+            #   set to a string, rather than int, value
+            # Update all existing videos
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video) \
+                and media_data_obj.index is not None:
+                    media_data_obj.index = int(media_data_obj.index)
 
 
     def save_db(self):
@@ -1597,7 +1692,7 @@ class TartubeApp(Gtk.Application):
                 os.rename(temp_bu_path, always_bu_path)
 
 
-    def switch_db(self, path):
+    def switch_db(self, data_list):
 
         """Called by config.SystemPrefWin.on_data_dir_button_clicked().
 
@@ -1609,22 +1704,32 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            path (string): Full file path to the location of the new data
-                directory
+            data_list (list): A list containing two items: the full file path
+                to the location of the new data directory, and the system
+                preferences window (config.SystemPrefWin) that the user has
+                open
+
+        Returns:
+        
+            True on success, False on failure
 
         """
 
         if DEBUG_FUNC_FLAG:
             print('ap 1363 switch_db')
 
+        # Extract values from the argument list
+        path = data_list.pop(0)
+        pref_win_obj = data_list.pop(0)
+
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
-            return
+            return False
 
         # If the old path is the same as the new one, we don't need to do
         #   anything
         if path == self.data_dir:
-            return
+            return False
 
         # Save the existing database
         self.save_db()
@@ -1674,8 +1779,31 @@ class TartubeApp(Gtk.Application):
             # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_populate()
 
+            # If the system preferences window is open, reset it to show the
+            #   new data directory
+            if pref_win_obj and pref_win_obj.is_visible():
+                pref_win_obj.reset_window()
+
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    'Database file created',
+                    'info',
+                    'ok',
+                    pref_win_obj,
+                )
+
+            else:
+
+                # (Parent window is the main window)
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    'Database file created',
+                    'info',
+                    'ok',
+                )
+
+            return True
+
         else:
-            self.load_db()
+            return self.load_db()
 
 
     def reset_db(self):
@@ -2290,7 +2418,7 @@ class TartubeApp(Gtk.Application):
 
 
     def create_video_from_download(self, download_item_obj, dir_path, \
-    filename, extension):
+    filename, extension, no_sort_flag=False):
 
         """Called downloads.VideoDownloader.confirm_new_video() and
         .confirm_sim_video().
@@ -2311,6 +2439,12 @@ class TartubeApp(Gtk.Application):
 
             extension (string): The video's extension, e.g. '.mp4'
 
+            no_sort_flag (True or False): True when called by
+                downloads.VideoDownloader.confirm_sim_video(), because the
+                video's parent containers (including the 'All Videos' folder)
+                should delay sorting their lists of child objects until that
+                calling function is ready. False when called by anything else
+
         Returns:
 
             video_obj (media.Video) - The video object created
@@ -2326,6 +2460,7 @@ class TartubeApp(Gtk.Application):
         video_obj = None
 
         if isinstance(media_data_obj, media.Video):
+
             # The downloads.DownloadItem object is handling a single video
             video_obj = media_data_obj
             # If the video was added manually (for example, using the 'Add
@@ -2334,9 +2469,9 @@ class TartubeApp(Gtk.Application):
                 video_obj.set_file(dir_path, filename, extension)
 
         else:
+
             # The downloads.DownloadItem object is handling a channel or
             #   playlist
-
             # Does a media.Video object already exist?
             for child_obj in media_data_obj.child_list:
 
@@ -2348,7 +2483,7 @@ class TartubeApp(Gtk.Application):
             if video_obj is None:
 
                 # Create a new media data object for the video
-                video_obj = self.add_video(media_data_obj, None)
+                video_obj = self.add_video(media_data_obj, None, no_sort_flag)
 
                 # Since we have them to hand, set the video's file path IVs
                 #   immediately
@@ -2600,7 +2735,7 @@ class TartubeApp(Gtk.Application):
     # (Add media data objects)
 
 
-    def add_video(self, parent_obj, source=None):
+    def add_video(self, parent_obj, source=None, no_sort_flag=False):
 
         """Can be called by anything. Mostly called by
         self.create_video_from_download() and self.on_menu_add_video().
@@ -2614,6 +2749,13 @@ class TartubeApp(Gtk.Application):
                 child (all videos have a parent)
 
             source (string): The video's source URL, if known
+
+            no_sort_flag (True or False): True when
+                self.create_video_from_download() is called by
+                downloads.VideoDownloader.confirm_sim_video(), because the
+                video's parent containers (including the 'All Videos' folder)
+                should delay sorting their lists of child objects until that
+                calling function is ready. False when called by anything else
 
         Returns:
 
@@ -2645,6 +2787,7 @@ class TartubeApp(Gtk.Application):
             self.default_video_name,
             parent_obj,
             None,                   # Use default download options
+            no_sort_flag,
         )
 
         if source is not None:
@@ -2655,7 +2798,7 @@ class TartubeApp(Gtk.Application):
         self.media_reg_dict[video_obj.dbid] = video_obj
 
         # The private 'All Videos' folder also has this video as a child object
-        self.fixed_all_folder.add_child(video_obj)
+        self.fixed_all_folder.add_child(video_obj, no_sort_flag)
 
         # Update the row in the Video Index for both the parent and private
         #   folder
@@ -2956,6 +3099,7 @@ class TartubeApp(Gtk.Application):
             + '\'s data directory',
             'question',
             'yes-no',
+            None,                   # Parent window is main window
             # Arguments passed directly to .move_container_to_top_continue()
             {
                 'yes': 'move_container_to_top_continue',
@@ -2979,6 +3123,17 @@ class TartubeApp(Gtk.Application):
         media_data_obj.parent_obj.del_child(media_data_obj)
         media_data_obj.set_parent_obj(None)
         self.media_top_level_list.append(media_data_obj.dbid)
+
+        # All videos which are descendents of media_data_obj must have their
+        #   .file_dir IV updated to the new location
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+            video_obj.reset_file_dir(self)
+
+        # Save the database (because, if the user terminates Tartube and then
+        #   restarts it, then tries to perform a download operation, a load of
+        #   Python error messages will be generated, complaining that
+        #   directories don't exist)
+        self.save_db()
 
         # Remove the moving object from the Video Index, and put it back there
         #   at its new location
@@ -3088,6 +3243,7 @@ class TartubeApp(Gtk.Application):
             + temp_string,
             'question',
             'yes-no',
+            None,                   # Parent window is main window
             # Arguments passed directly to .move_container_continue()
             {
                 'yes': 'move_container_continue',
@@ -3119,6 +3275,17 @@ class TartubeApp(Gtk.Application):
         if source_obj.dbid in self.media_top_level_list:
             index = self.media_top_level_list.index(source_obj.dbid)
             del self.media_top_level_list[index]
+
+        # All videos which are descendents of dest_obj must have their
+        #   .file_dir IV updated to the new location
+        for video_obj in source_obj.compile_all_videos( [] ):
+            video_obj.reset_file_dir(self)
+
+        # Save the database (because, if the user terminates Tartube and then
+        #   restarts it, then tries to perform a download operation, a load of
+        #   Python error messages will be generated, complaining that
+        #   directories don't exist)
+        self.save_db()
 
         # Remove the moving object from the Video Index, and put it back there
         #   at its new location
@@ -3259,6 +3426,7 @@ class TartubeApp(Gtk.Application):
                 ' cannot be reversed!',
                 'question',
                 'yes-no',
+                None,                   # Parent window is main window
                 # Arguments passed directly to .delete_container_continue()
                 {
                     'yes': 'delete_container_continue',
@@ -3928,6 +4096,48 @@ class TartubeApp(Gtk.Application):
             utils.open_file(cgi.escape(path, quote=True))
 
 
+    # (Options manager objects)
+
+
+    def reset_options_manager(self, data_list):
+
+        """Called by dialogue.on_clicked(), which was in turn called by
+        config.OptionsEditWin.on_reset_options_clicked().
+
+        Resets the specified download options object, setting its options to
+        their default values.
+
+        Args:
+
+            data_list (list): List of values supplied by the dialogue window.
+                The first is the edit window for the download options object
+                (which must be reset). The second optional value is the media
+                data object to which the download options object belongs.
+
+        """
+
+        edit_win_obj = data_list.pop(0)
+
+        # Replace the old object with a new one, which has the effect of
+        #   resetting its download options to the default values
+        options_obj = options.OptionsManager()
+
+        if data_list:
+
+            # The Download Options object belongs to the specified media data
+            #   object
+            media_data_obj = data_list.pop(0)
+            media_data_obj.set_options_obj(options_obj)
+
+        else:
+
+            # The General Download Options object
+            self.general_options_obj = options_obj
+
+        # Reset the edit window to display the new (default) values
+        edit_win_obj.reset_with_new_edit_obj(options_obj)
+
+
     # Callback class methods (for Gio actions)
 
 
@@ -3980,50 +4190,11 @@ class TartubeApp(Gtk.Application):
     # (Menu item and toolbar button callbacks)
 
 
-    def on_button_catalogue_size(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Changes the size of pages in the video catalogue.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            print('ap 3684 on_button_catalogue_size')
-
-        size = utils.strip_whitespace(
-            self.main_win_obj.catalogue_size_entry.get_text(),
-        )
-
-        if size.isdigit():
-            self.catalogue_page_size = int(size)
-
-            # Need to completely redraw the video catalogue to take account of
-            #   the new page size
-            if self.main_win_obj.video_index_current is not None:
-                self.main_win_obj.video_catalogue_redraw_all(
-                    self.main_win_obj.video_index_current,
-                )
-
-        else:
-            # Invalid value for the catalogue page size, so reset the Gtk.Entry
-            #   to show the existing value for the page size
-            self.main_win_obj.catalogue_size_entry.set_text(
-                str(self.catalogue_page_size),
-            )
-
-
     def on_button_first_page(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Changes the video catalogue page to the first one.
+        Changes the Video Catalogue page to the first one.
 
         Args:
 
@@ -4046,7 +4217,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Changes the video catalogue page to the last one.
+        Changes the Video Catalogue page to the last one.
 
         Args:
 
@@ -4069,7 +4240,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Changes the video catalogue page to the next one.
+        Changes the Video Catalogue page to the next one.
 
         Args:
 
@@ -4092,7 +4263,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Changes the video catalogue page to the previous one.
+        Changes the Video Catalogue page to the previous one.
 
         Args:
 
@@ -4109,6 +4280,47 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_current,
             self.main_win_obj.catalogue_toolbar_current_page - 1,
         )
+
+
+    def on_button_scroll_down(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Scrolls the Video Catalogue page to the bottom.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3689 on_button_scroll_down')
+
+        adjust = self.main_win_obj.catalogue_scrolled.get_vadjustment()
+        adjust.set_value(adjust.get_upper())
+
+
+    def on_button_scroll_up(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Scrolls the Video Catalogue page to the top.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3690 on_button_scroll_up')
+
+        self.main_win_obj.catalogue_scrolled.get_vadjustment().set_value(0)
 
 
     def on_button_stop_operation(self, action, par):
@@ -4169,10 +4381,11 @@ class TartubeApp(Gtk.Application):
             self.catalogue_mode = 'simple_hide_parent'
 
         # Redraw the Video Catalogue, but only if something was already drawn
-        #   there
+        #   there (and keep the current page number)
         if self.main_win_obj.video_index_current is not None:
             self.main_win_obj.video_catalogue_redraw_all(
                 self.main_win_obj.video_index_current,
+                self.main_win_obj.catalogue_toolbar_current_page,
             )
 
 
@@ -4912,6 +5125,14 @@ class TartubeApp(Gtk.Application):
             self.bandwidth_apply_flag = False
         else:
             self.bandwidth_apply_flag = True
+
+
+    def set_catalogue_page_size(self, size):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4434 set_catalogue_page_size')
+
+        self.catalogue_page_size = size
 
 
     def set_complex_index_flag(self, flag):

@@ -1,3 +1,39 @@
+v0.5.0 (1 Jul 2019)
+-------------------------------------------------------------------------------
+
+- On MS Windows, the fix from v0.4.0 to prevent a crash whenever the user tries
+    to change the location of Tartube's data directory, did not work. Fixed it
+    again (#6), and added some dialogue window to make it clearer to the user
+    what is going on
+- Fixed problems with dragging-and-dropping (or otherwise moving) a channel,
+    playlist or folder to a new location (such as another folder). The videos
+    were not updated with their new location. The new code will fix any
+    problems in the Tartube database
+- Fixed numerous problems with the code that sorts videos into the right order,
+    and which displays videos in the Video Catalogue in the right order
+- The 'Switch' button no longer resets the page back to the first one
+- When switching between channels/playlists/folders, scrollbars are
+    automatically moved back to the top
+- In the toolbar beneath the Video Catalogue, there are two new buttons for
+    scrolling to the top or bottom of the visible page. Users can now select
+    a different page just by typing the page number and pressing RETURN. The
+    same applies to the page size - there is no button to click any more, just
+    type the new size and press RETURN
+- Fixed several problems which were still preventing selection of different
+    video formats (#3)
+- Added bare-bones aac, m4a, mp3, ogg and wav as recognised video formats
+- A set of download options can now be completely reset to their default values
+- The 'Add Videos' dialogue window, and some others, don't behave well when the
+    user resizes them. Fixed (#4)
+- Added a small folder icon to the the 'Add Videos' dialogue window, and
+    others, so the user is less likely to forget to set a custom location
+- In the 'Add Videos' dialogue window, and others, URLs are now tidied up a
+    bit because being copied from the clipboard, eliminating leading/trailing
+    whitespace and empty lines
+- The Gtk test window, available for MS Windows after using the installer,
+    now contains some text (to make it clear that the window is working as
+    intended)
+
 v0.4.0 (29 Jun 2019)
 ------------------------------------------------------------------------------
 
@@ -43,7 +79,7 @@ v0.4.0 (29 Jun 2019)
 - Fixed incorrect formatting in the DASH and 3D file formats (#3)
 
 v0.3.0 (25 Jun 2019)
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 - Tartube will now run on MS Windows
 - Fixed some more crashes
@@ -51,7 +87,7 @@ v0.3.0 (25 Jun 2019)
     characters
 
 v0.2.0 (23 Jun 2019)
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 - Corrected old Python2 code to work on Python3
 - Greatly expanded the README file
@@ -62,7 +98,7 @@ v0.2.0 (23 Jun 2019)
 - Several other minor tweaks/fixes
 
 v0.1.0 (27 May 2019)
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 - This is the first public release of Tartube
 

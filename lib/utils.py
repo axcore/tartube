@@ -36,7 +36,7 @@ import textwrap
 
 
 # Import our modules
-from . import constants
+from . import formats
 from . import mainapp
 if mainapp.HAVE_VALIDATORS_FLAG:
     from . import validators
@@ -73,7 +73,10 @@ def add_links_from_clipboard(app_obj, widget):
             if not mainapp.HAVE_VALIDATORS_FLAG \
             or not app_obj.use_module_validators_flag \
             or validators.url(line):
-                valid_list.append(line)
+
+                line = strip_whitespace(line)
+                if re.search('\S', line):
+                    valid_list.append(line)
 
     if valid_list:
         if isinstance(widget, Gtk.Entry):
@@ -322,10 +325,10 @@ def format_bytes(num_bytes):
     if num_bytes == 0.0:
         exponent = 0
     else:
-        exponent = int(math.log(num_bytes, constants.KILO_SIZE))
+        exponent = int(math.log(num_bytes, formats.KILO_SIZE))
 
-    suffix = constants.FILESIZE_METRIC_LIST[exponent]
-    output_value = num_bytes / (constants.KILO_SIZE ** exponent)
+    suffix = formats.FILESIZE_METRIC_LIST[exponent]
+    output_value = num_bytes / (formats.KILO_SIZE ** exponent)
 
     return "%.2f%s" % (output_value, suffix)
 

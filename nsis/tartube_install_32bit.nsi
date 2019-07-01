@@ -1,4 +1,4 @@
-# Tartube v0.4.0 installer script for MS Windows
+# Tartube v0.5.0 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -207,7 +207,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.4.0-32bit.exe"
+    OutFile "install-tartube-0.5.0-32bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -294,7 +294,7 @@ Section "Tartube" SecClient
         "$INSTDIR\tartube_icon.ico"
     # Temporary Start Menu link for bugfixing on MS Windows 10
     CreateShortCut "$SMPROGRAMS\Tartube\Gtk graphics test.lnk" \
-        "$INSTDIR\msys64\home\user\tartube\hello_world_64bit.bat" \
+        "$INSTDIR\msys32\home\user\tartube\hello_world_32bit.bat" \
         "" \
         "$INSTDIR\tartube_icon.ico"
 
@@ -316,7 +316,7 @@ Section "Tartube" SecClient
         "Publisher" "A S Lewis"
     WriteRegStr HKLM \
         "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "DisplayVersion" "0.4.0"
+        "DisplayVersion" "0.5.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

@@ -32,7 +32,7 @@ import os
 
 # Import our modules
 import __main__
-from . import constants
+from . import formats
 from . import mainapp
 from . import media
 from . import utils
@@ -296,6 +296,47 @@ class GenericEditWin(GenericConfigWin):
 
         # The changes can now be cleared
         self.edit_dict = {}
+
+
+    def reset_with_new_edit_obj(self, new_edit_obj):
+
+        """At the moment, only called by
+        mainapp.TartubeApp.reset_options_manager().
+
+        Resets the object whose values are being edited in this window, i.e.
+        self.edit_obj, to the specified object.
+
+        Then redraws the window itself, as if the user had clicked the 'Reset'
+        button at the bottom of the window. This makes new_edit_obj's IVs
+        visible in the edit window, without the need to destroy the old one and
+        replace it with a new one.
+
+        Args:
+
+            new_edit_obj (class): The replacement edit object
+
+        """
+
+        self.edit_obj = new_edit_obj
+
+        # The rest of this function is copied from
+        #   self.on_button_reset_clicked()
+
+        # Remove all existing tabs from the notebook
+        number = self.notebook.get_n_pages()
+        if number:
+
+            for count in range(0, number):
+                self.notebook.remove_page(0)
+
+        # Empty self.edit_dict, destroying any changes the user has made
+        self.edit_dict = {}
+
+        # Re-draw all the tabs
+        self.setup_tabs()
+
+        # Render the changes
+        self.show_all()
 
 
     def retrieve_val(self, name):
@@ -1158,6 +1199,34 @@ class GenericPrefWin(GenericConfigWin):
 #   def setup_gap():            # Inherited from GenericConfigWin
 
 
+    # (Non-widget functions)
+
+
+    def reset_window(self):
+
+        """At the moment, only called by mainapp.TartubeApp.switch_db().
+
+        Redraws the window, without the need to destroy the old one and replace
+        it with a new one.
+        """
+
+        # This code is copied from
+        #   config.GenericEditWin.on_button_reset_clicked()
+
+        # Remove all existing tabs from the notebook
+        number = self.notebook.get_n_pages()
+        if number:
+
+            for count in range(0, number):
+                self.notebook.remove_page(0)
+
+        # Re-draw all the tabs
+        self.setup_tabs()
+
+        # Render the changes
+        self.show_all()
+
+
     # (Add widgets)
 
 
@@ -1678,6 +1747,12 @@ class OptionsEditWin(GenericEditWin):
             0, 4, 2, 1,
         )
 
+        button = Gtk.Button(
+            'Completely reset all download options to their default values',
+        )
+        grid.attach(button, 0, 5, 2, 1)
+        button.connect('clicked', self.on_reset_options_clicked)
+
 
     def setup_files_tab(self):
 
@@ -1702,10 +1777,10 @@ class OptionsEditWin(GenericEditWin):
 
         store = Gtk.ListStore(int, str)
         for num in (0, 1, 2, 4, 5, 3):
-            store.append( [num, constants.FILE_OUTPUT_NAME_DICT[num]] )
+            store.append( [num, formats.FILE_OUTPUT_NAME_DICT[num]] )
 
         current_format = self.edit_obj.options_dict['output_format']
-        current_template = constants.FILE_OUTPUT_CONVERT_DICT[current_format]
+        current_template = formats.FILE_OUTPUT_CONVERT_DICT[current_format]
         if current_format is None:
             current_template = self.edit_obj.options_dict['output_template']
 
@@ -1896,8 +1971,8 @@ class OptionsEditWin(GenericEditWin):
             0, 2, 2, 1,
         )
 
-        for key in constants.VIDEO_OPTION_LIST:
-            liststore.append([constants.VIDEO_OPTION_DICT[key]])
+        for key in formats.VIDEO_OPTION_LIST:
+            liststore.append([key])
 
         button = Gtk.Button('Add format >>>')
         grid.attach(button, 0, 3, 2, 1)
@@ -1911,6 +1986,23 @@ class OptionsEditWin(GenericEditWin):
         treeview2, liststore2 = self.add_treeview(grid,
             2, 2, 2, 1,
         )
+
+        # (Need to reverse formats.VIDEO_OPTION_DICT for quick lookup)
+        rev_dict = {}
+        for key in formats.VIDEO_OPTION_DICT:
+            rev_dict[formats.VIDEO_OPTION_DICT[key]] = key
+
+        # There are three video format options, any or all of which might be
+        #   set
+        val1 = self.retrieve_val('video_format')
+        val2 = self.retrieve_val('second_video_format')
+        val3 = self.retrieve_val('third_video_format')
+        if val1 != '0':
+            liststore2.append([rev_dict[val1]])
+        if val2 != '0':
+            liststore2.append([rev_dict[val2]])
+        if val3 != '0':
+            liststore2.append([rev_dict[val3]])
 
         button2 = Gtk.Button('<<< Remove format')
         grid.attach(button2, 2, 3, 2, 1)
@@ -2059,7 +2151,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_combo_with_data(grid,
-            constants.FILE_SIZE_UNIT_LIST,
+            formats.FILE_SIZE_UNIT_LIST,
             'min_filesize_unit',
             (grid_width - 1), 9, 1, 1,
         )
@@ -2076,7 +2168,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_combo_with_data(grid,
-            constants.FILE_SIZE_UNIT_LIST,
+            formats.FILE_SIZE_UNIT_LIST,
             'max_filesize_unit',
             (grid_width - 1), 10, 1, 1,
         )
@@ -2109,7 +2201,7 @@ class OptionsEditWin(GenericEditWin):
             0, 2, 1, 1,
         )
 
-        combo_list = constants.AUDIO_FORMAT_LIST
+        combo_list = formats.AUDIO_FORMAT_LIST
         combo_list.insert(0, '')
         self.add_combo(grid,
             combo_list,
@@ -2224,7 +2316,7 @@ class OptionsEditWin(GenericEditWin):
         # Signal connect appears below
 
         combo = self.add_combo_with_data(grid,
-            constants.LANGUAGE_CODE_LIST,
+            formats.LANGUAGE_CODE_LIST,
             'subs_lang',
             1, 4, 1, 1,
         )
@@ -2507,7 +2599,7 @@ class OptionsEditWin(GenericEditWin):
 
         else:
             self.file_tab_sensitise_widgets(False)
-            entry.set_text(constants.FILE_OUTPUT_CONVERT_DICT[row_id])
+            entry.set_text(formats.FILE_OUTPUT_CONVERT_DICT[row_id])
 
 
     def on_file_tab_entry_changed(self, entry):
@@ -2549,10 +2641,15 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
+
             # Nothing selected
             return
+
         else:
+
             name = model[iter][0]
+            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; set the first one whose value
         #   is not already 0
@@ -2560,15 +2657,16 @@ class OptionsEditWin(GenericEditWin):
         val2 = self.retrieve_val('second_video_format')
         val3 = self.retrieve_val('third_video_format')
         # Check the user's choice of format hasn't already been added
-        if name == val1 or name == val2 or name == val3:
+        if extract_code == val1 or extract_code == val2 \
+        or extract_code == val3:
             return
 
         if val1 == '0':
-            self.edit_dict['video_format'] = name
+            self.edit_dict['video_format'] = extract_code
         elif val2 == '0':
-            self.edit_dict['second_video_format'] = name
+            self.edit_dict['second_video_format'] = extract_code
         elif val3 == '0':
-            self.edit_dict['third_video_format'] = name
+            self.edit_dict['third_video_format'] = extract_code
             add_button.set_sensitive(False)
         else:
             # 'add_button' should be desensitised, but if clicked, just ignore
@@ -2601,11 +2699,16 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
+
             # Nothing selected
             return
+
         else:
+
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
+            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
         #   of them
@@ -2613,17 +2716,17 @@ class OptionsEditWin(GenericEditWin):
         val2 = self.retrieve_val('second_video_format')
         val3 = self.retrieve_val('third_video_format')
 
-        if name == val3:
+        if extract_code == val3:
             # Can't move the last item down
             return
 
         else:
 
-            if name == val2:
+            if extract_code == val2:
                 self.edit_dict['second_video_format'] = val3
                 self.edit_dict['third_video_format'] = val2
 
-            elif name == val1:
+            elif extract_code == val1:
                 self.edit_dict['video_format'] = val2
                 self.edit_dict['second_video_format'] = val1
 
@@ -2660,10 +2763,15 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
+
             # Nothing selected
             return
+
         else:
+
             name = model[iter][0]
+            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
         #   of them
@@ -2671,14 +2779,14 @@ class OptionsEditWin(GenericEditWin):
         val2 = self.retrieve_val('second_video_format')
         val3 = self.retrieve_val('third_video_format')
 
-        if name == val1:
+        if extract_code == val1:
             self.edit_dict['video_format'] = val2
             self.edit_dict['second_video_format'] = val3
             self.edit_dict['third_video_format'] = '0'
-        elif name == val2:
+        elif extract_code == val2:
             self.edit_dict['second_video_format'] = val3
             self.edit_dict['third_video_format'] = '0'
-        elif name == val3:
+        elif extract_code == val3:
             self.edit_dict['third_video_format'] = '0'
         else:
             # This should not be possible
@@ -2711,11 +2819,16 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
+
             # Nothing selected
             return
+
         else:
+
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
+            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
         #   of them
@@ -2723,17 +2836,17 @@ class OptionsEditWin(GenericEditWin):
         val2 = self.retrieve_val('second_video_format')
         val3 = self.retrieve_val('third_video_format')
 
-        if name == val1:
+        if extract_code == val1:
             # Can't move the first item up
             return
 
         else:
 
-            if name == val2:
+            if extract_code == val2:
                 self.edit_dict['video_format'] = val2
                 self.edit_dict['second_video_format'] = val1
 
-            elif name == val3:
+            elif extract_code == val3:
                 self.edit_dict['second_video_format'] = val3
                 self.edit_dict['third_video_format'] = val2
 
@@ -2746,6 +2859,49 @@ class OptionsEditWin(GenericEditWin):
             model.move_before(
                 model.get_iter(this_path),
                 model.get_iter(prev_path),
+            )
+
+
+    def on_reset_options_clicked(self, button):
+
+        """Called by callback in self.setup_general_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if self.media_data_obj is None:
+
+            # Editing the General Options Manager object
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                'This operation cannot be reversed.\n' \
+                + 'Are you sure you want to continue?',
+                'question',
+                'yes-no',
+                self,           # Parent window is this window
+                {
+                    'yes': 'reset_options_manager',
+                    # (Reset this edit window, if the user clicks 'yes')
+                    'data': [self],
+                },
+            )
+
+        else:
+
+            # Editing an Options Manager object attached to a particular media
+            #   data object
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                'This operation cannot be reversed.\n' \
+                + 'Are you sure you want to continue?',
+                'question',
+                'yes-no',
+                self,           # Parent window is this window
+                {
+                    'yes': 'reset_options_manager',
+                    'data': [self, self.media_data_obj],
+                },
             )
 
 
@@ -4627,7 +4783,7 @@ class SystemPrefWin(GenericPrefWin):
                 Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
             ),
         )
-
+        
         response = dialogue_win.run()
         if response == Gtk.ResponseType.OK:
             new_path = dialogue_win.get_filename()
@@ -4635,10 +4791,51 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win.destroy()
 
         if response == Gtk.ResponseType.OK:
-            self.app_obj.switch_db(new_path)
-            entry.set_text(self.app_obj.data_dir)
-            if self.app_obj.disable_load_save_flag:
-                button.set_sensitive(False)
+
+            # In the past, I accidentally created a new database directory
+            #   just inside an existing one, rather than switching to the
+            #   existing one
+            # If no database file exists, prompt the user to create a new one
+            db_path = os.path.join(new_path, self.app_obj.db_file_name)
+            if not os.path.isfile(db_path):
+            
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    'Are you sure you want to create\na new database at this' \
+                    + ' location?\n\n' + new_path,
+                    'question',
+                    'yes-no',
+                    self,           # Parent window is this window
+                    {
+                        'yes': 'switch_db',
+                        'data': [new_path, self],              
+                    },
+                )
+
+            # Database file already exists, so load it now
+            elif not self.app_obj.switch_db(new_path):
+
+                if self.app_obj.disable_load_save_flag:
+                    button.set_sensitive(False)
+                    
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    'Database file not loaded',
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+            else:
+
+                entry.set_text(self.app_obj.data_dir)
+                if self.app_obj.disable_load_save_flag:
+                    button.set_sensitive(False)
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    'Database file loaded',
+                    'info',
+                    'ok',
+                    self,           # Parent window is this window
+                )
 
 
     def on_dialogue_button_toggled(self, checkbutton):

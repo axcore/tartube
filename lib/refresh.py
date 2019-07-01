@@ -30,7 +30,7 @@ import threading
 
 
 # Import our modules
-from . import constants
+from . import formats
 from . import media
 
 
@@ -147,7 +147,7 @@ class RefreshManager(threading.Thread):
             filename, ext = os.path.splitext(rel_path)
             # (Remove the initial .)
             ext = ext[1:]
-            if ext in constants.VIDEO_FORMAT_DICT:
+            if ext in formats.VIDEO_FORMAT_DICT:
                 file_list.append(rel_path)
 
         # Compile a dictionary of video objects in this channel/playlist/folder

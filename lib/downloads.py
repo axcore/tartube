@@ -41,7 +41,7 @@ import time
 
 
 # Import our modules
-from . import constants
+from . import formats
 from . import mainapp
 from . import media
 from . import options
@@ -191,7 +191,7 @@ class DownloadManager(threading.Thread):
             download_item_obj = self.download_list_obj.fetch_next_item()
 
             # Exit this loop when there are no more downloads.DownloadItem
-            #   objects whose .status is constants.MAIN_STAGE_QUEUED, and when
+            #   objects whose .status is formats.MAIN_STAGE_QUEUED, and when
             #   all workers have finished their downloads
             # Otherwise, wait for an available downloads.DownloadWorker, and
             #   then assign the next downloads.DownloadItem to it
@@ -217,7 +217,7 @@ class DownloadManager(threading.Thread):
                         #   downloads.DownloadItem
                         self.download_list_obj.change_item_stage(
                             download_item_obj.dbid,
-                            constants.MAIN_STAGE_ACTIVE,
+                            formats.MAIN_STAGE_ACTIVE,
                         )
                         # Update the main window's progress bar
                         self.job_count += 1
@@ -784,7 +784,7 @@ class DownloadList(object):
             dbid (int): The specified item's .dbid
 
             new_stage: The new download stage, one of the values imported from
-                constants.py (e.g. constants.MAIN_STAGE_QUEUED)
+                formats.py (e.g. formats.MAIN_STAGE_QUEUED)
 
         """
 
@@ -897,8 +897,8 @@ class DownloadList(object):
         for dbid in self.download_item_list:
             this_item = self.download_item_dict[dbid]
 
-            # Don't return an item that's marked as constants.MAIN_STAGE_ACTIVE
-            if this_item.stage == constants.MAIN_STAGE_QUEUED:
+            # Don't return an item that's marked as formats.MAIN_STAGE_ACTIVE
+            if this_item.stage == formats.MAIN_STAGE_QUEUED:
                 return this_item
 
         return None
@@ -983,7 +983,7 @@ class DownloadItem(object):
         # A unique ID for this object
         self.dbid = dbid
         # The current download stage
-        self.stage = constants.MAIN_STAGE_QUEUED
+        self.stage = formats.MAIN_STAGE_QUEUED
 
 
 class VideoDownloader(object):
@@ -1255,9 +1255,9 @@ class VideoDownloader(object):
                     #   standard format, specified in the comments for
                     #   self.extract_stdout_data()
                     dl_stat_dict = self.extract_stdout_data(stdout)
-                    # If the job's status is constants.COMPLETED_STAGE_ALREADY
-                    #   or constants.ERROR_STAGE_ABORT, set our
-                    #   self.return_code IV
+                    # If the job's status is formats.COMPLETED_STAGE_ALREADY
+                    #   or formats.ERROR_STAGE_ABORT, set our self.return_code
+                    #   IV
                     self.extract_stdout_status(dl_stat_dict)
                     # Pass the dictionary on to self.download_worker_obj so the
                     #   main window can be updated
@@ -1588,6 +1588,7 @@ class VideoDownloader(object):
                 path,
                 filename,
                 extension,
+                True,               # Don't sort parent containers yet
             )
 
             # Update its IVs with the JSON information we extracted
@@ -1614,6 +1615,10 @@ class VideoDownloader(object):
             if isinstance(video_obj.parent_obj, media.Playlist) \
             and playlist_index is not None:
                 video_obj.set_index(playlist_index)
+
+            # Now we can sort the parent containers
+            video_obj.parent_obj.sort_children()
+            app_obj.fixed_all_folder.sort_children()
 
         else:
 
@@ -1887,7 +1892,7 @@ class VideoDownloader(object):
         stdout_list[0] = stdout_list[0].lstrip('\r')
         if stdout_list[0] == '[download]':
 
-            dl_stat_dict['status'] = constants.ACTIVE_STAGE_DOWNLOAD
+            dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
 
             # Get path, filename and extension
             if stdout_list[1] == 'Destination:':
@@ -1948,7 +1953,7 @@ class VideoDownloader(object):
 
             # Get file already downloaded status
             if stdout_list[-1] == 'downloaded':
-                dl_stat_dict['status'] = constants.COMPLETED_STAGE_ALREADY
+                dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
                 path, filename, extension = self.extract_filename(
                     ' '.join(stdout_with_spaces_list[1:-4]),
                 )
@@ -1962,14 +1967,14 @@ class VideoDownloader(object):
 
             # Get filesize abort status
             if stdout_list[-1] == 'Aborting.':
-                dl_stat_dict['status'] = constants.ERROR_STAGE_ABORT
+                dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
 
         elif stdout_list[0] == '[hlsnative]':
 
             # Get information from the native HLS extractor (see
             #   https://github.com/rg3/youtube-dl/blob/master/youtube_dl/
             #       downloader/hls.py#L54
-            dl_stat_dict['status'] = constants.ACTIVE_STAGE_DOWNLOAD
+            dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
 
             if len(stdout_list) == 7:
                 segment_no = float(stdout_list[6])
@@ -1985,7 +1990,7 @@ class VideoDownloader(object):
             # A successful video download is announced in one of several ways.
             #   Use the first announcement to update self.video_check_dict, and
             #   ignore subsequent announcements
-            dl_stat_dict['status'] = constants.ACTIVE_STAGE_POST_PROCESS
+            dl_stat_dict['status'] = formats.ACTIVE_STAGE_POST_PROCESS
 
             # Get the final file extension after the merging process has
             #   completed
@@ -2052,7 +2057,7 @@ class VideoDownloader(object):
                 self.video_total += 1
                 dl_stat_dict['playlist_size'] = self.video_total
 
-                dl_stat_dict['status'] = constants.ACTIVE_STAGE_CHECKING
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
 
         elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
 
@@ -2062,7 +2067,7 @@ class VideoDownloader(object):
         else:
 
             # The download has started
-            dl_stat_dict['status'] = constants.ACTIVE_STAGE_PRE_PROCESS
+            dl_stat_dict['status'] = formats.ACTIVE_STAGE_PRE_PROCESS
 
         return dl_stat_dict
 
@@ -2074,8 +2079,8 @@ class VideoDownloader(object):
 
         Based on YoutubeDLDownloader._extract_info().
 
-        If the job's status is constants.COMPLETED_STAGE_ALREADY or
-        constants.ERROR_STAGE_ABORT, translate that into a new value for the
+        If the job's status is formats.COMPLETED_STAGE_ALREADY or
+        formats.ERROR_STAGE_ABORT, translate that into a new value for the
         return code, and then use that value to actually set self.return_code
         (which halts the download).
 
@@ -2091,11 +2096,11 @@ class VideoDownloader(object):
             print('dl 1969 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
-            if dl_stat_dict['status'] == constants.COMPLETED_STAGE_ALREADY:
+            if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
                 self.set_return_code(self.ALREADY)
                 dl_stat_dict['status'] = None
 
-            if dl_stat_dict['status'] == constants.ERROR_STAGE_ABORT:
+            if dl_stat_dict['status'] == formats.ERROR_STAGE_ABORT:
                 self.set_return_code(self.FILESIZE_ABORT)
                 dl_stat_dict['status'] = None
 
@@ -2269,23 +2274,23 @@ class VideoDownloader(object):
         dl_stat_dict = {}
 
         if self.return_code == self.OK:
-            dl_stat_dict['status'] = constants.COMPLETED_STAGE_FINISHED
+            dl_stat_dict['status'] = formats.COMPLETED_STAGE_FINISHED
         elif self.return_code == self.ERROR:
-            dl_stat_dict['status'] = constants.MAIN_STAGE_ERROR
+            dl_stat_dict['status'] = formats.MAIN_STAGE_ERROR
             dl_stat_dict['eta'] = ''
             dl_stat_dict['speed'] = ''
         elif self.return_code == self.WARNING:
-            dl_stat_dict['status'] = constants.COMPLETED_STAGE_WARNING
+            dl_stat_dict['status'] = formats.COMPLETED_STAGE_WARNING
             dl_stat_dict['eta'] = ''
             dl_stat_dict['speed'] = ''
         elif self.return_code == self.STOPPED:
-            dl_stat_dict['status'] = constants.ERROR_STAGE_STOPPED
+            dl_stat_dict['status'] = formats.ERROR_STAGE_STOPPED
             dl_stat_dict['eta'] = ''
             dl_stat_dict['speed'] = ''
         elif self.return_code == self.ALREADY:
-            dl_stat_dict['status'] = constants.COMPLETED_STAGE_ALREADY
+            dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
         else:
-            dl_stat_dict['status'] = constants.ERROR_STAGE_ABORT
+            dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
 
         # Use some empty values in dl_stat_dict so that the Progress Tab
         #   doesn't show arbitrary data from the last file downloaded

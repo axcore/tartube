@@ -40,7 +40,7 @@ import time
 
 # Import our modules
 from . import config
-from . import constants
+from . import formats
 #from . import __main__
 import __main__
 from . import mainapp
@@ -121,18 +121,20 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_sortmodel = None       # Gtk.TreeModelSort
         self.check_button = None                # Gtk.Button
         self.download_button = None             # Gtk.Button
-        self.video_catalogue_scrolled = None    # Gtk.ScrolledWindow
-        self.video_catalogue_frame = None       # Gtk.Frame
-        self.video_catalogue_listbox = None     # Gtk.ListBox
+        self.catalogue_scrolled = None          # Gtk.ScrolledWindow
+        self.catalogue_frame = None             # Gtk.Frame
+        self.catalogue_listbox = None           # Gtk.ListBox
         self.catalogue_toolbar = None           # Gtk.Toolbar
         self.catalogue_page_entry = None        # Gtk.Entry
         self.catalogue_last_entry = None        # Gtk.Entry
-        self.catalogue_size_entry = None        # Gtk.Entry
-        self.catalogue_size_button = None       # Gtk.ToolButton
         self.catalogue_first_button = None      # Gtk.ToolButton
         self.catalogue_back_button = None       # Gtk.ToolButton
         self.catalogue_forwards_button = None   # Gtk.ToolButton
         self.catalogue_last_button = None       # Gtk.ToolButton
+        self.catalogue_size_entry = None        # Gtk.Entry
+        self.catalogue_scroll_up_button = None  # Gtk.ToolButton
+        self.catalogue_scroll_down_button = None
+                                                # Gtk.ToolButton
         # (from self.setup_progress_tab)
         self.progress_paned = None              # Gtk.VPaned
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
@@ -241,6 +243,17 @@ class MainWin(Gtk.ApplicationWindow):
         # Temporary solution is to disable auto-sorting during calls to that
         #   function
         self.video_index_no_sort_flag = False
+        # The name of the channel, playlist or folder currently visible in the
+        #   Video Catalogue (None if no channel, playlist or folder is
+        #   selected)
+        self.video_index_current = None
+        # Flag set to True when the currently visible item is a private folder
+        #   (media.Folder.priv_flag is True), set to False at all other times
+        self.video_index_current_priv_flag = False
+        # Don't update the Video Catalogue during certain procedures, such as
+        #   removing a row from the Video Index (in which case, this flag will
+        #   be set to True
+        self.ignore_video_index_select_flag = False
 
         # The Video Catalogue is the right-hand side of the main window. When
         #   the user clicks on a channel, playlist or folder, all the videos
@@ -257,10 +270,6 @@ class MainWin(Gtk.ApplicationWindow):
         #       media.Video object)
         #   value = the catalogue item itself
         self.video_catalogue_dict = {}
-        # An ordered list of .dbid IVs for all mainwin.SimpleCatalogueItem or
-        #   mainwin.ComplexCatalogueItem objects (in the order they're
-        #   displayed)
-        self.video_catalogue_list = []
 
         # The video catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
@@ -349,16 +358,6 @@ class MainWin(Gtk.ApplicationWindow):
         #   visible one)
         self.visible_tab_num = 0
 
-        # State variables
-        # The name of the channel, playlist or folder currently visible in the
-        #   Video Catalogue (None if no channel, playlist or folder is
-        #   selected)
-        self.video_index_current = None
-        # Don't update the Video Catalogue during certain procedures, such as
-        #   removing a row from the Video Index (in which case, this flag will
-        #   be set to True
-        self.ignore_video_index_select_flag = False
-
 
         # Code
         # ----
@@ -377,24 +376,24 @@ class MainWin(Gtk.ApplicationWindow):
         """Called by self.__init__().
 
         Populates self.icon_dict and self.pixbuf.dict from the lists provided
-        by constants.py.
+        by formats.py.
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 361 setup_pixbufs')
 
-        for key in constants.DIALOGUE_ICON_DICT:
-            rel_path = constants.DIALOGUE_ICON_DICT[key]
+        for key in formats.DIALOGUE_ICON_DICT:
+            rel_path = formats.DIALOGUE_ICON_DICT[key]
             full_path = os.path.join('icons', 'dialogue', rel_path)
             self.icon_dict[key] = full_path
 
-        for key in constants.LARGE_ICON_DICT:
-            rel_path = constants.LARGE_ICON_DICT[key]
+        for key in formats.LARGE_ICON_DICT:
+            rel_path = formats.LARGE_ICON_DICT[key]
             full_path = os.path.join('icons', 'large', rel_path)
             self.icon_dict[key] = full_path
 
-        for key in constants.SMALL_ICON_DICT:
-            rel_path = constants.SMALL_ICON_DICT[key]
+        for key in formats.SMALL_ICON_DICT:
+            rel_path = formats.SMALL_ICON_DICT[key]
             full_path = os.path.join('icons', 'small', rel_path)
             self.icon_dict[key] = full_path
 
@@ -407,7 +406,7 @@ class MainWin(Gtk.ApplicationWindow):
                 self.pixbuf_dict[key] \
                 = GdkPixbuf.Pixbuf.new_from_file(full_path)
 
-        for rel_path in constants.WIN_ICON_LIST:
+        for rel_path in formats.WIN_ICON_LIST:
             full_path = os.path.join('icons', 'win', rel_path)
             self.win_pixbuf_list.append(
                 GdkPixbuf.Pixbuf.new_from_file(full_path),
@@ -807,17 +806,15 @@ class MainWin(Gtk.ApplicationWindow):
         self.videos_paned.add2(vbox2)
 
         # Video catalogue
-        self.video_catalogue_scrolled = Gtk.ScrolledWindow()
-        vbox2.pack_start(self.video_catalogue_scrolled, True, True, 0)
-        self.video_catalogue_scrolled.set_policy(
+        self.catalogue_scrolled = Gtk.ScrolledWindow()
+        vbox2.pack_start(self.catalogue_scrolled, True, True, 0)
+        self.catalogue_scrolled.set_policy(
             Gtk.PolicyType.AUTOMATIC,
             Gtk.PolicyType.AUTOMATIC,
         )
 
-        self.video_catalogue_frame = Gtk.Frame()
-        self.video_catalogue_scrolled.add_with_viewport(
-            self.video_catalogue_frame,
-        )
+        self.catalogue_frame = Gtk.Frame()
+        self.catalogue_scrolled.add_with_viewport(self.catalogue_frame)
 
         # Video catalogue toolbar
         self.catalogue_toolbar = Gtk.Toolbar()
@@ -836,7 +833,10 @@ class MainWin(Gtk.ApplicationWindow):
             str(self.catalogue_toolbar_current_page),
         )
         self.catalogue_page_entry.set_width_chars(4)
-        self.catalogue_page_entry.set_editable(False)
+        self.catalogue_page_entry.connect(
+            'activate',
+            self.on_video_catalogue_page_entry_activated,
+        )
 
         toolitem3 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem3, -1)
@@ -852,29 +852,6 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.catalogue_last_entry.set_width_chars(4)
         self.catalogue_last_entry.set_editable(False)
-
-        self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
-
-        toolitem5 = Gtk.ToolItem.new()
-        self.catalogue_toolbar.insert(toolitem5, -1)
-        label3 = Gtk.Label('  Page size  ')
-        toolitem5.add(label3)
-
-        toolitem6 = Gtk.ToolItem.new()
-        self.catalogue_toolbar.insert(toolitem6, -1)
-        self.catalogue_size_entry = Gtk.Entry()
-        toolitem6.add(self.catalogue_size_entry)
-        self.catalogue_size_entry.set_text(
-            str(self.app_obj.catalogue_page_size),
-        )
-        self.catalogue_size_entry.set_width_chars(4)
-
-        self.catalogue_size_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_EDIT)
-        self.catalogue_toolbar.insert(self.catalogue_size_button, -1)
-        self.catalogue_size_button.set_action_name(
-            'app.catalogue_size_toolbutton',
-        )
 
         self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
@@ -908,6 +885,42 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_last_button.set_sensitive(False)
         self.catalogue_last_button.set_action_name(
             'app.last_page_toolbutton',
+        )
+
+        self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+
+        toolitem5 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem5, -1)
+        label3 = Gtk.Label('  Page size  ')
+        toolitem5.add(label3)
+
+        toolitem6 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem6, -1)
+        self.catalogue_size_entry = Gtk.Entry()
+        toolitem6.add(self.catalogue_size_entry)
+        self.catalogue_size_entry.set_text(
+            str(self.app_obj.catalogue_page_size),
+        )
+        self.catalogue_size_entry.set_width_chars(4)
+        self.catalogue_size_entry.connect(
+            'activate',
+            self.on_video_catalogue_size_entry_activated,
+        )
+
+        self.catalogue_scroll_up_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_UP)
+        self.catalogue_toolbar.insert(self.catalogue_scroll_up_button, -1)
+        self.catalogue_scroll_up_button.set_sensitive(False)
+        self.catalogue_scroll_up_button.set_action_name(
+            'app.scroll_up_toolbutton',
+        )
+
+        self.catalogue_scroll_down_button \
+        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_DOWN)
+        self.catalogue_toolbar.insert(self.catalogue_scroll_down_button, -1)
+        self.catalogue_scroll_down_button.set_sensitive(False)
+        self.catalogue_scroll_down_button.set_action_name(
+            'app.scroll_down_toolbutton',
         )
 
         # Video catalogue
@@ -1547,24 +1560,39 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Sort videos by playlist index (if set), then by upload time, and then
         #   by receive (download) time
-        if obj1.index is not None and obj2.index is not None:
+        # The video's index is not relevant unless sorting a playlist
+        if isinstance(obj1.parent_obj, media.Playlist) \
+        and obj1.parent_obj == obj2.parent_obj \
+        and obj1.index is not None and obj2.index is not None:
             if obj1.index < obj2.index:
                 return -1
             else:
                 return 1
         elif obj1.upload_time is not None and obj2.upload_time is not None:
-            if obj1.upload_time < obj2.upload_time:
-                return 1
-            elif obj1.upload_time == obj2.upload_time:
-                if obj1.receive_time < obj2.receive_time:
-                    return -1
-                elif obj1.receive_time == obj2.receive_time:
-                    return 0
-                else:
-                    return 1
-            else:
+            if obj1.upload_time > obj2.upload_time:
                 return -1
-
+            elif obj1.upload_time < obj2.upload_time:
+                return 1
+            else:
+                # In private folders (e.g. 'All Videos'), the most recently
+                #   received video goes to the top of the list
+                if self.video_index_current_priv_flag:
+                    if obj1.receive_time > obj2.receive_time:
+                        return -1
+                    elif obj1.receive_time < obj2.receive_time:
+                        return 1
+                    else:
+                        return 0
+                # ...but for everything else, the sorting algorithm is the same
+                #   as for media.GenericRemoteContainer.do_sort(), in which we
+                #   assume the website is sending us videos, newest first
+                else:
+                    if obj1.receive_time < obj2.receive_time:
+                        return -1
+                    elif obj1.receive_time > obj2.receive_time:
+                        return 1
+                    else:
+                        return 0
         else:
             return 0
 
@@ -2551,28 +2579,25 @@ class MainWin(Gtk.ApplicationWindow):
             print('mw 2447 video_catalogue_reset')
 
         # If not called by self.setup_videos_tab()...
-        if self.video_catalogue_listbox:
-            self.video_catalogue_frame.remove(
-                self.video_catalogue_frame.get_child(),
-            )
+        if self.catalogue_listbox:
+            self.catalogue_frame.remove(self.catalogue_frame.get_child())
 
         # Reset IVs (when called by anything)
-        self.video_catalogue_list = []
         self.video_catalogue_dict = {}
 
         # Set up the widgets
         listbox = Gtk.ListBox()
-        self.video_catalogue_frame.add(listbox)
-        self.video_catalogue_listbox = listbox
+        self.catalogue_frame.add(listbox)
+        self.catalogue_listbox = listbox
 
-        self.video_catalogue_listbox.set_sort_func(
+        self.catalogue_listbox.set_sort_func(
             self.video_catalogue_auto_sort,
             None,
             False,
         )
 
         # Make the changes visible
-        self.video_catalogue_frame.show_all()
+        self.catalogue_frame.show_all()
 
 
     def video_catalogue_redraw_all(self, name, page_num=1):
@@ -2622,6 +2647,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 2505 video_catalogue_redraw_all')
+
+        # If actually switching to a different channel/playlist/folder, or a
+        #   different page on the same channel/playlist/folder, must reset the
+        #   scrollbars later in the function
+        if self.video_index_current is None \
+        or self.video_index_current != name \
+        or self.catalogue_toolbar_current_page != page_num:
+            reset_scroll_flag = True
+        else:
+            reset_scroll_flag = False
 
         # The parent media data object is a media.Channel, media.playlist or
         #   media.Folder object
@@ -2682,7 +2717,6 @@ class MainWin(Gtk.ApplicationWindow):
                         child_obj,
                     )
 
-                self.video_catalogue_list.append(catalogue_item_obj.dbid)
                 self.video_catalogue_dict[catalogue_item_obj.dbid] = \
                 catalogue_item_obj
 
@@ -2691,7 +2725,7 @@ class MainWin(Gtk.ApplicationWindow):
                 # Instead of using Gtk.ListBoxRow directly, use a wrapper class
                 #   so we can quickly retrieve the video displayed on each row
                 wrapper_obj = CatalogueRow(child_obj)
-                self.video_catalogue_listbox.add(wrapper_obj)
+                self.catalogue_listbox.add(wrapper_obj)
 
                 # Populate the row with widgets...
                 catalogue_item_obj.draw_widgets(wrapper_obj)
@@ -2702,8 +2736,15 @@ class MainWin(Gtk.ApplicationWindow):
         #   videos
         self.video_catalogue_toolbar_update(page_num, video_count)
 
+        # In cases, sensitise the scroll up/down toolbar buttons
+        self.catalogue_scroll_up_button.set_sensitive(True)
+        self.catalogue_scroll_down_button.set_sensitive(True)
+        # Reset the scrollbar, if required
+        if reset_scroll_flag:
+            self.catalogue_scrolled.get_vadjustment().set_value(0)
+
         # Procedure complete
-        self.video_catalogue_listbox.show_all()
+        self.catalogue_listbox.show_all()
 
 
     def video_catalogue_update_row(self, video_obj):
@@ -2787,20 +2828,13 @@ class MainWin(Gtk.ApplicationWindow):
                 # If the page size is 0, then all videos are drawn on one page
                 if page_size and len(self.video_catalogue_dict) >= page_size:
 
-                    last_obj = None
-                    for other_obj in self.video_catalogue_dict.values():
-                        if last_obj is None or other_obj.dbid > last_obj.dbid:
-                            last_obj = other_obj
-
-                    if last_obj:
-
-                        self.video_catalogue_listbox.remove(
-                            last_obj.catalogue_row,
-                        )
-
-                        index = self.video_catalogue_list.index(last_obj.dbid)
-                        del self.video_catalogue_list[index]
-                        del self.video_catalogue_dict[last_obj.dbid]
+                    # Get the last mainwin.CatalogueRow object directly from
+                    #   the Gtk listbox, as it is auto-sorted frequently
+                    row_list = self.catalogue_listbox.get_children()
+                    last_row = row_list[-1]
+                    if last_row:
+                        self.catalogue_listbox.remove(last_row)
+                        del self.video_catalogue_dict[last_row.video_obj.dbid]
 
                 # Create a new catalogue item object
                 if self.app_obj.catalogue_mode == 'simple_hide_parent' \
@@ -2817,7 +2851,6 @@ class MainWin(Gtk.ApplicationWindow):
                         video_obj,
                     )
 
-                self.video_catalogue_list.append(catalogue_item_obj.dbid)
                 self.video_catalogue_dict[catalogue_item_obj.dbid] \
                 = catalogue_item_obj
 
@@ -2826,7 +2859,7 @@ class MainWin(Gtk.ApplicationWindow):
                 # Instead of using Gtk.ListBoxRow directly, use a wrapper class
                 #   so we can quickly retrieve the video displayed on each row
                 wrapper_obj = CatalogueRow(video_obj)
-                self.video_catalogue_listbox.add(wrapper_obj)
+                self.catalogue_listbox.add(wrapper_obj)
 
                 # Populate the row with widgets...
                 catalogue_item_obj.draw_widgets(wrapper_obj)
@@ -2841,10 +2874,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Force the Gtk.ListBox to sort its rows, so that videos are displayed
         #   in the correct order
-        self.video_catalogue_listbox.invalidate_sort()
+        self.catalogue_listbox.invalidate_sort()
 
         # Procedure complete
-        self.video_catalogue_listbox.show_all()
+        self.catalogue_listbox.show_all()
 
 
     def video_catalogue_delete_row(self, video_obj):
@@ -2888,23 +2921,9 @@ class MainWin(Gtk.ApplicationWindow):
             catalogue_item_obj = self.video_catalogue_dict[video_obj.dbid]
 
             # Remove the row from the Gtk.ListBox
-            self.video_catalogue_listbox.remove(
-                catalogue_item_obj.catalogue_row,
-            )
+            self.catalogue_listbox.remove(catalogue_item_obj.catalogue_row)
 
             # Update IVs
-            try:
-                index = self.video_catalogue_list.index(
-                    catalogue_item_obj.dbid,
-                )
-
-            except:
-                return self.app_obj.system_error(
-                    212,
-                    'Could not find row to delete in Video Catalogue',
-                )
-
-            del self.video_catalogue_list[index]
             del self.video_catalogue_dict[video_obj.dbid]
 
             # If the current page is not the last one, we can create a new
@@ -2912,22 +2931,23 @@ class MainWin(Gtk.ApplicationWindow):
             move_obj = None
             dbid = self.app_obj.media_name_dict[self.video_index_current]
             container_obj = self.app_obj.media_reg_dict[dbid]
+            video_count = 0
 
             if self.video_catalogue_dict \
             and self.catalogue_toolbar_current_page \
             < self.catalogue_toolbar_last_page:
 
-                # Find the last catalogue item on this page
-                last_obj = None
-                for other_obj in self.video_catalogue_dict.values():
-                    if not last_obj or other_obj.dbid > last_obj.dbid:
-                        last_obj = other_obj
+                # Get the last mainwin.CatalogueRow object directly from the
+                #   Gtk listbox, as it is auto-sorted frequently
+                row_list = self.catalogue_listbox.get_children()
+                last_row = row_list[-1]
+                if last_row:
+                    last_obj = last_row.video_obj
 
                 # Find the video object that would be drawn after that, if the
                 #   videos were all drawn on a single page
                 # At the same time, count the number of remaining child video
                 #   objects so we can update the toolbar
-                video_count = 0
                 next_flag = False
 
                 for child_obj in container_obj.child_list:
@@ -2962,7 +2982,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
             # Procedure complete
-            self.video_catalogue_listbox.show_all()
+            self.catalogue_listbox.show_all()
 
 
     def video_catalogue_popup_menu(self, event, video_obj):
@@ -4628,10 +4648,21 @@ class MainWin(Gtk.ApplicationWindow):
 
             if iter is None:
                 self.video_index_current = None
+                self.video_index_current_priv_flag = False
                 self.video_catalogue_reset()
+
             else:
                 self.video_index_current = name
                 self.video_catalogue_redraw_all(name)
+
+                dbid = self.app_obj.media_name_dict[name]
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+
+                if isinstance(media_data_obj, media.Folder) \
+                and media_data_obj.priv_flag:
+                    self.video_index_current_priv_flag = True
+                else:
+                    self.video_index_current_priv_flag = False
 
 
     def on_video_index_show_downloads(self, menu_item, media_data_obj):
@@ -4861,6 +4892,40 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_update_row(media_data_obj)
 
 
+    def on_video_catalogue_page_entry_activated(self, entry):
+
+        """Called from a callback in self.setup_videos_tab().
+
+        Switches to a different page in the Video Catalogue (or re-inserts the
+        current page number, if the user typed an invalid page number).
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4520 on_video_catalogue_size_entry_activated')
+
+        page_num = utils.strip_whitespace(entry.get_text())
+
+        if self.video_index_current is None \
+        or not page_num.isdigit() \
+        or int(page_num) < 1 \
+        or int(page_num) > self.catalogue_toolbar_last_page:
+            # Invalid page number, so reinsert the number of the page that's
+            #   actually visible
+            entry.set_text(str(self.catalogue_toolbar_current_page))
+
+        else:
+            # Switch to a different page
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                int(page_num),
+            )
+
+
     def on_video_catalogue_re_download(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_catalogue_popup_menu().
@@ -4934,6 +4999,37 @@ class MainWin(Gtk.ApplicationWindow):
         media_data_obj.set_options_obj(None)
         # Update the video catalogue to show the right icon
         self.video_catalogue_update_row(media_data_obj)
+
+
+    def on_video_catalogue_size_entry_activated(self, entry):
+
+        """Called from a callback in self.setup_videos_tab().
+
+        Sets the page size, and redraws the Video Catalogue (with the first
+        page visible).
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4602 on_video_catalogue_size_entry_activated')
+
+        size = utils.strip_whitespace(entry.get_text())
+
+        if size.isdigit():
+            self.app_obj.set_catalogue_page_size(int(size))
+
+            # Need to completely redraw the video catalogue to take account of
+            #   the new page size
+            if self.video_index_current is not None:
+                self.video_catalogue_redraw_all(self.video_index_current, 1)
+
+        else:
+            # Invalid page size, so reinsert the size that's already visible
+            entry.set_text(str(self.catalogue_page_size))
 
 
     def on_video_catalogue_show_properties(self, menu_item, media_data_obj):
@@ -6361,7 +6457,7 @@ class AddVideoDialogue(Gtk.Dialog):
             self,
             'Add videos',
             main_win_obj,
-            0,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -6378,10 +6474,10 @@ class AddVideoDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label('Copy and paste the links to one or more videos')
-        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(label, 0, 0, 2, 1)
 
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 1, 1, 1)
+        grid.attach(frame, 0, 1, 2, 1)
 
         scrolledwindow = Gtk.ScrolledWindow()
         frame.add(scrolledwindow)
@@ -6390,28 +6486,29 @@ class AddVideoDialogue(Gtk.Dialog):
 
         textview = Gtk.TextView()
         scrolledwindow.add(textview)
+        textview.set_hexpand(True)
 
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.textbuffer = textview.get_buffer()
 
         separator = Gtk.HSeparator()
-        grid.attach(separator, 0, 2, 1, 1)
+        grid.attach(separator, 0, 2, 2, 1)
 
         self.button = Gtk.RadioButton.new_with_label_from_widget(
             None,
             'I want to download these videos automatically',
         )
-        grid.attach(self.button, 0, 3, 1, 1)
+        grid.attach(self.button, 0, 3, 2, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)
         self.button2.set_label(
             'Don\'t download anything, just check the videos',
         )
-        grid.attach(self.button2, 0, 4, 1, 1)
+        grid.attach(self.button2, 0, 4, 2, 1)
 
         separator2 = Gtk.HSeparator()
-        grid.attach(separator2, 0, 5, 1, 1)
+        grid.attach(separator2, 0, 5, 2, 1)
 
         # (There are two fixed folders always at the top of this list)
         self.folder_list = []
@@ -6428,14 +6525,27 @@ class AddVideoDialogue(Gtk.Dialog):
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
 
         label2 = Gtk.Label('Add the videos to this folder')
-        grid.attach(label2, 0, 6, 1, 1)
+        grid.attach(label2, 0, 6, 2, 1)
+
+        box = Gtk.Box()
+        grid.attach(box, 0, 7, 1, 1)
+        box.set_border_width(main_win_obj.spacing_size)
+
+        image = Gtk.Image()
+        box.add(image)
+        image.set_from_pixbuf(
+            main_win_obj.app_obj.file_manager_obj.load_to_pixbuf(
+                main_win_obj.icon_dict['folder_small']
+            ),
+        )
 
         listmodel = Gtk.ListStore(str)
         for item in self.folder_list:
             listmodel.append([item])
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 0, 7, 1, 1)
+        grid.attach(combo, 1, 7, 1, 1)
+        combo.set_hexpand(True)
 
         cell = Gtk.CellRendererText()
         combo.pack_start(cell, False)
@@ -6496,7 +6606,7 @@ class AddChannelDialogue(Gtk.Dialog):
             self,
             'Add channel',
             main_win_obj,
-            0,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -6513,9 +6623,9 @@ class AddChannelDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label('Enter the channel name')
-        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(label, 0, 0, 2, 1)
         label2 = Gtk.Label()
-        grid.attach(label2, 0, 1, 1, 1)
+        grid.attach(label2, 0, 1, 2, 1)
         label2.set_markup(
             '<i>(Use the channel\'s real name or a customised name)</i>',
         )
@@ -6523,30 +6633,30 @@ class AddChannelDialogue(Gtk.Dialog):
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 2, 1, 1)
+        grid.attach(self.entry, 0, 2, 2, 1)
         self.entry.set_hexpand(True)
 
         label3 = Gtk.Label('Copy and paste a link to the channel')
-        grid.attach(label3, 0, 3, 1, 1)
+        grid.attach(label3, 0, 3, 2, 1)
 
         self.entry2 = Gtk.Entry()
-        grid.attach(self.entry2, 0, 4, 1, 1)
+        grid.attach(self.entry2, 0, 4, 2, 1)
         self.entry2.set_hexpand(True)
 
         separator = Gtk.HSeparator()
-        grid.attach(separator, 0, 5, 1, 1)
+        grid.attach(separator, 0, 5, 2, 1)
 
         self.button = Gtk.RadioButton.new_with_label_from_widget(
             None,
             'I want to download videos from this channel automatically',
         )
-        grid.attach(self.button, 0, 6, 1, 1)
+        grid.attach(self.button, 0, 6, 2, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)
         self.button2.set_label(
             'Don\'t download anything, just check for new videos',
         )
-        grid.attach(self.button2, 0, 7, 1, 1)
+        grid.attach(self.button2, 0, 7, 2, 1)
 
         # (There is one fixed folder always at the top of this list)
         self.folder_list = []
@@ -6564,10 +6674,22 @@ class AddChannelDialogue(Gtk.Dialog):
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
 
         separator2 = Gtk.HSeparator()
-        grid.attach(separator2, 0, 8, 1, 1)
+        grid.attach(separator2, 0, 8, 2, 1)
 
         label4 = Gtk.Label('(Optional) Add this channel inside a folder')
-        grid.attach(label4, 0, 9, 1, 1)
+        grid.attach(label4, 0, 9, 2, 1)
+
+        box = Gtk.Box()
+        grid.attach(box, 0, 10, 1, 1)
+        box.set_border_width(main_win_obj.spacing_size)
+
+        image = Gtk.Image()
+        box.add(image)
+        image.set_from_pixbuf(
+            main_win_obj.app_obj.file_manager_obj.load_to_pixbuf(
+                main_win_obj.icon_dict['folder_small']
+            ),
+        )
 
         self.folder_list.sort()
 
@@ -6576,7 +6698,8 @@ class AddChannelDialogue(Gtk.Dialog):
             listmodel.append([item])
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 0, 10, 1, 1)
+        grid.attach(combo, 1, 10, 1, 1)
+        combo.set_hexpand(True)
 
         cell = Gtk.CellRendererText()
         combo.pack_start(cell, False)
@@ -6638,7 +6761,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
             self,
             'Add playlist',
             main_win_obj,
-            0,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -6655,9 +6778,9 @@ class AddPlaylistDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label('Enter the playlist name')
-        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(label, 0, 0, 2, 1)
         label2 = Gtk.Label()
-        grid.attach(label2, 0, 1, 1, 1)
+        grid.attach(label2, 0, 1, 2, 1)
         label2.set_markup(
             '<i>(Use the playlist\'s real name or a customised name)</i>',
         )
@@ -6665,30 +6788,30 @@ class AddPlaylistDialogue(Gtk.Dialog):
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 2, 1, 1)
+        grid.attach(self.entry, 0, 2, 2, 1)
         self.entry.set_hexpand(True)
 
         label3 = Gtk.Label('Copy and paste a link to the playlist')
-        grid.attach(label3, 0, 3, 1, 1)
+        grid.attach(label3, 0, 3, 2, 1)
 
         self.entry2 = Gtk.Entry()
-        grid.attach(self.entry2, 0, 4, 1, 1)
+        grid.attach(self.entry2, 0, 4, 2, 1)
         self.entry2.set_hexpand(True)
 
         separator = Gtk.HSeparator()
-        grid.attach(separator, 0, 5, 1, 1)
+        grid.attach(separator, 0, 5, 2, 1)
 
         self.button = Gtk.RadioButton.new_with_label_from_widget(
             None,
             'I want to download videos from this playlist automatically',
         )
-        grid.attach(self.button, 0, 6, 1, 1)
+        grid.attach(self.button, 0, 6, 2, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)
         self.button2.set_label(
             'Don\'t download anything, just check for new videos',
         )
-        grid.attach(self.button2, 0, 7, 1, 1)
+        grid.attach(self.button2, 0, 7, 2, 1)
 
         # (There is one fixed folder always at the top of this list)
         self.folder_list = []
@@ -6706,10 +6829,22 @@ class AddPlaylistDialogue(Gtk.Dialog):
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
 
         separator2 = Gtk.HSeparator()
-        grid.attach(separator2, 0, 8, 1, 1)
+        grid.attach(separator2, 0, 8, 2, 1)
 
         label4 = Gtk.Label('(Optional) Add this playlist inside a folder')
-        grid.attach(label4, 0, 9, 1, 1)
+        grid.attach(label4, 0, 9, 2, 1)
+
+        box = Gtk.Box()
+        grid.attach(box, 0, 10, 1, 1)
+        box.set_border_width(main_win_obj.spacing_size)
+
+        image = Gtk.Image()
+        box.add(image)
+        image.set_from_pixbuf(
+            main_win_obj.app_obj.file_manager_obj.load_to_pixbuf(
+                main_win_obj.icon_dict['folder_small']
+            ),
+        )
 
         self.folder_list.sort()
 
@@ -6718,7 +6853,8 @@ class AddPlaylistDialogue(Gtk.Dialog):
             listmodel.append([item])
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 0, 10, 1, 1)
+        grid.attach(combo, 1, 10, 1, 1)
+        combo.set_hexpand(True)
 
         cell = Gtk.CellRendererText()
         combo.pack_start(cell, False)
@@ -6780,7 +6916,7 @@ class AddFolderDialogue(Gtk.Dialog):
             self,
             'Add folder',
             main_win_obj,
-            0,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -6797,28 +6933,28 @@ class AddFolderDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label('Enter the folder name')
-        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(label, 0, 0, 2, 1)
 
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 1, 1, 1)
+        grid.attach(self.entry, 0, 1, 2, 1)
         self.entry.set_hexpand(True)
 
         separator = Gtk.HSeparator()
-        grid.attach(separator, 0, 2, 1, 1)
+        grid.attach(separator, 0, 2, 2, 1)
 
         self.button = Gtk.RadioButton.new_with_label_from_widget(
             None,
             'I want to download videos from this folder automatically',
         )
-        grid.attach(self.button, 0, 3, 1, 1)
+        grid.attach(self.button, 0, 3, 2, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)
         self.button2.set_label(
             'Don\'t download anything, just check for new videos',
         )
-        grid.attach(self.button2, 0, 4, 1, 1)
+        grid.attach(self.button2, 0, 4, 2, 1)
 
         # (There is one fixed folder always at the top of this list)
         self.folder_list = []
@@ -6836,12 +6972,24 @@ class AddFolderDialogue(Gtk.Dialog):
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
 
         separator2 = Gtk.HSeparator()
-        grid.attach(separator2, 0, 5, 1, 1)
+        grid.attach(separator2, 0, 5, 2, 1)
 
         label4 = Gtk.Label(
             '(Optional) Add this folder inside another folder',
         )
-        grid.attach(label4, 0, 6, 1, 1)
+        grid.attach(label4, 0, 6, 2, 1)
+
+        box = Gtk.Box()
+        grid.attach(box, 0, 7, 1, 1)
+        box.set_border_width(main_win_obj.spacing_size)
+
+        image = Gtk.Image()
+        box.add(image)
+        image.set_from_pixbuf(
+            main_win_obj.app_obj.file_manager_obj.load_to_pixbuf(
+                main_win_obj.icon_dict['folder_small']
+            ),
+        )
 
         self.folder_list.sort()
 
@@ -6850,7 +6998,8 @@ class AddFolderDialogue(Gtk.Dialog):
             listmodel.append([item])
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 0, 7, 1, 1)
+        grid.attach(combo, 1, 7, 1, 1)
+        combo.set_hexpand(True)
 
         cell = Gtk.CellRendererText()
         combo.pack_start(cell, False)
@@ -6932,7 +7081,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
             self,
             'Delete ' + obj_type,
             main_win_obj,
-            0,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -6940,6 +7089,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         )
 
         self.set_modal(False)
+        self.set_resizable(False)
 
         # Set up the dialogue window
         box = self.get_content_area()

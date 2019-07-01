@@ -73,7 +73,7 @@ class DialogueManager(threading.Thread):
 
 
     def show_msg_dialogue(self, msg, msg_type, button_type,
-    response_dict=None):
+    parent_win_obj=None, response_dict=None):
 
         """Can be called by anything.
 
@@ -89,6 +89,10 @@ class DialogueManager(threading.Thread):
             button_type (string): The buttons to use in the dialogue window:
                 'ok', 'ok-cancel', 'yes-no'
 
+            parent_win_obj (mainwin.MainWin, config.GenericConfigWin or None):
+                The parent window for the dialogue window. If None, the main
+                window is used as the parent window
+
             response_dict (dict or None): A dictionary specified if the calling
                 code needs a response (e.g., needs to know whether the user
                 clicked the 'yes' or 'no' button). If specified, the keys are
@@ -100,11 +104,15 @@ class DialogueManager(threading.Thread):
 
         """
 
+        if parent_win_obj is None:
+            parent_win_obj = self.main_win_obj
+
         dialogue_win = MessageDialogue(
             self,
             msg,
             msg_type,
             button_type,
+            parent_win_obj,
             response_dict,
         )
 
@@ -128,6 +136,9 @@ class MessageDialogue(Gtk.MessageDialog):
         button_type (string): The buttons to use in the dialogue window: 'ok',
             'ok-cancel', 'yes-no'
 
+        parent_win_obj (mainwin.MainWin, config.GenericConfigWin): The parent
+            window for the dialogue window
+
         response_dict (dict or None): A dictionary specified if the calling
             code needs a response (e.g., needs to know whether the user clicked
             the 'yes' or 'no' button). If specified, the keys are 0, 1 or more
@@ -143,15 +154,10 @@ class MessageDialogue(Gtk.MessageDialog):
     # Standard class methods
 
 
-    def __init__(self, parent, msg, msg_type, button_type, response_dict):
+    def __init__(self, parent, msg, msg_type, button_type, parent_win_obj,
+    response_dict):
 
         # Prepare arguments
-        main_win_obj = parent.main_win_obj
-        if not main_win_obj:
-            main_win_flags = 0
-        else:
-            main_win_flags = Gtk.DialogFlags.DESTROY_WITH_PARENT
-
         if msg_type == 'warning':
             msg_type = Gtk.MessageType.WARNING
         elif msg_type == 'question':
@@ -174,8 +180,8 @@ class MessageDialogue(Gtk.MessageDialog):
         # Set up the dialogue window
         Gtk.MessageDialog.__init__(
             self,
-            main_win_obj,
-            main_win_flags,
+            parent_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
             msg_type,
             button_type,
             msg,

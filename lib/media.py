@@ -28,6 +28,7 @@
 import datetime
 import functools
 import os
+import re
 import time
 
 
@@ -387,7 +388,7 @@ class GenericRemoteContainer(GenericContainer):
     # Public class methods
 
 
-    def add_child(self, child_obj):
+    def add_child(self, child_obj, no_sort_flag=False):
 
         """Called by media.Video.__init__().
 
@@ -397,6 +398,10 @@ class GenericRemoteContainer(GenericContainer):
 
             child_obj (media.Video): The child object
 
+            no_sort_flag (True or False): True when the calling code wants to
+                delay sorting the parent container object, for some reason;
+                False if not
+
         """
 
         # Only media.Video objects can be added to a channel or playlist as a
@@ -404,7 +409,8 @@ class GenericRemoteContainer(GenericContainer):
         if isinstance(child_obj, Video) or child_obj in self.child_list:
 
             self.child_list.append(child_obj)
-            self.sort_children()
+            if not no_sort_flag:
+                self.sort_children()
 
             if isinstance(child_obj, Video):
                 self.vid_count += 1
@@ -432,19 +438,27 @@ class GenericRemoteContainer(GenericContainer):
 
         """
 
-        if obj1.upload_time is None or obj2.upload_time is None:
-            return 0
-        elif obj1.upload_time < obj2.upload_time:
-            return 1
-        elif obj1.upload_time == obj2.upload_time:
-            if obj1.receive_time < obj2.receive_time:
+        # The video's index is not relevant unless sorting a playlist
+        if isinstance(self, Playlist) \
+        and obj1.index is not None and obj2.index is not None:
+            if obj1.index < obj2.index:
                 return -1
-            elif obj1.receive_time == obj2.receive_time:
-                return 0
             else:
                 return 1
+        elif obj1.upload_time is not None and obj2.upload_time is not None:
+            if obj1.upload_time > obj2.upload_time:
+                return -1
+            elif obj1.upload_time < obj2.upload_time:
+                return 1
+            else:
+                if obj1.receive_time < obj2.receive_time:
+                    return -1
+                elif obj1.receive_time > obj2.receive_time:
+                    return 1
+                else:
+                    return 0
         else:
-            return -1
+            return 0
 
 
     def find_matching_video(self, app_obj, name):
@@ -471,18 +485,47 @@ class GenericRemoteContainer(GenericContainer):
         first = app_obj.match_first_chars
         ignore = app_obj.match_ignore_chars * -1
 
+        # Defend against two different of a name from the same video, one with
+        #   punctuation marks stripped away, and double quotes converted to
+        #   single quotes (thanks, YouTube!) by replacing those characters with
+        #   whitespace
+        # (After extensive testing, this is the only regex sequence I could
+        #   find that worked)
+        test_name = name[:]
+
+        # Remove punctuation
+        test_name = re.sub(r'\W+', ' ', test_name, flags=re.UNICODE)
+        # Also need to replace underline characters
+        test_name = re.sub(r'[\_\s]+', ' ', test_name)
+        # Also need to remove leading/trailing whitespace, in case the original
+        #   video name started/ended with a question mark or something like
+        #   that
+        test_name = re.sub(r'^\s+', '', test_name)
+        test_name = re.sub(r'\s+$', '', test_name)
+
         for child_obj in self.child_list:
             if isinstance(child_obj, Video):
 
+                child_name = child_obj.name[:]
+                child_name = re.sub(
+                    r'\W+',
+                    ' ',
+                    child_name,
+                    flags=re.UNICODE,
+                )
+                child_name = re.sub(r'[\_\s]+', ' ', child_name)
+                child_name = re.sub(r'^\s+', '', child_name)
+                child_name = re.sub(r'\s+$', '', child_name)
+
                 if (
                     method == 'exact_match' \
-                    and child_obj.name == name
+                    and child_name == test_name
                 ) or (
                     method == 'match_first' \
-                    and child_obj.name[:first] == name[:first]
+                    and child_name[:first] == test_name[:first]
                 ) or (
                     method == 'ignore_last' \
-                    and child_obj.name[:ignore] == name[:ignore]
+                    and child_name[:ignore] == test_name[:ignore]
                 ):
                     return child_obj
 
@@ -524,13 +567,18 @@ class Video(GenericMedia):
         options_obj (options.OptionsManager): The object specifying download
             options for this video, if any
 
+        no_sort_flag (True or False): True when the calling code wants to
+            delay sorting the parent container object, for some reason; False
+            if not
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, dbid, name, parent_obj, options_obj=None):
+    def __init__(self, dbid, name, parent_obj, options_obj=None,
+    no_sort_flag=False):
 
         # IV list - class objects
         # -----------------------
@@ -618,7 +666,7 @@ class Video(GenericMedia):
         # ----
 
         # Update the parent
-        self.parent_obj.add_child(self)
+        self.parent_obj.add_child(self, no_sort_flag)
 
 
     # Public class methods
@@ -707,6 +755,19 @@ class Video(GenericMedia):
         self.file_ext = extension
 
 
+    def reset_file_dir(self, app_obj):
+
+        """Called by mainapp.TartubeApp.move_container_to_top_continue()
+        and .move_container_continue().
+
+        After moving a channel, playlist or folder to a new location in the
+        media data registry's tree, every media.Video object which has been
+        moved along with it must have its .file_dir IV updated.
+        """
+
+        self.file_dir = self.parent_obj.get_dir(app_obj)
+
+
     def set_file_size(self, size=None):
 
         self.file_size = size
@@ -714,7 +775,7 @@ class Video(GenericMedia):
 
     def set_index(self, index):
 
-        self.index = index
+        self.index = int(index)
 
 
     def set_mkv(self):
@@ -1270,7 +1331,7 @@ class Folder(GenericContainer):
     # Public class methods
 
 
-    def add_child(self, child_obj):
+    def add_child(self, child_obj, no_sort_flag=False):
 
         """Called by media.Video.__init__(), media.Channel.__init__(),
         media.Playlist.__init__() or another instance of
@@ -1290,8 +1351,10 @@ class Folder(GenericContainer):
 
         # Check this is not already a child object
         if not child_obj in self.child_list:
+
             self.child_list.append(child_obj)
-            self.sort_children()
+            if not no_sort_flag:
+                self.sort_children()
 
             if isinstance(child_obj, Video):
                 self.vid_count += 1
@@ -1363,30 +1426,51 @@ class Folder(GenericContainer):
         ):
             if isinstance(obj1, Video):
 
-                if obj1.upload_time is None or obj2.upload_time is None:
-                    return 0
-                elif obj1.upload_time < obj2.upload_time:
-                    return 1
-                elif obj1.upload_time == obj2.upload_time:
-                    if obj1.receive_time < obj2.receive_time:
+                # The video's index is not relevant unless sorting a playlist
+                if isinstance(obj1.parent_obj, Playlist) \
+                and obj1.parent_obj == obj2.parent_obj \
+                and obj1.index is not None and obj2.index is not None:
+                    if obj1.index < obj2.index:
                         return -1
-                    elif obj1.receive_time == obj2.receive_time:
-                        return 0
                     else:
                         return 1
+                elif obj1.upload_time is not None \
+                and obj2.upload_time is not None:
+                    if obj1.upload_time > obj2.upload_time:
+                        return -1
+                    elif obj1.upload_time < obj2.upload_time:
+                        return 1
+                    else:
+                        # In private folders (e.g. 'All Videos'), the most
+                        #   recently received video goes to the top of the list
+                        if self.priv_flag:
+                            if obj1.receive_time > obj2.receive_time:
+                                return -1
+                            elif obj1.receive_time < obj2.receive_time:
+                                return 1
+                            else:
+                                return 0
+                        # ...but for everything else, the sorting algorithm is
+                        #   the same as for GenericRemoteContainer.do_sort(),
+                        #   in which we assume the website is sending us
+                        #   videos, newest first
+                        else:
+                            if obj1.receive_time < obj2.receive_time:
+                                return -1
+                            elif obj1.receive_time > obj2.receive_time:
+                                return 1
+                            else:
+                                return 0
                 else:
-                    return -1
-
+                    return 0
             else:
                 if obj1.name.lower() < obj2.name.lower():
                     return -1
-                elif obj1.name.lower() == obj2.name.lower():
-                    return 0
-                else:
+                elif obj1.name.lower() > obj2.name.lower():
                     return 1
-
+                else:
+                    return 0
         else:
-
             if isinstance(obj1, Folder):
                 return -1
             elif isinstance(obj2, Folder):

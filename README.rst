@@ -9,18 +9,20 @@ written in Python 3 / Gtk 3.
 It runs on MS Windows, Linux and BSD. It probably works on MacOS, but the
 authors have not been able to confirm this.
 
-**Tartube** is **alpha software**. It might not behave in the way you're
-expecting. If you find this frustrating, 
-`report the problem to the authors <https://github.com/axcore/tartube/issues>`__.
+**Tartube** is alpha software. **Test it carefully before you allow it to use your 100TB hard drive**, as it might not behave in the way you're
+expecting. 
+
+Problems can be reported at 
+`our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
 Downloads
 ---------
 
-Latest version: **v0.4.0 (29 June 2019)**
+Latest version: **v0.5.0 (1 July 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.4.0/install-tartube-0.4.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.4.0/install-tartube-0.4.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v0.4.0/tartube_v0.4.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.5.0/install-tartube-0.5.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.5.0/install-tartube-0.5.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v0.5.0/tartube_v0.5.0.tar.gz/download>`__ from Sourceforge
 -  `Source code and support <https://github.com/axcore/tartube>`__ from GitHub
 
 Why should I use Tartube?
@@ -343,7 +345,7 @@ A: This is because of a Gtk we haven't been able to resolve yet.
 
 **Q: I want to see all the videos on a single page, not spread over several pages!**
 
-A: At the bottom of the Tartube window, set the page size to zero. Click the adjacent edit button to apply the change.
+A: At the bottom of the Tartube window, set the page size to zero, and press return.
 
 **Q: I just want to check for new videos, but it takes so long!**
 
