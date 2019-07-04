@@ -1,3 +1,0 @@
-Gtk
-moviepy
-validators

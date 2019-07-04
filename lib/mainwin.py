@@ -41,7 +41,6 @@ import time
 # Import our modules
 from . import config
 from . import formats
-#from . import __main__
 import __main__
 from . import mainapp
 from . import media
@@ -384,17 +383,30 @@ class MainWin(Gtk.ApplicationWindow):
 
         for key in formats.DIALOGUE_ICON_DICT:
             rel_path = formats.DIALOGUE_ICON_DICT[key]
-            full_path = os.path.join('icons', 'dialogue', rel_path)
+            full_path = os.path.abspath(
+                os.path.join('icons', 'dialogue', rel_path),
+            )
+            self.icon_dict[key] = full_path
+
+        for key in formats.TOOLBAR_ICON_DICT:
+            rel_path = formats.TOOLBAR_ICON_DICT[key]
+            full_path = os.path.abspath(
+                os.path.join('icons', 'toolbar', rel_path),
+            )
             self.icon_dict[key] = full_path
 
         for key in formats.LARGE_ICON_DICT:
             rel_path = formats.LARGE_ICON_DICT[key]
-            full_path = os.path.join('icons', 'large', rel_path)
+            full_path = os.path.abspath(
+                os.path.join('icons', 'large', rel_path),
+            )
             self.icon_dict[key] = full_path
 
         for key in formats.SMALL_ICON_DICT:
             rel_path = formats.SMALL_ICON_DICT[key]
-            full_path = os.path.join('icons', 'small', rel_path)
+            full_path = os.path.abspath(
+                os.path.join('icons', 'small', rel_path),
+            )
             self.icon_dict[key] = full_path
 
         for key in self.icon_dict:
@@ -407,7 +419,9 @@ class MainWin(Gtk.ApplicationWindow):
                 = GdkPixbuf.Pixbuf.new_from_file(full_path)
 
         for rel_path in formats.WIN_ICON_LIST:
-            full_path = os.path.join('icons', 'win', rel_path)
+            full_path = os.path.abspath(
+                os.path.join('icons', 'win', rel_path),
+            )
             self.win_pixbuf_list.append(
                 GdkPixbuf.Pixbuf.new_from_file(full_path),
             )
@@ -620,93 +634,242 @@ class MainWin(Gtk.ApplicationWindow):
 
     def setup_main_toolbar(self):
 
-        """Called by self.setup_win().
+        """Called by self.setup_win(). Also called by
+        self.redraw_main_toolbar().
 
-        Sets up a Gtk.Toolbar near the top of the main window, below the menu.
+        Sets up a Gtk.Toolbar near the top of the main window, below the menu,
+        replacing the previous one, if it exists.
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 607 setup_main_toolbar')
 
+        # If a toolbar already exists, destroy it to make room for the new one
+        if self.main_toolbar:
+            self.grid.remove(self.main_toolbar)
+
+        # Create a new toolbar
         self.main_toolbar = Gtk.Toolbar()
         self.grid.attach(self.main_toolbar, 0, 1, 1, 1)
 
-        # Toolbar items
-        add_video_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+        # Toolbar items. If mainapp.TartubeApp.toolbar_squeeze_flag is True,
+        #   we don't display labels in the toolbuttons
+        squeeze_flag = self.app_obj.toolbar_squeeze_flag
+
+        if not squeeze_flag:
+            add_video_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_video_small'],
+                ),
+            )
+            add_video_button.set_label('Videos')
+            add_video_button.set_is_important(True)
+        else:
+            add_video_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_video_large'],
+                ),
+            )
+
         self.main_toolbar.insert(add_video_button, -1)
-        add_video_button.set_label('Videos')
-        add_video_button.set_is_important(True)
         add_video_button.set_action_name('app.add_video_toolbutton')
+        add_video_button.set_tooltip_text('Add new video(s)')
 
-        add_channel_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+        if not squeeze_flag:
+            add_channel_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_channel_small'],
+                ),
+            )
+            add_channel_button.set_label('Channel')
+            add_channel_button.set_is_important(True)
+        else:
+            add_channel_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_channel_large'],
+                ),
+            )
+
         self.main_toolbar.insert(add_channel_button, -1)
-        add_channel_button.set_label('Channel')
-        add_channel_button.set_is_important(True)
         add_channel_button.set_action_name('app.add_channel_toolbutton')
+        add_channel_button.set_tooltip_text('Add a new channel')
 
-        add_playlist_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+        if not squeeze_flag:
+            add_playlist_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_playlist_small'],
+                ),
+            )
+            add_playlist_button.set_label('Playlist')
+            add_playlist_button.set_is_important(True)
+        else:
+            add_playlist_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_playlist_large'],
+                ),
+            )
+
         self.main_toolbar.insert(add_playlist_button, -1)
-        add_playlist_button.set_label('Playlist')
-        add_playlist_button.set_is_important(True)
         add_playlist_button.set_action_name('app.add_playlist_toolbutton')
+        add_playlist_button.set_tooltip_text('Add a new playlist')
 
-        add_folder_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+        if not squeeze_flag:
+            add_folder_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_folder_small'],
+                ),
+            )
+            add_folder_button.set_label('Folder')
+            add_folder_button.set_is_important(True)
+        else:
+            add_folder_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_folder_large'],
+                ),
+            )
+
         self.main_toolbar.insert(add_folder_button, -1)
-        add_folder_button.set_label('Folder')
-        add_folder_button.set_is_important(True)
         add_folder_button.set_action_name('app.add_folder_toolbutton')
+        add_folder_button.set_tooltip_text('Add a new folder')
 
-#        self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+        # (Conversely, if there are no labels, then we have enough room for a
+        #   separator)
+        if squeeze_flag:
+            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
-        self.check_all_toolbutton = Gtk.ToolButton.new_from_stock(
-            Gtk.STOCK_REFRESH,
-        )
+        if not squeeze_flag:
+            self.check_all_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_check_small'],
+                ),
+            )
+            self.check_all_toolbutton.set_label('Check')
+            self.check_all_toolbutton.set_is_important(True)
+        else:
+            self.check_all_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_check_large'],
+                ),
+            )
+
         self.main_toolbar.insert(self.check_all_toolbutton, -1)
-        self.check_all_toolbutton.set_label('Check')
-        self.check_all_toolbutton.set_is_important(True)
         self.check_all_toolbutton.set_action_name('app.check_all_toolbutton')
-
-        self.download_all_toolbutton = Gtk.ToolButton.new_from_stock(
-            Gtk.STOCK_EXECUTE,
+        self.check_all_toolbutton.set_tooltip_text(
+            'Check all videos, channels, playlists and folders',
         )
+
+        if not squeeze_flag:
+            self.download_all_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_download_small'],
+                ),
+            )
+            self.download_all_toolbutton.set_label('Download')
+            self.download_all_toolbutton.set_is_important(True)
+        else:
+            self.download_all_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_download_large'],
+                ),
+            )
+
         self.main_toolbar.insert(self.download_all_toolbutton, -1)
-        self.download_all_toolbutton.set_label('Download')
-        self.download_all_toolbutton.set_is_important(True)
         self.download_all_toolbutton.set_action_name(
             'app.download_all_toolbutton',
         )
-
-        self.stop_download_toolbutton = Gtk.ToolButton.new_from_stock(
-            Gtk.STOCK_STOP,
+        self.download_all_toolbutton.set_tooltip_text(
+            'Download all videos, channels, playlists and folders',
         )
+
+        if squeeze_flag:
+            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+
+        if not squeeze_flag:
+            self.stop_download_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_stop_small'],
+                ),
+            )
+            self.stop_download_toolbutton.set_label('Stop')
+            self.stop_download_toolbutton.set_is_important(True)
+        else:
+            self.stop_download_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_stop_large'],
+                ),
+            )
+
         self.main_toolbar.insert(self.stop_download_toolbutton, -1)
-        self.stop_download_toolbutton.set_label('Stop')
-        self.stop_download_toolbutton.set_is_important(True)
         self.stop_download_toolbutton.set_sensitive(False)
         self.stop_download_toolbutton.set_action_name(
             'app.stop_download_toolbutton',
         )
+        self.stop_download_toolbutton.set_tooltip_text(
+            'Stop the current operation',
+        )
 
-#        self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+        if not squeeze_flag:
+            switch_view_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_switch_small'],
+                ),
+            )
+            switch_view_button.set_label('Switch')
+            switch_view_button.set_is_important(True)
+        else:
+            switch_view_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_switch_large'],
+                ),
+            )
 
-        switch_view_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CONVERT)
         self.main_toolbar.insert(switch_view_button, -1)
-        switch_view_button.set_label('Switch')
-        switch_view_button.set_is_important(True)
         switch_view_button.set_action_name('app.switch_view_toolbutton')
+        switch_view_button.set_tooltip_text(
+            'Switch between simple and complex views',
+        )
 
         if self.app_obj.debug_test_media_toolbar_flag:
-            self.test_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CDROM)
-            self.main_toolbar.insert(self.test_button, -1)
-            self.test_button.set_label('Test')
-            self.test_button.set_is_important(True)
-            self.test_button.set_action_name('app.test_toolbutton')
 
-        quit_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CLOSE)
+            if not squeeze_flag:
+                self.test_button = Gtk.ToolButton.new(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['tool_test_small'],
+                    ),
+                )
+                self.test_button.set_label('Test')
+                self.test_button.set_is_important(True)
+            else:
+                self.test_button = Gtk.ToolButton.new(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['tool_test_large'],
+                    ),
+                )
+
+            self.main_toolbar.insert(self.test_button, -1)
+            self.test_button.set_action_name('app.test_toolbutton')
+            self.test_button.set_tooltip_text('Add test media data objects')
+
+        if not squeeze_flag:
+            quit_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_quit_small'],
+                ),
+            )
+            quit_button.set_label('Quit')
+            quit_button.set_is_important(True)
+        else:
+            quit_button = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_quit_large'],
+                ),
+            )
+
         self.main_toolbar.insert(quit_button, -1)
-        quit_button.set_label('Quit')
-        quit_button.set_is_important(True)
         quit_button.set_action_name('app.quit_toolbutton')
+        quit_button.set_tooltip_text(
+            'Close ' + utils.upper_case_first(__main__.__packagename__),
+        )
 
 
     def setup_notebook(self):
@@ -833,6 +996,7 @@ class MainWin(Gtk.ApplicationWindow):
             str(self.catalogue_toolbar_current_page),
         )
         self.catalogue_page_entry.set_width_chars(4)
+        self.catalogue_page_entry.set_sensitive(False)
         self.catalogue_page_entry.connect(
             'activate',
             self.on_video_catalogue_page_entry_activated,
@@ -851,6 +1015,7 @@ class MainWin(Gtk.ApplicationWindow):
             str(self.catalogue_toolbar_last_page),
         )
         self.catalogue_last_entry.set_width_chars(4)
+        self.catalogue_last_entry.set_sensitive(False)
         self.catalogue_last_entry.set_editable(False)
 
         self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
@@ -1291,6 +1456,20 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_all()
 
 
+    def redraw_main_toolbar(self):
+
+        """Called by mainapp.TartubeApp.set_toolbar_squeeze_flag() when the
+        value of the flag is changed.
+
+        Redraws the main toolbar, with or without labels, depending on the
+        value of the flag.
+
+        """
+
+        self.setup_main_toolbar()
+        self.show_all()
+
+
     def show_progress_bar(self, force_sim_flag=False):
 
         """Called by mainapp.TartubeApp.download_manager_start().
@@ -1560,8 +1739,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Sort videos by playlist index (if set), then by upload time, and then
         #   by receive (download) time
-        # The video's index is not relevant unless sorting a playlist
+        # The video's index is not relevant unless sorting a playlist (and not
+        #   relevant in private folders, e.g. 'All Videos')
         if isinstance(obj1.parent_obj, media.Playlist) \
+        and not self.video_index_current_priv_flag \
         and obj1.parent_obj == obj2.parent_obj \
         and obj1.index is not None and obj2.index is not None:
             if obj1.index < obj2.index:
@@ -1574,8 +1755,8 @@ class MainWin(Gtk.ApplicationWindow):
             elif obj1.upload_time < obj2.upload_time:
                 return 1
             else:
-                # In private folders (e.g. 'All Videos'), the most recently
-                #   received video goes to the top of the list
+                # In private folders, the most recently received video goes to
+                #   the top of the list
                 if self.video_index_current_priv_flag:
                     if obj1.receive_time > obj2.receive_time:
                         return -1
@@ -2298,7 +2479,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             event (Gdk.EventButton): The mouse click event
 
-            name (string): The name of the clicked  media data object
+            name (string): The name of the clicked media data object
 
         """
 
@@ -2374,6 +2555,15 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(separator_item)
 
         # Apply/remove/edit download options, disable downloads
+
+        # (Desensitise these menu items, if an edit window is already open)
+        no_options_flag = False
+        for win_obj in self.config_win_list:
+            if isinstance(win_obj, config.OptionsEditWin) \
+            and media_data_obj.options_obj == win_obj.edit_obj:
+                no_options_flag = True
+                break
+
         if not media_data_obj.options_obj:
 
             apply_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -2385,7 +2575,7 @@ class MainWin(Gtk.ApplicationWindow):
                 media_data_obj,
             )
             popup_menu.append(apply_options_menu_item)
-            if self.app_obj.current_manager_obj \
+            if no_options_flag or self.app_obj.current_manager_obj \
             or (
                 isinstance(media_data_obj, media.Folder)
                 and media_data_obj.priv_flag
@@ -2403,12 +2593,12 @@ class MainWin(Gtk.ApplicationWindow):
                 media_data_obj,
             )
             popup_menu.append(remove_options_menu_item)
-            if self.app_obj.current_manager_obj \
+            if no_options_flag or self.app_obj.current_manager_obj \
             or (
                 isinstance(media_data_obj, media.Folder)
                 and media_data_obj.priv_flag
             ):
-                apply_options_menu_item.set_sensitive(False)
+                remove_options_menu_item.set_sensitive(False)
 
         edit_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
             '_Edit download options...',
@@ -2419,7 +2609,8 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         popup_menu.append(edit_options_menu_item)
-        if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
+        if no_options_flag or self.app_obj.current_manager_obj \
+        or not media_data_obj.options_obj:
             edit_options_menu_item.set_sensitive(False)
 
         enforce_check_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
@@ -2806,6 +2997,7 @@ class MainWin(Gtk.ApplicationWindow):
             #   we can update the toolbar widgets
             video_count = 0
             page_num = 1
+            current_page_num = self.catalogue_toolbar_current_page
             page_size = self.app_obj.catalogue_page_size
 
             dbid = self.app_obj.media_name_dict[self.video_index_current]
@@ -2819,52 +3011,84 @@ class MainWin(Gtk.ApplicationWindow):
                     if child_obj == video_obj and page_size:
                         page_num = int((video_count - 1) / page_size) + 1
 
-            # If the video should be drawn on the current page...
-            if page_num == self.catalogue_toolbar_current_page:
+            # If the video should be drawn on the current page, or on any
+            #   previous page, and if the current page is already full, then we
+            #   might need to remove a catalogue item from this page, and
+            #   replace it with another
+            if page_num <= current_page_num \
+            and len(self.video_catalogue_dict) >= page_size:
 
-                # If the current page isn't the last page, and if the current
-                #   page is already full, destroy the last catalogue item on
-                #   the page to make room for a new one
-                # If the page size is 0, then all videos are drawn on one page
-                if page_size and len(self.video_catalogue_dict) >= page_size:
+                # Compile a dictionary of videos which are currently visible on
+                #   this page
+                visible_dict = {}
+                for catalogue_item in self.video_catalogue_dict.values():
+                    visible_dict[catalogue_item.video_obj.dbid] \
+                    = catalogue_item.video_obj
 
-                    # Get the last mainwin.CatalogueRow object directly from
-                    #   the Gtk listbox, as it is auto-sorted frequently
-                    row_list = self.catalogue_listbox.get_children()
-                    last_row = row_list[-1]
-                    if last_row:
-                        self.catalogue_listbox.remove(last_row)
-                        del self.video_catalogue_dict[last_row.video_obj.dbid]
+                # Check the videos which should be visible on this page. This
+                #   code leaves us with 'visible_dict' containing videos that
+                #   should no longer be visible on the page, and 'missing_dict'
+                #   containing videos that should be visible on the page, but
+                #   are not
+                # Each dictionary should have 0 or 1 entries, but the code will
+                #   cope if it's more than that
+                missing_dict = {}
+                for index in range (
+                    (((current_page_num - 1) * page_size) + 1),
+                    ((current_page_num * page_size) + 1),
+                ):
+                    if index <= video_count:
+                        child_obj = container_obj.child_list[index]
+                        if not child_obj.dbid in visible_dict:
+                            missing_dict[child_obj.dbid] = child_obj
+                        else:
+                            del visible_dict[child_obj.dbid]
 
-                # Create a new catalogue item object
-                if self.app_obj.catalogue_mode == 'simple_hide_parent' \
-                or self.app_obj.catalogue_mode == 'simple_show_parent':
-
-                    catalogue_item_obj = SimpleCatalogueItem(
-                        self,
-                        video_obj,
+                # Remove any catalogue items for videos that shouldn't be
+                #   visible, but are
+                for dbid in visible_dict:
+                    catalogue_item_obj = self.video_catalogue_dict[dbid]
+                    self.catalogue_listbox.remove(
+                        catalogue_item_obj.catalogue_row,
                     )
 
-                else:
-                    catalogue_item_obj = ComplexCatalogueItem(
-                        self,
-                        video_obj,
-                    )
+                    del self.video_catalogue_dict[dbid]
 
-                self.video_catalogue_dict[catalogue_item_obj.dbid] \
-                = catalogue_item_obj
+                # Add any new catalogue items for videos which should be
+                #   visible, but aren't
+                for dbid in missing_dict:
 
-                # Add a row to the Gtk.ListBox
+                    # Get the media.Video object
+                    missing_obj = self.app_obj.media_reg_dict[dbid]
 
-                # Instead of using Gtk.ListBoxRow directly, use a wrapper class
-                #   so we can quickly retrieve the video displayed on each row
-                wrapper_obj = CatalogueRow(video_obj)
-                self.catalogue_listbox.add(wrapper_obj)
+                    # Create a new catalogue item
+                    if self.app_obj.catalogue_mode == 'simple_hide_parent' \
+                    or self.app_obj.catalogue_mode == 'simple_show_parent':
+                        catalogue_item_obj = SimpleCatalogueItem(
+                            self,
+                            missing_obj,
+                        )
 
-                # Populate the row with widgets...
-                catalogue_item_obj.draw_widgets(wrapper_obj)
-                # ...and give them their initial appearance
-                catalogue_item_obj.update_widgets()
+                    else:
+                        catalogue_item_obj = ComplexCatalogueItem(
+                            self,
+                            missing_obj,
+                        )
+
+                    self.video_catalogue_dict[dbid] = catalogue_item_obj
+
+                    # Add a row to the Gtk.ListBox
+
+                    # Instead of using Gtk.ListBoxRow directly, use a wrapper
+                    #   class so we can quickly retrieve the video displayed on
+                    #   each row
+                    wrapper_obj = CatalogueRow(missing_obj)
+                    self.catalogue_listbox.add(wrapper_obj)
+
+                    # Populate the row with widgets...
+                    catalogue_item_obj.draw_widgets(wrapper_obj)
+                    # ...and give them their initial appearance
+                    catalogue_item_obj.update_widgets()
 
             # Update widgets in the toolbar
             self.video_catalogue_toolbar_update(
@@ -3140,6 +3364,15 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(separator_item3)
 
         # Apply/remove/edit download options, disable downloads
+
+        # (Desensitise these menu items, if an edit window is already open)
+        no_options_flag = False
+        for win_obj in self.config_win_list:
+            if isinstance(win_obj, config.OptionsEditWin) \
+            and video_obj.options_obj == win_obj.edit_obj:
+                no_options_flag = True
+                break
+
         if not video_obj.options_obj:
 
             apply_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -3151,7 +3384,7 @@ class MainWin(Gtk.ApplicationWindow):
                 video_obj,
             )
             popup_menu.append(apply_options_menu_item)
-            if self.app_obj.current_manager_obj:
+            if no_options_flag or self.app_obj.current_manager_obj:
                 apply_options_menu_item.set_sensitive(False)
 
         else:
@@ -3165,7 +3398,7 @@ class MainWin(Gtk.ApplicationWindow):
                 video_obj,
             )
             popup_menu.append(remove_options_menu_item)
-            if self.app_obj.current_manager_obj:
+            if no_options_flag or self.app_obj.current_manager_obj:
                 remove_options_menu_item.set_sensitive(False)
 
         edit_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -3177,7 +3410,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj,
         )
         popup_menu.append(edit_options_menu_item)
-        if self.app_obj.current_manager_obj or not video_obj.options_obj:
+        if no_options_flag or self.app_obj.current_manager_obj \
+        or not video_obj.options_obj:
             edit_options_menu_item.set_sensitive(False)
 
         enforce_check_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
@@ -3245,9 +3479,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_toolbar_current_page = 1
         self.catalogue_toolbar_last_page = 1
 
+        self.catalogue_page_entry.set_sensitive(True)
         self.catalogue_page_entry.set_text(
             str(self.catalogue_toolbar_current_page),
         )
+
+        self.catalogue_last_entry.set_sensitive(True)
         self.catalogue_last_entry.set_text(
             str(self.catalogue_toolbar_last_page),
         )
@@ -3286,9 +3523,12 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_toolbar_last_page \
             = int((video_count - 1) / self.app_obj.catalogue_page_size) + 1
 
+        self.catalogue_page_entry.set_sensitive(True)
         self.catalogue_page_entry.set_text(
             str(self.catalogue_toolbar_current_page),
         )
+
+        self.catalogue_last_entry.set_sensitive(True)
         self.catalogue_last_entry.set_text(
             str(self.catalogue_toolbar_last_page),
         )
@@ -3724,9 +3964,11 @@ class MainWin(Gtk.ApplicationWindow):
             #   other values in the dictionary until we need them
             video_obj = temp_dict['video_obj']
             # Get the video's full file path now, as we use it several times
-            video_path = os.path.join(
-                video_obj.file_dir,
-                video_obj.file_name + video_obj.file_ext,
+            video_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + video_obj.file_ext,
+                ),
             )
 
             # Because of the 'Requested formats are incompatible for merge and
@@ -3736,9 +3978,11 @@ class MainWin(Gtk.ApplicationWindow):
             if not os.path.isfile(video_path) and video_obj.file_ext == '.mp4':
 
                 mkv_flag = True
-                video_path = os.path.join(
-                    video_obj.file_dir,
-                    video_obj.file_name + '.mkv',
+                video_path = os.path.abspath(
+                    os.path.join(
+                        video_obj.file_dir,
+                        video_obj.file_name + '.mkv',
+                    ),
                 )
 
             # Does the downloaded file now exist on the user's hard drive?
@@ -3751,6 +3995,14 @@ class MainWin(Gtk.ApplicationWindow):
                     temp_dict,
                     mkv_flag,
                 )
+
+                # The parent container objects can now be sorted
+                video_obj.parent_obj.sort_children()
+                self.app_obj.fixed_all_folder.sort_children()
+                if video_obj.new_flag:
+                    self.app_obj.fixed_new_folder.sort_children()
+                if video_obj.fav_flag:
+                    self.app_obj.fixed_fav_folder.sort_children()
 
                 # Update the video catalogue in the 'Videos' tab
                 self.video_catalogue_update_row(video_obj)
@@ -4955,9 +5207,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   the flag has not been set
         if media_data_obj.file_dir:
 
-            path = os.path.join(
-                media_data_obj.file_dir,
-                media_data_obj.file_name + media_data_obj.file_ext,
+            path = os.path.abspath(
+                os.path.join(
+                    media_data_obj.file_dir,
+                    media_data_obj.file_name + media_data_obj.file_ext,
+                ),
             )
 
             if os.path.isfile(path):

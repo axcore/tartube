@@ -29,6 +29,7 @@ from gi.repository import GObject
 # Import other modules
 import datetime
 import json
+import __main__
 import signal
 import os
 import queue
@@ -752,7 +753,9 @@ class DownloadList(object):
             # Videos in a private folder's .child_list can't be downloaded
             #   (since they are also a child of a channel, playlist or a public
             #   folder)
-            self.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
                 301,
                 'Cannot download videos in a private folder',
             )
@@ -1158,7 +1161,15 @@ class VideoDownloader(object):
         # No check is carried out if self.download_item_obj represents an
         #   individual media.Video object (and not a whole channel or playlist)
         self.video_limit_count = 0
-
+        # Git issue #9 describes youtube-dl failing to download the video's
+        #   JSON metadata. We can't do anything about the youtube-dl code, but
+        #   we can apply our own timeout
+        # This IV is set whenever self.confirm_sim_video() is called. After
+        #   being set, if a certain time has passed without another call to
+        #   self.confirm_sim_video, self.do_download() halts the child process
+        self.last_sim_video_check_time = None
+        # The time to wait, in seconds
+        self.last_sim_video_wait_time = 60
 
         # Code
         # ----
@@ -1239,6 +1250,10 @@ class VideoDownloader(object):
         #   the status of the current job
         while self.is_child_process_alive():
 
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
             # Read from the child process STDOUT, and convert into unicode for
             #   Python's convenience
             while not self.stdout_queue.empty():
@@ -1246,7 +1261,7 @@ class VideoDownloader(object):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
-                    if sys.platform == "win32":
+                    if os.name == 'nt':
                         stdout = stdout.decode('cp1252')
                     else:
                         stdout = stdout.decode('utf-8')
@@ -1264,11 +1279,33 @@ class VideoDownloader(object):
                     self.download_worker_obj.data_callback(dl_stat_dict)
 
                     if (app_obj.ytdl_write_stdout_flag):
-                        print(stdout)
 
-            # Pause a moment, before the next iteration of the loop (don't want
-            #   to hog resources)
-            time.sleep(self.sleep_time)
+                        name = utils.upper_case_first(__main__.__packagename__)
+                        # JSON output starts with {, in case we need to ignore
+                        if not app_obj.ytdl_write_ignore_json_flag:
+                            print(stdout)
+
+                        else:
+                            if stdout[:1] == '{':
+                                print('<' + name + ' received JSON data>')
+                            else:
+                                print(stdout)
+
+            # Apply the JSON timeout, if required
+            if app_obj.apply_json_timeout_flag \
+            and self.last_sim_video_check_time is not None \
+            and self.last_sim_video_check_time < int(time.time()):
+                # Halt the child process, which stops checking this channel/
+                #   playlist
+                self.stop()
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.system_error,
+                    302,
+                    'Enforced timeout on youtube-dl because it took too long' \
+                    + ' to fetch a video\'s JSON data',
+                )
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -1277,7 +1314,7 @@ class VideoDownloader(object):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            if sys.platform == "win32":
+            if os.name == 'nt':
                 stderr = stderr.decode('cp1252')
             else:
                 stderr = stderr.decode('utf-8')
@@ -1324,6 +1361,28 @@ class VideoDownloader(object):
 
         # Pass the result back to the parent downloads.DownloadWorker object
         return self.return_code
+
+
+    def check_dl_is_correct_type(self):
+
+        """Called by self.extract_stdout_data().
+
+        When youtube-dl reports the URL associated with the download item
+        object contains multiple videos (or potentially contains multiple
+        videos), then the URL is a channel or playlist, not a video.
+
+        Cannot store data for a channel or playlist in a media.Video object,
+        so stop the child process immediately and display a system error.
+        """
+
+        if isinstance(self.download_item_obj.media_data_obj, media.Video):
+
+            self.stop()
+            self.download_item_obj.media_data_obj.set_error(
+                'The video \'' + self.download_item_obj.media_data_obj.name \
+                + '\' has a source URL that points to a channel or a' \
+                + ' playlist, not a video',
+            )
 
 
     def close(self):
@@ -1375,6 +1434,7 @@ class VideoDownloader(object):
                 dir_path,
                 filename,
                 extension,
+                True,               # Don't sort parent containers yet
             )
 
             # If downloading from a playlist, remember the video's index in
@@ -1521,15 +1581,24 @@ class VideoDownloader(object):
         #   self.__init__() have been reached
         stop_flag = False
 
+        # Set the time at which a JSON timeout should be applied, if no more
+        #   calls to this function have been made
+        self.last_sim_video_check_time \
+        = int(time.time()) + self.last_sim_video_wait_time
+
         # From the JSON dictionary, extract the data we need
         if '_filename' in json_dict:
             full_path = json_dict['_filename']
             path, filename, extension = self.extract_filename(full_path)
         else:
-            return app_obj.system_error(
-                302,
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
+                303,
                 'Missing filename in JSON data',
             )
+
+            return
 
         if 'upload_date' in json_dict:
             # date_string in form YYYYMMDD
@@ -1580,15 +1649,20 @@ class VideoDownloader(object):
             # (video_obj is set to None, if no match is found)
             video_obj = media_data_obj.find_matching_video(app_obj, filename)
 
+        new_flag = False
         if not video_obj:
 
             # No matching media.Video object found, so create a new one
+            new_flag = True
+
             video_obj = app_obj.create_video_from_download(
                 self.download_item_obj,
                 path,
                 filename,
                 extension,
-                True,               # Don't sort parent containers yet
+                # Don't sort parent container objects yet; wait for
+                #   mainwin.MainWin.results_list_update_row() to do it
+                True,
             )
 
             # Update its IVs with the JSON information we extracted
@@ -1619,6 +1693,10 @@ class VideoDownloader(object):
             # Now we can sort the parent containers
             video_obj.parent_obj.sort_children()
             app_obj.fixed_all_folder.sort_children()
+            if video_obj.new_flag:
+                app_obj.fixed_new_folder.sort_children()
+            if video_obj.fav_flag:
+                app_obj.fixed_fav_folder.sort_children()
 
         else:
 
@@ -1677,7 +1755,9 @@ class VideoDownloader(object):
         options_dict =self.download_worker_obj.options_manager_obj.options_dict
 
         if descrip and options_dict['write_description']:
-            descrip_path = os.path.join(path, filename + '.description')
+            descrip_path = os.path.abspath(
+                os.path.join(path, filename + '.description'),
+            )
             if not options_dict['sim_keep_description']:
                 descrip_path = utils.convert_path_to_temp(
                     app_obj,
@@ -1691,7 +1771,9 @@ class VideoDownloader(object):
                 fh.close()
 
         if options_dict['write_info']:
-            json_path = os.path.join(path, filename + '.info.json')
+            json_path = os.path.abspath(
+                os.path.join(path, filename + '.info.json'),
+            )
             if not options_dict['sim_keep_info']:
                 json_path = utils.convert_path_to_temp(app_obj, json_path)
 
@@ -1711,9 +1793,11 @@ class VideoDownloader(object):
 
             # ...and thus get the filename used by youtube-dl when storing the
             #   thumbnail locally
-            thumb_path = os.path.join(
-                video_obj.file_dir,
-                video_obj.file_name + remote_ext,
+            thumb_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + remote_ext,
+                ),
             )
 
             if not options_dict['sim_keep_thumbnail']:
@@ -1724,13 +1808,25 @@ class VideoDownloader(object):
                 with open(thumb_path, 'wb') as outfile:
                     outfile.write(request_obj.content)
 
-        # Update the main window
-        GObject.timeout_add(
-            0,
-            app_obj.announce_video_download,
-            self.download_item_obj,
-            video_obj,
-        )
+        # If a new media.Video object was created, add a line to the Results
+        #   List, as well as updating the Video Catalogue
+        if new_flag:
+
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
+                self.download_item_obj,
+                video_obj,
+            )
+
+        else:
+
+            # Otherwise, just update the Video Catalogue
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.video_catalogue_update_row,
+                video_obj,
+            )
 
         # Stop checking videos in this channel/playlist, if a limit has been
         #   reached
@@ -1773,11 +1869,11 @@ class VideoDownloader(object):
             #   later kill the whole process group with os.killpg
             preexec = os.setsid
 
-        # Encode the system command for the child process, converting unicode
-        #   to str so the MS Windows shell can accept it (see
-        #   http://stackoverflow.com/a/9951851/35070 )
-        if sys.version_info < (3, 0):
-            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
+#        # Encode the system command for the child process, converting unicode
+#        #   to str so the MS Windows shell can accept it (see
+#        #   http://stackoverflow.com/a/9951851/35070 )
+#        if sys.version_info < (3, 0):
+#            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
 
         try:
             self.child_process = subprocess.Popen(
@@ -1943,6 +2039,10 @@ class VideoDownloader(object):
                 dl_stat_dict['playlist_size'] = stdout_list[5]
                 self.video_total = stdout_list[5]
 
+                # If downloading an individual video, rather than a channel or
+                #   a playlist, stop the download immediately
+                self.check_dl_is_correct_type()
+
             # Remove the 'and merged' part of the STDOUT message when using
             #   FFmpeg to merge the formats
             if stdout_list[-3] == 'downloaded' and stdout_list[-1] == 'merged':
@@ -2044,8 +2144,10 @@ class VideoDownloader(object):
                     json_dict = json.loads(stdout)
 
                 except:
-                    return self.download_manager_obj.app_obj.system_error(
-                        303,
+                    GObject.timeout_add(
+                        0,
+                        app_obj.system_error,
+                        304,
                         'Invalid JSON data received from server',
                     )
 
@@ -2138,13 +2240,6 @@ class VideoDownloader(object):
         cmd_list = [self.download_manager_obj.app_obj.ytdl_path] \
         + options_list + [self.download_item_obj.media_data_obj.source]
 
-        # If the user installed Tartube with the standard MSWin installer,
-        #   which uses MSYS2 (msys2.org) and includes a copy of youtube-dl,
-        #   then we need to add an extra argument (otherwise, it won't work)
-        if self.download_manager_obj.app_obj.ytdl_update_current \
-        == 'Automatic installation update':
-            cmd_list.insert(0, 'python3')
-
         return cmd_list
 
 
@@ -2220,10 +2315,28 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             print('dl 2087 is_ignorable')
 
-        if self.download_manager_obj.app_obj.ignore_merge_warning_flag \
+        app_obj = self.download_manager_obj.app_obj
+
+        if app_obj.ignore_merge_warning_flag \
         and re.search(r'Requested formats are incompatible for merge', stderr):
             return True
+
+        elif app_obj.ignore_yt_copyright_flag \
+        and re.search(
+            r'This video contains contents from.*copyright grounds',
+            stderr,
+        ):
+            return True
+
+        elif app_obj.ignore_child_process_exit_flag \
+        and re.search(
+            r'Child process exited with non\-zero code',
+            stderr,
+        ):
+            return True
+
         else:
+            # Not ignorable
             return False
 
 

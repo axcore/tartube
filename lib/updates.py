@@ -21,7 +21,9 @@
 
 
 # Import Gtk modules
-#   ...
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import GObject
 
 
 # Import other modules
@@ -83,6 +85,10 @@ class UpdateManager(threading.Thread):
 
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # The youtube-dl version number as a string, if captured from the child
+        #   process (e.g. '2019.07.02')
+        self.ytdl_version = None
 
 
         # IV list - other
@@ -150,7 +156,7 @@ class UpdateManager(threading.Thread):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
-                    if sys.platform == "win32":
+                    if os.name == 'nt':
                         stdout = stdout.decode('cp1252')
                     else:
                         stdout = stdout.decode('utf-8')
@@ -161,7 +167,14 @@ class UpdateManager(threading.Thread):
                     if re.search('It looks like you installed', stdout):
                         self.stderr_list.append(stdout)
                     else:
+                        # Try to intercept the new version number for
+                        #   youtube-dl
+                        self.intercept_version_from_stdout(stdout)
                         self.stdout_list.append(stdout)
+
+                        if (self.app_obj.ytdl_write_stdout_flag):
+                            print(stdout)
+
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -170,18 +183,26 @@ class UpdateManager(threading.Thread):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            if sys.platform == "win32":
+            if os.name == 'nt':
                 stderr = stderr.decode('cp1252')
             else:
                 stderr = stderr.decode('utf-8')
 
             if stderr:
-                self.stderr_list.append(stderr)
+
+                # If the user has pip installed, rather than pip3, they will by
+                #   now (mid-2019) be seeing a Python 2.7 deprecation warning.
+                #   Ignore that message, if received
+                if not re.search('DEPRECATION', stderr):
+                    self.stderr_list.append(stderr)
+
+            if (self.app_obj.ytdl_write_stderr_flag):
+                print(stderr)
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
         if self.child_process is None:
-            self.stderr_list.append('Download did not start')
+            self.stderr_list.append('youtube-dl update did not start')
 
         elif self.child_process.returncode > 0:
             self.stderr_list.append(
@@ -192,9 +213,22 @@ class UpdateManager(threading.Thread):
 
         # Operation complete; inform the main application of success or failure
         if self.stderr_list:
-            self.app_obj.update_manager_finished(False)
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.update_manager_finished,
+                False,
+                self.ytdl_version,
+            )
+
         else:
-            self.app_obj.update_manager_finished(True)
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.update_manager_finished,
+                True,
+                self.ytdl_version,
+            )
 
 
     def create_child_process(self, cmd_list):
@@ -224,11 +258,11 @@ class UpdateManager(threading.Thread):
             #   later kill the whole process group with os.killpg
             preexec = os.setsid
 
-        # Encode the system command for the child process, converting unicode
-        #   to str so the MS Windows shell can accept it (see
-        #   http://stackoverflow.com/a/9951851/35070 )
-        if sys.version_info < (3, 0):
-            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
+#        # Encode the system command for the child process, converting unicode
+#        #   to str so the MS Windows shell can accept it (see
+#        #   http://stackoverflow.com/a/9951851/35070 )
+#        if sys.version_info < (3, 0):
+#            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
 
         try:
             self.child_process = subprocess.Popen(
@@ -243,6 +277,37 @@ class UpdateManager(threading.Thread):
             # (The code in self.run() will spot that the child process did not
             #   start)
             self.stderr_list.append('Child process did not start')
+
+
+    def intercept_version_from_stdout(self, stdout):
+
+        """Called by self.run().
+
+        Check a STDOUT message, hoping to intercept the new youtube-dl version
+        number.
+
+        Args:
+
+            stdout (string): The STDOUT message
+
+        """
+
+        substring = re.search(
+            'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
+            stdout,
+        )
+
+        if substring:
+            self.ytdl_version = substring.group(1)
+
+        else:
+            substring = re.search(
+                'Successfully installed youtube\-dl\-([\d\.]+)\s*$',
+                stdout,
+            )
+
+            if substring:
+                self.ytdl_version = substring.group(1)
 
 
     def is_child_process_alive(self):

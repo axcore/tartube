@@ -386,6 +386,29 @@ DIALOGUE_ICON_DICT = {
     'system_icon': 'system_icon_64.png',
 }
 
+TOOLBAR_ICON_DICT = {
+    'tool_channel_large': 'channel_large.png',
+    'tool_channel_small': 'channel_small.png',
+    'tool_check_large': 'check_large.png',
+    'tool_check_small': 'check_small.png',
+    'tool_download_large': 'download_large.png',
+    'tool_download_small': 'download_small.png',
+    'tool_folder_large': 'folder_large.png',
+    'tool_folder_small': 'folder_small.png',
+    'tool_playlist_large': 'playlist_large.png',
+    'tool_playlist_small': 'playlist_small.png',
+    'tool_quit_large': 'quit_large.png',
+    'tool_quit_small': 'quit_small.png',
+    'tool_stop_large': 'stop_large.png',
+    'tool_stop_small': 'stop_small.png',
+    'tool_switch_large': 'switch_large.png',
+    'tool_switch_small': 'switch_small.png',
+    'tool_test_large': 'test_large.png',
+    'tool_test_small': 'test_small.png',
+    'tool_video_large': 'video_large.png',
+    'tool_video_small': 'video_small.png',
+}
+
 LARGE_ICON_DICT = {
     'video_both_large': 'video_both.png',
     'video_left_large': 'video_left.png',

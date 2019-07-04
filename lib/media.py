@@ -377,7 +377,7 @@ class GenericContainer(GenericMedia):
             obj = obj.parent_obj
             dir_list.insert(0, obj.name)
 
-        return os.path.join(app_obj.downloads_dir, *dir_list)
+        return os.path.abspath(os.path.join(app_obj.downloads_dir, *dir_list))
 
 
 class GenericRemoteContainer(GenericContainer):
@@ -712,9 +712,11 @@ class Video(GenericMedia):
 
         """
 
-        descrip_path = os.path.join(
-            self.file_dir,
-            self.file_name + '.description',
+        descrip_path = os.path.abspath(
+            os.path.join(
+                self.file_dir,
+                self.file_name + '.description',
+            ),
         )
 
         text = app_obj.file_manager_obj.load_text(descrip_path)
@@ -1426,15 +1428,7 @@ class Folder(GenericContainer):
         ):
             if isinstance(obj1, Video):
 
-                # The video's index is not relevant unless sorting a playlist
-                if isinstance(obj1.parent_obj, Playlist) \
-                and obj1.parent_obj == obj2.parent_obj \
-                and obj1.index is not None and obj2.index is not None:
-                    if obj1.index < obj2.index:
-                        return -1
-                    else:
-                        return 1
-                elif obj1.upload_time is not None \
+                if obj1.upload_time is not None \
                 and obj2.upload_time is not None:
                     if obj1.upload_time > obj2.upload_time:
                         return -1

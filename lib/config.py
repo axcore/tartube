@@ -337,8 +337,8 @@ class GenericEditWin(GenericConfigWin):
 
         # Render the changes
         self.show_all()
-                
-    
+
+
     def retrieve_val(self, name):
 
         """Can be called by anything.
@@ -445,10 +445,11 @@ class GenericEditWin(GenericConfigWin):
         for string in combo_list:
             store.append( [string] )
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, x, y, wid, hei)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
         combo.set_entry_text_column(0)
 
         if prop is not None:
@@ -502,10 +503,11 @@ class GenericEditWin(GenericConfigWin):
             store.append( [ mini_list[0], mini_list[1] ] )
             index_list.append(mini_list[1])
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, x, y, wid, hei)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
         combo.set_entry_text_column(0)
 
         if prop is not None:
@@ -1226,7 +1228,7 @@ class GenericPrefWin(GenericConfigWin):
         # Render the changes
         self.show_all()
 
-     
+
     # (Add widgets)
 
 
@@ -1307,10 +1309,11 @@ class GenericPrefWin(GenericConfigWin):
             if active_val is not None and active_val == string:
                 active_index = count
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, x, y, wid, hei)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
         combo.set_entry_text_column(0)
         combo.set_active(active_index)
 
@@ -1753,7 +1756,7 @@ class OptionsEditWin(GenericEditWin):
         grid.attach(button, 0, 5, 2, 1)
         button.connect('clicked', self.on_reset_options_clicked)
 
-        
+
     def setup_files_tab(self):
 
         """Called by self.setup_tabs().
@@ -1776,20 +1779,22 @@ class OptionsEditWin(GenericEditWin):
         )
 
         store = Gtk.ListStore(int, str)
-        for num in (0, 1, 2, 4, 5, 3):
+        num_list = [0, 1, 2, 4, 5, 3]
+        for num in num_list:
             store.append( [num, formats.FILE_OUTPUT_NAME_DICT[num]] )
 
         current_format = self.edit_obj.options_dict['output_format']
         current_template = formats.FILE_OUTPUT_CONVERT_DICT[current_format]
-        if current_format is None:
+        if current_template is None:
             current_template = self.edit_obj.options_dict['output_template']
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 0, 2, grid_width, 1)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, "text", 1)
         combo.set_entry_text_column(1)
-        combo.set_active(current_format)
+        combo.set_active(num_list.index(current_format))
         # Signal connect appears below
 
         self.add_label(grid,
@@ -1820,10 +1825,11 @@ class OptionsEditWin(GenericEditWin):
         ):
             store2.append( [string] )
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo2 = Gtk.ComboBox.new_with_model_and_entry(store2)
+        combo2 = Gtk.ComboBox.new_with_model(store2)
         grid.attach(combo2, 1, 5, 1, 1)
+        renderer_text2 = Gtk.CellRendererText()
+        combo2.pack_start(renderer_text2, True)
+        combo2.add_attribute(renderer_text2, "text", 0)
         combo2.set_entry_text_column(0)
         combo2.set_active(0)
 
@@ -1845,10 +1851,11 @@ class OptionsEditWin(GenericEditWin):
         ):
             store3.append( [string] )
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo3 = Gtk.ComboBox.new_with_model_and_entry(store3)
+        combo3 = Gtk.ComboBox.new_with_model(store3)
         grid.attach(combo3, 3, 5, 1, 1)
+        renderer_text3 = Gtk.CellRendererText()
+        combo3.pack_start(renderer_text3, True)
+        combo3.add_attribute(renderer_text3, "text", 0)
         combo3.set_entry_text_column(0)
         combo3.set_active(0)
 
@@ -1870,10 +1877,11 @@ class OptionsEditWin(GenericEditWin):
         ):
             store4.append( [string] )
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
-        combo4 = Gtk.ComboBox.new_with_model_and_entry(store4)
+        combo4 = Gtk.ComboBox.new_with_model(store4)
         grid.attach(combo4, 1, 6, 1, 1)
+        renderer_text4 = Gtk.CellRendererText()
+        combo4.pack_start(renderer_text4, True)
+        combo4.add_attribute(renderer_text4, "text", 0)
         combo4.set_entry_text_column(0)
         combo4.set_active(0)
 
@@ -2641,12 +2649,12 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
-        
+
             # Nothing selected
             return
-            
+
         else:
-        
+
             name = model[iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
@@ -2699,17 +2707,17 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
-        
+
             # Nothing selected
             return
-            
+
         else:
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-            
+
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2763,7 +2771,7 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
         if iter is None:
-        
+
             # Nothing selected
             return
 
@@ -2772,7 +2780,7 @@ class OptionsEditWin(GenericEditWin):
             name = model[iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-            
+
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2819,17 +2827,17 @@ class OptionsEditWin(GenericEditWin):
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
         if not path_list:
-        
+
             # Nothing selected
             return
-            
+
         else:
-        
+
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
             # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
-            
+
         # There are three video format options; the selected one might be any
         #   of them
         val1 = self.retrieve_val('video_format')
@@ -2884,23 +2892,23 @@ class OptionsEditWin(GenericEditWin):
                 {
                     'yes': 'reset_options_manager',
                     # (Reset this edit window, if the user clicks 'yes')
-                    'data': [self],              
+                    'data': [self],
                 },
             )
 
         else:
 
             # Editing an Options Manager object attached to a particular media
-            #   data object 
+            #   data object
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 'This operation cannot be reversed.\n' \
                 + 'Are you sure you want to continue?',
                 'question',
                 'yes-no',
-                self,           # Parent window is this window                
+                self,           # Parent window is this window
                 {
                     'yes': 'reset_options_manager',
-                    'data': [self, self.media_data_obj], 
+                    'data': [self, self.media_data_obj],
                 },
             )
 
@@ -3143,9 +3151,11 @@ class VideoEditWin(GenericEditWin):
         entry5.set_editable(False)
         if self.edit_obj.file_dir:
             entry5.set_text(
-                os.path.join(
-                    self.edit_obj.file_dir,
-                    self.edit_obj.file_name + self.edit_obj.file_ext,
+                os.path.abspath(
+                    os.path.join(
+                        self.edit_obj.file_dir,
+                        self.edit_obj.file_name + self.edit_obj.file_ext,
+                    ),
                 )
             )
 
@@ -4079,6 +4089,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_videos_tab()
         self.setup_ytdl_tab()
         self.setup_performance_tab()
+        self.setup_debug_tab()
 
 
     def setup_general_tab(self):
@@ -4106,12 +4117,10 @@ class SystemPrefWin(GenericPrefWin):
         # (This is a placeholder, to be replaced when we add translations)
         store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         pixbuf = self.app_obj.file_manager_obj.load_to_pixbuf(
-            os.path.join('icons', 'locale', 'flag_uk.png'),
+            os.path.abspath(os.path.join('icons', 'locale', 'flag_uk.png')),
         )
         store.append( [pixbuf, 'English'] )
 
-        # !!! TODO BUG: Work out how to replace this with .new_with_model(), so
-        #   mischievous users can't type in the entry
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 1, (grid_width - 1), 1)
         combo.set_hexpand(True)
@@ -4147,50 +4156,56 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.disable_load_save_flag:
             button.set_sensitive(False)
 
-        # Operation preferences
+        # Main window preferences
         self.add_label(grid,
-            '<u>Operation preferences</u>',
+            '<u>Main window preferences</u>',
             0, 3, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            'Automatically update youtube-dl before every download operation',
-            self.app_obj.operation_auto_update_flag,
+            'Don\'t show labels in the toolbar',
+            self.app_obj.toolbar_squeeze_flag,
             True,                   # Can be toggled by user
             0, 4, grid_width, 1,
         )
-        checkbutton.connect('toggled', self.on_auto_update_button_toggled)
+        checkbutton.connect('toggled', self.on_squeeze_button_toggled)
+
+        # Operation preferences
+        self.add_label(grid,
+            '<u>Operation preferences</u>',
+            0, 5, grid_width, 1,
+        )
 
         checkbutton2 = self.add_checkbutton(grid,
+            'Automatically update youtube-dl before every download operation',
+            self.app_obj.operation_auto_update_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        checkbutton2.connect('toggled', self.on_auto_update_button_toggled)
+
+        checkbutton3 = self.add_checkbutton(grid,
             'Automatically save files at the end of a download/update/' \
             + 'refresh operation',
             self.app_obj.operation_save_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 7, grid_width, 1,
         )
-        checkbutton2.connect('toggled', self.on_save_button_toggled)
+        checkbutton3.connect('toggled', self.on_save_button_toggled)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             'Show a dialogue window at the end of a download/update/refresh' \
             + ' operation',
             self.app_obj.operation_dialogue_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton3.connect('toggled', self.on_dialogue_button_toggled)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            'Ignore \'Requested formats are incompatible for merge\' warnings',
-            self.app_obj.ignore_merge_warning_flag,
-            True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
-        )
-        checkbutton4.connect('toggled', self.on_merge_button_toggled)
+        checkbutton4.connect('toggled', self.on_dialogue_button_toggled)
 
         # Module preferences
         self.add_label(grid,
             '<u>Module preferences</u>',
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
 
         checkbutton5 = self.add_checkbutton(grid,
@@ -4198,22 +4213,11 @@ class SystemPrefWin(GenericPrefWin):
             + ' (may be slow)',
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         checkbutton5.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
             checkbutton5.set_sensitive(False)
-
-        checkbutton6 = self.add_checkbutton(grid,
-            'Use \'validators\' module to check URLs are valid before using'
-            + ' them',
-            self.app_obj.use_module_moviepy_flag,
-            True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
-        )
-        checkbutton6.connect('toggled', self.on_validators_button_toggled)
-        if not mainapp.HAVE_VALIDATORS_FLAG:
-            checkbutton6.set_sensitive(False)
 
 
     def setup_backups_tab(self):
@@ -4236,7 +4240,7 @@ class SystemPrefWin(GenericPrefWin):
             + ' makes a backup copy of it (in case something goes wrong)',
             0, 1, 1, 1,
         )
-            
+
         radiobutton = self.add_radiobutton(grid,
             None,
             'Delete the backup file as soon as the save procedure is' \
@@ -4251,7 +4255,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 3, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'single':
-            radiobutton2.set_active(True)            
+            radiobutton2.set_active(True)
         # Signal connect appears below
 
         radiobutton3 = self.add_radiobutton(grid,
@@ -4261,7 +4265,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'daily':
-            radiobutton3.set_active(True)            
+            radiobutton3.set_active(True)
         # Signal connect appears below
 
         radiobutton4 = self.add_radiobutton(grid,
@@ -4270,7 +4274,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 5, 1, 1,
         )
         if self.app_obj.db_backup_mode == 'always':
-            radiobutton4.set_active(True)            
+            radiobutton4.set_active(True)
         # Signal connect appears below
 
         # Signal connects from above
@@ -4453,10 +4457,11 @@ class SystemPrefWin(GenericPrefWin):
         for mini_list in combo_list:
             store.append( [ mini_list[0], mini_list[1] ] )
 
-        # !!! TODO BUG: Work out how to replace this with
-        #   .new_with_model(), so mischievous users can't type in the entry
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 3, 1, 1)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, "text", 0)
         combo.set_entry_text_column(0)
 
         if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
@@ -4478,38 +4483,50 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo2.connect('changed', self.on_update_combo_changed)
 
-        # Debugging options
+        # Timeout preferences
         self.add_label(grid,
-            '<u>Debugging options</u>',
-            0, 5, 1, 1,
+            '<u>Timeout preferences</u>',
+            0, 5, 2, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            'Write output from youtube-dl\'s STDOUT to the terminal',
-            self.app_obj.ytdl_write_stdout_flag,
-            True,               # Can be toggled by user
-            0, 6, 1, 1,
+            'When checking videos, apply a 60-second timeout while fetching' \
+            + ' JSON data',
+            self.app_obj.apply_json_timeout_flag,
+            True,                   # Can be toggled by user
+            0, 6, 2, 1,
         )
-        checkbutton.set_hexpand(False)
-        checkbutton.connect('toggled', self.on_stdout_button_toggled)
+        checkbutton.connect('toggled', self.on_json_button_toggled)
+
+        # Errors/Warnings tab preferences
+        self.add_label(grid,
+            '<u>Errors/Warnings tab preferences</u>',
+            0, 7, 2, 1,
+        )
 
         checkbutton2 = self.add_checkbutton(grid,
-            'Write output from youtube-dl\'s STDERR to the terminal',
-            self.app_obj.ytdl_write_stderr_flag,
-            True,               # Can be toggled by user
-            0, 7, 1, 1,
+            'Ignore \'Requested formats are incompatible for merge\' warnings',
+            self.app_obj.ignore_merge_warning_flag,
+            True,                   # Can be toggled by user
+            0, 8, 2, 1,
         )
-        checkbutton2.set_hexpand(False)
-        checkbutton2.connect('toggled', self.on_stderr_button_toggled)
+        checkbutton2.connect('toggled', self.on_merge_button_toggled)
 
         checkbutton3 = self.add_checkbutton(grid,
-            'Write verbose output (youtube-dl debugging mode)',
-            self.app_obj.ytdl_write_verbose_flag,
-            True,               # Can be toggled by user
-            0, 8, 1, 1,
+            'Ignore YouTube copyright errors',
+            self.app_obj.ignore_yt_copyright_flag,
+            True,                   # Can be toggled by user
+            0, 9, 2, 1,
         )
-        checkbutton3.set_hexpand(False)
-        checkbutton3.connect('toggled', self.on_verbose_button_toggled)
+        checkbutton3.connect('toggled', self.on_copyright_button_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            'Ignore \'Child process exited with non-zero code\' errors',
+            self.app_obj.ignore_child_process_exit_flag,
+            True,                   # Can be toggled by user
+            0, 10, 2, 1,
+        )
+        checkbutton4.connect('toggled', self.on_child_process_button_toggled)
 
 
     def setup_performance_tab(self):
@@ -4576,7 +4593,7 @@ class SystemPrefWin(GenericPrefWin):
         self.add_label(grid,
             '<u>Time-saving preferences</u>',
             0, 3, grid_width, 1,
-        )        
+        )
 
         checkbutton3 = self.add_checkbutton(grid,
             'Stop checking/downloading a channel/playlist when it starts' \
@@ -4627,7 +4644,68 @@ class SystemPrefWin(GenericPrefWin):
             entry,
             entry2,
         )
-        
+
+
+    def setup_debug_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Debug' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_Debug')
+
+        # Debugging options
+        self.add_label(grid,
+            '<u>Debugging options</u>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            'Write output from youtube-dl\'s STDOUT to the terminal',
+            self.app_obj.ytdl_write_stdout_flag,
+            True,               # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+        # Signal connect appears below
+
+        checkbutton2 = self.add_checkbutton(grid,
+            '...but don\'t write each video\'s JSON data',
+            self.app_obj.ytdl_write_ignore_json_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton2.set_hexpand(False)
+        checkbutton2.connect('toggled', self.on_stdout_json_button_toggled)
+        if not self.app_obj.ytdl_write_stdout_flag:
+            checkbutton2.set_sensitive(False)
+
+        # Signal connect from above
+        checkbutton.connect(
+            'toggled',
+            self.on_stdout_button_toggled,
+            checkbutton2,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'Write output from youtube-dl\'s STDERR to the terminal',
+            self.app_obj.ytdl_write_stderr_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        checkbutton3.connect('toggled', self.on_stderr_button_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            'Write verbose output (youtube-dl debugging mode)',
+            self.app_obj.ytdl_write_verbose_flag,
+            True,               # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        checkbutton4.connect('toggled', self.on_verbose_button_toggled)
+
 
     # Callback class methods
 
@@ -4667,7 +4745,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if radiobutton.get_active():            
+        if radiobutton.get_active():
             self.app_obj.set_db_backup_mode(value)
 
 
@@ -4716,7 +4794,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Sets the limit at which a download operation will stop checking a
         channel or playlist.
-        
+
         Args:
 
             entry (Gtk.Entry): The widget changed
@@ -4727,7 +4805,7 @@ class SystemPrefWin(GenericPrefWin):
         if text.isdigit() and int(text) >= 0:
             self.app_obj.set_operation_check_limit(int(text))
 
-        
+
     def on_complex_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
@@ -4754,6 +4832,46 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.main_win_obj.video_index_reset()
             self.app_obj.main_win_obj.video_catalogue_reset()
             self.app_obj.main_win_obj.video_index_populate()
+
+
+    def on_child_process_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of child process exit error messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_child_process_exit_flag:
+            self.app_obj.set_ignore_child_process_exit_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_child_process_exit_flag:
+            self.app_obj.set_ignore_child_process_exit_flag(False)
+
+
+    def on_copyright_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of YouTube copyright errors messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_yt_copyright_flag:
+            self.app_obj.set_ignore_yt_copyright_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_yt_copyright_flag:
+            self.app_obj.set_ignore_yt_copyright_flag(False)
 
 
     def on_data_dir_button_clicked(self, button, entry):
@@ -4783,7 +4901,7 @@ class SystemPrefWin(GenericPrefWin):
                 Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
             ),
         )
-        
+
         response = dialogue_win.run()
         if response == Gtk.ResponseType.OK:
             new_path = dialogue_win.get_filename()
@@ -4796,9 +4914,11 @@ class SystemPrefWin(GenericPrefWin):
             #   just inside an existing one, rather than switching to the
             #   existing one
             # If no database file exists, prompt the user to create a new one
-            db_path = os.path.join(new_path, self.app_obj.db_file_name)
+            db_path = os.path.abspath(
+                os.path.join(new_path, self.app_obj.db_file_name),
+            )
             if not os.path.isfile(db_path):
-            
+
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     'Are you sure you want to create\na new database at this' \
                     + ' location?\n\n' + new_path,
@@ -4807,7 +4927,7 @@ class SystemPrefWin(GenericPrefWin):
                     self,           # Parent window is this window
                     {
                         'yes': 'switch_db',
-                        'data': [new_path, self],              
+                        'data': [new_path, self],
                     },
                 )
 
@@ -4816,7 +4936,7 @@ class SystemPrefWin(GenericPrefWin):
 
                 if self.app_obj.disable_load_save_flag:
                     button.set_sensitive(False)
-                    
+
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     'Database file not loaded',
                     'error',
@@ -4865,7 +4985,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
-        
+
         Args:
 
             entry (Gtk.Entry): The widget changed
@@ -4876,14 +4996,35 @@ class SystemPrefWin(GenericPrefWin):
         if text.isdigit() and int(text) >= 0:
             self.app_obj.set_operation_download_limit(int(text))
 
-        
+
+    def on_json_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables apply a 60-second timeout when fetching a video's JSON
+        data.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.apply_json_timeout_flag:
+            self.app_obj.set_apply_json_timeout_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.apply_json_timeout_flag:
+            self.app_obj.set_apply_json_timeout_flag(False)
+
+
     def on_limit_button_toggled(self, checkbutton, entry, entry2):
 
         """Called from callback in self.setup_performance_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
-        
+
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -4896,14 +5037,14 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_limit_flag(True)
             entry.set_sensitive(True)
             entry2.set_sensitive(True)
-            
+
         elif not checkbutton.get_active() \
         and self.app_obj.operation_limit_flag:
             self.app_obj.set_operation_limit_flag(False)
             entry.set_sensitive(False)
             entry2.set_sensitive(False)
 
-        
+
     def on_match_button_toggled(self, radiobutton):
 
         """Called from callback in self.setup_videos_tab().
@@ -4962,7 +5103,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_merge_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_general_tab().
+        """Called from callback in self.setup_ytdl_tab().
 
         Enables/disables ignoring of 'Requested formats are incompatible for
         merge and will be merged into mkv' warning messages.
@@ -5020,6 +5161,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_save_flag(False)
 
 
+    def on_squeeze_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables labels in the main window's main toolbar.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.toolbar_squeeze_flag:
+            self.app_obj.set_toolbar_squeeze_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.toolbar_squeeze_flag:
+            self.app_obj.set_toolbar_squeeze_flag(False)
+
+
     def on_stderr_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_ytdl_tab().
@@ -5041,7 +5202,34 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ytdl_write_stderr_flag(False)
 
 
-    def on_stdout_button_toggled(self, checkbutton):
+    def on_stdout_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called from a callback in self.setup_ytdl_tab().
+
+        Enables/disables writing output from youtube-dl's STDOUT to the
+        terminal.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): A different checkbutton to
+                sensitise/desensitise, according to the new value of the flag
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_write_stdout_flag:
+            self.app_obj.set_ytdl_write_stdout_flag(True)
+            checkbutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_write_stdout_flag:
+            self.app_obj.set_ytdl_write_stdout_flag(False)
+            checkbutton2.set_sensitive(False)
+
+
+    def on_stdout_json_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_ytdl_tab().
 
@@ -5055,11 +5243,11 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         if checkbutton.get_active() \
-        and not self.app_obj.ytdl_write_stdout_flag:
-            self.app_obj.set_ytdl_write_stdout_flag(True)
+        and not self.app_obj.ytdl_write_ignore_json_flag:
+            self.app_obj.set_ytdl_write_ignore_json_flag(True)
         elif not checkbutton.get_active() \
-        and self.app_obj.ytdl_write_stdout_flag:
-            self.app_obj.set_ytdl_write_stdout_flag(False)
+        and self.app_obj.ytdl_write_ignore_json_flag:
+            self.app_obj.set_ytdl_write_ignore_json_flag(False)
 
 
     def on_update_combo_changed(self, combo):
@@ -5078,26 +5266,6 @@ class SystemPrefWin(GenericPrefWin):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         self.app_obj.set_ytdl_update_current(model[tree_iter][0])
-
-
-    def on_validators_button_toggled(self, checkbutton):
-
-        """Called from callback in self.setup_general_tab().
-
-        Enables/disables use of the validators module.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.use_module_validators_flag:
-            self.app_obj.set_use_module_validators_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.use_module_validators_flag:
-            self.app_obj.set_use_module_validators_flag(False)
 
 
     def on_verbose_button_toggled(self, checkbutton):

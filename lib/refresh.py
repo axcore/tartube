@@ -185,7 +185,7 @@ class RefreshManager(threading.Thread):
                 #   it so now
                 child_obj = check_dict[rel_path]
                 if not child_obj.dl_flag:
-                    self.app_obj.mark_video_downloaded(child_obj, False)
+                    self.app_obj.mark_video_downloaded(child_obj, True)
 
                 # Eliminate this media.Video object; no other video file
                 #   should match it (guards against two video files with the
@@ -197,7 +197,7 @@ class RefreshManager(threading.Thread):
 
                 # File didn't match a media.Video object, so create a new one
                 video_obj = self.app_obj.add_video(media_data_obj, None)
-                video_path = os.path.join(dir_path, rel_path)
+                video_path = os.path.abspath(os.path.join(dir_path, rel_path))
 
                 # Set the new video object's IVs
                 filename, ext = os.path.splitext(rel_path)
@@ -209,7 +209,7 @@ class RefreshManager(threading.Thread):
 
                 video_obj.set_file_size(
                     os.path.getsize(
-                        os.path.join(dir_path, rel_path),
+                        os.path.abspath(os.path.join(dir_path, rel_path)),
                     ),
                 )
 
@@ -227,7 +227,7 @@ class RefreshManager(threading.Thread):
 
                 # This call marks the video as downloaded, and also updates the
                 #   Video Index and Video Catalogue
-                self.app_obj.mark_video_downloaded(video_obj, False)
+                self.app_obj.mark_video_downloaded(video_obj, True)
 
 
     def stop_refresh_operation(self):

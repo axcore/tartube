@@ -35,16 +35,38 @@ import setuptools
 # Setup
 setuptools.setup(
     name='tartube',
-    version='0.5.0',
+    version='0.6.0',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based
         on youtube-dl-gui and written in Python 3 / Gtk 3""",
     long_description_content_type='text/markdown',
+    url='https://tartube.sourceforge.io',
     author='A S Lewis',
     author_email='aslewis@cpan.org',
-    url='https://github.com/axcore/tartube',
 #    license=license,
-    license="""GPL3+""",
-    packages=setuptools.find_packages()
+#    license="""GPL3+""",
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: End Users/Desktop',
+        'Topic :: Multimedia :: Video',
+        'License :: OSI Approved' \
+        + ' :: GNU General Public License v3 or later (GPLv3+)',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+    ],
+    keywords='tartube video download youtube',
+    packages=setuptools.find_packages(
+        exclude=('docs', 'icons', 'nsis', 'tests'),
+    ),
+    python_requires='>=3.0, <4',
+    install_requires=['requests'],
+    scripts=['tartube'],
+    project_urls={
+        'Bug Reports': 'https://github.com/axcore/tartube/issues',
+        'Source': 'https://github.com/axcore/tartube',
+    },
 )

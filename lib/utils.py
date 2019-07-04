@@ -30,6 +30,7 @@ import locale
 import math
 import os
 import re
+import requests
 import subprocess
 import sys
 import textwrap
@@ -38,8 +39,6 @@ import textwrap
 # Import our modules
 from . import formats
 from . import mainapp
-if mainapp.HAVE_VALIDATORS_FLAG:
-    from . import validators
 
 
 # Functions
@@ -70,9 +69,7 @@ def add_links_from_clipboard(app_obj, widget):
     valid_list = []
     if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
         for line in cliptext.split('\n'):
-            if not mainapp.HAVE_VALIDATORS_FLAG \
-            or not app_obj.use_module_validators_flag \
-            or validators.url(line):
+            if check_url(line):
 
                 line = strip_whitespace(line)
                 if re.search('\S', line):
@@ -83,6 +80,30 @@ def add_links_from_clipboard(app_obj, widget):
             widget.set_text(valid_list[0])
         elif isinstance(widget, Gtk.TextBuffer):
             widget.set_text(str.join('\n', valid_list))
+
+
+def check_url(url):
+
+    """Can be called by anything.
+
+    Checks for valid URLs.
+
+    Args:
+
+        url (string): The URL to check
+
+    Returns:
+
+        True if the URL is valid, False if invalid.
+
+    """
+
+    prepared_request = requests.models.PreparedRequest()
+    try:
+        prepared_request.prepare_url(url, None)
+        return True
+    except:
+        return False
 
 
 def convert_item(item, to_unicode=False):
@@ -285,9 +306,11 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
     for ext in ('.jpg', '.png', '.gif'):
 
         # Look in main data directory
-        path = os.path.join(
-            video_obj.file_dir,
-            video_obj.file_name + ext,
+        path = os.path.abspath(
+            os.path.join(
+                video_obj.file_dir,
+                video_obj.file_name + ext,
+            ),
         )
 
         if os.path.isfile(path):

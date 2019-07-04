@@ -353,9 +353,11 @@ class OptionsManager(object):
             'add_metadata': False,
             # YOUTUBE-DL-GUI OPTIONS
             'output_format': 1,
-            'output_template': os.path.join(
-                '%(uploader)s',
-                '%(title)s.%(ext)s',
+            'output_template': os.path.abspath(
+                os.path.join(
+                    '%(uploader)s',
+                    '%(title)s.%(ext)s',
+                ),
             ),
             'second_video_format': '0',
             'third_video_format': '0',
@@ -736,7 +738,9 @@ class OptionsParser(object):
         if template is None:
             template = copy_dict['output_template']
 
-        copy_dict['save_path'] = os.path.join(save_path, template)
+        copy_dict['save_path'] = os.path.abspath(
+            os.path.join(save_path, template),
+        )
 
 
     def build_video_format(self, copy_dict):

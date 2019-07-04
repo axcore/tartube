@@ -1,3 +1,41 @@
+v0.6.0 (4 Jul 2019)
+-------------------------------------------------------------------------------
+
+- Some MS Windows users, especially on Windows 10, report that they can't run
+    Tartube at all. In an effort to get around this, the installer has been
+    redesigned. The way Tartube communicates with youtube-dl on MS Windows has
+    been changed. youtube-dl update operations should now work flawlessly.
+    Please report any further problems at our GitHub page; this might be a fix
+    to issue #10
+- Users on Linux/*BSD can now run Tartube directly from the command line, after
+    installing it (see the README)
+- Occasionally, videos were downloaded (or checked) successfully, but Tartube
+    failed to notice them. This issue should now be fixed
+- When checking videos/channels/playlists/folders, only new videos will now
+    appear in the Results List (in the 'Progress' tab)
+- The toolbar has been redesigned. MS Windows users won't see labels at all
+    (so everything should fit). Users on all system can turn labels on or off.
+    Tooltips have been added to the buttons, in case the labels are turned off
+- Fixed yet another problem with button to switch the location of Tartube's
+    data folder (#6)
+- Tartube no longer requires the python 'validators' module
+- Tartube can now ignore YouTube copyright messages, and also 'Child process
+    exited with non-zero code' messages, meaning that they won't appear in
+    Tartube's 'Errors/Warnings' tab. (They are not ignored by default)
+- Tartube now applies a 60-second timeout when youtube-dl tries to download
+    a video's metadata (since youtube-dl uses a 10-minute timeout); this can be
+    turned off, if required (#9)
+- Fixed some more issues with the way videos are sorted in the Video Catalogue
+    (it's still not 100%)
+- Users can no longer type in comboboxes
+- Tartube now spots when the user adds a channel or playlist URL as a video;
+    only the first video in the channel/playlist is now downloaded
+- You can no longer remove download options from a media data object when the
+    download options edit window is still open
+- When you update youtube-dl, Tartube will now tell you which youtube-dl
+    version is installed. Tartube will no longer claim the update operation
+    fails if you're using pip (rather than pip3)
+
 v0.5.0 (1 Jul 2019)
 -------------------------------------------------------------------------------
 

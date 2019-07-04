@@ -37,18 +37,14 @@ import re
 import shutil
 import sys
 import time
+
+
 # Import other Python modules
 try:
     import moviepy.editor
     HAVE_MOVIEPY_FLAG = True
 except:
     HAVE_MOVIEPY_FLAG = False
-
-try:
-    import validators
-    HAVE_VALIDATORS_FLAG = True
-except:
-    HAVE_VALIDATORS_FLAG = False
 
 
 # Import our modules
@@ -92,6 +88,31 @@ class TartubeApp(Gtk.Application):
             application_id=__main__.__app_id__,
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs)
+
+        # Debugging flags (can only be set by editing the source code)
+        # Delete the config file and the contents of Tartube's data directory
+        #   on startup
+        self.debug_delete_data_flag = False
+        # After installation, don't show the dialogue windows prompting the
+        #   user to choose Tartube's data directory; just use the default
+        #   location
+        self.debug_no_dialogue_flag = False
+        # In the main window's menu, show a menu item for adding a set of
+        #   media data objects for testing
+        self.debug_test_media_menu_flag = False
+        # In the main window's toolbar, show a toolbar item for adding a set of
+        #   media data objects for testing
+        self.debug_test_media_toolbar_flag = False
+        # Show an dialogue window with 'Tartube is already running!' if the
+        #   user tries to open a second instance of Tartube
+        self.debug_warn_multiple_flag = False
+        # Open the main window in the top-left corner of the desktop
+        self.debug_open_top_left_flag = False
+        # Automatically open the system preferences window on startup
+        self.debug_open_pref_win_flag = False
+        # Hide all the system folders (this is not reversible by setting the
+        #   flag back to False)
+        self.debug_hide_folders_flag = False
 
         # Instance variable (IV) list - class objects
         # -------------------------------------------
@@ -168,35 +189,54 @@ class TartubeApp(Gtk.Application):
         self.main_win_height = 600
         self.config_win_width = 650
         self.config_win_height = 450
+        # Flag set to True if the main toolbar should be compressed (by
+        #   removing the labels); ideal if the toolbar's contents won't fit in
+        #   the standard-sized window (as it almost certainly won't on MS
+        #   Windows)
+        if os.name != 'nt':
+            self.toolbar_squeeze_flag = False
+        else:
+            self.toolbar_squeeze_flag = True
         # Default size (in pixels) of space between various widgets
         self.default_spacing_size = 5
 
-        # Tartube's data directory (platform-dependant)
-        self.data_dir = os.path.join(
-            os.path.expanduser('~'),
-            __main__.__packagename__,
+        # Tartube's data directory (platform-dependant), i.e. 'tartube-data'
+        # Note that, using the MSWin installer, Cygwin gives file paths with
+        #   both / and \ separators. Throughout the code, we use
+        #   os.path.abspath to circumvent this problem
+        self.data_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+            ),
         )
         # The sub-directory into which videos are downloaded
-        self.downloads_dir = os.path.join(
-            os.path.expanduser('~'),
-            __main__.__packagename__,
-            'downloads',
+        self.downloads_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+                'downloads',
+            ),
         )
         # A temporary directory, deleted when Tartube starts and stops
-        self.temp_dir = os.path.join(
-            os.path.expanduser('~'),
-            __main__.__packagename__,
-            '.temp',
+        self.temp_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+                '.temp',
+            ),
         )
         # Inside the temporary directory, a downloads folder, replicating the
         #   layout of self.downloads_dir, and used for storing description,
         #   JSON and thumbnail files which the user doesn't want to store in
         #   self.downloads_dir
-        self.temp_dl_dir = os.path.join(
-            os.path.expanduser('~'),
-            __main__.__packagename__,
-            '.temp',
-            'downloads',
+        self.temp_dl_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+                '.temp',
+                'downloads',
+            ),
         )
 
         # Name of the Tartube config file, always found in the same directory
@@ -255,6 +295,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if output youtube-dl's STDOUT should be written to
         #   the terminal window
         self.ytdl_write_stdout_flag = False
+        # Flag set to True if we should ignore JSON output when writing to the
+        #   terminal window (ignored if self.ytdl_write_stdout_flag is False)
+        self.ytdl_write_ignore_json_flag = True
         # Flag set to True if output youtube-dl's STDERR should be written to
         #   the terminal window
         self.ytdl_write_stderr_flag = False
@@ -404,16 +447,25 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if a dialogue window should be shown at the end of
         #   each download/update/refresh operation
         self.operation_dialogue_flag = True
-        # Flag set to True if 'Requested formats are incompatible for merge and
-        #   will be merged into mkv' messages from youtube-dl should be ignored
-        self.ignore_merge_warning_flag = True
         # Flag set to True if self.update_video_from_filesystem() should get
         #   the video duration, if not already known, using the moviepy.editor
         #   module (which may be slow)
         self.use_module_moviepy_flag = True
-        # Flag set to True if various functions should use the validators
-        #   module to check URLs are valid, before adding them
-        self.use_module_validators_flag = True
+
+        # Flag set to True if, when checking videos/channels/playlists, we
+        #   should timeout after 60 seconds (in case youtube-dl gets stuck
+        #   downloading the JSON data)
+        self.apply_json_timeout_flag = True
+        # Flag set to True if 'Requested formats are incompatible for merge and
+        #   will be merged into mkv' messages from youtube-dl should be ignored
+        #   (in the Errors/Warnings tab)
+        self.ignore_merge_warning_flag = True
+        # Flag set to True if YouTube copyright messages should be ignored (in
+        #   the Errors/Warnings tab)
+        self.ignore_yt_copyright_flag = False
+        # Flag set to True if 'Child process exited with non-zero code'
+        #   messages should be ignored (in the Errors/Warnings tab)
+        self.ignore_child_process_exit_flag = False
 
         # During a download operation, the number of simultaneous downloads
         #   allowed. (An instruction to youtube-dl to download video(s) from a
@@ -473,37 +525,6 @@ class TartubeApp(Gtk.Application):
         #   struggles with a list of hundreds, or thousands, of videos)
         # The number of videos per page, or 0 to always use a single page
         self.catalogue_page_size = 50
-
-        # Debugging flags (can only be set by editing the source code)
-        # Delete the config file and the contents of Tartube's data directory
-        #   on startup
-        self.debug_delete_data_flag = False
-        # In the main window's menu, show a menu item for adding a set of
-        #   media data objects for testing
-        self.debug_test_media_menu_flag = False
-        # In the main window's toolbar, show a toolbar item for adding a set of
-        #   media data objects for testing
-        self.debug_test_media_toolbar_flag = False
-        # Show an dialogue window with 'Tartube is already running!' if the
-        #   user tries to open a second instance of Tartube
-        self.debug_warn_multiple_flag = False
-        # Open the main window in the top-left corner of the desktop
-        self.debug_open_top_left_flag = False
-        # Automatically open the system preferences window on startup
-        self.debug_open_pref_win_flag = False
-        # Hide all the system folders (this is not reversible by setting the
-        #   flag back to False)
-        self.debug_hide_folders_flag = False
-        # For Tartube developers who don't want to manually change
-        #   self.ytdl_path and self.ytdl_update_current on every startup
-        #   (assuming that self.debug_delete_data_flag is True), modify those
-        #   IVs
-        self.debug_modify_ytdl_flag = False
-        self.debug_ytdl_path = None
-        self.debug_ytdl_update_current = None
-#        self.debug_modify_ytdl_flag = True
-#        self.debug_ytdl_path = 'youtube-dl'
-#        self.debug_ytdl_update_current = 'Update using pip'
 
 
     def do_startup(self):
@@ -870,6 +891,26 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 763 start')
 
+        # Import the script name (for convenience)
+        script_name = utils.upper_case_first(__main__.__packagename__)
+
+        # Create the main window
+        self.main_win_obj = mainwin.MainWin(self)
+        # If the debugging flag is set, move it to the top-left corner of the
+        #   desktop
+        if self.debug_open_top_left_flag:
+            self.main_win_obj.move(0, 0)
+
+        # Make it visible
+        self.main_win_obj.show_all()
+
+        # Start the dialogue manager (thread-safe code for Gtk message dialogue
+        #   windows)
+        self.dialogue_manager_obj = dialogue.DialogueManager(
+            self,
+            self.main_win_obj,
+        )
+
         # Delete Tartube's config file and data directory, if the debugging
         #   flag is set
         if self.debug_delete_data_flag:
@@ -882,63 +923,154 @@ class TartubeApp(Gtk.Application):
         # Give mainapp.TartubeApp IVs their initial values
         self.general_options_obj = options.OptionsManager()
 
+        # Set youtube-dl IVs
         if os.name == 'nt':
-            self.ytdl_bin = 'youtube-dl'
-            # The default values assume the user is using the standard MSWin
-            #   installer, which uses MSYS2 (msys2.org) and includes a copy of
-            #   youtube-dl
-            self.ytdl_path_default = '../youtube-dl/bin/youtube-dl'
-            self.ytdl_path = self.ytdl_path_default
-            self.ytdl_update_dict = {
-                'Automatic installation update': [
-                    self.ytdl_path_default,
-                    '-U',
-                ],
-                'Manual installation update': ['youtube-dl', '-U'],
-            }
-            self.ytdl_update_list = [
-                'Automatic installation update',
-                'Manual installation update',
-            ]
-            # NB downloads.VideoDownloader.get_system_cmd() checks for the
-            #   value of this string; if the value is changed, so must that
-            #   function be changed
-            self.ytdl_update_current = 'Automatic installation update'
 
-        else:
+            if 'PROGRAMFILES(X86)' in os.environ:
+                # 64-bit MS Windows
+                descrip = 'Windows 64-bit update (recommended)'
+                python_path = '..\\..\\..\\mingw64\\bin\python3.exe'
+                pip_path = '..\\..\\..\\mingw64\\bin\pip3-script.py'
+            else:
+                # 32-bit MS Windows
+                descrip = 'Windows 32-bit update (recommended)'
+                python_path = '..\\..\\..\\mingw32\\bin\python3.exe'
+                pip_path = '..\\..\\..\\mingw32\\bin\pip3-script.py'
+
             self.ytdl_bin = 'youtube-dl'
-            self.ytdl_path_default = \
-            os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin)
-            self.ytdl_path = self.ytdl_path_default
+            self.ytdl_path_default = 'youtube-dl'
+            self.ytdl_path = 'youtube-dl'
             self.ytdl_update_dict = {
-                'Update using actual youtube-dl path': [
+                descrip: [
+                    python_path,
+                    pip_path,
+                    'install',
+                    '--upgrade',
+                    'youtube-dl',
+                ],
+                'Update using pip3': [
+                    'pip3', 'install', '--upgrade', 'youtube-dl',
+                ],
+                'Update using pip': [
+                    'pip', 'install', '--upgrade', 'youtube-dl',
+                ],
+                'Update using default youtube-dl path': [
                     self.ytdl_path_default, '-U',
                 ],
                 'Update using local youtube-dl path': [
                     'youtube-dl', '-U',
                 ],
+            }
+            self.ytdl_update_list = [
+                descrip,
+                'Update using pip3',
+                'Update using pip',
+                'Update using default youtube-dl path',
+                'Update using local youtube-dl path',
+            ]
+            self.ytdl_update_current = descrip
+
+        else:
+            self.ytdl_bin = 'youtube-dl'
+            self.ytdl_path_default = os.path.abspath(
+                os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
+            )
+            self.ytdl_path = 'youtube-dl'
+            self.ytdl_update_dict = {
+                'Update using pip3 (recommended)': [
+                    'pip3', 'install', '--upgrade', 'youtube-dl',
+                ],
                 'Update using pip': [
                     'pip', 'install', '--upgrade', 'youtube-dl',
                 ],
+                'Update using default youtube-dl path': [
+                    self.ytdl_path_default, '-U',
+                ],
+                'Update using local youtube-dl path': [
+                    'youtube-dl', '-U',
+                ],
             }
             self.ytdl_update_list = [
-                'Update using actual youtube-dl path',
-                'Update using local youtube-dl path',
+                'Update using pip3 (recommended)',
                 'Update using pip',
+                'Update using default youtube-dl path',
+                'Update using local youtube-dl path',
             ]
-            self.ytdl_update_current = 'Update using actual youtube-dl path'
-
-        # For Tartube developers who don't want to manually change those
-        #   settings every time, if the debugging flag has been set, use some
-        #   custom settings
-        if self.debug_modify_ytdl_flag:
-            self.ytdl_path = self.debug_ytdl_path
-            self.ytdl_update_current = self.debug_ytdl_update_current
+            self.ytdl_update_current = 'Update using pip3 (recommended)'
 
         # If the config file exists, load it. If not, create it
+        new_mswin_flag = False
         if os.path.isfile(self.config_file_name):
             self.load_config()
+        elif self.debug_no_dialogue_flag:
+            self.save_config()
         else:
+
+            # (Need to show an extra prompt at the end of this function)
+            if os.name == 'nt':
+                new_mswin_flag = True
+
+            # On MS Windows, Cygwin creates a Tartube data directory at
+            #   C:\msys64\home\USERNAME\tartube-data, which is not very
+            #   convenient
+            # Even on Linux/*BSD, the user might want to choose their own data
+            #   directory
+            # Therefore, on new installations, immediately ask the user to
+            #   choose a location for the data directory
+            dialogue_win = Gtk.MessageDialog(
+                self.main_win_obj,
+                0,
+                Gtk.MessageType.INFO,
+                Gtk.ButtonsType.OK_CANCEL,
+                'Welcome to ' + script_name + '!',
+            )
+
+            if os.name == 'nt':
+                folder = 'folder'
+            else:
+                folder = 'directory'
+
+            dialogue_win.format_secondary_text(
+                script_name + ' will download videos into a single ' + folder \
+                + '. (Other\ndownloaded files, such as thumbnails, will be' \
+                + ' stored in the\nsame ' + folder + '.)' \
+                + '\n\nPlease create that ' + folder + ' now, or select an' \
+                + ' existing ' + folder + '.' \
+                + '\n\nAlternatively, click the \'Cancel\' button to use' \
+                + ' this ' + folder + ':\n\n' + self.data_dir,
+            )
+            response = dialogue_win.run()
+            dialogue_win.destroy()
+
+            if response == Gtk.ResponseType.OK:
+
+                file_chooser_win = Gtk.FileChooserDialog(
+                    'Please select ' + script_name + '\'s data ' + folder,
+                    self.main_win_obj,
+                    Gtk.FileChooserAction.SELECT_FOLDER,
+                    (
+                        Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+                    ),
+                )
+
+                response = file_chooser_win.run()
+                if response == Gtk.ResponseType.OK:
+                    self.data_dir = file_chooser_win.get_filename()
+                    self.downloads_dir = os.path.abspath(
+                        os.path.join(self.data_dir, 'downloads'),
+                    )
+                    self.temp_dir = os.path.abspath(
+                        os.path.join(self.data_dir, '.temp'),
+                    )
+                    self.temp_dl_dir = os.path.abspath(
+                        os.path.join(self.data_dir, '.temp', 'downloads'),
+                    )
+
+                file_chooser_win.destroy()
+
+            # All done; create the config file, whether Tartube's data
+            #   directory has been changed, or not
             self.save_config()
 
         # Create Tartube's data directories (if they don't already exist)
@@ -960,7 +1092,9 @@ class TartubeApp(Gtk.Application):
             os.makedirs(self.temp_dl_dir)
 
         # If the database file exists, load it. If not, create it
-        db_path = os.path.join(self.data_dir, self.db_file_name)
+        db_path = os.path.abspath(
+            os.path.join(self.data_dir, self.db_file_name),
+        )
         if os.path.isfile(db_path):
 
             self.load_db()
@@ -972,34 +1106,38 @@ class TartubeApp(Gtk.Application):
             #   hidden)
             self.create_system_folders()
 
+            # Populate the Video Index
+            self.main_win_obj.video_index_populate()
+
             # Create the database file
             self.save_db()
 
-        # Create the main window
-        self.main_win_obj = mainwin.MainWin(self)
-        # If the debugging flag is set, move it to the top-left corner of the
-        #   desktop
-        if self.debug_open_top_left_flag:
-            self.main_win_obj.move(0, 0)
-
-        # Make it visible
-        self.main_win_obj.show_all()
-
-        # Populate the Video Index
-        self.main_win_obj.video_index_populate()
-
-        # Start the dialogue manager (thread-safe code for Gtk message dialogue
-        #   windows)
-        self.dialogue_manager_obj = dialogue.DialogueManager(
-            self,
-            self.main_win_obj,
-        )
+        # If self.toolbar_squeeze_flag is set, after loading the config file,
+        #   redraw the main toolbar without labels
+        if self.toolbar_squeeze_flag:
+            self.main_win_obj.redraw_main_toolbar()
 
         # If file load/save has been disabled, we can now show a dialogue
         #   window
         if self.disable_load_save_flag:
             self.file_error_dialogue(
                 'Because of an error,\nfile load/save has been\ndisabled',
+            )
+
+        # For new installations, MS Windows must be prompted to perform an
+        #   update operation, which installs youtube-dl on their system
+        elif new_mswin_flag:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                'youtube-dl must be installed before you\ncan use ' \
+                + utils.upper_case_first(__main__.__packagename__) \
+                + '. Do you want to install\nyoutube-dl now?',
+                'question',
+                'yes-no',
+                None,                   # Parent window is main window
+                {
+                    'yes': 'update_manager_start',
+                },
             )
 
 
@@ -1102,7 +1240,7 @@ class TartubeApp(Gtk.Application):
 
             100-199: mainapp.py     (in use: 101-125)
             200-299: mainwin.py     (in use: 201-234)
-            300-399: downloads.py   (in use: 301-303)
+            300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
 
         """
@@ -1183,21 +1321,36 @@ class TartubeApp(Gtk.Application):
             )
 
         # Set IVs to their new values
+        if version >= 5024:  # v0.5.024
+            self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
+
         self.data_dir = json_dict['data_dir']
-        self.downloads_dir = os.path.join(self.data_dir, 'downloads')
-        self.temp_dir = os.path.join(self.data_dir, '.temp')
-        self.temp_dl_dir = os.path.join(self.data_dir, '.temp', 'downloads')
+        self.downloads_dir = os.path.abspath(
+            os.path.join(self.data_dir, 'downloads'),
+        )
+        self.temp_dir = os.path.abspath(os.path.join(self.data_dir, '.temp'))
+        self.temp_dl_dir = os.path.abspath(
+            os.path.join(self.data_dir, '.temp', 'downloads'),
+        )
 
         if version >= 3014:  # v0.3.014
             self.db_backup_mode = json_dict['db_backup_mode']
 
-        self.ytdl_bin = json_dict['ytdl_bin']
-        self.ytdl_path_default = json_dict['ytdl_path_default']
-        self.ytdl_path = json_dict['ytdl_path']
-        self.ytdl_update_dict = json_dict['ytdl_update_dict']
-        self.ytdl_update_list = json_dict['ytdl_update_list']
-        self.ytdl_update_current = json_dict['ytdl_update_current']
+        # (In version v0.5.027, the value of these IVs were overhauled. If
+        #   loading from an earlier config file, replace those values with the
+        #   new default values)
+        if version >= 5027:
+            self.ytdl_bin = json_dict['ytdl_bin']
+            self.ytdl_path_default = json_dict['ytdl_path_default']
+            self.ytdl_path = json_dict['ytdl_path']
+            self.ytdl_update_dict = json_dict['ytdl_update_dict']
+            self.ytdl_update_list = json_dict['ytdl_update_list']
+            self.ytdl_update_current = json_dict['ytdl_update_current']
+
         self.ytdl_write_stdout_flag = json_dict['ytdl_write_stdout_flag']
+        if version >= 5004:  # v0.5.004
+            self.ytdl_write_ignore_json_flag \
+            = json_dict['ytdl_write_ignore_json_flag']
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
 
@@ -1211,12 +1364,22 @@ class TartubeApp(Gtk.Application):
         = json_dict['operation_auto_update_flag']
         self.operation_save_flag = json_dict['operation_save_flag']
         self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
+        self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
+#       # Removed v0.5.003
+#        self.use_module_validators_flag \
+#        = json_dict['use_module_validators_flag']
+
+        if version >= 5004:  # v0.5.004
+            self.apply_json_timeout_flag \
+            = json_dict['apply_json_timeout_flag']
         if version >= 1027:  # v0.1.028
             self.ignore_merge_warning_flag \
             = json_dict['ignore_merge_warning_flag']
-        self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
-        self.use_module_validators_flag \
-        = json_dict['use_module_validators_flag']
+        if version >= 5004:  # v0.5.004
+            self.ignore_yt_copyright_flag \
+            = json_dict['ignore_yt_copyright_flag']
+            self.ignore_child_process_exit_flag \
+            = json_dict['ignore_child_process_exit_flag']
 
         self.num_worker_default = json_dict['num_worker_default']
         self.num_worker_apply_flag = json_dict['num_worker_apply_flag']
@@ -1263,6 +1426,8 @@ class TartubeApp(Gtk.Application):
             'save_date': str(utc.strftime('%d %b %Y')),
             'save_time': str(utc.strftime('%H:%M:%S')),
             # Data
+            'toolbar_squeeze_flag': self.toolbar_squeeze_flag,
+
             'data_dir': self.data_dir,
 
             'db_backup_mode': self.db_backup_mode,
@@ -1273,7 +1438,9 @@ class TartubeApp(Gtk.Application):
             'ytdl_update_dict': self.ytdl_update_dict,
             'ytdl_update_list': self.ytdl_update_list,
             'ytdl_update_current': self.ytdl_update_current,
+
             'ytdl_write_stdout_flag': self.ytdl_write_stdout_flag,
+            'ytdl_write_ignore_json_flag': self.ytdl_write_ignore_json_flag,
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
             'ytdl_write_verbose_flag': self.ytdl_write_verbose_flag,
 
@@ -1284,9 +1451,13 @@ class TartubeApp(Gtk.Application):
             'operation_auto_update_flag': self.operation_auto_update_flag,
             'operation_save_flag': self.operation_save_flag,
             'operation_dialogue_flag': self.operation_dialogue_flag,
-            'ignore_merge_warning_flag': self.ignore_merge_warning_flag,
             'use_module_moviepy_flag': self.use_module_moviepy_flag,
-            'use_module_validators_flag': self.use_module_validators_flag,
+
+            'apply_json_timeout_flag': self.apply_json_timeout_flag,
+            'ignore_merge_warning_flag': self.ignore_merge_warning_flag,
+            'ignore_yt_copyright_flag': self.ignore_yt_copyright_flag,
+            'ignore_child_process_exit_flag': \
+            self.ignore_child_process_exit_flag,
 
             'num_worker_default': self.num_worker_default,
             'num_worker_apply_flag': self.num_worker_apply_flag,
@@ -1334,7 +1505,7 @@ class TartubeApp(Gtk.Application):
             print('ap 1190 load_db')
 
         # Sanity check
-        path = os.path.join(self.data_dir, self.db_file_name)
+        path = os.path.abspath(os.path.join(self.data_dir, self.db_file_name))
         if self.current_manager_obj \
         or not os.path.isfile(path) \
         or self.disable_load_save_flag:
@@ -1580,9 +1751,11 @@ class TartubeApp(Gtk.Application):
 
         # Prepare values
         utc = datetime.datetime.utcfromtimestamp(time.time())
-        path = os.path.join(self.data_dir, self.db_file_name)
-        bu_path = os.path.join(self.data_dir, 'tartube_BU.db')
-        temp_bu_path = os.path.join(self.data_dir, 'tartube_TEMP_BU.db')
+        path = os.path.abspath(os.path.join(self.data_dir, self.db_file_name))
+        bu_path = os.path.abspath(os.path.join(self.data_dir, 'tartube_BU.db'))
+        temp_bu_path = os.path.abspath(
+            os.path.join(self.data_dir, 'tartube_TEMP_BU.db'),
+        )
 
         # Prepare a dictionary of data to save, using Python pickle
         save_dict = {
@@ -1662,9 +1835,11 @@ class TartubeApp(Gtk.Application):
 
             elif self.db_backup_mode == 'daily':
 
-                daily_bu_path = os.path.join(
-                    self.data_dir,
-                    'tartube_BU_' + str(utc.strftime('%Y_%m_%d')) + '.db',
+                daily_bu_path = os.path.abspath(
+                    os.path.join(
+                        self.data_dir,
+                        'tartube_BU_' + str(utc.strftime('%Y_%m_%d')) + '.db',
+                    ),
                 )
 
                 # Only make a new backup file once per day
@@ -1680,10 +1855,12 @@ class TartubeApp(Gtk.Application):
 
             elif self.db_backup_mode == 'always':
 
-                always_bu_path = os.path.join(
-                    self.data_dir,
-                    'tartube_BU_' + str(utc.strftime('%Y_%m_%d_%H_%M_%S')) \
-                    + '.db',
+                always_bu_path = os.path.abspath(
+                    os.path.join(
+                        self.data_dir,
+                        'tartube_BU_' \
+                        + str(utc.strftime('%Y_%m_%d_%H_%M_%S')) + '.db',
+                    ),
                 )
 
                 if os.path.isfile(always_bu_path):
@@ -1710,7 +1887,7 @@ class TartubeApp(Gtk.Application):
                 open
 
         Returns:
-        
+
             True on success, False on failure
 
         """
@@ -1740,9 +1917,11 @@ class TartubeApp(Gtk.Application):
 
         # Update IVs...
         self.data_dir = path
-        self.downloads_dir = os.path.join(path, 'downloads')
-        self.temp_dir = os.path.join(path, '.temp')
-        self.temp_dl_dir = os.path.join(path, '.temp', 'downloads')
+        self.downloads_dir = os.path.abspath(os.path.join(path, 'downloads'))
+        self.temp_dir = os.path.abspath(os.path.join(path, '.temp'))
+        self.temp_dl_dir = os.path.abspath(
+            os.path.join(path, '.temp', 'downloads'),
+        )
         # ...then save the config file to preserve them
         self.save_config()
 
@@ -1760,7 +1939,9 @@ class TartubeApp(Gtk.Application):
             os.makedirs(self.temp_dl_dir)
 
         # If the database file itself exists; load it. If not, create it
-        db_path = os.path.join(self.data_dir, self.db_file_name)
+        db_path = os.path.abspath(
+            os.path.join(self.data_dir, self.db_file_name),
+        )
         if not os.path.isfile(db_path):
 
             # Reset main window widgets
@@ -1926,7 +2107,7 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('1544 file_error_dialogue')
 
-        if self.main_win_obj:
+        if self.main_win_obj and self.dialogue_manager_obj:
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'error', 'ok')
 
         else:
@@ -2252,7 +2433,7 @@ class TartubeApp(Gtk.Application):
         self.update_manager_obj = self.current_manager_obj
 
 
-    def update_manager_finished(self, success_flag=True):
+    def update_manager_finished(self, success_flag=True, ytdl_version=None):
 
         """Called by updates.UpdateManager.run().
 
@@ -2263,6 +2444,9 @@ class TartubeApp(Gtk.Application):
 
             success_flag (True or False): True if the update operation
                 succeeded, False if not
+
+            ytdl_version (string): Set if the update manager was able to
+                capture the new youtube-dl version number, or None if not
 
         """
 
@@ -2289,10 +2473,14 @@ class TartubeApp(Gtk.Application):
 
             if not success_flag:
                 msg = 'Update operation failed'
-            elif not self.operation_halted_flag:
-                msg = 'Update operation complete'
-            else:
+            elif self.operation_halted_flag:
                 msg = 'Update operation halted'
+            else:
+                msg = 'Update operation complete'
+                if ytdl_version is not None:
+                    msg += '\n\nyoutube-dl version: ' + ytdl_version
+                else:
+                    msg += '\n\nyoutube-dl version: (unknown)'
 
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
 
@@ -2608,9 +2796,11 @@ class TartubeApp(Gtk.Application):
         if 'keep_description' in temp_dict \
         and not temp_dict['keep_description']:
 
-            old_path = os.path.join(
-                video_obj.file_dir,
-                video_obj.file_name + '.description',
+            old_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + '.description',
+                ),
             )
 
             if os.path.isfile(old_path):
@@ -2622,9 +2812,11 @@ class TartubeApp(Gtk.Application):
 
         if 'keep_info' in temp_dict and not temp_dict['keep_info']:
 
-            old_path = os.path.join(
-                video_obj.file_dir,
-                video_obj.file_name + '.info.json',
+            old_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + '.info.json',
+                ),
             )
 
             if os.path.isfile(old_path):
@@ -2666,9 +2858,11 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 2275 update_video_from_json')
 
-        json_path = os.path.join(
-            video_obj.file_dir,
-            video_obj.file_name + '.info.json',
+        json_path = os.path.abspath(
+            os.path.join(
+                video_obj.file_dir,
+                video_obj.file_name + '.info.json',
+            ),
         )
 
         if os.path.isfile(json_path):
@@ -4077,9 +4271,11 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 3637 watch_video_in_player')
 
-        path = os.path.join(
-            video_obj.file_dir,
-            video_obj.file_name + video_obj.file_ext,
+        path = os.path.abspath(
+            os.path.join(
+                video_obj.file_dir,
+                video_obj.file_name + video_obj.file_ext,
+            ),
         )
 
         if not os.path.isfile(path):
@@ -4493,12 +4689,7 @@ class TartubeApp(Gtk.Application):
                     'ok',
                 )
 
-            elif not source \
-            or (
-                HAVE_VALIDATORS_FLAG \
-                and self.use_module_validators_flag
-                and not validators.url(source)
-            ):
+            elif not source or not utils.check_url(source):
                 self.dialogue_manager_obj.show_msg_dialogue(
                     'You must enter a valid URL',
                     'error',
@@ -4656,12 +4847,7 @@ class TartubeApp(Gtk.Application):
                     'ok',
                 )
 
-            elif not source \
-            or (
-                HAVE_VALIDATORS_FLAG \
-                and self.use_module_validators_flag
-                and not validators.url(source)
-            ):
+            elif not source or not utils.url_check(source):
                 self.dialogue_manager_obj.show_msg_dialogue(
                     'You must enter a valid URL',
                     'error',
@@ -4745,11 +4931,7 @@ class TartubeApp(Gtk.Application):
 
         if response == Gtk.ResponseType.OK:
 
-            # Split text into a list of lines
-            # If the validators module is available, use it to filter out
-            #   invalid URLs
-            # If the validators module is not available, just check for non-
-            #   whitespace characters
+            # Split text into a list of lines and filter out invalid URLs
             video_list = []
             duplicate_list = []
             for line in text.split('\n'):
@@ -4759,12 +4941,7 @@ class TartubeApp(Gtk.Application):
 
                 # Perform checks on the URL. If it passes, remove leading/
                 #   trailing whitespace
-                if HAVE_VALIDATORS_FLAG \
-                and self.use_module_validators_flag:
-                    if validators.url(line):
-                        video_list.append(utils.strip_whitespace(line))
-
-                elif re.search(r'\S{3,}', line):
+                if utils.check_url(line):
                     video_list.append(utils.strip_whitespace(line))
 
             # Check everything in the list against other media.Video objects
@@ -5085,6 +5262,17 @@ class TartubeApp(Gtk.Application):
     # Set accessors
 
 
+    def set_apply_json_timeout_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4413 set_apply_json_timeout_flag')
+
+        if not flag:
+            self.apply_json_timeout_flag = False
+        else:
+            self.apply_json_timeout_flag = True
+
+
     def set_bandwidth_default(self, value):
 
         """Called by mainwin.MainWin.on_spinbutton2_changed().
@@ -5154,15 +5342,37 @@ class TartubeApp(Gtk.Application):
         self.db_backup_mode = value
 
 
+    def set_ignore_child_process_exit_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4456 set_ignore_child_process_exit_flag')
+
+        if not flag:
+            self.ignore_child_process_exit_flag = False
+        else:
+            self.ignore_child_process_exit_flag = True
+
+
     def set_ignore_merge_warning_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            print('ap 4456 set_ignore_merge_warning_flag')
+            print('ap 4457 set_ignore_merge_warning_flag')
 
         if not flag:
             self.ignore_merge_warning_flag = False
         else:
             self.ignore_merge_warning_flag = True
+
+
+    def set_ignore_yt_copyright_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('a7 4458 set_ignore_yt_copyright_flag')
+
+        if not flag:
+            self.ignore_yt_copyright_flag = False
+        else:
+            self.ignore_yt_copyright_flag = True
 
 
     def set_match_first_chars(self, num_chars):
@@ -5298,6 +5508,20 @@ class TartubeApp(Gtk.Application):
             self.operation_save_flag = True
 
 
+    def set_toolbar_squeeze_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4563 set_toolbar_squeeze_flag')
+
+        if not flag:
+            self.toolbar_squeeze_flag = False
+        else:
+            self.toolbar_squeeze_flag = True
+
+        if self.main_win_obj and self.main_win_obj.main_toolbar:
+            self.main_win_obj.redraw_main_toolbar()
+
+
     def set_use_module_moviepy_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -5307,17 +5531,6 @@ class TartubeApp(Gtk.Application):
             self.use_module_moviepy_flag = False
         else:
             self.use_module_moviepy_flag = True
-
-
-    def set_use_module_moviepy_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            print('ap 4583 set_use_module_moviepy_flag')
-
-        if not flag:
-            self.use_module_validators_flag = False
-        else:
-            self.use_module_validators_flag = True
 
 
     def set_ytdl_path(self, path):
@@ -5334,6 +5547,17 @@ class TartubeApp(Gtk.Application):
             print('ap 4603 set_ytdl_update_current')
 
         self.ytdl_update_current = string
+
+
+    def set_ytdl_write_ignore_json_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4604 set_ytdl_write_ignore_json_flag')
+
+        if not flag:
+            self.ytdl_write_ignore_json_flag = False
+        else:
+            self.ytdl_write_ignore_json_flag = True
 
 
     def set_ytdl_write_stderr_flag(self, flag):
