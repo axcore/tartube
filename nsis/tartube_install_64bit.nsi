@@ -1,4 +1,4 @@
-# Tartube v0.6.0 installer script for MS Windows
+# Tartube v0.7.0 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -207,7 +207,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.6.0-64bit.exe"
+    OutFile "install-tartube-0.7.0-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -286,23 +286,19 @@ Section "Tartube" SecClient
     CreateDirectory "$SMPROGRAMS\Tartube"
     CreateShortCut "$SMPROGRAMS\Tartube\Tartube.lnk" \
         "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" \
-        "$INSTDIR\tartube_icon.ico"
+        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
     CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" \
         "$INSTDIR\Uninstall.exe" \
-        "" \
-        "$INSTDIR\tartube_icon.ico"
+        "" "$INSTDIR\tartube_icon.ico"
     # Temporary Start Menu link for bugfixing on MS Windows 10
-    CreateShortCut "$SMPROGRAMS\Tartube\Gtk graphics test.lnk" \
+    CreateShortCut "$SMPROGRAMS\Tartube\Test Gtk graphics.lnk" \
         "$INSTDIR\msys64\home\user\tartube\hello_world_64bit.bat" \
-        "" \
-        "$INSTDIR\tartube_icon.ico"
+        "" "$INSTDIR\tartube_icon.ico"
 
     # Desktop icon
     CreateShortcut "$DESKTOP\Tartube.lnk" \
         "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" \
-        "$INSTDIR\tartube_icon.ico"
+        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
 
     # Store installation folder
     WriteRegStr HKLM \
@@ -316,7 +312,7 @@ Section "Tartube" SecClient
         "Publisher" "A S Lewis"
     WriteRegStr HKLM \
         "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "DisplayVersion" "0.6.0"
+        "DisplayVersion" "0.7.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

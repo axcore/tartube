@@ -1124,6 +1124,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Progress List
         self.progress_list_treeview = Gtk.TreeView()
         self.progress_list_frame.add(self.progress_list_treeview)
+        self.progress_list_treeview.set_can_focus(False)
 
         for i, column_title in enumerate(
             [
@@ -1169,6 +1170,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Results List
         self.results_list_treeview = Gtk.TreeView()
         self.results_list_frame.add(self.results_list_treeview)
+        self.results_list_treeview.set_can_focus(False)
 
         for i, column_title in enumerate(
             [
@@ -1277,6 +1279,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.errors_list_treeview = Gtk.TreeView()
         self.errors_list_frame.add(self.errors_list_treeview)
+        self.errors_list_treeview.set_can_focus(False)
 
         for i, column_title in enumerate(['', '', 'Time', 'Media', 'Message']):
 
@@ -1754,7 +1757,8 @@ class MainWin(Gtk.ApplicationWindow):
                 return -1
             elif obj1.upload_time < obj2.upload_time:
                 return 1
-            else:
+            elif obj1.receive_time is not None \
+            and obj2.receive_time is not None:
                 # In private folders, the most recently received video goes to
                 #   the top of the list
                 if self.video_index_current_priv_flag:
@@ -1774,6 +1778,8 @@ class MainWin(Gtk.ApplicationWindow):
                         return 1
                     else:
                         return 0
+            else:
+                return 0
         else:
             return 0
 
@@ -1810,6 +1816,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Set up the widgets
         self.video_index_treeview = Gtk.TreeView()
         self.video_index_frame.add(self.video_index_treeview)
+        self.video_index_treeview.set_can_focus(False)
         self.video_index_treeview.set_headers_visible(False)
         # (Detect right-clicks on the treeview)
         self.video_index_treeview.connect(
@@ -2020,13 +2027,6 @@ class MainWin(Gtk.ApplicationWindow):
                 'Video index setup row request failed sanity check',
             )
 
-        # Temporarily disable auto-sorting, or the call to
-        #   Gtk.TreeView.expand_to_path() will sometimes fail
-        # !!! TODO BUG: Why? Who knows, it's a Gtk thing. Unfortunately that
-        #   means rows in the Video Index might be in the wrong order, but
-        #   that's better than a failure of .expand_to_path() )
-        self.video_index_no_sort_flag = True
-
         # Add a row to the treeview
         if media_data_obj.parent_obj:
 
@@ -2051,9 +2051,6 @@ class MainWin(Gtk.ApplicationWindow):
                 ],
             )
 
-            # Expand rows to make the new media data object visible...
-            self.video_index_treeview.expand_to_path(parent_ref.get_path())
-
         else:
 
             # The media data object has no parent, so add a row to the
@@ -2075,13 +2072,22 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.video_index_row_dict[media_data_obj.name] = tree_ref
 
+        if media_data_obj.parent_obj:
+
+            # Expand rows to make the new media data object visible...
+            self.video_index_treeview.expand_to_path(
+                self.video_index_sortmodel.convert_child_path_to_path(
+                    parent_ref.get_path(),
+                ),
+            )
+
         # Select the row (which clears the Video Catalogue)
         selection = self.video_index_treeview.get_selection()
-        selection.select_path(tree_ref.get_path())
-
-        # Re-enable auto-sorting, if disabled
-        if self.video_index_no_sort_flag:
-            self.video_index_no_sort_flag = False
+        selection.select_path(
+            self.video_index_sortmodel.convert_child_path_to_path(
+                tree_ref.get_path(),
+            ),
+        )
 
         # Make the changes visible
         self.video_index_treeview.show_all()
@@ -2165,19 +2171,27 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Select the row, expanding the treeview path to make it visible, if
         #   necessary
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
-        tree_path = tree_ref.get_path()
-        tree_iter = self.video_index_treestore.get_iter(tree_path)
+        if media_data_obj.parent_obj:
 
-        self.video_index_treeview.expand_to_path(tree_path)
+            # Expand rows to make the new media data object visible...
+            parent_ref \
+            = self.video_index_row_dict[media_data_obj.parent_obj.name]
+
+            self.video_index_treeview.expand_to_path(
+                self.video_index_sortmodel.convert_child_path_to_path(
+                    parent_ref.get_path(),
+                ),
+            )
+
+        # Select the row
+        tree_ref = self.video_index_row_dict[media_data_obj.name]
 
         selection = self.video_index_treeview.get_selection()
-        # !!! TODO BUG: This generates a Gtk error:
-        #   Gtk-CRITICAL **: gtk_tree_model_sort_get_path: assertion
-        #   'priv->stamp == iter->stamp' failed
-        selection.select_iter(tree_iter)
-
-        self.show_all()
+        selection.select_path(
+            self.video_index_sortmodel.convert_child_path_to_path(
+                tree_ref.get_path(),
+            ),
+        )
 
 
     def video_index_update_row_icon(self, media_data_obj):
@@ -2551,8 +2565,7 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(refresh_menu_item)
 
         # Separator
-        separator_item = Gtk.SeparatorMenuItem()
-        popup_menu.append(separator_item)
+        popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Apply/remove/edit download options, disable downloads
 
@@ -2627,8 +2640,89 @@ class MainWin(Gtk.ApplicationWindow):
             enforce_check_menu_item.set_sensitive(False)
 
         # Separator
-        separator_item2 = Gtk.SeparatorMenuItem()
-        popup_menu.append(separator_item2)
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Contents
+        contents_submenu = Gtk.Menu()
+
+        if not isinstance(media_data_obj, media.Folder):
+
+            self.video_index_setup_contents_submenu(
+                contents_submenu,
+                media_data_obj,
+                False,
+            )
+
+        else:
+
+            # All contents
+            all_contents_submenu = Gtk.Menu()
+
+            self.video_index_setup_contents_submenu(
+                all_contents_submenu,
+                media_data_obj,
+                False,
+            )
+
+            # Separator
+            all_contents_submenu.append(Gtk.SeparatorMenuItem())
+
+            empty_folder_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                '_Empty folder',
+            )
+            empty_folder_menu_item.connect(
+                'activate',
+                self.on_video_index_empty_folder,
+                media_data_obj,
+            )
+            all_contents_submenu.append(empty_folder_menu_item)
+            if not media_data_obj.child_list or media_data_obj.priv_flag:
+                empty_folder_menu_item.set_sensitive(False)
+
+            all_contents_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                '_All contents',
+            )
+            all_contents_menu_item.set_submenu(all_contents_submenu)
+            contents_submenu.append(all_contents_menu_item)
+
+            # Just folder videos
+            just_videos_submenu = Gtk.Menu()
+
+            self.video_index_setup_contents_submenu(
+                just_videos_submenu,
+                media_data_obj,
+                True,
+            )
+
+            # Separator
+            just_videos_submenu.append(Gtk.SeparatorMenuItem())
+
+            empty_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                '_Remove videos',
+            )
+            empty_videos_menu_item.connect(
+                'activate',
+                self.on_video_index_remove_videos,
+                media_data_obj,
+            )
+            just_videos_submenu.append(empty_videos_menu_item)
+            if not media_data_obj.child_list or media_data_obj.priv_flag:
+                empty_videos_menu_item.set_sensitive(False)
+
+            just_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                '_Just folder videos',
+            )
+            just_videos_menu_item.set_submenu(just_videos_submenu)
+            contents_submenu.append(just_videos_menu_item)
+
+        contents_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            utils.upper_case_first(media_type) + ' co_ntents',
+        )
+        contents_menu_item.set_submenu(contents_submenu)
+        popup_menu.append(contents_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Show properties/downloads, hide folder
         show_properties_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -2683,57 +2777,7 @@ class MainWin(Gtk.ApplicationWindow):
             move_top_menu_item.set_sensitive(False)
 
         # Separator
-        separator_item3 = Gtk.SeparatorMenuItem()
-        popup_menu.append(separator_item3)
-
-        # Mark videos as new/favourite
-        mark_videos_submenu = Gtk.Menu()
-
-        mark_new_menu_item = Gtk.MenuItem.new_with_mnemonic('_New')
-        mark_new_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_new,
-            media_data_obj,
-        )
-        mark_videos_submenu.append(mark_new_menu_item)
-        if media_data_obj == self.app_obj.fixed_new_folder:
-            mark_new_menu_item.set_sensitive(False)
-
-        mark_old_menu_item = Gtk.MenuItem.new_with_mnemonic('N_ot new')
-        mark_old_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_new,
-            media_data_obj,
-        )
-        mark_videos_submenu.append(mark_old_menu_item)
-
-        mark_fav_menu_item = Gtk.MenuItem.new_with_mnemonic('_Favourite')
-        mark_fav_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_favourite,
-            media_data_obj,
-        )
-        mark_videos_submenu.append(mark_fav_menu_item)
-        if media_data_obj == self.app_obj.fixed_fav_folder:
-            mark_fav_menu_item.set_sensitive(False)
-
-        mark_not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            'Not f_avourite',
-        )
-        mark_not_fav_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_favourite,
-            media_data_obj,
-        )
-        mark_videos_submenu.append(mark_not_fav_menu_item)
-
-        mark_videos_menu_item = Gtk.MenuItem.new_with_mnemonic('_Mark videos')
-        mark_videos_menu_item.set_submenu(mark_videos_submenu)
-        popup_menu.append(mark_videos_menu_item)
-
-        # Separator
-        separator_item4 = Gtk.SeparatorMenuItem()
-        popup_menu.append(separator_item4)
+        popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Delete items
         delete_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -2751,6 +2795,72 @@ class MainWin(Gtk.ApplicationWindow):
         # Create the popup menu
         popup_menu.show_all()
         popup_menu.popup(None, None, None, None, event.button, event.time)
+
+
+    def video_index_setup_contents_submenu(self, submenu, media_data_obj,
+    only_child_videos_flag=False):
+
+        """Called by self.video_index_popup_menu().
+
+        Sets up a submenu for handling the contents of a channel, playlist
+        or folder.
+
+        Args:
+
+            submenu (Gtk.Menu): The submenu to set up, currently empty
+
+            media_data_obj (media.Channel, media.Playlist, media.Folder): The
+                channel, playlist or folder whose contents should be modified
+                by items in the sub-menu
+
+            only_child_videos_flag (True or False): Set to True when only a
+                folder's child videos (not anything in its child channels,
+                playlists or folders) should be modified by items in the
+                sub-menu; False if all child objects should be modified
+
+        """
+
+        mark_new_menu_item = Gtk.MenuItem.new_with_mnemonic('Mark as _new')
+        mark_new_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_new,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_new_menu_item)
+        if media_data_obj == self.app_obj.fixed_new_folder:
+            mark_new_menu_item.set_sensitive(False)
+
+        mark_old_menu_item = Gtk.MenuItem.new_with_mnemonic('Mark as n_ot new')
+        mark_old_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_new,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_old_menu_item)
+
+        mark_fav_menu_item = Gtk.MenuItem.new_with_mnemonic('Mark _favourite')
+        mark_fav_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_favourite,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_fav_menu_item)
+        if media_data_obj == self.app_obj.fixed_fav_folder:
+            mark_fav_menu_item.set_sensitive(False)
+
+        mark_not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            'Mark not f_avourite',
+        )
+        mark_not_fav_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_favourite,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_not_fav_menu_item)
 
 
     # (Video Catalogue)
@@ -2777,9 +2887,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_dict = {}
 
         # Set up the widgets
-        listbox = Gtk.ListBox()
-        self.catalogue_frame.add(listbox)
-        self.catalogue_listbox = listbox
+        self.catalogue_listbox = Gtk.ListBox()
+        self.catalogue_frame.add(self.catalogue_listbox)
+        self.catalogue_listbox.set_can_focus(False)
 
         self.catalogue_listbox.set_sort_func(
             self.video_catalogue_auto_sort,
@@ -2791,7 +2901,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_frame.show_all()
 
 
-    def video_catalogue_redraw_all(self, name, page_num=1):
+    def video_catalogue_redraw_all(self, name, page_num=1,
+    reset_scroll_flag=False):
 
         """Called from callbacks in self.on_video_index_selection_changed(),
         mainapp.TartubeApp.on_button_switch_view(),
@@ -2834,6 +2945,11 @@ class MainWin(Gtk.ApplicationWindow):
                 range 1 to self.catalogue_toolbar_last_page). If None, the
                 current page is drawn
 
+            reset_scroll_flag (True or False): Set to True when called by
+                self.on_video_index_selection_changed(). The scrollbars must
+                always be reset when switching between channels/playlist/
+                folders
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -2842,12 +2958,11 @@ class MainWin(Gtk.ApplicationWindow):
         # If actually switching to a different channel/playlist/folder, or a
         #   different page on the same channel/playlist/folder, must reset the
         #   scrollbars later in the function
-        if self.video_index_current is None \
-        or self.video_index_current != name \
-        or self.catalogue_toolbar_current_page != page_num:
-            reset_scroll_flag = True
-        else:
-            reset_scroll_flag = False
+        if not reset_scroll_flag:
+            if self.video_index_current is None \
+            or self.video_index_current != name \
+            or self.catalogue_toolbar_current_page != page_num:
+                reset_scroll_flag = True
 
         # The parent media data object is a media.Channel, media.playlist or
         #   media.Folder object
@@ -3062,33 +3177,12 @@ class MainWin(Gtk.ApplicationWindow):
                     missing_obj = self.app_obj.media_reg_dict[dbid]
 
                     # Create a new catalogue item
-                    if self.app_obj.catalogue_mode == 'simple_hide_parent' \
-                    or self.app_obj.catalogue_mode == 'simple_show_parent':
-                        catalogue_item_obj = SimpleCatalogueItem(
-                            self,
-                            missing_obj,
-                        )
+                    self.video_catalogue_insert_item(missing_obj)
 
-                    else:
-                        catalogue_item_obj = ComplexCatalogueItem(
-                            self,
-                            missing_obj,
-                        )
+            else:
 
-                    self.video_catalogue_dict[dbid] = catalogue_item_obj
-
-                    # Add a row to the Gtk.ListBox
-
-                    # Instead of using Gtk.ListBoxRow directly, use a wrapper
-                    #   class so we can quickly retrieve the video displayed on
-                    #   each row
-                    wrapper_obj = CatalogueRow(missing_obj)
-                    self.catalogue_listbox.add(wrapper_obj)
-
-                    # Populate the row with widgets...
-                    catalogue_item_obj.draw_widgets(wrapper_obj)
-                    # ...and give them their initial appearance
-                    catalogue_item_obj.update_widgets()
+                # Page is not full, so just create a new catalogue item
+                self.video_catalogue_insert_item(video_obj)
 
             # Update widgets in the toolbar
             self.video_catalogue_toolbar_update(
@@ -3102,6 +3196,50 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Procedure complete
         self.catalogue_listbox.show_all()
+
+
+    def video_catalogue_insert_item(self, video_obj):
+
+        """Called by self.video_catalogue_update_row() (only).
+
+        Adds a new mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem
+        to the Video Catalogue.
+
+        Args:
+
+            video_obj (media.Video): The video for which a new catalogue item
+                should be created
+
+        """
+
+        # Create the new catalogue item
+        if self.app_obj.catalogue_mode == 'simple_hide_parent' \
+        or self.app_obj.catalogue_mode == 'simple_show_parent':
+            catalogue_item_obj = SimpleCatalogueItem(
+                self,
+                video_obj,
+            )
+
+        else:
+            catalogue_item_obj = ComplexCatalogueItem(
+                self,
+                video_obj,
+            )
+
+        self.video_catalogue_dict[video_obj.dbid] = catalogue_item_obj
+
+        # Add a row to the Gtk.ListBox
+
+        # Instead of using Gtk.ListBoxRow directly, use a wrapper
+        #   class so we can quickly retrieve the video displayed on
+        #   each row
+        wrapper_obj = CatalogueRow(video_obj)
+        self.catalogue_listbox.add(wrapper_obj)
+
+        # Populate the row with widgets...
+        catalogue_item_obj.draw_widgets(wrapper_obj)
+        # ...and give them their initial appearance
+        catalogue_item_obj.update_widgets()
 
 
     def video_catalogue_delete_row(self, video_obj):
@@ -4241,7 +4379,7 @@ class MainWin(Gtk.ApplicationWindow):
             utils.upper_case_first(__main__.__packagename__) + ' error',
         )
         row_list.append(
-            utils.tidy_up_long_string(str(error_code) + ': ' + msg),
+            utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg),
         )
 
         # Create a new row in the treeview. Doing the .show_all() first
@@ -4253,6 +4391,63 @@ class MainWin(Gtk.ApplicationWindow):
         #   tab)
         if self.visible_tab_num != 2:
             self.tab_error_count += 1
+            self.errors_list_refresh_label()
+
+
+    def errors_list_add_system_warning(self, error_code, msg):
+
+        """Can be called by anything. The quickest way is to call
+        mainapp.TartubeApp.system_warning(), which acts as a wrapper for this
+        function.
+
+        Display a system warning message in the Errors List.
+
+        Args:
+
+            error_code (int): An error code in the range 100-999 (see
+                the .system_error() function)
+
+            msg (str): The system warning message to display
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 3631 errors_list_add_system_warning')
+
+        # Prepare the icons
+        pixbuf = self.pixbuf_dict['warning_small']
+        pixbuf2 = self.pixbuf_dict['system_warning_small']
+
+        # Prepare the new row in the treeview
+        row_list = []
+        utc = datetime.datetime.utcfromtimestamp(time.time())
+        time_string = str(utc.strftime('%H:%M:%S'))
+
+        row_list.append(pixbuf)
+        row_list.append(pixbuf2)
+        row_list.append(time_string)
+        row_list.append(
+            utils.upper_case_first(__main__.__packagename__) + ' warning',
+        )
+        row_list.append(
+            utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg) \
+            + '\n' + utils.tidy_up_long_string(
+                'To disable system warning messages, click Edit >' \
+                + ' System preferences... > General, and then deselect \'' \
+                + 'Show system warning messages in the \'Errors/Warnings\'' \
+                + ' tab\'',
+            ),
+        )
+
+        # Create a new row in the treeview. Doing the .show_all() first
+        #   prevents a Gtk error (for unknown reasons)
+        self.errors_list_treeview.show_all()
+        self.errors_list_liststore.append(row_list)
+
+        # (Don't update the Errors/Warnings tab label if it's the visible
+        #   tab)
+        if self.visible_tab_num != 2:
+            self.tab_warning_count += 1
             self.errors_list_refresh_label()
 
 
@@ -4394,7 +4589,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The clicked menu item
 
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The clicked media data object
 
         """
@@ -4553,6 +4748,28 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
+    def on_video_index_empty_folder(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Empties the folder.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Folder): The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 3945 on_video_index_empty_folder')
+
+        # The True flag tells the function to empty the container, rather than
+        #   delete it
+        self.app_obj.delete_container(media_data_obj, True)
+
+
     def on_video_index_enforce_check(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_index_popup_menu().
@@ -4586,7 +4803,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_update_row_text(media_data_obj)
 
 
-    def on_video_index_mark_favourite(self, menu_item, media_data_obj):
+    def on_video_index_mark_favourite(self, menu_item, media_data_obj,
+    only_child_videos_flag):
 
         """Called from a callback in self.video_index_popup_menu().
 
@@ -4600,15 +4818,24 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj (media.Channel, media.Playlist or media.Channel):
                 The clicked media data object
 
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if all descendants should
+                be marked
+
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 4010 on_video_index_mark_favourite')
 
-        self.app_obj.mark_container_favourite(media_data_obj, True)
+        self.app_obj.mark_container_favourite(
+            media_data_obj,
+            True,
+            only_child_videos_flag,
+        )
 
 
-    def on_video_index_mark_not_favourite(self, menu_item, media_data_obj):
+    def on_video_index_mark_not_favourite(self, menu_item, media_data_obj,
+    only_child_videos_flag):
 
         """Called from a callback in self.video_index_popup_menu().
 
@@ -4622,12 +4849,20 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj (media.Channel, media.Playlist or media.Channel):
                 The clicked media data object
 
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if all descendants should
+                be marked
+
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 4032 on_video_index_mark_not_favourite')
 
-        self.app_obj.mark_container_favourite(media_data_obj, False)
+        self.app_obj.mark_container_favourite(
+            media_data_obj,
+            False,
+            only_child_videos_flag,
+        )
 
 
     def on_video_index_hide_folder(self, menu_item, media_data_obj):
@@ -4651,7 +4886,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.mark_folder_hidden(media_data_obj, True)
 
 
-    def on_video_index_mark_new(self, menu_item, media_data_obj):
+    def on_video_index_mark_new(self, menu_item, media_data_obj,
+    only_child_videos_flag):
 
         """Called from a callback in self.video_index_popup_menu().
 
@@ -4665,6 +4901,10 @@ class MainWin(Gtk.ApplicationWindow):
 
             media_data_obj (media.Channel, media.Playlist or media.Channel):
                 The clicked media data object
+
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if all descendants should
+                be marked
 
         """
 
@@ -4690,17 +4930,27 @@ class MainWin(Gtk.ApplicationWindow):
                 if isinstance(other_obj, media.Video) and other_obj.fav_flag:
                     self.app_obj.mark_video_new(other_obj, True)
 
+        elif only_child_videos_flag:
+
+            # Check only videos that are children of the specified media data
+            #   object
+            for other_obj in media_data_obj.child_list:
+                if isinstance(other_obj, media.Video):
+                    self.app_obj.mark_video_new(other_obj, True)
+
         else:
 
             # Check only videos that are descendants of the specified media
             #   data object
             for other_obj in media_data_obj.compile_all_videos( [] ):
 
+                # (Only downloaded videos can be marked as new)
                 if other_obj.dl_flag:
                     self.app_obj.mark_video_new(other_obj, True)
 
 
-    def on_video_index_mark_not_new(self, menu_item, media_data_obj):
+    def on_video_index_mark_not_new(self, menu_item, media_data_obj,
+    only_child_videos_flag):
 
         """Called from a callback in self.video_index_popup_menu().
 
@@ -4713,6 +4963,10 @@ class MainWin(Gtk.ApplicationWindow):
 
             media_data_obj (media.Channel, media.Playlist or media.Channel):
                 The clicked media data object
+
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if all descendants should
+                be marked
 
         """
 
@@ -4735,6 +4989,14 @@ class MainWin(Gtk.ApplicationWindow):
             for other_obj in list(self.app_obj.media_reg_dict.values()):
 
                 if isinstance(other_obj, media.Video) and other_obj.fav_flag:
+                    self.app_obj.mark_video_new(other_obj, False)
+
+        elif only_child_videos_flag:
+
+            # Check only videos that are children of the specified media data
+            #   object
+            for other_obj in media_data_obj.child_list:
+                if isinstance(other_obj, media.Video):
                     self.app_obj.mark_video_new(other_obj, False)
 
         else:
@@ -4827,6 +5089,29 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.remove_download_options(media_data_obj)
 
 
+    def on_video_index_remove_videos(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Empties all child videos of a folder object, but doesn't remove any
+        child channel, playlist or folder objects.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Folder): The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4222 on_video_index_remove_videos')
+
+        for child_obj in media_data_obj.child_list:
+            if isinstance(child_obj, media.Video):
+                self.app_obj.delete_video(child_obj)
+
+
     def on_video_index_right_click(self, treeview, event):
 
         """Called from callback in self.setup_videos_tab().
@@ -4870,7 +5155,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def on_video_index_selection_changed(self, selection):
 
-        """Called from callback in self.on_video_index_selection_changed().
+        """Called from callback in self.video_index_reset().
 
         Also called from callbacks in mainapp.TartubeApp.on_menu_test,
         .on_button_switch_view() and .on_menu_add_video().
@@ -4893,7 +5178,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             name = model[iter][1]
 
-        # Don't update the Video Catalogue during certain proecudres, such as
+        # Don't update the Video Catalogue during certain procedures, such as
         #   removing a row from the Video Index (in which case, the flag will
         #   be set)
         if not self.ignore_video_index_select_flag:
@@ -4905,7 +5190,6 @@ class MainWin(Gtk.ApplicationWindow):
 
             else:
                 self.video_index_current = name
-                self.video_catalogue_redraw_all(name)
 
                 dbid = self.app_obj.media_name_dict[name]
                 media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -4915,6 +5199,10 @@ class MainWin(Gtk.ApplicationWindow):
                     self.video_index_current_priv_flag = True
                 else:
                     self.video_index_current_priv_flag = False
+
+                # Redraw the Video Catalogue, on the first page, and reset its
+                #   scrollbars back to the top
+                self.video_catalogue_redraw_all(name, 1, True)
 
 
     def on_video_index_show_downloads(self, menu_item, media_data_obj):
@@ -5045,7 +5333,7 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             print('mw 4439 on_video_catalogue_delete_video')
 
-        self.app_obj.delete_video(media_data_obj)
+        self.app_obj.delete_video(media_data_obj, False, True)
 
 
     def on_video_catalogue_download(self, menu_item, media_data_obj):
@@ -7300,13 +7588,16 @@ class DeleteContainerDialogue(Gtk.Dialog):
         media_data_obj (media.Channel, media.Playlist or media.Folder): The
             container media data object to be deleted
 
+        empty_flag (True or False): If True, the container media data object is
+            to be emptied, rather than being deleted
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, media_data_obj):
+    def __init__(self, main_win_obj, media_data_obj, empty_flag):
 
         if DEBUG_FUNC_FLAG:
             print('mw 6453 __init__')
@@ -7331,9 +7622,14 @@ class DeleteContainerDialogue(Gtk.Dialog):
         folder_count = media_data_obj.count_descendants( [0, 0, 0, 0, 0] )
 
         # Create the dialogue window
+        if not empty_flag:
+            title = 'Delete ' + obj_type
+        else:
+            title = 'Empty ' + obj_type
+
         Gtk.Dialog.__init__(
             self,
-            'Delete ' + obj_type,
+            title,
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -7417,18 +7713,35 @@ class DeleteContainerDialogue(Gtk.Dialog):
         separator = Gtk.HSeparator()
         grid.attach(separator, 0, 5, 1, 1)
 
-        label6 = Gtk.Label(
-            'Do you want to delete the ' + obj_type + ' from ' + pkg_string \
-            + '\'s data\ndirectory, deleting all of its files, or do you' \
-            + ' just want to\nremove the ' + obj_type + ' from this list?',
-        )
+        if not empty_flag:
+            label6 = Gtk.Label(
+                'Do you want to delete the ' + obj_type + ' from ' \
+                + pkg_string + '\'s data\ndirectory, deleting all of its' \
+                + ' files, or do you just want to\nremove the ' + obj_type \
+                + ' from this list?',
+            )
+        else:
+            label6 = Gtk.Label(
+                'Do you want to empty the ' + obj_type + ' in ' \
+                + pkg_string + '\'s data\ndirectory, deleting all of its' \
+                + ' files, or do you just want to\nempty the ' + obj_type \
+                + ' in this list?',
+            )
+
         grid.attach(label6, 0, 6, 1, 1)
         label6.set_alignment(0, 0.5)
 
-        self.button = Gtk.RadioButton.new_with_label_from_widget(
-            None,
-            'Just remove the ' + obj_type + ' from this list',
-        )
+        if not empty_flag:
+            self.button = Gtk.RadioButton.new_with_label_from_widget(
+                None,
+                'Just remove the ' + obj_type + ' from this list',
+            )
+        else:
+            self.button = Gtk.RadioButton.new_with_label_from_widget(
+                None,
+                'Just empty the ' + obj_type + ' in this list',
+            )
+
         grid.attach(self.button, 0, 7, 1, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)

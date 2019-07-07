@@ -1,3 +1,35 @@
+v0.7.0 (7 Jul 2019)
+-------------------------------------------------------------------------------
+
+- This is the first release candidate for v1.0.0
+- The MS Windows installer has been redesigned again (thanks to slartie for his
+    generous assistance in getting it working). Some MS Windows 10 users were
+    still complaining that Tartube would not run; this should be fixed now
+- MS Windows should find that the annoying terminal window is no longer visible
+- Deleting individual videos, then adding them to the Tartube database again,
+    could cause problems with the statistics displayed in the Video Index (e.g.
+    'All Videos (0, -1)'. Fixed
+- Deleting and individual video by right-clicking it removed the video from the
+    database, but didn't delete the video file itself. Fixed
+- If an empty channel/playlist was selected, new videos did not automatically
+    appear in the Video Catalogue during a download operation. Fixed
+- Fixed some issues with the Temporary Videos folder
+- Fixed more issues with videos being dislayed in the wrong order in the Video
+    Catalogue
+- Fixed more issues with the scrollbars not resetting themselves when switching
+    between channels/playlists/folders
+- After right-clicking a folder, selecting Mark Videos > New didn't work. Fixed
+- When marking videos as new/favourite, you can now do this to all videos
+    in a folder, including all child channels/playlists/folders, or you can do
+    it just to the videos actually inside that folder. There are several new
+    popup menu options for emptying a folder, or for removing all its videos
+- Tartube will no longer issue a system error if you drag a folder onto itself
+    in the Video Index
+- Fixed the remaining issues caused by the Gtk graphics libraries
+- Confirmed that various Gtk issues present in Gtk3.22 are not present in
+    Gtk 3.24. Users with Gtk 3.22 on their system will be warned to update it.
+    These warnings can be disabled, if required
+
 v0.6.0 (4 Jul 2019)
 -------------------------------------------------------------------------------
 

@@ -189,6 +189,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_height = 600
         self.config_win_width = 650
         self.config_win_height = 450
+        # Default size (in pixels) of space between various widgets
+        self.default_spacing_size = 5
+
         # Flag set to True if the main toolbar should be compressed (by
         #   removing the labels); ideal if the toolbar's contents won't fit in
         #   the standard-sized window (as it almost certainly won't on MS
@@ -197,8 +200,19 @@ class TartubeApp(Gtk.Application):
             self.toolbar_squeeze_flag = False
         else:
             self.toolbar_squeeze_flag = True
-        # Default size (in pixels) of space between various widgets
-        self.default_spacing_size = 5
+        # Flag set to True if system warning messages should be shown (system
+        #   error messages are always shown)
+        # NB The check is applied by self.system_warning(); any part of the
+        #   code could call mainwin.MainWin.errors_list_add_system_warning()
+        #   directly, which would bypass this flag
+        self.system_warning_show_flag = True
+
+        # Gtk v3.22.* produces numerous error/warning messages in the terminal
+        #   when the Video Index and Video Catalogue are updated. Whatever the
+        #   issues were, they appear to have been fixed by Gtk v3.24.*
+        # Flag set to True by self.start() if Tartube is being run before
+        #   Gtk v3.24
+        self.gtk_broken_flag = False
 
         # Tartube's data directory (platform-dependant), i.e. 'tartube-data'
         # Note that, using the MSWin installer, Cygwin gives file paths with
@@ -894,6 +908,16 @@ class TartubeApp(Gtk.Application):
         # Import the script name (for convenience)
         script_name = utils.upper_case_first(__main__.__packagename__)
 
+        # Gtk v3.22.* produces numerous error/warning messages in the terminal
+        #   when the Video Index and Video Catalogue are updated. Whatever the
+        #   issues were, they appear to have been fixed by Gtk v3.24.*
+        major = Gtk.get_major_version()
+        minor = Gtk.get_minor_version()
+        micro = Gtk.get_micro_version()
+        if major < 3 or (major == 3 and minor < 24):
+
+            self.gtk_broken_flag = True
+
         # Create the main window
         self.main_win_obj = mainwin.MainWin(self)
         # If the debugging flag is set, move it to the top-left corner of the
@@ -1117,6 +1141,17 @@ class TartubeApp(Gtk.Application):
         if self.toolbar_squeeze_flag:
             self.main_win_obj.redraw_main_toolbar()
 
+        # If the system's Gtk is an early, broken version, display a system
+        #   warning
+        if self.gtk_broken_flag:
+            self.system_warning(
+                126,
+                'Gtk v' + str(major) + '.' + str(minor) + '.' + str(micro) \
+                + ' is broken, which will cause problems when running ' \
+                + utils.upper_case_first(__main__.__packagename__) \
+                + '. Please update it to at least Gtk v3.24',
+            )
+
         # If file load/save has been disabled, we can now show a dialogue
         #   window
         if self.disable_load_save_flag:
@@ -1236,9 +1271,10 @@ class TartubeApp(Gtk.Application):
 
         Notes:
 
-            Error codes are currently assigned thus:
+            Error codes for this function and for self.system_warning are
+            currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-125)
+            100-199: mainapp.py     (in use: 101-126)
             200-299: mainwin.py     (in use: 201-234)
             300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
@@ -1253,6 +1289,32 @@ class TartubeApp(Gtk.Application):
         else:
             # Emergency fallback: display in the terminal window
             print('SYSTEM ERROR ' + str(error_code) + ': ' + msg)
+
+
+    def system_warning(self, error_code, msg):
+
+        """Can be called by anything.
+
+        Wrapper function for mainwin.MainWin.errors_list_add_system_warning().
+
+        Args:
+
+            code (int): An error code in the range 100-999. This function and
+                self.system_error() share the same error codes
+
+            msg (str): A system error message to display in the main window's
+                Errors List.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 992 system_warning')
+
+        if self.main_win_obj and self.system_warning_show_flag:
+            self.main_win_obj.errors_list_add_system_warning(error_code, msg)
+        else:
+            # Emergency fallback: display in the terminal window
+            print('SYSTEM WARNING ' + str(error_code) + ': ' + msg)
 
 
     # (Config/database files load/save)
@@ -1323,6 +1385,9 @@ class TartubeApp(Gtk.Application):
         # Set IVs to their new values
         if version >= 5024:  # v0.5.024
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
+        if version >= 6006:  # v0.6.006
+            self.system_warning_show_flag \
+            = json_dict['system_warning_show_flag']
 
         self.data_dir = json_dict['data_dir']
         self.downloads_dir = os.path.abspath(
@@ -1427,6 +1492,7 @@ class TartubeApp(Gtk.Application):
             'save_time': str(utc.strftime('%H:%M:%S')),
             # Data
             'toolbar_squeeze_flag': self.toolbar_squeeze_flag,
+            'system_warning_show_flag': self.system_warning_show_flag,
 
             'data_dir': self.data_dir,
 
@@ -1730,6 +1796,37 @@ class TartubeApp(Gtk.Application):
                 if isinstance(media_data_obj, media.Video) \
                 and media_data_obj.index is not None:
                     media_data_obj.index = int(media_data_obj.index)
+
+        if version < 6003:  # v0.6.003
+
+            # This version fixes an issue in which deleting an individual video
+            #   and then re-adding the same video, downloading it then deleting
+            #   it a second time, messes up the parent container's count IVs
+            # Nothing for it but to recalculate them all, just in case
+            for dbid in self.media_name_dict.values():
+                container_obj = self.media_reg_dict[dbid]
+
+                vid_count = new_count = fav_count = dl_count = 0
+
+                for child_obj in container_obj.child_list:
+                    if isinstance(child_obj, media.Video):
+                        vid_count += 1
+
+                        if child_obj.new_flag:
+                            new_count += 1
+
+                        if child_obj.fav_flag:
+                            fav_count += 1
+
+                        if child_obj.dl_flag:
+                            dl_count += 1
+
+                container_obj.reset_counts(
+                    vid_count,
+                    new_count,
+                    fav_count,
+                    dl_count,
+                )
 
 
     def save_db(self):
@@ -2133,10 +2230,13 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 1570 delete_temp_folders')
 
-        for name in self.media_name_dict:
+        # (Must compile a list of top-level container objects first, or Python
+        #   will complain about the dictionary changing size)
+        obj_list = []
+        for dbid in self.media_name_dict.values():
+            obj_list.append(self.media_reg_dict[dbid])
 
-            dbid = self.media_name_dict[name]
-            media_data_obj = self.media_reg_dict[dbid]
+        for media_data_obj in obj_list:
 
             if isinstance(media_data_obj, media.Folder) \
             and media_data_obj.temp_flag:
@@ -2645,7 +2745,6 @@ class TartubeApp(Gtk.Application):
         # The downloads.DownloadItem handles a download for a video, a channel
         #   or a playlist
         media_data_obj = download_item_obj.media_data_obj
-        video_obj = None
 
         if isinstance(media_data_obj, media.Video):
 
@@ -2661,6 +2760,7 @@ class TartubeApp(Gtk.Application):
             # The downloads.DownloadItem object is handling a channel or
             #   playlist
             # Does a media.Video object already exist?
+            video_obj = None
             for child_obj in media_data_obj.child_list:
 
                 if isinstance(child_obj, media.Video) \
@@ -2868,6 +2968,9 @@ class TartubeApp(Gtk.Application):
         if os.path.isfile(json_path):
 
             json_dict = self.file_manager_obj.load_json(json_path)
+
+            if 'title' in json_dict:
+                video_obj.set_name(json_dict['title'])
 
             if 'upload_date' in json_dict:
                 # date_string in form YYYYMMDD
@@ -3335,8 +3438,6 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_add_row(media_data_obj)
 
         # Select the moving object, which redraws the Video Catalogue
-        # !!! TODO BUG: This doesn't work because the .select_iter() call
-        #   generates an error
         self.main_win_obj.video_index_select_row(media_data_obj)
 
 
@@ -3364,12 +3465,16 @@ class TartubeApp(Gtk.Application):
 
         # Do some basic checks
         if source_obj is None or isinstance(source_obj, media.Video) \
-        or dest_obj is None or isinstance(dest_obj, media.Video) \
-        or source_obj == dest_obj:
+        or dest_obj is None or isinstance(dest_obj, media.Video):
             return self.system_error(
                 114,
                 'Move container request failed sanity check',
             )
+
+        elif source_obj == dest_obj:
+            # No need for a system error message if the user drags a folder
+            #   onto itself; just do nothing
+            return
 
         # Ignore Video Index drag-and-drop during an download/update/refresh
         #   operation
@@ -3486,15 +3591,14 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_delete_row(source_obj)
         self.main_win_obj.video_index_add_row(source_obj)
         # Select the moving object, which redraws the Video Catalogue
-        # !!! TODO BUG: This doesn't work because the .select_iter() call
-        #   generates an error
         self.main_win_obj.video_index_select_row(source_obj)
 
 
     # (Delete media data objects)
 
 
-    def delete_video(self, video_obj, no_update_index_flag=False):
+    def delete_video(self, video_obj, no_update_index_flag=False,
+    delete_files_flag=False):
 
         """Called by self.delete_temp_folders(), .delete_container(),
         mainwin.MainWin.video_catalogue_popup_menu() and a callback in
@@ -3509,6 +3613,11 @@ class TartubeApp(Gtk.Application):
             no_update_index_flag (True or False): True when called by
                 self.delete_container(), in which case the Video Index is not
                 updated (because the calling function wants to do that)
+
+            delete_files_flag (True or False): True when called by
+                mainwin.MainWin.on_video_catalogue_delete_video, in which case
+                the video and its associated files are deleted from the
+                filesystem
 
         """
 
@@ -3538,21 +3647,61 @@ class TartubeApp(Gtk.Application):
         # Remove the video from our IVs
         del self.media_reg_dict[video_obj.dbid]
 
-        # (If emptying a temporary folder on startup, the main window won't be
-        #   visible yet)
-        if self.main_win_obj:
-            # Remove the video from the catalogue, if present
-            self.main_win_obj.video_catalogue_delete_row(video_obj)
+        # Delete files from the filesystem, if required
+        if delete_files_flag and video_obj.file_dir:
 
-            # Update rows in the Video Index
-            if not no_update_index_flag:
-                for container_obj in update_list:
+            video_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + video_obj.file_ext,
+                ),
+            )
+
+            if os.path.isfile(video_path):
+                os.remove(video_path)
+
+            # Also need to delete the thumbnail, description and/or JSON files
+            #   if they exist
+            thumb_path = utils.find_thumbnail(self, video_obj)
+            if thumb_path and os.path.isfile(thumb_path):
+                os.remove(thumb_path)
+
+            descrip_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + '.description',
+                ),
+            )
+
+            if os.path.isfile(descrip_path):
+                os.remove(descrip_path)
+
+            json_path = os.path.abspath(
+                os.path.join(
+                    video_obj.file_dir,
+                    video_obj.file_name + '.info.json',
+                ),
+            )
+
+            if os.path.isfile(json_path):
+                os.remove(json_path)
+
+        # Remove the video from the catalogue, if present
+        self.main_win_obj.video_catalogue_delete_row(video_obj)
+        # Update rows in the Video Index, first checking that the parent
+        #   container object is currently drawn there (which it might not be,
+        #   if emptying temporary folders on startup)
+        if not no_update_index_flag:
+            for container_obj in update_list:
+
+                if container_obj.name \
+                in self.main_win_obj.video_index_row_dict:
                     self.main_win_obj.video_index_update_row_text(
                         container_obj,
                     )
 
 
-    def delete_container(self, media_data_obj):
+    def delete_container(self, media_data_obj, empty_flag=False):
 
         """Can be called by anything.
 
@@ -3572,6 +3721,10 @@ class TartubeApp(Gtk.Application):
 
             media_data_obj (media.Channel, media.Playlist, media.Folder):
                 The container media data object
+
+            empty_flag (True or False): If True, the container media data
+                object is to be emptied, rather than being deleted
+
 
         """
 
@@ -3593,24 +3746,42 @@ class TartubeApp(Gtk.Application):
         #   children
         # (Even though there are no children, we can't guarantee that the
         #   sub-directories in Tartube's data directory are empty)
-        dialogue_win = mainwin.DeleteContainerDialogue(
-            self.main_win_obj,
-            media_data_obj,
-        )
+        # Exception: don't prompt for confirmation if media_data_obj is
+        #   somewhere inside a temporary folder
+        confirm_flag = True
+        delete_file_flag = False
+        parent_obj = media_data_obj.parent_obj
 
-        response = dialogue_win.run()
+        while parent_obj is not None:
+            if isinstance(parent_obj, media.Folder) and parent_obj.temp_flag:
+                # The media data object is somewhere inside a temporary folder;
+                #   no need to prompt for confirmation
+                confirm_flag = False
 
-        # Retrieve user choices from the dialogue window...
-        if dialogue_win.button2.get_active():
-            delete_file_flag = True
-        else:
-            delete_file_flag = False
+            parent_obj = parent_obj.parent_obj
 
-        # ...before destroying it
-        dialogue_win.destroy()
+        if confirm_flag:
 
-        if response != Gtk.ResponseType.OK:
-            return
+            # Prompt the user for confirmation
+            dialogue_win = mainwin.DeleteContainerDialogue(
+                self.main_win_obj,
+                media_data_obj,
+                empty_flag,
+            )
+
+            response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window...
+            if dialogue_win.button2.get_active():
+                delete_file_flag = True
+            else:
+                delete_file_flag = False
+
+            # ...before destroying it
+            dialogue_win.destroy()
+
+            if response != Gtk.ResponseType.OK:
+                return
 
         # Get a second confirmation, if required to delete files
         if delete_file_flag:
@@ -3624,17 +3795,17 @@ class TartubeApp(Gtk.Application):
                 # Arguments passed directly to .delete_container_continue()
                 {
                     'yes': 'delete_container_continue',
-                    'data': media_data_obj,
+                    'data': [media_data_obj, empty_flag],
                 }
             )
 
         # No second confirmation required, so we can proceed directly to the
         #   call to self.delete_container_complete()
         else:
-            self.delete_container_complete(media_data_obj)
+            self.delete_container_complete(media_data_obj, empty_flag)
 
 
-    def delete_container_continue(self, media_data_obj):
+    def delete_container_continue(self, data_list):
 
         """Called by dialogue.MessageDialogue.on_clicked().
 
@@ -3643,25 +3814,36 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            media_data_obj (media.Channel, media.Playlist, media.Folder):
-                The container media data object
+            data_list (list): A list of two items. The first is the container
+                media data object; the second is a flag set to True if the
+                container should be emptied, rather than being deleted
 
         """
 
         if DEBUG_FUNC_FLAG:
             print('ap 3034 delete_container_continue')
 
+        # Unpack the arguments
+        media_data_obj = data_list[0]
+        empty_flag = data_list[1]
+
         # Confirmation obtained, so delete the files
         container_dir = media_data_obj.get_dir(self)
         if os.path.isdir(container_dir):
             shutil.rmtree(container_dir)
 
+        # If emptying the container rather than deleting it, just create a
+        #   replacement (empty) directory on the filesystem
+        if empty_flag:
+            os.makedirs(container_dir)
+
         # Now call self.delete_container_complete() to handle the media data
         #   registry
-        self.delete_container_complete(media_data_obj)
+        self.delete_container_complete(media_data_obj, empty_flag)
 
 
-    def delete_container_complete(self, media_data_obj, recursive_flag=False):
+    def delete_container_complete(self, media_data_obj, empty_flag,
+    recursive_flag=False):
 
         """Called by self.delete_container(), .delete_container_continue()
         and then recursively by this function.
@@ -3676,6 +3858,9 @@ class TartubeApp(Gtk.Application):
 
             media_data_obj (media.Channel, media.Playlist, media.Folder):
                 The container media data object
+
+            empty_flag (True or False): If True, the container media data
+                object is to be emptied, rather than being deleted
 
             recursive_flag (True, False): Set to False on the initial call to
                 this function from some other part of the code, and True when
@@ -3697,24 +3882,31 @@ class TartubeApp(Gtk.Application):
             if isinstance(child_obj, media.Video):
                 self.delete_video(child_obj, True)
             else:
-                self.delete_container_complete(child_obj, True)
+                self.delete_container_complete(child_obj, False, True)
 
-        # Remove the container object from its own parent object (if it has
-        #   one)
-        if media_data_obj.parent_obj:
-            media_data_obj.parent_obj.del_child(media_data_obj)
+        if not empty_flag or recursive_flag:
 
-        # Remove the media data object from our IVs
-        del self.media_reg_dict[media_data_obj.dbid]
-        del self.media_name_dict[media_data_obj.name]
-        if media_data_obj.dbid in self.media_top_level_list:
-            index = self.media_top_level_list.index(media_data_obj.dbid)
-            del self.media_top_level_list[index]
+            # Remove the container object from its own parent object (if it has
+            #   one)
+            if media_data_obj.parent_obj:
+                media_data_obj.parent_obj.del_child(media_data_obj)
+
+            # Remove the media data object from our IVs
+            del self.media_reg_dict[media_data_obj.dbid]
+            del self.media_name_dict[media_data_obj.name]
+            if media_data_obj.dbid in self.media_top_level_list:
+                index = self.media_top_level_list.index(media_data_obj.dbid)
+                del self.media_top_level_list[index]
 
         # During the initial call to this function, delete the container
         #   object from the Video Index (which automatically resets the Video
         #   Catalogue)
-        if not recursive_flag:
+        # (If deleting the contents of temporary folders while loading a
+        #   Tartube database, the Video Index may not yet have been drawn, so
+        #   we have to check for that)
+        if not recursive_flag and not empty_flag \
+        and media_data_obj.name in self.main_win_obj.video_index_row_dict:
+
             self.main_win_obj.video_index_delete_row(media_data_obj)
 
             # Also redraw the private folders in the Video Index, to show the
@@ -3730,6 +3922,14 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_update_row_text(
                 self.fixed_fav_folder,
             )
+
+        elif not recursive_flag and empty_flag:
+
+            # When emptying the container, the quickest way to update the Video
+            #   Index is just to redraw it from scratch
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_catalogue_reset()
+            self.main_win_obj.video_index_populate()
 
 
     # (Change media data object settings, updating all related things)
@@ -3839,7 +4039,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_update_row_text(container_obj)
 
 
-    def mark_video_downloaded(self, video_obj, flag):
+    def mark_video_downloaded(self, video_obj, dl_flag, not_new_flag=False):
 
         """Can be called by anything.
 
@@ -3852,8 +4052,12 @@ class TartubeApp(Gtk.Application):
 
             video_obj (media.Video): The media.Video object to mark.
 
-            flag (True or False): True to mark the video as downloaded, False
-                to mark it as not downloaded.
+            dl_flag (True or False): True to mark the video as downloaded,
+                False to mark it as not downloaded.
+
+            not_new_flag (True or False): Set to True when called by
+                downloads.confirm_old_video(). The video is downloaded, but not
+                new
 
         """
 
@@ -3870,13 +4074,13 @@ class TartubeApp(Gtk.Application):
                 'Mark video as downloaded request failed sanity check',
             )
 
-        elif not flag:
+        elif not dl_flag:
 
             # Mark video as not downloaded
             if not video_obj.dl_flag:
 
-                 # Already marked
-                 return
+                # Already marked
+                return
 
             else:
 
@@ -3892,15 +4096,16 @@ class TartubeApp(Gtk.Application):
                     update_list.append(self.fixed_fav_folder)
 
                 # Also mark the video as not new
-                self.mark_video_new(video_obj, False, True)
+                if not not_new_flag:
+                    self.mark_video_new(video_obj, False, True)
 
         else:
 
             # Mark video as downloaded
             if video_obj.dl_flag:
 
-                 # Already marked
-                 return
+                # Already marked
+                return
 
             else:
 
@@ -3921,7 +4126,8 @@ class TartubeApp(Gtk.Application):
                     update_list.append(self.fixed_fav_folder)
 
                 # Also mark the video as new
-                self.mark_video_new(video_obj, True, True)
+                if not not_new_flag:
+                    self.mark_video_new(video_obj, True, True)
 
         # Update rows in the Video Index
         for container_obj in update_list:
@@ -4095,7 +4301,8 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_delete_row(folder_obj)
 
 
-    def mark_container_favourite(self, media_data_obj, flag):
+    def mark_container_favourite(self, media_data_obj, flag,
+    only_child_videos_flag):
 
         """Called by mainwin.MainWin.on_video_index_mark_favourite() and
         .on_video_index_mark_not_favourite().
@@ -4111,6 +4318,10 @@ class TartubeApp(Gtk.Application):
 
             flag (True or False): True to mark as favourite, False to mark as
                 not favourite
+
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if the container object
+                and all its descendants should be marked
 
         """
 
@@ -4152,6 +4363,14 @@ class TartubeApp(Gtk.Application):
 
                 if isinstance(other_obj, media.Video) \
                 and other_obj.fav_flag:
+                    self.mark_video_favourite(other_obj, flag, True)
+
+        elif only_child_videos_flag:
+
+            # Check videos in this folder
+            for other_obj in media_data_obj.child_list:
+
+                if isinstance(other_obj, media.Video):
                     self.mark_video_favourite(other_obj, flag, True)
 
         else:
@@ -4847,7 +5066,7 @@ class TartubeApp(Gtk.Application):
                     'ok',
                 )
 
-            elif not source or not utils.url_check(source):
+            elif not source or not utils.check_url(source):
                 self.dialogue_manager_obj.show_msg_dialogue(
                     'You must enter a valid URL',
                     'error',
@@ -4955,20 +5174,6 @@ class TartubeApp(Gtk.Application):
             # In the Video Index, select the parent media data object, which
             #   updates both the Video Index and the Video Catalogue
             self.main_win_obj.video_index_select_row(parent_obj)
-            # !!! TODO BUG: That doesn't work, possibly because of the gtk_iter
-            #   error we have been getting, so artificially update the Video
-            #   Catalogue if the parent container is the visible one
-#            if self.main_win_obj.video_index_current is not None \
-#            and self.main_win_obj.video_index_current == parent_obj.name:
-#                self.main_win_obj.video_catalogue_redraw_all(parent_obj.name)
-            if self.main_win_obj.video_index_current is not None \
-            and (
-                self.main_win_obj.video_index_current == parent_obj.name \
-                or self.main_win_obj.video_index_current == 'All Videos'
-            ):
-                self.main_win_obj.video_catalogue_redraw_all(
-                    self.main_win_obj.video_index_current,
-                )
 
             # If any duplicates were found, inform the user
             if duplicate_list:
@@ -5329,9 +5534,9 @@ class TartubeApp(Gtk.Application):
             print('ap 4445 set_complex_index_flag')
 
         if not flag:
-            self.complex_index = False
+            self.complex_index_flag = False
         else:
-            self.complex_index = True
+            self.complex_index_flag = True
 
 
     def set_db_backup_mode(self, value):
@@ -5506,6 +5711,17 @@ class TartubeApp(Gtk.Application):
             self.operation_save_flag = False
         else:
             self.operation_save_flag = True
+
+
+    def set_system_warning_show_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4563 set_system_warning_show_flag')
+
+        if not flag:
+            self.system_warning_show_flag = False
+        else:
+            self.system_warning_show_flag = True
 
 
     def set_toolbar_squeeze_flag(self, flag):

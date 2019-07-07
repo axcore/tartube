@@ -315,6 +315,23 @@ class GenericContainer(GenericMedia):
     # Set accessors
 
 
+    def reset_counts(self, vid_count, new_count, fav_count, dl_count):
+
+        """Called by mainapp.TartubeApp.update_db().
+
+        When a database created by an earlier version of Tartube is loaded,
+        the calling function updates IVs as required.
+
+        This function is called if this object's video counts need to be
+        changed.
+        """
+
+        self.vid_count = vid_count
+        self.new_count = new_count
+        self.fav_count = fav_count
+        self.dl_count = dl_count
+
+
     def inc_dl_count(self):
 
         self.dl_count += 1
@@ -450,7 +467,8 @@ class GenericRemoteContainer(GenericContainer):
                 return -1
             elif obj1.upload_time < obj2.upload_time:
                 return 1
-            else:
+            elif obj1.receive_time is not None \
+            and obj2.receive_time is not None:
                 if obj1.receive_time < obj2.receive_time:
                     return -1
                 elif obj1.receive_time > obj2.receive_time:
@@ -796,8 +814,8 @@ class Video(GenericMedia):
 
     def set_name(self, name):
 
-        """Called by mainwin.MainWin.results_list_update_row() to set the name
-        of an unnamed video, replacing the default name (specified by
+        """Called by mainapp.TartubeApp.update_video_when_file_found() to set
+        the name of an unnamed video, replacing the default name (specified by
         mainapp.TartubeApp.default_video_name).
 
         Also called by media.VideoDownloader.confirm_sim_video().
@@ -1066,6 +1084,9 @@ class Channel(GenericRemoteContainer):
     # Set accessors
 
 
+#   def reset_counts():         # Inherited from GenericContainer
+
+
 #   def set_dl_sim_flag():      # Inherited from GenericMedia
 
 
@@ -1195,6 +1216,9 @@ class Playlist(GenericRemoteContainer):
 
 
     # Set accessors
+
+
+#   def reset_counts():         # Inherited from GenericContainer
 
 
 #   def set_dl_sim_flag():      # Inherited from GenericMedia
@@ -1434,7 +1458,8 @@ class Folder(GenericContainer):
                         return -1
                     elif obj1.upload_time < obj2.upload_time:
                         return 1
-                    else:
+                    elif obj1.receive_time is not None \
+                    and obj2.receive_time is not None:
                         # In private folders (e.g. 'All Videos'), the most
                         #   recently received video goes to the top of the list
                         if self.priv_flag:
@@ -1455,6 +1480,8 @@ class Folder(GenericContainer):
                                 return 1
                             else:
                                 return 0
+                    else:
+                        return 0
                 else:
                     return 0
             else:
@@ -1494,21 +1521,7 @@ class Folder(GenericContainer):
     # Set accessors
 
 
-    def reset_counts(self, vid_count, new_count, fav_count, dl_count):
-
-        """Called by mainapp.TartubeApp.update_db().
-
-        When a database created by an earlier version of Tartube is loaded,
-        the calling function updates IVs as required.
-
-        This function is called if this object's video counts need to be
-        changed.
-        """
-
-        self.vid_count = vid_count
-        self.new_count = new_count
-        self.fav_count = fav_count
-        self.dl_count = dl_count
+#   def reset_counts():         # Inherited from GenericContainer
 
 
 #   def set_dl_sim_flag():      # Inherited from GenericMedia

@@ -18,11 +18,11 @@ Problems can be reported at
 Downloads
 ---------
 
-Latest version: **v0.6.0 (4 July 2019)**
+Latest version: **v0.7.0 (7 July 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.6.0/install-tartube-0.6.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.6.0/install-tartube-0.6.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v0.6.0/tartube_v0.6.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.7.0/install-tartube-0.7.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.7.0/install-tartube-0.7.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v0.7.0/tartube_v0.7.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 Why should I use Tartube?
@@ -94,7 +94,7 @@ Run without installing
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
-3. Run ``python3 tartube.py``
+3. Run ``python3 tartube``
 
 Getting started
 ---------------

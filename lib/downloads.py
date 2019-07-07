@@ -1487,11 +1487,12 @@ class VideoDownloader(object):
 
             if not media_data_obj.dl_flag:
 
-                media_data_obj.set_dl_flag(True)
                 GObject.timeout_add(
                     0,
-                    app_obj.main_win_obj.video_catalogue_update_row,
+                    app_obj.mark_video_downloaded,
                     media_data_obj,
+                    True,               # Video is downloaded
+                    True,               # Video is not new
                 )
 
         else:
@@ -1503,11 +1504,12 @@ class VideoDownloader(object):
 
                 if not match_obj.dl_flag:
 
-                    match_obj.set_dl_flag(True)
                     GObject.timeout_add(
                         0,
-                        app_obj.main_win_obj.video_catalogue_update_row,
+                        app_obj.mark_video_downloaded,
                         match_obj,
+                        True,           # Video is downloaded
+                        True,           # Video is not new
                     )
 
                 else:

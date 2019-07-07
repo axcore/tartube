@@ -4170,54 +4170,62 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton.connect('toggled', self.on_squeeze_button_toggled)
 
+        checkbutton2 = self.add_checkbutton(grid,
+            'Show system warning messages in the \'Errors/Warnings\' tab',
+            self.app_obj.system_warning_show_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        checkbutton2.connect('toggled', self.on_warning_button_toggled)
+
         # Operation preferences
         self.add_label(grid,
             '<u>Operation preferences</u>',
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             'Automatically update youtube-dl before every download operation',
             self.app_obj.operation_auto_update_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
-        checkbutton2.connect('toggled', self.on_auto_update_button_toggled)
+        checkbutton3.connect('toggled', self.on_auto_update_button_toggled)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             'Automatically save files at the end of a download/update/' \
             + 'refresh operation',
             self.app_obj.operation_save_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton3.connect('toggled', self.on_save_button_toggled)
+        checkbutton4.connect('toggled', self.on_save_button_toggled)
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             'Show a dialogue window at the end of a download/update/refresh' \
             + ' operation',
             self.app_obj.operation_dialogue_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton4.connect('toggled', self.on_dialogue_button_toggled)
+        checkbutton5.connect('toggled', self.on_dialogue_button_toggled)
 
         # Module preferences
         self.add_label(grid,
             '<u>Module preferences</u>',
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             'Use \'moviepy\' module to get a video\'s duration, if not known'
             + ' (may be slow)',
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_moviepy_button_toggled)
+        checkbutton6.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
-            checkbutton5.set_sensitive(False)
+            checkbutton6.set_sensitive(False)
 
 
     def setup_backups_tab(self):
@@ -5286,6 +5294,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_write_verbose_flag:
             self.app_obj.set_ytdl_write_verbose_flag(False)
+
+
+    def on_warning_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables system warnings in the 'Errors/Warnings' tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.system_warning_show_flag:
+            self.app_obj.set_system_warning_show_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.system_warning_show_flag:
+            self.app_obj.set_system_warning_show_flag(False)
 
 
     def on_worker_button_toggled(self, checkbutton):

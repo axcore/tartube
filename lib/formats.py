@@ -465,6 +465,7 @@ SMALL_ICON_DICT = {
     'error_small': 'error.png',
     'warning_small': 'warning.png',
     'system_error_small': 'system_error.png',
+    'system_warning_small': 'system_warning.png',
 }
 
 WIN_ICON_LIST = [

@@ -1,2 +1,2 @@
-..\..\..\mingw64\bin\python3.exe hello_world.py
+..\..\..\usr\bin\mintty.exe -h always /bin/env MSYSTEM=MINGW64 /bin/bash -lc /home/user/tartube/hello_world_mswin.sh
 PAUSE
