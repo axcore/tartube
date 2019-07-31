@@ -1,3 +1,10 @@
+v1.0.0 (31 Jul 2019)
+-------------------------------------------------------------------------------
+
+- First beta release
+- Fixed some issues with the MS Windows installer
+- Some parts of the Tartube window displayed the wrong icons. Fixed
+
 v0.7.0 (7 Jul 2019)
 -------------------------------------------------------------------------------
 
@@ -29,7 +36,7 @@ v0.7.0 (7 Jul 2019)
 - Confirmed that various Gtk issues present in Gtk3.22 are not present in
     Gtk 3.24. Users with Gtk 3.22 on their system will be warned to update it.
     These warnings can be disabled, if required
-
+    
 v0.6.0 (4 Jul 2019)
 -------------------------------------------------------------------------------
 
@@ -103,7 +110,7 @@ v0.5.0 (1 Jul 2019)
 - The Gtk test window, available for MS Windows after using the installer,
     now contains some text (to make it clear that the window is working as
     intended)
-
+        
 v0.4.0 (29 Jun 2019)
 ------------------------------------------------------------------------------
 
@@ -147,7 +154,7 @@ v0.4.0 (29 Jun 2019)
     previous two). Two of them show the name of a video's parent channel/
     playlist/folder; the other two show the video's description
 - Fixed incorrect formatting in the DASH and 3D file formats (#3)
-
+    
 v0.3.0 (25 Jun 2019)
 -------------------------------------------------------------------------------
 
@@ -155,7 +162,7 @@ v0.3.0 (25 Jun 2019)
 - Fixed some more crashes
 - Fixed some issues with video descriptions containing quotes and ampersand
     characters
-
+    
 v0.2.0 (23 Jun 2019)
 -------------------------------------------------------------------------------
 

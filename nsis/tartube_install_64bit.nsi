@@ -1,4 +1,4 @@
-# Tartube v0.7.0 installer script for MS Windows
+# Tartube v1.0.0 installer script for MS Windows
 #
 # Copyright (C) 2019 A S Lewis
 #
@@ -16,31 +16,26 @@
 #
 #
 # Build instructions:
-#   These instructions describe how to create an installer for Tartube on a
+#   - These instructions describe how to create an installer for Tartube on a
 #       64-bit MS Windows machine, Windows Vista or higher. For 32-bit machines
 #       see the tartube_install_32bit.nsi file
-#   The instructions are based on the method described in
 #
-#       https://bitbucket.org/sirdeniel/deploy-python-gtk3-apps-for-windows/
-#
-#   - If you don't have a suitable editor (Notepad is not good enough),
-#       download and install one, e.g. Notepad++ from
-#
-#       https://notepad-plus-plus.org/
-#
-#   - On an MS Windows machine, download and install NSIS from
+#   - Download and install NSIS from
 #
 #       http://nsis.sourceforge.io/Download/
 #
 #   - Download the 64-bit version of MSYS2. The downloadable file should look
-#       something like 'msys2-x86-64-nnn.exe'
+#       something like 'msys2-x86-64-yyyymmdd.exe'
 #
 #       http://www.msys2.org/
 #
-#   - Run the file to install MSYS2. Let it install in its default location
+#   - Run the file to install MSYS2. We suggest that you create a directory
+#       called C:\testme, and then let MSYS2 install itself inside that
+#       directory, i.e. C:\testme\msys64
+#
 #   - Run the mingw64 terminal, i.e.
 #
-#       C:\msys64\mingw64.exe
+#       C:\testme\msys64\mingw64.exe
 #
 #   - We need to install various dependencies. In the terminal window, type
 #       this command
@@ -52,38 +47,17 @@
 #   - In the new window, type these commands
 #
 #       pacman -Su
-#       pacman -S mingw-w64-x86_64-gtk3
-#       pacman -S mingw-w64-x86_64-gsettings-desktop-schemas
 #       pacman -S mingw-w64-x86_64-python3
+#       pacman -S mingw-w64-x86_64-python3-pip
 #       pacman -S mingw-w64-x86_64-python3-gobject
 #       pacman -S mingw-w64-x86_64-python3-requests
+#       pacman -S mingw-w64-x86_64-gtk3
+#       pacman -S mingw-w64-x86_64-gsettings-desktop-schemas
 #
 #   - Optional step: you can check that the dependencies are working by typing
 #       this command (if you like):
 #
 #       gtk3-demo
-#
-#   - Now download youtube-dl. DO NOT use the installer for MS Windows; instead
-#       download the source code from
-#
-#       https://github.com/ytdl-org/youtube-dl/
-#
-#   - Extract the 'youtube-dl-master' file. Changed folder into the new
-#       'youtube-dl-master' folder, where you will find another folder called
-#       'youtube-dl-master'
-#   - Rename this inner folder as 'youtube-dl', and then copy that folder to
-#
-#       C:\msys64\home\YOURNAME
-#
-#   - Note that, throughout this guide, YOURNAME should be substituted for your
-#       actual Windows username. For example, the copied folder might be
-#
-#       C:\msys64\home\alice\youtube-dl
-#
-#   - Next, in the mingw64 terminal window, type
-#
-#       cd youtube-dl
-#       python3 setup.py install
 #
 #   - Now download the Tartube source code from
 #
@@ -91,110 +65,69 @@
 #
 #   - Extract it, and copy the whole 'tartube' folder to
 #
-#       C:\msys64\home\YOURNAME
+#       C:\testme\msys64\home\YOURNAME
 #
-#   - Now download the deployment package from
+#   - Note that, throughout this guide, YOURNAME should be substituted for your
+#       actual Windows username. For example, the copied folder might be
 #
-#       https://bitbucket.org/sirdeniel/deploy-python-gtk3-apps-for-windows/
+#       C:\testme\msys64\home\alice\tartube
 #
-#   - Extract it. The folder's contents should look like this
+#   - The C:\testme folder now contains about 2GB of data. If you like, you can
+#       use all of it (which would create an installer of about 600MB). In most
+#       cases, though, you will probably want to remove everything that's not
+#       necessary. This table shows which files and folders are in the official
+#       Tartube installer (which is about 90MB). Everything else can be
+#       deleted:
 #
-#       /sirdeniel-deploy-python-gtk3-apps-for-windows-xxxxxx
-#           README.MD
-#           /resources
-#               build_dist.py
-#               config.pmc
-#               procmon_files.png
-#               save_procmonlog.png
-#               start_capture.png
-#               start_procmon.bat
-#               target_startin_lnk.png
+#       C:\testme\msys64\dev
+#       C:\testme\msys64\etc
+#       C:\testme\msys64\home
+#       C:\testme\msys64\mingw64\bin
+#       C:\testme\msys64\mingw64\lib\gdk-pixbuf-2.0
+#       C:\testme\msys64\mingw64\lib\girepository-1.0
+#       C:\testme\msys64\mingw64\lib\glib-2.0
+#       C:\testme\msys64\mingw64\lib\gtk-3.0
+#       C:\testme\msys64\mingw64\lib\python3.7
+#       C:\testme\msys64\mingw64\lib\thread2.8.4
+#       C:\testme\msys64\mingw64\share\gir-1.0
+#       C:\testme\msys64\mingw64\share\glib-2.0
+#       C:\testme\msys64\mingw64\share\gtk-3.0
+#       C:\testme\msys64\mingw64\share\icons
+#       C:\testme\msys64\mingw64\share\locale
+#       C:\testme\msys64\mingw64\share\themes
+#       C:\testme\msys64\mingw64\share\thumbnailers
+#       C:\testme\msys64\tmp
+#       C:\testme\msys64\usr\bin\bash
+#       C:\testme\msys64\usr\bin\chmod
+#       C:\testme\msys64\usr\bin\cygpath
+#       C:\testme\msys64\usr\bin\cygwin-console-helper
+#       C:\testme\msys64\usr\bin\env
+#       C:\testme\msys64\usr\bin\find
+#       C:\testme\msys64\usr\bin\findfs
+#       C:\testme\msys64\usr\bin\hostid
+#       C:\testme\msys64\usr\bin\hostname
+#       C:\testme\msys64\usr\bin\iconv
+#       C:\testme\msys64\usr\bin\id
+#       C:\testme\msys64\usr\bin\ln
+#       C:\testme\msys64\usr\bin\locale
+#       C:\testme\msys64\usr\bin\mintty
+#       C:\testme\msys64\usr\bin\mkdir
+#       C:\testme\msys64\usr\bin\msys-2.0.dll
+#       C:\testme\msys64\usr\bin\msys-gcc_s-1.dll
+#       C:\testme\msys64\usr\bin\msys-iconv-2.dll
+#       C:\testme\msys64\usr\bin\msys-intl-8.dll
+#       C:\testme\msys64\usr\bin\test
+#       C:\testme\msys64\usr\bin\tzset
 #
-#   - Create a new folder
-#
-#       C:\msys64\home\YOURNAME\procmon
-#
-#   - Copy everything from the extracted 'resources' folder into the new
-#       'procmon' folder
-#   - Move the 'build_dst.py' file from the new 'procmon' folder into the
-#       parent folder, i.e.
-#
-#         C:\msys64\home\YOURNAME
-#
-#   - Download Process Monitor from the official Microsoft site. At the time of
-#       writing, it can be found at
-#
-#       https://docs.microsoft.com/en-us/sysinternals/downloads/procmon
-#
-#   - Copy the file into the new 'procmon' folder
-#   - In the new 'procmon' folder. run the batch file 'start_procmon.bat'
-#   - Give permission for the programme to run
-#   - Close the 'Process Monitor Filter' window by clicking the OK button, and
-#       without making any changes
-#   - In the Process Monitor window, click the magnifying glass icon (or press
-#       CTRL+E) to begin monitoring
-#
-#   - Now run Tartube. In the mingw64 terminal window, type
-#
-#       cd
-#       python3 ./youtube-dl/bin/youtube-dl --version
-#       cd tartube
-#       python3 tartube.py
-#
-#   - In Tartube, download any video from any supported website (e.g. from
-#       YouTube)
-#   - Close the Tartube window
-#   - In the Process Monitor window, click the magnifying glass (or press
-#       CTRL+E) to stop monitoring. Then click 'File > Save'
-#   - In the dialogue window, select 'Comma-separated values (CSV)', and change
-#       the file path to
-#
-#         C:\msys64\home\YOURNAME\Logfile.CSV
-#
-#   - Save the file and close Process Manager
-#   - In the minwg64 terminal window, type this
-#
-#       cd ..
-#       python3 build_dist.py
-#
-#   - This creates a folder called 'dist'
-#   - You can now close the mingw64 terminal window
-#
-#   - DELETE the following folder in its entirety, and replace it with the
-#       original source code (as described above)
-#
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube
-#
-#   - The youtube-dl might be missing some important files, so copy the
-#       original source code into its folder, but DO NOT replace any files that
-#       already exist there
-#
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\youtube-dl
-#
-#   - Now move the following file into its parent folder:
-#
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube\nsis\tartube_64bit.bat
-#
-#   - In other words, its new location is
-#
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube\tartube_64bit.bat
-#
-#   - Now copy all of the remaining files in this folder
-#
-#       C:\msys64\home\YOURNAME\dist\msys64\home\YOURNAME\tartube\nsis
-#
-#   - ...into this folder:
-#
-#       C:\msys64\home\YOURNAME\dist
-#
-#   - The installer script (this file) is now at the following location
-#
-#       C:\msys64\home\YOURNAME\dist\tartube_install_64bit.nsi
-#
-#   - Open the file in an editor, change the version number just below (in the
-#       line starting 'OutFile'), and save it
-#   - Compile the installer (e.g. by right-clicking the file and selecting
-#       'Compile NSIS script file')
+#   - Now go into the C:\testme\msys64\home\YOURNAME\tartube\nsis folder, and
+#       MOVE all the windows batch files into the folder above, i.e. into
+#       C:\testme\msys64\home\YOURNAME\tartube
+#   - Next, COPY all the remaining files in
+#       C:\testme\msys64\home\YOURNAME\tartube\nsis to C:\testme
+#   - Create the installer by compiling the NSIS script,
+#       C:\testme\tartube_install_64bit.nsi (the quickest way to do this is
+#       by right-clicking the file and selecting 'Compile NSIS script file')
+#   - When NSIS is finished, the installer appears in C:\testme
 
 # Header files
 # -------------------------------
@@ -207,7 +140,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-0.7.0-64bit.exe"
+    OutFile "install-tartube-1.0.0-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -312,7 +245,7 @@ Section "Tartube" SecClient
         "Publisher" "A S Lewis"
     WriteRegStr HKLM \
         "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "DisplayVersion" "0.7.0"
+        "DisplayVersion" "1.0.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -327,10 +260,10 @@ Section "Uninstall"
     Delete "$SMPROGRAMS\Tartube\Tartube.lnk"
     Delete "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk"
     Delete "$SMPROGRAMS\Tartube\Gtk graphics test.lnk"
-    RmDir "$SMPROGRAMS\Tartube"
+    RMDir /r "$SMPROGRAMS\Tartube"
     Delete "$DESKTOP\Tartube.lnk"
 
-    RMDir "$INSTDIR"
+    RMDir /r "$INSTDIR"
     Delete "$INSTDIR\Uninstall.exe"
 
     DeleteRegKey HKLM \

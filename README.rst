@@ -9,20 +9,20 @@ written in Python 3 / Gtk 3.
 It runs on MS Windows, Linux and BSD. It probably works on MacOS, but the
 authors have not been able to confirm this.
 
-**Tartube** is alpha software. **Test it carefully before you allow it to use
-your 100TB hard drive**, as it might not behave in the way you're expecting.
+**Tartube** is beta software. **Test it carefully before you allow it to use
+your 100TB hard drive**, as it might not behave in the way you're expecting. 
 
-Problems can be reported at
+Problems can be reported at 
 `our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
 Downloads
 ---------
 
-Latest version: **v0.7.0 (7 July 2019)**
+Latest version: **v1.0.0 (31 July 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v0.7.0/install-tartube-0.7.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v0.7.0/install-tartube-0.7.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v0.7.0/tartube_v0.7.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.0.0/tartube_v1.0.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 Why should I use Tartube?
@@ -40,23 +40,71 @@ Why should I use Tartube?
    they don't like. **Tartube** won't do any of those things
 -  **Tartube** can, in some circumstances, see videos that are region-blocked
    and/or age-restricted
-
+   
 Screenshots
 -----------
 
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
 
-Installation
-------------
+Installation - MS Windows
+-------------------------
 
 MS Windows users should use the installer available at the Tartube website. The
 installer contains everything you need to run Tartube. You must be using
 Windows Vista or above; the installer will not work on Windows XP.
 
+**Some users report that they can't run Tartube at all**. If so, you can try
+the following steps:
+
+- From the Windows Start Menu, click **Tartube > Test Gtk graphics**. If you see a lot of error messages, you can `report those errors to the authors <https://github.com/axcore/tartube/issues>`__.
+- You can try a **manual installation (see below)**. This takes about 10-30 minutes, depending on your internet speed
+
+MS Windows manual installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- This section assumes you have a 64-bit computer
+- Download and install MSYS2 from `msys2.org <https://msys2.org>`__. You need the file that looks something like **msys2-x86_64-yyyymmdd.exe**
+- MSYS2 wants to install in **C:\\msys64**, so do that
+- Open the MINGW64 terminal, which is **C:\\msys64\\mingw64.exe**
+- In the MINGW64 terminal, type:
+
+        **pacman -Syu**
+        
+- If the terminal wants to shut down, close it, and then restart it
+- Now type the following commands, one by one:
+
+        **pacman -Su**
+        
+        **pacman -S mingw-w64-x86_64-python3**
+        
+        **pacman -S mingw-w64-x86_64-python3-pip**
+        
+        **pacman -S mingw-w64-x86_64-python3-gobject**
+        
+        **pacman -S mingw-w64-x86_64-python3-requests**
+        
+        **pacman -S mingw-w64-x86_64-gtk3**
+        
+        **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**        
+        
+- Download the `Tartube source code <https://sourceforge.net/projects/tartube/files/v0.7.0/tartube_v0.7.0.tar.gz/download>`__ from Sourceforge
+- Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
+- Now, to run Tartube, type these commands in the MINGW64 terminal:
+
+        **cd tartube**
+        
+        **python3 tartube**
+
+Installation - MacOS
+--------------------
+
 Tartube should run on MacOS, but the authors don't have access a MacOS system.
 If you are a MacOS user, open an issue at our Github page, and we'll work out
 the installation procedure together.
+
+Installation - Linux/BSD/MacOS
+------------------------------
 
 Linux/BSD users can use any of the following installation methods.
 
@@ -72,29 +120,29 @@ Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
--  `Python moviepy module <https://pypi.org/project/moviepy/>`__
--  `Ffmpeg <https://ffmpeg.org/>`__
+-  `Python moviepy module <https://pypi.org/project/moviepy/>`__ 
+-  `Ffmpeg <https://ffmpeg.org/>`__ 
 
 Install using PyPI
 ~~~~~~~~~~~~~~~~~~
 
-1. Run ``pip3 install tartube``
-2. Run ``tartube``
+1. Type: ``pip3 install tartube``
+2. Type: ``tartube``
 
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
-3. Run ``python3 setup.py install``
-4. Run ``tartube``
+3. Type: ``python3 setup.py install``
+4. Type: ``tartube``
 
 Run without installing
 ~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
-3. Run ``python3 tartube``
+3. Type: ``python3 tartube``
 
 Getting started
 ---------------
@@ -102,7 +150,7 @@ Getting started
 1. Choose where to save videos
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you first start **Tartube**, you will be asked to choose where
+When you first start **Tartube**, you will be asked to choose where 
 Tartube should save its videos.
 
 .. image:: screenshots/example1.png
@@ -118,15 +166,15 @@ You can change the location later, if you need to.
 2. Check youtube-dl is updated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tartube** uses **youtube-dl** to interact with websites like YouTube. You
+**Tartube** uses **youtube-dl** to interact with websites like YouTube. You 
 should check that **youtube-dl** is also installed and running correctly.
 
-If you are using MS Windows, you will be prompted to install **youtube-dl**;
+If you are using MS Windows, you will be prompted to install **youtube-dl**; 
 you should click **Yes**.
 
 .. image:: screenshots/example1b.png
   :alt: Installing youtube-dl on MS Windows
-
+  
 **youtube-dl** is updated every week or so. All users can check that
 **youtube-dl** is installed and up to date:
 
@@ -138,11 +186,11 @@ you should click **Yes**.
 3. Setting youtube-dl's location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the update operation fails on MS Windows, you should
+If the update operation fails on MS Windows, you should 
 `ask the authors for help <https://github.com/axcore/tartube/>`__.
 
-Users on all other systems can modify Tartube's settings. There are several
-locations on your filesystem where youtube-dl might have been installed.
+Users on all other systems can modify Tartube's settings. There are several 
+locations on your filesystem where youtube-dl might have been installed. 
 
 .. image:: screenshots/example2.png
   :alt: Updating youtube-dl
@@ -165,7 +213,7 @@ inside of other folders.
 
 .. image:: screenshots/example3.png
   :alt: Tartube's system folders
-
+  
 When you start **Tartube**, there are five folders already visible. You can't
 remove any of these folders (but you can hide them, if you want).
 
@@ -184,7 +232,7 @@ of the window. A popup window will appear.
 Copy and paste the video's URL into the popup window. You can copy and paste as
 many URLs as you like.
 
-When you're finished, click the **OK** button.
+When you're finished, click the **OK** button. 
 
 Finally, click on the **Unsorted Videos** folder to see the videos you've
 added.
@@ -196,7 +244,7 @@ added.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also add a whole channel by clicking the **'Channel'** button or a
-whole playlist by clicking the **'Playlist'** button.
+whole playlist by clicking the **'Playlist'** button. 
 
 **Tartube** will download all of the videos in the channel or playlist.
 
@@ -215,7 +263,7 @@ idea to create some folders, and to store your channels/playlists inside those
 folders.
 
 Click the **'Folder'** button near the top of the window,  and create a folder
-called **Comedy**.
+called **Comedy**. 
 
 .. image:: screenshots/example7.png
   :alt: Adding a folder
@@ -243,7 +291,7 @@ basically four things **Tartube** can do:
 
 .. image:: screenshots/example9.png
   :alt: The Check and Download buttons
-
+  
 To **Check** or **Download** videos, channels and playlists, use the buttons
 near the top of the window. To **Refresh** **Tartube**'s database, use the
 menu.
@@ -261,7 +309,7 @@ them.
 
 .. image:: screenshots/example10.png
   :alt: Opening the download options window
-
+  
 -  Click **Edit > General download options...**
 
 A new window opens. Any changes you make in this window aren't actually applied
@@ -279,7 +327,7 @@ channels, playlists and folders you've added.
 
 .. image:: screenshots/example11.png
   :alt: The window with only general download options applied
-
+  
 Now, suppose you want to apply some download options to the **Music** folder:
 
 -  Right-click the folder, and select **Apply download options...**
@@ -311,7 +359,7 @@ You can mark channels, playlists and even whole folders as favourites.
 -  Right-click the channel, playlist or folder, and select
    **Mark videos > Favourite**
 
-When you do that, any videos you download will appear in the
+When you do that, any videos you download will appear in the 
 **Favourite Videos** folder (as well as in their normal location).
 
 12. Watching videos
@@ -332,18 +380,18 @@ without restrictions on the **HookTube** website.
 Frequently-Asked Questions
 --------------------------
 
-**Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work
+**Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work 
 properly / Tartube keeps crashing!**
 
-A: Tartube is alpha software. Please report any problems to the authors at our
-`Github page <https://github.com/axcore/tartube/issues>`__
+A: Tartube is beta software. Please report any problems to the authors at our
+`Github page <https://github.com/axcore/tartube/issues>`__ 
 
 **Q: After I downloaded some videos, Tartube crashed, and now all my videos are
 missing!**
 
 A: Tartube creates a backup copy of the database, before trying to save a new
 copy. In the unlikely event of a failure, you can replace the broken database
-file with the backup file.
+file with the backup file. 
 
 To find Tartube's data directory (folder), click
 **Edit > System preferences... > General**.
@@ -359,12 +407,7 @@ the options in **Edit > System preferences... > Backups**.
 Note that Tartube does not create backup copies of the videos you've
 downloaded. That is your responsibility!
 
-**Q: The videos/channels/playlists/folders are in the wrong order!**
-
-A: This is because of a Gtk we haven't been able to resolve yet.
-
-**Q: I want to see all the videos on a single page, not spread over several
-pages!**
+**Q: I want to see all the videos on a single page, not spread over several pages!**
 
 A: At the bottom of the Tartube window, set the page size to zero, and press
 ENTER.
@@ -372,7 +415,7 @@ ENTER.
 **Q: I just want to check for new videos, but it takes so long!**
 
 A: By default, the underlying **youtube-dl** software checks an entire channel,
-even if it contains hundreds of videos.
+even if it contains hundreds of videos. 
 
 You can drastically reduce the time this takes by telling Tartube to stop
 checking/downloading videos, if it receives (for example) notifications for
@@ -415,9 +458,9 @@ Known issues
 
 -  Tartube crashes continuously and often **FIXED**
 -  Alphabetic sorting of channels/playlists/folders doesn't always work as
-   intended, due to an unresolved Gtk issue
+   intended, due to an unresolved Gtk issue **FIXED**
 -  Channels/playlists/folder selection does not always work as intended, due to
-   an unresolved Gtk issue
+   an unresolved Gtk issue **FIXED**
 -  Users can type in comboboxes, but this should not be possible **FIXED**
 
 Contributing

@@ -453,8 +453,8 @@ LARGE_ICON_DICT = {
 
 SMALL_ICON_DICT = {
     'video_small': 'video.png',
-    'channel_small': 'playlist.png',
-    'playlist_small': 'channel.png',
+    'channel_small': 'channel.png',
+    'playlist_small': 'playlist.png',
     'folder_small': 'folder.png',
 
     'download_small': 'download.png',

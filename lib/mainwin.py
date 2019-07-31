@@ -850,6 +850,9 @@ class MainWin(Gtk.ApplicationWindow):
             self.test_button.set_action_name('app.test_toolbutton')
             self.test_button.set_tooltip_text('Add test media data objects')
 
+        if squeeze_flag:
+            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+
         if not squeeze_flag:
             quit_button = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
@@ -2627,7 +2630,7 @@ class MainWin(Gtk.ApplicationWindow):
             edit_options_menu_item.set_sensitive(False)
 
         enforce_check_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-            'D_isable downloads',
+            'D_isable video downloads',
         )
         enforce_check_menu_item.set_active(media_data_obj.dl_sim_flag)
         enforce_check_menu_item.connect(
