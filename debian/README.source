@@ -1,0 +1,16 @@
+The Debian packaging of tartube is maintained in git, using the merging
+workflow described in dgit-maint-merge(7).  There isn't a patch queue that can
+be represented as a quilt series.
+
+A detailed breakdown of the changes is available from their canonical
+representation - git commits in the packaging repository.  For example, to see
+the changes made by the Debian maintainer in the first upload of upstream
+version 1.2.3, you could use:
+
+    % git clone https://git.dgit.debian.org/tartube
+    % cd tartube
+    % git log --oneline 1.2.3..debian/1.2.3-1 -- . ':!debian'
+
+(If you have dgit, use `dgit clone tartube`, rather than plain `git clone`.)
+
+A single combined diff, containing all the changes, follows.

@@ -1,0 +1,5 @@
+tartube (1.0.0-1) UNRELEASED; urgency=medium
+
+  * Initial release. (Closes: #934681)
+
+ -- Félix Sipma <felix+debian@gueux.org>  Tue, 13 Aug 2019 11:28:07 +0200
