@@ -54,7 +54,7 @@ MS Windows users should use the installer available at the Tartube website. The
 installer contains everything you need to run Tartube. You must be using
 Windows Vista or above; the installer will not work on Windows XP.
 
-**Some users report that Tartube will install but won't run**. If you have problems, `read this page <docs/mswin_manual_install.rst>`__.
+**Some users report that Tartube will install but won't run**. If you have problems, `read this page <docs/mswin_install.rst>`__.
 
 Installation - MacOS
 --------------------
