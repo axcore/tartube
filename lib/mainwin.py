@@ -559,6 +559,21 @@ class MainWin(Gtk.ApplicationWindow):
         separator_item2 = Gtk.SeparatorMenuItem()
         media_sub_menu.append(separator_item2)
 
+        self.export_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Export from database',
+        )
+        media_sub_menu.append(self.export_db_menu_item)
+        self.export_db_menu_item.set_action_name('app.export_db_menu')
+
+        self.import_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Import into database',
+        )
+        media_sub_menu.append(self.import_db_menu_item)
+        self.import_db_menu_item.set_action_name('app.import_db_menu')
+
+        separator_item3 = Gtk.SeparatorMenuItem()
+        media_sub_menu.append(separator_item3)
+
         switch_view_menu_item = \
         Gtk.MenuItem.new_with_mnemonic('_Switch between views')
         media_sub_menu.append(switch_view_menu_item)
@@ -571,8 +586,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.debug_test_media_menu_flag:
 
-            separator_item3 = Gtk.SeparatorMenuItem()
-            media_sub_menu.append(separator_item3)
+            separator_item4 = Gtk.SeparatorMenuItem()
+            media_sub_menu.append(separator_item4)
 
             self.test_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 '_Add test media',
@@ -602,24 +617,26 @@ class MainWin(Gtk.ApplicationWindow):
         self.stop_download_menu_item.set_sensitive(False)
         self.stop_download_menu_item.set_action_name('app.stop_download_menu')
 
-        separator_item4 = Gtk.SeparatorMenuItem()
-        ops_sub_menu.append(separator_item4)
+        separator_item5 = Gtk.SeparatorMenuItem()
+        ops_sub_menu.append(separator_item5)
+
+        self.refresh_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Refresh database',
+        )
+        ops_sub_menu.append(self.refresh_db_menu_item)
+        self.refresh_db_menu_item.set_action_name('app.refresh_db_menu')
+
+        separator_item6 = Gtk.SeparatorMenuItem()
+        ops_sub_menu.append(separator_item6)
 
         self.update_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
             '_Update youtube-dl',
         )
         ops_sub_menu.append(self.update_ytdl_menu_item)
         self.update_ytdl_menu_item.set_action_name('app.update_ytdl_menu')
-
-        separator_item5 = Gtk.SeparatorMenuItem()
-        ops_sub_menu.append(separator_item5)
-
-        self.refresh_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            '_Refresh whole database',
-        )
-        ops_sub_menu.append(self.refresh_db_menu_item)
-        self.refresh_db_menu_item.set_action_name('app.refresh_db_menu')
-
+        if __main__.__disable_ytdl_update_flag__:
+            self.update_ytdl_menu_item.set_sensitive(False)
+        
         # Help column
         help_menu_column = Gtk.MenuItem.new_with_mnemonic('_Help')
         self.menubar.add(help_menu_column)
@@ -1349,13 +1366,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.system_prefs_menu_item.set_sensitive(flag)
         self.gen_options_menu_item.set_sensitive(flag)
+        self.export_db_menu_item.set_sensitive(flag)
+        self.import_db_menu_item.set_sensitive(flag)
         self.check_all_menu_item.set_sensitive(flag)
         self.download_all_menu_item.set_sensitive(flag)
-        self.update_ytdl_menu_item.set_sensitive(flag)
         self.refresh_db_menu_item.set_sensitive(flag)
-
         self.check_all_toolbutton.set_sensitive(flag)
         self.download_all_toolbutton.set_sensitive(flag)
+
+        if not __main__.__disable_ytdl_update_flag__:
+            self.update_ytdl_menu_item.set_sensitive(flag)
 
         # (The 'Save database' menu item must remain desensitised if file load/
         #   save is disabled)
@@ -1697,8 +1717,19 @@ class MainWin(Gtk.ApplicationWindow):
                 elif not obj1.fixed_flag and obj2.fixed_flag:
                     return 1
 
-            # (Media data objects can't have the same name)
-            if obj1.name.lower() < obj2.name.lower():
+            # Media data objects can't have the same name, but they might have
+            #   the same nickname
+            # If two nicknames both start with an index, e.g. '1 Music' and 
+            #   '11 Comedy' then make sure the one with the lowest index comes 
+            #   first
+            index1_list = re.findall(r'^(\d+)', obj1.nickname)
+            index2_list = re.findall(r'^(\d+)', obj2.nickname)
+            if index1_list and index2_list: 
+                if index1_list[0] < index2_list[0]:
+                    return -1
+                else:
+                    return 1
+            elif obj1.nickname.lower() < obj2.nickname.lower():
                 return -1
             else:
                 return 1
@@ -2411,7 +2442,7 @@ class MainWin(Gtk.ApplicationWindow):
             print('mw 2081 video_index_get_text')
 
         text = utils.shorten_string(
-            media_data_obj.name,
+            media_data_obj.nickname,
             self.tiny_string_max_len,
         )
 
@@ -2724,35 +2755,22 @@ class MainWin(Gtk.ApplicationWindow):
         contents_menu_item.set_submenu(contents_submenu)
         popup_menu.append(contents_menu_item)
 
-        # Separator
-        popup_menu.append(Gtk.SeparatorMenuItem())
-
-        # Show properties/downloads, hide folder
-        show_properties_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            'Show _properties...',
+        # Actions
+        actions_submenu = Gtk.Menu()
+            
+        move_top_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            'Move to _top level',
         )
-        show_properties_menu_item.connect(
+        move_top_menu_item.connect(
             'activate',
-            self.on_video_index_show_properties,
+            self.on_video_index_move_to_top,
             media_data_obj,
         )
-        popup_menu.append(show_properties_menu_item)
-        if self.app_obj.current_manager_obj:
-            show_properties_menu_item.set_sensitive(False)
-
-        show_downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            '_Show destination',
-        )
-        show_downloads_menu_item.connect(
-            'activate',
-            self.on_video_index_show_downloads,
-            media_data_obj,
-        )
-        popup_menu.append(show_downloads_menu_item)
-        if isinstance(media_data_obj, media.Folder) \
-        and media_data_obj.priv_flag:
-            show_downloads_menu_item.set_sensitive(False)
-
+        actions_submenu.append(move_top_menu_item)
+        if not media_data_obj.parent_obj \
+        or self.app_obj.current_manager_obj:
+            move_top_menu_item.set_sensitive(False)
+                
         if isinstance(media_data_obj, media.Folder):
 
             hide_folder_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -2763,21 +2781,89 @@ class MainWin(Gtk.ApplicationWindow):
                 self.on_video_index_hide_folder,
                 media_data_obj,
             )
-            popup_menu.append(hide_folder_menu_item)
-
-        # Move to top level
-        move_top_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            'Move to _top level',
+            actions_submenu.append(hide_folder_menu_item)
+            
+        set_nickname_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            'Set _nickname...',
         )
-        move_top_menu_item.connect(
+        set_nickname_menu_item.connect(
             'activate',
-            self.on_video_index_move_to_top,
+            self.on_video_index_set_nickname,
             media_data_obj,
         )
-        popup_menu.append(move_top_menu_item)
-        if not media_data_obj.parent_obj \
-        or self.app_obj.current_manager_obj:
-            move_top_menu_item.set_sensitive(False)
+        actions_submenu.append(set_nickname_menu_item)
+        if isinstance(media_data_obj, media.Folder) \
+        and media_data_obj.priv_flag:
+            set_nickname_menu_item.set_sensitive(False)
+            
+        export_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Export ' + media_type + '...',
+        )
+        export_menu_item.connect(
+            'activate',
+            self.on_video_index_export,
+            media_data_obj,
+        )
+        actions_submenu.append(export_menu_item)
+        if self.app_obj.current_manager_obj:
+            export_menu_item.set_sensitive(False)
+
+        # Separator
+        actions_submenu.append(Gtk.SeparatorMenuItem())
+            
+        show_properties_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            'Show _properties...',
+        )
+        show_properties_menu_item.connect(
+            'activate',
+            self.on_video_index_show_properties,
+            media_data_obj,
+        )
+        actions_submenu.append(show_properties_menu_item)
+        if self.app_obj.current_manager_obj:
+            show_properties_menu_item.set_sensitive(False)
+                        
+        actions_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            utils.upper_case_first(media_type) + ' _actions',
+        )
+        actions_menu_item.set_submenu(actions_submenu)
+        popup_menu.append(actions_menu_item)
+
+        # Filesystem
+        filesystem_submenu = Gtk.Menu()
+
+        show_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Show location',
+        )
+        show_destination_menu_item.connect(
+            'activate',
+            self.on_video_index_show_location,
+            media_data_obj,
+        )
+        filesystem_submenu.append(show_destination_menu_item)
+        if isinstance(media_data_obj, media.Folder) \
+        and media_data_obj.priv_flag:
+            show_destination_menu_item.set_sensitive(False)
+            
+        rename_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Rename location...',
+        )
+        rename_destination_menu_item.connect(
+            'activate',
+            self.on_video_index_rename_location,
+            media_data_obj,
+        )
+        filesystem_submenu.append(rename_destination_menu_item)
+        if self.app_obj.current_manager_obj or self.config_win_list \
+        or (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.fixed_flag
+        ):
+            rename_destination_menu_item.set_sensitive(False)
+
+        filesystem_menu_item = Gtk.MenuItem.new_with_mnemonic('_Filesystem')
+        filesystem_menu_item.set_submenu(filesystem_submenu)
+        popup_menu.append(filesystem_menu_item)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -4243,6 +4329,10 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.errors_list_treeview.set_model(self.errors_list_liststore)
 
+        self.tab_error_count = 0
+        self.tab_warning_count = 0
+        self.errors_list_refresh_label()
+            
 
     def errors_list_add_row(self, media_data_obj):
 
@@ -4507,7 +4597,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.visible_tab_num = page_num
 
-        if page_num == 2:
+        if page_num == 2 and not self.app_obj.system_msg_keep_totals_flag:
             self.tab_error_count = 0
             self.tab_warning_count = 0
             self.errors_list_refresh_label()
@@ -4804,6 +4894,28 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj.set_dl_sim_flag(False)
 
         self.video_index_update_row_text(media_data_obj)
+
+
+    def on_video_index_export(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Exports a summary of the database, containing the selected channel/
+        playlist/folder and its descendants.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4330 on_video_index_export')
+
+        self.app_obj.export_from_db( [media_data_obj] )
 
 
     def on_video_index_mark_favourite(self, menu_item, media_data_obj,
@@ -5115,6 +5227,28 @@ class MainWin(Gtk.ApplicationWindow):
                 self.app_obj.delete_video(child_obj)
 
 
+    def on_video_index_rename_location(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Renames a channel, playlist or folder. Also renames the corresponding
+        directory in Tartube's data directory.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4223 on_video_index_rename_location')
+
+        self.app_obj.rename_container(media_data_obj)
+
+
     def on_video_index_right_click(self, treeview, event):
 
         """Called from callback in self.setup_videos_tab().
@@ -5208,7 +5342,49 @@ class MainWin(Gtk.ApplicationWindow):
                 self.video_catalogue_redraw_all(name, 1, True)
 
 
-    def on_video_index_show_downloads(self, menu_item, media_data_obj):
+    def on_video_index_set_nickname(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Sets (or resets) the nickname for the selected channel, playlist or
+        folder.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 4293 on_video_index_set_nickname')
+
+        if isinstance(media_data_obj, media.Video):
+            return self.app_obj.system_error(
+                235,
+                'Cannot set the nickname of a video',
+            )
+                        
+        dialogue_win = SetNicknameDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window, before destroying it
+        nickname = dialogue_win.entry.get_text()
+        dialogue_win.destroy()
+        
+        if response == Gtk.ResponseType.OK:
+            
+            # If nickname is an empty string, then the call to .set_nickname()
+            #   resets the .nickname IV to match the .name IV
+            media_data_obj.set_nickname(nickname)
+                
+            # Update the name displayed in the Video Index
+            self.video_index_update_row_text(media_data_obj)
+        
+
+    def on_video_index_show_location(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_index_popup_menu().
 
@@ -5225,7 +5401,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 4330 on_video_index_show_downloads')
+            print('mw 4330 on_video_index_show_location')
 
         path = media_data_obj.get_dir(self.app_obj)
         utils.open_file(path)
@@ -7099,7 +7275,11 @@ class AddVideoDialogue(Gtk.Dialog):
         combo.connect('changed', self.on_combo_changed)
 
         # Paste in the contents of the clipboard (if it contains valid URLs)
-        utils.add_links_from_clipboard(main_win_obj.app_obj, self.textbuffer)
+        if main_win_obj.app_obj.dialogue_copy_clipboard_flag:
+            utils.add_links_from_clipboard(
+                main_win_obj.app_obj, 
+                self.textbuffer,
+            )
 
         # Display the dialogue window
         self.show_all()
@@ -7142,10 +7322,11 @@ class AddChannelDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj):
+    def __init__(self, main_win_obj, keep_folder_name=None):
 
         if DEBUG_FUNC_FLAG:
             print('mw 6037 __init__')
+
 
         Gtk.Dialog.__init__(
             self,
@@ -7212,12 +7393,22 @@ class AddChannelDialogue(Gtk.Dialog):
             and not media_data_obj.fixed_flag \
             and not media_data_obj.restrict_flag \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level:
+            < main_win_obj.app_obj.media_max_level \
+            and (
+                keep_folder_name is None 
+                or keep_folder_name != media_data_obj.name
+            ):
                 self.folder_list.append(media_data_obj.name)
 
+        self.folder_list.sort()
         self.folder_list.insert(0, '')
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
-
+        
+        # (If continuously re-opening this dialogue window, show the same 
+        #   folder at the top of the list as the previous time)
+        if keep_folder_name is not None:
+            self.folder_list.insert(0, keep_folder_name)
+            
         separator2 = Gtk.HSeparator()
         grid.attach(separator2, 0, 8, 2, 1)
 
@@ -7236,8 +7427,6 @@ class AddChannelDialogue(Gtk.Dialog):
             ),
         )
 
-        self.folder_list.sort()
-
         listmodel = Gtk.ListStore(str)
         for item in self.folder_list:
             listmodel.append([item])
@@ -7254,7 +7443,9 @@ class AddChannelDialogue(Gtk.Dialog):
 
         # Paste in the contents of the clipboard (if it contains at least one
         #   valid URL)
-        utils.add_links_from_clipboard(main_win_obj.app_obj, self.entry2)
+        if main_win_obj.app_obj.dialogue_copy_clipboard_flag \
+        and not main_win_obj.app_obj.dialogue_keep_open_flag:  
+            utils.add_links_from_clipboard(main_win_obj.app_obj, self.entry2)
 
         # Display the dialogue window
         self.show_all()
@@ -7297,11 +7488,11 @@ class AddPlaylistDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj):
-
+    def __init__(self, main_win_obj, keep_folder_name=None):
+        
         if DEBUG_FUNC_FLAG:
             print('mw 6179 __init__')
-
+        
         Gtk.Dialog.__init__(
             self,
             'Add playlist',
@@ -7358,7 +7549,6 @@ class AddPlaylistDialogue(Gtk.Dialog):
         )
         grid.attach(self.button2, 0, 7, 2, 1)
 
-        # (There is one fixed folder always at the top of this list)
         self.folder_list = []
         for name, dbid in main_win_obj.app_obj.media_name_dict.items():
             media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
@@ -7367,12 +7557,22 @@ class AddPlaylistDialogue(Gtk.Dialog):
             and not media_data_obj.fixed_flag \
             and not media_data_obj.restrict_flag \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level:
+            < main_win_obj.app_obj.media_max_level \
+            and (
+                keep_folder_name is None 
+                or keep_folder_name != media_data_obj.name
+            ):            
                 self.folder_list.append(media_data_obj.name)
 
+        self.folder_list.sort()
         self.folder_list.insert(0, '')
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
-
+        
+        # (If continuously re-opening this dialogue window, show the same 
+        #   folder at the top of the list as the previous time)
+        if keep_folder_name is not None:
+            self.folder_list.insert(0, keep_folder_name)
+            
         separator2 = Gtk.HSeparator()
         grid.attach(separator2, 0, 8, 2, 1)
 
@@ -7391,8 +7591,6 @@ class AddPlaylistDialogue(Gtk.Dialog):
             ),
         )
 
-        self.folder_list.sort()
-
         listmodel = Gtk.ListStore(str)
         for item in self.folder_list:
             listmodel.append([item])
@@ -7409,7 +7607,9 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         # Paste in the contents of the clipboard (if it contains at least one
         #   valid URL)
-        utils.add_links_from_clipboard(main_win_obj.app_obj, self.entry2)
+        if main_win_obj.app_obj.dialogue_copy_clipboard_flag \
+        and not main_win_obj.app_obj.dialogue_keep_open_flag:  
+            utils.add_links_from_clipboard(main_win_obj.app_obj, self.entry2)
 
         # Display the dialogue window
         self.show_all()
@@ -7755,3 +7955,593 @@ class DeleteContainerDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+class ExportDialogue(Gtk.Dialog):
+
+    """Python class handling a dialogue window that prompts the user before
+    creating a database export.
+    
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+        
+        whole_flag (bool): True if the whole database is to be exported, False
+            if only part of the database is to be exported
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, whole_flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 7880 __init__')
+
+        Gtk.Dialog.__init__(
+            self,
+            'Export from database',
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        if not whole_flag:
+            msg = utils.upper_case_first(__main__.__packagename__) \
+            + ' is ready to export a partial summary of its\ndatabase,' \
+            + ' containing a list of videos, channels,\nplaylists and/or' \
+            + ' folders (but not including the\nvideos themselves)'
+        else:
+            msg = utils.upper_case_first(__main__.__packagename__) \
+            + ' is ready to export a summary of its database,\n' \
+            + ' containing a list of videos, channels, playlists and/or\n' \
+            + ' folders (but not including the videos themselves)'
+            
+        label = Gtk.Label(msg)
+        grid.attach(label, 0, 0, 1, 1)
+
+        separator = Gtk.HSeparator()
+        grid.attach(separator, 0, 1, 1, 1)
+                
+        label = Gtk.Label('Choose what should be included:')
+        grid.attach(label, 0, 2, 1, 1)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)
+        self.checkbutton = Gtk.CheckButton()
+        grid.attach(self.checkbutton, 0, 3, 1, 1)
+        self.checkbutton.set_label('Include lists of videos')
+        self.checkbutton.set_active(False)
+        
+        self.checkbutton2 = Gtk.CheckButton()
+        grid.attach(self.checkbutton2, 0, 4, 1, 1)
+        self.checkbutton2.set_label('Include channels')
+        self.checkbutton2.set_active(True)
+        
+        self.checkbutton3 = Gtk.CheckButton()
+        grid.attach(self.checkbutton3, 0, 5, 1, 1)
+        self.checkbutton3.set_label('Include playlists')
+        self.checkbutton3.set_active(True)
+        
+        self.checkbutton4 = Gtk.CheckButton()
+        grid.attach(self.checkbutton4, 0, 6, 1, 1)
+        self.checkbutton4.set_label('Preserve folder structure')
+        self.checkbutton4.set_active(True)
+
+        separator2 = Gtk.HSeparator()
+        grid.attach(separator2, 0, 7, 1, 1)
+
+        self.checkbutton5 = Gtk.CheckButton()
+        grid.attach(self.checkbutton5, 0, 8, 1, 1)
+        self.checkbutton5.set_label('Export as plain text')
+        self.checkbutton5.set_active(False)
+        self.checkbutton5.connect('toggled', self.on_checkbutton_toggled)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_checkbutton_toggled(self, checkbutton):
+
+        """Called from callback in self.__init__().
+
+        When the specified checkbutton is toggled, modify other widgets in the
+        dialogue window.
+        
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 7974 on_checkbutton_toggled')
+
+        if not checkbutton.get_active():
+            self.checkbutton.set_sensitive(True)
+            self.checkbutton4.set_sensitive(True)
+        else:
+            self.checkbutton.set_active(False)
+            self.checkbutton.set_sensitive(False)
+            self.checkbutton4.set_active(False)
+            self.checkbutton4.set_sensitive(False)
+            
+            
+class ImportDialogue(Gtk.Dialog):
+
+    """Python class handling a dialogue window that prompts the user before
+    hanlding an export file, created by mainapp.TartubeApp.export_from_db().
+    
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+        
+        db_dict (dict): The imported data, a dictionary described in the 
+            comments in mainapp.TartubeApp.export_from_db()
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, db_dict):
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 7957 __init__')
+
+        Gtk.Dialog.__init__(
+            self,
+            'Import into database',
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+        self.set_default_size(
+            main_win_obj.app_obj.config_win_width,
+            main_win_obj.app_obj.config_win_height,
+        )
+        
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label('Choose which items to import')
+        grid.attach(label, 0, 0, 4, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        grid.attach(scrolled, 0, 1, 4, 1)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_hexpand(True)
+        scrolled.set_vexpand(True)
+        
+        frame = Gtk.Frame()
+        scrolled.add_with_viewport(frame)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)        
+        self.treeview = Gtk.TreeView()
+        frame.add(self.treeview)
+        self.treeview.set_can_focus(False)        
+
+        renderer_toggle = Gtk.CellRendererToggle()
+        renderer_toggle.connect('toggled', self.on_checkbutton_toggled)
+        column_toggle = Gtk.TreeViewColumn(
+            'Import',
+            renderer_toggle,
+            active=0,
+        )
+        self.treeview.append_column(column_toggle)
+
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        column_pixbuf = Gtk.TreeViewColumn(
+            '',
+            renderer_pixbuf,
+            pixbuf=1,
+        )
+        self.treeview.append_column(column_pixbuf)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn(
+            'Name',
+            renderer_text,
+            text=2,
+        )
+        self.treeview.append_column(column_text)
+
+        renderer_text2 = Gtk.CellRendererText()
+        column_text2 = Gtk.TreeViewColumn(
+            'hide',
+            renderer_text2,
+            text=3,
+        )
+        column_text2.set_visible(False)
+        self.treeview.append_column(column_text2)
+                
+        self.liststore = Gtk.ListStore(bool, GdkPixbuf.Pixbuf, str, int)
+        self.treeview.set_model(self.liststore)
+        
+        self.checkbutton = Gtk.CheckButton()
+        grid.attach(self.checkbutton, 0, 2, 1, 1)
+        self.checkbutton.set_label('Import videos')
+        self.checkbutton.set_active(False)        
+        
+        self.checkbutton2 = Gtk.CheckButton()
+        grid.attach(self.checkbutton2, 1, 2, 1, 1)
+        self.checkbutton2.set_label('Merge channels/playlists/folders')
+        self.checkbutton2.set_active(False)        
+
+        button = Gtk.Button.new_with_label('Select all')
+        grid.attach(button, 2, 2, 1, 1)
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_select_all_clicked)
+        
+        button2 = Gtk.Button.new_with_label('Deselect all')
+        grid.attach(button2, 3, 2, 1, 1)
+        button2.set_hexpand(False)
+        button2.connect('clicked', self.on_deselect_all_clicked)
+                        
+        # The data is imported as a dictionary, perhaps preserving the original
+        #   folder structure of the database, or perhaps not
+        # The 'db_dict' format is described in the comments in
+        #   mainapp.TartubeApp.export_from_db()
+        # 'db_dict' contains mini-dictionaries, 'mini_dict', whose format is
+        #   also described in that function. Each 'mini_dict' represents a 
+        #   single media data object
+        # 
+        # Convert 'db_dict' to a list. Each item in the list is a 'mini_dict'.
+        #   Each 'mini_dict' has some new key-value pairs (except those 
+        #   representing videos):
+        #
+        #   - 'video_count': int (showing the number of videos the channel, 
+        #       playlist or folder contains)
+        #   - 'display_name': str (the channel/playlist/folder name indented
+        #       with extra whitespace (so the user can clearly see the folder 
+        #       structure)
+        #   - 'import_flag': bool (True if this channel/playlist/folder should 
+        #       be imported, False if not)
+        converted_list = self.convert_to_list(db_dict)
+        
+        # Add a line to the textview for each channel, playlist and folder
+        for mini_dict in converted_list:
+
+            pixbuf = main_win_obj.pixbuf_dict[mini_dict['type'] + '_small']
+            text = mini_dict['display_name']
+            if mini_dict['video_count'] == 1:
+                text += '   [ 1 video ]'
+            elif mini_dict['video_count']:
+                text += '   [ ' + str(mini_dict['video_count']) + ' videos ]'
+                
+            self.liststore.append( [True, pixbuf, text, mini_dict['dbid']] )
+            
+        # Compile a dictionary, a flattened version of the original 'db_dict'
+        #   (i.e. which the original database's folder structure removed)
+        # This new dictionary contains a single key-value pair for every 
+        #   channel, playlist and folder. Dictionary in the form:
+        #
+        #   key: the channel/playlist/folder dbid
+        #   value: the 'mini_dict' for that channel/playlist/folder
+        #
+        # If the channel/playlist/folder has any child videos, then its
+        #   'mini_dict' still has some child 'mini_dicts', one for each video
+        self.flat_db_dict = {}
+        for mini_dict in converted_list:
+            self.flat_db_dict[mini_dict['dbid']] = mini_dict
+                        
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+    
+            
+    def convert_to_list(self, db_dict, converted_list=[], parent_mini_dict=None, 
+    recursion_level=0):
+    
+        """Called by self.__init__(), and then recursively by this function.
+        
+        Converts the imported 'db_dict' into a list, with each item in the
+        list being a 'mini_dict' (the format of both dictionaries is described
+        in the comments in mainapp.TartubeApp.export_from_db() ).
+        
+        Args:
+
+            db_dict (dict): The dictionary described in self.export_from_db();
+                if called from self.__init__(), the original imported 
+                dictionary; if called recursively, a dictionary from somewhere
+                inside the original imported dictionary 
+                
+            converted_list (list): The converted list so far; this function adds
+                more 'mini_dict' items to the list
+                
+            parent_mini_dict (dict): The contents of db_dict all represent 
+                children of the channel/playlist/folder represent by this
+                dictionary
+                
+            recursion_level (int): The number of recursive calls to this 
+                function (so far)
+        
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 8109 convert_to_list')
+            
+        # (Sorting function for the code immediately below)
+        def sort_dict_by_name(this_dict):
+            return this_dict['name']
+        
+        # Deal with importable videos/channels/playlists/folders in alphabetical
+        #   order
+        for mini_dict in sorted(db_dict.values(), key=sort_dict_by_name):
+                        
+            if mini_dict['type'] == 'video':
+               
+                # Videos are not displayed in the treeview (but we count the
+                #   number of videos in each channel/playlist/folder)
+                if parent_mini_dict:
+                   parent_mini_dict['video_count'] += 1
+                   
+            else:
+                
+                # In the treeview, the channel/playlist/folder name is indented, 
+                #   so the user can see the folder structure
+                mini_dict['display_name'] = (' ' * 3 * recursion_level) \
+                + mini_dict['name']
+            
+                # Count the number of videos this channel/playlist/folder
+                #   contains
+                mini_dict['video_count'] = 0
+                
+                # Import everything, until the user chooses otherwise
+                mini_dict['import_flag'] = True
+                
+                # Add this channel/playlist/folder to the list visible in the
+                #   textview
+                converted_list.append(mini_dict)
+                # Call this function to process any child videos/channels/
+                #   playlists/folders
+                converted_list = self.convert_to_list(
+                    mini_dict['db_dict'], 
+                    converted_list,
+                    mini_dict, 
+                    recursion_level + 1,
+                )
+                
+        # Procedure complete
+        return converted_list
+                        
+            
+    def on_checkbutton_toggled(self, checkbutton, path):
+        
+        """Called from a callback in self.__init__().
+        
+        Respond when the user selects/deselects an item in the treeview.
+        
+        Args:
+            
+            checkbutton (Gtk.CheckButton): The widget clicked
+            
+            path (int): A number representing the widget's row
+            
+        """
+
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 8158 on_cell_toggled')
+            
+        # The user has clicked on the checkbutton widget, so toggle the widget
+        #   itself
+        self.liststore[path][0] = not self.liststore[path][0]
+        
+        # Update the data to be returned (eventually) to the calling
+        #   mainapp.TartubeApp.import_into_db() function
+        mini_dict = self.processed_dict[self.liststore[path][3]]
+        mini_dict['import_flag'] = self.liststore[path][0]
+                
+
+    def on_select_all_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+        
+        Mark all channels/playlists/folders to be imported.
+        
+        Args:
+        
+            button (Gtk.Button): The widget clicked
+            
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 8232 on_select_all_clicked')
+                        
+        for path in range(0, len(self.liststore)):
+            self.liststore[path][0] = True
+
+        for mini_dict in self.processed_dict.values():
+            mini_dict['import_flag'] = True
+            
+        
+    def on_deselect_all_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+        
+        Mark all channels/playlists/folders to be not imported.
+        
+        Args:
+        
+            button (Gtk.Button): The widget clicked
+            
+        """
+        
+        if DEBUG_FUNC_FLAG:
+            print('mw 8254 on_deselect_all_clicked')
+            
+        for path in range(0, len(self.liststore)):
+            self.liststore[path][0] = False
+
+        for mini_dict in self.processed_dict.values():
+            mini_dict['import_flag'] = False
+        
+        
+class SetNicknameDialogue(Gtk.Dialog):
+
+    """Python class handling a dialogue window that prompts the user to set the
+    nickname of a channel, playlist or folder.
+    
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+        
+        media_data_obj (media.Channel, media.Playlist, media.Folder): The media
+            data object whose nickname is to be changed
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, media_data_obj):
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 8711 __init__')
+
+        Gtk.Dialog.__init__(
+            self,
+            'Set nickname',
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+        
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        if isinstance(media_data_obj, media.Channel):
+            obj_type = 'channel'
+        elif isinstance(media_data_obj, media.Playlist):
+            obj_type = 'playlist'
+        else:
+            obj_type = 'folder'
+                        
+        label = Gtk.Label(
+            'Set the nickname for the ' + obj_type + ' \'' \
+            + media_data_obj.name \
+            + '\'\n(or leave it blank to reset the nickname)',                
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)   
+        self.entry = Gtk.Entry()
+        grid.attach(self.entry, 0, 1, 1, 1)
+        self.entry.set_text(media_data_obj.nickname)
+                        
+        # Display the dialogue window
+        self.show_all()
+    
+            
+class RenameContainerDialogue(Gtk.Dialog):
+
+    """Python class handling a dialogue window that prompts the user to rename a
+    channel, playlist or folder.
+    
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+        
+        media_data_obj (media.Channel, media.Playlist, media.Folder): The media
+            data object whose name is to be changed
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, media_data_obj):
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 8837 __init__')
+
+        if isinstance(media_data_obj, media.Channel):
+            obj_type = 'channel'
+        elif isinstance(media_data_obj, media.Playlist):
+            obj_type = 'playlist'
+        else:
+            obj_type = 'folder'
+            
+        Gtk.Dialog.__init__(
+            self,
+            'Rename ' + obj_type,
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+        
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+                        
+        label = Gtk.Label(
+            'Set the new name for the ' + obj_type + ' \'' \
+            + media_data_obj.name \
+            + '\'\n\nNB This operation will make changes to your filesystem!',
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)   
+        self.entry = Gtk.Entry()
+        grid.attach(self.entry, 0, 1, 1, 1)
+        self.entry.set_text(media_data_obj.name)
+                        
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+    
+            

@@ -3516,55 +3516,67 @@ class ChannelPlaylistEditWin(GenericEditWin):
         )
         entry2.set_editable(False)
 
+        label = self.add_label(grid,
+            'Listed as',
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry3 = self.add_entry(grid,
+            'nickname',
+            1, 2, 1, 1,
+        )
+        entry3.set_editable(False)
+
         main_win_obj = self.app_obj.main_win_obj
         parent_obj = self.edit_obj.parent_obj
         if parent_obj:
             icon_path = main_win_obj.icon_dict['folder_none_large']
         else:
             icon_path = main_win_obj.icon_dict['folder_no_parent_none_large']
-
+        
         self.add_image(grid,
             icon_path,
-            0, 2, 1, 1,
-        )
-
-        entry3 = self.add_entry(grid,
-            None,
-            1, 2, 1, 1,
-        )
-        entry3.set_editable(False)
-        if parent_obj:
-            entry3.set_text(parent_obj.name)
-
-        label = self.add_label(grid,
-            'URL',
             0, 3, 1, 1,
         )
-        label.set_hexpand(False)
 
         entry4 = self.add_entry(grid,
-            'source',
+            None,
             1, 3, 1, 1,
         )
         entry4.set_editable(False)
+        if parent_obj:
+            entry4.set_text(parent_obj.name)
 
         label2 = self.add_label(grid,
-            'Directory',
+            'URL',
             0, 4, 1, 1,
         )
         label2.set_hexpand(False)
 
         entry5 = self.add_entry(grid,
-            None,
+            'source',
             1, 4, 1, 1,
         )
         entry5.set_editable(False)
-        entry5.set_text(self.edit_obj.get_dir(self.app_obj))
+
+        label3 = self.add_label(grid,
+            'Location',
+            0, 5, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        entry6 = self.add_entry(grid,
+            None,
+            1, 5, 1, 1,
+        )
+        entry6.set_editable(False)
+        entry6.set_text(self.edit_obj.get_dir(self.app_obj))
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
         grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 5, 2, 1)
+        grid.attach(grid2, 0, 6, 2, 1)
         grid2.set_vexpand(False)
         grid2.set_border_width(self.spacing_size)
         grid2.set_column_spacing(self.spacing_size)
@@ -3588,54 +3600,54 @@ class ChannelPlaylistEditWin(GenericEditWin):
             'Total videos',
             1, 0, 1, 1,
         )
-        entry6 = self.add_entry(grid2,
+        entry7 = self.add_entry(grid2,
             'vid_count',
             2, 0, 1, 1,
-        )
-        entry6.set_editable(False)
-        entry6.set_width_chars(8)
-        entry6.set_hexpand(False)
-
-        self.add_label(grid2,
-            'New videos',
-            1, 1, 1, 1,
-        )
-        entry7 = self.add_entry(grid2,
-            'new_count',
-            2, 1, 1, 1,
         )
         entry7.set_editable(False)
         entry7.set_width_chars(8)
         entry7.set_hexpand(False)
 
         self.add_label(grid2,
-            'Favourite videos',
-            1, 2, 1, 1,
+            'New videos',
+            1, 1, 1, 1,
         )
         entry8 = self.add_entry(grid2,
-            'fav_count',
-            2, 2, 1, 1,
+            'new_count',
+            2, 1, 1, 1,
         )
         entry8.set_editable(False)
         entry8.set_width_chars(8)
         entry8.set_hexpand(False)
 
         self.add_label(grid2,
-            'Downloaded videos',
-            1, 3, 1, 1,
+            'Favourite videos',
+            1, 2, 1, 1,
         )
         entry9 = self.add_entry(grid2,
-            'dl_count',
-            2, 3, 1, 1,
+            'fav_count',
+            2, 2, 1, 1,
         )
         entry9.set_editable(False)
         entry9.set_width_chars(8)
         entry9.set_hexpand(False)
 
+        self.add_label(grid2,
+            'Downloaded videos',
+            1, 3, 1, 1,
+        )
+        entry10 = self.add_entry(grid2,
+            'dl_count',
+            2, 3, 1, 1,
+        )
+        entry10.set_editable(False)
+        entry10.set_width_chars(8)
+        entry10.set_hexpand(False)
+
         # To avoid messing up the formatting again, but the next buttons inside
         #   an hbox
         hbox = Gtk.HBox()
-        grid.attach(hbox, 0, 6, 2, 1)
+        grid.attach(hbox, 0, 7, 2, 1)
 
         self.apply_button = Gtk.Button('Apply download options')
         hbox.pack_start(self.apply_button, True, True, self.spacing_size)
@@ -3863,6 +3875,18 @@ class FolderEditWin(GenericEditWin):
         )
         entry2.set_editable(False)
 
+        label = self.add_label(grid,
+            'Listed as',
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry3 = self.add_entry(grid,
+            'nickname',
+            1, 2, 1, 1,
+        )
+        entry3.set_editable(False)
+
         main_win_obj = self.app_obj.main_win_obj
         parent_obj = self.edit_obj.parent_obj
         if parent_obj:
@@ -3872,34 +3896,34 @@ class FolderEditWin(GenericEditWin):
 
         self.add_image(grid,
             icon_path,
-            0, 2, 1, 1,
-        )
-
-        entry3 = self.add_entry(grid,
-            None,
-            1, 2, 1, 1,
-        )
-        entry3.set_editable(False)
-        if parent_obj:
-            entry3.set_text(parent_obj.name)
-
-        label = self.add_label(grid,
-            'Directory',
             0, 3, 1, 1,
         )
-        label.set_hexpand(False)
 
         entry4 = self.add_entry(grid,
             None,
             1, 3, 1, 1,
         )
         entry4.set_editable(False)
-        entry4.set_text(self.edit_obj.get_dir(self.app_obj))
+        if parent_obj:
+            entry4.set_text(parent_obj.name)
+
+        label2 = self.add_label(grid,
+            'Location',
+            0, 4, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        entry5 = self.add_entry(grid,
+            None,
+            1, 4, 1, 1,
+        )
+        entry5.set_editable(False)
+        entry5.set_text(self.edit_obj.get_dir(self.app_obj))
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
         grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 4, 2, 1)
+        grid.attach(grid2, 0, 5, 2, 1)
         grid2.set_vexpand(False)
         grid2.set_border_width(self.spacing_size)
         grid2.set_column_spacing(self.spacing_size)
@@ -4090,6 +4114,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_ytdl_tab()
         self.setup_performance_tab()
         self.setup_debug_tab()
+        self.setup_new_tab()       
 
 
     def setup_general_tab(self):
@@ -4178,54 +4203,63 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton2.connect('toggled', self.on_warning_button_toggled)
 
+        checkbutton3 = self.add_checkbutton(grid,
+            'Don\'t remove number of system messages from tab label until' \
+            + ' \'Clear\' button is clicked',
+            self.app_obj.system_msg_keep_totals_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_system_keep_button_toggled)
+
         # Operation preferences
         self.add_label(grid,
             '<u>Operation preferences</u>',
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             'Automatically update youtube-dl before every download operation',
             self.app_obj.operation_auto_update_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton3.connect('toggled', self.on_auto_update_button_toggled)
+        checkbutton4.connect('toggled', self.on_auto_update_button_toggled)
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             'Automatically save files at the end of a download/update/' \
             + 'refresh operation',
             self.app_obj.operation_save_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton4.connect('toggled', self.on_save_button_toggled)
+        checkbutton5.connect('toggled', self.on_save_button_toggled)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             'Show a dialogue window at the end of a download/update/refresh' \
             + ' operation',
             self.app_obj.operation_dialogue_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_dialogue_button_toggled)
+        checkbutton6.connect('toggled', self.on_dialogue_button_toggled)
 
         # Module preferences
         self.add_label(grid,
             '<u>Module preferences</u>',
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             'Use \'moviepy\' module to get a video\'s duration, if not known'
             + ' (may be slow)',
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 12, grid_width, 1,
         )
-        checkbutton6.connect('toggled', self.on_moviepy_button_toggled)
+        checkbutton7.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
-            checkbutton6.set_sensitive(False)
+            checkbutton7.set_sensitive(False)
 
 
     def setup_backups_tab(self):
@@ -4491,6 +4525,10 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo2.connect('changed', self.on_update_combo_changed)
 
+        if __main__.__disable_ytdl_update_flag__:
+            combo.set_sensitive(False)
+            combo2.set_sensitive(False)
+
         # Timeout preferences
         self.add_label(grid,
             '<u>Timeout preferences</u>',
@@ -4715,6 +4753,62 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4.connect('toggled', self.on_verbose_button_toggled)
 
 
+    def setup_new_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'New' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_New')
+
+        # New options
+        self.add_label(grid,
+            '<u>Dialogue window preferences</u>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            'When adding channels/playlists, keep the dialogue window open',
+            self.app_obj.dialogue_keep_open_flag,
+            True,               # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+        # signal connnect appears below
+
+        checkbutton2 = self.add_checkbutton(grid,
+            'When adding videos/channels/playlists, copy URLs from the system' \
+            + ' clipboard',
+            self.app_obj.dialogue_copy_clipboard_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton2.set_hexpand(False)
+        checkbutton2.connect('toggled', self.on_clipboard_button_toggled)
+        if self.app_obj.dialogue_keep_open_flag:
+            checkbutton3.set_sensitive(False)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'When adding channels/playlists, re-use the optional parent folder',
+            self.app_obj.dialogue_keep_container_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        checkbutton3.connect('toggled',  self.on_keep_container_button_toggled);
+        if not self.app_obj.dialogue_keep_open_flag:
+            checkbutton3.set_sensitive(False)
+
+        # signal connect from above
+        checkbutton.connect(
+            'toggled',
+            self.on_keep_open_button_toggled,
+            checkbutton2,
+            checkbutton3,
+        )
+
+
     # Callback class methods
 
 
@@ -4860,6 +4954,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_child_process_exit_flag:
             self.app_obj.set_ignore_child_process_exit_flag(False)
+
+
+    def on_clipboard_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_new_tab(). ???
+
+        Enables/disables copying from the system clipboard in various dialogue
+        windows.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_copy_clipboard_flag:
+            self.app_obj.set_dialogue_copy_clipboard_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_copy_clipboard_flag:
+            self.app_obj.set_dialogue_copy_clipboard_flag(False)
 
 
     def on_copyright_button_toggled(self, checkbutton):
@@ -5024,6 +5139,57 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.apply_json_timeout_flag:
             self.app_obj.set_apply_json_timeout_flag(False)
+
+
+    def on_keep_container_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_new_tab(). ???
+
+        Enables/disables re-using the parent folder when adding channels/
+        playlists/folders.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_keep_container_flag:
+            self.app_obj.set_dialogue_keep_container_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_keep_container_flag:
+            self.app_obj.set_dialogue_keep_container_flag(False)
+
+
+    def on_keep_open_button_toggled(self, checkbutton, checkbutton2,
+    checkbutton3):
+
+        """Called from a callback in self.setup_new_tab(). ???
+
+        Enables/disables keeping the dialogue window open when adding channels/
+        playlists/folders.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2, checkbutton3 (Gtk.CheckButton): Different checkbuttons
+                to sensitise/desensitise, according to the new value of the flag
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_keep_open_flag:
+            self.app_obj.set_dialogue_keep_open_flag(True)
+            checkbutton2.set_sensitive(False)
+            checkbutton3.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_keep_open_flag:
+            self.app_obj.set_dialogue_keep_open_flag(False)
+            checkbutton2.set_sensitive(True)
+            checkbutton3.set_sensitive(False)
 
 
     def on_limit_button_toggled(self, checkbutton, entry, entry2):
@@ -5256,6 +5422,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_write_ignore_json_flag:
             self.app_obj.set_ytdl_write_ignore_json_flag(False)
+
+
+    def on_system_keep_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables keeping the total number of system messages in the tab
+        label until the clear button is explicitly clicked.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.system_msg_keep_totals_flag:
+            self.app_obj.set_system_msg_keep_totals_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.system_msg_keep_totals_flag:
+            self.app_obj.set_system_msg_keep_totals_flag(False)
 
 
     def on_update_combo_changed(self, combo):

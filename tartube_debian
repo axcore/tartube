@@ -60,9 +60,10 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 + 'and written in Python 3 / Gtk 3'
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
-# This is the default executable, in which youtube-dl updates are enabled. For
-#   Debian packaging, use the 'tartube_debian' executable
-__disable_ytdl_update_flag__ = False
+# This is a modified executable, in which youtube-dl updates are disabled
+#   (to meet the demands of Debian packaging). All other users should run the
+#   'tartube' executable
+__disable_ytdl_update_flag__ = True
 
 
 # Start Tartube

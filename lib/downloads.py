@@ -575,7 +575,8 @@ class DownloadWorker(threading.Thread):
                 self.video_downloader_obj.close()
 
                 # This worker is now available for a new job
-                self.available_flag = True
+                if not self.doomed_flag:
+                    self.available_flag = True
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
