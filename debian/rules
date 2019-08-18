@@ -2,5 +2,8 @@
 
 export PYBUILD_NAME = tartube
 
+# Deactivate youtube-dl updates
+export TARTUBE_NO_UPDATES=1
+
 %:
 	dh $@ --with python3 --buildsystem=pybuild
