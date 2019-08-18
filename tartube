@@ -34,8 +34,8 @@ from lib import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '1.0.024'
-__date__ = '14 Aug 2019'
+__version__ = '1.1.0'
+__date__ = '18 Aug 2019'
 __copyright__ = 'Copyright \xa9 2019 A S Lewis'
 __license__ = """
 Copyright \xc2\xa9 2019 A S Lewis.
@@ -61,7 +61,8 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
 # This is the default executable, in which youtube-dl updates are enabled. For
-#   Debian packaging, use the 'tartube_debian' executable
+#   Debian packaging, use the 'tartube_debian' executable (see the comments in
+#   setup.py)
 __disable_ytdl_update_flag__ = False
 
 

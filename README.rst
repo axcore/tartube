@@ -18,11 +18,11 @@ Problems can be reported at
 Downloads
 ---------
 
-Latest version: **v1.0.0 (31 July 2019)**
+Latest version: **v1.1.0 (18 Aug 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.0.0/tartube_v1.0.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.1.0/install-tartube-1.1.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.1.0/install-tartube-1.1.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.1.0/tartube_v1.1.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 Why should I use Tartube?

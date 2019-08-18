@@ -575,8 +575,7 @@ class DownloadWorker(threading.Thread):
                 self.video_downloader_obj.close()
 
                 # This worker is now available for a new job
-                if not self.doomed_flag:
-                    self.available_flag = True
+                self.available_flag = True
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
@@ -1651,6 +1650,8 @@ class VideoDownloader(object):
             #   its child objects, looking for a matching video
             # (video_obj is set to None, if no match is found)
             video_obj = media_data_obj.find_matching_video(app_obj, filename)
+            if not video_obj:
+                video_obj = media_data_obj.find_matching_video(app_obj, name)
 
         new_flag = False
         if not video_obj:
@@ -1669,8 +1670,13 @@ class VideoDownloader(object):
             )
 
             # Update its IVs with the JSON information we extracted
+            if filename is not None:
+                video_obj.set_name(filename)
+
             if name is not None:
-                video_obj.set_name(name)
+                video_obj.set_nickname(name)
+            elif filename is not None:
+                video_obj.set_nickname(filename)
 
             if upload_time is not None:
                 video_obj.set_upload_time(upload_time)
@@ -1728,8 +1734,17 @@ class VideoDownloader(object):
 
             # Update any video object IVs that are not set
             if video_obj.name == app_obj.default_video_name \
-            and name is not None:
-                video_obj.set_name(name)
+            and filename is not None:
+                video_obj.set_name(filename)
+
+#            if video_obj.nickname == app_obj.default_video_name \
+#            and name is not None:
+#                video_obj.set_nickname(name)
+            if video_obj.nickname == app_obj.default_video_name:
+                if name is not None:
+                    video_obj.set_nickname(name)
+                elif filename is not None:
+                    video_obj.set_nickname(filename)
 
             if not video_obj.upload_time and upload_time is not None:
                video_obj.set_upload_time(upload_time)

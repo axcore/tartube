@@ -82,6 +82,14 @@ class GenericMedia(object):
             self.fav_flag = False
 
 
+    def set_nickname(self, nickname):
+
+        if nickname is None or nickname == '':
+            self.nickname = self.name
+        else:
+            self.nickname = nickname
+
+
     def set_options_obj(self, options_obj):
 
         self.options_obj = options_obj
@@ -312,69 +320,69 @@ class GenericContainer(GenericMedia):
         return False
 
 
-    def prepare_export(self, include_video_flag, include_channel_flag, 
+    def prepare_export(self, include_video_flag, include_channel_flag,
     include_playlist_flag):
-        
+
         """Called by mainapp.TartubeApp.export_from_db() or by this function
         recursively.
-        
-        Creates the dictionary, to be saved as a JSON file, described in the 
-        comments to that function. This function is called when we want to 
+
+        Creates the dictionary, to be saved as a JSON file, described in the
+        comments to that function. This function is called when we want to
         preserve the folder structure of the Tartube database.
-        
+
         Args:
-        
-            include_video_flag (bool): If True, include videos. If False, don't 
+
+            include_video_flag (bool): If True, include videos. If False, don't
                 include them
-                
-            include_channel_flag (True or False): If True, include channels (and
-                their videos, if allowed). If False, ignore them
-                
+
+            include_channel_flag (True or False): If True, include channels
+                (and their videos, if allowed). If False, ignore them
+
             include_playlist_flag (True or False): If True, include playlists
                 (and their videos, if allowed). If False, ignore them
-                
+
         Return values:
-        
+
             return_dict (dict): A dictionary described in the comments in the
                 calling function
-                            
+
         """
-                
+
         # Ignore the types of media data object that we don't require (and all
         #   of their children)
         if isinstance(self, Video):
             # (This shouldn't occur)
-            return 
-            
+            return
+
         elif isinstance(self, Channel):
             if not include_channel_flag:
-                return 
+                return
             else:
                 media_type = 'channel'
-                
+
         elif isinstance(self, Playlist):
             if not include_playlist_flag:
-                return 
+                return
             else:
                 media_type = 'playlist'
-                
+
         elif isinstance(self, Folder):
             if self.fixed_flag:
-                return 
+                return
             else:
                 media_type = 'folder'
-                        
+
         # This dictionary contains values for the children of this object
         db_dict = {}
-        
+
         for child_obj in self.child_list:
-            
+
             if isinstance(child_obj, Video):
-            
-                # (Don't bother exporting a video whose source URL is not 
+
+                # (Don't bother exporting a video whose source URL is not
                 #   known)
                 if include_video_flag and child_obj.source is not None:
-                    
+
                     mini_dict = {
                         'type': 'video',
                         'dbid': child_obj.dbid,
@@ -383,17 +391,17 @@ class GenericContainer(GenericMedia):
                         'source': child_obj.source,
                         'db_dict': {},
                     }
-                
+
                     db_dict[child_obj.dbid] = mini_dict
-                    
+
             else:
-                
+
                 mini_dict = child_obj.prepare_export(
-                    include_video_flag, 
-                    include_channel_flag, 
-                    include_playlist_flag, 
+                    include_video_flag,
+                    include_channel_flag,
+                    include_playlist_flag,
                 )
-                
+
                 if mini_dict:
                     db_dict[child_obj.dbid] = mini_dict
 
@@ -410,78 +418,78 @@ class GenericContainer(GenericMedia):
 
         if media_type != 'folder':
             return_dict['source'] = self.source
-               
+
         # Procedure complete
-        return return_dict 
-      
-                        
-    def prepare_flat_export(self, db_dict, include_video_flag, 
+        return return_dict
+
+
+    def prepare_flat_export(self, db_dict, include_video_flag,
     include_channel_flag, include_playlist_flag):
-        
+
         """Called by mainapp.TartubeApp.export_from_db() or by this function
         recursively.
-        
-        Creates the dictionary, to be saved as a JSON file, described in the 
-        comments to that function. This function is called when we don't want to 
-        preserve the folder structure of the Tartube database.
-        
+
+        Creates the dictionary, to be saved as a JSON file, described in the
+        comments to that function. This function is called when we don't want
+        to preserve the folder structure of the Tartube database.
+
         Args:
-        
+
             db_dict (dict): The dictionary described in the comments in the
                 calling function
-                
-            include_video_flag (bool): If True, include videos. If False, don't 
+
+            include_video_flag (bool): If True, include videos. If False, don't
                 include them
-                
-            include_channel_flag (True or False): If True, include channels (and
-                their videos, if allowed). If False, ignore them
-                
+
+            include_channel_flag (True or False): If True, include channels
+                (and their videos, if allowed). If False, ignore them
+
             include_playlist_flag (True or False): If True, include playlists
                 (and their videos, if allowed). If False, ignore them
-                
+
         Return values:
-        
+
             db_dict (dict): The modified dictionary
-                            
+
         """
 
         # Ignore the types of media data object that we don't require (and all
-        #   of their children)        
+        #   of their children)
         if isinstance(self, Video):
             # (This shouldn't occur)
-            return db_dict       
-                
+            return db_dict
+
         elif isinstance(self, Channel):
             if not include_channel_flag:
                 return db_dict
             else:
                 media_type = 'channel'
-                
+
         elif isinstance(self, Playlist):
             if not include_playlist_flag:
                 return db_dict
             else:
                 media_type = 'playlist'
-                
+
         elif isinstance(self, Folder):
             if self.fixed_flag:
                 return db_dict
             else:
                 media_type = 'folder'
-                 
+
         # Add values to the dictionary
         if media_type == 'channel' or media_type == 'playlist':
-            
+
             child_dict = {}
-                     
+
             for child_obj in self.child_list:
 
                 if isinstance(child_obj, Video):
-                
-                    # (Don't bother exporting a video whose source URL is not 
+
+                    # (Don't bother exporting a video whose source URL is not
                     #   known)
                     if include_video_flag and child_obj.source is not None:
-                        
+
                         child_mini_dict = {
                             'type': 'video',
                             'dbid': child_obj.dbid,
@@ -490,18 +498,18 @@ class GenericContainer(GenericMedia):
                             'source': child_obj.source,
                             'db_dict': {},
                         }
-                    
-                        child_dict[child_obj.dbid] = child_mini_dict                
-                
+
+                        child_dict[child_obj.dbid] = child_mini_dict
+
                 else:
-                    
+
                     db_dict = child_obj.prepare_flat_export(
                         db_dict,
-                        include_video_flag, 
-                        include_channel_flag, 
-                        include_playlist_flag, 
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
                     )
-                
+
             mini_dict = {
                 'type': media_type,
                 'dbid': self.dbid,
@@ -512,24 +520,24 @@ class GenericContainer(GenericMedia):
             }
 
             db_dict[self.dbid] = mini_dict
-                
+
         elif media_type == 'folder':
 
             for child_obj in self.child_list:
 
                 if not isinstance(child_obj, Video):
-            
+
                     db_dict = child_obj.prepare_flat_export(
                         db_dict,
-                        include_video_flag, 
-                        include_channel_flag, 
-                        include_playlist_flag, 
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
                     )
-                     
+
         # Procedure complete
         return db_dict
-                                   
-                            
+
+
     # Set accessors
 
 
@@ -581,25 +589,17 @@ class GenericContainer(GenericMedia):
 
 
     def set_name(self, name):
-        
+
         """Must only be called by mainapp.TartubeApp.rename_container()."""
-        
-        # Update the nickname at the same time, if it has the same value as 
+
+        # Update the nickname at the same time, if it has the same value as
         #   this object's name
         if self.nickname == self.name:
-            self.nickname = name 
-            
+            self.nickname = name
+
         self.name = name
 
-            
-    def set_nickname(self, nickname):
-        
-        if nickname is None or nickname == '':
-            self.nickname = self.name 
-        else:
-            self.nickname = nickname
-            
-        
+
     def set_parent_obj(self, parent_obj):
 
         self.parent_obj = parent_obj
@@ -620,8 +620,8 @@ class GenericContainer(GenericMedia):
             app_obj (mainapp.TartubeApp): The main application
 
         Optional args:
-        
-            new_name (str): If specified, fetches the full path to the 
+
+            new_name (str): If specified, fetches the full path to the
                 sub-directory that would be used by this channel, playlist or
                 folder, if it were renamed to 'new_name'. If not specified, the
                 channel/playlist/folder's actual name is used
@@ -636,7 +636,7 @@ class GenericContainer(GenericMedia):
             dir_list = [new_name]
         else:
             dir_list = [self.name]
-        
+
         obj = self
         while obj.parent_obj:
 
@@ -808,20 +808,20 @@ class GenericRemoteContainer(GenericContainer):
         """
 
         # v1.0.002: At the end of a download operation, I am seeing 'list
-        #   modified during sort' errors. Not sure what the cause is, but we 
+        #   modified during sort' errors. Not sure what the cause is, but we
         #   can prevent it by sorting a copy of the list, rather than the list
-        #   itself. If the list itself is modified during the sort, sort it 
+        #   itself. If the list itself is modified during the sort, sort it
         #   again
         while True:
-            
+
             copy_list = self.child_list.copy()
             copy_list.sort(key=functools.cmp_to_key(self.do_sort))
-            
+
             if len(copy_list) == len(self.child_list):
                 self.child_list = copy_list.copy()
                 break
-                
-                
+
+
         self.child_list.sort(key=functools.cmp_to_key(self.do_sort))
 
 
@@ -880,6 +880,17 @@ class Video(GenericMedia):
 
         # Video name
         self.name = name
+        # Video nickname (displayed in the Video Catalogue)
+        # If the video's JSON data has been fetched, self.name matches the
+        #   actual filename of the video, and self.nickname is the video's
+        #   title
+        # (In practical terms, if the user has specified that the video
+        #   filename should be in the format NAME + ID, then self.name will be
+        #   in the format 'NAME + ID', and self.nickname will be in the format
+        #   'NAME')
+        # If the video's JSON data has not been fetched, self.name and
+        #   self.nickname are the same
+        self.nickname = name
         # Download source (a URL)
         self.source = None
 
@@ -1286,7 +1297,7 @@ class Channel(GenericRemoteContainer):
 
         # Channel name
         self.name = name
-        # Channel nickname (displayed in the Video Index; the same as .name, 
+        # Channel nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
         self.nickname = name
         # Download source (a URL)
@@ -1423,9 +1434,9 @@ class Playlist(GenericRemoteContainer):
 
         # Playlist name
         self.name = name
-        # Playlist nickname (displayed in the Video Index; the same as .name, 
+        # Playlist nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
-        self.nickname = name        
+        self.nickname = name
         # Download source (a URL)
         self.source = None
 
@@ -1576,11 +1587,11 @@ class Folder(GenericContainer):
 
         # Folder name
         self.name = name
-        # Folder nickname (displayed in the Video Index; the same as .name, 
+        # Folder nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it). Note that the nickname of a fixed
         #   folder can't be changed
-        self.nickname = name  
-        
+        self.nickname = name
+
         # Flag set to False if the folder can be deleted by the user, or True
         #   if it can't be deleted by the user
         self.fixed_flag = fixed_flag
@@ -1790,15 +1801,15 @@ class Folder(GenericContainer):
         """
 
         # v1.0.002: At the end of a download operation, I am seeing 'list
-        #   modified during sort' errors. Not sure what the cause is, but we 
+        #   modified during sort' errors. Not sure what the cause is, but we
         #   can prevent it by sorting a copy of the list, rather than the list
-        #   itself. If the list itself is modified during the sort, sort it 
+        #   itself. If the list itself is modified during the sort, sort it
         #   again
         while True:
-            
+
             copy_list = self.child_list.copy()
             copy_list.sort(key=functools.cmp_to_key(self.do_sort))
-            
+
             if len(copy_list) == len(self.child_list):
                 self.child_list = copy_list.copy()
                 break

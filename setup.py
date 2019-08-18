@@ -37,7 +37,7 @@ import sys
 #   the default executable 'tartube' is replaced by the 'tartube_debian'
 #   executiable, in which youtube-dl updates are disabled
 # The package maintainer should use
-#   TARTUBE_NO_UPDATES=1 python3 setup.py build 
+#   TARTUBE_NO_UPDATES=1 python3 setup.py build
 env_var_name = 'TARTUBE_NO_UPDATES'
 env_var_value = os.environ.get( env_var_name, None )
 script_name = 'tartube'
@@ -57,11 +57,11 @@ if env_var_value is not None:
             ),
         )
 
-        
+
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.0.024',
+    version='1.1.0',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

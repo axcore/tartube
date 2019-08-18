@@ -1,3 +1,82 @@
+v1.1.0 (18 Aug 2019)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- You can now create an export of Tartube's database. This export contains
+    details of videos, channels, playlists and/or folders, but not the videos
+    themselves (or any of the thumbnail/description/metadata files). The
+    export can take two forms: JSON data, or plain text. If JSON data, the
+    exported file can later be imported into another Tartube database (imports
+    from plain text are not implemented yet). You can export either the
+    entire database, or just one channel/playlist/folder (and everythng it
+    contains)
+- You can now change the name of a channel, playlist of folder. This doesn't
+    have any effect on your filesystem; it only changes the name displayed in
+    the Video Index (the left-hand side of the Videos tab). This might be
+    useful for channels and playlists that have weird or very short names. For
+    example, right-click a folder and select 'Folder actions > Set nickname...'
+- You can also rename the channel, playlist or folder, and this action DOES
+    affect the filesystem, changing the directory/folder on your hard drive
+    where the channel/playlist/folder videos are stored. For example, right-
+    click a folder and select 'Filesystem > Rename location...'
+- If you change the format of a downloaded video file from the default 'Title'
+    to, for example, 'Title + ID', the Video catalogue (the right-hand side of
+    the Videos tab) will now simply display the video's title (which should be
+    easier to read). To see the actual filename, you can right-click the video
+    and select 'Show properties'. This only works if the video's metadata was
+    downloaded when the video itself was downloaded; this is now turned on by
+    default for all new users
+
+MINOR NEW FEATURES
+- When adding videos, channels and playlists, the contents of the system's
+    clipboard was automatically copied into the window. This can now be turned
+    off, if you wish (Edit > System preferences... > Windows > When adding
+    videos/channels/playlists, copy URLs from the system clipboard)
+- When adding channels/playlists, you can set the dialogue window to stay open,
+    which makes adding multiple channels/playlists quicker (Edit >
+    System preferences... > Windows > When adding channels/playlists, keep the
+    dialogue window open)
+- When creating channels/playlists/folders inside an existing parent folder, a
+    dialogue window which stays open can be told to continuously re-use that
+    parent folder (Edit > System preferences... > Windows > When adding
+    channels/playlists, re-use the optional parent folder)
+- When checking/downloading videos, the Results List (the bottom half of the
+    Progress tab) can now display videos in reverse order, so you don't have to
+    scroll down to see the video that was just checked/downloaded (Edit >
+    System Preferences... > Windows > Show results in reverse order)
+- The number of ystem error and warning messages displayed in their own tab
+    is visible in the tab's label. The label is usually reset when the tab
+    is made visible. You can now disable this behaviour, preserving the numbers
+    until the 'Clear the list' button is explicitly clicked (Edit >
+    System preferences... > Windows > Don't remove number of system messages
+    from tab lable until 'Clear' button is clicked)
+- Items in the Video Index (on the left-hand side of the Videos tab) are sorted
+    alphabetically. The sorting algorithm has been improved to take account of
+    numbered items, such that '1 Music' will now appear before '11 Comedy'
+- For the benefit of package maintainers (such as a Debian package), Tartube
+    now uses an environment variable which will prevent Tartube from updating
+    the youtube-dl binary, if specified. See the comments in setup.py
+
+MAJOR FIXES
+- Users whose system Gtk is earlier than v3.24 (this includes many current
+    Linux distros, but the MS Windows installer) will have experienced graphics
+    issues, and endless error messages in the terminal window, if open. If your
+    system Gtk is earlier than v3.24, Tartube will no longer update the Video
+    Index during a download operation; this should fix the issue at the cost of
+    disabling real-time updates of the number of videos in each channel,
+    playlist and folder. Your system's Gtk version is now visible in Tartube's
+    System Preferences window
+- After loading the config file, the download limits were set, but not
+    displayed in the Progress tab. Fixed
+- Rarely, Tartube crashes (or freezes) when loading a video's JSON metadata
+    file from your filesystem (but now when downloading it). This should no
+    longer happen
+
+MINOR FIXES
+- The 'Channel properties', 'Folder properties' (etc) windows used the wrong
+    icon (displaying a folder in the wrong colour). Fixed
+- Fixed a 'list modified during sort' error during a download operation
+
 v1.0.0 (31 Jul 2019)
 -------------------------------------------------------------------------------
 
@@ -36,7 +115,7 @@ v0.7.0 (7 Jul 2019)
 - Confirmed that various Gtk issues present in Gtk3.22 are not present in
     Gtk 3.24. Users with Gtk 3.22 on their system will be warned to update it.
     These warnings can be disabled, if required
-    
+
 v0.6.0 (4 Jul 2019)
 -------------------------------------------------------------------------------
 
@@ -110,7 +189,7 @@ v0.5.0 (1 Jul 2019)
 - The Gtk test window, available for MS Windows after using the installer,
     now contains some text (to make it clear that the window is working as
     intended)
-        
+
 v0.4.0 (29 Jun 2019)
 ------------------------------------------------------------------------------
 
@@ -154,7 +233,7 @@ v0.4.0 (29 Jun 2019)
     previous two). Two of them show the name of a video's parent channel/
     playlist/folder; the other two show the video's description
 - Fixed incorrect formatting in the DASH and 3D file formats (#3)
-    
+
 v0.3.0 (25 Jun 2019)
 -------------------------------------------------------------------------------
 
@@ -162,7 +241,7 @@ v0.3.0 (25 Jun 2019)
 - Fixed some more crashes
 - Fixed some issues with video descriptions containing quotes and ampersand
     characters
-    
+
 v0.2.0 (23 Jun 2019)
 -------------------------------------------------------------------------------
 

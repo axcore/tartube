@@ -322,7 +322,7 @@ class OptionsManager(object):
             'restrict_filenames': False,
             'nomtime': False,
             'write_description': True,
-            'write_info': False,
+            'write_info': True,
             # THUMBNAIL IMAGES
             'write_thumbnail': True,
             # VERBOSITY / SIMULATION OPTIONS
