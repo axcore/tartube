@@ -41,12 +41,12 @@ import sys
 env_var_name = 'TARTUBE_NO_UPDATES'
 env_var_value = os.environ.get( env_var_name, None )
 script_name = 'tartube'
+script_exec = 'tartube'
 
 if env_var_value is not None:
 
     if env_var_value == '1':
-        os.remove('tartube')
-        os.rename('tartube_debian', 'tartube')
+        script_exec = 'tartube_debian'
         sys.stderr.write('youtube-dl updates are disabled in this version')
 
     else:
@@ -90,7 +90,7 @@ setuptools.setup(
     ),
     python_requires='>=3.0, <4',
     install_requires=['requests'],
-    scripts=['tartube'],
+    scripts=[script_exec],
     project_urls={
         'Bug Reports': 'https://github.com/axcore/tartube/issues',
         'Source': 'https://github.com/axcore/tartube',
