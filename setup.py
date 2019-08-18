@@ -21,8 +21,9 @@
 
 
 # Import modules
+import os
 import setuptools
-
+import sys
 
 # Import documents
 #with open('README.rst', 'r') as f:
@@ -32,10 +33,35 @@ import setuptools
 #    license = f.read()
 
 
+# For the Debian distribution, use an environment variable. When specified,
+#   the default executable 'tartube' is replaced by the 'tartube_debian'
+#   executiable, in which youtube-dl updates are disabled
+# The package maintainer should use
+#   TARTUBE_NO_UPDATES=1 python3 setup.py build
+env_var_name = 'TARTUBE_NO_UPDATES'
+env_var_value = os.environ.get( env_var_name, None )
+script_name = 'tartube'
+
+if env_var_value is not None:
+
+    if env_var_value == '1':
+        os.remove('tartube')
+        os.rename('tartube_debian', 'tartube')
+        sys.stderr.write('youtube-dl updates are disabled in this version')
+
+    else:
+        sys.stderr.write(
+            "Unrecognised '%s=%s' environment variable!\n" % (
+                env_var_name,
+                env_var_value,
+            ),
+        )
+
+
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.0.0',
+    version='1.1.0',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

@@ -76,14 +76,18 @@ class FileManager(threading.Thread):
 
         """
 
-        json_dict = {}
+        empty_dict = {}
         if not os.path.isfile(full_path):
-            return json_dict
+            return empty_dict
 
         with open(full_path, 'r') as json_file:
-            json_dict = json.load(json_file)
 
-        return json_dict
+            try:
+                json_dict = json.load(json_file)
+                return json_dict
+
+            except:
+                return empty_dict
 
 
     def load_text(self, full_path):

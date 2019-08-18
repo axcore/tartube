@@ -200,13 +200,27 @@ class TartubeApp(Gtk.Application):
             self.toolbar_squeeze_flag = False
         else:
             self.toolbar_squeeze_flag = True
+
+        # Flag set to True if the Results List should be in reverse order (i.e.
+        #   the most recently checked or downloaded video appears at the top
+        #   of the list)
+        self.results_list_reverse_flag = False
         # Flag set to True if system warning messages should be shown (system
         #   error messages are always shown)
         # NB The check is applied by self.system_warning(); any part of the
         #   code could call mainwin.MainWin.errors_list_add_system_warning()
         #   directly, which would bypass this flag
         self.system_warning_show_flag = True
+        # Flag set to True if the total number of system error/warning messages
+        #   shown in the tab label is not reset until the 'Clear the list'
+        #   button is explicitly clicked (normally, the total numbers are
+        #   reset when the user switches to a different tab)
+        self.system_msg_keep_totals_flag = False
 
+        # The current Gtk version
+        self.gtk_version_major = Gtk.get_major_version()
+        self.gtk_version_minor = Gtk.get_minor_version()
+        self.gtk_version_micro = Gtk.get_micro_version()
         # Gtk v3.22.* produces numerous error/warning messages in the terminal
         #   when the Video Index and Video Catalogue are updated. Whatever the
         #   issues were, they appear to have been fixed by Gtk v3.24.*
@@ -259,6 +273,11 @@ class TartubeApp(Gtk.Application):
         # Name of the Tartube database file (storing media data objects). The
         #   database file is always found in self.data_dir
         self.db_file_name = __main__.__packagename__ + '.db'
+        # Names of the database export files (one for JSON, for for plain text)
+        self.export_json_file_name \
+        = __main__.__packagename__ + '_db_export.json'
+        self.export_text_file_name \
+        = __main__.__packagename__ + '_db_export.txt'
         # How Tartube should make backups of its database file:
         #   'default' - make a backup file during a save operation, but delete
         #       it when the save operation is complete
@@ -466,6 +485,18 @@ class TartubeApp(Gtk.Application):
         #   module (which may be slow)
         self.use_module_moviepy_flag = True
 
+        # Flag set to True if dialogue windows for adding videos, channels and
+        #   playlists should copy the contents of the system clipboard
+        self.dialogue_copy_clipboard_flag = True
+        # Flag set to True if dialogue windows for adding channels and
+        #   playlists should continually re-open, whenever the use clicks the
+        #   OK button (so multiple channels etc can be added quickly)
+        self.dialogue_keep_open_flag = False
+        # Flag set to True if dialogue windows for adding channels and
+        #   playlists should use the same (optional) containing folder, when
+        #   re-opening (ignored if self.dialogue_keep_open_flag is False)
+        self.dialogue_keep_container_flag = False
+
         # Flag set to True if, when checking videos/channels/playlists, we
         #   should timeout after 60 seconds (in case youtube-dl gets stuck
         #   downloading the JSON data)
@@ -601,6 +632,14 @@ class TartubeApp(Gtk.Application):
         add_folder_menu_action.connect('activate', self.on_menu_add_folder)
         self.add_action(add_folder_menu_action)
 
+        export_db_menu_action = Gio.SimpleAction.new('export_db_menu', None)
+        export_db_menu_action.connect('activate', self.on_menu_export_db)
+        self.add_action(export_db_menu_action)
+
+        import_db_menu_action = Gio.SimpleAction.new('import_db_menu', None)
+        import_db_menu_action.connect('activate', self.on_menu_import_db)
+        self.add_action(import_db_menu_action)
+
         switch_view_menu_action = Gio.SimpleAction.new(
             'switch_view_menu',
             None,
@@ -648,13 +687,13 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(stop_download_menu_action)
 
-        update_menu_action = Gio.SimpleAction.new('update_ytdl_menu', None)
-        update_menu_action.connect('activate', self.on_menu_update_ytdl)
-        self.add_action(update_menu_action)
-
         refresh_db_menu_action = Gio.SimpleAction.new('refresh_db_menu', None)
         refresh_db_menu_action.connect('activate', self.on_menu_refresh_db)
         self.add_action(refresh_db_menu_action)
+
+        update_menu_action = Gio.SimpleAction.new('update_ytdl_menu', None)
+        update_menu_action.connect('activate', self.on_menu_update_ytdl)
+        self.add_action(update_menu_action)
 
         # 'Help' column
         about_menu_action = Gio.SimpleAction.new('about_menu', None)
@@ -911,10 +950,8 @@ class TartubeApp(Gtk.Application):
         # Gtk v3.22.* produces numerous error/warning messages in the terminal
         #   when the Video Index and Video Catalogue are updated. Whatever the
         #   issues were, they appear to have been fixed by Gtk v3.24.*
-        major = Gtk.get_major_version()
-        minor = Gtk.get_minor_version()
-        micro = Gtk.get_micro_version()
-        if major < 3 or (major == 3 and minor < 24):
+        if self.gtk_version_major < 3 \
+        or (self.gtk_version_major == 3 and self.gtk_version_minor < 24):
 
             self.gtk_broken_flag = True
 
@@ -948,7 +985,21 @@ class TartubeApp(Gtk.Application):
         self.general_options_obj = options.OptionsManager()
 
         # Set youtube-dl IVs
-        if os.name == 'nt':
+        if __main__.__disable_ytdl_update_flag__:
+            self.ytdl_bin = 'youtube-dl'
+            self.ytdl_path_default = os.path.abspath(
+                os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
+            )
+            self.ytdl_path = 'youtube-dl'
+            self.ytdl_update_dict = {
+                'youtube-dl updates are disabled': [],
+            }
+            self.ytdl_update_list = [
+                'youtube-dl updates are disabled',
+            ]
+            self.ytdl_update_current = 'youtube-dl updates are disabled'
+
+        elif os.name == 'nt':
 
             if 'PROGRAMFILES(X86)' in os.environ:
                 # 64-bit MS Windows
@@ -1041,32 +1092,27 @@ class TartubeApp(Gtk.Application):
             #   directory
             # Therefore, on new installations, immediately ask the user to
             #   choose a location for the data directory
-            dialogue_win = Gtk.MessageDialog(
+            dialogue_win = mainwin.SetDirectoryDialogue(
                 self.main_win_obj,
-                0,
-                Gtk.MessageType.INFO,
-                Gtk.ButtonsType.OK_CANCEL,
-                'Welcome to ' + script_name + '!',
+                self.data_dir,
             )
 
-            if os.name == 'nt':
-                folder = 'folder'
-            else:
-                folder = 'directory'
-
-            dialogue_win.format_secondary_text(
-                script_name + ' will download videos into a single ' + folder \
-                + '. (Other\ndownloaded files, such as thumbnails, will be' \
-                + ' stored in the\nsame ' + folder + '.)' \
-                + '\n\nPlease create that ' + folder + ' now, or select an' \
-                + ' existing ' + folder + '.' \
-                + '\n\nAlternatively, click the \'Cancel\' button to use' \
-                + ' this ' + folder + ':\n\n' + self.data_dir,
-            )
             response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window, before destroying
+            #   it
+            custom_flag = False
+            if dialogue_win.button2.get_active():
+                custom_flag = True
+
             dialogue_win.destroy()
 
-            if response == Gtk.ResponseType.OK:
+            if response == Gtk.ResponseType.OK and custom_flag:
+
+                if os.name == 'nt':
+                    folder = 'folder'
+                else:
+                    folder = 'directory'
 
                 file_chooser_win = Gtk.FileChooserDialog(
                     'Please select ' + script_name + '\'s data ' + folder,
@@ -1146,7 +1192,9 @@ class TartubeApp(Gtk.Application):
         if self.gtk_broken_flag:
             self.system_warning(
                 126,
-                'Gtk v' + str(major) + '.' + str(minor) + '.' + str(micro) \
+                'Gtk v' + str(self.gtk_version_major) + '.' \
+                + str(self.gtk_version_minor) + '.' \
+                + str(self.gtk_version_micro) \
                 + ' is broken, which will cause problems when running ' \
                 + utils.upper_case_first(__main__.__packagename__) \
                 + '. Please update it to at least Gtk v3.24',
@@ -1274,8 +1322,8 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-126)
-            200-299: mainwin.py     (in use: 201-234)
+            100-199: mainapp.py     (in use: 101-128)
+            200-299: mainwin.py     (in use: 201-235)
             300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
 
@@ -1382,12 +1430,30 @@ class TartubeApp(Gtk.Application):
                 + utils.upper_case_first(__main__.__packagename__),
             )
 
+        # Since v1.0.008, config files have identified their file type
+        if version >= 1000008 \
+        and (
+            not 'file_type' in json_dict or json_dict['file_type'] != 'config'
+        ):
+            self.disable_load_save()
+            return self.file_error_dialogue(
+                'The ' + utils.upper_case_first(__main__.__packagename__) \
+                + ' config file is invalid',
+            )
+
         # Set IVs to their new values
-        if version >= 5024:  # v0.5.024
+        if version >= 5024:     # v0.5.024
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
-        if version >= 6006:  # v0.6.006
+
+        if version >= 1000029:  # v1.0.029
+            self.results_list_reverse_flag \
+            = json_dict['results_list_reverse_flag']
+        if version >= 6006:     # v0.6.006
             self.system_warning_show_flag \
             = json_dict['system_warning_show_flag']
+        if version >= 1000007:  # v1.0.007
+            self.system_msg_keep_totals_flag \
+            = json_dict['system_msg_keep_totals_flag']
 
         self.data_dir = json_dict['data_dir']
         self.downloads_dir = os.path.abspath(
@@ -1398,7 +1464,7 @@ class TartubeApp(Gtk.Application):
             os.path.join(self.data_dir, '.temp', 'downloads'),
         )
 
-        if version >= 3014:  # v0.3.014
+        if version >= 3014:     # v0.3.014
             self.db_backup_mode = json_dict['db_backup_mode']
 
         # (In version v0.5.027, the value of these IVs were overhauled. If
@@ -1413,13 +1479,13 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_current = json_dict['ytdl_update_current']
 
         self.ytdl_write_stdout_flag = json_dict['ytdl_write_stdout_flag']
-        if version >= 5004:  # v0.5.004
+        if version >= 5004:     # v0.5.004
             self.ytdl_write_ignore_json_flag \
             = json_dict['ytdl_write_ignore_json_flag']
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
 
-        if version >= 3029:  # v0.3.029
+        if version >= 3029:     # v0.3.029
             self.operation_limit_flag = json_dict['operation_limit_flag']
             self.operation_check_limit = json_dict['operation_check_limit']
             self.operation_download_limit \
@@ -1434,23 +1500,36 @@ class TartubeApp(Gtk.Application):
 #        self.use_module_validators_flag \
 #        = json_dict['use_module_validators_flag']
 
-        if version >= 5004:  # v0.5.004
+        if version >= 1000006:  # v1.0.006
+            self.dialogue_copy_clipboard_flag \
+            = json_dict['dialogue_copy_clipboard_flag']
+            self.dialogue_keep_open_flag \
+            = json_dict['dialogue_keep_open_flag']
+            self.dialogue_keep_container_flag \
+            = json_dict['dialogue_keep_container_flag']
+
+        if version >= 5004:     # v0.5.004
             self.apply_json_timeout_flag \
             = json_dict['apply_json_timeout_flag']
-        if version >= 1027:  # v0.1.028
+        if version >= 1027:     # v0.1.028
             self.ignore_merge_warning_flag \
             = json_dict['ignore_merge_warning_flag']
-        if version >= 5004:  # v0.5.004
+        if version >= 5004:     # v0.5.004
             self.ignore_yt_copyright_flag \
             = json_dict['ignore_yt_copyright_flag']
             self.ignore_child_process_exit_flag \
             = json_dict['ignore_child_process_exit_flag']
 
-        self.num_worker_default = json_dict['num_worker_default']
-        self.num_worker_apply_flag = json_dict['num_worker_apply_flag']
+        # (Setting the value of the Gtk widgets automatically sets the IVs)
+        self.main_win_obj.spinbutton.set_value(json_dict['num_worker_default'])
+        self.main_win_obj.checkbutton.set_active(
+            json_dict['num_worker_apply_flag'],
+        )
 
-        self.bandwidth_default = json_dict['bandwidth_default']
-        self.bandwidth_apply_flag = json_dict['bandwidth_apply_flag']
+        self.main_win_obj.spinbutton2.set_value(json_dict['bandwidth_default'])
+        self.main_win_obj.checkbutton2.set_active(
+            json_dict['bandwidth_apply_flag'],
+        )
 
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
@@ -1490,9 +1569,13 @@ class TartubeApp(Gtk.Application):
             'script_version': __main__.__version__,
             'save_date': str(utc.strftime('%d %b %Y')),
             'save_time': str(utc.strftime('%H:%M:%S')),
+            'file_type': 'config',
             # Data
             'toolbar_squeeze_flag': self.toolbar_squeeze_flag,
+
+            'results_list_reverse_flag': self.results_list_reverse_flag,
             'system_warning_show_flag': self.system_warning_show_flag,
+            'system_msg_keep_totals_flag': self.system_msg_keep_totals_flag,
 
             'data_dir': self.data_dir,
 
@@ -1518,6 +1601,10 @@ class TartubeApp(Gtk.Application):
             'operation_save_flag': self.operation_save_flag,
             'operation_dialogue_flag': self.operation_dialogue_flag,
             'use_module_moviepy_flag': self.use_module_moviepy_flag,
+
+            'dialogue_copy_clipboard_flag': self.dialogue_copy_clipboard_flag,
+            'dialogue_keep_open_flag': self.dialogue_keep_open_flag,
+            'dialogue_keep_container_flag': self.dialogue_keep_container_flag,
 
             'apply_json_timeout_flag': self.apply_json_timeout_flag,
             'ignore_merge_warning_flag': self.ignore_merge_warning_flag,
@@ -1585,6 +1672,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.progress_list_reset()
             self.main_win_obj.results_list_reset()
             self.main_win_obj.errors_list_reset()
+            self.main_win_obj.show_all()
 
         # Try to load the database file
         try:
@@ -1827,6 +1915,49 @@ class TartubeApp(Gtk.Application):
                     fav_count,
                     dl_count,
                 )
+
+        if version < 1000013:  # v1.0.013
+
+            # This version adds nicknames to channels, playlists and folders
+            for dbid in self.media_name_dict.values():
+                container_obj = self.media_reg_dict[dbid]
+                container_obj.nickname = container_obj.name
+
+        if version < 1000031:  # v1.0.031
+
+            # This version adds nicknames to videos. If the database is large,
+            #   warn the user before continuing
+            if self.media_reg_dict.len() > 1000:
+
+                dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                    utils.upper_case_first(__main__.__packagename__) \
+                    + ' is applying an essential\ndatabase update.\n\nThis' \
+                    + ' might take a few minutes,\nso please be patient.',
+                    'info',
+                    'ok',
+                    self.main_win_obj,
+                )
+
+                dialogue_win.set_modal(True)
+
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+
+                    media_data_obj.nickname = media_data_obj.name
+
+                    # If the video's JSON data has been saved, we can use that
+                    #   to set the nickname
+                    json_path = os.path.abspath(
+                        os.path.join(
+                            media_data_obj.file_dir,
+                            media_data_obj.file_name + '.info.json',
+                        ),
+                    )
+
+                    if os.path.isfile(json_path):
+                        json_dict = self.file_manager_obj.load_json(json_path)
+                        if 'title' in json_dict:
+                            media_data_obj.nickname = json_dict['title']
 
 
     def save_db(self):
@@ -2470,6 +2601,17 @@ class TartubeApp(Gtk.Application):
             self.save_config()
             self.save_db()
 
+        # Reset operation IVs
+        self.operation_halted_flag = False
+
+        # If updates to the Video Index were disabled because of Gtk issues,
+        #   we must now redraw the Video Index and Video Catalogue from
+        #   scratch
+        if self.gtk_broken_flag:
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_catalogue_reset()
+            self.main_win_obj.video_index_populate()
+
         # Then show a dialogue window, if allowed
         if self.operation_dialogue_flag:
 
@@ -2483,9 +2625,6 @@ class TartubeApp(Gtk.Application):
                 + utils.convert_seconds_to_string(time_num, True)
 
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
-
-        # Reset operation IVs
-        self.operation_halted_flag = False
 
 
     def update_manager_start(self):
@@ -2521,6 +2660,16 @@ class TartubeApp(Gtk.Application):
             )
 
             return
+
+        elif __main__.__disable_ytdl_update_flag__:
+            # Update operation is disabled in the Debian package. It should not
+            #   be possible to call this function, but we'll show an error
+            #   message anyway
+            return self.system_error(
+                128,
+                'Update operations are disabled in this version of ' \
+                + utils.upper_case_first(__main__.__packagename__),
+            )
 
         # During an update operation, certain widgets are modified and/or
         #   desensitised
@@ -2659,8 +2808,6 @@ class TartubeApp(Gtk.Application):
         #   checking this IV
         self.current_manager_obj = refresh.RefreshManager(self, media_data_obj)
         self.refresh_manager_obj = self.current_manager_obj
-
-        self.refresh_manager_obj.run()
 
 
     def refresh_manager_finished(self):
@@ -2874,6 +3021,9 @@ class TartubeApp(Gtk.Application):
         # Only set the .name IV if the video is currently unnamed
         if video_obj.name == self.default_video_name:
             video_obj.set_name(video_obj.file_name)
+            # (The video's title, stored in the .nickname IV, will be updated
+            #   from the JSON data in a momemnt)
+            video_obj.set_nickname(video_obj.file_name)
 
         # If it's an .mkv file because of a failed merge, update the IV
         if mkv_flag:
@@ -2970,7 +3120,7 @@ class TartubeApp(Gtk.Application):
             json_dict = self.file_manager_obj.load_json(json_path)
 
             if 'title' in json_dict:
-                video_obj.set_name(json_dict['title'])
+                video_obj.set_nickname(json_dict['title'])
 
             if 'upload_date' in json_dict:
                 # date_string in form YYYYMMDD
@@ -3272,7 +3422,7 @@ class TartubeApp(Gtk.Application):
     priv_flag=False, restrict_flag=False, temp_flag=False):
 
         """Can be called by anything. Mostly called by
-        mainwin.MainWin.on_menu_add_folder().
+        self.on_menu_add_folder().
 
         Creates a new media.Folder object, and updates IVs.
 
@@ -4395,6 +4545,87 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_update_row_text(media_data_obj)
 
 
+    def rename_container(self, media_data_obj):
+
+        """Called by mainwin.MainWin.on_video_index_rename_destination().
+
+        Renames a channel, playlist or folder. Also renames the corresponding
+        directory in Tartube's data directory.
+
+        """
+
+        # Do some basic checks
+        if media_data_obj is None or isinstance(media_data_obj, media.Video) \
+        or self.current_manager_obj or self.main_win_obj.config_win_list \
+        or (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.fixed_flag
+        ):
+            return self.system_error(
+                127,
+                'Rename container request failed sanity check',
+            )
+
+        # Prompt the user for a new name
+        dialogue_win = mainwin.RenameContainerDialogue(
+            self.main_win_obj,
+            media_data_obj,
+        )
+
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window, before destroying it
+        new_name = dialogue_win.entry.get_text()
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK and new_name != '' \
+        and new_name != media_data_obj.name:
+
+            # Check that an existing channel/playlist/folder isn't already
+            #   using this name
+            if new_name in self.media_name_dict:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'The name \'' + new_name + '\' is already in use',
+                    'error',
+                    'ok',
+                )
+
+            # Attempt to rename the sub-directory itself
+            old_dir = media_data_obj.get_dir(self)
+            new_dir = media_data_obj.get_dir(self, new_name)
+            try:
+                os.rename(old_dir, new_dir)
+
+            except:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'Failed to rename \'' + media_data_obj.name + '\'',
+                    'error',
+                    'ok',
+                )
+
+            # Filesystem updated, so now update the media data object itself.
+            #   This call also updates the object's .nickname IV
+            old_name = media_data_obj.name
+            media_data_obj.set_name(new_name)
+            # Update the media data registry
+            del self.media_name_dict[old_name]
+            self.media_name_dict[new_name] = media_data_obj.dbid
+
+            # All videos which are descendents of media_data_obj must have
+            #   their .file_dir IV updated to the new location
+            for video_obj in media_data_obj.compile_all_videos( [] ):
+                video_obj.reset_file_dir(self)
+
+            # Reset the Video Index and the Video Catalogue (this prevents a
+            #   lot of problems)
+            self.main_win_obj.video_catalogue_reset()
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_index_populate()
+
+            # Save the database file (since the filesystem itself has changed)
+            self.save_db()
+
+
     def apply_download_options(self, media_data_obj):
 
         """Called by callbacks in
@@ -4467,6 +4698,664 @@ class TartubeApp(Gtk.Application):
         media_data_obj.set_options_obj(None)
         # Update the row in the Video Index
         self.main_win_obj.video_index_update_row_icon(media_data_obj)
+
+
+    # (Export/import data to/from the Tartube database)
+
+    def export_from_db(self, media_list):
+
+        """
+        Called by self.on_menu_export_db() or by any other function.
+
+        Exports a summary of the Tartube database to an export file - either a
+        structured JSON file, or a plain text file, at the user's option.
+
+        The export file typically contains a list of videos, channels,
+        playlists and folders, but not any downloaded files (videos,
+        thumbnails, etc).
+
+        The export file is not the same as a Tartube database file (usually
+        tartube.db) and cannot be loaded as a database file. However, the
+        export file can be imported into an existing database.
+
+        Args:
+
+            media_list (list): A list of media data objects. If specified, only
+                those objects (and any media data objects they contain) are
+                included in the export. If an empty list is passed, the whole
+                database is included.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3605 export_from_db')
+
+        # If the specified list is empty, a summary of the whole database is
+        #   exported
+        if not media_list:
+            whole_flag = True
+        else:
+            whole_flag = False
+
+        # Prompt the user for which kinds of media data object should be
+        #   included in the export, and which type of file (JSON or plain text)
+        #   should be created
+        dialogue_win = mainwin.ExportDialogue(self.main_win_obj, whole_flag)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window...
+        include_video_flag = dialogue_win.checkbutton.get_active()
+        include_channel_flag = dialogue_win.checkbutton2.get_active()
+        include_playlist_flag = dialogue_win.checkbutton3.get_active()
+        preserve_folder_flag = dialogue_win.checkbutton4.get_active()
+        plain_text_flag = dialogue_win.checkbutton5.get_active()
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.OK:
+            return
+
+        # Prompt the user for the file path to use
+        file_chooser_win = Gtk.FileChooserDialog(
+            'Select where to save the database export',
+            self.main_win_obj,
+            Gtk.FileChooserAction.SAVE,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+            ),
+        )
+
+        if not plain_text_flag:
+            file_chooser_win.set_current_name(self.export_json_file_name)
+        else:
+            file_chooser_win.set_current_name(self.export_text_file_name)
+
+        response = file_chooser_win.run()
+        if response != Gtk.ResponseType.OK:
+            file_chooser_win.destroy()
+            return
+
+        file_path = file_chooser_win.get_filename()
+        file_chooser_win.destroy()
+        if not file_path:
+            return
+
+        # Compile a dictionary of data to export, representing the contents of
+        #   the database (in whole or in part)
+        # Throughout the export/import code, dictionaries in this form are
+        #   called 'db_dict'
+        # Depending on the user's choices, the dictionary preserves the folder
+        #   structure of the database (or not)
+        #
+        # Key-value pairs in the dictionary are in the form
+        #
+        #       dbid: mini_dict
+        #
+        # 'dbid' is each media data object's .dbid
+        # 'mini_dict' is a dictionary of values representing a media data
+        #   object
+        #
+        # The same 'mini_dict' structure is used during export and
+        #   import procedures. Its keys are:
+        #
+        #       type        - set to 'video', 'channel', 'playlist' or 'folder'
+        #       dbid        - set to the media data object's .dbid
+        #       name        - set to the media data object's .name IV
+        #       nickname    - set to the media data object's .nickname IV (or
+        #                       None for videos)
+        #       source      - set to the media data object's .source IV (or
+        #                       None for folders)
+        #       db_dict     - the children of this media data object, stored in
+        #                       the form described above
+        #
+        # The import process adds some extra keys to a 'mini_dict' while
+        #   processing it, but only for channels/playlists/folders. The extra
+        #   keys are:
+        #
+        #       display_name
+        #               - the media data object's name, indented for display
+        #                   in mainwin.ImportDialogueWin
+        #       video_count
+        #               - the number of videos this media data object contains
+        #       import_flag
+        #               - True if the user has selected this media data object
+        #                   to be imported, False if they have deselected it
+        db_dict = {}
+
+        # Compile the contents of the 'db_dict' to export
+        # If the media_list argument is empty, use the whole database.
+        #   Otherwise, use only the specified media data objects (and any media
+        #   data objects they contain)
+        if preserve_folder_flag and not plain_text_flag:
+
+            if media_list:
+
+                for media_data_obj in media_list:
+
+                    mini_dict = media_data_obj.prepare_export(
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
+                    )
+
+                    if mini_dict:
+                        db_dict[media_data_obj.dbid] = mini_dict
+
+            else:
+
+                for dbid in self.media_top_level_list:
+
+                    media_data_obj = self.media_reg_dict[dbid]
+
+                    mini_dict = media_data_obj.prepare_export(
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
+                    )
+
+                    if mini_dict:
+                        db_dict[media_data_obj.dbid] = mini_dict
+
+        else:
+
+            if media_list:
+
+                for media_data_obj in media_list:
+
+                    db_dict = media_data_obj.prepare_flat_export(
+                        db_dict,
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
+                    )
+
+            else:
+
+                for dbid in self.media_top_level_list:
+
+                    media_data_obj = self.media_reg_dict[dbid]
+
+                    db_dict = media_data_obj.prepare_flat_export(
+                        db_dict,
+                        include_video_flag,
+                        include_channel_flag,
+                        include_playlist_flag,
+                    )
+
+        if not db_dict:
+
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                'There is nothing to export!',
+                'error',
+                'ok',
+            )
+
+        # Export a JSON file
+        if not plain_text_flag:
+
+            # The exported JSON file has the same metadata as a config file,
+            #   with only the 'file_type' being different
+
+            # Prepare values
+            utc = datetime.datetime.utcfromtimestamp(time.time())
+
+            # Prepare a dictionary of data to save as a JSON file
+            json_dict = {
+                # Metadata
+                'script_name': __main__.__packagename__,
+                'script_version': __main__.__version__,
+                'save_date': str(utc.strftime('%d %b %Y')),
+                'save_time': str(utc.strftime('%H:%M:%S')),
+                'file_type': 'db_export',
+                # Data
+                'db_dict': db_dict,
+            }
+
+            # Try to save the file
+            try:
+                with open(file_path, 'w') as outfile:
+                    json.dump(json_dict, outfile, indent=4)
+
+            except:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'Failed to save the database export file',
+                    'error',
+                    'ok',
+                )
+
+        # Export a plain text file
+        else:
+
+            # The text file contains lines, in groups of three, in the
+            #   following format:
+            #
+            #       @type
+            #       <name>
+            #       <url>
+            #
+            # ...where '@type' is one of '@video', '@channel' or '@playlist'
+            #   (the folder structure is never preserved in a plain text
+            #   export)
+            # A video belongs to the channel/playlist above it
+
+            # Prepare the list of lines
+            line_list = []
+
+            for dbid in db_dict.keys():
+
+                media_data_obj = self.media_reg_dict[dbid]
+
+                if isinstance(media_data_obj, media.Channel):
+                    line_list.append('@channel')
+                    line_list.append(media_data_obj.name)
+                    line_list.append(media_data_obj.source)
+
+                elif isinstance(media_data_obj, media.Playlist):
+                    line_list.append('@playlist')
+                    line_list.append(media_data_obj.name)
+                    line_list.append(media_data_obj.source)
+
+                else:
+                    continue
+
+                if include_video_flag:
+
+                    for child_obj in media_data_obj.child_list:
+                        # (Nothing but videos should be in this list, but we'll
+                        #   check anyway)
+                        if isinstance(child_obj, media.Video):
+                            line_list.append('@video')
+                            line_list.append(child_obj.name)
+                            line_list.append(child_obj.source)
+
+            # Try to save the file
+            try:
+                with open(file_path, 'w') as outfile:
+                    for line in line_list:
+                        outfile.write(line + '\n')
+
+            except:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'Failed to save the database export file',
+                    'error',
+                    'ok',
+                )
+
+        # Export was successful
+        self.dialogue_manager_obj.show_msg_dialogue(
+            'Database export file saved to\n' + file_path,
+            'info',
+            'ok',
+        )
+
+
+    def import_into_db(self):
+
+        """Called by self.on_menu_import_db() or by any other function.
+
+        Imports the contents of an export file generated by a call to
+        self.export_from_db().
+
+        (Only imports JSON files; doesn't import the plain text files generated
+        by that function.)
+
+        After prompting the user, creates new media.Video, media.Channel,
+        media.Playlist and/or media.Folder objects. Checks for duplicates and
+        handles them appropriately.
+
+        The export file contains a dictionary, 'db_dict', containing further
+        dictionaries, 'mini_dict', whose formats are described in the comments
+        in self.export_from_db().
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3606 import_into_db')
+
+        # Prompt the user for the export file to load
+        file_chooser_win = Gtk.FileChooserDialog(
+            'Select the database export',
+            self.main_win_obj,
+            Gtk.FileChooserAction.OPEN,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+            ),
+        )
+
+        response = file_chooser_win.run()
+        if response != Gtk.ResponseType.OK:
+            file_chooser_win.destroy()
+            return
+
+        file_path = file_chooser_win.get_filename()
+        file_chooser_win.destroy()
+        if not file_path:
+            return
+
+        # Try to load the export file
+        try:
+            with open(file_path) as infile:
+                json_dict = json.load(infile)
+
+        except:
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                'Failed to load the database export file',
+                'error',
+                'ok',
+            )
+
+        # Do some basic checks on the loaded data
+        if not json_dict \
+        or not 'script_name' in json_dict \
+        or not 'script_version' in json_dict \
+        or not 'save_date' in json_dict \
+        or not 'save_time' in json_dict \
+        or not 'file_type' in json_dict \
+        or json_dict['script_name'] != __main__.__packagename__ \
+        or json_dict['file_type'] != 'db_export':
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                'The database export file is invalid',
+                'error',
+                'ok',
+            )
+
+        # (At the moment, export files are compatible with all versions of
+        #   Tartube after v1.0.0; this may change in future)
+
+        # Prompt the user to allow them to select which videos/channels/
+        #   playlists/folders to actually import, and how to deal with
+        #   duplicate channels/playlists/folders
+        dialogue_win = mainwin.ImportDialogue(
+            self.main_win_obj,
+            json_dict['db_dict'],
+        )
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window, before destroying the
+        #   dialogue window
+        # 'flat_db_dict' is a flattened version of the imported 'db_dict' (i.e.
+        #   with its folder structure removed), and with additional key-value
+        #   pairs added to each 'mini_dict'. (The new key-value pairs are also
+        #   described in the comments in self.export_from_db() )
+        import_videos_flag = dialogue_win.checkbutton.get_active()
+        merge_duplicates_flag = dialogue_win.checkbutton.get_active()
+        flat_db_dict = dialogue_win.flat_db_dict
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.OK:
+            return
+
+        # Process the imported 'db_dict', creating new videos/channels/
+        #   playlists/folders as required, and dealing appropriately with
+        #   any duplicates
+        (video_count, channel_count, playlist_count, folder_count) \
+        = self.process_import(
+            json_dict['db_dict'],   # The imported 'db_dict'
+            flat_db_dict,           # The flattened version of that dictionary
+            None,                   # No parent 'mini_dict' yet
+            import_videos_flag,
+            merge_duplicates_flag,
+            0,                      # video_count
+            0,                      # channel_count
+            0,                      # playlist count
+            0,                      # folder_count
+        )
+
+        if not video_count and not channel_count and not playlist_count \
+        and not folder_count:
+            self.dialogue_manager_obj.show_msg_dialogue(
+                'Nothing was imported from the database export file',
+                'error',
+                'ok',
+            )
+
+        else:
+
+            # Update the Video Catalogue, in case any new videos have been
+            #   imported into it
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+            )
+
+            # Show a confirmation
+            msg = 'Imported:' \
+            + '\n\nVideos: ' + str(video_count) \
+            + '\nChannels: ' + str(channel_count) \
+            + '\nPlaylists: ' + str(playlist_count) \
+            + '\nFolders: ' + str(folder_count)
+
+            self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
+
+
+    def process_import(self, db_dict, flat_db_dict, parent_obj,
+    import_videos_flag, merge_duplicates_flag, video_count, channel_count,
+    playlist_count, folder_count):
+
+        """Called by self.import_into_db() and then recursively by this
+        function.
+
+        Process a 'db_dict' (in the format described in the comments in
+        self.export_from_db() ).
+
+        Create new videos/channels/playlists/folders as required, and deal
+        appropriately with any duplicates
+
+        Args:
+
+            db_dict (dict): The dictionary described in self.export_from_db();
+                if called from self.import_into_db(), the original imported
+                dictionary; if called recursively, a dictionary from somewhere
+                inside the original imported dictionary
+
+            flat_db_dict (dict): A flattened version of the original imported
+                'db_dict' (not necessarily the same 'db_dict' provided by the
+                argument above). Flattened means that the folder structure has
+                been removed, and additional key-value pairs have been added to
+                each 'mini_dict'
+
+            parent_obj (media.Channel, media.Playlist, media.Folder or None):
+                The contents of db_dict are all children of this parent media
+                data object
+
+            import_videos_flag (bool): If True, any video objects are imported.
+                If False, video objects are ignored
+
+            merge_duplicates_flag (bool): If True, imported channels/playlists/
+                folders with the same name (and source URL) as an existing
+                channel/playlist/folder are merged with them. If False, the
+                imported channel/playlist/folder is renamed
+
+            video_count, channel_count, playlist_count, folder_count (int): The
+                total number of videos/channels/playlists/folders imported so
+                far
+
+        Return values:
+
+            video_count, channel_count, playlist_count, folder_count (int): The
+                updated counts after importing videos/channels/playlists/
+                folders
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 3607 process_import')
+
+        # To optimise the code below, compile a dictionary for quick lookup,
+        #   containing the source URLs for all videos in the parent channel/
+        #   playlist/folder
+        url_check_dict = {}
+        if parent_obj:
+            for child_obj in parent_obj.child_list:
+                if isinstance(child_obj, media.Video) \
+                and child_obj.source is not None:
+                    url_check_dict[child_obj.source] = None
+
+        # Deal in turn with each video/channel/playlist/folder stored at the
+        #   top level of 'db_dict'
+        # The dbid is the one used in the database from which the export file
+        #   was generated. Once imported into our database, the new media data
+        #   object will be given a different dbid
+        # (In other words, we can't compare this dbid with those used in
+        #   self.media_reg_dict)
+        for dbid in db_dict.keys():
+
+            # Each 'mini_dict' contains details for a single video/channel/
+            #   playlist/folder
+            mini_dict = db_dict[dbid]
+
+            # Check whether the user has marked this item to be imported, or
+            #   not
+            if int(dbid) in flat_db_dict:
+
+                check_dict = flat_db_dict[int(dbid)]
+                if not check_dict['import_flag']:
+
+                    # Don't import this one
+                    continue
+
+            # This item is marked to be imported
+            if mini_dict['type'] == 'video':
+
+                if import_videos_flag:
+
+                    # Check that a video with the same URL doesn't already
+                    #   exist in the parent channel/playlist/folder. If so,
+                    #   don't import this duplicate video
+                    if not mini_dict['source'] in url_check_dict:
+
+                        # This video isn't a duplicate, so we can import it
+                        video_obj = self.add_video(
+                            parent_obj,
+                            mini_dict['source'],
+                        )
+
+                        if video_obj:
+                            video_count += 1
+                            video_obj.set_name(mini_dict['name'])
+
+            else:
+
+                if mini_dict['name'] in self.media_name_dict:
+
+                    old_dbid = self.media_name_dict[mini_dict['name']]
+                    old_obj = self.media_reg_dict[old_dbid]
+
+                    # A channel/playlist/folder with the same name already
+                    #   exists in our database. Rename it if the user wants
+                    #   that, or if the two have different source URLs
+                    if not merge_duplicates_flag \
+                    or old_obj.source != mini_dict['source']:
+
+                        # Rename the imported channel/playlist/folder
+                        mini_dict['name'] = self.rename_imported_container(
+                            mini_dict['name'],
+                        )
+
+                    else:
+
+                        # Use the existing channel/playlist/folder of the same
+                        #   name, thereby merging the two
+                        old_dbid = self.media_name_dict[mini_dict['name']]
+                        media_data_obj = self.media_reg_dict[old_dbid]
+
+                else:
+
+                    # Import the channel/playlist/folder
+                    media_data_obj = None
+
+                    if mini_dict['type'] == 'channel':
+                        media_data_obj = self.add_channel(
+                            mini_dict['name'],
+                            parent_obj,
+                            mini_dict['source'],
+                        )
+
+                        if media_data_obj:
+                            channel_count += 1
+
+                    elif mini_dict['type'] == 'playlist':
+                        media_data_obj = self.add_playlist(
+                            mini_dict['name'],
+                            parent_obj,
+                            mini_dict['source'],
+                        )
+
+                        if media_data_obj:
+                            playlist_count += 1
+
+                    elif mini_dict['type'] == 'folder':
+                        media_data_obj = self.add_folder(
+                            mini_dict['name'],
+                            parent_obj,
+                        )
+
+                        if media_data_obj:
+                            folder_count += 1
+
+                    if media_data_obj:
+                        media_data_obj.set_nickname(mini_dict['nickname'])
+
+                # If the channel/playlist/folder was successfully imported,
+                #   update the Video Index, then deal with any children by
+                #   calling this function recursively
+                if media_data_obj is not None:
+
+                    self.main_win_obj.video_index_add_row(media_data_obj)
+
+                    if mini_dict['db_dict']:
+
+                        (
+                            video_count, channel_count, playlist_count,
+                            folder_count,
+                        ) = self.process_import(
+                            mini_dict['db_dict'],
+                            flat_db_dict,
+                            media_data_obj,
+                            import_videos_flag,
+                            merge_duplicates_flag,
+                            video_count,
+                            channel_count,
+                            playlist_count,
+                            folder_count,
+                        )
+
+        # Procedure complete
+        return video_count, channel_count, playlist_count, folder_count
+
+
+    def rename_imported_container(self, name):
+
+        """Called by self.process_import() (only).
+
+        When importing a channel/playlist/folder whose name is the same as an
+        existing channel/playlist/folder, this function is called to rename
+        the imported one (when necessary).
+
+        For example, converts 'Comedy' to 'Comedy (2)'.
+
+        Args:
+
+            name (str): The name of the imported channel/playlist/folder
+
+        Return values:
+
+            The converted name
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 3608 rename_imported_container')
+
+        count = 1
+        while True:
+
+            count += 1
+            new_name = name + ' (' + str(count) + ')'
+
+            if not new_name in self.media_name_dict:
+                return new_name
 
 
     # (Interact with media data objects)
@@ -4882,72 +5771,98 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 3843 on_menu_add_channel')
 
-        dialogue_win = mainwin.AddChannelDialogue(self.main_win_obj)
-        response = dialogue_win.run()
+        keep_open_flag = True
+        keep_folder_name = None
 
-        # Retrieve user choices from the dialogue window...
-        name = dialogue_win.entry.get_text()
-        source = dialogue_win.entry2.get_text()
-        dl_sim_flag = dialogue_win.button2.get_active()
+        while keep_open_flag:
 
-        # ...and find the name of the parent media data object (a
-        #   media.Folder), if one was specified...
-        parent_name = None
-        if hasattr(dialogue_win, 'parent_name'):
-            parent_name = dialogue_win.parent_name
+            dialogue_win = mainwin.AddChannelDialogue(
+                self.main_win_obj,
+                keep_folder_name,
+            )
 
-        # ...before destroying the dialogue window
-        dialogue_win.destroy()
+            response = dialogue_win.run()
 
-        if response == Gtk.ResponseType.OK:
+            # Retrieve user choices from the dialogue window...
+            name = dialogue_win.entry.get_text()
+            source = dialogue_win.entry2.get_text()
+            dl_sim_flag = dialogue_win.button2.get_active()
 
-            if not name or re.match('^\s*$', name):
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    'You must give the channel a name',
-                    'error',
-                    'ok',
-                )
+            # ...and find the name of the parent media data object (a
+            #   media.Folder), if one was specified...
+            parent_name = None
+            if hasattr(dialogue_win, 'parent_name'):
+                parent_name = dialogue_win.parent_name
+            elif keep_folder_name is not None:
+                parent_name = keep_folder_name
 
-            elif not source or not utils.check_url(source):
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    'You must enter a valid URL',
-                    'error',
-                    'ok',
-                )
+            # ...before destroying the dialogue window
+            dialogue_win.destroy()
 
-            elif name in self.media_name_dict:
+            if response != Gtk.ResponseType.OK:
 
-                # Another channel, playlist or folder is already using this
-                #   name
-                self.reject_media_name(name)
+                keep_open_flag = False
 
             else:
 
-                # Remove leading/trailing whitespace from the name; make sure
-                #   the name is not excessively long
-                name = utils.tidy_up_container_name(
-                    name,
-                    self.container_name_max_len,
-                )
+                if not name or re.match('^\s*$', name):
 
-                # Find the parent media data object (a media.Folder), if
-                #   specified
-                parent_obj = None
-                if parent_name and parent_name in self.media_name_dict:
-                    dbid = self.media_name_dict[parent_name]
-                    parent_obj = self.media_reg_dict[dbid]
+                    keep_open_flag = False
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        'You must give the channel a name',
+                        'error',
+                        'ok',
+                    )
 
-                # Create the new channel
-                channel_obj = self.add_channel(
-                    name,
-                    parent_obj,
-                    source,
-                    dl_sim_flag,
-                )
+                elif not source or not utils.check_url(source):
 
-                # Add the channel to Video Index
-                if channel_obj:
-                    self.main_win_obj.video_index_add_row(channel_obj)
+                    keep_open_flag = False
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        'You must enter a valid URL',
+                        'error',
+                        'ok',
+                    )
+
+                elif name in self.media_name_dict:
+
+                    # Another channel, playlist or folder is already using this
+                    #   name
+                    keep_open_flag = False
+                    self.reject_media_name(name)
+
+                else:
+
+                    keep_open_flag = self.dialogue_keep_open_flag
+
+                    # Remove leading/trailing whitespace from the name; make
+                    #   sure the name is not excessively long
+                    name = utils.tidy_up_container_name(
+                        name,
+                        self.container_name_max_len,
+                    )
+
+                    # Find the parent media data object (a media.Folder), if
+                    #   specified
+                    parent_obj = None
+                    if parent_name and parent_name in self.media_name_dict:
+                        dbid = self.media_name_dict[parent_name]
+                        parent_obj = self.media_reg_dict[dbid]
+
+                        if self.dialogue_keep_open_flag \
+                        and self.dialogue_keep_container_flag:
+                            keep_folder_name = parent_name
+
+                    # Create the new channel
+                    channel_obj = self.add_channel(
+                        name,
+                        parent_obj,
+                        source,
+                        dl_sim_flag,
+                    )
+
+                    # Add the channel to Video Index
+                    if channel_obj:
+                        self.main_win_obj.video_index_add_row(channel_obj)
 
 
     def on_menu_add_folder(self, action, par):
@@ -5040,72 +5955,98 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 3992 on_menu_add_playlist')
 
-        dialogue_win = mainwin.AddPlaylistDialogue(self.main_win_obj)
-        response = dialogue_win.run()
+        keep_open_flag = True
+        keep_folder_name = None
 
-        # Retrieve user choices from the dialogue window...
-        name = dialogue_win.entry.get_text()
-        source = dialogue_win.entry2.get_text()
-        dl_sim_flag = dialogue_win.button2.get_active()
+        while keep_open_flag:
 
-        # ...and find the name of the parent media data object (a
-        #   media.Folder), if one was specified...
-        parent_name = None
-        if hasattr(dialogue_win, 'parent_name'):
-            parent_name = dialogue_win.parent_name
+            dialogue_win = mainwin.AddPlaylistDialogue(
+                self.main_win_obj,
+                keep_folder_name,
+            )
 
-        # ...before destroying the dialogue window
-        dialogue_win.destroy()
+            response = dialogue_win.run()
 
-        if response == Gtk.ResponseType.OK:
+            # Retrieve user choices from the dialogue window...
+            name = dialogue_win.entry.get_text()
+            source = dialogue_win.entry2.get_text()
+            dl_sim_flag = dialogue_win.button2.get_active()
 
-            if not name or re.match('^\s*$', name):
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    'You must give the playlist a name',
-                    'error',
-                    'ok',
-                )
+            # ...and find the name of the parent media data object (a
+            #   media.Folder), if one was specified...
+            parent_name = None
+            if hasattr(dialogue_win, 'parent_name'):
+                parent_name = dialogue_win.parent_name
+            elif keep_folder_name is not None:
+                parent_name = keep_folder_name
 
-            elif not source or not utils.check_url(source):
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    'You must enter a valid URL',
-                    'error',
-                    'ok',
-                )
+            # ...before destroying the dialogue window
+            dialogue_win.destroy()
 
-            elif name in self.media_name_dict:
+            if response != Gtk.ResponseType.OK:
 
-                # Another channel, playlist or folder is already using this
-                #   name
-                self.reject_media_name(name)
+                keep_open_flag = False
 
             else:
 
-                # Remove leading/trailing whitespace from the name; make sure
-                #   the name is not excessively long
-                name = utils.tidy_up_container_name(
-                    name,
-                    self.container_name_max_len,
-                )
+                if not name or re.match('^\s*$', name):
 
-                # Find the parent media data object (a media.Folder), if
-                #   specified
-                parent_obj = None
-                if parent_name and parent_name in self.media_name_dict:
-                    dbid = self.media_name_dict[parent_name]
-                    parent_obj = self.media_reg_dict[dbid]
+                    keep_open_flag = False
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        'You must give the playlist a name',
+                        'error',
+                        'ok',
+                    )
 
-                # Create the playlist
-                playlist_obj = self.add_playlist(
-                    name,
-                    parent_obj,
-                    source,
-                    dl_sim_flag,
-                )
+                elif not source or not utils.check_url(source):
 
-                # Add the playlist to the Video Index
-                if playlist_obj:
-                    self.main_win_obj.video_index_add_row(playlist_obj)
+                    keep_open_flag = False
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        'You must enter a valid URL',
+                        'error',
+                        'ok',
+                    )
+
+                elif name in self.media_name_dict:
+
+                    # Another channel, playlist or folder is already using this
+                    #   name
+                    keep_open_flag = False
+                    self.reject_media_name(name)
+
+                else:
+
+                    keep_open_flag = self.dialogue_keep_open_flag
+
+                    # Remove leading/trailing whitespace from the name; make
+                    #   sure the name is not excessively long
+                    name = utils.tidy_up_container_name(
+                        name,
+                        self.container_name_max_len,
+                    )
+
+                    # Find the parent media data object (a media.Folder), if
+                    #   specified
+                    parent_obj = None
+                    if parent_name and parent_name in self.media_name_dict:
+                        dbid = self.media_name_dict[parent_name]
+                        parent_obj = self.media_reg_dict[dbid]
+
+                        if self.dialogue_keep_open_flag \
+                        and self.dialogue_keep_container_flag:
+                            keep_folder_name = parent_name
+
+                    # Create the playlist
+                    playlist_obj = self.add_playlist(
+                        name,
+                        parent_obj,
+                        source,
+                        dl_sim_flag,
+                    )
+
+                    # Add the playlist to the Video Index
+                    if playlist_obj:
+                        self.main_win_obj.video_index_add_row(playlist_obj)
 
 
     def on_menu_add_video(self, action, par):
@@ -5227,6 +6168,46 @@ class TartubeApp(Gtk.Application):
             print('ap 4157 on_menu_download_all')
 
         self.download_manager_start(False)
+
+
+    def on_menu_export_db(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Exports data from the Tartube database.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4158 on_menu_export_db')
+
+        self.export_from_db( [] )
+
+
+    def on_menu_import_db(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Imports data into the Tartube database.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4159 on_menu_import_db')
+
+        self.import_into_db()
 
 
     def on_menu_general_options(self, action, par):
@@ -5547,6 +6528,39 @@ class TartubeApp(Gtk.Application):
         self.db_backup_mode = value
 
 
+    def set_dialogue_copy_clipboard_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4447 set_dialogue_copy_clipboard_flag')
+
+        if not flag:
+            self.dialogue_copy_clipboard_flag = False
+        else:
+            self.dialogue_copy_clipboard_flag = True
+
+
+    def set_dialogue_keep_container_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4448 set_dialogue_keep_container_flag')
+
+        if not flag:
+            self.dialogue_keep_container_flag = False
+        else:
+            self.dialogue_keep_container_flag = True
+
+
+    def set_dialogue_keep_open_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4449 set_dialogue_keep_open_flag')
+
+        if not flag:
+            self.dialogue_keep_open_flag = False
+        else:
+            self.dialogue_keep_open_flag = True
+
+
     def set_ignore_child_process_exit_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -5713,10 +6727,32 @@ class TartubeApp(Gtk.Application):
             self.operation_save_flag = True
 
 
+    def set_results_list_reverse_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4563 set_results_list_reverse_flag')
+
+        if not flag:
+            self.results_list_reverse_flag = False
+        else:
+            self.results_list_reverse_flag = True
+
+
+    def set_system_msg_keep_totals_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4564 set_system_msg_keep_totals_flag')
+
+        if not flag:
+            self.system_msg_keep_totals_flag = False
+        else:
+            self.system_msg_keep_totals_flag = True
+
+
     def set_system_warning_show_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            print('ap 4563 set_system_warning_show_flag')
+            print('ap 4565 set_system_warning_show_flag')
 
         if not flag:
             self.system_warning_show_flag = False
@@ -5727,7 +6763,7 @@ class TartubeApp(Gtk.Application):
     def set_toolbar_squeeze_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            print('ap 4563 set_toolbar_squeeze_flag')
+            print('ap 4566 set_toolbar_squeeze_flag')
 
         if not flag:
             self.toolbar_squeeze_flag = False

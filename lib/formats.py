@@ -445,10 +445,10 @@ LARGE_ICON_DICT = {
     'folder_temp_none_large': 'folder_blue_none.png',
     'folder_temp_right_large': 'folder_blue_right.png',
 
-    'folder_no_parent_both_large': 'folder_blue_both.png',
-    'folder_no_parent_left_large': 'folder_blue_left.png',
-    'folder_no_parent_none_large': 'folder_blue_none.png',
-    'folder_no_parent_right_large': 'folder_blue_right.png',
+    'folder_no_parent_both_large': 'folder_black_both.png',
+    'folder_no_parent_left_large': 'folder_black_left.png',
+    'folder_no_parent_none_large': 'folder_black_none.png',
+    'folder_no_parent_right_large': 'folder_black_right.png',
 }
 
 SMALL_ICON_DICT = {

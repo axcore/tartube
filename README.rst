@@ -18,11 +18,11 @@ Problems can be reported at
 Downloads
 ---------
 
-Latest version: **v1.0.0 (31 July 2019)**
+Latest version: **v1.1.0 (18 Aug 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.0.0/install-tartube-1.0.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.0.0/tartube_v1.0.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.1.0/install-tartube-1.1.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.1.0/install-tartube-1.1.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.1.0/tartube_v1.1.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 Why should I use Tartube?
@@ -54,47 +54,7 @@ MS Windows users should use the installer available at the Tartube website. The
 installer contains everything you need to run Tartube. You must be using
 Windows Vista or above; the installer will not work on Windows XP.
 
-**Some users report that they can't run Tartube at all**. If so, you can try
-the following steps:
-
-- From the Windows Start Menu, click **Tartube > Test Gtk graphics**. If you see a lot of error messages, you can `report those errors to the authors <https://github.com/axcore/tartube/issues>`__.
-- You can try a **manual installation (see below)**. This takes about 10-30 minutes, depending on your internet speed
-
-MS Windows manual installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- This section assumes you have a 64-bit computer
-- Download and install MSYS2 from `msys2.org <https://msys2.org>`__. You need the file that looks something like **msys2-x86_64-yyyymmdd.exe**
-- MSYS2 wants to install in **C:\\msys64**, so do that
-- Open the MINGW64 terminal, which is **C:\\msys64\\mingw64.exe**
-- In the MINGW64 terminal, type:
-
-        **pacman -Syu**
-        
-- If the terminal wants to shut down, close it, and then restart it
-- Now type the following commands, one by one:
-
-        **pacman -Su**
-        
-        **pacman -S mingw-w64-x86_64-python3**
-        
-        **pacman -S mingw-w64-x86_64-python3-pip**
-        
-        **pacman -S mingw-w64-x86_64-python3-gobject**
-        
-        **pacman -S mingw-w64-x86_64-python3-requests**
-        
-        **pacman -S mingw-w64-x86_64-gtk3**
-        
-        **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**        
-        
-- Download the `Tartube source code <https://sourceforge.net/projects/tartube/files/v0.7.0/tartube_v0.7.0.tar.gz/download>`__ from Sourceforge
-- Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
-- Now, to run Tartube, type these commands in the MINGW64 terminal:
-
-        **cd tartube**
-        
-        **python3 tartube**
+**Some users report that Tartube will install but won't run**. If you have problems, `read this page <docs/mswin_install.rst>`__.
 
 Installation - MacOS
 --------------------
@@ -462,6 +422,7 @@ Known issues
 -  Channels/playlists/folder selection does not always work as intended, due to
    an unresolved Gtk issue **FIXED**
 -  Users can type in comboboxes, but this should not be possible **FIXED**
+-  Some MS Windows users report that `Tartube will install, but not run <docs/mswin_manual_install.rst>`__
 
 Contributing
 ------------

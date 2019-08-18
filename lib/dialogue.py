@@ -102,6 +102,10 @@ class DialogueManager(threading.Thread):
                 the key 'data'. If it does, the corresponding value is passed
                 to the mainapp.TartubeApp function as an argument
 
+        Returns:
+
+            Gtk.MessageDialog window
+
         """
 
         if parent_win_obj is None:
@@ -117,6 +121,8 @@ class DialogueManager(threading.Thread):
         )
 
         dialogue_win.create_dialogue()
+
+        return dialogue_win
 
 
 class MessageDialogue(Gtk.MessageDialog):

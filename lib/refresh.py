@@ -78,6 +78,13 @@ class RefreshManager(threading.Thread):
         self.running_flag = True
 
 
+        # Code
+        # ----
+
+        # Let's get this party started!
+        self.start()
+
+
     # Public class methods
 
 
