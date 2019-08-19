@@ -102,7 +102,8 @@ Run without installing
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
-3. Type: ``python3 tartube``
+3. The executable is inside a further sub-directory, so do **cd tartube** again
+4. Type: ``python3 tartube``
 
 Getting started
 ---------------

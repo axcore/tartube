@@ -33,8 +33,8 @@ import time
 
 
 # Import our modules
-from . import mainapp
-from . import utils
+import mainapp
+import utils
 
 
 # Classes

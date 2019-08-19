@@ -39,13 +39,13 @@ import time
 
 
 # Import our modules
-from . import config
-from . import formats
+import config
+import formats
 import __main__
-from . import mainapp
-from . import media
-from . import options
-from . import utils
+import mainapp
+import media
+import options
+import utils
 
 
 # !!! Debugging flag
@@ -381,51 +381,78 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             print('mw 361 setup_pixbufs')
 
-        for key in formats.DIALOGUE_ICON_DICT:
-            rel_path = formats.DIALOGUE_ICON_DICT[key]
-            full_path = os.path.abspath(
-                os.path.join('icons', 'dialogue', rel_path),
-            )
-            self.icon_dict[key] = full_path
+        # The default location for icons is ../icons. Packagers may have moved
+        #   them to one of the directories specified by
+        #   __main__.__icon_dir_list__
+        # Check all locations, and use the first one which actually exists
+        icon_dir_list = __main__.__icon_dir_list__.copy()
+        icon_dir_list.insert(
+            0,
+            os.path.abspath(
+                os.path.join(self.app_obj.script_parent_dir, 'icons'),
+            ),
+        )
 
-        for key in formats.TOOLBAR_ICON_DICT:
-            rel_path = formats.TOOLBAR_ICON_DICT[key]
-            full_path = os.path.abspath(
-                os.path.join('icons', 'toolbar', rel_path),
-            )
-            self.icon_dict[key] = full_path
+        for icon_dir_path in icon_dir_list:
+            if os.path.isdir(icon_dir_path):
+                
+                for key in formats.DIALOGUE_ICON_DICT:
+                    rel_path = formats.DIALOGUE_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'dialogue', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
 
-        for key in formats.LARGE_ICON_DICT:
-            rel_path = formats.LARGE_ICON_DICT[key]
-            full_path = os.path.abspath(
-                os.path.join('icons', 'large', rel_path),
-            )
-            self.icon_dict[key] = full_path
+                for key in formats.TOOLBAR_ICON_DICT:
+                    rel_path = formats.TOOLBAR_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'toolbar', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
 
-        for key in formats.SMALL_ICON_DICT:
-            rel_path = formats.SMALL_ICON_DICT[key]
-            full_path = os.path.abspath(
-                os.path.join('icons', 'small', rel_path),
-            )
-            self.icon_dict[key] = full_path
+                for key in formats.LARGE_ICON_DICT:
+                    rel_path = formats.LARGE_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'large', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
 
-        for key in self.icon_dict:
-            full_path = self.icon_dict[key]
+                for key in formats.SMALL_ICON_DICT:
+                    rel_path = formats.SMALL_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'small', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
 
-            if not os.path.isfile(full_path):
-                self.pixbuf_dict[key] = None
-            else:
-                self.pixbuf_dict[key] \
-                = GdkPixbuf.Pixbuf.new_from_file(full_path)
+                for key in self.icon_dict:
+                    full_path = self.icon_dict[key]
 
-        for rel_path in formats.WIN_ICON_LIST:
-            full_path = os.path.abspath(
-                os.path.join('icons', 'win', rel_path),
-            )
-            self.win_pixbuf_list.append(
-                GdkPixbuf.Pixbuf.new_from_file(full_path),
-            )
+                    if not os.path.isfile(full_path):
+                        self.pixbuf_dict[key] = None
+                    else:
+                        self.pixbuf_dict[key] \
+                        = GdkPixbuf.Pixbuf.new_from_file(full_path)
 
+                for rel_path in formats.WIN_ICON_LIST:
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'win', rel_path),
+                    )
+                    self.win_pixbuf_list.append(
+                        GdkPixbuf.Pixbuf.new_from_file(full_path),
+                    )
+
+                return
+
+        # No icons directory found; this is a fatal error
+        print(
+            'Missing icons directory; ' \
+            + utils.upper_case_first(__main__.__packagename__) \
+            + ' cannot start',
+            file=sys.stderr,
+        )
+
+        self.app_obj.do_shutdown()
+        
 
     def setup_win(self):
 

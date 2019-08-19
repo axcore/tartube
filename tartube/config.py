@@ -32,10 +32,10 @@ import os
 
 # Import our modules
 import __main__
-from . import formats
-from . import mainapp
-from . import media
-from . import utils
+import formats
+import mainapp
+import media
+import utils
 
 
 # Classes

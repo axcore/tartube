@@ -49,18 +49,18 @@ except:
 
 # Import our modules
 import __main__
-from . import config
-from . import dialogue
-from . import downloads
-from . import files
-from . import formats
-from . import mainwin
-from . import media
-from . import options
-from . import refresh
-from . import testing
-from . import updates
-from . import utils
+import config
+import dialogue
+import downloads
+import files
+import formats
+import mainwin
+import media
+import options
+import refresh
+import testing
+import updates
+import utils
 
 
 # !!! Debugging flag
@@ -228,6 +228,13 @@ class TartubeApp(Gtk.Application):
         #   Gtk v3.24
         self.gtk_broken_flag = False
 
+        # For quick lookup, the directory in which the 'tartube' executable
+        #   file is found, and its parent directory
+        self.script_dir = sys.path[0]
+        self.script_parent_dir = os.path.abspath(
+            os.path.join(self.script_dir, os.pardir),
+        )
+
         # Tartube's data directory (platform-dependant), i.e. 'tartube-data'
         # Note that, using the MSWin installer, Cygwin gives file paths with
         #   both / and \ separators. Throughout the code, we use
@@ -267,8 +274,8 @@ class TartubeApp(Gtk.Application):
             ),
         )
 
-        # Name of the Tartube config file, always found in the same directory
-        #   as tartube.py
+        # Name of the Tartube config file, found in the self.script_parent_dir
+        #   directory
         self.config_file_name = 'settings.json'
         # Name of the Tartube database file (storing media data objects). The
         #   database file is always found in self.data_dir
@@ -974,9 +981,13 @@ class TartubeApp(Gtk.Application):
 
         # Delete Tartube's config file and data directory, if the debugging
         #   flag is set
+        config_path = os.path.abspath(
+            os.path.join(self.script_parent_dir, self.config_file_name),
+        )
+        
         if self.debug_delete_data_flag:
-            if os.path.isfile(self.config_file_name):
-                os.remove(self.config_file_name)
+            if os.path.isfile(config_path):
+                os.remove(config_path)
 
             if os.path.isdir(self.data_dir):
                 shutil.rmtree(self.data_dir)
@@ -1075,7 +1086,7 @@ class TartubeApp(Gtk.Application):
 
         # If the config file exists, load it. If not, create it
         new_mswin_flag = False
-        if os.path.isfile(self.config_file_name):
+        if os.path.isfile(config_path):
             self.load_config()
         elif self.debug_no_dialogue_flag:
             self.save_config()
@@ -1379,15 +1390,19 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 1012 load_config')
 
+        config_path = os.path.abspath(
+            os.path.join(self.script_parent_dir, self.config_file_name),
+        )
+
         # Sanity check
         if self.current_manager_obj \
-        or not os.path.isfile(self.config_file_name) \
+        or not os.path.isfile(config_path) \
         or self.disable_load_save_flag:
             return
 
-        # Try to load the config file
+        # Try to load the config file                
         try:
-            with open(self.config_file_name) as infile:
+            with open(config_path) as infile:
                 json_dict = json.load(infile)
 
         except:
@@ -1555,6 +1570,10 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 1117 save_config')
 
+        config_path = os.path.abspath(
+            os.path.join(self.script_parent_dir, self.config_file_name),
+        )
+        
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
             return
@@ -1629,7 +1648,7 @@ class TartubeApp(Gtk.Application):
 
         # Try to save the file
         try:
-            with open(self.config_file_name, 'w') as outfile:
+            with open(config_path, 'w') as outfile:
                 json.dump(json_dict, outfile, indent=4)
 
         except:
@@ -1689,7 +1708,7 @@ class TartubeApp(Gtk.Application):
             )
 
             return False
-
+        
         # Do some basic checks on the loaded data
         if not load_dict \
         or not 'script_name' in load_dict \

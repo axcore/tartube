@@ -42,11 +42,11 @@ import time
 
 
 # Import our modules
-from . import formats
-from . import mainapp
-from . import media
-from . import options
-from . import utils
+import formats
+import mainapp
+import media
+import options
+import utils
 
 
 # !!! Debugging flag

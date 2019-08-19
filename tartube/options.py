@@ -29,10 +29,10 @@ import os
 
 
 # Import our modules
-from . import formats
-from . import mainapp
-from . import media
-from . import utils
+import formats
+import mainapp
+import media
+import utils
 
 
 # Classes

@@ -30,8 +30,8 @@ import threading
 
 
 # Import our modules
-from . import formats
-from . import media
+import formats
+import media
 
 
 # Classes

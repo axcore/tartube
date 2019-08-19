@@ -1,1 +1,5 @@
+include AUTHORS
+include CHANGES
 include LICENSE
+include README.rst
+include icons/*

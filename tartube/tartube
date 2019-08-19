@@ -25,17 +25,18 @@
 
 
 # Import other modules
+import os
 import sys
 
 
 # Import our modules
-from lib import mainapp
+import mainapp
 
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '1.1.0'
-__date__ = '18 Aug 2019'
+__version__ = '1.1.008'
+__date__ = '19 Aug 2019'
 __copyright__ = 'Copyright \xa9 2019 A S Lewis'
 __license__ = """
 Copyright \xc2\xa9 2019 A S Lewis.
@@ -64,6 +65,13 @@ __app_id__ = 'io.sourceforge.tartube'
 #   Debian packaging, use the 'tartube_debian' executable (see the comments in
 #   setup.py)
 __disable_ytdl_update_flag__ = False
+# Tartube's icons are stored in the ../icons directory. If packagers want to
+#   move them somewhere else, then adding the directory path to this list will
+#   tell mainwin.MainWin.setup_pixbufs() how to find them
+__icon_dir_list__ = [
+    # /usr/share/tartube/icons
+    os.path.abspath(os.path.join('/usr', 'share', __packagename__, 'icons')),
+]
 
 
 # Start Tartube

@@ -40,13 +40,12 @@ import sys
 #   TARTUBE_NO_UPDATES=1 python3 setup.py build
 env_var_name = 'TARTUBE_NO_UPDATES'
 env_var_value = os.environ.get( env_var_name, None )
-script_name = 'tartube'
-script_exec = 'tartube'
+script_exec = os.path.join('tartube', 'tartube')
 
 if env_var_value is not None:
 
     if env_var_value == '1':
-        script_exec = 'tartube_debian'
+        script_exec = os.path.join('tartube', 'tartube_debian')
         sys.stderr.write('youtube-dl updates are disabled in this version')
 
     else:
@@ -61,7 +60,7 @@ if env_var_value is not None:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.1.0',
+    version='1.1.008',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based
@@ -88,6 +87,7 @@ setuptools.setup(
     packages=setuptools.find_packages(
         exclude=('docs', 'icons', 'nsis', 'tests'),
     ),
+    include_package_data=True,
     python_requires='>=3.0, <4',
     install_requires=['requests'],
     scripts=[script_exec],

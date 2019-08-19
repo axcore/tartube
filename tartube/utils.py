@@ -37,8 +37,8 @@ import textwrap
 
 
 # Import our modules
-from . import formats
-from . import mainapp
+import formats
+import mainapp
 
 
 # Functions
