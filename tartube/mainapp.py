@@ -46,6 +46,8 @@ try:
 except:
     HAVE_MOVIEPY_FLAG = False
 
+from xdg.BaseDirectory import xdg_config_home
+
 
 # Import our modules
 import __main__
@@ -90,6 +92,8 @@ class TartubeApp(Gtk.Application):
             **kwargs)
 
         # Debugging flags (can only be set by editing the source code)
+        # Force Tartube to use the pre-v1.1.014 location for the config file
+        self.debug_old_config_flag = False
         # Delete the config file and the contents of Tartube's data directory
         #   on startup
         self.debug_delete_data_flag = False
@@ -274,9 +278,25 @@ class TartubeApp(Gtk.Application):
             ),
         )
 
-        # Name of the Tartube config file, found in the self.script_parent_dir
-        #   directory
+        # Name of the Tartube config file
         self.config_file_name = 'settings.json'
+        # Path to the config file. Before v1.1.014, the Tartube config file was
+        #   stored in self.script_parent_dir; it is now stored in
+        #   $XDG_CONFIG_HOME/tartube
+        self.config_file_path = os.path.abspath(
+            os.path.join(
+                xdg_config_home,
+                __main__.__packagename__,
+                self.config_file_name,
+               ),
+        )
+        self.config_file_old_path = os.path.abspath(
+            os.path.join(self.script_parent_dir, self.config_file_name),
+        )
+
+        if self.debug_old_config_flag:
+            self.config_file_path = self.config_file_old_path
+        
         # Name of the Tartube database file (storing media data objects). The
         #   database file is always found in self.data_dir
         self.db_file_name = __main__.__packagename__ + '.db'
@@ -981,13 +1001,12 @@ class TartubeApp(Gtk.Application):
 
         # Delete Tartube's config file and data directory, if the debugging
         #   flag is set
-        config_path = os.path.abspath(
-            os.path.join(self.script_parent_dir, self.config_file_name),
-        )
-        
         if self.debug_delete_data_flag:
-            if os.path.isfile(config_path):
-                os.remove(config_path)
+            if os.path.isfile(self.config_file_path):
+                os.remove(self.config_file_path)
+
+            if os.path.isfile(self.config_file_old_path):
+                os.remove(self.config_file_old_path)
 
             if os.path.isdir(self.data_dir):
                 shutil.rmtree(self.data_dir)
@@ -1084,9 +1103,11 @@ class TartubeApp(Gtk.Application):
             ]
             self.ytdl_update_current = 'Update using pip3 (recommended)'
 
-        # If the config file exists, load it. If not, create it
+        # If the config file exists, load it (from either the default or the
+        #   pre v1.1.014 location). If not, create it
         new_mswin_flag = False
-        if os.path.isfile(config_path):
+        if os.path.isfile(self.config_file_path) \
+        or os.path.isfile(self.config_file_old_path):
             self.load_config()
         elif self.debug_no_dialogue_flag:
             self.save_config()
@@ -1390,19 +1411,24 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 1012 load_config')
 
-        config_path = os.path.abspath(
-            os.path.join(self.script_parent_dir, self.config_file_name),
-        )
+        # Before v1.1.014, the Tartube config file was stored in
+        #   self.script_parent_dir; it is now stored in
+        #   $XDG_CONFIG_HOME/tartube
+        config_file_path = self.config_file_path
+        if not os.path.isfile(config_file_path):
+
+            # Try the old location        
+            config_file_path = self.config_file_old_path
 
         # Sanity check
         if self.current_manager_obj \
-        or not os.path.isfile(config_path) \
+        or not os.path.isfile(config_file_path) \
         or self.disable_load_save_flag:
             return
 
         # Try to load the config file                
         try:
-            with open(config_path) as infile:
+            with open(config_file_path) as infile:
                 json_dict = json.load(infile)
 
         except:
@@ -1455,6 +1481,21 @@ class TartubeApp(Gtk.Application):
                 'The ' + utils.upper_case_first(__main__.__packagename__) \
                 + ' config file is invalid',
             )
+
+        # If the config file was loaded from the pre-v1.1.014 location, move it
+        if config_file_path == self.config_file_old_path:
+
+            destination_dir = os.path.abspath(
+                os.path.join(
+                    xdg_config_home,
+                    __main__.__packagename__,
+                ),
+            )
+                    
+            if not os.path.isdir(destination_dir):
+                os.makedirs(destination_dir)
+                        
+            shutil.move(self.config_file_old_path, self.config_file_path)
 
         # Set IVs to their new values
         if version >= 5024:     # v0.5.024
@@ -1569,10 +1610,6 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 1117 save_config')
-
-        config_path = os.path.abspath(
-            os.path.join(self.script_parent_dir, self.config_file_name),
-        )
         
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
@@ -1648,7 +1685,7 @@ class TartubeApp(Gtk.Application):
 
         # Try to save the file
         try:
-            with open(config_path, 'w') as outfile:
+            with open(self.config_file_path, 'w') as outfile:
                 json.dump(json_dict, outfile, indent=4)
 
         except:
@@ -2853,6 +2890,14 @@ class TartubeApp(Gtk.Application):
         if self.operation_save_flag:
             self.save_config()
             self.save_db()
+
+        # If updates to the Video Index were disabled because of Gtk issues,
+        #   we must now redraw the Video Index and Video Catalogue from
+        #   scratch
+        if self.gtk_broken_flag:
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_catalogue_reset()
+            self.main_win_obj.video_index_populate()
 
         # Then show a dialogue window, if allowed
         if self.operation_dialogue_flag:

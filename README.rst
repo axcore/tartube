@@ -75,6 +75,8 @@ Linux/BSD Installation requirements
 -  `Python 3 <https://www.python.org/downloads>`__
 -  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 -  `Python Requests module <https://3.python-requests.org/>`__
+-  `Python xdg module <https://pypi.org/project/xdg/>`__
+
 
 Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~

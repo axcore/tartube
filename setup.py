@@ -60,7 +60,7 @@ if env_var_value is not None:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.1.008',
+    version='1.1.015',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based
@@ -89,7 +89,7 @@ setuptools.setup(
     ),
     include_package_data=True,
     python_requires='>=3.0, <4',
-    install_requires=['requests'],
+    install_requires=['requests', 'xdg'],
     scripts=[script_exec],
     project_urls={
         'Bug Reports': 'https://github.com/axcore/tartube/issues',

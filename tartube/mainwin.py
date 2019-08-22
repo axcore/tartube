@@ -2307,8 +2307,12 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         # Because of Gtk issues, we don't update the Video Index during a
-        #   download operation if the flag is set
-        if self.app_obj.download_manager_obj and self.app_obj.gtk_broken_flag:
+        #   download/refresh operation if the flag is set
+        if self.app_obj.gtk_broken_flag \
+        and (
+            self.app_obj.download_manager_obj \
+            or self.app_obj.refresh_manager_obj
+        ):
             return
 
         # Update the treeview row
@@ -2360,7 +2364,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Because of Gtk issues, we don't update the Video Index during a
         #   download operation if the flag is set
-        if self.app_obj.download_manager_obj and self.app_obj.gtk_broken_flag:
+        if self.app_obj.gtk_broken_flag \
+        and (
+            self.app_obj.download_manager_obj \
+            or self.app_obj.refresh_manager_obj
+        ):
             return
 
         # Update the treeview row

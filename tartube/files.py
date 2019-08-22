@@ -111,9 +111,13 @@ class FileManager(threading.Thread):
             return None
 
         with open(full_path, 'r') as text_file:
-            text = text_file.read()
 
-        return text
+            try:
+                text = text_file.read()
+                return text
+
+            except:
+                return None
 
 
     def load_to_pixbuf(self, full_path, width=None, height=None):
