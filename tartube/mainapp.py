@@ -46,9 +46,13 @@ try:
 except:
     HAVE_MOVIEPY_FLAG = False
 
-from xdg.BaseDirectory import xdg_config_home
+try:
+    from xdg.BaseDirectory import xdg_config_home
+    HAVE_XDG_FLAG = True
+except:
+    HAVE_XDG_FLAG = False
 
-
+        
 # Import our modules
 import __main__
 import config
@@ -91,12 +95,6 @@ class TartubeApp(Gtk.Application):
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs)
 
-        # Debugging flags (can only be set by editing the source code)
-        # Force Tartube to use the pre-v1.1.014 location for the config file
-        self.debug_old_config_flag = False
-        # Delete the config file and the contents of Tartube's data directory
-        #   on startup
-        self.debug_delete_data_flag = False
         # After installation, don't show the dialogue windows prompting the
         #   user to choose Tartube's data directory; just use the default
         #   location
@@ -280,23 +278,23 @@ class TartubeApp(Gtk.Application):
 
         # Name of the Tartube config file
         self.config_file_name = 'settings.json'
-        # Path to the config file. Before v1.1.014, the Tartube config file was
-        #   stored in self.script_parent_dir; it is now stored in
-        #   $XDG_CONFIG_HOME/tartube
+        # The config file can be stored at one of two locations, depending on
+        #   the value of __main__.__debian_install_flag__
         self.config_file_path = os.path.abspath(
-            os.path.join(
-                xdg_config_home,
-                __main__.__packagename__,
-                self.config_file_name,
-               ),
-        )
-        self.config_file_old_path = os.path.abspath(
             os.path.join(self.script_parent_dir, self.config_file_name),
         )
 
-        if self.debug_old_config_flag:
-            self.config_file_path = self.config_file_old_path
-        
+        if not HAVE_XDG_FLAG:
+            self.config_file_xdg_path = None
+        else:
+            self.config_file_xdg_path = os.path.abspath(
+                os.path.join(
+                    xdg_config_home,
+                    __main__.__packagename__,
+                    self.config_file_name,
+                   ),
+            )
+                
         # Name of the Tartube database file (storing media data objects). The
         #   database file is always found in self.data_dir
         self.db_file_name = __main__.__packagename__ + '.db'
@@ -506,12 +504,12 @@ class TartubeApp(Gtk.Application):
         self.operation_save_flag = True
         # Flag set to True if a dialogue window should be shown at the end of
         #   each download/update/refresh operation
-        self.operation_dialogue_flag = True
+        self.operation_dialogue_flag = True        
         # Flag set to True if self.update_video_from_filesystem() should get
         #   the video duration, if not already known, using the moviepy.editor
-        #   module (which may be slow)
+        #   module (an optional dependency)
         self.use_module_moviepy_flag = True
-
+            
         # Flag set to True if dialogue windows for adding videos, channels and
         #   playlists should copy the contents of the system clipboard
         self.dialogue_copy_clipboard_flag = True
@@ -583,6 +581,20 @@ class TartubeApp(Gtk.Application):
         #   1-999
         self.match_ignore_chars = self.match_default_chars
 
+        # Automatic video deletion. Applies only to downloaded videos (not to
+        #   checked videos)
+        # Flag set to True if videos should be deleted after a certain time
+        self.auto_delete_flag = False
+        # Flag set to True if videos are automatically deleted after a certain
+        #   time, but only if they have been watched (media.Video.dl_flag is
+        #   True, media.Video.new_flag is False; ignored if
+        #   self.auto_delete_old_flag is False)
+        self.auto_delete_watched_flag = False
+        # Videos are automatically deleted after this many days (must be an
+        #   integer, minimum value 1; ignored if self.auto_delete_old_flag is
+        #   False)
+        self.auto_delete_days = 30
+        
         # How much information to show in the Video Index. False to show
         #   minimal video stats, True to show full video stats
         self.complex_index_flag = False
@@ -663,9 +675,19 @@ class TartubeApp(Gtk.Application):
         export_db_menu_action.connect('activate', self.on_menu_export_db)
         self.add_action(export_db_menu_action)
 
-        import_db_menu_action = Gio.SimpleAction.new('import_db_menu', None)
-        import_db_menu_action.connect('activate', self.on_menu_import_db)
-        self.add_action(import_db_menu_action)
+        import_json_menu_action = Gio.SimpleAction.new(
+            'import_json_menu',
+            None,
+        )
+        import_json_menu_action.connect('activate', self.on_menu_import_json)
+        self.add_action(import_json_menu_action)
+
+        import_text_menu_action = Gio.SimpleAction.new(
+            'import_text_menu',
+            None,
+        )
+        import_text_menu_action.connect('activate', self.on_menu_import_plain_text)
+        self.add_action(import_text_menu_action)
 
         switch_view_menu_action = Gio.SimpleAction.new(
             'switch_view_menu',
@@ -726,7 +748,11 @@ class TartubeApp(Gtk.Application):
         about_menu_action = Gio.SimpleAction.new('about_menu', None)
         about_menu_action.connect('activate', self.on_menu_about)
         self.add_action(about_menu_action)
-
+        
+        go_website_menu_action = Gio.SimpleAction.new('go_website_menu', None)
+        go_website_menu_action.connect('activate', self.on_menu_go_website)
+        self.add_action(go_website_menu_action)
+        
         # Main toolbar actions
         # --------------------
 
@@ -999,23 +1025,11 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj,
         )
 
-        # Delete Tartube's config file and data directory, if the debugging
-        #   flag is set
-        if self.debug_delete_data_flag:
-            if os.path.isfile(self.config_file_path):
-                os.remove(self.config_file_path)
-
-            if os.path.isfile(self.config_file_old_path):
-                os.remove(self.config_file_old_path)
-
-            if os.path.isdir(self.data_dir):
-                shutil.rmtree(self.data_dir)
-
         # Give mainapp.TartubeApp IVs their initial values
         self.general_options_obj = options.OptionsManager()
 
         # Set youtube-dl IVs
-        if __main__.__disable_ytdl_update_flag__:
+        if __main__.__debian_install_flag__:
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = os.path.abspath(
                 os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
@@ -1103,43 +1117,70 @@ class TartubeApp(Gtk.Application):
             ]
             self.ytdl_update_current = 'Update using pip3 (recommended)'
 
-        # If the config file exists, load it (from either the default or the
-        #   pre v1.1.014 location). If not, create it
+        # If the config file exists, load it. If not, create it
         new_mswin_flag = False
-        if os.path.isfile(self.config_file_path) \
-        or os.path.isfile(self.config_file_old_path):
+        
+        if (
+            not __main__.__debian_install_flag__
+            and os.path.isfile(self.config_file_path)
+        ) or (
+            __main__.__debian_install_flag__
+            and self.config_file_xdg_path is not None
+            and os.path.isfile(self.config_file_xdg_path)
+        ):
             self.load_config()
+            
         elif self.debug_no_dialogue_flag:
             self.save_config()
+
         else:
 
-            # (Need to show an extra prompt at the end of this function)
+            # New Tartube installation
             if os.name == 'nt':
+
+                # On MS Windows, Cygwin creates a Tartube data directory at
+                #   C:\msys64\home\USERNAME\tartube-data, which is not very
+                #   convenient. Force the user to nominate the directory they
+                #   want
                 new_mswin_flag = True
-
-            # On MS Windows, Cygwin creates a Tartube data directory at
-            #   C:\msys64\home\USERNAME\tartube-data, which is not very
-            #   convenient
-            # Even on Linux/*BSD, the user might want to choose their own data
-            #   directory
-            # Therefore, on new installations, immediately ask the user to
-            #   choose a location for the data directory
-            dialogue_win = mainwin.SetDirectoryDialogue(
-                self.main_win_obj,
-                self.data_dir,
-            )
-
-            response = dialogue_win.run()
-
-            # Retrieve user choices from the dialogue window, before destroying
-            #   it
-            custom_flag = False
-            if dialogue_win.button2.get_active():
                 custom_flag = True
+                
+                dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                    'Click OK to create a folder in which\n' \
+                    + utils.upper_case_first(__main__.__packagename__) \
+                    + ' can store its videos\n\nIf you have used ' \
+                    + utils.upper_case_first(__main__.__packagename__) \
+                    + ' before,\nyou can select an existing folder\ninstead of'
+                    + ' creating a new one',
+                   'info',
+                   'ok',
+                   self.main_win_obj,
+                )
 
-            dialogue_win.destroy()
+                dialogue_win.set_modal(True)
 
-            if response == Gtk.ResponseType.OK and custom_flag:
+            else:
+
+                # On Linux/BSD, offer the user a choice between using the
+                #   default data directory specified by self.data_dir, or
+                #   specifying their own data directory                
+                dialogue_win = mainwin.SetDirectoryDialogue(
+                    self.main_win_obj,
+                    self.data_dir,
+                )
+
+                response = dialogue_win.run()
+
+                # Retrieve user choices from the dialogue window, before
+                #   destroying it
+                custom_flag = False
+                if response == Gtk.ResponseType.OK \
+                and dialogue_win.button2.get_active():
+                    custom_flag = True
+
+                dialogue_win.destroy()
+
+            if custom_flag:
 
                 if os.name == 'nt':
                     folder = 'folder'
@@ -1355,7 +1396,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-128)
-            200-299: mainwin.py     (in use: 201-235)
+            200-299: mainwin.py     (in use: 201-236)
             300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
 
@@ -1411,14 +1452,13 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 1012 load_config')
 
-        # Before v1.1.014, the Tartube config file was stored in
-        #   self.script_parent_dir; it is now stored in
-        #   $XDG_CONFIG_HOME/tartube
-        config_file_path = self.config_file_path
-        if not os.path.isfile(config_file_path):
-
-            # Try the old location        
-            config_file_path = self.config_file_old_path
+        # The config file can be stored at one of two locations, depending on
+        #   the value of __main__.__debian_install_flag__
+        if __main__.__debian_install_flag__ \
+        and self.config_file_xdg_path is not None:
+            config_file_path = self.config_file_xdg_path
+        else:
+            config_file_path = self.config_file_path
 
         # Sanity check
         if self.current_manager_obj \
@@ -1482,21 +1522,6 @@ class TartubeApp(Gtk.Application):
                 + ' config file is invalid',
             )
 
-        # If the config file was loaded from the pre-v1.1.014 location, move it
-        if config_file_path == self.config_file_old_path:
-
-            destination_dir = os.path.abspath(
-                os.path.join(
-                    xdg_config_home,
-                    __main__.__packagename__,
-                ),
-            )
-                    
-            if not os.path.isdir(destination_dir):
-                os.makedirs(destination_dir)
-                        
-            shutil.move(self.config_file_old_path, self.config_file_path)
-
         # Set IVs to their new values
         if version >= 5024:     # v0.5.024
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
@@ -1551,6 +1576,7 @@ class TartubeApp(Gtk.Application):
         = json_dict['operation_auto_update_flag']
         self.operation_save_flag = json_dict['operation_save_flag']
         self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
+        
         self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
 #       # Removed v0.5.003
 #        self.use_module_validators_flag \
@@ -1590,6 +1616,12 @@ class TartubeApp(Gtk.Application):
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
         self.match_ignore_chars = json_dict['match_ignore_chars']
+        
+        if version >= 1001029:  # v1.1.029
+            self.auto_delete_flag = json_dict['auto_delete_flag']
+            self.auto_delete_watched_flag \
+            = json_dict['auto_delete_watched_flag']
+            self.auto_delete_days = json_dict['auto_delete_days']
 
         self.complex_index_flag = json_dict['complex_index_flag']
         if version >= 3019:  # v0.3.019
@@ -1610,7 +1642,15 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 1117 save_config')
-        
+
+        # The config file can be stored at one of two locations, depending on
+        #   the value of __main__.__debian_install_flag__
+        if __main__.__debian_install_flag__ \
+        and self.config_file_xdg_path is not None:
+            config_file_path = self.config_file_xdg_path
+        else:
+            config_file_path = self.config_file_path
+                    
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
             return
@@ -1677,6 +1717,10 @@ class TartubeApp(Gtk.Application):
             'match_method': self.match_method,
             'match_first_chars': self.match_first_chars,
             'match_ignore_chars': self.match_ignore_chars,
+            
+            'auto_delete_flag': self.auto_delete_flag,
+            'auto_delete_watched_flag': self.auto_delete_watched_flag,
+            'auto_delete_days': self.auto_delete_days,
 
             'complex_index_flag': self.complex_index_flag,
             'catalogue_mode': self.catalogue_mode,
@@ -1685,7 +1729,7 @@ class TartubeApp(Gtk.Application):
 
         # Try to save the file
         try:
-            with open(self.config_file_path, 'w') as outfile:
+            with open(config_file_path, 'w') as outfile:
                 json.dump(json_dict, outfile, indent=4)
 
         except:
@@ -1788,11 +1832,14 @@ class TartubeApp(Gtk.Application):
         self.fixed_misc_folder = load_dict['fixed_misc_folder']
         self.fixed_temp_folder = load_dict['fixed_temp_folder']
 
+        # Update the loaded data for this version of Tartube
+        self.update_db(version)
+
         # Empty any temporary folders
         self.delete_temp_folders()
 
-        # Update the loaded data for this version of Tartube
-        self.update_db(version)
+        # Auto-delete old downloaded videos
+        self.auto_delete_old_videos()
 
         # If the debugging flag is set, hide all fixed (system) folders
         if self.debug_hide_folders_flag:
@@ -2015,6 +2062,44 @@ class TartubeApp(Gtk.Application):
                         if 'title' in json_dict:
                             media_data_obj.nickname = json_dict['title']
 
+
+        if version < 1001031:  # v1.1.031
+
+            # This version adds the ability to disable checking/downloading for
+            #   media data objects
+            for dbid in self.media_name_dict.values():
+                media_data_obj = self.media_reg_dict[dbid]
+                media_data_obj.dl_disable_flag = False            
+
+        if version < 1001032:  # v1.1.032
+
+            # This version adds video archiving. Archived videos cannot be
+            #   auto-deleted
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.archive_flag = False  
+
+        if version < 1001037:  # v1.1.037
+
+            # This version adds alternative destination directories for a
+            #   channel's/playlist's/folder's videos, thumbnails (etc)
+            for dbid in self.media_name_dict.values():
+                media_data_obj = self.media_reg_dict[dbid]
+                media_data_obj.master_dbid = media_data_obj.dbid
+                media_data_obj.slave_dbid_list = []
+
+
+        if version < 1001045:  # v1.1.045
+
+            # This version adds a new option to options.OptionsManager
+            options_obj_list = [self.general_options_obj]
+            for media_data_obj in self.media_reg_dict.values():
+                if media_data_obj.options_obj is not None:
+                    options_obj_list.append(media_data_obj.options_obj)
+
+            for options_obj in options_obj_list:
+                options_obj.options_dict['use_fixed_folder'] = None
+                                                     
 
     def save_db(self):
 
@@ -2429,7 +2514,7 @@ class TartubeApp(Gtk.Application):
             and media_data_obj.temp_flag:
 
                 # Delete all child objects
-                for child_obj in media_data_obj.child_list:
+                for child_obj in list(media_data_obj.child_list.copy()):
                     if isinstance(child_obj, media.Video):
                         self.delete_video(child_obj)
                     else:
@@ -2443,6 +2528,43 @@ class TartubeApp(Gtk.Application):
                 os.makedirs(dir_path)
 
 
+    def auto_delete_old_videos(self):
+
+        """Called by self.load_db().
+
+        After loading the Tartube database, auto-delete any old downloaded
+        videos (if auto-deletion is enabled)
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 1571 auto_delete_old_videos')
+            
+        if not self.auto_delete_flag:
+            return
+
+        # Calculate the system time before which any downloaded videos can be
+        #   deleted
+        time_limit = int(time.time()) - (self.auto_delete_days * 24 * 60 * 60)
+        
+        # Import a list of media data objects (as self.media_reg_dict will be
+        #   modified during this operation)
+        media_list = list(self.media_reg_dict.values())
+
+        # Auto-delete any videos as required
+        for media_data_obj in media_list:
+
+            if isinstance(media_data_obj, media.Video) \
+            and media_data_obj.dl_flag \
+            and not media_data_obj.archive_flag \
+            and media_data_obj.receive_time < time_limit \
+            and (
+                not self.auto_delete_watched_flag \
+                or not media_data_obj.new_flag
+            ):
+                # Ddelete this video
+                self.delete_video(media_data_obj, True, True, True)
+
+        
     def convert_version(self, version):
 
         """Can be called by anything, but mostly called by self.load_config()
@@ -2717,7 +2839,7 @@ class TartubeApp(Gtk.Application):
 
             return
 
-        elif __main__.__disable_ytdl_update_flag__:
+        elif __main__.__debian_install_flag__:
             # Update operation is disabled in the Debian package. It should not
             #   be possible to call this function, but we'll show an error
             #   message anyway
@@ -2982,7 +3104,25 @@ class TartubeApp(Gtk.Application):
             if video_obj is None:
 
                 # Create a new media data object for the video
-                video_obj = self.add_video(media_data_obj, None, no_sort_flag)
+                override_name = download_item_obj.options_manager_obj.options_dict['use_fixed_folder']
+                if override_name is not None \
+                and override_name in self.media_name_dict:                
+
+                    other_dbid = self.media_name_dict[override_name]
+                    other_parent_obj = self.media_reg_dict[other_dbid]
+
+                    video_obj = self.add_video(
+                        other_parent_obj,
+                        None,
+                        no_sort_flag,
+                    )
+
+                else:
+                    video_obj = self.add_video(
+                        media_data_obj,
+                        None,
+                        no_sort_flag,
+                    )
 
                 # Since we have them to hand, set the video's file path IVs
                 #   immediately
@@ -3155,6 +3295,52 @@ class TartubeApp(Gtk.Application):
         self.mark_video_downloaded(video_obj, True)
 
 
+    def announce_video_clone(self, video_obj):
+
+        """Called by downloads.VideoDownloader.confirm_old_video().
+
+        This is a modified version of self.update_video_when_file_found(),
+        called when a channel/playlist/folder is using an alternative
+        download destination for its videos (in which case,
+        self.update_video_when_file_found() can't be called).
+
+        Args:
+
+            video_obj (media.Video): The video which already exists on the
+                user's filesystem (in the alternative download destination)
+                
+        """
+        
+        video_path = os.path.abspath(
+            os.path.join(
+                video_obj.file_dir,
+                video_obj.file_name + video_obj.file_ext,
+            )
+        )
+
+        # Only set the .name IV if the video is currently unnamed
+        if video_obj.name == self.default_video_name:
+            video_obj.set_name(video_obj.file_name)
+            # (The video's title, stored in the .nickname IV, will be updated
+            #   from the JSON data in a momemnt)
+            video_obj.set_nickname(video_obj.file_name)
+
+        # Set the file size
+        video_obj.set_file_size(os.path.getsize(video_path))
+
+        # If the JSON file was downloaded, we can extract video statistics from
+        #   it
+        self.update_video_from_json(video_obj)
+
+        # For any of those statistics that haven't been set (because the JSON
+        #   file was missing or didn't contain the right statistics), set them
+        #   directly        
+        self.update_video_from_filesystem(video_obj, video_path)
+
+        # Mark the video as (fully) downloaded (and update everything else)
+        self.mark_video_downloaded(video_obj, True)
+        
+                    
     def update_video_from_json(self, video_obj):
 
         """Called by self.update_video_when_file_found() and
@@ -3811,12 +3997,12 @@ class TartubeApp(Gtk.Application):
     # (Delete media data objects)
 
 
-    def delete_video(self, video_obj, no_update_index_flag=False,
-    delete_files_flag=False):
+    def delete_video(self, video_obj, delete_files_flag=False,
+    no_update_index_flag=False, no_update_catalogue_flag=False):
 
-        """Called by self.delete_temp_folders(), .delete_container(),
-        mainwin.MainWin.video_catalogue_popup_menu() and a callback in
-        mainwin.MainWin.on_video_catalogue_delete_video().
+        """Called by self.delete_temp_folders(), .delete_old_videos(),
+        .delete_container(), mainwin.MainWin.video_catalogue_popup_menu() and a
+        callback in mainwin.MainWin.on_video_catalogue_delete_video().
 
         Deletes a video object from the media registry.
 
@@ -3824,14 +4010,18 @@ class TartubeApp(Gtk.Application):
 
             video_obj (media.Video): The media.Video object to delete
 
-            no_update_index_flag (True or False): True when called by
-                self.delete_container(), in which case the Video Index is not
-                updated (because the calling function wants to do that)
-
             delete_files_flag (True or False): True when called by
                 mainwin.MainWin.on_video_catalogue_delete_video, in which case
                 the video and its associated files are deleted from the
                 filesystem
+
+            no_update_index_flag (True or False): True when called by
+                self.delete_old_videos() or self.delete_container(), in which
+                case the Video Index is not updated
+                
+            no_update_catalogue_flag (True or False): True when called by
+                self.delete_old_videos(), in which case the Video Catalogue is
+                not updated
 
         """
 
@@ -3901,7 +4091,9 @@ class TartubeApp(Gtk.Application):
                 os.remove(json_path)
 
         # Remove the video from the catalogue, if present
-        self.main_win_obj.video_catalogue_delete_row(video_obj)
+        if not no_update_catalogue_flag:
+            self.main_win_obj.video_catalogue_delete_row(video_obj)
+        
         # Update rows in the Video Index, first checking that the parent
         #   container object is currently drawn there (which it might not be,
         #   if emptying temporary folders on startup)
@@ -4094,7 +4286,7 @@ class TartubeApp(Gtk.Application):
         copy_list = media_data_obj.child_list.copy()
         for child_obj in copy_list:
             if isinstance(child_obj, media.Video):
-                self.delete_video(child_obj, True)
+                self.delete_video(child_obj, False, True)
             else:
                 self.delete_container_complete(child_obj, False, True)
 
@@ -4104,6 +4296,9 @@ class TartubeApp(Gtk.Application):
             #   one)
             if media_data_obj.parent_obj:
                 media_data_obj.parent_obj.del_child(media_data_obj)
+
+            # Reset alternative download destinations
+            media_data_obj.set_master_dbid(self, media_data_obj.dbid)
 
             # Remove the media data object from our IVs
             del self.media_reg_dict[media_data_obj.dbid]
@@ -4300,6 +4495,8 @@ class TartubeApp(Gtk.Application):
 
                 # Update the video object's IVs
                 video_obj.set_dl_flag(False)
+                # (A video that is not downloaded cannot be marked archived)
+                video_obj.set_archive_flag(False)
                 # Update the parent container object
                 video_obj.parent_obj.dec_dl_count()
                 # Update private folders
@@ -4515,13 +4712,99 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_delete_row(folder_obj)
 
 
+    def mark_container_archived(self, media_data_obj, flag,
+    only_child_videos_flag):
+
+        """Called by mainwin.MainWin.on_video_index_mark_archived() and
+        .on_video_index_mark_not_archived().
+
+        Marks any descedant videos as archived.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The container object to update
+
+            flag (True or False): True to mark as archived, False to mark as
+                not archived
+
+            only_child_videos_flag (True or False): Set to True if only child
+                video objects should be marked; False if the container object
+                and all its descendants should be marked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3483 mark_container_archived')
+
+        if isinstance(media_data_obj, media.Video):
+            return self.system_error(
+                121,
+                'Mark container as archived request failed sanity check',
+            )
+
+        # Special arrangements for private folders
+        if media_data_obj == self.fixed_all_folder:
+
+            # Check every video
+            for other_obj in list(self.media_reg_dict.values()):
+
+                if isinstance(other_obj, media.Video) and other_obj.dl_flag:
+                    other_obj.set_archive_flag(flag)
+
+        elif media_data_obj == self.fixed_new_folder:
+
+            # Check videos in this folder
+            for other_obj in self.fixed_new_folder.child_list:
+
+                if isinstance(other_obj, media.Video) and other_obj.dl_flag \
+                and other_obj.new_flag:
+                    other_obj.set_archive_flag(flag)
+
+        elif not flag and media_data_obj == self.fixed_fav_folder:
+
+            # Check videos in this folder
+            for other_obj in self.fixed_fav_folder.child_list:
+
+                if isinstance(other_obj, media.Video) and other_obj.dl_flag \
+                and other_obj.fav_flag:
+                    other_obj.set_archive_flag(flag)
+
+        elif only_child_videos_flag:
+
+            # Check videos in this channel/playlist/folder
+            for other_obj in media_data_obj.child_list:
+
+                if isinstance(other_obj, media.Video):
+                    other_obj.set_archive_flag(flag)
+
+        else:
+
+            # Check videos in this channel/playlist/folder, and in any
+            #   descendant channels/playlists/folders
+            for other_obj in media_data_obj.compile_all_videos( [] ):
+
+                if isinstance(other_obj, media.Video) and other_obj.dl_flag:
+                    other_obj.set_archive_flag(flag)
+
+        # In all cases, update the row on the Video Index 
+        self.main_win_obj.video_index_update_row_icon(media_data_obj)
+        self.main_win_obj.video_index_update_row_text(media_data_obj)
+        # If this container is the one visible in the Video Catalogue, redraw
+        #   the Video Catalogue
+        if self.main_win_obj.video_index_current == media_data_obj.name:
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+            )
+            
+
     def mark_container_favourite(self, media_data_obj, flag,
     only_child_videos_flag):
 
         """Called by mainwin.MainWin.on_video_index_mark_favourite() and
         .on_video_index_mark_not_favourite().
 
-        Mark this channel, playlist or folder as favourite. Also mark any
+        Marks this channel, playlist or folder as favourite. Also marks any
         descendant videos as favourite (but not descendent channels, playlists
         or folders).
 
@@ -5054,23 +5337,28 @@ class TartubeApp(Gtk.Application):
         )
 
 
-    def import_into_db(self):
+    def import_into_db(self, json_flag):
 
-        """Called by self.on_menu_import_db() or by any other function.
+        """Called by self.on_menu_import_json() or by any other function.
 
-        Imports the contents of an export file generated by a call to
-        self.export_from_db().
-
-        (Only imports JSON files; doesn't import the plain text files generated
-        by that function.)
+        Imports the contents of a JSON export file or a plain text export file
+        generated by a call to self.export_from_db().
 
         After prompting the user, creates new media.Video, media.Channel,
         media.Playlist and/or media.Folder objects. Checks for duplicates and
         handles them appropriately.
 
-        The export file contains a dictionary, 'db_dict', containing further
+        A JSON export file contains a dictionary, 'db_dict', containing further
         dictionaries, 'mini_dict', whose formats are described in the comments
         in self.export_from_db().
+
+        A plain text export file contains lines in groups of three, in the
+        format described in the comments in self.export_from_db().
+
+        Args:
+
+            json_flag (bool): True if a JSON export file should be imported,
+                False if a plain text export file should be imported
 
         """
 
@@ -5099,42 +5387,62 @@ class TartubeApp(Gtk.Application):
             return
 
         # Try to load the export file
-        try:
-            with open(file_path) as infile:
-                json_dict = json.load(infile)
+        if not json_flag:
 
-        except:
+            text = self.file_manager_obj.load_text(file_path)
+            if text is None:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'Failed to load the database export file',
+                    'error',
+                    'ok',
+                )
+
+            # Parse the text file, creating a db_dict in the form described in
+            #   the comments in self.export_from_db()
+            db_dict = self.parse_text_import(text)
+
+        else:
+
+            json_dict = self.file_manager_obj.load_json(file_path)
+            if not json_dict:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'Failed to load the database export file',
+                    'error',
+                    'ok',
+                )
+
+            # Do some basic checks on the loaded data
+            # (At the moment, JSON export files are compatible with all
+            #   versions of Tartube after v1.0.0; this may change in future)        
+            if not json_dict \
+            or not 'script_name' in json_dict \
+            or not 'script_version' in json_dict \
+            or not 'save_date' in json_dict \
+            or not 'save_time' in json_dict \
+            or not 'file_type' in json_dict \
+            or json_dict['script_name'] != __main__.__packagename__ \
+            or json_dict['file_type'] != 'db_export':
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    'The database export file is invalid',
+                    'error',
+                    'ok',
+                )
+
+            # Retrieve the database data itself. db_dict is in the form
+            #   described in the comments in self.export_from_db()
+            db_dict = json_dict['db_dict']
+
+        if not db_dict:
             return self.dialogue_manager_obj.show_msg_dialogue(
-                'Failed to load the database export file',
+                'The database export file\nis invalid (or empty)',
                 'error',
                 'ok',
             )
-
-        # Do some basic checks on the loaded data
-        if not json_dict \
-        or not 'script_name' in json_dict \
-        or not 'script_version' in json_dict \
-        or not 'save_date' in json_dict \
-        or not 'save_time' in json_dict \
-        or not 'file_type' in json_dict \
-        or json_dict['script_name'] != __main__.__packagename__ \
-        or json_dict['file_type'] != 'db_export':
-            return self.dialogue_manager_obj.show_msg_dialogue(
-                'The database export file is invalid',
-                'error',
-                'ok',
-            )
-
-        # (At the moment, export files are compatible with all versions of
-        #   Tartube after v1.0.0; this may change in future)
-
+                                
         # Prompt the user to allow them to select which videos/channels/
         #   playlists/folders to actually import, and how to deal with
         #   duplicate channels/playlists/folders
-        dialogue_win = mainwin.ImportDialogue(
-            self.main_win_obj,
-            json_dict['db_dict'],
-        )
+        dialogue_win = mainwin.ImportDialogue(self.main_win_obj, db_dict)
         response = dialogue_win.run()
 
         # Retrieve user choices from the dialogue window, before destroying the
@@ -5156,7 +5464,7 @@ class TartubeApp(Gtk.Application):
         #   any duplicates
         (video_count, channel_count, playlist_count, folder_count) \
         = self.process_import(
-            json_dict['db_dict'],   # The imported 'db_dict'
+            db_dict,                # The imported data
             flat_db_dict,           # The flattened version of that dictionary
             None,                   # No parent 'mini_dict' yet
             import_videos_flag,
@@ -5170,7 +5478,7 @@ class TartubeApp(Gtk.Application):
         if not video_count and not channel_count and not playlist_count \
         and not folder_count:
             self.dialogue_manager_obj.show_msg_dialogue(
-                'Nothing was imported from the database export file',
+                'Nothing was imported from\nthe database export file',
                 'error',
                 'ok',
             )
@@ -5193,6 +5501,104 @@ class TartubeApp(Gtk.Application):
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
 
 
+    def parse_text_import(self, text):
+
+        """Called by self.import_into_db().
+
+        Given the contents of a plain text database export, which has been
+        loaded into memory, convert the contents into the db_dict format
+        described in the comments in self.export_from_db(), as if a JSON
+        database export had been loaded.
+
+        The text file contains lines, in groups of three, in the following
+        format:
+
+            @type
+            <name>
+            <url>
+            
+        ...where '@type' is one of '@video', '@channel' or '@playlist' (the
+        folder structure is never preserved in a plain text export).
+
+        A video belongs to the channel/playlist above it.
+
+        Args:
+
+            text (str): The contents of the loaded plain text file
+
+        Returns:
+
+            db_dict (dict): The converted data in the form described in the
+                comments in self.export_from_db()
+                
+        """
+
+        db_dict = {}
+        dbid = 0
+        last_container_mini_dict = None
+        
+        # Split text into separate lines
+        line_list = text.split('\n')
+        
+        # Remove all empty lines (including those containing only whitespace)
+        mod_list = []
+        for line in line_list:
+            if re.match('\S', line):
+                mod_list.append(line)
+
+        # Extract each group of three lines, and check they are valid
+        # If a group of three is invalid (or if we reach the end of the file
+        #   in the middle of a group of 3), ignore that group and any
+        #   subsequent groups, and just use the data already extracted
+        while len(mod_list) > 2:
+            
+            media_type = mod_list[0]
+            name = mod_list[1]
+            source = mod_list[2]
+
+            mod_list = mod_list[3:]
+            
+            if media_type is None \
+            or (
+                media_type != '@video' and media_type != '@channel' \
+                and media_type != '@playlist'
+            ) \
+            or name is None or name == '' \
+            or source is None or not utils.check_url(source):
+                break
+
+            # A valid group of three; add an entry to db_dict using a fake dbid
+            dbid += 1
+
+            mini_dict = {
+                'type': None,
+                'dbid': dbid,
+                'name': name,
+                'nickname': name,
+                'source': source,
+                'db_dict': {},
+            }
+
+            if media_type == '@video':
+                mini_dict['type'] = 'video'
+                # A video belongs to the previous channel or playlist (if any)
+                if last_container_mini_dict is not None:
+                    last_container_mini_dict['db_dict'][dbid] = mini_dict
+
+            elif media_type == '@channel':
+                mini_dict['type'] = 'channel'
+                last_container_mini_dict = mini_dict
+                
+            else:
+                mini_dict['type'] = 'playlist'
+                last_container_mini_dict = mini_dict
+
+            db_dict[dbid] = mini_dict
+
+        # Procedure complete
+        return db_dict
+
+        
     def process_import(self, db_dict, flat_db_dict, parent_obj,
     import_videos_flag, merge_duplicates_flag, video_count, channel_count,
     playlist_count, folder_count):
@@ -5265,6 +5671,8 @@ class TartubeApp(Gtk.Application):
         #   self.media_reg_dict)
         for dbid in db_dict.keys():
 
+            media_data_obj = None
+
             # Each 'mini_dict' contains details for a single video/channel/
             #   playlist/folder
             mini_dict = db_dict[dbid]
@@ -5317,6 +5725,10 @@ class TartubeApp(Gtk.Application):
                             mini_dict['name'],
                         )
 
+                        mini_dict['nickname'] = self.rename_imported_container(
+                            mini_dict['nickname'],
+                        )
+
                     else:
 
                         # Use the existing channel/playlist/folder of the same
@@ -5324,47 +5736,42 @@ class TartubeApp(Gtk.Application):
                         old_dbid = self.media_name_dict[mini_dict['name']]
                         media_data_obj = self.media_reg_dict[old_dbid]
 
-                else:
-
-                    # Import the channel/playlist/folder
-                    media_data_obj = None
-
-                    if mini_dict['type'] == 'channel':
-                        media_data_obj = self.add_channel(
-                            mini_dict['name'],
-                            parent_obj,
-                            mini_dict['source'],
-                        )
-
-                        if media_data_obj:
-                            channel_count += 1
-
-                    elif mini_dict['type'] == 'playlist':
-                        media_data_obj = self.add_playlist(
-                            mini_dict['name'],
-                            parent_obj,
-                            mini_dict['source'],
-                        )
-
-                        if media_data_obj:
-                            playlist_count += 1
-
-                    elif mini_dict['type'] == 'folder':
-                        media_data_obj = self.add_folder(
-                            mini_dict['name'],
-                            parent_obj,
-                        )
-
-                        if media_data_obj:
-                            folder_count += 1
+                # Import the channel/playlist/folder
+                if mini_dict['type'] == 'channel':
+                    media_data_obj = self.add_channel(
+                        mini_dict['name'],
+                        parent_obj,
+                        mini_dict['source'],
+                    )
 
                     if media_data_obj:
-                        media_data_obj.set_nickname(mini_dict['nickname'])
+                        channel_count += 1
+
+                elif mini_dict['type'] == 'playlist':
+                    media_data_obj = self.add_playlist(
+                        mini_dict['name'],
+                        parent_obj,
+                        mini_dict['source'],
+                    )
+
+                    if media_data_obj:
+                        playlist_count += 1
+
+                elif mini_dict['type'] == 'folder':
+                    media_data_obj = self.add_folder(
+                        mini_dict['name'],
+                        parent_obj,
+                    )
+
+                    if media_data_obj:
+                        folder_count += 1
 
                 # If the channel/playlist/folder was successfully imported,
-                #   update the Video Index, then deal with any children by
-                #   calling this function recursively
+                #   set its nickname, update the Video Index, then deal with
+                #   any children by calling this function recursively
                 if media_data_obj is not None:
+
+                    media_data_obj.set_nickname(mini_dict['nickname'])
 
                     self.main_win_obj.video_index_add_row(media_data_obj)
 
@@ -6254,11 +6661,11 @@ class TartubeApp(Gtk.Application):
         self.export_from_db( [] )
 
 
-    def on_menu_import_db(self, action, par):
+    def on_menu_go_website(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Imports data into the Tartube database.
+        Opens the Tartube website.
 
         Args:
 
@@ -6269,9 +6676,50 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('ap 4159 on_menu_import_db')
+            print('ap 3782 on_menu_go_website')
 
-        self.import_into_db()
+        utils.open_file(__main__.__website__)
+
+
+    def on_menu_import_json(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Imports data into from a JSON export file into the Tartube database.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4159 on_menu_import_json')
+
+        self.import_into_db(True)
+
+
+    def on_menu_import_plain_text(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Imports data into from a plain text export file into the Tartube
+        database.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4160 on_menu_import_plain_text')
+
+        self.import_into_db(False)
 
 
     def on_menu_general_options(self, action, par):
@@ -6521,6 +6969,36 @@ class TartubeApp(Gtk.Application):
             self.apply_json_timeout_flag = False
         else:
             self.apply_json_timeout_flag = True
+
+
+    def set_auto_delete_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4414 set_auto_delete_flag')
+
+        if not flag:
+            self.auto_delete_flag = False
+        else:
+            self.auto_delete_flag = True
+
+
+    def set_auto_delete_watched_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4415 set_auto_delete_watched_flag')
+
+        if not flag:
+            self.auto_delete_watched_flag = False
+        else:
+            self.auto_delete_watched_flag = True
+
+
+    def set_auto_delete_days(self, days):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 4415 set_auto_delete_days')
+
+        self.auto_delete_days = days
 
 
     def set_bandwidth_default(self, value):

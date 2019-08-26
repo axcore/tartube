@@ -34,8 +34,10 @@ import sys
 
 
 # For the Debian distribution, use an environment variable. When specified,
-#   the default executable 'tartube' is replaced by the 'tartube_debian'
-#   executiable, in which youtube-dl updates are disabled
+#   the 'tartube_debian' file is the executable, rather than the 'tartube'
+#   file
+# When the 'tartube_debian' file is the executable, youtube-dl updates are
+#   disabled, and Tartube's config file is stored at $XDG_CONFIG_HOME
 # The package maintainer should use
 #   TARTUBE_NO_UPDATES=1 python3 setup.py build
 env_var_name = 'TARTUBE_NO_UPDATES'
@@ -60,7 +62,7 @@ if env_var_value is not None:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.1.015',
+    version='1.1.050',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

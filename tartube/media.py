@@ -541,6 +541,14 @@ class GenericContainer(GenericMedia):
     # Set accessors
 
 
+    def set_dl_disable_flag(self, flag):
+
+        if flag:
+            self.dl_disable_flag = True
+        else:
+            self.dl_disable_flag = False
+
+
     def reset_counts(self, vid_count, new_count, fav_count, dl_count):
 
         """Called by mainapp.TartubeApp.update_db().
@@ -588,6 +596,56 @@ class GenericContainer(GenericMedia):
         self.new_count -= 1
 
 
+    def set_master_dbid(self, app_obj, dbid):
+
+        if dbid == self.master_dbid:
+            # No change to the current value
+            return
+
+        else:
+
+            # Update the old alternative download destination
+            if self.master_dbid != self.dbid:
+                old_dest_obj = app_obj.media_reg_dict[self.master_dbid]
+                old_dest_obj.del_slave_dbid(self.dbid)
+
+            # Update this object's IV
+            self.master_dbid = dbid
+
+            if self.master_dbid != self.dbid:
+
+                # Update the new alternative download destination
+                new_dest_obj = app_obj.media_reg_dict[self.master_dbid]
+                new_dest_obj.add_slave_dbid(self.dbid)
+
+
+    def add_slave_dbid(self, dbid):
+
+        """Called by self.set_master_dbid() only."""
+
+        # (Failsafe: don't add the same value to self.slave_dbid_list)
+        match_flag = False
+        for slave_dbid in self.slave_dbid_list:
+            if slave_dbid == dbid:
+                match_flag = True
+                break
+
+        if not match_flag:
+            self.slave_dbid_list.append(dbid)
+
+
+    def del_slave_dbid(self, dbid):
+
+        """Called by self.set_master_dbid() only."""
+        new_list = []
+        
+        for slave_dbid in self.slave_dbid_list:
+            if slave_dbid != dbid:
+                new_list.append(slave_dbid)
+
+        self.slave_dbid_list = new_list.copy()
+        
+        
     def set_name(self, name):
 
         """Must only be called by mainapp.TartubeApp.rename_container()."""
@@ -905,6 +963,9 @@ class Video(GenericMedia):
         #   it's marked as a favourite if the same IV in the parent channel,
         #   playlist or folder (also in the parent's parent, and so on) is True
         self.fav_flag = False
+        # Flag set to True if the video is archived, meaning that it can't be
+        #   auto-deleted (but it can still be deleted manually by the user)
+        self.archive_flag = False
 
         # The file's directory, name and extension
         self.file_dir = None
@@ -1018,6 +1079,13 @@ class Video(GenericMedia):
 
 
     # Set accessors
+
+    def set_archive_flag(self, flag):
+
+        if flag:
+            self.archive_flag = True
+        else:
+            self.archive_flag = False
 
 
     def set_dl_flag(self, flag=False):
@@ -1303,10 +1371,27 @@ class Channel(GenericRemoteContainer):
         # Download source (a URL)
         self.source = None
 
+        # Alternative download destination - the dbid of a channel, playlist or
+        #   folder in whose directory videos, thumbnails (etc) are downloaded.
+        #   By default, set to the dbid of this channel; but can be set to the
+        #   dbid of any other channel/playlist/folder
+        # Used for: (1) adding a channel and its playlists to the Tartube
+        #   database, so that duplicate videos don't exist on the user's
+        #   filesystem, (2) tying together, for example, a YouTube and a
+        #   BitChute account, so that duplicate videos don't exist on the
+        #   user's filesystem
+        self.master_dbid = dbid
+        # A list of dbids for any channel, playlist or folder that uses this
+        #   channel as its alternative destination
+        self.slave_dbid_list = []
+
         # Flag set to True if Tartube should always simulate the download of
         #   videos in this channel, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
         self.dl_sim_flag = False
+        # Flag set to True if this channel should never be checked or
+        #   downloaded
+        self.dl_disable_flag = False
         # Flag set to True if this channel is marked as favourite, meaning
         #   that all child video objects are automatically marked as
         #   favourites
@@ -1440,10 +1525,27 @@ class Playlist(GenericRemoteContainer):
         # Download source (a URL)
         self.source = None
 
+        # Alternative download destination - the dbid of a channel, playlist or
+        #   folder in whose directory videos, thumbnails (etc) are downloaded.
+        #   By default, set to the dbid of this playlist; but can be set to the
+        #   dbid of any other channel/playlist/folder
+        # Used for: (1) adding a channel and its playlists to the Tartube
+        #   database, so that duplicate videos don't exist on the user's
+        #   filesystem, (2) tying together, for example, a YouTube and a
+        #   BitChute account, so that duplicate videos don't exist on the
+        #   user's filesystem
+        self.master_dbid = dbid
+        # A list of dbids for any channel, playlist or folder that uses this
+        #   playlist as its alternative destination
+        self.slave_dbid_list = []
+        
         # Flag set to True if Tartube should always simulate the download of
         #   videos in this playlist, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
         self.dl_sim_flag = False
+        # Flag set to True if this playlist should never be checked or
+        #   downloaded
+        self.dl_disable_flag = False
         # Flag set to True if this playlist is marked as favourite, meaning
         #   that all child video objects are automatically marked as
         #   favourites
@@ -1592,6 +1694,21 @@ class Folder(GenericContainer):
         #   folder can't be changed
         self.nickname = name
 
+        # Alternative download destination - the dbid of a channel, playlist or
+        #   folder in whose directory videos, thumbnails (etc) are downloaded.
+        #   By default, set to the dbid of this folder; but can be set to the
+        #   dbid of any other channel/playlist/folder
+        # Used for: (1) adding a channel and its playlists to the Tartube
+        #   database, so that duplicate videos don't exist on the user's
+        #   filesystem, (2) tying together, for example, a YouTube and a
+        #   BitChute account, so that duplicate videos don't exist on the
+        #   user's filesystem
+        # NB Fixed folders cannot have an alternative download destination
+        self.master_dbid = dbid
+        # A list of dbids for any channel, playlist or folder that uses this
+        #   folder as its alternative destination
+        self.slave_dbid_list = []
+        
         # Flag set to False if the folder can be deleted by the user, or True
         #   if it can't be deleted by the user
         self.fixed_flag = fixed_flag
@@ -1611,6 +1728,10 @@ class Folder(GenericContainer):
         #   videos in this folder, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
         self.dl_sim_flag = False
+        # Flag set to True if this folder should never be checked or
+        #   downloaded. If True, the setting applies to any descendant
+        #   channels, playlists and folders
+        self.dl_disable_flag = False        
         # Flag set to True if this folder is hidden (not visible in the Video
         #   Index). Note that only folders can be hidden; channels and
         #   playlists cannot

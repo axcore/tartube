@@ -35,8 +35,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '1.1.015'
-__date__ = '22 Aug 2019'
+__version__ = '1.1.050'
+__date__ = '26 Aug 2019'
 __copyright__ = 'Copyright \xa9 2019 A S Lewis'
 __license__ = """
 Copyright \xc2\xa9 2019 A S Lewis.
@@ -64,7 +64,7 @@ __app_id__ = 'io.sourceforge.tartube'
 # This is the default executable, in which youtube-dl updates are enabled. For
 #   Debian packaging, use the 'tartube_debian' executable (see the comments in
 #   setup.py)
-__disable_ytdl_update_flag__ = False
+__debian_install_flag__ = False
 # Tartube's icons are stored in the ../icons directory. If packagers want to
 #   move them somewhere else, then adding the directory path to this list will
 #   tell mainwin.MainWin.setup_pixbufs() how to find them

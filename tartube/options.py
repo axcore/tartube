@@ -268,6 +268,13 @@ class OptionsManager(object):
             temporary directories.
 
             The same applies to the JSON and thumbnail files.
+
+        use_fixed_folder (str or None): If not None, then all videos are
+            downloaded to one of Tartube's fixed folders (not including private
+            folders) - currently, that group consists of only 'Temporary
+            Videos' and 'Unsorted Videos'. The value should match the name of
+            the folder
+        
     """
 
 
@@ -371,6 +378,7 @@ class OptionsManager(object):
            'sim_keep_description': False,
            'sim_keep_info': False,
            'sim_keep_thumbnail': True,
+           'use_fixed_folder': None,
         }
 
 
@@ -518,6 +526,7 @@ class OptionsParser(object):
 #           OptionHolder('sim_keep_description', '', False),
 #           OptionHolder('sim_keep_info', '', False),
 #           OptionHolder('sim_keep_thumbnail', '', False),
+#           OptionHolder('use_fixed_folder', '', None),
         ]
 
 
@@ -721,16 +730,31 @@ class OptionsParser(object):
         """
 
         # Set the directory in which any downloaded videos will be saved
+        app_obj = self.download_manager_obj.app_obj
         media_data_obj = download_item_obj.media_data_obj
-        if isinstance(media_data_obj, media.Video):
-            save_path = media_data_obj.parent_obj.get_dir(
-                self.download_manager_obj.app_obj
-            )
+        override_name = copy_dict['use_fixed_folder']
 
+        if not isinstance(media_data_obj, media.Video) \
+        and override_name is not None \
+        and override_name in app_obj.media_name_dict:
+
+            # Because of the override, save all videos to a fixed folder
+            other_dbid = app_obj.media_name_dict[override_name]
+            other_obj = app_obj.media_reg_dict[other_dbid]
+            save_path = other_obj.get_dir(app_obj)
+                        
         else:
-            save_path = media_data_obj.get_dir(
-                self.download_manager_obj.app_obj
-            )
+            
+            if isinstance(media_data_obj, media.Video):
+                save_path = media_data_obj.parent_obj.get_dir(
+                    self.download_manager_obj.app_obj
+                )
+
+            else:
+                save_path = media_data_obj.get_dir(
+                    self.download_manager_obj.app_obj
+                )
+
 
         # Set the youtube-dl output template for the video's file
         template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]

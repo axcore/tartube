@@ -575,7 +575,7 @@ class GenericEditWin(GenericConfigWin):
 
         Returns:
 
-            The image created
+            The Gtk.Frame containing the image
 
         """
 
@@ -588,7 +588,7 @@ class GenericEditWin(GenericConfigWin):
             self.app_obj.file_manager_obj.load_to_pixbuf(image_path),
         )
 
-        return image
+        return frame
 
 
     def add_label(self, grid, text, x, y, wid, hei):
@@ -1069,6 +1069,226 @@ class GenericEditWin(GenericConfigWin):
     # (Inherited by VideoEditWin, ChannelPlaylistEditWin and FolderEditWin)
 
 
+    def add_container_properties(self, grid):
+
+        """Called by VideoEditWin.setup_tabs(),
+        ChannelPlaylistEditWin.setup_tabs() and FolderEditWin.setup_tabs().
+
+        Adds widgets common to those edit windows.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+                
+        """
+
+        entry = self.add_entry(grid,
+            None,
+            0, 1, 1, 1,
+        )
+        entry.set_text('#' + str(self.edit_obj.dbid))
+        entry.set_editable(False)
+        entry.set_hexpand(False)
+        entry.set_width_chars(8)
+
+        main_win_obj = self.app_obj.main_win_obj
+        parent_obj = self.edit_obj.parent_obj
+        if isinstance(self.edit_obj, media.Channel):
+            icon_path = main_win_obj.icon_dict['channel_small']
+        elif isinstance(self.edit_obj, media.Playlist):
+            icon_path = main_win_obj.icon_dict['playlist_small']
+        else:
+            icon_path = main_win_obj.icon_dict['folder_small']
+
+        frame = self.add_image(grid,
+            icon_path,
+            1, 1, 1, 1,
+        )
+        # (The frame looks cramped without this. The icon itself is 16x16)
+        frame.set_size_request(
+            16 + (self.spacing_size * 2),
+            -1,
+        )
+
+        entry2 = self.add_entry(grid,
+            'name',
+            2, 1, 1, 1,
+        )
+        entry2.set_editable(False)
+
+        label = self.add_label(grid,
+            'Listed as',
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry3 = self.add_entry(grid,
+            'nickname',
+            2, 2, 1, 1,
+        )
+        entry3.set_editable(False)
+
+        label2 = self.add_label(grid,
+            'Contained in',
+            0, 3, 1, 1,
+        )
+        label2.set_hexpand(False)
+        
+        if parent_obj:
+            icon_path2 = main_win_obj.icon_dict['folder_small']
+        else:
+            icon_path2 = main_win_obj.icon_dict['folder_black_small']
+
+        frame2 = self.add_image(grid,
+            icon_path2,
+            1, 3, 1, 1,
+        )
+        frame2.set_size_request(
+            16 + (self.spacing_size * 2),
+            -1,
+        )
+        
+        entry4 = self.add_entry(grid,
+            None,
+            2, 3, 1, 1,
+        )
+        entry4.set_editable(False)
+        if parent_obj:
+            entry4.set_text(parent_obj.name)
+
+
+    def add_source_properties(self, grid):
+
+        """Called by VideoEditWin.setup_tabs() and
+        ChannelPlaylistEditWin.setup_tabs().
+
+        Adds widgets common to those edit windows.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+                
+        """
+
+        label2 = self.add_label(grid,
+            utils.upper_case_first(self.media_type) + ' URL',
+            0, 4, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        entry5 = self.add_entry(grid,
+            'source',
+            1, 4, 2, 1,
+        )
+        entry5.set_editable(False)
+
+        
+    def add_destination_properties(self, grid):
+
+        """Called by ChannelPlaylistEditWin.setup_tabs() and
+        FolderEditWin.setup_tabs().
+
+        Adds widgets common to those edit windows.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+                
+        """
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 5, 3, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        label3 = self.add_label(grid2,
+            'Videos downloaded to',
+            0, 0, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        main_win_obj = self.app_obj.main_win_obj
+        dest_obj = self.app_obj.media_reg_dict[self.edit_obj.master_dbid]
+        if isinstance(dest_obj, media.Channel):
+            icon_path3 = main_win_obj.icon_dict['channel_small']
+        elif isinstance(dest_obj, media.Playlist):
+            icon_path3 = main_win_obj.icon_dict['playlist_small']
+        else:
+            icon_path3 = main_win_obj.icon_dict['folder_small']
+
+        frame3 = self.add_image(grid2,
+            icon_path3,
+            1, 0, 1, 1,
+        )
+        frame3.set_size_request(
+            16 + (self.spacing_size * 2),
+            -1,
+        )
+        
+        entry6 = self.add_entry(grid2,
+            None,
+            2, 0, 1, 1,
+        )
+        entry6.set_editable(False)
+        entry6.set_text(dest_obj.name)
+
+        label5 = self.add_label(grid2,
+            'Location on filesystem',
+            0, 1, 1, 1,
+        )
+        label5.set_hexpand(False)
+        
+        entry7 = self.add_entry(grid2,
+            None,
+            1, 1, 2, 1,
+        )
+        entry7.set_editable(False)
+        entry7.set_text(self.edit_obj.get_dir(self.app_obj))
+        
+        
+    def setup_download_options_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'General' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_Download options')
+
+        # Download options
+        self.add_label(grid,
+            '<u>Download options</u>',
+            0, 0, 2, 1,
+        )
+
+        self.apply_options_button = Gtk.Button('Apply download options')
+        grid.attach(self.apply_options_button, 0, 1, 1, 1)
+        self.apply_options_button.connect(
+            'clicked',
+            self.on_button_apply_clicked,
+        )
+
+        self.edit_button = Gtk.Button('Edit download options')
+        grid.attach(self.edit_button, 1, 1, 1, 1)
+        self.edit_button.connect('clicked', self.on_button_edit_clicked)
+
+        self.remove_button = Gtk.Button('Remove download options')
+        grid.attach(self.remove_button, 1, 2, 1, 1)
+        self.remove_button.connect('clicked', self.on_button_remove_clicked)
+
+        if self.edit_obj.options_obj:
+            self.apply_options_button.set_sensitive(False)
+        else:
+            self.edit_button.set_sensitive(False)
+            self.remove_button.set_sensitive(False)
+
+            
     def on_button_apply_clicked(self, button):
 
         """Called from callback in self.setup_general_tab().
@@ -1090,9 +1310,9 @@ class GenericEditWin(GenericConfigWin):
         # Apply download options to the media data object
         self.app_obj.apply_download_options(self.edit_obj)
         # (De)sensitise buttons appropriately
-        self.apply_button.set_sensitive(False)
-        self.edit_button.set_sensitive(True)
-        self.remove_button.set_sensitive(True)
+        self.apply_options_button.set_sensitive(False)
+        self.edit_options_button.set_sensitive(True)
+        self.remove_options_button.set_sensitive(True)
 
 
     def on_button_edit_clicked(self, button):
@@ -1142,9 +1362,9 @@ class GenericEditWin(GenericConfigWin):
         # Remove download options from the media data object
         self.app_obj.remove_download_options(self.edit_obj)
         # (De)sensitise buttons appropriately
-        self.apply_button.set_sensitive(True)
-        self.edit_button.set_sensitive(False)
-        self.remove_button.set_sensitive(False)
+        self.apply_options_button.set_sensitive(True)
+        self.edit_options_button.set_sensitive(False)
+        self.remove_options_button.set_sensitive(False)
 
 
 class GenericPrefWin(GenericConfigWin):
@@ -1929,29 +2149,74 @@ class OptionsEditWin(GenericEditWin):
             self.file_tab_sensitise_widgets(False)
 
         # Filesystem options
-
-        # (empty label for spacing)
-        self.add_label(grid,
-            '',
-            0, 7, grid_width, 1,
-        )
-
         self.add_label(grid,
             '<u>Filesystem options</u>',
-            0, 8, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             'Restrict filenames to using ASCII characters',
             'restrict_filenames',
-            0, 9, grid_width, 1,
+            0, 8, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             'Set the file modification time from the server',
             'nomtime',
-            0, 10, grid_width, 1,
+            0, 9, grid_width, 1,
         )
+
+        # Filesystem overrides
+        self.add_label(grid,
+            '<u>Filesystem overrides</u>',
+            0, 10, grid_width, 1,
+        )        
+
+        checkbutton = self.add_checkbutton(grid,
+            'Download all videos into this folder',
+            None,
+            0, 11, 2, 1,
+        )
+        # Signal connect below
+
+        # (Currently, only two fixed folders are elligible for this mode, so
+        #   we'll just add them individually)
+        store5 = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
+        pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_green_small']
+        store5.append( [pixbuf, self.app_obj.fixed_misc_folder.name] )
+        pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_blue_small']
+        store5.append( [pixbuf, self.app_obj.fixed_temp_folder.name] )
+
+        combo5 = Gtk.ComboBox.new_with_model(store5)
+        grid.attach(combo5, 2, 11, (grid_width - 2), 1)
+        renderer_pixbuf5 = Gtk.CellRendererPixbuf()
+        combo5.pack_start(renderer_pixbuf5, False)
+        combo5.add_attribute(renderer_pixbuf5, 'pixbuf', 0)
+        renderer_text5 = Gtk.CellRendererText()
+        combo5.pack_start(renderer_text5, True)
+        combo5.add_attribute(renderer_text5, 'text', 1)
+        combo5.set_entry_text_column(1)
+        # Signal connect below
+
+        current_override = self.edit_obj.options_dict['use_fixed_folder']        
+        if current_override is None:
+            checkbutton.set_active(False)
+            combo5.set_sensitive(False)
+            combo5.set_active(0)
+        else:
+            checkbutton.set_active(True)
+            combo5.set_sensitive(True)
+            if current_override == self.app_obj.fixed_temp_folder.name:
+                combo5.set_active(1)
+            else:
+                # The value should be either None, 'Unsorted Videos' or
+                #   'Temporary Videos'. In case the value is anything else,
+                #   use 'Unsorted Videos'
+                combo5.set_active(0)
+
+        # Signal connects from above
+        checkbutton.connect('toggled', self.on_fixed_folder_toggled, combo5)
+        combo5.connect('changed', self.on_fixed_folder_changed)
 
 
     def setup_formats_tab(self):
@@ -2546,6 +2811,48 @@ class OptionsEditWin(GenericEditWin):
     # Callback class methods
 
 
+    def on_fixed_folder_toggled(self, checkbutton, combo):
+
+        """Called by callback in self.setup_files_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to be modified by this
+                function
+
+        """
+
+        if not checkbutton.get_active():
+            self.edit_dict['use_fixed_folder'] = None
+            combo.set_sensitive(False)
+
+        else:
+
+            tree_iter = combo.get_active_iter()
+            model = combo.get_model()
+            pixbuf, name = model[tree_iter][:2]
+            self.edit_dict['use_fixed_folder'] = name
+            combo.set_sensitive(True)
+
+
+    def on_fixed_folder_changed(self, combo):
+
+        """Called by callback in self.setup_files_tab().
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        pixbuf, name = model[tree_iter][:2]
+        self.edit_dict['use_fixed_folder'] = name
+
+        
     def on_file_tab_button_clicked(self, button, entry, combo):
 
         """Called by callback in self.setup_files_tab().
@@ -2994,9 +3301,9 @@ class VideoEditWin(GenericEditWin):
         self.ok_button = None                   # Gtk.Button
         self.cancel_button = None               # Gtk.Button
         # (Non-standard widgets)
-        self.apply_button = None                # Gtk.Button
-        self.edit_button = None                 # Gtk.Button
-        self.remove_button = None               # Gtk.Button
+        self.apply_options_button = None        # Gtk.Button
+        self.edit_options_button = None         # Gtk.Button
+        self.remove_options_button = None       # Gtk.Button
 
 
         # IV list - other
@@ -3020,6 +3327,9 @@ class VideoEditWin(GenericEditWin):
         #   closed, the dictionary will still be empty)
         self.edit_dict = {}
 
+        # String identifying the media type
+        self.media_type = 'video'
+        
 
         # Code
         # ----
@@ -3070,6 +3380,7 @@ class VideoEditWin(GenericEditWin):
         """
 
         self.setup_general_tab()
+        self.setup_download_options_tab()
         self.setup_descrip_tab()
         self.setup_errors_warnings_tab()
 
@@ -3088,68 +3399,10 @@ class VideoEditWin(GenericEditWin):
             0, 0, 2, 1,
         )
 
-        entry = self.add_entry(grid,
-            None,
-            0, 1, 1, 1,
-        )
-        entry.set_text('#' + str(self.edit_obj.dbid))
-        entry.set_editable(False)
-        entry.set_hexpand(False)
-        entry.set_width_chars(8)
-
-        entry2 = self.add_entry(grid,
-            'name',
-            1, 1, 1, 1,
-        )
-        entry2.set_editable(False)
-
-        label = self.add_label(grid,
-            'Listed as',
-            0, 2, 1, 1,
-        )
-        label.set_hexpand(False)
-
-        entry3 = self.add_entry(grid,
-            'nickname',
-            1, 2, 1, 1,
-        )
-        entry3.set_editable(False)
-
-        parent_obj = self.edit_obj.parent_obj
-        if isinstance(parent_obj, media.Channel):
-            icon_path \
-            = self.app_obj.main_win_obj.icon_dict['channel_none_large']
-        elif isinstance(parent_obj, media.Playlist):
-            icon_path \
-            = self.app_obj.main_win_obj.icon_dict['playlist_none_large']
-        else:
-            icon_path \
-            = self.app_obj.main_win_obj.icon_dict['folder_none_large']
-
-        self.add_image(grid,
-            icon_path,
-            0, 3, 1, 1,
-        )
-
-        entry4 = self.add_entry(grid,
-            None,
-            1, 3, 1, 1,
-        )
-        entry4.set_text(parent_obj.name)
-        entry4.set_editable(False)
-
-        label2 = self.add_label(grid,
-            'URL',
-            0, 4, 1, 1,
-        )
-        label2.set_hexpand(False)
-
-        entry5 = self.add_entry(grid,
-            'source',
-            1, 4, 1, 1,
-        )
-        entry5.set_editable(False)
-
+        # The first sets of widgets are shared by multiple edit windows
+        self.add_container_properties(grid)
+        self.add_source_properties(grid)
+      
         label3 = self.add_label(grid,
             'File',
             0, 5, 1, 1,
@@ -3158,7 +3411,7 @@ class VideoEditWin(GenericEditWin):
 
         entry6 = self.add_entry(grid,
             None,
-            1, 5, 1, 1,
+            1, 5, 2, 1,
         )
         entry6.set_editable(False)
         if self.edit_obj.file_dir:
@@ -3173,27 +3426,27 @@ class VideoEditWin(GenericEditWin):
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 6, 2, 1)
-        grid2.set_vexpand(False)
-        grid2.set_border_width(self.spacing_size)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 6, 3, 1)
+        grid3.set_vexpand(False)
+        grid3.set_border_width(self.spacing_size)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
 
-        checkbutton = self.add_checkbutton(grid2,
+        checkbutton = self.add_checkbutton(grid3,
             'Always simulate download of this video',
             'dl_sim_flag',
             0, 0, 1, 1,
         )
         checkbutton.set_sensitive(False)
 
-        label4 = self.add_label(grid2,
+        label4 = self.add_label(grid3,
             'Duration',
             1, 0, 1, 1,
         )
         label4.set_hexpand(False)
 
-        entry7 = self.add_entry(grid2,
+        entry7 = self.add_entry(grid3,
             None,
             2, 0, 1, 1,
         )
@@ -3203,20 +3456,20 @@ class VideoEditWin(GenericEditWin):
                 utils.convert_seconds_to_string(self.edit_obj.duration),
             )
 
-        checkbutton2 = self.add_checkbutton(grid2,
+        checkbutton2 = self.add_checkbutton(grid3,
             'Video is marked as unwatched',
             'new_flag',
             0, 1, 1, 1,
         )
         checkbutton2.set_sensitive(False)
 
-        label5 = self.add_label(grid2,
+        label5 = self.add_label(grid3,
             'File size',
             1, 1, 1, 1,
         )
         label5.set_hexpand(False)
 
-        entry8 = self.add_entry(grid2,
+        entry8 = self.add_entry(grid3,
             None,
             2, 1, 1, 1,
         )
@@ -3224,20 +3477,20 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.file_size is not None:
             entry8.set_text(self.edit_obj.get_file_size_string())
 
-        checkbutton3 = self.add_checkbutton(grid2,
+        checkbutton3 = self.add_checkbutton(grid3,
             'Video is marked as favourite',
             'fav_flag',
             0, 2, 1, 1,
         )
         checkbutton3.set_sensitive(False)
 
-        label6 = self.add_label(grid2,
+        label6 = self.add_label(grid3,
             'Upload time',
             1, 2, 1, 1,
         )
         label6.set_hexpand(False)
 
-        entry9 = self.add_entry(grid2,
+        entry9 = self.add_entry(grid3,
             None,
             2, 2, 1, 1,
         )
@@ -3245,20 +3498,20 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.upload_time is not None:
             entry9.set_text(self.edit_obj.get_upload_time_string())
 
-        checkbutton4 = self.add_checkbutton(grid2,
+        checkbutton4 = self.add_checkbutton(grid3,
             'Video has been downloaded',
             'dl_flag',
             0, 3, 1, 1,
         )
         checkbutton4.set_sensitive(False)
 
-        label7 = self.add_label(grid2,
+        label7 = self.add_label(grid3,
             'Receive time',
             1, 3, 1, 1,
         )
         label7.set_hexpand(False)
 
-        entry10 = self.add_entry(grid2,
+        entry10 = self.add_entry(grid3,
             None,
             2, 3, 1, 1,
         )
@@ -3266,28 +3519,8 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.receive_time is not None:
             entry10.set_text(self.edit_obj.get_receive_time_string())
 
-        # To avoid messing up the formatting again, put the next buttons inside
-        #   an hbox
-        hbox = Gtk.HBox()
-        grid.attach(hbox, 0, 7, 2, 1)
 
-        self.apply_button = Gtk.Button('Apply download options')
-        hbox.pack_start(self.apply_button, True, True, self.spacing_size)
-        self.apply_button.connect('clicked', self.on_button_apply_clicked)
-
-        self.edit_button = Gtk.Button('Edit download options')
-        hbox.pack_start(self.edit_button, True, True, self.spacing_size)
-        self.edit_button.connect('clicked', self.on_button_edit_clicked)
-
-        self.remove_button = Gtk.Button('Remove download options')
-        hbox.pack_start(self.remove_button, True, True, self.spacing_size)
-        self.remove_button.connect('clicked', self.on_button_remove_clicked)
-
-        if self.edit_obj.options_obj:
-            self.apply_button.set_sensitive(False)
-        else:
-            self.edit_button.set_sensitive(False)
-            self.remove_button.set_sensitive(False)
+#   def setup_download_options_tab():   # Inherited from GenericConfigWin
 
 
     def setup_descrip_tab(self):
@@ -3417,9 +3650,9 @@ class ChannelPlaylistEditWin(GenericEditWin):
         self.ok_button = None                   # Gtk.Button
         self.cancel_button = None               # Gtk.Button
         # (Non-standard widgets)
-        self.apply_button = None                # Gtk.Button
-        self.edit_button = None                 # Gtk.Button
-        self.remove_button = None               # Gtk.Button
+        self.apply_options_button = None        # Gtk.Button
+        self.edit_options_button = None         # Gtk.Button
+        self.remove_options_button = None       # Gtk.Button
 
 
         # IV list - other
@@ -3496,6 +3729,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         """
 
         self.setup_general_tab()
+        self.setup_download_options_tab()
         self.setup_errors_warnings_tab()
 
 
@@ -3510,176 +3744,95 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         self.add_label(grid,
             '<u>General properties</u>',
-            0, 0, 2, 1,
+            0, 0, 3, 1,
         )
 
-        entry = self.add_entry(grid,
-            None,
-            0, 1, 1, 1,
-        )
-        entry.set_text('#' + str(self.edit_obj.dbid))
-        entry.set_editable(False)
-        entry.set_hexpand(False)
-        entry.set_width_chars(8)
-
-        entry2 = self.add_entry(grid,
-            'name',
-            1, 1, 1, 1,
-        )
-        entry2.set_editable(False)
-
-        label = self.add_label(grid,
-            'Listed as',
-            0, 2, 1, 1,
-        )
-        label.set_hexpand(False)
-
-        entry3 = self.add_entry(grid,
-            'nickname',
-            1, 2, 1, 1,
-        )
-        entry3.set_editable(False)
-
-        main_win_obj = self.app_obj.main_win_obj
-        parent_obj = self.edit_obj.parent_obj
-        if parent_obj:
-            icon_path = main_win_obj.icon_dict['folder_none_large']
-        else:
-            icon_path = main_win_obj.icon_dict['folder_no_parent_none_large']
-
-        self.add_image(grid,
-            icon_path,
-            0, 3, 1, 1,
-        )
-
-        entry4 = self.add_entry(grid,
-            None,
-            1, 3, 1, 1,
-        )
-        entry4.set_editable(False)
-        if parent_obj:
-            entry4.set_text(parent_obj.name)
-
-        label2 = self.add_label(grid,
-            'URL',
-            0, 4, 1, 1,
-        )
-        label2.set_hexpand(False)
-
-        entry5 = self.add_entry(grid,
-            'source',
-            1, 4, 1, 1,
-        )
-        entry5.set_editable(False)
-
-        label3 = self.add_label(grid,
-            'Location',
-            0, 5, 1, 1,
-        )
-        label3.set_hexpand(False)
-
-        entry6 = self.add_entry(grid,
-            None,
-            1, 5, 1, 1,
-        )
-        entry6.set_editable(False)
-        entry6.set_text(self.edit_obj.get_dir(self.app_obj))
+        # The first sets of widgets are shared by multiple edit windows
+        self.add_container_properties(grid)
+        self.add_source_properties(grid)
+        self.add_destination_properties(grid)
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 6, 2, 1)
-        grid2.set_vexpand(False)
-        grid2.set_border_width(self.spacing_size)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 6, 3, 1)
+        grid3.set_vexpand(False)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
 
-        checkbutton = self.add_checkbutton(grid2,
+        checkbutton = self.add_checkbutton(grid3,
             'Always simulate download of videos in this ' + self.media_type,
             'dl_sim_flag',
             0, 0, 1, 1,
         )
         checkbutton.set_sensitive(False)
 
-        checkbutton2 = self.add_checkbutton(grid2,
-            'This ' + self.media_type + ' is marked as a favourite',
-            'fav_flag',
+        checkbutton2 = self.add_checkbutton(grid3,
+            'Disable checking/downloading for this ' + self.media_type,
+            'dl_disable_flag',
             0, 1, 1, 1,
         )
         checkbutton2.set_sensitive(False)
 
-        self.add_label(grid2,
+        checkbutton3 = self.add_checkbutton(grid3,
+            'This ' + self.media_type + ' is marked as a favourite',
+            'fav_flag',
+            0, 2, 1, 1,
+        )
+        checkbutton3.set_sensitive(False)
+
+        self.add_label(grid3,
             'Total videos',
             1, 0, 1, 1,
         )
-        entry7 = self.add_entry(grid2,
+        entry8 = self.add_entry(grid3,
             'vid_count',
             2, 0, 1, 1,
-        )
-        entry7.set_editable(False)
-        entry7.set_width_chars(8)
-        entry7.set_hexpand(False)
-
-        self.add_label(grid2,
-            'New videos',
-            1, 1, 1, 1,
-        )
-        entry8 = self.add_entry(grid2,
-            'new_count',
-            2, 1, 1, 1,
         )
         entry8.set_editable(False)
         entry8.set_width_chars(8)
         entry8.set_hexpand(False)
 
-        self.add_label(grid2,
-            'Favourite videos',
-            1, 2, 1, 1,
+        self.add_label(grid3,
+            'New videos',
+            1, 1, 1, 1,
         )
-        entry9 = self.add_entry(grid2,
-            'fav_count',
-            2, 2, 1, 1,
+        entry9 = self.add_entry(grid3,
+            'new_count',
+            2, 1, 1, 1,
         )
         entry9.set_editable(False)
         entry9.set_width_chars(8)
         entry9.set_hexpand(False)
 
-        self.add_label(grid2,
-            'Downloaded videos',
-            1, 3, 1, 1,
+        self.add_label(grid3,
+            'Favourite videos',
+            1, 2, 1, 1,
         )
-        entry10 = self.add_entry(grid2,
-            'dl_count',
-            2, 3, 1, 1,
+        entry10 = self.add_entry(grid3,
+            'fav_count',
+            2, 2, 1, 1,
         )
         entry10.set_editable(False)
         entry10.set_width_chars(8)
         entry10.set_hexpand(False)
 
-        # To avoid messing up the formatting again, but the next buttons inside
-        #   an hbox
-        hbox = Gtk.HBox()
-        grid.attach(hbox, 0, 7, 2, 1)
-
-        self.apply_button = Gtk.Button('Apply download options')
-        hbox.pack_start(self.apply_button, True, True, self.spacing_size)
-        self.apply_button.connect('clicked', self.on_button_apply_clicked)
-
-        self.edit_button = Gtk.Button('Edit download options')
-        hbox.pack_start(self.edit_button, True, True, self.spacing_size)
-        self.edit_button.connect('clicked', self.on_button_edit_clicked)
-
-        self.remove_button = Gtk.Button('Remove download options')
-        hbox.pack_start(self.remove_button, True, True, self.spacing_size)
-        self.remove_button.connect('clicked', self.on_button_remove_clicked)
-
-        if self.edit_obj.options_obj:
-            self.apply_button.set_sensitive(False)
-        else:
-            self.edit_button.set_sensitive(False)
-            self.remove_button.set_sensitive(False)
+        self.add_label(grid3,
+            'Downloaded videos',
+            1, 3, 1, 1,
+        )
+        entry11 = self.add_entry(grid3,
+            'dl_count',
+            2, 3, 1, 1,
+        )
+        entry11.set_editable(False)
+        entry11.set_width_chars(8)
+        entry11.set_hexpand(False)
 
 
+#   def setup_download_options_tab():   # Inherited from GenericConfigWin
+
+            
     def setup_errors_warnings_tab(self):
 
         """Called by self.setup_tabs().
@@ -3780,9 +3933,9 @@ class FolderEditWin(GenericEditWin):
         self.ok_button = None                   # Gtk.Button
         self.cancel_button = None               # Gtk.Button
         # (Non-standard widgets)
-        self.apply_button = None                # Gtk.Button
-        self.edit_button = None                 # Gtk.Button
-        self.remove_button = None               # Gtk.Button
+        self.apply_options_button = None        # Gtk.Button
+        self.edit_options_button = None         # Gtk.Button
+        self.remove_options_button = None       # Gtk.Button
 
 
         # IV list - other
@@ -3806,6 +3959,9 @@ class FolderEditWin(GenericEditWin):
         #   closed, the dictionary will still be empty)
         self.edit_dict = {}
 
+        # String identifying the media type
+        self.media_type = 'folder'
+        
 
         # Code
         # ----
@@ -3856,6 +4012,7 @@ class FolderEditWin(GenericEditWin):
         """
 
         self.setup_general_tab()
+        self.setup_download_options_tab()
 
 
     def setup_general_tab(self):
@@ -3872,148 +4029,79 @@ class FolderEditWin(GenericEditWin):
             0, 0, 2, 1,
         )
 
-        entry = self.add_entry(grid,
-            None,
-            0, 1, 1, 1,
-        )
-        entry.set_text('#' + str(self.edit_obj.dbid))
-        entry.set_editable(False)
-        entry.set_hexpand(False)
-        entry.set_width_chars(8)
-
-        entry2 = self.add_entry(grid,
-            'name',
-            1, 1, 1, 1,
-        )
-        entry2.set_editable(False)
-
-        label = self.add_label(grid,
-            'Listed as',
-            0, 2, 1, 1,
-        )
-        label.set_hexpand(False)
-
-        entry3 = self.add_entry(grid,
-            'nickname',
-            1, 2, 1, 1,
-        )
-        entry3.set_editable(False)
-
-        main_win_obj = self.app_obj.main_win_obj
-        parent_obj = self.edit_obj.parent_obj
-        if parent_obj:
-            icon_path = main_win_obj.icon_dict['folder_none_large']
-        else:
-            icon_path = main_win_obj.icon_dict['folder_no_parent_none_large']
-
-        self.add_image(grid,
-            icon_path,
-            0, 3, 1, 1,
-        )
-
-        entry4 = self.add_entry(grid,
-            None,
-            1, 3, 1, 1,
-        )
-        entry4.set_editable(False)
-        if parent_obj:
-            entry4.set_text(parent_obj.name)
-
-        label2 = self.add_label(grid,
-            'Location',
-            0, 4, 1, 1,
-        )
-        label2.set_hexpand(False)
-
-        entry5 = self.add_entry(grid,
-            None,
-            1, 4, 1, 1,
-        )
-        entry5.set_editable(False)
-        entry5.set_text(self.edit_obj.get_dir(self.app_obj))
+        # The first sets of widgets are shared by multiple edit windows
+        self.add_container_properties(grid)
+        self.add_destination_properties(grid)
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 5, 2, 1)
-        grid2.set_vexpand(False)
-        grid2.set_border_width(self.spacing_size)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 6, 3, 1)
+        grid3.set_vexpand(False)
+        grid3.set_border_width(self.spacing_size)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
 
-        checkbutton = self.add_checkbutton(grid2,
+        checkbutton = self.add_checkbutton(grid3,
             'Always simulate download of videos',
             'dl_sim_flag',
             0, 0, 1, 1,
         )
         checkbutton.set_sensitive(False)
 
-        checkbutton2 = self.add_checkbutton(grid2,
-            'This folder is marked as a favourite',
-            'fav_flag',
+        checkbutton2 = self.add_checkbutton(grid3,
+            'Disable checking/downloading for this folder',
+            'dl_disable_flag',
             0, 1, 1, 1,
         )
         checkbutton2.set_sensitive(False)
 
-        checkbutton3 = self.add_checkbutton(grid2,
-            'This folder is hidden',
-            'hidden_flag',
+        checkbutton3 = self.add_checkbutton(grid3,
+            'This folder is marked as a favourite',
+            'fav_flag',
             0, 2, 1, 1,
         )
         checkbutton3.set_sensitive(False)
 
-        checkbutton4 = self.add_checkbutton(grid2,
+        checkbutton4 = self.add_checkbutton(grid3,
+            'This folder is hidden',
+            'hidden_flag',
+            0, 3, 1, 1,
+        )
+        checkbutton4.set_sensitive(False)
+
+        checkbutton5 = self.add_checkbutton(grid3,
             'This folder can\'t be deleted by the user',
             'fixed_flag',
             1, 0, 1, 1,
         )
-        checkbutton4.set_sensitive(False)
+        checkbutton5.set_sensitive(False)
 
-        checkbutton5 = self.add_checkbutton(grid2,
+        checkbutton6 = self.add_checkbutton(grid3,
             'This is a system-controlled folder',
             'priv_flag',
             1, 1, 1, 1,
         )
-        checkbutton5.set_sensitive(False)
+        checkbutton6.set_sensitive(False)
 
-        checkbutton6 = self.add_checkbutton(grid2,
+        checkbutton7 = self.add_checkbutton(grid3,
             'Only videos can be added to this folder',
             'restrict_flag',
             1, 2, 1, 1,
         )
-        checkbutton6.set_sensitive(False)
+        checkbutton7.set_sensitive(False)
 
-        checkbutton7 = self.add_checkbutton(grid2,
+        checkbutton8 = self.add_checkbutton(grid3,
             'All contents deleted when ' \
             + utils.upper_case_first(__main__. __packagename__) \
             + ' shuts down',
             'temp_flag',
             1, 3, 1, 1,
         )
-        checkbutton7.set_sensitive(False)
+        checkbutton8.set_sensitive(False)
 
-        # To avoid messing up the formatting again, but the next buttons inside
-        #   an hbox
-        hbox = Gtk.HBox()
-        grid.attach(hbox, 0, 6, 2, 1)
 
-        self.apply_button = Gtk.Button('Apply download options')
-        hbox.pack_start(self.apply_button, True, True, self.spacing_size)
-        self.apply_button.connect('clicked', self.on_button_apply_clicked)
-
-        self.edit_button = Gtk.Button('Edit download options')
-        hbox.pack_start(self.edit_button, True, True, self.spacing_size)
-        self.edit_button.connect('clicked', self.on_button_edit_clicked)
-
-        self.remove_button = Gtk.Button('Remove download options')
-        hbox.pack_start(self.remove_button, True, True, self.spacing_size)
-        self.remove_button.connect('clicked', self.on_button_remove_clicked)
-
-        if self.edit_obj.options_obj:
-            self.apply_button.set_sensitive(False)
-        else:
-            self.edit_button.set_sensitive(False)
-            self.remove_button.set_sensitive(False)
+#   def setup_download_options_tab():   # Inherited from GenericConfigWin
 
 
     # Callback class methods
@@ -4153,9 +4241,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # (This is a placeholder, to be replaced when we add translations)
         store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        pixbuf = self.app_obj.file_manager_obj.load_to_pixbuf(
-            os.path.abspath(os.path.join('icons', 'locale', 'flag_uk.png')),
-        )
+        pixbuf = self.app_obj.main_win_obj.pixbuf_dict['flag_uk']
         store.append( [pixbuf, 'English'] )
 
         combo = Gtk.ComboBox.new_with_model(store)
@@ -4516,6 +4602,47 @@ class SystemPrefWin(GenericPrefWin):
             self.on_match_spinbutton_changed,
         )
 
+        # Video deletion preferences
+        self.add_label(grid,
+            '<u>Video deletion preferences</u>',
+            0, 7, grid_width, 1,
+        )
+
+        checkbutton2 = self.add_checkbutton(grid,
+            'Automatically delete downloaded videos after this many days',
+            self.app_obj.auto_delete_flag,
+            True,               # Can be toggled by user
+            0, 8, (grid_width - 1), 1,
+        )
+        # Signal connect appears below
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, 999, 1, self.app_obj.auto_delete_days,
+            2, 8, 1, 1,
+        )
+        # Signal connect appears below
+
+        checkbutton3 = self.add_checkbutton(grid,
+            '...but only delete videos which have been watched',
+            self.app_obj.auto_delete_watched_flag,
+            True,               # Can be toggled by user
+            0, 9, grid_width, 1,
+        )
+        # Signal connect appears below
+        
+        # Signal connects from above
+        checkbutton2.connect(
+            'toggled',
+            self.on_auto_delete_button_toggled,
+            spinbutton3,
+            checkbutton2,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_auto_delete_spinbutton_changed,
+        )
+        checkbutton3.connect('toggled', self.on_delete_watched_button_toggled)
+
 
     def setup_operations_tab(self):
 
@@ -4540,6 +4667,8 @@ class SystemPrefWin(GenericPrefWin):
             0, 1, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_auto_update_button_toggled)
+        if __main__.__debian_install_flag__:
+            checkbutton.set_sensitive(False)
 
         checkbutton2 = self.add_checkbutton(grid,
             'Automatically save files at the end of a download/update/' \
@@ -4752,7 +4881,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo2.connect('changed', self.on_update_combo_changed)
 
-        if __main__.__disable_ytdl_update_flag__:
+        if __main__.__debian_install_flag__:
             combo.set_sensitive(False)
             combo2.set_sensitive(False)
 
@@ -4864,6 +4993,53 @@ class SystemPrefWin(GenericPrefWin):
 
 
     # Callback class methods
+
+
+    def on_auto_delete_button_toggled(self, checkbutton, spinbutton,
+    checkbutton2):
+
+        """Called from callback in self.setup_videos_tab().
+
+        Enables/disables automatic deletion of downloaded videos.
+        
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            checkbutton2 (Gtk.CheckButton): Another widget to be
+                (de)sensitised
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(True)
+            spinbutton.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
+            
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(False)
+            spinbutton.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
+            
+
+    def on_auto_delete_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        Sets the number of days after which downloaded videos should be
+        deleted.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_auto_delete_days(spinbutton.get_value())
 
 
     def on_auto_update_button_toggled(self, checkbutton):
@@ -5133,6 +5309,27 @@ class SystemPrefWin(GenericPrefWin):
                     'ok',
                     self,           # Parent window is this window
                 )
+
+
+    def on_delete_watched_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        Enables/disables automatic deletion of videos, but only those that have
+        been watched.
+        
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_delete_watched_flag:
+            self.app_obj.set_auto_delete_watched_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_delete_watched_flag:
+            self.app_obj.set_auto_delete_watched_flag(False)
 
 
     def on_dialogue_button_toggled(self, checkbutton):

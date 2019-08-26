@@ -457,15 +457,19 @@ SMALL_ICON_DICT = {
     'playlist_small': 'playlist.png',
     'folder_small': 'folder.png',
 
-    'download_small': 'download.png',
+    'archived_small': 'archived.png',
     'check_small': 'check.png',
+    'download_small': 'download.png',
+    'error_small': 'error.png',
+    'folder_black_small': 'folder_black.png',
+    'folder_blue_small': 'folder_blue.png',
+    'folder_green_small': 'folder_green.png',
+    'folder_red_small': 'folder_red.png',
     'have_file_small': 'have_file.png',
     'no_file_small': 'no_file.png',
-    'ok_small': 'ok.png',
-    'error_small': 'error.png',
-    'warning_small': 'warning.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
+    'warning_small': 'warning.png',
 }
 
 WIN_ICON_LIST = [

@@ -341,6 +341,53 @@ class DownloadManager(threading.Thread):
                         break
 
 
+    def check_master_slave(self, media_data_obj):
+
+        """Called by VideoDownloader.do_download().
+
+        When two channels/playlists/folders share a download destination, we
+        don't want to download both of them at the same time.
+
+        This function is called when media_data_obj is about to be
+        downloaded.
+
+        Every worker is checked, to see if it's downloading to the same
+        destination. If so, this function returns True, and
+        VideoDownloader.do_download() waits a few seconds, before trying
+        again.
+
+        Otherwise, this function returns False, and
+        VideoDownloader.do_download() is free to start its download.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist, media.Folder):
+                The media data object that the calling function wants to
+                download
+
+        Returns:
+
+            True or False, as described above
+
+        """
+
+        for worker_obj in self.worker_list:
+
+            if not worker_obj.available_flag \
+            and worker_obj.download_item_obj:
+
+                other_obj = worker_obj.download_item_obj.media_data_obj
+
+                if other_obj.dbid != media_data_obj.dbid \
+                and (
+                    other_obj.dbid == media_data_obj.master_dbid \
+                    or other_obj.dbid in media_data_obj.slave_dbid_list
+                ):
+                    return True
+
+        return False
+                
+        
     def check_workers_all_finished(self):
 
         """Called by self.run().
@@ -737,7 +784,7 @@ class DownloadList(object):
 
         # Code
         # ----
-
+        
         # For each media data object to be downloaded, created a
         #   downloads.DownloadItem object, and update the IVs above
         if not media_data_obj:
@@ -763,7 +810,7 @@ class DownloadList(object):
         else:
 
             # Use the specified media data object. The True value tells
-            #   self.create_item to download media_data_obj, even if it is a
+            #   self.create_item() to download media_data_obj, even if it is a
             #   video in a channel or a playlist (which otherwise would be
             #   handled by downloading the channel/playlist)
             self.create_item(media_data_obj, True)
@@ -810,8 +857,13 @@ class DownloadList(object):
             - media.Video objects in any restricted folder
             - media.Video objects in the fixed 'Unsorted Videos' folder which
                 are already marked as downloaded
+            - media.Video objects which have an ancestor (e.g. a parent
+                media.Channel) for which checking/downloading is disabled
+            - media.Channel and media.Playlist objects for which checking/
+                downloading are disabled, or which have an ancestor (e.g. a
+                parent media.folder) for which checking/downloading is disabled
             - media.Folder objects
-
+            
         Adds the resulting downloads.DownloadItem object to this object's IVs.
 
         Args:
@@ -855,6 +907,22 @@ class DownloadList(object):
                 and not init_flag
             ):
                 return
+            
+        # Don't create a download.DownloadItem object if the media data object
+        #   has an ancestor for which checking/downloading is disabled
+        if isinstance(media_data_obj, media.Video):
+            dl_disable_flag = False
+        else:
+            dl_disable_flag = media_data_obj.dl_disable_flag
+
+        parent_obj = media_data_obj.parent_obj
+
+        while not dl_disable_flag and parent_obj is not None:
+            dl_disable_flag = parent_obj.dl_disable_flag
+            parent_obj = parent_obj.parent_obj
+
+        if dl_disable_flag:
+            return
 
         # Don't create a download.DownloadItem object for a media.Folder,
         #   obviously
@@ -1102,10 +1170,25 @@ class VideoDownloader(object):
         # The time (in seconds) between iterations of the loop in
         #   self.do_download()
         self.sleep_time = 0.1
+        # The time (in seconds) to wait for an existing download, which shares
+        #   a common download destination with this media data object, to
+        #   finish downloading
+        self.long_sleep_time = 10
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
         self.dl_sim_flag = None
+
+        # Flag set to True by a call from any function to self.stop_soon()
+        # After being set to True, this VideoDownloader should give up after
+        #   the next call to self.confirm_new_video(), .confirm_old_video()
+        #   .confirm_sim_video()
+        self.stop_soon_flag = False
+        # When self.stop_soon_flag is True, the next call to
+        #   self.confirm_new_video(), .confirm_old_video() or
+        #   .confirm_sim_video() sets this flag to True, informing
+        #   self.do_download() that it can stop the child process
+        self.stop_now_flag = False
 
         # youtube-dl is passed a URL, which might represent an individual
         #   video, a channel or a playlist
@@ -1177,17 +1260,20 @@ class VideoDownloader(object):
         #   download
         media_data_obj = self.download_item_obj.media_data_obj
 
-        # If the media data object is a video, channel or playlist, it can be
-        #   marked as a simulated download only
-        # If it's a video inside a folder and the folder itself is marked as
-        #   simulated downloads only, apply that to all videos in the folder
-        if self.download_manager_obj.force_sim_flag \
-        or media_data_obj.dl_sim_flag \
-        or (
-            isinstance(media_data_obj, media.Video) \
-            and isinstance(media_data_obj.parent_obj, media.Folder) \
-            and media_data_obj.parent_obj.dl_sim_flag
-        ):
+        # All media data objects can be marked as simulate downloads only. The
+        #   setting applies not just to the media data object, but all of its
+        #   descendants
+        if self.download_manager_obj.force_sim_flag:
+            dl_sim_flag = True
+        else:        
+            dl_sim_flag = media_data_obj.dl_sim_flag
+            parent_obj = media_data_obj.parent_obj
+
+            while not dl_sim_flag and parent_obj is not None:
+                dl_sim_flag = parent_obj.dl_sim_flag
+                parent_obj = parent_obj.parent_obj
+
+        if dl_sim_flag:
             self.dl_sim_flag = True
             self.video_num = 0
             self.video_total = 0
@@ -1229,6 +1315,18 @@ class VideoDownloader(object):
         #   time it was checked/downloaded
         self.download_item_obj.media_data_obj.reset_error_warning()
 
+        # If two channels/playlists/folders share a download destination, we
+        #   don't want to download both of them at the same time
+        # If this media data obj shares a download destination with another
+        #   downloads.DownloadWorker, wait until that download has finished
+        #   before starting this one
+        if not isinstance(self.download_item_obj.media_data_obj, media.Video):
+            
+            while self.download_manager_obj.check_master_slave(
+                self.download_item_obj.media_data_obj,
+            ):
+                time.sleep(self.long_sleep_time)
+            
         # Prepare a system command...
         cmd_list = self.get_system_cmd()
         # ...and create a new child process using that command
@@ -1306,6 +1404,12 @@ class VideoDownloader(object):
                     'Enforced timeout on youtube-dl because it took too long' \
                     + ' to fetch a video\'s JSON data',
                 )
+
+            # Stop this video downloader, if required to do so, having just
+            #   finished checking/downloading a video
+            if self.stop_now_flag:
+                self.stop()
+
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -1456,6 +1560,11 @@ class VideoDownloader(object):
                 options_manager_obj.options_dict['keep_thumbnail'],
             )
 
+        # This VideoDownloader can now stop, if required to do so after a video
+        #   has been checked/downloaded
+        if self.stop_soon_flag:
+            self.stop_now_flag = True
+            
 
     def confirm_old_video(self, dir_path, filename, extension):
 
@@ -1549,16 +1658,37 @@ class VideoDownloader(object):
                 = self.download_worker_obj.options_manager_obj
 
                 # Update the main window
-                GObject.timeout_add(
-                    0,
-                    app_obj.announce_video_download,
-                    self.download_item_obj,
-                    video_obj,
-                    options_manager_obj.options_dict['keep_description'],
-                    options_manager_obj.options_dict['keep_info'],
-                    options_manager_obj.options_dict['keep_thumbnail'],
-                )
+                if media_data_obj.master_dbid != media_data_obj.dbid:
 
+                    # The container is storing its videos in another
+                    #   container's sub-directory, which (probably) explains
+                    #   why we couldn't find a match. Don't add anything to the
+                    #   Results List
+                    GObject.timeout_add(
+                        0,
+                        app_obj.announce_video_clone,
+                        video_obj,
+                    )
+
+                else:
+
+                    # Do add an entry to the Results List (as well as updating
+                    #   the Video Catalogue, as normal)
+                    GObject.timeout_add(
+                        0,
+                        app_obj.announce_video_download,
+                        self.download_item_obj,
+                        video_obj,
+                        options_manager_obj.options_dict['keep_description'],
+                        options_manager_obj.options_dict['keep_info'],
+                        options_manager_obj.options_dict['keep_thumbnail'],
+                    )
+
+        # This VideoDownloader can now stop, if required to do so after a video
+        #   has been checked/downloaded
+        if self.stop_soon_flag:
+            self.stop_now_flag = True
+            
 
     def confirm_sim_video(self, json_dict):
 
@@ -1851,6 +1981,11 @@ class VideoDownloader(object):
         if stop_flag:
             self.stop()
 
+        # This VideoDownloader can now stop, if required to do so after a video
+        #   has been checked/downloaded
+        elif self.stop_soon_flag:
+            self.stop_now_flag = True
+            
 
     def create_child_process(self, cmd_list):
 
@@ -2243,6 +2378,9 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             print('dl 1997 get_system_cmd')
 
+        # Import things for convenience
+        app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
         options_list = self.download_worker_obj.options_list
 
         # Simulate the download, rather than actually downloading videos, if
@@ -2250,13 +2388,30 @@ class VideoDownloader(object):
         if self.dl_sim_flag:
             options_list.append('--dump-json')
 
+        # If actually downloading videos, create an archive file so that, if
+        #   the user deletes the videos, youtube-dl won't try to download them
+        #   again
+        else:
+
+            # (Create the archive file in the media data object's own
+            #   sub-directory, not the alternative download destination, as
+            #   this helps youtube-dl to work the way we want it)
+            if isinstance(media_data_obj, media.Video):
+                dl_path = media_data_obj.parent_obj.get_dir(app_obj)
+            else:
+                dl_path = media_data_obj.get_dir(app_obj)
+
+            options_list.append('--download-archive')
+            options_list.append(
+                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
+            )
+
         # Show verbose output (youtube-dl debugging mode), if required
-        if self.download_manager_obj.app_obj.ytdl_write_verbose_flag:
+        if app_obj.ytdl_write_verbose_flag:
             options_list.append('--verbose')
 
         # Set the list
-        cmd_list = [self.download_manager_obj.app_obj.ytdl_path] \
-        + options_list + [self.download_item_obj.media_data_obj.source]
+        cmd_list = [app_obj.ytdl_path] + options_list + [media_data_obj.source]
 
         return cmd_list
 
@@ -2478,7 +2633,8 @@ class VideoDownloader(object):
 
     def stop(self):
 
-        """Called by downloads.DownloadWorker.close().
+        """Called by downloads.DownloadWorker.close() and also by
+        mainwin.MainWin.on_progress_list_stop_now().
 
         Terminates the child process and sets this object's return code to
         self.STOPPED.
@@ -2503,6 +2659,21 @@ class VideoDownloader(object):
                 os.killpg(self.child_process.pid, signal.SIGKILL)
 
             self.set_return_code(self.STOPPED)
+
+
+    def stop_soon(self):
+
+        """Can be called by anything. Currently called by
+        mainwin.MainWin.on_progress_list_stop_soon().
+
+        Sets the flag that causes this VideoDownloader to stop after the
+        current video.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('dl 2224 stop_soon')
+
+        self.stop_soon_flag = True
 
 
 class PipeReader(threading.Thread):
