@@ -228,6 +228,54 @@ class GenericContainer(GenericMedia):
             return True
 
 
+    def fetch_tooltip_text(self, app_obj, max_length):
+
+        """Called by mainwin.MainWin.video_index_setup_row().
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            max_length (int or None): If specified, the maximum line length, in
+                characters
+
+        Returns:
+
+            Text containing the channel/playlist/folder directory path and
+                the source (except for folders), ready for display in a tooltip
+
+        """
+
+        text = '#' + str(self.dbid) + ':   ' + self.name + '\n\n'
+
+        if not isinstance(self, Folder):
+
+            text += 'Source:\n'
+            if self.source is None:
+                text += ' <unknown>'
+            else:
+                text += self.source
+
+            text += '\n\n'
+
+        text += 'Location:\n'
+
+        location = self.get_dir(app_obj)
+        if location is None:
+            text += ' <unknown>'
+        else:
+            text += location
+
+        # Need to escape question marks or we'll get a markup error
+        text = re.sub('&', '&amp;', text)
+
+        # Apply a maximum line length, if required
+        if max_length is not None:
+            text = utils.tidy_up_long_descrip(text, max_length)
+
+        return text
+
+
     def find_child_index(self, child_obj):
 
         """Can be called by anything.
@@ -638,14 +686,14 @@ class GenericContainer(GenericMedia):
 
         """Called by self.set_master_dbid() only."""
         new_list = []
-        
+
         for slave_dbid in self.slave_dbid_list:
             if slave_dbid != dbid:
                 new_list.append(slave_dbid)
 
         self.slave_dbid_list = new_list.copy()
-        
-        
+
+
     def set_name(self, name):
 
         """Must only be called by mainapp.TartubeApp.rename_container()."""
@@ -1049,6 +1097,53 @@ class Video(GenericMedia):
                 parent_obj = parent_obj.parent_obj
 
         return False
+
+
+    def fetch_tooltip_text(self, max_length=None):
+
+        """Called by mainwin.SimpleCatalogueItem.update_tooltips() and
+        mainwin.ComplexCatalogueItem.update_tooltips().
+
+        Args:
+
+            max_length (int or None): If specified, the maximum line length, in
+                characters
+
+        Returns:
+
+            Text containing the video's file path and source, ready for display
+            in a tooltip
+
+        """
+
+        text = '#' + str(self.dbid) + ':   ' + self.name
+
+        text += '\n\nSource:\n'
+        if self.source is None:
+            text += ' <unknown>'
+        else:
+            text += self.source
+
+        text += '\n\nFile:\n'
+        if self.file_dir is None:
+            text += ' <unknown>'
+        else:
+            text += os.path.abspath(
+                os.path.join(
+                    self.file_dir,
+                    self.file_name + self.file_ext,
+                ),
+            )
+
+        # Need to escape question marks or we'll get a markup error
+        text = re.sub('&', '&amp;', text)
+
+        # Apply a maximum line length, if required
+        if max_length is not None:
+#            text = utils.tidy_up_long_string(text, max_length, False)
+            text = utils.tidy_up_long_descrip(text, max_length)
+
+        return text
 
 
     def read_video_descrip(self, app_obj, max_length):
@@ -1538,7 +1633,7 @@ class Playlist(GenericRemoteContainer):
         # A list of dbids for any channel, playlist or folder that uses this
         #   playlist as its alternative destination
         self.slave_dbid_list = []
-        
+
         # Flag set to True if Tartube should always simulate the download of
         #   videos in this playlist, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
@@ -1708,7 +1803,7 @@ class Folder(GenericContainer):
         # A list of dbids for any channel, playlist or folder that uses this
         #   folder as its alternative destination
         self.slave_dbid_list = []
-        
+
         # Flag set to False if the folder can be deleted by the user, or True
         #   if it can't be deleted by the user
         self.fixed_flag = fixed_flag
@@ -1731,7 +1826,7 @@ class Folder(GenericContainer):
         # Flag set to True if this folder should never be checked or
         #   downloaded. If True, the setting applies to any descendant
         #   channels, playlists and folders
-        self.dl_disable_flag = False        
+        self.dl_disable_flag = False
         # Flag set to True if this folder is hidden (not visible in the Video
         #   Index). Note that only folders can be hidden; channels and
         #   playlists cannot

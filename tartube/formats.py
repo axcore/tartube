@@ -458,6 +458,8 @@ SMALL_ICON_DICT = {
     'folder_small': 'folder.png',
 
     'archived_small': 'archived.png',
+    'arrow_up_small': 'arrow_up.png',
+    'arrow_down_small': 'arrow_down.png',
     'check_small': 'check.png',
     'download_small': 'download.png',
     'error_small': 'error.png',

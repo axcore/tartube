@@ -546,16 +546,22 @@ def tidy_up_long_string(string, max_length=80, reduce_flag=True):
 
         line_list = []
         for line in string.split('\n'):
-            new_list = textwrap.wrap(
-                line,
-                width=max_length,
-                # Don't split up URLs
-                break_long_words=False,
-                break_on_hyphens=False,
-            )
 
-            for mini_line in new_list:
-                line_list.append(mini_line)
+            if line == '':
+                # Preserve empty lines
+                line_list.append('')
+
+            else:
+                new_list = textwrap.wrap(
+                    line,
+                    width=max_length,
+                    # Don't split up URLs
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+
+                for mini_line in new_list:
+                    line_list.append(mini_line)
 
         return '\n'.join(line_list)
 
@@ -567,7 +573,8 @@ def tidy_up_long_string(string, max_length=80, reduce_flag=True):
 
 def tidy_up_long_descrip(string, max_length=80):
 
-    """Called by media.Video.set_video_descrip().
+    """Called by media.Video.set_video_descrip(), and also used by
+    .fetch_tooltip_text() functions in media.py.
 
     A modified version of utils.tidy_up_long_string. In this case, the
     specified string can contain any number of newline characters. We begin
@@ -597,16 +604,23 @@ def tidy_up_long_descrip(string, max_length=80):
         line_list = []
 
         for line in string.split('\n'):
-            new_list = textwrap.wrap(
-                line,
-                width=max_length,
-                # Don't split up URLs
-                break_long_words=False,
-                break_on_hyphens=False,
-            )
 
-            for mini_line in new_list:
-                line_list.append(mini_line)
+            if line == '':
+                # Preserve empty lines
+                line_list.append('')
+
+            else:
+
+                new_list = textwrap.wrap(
+                    line,
+                    width=max_length,
+                    # Don't split up URLs
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+
+                for mini_line in new_list:
+                    line_list.append(mini_line)
 
         return '\n'.join(line_list)
 
