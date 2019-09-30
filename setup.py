@@ -62,7 +62,7 @@ if env_var_value is not None:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.2.0',
+    version='1.2.008',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

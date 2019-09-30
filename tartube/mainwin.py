@@ -1646,7 +1646,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 1648 redraw_main_toolbar')
-            
+
         self.setup_main_toolbar()
 
         if self.app_obj.disable_dl_all_flag:
@@ -1839,7 +1839,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 1841 enable_tooltips')
-            
+
         self.video_index_treeview.set_tooltip_column(2)
         if update_catalogue_flag:
             self.video_catalogue_redraw_all(
@@ -1864,7 +1864,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 1866 disable_tooltips')
-            
+
         self.video_index_treeview.set_tooltip_column(-1)
         if update_catalogue_flag:
             self.video_catalogue_redraw_all(
@@ -1882,7 +1882,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 1884 enable_dl_all_buttons')
-            
+
         # This setting doesn't apply during a download/update/refresh
         #   operation
         if not self.app_obj.current_manager_obj:
@@ -1901,7 +1901,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 1903 move_container')
-            
+
         # This setting doesn't apply during a download/update/refresh
         #   operation
         if not self.app_obj.current_manager_obj:
@@ -2777,7 +2777,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 2779 video_catalogue_multi_popup_menu')
-            
+
         # Convert row_list, a list of mainwin.CatalogueRow objects, into a
         #   list of media.Video objects
         video_list = []
@@ -3191,7 +3191,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 3193 video_index_setup_contents_submenu')
-            
+
         mark_new_menu_item = Gtk.MenuItem.new_with_mnemonic('Mark as _new')
         mark_new_menu_item.connect(
             'activate',
@@ -3282,7 +3282,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 3284 add_watch_video_menu_items')
-            
+
         # Watch video in player/download and watch
         if not video_obj.dl_flag:
 
@@ -4618,7 +4618,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 4620 video_catalogue_toolbar_reset')
-            
+
         self.catalogue_toolbar_current_page = 1
         self.catalogue_toolbar_last_page = 1
 
@@ -4660,7 +4660,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 4662 video_catalogue_toolbar_update')
-            
+
         self.catalogue_toolbar_current_page = page_num
 
         # If the page size is 0, then all videos are drawn on one page
@@ -4787,7 +4787,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             print('mw 4789 progress_list_add_row')
-            
+
         # Prepare the icon
         if isinstance(media_data_obj, media.Channel):
             pixbuf = self.pixbuf_dict['channel_small']
@@ -5663,7 +5663,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a download operation
-        self.app_obj.download_manager_start(True, False, media_data_obj)
+        self.app_obj.download_manager_start(True, False, [media_data_obj] )
 
 
     def on_video_index_delete_container(self, menu_item, media_data_obj):
@@ -5712,7 +5712,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a download operation
-        self.app_obj.download_manager_start(False, False, media_data_obj)
+        self.app_obj.download_manager_start(False, False, [media_data_obj] )
 
 
     def on_video_index_drag_data_received(self, treeview, drag_context, x, y, \
@@ -6627,7 +6627,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a download operation
-        self.app_obj.download_manager_start(True, False, media_data_obj)
+        self.app_obj.download_manager_start(True, False, [media_data_obj] )
 
 
     def on_video_catalogue_check_multi(self, menu_item, media_data_list):
@@ -6802,7 +6802,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a download operation
-        self.app_obj.download_manager_start(False, False, media_data_obj)
+        self.app_obj.download_manager_start(False, False, [media_data_obj] )
 
 
     def on_video_catalogue_download_multi(self, menu_item, media_data_list):
@@ -6982,7 +6982,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.mark_video_downloaded(media_data_obj, False)
 
         # Now we're ready to start the download operation
-        self.app_obj.download_manager_start(False, False, media_data_obj)
+        self.app_obj.download_manager_start(False, False, [media_data_obj] )
 
 
     def on_video_catalogue_remove_options(self, menu_item, media_data_obj):
@@ -10287,7 +10287,7 @@ class ImportDialogue(Gtk.Dialog):
 
         # Update the data to be returned (eventually) to the calling
         #   mainapp.TartubeApp.import_into_db() function
-        mini_dict = self.processed_dict[self.liststore[path][3]]
+        mini_dict = self.flat_db_dict[self.liststore[path][3]]
         mini_dict['import_flag'] = self.liststore[path][0]
 
 
@@ -10309,7 +10309,7 @@ class ImportDialogue(Gtk.Dialog):
         for path in range(0, len(self.liststore)):
             self.liststore[path][0] = True
 
-        for mini_dict in self.processed_dict.values():
+        for mini_dict in self.flat_db_dict.values():
             mini_dict['import_flag'] = True
 
 
@@ -10331,7 +10331,7 @@ class ImportDialogue(Gtk.Dialog):
         for path in range(0, len(self.liststore)):
             self.liststore[path][0] = False
 
-        for mini_dict in self.processed_dict.values():
+        for mini_dict in self.flat_db_dict.values():
             mini_dict['import_flag'] = False
 
 

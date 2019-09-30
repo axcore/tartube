@@ -1,3 +1,21 @@
+v1.2.008 (30 Sep 2019)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- Tartube now ignores the YouTube 'WARNING: video doesn't have subtitles'
+    by default. You can change this setting, if you want to
+
+MAJOR FIXES
+- When moving a channel/playlist/folder to a different place on your
+    filesystem, or when renaming a channel/playlist/folder, in certain rare
+    situations data in the Tartube database isn't updated correctly. This may
+    lead to a freeze or a crash. I'm not sure yet what the cause is, but I have
+    added temporary code to prevent the problem affecting any user
+- Fixed error messages generated when checking/downloading individual
+    channels/playlists/folders
+- Fixed faulty code for importing videos/channels/playlists/folders into the
+    database
+
 v1.2.0 (31 Aug 2019)
 -------------------------------------------------------------------------------
 
@@ -34,7 +52,7 @@ MAJOR NEW FEATURES
 - Plain text exports of Tartube's database can now be re-imported. Some
     inconsistencies with the import process (from JSON and plain text files)
     have been fixed
-    
+
 MINOR NEW FEATURES
 - Added tooltips in several places. If you don't want to see tooltips above
     videos/channels/playlists/folders, you can turn them off
@@ -57,7 +75,7 @@ MINOR NEW FEATURES
 - The Tartube website can now be opened from the main window menu
 - XDG has been added as an optional dependency, for the benefit of Debian
     packagers
-    
+
 MAJOR FIXES
 - The MS Windows installer should now work for everyone
 - Refresh operations are now stable (should not crash) on systems with Gtk 3.22
@@ -68,7 +86,7 @@ MAJOR FIXES
     contains
 - Marking/unmarking a video as favourite caused certain problems, which should
     now be fixed
-    
+
 MINOR FIXES
 - Fixed some unicode errors in reading JSON and plain text files
 - Fixed the wrong page size displayed in the toolbar at the bototm of the

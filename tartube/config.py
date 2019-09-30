@@ -4749,6 +4749,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_scheduling_tab()
         self.setup_operations_tab()
         self.setup_ytdl_tab()
+        self.setup_ignore_tab()
         self.setup_debug_tab()
 
 
@@ -5624,37 +5625,61 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton.connect('toggled', self.on_json_button_toggled)
 
-        checkbutton2 = self.add_checkbutton(grid,
+
+    def setup_ignore_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Ignore' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_Ignore')
+
+        # Ignore options
+        self.add_label(grid,
+            '<u>Ignore options</u>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
             'Ignore \'Requested formats are incompatible for merge\' warnings',
             self.app_obj.ignore_merge_warning_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 1, 1, 1,
         )
-        checkbutton2.connect('toggled', self.on_merge_button_toggled)
+        checkbutton.connect('toggled', self.on_merge_button_toggled)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton2 = self.add_checkbutton(grid,
             'Ignore YouTube copyright errors',
             self.app_obj.ignore_yt_copyright_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 2, 1, 1,
         )
-        checkbutton3.connect('toggled', self.on_copyright_button_toggled)
+        checkbutton2.connect('toggled', self.on_copyright_button_toggled)
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             'Ignore \'Child process exited with non-zero code\' errors',
             self.app_obj.ignore_child_process_exit_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 3, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_child_process_button_toggled)
+        checkbutton3.connect('toggled', self.on_child_process_button_toggled)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             'Ignore \'There are no annotations to write\' warnings',
             self.app_obj.ignore_no_annotations_flag,
             True,                   # Can be toggled by user
-            0, 12, grid_width, 1,
+            0, 4, 1, 1,
         )
-        checkbutton5.connect('toggled', self.on_no_annotations_button_toggled)
+        checkbutton4.connect('toggled', self.on_no_annotations_button_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            'Ignore \'Video doesn\'t have subtitles\' warnings',
+            self.app_obj.ignore_no_subtitles_flag,
+            True,                   # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton5.connect('toggled', self.on_no_subtitles_button_toggled)
 
 
     def setup_debug_tab(self):
@@ -6415,7 +6440,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_no_annotations_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ignore_tab().
 
         Enables/disables ignoring of the 'no annotations' warning messages.
 
@@ -6431,6 +6456,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_no_annotations_flag:
             self.app_obj.set_ignore_no_annotations_flag(False)
+
+
+    def on_no_subtitles_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ignore_tab().
+
+        Enables/disables ignoring of the 'no subtitles' warning messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_no_subtitles_flag:
+            self.app_obj.set_ignore_no_subtitles_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_no_subtitles_flag:
+            self.app_obj.set_ignore_no_subtitles_flag(False)
 
 
     def on_reset_ffmpeg_button_clicked(self, button, entry):

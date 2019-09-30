@@ -373,7 +373,7 @@ class DownloadManager(threading.Thread):
 
         if DEBUG_FUNC_FLAG:
             print('dl 375 check_master_slave')
-            
+
         for worker_obj in self.worker_list:
 
             if not worker_obj.available_flag \
@@ -1564,7 +1564,7 @@ class VideoDownloader(object):
 
         if DEBUG_FUNC_FLAG:
             print('dl 1566 check_dl_is_correct_type')
-            
+
         if isinstance(self.download_item_obj.media_data_obj, media.Video):
 
             self.stop()
@@ -2048,8 +2048,16 @@ class VideoDownloader(object):
 
             if not os.path.isfile(thumb_path):
                 request_obj = requests.get(thumbnail)
-                with open(thumb_path, 'wb') as outfile:
-                    outfile.write(request_obj.content)
+
+#                with open(thumb_path, 'wb') as outfile:
+#                    outfile.write(request_obj.content)
+                # v1.2.006 This crashes if the directory specified by
+                #   thumb_path doesn't exist, so need to use 'try'
+                try:
+                    with open(thumb_path, 'wb') as outfile:
+                        outfile.write(request_obj.content)
+                except:
+                    pass
 
         # If a new media.Video object was created, add a line to the Results
         #   List, as well as updating the Video Catalogue
@@ -2616,6 +2624,13 @@ class VideoDownloader(object):
         ):
             return True
 
+        elif app_obj.ignore_no_subtitles_flag \
+        and re.search(
+            r'video doesn\'t have subtitles',
+            stderr,
+        ):
+            return True
+
         else:
             # Not ignorable
             return False
@@ -2727,7 +2742,7 @@ class VideoDownloader(object):
 
         if DEBUG_FUNC_FLAG:
             print('dl 2729 set_temp_destination')
-            
+
         self.temp_path = path
         self.temp_filename = filename
         self.temp_extension = extension
@@ -2739,7 +2754,7 @@ class VideoDownloader(object):
 
         if DEBUG_FUNC_FLAG:
             print('dl 2741 reset_temp_destination')
-            
+
         self.temp_path = None
         self.temp_filename = None
         self.temp_extension = None

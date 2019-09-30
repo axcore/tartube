@@ -607,6 +607,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if 'There are no annotations to write' messages
         #   should be ignored (in the Errors/Warnings tab)
         self.ignore_no_annotations_flag = True
+        # Flag set to True if 'video doesn't have subtitles' errors should be
+        #   ignored (in the Errors/Warnings tab)
+        self.ignore_no_subtitles_flag = True
 
         # During a download operation, the number of simultaneous downloads
         #   allowed. (An instruction to youtube-dl to download video(s) from a
@@ -1234,14 +1237,13 @@ class TartubeApp(Gtk.Application):
                 #   want
                 new_mswin_flag = True
                 custom_flag = True
+                name = utils.upper_case_first(__main__.__packagename__)
 
                 dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
-                    'Click OK to create a folder in which\n' \
-                    + utils.upper_case_first(__main__.__packagename__) \
-                    + ' can store its videos\n\nIf you have used ' \
-                    + utils.upper_case_first(__main__.__packagename__) \
-                    + ' before,\nyou can select an existing folder\ninstead of'
-                    + ' creating a new one',
+                    'Welcome to ' + name + '!\n\nClick OK to create a folder' \
+                    + ' in which\n' + name + ' can store its videos\n\n' \
+                    + 'If you have used ' + name + ' before,\nyou can select' \
+                    + ' an existing folder\ninstead of creating a new one',
                    'info',
                    'ok',
                    self.main_win_obj,
@@ -1353,9 +1355,9 @@ class TartubeApp(Gtk.Application):
                 'Gtk v' + str(self.gtk_version_major) + '.' \
                 + str(self.gtk_version_minor) + '.' \
                 + str(self.gtk_version_micro) \
-                + ' is broken, which will cause problems when running ' \
+                + ' is broken, which may cause problems when running ' \
                 + utils.upper_case_first(__main__.__packagename__) \
-                + '. Please update it to at least Gtk v3.24',
+                + '. If possible, please update it to at least Gtk v3.24',
             )
 
         # If file load/save has been disabled, we can now show a dialogue
@@ -1748,6 +1750,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1001077:  # v1.1.077
             self.ignore_no_annotations_flag \
             = json_dict['ignore_no_annotations_flag']
+        if version >= 1002004:  # v1.2.004
+            self.ignore_no_subtitles_flag \
+            = json_dict['ignore_no_subtitles_flag']
 
         # (Setting the value of the Gtk widgets automatically sets the IVs)
         self.main_win_obj.spinbutton.set_value(json_dict['num_worker_default'])
@@ -1891,6 +1896,7 @@ class TartubeApp(Gtk.Application):
             'ignore_child_process_exit_flag': \
             self.ignore_child_process_exit_flag,
             'ignore_no_annotations_flag': self.ignore_no_annotations_flag,
+            'ignore_no_subtitles_flag': self.ignore_no_subtitles_flag,
 
             'num_worker_default': self.num_worker_default,
             'num_worker_apply_flag': self.num_worker_apply_flag,
@@ -2353,6 +2359,17 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['extract_audio'] \
                 = options_obj.options_dict['to_audio']
                 options_obj.options_dict.pop('to_audio')
+
+
+        if version < 1002005:  # v1.2.005
+
+            # After moving videos from one filesystem location to another,
+            #   some media.Video had the wrong value for their .file_dir IV
+            # To be safe, reset them all
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+
+                    media_data_obj.reset_file_dir(self)
 
 
     def save_db(self):
@@ -3651,7 +3668,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 3653 announce_video_clone')
-            
+
         video_path = os.path.abspath(
             os.path.join(
                 video_obj.file_dir,
@@ -4167,8 +4184,13 @@ class TartubeApp(Gtk.Application):
 
         # All videos which are descendents of media_data_obj must have their
         #   .file_dir IV updated to the new location
-        for video_obj in media_data_obj.compile_all_videos( [] ):
-            video_obj.reset_file_dir(self)
+#        for video_obj in media_data_obj.compile_all_videos( [] ):
+#            video_obj.reset_file_dir(self)
+        # v1.2.006 This has been observed to fail. Don't know why, yet, so
+        #   reset the .file_dir IV for all videos, just to be safe
+        for other_obj in self.media_reg_dict.values():
+            if isinstance(other_obj, media.Video):
+                other_obj.reset_file_dir(self)
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -4304,7 +4326,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 4306 move_container_continue')
-            
+
         source_obj = media_list[0]
         dest_obj = media_list[1]
 
@@ -4324,8 +4346,13 @@ class TartubeApp(Gtk.Application):
 
         # All videos which are descendents of dest_obj must have their
         #   .file_dir IV updated to the new location
-        for video_obj in source_obj.compile_all_videos( [] ):
-            video_obj.reset_file_dir(self)
+#        for video_obj in source_obj.compile_all_videos( [] ):
+#            video_obj.reset_file_dir(self)
+        # v1.2.006 This has been observed to fail. Don't know why, yet, so
+        #   reset the .file_dir IV for all videos, just to be safe
+        for other_obj in self.media_reg_dict.values():
+            if isinstance(other_obj, media.Video):
+                other_obj.reset_file_dir(self)
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -5254,7 +5281,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 5256 rename_container')
-            
+
         # Do some basic checks
         if media_data_obj is None or isinstance(media_data_obj, media.Video) \
         or self.current_manager_obj or self.main_win_obj.config_win_list \
@@ -6310,7 +6337,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             print('ap 6312 reset_options_manager')
-            
+
         edit_win_obj = data_list.pop(0)
 
         # Replace the old object with a new one, which has the effect of
@@ -7701,6 +7728,17 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_annotations_flag = False
         else:
             self.ignore_no_annotations_flag = True
+
+
+    def set_ignore_no_subtitles_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7681 set_ignore_no_subtitles_flag')
+
+        if not flag:
+            self.ignore_no_subtitles_flag = False
+        else:
+            self.ignore_no_subtitles_flag = True
 
 
     def set_ignore_yt_copyright_flag(self, flag):
