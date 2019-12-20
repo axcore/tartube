@@ -66,6 +66,7 @@ import media
 import options
 import refresh
 import testing
+import threading
 import updates
 import utils
 
@@ -96,6 +97,8 @@ class TartubeApp(Gtk.Application):
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs)
 
+        # Debugging flags
+        # ---------------
         # After installation, don't show the dialogue windows prompting the
         #   user to choose Tartube's data directory; just use the default
         #   location
@@ -113,6 +116,8 @@ class TartubeApp(Gtk.Application):
         self.debug_open_top_left_flag = False
         # Automatically open the system preferences window on startup
         self.debug_open_pref_win_flag = False
+        # Automatically open the general download options window on startup
+        self.debug_open_options_win_flag = False
         # Hide all the system folders (this is not reversible by setting the
         #   flag back to False)
         self.debug_hide_folders_flag = False
@@ -263,12 +268,13 @@ class TartubeApp(Gtk.Application):
         # Note that, using the MSWin installer, Cygwin gives file paths with
         #   both / and \ separators. Throughout the code, we use
         #   os.path.abspath to circumvent this problem
-        self.data_dir = os.path.abspath(
+        self.default_data_dir = os.path.abspath(
             os.path.join(
                 os.path.expanduser('~'),
                 __main__.__packagename__ + '-data',
             ),
         )
+        self.data_dir = self.default_data_dir
         # The sub-directory into which videos are downloaded
         self.downloads_dir = os.path.abspath(
             os.path.join(
@@ -372,18 +378,52 @@ class TartubeApp(Gtk.Application):
         #   self.ytdl_update_dict, set by self.start()
         self.ytdl_update_current = None
 
+        # Flag set to True if output youtube-dl's STDOUT should be displayed in
+        #   the Output Tab
+        self.ytdl_output_stdout_flag = True
+        # Flag set to True if we should ignore JSON output when displaying text
+        #   in the Output Tab (ignored if self.ytdl_output_stdout_flag is
+        #   False)
+        self.ytdl_output_ignore_json_flag = True
+        # Flag set to True if we should ignore download progress (as a
+        #   percentage) when displaying text in the Output Tab (ignored if
+        #   self.ytdl_output_stdout_flag is False)
+        self.ytdl_output_ignore_progress_flag = True
+        # Flag set to True if youtube-dl's STDERR should be displayed in the
+        #   Output Tab
+        self.ytdl_output_stderr_flag = True
+        # Flag set to True if pages in the Output Tab should be emptied at the
+        #   start of each operation
+        self.ytdl_output_start_empty_flag = True
+
         # Flag set to True if output youtube-dl's STDOUT should be written to
         #   the terminal window
         self.ytdl_write_stdout_flag = False
         # Flag set to True if we should ignore JSON output when writing to the
         #   terminal window (ignored if self.ytdl_write_stdout_flag is False)
         self.ytdl_write_ignore_json_flag = True
-        # Flag set to True if output youtube-dl's STDERR should be written to
-        #   the terminal window
+        # Flag set to True if we should ignore download progress (as a
+        #   percentage) when writing to the terminal window (ignored if
+        #   self.ytdl_write_stdout_flag is False)
+        self.ytdl_write_ignore_progress_flag = True
+        # Flag set to True if youtube-dl's STDERR should be written to the
+        #   terminal window
         self.ytdl_write_stderr_flag = False
+
         # Flag set to True if youtube-dl should show verbose output (using the
-        #   --verbose option)
+        #   --verbose option). The setting applies to both the Output Tab and
+        #   the terminal window
         self.ytdl_write_verbose_flag = False
+
+        # Flag set to True if, during a refresh operation, videos should be
+        #   displayed in the Output Tab. Set to False if only channels,
+        #   playlists and folders should be displayed there
+        self.refresh_output_videos_flag = True
+        # Flag set to True if, during a refresh operation, non-matching videos
+        #   should be displayed in the Output Tab. Set to False if only
+        #   matching videos should be displayed there. Ignore if
+        #   self.refresh_output_videos_flag is False
+        self.refresh_output_verbose_flag = False
 
         # Path to the ffmpeg/avconv binary (or the directory containing the
         #   binary). If set to any value besides None,
@@ -391,8 +431,8 @@ class TartubeApp(Gtk.Application):
         #   its --ffmpeg-location option
         self.ffmpeg_path = None
 
-        # During a download operation, a GObject timer runs, so that statistics
-        #   in the Progress Tab can be updated at regular intervals
+        # During a download operation, a GObject timer runs, so that the
+        #   Progress Tab and Output Tab can be updated at regular intervals
         # There is also a delay between the instant at which youtube-dl
         #   reports a video file has been downloaded, and the instant at which
         #   it appears in the filesystem. The timer checks for newly-existing
@@ -408,6 +448,70 @@ class TartubeApp(Gtk.Application):
         # Once that extra time has been applied, the time (matches time.time())
         #   at which to stop waiting
         self.dl_timer_check_time = None
+
+        # During a download operation, we periodically check whether the device
+        #   containing self.data_dir is running out of space
+        # The check interval time (in seconds)
+        self.dl_timer_disk_space_time = 60
+        # The time (matchs time.time()) at which the next check takes place
+        self.dl_timer_disk_space_check_time = None
+
+        # Flag set to True if Tartube should warn if the system is running out
+        #   of disk space (on the drive containing self.data_dir), False if
+        #   not. The warning is issued at the start of a download operation
+        self.disk_space_warn_flag = True
+        # The amount of free disk space (in Mb) below which the warning is
+        #   issued. If 0, no warning is issued. Ignored if
+        #   self.disk_space_warn_flag is False
+        self.disk_space_warn_limit = 1000
+        # Flag set to True if Tartube should refuse to start a download
+        #   operation, and halt an existing download operation, if the system
+        #   is running out of disk space (on the drive containing
+        #   self.data_dir), False if not
+        self.disk_space_stop_flag = True
+        # The amount of free disk space (in Mb) below which the refusal/halt
+        #   is enacted. If 0, a download operation will continue downloading
+        #   files until the device actually runs out of space. Ignored if
+        #   self.disk_space_stop_flag is False
+        self.disk_space_stop_limit = 500
+        # The IVs above can be set to any number (0 or above), but the
+        #   Gtk.SpinButtons in the system preferences window increment/
+        #   decrement the value by this many Mb at a time
+        self.disk_space_increment = 100
+        # An absolute minimum of disk space, below which a download operation
+        #   will not start, or will halt, regardless of the values of the IVs
+        #   above (in Mb)
+        self.disk_space_abs_limit = 50
+
+        # During an update operation, a separate GObject timer runs, so that
+        #   the Output Tab can be updated at regular intervals
+        # The timer's ID (None when no timer is running)
+        self.update_timer_id = None
+        # The timer interval time (in milliseconds)
+        self.update_timer_time = 500
+        # At the end of the update operation, the timer continues running for
+        #   a few seconds, to prevent various Gtk errors (and occasionally
+        #   crashes) for systems with Gtk < 3.2. The maximum time to wait (in
+        #   seconds)
+        self.update_timer_final_time = 5
+        # Once that extra time has been applied, the time (matches time.time())
+        #   at which to stop waiting
+        self.update_timer_check_time = None
+
+        # During a refresh operation, a separate GObject timer runs, so that
+        #   the Output Tab can be updated at regular intervals
+        # The timer's ID (None when no timer is running)
+        self.refresh_timer_id = None
+        # The timer interval time (in milliseconds)
+        self.refresh_timer_time = 500
+        # At the end of the refresh operation, the timer continues running for
+        #   a few seconds, to prevent various Gtk errors (and occasionally
+        #   crashes) for systems with Gtk < 3.2. The maximum time to wait (in
+        #   seconds)
+        self.refresh_timer_final_time = 5
+        # Once that extra time has been applied, the time (matches time.time())
+        #   at which to stop waiting
+        self.refresh_timer_check_time = None
 
         # During any operation, a flag set to True if the operation was halted
         #   by the user, rather than being allowed to complete naturally
@@ -636,6 +740,16 @@ class TartubeApp(Gtk.Application):
         # Flag set to True when the limit is currently applied, False when not
         self.bandwidth_apply_flag = False
 
+        # During a download operation, the maximum video resolution to
+        #   download. Must be one of the keys in formats.VIDEO_RESOLUTION_DICT
+        #   (e.g. '720p')
+        self.video_res_default = '720p'
+        # Flag set to True when this maximum video resolution is applied. When
+        #   applied, it overrides the download options 'video_format',
+        #   'second_video_format' and 'third_video_format' (see the comments
+        #   in options.OptionsManager)
+        self.video_res_apply_flag = False
+
         # The method of matching downloaded videos against existing
         #   media.Video objects:
         #       'exact_match' - The video name must match exactly
@@ -669,6 +783,12 @@ class TartubeApp(Gtk.Application):
         #   False)
         self.auto_delete_days = 30
 
+        # Temporary folder emptying (applies to all media.Folder objects whose
+        #   .temp_flag is True)
+        # Temporary folders are always emptied when Tartube starts. Flag set to
+        #   True if they should be emptied when Tartube shuts down, as well
+        self.delete_on_shutdown_flag = False
+
         # How much information to show in the Video Index. False to show
         #   minimal video stats, True to show full video stats
         self.complex_index_flag = False
@@ -678,11 +798,15 @@ class TartubeApp(Gtk.Application):
         #   folder, or not
         # The current video catalogue mode: 'simple_hide_parent',
         #   'simple_show_parent', 'complex_hide_parent', 'complex_show_parent'
-        self.catalogue_mode = 'simple_hide_parent'
+        self.catalogue_mode = 'complex_show_parent'
         # The video catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
         # The number of videos per page, or 0 to always use a single page
         self.catalogue_page_size = 50
+
+        # Flag set to True if a smaller set of options should be shown in the
+        #   download options edit window (for inexperienced users)
+        self.simple_options_flag = True
 
 
     def do_startup(self):
@@ -803,23 +927,27 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(download_all_menu_action)
 
-        stop_download_menu_action = Gio.SimpleAction.new(
-            'stop_download_menu',
-            None,
-        )
-        stop_download_menu_action.connect(
-            'activate',
-            self.on_button_stop_operation,
-        )
-        self.add_action(stop_download_menu_action)
-
         refresh_db_menu_action = Gio.SimpleAction.new('refresh_db_menu', None)
         refresh_db_menu_action.connect('activate', self.on_menu_refresh_db)
         self.add_action(refresh_db_menu_action)
 
-        update_menu_action = Gio.SimpleAction.new('update_ytdl_menu', None)
-        update_menu_action.connect('activate', self.on_menu_update_ytdl)
-        self.add_action(update_menu_action)
+        ytdl_menu_action = Gio.SimpleAction.new('update_ytdl_menu', None)
+        ytdl_menu_action.connect('activate', self.on_menu_update_ytdl)
+        self.add_action(ytdl_menu_action)
+
+        ffmpeg_menu_action = Gio.SimpleAction.new('install_ffmpeg_menu', None)
+        ffmpeg_menu_action.connect('activate', self.on_menu_install_ffmpeg)
+        self.add_action(ffmpeg_menu_action)
+
+        stop_operation_menu_action = Gio.SimpleAction.new(
+            'stop_operation_menu',
+            None,
+        )
+        stop_operation_menu_action.connect(
+            'activate',
+            self.on_button_stop_operation,
+        )
+        self.add_action(stop_operation_menu_action)
 
         # 'Help' column
         about_menu_action = Gio.SimpleAction.new('about_menu', None)
@@ -893,15 +1021,15 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(download_all_toolbutton_action)
 
-        stop_download_button_action = Gio.SimpleAction.new(
-            'stop_download_toolbutton',
+        stop_operation_button_action = Gio.SimpleAction.new(
+            'stop_operation_toolbutton',
             None,
         )
-        stop_download_button_action.connect(
+        stop_operation_button_action.connect(
             'activate',
             self.on_button_stop_operation,
         )
-        self.add_action(stop_download_button_action)
+        self.add_action(stop_operation_button_action)
 
         switch_view_button_action = Gio.SimpleAction.new(
             'switch_view_toolbutton',
@@ -1033,6 +1161,11 @@ class TartubeApp(Gtk.Application):
             if self.debug_open_pref_win_flag:
                 config.SystemPrefWin(self)
 
+            # Open the general download options window, if the debugging flag
+            #   is set
+            if self.debug_open_options_win_flag:
+                config.OptionsEditWin(self, self.general_options_obj, None)
+
         else:
             self.main_win_obj.present()
 
@@ -1063,6 +1196,10 @@ class TartubeApp(Gtk.Application):
             GObject.source_remove(self.script_timer_id)
         if self.dl_timer_id:
             GObject.source_remove(self.dl_timer_id)
+        if self.update_timer_id:
+            GObject.source_remove(self.update_timer_id)
+        if self.refresh_timer_id:
+            GObject.source_remove(self.refresh_timer_id)
 
         # Don't prompt the user before halting a download/update/refresh
         #   operation, as we would do in calls to self.stop()
@@ -1075,6 +1212,10 @@ class TartubeApp(Gtk.Application):
 
         # Stop immediately
         Gtk.Application.do_shutdown(self)
+        if os.name == 'nt':
+            # Under MS Windows, all methods of shutting down after an update
+            #   operation fail - except this method
+            os._exit(0)
 
 
     # Public class methods
@@ -1211,7 +1352,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_current = 'Update using pip3 (recommended)'
 
         # If the config file exists, load it. If not, create it
-        new_mswin_flag = False
+        new_config_flag = False
 
         if (
             not __main__.__debian_install_flag__
@@ -1225,88 +1366,51 @@ class TartubeApp(Gtk.Application):
 
         elif self.debug_no_dialogue_flag:
             self.save_config()
+            new_config_flag = True
 
         else:
 
             # New Tartube installation
-            if os.name == 'nt':
+            new_config_flag = True
 
-                # On MS Windows, Cygwin creates a Tartube data directory at
-                #   C:\msys64\home\USERNAME\tartube-data, which is not very
-                #   convenient. Force the user to nominate the directory they
-                #   want
-                new_mswin_flag = True
-                custom_flag = True
-                name = utils.upper_case_first(__main__.__packagename__)
+            # On MS Windows, tell the user that they must set the location of
+            #   the data directory, self.data_dir. On other operating systems,
+            #   ask the user if they want to use the default location, or
+            #   choose a custom one
+            custom_flag = self.notify_user_of_data_dir()
+            if custom_flag and not self.prompt_user_for_data_dir():
 
-                dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
-                    'Welcome to ' + name + '!\n\nClick OK to create a folder' \
-                    + ' in which\n' + name + ' can store its videos\n\n' \
-                    + 'If you have used ' + name + ' before,\nyou can select' \
-                    + ' an existing folder\ninstead of creating a new one',
-                   'info',
-                   'ok',
-                   self.main_win_obj,
-                )
-
-                dialogue_win.set_modal(True)
-
-            else:
-
-                # On Linux/BSD, offer the user a choice between using the
-                #   default data directory specified by self.data_dir, or
-                #   specifying their own data directory
-                dialogue_win = mainwin.SetDirectoryDialogue(
-                    self.main_win_obj,
-                    self.data_dir,
-                )
-
-                response = dialogue_win.run()
-
-                # Retrieve user choices from the dialogue window, before
-                #   destroying it
-                custom_flag = False
-                if response == Gtk.ResponseType.OK \
-                and dialogue_win.button2.get_active():
-                    custom_flag = True
-
-                dialogue_win.destroy()
-
-            if custom_flag:
-
-                if os.name == 'nt':
-                    folder = 'folder'
-                else:
-                    folder = 'directory'
-
-                file_chooser_win = Gtk.FileChooserDialog(
-                    'Please select ' + script_name + '\'s data ' + folder,
-                    self.main_win_obj,
-                    Gtk.FileChooserAction.SELECT_FOLDER,
-                    (
-                        Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
-                    ),
-                )
-
-                response = file_chooser_win.run()
-                if response == Gtk.ResponseType.OK:
-                    self.data_dir = file_chooser_win.get_filename()
-                    self.downloads_dir = os.path.abspath(
-                        os.path.join(self.data_dir, 'downloads'),
-                    )
-                    self.temp_dir = os.path.abspath(
-                        os.path.join(self.data_dir, '.temp'),
-                    )
-                    self.temp_dl_dir = os.path.abspath(
-                        os.path.join(self.data_dir, '.temp', 'downloads'),
-                    )
-
-                file_chooser_win.destroy()
+                # The user declined to specify a data directory, so shut down
+                #   Tartube. Destroying the main window calls
+                #   self.do_shutdown()
+                return self.main_win_obj.destroy()
 
             # All done; create the config file, whether Tartube's data
             #   directory has been changed, or not
             self.save_config()
+
+        # Check that the data directory specified by self.data_dir actually
+        #   exists. If not, the most common reason is that the user has
+        #   forgotten to mount an external drive
+        if not new_config_flag \
+        and not self.debug_no_dialogue_flag \
+        and not os.path.exists(self.data_dir):
+
+            # Ask the user what to do next
+            dialogue_win = mainwin.MountDriveDialogue(self.main_win_obj)
+            dialogue_win.run()
+
+            # If the data directory now exists, or can be created in principle
+            #   by the code just below (because the user wants to use the
+            #   default location), then available_flag will be True
+            available_flag = dialogue_win.available_flag
+            dialogue_win.destroy()
+
+            if not available_flag:
+
+                # The user opted to shut down Tartube. Destroying the main
+                #   window calls self.do_shutdown()
+                return self.main_win_obj.destroy()
 
         # Create Tartube's data directories (if they don't already exist)
         if not os.path.isdir(self.data_dir):
@@ -1330,6 +1434,7 @@ class TartubeApp(Gtk.Application):
         db_path = os.path.abspath(
             os.path.join(self.data_dir, self.db_file_name),
         )
+
         if os.path.isfile(db_path):
 
             self.load_db()
@@ -1346,6 +1451,10 @@ class TartubeApp(Gtk.Application):
 
             # Create the database file
             self.save_db()
+
+        # Now the config file has been loaded (or created), we can add the
+        #   right number of pages to the Output Tab
+        self.main_win_obj.output_tab_setup_pages()
 
         # If the system's Gtk is an early, broken version, display a system
         #   warning
@@ -1377,7 +1486,7 @@ class TartubeApp(Gtk.Application):
 
             # For new installations, MS Windows must be prompted to perform an
             #   update operation, which installs youtube-dl on their system
-            if new_mswin_flag:
+            if new_config_flag and os.name == 'nt':
 
                 self.dialogue_manager_obj.show_msg_dialogue(
                     'youtube-dl must be installed before you\ncan use ' \
@@ -1388,6 +1497,8 @@ class TartubeApp(Gtk.Application):
                     None,                   # Parent window is main window
                     {
                         'yes': 'update_manager_start',
+                        # Install FFmpeg, not youtube-dl
+                        'data': False,
                     },
                 )
 
@@ -1483,8 +1594,19 @@ class TartubeApp(Gtk.Application):
             GObject.source_remove(self.dl_timer_id)
             self.dl_timer_id = None
 
-        # Empty any temporary folders from the database
-        self.delete_temp_folders()
+        if self.update_timer_id:
+            GObject.source_remove(self.update_timer_id)
+            self.update_timer_id = None
+
+        if self.refresh_timer_id:
+            GObject.source_remove(self.refresh_timer_id)
+            self.refresh_timer_id = None
+
+        # Empty any temporary folders from the database (if allowed; those
+        #   temporary folders are always deleted when Tartube starts)
+        if self.delete_on_shutdown_flag:
+            self.delete_temp_folders()
+
         # Delete Tartube's temporary folder from the filesystem
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
@@ -1515,7 +1637,7 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-130)
+            100-199: mainapp.py     (in use: 101-134)
             200-299: mainwin.py     (in use: 201-239)
             300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
@@ -1689,12 +1811,39 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_list = json_dict['ytdl_update_list']
             self.ytdl_update_current = json_dict['ytdl_update_current']
 
+        if version >= 1002030:  # v1.2.030
+            self.ytdl_output_stdout_flag = json_dict['ytdl_output_stdout_flag']
+            self.ytdl_output_ignore_json_flag \
+            = json_dict['ytdl_output_ignore_json_flag']
+            self.ytdl_output_ignore_progress_flag \
+            = json_dict['ytdl_output_ignore_progress_flag']
+            self.ytdl_output_stderr_flag = json_dict['ytdl_output_stderr_flag']
+            self.ytdl_output_start_empty_flag \
+            = json_dict['ytdl_output_start_empty_flag']
+
         self.ytdl_write_stdout_flag = json_dict['ytdl_write_stdout_flag']
         if version >= 5004:     # v0.5.004
             self.ytdl_write_ignore_json_flag \
             = json_dict['ytdl_write_ignore_json_flag']
+        if version >= 1002030:  # v1.2.030
+            self.ytdl_write_ignore_progress_flag \
+            = json_dict['ytdl_write_ignore_progress_flag']
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
+
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
+
+        if version >= 1002024:  # v1.2.024
+            self.refresh_output_videos_flag \
+            = json_dict['refresh_output_videos_flag']
+        if version >= 1002027:  # v1.2.027
+            self.refresh_output_verbose_flag \
+            = json_dict['refresh_output_verbose_flag']
+
+        if version >= 1002030:  # v1.2.037
+            self.disk_space_warn_flag = json_dict['disk_space_warn_flag']
+            self.disk_space_warn_limit = json_dict['disk_space_warn_limit']
+            self.disk_space_stop_flag = json_dict['disk_space_stop_flag']
+            self.disk_space_stop_limit = json_dict['disk_space_stop_limit']
 
         if version >= 1001054:  # v1.1.054
             self.ffmpeg_path = json_dict['ffmpeg_path']
@@ -1755,15 +1904,27 @@ class TartubeApp(Gtk.Application):
             = json_dict['ignore_no_subtitles_flag']
 
         # (Setting the value of the Gtk widgets automatically sets the IVs)
-        self.main_win_obj.spinbutton.set_value(json_dict['num_worker_default'])
-        self.main_win_obj.checkbutton.set_active(
+        self.main_win_obj.num_worker_spinbutton.set_value(
+            json_dict['num_worker_default'],
+        )
+        self.main_win_obj.num_worker_checkbutton.set_active(
             json_dict['num_worker_apply_flag'],
         )
 
-        self.main_win_obj.spinbutton2.set_value(json_dict['bandwidth_default'])
-        self.main_win_obj.checkbutton2.set_active(
+        self.main_win_obj.bandwidth_spinbutton.set_value(
+            json_dict['bandwidth_default'],
+        )
+        self.main_win_obj.bandwidth_checkbutton.set_active(
             json_dict['bandwidth_apply_flag'],
         )
+
+        if version >= 1002011:  # v1.2.011
+            self.main_win_obj.set_video_res_limit(
+                json_dict['video_res_default'],
+            )
+            self.main_win_obj.video_res_checkbutton.set_active(
+                json_dict['video_res_apply_flag'],
+            )
 
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
@@ -1775,11 +1936,17 @@ class TartubeApp(Gtk.Application):
             = json_dict['auto_delete_watched_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
 
+        if version >= 1001041:  # v1.1.041
+            self.delete_on_shutdown_flag = json_dict['delete_on_shutdown_flag']
+
         self.complex_index_flag = json_dict['complex_index_flag']
         if version >= 3019:  # v0.3.019
             self.catalogue_mode = json_dict['catalogue_mode']
         if version >= 3023:  # v0.3.023
             self.catalogue_page_size = json_dict['catalogue_page_size']
+
+        if version >= 1002013:  # v1.2.013
+            self.simple_options_flag = json_dict['simple_options_flag']
 
         # Now update various widgets, having loaded the config file
 
@@ -1860,10 +2027,28 @@ class TartubeApp(Gtk.Application):
             'ytdl_update_list': self.ytdl_update_list,
             'ytdl_update_current': self.ytdl_update_current,
 
+            'ytdl_output_stdout_flag': self.ytdl_output_stdout_flag,
+            'ytdl_output_ignore_json_flag': self.ytdl_output_ignore_json_flag,
+            'ytdl_output_ignore_progress_flag': \
+            self.ytdl_output_ignore_progress_flag,
+            'ytdl_output_stderr_flag': self.ytdl_output_stderr_flag,
+            'ytdl_output_start_empty_flag': self.ytdl_output_start_empty_flag,
+
             'ytdl_write_stdout_flag': self.ytdl_write_stdout_flag,
             'ytdl_write_ignore_json_flag': self.ytdl_write_ignore_json_flag,
+            'ytdl_write_ignore_progress_flag': \
+            self.ytdl_write_ignore_progress_flag,
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
+
             'ytdl_write_verbose_flag': self.ytdl_write_verbose_flag,
+
+            'refresh_output_videos_flag': self.refresh_output_videos_flag,
+            'refresh_output_verbose_flag': self.refresh_output_verbose_flag,
+
+            'disk_space_warn_flag': self.disk_space_warn_flag,
+            'disk_space_warn_limit': self.disk_space_warn_limit,
+            'disk_space_stop_flag': self.disk_space_stop_flag,
+            'disk_space_stop_limit': self.disk_space_stop_limit,
 
             'ffmpeg_path': self.ffmpeg_path,
 
@@ -1904,6 +2089,9 @@ class TartubeApp(Gtk.Application):
             'bandwidth_default': self.bandwidth_default,
             'bandwidth_apply_flag': self.bandwidth_apply_flag,
 
+            'video_res_default': self.video_res_default,
+            'video_res_apply_flag': self.video_res_apply_flag,
+
             'match_method': self.match_method,
             'match_first_chars': self.match_first_chars,
             'match_ignore_chars': self.match_ignore_chars,
@@ -1912,9 +2100,13 @@ class TartubeApp(Gtk.Application):
             'auto_delete_watched_flag': self.auto_delete_watched_flag,
             'auto_delete_days': self.auto_delete_days,
 
+            'delete_on_shutdown_flag': self.delete_on_shutdown_flag,
+
             'complex_index_flag': self.complex_index_flag,
             'catalogue_mode': self.catalogue_mode,
             'catalogue_page_size': self.catalogue_page_size,
+
+            'simple_options_flag': self.simple_options_flag,
         }
 
         # Try to save the file
@@ -2278,7 +2470,6 @@ class TartubeApp(Gtk.Application):
                 media_data_obj.master_dbid = media_data_obj.dbid
                 media_data_obj.slave_dbid_list = []
 
-
         if version < 1001045:  # v1.1.045
 
             # This version adds a new option to options.OptionsManager
@@ -2289,7 +2480,6 @@ class TartubeApp(Gtk.Application):
 
             for options_obj in options_obj_list:
                 options_obj.options_dict['use_fixed_folder'] = None
-
 
         if version < 1001060:  # v1.1.060
 
@@ -2359,7 +2549,6 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['extract_audio'] \
                 = options_obj.options_dict['to_audio']
                 options_obj.options_dict.pop('to_audio')
-
 
         if version < 1002005:  # v1.2.005
 
@@ -2655,6 +2844,135 @@ class TartubeApp(Gtk.Application):
         self.create_system_folders()
 
 
+    def notify_user_of_data_dir(self):
+
+        """Called by self.start().
+
+        On MS Windows, tell the user that they must set the location of the
+        Tartube data directory, self.data_dir. On other operating systems, ask
+        the user if they want to use the default location, or choose a custom
+        one.
+
+        Return values:
+            True to choose a custom location for the data directory, False to
+                use the default location.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 2623 notify_user_of_data_dir')
+
+        if os.name == 'nt':
+
+            # On MS Windows, Cygwin creates a Tartube data directory at
+            #   C:\msys64\home\USERNAME\tartube-data, which is not very
+            #   convenient. Force the user to nominate the directory they want
+            script_name = utils.upper_case_first(__main__.__packagename__)
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                'Welcome to ' + script_name + '!\n\nClick OK to create a' \
+                + ' folder in which\n' + script_name + ' can store its' \
+                + ' videos\n\nIf you have used ' + script_name \
+                + ' before,\nyou can select an existing folder\ninstead of' \
+                + ' creating a new one',
+                'info',
+                'ok',
+                self.main_win_obj,
+            )
+
+            # Because of Gtk weirdness, the dialogue window isn't actually
+            #   modal; but these lines at least make sure the dialogue window
+            #   is visible above the file chooser dialogue that
+            #   self.prompt_user_for_data_dir() is about to create
+            dialogue_win.set_transient_for(self.main_win_obj)
+            dialogue_win.set_modal(True)
+
+            return True
+
+        else:
+
+            # On Linux/BSD, offer the user a choice between using the default
+            #   data directory specified by self.data_dir, or specifying their
+            #   own data directory
+            dialogue_win = mainwin.SetDirectoryDialogue(
+                self.main_win_obj,
+                self.data_dir,
+            )
+
+            response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window, before destroying
+            #   it
+            custom_flag = False
+            if response == Gtk.ResponseType.OK \
+            and dialogue_win.button2.get_active():
+                custom_flag = True
+
+            dialogue_win.destroy()
+
+            return custom_flag
+
+
+    def prompt_user_for_data_dir(self):
+
+        """Called by self.start(), immediately after a call to
+        self.notify_user_of_data_dir().
+
+        Prompt the user for the location of a new data directory.
+
+        Return values:
+            True if the user selects a location, False if they do not.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 2625 prompt_user_for_data_dir')
+
+        script_name = utils.upper_case_first(__main__.__packagename__)
+
+        if os.name == 'nt':
+            folder = 'folder'
+        else:
+            folder = 'directory'
+
+        file_chooser_win = Gtk.FileChooserDialog(
+            'Please select ' + script_name + '\'s data ' + folder,
+            self.main_win_obj,
+            Gtk.FileChooserAction.SELECT_FOLDER,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+            ),
+        )
+
+        response = file_chooser_win.run()
+        if response == Gtk.ResponseType.OK:
+
+            self.data_dir = file_chooser_win.get_filename()
+            self.downloads_dir = os.path.abspath(
+                os.path.join(self.data_dir, 'downloads'),
+            )
+
+            self.temp_dir = os.path.abspath(
+                os.path.join(self.data_dir, '.temp'),
+            )
+
+            self.temp_dl_dir = os.path.abspath(
+                os.path.join(self.data_dir, '.temp', 'downloads'),
+            )
+
+        file_chooser_win.destroy()
+        if response == Gtk.ResponseType.OK:
+
+            # Location selected; the remaining code in self.start() will
+            #   create the data directory, if necessary
+            return True
+
+        else:
+
+            # Location not selected. Tartube will now shut down
+            return False
+
+
     def create_system_folders(self):
 
         """Called by self.start() and .reset_db().
@@ -2939,6 +3257,93 @@ class TartubeApp(Gtk.Application):
 
             return
 
+        # If the device containing self.data_dir is running low on space,
+        #   warn the user before proceeding
+        disk_space = utils.disk_get_free_space(self.data_dir)
+        total_space = utils.disk_get_total_space(self.data_dir)
+
+        if (
+            self.disk_space_stop_flag \
+            and self.disk_space_stop_limit != 0 \
+            and disk_space <= self.disk_space_stop_limit
+        ) or disk_space < self.disk_space_abs_limit:
+
+            # Refuse to proceed with the operation
+            if not automatic_flag:
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    'You only have ' + str(disk_space) + ' / ' \
+                    + str(total_space) + 'Mb\nremaining on your device',
+                    'error',
+                    'ok',
+                )
+
+            return
+
+        elif self.disk_space_warn_flag \
+        and self.disk_space_warn_limit != 0 \
+        and disk_space <= self.disk_space_warn_limit:
+
+            if automatic_flag:
+
+                # Don't perform a schedules download operation if disk space is
+                #   below the limit at which a warning would normally be issued
+                return
+
+            else:
+
+                # Warn the user that their free disk space is running low, and
+                #   get confirmation before starting the download operation
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    'You only have ' + str(disk_space) + ' / ' \
+                    + str(total_space) + 'Mb\nremaining on your device.' \
+                    + '\n\nAre you sure you want to\ncontinue?',
+                    'question',
+                    'yes-no',
+                    None,                   # Parent window is main window
+                    # Arguments passed directly to .download_manager_continue()
+                    {
+                        'yes': 'download_manager_continue',
+                        'data': [
+                            force_sim_flag,
+                            automatic_flag,
+                            media_data_list,
+                        ],
+                    },
+                )
+
+        else:
+
+            # Start the download operation immediately
+            self.download_manager_continue(
+                [force_sim_flag, automatic_flag, media_data_list],
+            )
+
+
+    def download_manager_continue(self, arg_list):
+
+        """Called by dialogue.MessageDialogue.on_clicked() or by
+        self.download_manager_start() directly.
+
+        Having obtained confirmation from the user (if required), start the
+        download operation.
+
+        Args:
+
+            arg_list (list): List of arguments originally supplied to
+                self.download_manager_start(). A list in the form
+
+                    [ force_sim_flag, automatic_flag, media_data_list ]
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 2897 download_manager_start')
+
+        # Extract arguments from arg_list
+        force_sim_flag = arg_list.pop(0)
+        automatic_flag = arg_list.pop(0)
+        media_data_list = arg_list.pop(0)
+
         # The media data registry consists of a collection of media data
         #   objects (media.Video, media.Channel, media.Playlist and
         #   media.Folder)
@@ -2966,7 +3371,8 @@ class TartubeApp(Gtk.Application):
         #   download operation
         if self.operation_auto_update_flag and not self.operation_waiting_flag:
 
-            self.update_manager_start()
+            # The False argument means 'install youtube-dl, not FFmpeg'
+            self.update_manager_start(False)
             # These IVs tells self.update_manager_finished to start a download
             #   operation
             self.operation_waiting_flag = True
@@ -2996,6 +3402,8 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.progress_list_reset()
         # Reset the Results List
         self.main_win_obj.results_list_reset()
+        # Reset the Output Tab
+        self.main_win_obj.output_tab_reset_pages()
         # Initialise the Progress List with one row for each media data object
         #   in the downloads.DownloadList object
         self.main_win_obj.progress_list_init(download_list_obj)
@@ -3004,8 +3412,8 @@ class TartubeApp(Gtk.Application):
         # Make the widget changes visible
         self.main_win_obj.show_all()
 
-        # During a download operation, a GObject timer runs, so that statistics
-        #   in the Progress Tab can be updated at regular intervals
+        # During a download operation, a GObject timer runs, so that the
+        #   Progress Tab and Output Tab can be updated at regular intervals
         # There is also a delay between the instant at which youtube-dl
         #   reports a video file has been downloaded, and the instant at which
         #   it appears in the filesystem. The timer checks for newly-existing
@@ -3077,17 +3485,17 @@ class TartubeApp(Gtk.Application):
         #   empty this list)
         self.watch_after_dl_list = []
 
+        # After a download operation, save files, if allowed
+        if self.operation_save_flag:
+            self.save_config()
+            self.save_db()
+
         # After a download operation, remove the progress bar in the Videos Tab
         self.main_win_obj.hide_progress_bar()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(True)
         # Make the widget changes visible
         self.main_win_obj.show_all()
-
-        # After a download operation, save files, if allowed
-        if self.operation_save_flag:
-            self.save_config()
-            self.save_db()
 
         # Reset operation IVs
         self.operation_halted_flag = False
@@ -3131,16 +3539,26 @@ class TartubeApp(Gtk.Application):
         self.no_dialogue_this_time_flag = False
 
 
-    def update_manager_start(self):
+    def update_manager_start(self, ffmpeg_flag=False):
 
-        """Called by self.download_manager_start() and by a callback in
-        self.on_menu_update_ytdl().
+        """Called by self.download_manager_start() or by callbacks in
+        self.on_menu_install_ffmpeg() and .on_menu_update_ytdl().
 
-        Initiates an update operation to update the system's youtube-dl.
+        Initiates an update operation to do one of two jobs:
+
+        1. Install FFmpeg (on MS Windows only)
+
+        2. Install youtube-dl, or update it to its most recent version.
 
         Creates a new updates.UpdateManager object to handle the update
         operation. When the operation is complete,
         self.update_manager_finished() is called.
+
+        Args:
+
+            ffmpeg_flag (bool): If True, install FFmpeg (on MS Windows only).
+                If False (or None), installs/updates youtube-dl
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -3175,20 +3593,60 @@ class TartubeApp(Gtk.Application):
                 + utils.upper_case_first(__main__.__packagename__),
             )
 
+        elif ffmpeg_flag and os.name != 'nt':
+            # The Update operation can only install FFmpeg on the MS Windows
+            #   installation of Tartube. It should not be possible to call this
+            #   function, but we'll show an error message anyway
+            return self.system_error(
+                134,
+                'Update operation cannot install FFmpeg on your operating' \
+                + ' system',
+            )
+
         # During an update operation, certain widgets are modified and/or
         #   desensitised
-        self.main_win_obj.modify_widgets_in_update_operation(False)
+        self.main_win_obj.output_tab_reset_pages()
+
+        self.main_win_obj.modify_widgets_in_update_operation(
+            False,
+            ffmpeg_flag,
+        )
+
+        # During an update operation, a GObject timer runs, so that the Output
+        #   Tab can be updated at regular intervals
+        # Create the timer
+        self.update_timer_id = GObject.timeout_add(
+            self.update_timer_time,
+            self.update_timer_callback,
+        )
 
         # Initiate the update operation. Any code can check whether a
         #   download, update or refresh operation is in progress, or not, by
         #   checking this IV
-        self.current_manager_obj = updates.UpdateManager(self)
+        self.current_manager_obj = updates.UpdateManager(self, ffmpeg_flag)
         self.update_manager_obj = self.current_manager_obj
 
 
-    def update_manager_finished(self, success_flag=True, ytdl_version=None):
+    def update_manager_halt_timer(self):
 
-        """Called by updates.UpdateManager.run().
+        """Called by updates.UpdateManager.install_ffmpeg() or
+        .install_ytdl() when those functions have finished.
+
+        During an update operation, a GObject timer was running. Let it
+        continue running for a few seconds more.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3025 update_manager_halt_timer')
+
+        if self.update_timer_id:
+            self.update_timer_check_time \
+            = int(time.time()) + self.update_timer_final_time
+
+
+    def update_manager_finished(self):
+
+        """Called by self.update_timer_callback().
 
         The update operation has finished, so update IVs and main window
         widgets.
@@ -3198,42 +3656,61 @@ class TartubeApp(Gtk.Application):
             success_flag (True or False): True if the update operation
                 succeeded, False if not
 
-            ytdl_version (string): Set if the update manager was able to
-                capture the new youtube-dl version number, or None if not
+            ytdl_version (string): When installing/updating youtube-dl, set to
+                the new youtube-dl version number, if the update manager was
+                able to capture it. Otherwise set to None
 
         """
 
         if DEBUG_FUNC_FLAG:
             print('ap 3190 update_manager_finished')
 
+        # Import IVs from updates.UpdateManager, before it is destroyed
+        ffmpeg_flag = self.update_manager_obj.ffmpeg_flag
+        success_flag = self.update_manager_obj.success_flag
+        ytdl_version = self.update_manager_obj.ytdl_version
+
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
         self.current_manager_obj = None
         self.update_manager_obj = None
 
-        # During an update operation, certain widgets are modified and/or
-        #   desensitised; restore them to their original state
-        self.main_win_obj.modify_widgets_in_update_operation(True)
+        # Stop the timer and reset IVs
+        GObject.source_remove(self.update_timer_id)
+        self.update_timer_id = None
+        self.update_timer_check_time = None
 
         # After an update operation, save files, if allowed
         if self.operation_save_flag:
             self.save_config()
             self.save_db()
 
+        # During an update operation, certain widgets are modified and/or
+        #   desensitised; restore them to their original state
+        self.main_win_obj.modify_widgets_in_update_operation(True)
+
         # Then show a dialogue window, if allowed (and if a download operation
         #   is not waiting to start)
         if self.operation_dialogue_flag and not self.operation_waiting_flag:
 
-            if not success_flag:
-                msg = 'Update operation failed'
-            elif self.operation_halted_flag:
-                msg = 'Update operation halted'
-            else:
-                msg = 'Update operation complete'
-                if ytdl_version is not None:
-                    msg += '\n\nyoutube-dl version: ' + ytdl_version
+            if ffmpeg_flag:
+
+                if not success_flag:
+                    msg = 'Installation failed'
                 else:
-                    msg += '\n\nyoutube-dl version: (unknown)'
+                    msg = 'Installation complete'
+
+            else:
+                if not success_flag:
+                    msg = 'Update operation failed'
+                elif self.operation_halted_flag:
+                    msg = 'Update operation halted'
+                else:
+                    msg = 'Update operation complete'
+                    if ytdl_version is not None:
+                        msg += '\n\nyoutube-dl version: ' + ytdl_version
+                    else:
+                        msg += '\n\nyoutube-dl version: (unknown)'
 
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
 
@@ -3242,10 +3719,12 @@ class TartubeApp(Gtk.Application):
 
         # If a download operation is waiting to start, start it
         if self.operation_waiting_flag:
-            self.download_manager_start(
-                self.operation_waiting_sim_flag,
-                False,
-                self.operation_waiting_list,
+            self.download_manager_continue(
+                [
+                    self.operation_waiting_sim_flag,
+                    False,
+                    self.operation_waiting_list,
+                ],
             )
 
             # Reset those IVs, ready for any future download operations
@@ -3304,9 +3783,80 @@ class TartubeApp(Gtk.Application):
 
             return
 
+        # The user might not be aware of what a refresh operation is, or the
+        #   effect it might have on Tartube's database
+        # Warn them, and give them the opportunity to back out
+        if os.name == 'nt':
+            folder = 'folder'
+        else:
+            folder = 'directory'
+
+        if not media_data_obj:
+            string = 'click\nthe \'Check all\' button in the main window.\n\n'
+        elif isinstance(media_data_obj, media.Channel):
+            string = '\nright-click the channel and select \'Check channel\'' \
+            + '.\n\n'
+        elif isinstance(media_data_obj, media.Playlist):
+            string = '\nright-click the playlist and select \'Check' \
+            + ' playlist\'.\n\n'
+        else:
+            string = '\nright-click the folder and select \'Check folder\'' \
+            + '.\n\n'
+
+        self.dialogue_manager_obj.show_msg_dialogue(
+            'During a refresh operation, ' \
+            + utils.upper_case_first(__main__.__packagename__) \
+            + ' analyses its data\n' + folder + ', looking for videos that' \
+            + ' haven\'t yet been\nadded to its database.\n\n' \
+            + 'You only need to perform a refresh operation if you\nhave' \
+            + ' manually copied videos into ' \
+            + utils.upper_case_first(__main__.__packagename__) \
+            + '\'s data\n' + folder + '.\n\n' \
+            + 'Before starting a refresh operation, you should ' + string \
+            + 'Are you sure you want to procede with the refresh\noperation?',
+            'question',
+            'yes-no',
+            None,                   # Parent window is main window
+            # Arguments passed directly to .move_container_to_top_continue()
+            {
+                'yes': 'refresh_manager_continue',
+                'data': media_data_obj,
+            },
+        )
+
+
+    def refresh_manager_continue(self, media_data_obj=None):
+
+        """Called by dialogue.MessageDialogue.on_clicked().
+
+        Having obtained confirmation from the user, start the refresh
+        operation.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist, media.Folder or
+                None): If specified, only this channel/playlist/folder is
+                refreshed. If not specified, the entire media registry is
+                refreshed
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3263 refresh_manager_continue')
+
+        # Reset the Output Tab
+        self.main_win_obj.output_tab_reset_pages()
         # During a refresh operation, certain widgets are modified and/or
         #   desensitised
         self.main_win_obj.modify_widgets_in_refresh_operation(False)
+
+        # During a refresh operation, a GObject timer runs, so that the Output
+        #   Tab can be updated at regular intervals
+        # Create the timer
+        self.refresh_timer_id = GObject.timeout_add(
+            self.refresh_timer_time,
+            self.refresh_timer_callback,
+        )
 
         # Initiate the refresh operation. Any code can check whether a
         #   download, update or refresh operation is in progress, or not, by
@@ -3315,9 +3865,26 @@ class TartubeApp(Gtk.Application):
         self.refresh_manager_obj = self.current_manager_obj
 
 
+    def refresh_manager_halt_timer(self):
+
+        """Called by refresh.RefreshManager.run() when that function has
+        finished.
+
+        During a refresh operation, a GObject timer was running. Let it
+        continue running for a few seconds more.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3024 refresh_manager_halt_timer')
+
+        if self.refresh_timer_id:
+            self.refresh_timer_check_time \
+            = int(time.time()) + self.refresh_timer_final_time
+
+
     def refresh_manager_finished(self):
 
-        """Called by refresh.RefreshManager.run().
+        """Called by self.refresh_timer_callback().
 
         The refresh operation has finished, so update IVs and main window
         widgets.
@@ -3326,19 +3893,33 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 3310 refresh_manager_finished')
 
+        # Get the time taken by the download operation, so we can convert it
+        #   into a nice string below (e.g. '05:15')
+        time_num = int(
+            self.refresh_manager_obj.stop_time \
+            - self.refresh_manager_obj.start_time
+        )
+
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
         self.current_manager_obj = None
         self.refresh_manager_obj = None
 
-        # During a refresh operation, certain widgets are modified and/or
-        #   desensitised; restore them to their original state
-        self.main_win_obj.modify_widgets_in_refresh_operation(True)
+        # Stop the timer and reset IVs
+        GObject.source_remove(self.refresh_timer_id)
+        self.refresh_timer_id = None
+        # Any remanining messages generated by refresh.RefreshManager should be
+        #   shown in the Output Tab immediately
+        self.main_win_obj.output_tab_update_pages()
 
         # After a refresh operation, save files, if allowed
         if self.operation_save_flag:
             self.save_config()
             self.save_db()
+
+        # During a refresh operation, certain widgets are modified and/or
+        #   desensitised; restore them to their original state
+        self.main_win_obj.modify_widgets_in_refresh_operation(True)
 
         # If updates to the Video Index were disabled because of Gtk issues,
         #   we must now redraw the Video Index and Video Catalogue from
@@ -3355,6 +3936,10 @@ class TartubeApp(Gtk.Application):
                 msg = 'Refresh operation complete'
             else:
                 msg = 'Refresh operation halted'
+
+            if time_num >= 10:
+                msg += '\n\nTime taken: ' \
+                + utils.convert_seconds_to_string(time_num, True)
 
             self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
 
@@ -3775,8 +4360,35 @@ class TartubeApp(Gtk.Application):
         if video_obj.duration is None \
         and HAVE_MOVIEPY_FLAG \
         and self.use_module_moviepy_flag:
-            clip = moviepy.editor.VideoFileClip(video_path)
-            video_obj.set_duration(clip.duration)
+
+#            try:
+#                clip = moviepy.editor.VideoFileClip(video_path)
+#                video_obj.set_duration(clip.duration)
+#            except:
+#                self.system_error(
+#                    132,
+#                    '\'' + video_obj.parent_obj.name + '\': moviepy module' \
+#                    + 'failed to fetch duration of video \'' \
+#                    + video_obj.name + '\'',
+#                )
+            # v1.2.040 - When the video file is corrupted, moviepy freezes
+            #   indefinitely
+            # Instead, let's try placing the operation inside a thread
+            this_thread = threading.Thread(
+                target=self.set_duration_from_moviepy,
+                args=(video_obj, video_path,),
+            )
+
+            this_thread.daemon = True
+            this_thread.start()
+            this_thread.join(10)         # Timeout after 10 seconds
+            if this_thread.is_alive():
+                self.system_error(
+                    132,
+                    '\'' + video_obj.parent_obj.name + '\': moviepy module' \
+                    + 'failed to fetch duration of video \'' \
+                    + video_obj.name + '\'',
+                )
 
         # (Can't set the video source directly)
 
@@ -3785,6 +4397,31 @@ class TartubeApp(Gtk.Application):
                 self,
                 self.main_win_obj.descrip_line_max_len,
             )
+
+
+    def set_duration_from_moviepy(self, video_obj, video_path):
+
+        """Called by thread inside self.update_video_from_filesystem().
+
+        When we call moviepy.editor.VideoFileClip() on a corrupted video file,
+        moviepy freezes indefinitely.
+
+        This function is called inside a thread, so a timeout of ten seconds
+        can be applied.
+
+        Args:
+
+            video_obj (media.Video): The video object being updated
+
+            video_path (str): The path to the video file itself
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 3751 set_duration_from_moviepy')
+
+        clip = moviepy.editor.VideoFileClip(video_path)
+        video_obj.set_duration(clip.duration)
 
 
     # (Add media data objects)
@@ -4135,6 +4772,38 @@ class TartubeApp(Gtk.Application):
                 'Move container to top request failed sanity check',
             )
 
+        # Check that the target directory doesn't already exist (unlikely, but
+        #   possible if the user has been copying files manually)
+        target_path = os.path.abspath(
+            os.path.join(
+                self.downloads_dir,
+                media_data_obj.name,
+            ),
+        )
+
+        if os.path.isdir(target_path) or os.path.isfile(target_path):
+
+            if os.name == 'nt':
+                folder = 'folder'
+            else:
+                folder = 'directory'
+
+            # (The same error message appears in self.move_container() )
+            self.dialogue_manager_obj.show_msg_dialogue(
+                'Cannot move anything to\n\n' + target_path + '\n\nbecause a' \
+                + ' file or ' + folder + ' with the same name already\n' \
+                + 'exists (although ' \
+                + utils.upper_case_first(__main__.__packagename__) \
+                + '\'s database doesn\'t know\nanything about it).\n\n' \
+                + 'You probably created that file/' + folder \
+                + ' accidentally,\nin which case, you should delete it' \
+                + ' manually before\ntrying again.',
+                'error',
+                'ok',
+            )
+
+            return
+
         # Prompt the user for confirmation
         if isinstance(media_data_obj, media.Channel):
             source_type = 'channel'
@@ -4274,6 +4943,37 @@ class TartubeApp(Gtk.Application):
             self.dialogue_manager_obj.show_msg_dialogue(
                 'The folder \'' + dest_obj.name \
                 + '\'\ncan only contain videos',
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Check that the target directory doesn't already exist (unlikely, but
+        #   possible if the user has been copying files manually)
+        target_path = os.path.abspath(
+            os.path.join(
+                dest_obj.get_dir(self),
+                source_obj.name,
+            ),
+        )
+
+        if os.path.isdir(target_path) or os.path.isfile(target_path):
+
+            if os.name == 'nt':
+                folder = 'folder'
+            else:
+                folder = 'directory'
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                'Cannot move anything to\n\n' + target_path + '\n\nbecause a' \
+                + ' file or ' + folder + ' with the same name already\n' \
+                + 'exists (although ' \
+                + utils.upper_case_first(__main__.__packagename__) \
+                + '\'s database doesn\'t know\nanything about it).\n\n' \
+                + 'You probably created that file/' + folder \
+                + ' accidentally,\nin which case, you should delete it' \
+                + ' manually before\ntrying again.',
                 'error',
                 'ok',
             )
@@ -4423,7 +5123,12 @@ class TartubeApp(Gtk.Application):
             update_list.append(self.fixed_fav_folder)
 
         # Remove the video from our IVs
-        del self.media_reg_dict[video_obj.dbid]
+        # v1.2.017 When deleting folders containing thousands of videos, I
+        #   noticed that a small number of video DBIDs didn't exist in the
+        #   registry. Not sure what the cause is, but the following lines
+        #   prevent a python error
+        if video_obj.dbid in self.media_reg_dict:
+            del self.media_reg_dict[video_obj.dbid]
 
         # Delete files from the filesystem, if required
         if delete_files_flag and video_obj.file_dir:
@@ -6412,13 +7117,22 @@ class TartubeApp(Gtk.Application):
 
         """Called by GObject timer created by self.download_manager_start().
 
-        During a download operation, a GObject timer runs, so that statistics
-        in the Progress Tab can be updated at regular intervals
+        During a download operation, a GObject timer runs, so that the Progress
+        Tab and Output Tab can be updated at regular intervals.
 
         There is also a delay between the instant at which youtube-dl reports a
         video file has been downloaded, and the instant at which it appears in
         the filesystem. The timer checks for newly-existing files at regular
-        intervals, too
+        intervals, too.
+
+        During download operations, youtube-dl output is temporarily stored
+        (because Gtk widgets cannot be updated from within a thread). This
+        function calls  mainwin.MainWin.output_tab_update_pages()  to display
+        that output in the Output Tab.
+
+        If required, this function periodically checks whether the device
+        containing self.data_dir is running out of space (and halts the
+        operation, if so.)
 
         Returns:
 
@@ -6429,9 +7143,43 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 6385 dl_timer_callback')
 
+        # Periodically check (if required) whether the device is running out of
+        #   disk space
+        if self.dl_timer_disk_space_check_time is None:
+            # First check occurs 60 seconds after the operation begins
+            self.dl_timer_disk_space_check_time \
+            = time.time() + self.dl_timer_disk_space_time
+
+        elif self.dl_timer_disk_space_check_time < time.time():
+
+            self.dl_timer_disk_space_check_time \
+            = time.time() + self.dl_timer_disk_space_time
+
+            disk_space = utils.disk_get_free_space(self.data_dir)
+
+            if (
+                self.disk_space_stop_flag \
+                and self.disk_space_stop_limit != 0 \
+                and disk_space <= self.disk_space_stop_limit
+            ) or disk_space < self.disk_space_abs_limit:
+
+                # Stop the download operation
+                self.system_error(
+                    133,
+                    'Download operation halted because the device is running' \
+                    + ' out of space',
+                )
+
+                self.download_manager_obj.stop_download_operation()
+                # Return 1 to keep the timer going, which allows the operation
+                #   to finish naturally
+                return 1
+
+        # Disk space check complete, now update main window widgets
         if self.dl_timer_check_time is None:
             self.main_win_obj.progress_list_display_dl_stats()
             self.main_win_obj.results_list_update_row()
+            self.main_win_obj.output_tab_update_pages()
 
             # Download operation still in progress, return 1 to keep the timer
             #   going
@@ -6440,6 +7188,7 @@ class TartubeApp(Gtk.Application):
         elif self.dl_timer_check_time > time.time():
             self.main_win_obj.progress_list_display_dl_stats()
             self.main_win_obj.results_list_update_row()
+            self.main_win_obj.output_tab_update_pages()
 
             if self.main_win_obj.results_list_temp_list:
                 # Not all downloaded files confirmed to exist yet, so return 1
@@ -6449,6 +7198,94 @@ class TartubeApp(Gtk.Application):
         # The download operation has finished. The call to
         #   self.download_manager_finished() destroys the timer
         self.download_manager_finished()
+
+
+    def update_timer_callback(self):
+
+        """Called by GObject timer created by self.update_manager_start().
+
+        During an update operation, a GObject timer runs, so that the Output
+        Tab can be updated at regular intervals.
+
+        For the benefit of systems with Gtk < 3.24, the timer continues running
+        for a few seconds at the end of the update operation.
+
+        During update operations, messages generated by updates.UpdateManager
+        are temporarily stored (because Gtk widgets cannot be updated from
+        within a thread). This function calls
+        mainwin.MainWin.output_tab_update_pages() to display those messages in
+        the Output Tab.
+
+        Returns:
+
+            1 to keep the timer going
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 6386 update_timer_callback')
+
+        if self.update_timer_check_time is None:
+
+            self.main_win_obj.output_tab_update_pages()
+            # Update operation still in progress, return 1 to keep the timer
+            #   going
+            return 1
+
+        elif self.update_timer_check_time > time.time():
+
+            self.main_win_obj.output_tab_update_pages()
+            # Cooldown time not yet finished, return 1 to keep the timer going
+            return 1
+
+        else:
+            # The update operation has finished. The call to
+            #   self.update_manager_finished() destroys the timer
+            self.update_manager_finished()
+
+
+    def refresh_timer_callback(self):
+
+        """Called by GObject timer created by self.refresh_manager_start().
+
+        During a refresh operation, a GObject timer runs, so that the Output
+        Tab can be updated at regular intervals.
+
+        For the benefit of systems with Gtk < 3.24, the timer continues running
+        for a few seconds at the end of the refresh operation.
+
+        During refresh operations, messages generated by refresh.RefreshManager
+        are temporarily stored (because Gtk widgets cannot be updated from
+        within a thread). This function calls
+        mainwin.MainWin.output_tab_update_pages() to display those messages in
+        the Output Tab.
+
+        Returns:
+
+            1 to keep the timer going
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 6387 refresh_timer_callback')
+
+        if self.refresh_timer_check_time is None:
+
+            self.main_win_obj.output_tab_update_pages()
+            # Refresh operation still in progress, return 1 to keep the timer
+            #   going
+            return 1
+
+        elif self.refresh_timer_check_time > time.time():
+
+            self.main_win_obj.output_tab_update_pages()
+            # Cooldown time not yet finished, return 1 to keep the timer going
+            return 1
+
+        else:
+            # The refresh operation has finished. The call to
+            #   self.refresh_manager_finished() destroys the timer
+            self.refresh_manager_finished()
 
 
     # (Menu item and toolbar button callbacks)
@@ -7222,6 +8059,26 @@ class TartubeApp(Gtk.Application):
         self.export_from_db( [] )
 
 
+    def on_menu_general_options(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Opens an edit window for the General Options Manager.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7256 on_menu_general_options')
+
+        config.OptionsEditWin(self, self.general_options_obj, None)
+
+
     def on_menu_go_website(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -7283,11 +8140,11 @@ class TartubeApp(Gtk.Application):
         self.import_into_db(False)
 
 
-    def on_menu_general_options(self, action, par):
+    def on_menu_install_ffmpeg(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Opens an edit window for the General Options Manager.
+        Start an update operation to install FFmpeg (on MS Windows only).
 
         Args:
 
@@ -7298,9 +8155,10 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('ap 7256 on_menu_general_options')
+            print('ap 7237 on_menu_install_ffmpeg')
 
-        config.OptionsEditWin(self, self.general_options_obj, None)
+        # The True argument means 'install FFmpeg, not youtube-dl'
+        self.update_manager_start(True)
 
 
     def on_menu_refresh_db(self, action, par):
@@ -7455,7 +8313,8 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 7411 on_menu_update_ytdl')
 
-        self.update_manager_start()
+        # The False argument means 'install youtube-dl, not FFmpeg'
+        self.update_manager_start(False)
 
 
     def on_menu_quit(self, action, par):
@@ -7634,12 +8493,38 @@ class TartubeApp(Gtk.Application):
             self.complex_index_flag = True
 
 
+    def reset_data_dir(self):
+
+        """Called by mainwin.MountDriveDialogue.on_default_clicked() only;
+        everything else should call self.switch_db().
+
+        The call to this function resets the value of self.data_dir without
+        actually loading the database.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7585 reset_data_dir')
+
+        self.data_dir = self.default_data_dir
+
+
     def set_db_backup_mode(self, value):
 
         if DEBUG_FUNC_FLAG:
             print('ap 7595 set_db_backup_mode')
 
         self.db_backup_mode = value
+
+
+    def set_delete_on_shutdown_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7596 set_delete_on_shutdown_flag')
+
+        if not flag:
+            self.delete_on_shutdown_flag = False
+        else:
+            self.delete_on_shutdown_flag = True
 
 
     def set_dialogue_copy_clipboard_flag(self, flag):
@@ -7687,6 +8572,44 @@ class TartubeApp(Gtk.Application):
         else:
             self.disable_dl_all_flag = True
             self.main_win_obj.disable_dl_all_buttons()
+
+
+    def set_disk_space_stop_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7637 set_disk_space_stop_flag')
+
+        if not flag:
+            self.disk_space_stop_flag = False
+        else:
+            self.disk_space_stop_flag = True
+
+
+    def set_disk_space_stop_limit(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7638 set_disk_space_stop_limit')
+
+        self.disk_space_stop_limit = value
+
+
+    def set_disk_space_warn_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7639 set_disk_space_warn_flag')
+
+        if not flag:
+            self.disk_space_warn_flag = False
+        else:
+            self.disk_space_warn_flag = True
+
+
+    def set_disk_space_warn_limit(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7640 set_disk_space_warn_limit')
+
+        self.disk_space_warn_limit = value
 
 
     def set_ffmpeg_path(self, path):
@@ -7801,7 +8724,8 @@ class TartubeApp(Gtk.Application):
 
         Sets the new value for the number of simultaneous downloads allowed. If
         a download operation is in progress, informs the download manager
-        object, so the number of download workers can be adjusted.
+        object, so the number of download workers can be adjusted. Also
+        increases the number of pages in the Output Tab, if necessary.
 
         Args:
 
@@ -7823,6 +8747,9 @@ class TartubeApp(Gtk.Application):
 
         if old_value != value and self.download_manager_obj:
             self.download_manager_obj.change_worker_count(value)
+
+        if value > self.main_win_obj.output_page_count:
+            self.main_win_obj.output_tab_setup_pages()
 
 
     def set_operation_auto_update_flag(self, flag):
@@ -7939,6 +8866,17 @@ class TartubeApp(Gtk.Application):
             self.scheduled_stop_flag = True
 
 
+    def set_simple_options_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7879 set_simple_options_flag')
+
+        if not flag:
+            self.simple_options_flag = False
+        else:
+            self.simple_options_flag = True
+
+
     def set_show_small_icons_in_index(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -8017,6 +8955,128 @@ class TartubeApp(Gtk.Application):
             self.use_module_moviepy_flag = True
 
 
+    def set_video_res_apply_flag(self, flag):
+
+        """Called by mainwin.MainWin.on_checkbutton2_changed().
+
+        Applies or releases the video resolution limit. If a download operation
+        is in progress, the new setting is applied to the next download job.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7957 set_video_res_apply_flag')
+
+        if not flag:
+            self.video_res_apply_flag = False
+        else:
+            self.video_res_apply_flag = True
+
+
+    def set_video_res_default(self, value):
+
+        """Called by mainwin.MainWin.set_video_res_limit(),
+        .on_combobox_changed(), and
+        config.SystemPrefWin.on_video_res_combo_changed().
+
+        Sets the new video resolution limit. If a download operation is in
+        progress, the new value is applied to the next download job.
+
+        Args:
+
+            value (str): The new video resolution limit (a key in
+                formats.VIDEO_RESOLUTION_DICT, e.g. '720p')
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7545 set_video_res_default')
+
+        if not value in formats.VIDEO_RESOLUTION_DICT:
+            return self.system_error(
+                131,
+                'Set video resolution request failed sanity check',
+            )
+
+        self.video_res_default = value
+
+
+    def set_refresh_output_verbose_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7546 set_refresh_output_verbose_flag')
+
+        if not flag:
+            self.refresh_output_verbose_flag = False
+        else:
+            self.refresh_output_verbose_flag = True
+
+
+    def set_refresh_output_videos_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7547 set_refresh_output_videos_flag')
+
+        if not flag:
+            self.refresh_output_videos_flag = False
+        else:
+            self.refresh_output_videos_flag = True
+
+
+    def set_ytdl_output_start_empty_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7548 set_ytdl_output_start_empty_flag')
+
+        if not flag:
+            self.ytdl_output_start_empty_flag = False
+        else:
+            self.ytdl_output_start_empty_flag = True
+
+
+    def set_ytdl_output_ignore_json_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7549 set_ytdl_output_ignore_json_flag')
+
+        if not flag:
+            self.ytdl_output_ignore_json_flag = False
+        else:
+            self.ytdl_output_ignore_json_flag = True
+
+
+    def set_ytdl_output_ignore_progress_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7550 set_ytdl_output_ignore_progress_flag')
+
+        if not flag:
+            self.ytdl_output_ignore_progress_flag = False
+        else:
+            self.ytdl_output_ignore_progress_flag = True
+
+
+    def set_ytdl_output_stderr_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7551 set_ytdl_output_stderr_flag')
+
+        if not flag:
+            self.ytdl_output_stderr_flag = False
+        else:
+            self.ytdl_output_stderr_flag = True
+
+
+    def set_ytdl_output_stdout_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7552 set_ytdl_output_stdout_flag')
+
+        if not flag:
+            self.ytdl_output_stdout_flag = False
+        else:
+            self.ytdl_output_stdout_flag = True
+
+
     def set_ytdl_path(self, path):
 
         if DEBUG_FUNC_FLAG:
@@ -8042,6 +9102,17 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_ignore_json_flag = False
         else:
             self.ytdl_write_ignore_json_flag = True
+
+
+    def set_ytdl_write_ignore_progress_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            print('ap 7983 set_ytdl_write_ignore_progress_flag')
+
+        if not flag:
+            self.ytdl_write_ignore_progress_flag = False
+        else:
+            self.ytdl_write_ignore_progress_flag = True
 
 
     def set_ytdl_write_stderr_flag(self, flag):

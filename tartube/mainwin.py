@@ -109,6 +109,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.videos_tab = None                  # Gtk.Box
         self.videos_label = None                # Gtk.Label
         self.progress_tab = None                # Gkt.Box
+        self.progress_label = None              # Gtk.Label
+        self.output_tab = None                  # Gkt.Box
+        self.output_label = None                # Gtk.Label
         self.errors_tab = None                  # Gkt.Box
         self.errors_label = None                # Gkt.Label
         # (from self.setup_videos_tab)
@@ -118,8 +121,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_treeview = None        # Gtk.TreeView
         self.video_index_treestore = None       # Gtk.TreeStore
         self.video_index_sortmodel = None       # Gtk.TreeModelSort
-        self.check_button = None                # Gtk.Button
-        self.download_button = None             # Gtk.Button
+        self.button_box = None                  # Gtk.VBox
+        self.check_media_button = None          # Gtk.Button
+        self.download_media_button = None       # Gtk.Button
         self.catalogue_scrolled = None          # Gtk.ScrolledWindow
         self.catalogue_frame = None             # Gtk.Frame
         self.catalogue_listbox = None           # Gtk.ListBox
@@ -138,19 +142,24 @@ class MainWin(Gtk.ApplicationWindow):
         # (from self.setup_progress_tab)
         self.progress_paned = None              # Gtk.VPaned
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
-        self.progress_list_framed = None        # Gtk.Frame
+        self.progress_list_frame = None         # Gtk.Frame
         self.progress_list_treeview = None      # Gtk.TreeView
         self.progress_list_liststore = None     # Gtk.ListStore
         self.results_list_scrolled = None       # Gtk.Frame
         self.results_list_frame = None          # Gtk.Frame
         self.results_list_treeview = None       # Gtk.TreeView
         self.results_list_liststore = None      # Gtk.ListStore
-        self.button_box = None                  # Gtk.VBox
-        self.checkbutton = None                 # Gtk.CheckButton
-        self.spinbutton = None                  # Gtk.SpinButton
+        self.num_worker_checkbutton = None      # Gtk.CheckButton
+        self.num_worker_spinbutton = None       # Gtk.SpinButton
+        self.bandwidth_checkbutton = None       # Gtk.CheckButton
+        self.bandwidth_spinbutton = None        # Gtk.SpinButton
+        self.video_res_checkbutton = None       # Gtk.CheckButton
+        self.video_res_combobox = None          # Gtk.ComboBox
         self.progress_box = None                # Gtk.HBox
         self.progress_bar = None                # Gtk.ProgressBar
         self.progress_label = None              # Gtk.Label
+        # (from self.setup_output_tab)
+        self.output_notebook = None             # Gtk.Notebook
         # (from self.setup_errors_tab)
         self.errors_list_scrolled = None        # Gtk.ScrolledWindow
         self.errors_list_framed = None          # Gtk.Frame
@@ -159,19 +168,23 @@ class MainWin(Gtk.ApplicationWindow):
         self.error_list_button = None           # Gtk.Button
 
         # (Widgets which must be (de)sensitised during download/update/refresh
-        #   operations, in addition to self.check_button and
-        #   self.download_button)
+        #   operations, in addition to self.check_media_button and
+        #   self.download_media_button)
         self.save_db_menu_item = None           # Gtk.MenuItem
         self.system_prefs_menu_item = None      # Gtk.MenuItem
         self.gen_options_menu_item = None       # Gtk.MenuItem
+        self.add_video_menu_item = None         # Gtk.MenuItem
+        self.add_channel_menu_item = None       # Gtk.MenuItem
+        self.add_playlist_menu_item = None      # Gtk.MenuItem
+        self.add_folder_menu_item = None        # Gtk.MenuItem
         self.check_all_menu_item = None         # Gtk.MenuItem
         self.download_all_menu_item = None      # Gtk.MenuItem
-        self.stop_download_menu_item = None     # Gtk.MenuItem
+        self.stop_operation_menu_item = None    # Gtk.MenuItem
         self.update_ytdl_menu_item = None       # Gtk.MenuItem
         self.refresh_db_menu_item = None        # Gtk.MenuItem
         self.check_all_toolbutton = None        # Gtk.ToolButton
         self.download_all_toolbutton = None     # Gtk.ToolButton
-        self.stop_download_toolbutton = None    # Gtk.ToolButton
+        self.stop_operation_toolbutton = None   # Gtk.ToolButton
         # (Other widgets that might be modified, depending on current
         #   conditions)
         self.test_menu_item = None              # Gtk.MenuItem
@@ -345,6 +358,32 @@ class MainWin(Gtk.ApplicationWindow):
         #           dictionary at all for simulated downloads)
         self.results_list_temp_list = []
 
+        # Output Tab IVs
+        # The number of pages in the Output Tab's notebook. The number matches
+        #   the highest value of mainapp.TartubeApp.num_worker_default during
+        #   this session (i.e. if the user increases the value, new page(s) are
+        #   created, but if the user reduces the value, no pages are destroyed)
+        self.output_page_count = 0
+        # Dictionary of Gtk.TextView objects created in the Output Tab; one for
+        #   each page
+        # Dictionary in the form
+        #   key = The page number (the first page is #1)
+        #   value = The corresponding Gtk.TextView object
+        self.output_textview_dict = {}
+        # When youtube-dl generates output, that text cannot be displayed in
+        #   the Output Tab's pages immediately (because Gtk widgets cannot be
+        #   updated from within a thread)
+        # Instead, values are appended to this list
+        # During a download operation, mainapp.TartubeApp.dl_timer_callback()
+        #   calls self.output_tab_update() regularly to display the output in
+        #   the Output Tab (which empties the list)
+        # List in groups of 3, in the form
+        #   (page_number, mssage, error_flag...)
+        # ...where 'page_number' matches a key in self.output_textview_dict,
+        #   'msg' is a string to display, and 'error_flag' is True for an
+        #   error/warning message, False otherwise
+        self.output_tab_insert_list = []
+
         # Errors / Warnings Tab IVs
         # The number of errors added to the Error List, since this tab was the
         #   visible one (updated by self.errors_list_add_row() or
@@ -491,6 +530,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.setup_notebook()
         self.setup_videos_tab()
         self.setup_progress_tab()
+        self.setup_output_tab()
         self.setup_errors_tab()
 
 
@@ -569,29 +609,29 @@ class MainWin(Gtk.ApplicationWindow):
         media_sub_menu = Gtk.Menu()
         media_menu_column.set_submenu(media_sub_menu)
 
-        add_video_menu_item = Gtk.MenuItem.new_with_mnemonic(
+        self.add_video_menu_item = Gtk.MenuItem.new_with_mnemonic(
             'Add _videos...',
         )
-        media_sub_menu.append(add_video_menu_item)
-        add_video_menu_item.set_action_name('app.add_video_menu')
+        media_sub_menu.append(self.add_video_menu_item)
+        self.add_video_menu_item.set_action_name('app.add_video_menu')
 
-        add_channel_menu_item = Gtk.MenuItem.new_with_mnemonic(
+        self.add_channel_menu_item = Gtk.MenuItem.new_with_mnemonic(
             'Add _channel...',
         )
-        media_sub_menu.append(add_channel_menu_item)
-        add_channel_menu_item.set_action_name('app.add_channel_menu')
+        media_sub_menu.append(self.add_channel_menu_item)
+        self.add_channel_menu_item.set_action_name('app.add_channel_menu')
 
-        add_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
+        self.add_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
             'Add _playlist...',
         )
-        media_sub_menu.append(add_playlist_menu_item)
-        add_playlist_menu_item.set_action_name('app.add_playlist_menu')
+        media_sub_menu.append(self.add_playlist_menu_item)
+        self.add_playlist_menu_item.set_action_name('app.add_playlist_menu')
 
-        add_folder_menu_item = Gtk.MenuItem.new_with_mnemonic(
+        self.add_folder_menu_item = Gtk.MenuItem.new_with_mnemonic(
             'Add _folder...',
         )
-        media_sub_menu.append(add_folder_menu_item)
-        add_folder_menu_item.set_action_name('app.add_folder_menu')
+        media_sub_menu.append(self.add_folder_menu_item)
+        self.add_folder_menu_item.set_action_name('app.add_folder_menu')
 
         media_sub_menu.append(Gtk.SeparatorMenuItem())
 
@@ -659,12 +699,6 @@ class MainWin(Gtk.ApplicationWindow):
         ops_sub_menu.append(self.download_all_menu_item)
         self.download_all_menu_item.set_action_name('app.download_all_menu')
 
-        self.stop_download_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic('_Stop downloads')
-        ops_sub_menu.append(self.stop_download_menu_item)
-        self.stop_download_menu_item.set_sensitive(False)
-        self.stop_download_menu_item.set_action_name('app.stop_download_menu')
-
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
         self.refresh_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -682,6 +716,26 @@ class MainWin(Gtk.ApplicationWindow):
         self.update_ytdl_menu_item.set_action_name('app.update_ytdl_menu')
         if __main__.__debian_install_flag__:
             self.update_ytdl_menu_item.set_sensitive(False)
+
+        self.install_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            '_Install FFmpeg',
+        )
+        ops_sub_menu.append(self.install_ffmpeg_menu_item)
+        self.install_ffmpeg_menu_item.set_action_name(
+            'app.install_ffmpeg_menu',
+        )
+        if os.name != 'nt':
+            self.install_ffmpeg_menu_item.set_sensitive(False)
+
+        ops_sub_menu.append(Gtk.SeparatorMenuItem())
+
+        self.stop_operation_menu_item = \
+        Gtk.MenuItem.new_with_mnemonic('_Stop current operation')
+        ops_sub_menu.append(self.stop_operation_menu_item)
+        self.stop_operation_menu_item.set_action_name(
+            'app.stop_operation_menu',
+        )
+        self.stop_operation_menu_item.set_sensitive(False)
 
         # Help column
         help_menu_column = Gtk.MenuItem.new_with_mnemonic('_Help')
@@ -724,80 +778,84 @@ class MainWin(Gtk.ApplicationWindow):
         squeeze_flag = self.app_obj.toolbar_squeeze_flag
 
         if not squeeze_flag:
-            add_video_button = Gtk.ToolButton.new(
+            self.add_video_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_video_small'],
                 ),
             )
-            add_video_button.set_label('Videos')
-            add_video_button.set_is_important(True)
+            self.add_video_toolbutton.set_label('Videos')
+            self.add_video_toolbutton.set_is_important(True)
         else:
-            add_video_button = Gtk.ToolButton.new(
+            self.add_video_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_video_large'],
                 ),
             )
 
-        self.main_toolbar.insert(add_video_button, -1)
-        add_video_button.set_tooltip_text('Add new video(s)')
-        add_video_button.set_action_name('app.add_video_toolbutton')
+        self.main_toolbar.insert(self.add_video_toolbutton, -1)
+        self.add_video_toolbutton.set_tooltip_text('Add new video(s)')
+        self.add_video_toolbutton.set_action_name('app.add_video_toolbutton')
 
         if not squeeze_flag:
-            add_channel_button = Gtk.ToolButton.new(
+            self.add_channel_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_channel_small'],
                 ),
             )
-            add_channel_button.set_label('Channel')
-            add_channel_button.set_is_important(True)
+            self.add_channel_toolbutton.set_label('Channel')
+            self.add_channel_toolbutton.set_is_important(True)
         else:
-            add_channel_button = Gtk.ToolButton.new(
+            self.add_channel_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_channel_large'],
                 ),
             )
 
-        self.main_toolbar.insert(add_channel_button, -1)
-        add_channel_button.set_tooltip_text('Add a new channel')
-        add_channel_button.set_action_name('app.add_channel_toolbutton')
+        self.main_toolbar.insert(self.add_channel_toolbutton, -1)
+        self.add_channel_toolbutton.set_tooltip_text('Add a new channel')
+        self.add_channel_toolbutton.set_action_name(
+            'app.add_channel_toolbutton',
+        )
 
         if not squeeze_flag:
-            add_playlist_button = Gtk.ToolButton.new(
+            self.add_playlist_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_playlist_small'],
                 ),
             )
-            add_playlist_button.set_label('Playlist')
-            add_playlist_button.set_is_important(True)
+            self.add_playlist_toolbutton.set_label('Playlist')
+            self.add_playlist_toolbutton.set_is_important(True)
         else:
-            add_playlist_button = Gtk.ToolButton.new(
+            self.add_playlist_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_playlist_large'],
                 ),
             )
 
-        self.main_toolbar.insert(add_playlist_button, -1)
-        add_playlist_button.set_tooltip_text('Add a new playlist')
-        add_playlist_button.set_action_name('app.add_playlist_toolbutton')
+        self.main_toolbar.insert(self.add_playlist_toolbutton, -1)
+        self.add_playlist_toolbutton.set_tooltip_text('Add a new playlist')
+        self.add_playlist_toolbutton.set_action_name(
+            'app.add_playlist_toolbutton',
+        )
 
         if not squeeze_flag:
-            add_folder_button = Gtk.ToolButton.new(
+            self.add_folder_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_folder_small'],
                 ),
             )
-            add_folder_button.set_label('Folder')
-            add_folder_button.set_is_important(True)
+            self.add_folder_toolbutton.set_label('Folder')
+            self.add_folder_toolbutton.set_is_important(True)
         else:
-            add_folder_button = Gtk.ToolButton.new(
+            self.add_folder_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_folder_large'],
                 ),
             )
 
-        self.main_toolbar.insert(add_folder_button, -1)
-        add_folder_button.set_tooltip_text('Add a new folder')
-        add_folder_button.set_action_name('app.add_folder_toolbutton')
+        self.main_toolbar.insert(self.add_folder_toolbutton, -1)
+        self.add_folder_toolbutton.set_tooltip_text('Add a new folder')
+        self.add_folder_toolbutton.set_action_name('app.add_folder_toolbutton')
 
         # (Conversely, if there are no labels, then we have enough room for a
         #   separator)
@@ -852,27 +910,27 @@ class MainWin(Gtk.ApplicationWindow):
             self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         if not squeeze_flag:
-            self.stop_download_toolbutton = Gtk.ToolButton.new(
+            self.stop_operation_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_stop_small'],
                 ),
             )
-            self.stop_download_toolbutton.set_label('Stop')
-            self.stop_download_toolbutton.set_is_important(True)
+            self.stop_operation_toolbutton.set_label('Stop')
+            self.stop_operation_toolbutton.set_is_important(True)
         else:
-            self.stop_download_toolbutton = Gtk.ToolButton.new(
+            self.stop_operation_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_stop_large'],
                 ),
             )
 
-        self.main_toolbar.insert(self.stop_download_toolbutton, -1)
-        self.stop_download_toolbutton.set_sensitive(False)
-        self.stop_download_toolbutton.set_tooltip_text(
+        self.main_toolbar.insert(self.stop_operation_toolbutton, -1)
+        self.stop_operation_toolbutton.set_sensitive(False)
+        self.stop_operation_toolbutton.set_tooltip_text(
             'Stop the current operation',
         )
-        self.stop_download_toolbutton.set_action_name(
-            'app.stop_download_toolbutton',
+        self.stop_operation_toolbutton.set_action_name(
+            'app.stop_operation_toolbutton',
         )
 
         if not squeeze_flag:
@@ -974,6 +1032,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_tab.set_vexpand(True)
         self.progress_tab.set_border_width(self.spacing_size)
 
+        # Output Tab
+        self.output_tab = Gtk.Box()
+        self.output_label = Gtk.Label.new_with_mnemonic('_Output')
+        self.notebook.append_page(self.output_tab, self.output_label)
+        self.output_tab.set_hexpand(True)
+        self.output_tab.set_vexpand(True)
+        self.output_tab.set_border_width(self.spacing_size)
+
         # Errors Tab
         self.errors_tab = Gtk.Box()
         self.errors_label = Gtk.Label.new_with_mnemonic('_Errors / Warnings')
@@ -1019,26 +1085,26 @@ class MainWin(Gtk.ApplicationWindow):
         self.button_box = Gtk.VBox()
         vbox.pack_start(self.button_box, False, False, 0)
 
-        self.check_button = Gtk.Button()
+        self.check_media_button = Gtk.Button()
         self.button_box.pack_start(
-            self.check_button,
+            self.check_media_button,
             True,
             True,
             self.spacing_size,
         )
-        self.check_button.set_label('Check all')
-        self.check_button.set_tooltip_text(
+        self.check_media_button.set_label('Check all')
+        self.check_media_button.set_tooltip_text(
             'Check all videos, channels, playlists and folders',
         )
-        self.check_button.set_action_name('app.check_all_button')
+        self.check_media_button.set_action_name('app.check_all_button')
 
-        self.download_button = Gtk.Button()
-        self.button_box.pack_start(self.download_button, True, True, 0)
-        self.download_button.set_label('Download all')
-        self.download_button.set_tooltip_text(
+        self.download_media_button = Gtk.Button()
+        self.button_box.pack_start(self.download_media_button, True, True, 0)
+        self.download_media_button.set_label('Download all')
+        self.download_media_button.set_tooltip_text(
             'Download all videos, channels, playlists and folders',
         )
-        self.download_button.set_action_name('app.download_all_button')
+        self.download_media_button.set_action_name('app.download_all_button')
 
         # Right-hand side
         vbox2 = Gtk.VBox()
@@ -1335,38 +1401,114 @@ class MainWin(Gtk.ApplicationWindow):
         vbox.pack_start(hbox, False, False, self.spacing_size)
         hbox.set_border_width(self.spacing_size)
 
-        self.checkbutton = Gtk.CheckButton()
-        hbox.pack_start(self.checkbutton, False, False, 0)
-        self.checkbutton.set_label('Limit simultaneous downloads to')
-        self.checkbutton.set_active(self.app_obj.num_worker_apply_flag)
-        self.checkbutton.connect('toggled', self.on_checkbutton_changed)
+        self.num_worker_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.num_worker_checkbutton, False, False, 0)
+        self.num_worker_checkbutton.set_label('Max downloads')
+        self.num_worker_checkbutton.set_active(
+            self.app_obj.num_worker_apply_flag,
+        )
+        self.num_worker_checkbutton.connect(
+            'toggled',
+            self.on_num_worker_checkbutton_changed,
+        )
 
-        self.spinbutton = Gtk.SpinButton.new_with_range(
+        self.num_worker_spinbutton = Gtk.SpinButton.new_with_range(
             self.app_obj.num_worker_min,
             self.app_obj.num_worker_max,
             1,
         )
-        hbox.pack_start(self.spinbutton, False, False, self.spacing_size)
-        self.spinbutton.set_value(self.app_obj.num_worker_default)
-        self.spinbutton.connect('value-changed', self.on_spinbutton_changed)
+        hbox.pack_start(
+            self.num_worker_spinbutton,
+            True,
+            False,
+            self.spacing_size,
+        )
+        self.num_worker_spinbutton.set_value(self.app_obj.num_worker_default)
+        self.num_worker_spinbutton.connect(
+            'value-changed',
+            self.on_num_worker_spinbutton_changed,
+        )
 
-        label = Gtk.Label('KiB/s')
-        hbox.pack_end(label, False, False, 0)
+        self.bandwidth_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.bandwidth_checkbutton, False, False, 0)
+        self.bandwidth_checkbutton.set_label('D/L speed (KiB/s)')
+        self.bandwidth_checkbutton.set_active(
+            self.app_obj.bandwidth_apply_flag,
+        )
+        self.bandwidth_checkbutton.connect(
+            'toggled',
+            self.on_bandwidth_checkbutton_changed,
+        )
 
-        self.spinbutton2 = Gtk.SpinButton.new_with_range(
+        self.bandwidth_spinbutton = Gtk.SpinButton.new_with_range(
             self.app_obj.bandwidth_min,
             self.app_obj.bandwidth_max,
             1,
         )
-        hbox.pack_end(self.spinbutton2, False, False, self.spacing_size)
-        self.spinbutton2.set_value(self.app_obj.bandwidth_default)
-        self.spinbutton2.connect('value-changed', self.on_spinbutton2_changed)
+        hbox.pack_start(
+            self.bandwidth_spinbutton,
+            True,
+            False,
+            self.spacing_size,
+        )
+        self.bandwidth_spinbutton.set_value(self.app_obj.bandwidth_default)
+        self.bandwidth_spinbutton.connect(
+            'value-changed',
+            self.on_bandwidth_spinbutton_changed,
+        )
 
-        self.checkbutton2 = Gtk.CheckButton()
-        hbox.pack_end(self.checkbutton2, False, False, 0)
-        self.checkbutton2.set_label('Limit download speed to')
-        self.checkbutton2.set_active(self.app_obj.bandwidth_apply_flag)
-        self.checkbutton2.connect('toggled', self.on_checkbutton2_changed)
+        self.video_res_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.video_res_checkbutton, False, False, 0)
+        self.video_res_checkbutton.set_label('Video resolution')
+        self.video_res_checkbutton.set_active(
+            self.app_obj.video_res_apply_flag,
+        )
+        self.video_res_checkbutton.connect(
+            'toggled',
+            self.on_video_res_checkbutton_changed,
+        )
+
+        store = Gtk.ListStore(str)
+        for string in formats.VIDEO_RESOLUTION_LIST:
+            store.append( [string] )
+
+        self.video_res_combobox = Gtk.ComboBox.new_with_model(store)
+        hbox.pack_start(self.video_res_combobox, False, False, 0)
+        renderer_text = Gtk.CellRendererText()
+        self.video_res_combobox.pack_start(renderer_text, True)
+        self.video_res_combobox.add_attribute(renderer_text, 'text', 0)
+        self.video_res_combobox.set_entry_text_column(0)
+        self.set_video_res_limit(None)        # Uses default resolution, 720p
+        self.video_res_combobox.connect('changed', self.on_combobox_changed)
+
+
+    def setup_output_tab(self):
+
+        """Called by self.setup_win().
+
+        Creates widgets for the Output Tab.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 1197 setup_output_tab')
+
+        vbox = Gtk.VBox()
+        self.output_tab.pack_start(vbox, True, True, 0)
+
+        # During a download operation, each page in the notebook displays
+        #   output from a single downloads.DownloadWorker object
+        # The pages are added later, via a call to
+        #   self.output_tab_setup_pages()
+        self.output_notebook = Gtk.Notebook()
+        vbox.pack_start(self.output_notebook, True, True, 0)
+        self.output_notebook.set_border_width(0)
+
+        # When the user switches between notebook pages, scroll the visible
+        #   page's textview to the bottom (otherwise it gets confusing)
+        self.output_notebook.connect(
+            'switch-page',
+            self.on_output_notebook_switch_page,
+        )
 
 
     def setup_errors_tab(self):
@@ -1441,63 +1583,85 @@ class MainWin(Gtk.ApplicationWindow):
     # (Moodify main window widgets)
 
 
-    def sensitise_operation_widgets(self, flag):
+    def sensitise_operation_widgets(self, sens_flag, \
+    refresh_update_flag=False):
 
         """Called by mainapp.TartubeApp.download_manager_start(),
-        .download_manager_finished() and self.modify_operation_widgets().
+        .download_manager_finished(), self.modify_operation_widgets(),
+        .modify_widgets_in_update_operation() and
+        .modify_widgets_in_refresh_operation().
 
         (De)sensitises widgets that must not be sensitised during a download,
         update or refresh operation.
 
         Args:
 
-            flag (True or False): False to desensitise widget at the start of
-                an operation, True to re-sensitise widgets at the end of the
+            sens_flag (True or False): False to desensitise widget at the start
+                of an operation, True to re-sensitise widgets at the end of the
                 operation
+
+            refresh_update_flag (True, False or None): True when called by
+                self.modify_widgets_in_update_operation() or
+                self.modify_widgets_in_refresh_operation(), False (or None)
+                when called by anything else
 
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 1461 sensitise_operation_widgets')
 
-        self.system_prefs_menu_item.set_sensitive(flag)
-        self.gen_options_menu_item.set_sensitive(flag)
-        self.export_db_menu_item.set_sensitive(flag)
-        self.import_db_menu_item.set_sensitive(flag)
-        self.check_all_menu_item.set_sensitive(flag)
+        self.system_prefs_menu_item.set_sensitive(sens_flag)
+        self.gen_options_menu_item.set_sensitive(sens_flag)
+        self.export_db_menu_item.set_sensitive(sens_flag)
+        self.import_db_menu_item.set_sensitive(sens_flag)
+        self.check_all_menu_item.set_sensitive(sens_flag)
 
         if not self.app_obj.disable_dl_all_flag:
-            self.download_all_menu_item.set_sensitive(flag)
+            self.download_all_menu_item.set_sensitive(sens_flag)
         else:
             self.download_all_menu_item.set_sensitive(False)
 
-        self.refresh_db_menu_item.set_sensitive(flag)
-        self.check_all_toolbutton.set_sensitive(flag)
+        self.refresh_db_menu_item.set_sensitive(sens_flag)
+        self.check_all_toolbutton.set_sensitive(sens_flag)
 
         if not self.app_obj.disable_dl_all_flag:
-            self.download_all_toolbutton.set_sensitive(flag)
+            self.download_all_toolbutton.set_sensitive(sens_flag)
         else:
             self.download_all_toolbutton.set_sensitive(False)
 
         if not __main__.__debian_install_flag__:
-            self.update_ytdl_menu_item.set_sensitive(flag)
+            self.update_ytdl_menu_item.set_sensitive(sens_flag)
+
+        # (The 'Add videos', 'Add channel' etc menu items/buttons are
+        #   sensitised during a download operation, but desensitised during an
+        #   update/refresh operation)
+        if refresh_update_flag:
+            self.add_video_menu_item.set_sensitive(sens_flag)
+            self.add_channel_menu_item.set_sensitive(sens_flag)
+            self.add_playlist_menu_item.set_sensitive(sens_flag)
+            self.add_folder_menu_item.set_sensitive(sens_flag)
+            self.add_video_toolbutton.set_sensitive(sens_flag)
+            self.add_channel_toolbutton.set_sensitive(sens_flag)
+            self.add_playlist_toolbutton.set_sensitive(sens_flag)
+            self.add_folder_toolbutton.set_sensitive(sens_flag)
 
         # (The 'Save database' menu item must remain desensitised if file load/
         #   save is disabled)
         if not self.app_obj.disable_load_save_flag:
-            self.save_db_menu_item.set_sensitive(flag)
+            self.save_db_menu_item.set_sensitive(sens_flag)
 
         # (The 'Stop' button/menu item are only sensitised during a download/
         #   update/refresh operation)
-        if not flag:
-            self.stop_download_menu_item.set_sensitive(True)
-            self.stop_download_toolbutton.set_sensitive(True)
+        if not sens_flag:
+            self.stop_operation_menu_item.set_sensitive(True)
+            self.stop_operation_toolbutton.set_sensitive(True)
         else:
-            self.stop_download_menu_item.set_sensitive(False)
-            self.stop_download_toolbutton.set_sensitive(False)
+            self.stop_operation_menu_item.set_sensitive(False)
+            self.stop_operation_toolbutton.set_sensitive(False)
 
 
-    def modify_widgets_in_update_operation(self, finish_flag):
+    def modify_widgets_in_update_operation(self, finish_flag, \
+    ffmpeg_flag=False):
 
         """Called by mainapp.TartubeApp.update_manager_start() and
         .update_manager_finished().
@@ -1509,58 +1673,66 @@ class MainWin(Gtk.ApplicationWindow):
             finish_flag (True or False): False at the start of the update
                 operation, True at the end of it
 
+            ffmpeg_flag (bool): True when called by .update_manager_start() to
+                install FFmpeg. Otherwise False
+
         """
 
         if DEBUG_FUNC_FLAG:
             print('mw 1515 modify_widgets_in_update_operation')
 
         # Remove existing widgets. In previous code, we simply changed the
-        #   label on on self.check_button, but this causes frequent crashes
+        #   label on on self.check_media_button, but this causes frequent
+        #   crashes
         # Get around the crashes by destroying the old widgets and creating new
         #   ones
-        self.button_box.remove(self.check_button)
-        self.check_button = None
-        self.button_box.remove(self.download_button)
-        self.download_button = None
+        self.button_box.remove(self.check_media_button)
+        self.check_media_button = None
+        self.button_box.remove(self.download_media_button)
+        self.download_media_button = None
 
         # Add replacement widgets
-        self.check_button = Gtk.Button()
-        self.button_box.pack_start(self.check_button, True, True, 0)
-        self.check_button.set_action_name('app.check_all_button')
+        self.check_media_button = Gtk.Button()
+        self.button_box.pack_start(self.check_media_button, True, True, 0)
+        self.check_media_button.set_action_name('app.check_all_button')
 
-        self.download_button = Gtk.Button()
-        self.button_box.pack_start(self.download_button, True, True, 0)
-        self.download_button.set_action_name('app.download_all_button')
+        self.download_media_button = Gtk.Button()
+        self.button_box.pack_start(self.download_media_button, True, True, 0)
+        self.download_media_button.set_action_name('app.download_all_button')
 
         if not finish_flag:
 
-            self.check_button.set_label('Updating')
-            self.check_button.set_sensitive(False)
+            if ffmpeg_flag:
+                self.check_media_button.set_label('Installing')
+                self.download_media_button.set_label('FFmpeg')
+            else:
+                self.check_media_button.set_label('Updating')
+                self.download_media_button.set_label('youtube-dl')
 
-            self.download_button.set_label('youtube-dl')
-            self.download_button.set_sensitive(False)
+            self.check_media_button.set_sensitive(False)
+            self.download_media_button.set_sensitive(False)
 
-            self.sensitise_operation_widgets(False)
+            self.sensitise_operation_widgets(False, True)
 
         else:
-            self.check_button.set_label('Check all')
-            self.check_button.set_sensitive(True)
-            self.check_button.set_tooltip_text(
+            self.check_media_button.set_label('Check all')
+            self.check_media_button.set_sensitive(True)
+            self.check_media_button.set_tooltip_text(
                 'Check all videos, channels, playlists and folders',
             )
 
-            self.download_button.set_label('Download all')
+            self.download_media_button.set_label('Download all')
 
-            self.download_button.set_tooltip_text(
+            self.download_media_button.set_tooltip_text(
                 'Download all videos, channels, playlists and folders',
             )
 
             if not self.app_obj.disable_dl_all_flag:
-                self.download_button.set_sensitive(True)
+                self.download_media_button.set_sensitive(True)
             else:
-                self.download_button.set_sensitive(False)
+                self.download_media_button.set_sensitive(False)
 
-            self.sensitise_operation_widgets(True)
+            self.sensitise_operation_widgets(True, True)
 
         # Make the widget changes visible
         self.show_all()
@@ -1584,51 +1756,52 @@ class MainWin(Gtk.ApplicationWindow):
             print('mw 1584 modify_widgets_in_refresh_operation')
 
         # Remove existing widgets. In previous code, we simply changed the
-        #   label on on self.check_button, but this causes frequent crashes
+        #   label on on self.check_media_button, but this causes frequent
+        #   crashes
         # Get around the crashes by destroying the old widgets and creating new
         #   ones
-        self.button_box.remove(self.check_button)
-        self.check_button = None
-        self.button_box.remove(self.download_button)
-        self.download_button = None
+        self.button_box.remove(self.check_media_button)
+        self.check_media_button = None
+        self.button_box.remove(self.download_media_button)
+        self.download_media_button = None
 
         # Add replacement widgets
-        self.check_button = Gtk.Button()
-        self.button_box.pack_start(self.check_button, True, True, 0)
-        self.check_button.set_action_name('app.check_all_button')
+        self.check_media_button = Gtk.Button()
+        self.button_box.pack_start(self.check_media_button, True, True, 0)
+        self.check_media_button.set_action_name('app.check_all_button')
 
-        self.download_button = Gtk.Button()
-        self.button_box.pack_start(self.download_button, True, True, 0)
-        self.download_button.set_action_name('app.download_all_button')
+        self.download_media_button = Gtk.Button()
+        self.button_box.pack_start(self.download_media_button, True, True, 0)
+        self.download_media_button.set_action_name('app.download_all_button')
 
         if not finish_flag:
 
-            self.check_button.set_label('Refreshing')
-            self.check_button.set_sensitive(False)
+            self.check_media_button.set_label('Refreshing')
+            self.check_media_button.set_sensitive(False)
 
-            self.download_button.set_label('database')
-            self.download_button.set_sensitive(False)
+            self.download_media_button.set_label('database')
+            self.download_media_button.set_sensitive(False)
 
-            self.sensitise_operation_widgets(False)
+            self.sensitise_operation_widgets(False, True)
 
         else:
-            self.check_button.set_label('Check all')
-            self.check_button.set_sensitive(True)
-            self.check_button.set_tooltip_text(
+            self.check_media_button.set_label('Check all')
+            self.check_media_button.set_sensitive(True)
+            self.check_media_button.set_tooltip_text(
                 'Check all videos, channels, playlists and folders',
             )
 
-            self.download_button.set_label('Download all')
-            self.download_button.set_tooltip_text(
+            self.download_media_button.set_label('Download all')
+            self.download_media_button.set_tooltip_text(
                 'Download all videos, channels, playlists and folders',
             )
 
             if not self.app_obj.disable_dl_all_flag:
-                self.download_button.set_sensitive(True)
+                self.download_media_button.set_sensitive(True)
             else:
-                self.download_button.set_sensitive(False)
+                self.download_media_button.set_sensitive(False)
 
-            self.sensitise_operation_widgets(True)
+            self.sensitise_operation_widgets(True, True)
 
         # Make the widget changes visible
         self.show_all()
@@ -1659,8 +1832,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called by mainapp.TartubeApp.download_manager_start().
 
-        At the start of a download operation, replace self.download_button
-        with a progress bar (and a label just above it).
+        At the start of a download operation, replace
+        self.download_media_button with a progress bar (and a label just above
+        it).
 
         Args:
 
@@ -1681,23 +1855,24 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Remove existing widgets. In previous code, we simply changed the
-        #   label on on self.check_button, but this causes frequent crashes
+        #   label on on self.check_media_button, but this causes frequent
+        #   crashes
         # Get around the crashes by destroying the old widgets and creating new
         #   ones
-        self.button_box.remove(self.check_button)
-        self.check_button = None
-        self.button_box.remove(self.download_button)
-        self.download_button = None
+        self.button_box.remove(self.check_media_button)
+        self.check_media_button = None
+        self.button_box.remove(self.download_media_button)
+        self.download_media_button = None
 
         # Add replacement widgets
-        self.check_button = Gtk.Button()
-        self.button_box.pack_start(self.check_button, True, True, 0)
-        self.check_button.set_action_name('app.check_all_button')
-        self.check_button.set_sensitive(False)
+        self.check_media_button = Gtk.Button()
+        self.button_box.pack_start(self.check_media_button, True, True, 0)
+        self.check_media_button.set_action_name('app.check_all_button')
+        self.check_media_button.set_sensitive(False)
         if force_sim_flag:
-            self.check_button.set_label('Checking...')
+            self.check_media_button.set_label('Checking...')
         else:
-            self.check_button.set_label('Downloading...')
+            self.check_media_button.set_label('Downloading...')
 
         # (Put the progress bar inside a box, so it doesn't touch the divider,
         #   because that doesn't look nice)
@@ -1745,38 +1920,39 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Remove existing widgets. In previous code, we simply changed the
-        #   label on on self.check_button, but this causes frequent crashes
+        #   label on on self.check_media_button, but this causes frequent
+        #   crashes
         # Get around the crashes by destroying the old widget and creating a
         #   new one
-        self.button_box.remove(self.check_button)
-        self.check_button = None
+        self.button_box.remove(self.check_media_button)
+        self.check_media_button = None
         self.button_box.remove(self.progress_box)
         self.progress_box = None
         self.progress_bar = None
 
         # Add replacement widgets
-        self.check_button = Gtk.Button()
-        self.button_box.pack_start(self.check_button, True, True, 0)
-        self.check_button.set_label('Check all')
-        self.check_button.set_tooltip_text(
+        self.check_media_button = Gtk.Button()
+        self.button_box.pack_start(self.check_media_button, True, True, 0)
+        self.check_media_button.set_label('Check all')
+        self.check_media_button.set_tooltip_text(
             'Check all videos, channels, playlists and folders',
         )
-        self.check_button.set_action_name('app.check_all_button')
+        self.check_media_button.set_action_name('app.check_all_button')
 
-        self.download_button = Gtk.Button()
-        self.button_box.pack_start(self.download_button, True, True, 0)
-        self.download_button.set_label('Download all')
-        self.download_button.set_tooltip_text(
+        self.download_media_button = Gtk.Button()
+        self.button_box.pack_start(self.download_media_button, True, True, 0)
+        self.download_media_button.set_label('Download all')
+        self.download_media_button.set_tooltip_text(
             'Download all videos, channels, playlists and folders',
         )
-        self.download_button.set_action_name('app.download_all_button')
+        self.download_media_button.set_action_name('app.download_all_button')
 
         # (For some reason, the button must be desensitised after setting the
         #   action name)
         if not self.app_obj.disable_dl_all_flag:
-            self.download_button.set_sensitive(True)
+            self.download_media_button.set_sensitive(True)
         else:
-            self.download_button.set_sensitive(False)
+            self.download_media_button.set_sensitive(False)
 
         # Make the changes visible
         self.button_box.show_all()
@@ -1888,7 +2064,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.app_obj.current_manager_obj:
             self.download_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
-            self.download_button.set_sensitive(True)
+            self.download_media_button.set_sensitive(True)
 
 
     def disable_dl_all_buttons(self):
@@ -1907,7 +2083,35 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.app_obj.current_manager_obj:
             self.download_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
-            self.download_button.set_sensitive(False)
+            self.download_media_button.set_sensitive(False)
+
+
+    def set_video_res_limit(self, resolution):
+
+        """Called by mainapp.TartubeApp.load_config() and
+        self.setup_progress_tab().
+
+        Sets a new video resolution limit. Updates the combobox in the
+        Progress Tab, and calls the main application to update its IV.
+
+        Args:
+
+            resolution (str): The new progressive scan resolution; a key in
+                formats.VIDEO_RESOLUTION_DICT (e.g. '720p'), or None to use the
+                default resolution limit specified by
+                formats.VIDEO_RESOLUTION_DEFAULT.
+
+        """
+
+        # Check it's a recognised value
+        if not resolution in formats.VIDEO_RESOLUTION_LIST:
+            resolution = formats.VIDEO_RESOLUTION_DEFAULT
+
+        self.video_res_combobox.set_active(
+            formats.VIDEO_RESOLUTION_LIST.index(resolution),
+        )
+
+        self.app_obj.set_video_res_default(resolution)
 
 
     # (Auto-sort functions for main window widgets)
@@ -1985,7 +2189,7 @@ class MainWin(Gtk.ApplicationWindow):
             index1_list = re.findall(r'^(\d+)', obj1.nickname)
             index2_list = re.findall(r'^(\d+)', obj2.nickname)
             if index1_list and index2_list:
-                if index1_list[0] < index2_list[0]:
+                if int(index1_list[0]) < int(index2_list[0]):
                     return -1
                 else:
                     return 1
@@ -3376,9 +3580,10 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_index_row_dict = {}
 
             # Remove the old widgets
-            self.video_index_frame.remove(
-                self.video_index_frame.get_child(),
-            )
+            if self.video_index_frame.get_child():
+                self.video_index_frame.remove(
+                    self.video_index_frame.get_child(),
+                )
 
         # Set up the widgets
         self.video_index_treeview = Gtk.TreeView()
@@ -3441,7 +3646,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             count += 1
 
-            if item is 'pixbuf':
+            if item == 'pixbuf':
 
                 renderer_pixbuf = Gtk.CellRendererPixbuf()
                 column_pixbuf = Gtk.TreeViewColumn(
@@ -3459,7 +3664,7 @@ class MainWin(Gtk.ApplicationWindow):
                     text=count,
                 )
                 self.video_index_treeview.append_column(column_text)
-                if item is 'hide':
+                if item == 'hide':
                     column_text.set_visible(False)
                 else:
                     column_text.set_cell_data_func(
@@ -5267,7 +5472,327 @@ class MainWin(Gtk.ApplicationWindow):
         self.results_list_temp_list = new_temp_list
 
 
-    # (Errors List)
+    # (Output tab)
+
+    def output_tab_setup_pages(self):
+
+        """Called by mainapp.TartubeApp.start() and .set_num_worker_default().
+
+        Makes sure there are enough pages in the Output Tab's notebook for
+        each simultaneous download allowed (a value specified by
+        mainapp.TartubeApp.num_worker_default).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5106 output_tab_setup_pages')
+
+        # The number of pages in the notebook should match the highest value of
+        #   mainapp.TartubeApp.num_worker_default during this session (i.e. if
+        #   the user reduces its value, we don't remove pages; but we do add
+        #   pages if the user increases its value)
+        if self.output_page_count < self.app_obj.num_worker_default:
+
+            for num in range(1, (self.app_obj.num_worker_default + 1)):
+                if not num in self.output_textview_dict:
+                    self.output_tab_add_page()
+
+
+    def output_tab_add_page(self):
+
+        """Called by self.output_tab_setup_pages().
+
+        Adds a new page to the Output Tab's notebook, and updates IVs.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5106 output_tab_add_page')
+
+        # Each page corresponds to a single downloads.DownloadWorker object.
+        #   The page number matches the worker's .worker_id. The first page/
+        #   worker is numbered #1
+        self.output_page_count += 1
+
+        # Add the new page
+        tab = Gtk.Box()
+        label = Gtk.Label.new_with_mnemonic(
+            'Thread #_' + str(self.output_page_count),
+        )
+        self.output_notebook.append_page(tab, label)
+        tab.set_hexpand(True)
+        tab.set_vexpand(True)
+        tab.set_border_width(self.spacing_size)
+
+        # Add a textview to the tab, using a css style sheet to provide
+        #   monospaced white text on a black background
+        scrolled = Gtk.ScrolledWindow()
+        tab.pack_start(scrolled, True, True, 0)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+
+        frame = Gtk.Frame()
+        scrolled.add_with_viewport(frame)
+
+        style_provider = self.output_tab_set_textview_css(
+            '#css_text_id_' + str(self.output_page_count) \
+            + ', textview text {\n' \
+            + '   background-color: #000000;\n' \
+            + '   color: #FFFFFF;\n' \
+            + '}\n' \
+            + '#css_label_id_' + str(self.output_page_count) \
+            + ', textview {\n' \
+            + '   font-family: monospace, monospace;\n' \
+            + '   font-size: 10pt;\n' \
+            + '}'
+        )
+
+        textview = Gtk.TextView()
+        frame.add(textview)
+        textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_editable(False)
+        textview.set_cursor_visible(False)
+
+        context = textview.get_style_context()
+        context.add_provider(style_provider, 600)
+
+        # Reset css properties for the next Gtk.TextView created (for example,
+        #   by AddVideoDialogue) so it uses default values, rather than the
+        #   white text on black background used above
+        # To do that, create a dummy textview, and apply a css style to it
+        textview2 = Gtk.TextView()
+        style_provider2 = self.output_tab_set_textview_css(
+            '#css_text_id_default, textview text {\n' \
+            + '   background-color: unset;\n' \
+            + '   color: unset;\n' \
+            + '}\n' \
+            + '#css_label_id_default, textview {\n' \
+            + '   font-family: unset;\n' \
+            + '   font-size: unset;\n' \
+            + '}'
+        )
+
+        context = textview2.get_style_context()
+        context.add_provider(style_provider2, 600)
+
+        # Set up auto-scrolling
+        textview.connect(
+            'size-allocate',
+            self.output_tab_do_autoscroll,
+            scrolled,
+        )
+
+        # Make the page visible
+        self.show_all()
+
+        # Update IVs
+        self.output_textview_dict[self.output_page_count] = textview
+
+
+    def output_tab_set_textview_css(self, css_string):
+
+        """Called by self.output_tab_add_page().
+
+        Applies a CSS style to the current screen. Called once to create a
+        white-on-black Gtk.TextView, then a second time to create a dummy
+        textview with default properties.
+
+        Args:
+
+            css_string (str): The CSS style to apply
+
+        Return values:
+
+            The Gtk.CssProvider created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5107 output_tab_set_textview_css')
+
+        style_provider = Gtk.CssProvider()
+        style_provider.load_from_data(bytes(css_string.encode()))
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            style_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        return style_provider
+
+
+    def output_tab_write_stdout(self, page_num, msg):
+
+        """Called by downloads.VideoDownloader.do_download() and by various
+        functions in refresh.RefreshManager.
+
+        During a download operation, youtube-dl sends output to STDOUT. If
+        permitted, this output is displayed in the Output Tab. However, it
+        can't be displayed immediately, because Gtk widgets can't be updated
+        from within a thread.
+
+        Instead, add the received values to a list, and wait for the GObject
+        timer mainapp.TartubeApp.dl_timer_id to call self.output_tab_update().
+
+        Args:
+
+            page_num (int): The page number on which this message should be
+                displayed. Matches a key in self.output_textview_dict
+
+            msg (str): The message to display. A newline character will be
+                added by self.output_tab_update_pages().
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5107 output_tab_write_stdout')
+
+        self.output_tab_insert_list.extend( [page_num, msg, False] )
+
+
+    def output_tab_write_stderr(self, page_num, msg):
+
+        """Called by downloads.VideoDownloader.do_download().
+
+        During a download operation, youtube-dl sends output to STDERR. If
+        permitted, this output is displayed in the Output Tab. However, it
+        can't be displayed immediately, because Gtk widgets can't be updated
+        from within a thread.
+
+        Instead, add the received values to a list, and wait for the GObject
+        timer mainapp.TartubeApp.dl_timer_id to call self.output_tab_update().
+
+        Args:
+
+            page_num (int): The page number on which this message should be
+                displayed. Matches a key in self.output_textview_dict
+
+            msg (str): The message to display. A newline character will be
+                added by self.output_tab_update_pages().
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5107 output_tab_write_stderr')
+
+        self.output_tab_insert_list.extend( [page_num, msg, True] )
+
+
+    def output_tab_update_pages(self):
+
+        """Called by mainapp.TartubeApp.dl_timer_callback(),
+        .refresh_timer_callback() and .refresh_manager_finished().
+
+        During a download operation, youtube-dl sends output to STDOUT/STDERR.
+        If permitted, this output is displayed in the Output Tab. However, it
+        can't be displayed immediately, because Gtk widgets can't be updated
+        from within a thread.
+
+        Instead, the output has been added to self.output_tab_insert_list. This
+        output can now be displayed (and the list can be emptied).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5108 output_tab_update_pages')
+
+        if self.output_tab_insert_list:
+
+            while self.output_tab_insert_list:
+
+                page_num = self.output_tab_insert_list.pop(0)
+                msg = self.output_tab_insert_list.pop(0)
+                error_flag = self.output_tab_insert_list.pop(0)
+
+                # Add the output to the textview. STDERR messages are displayed
+                #   in cyan text
+                textview = self.output_textview_dict[page_num]
+                textbuffer = textview.get_buffer()
+
+                if not error_flag:
+                    textbuffer.insert(textbuffer.get_end_iter(), msg + '\n')
+                else:
+                    string = '<span color="{:s}">' + msg + '</span>\n'
+                    textbuffer.insert_markup(
+                        textbuffer.get_end_iter(),
+                        string.format('cyan'),
+                        -1,
+                    )
+
+            # Make the new output visible
+            for textview in self.output_textview_dict.values():
+                textview.show_all()
+
+
+    def output_tab_do_autoscroll(self, textview, rect, scrolled):
+
+        """Called from a callback in self.output_tab_add_page().
+
+        When one of the textviews in the Output Tab is modified (text added or
+        removed), make sure the page is scrolled to the bottom.
+
+        Args:
+
+            textview (Gtk.TextView): The textview to scroll
+
+            rect (Gdk.Rectangle): Ignored
+
+            scrolled (Gtk.ScrolledWindow): The scroller which contains the
+                textview
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5108 output_tab_do_autoscroll')
+
+        adj = scrolled.get_vadjustment()
+        adj.set_value(adj.get_upper() - adj.get_page_size())
+
+
+    def output_tab_scroll_visible_page(self, page_num):
+
+        """Called by self.on_output_notebook_switch_page() and
+        .on_notebook_switch_page().
+
+        When the user switches between pages in the Output Tab, scroll the
+        visible textview to the bottom (otherwise it gets confusing).
+
+        Args:
+
+            page_num (int): The page to be scrolled, matching a key in
+                self.output_textview_dict
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5109 output_tab_scroll_visible_page')
+
+        if page_num in self.output_textview_dict:
+            textview = self.output_textview_dict[page_num]
+
+            frame = textview.get_parent()
+            viewport = frame.get_parent()
+            scrolled = viewport.get_parent()
+
+            adj = scrolled.get_vadjustment()
+            adj.set_value(adj.get_upper() - adj.get_page_size())
+
+
+    def output_tab_reset_pages(self):
+
+        """Called by mainapp.TartubeApp.download_manager_start() and
+        .refresh_manager_start().
+
+        At the start of a download/refresh operation, empty the pages in the
+        Output Tab (if allowed).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5110 output_tab_clear_pages')
+
+        for textview in self.output_textview_dict.values():
+            textbuffer = textview.get_buffer()
+            textbuffer.set_text('')
+            textview.show_all()
+
+
+    # (Errors Tab)
 
 
     def errors_list_reset(self):
@@ -5353,7 +5878,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # (Don't update the Errors/Warnings tab label if it's the visible
             #   tab)
-            if self.visible_tab_num != 2:
+            if self.visible_tab_num != 3:
                 self.tab_error_count += 1
 
         for msg in media_data_obj.warning_list:
@@ -5390,11 +5915,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             # (Don't update the Errors/Warnings tab label if it's the visible
             #   tab)
-            if self.visible_tab_num != 2:
+            if self.visible_tab_num != 3:
                 self.tab_warning_count += 1
 
         # Update the tab's label to show the number of warnings/errors visible
-        if self.visible_tab_num != 2:
+        if self.visible_tab_num != 3:
             self.errors_list_refresh_label()
 
 
@@ -5444,7 +5969,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (Don't update the Errors/Warnings tab label if it's the visible
         #   tab)
-        if self.visible_tab_num != 2:
+        if self.visible_tab_num != 3:
             self.tab_error_count += 1
             self.errors_list_refresh_label()
 
@@ -5501,7 +6026,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (Don't update the Errors/Warnings tab label if it's the visible
         #   tab)
-        if self.visible_tab_num != 2:
+        if self.visible_tab_num != 3:
             self.tab_warning_count += 1
             self.errors_list_refresh_label()
 
@@ -5559,10 +6084,43 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.visible_tab_num = page_num
 
-        if page_num == 2 and not self.app_obj.system_msg_keep_totals_flag:
+        if page_num == 2:
+            # Switching between tabs causes pages in the Output Tab to scroll
+            #   to the top. Make sure they're all scrolled back to the bottom
+            for page_num in range(1, (self.output_page_count + 1)):
+                self.output_tab_scroll_visible_page(page_num)
+
+        elif page_num == 3 and not self.app_obj.system_msg_keep_totals_flag:
+            # Update the tab's label
             self.tab_error_count = 0
             self.tab_warning_count = 0
             self.errors_list_refresh_label()
+
+
+    def on_output_notebook_switch_page(self, notebook, box, page_num):
+
+        """Called from callback in self.setup_output_tab().
+
+        When the user switches between pages in the Output Tab, scroll the
+        visible textview to the bottom (otherwise it gets confusing).
+
+        Args:
+
+            notebook (Gtk.Notebook): The Output Tab's notebook, providing
+                several pages
+
+            box (Gtk.Box) - The box in which the page's widgets are placed
+
+            page_num (int) - The number of the newly-visible page (the first
+                page is number 0)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 5523 on_ouput_notebook_switch_page')
+
+        # Output Tab IVs number the first page as #1, and so on
+        self.output_tab_scroll_visible_page(page_num + 1)
 
 
     def on_video_index_apply_options(self, menu_item, media_data_obj):
@@ -7690,7 +8248,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.results_list_liststore.remove(iter)
 
 
-    def on_spinbutton_changed(self, spinbutton):
+    def on_num_worker_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_progress_tab().
 
@@ -7705,15 +8263,15 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 7672 on_spinbutton_changed')
+            print('mw 7672 on_num_worker_spinbutton_changed')
 
-        if self.checkbutton.get_active():
+        if self.num_worker_checkbutton.get_active():
             self.app_obj.set_num_worker_default(
-                int(self.spinbutton.get_value())
+                int(self.num_worker_spinbutton.get_value())
             )
 
 
-    def on_checkbutton_changed(self, checkbutton):
+    def on_num_worker_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_progress_tab().
 
@@ -7730,11 +8288,11 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             print('mw 7695 on_checkbutton_changed')
 
-        if self.checkbutton.get_active():
+        if self.num_worker_checkbutton.get_active():
 
             self.app_obj.set_num_worker_apply_flag(True)
             self.app_obj.set_num_worker_default(
-                int(self.spinbutton.get_value())
+                int(self.num_worker_spinbutton.get_value())
             )
 
         else:
@@ -7742,7 +8300,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.set_num_worker_apply_flag(False)
 
 
-    def on_spinbutton2_changed(self, spinbutton):
+    def on_bandwidth_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_progress_tab().
 
@@ -7757,14 +8315,14 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 7724 on_spinbutton2_changed')
+            print('mw 7724 on_bandwidth_spinbutton_changed')
 
         self.app_obj.set_bandwidth_default(
-            int(self.spinbutton2.get_value())
+            int(self.bandwidth_spinbutton.get_value())
         )
 
 
-    def on_checkbutton2_changed(self, checkbutton):
+    def on_bandwidth_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_progress_tab().
 
@@ -7779,9 +8337,55 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('mw 7746 on_checkbutton2_changed')
+            print('mw 7746 on_bandwidth_checkbutton_changed')
 
-        self.app_obj.set_bandwidth_apply_flag(self.checkbutton2.get_active())
+        self.app_obj.set_bandwidth_apply_flag(
+            self.bandwidth_checkbutton.get_active(),
+        )
+
+
+    def on_combobox_changed(self, combobox):
+
+        """Called from callback in self.setup_progress_tab().
+
+        In the Progress Tab, when the user sets the video resolution limit,
+        inform mainapp.TartubeApp. The new setting is applied to the next
+        download job.
+
+        Args:
+
+            combobox (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 7747 on_combobox_changed')
+
+        tree_iter = self.video_res_combobox.get_active_iter()
+        model = self.video_res_combobox.get_model()
+        self.app_obj.set_video_res_default(model[tree_iter][0])
+
+
+    def on_video_res_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_progress_tab().
+
+        In the Progress Tab, when the user turns the video resolution limit
+        on/off, inform mainapp.TartubeApp. The new setting is applied to the
+        next download job.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 7748 on_video_res_checkbutton_changed')
+
+        self.app_obj.set_video_res_apply_flag(
+            self.video_res_checkbutton.get_active(),
+        )
 
 
     def on_errors_list_clear(self, button):
@@ -9705,88 +10309,95 @@ class DeleteContainerDialogue(Gtk.Dialog):
         grid.set_border_width(main_win_obj.spacing_size)
         grid.set_row_spacing(main_win_obj.spacing_size)
 
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 1, 1)
+        label.set_markup('<b>' + media_data_obj.name + '</b>')
+
+        separator = Gtk.HSeparator()
+        grid.attach(separator, 0, 1, 1, 1)
+
         if not total_count:
 
             if obj_type == 'folder':
 
-                label = Gtk.Label(
+                label2 = Gtk.Label(
                     'This ' + obj_type + ' does not contain any videos,' \
                     + ' channels,\nplaylists or folders (but there might be' \
                     + ' some files\nin ' + pkg_string + '\'s data directory)',
                 )
 
             else:
-                label = Gtk.Label(
+                label2 = Gtk.Label(
                     'This ' + obj_type + ' does not contain any videos (but' \
                     + ' there might\nbe some files in ' + pkg_string \
                     + '\'s data directory)',
                 )
 
-            grid.attach(label, 0, 0, 1, 5)
-            label.set_alignment(0, 0.5)
+            grid.attach(label2, 0, 2, 1, 5)
+            label2.set_alignment(0, 0.5)
 
         else:
 
-            label = Gtk.Label('This ' + obj_type + ' contains:')
-            grid.attach(label, 0, 0, 1, 1)
-            label.set_alignment(0, 0.5)
+            label2 = Gtk.Label('This ' + obj_type + ' contains:')
+            grid.attach(label2, 0, 2, 1, 1)
+            label2.set_alignment(0, 0.5)
 
             if folder_count == 1:
                 label_string = '<b>1</b> folder'
             else:
                 label_string = '<b>' + str(folder_count) + '</b> folders'
 
-            label2 = Gtk.Label()
-            grid.attach(label2, 0, 1, 1, 1)
-            label2.set_markup(label_string)
+            label3 = Gtk.Label()
+            grid.attach(label3, 0, 3, 1, 1)
+            label3.set_markup(label_string)
 
             if channel_count == 1:
                 label_string = '<b>1</b> channel'
             else:
                 label_string = '<b>' + str(channel_count) + '</b> channels'
 
-            label3 = Gtk.Label()
-            grid.attach(label3, 0, 2, 1, 1)
-            label3.set_markup(label_string)
+            label4 = Gtk.Label()
+            grid.attach(label4, 0, 4, 1, 1)
+            label4.set_markup(label_string)
 
             if playlist_count == 1:
                 label_string = '<b>1</b> playlist'
             else:
                 label_string = '<b>' + str(playlist_count) + '</b> playlists'
 
-            label4 = Gtk.Label()
-            grid.attach(label4, 0, 3, 1, 1)
-            label4.set_markup(label_string)
+            label5 = Gtk.Label()
+            grid.attach(label5, 0, 5, 1, 1)
+            label5.set_markup(label_string)
 
             if self.video_count == 1:
                 label_string = '<b>1</b> video'
             else:
                 label_string = '<b>' + str(self.video_count) + '</b> videos'
 
-            label5 = Gtk.Label()
-            grid.attach(label5, 0, 4, 1, 1)
-            label5.set_markup(label_string)
+            label6 = Gtk.Label()
+            grid.attach(label6, 0, 6, 1, 1)
+            label6.set_markup(label_string)
 
-        separator = Gtk.HSeparator()
-        grid.attach(separator, 0, 5, 1, 1)
+        separator2 = Gtk.HSeparator()
+        grid.attach(separator2, 0, 7, 1, 1)
 
         if not empty_flag:
-            label6 = Gtk.Label(
+            label7 = Gtk.Label(
                 'Do you want to delete the ' + obj_type + ' from ' \
                 + pkg_string + '\'s data\ndirectory, deleting all of its' \
                 + ' files, or do you just want to\nremove the ' + obj_type \
                 + ' from this list?',
             )
         else:
-            label6 = Gtk.Label(
+            label7 = Gtk.Label(
                 'Do you want to empty the ' + obj_type + ' in ' \
                 + pkg_string + '\'s data\ndirectory, deleting all of its' \
                 + ' files, or do you just want to\nempty the ' + obj_type \
                 + ' in this list?',
             )
 
-        grid.attach(label6, 0, 6, 1, 1)
-        label6.set_alignment(0, 0.5)
+        grid.attach(label7, 0, 8, 1, 1)
+        label7.set_alignment(0, 0.5)
 
         if not empty_flag:
             self.button = Gtk.RadioButton.new_with_label_from_widget(
@@ -9799,13 +10410,13 @@ class DeleteContainerDialogue(Gtk.Dialog):
                 'Just empty the ' + obj_type + ' in this list',
             )
 
-        grid.attach(self.button, 0, 7, 1, 1)
+        grid.attach(self.button, 0, 9, 1, 1)
 
         self.button2 = Gtk.RadioButton.new_from_widget(self.button)
         self.button2.set_label(
             'Delete all files',
         )
-        grid.attach(self.button2, 0, 8, 1, 1)
+        grid.attach(self.button2, 0, 10, 1, 1)
 
         # Display the dialogue window
         self.show_all()
@@ -10776,4 +11387,218 @@ class CalendarDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+class MountDriveDialogue(Gtk.Dialog):
+
+    """Python class handling a dialogue window that asks the user what to do,
+    if the drive containing Tartube's data directory is not mounted.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 10703 __init__')
+
+        Gtk.Dialog.__init__(
+            self,
+            'Mount drive',
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+        )
+
+        self.set_modal(True)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        script_name = utils.upper_case_first(__main__.__packagename__)
+        if os.name == 'nt':
+            folder = 'folder'
+        else:
+            folder = 'directory'
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)
+        self.main_win_obj = main_win_obj
+
+        label = Gtk.Label(
+            'The ' + script_name + ' data ' + folder + ' is set to:',
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 1, 1, 1)
+        label.set_markup(
+            '<b>' \
+            + utils.shorten_string(main_win_obj.app_obj.data_dir, 50) \
+            + '</b>',
+        )
+
+        label = Gtk.Label(
+            '...but this ' + folder + ' doesn\'t exist',
+        )
+        grid.attach(label, 0, 2, 1, 1)
+
+        separator = Gtk.HSeparator()
+        grid.attach(separator, 0, 3, 1, 1)
+
+        self.mounted_button = Gtk.Button.new_with_label(
+            'I have mounted the drive, please try again',
+        )
+        grid.attach(self.mounted_button, 0, 4, 1, 1)
+        self.mounted_button.set_hexpand(False)
+        self.mounted_button.connect('clicked', self.on_mounted_clicked)
+
+        self.select_button = Gtk.Button.new_with_label(
+            'Select a different data directory',
+        )
+        grid.attach(self.select_button, 0, 5, 1, 1)
+        self.select_button.set_hexpand(False)
+        self.select_button.connect('clicked', self.on_select_clicked)
+
+        self.default_button = Gtk.Button.new_with_label(
+            'Use the default data directory',
+        )
+        grid.attach(self.default_button, 0, 6, 1, 1)
+        self.default_button.set_hexpand(False)
+        self.default_button.connect('clicked', self.on_default_clicked)
+
+        self.stop_button = Gtk.Button.new_with_label(
+            'Shut down ' + script_name,
+        )
+        grid.attach(self.stop_button, 0, 7, 1, 1)
+        self.stop_button.set_hexpand(False)
+        self.stop_button.connect('clicked', self.on_stop_clicked)
+
+        # Flag set to True if the data directory specified by
+        #   mainapp.TartubeApp.data_dir is now available
+        self.available_flag = False
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_mounted_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+
+        The user claims to have mounted the drive containing Tartube's data
+        directory. Check this is the case.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 10704 on_mounted_clicked')
+
+        app_obj = self.main_win_obj.app_obj
+
+        if os.path.exists(app_obj.data_dir):
+
+            # Data directory exists
+            self.available_flag = True
+            self.destroy()
+
+        else:
+
+            # Data directory still does not exist. Inform the user
+            if os.name == 'nt':
+                folder = 'folder'
+            else:
+                folder = 'directory'
+
+
+            mini_win = app_obj.dialogue_manager_obj.show_msg_dialogue(
+                'The ' + folder + ' still doesn\'t exist\nPlease try a' \
+                + ' different option',
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+            mini_win.set_modal(True)
+
+
+    def on_select_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+
+        Prompt the user to select a new data directory.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 10705 on_select_clicked')
+
+        result = self.main_win_obj.app_obj.prompt_user_for_data_dir()
+        if result:
+
+            # New data directory selected
+            self.available_flag = True
+            self.destroy()
+
+
+    def on_default_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+
+        Sets the data directory to the default location for this system.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 10706 on_default_clicked')
+
+        self.main_win_obj.app_obj.reset_data_dir()
+        self.available_flag = True
+        self.destroy()
+
+
+    def on_stop_clicked(self, widget):
+
+        """Called from a callback in self.__init__().
+
+        Don't select a new data directory; just tell Tartube to shut down.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            print('mw 10707 on_stop_clicked')
+
+        self.available_flag = False
+        self.destroy()
+
 

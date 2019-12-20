@@ -1,5 +1,59 @@
-Tartube
-=======
+===================================================
+Tartube - The Easy Way To Watch And Download Videos
+===================================================
+------------------------------------------------------------
+Works with YouTube, BitChute, and hundreds of other websites
+------------------------------------------------------------
+
+.. image:: screenshots/tartube.png
+  :alt: Tartube screenshot
+
+* `1 Introduction`_
+* `2 Why should I use Tartube?`_
+* `3 Quick start guide`_
+* `3.1 MS Windows`_
+* `3.2 Linux/BSD`_
+* `4 Downloads`_
+* `5 Installation`_
+* `5.1 Installation - MS Windows`_
+* `5.2 Installation - MacOS`_
+* `5.3 Installation - Linux/BSD`_
+* `5.3.1 Linux/BSD Installation requirements`_
+* `5.3.2 Optional dependencies`_
+* `5.3.3 Install using PyPI`_
+* `5.3.4 Install from source`_
+* `5.3.5 Run without installing`_
+* `6 Getting started`_
+* `6.1 Choose where to save videos`_
+* `6.2 Check youtube-dl is updated`_
+* `6.3 Setting youtube-dl's location`_
+* `6.4 Setting the location of FFmpeg / AVConv`_
+* `6.4.1 On MS Windows`_
+* `6.4.2 On Linux/BSD`_
+* `6.5 Introducing system folders`_
+* `6.6 Adding videos`_
+* `6.7 Adding channels and playlists`_
+* `6.8 Adding folders`_
+* `6.9 Things you can do`_
+* `6.10 General download options`_
+* `6.11 Other download options`_
+* `6.12 Favourite videos`_
+* `6.13 Watching videos`_
+* `6.14 Combining channels, playlists and folders`_
+* `6.14.1 Combining one channel and many playlists`_
+* `6.14.2 Combining channels from different websites`_
+* `6.14.3 Download all videos to a single folder`_
+* `6.15 Archiving videos`_
+* `6.16 Exporting/importing the Tartube database`_
+* `7. Frequently-Asked Questions`_
+* `8. Future plans`_
+* `9. Known issues`_
+* `10. Contributing`_
+* `11. Authors`_
+* `12. License`_
+
+1 Introduction
+==============
 
 **Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, partly based on `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ and written in Python 3 / Gtk 3.
 
@@ -9,18 +63,8 @@ It runs on MS Windows, Linux and BSD. It probably works on MacOS, but the author
 
 Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
-Downloads
----------
-
-Latest version: **v1.2.008 (30 Sep 2019)**
-
--  `MS Windows (32-bit) installer <https://sourceforge.io/projects/tartube/files/v1.2.008/install-tartube-1.2.008-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.io/projects/tartube/files/v1.2.008/install-tartube-1.2.008-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.io/projects/tartube/files/v1.2.008/tartube_v1.2.008.tar.gz/download>`__ from Sourceforge
--  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
-
-Why should I use Tartube?
--------------------------
+2 Why should I use Tartube?
+===========================
 
 -  You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other sites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
 -  You can fetch information about those videos, channels and playlists, without actually downloading anything
@@ -28,15 +72,56 @@ Why should I use Tartube?
 -  If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
 -  Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
 -  **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
-   
-Screenshots
------------
+-  **Tartube** is free and open-source software
 
-.. image:: screenshots/tartube.png
-  :alt: Tartube screenshot
+3 Quick start guide 
+===================
 
-Installation - MS Windows
--------------------------
+3.1 MS Windows
+--------------
+
+-  Download, install and run Tartube
+-  When prompted, choose a folder where **Tartube** can store videos
+-  When prompted, let **Tartube** install **youtube-dl** for you
+-  It's recommended that you install **FFmeg**. From the menu, click **Operations > Install FFmpeg**
+-  Go to the YouTube website, and find your favourite channel
+-  In Tartube, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
+-  In the dialogue window, add the name of the channel and the address (URL)
+-  Click the **OK** button to close the window
+-  Click the **Check all** button. **Tartube** will fetch a list of videos in the channel
+-  Click **All Videos** to see that list
+-  If you want to download the videos, click the **Download all** button
+
+3.2 Linux/BSD
+~~~~~~~~~~~~~
+
+-  Download and install `youtube-dl <https://youtube-dl.org/>`__
+-  It's recommended that you install  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
+-  Download Tartube. Installation is not necessary; you can just run the main script (navigate into the **Tartube** directory, open a terminal window, and type **python3 tartube/tartube**)
+-  When prompted, choose a directory where **Tartube** can store videos
+-  Go to the YouTube website, and find your favourite channel
+-  In Tartube, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
+-  In the dialogue window, add the name of the channel and the address (URL)
+-  Click the **OK** button to close the window
+-  Click the **Check all** button. **Tartube** will fetch a list of videos in the channel
+-  Click **All Videos** to see that list
+-  If you want to download the videos, click the **Download all** button
+
+4 Downloads
+===========
+
+Latest version: **v1.3.0 (20 Dec 2019)**
+
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.0/install-tartube-1.3.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.0/install-tartube-1.3.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.0/tartube_v1.3.0.tar.gz/download>`__ from Sourceforge
+-  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
+
+5 Installation
+==============
+
+5.1 Installation - MS Windows
+-----------------------------
 
 MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run Tartube. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
@@ -77,60 +162,58 @@ If you want to use **ffmpeg**, see the section below.
         
         **python3 tartube**
 
-
-Installation - MacOS
---------------------
+5.2 Installation - MacOS
+------------------------
 
 Tartube should run on MacOS, but the authors don't have access a MacOS system. If you are a MacOS user, open an issue at our Github page, and we'll work out the installation procedure together.
 
-Installation - Linux/BSD/MacOS
-------------------------------
+5.3 Installation - Linux/BSD
+----------------------------
 
 Linux/BSD users can use any of the following installation methods.
 
-Linux/BSD Installation requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.3.1 Linux/BSD Installation requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `youtube-dl <https://youtube-dl.org/>`__
 -  `Python 3 <https://www.python.org/downloads>`__
 -  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 -  `Python Requests module <https://3.python-requests.org/>`__
 
-
-Optional dependencies
-~~~~~~~~~~~~~~~~~~~~~
+5.3.2 Optional dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `Python xdg module <https://pypi.org/project/xdg/>`__ - required if you want to package **Tartube**
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell Tartube about the length of its videos, moviepy can work it out
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - see the section below if you want to use FFmpeg or AVConv
 
-Install using PyPI
-~~~~~~~~~~~~~~~~~~
+5.3.3 Install using PyPI
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Installation via ``pip`` does not work. I have given up trying to make it work.
 
-Install from source
-~~~~~~~~~~~~~~~~~~~
+5.3.4 Install from source
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
 3. Type: ``python3 setup.py install``
 4. Type: ``tartube``
 
-Run without installing
-~~~~~~~~~~~~~~~~~~~~~~
+5.3.5 Run without installing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
 3. The executable is inside a further sub-directory, so do **cd tartube** again
 4. Type: ``python3 tartube``
 
-Getting started
----------------
+6 Getting started
+=================
 
-1. Choose where to save videos
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.1 Choose where to save videos
+-------------------------------
 
 When you first start **Tartube**, you will be asked to choose where Tartube should save its videos.
 
@@ -144,8 +227,8 @@ Regardless of which location you select, you can change it later, if you need to
 -  Check the location of the **Tartube data directory**
 -  If you want to change it, click the **Change** button
 
-2. Check youtube-dl is updated
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.2 Check youtube-dl is updated
+-------------------------------
 
 *This section does not apply if you installed Tartube via the Debian repository.*
 
@@ -163,8 +246,8 @@ If you are using MS Windows, you will be prompted to install **youtube-dl**; you
 
 -  Click **Operations > Update youtube-dl**
 
-3. Setting youtube-dl's location
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.3 Setting youtube-dl's location
+---------------------------------
 
 *This section does not apply if you installed Tartube via the Debian repository.*
 
@@ -181,20 +264,28 @@ On other systems, users can modify Tartube's settings. There are several locatio
 -  Try changing the setting **'Shell command for update operations'**
 -  Try the update operation again
 
-4. Setting the location of FFmpeg / AVConv
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.4 Setting the location of FFmpeg / AVConv
+-------------------------------------------
   
-**youtube-dl** can use the `FFmpeg library <https://ffmpeg.org/>`__ or the `AVConv library <https://sourceforge.io/projects/avconv/>`__ for various video-processing tasks, such as converting video files to audio. If you want to use FFmpeg or AVConv, you should first install them on your system.
+**youtube-dl** can use the `FFmpeg library <https://ffmpeg.org/>`__ or the `AVConv library <https://sourceforge.io/projects/avconv/>`__ for various video-processing tasks, such as converting video files to audio, and for handling large resolutions (1080p and higher). If you want to use FFmpeg or AVConv, you should first install them on your system.
 
-On Linux/BSD, **youtube-dl** might be able to detect FFmpeg/AVConv without any help from you. On MS Windows, **youtube-dl** can't do that.
+6.4.1 On MS Windows
+~~~~~~~~~~~~~~~~~~~
 
-In either case, you can tell Tartube where to find FFmpeg/AVConv in this same tab.
+On MS Windows, the usual methods of FFmpeg installation will not work. You **must** download a MinGW-compatible version of FFmpeg. The quickest way to do this is from the main menu: click **Operations > Install FFmpeg**.
+
+There is no known method of installing a compatible version of AVConv.
+
+6.4.2 On Linux/BSD
+~~~~~~~~~~~~~~~~~~
+
+On Linux/BSD, **youtube-dl** might be able to detect FFmpeg/AVConv without any help from you. If not, you can tell Tartube where to find FFmpeg/AVConv in this same tab.
 
 .. image:: screenshots/example2b.png
   :alt: Updating ffmpeg
 
-5. Introducing system folders
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.5 Introducing system folders
+------------------------------
 
 On the left side of the **Tartube** window is a list of folders. You can store videos, channels and playlists inside these folders. You can even store folders inside of other folders.
 
@@ -207,8 +298,8 @@ When you start **Tartube**, there are five folders already visible. You can't re
 
 Videos saved to the **Temporary Videos** folder are deleted when **Tartube** shuts down.
 
-6. Adding videos
-~~~~~~~~~~~~~~~~
+6.6 Adding videos
+-----------------
 
 You can add individual videos by clicking the **'Videos'** button near the top of the window. A popup window will appear.
 
@@ -224,8 +315,8 @@ Finally, click on the **Unsorted Videos** folder to see the videos you've added.
 .. image:: screenshots/example5.png
   :alt: Your first added video
 
-7. Adding channels and playlists
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.7 Adding channels and playlists
+---------------------------------
 
 You can also add a whole channel by clicking the **'Channel'** button or a whole playlist by clicking the **'Playlist'** button. 
 
@@ -236,8 +327,8 @@ You can also add a whole channel by clicking the **'Channel'** button or a whole
 
 Copy and paste the channel's URL into the popup window. You should also give the channel a name. The channel's name is usually the name used on the website (but you can choose any name you like).
 
-8. Adding folders
-~~~~~~~~~~~~~~~~~
+6.8 Adding folders
+------------------
 
 The left-hand side of the window will quickly still filling up. It's a good idea to create some folders, and to store your channels/playlists inside those folders.
 
@@ -251,8 +342,8 @@ Then repeat that process to create a folder called **Music**. You can then drag-
 .. image:: screenshots/example8.png
   :alt: A channel inside a folder
 
-9. Things you can do
-~~~~~~~~~~~~~~~~~~~~
+6.9 Things you can do
+----------------------
 
 Once you've finished adding videos, channels, playlists and folders, there are basically four things **Tartube** can do:
 
@@ -271,8 +362,8 @@ To **Check** or **Download** videos, channels and playlists, use the buttons nea
 
 **Protip:** Do a **'Check'** operation before you do **'Refresh'** operation
 
-10. General download options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.10 General download options
+-----------------------------
 
 **youtube-dl** offers a large number of download options. This is how to set them.
 
@@ -283,8 +374,8 @@ To **Check** or **Download** videos, channels and playlists, use the buttons nea
 
 A new window opens. Any changes you make in this window aren't actually applied until you click the **'Apply'** or **'OK'** buttons.
 
-11. Other download options
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.11 Other download options
+---------------------------
 
 Those are the *default* download options. If you want to apply a *different* set of download options to a particular channel or particular playlist, you can do so.
 
@@ -312,8 +403,8 @@ The previous set of download options still applies to everything in the **Music*
 .. image:: screenshots/example13.png
   :alt: Download options applied to the Village People channel
 
-12. Favourite videos
-~~~~~~~~~~~~~~~~~~~~
+6.12 Favourite videos
+---------------------
 
 You can mark channels, playlists and even whole folders as favourites.
 
@@ -322,8 +413,8 @@ You can mark channels, playlists and even whole folders as favourites.
 
 When you do that, any videos you download will appear in the **Favourite Videos** folder (as well as in their normal location).
 
-13. Watching videos
-~~~~~~~~~~~~~~~~~~~
+6.13 Watching videos
+--------------------
 
 If you've downloaded a video, you can watch it by clicking the word **Player**.
 
@@ -334,8 +425,8 @@ If you haven't downloaded the video yet, you can watch it online by clicking the
 
 If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's often possible to watch the same video without restrictions on the **HookTube** website.
 
-14. Combining channels, playlists and folders
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.14 Combining channels, playlists and folders
+----------------------------------------------
 
 **Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's hard drive. There are three situations in which this might be useful:
 
@@ -343,8 +434,8 @@ If it's a YouTube video that is restricted (not available in certain regions, or
 - A creator releases their videos on **BitChute** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
 - You don't care about keeping videos in separate directories/folders on your filesystem. You just want to download all videos to one place
 
-14a. Combining one channel and many playlists
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.14.1 Combining one channel and many playlists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might have a single channel, and several playlists. The playlists contain videos from that channel (but not necessarily *every* video).
 
@@ -357,8 +448,8 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 - Now, right-click on each playlist in turn and select **Playlist actions > Set download destination...**
 - In the dialogue window, click **Choose a different directory/folder**, select the name of the channel, then click the **OK button**
 
-14b. Combining channels from different websites
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.14.2 Combining channels from different websites
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might release their videos on **YouTube**, but also on a site like **BitChute**. Sometimes they will only release a particular video on **BitChute**.
 
@@ -373,8 +464,8 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
 
-14c. Download all videos to a single folder
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.14.3 Download all videos to a single folder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don't care about keeping videos in separate directories/folders on your filesystem, you can download *all* videos into the **Unsorted videos** folder. Regardless of whether you have added one channel or a thousand, all the videos will be stored in that one place.
 
@@ -384,8 +475,8 @@ If you don't care about keeping videos in separate directories/folders on your f
 
 Alternatively, you could select **Temporary Videos**. If you do, videos will be deleted when you shut down **Tartube** (and will not be re-downloaded in the future).
 
-15. Archiving videos
-~~~~~~~~~~~~~~~~~~~~
+6.15 Archiving videos
+---------------------
 
 You can tell **Tartube** to automatically delete videos after some period of time. This is useful if you don't have an infinitely large hard drive.
 
@@ -403,8 +494,8 @@ You can also archive all the videos in a channel, playlist or folder.
 - This action applies to *all* videos that are *currently* in the folder, including the contents of any channels and playlists in that folder
 - It doesn't apply to any videos you might download in the future
 
-16. Exporting/importing the Tartube database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.16 Exporting/importing the Tartube database
+---------------------------------------------
 
 You can export the contents of **Tartube**'s database and, at any time in the future, import that information into a different **Tartube** database, perhaps on a different computer.
 
@@ -423,8 +514,37 @@ This is how to import the data into a different **Tartube** database.
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
-Frequently-Asked Questions
---------------------------
+6.17 Importing videos from other applications
+---------------------------------------------
+
+**Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, but it is not the only one. If you've downloaded videos using another application, this is how to add them to Tartube's database.
+
+- In **Tartube**'s main window, add each channel and playlist in the normal way
+- When you're ready, click the **Check all** button. This adds a list of videos to Tartube's database, without actually downloading the videos themselves
+- Copy the video files into Tartube's data folder. For example, copy all your **PewDiePie** videos into **../tartube-data/downloads/PewDiePie**
+- In the **Tartube** menu, click **Operations > Refresh database**. **Tartube** will search for video files, and try to match them with the contents of its database
+- The whole process might some time, so be patient
+
+7. Frequently-Asked Questions
+=============================
+
+**Q: Why is the installer so big?**
+
+Tartube is a Linux application. The installer for MS Windows contains not just Tartube itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
+
+If you're at all suspicious that such a small application uses such a large installer, you are invited to examine the installed files for yourself: 
+
+**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube**
+
+(You might need to enable hidden folders; this can be done from the Control Panel.)
+
+Everything is copied into this single folder. The installer doesn't modify the Windows registry, nor does it copy files anywhere else (other than to the desktop and the Start Menu). 
+
+The NSIS scripts used to create the installers can be found here:
+
+**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\nsis**
+
+The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
 **Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly / Tartube keeps crashing!**
 
@@ -469,8 +589,8 @@ A: Click **Edit > System preferences... > General > Don't show labels in the too
 
 MS Windows users can already see a toolbar without labels.
 
-Future plans
-------------
+8. Future plans
+===============
 
 -  Fix the endless crashes **DONE**
 -  Support for multiple databases (so you can store videos on two external hard    drives at the same time)
@@ -482,29 +602,30 @@ Future plans
 -  Add more youtube-dl options **DONE**
 -  Expand this guide to explain all features of Tartube
 
-Known issues
-------------
+9. Known issues
+===============
 
 -  Tartube crashes continuously and often **FIXED**
 -  Alphabetic sorting of channels/playlists/folders doesn't always work as intended, due to an unresolved Gtk issue **FIXED**
 -  Channels/playlists/folder selection does not always work as intended, due to an unresolved Gtk issue **FIXED**
 -  Users can type in comboboxes, but this should not be possible **FIXED**
 -  Some MS Windows users report that Tartube will install, but not run **FIXED**
+-  Some MS Windows users report that Tartube doesn't recognise FFmpeg **FIXED**
 -  Installation via **pip** does not work
 
-Contributing
-------------
+10. Contributing
+================
 
 -  Report a bug: Use the Github
    `issues <https://github.com/axcore/tartube/issues>`__ page
 
-Authors
--------
+11. Authors
+===========
 
 See the `AUTHORS <AUTHORS>`__ file.
 
-License
--------
+12. License
+===========
 
 Tartube is licensed under the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`__.
 

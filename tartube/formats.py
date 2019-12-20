@@ -90,55 +90,67 @@ video_option_setup_list = [
     # Extractor code - description
     # !!! TODO: Add a large range of extractor codes (currently, can't find
     #   a list)
-    '3gp',  '3gp',
-    '17',   '3gp [144p]',
-    '36',   '3gp [240p]',
-    'flv',  'flv',
-    '5',    'flv [240p]',
-    '34',   'flv [360p]',
-    '35',   'flv [480p]',
-    'webm', 'webm',
-    '43',   'webm [360p]',
-    '44',   'webm [480p]',
-    '45',   'webm [720p]',
-    '46',   'webm [1080p]',
-    'mp4',  'mp4',
-    '18',   'mp4 [360p]',
-    '22',   'mp4 [720p]',
-    '37',   'mp4 [1080p]',
-    '38',   'mp4 [4K]',
-    '160',  'mp4 [144p] (DASH Video)',
-    '133',  'mp4 [240p] (DASH Video)',
-    '134',  'mp4 [360p] (DASH Video)',
-    '135',  'mp4 [480p] (DASH Video)',
-    '136',  'mp4 [720p] (DASH Video)',
-    '137',  'mp4 [1080p] (DASH Video)',
-    '264',  'mp4 [1440p] (DASH Video)',
-    '138',  'mp4 [2160p] (DASH Video)',
-    '242',  'webm [240p] (DASH Video)',
-    '243',  'webm [360p] (DASH Video)',
-    '244',  'webm [480p] (DASH Video)',
-    '247',  'webm [720p] (DASH Video)',
-    '248',  'webm [1080p] (DASH Video)',
-    '271',  'webm [1440p] (DASH Video)',
-    '272',  'webm [2160p] (DASH Video)',
-    '82',   'mp4 [360p] (3D)',
-    '83',   'mp4 [480p] (3D)',
-    '84',   'mp4 [720p] (3D)',
-    '85',   'mp4 [1080p] (3D)',
-    '100',  'webm [360p] (3D)',
-    '101',  'webm [480p] (3D)',
-    '102',  'webm [720p] (3D)',
-    'wav',  'wav',                      # Not imported from youtube-dl-gui
-    'm4a',  'm4a',                      # Not imported from youtube-dl-gui
-    '139',  'm4a 48k (DASH Audio)',
-    '140',  'm4a 128k (DASH Audio)',
-    '141',  'm4a 256k (DASH Audio)',
-    '171',  'webm 48k (DASH Audio)',
-    '172',  'webm 256k (DASH Audio)',
-    'aac',  'aac',                      # Not imported from youtube-dl-gui
-    'mp3',  'mp3',                      # Not imported from youtube-dl-gui
-    'ogg',  'ogg',                      # Not imported from youtube-dl-gui
+    # Dummy extractor codes - progressive scan resolutions
+    '144p',     'Any format [144p]',        # Not imported from youtube-dl-gui
+    '240p',     'Any format [240p]',        # Not imported from youtube-dl-gui
+    '360p',     'Any format [360p]',        # Not imported from youtube-dl-gui
+    '480p',     'Any format [480p]',        # Not imported from youtube-dl-gui
+    '720p',     'Any format [720p]',        # Not imported from youtube-dl-gui
+    '1080p',    'Any format [1080p]',       # Not imported from youtube-dl-gui
+    '1440p',    'Any format [1440p]',       # Not imported from youtube-dl-gui
+    '2160p',    'Any format [2160p]',       # Not imported from youtube-dl-gui
+    '4320p',    'Any format [4320p]',       # Not imported from youtube-dl-gui
+    # Dummy extractor codes - other
+    '3gp',      '3gp',
+    'aac',      'aac',                      # Not imported from youtube-dl-gui
+    'flv',      'flv',
+    'm4a',      'm4a',                      # Not imported from youtube-dl-gui
+    'mp3',      'mp3',                      # Not imported from youtube-dl-gui
+    'mp4',      'mp4',
+    'ogg',      'ogg',                      # Not imported from youtube-dl-gui
+    'wav',      'wav',                      # Not imported from youtube-dl-gui
+    'webm',     'webm',
+    # Real extractor codes
+    '17',       '3gp [144p]',
+    '36',       '3gp [240p]',
+    '5',        'flv [240p]',
+    '34',       'flv [360p]',
+    '35',       'flv [480p]',
+    '139',      'm4a 48k (DASH Audio)',
+    '140',      'm4a 128k (DASH Audio)',
+    '141',      'm4a 256k (DASH Audio)',
+    '18',       'mp4 [360p]',
+    '22',       'mp4 [720p]',
+    '37',       'mp4 [1080p]',
+    '38',       'mp4 [4K]',
+    '160',      'mp4 [144p] (DASH Video)',
+    '133',      'mp4 [240p] (DASH Video)',
+    '134',      'mp4 [360p] (DASH Video)',
+    '135',      'mp4 [480p] (DASH Video)',
+    '136',      'mp4 [720p] (DASH Video)',
+    '137',      'mp4 [1080p] (DASH Video)',
+    '264',      'mp4 [1440p] (DASH Video)',
+    '138',      'mp4 [2160p] (DASH Video)',
+    '82',       'mp4 [360p] (3D)',
+    '83',       'mp4 [480p] (3D)',
+    '84',       'mp4 [720p] (3D)',
+    '85',       'mp4 [1080p] (3D)',
+    '43',       'webm [360p]',
+    '44',       'webm [480p]',
+    '45',       'webm [720p]',
+    '46',       'webm [1080p]',
+    '242',      'webm [240p] (DASH Video)',
+    '243',      'webm [360p] (DASH Video)',
+    '244',      'webm [480p] (DASH Video)',
+    '247',      'webm [720p] (DASH Video)',
+    '248',      'webm [1080p] (DASH Video)',
+    '271',      'webm [1440p] (DASH Video)',
+    '272',      'webm [2160p] (DASH Video)',
+    '100',      'webm [360p] (3D)',
+    '101',      'webm [480p] (3D)',
+    '102',      'webm [720p] (3D)',
+    '171',      'webm 48k (DASH Audio)',
+    '172',      'webm 256k (DASH Audio)',
 ]
 
 VIDEO_OPTION_LIST = []
@@ -150,6 +162,29 @@ while video_option_setup_list:
 
     VIDEO_OPTION_LIST.append(key)
     VIDEO_OPTION_DICT[key] = value
+
+video_resolution_setup_list = [
+    '144p',     '144',
+    '240p',     '240',
+    '360p',     '360',
+    '480p',     '480',
+    '720p',     '720',
+    '1080p',    '1080',
+    '1440p',    '1440',
+    '2160p',    '2160',
+    '4320p',    '4320',
+]
+
+VIDEO_RESOLUTION_LIST = []
+VIDEO_RESOLUTION_DICT = {}
+VIDEO_RESOLUTION_DEFAULT = '720p'
+
+while video_resolution_setup_list:
+    key = video_resolution_setup_list.pop(0)
+    value = video_resolution_setup_list.pop(0)
+
+    VIDEO_RESOLUTION_LIST.append(key)
+    VIDEO_RESOLUTION_DICT[key] = value
 
 video_format_setup_list = ['mp4', 'flv', 'ogg', 'webm', 'mkv', 'avi']
 
@@ -449,6 +484,11 @@ LARGE_ICON_DICT = {
     'folder_no_parent_left_large': 'folder_black_left.png',
     'folder_no_parent_none_large': 'folder_black_none.png',
     'folder_no_parent_right_large': 'folder_black_right.png',
+
+    'hand_left_large': 'hand_left.png',
+    'hand_right_large': 'hand_right.png',
+    'question_large': 'question.png',
+    'warning_large': 'warning.png',
 }
 
 SMALL_ICON_DICT = {

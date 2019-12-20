@@ -525,6 +525,10 @@ class DownloadWorker(threading.Thread):
 
         # IV list - other
         # ---------------
+        # A number identifying this worker, matching the number of the page
+        #   in the Output Tab (so the first worker created is #1)
+        self.worker_id = len(download_manager_obj.worker_list) + 1
+
         # The time (in seconds) between iterations of the loop in self.run()
         self.sleep_time = 0.25
 
@@ -1459,18 +1463,40 @@ class VideoDownloader(object):
                     #   main window can be updated
                     self.download_worker_obj.data_callback(dl_stat_dict)
 
-                    if (app_obj.ytdl_write_stdout_flag):
+                    # Show output in the Output Tab (if required). For
+                    #   simulated downloads, a message is displayed by
+                    #   self.confirm_sim_video() instead
+                    if app_obj.ytdl_output_stdout_flag \
+                    and (
+                        not app_obj.ytdl_output_ignore_progress_flag \
+                        or not re.match(
+                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                            stdout,
+                        )
+                    ) and (
+                        not app_obj.ytdl_output_ignore_json_flag \
+                        or stdout[:1] != '{'
+                    ):
+                        app_obj.main_win_obj.output_tab_write_stdout(
+                            self.download_worker_obj.worker_id,
+                            stdout,
+                        )
 
-                        name = utils.upper_case_first(__main__.__packagename__)
-                        # JSON output starts with {, in case we need to ignore
-                        if not app_obj.ytdl_write_ignore_json_flag:
-                            print(stdout)
-
-                        else:
-                            if stdout[:1] == '{':
-                                print('<' + name + ' received JSON data>')
-                            else:
-                                print(stdout)
+                    # Show output in the terminal (if required). For simulated
+                    #   downloads, a message is displayed by
+                    #   self.confirm_sim_video() instead
+                    if app_obj.ytdl_write_stdout_flag \
+                    and (
+                        not app_obj.ytdl_write_ignore_progress_flag \
+                        or not re.match(
+                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                            stdout,
+                        )
+                    ) and (
+                        not app_obj.ytdl_write_ignore_json_flag \
+                        or stdout[:1] != '{'
+                    ):
+                        print(stdout)
 
             # Apply the JSON timeout, if required
             if app_obj.apply_json_timeout_flag \
@@ -1516,6 +1542,14 @@ class VideoDownloader(object):
                     self.set_return_code(self.ERROR)
                     self.download_item_obj.media_data_obj.set_error(stderr)
 
+            # Show output in the Output Tab (if required)
+            if (app_obj.ytdl_output_stderr_flag):
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    stderr,
+                )
+
+            # Show output in the terminal (if required)
             if (app_obj.ytdl_write_stderr_flag):
                 print(stderr)
 
@@ -2002,9 +2036,16 @@ class VideoDownloader(object):
 
             # (Don't replace a file that already exists)
             if not os.path.isfile(descrip_path):
-                fh = open(descrip_path, 'wb')
-                fh.write(descrip.encode('utf-8'))
-                fh.close()
+#                fh = open(descrip_path, 'wb')
+#                fh.write(descrip.encode('utf-8'))
+#                fh.close()
+                # v1.2.039 try/except added in case the device is full
+                try:
+                    fh = open(descrip_path, 'wb')
+                    fh.write(descrip.encode('utf-8'))
+                    fh.close()
+                except:
+                    pass
 
         if options_dict['write_info']:
             json_path = os.path.abspath(
@@ -2015,7 +2056,12 @@ class VideoDownloader(object):
 
             if not os.path.isfile(json_path):
                 with open(json_path, 'w') as outfile:
-                    json.dump(json_dict, outfile, indent=4)
+#                    json.dump(json_dict, outfile, indent=4)
+                # v1.2.039 try/except added in case the device is full
+                    try:
+                        json.dump(json_dict, outfile, indent=4)
+                    except:
+                        pass
 
         if options_dict['write_annotations']:
             xml_path = os.path.abspath(
@@ -2078,6 +2124,23 @@ class VideoDownloader(object):
                 app_obj.main_win_obj.video_catalogue_update_row,
                 video_obj,
             )
+
+        # For simulated downloads, self.do_download() has not displayed
+        #   anything in the Output Tab/terminal window; so do that now (if
+        #   required)
+        if (app_obj.ytdl_output_stdout_flag):
+
+            msg = '[' + video_obj.parent_obj.name \
+            + '] <Simulated download of \'' + filename + '\'>'
+
+            if (app_obj.ytdl_output_stdout_flag):
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    self.download_worker_obj.worker_id,
+                    msg,
+                )
+
+            if (app_obj.ytdl_write_stdout_flag):
+                print(msg)
 
         # Stop checking videos in this channel/playlist, if a limit has been
         #   reached

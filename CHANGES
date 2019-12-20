@@ -1,3 +1,88 @@
+v1.3.0 (20 Sep 2019)
+-------------------------------------------------------------------------------
+MAJOR NEW FEATURES
+- Tartube on MS Windows did not recognise FFmpeg or AVConv. You can now tell
+    Tartube to download and install a compatible version of FFmpeg from the
+    main menu (Operations > Install FFmpeg). Tartube still cannot recognise
+    the ordinary version of FFmpeg, and it still does not recognise AVConv at
+    all. It is unlikely that this situation can be remedied
+- A new Output Tab has been added, in which you can see what is happening
+    internally when you check or download videos, update youtube-dl, install
+    FFmpeg, or refresh the Tartube database. The amount of information shown
+    can be customised in the System preferences window. The information can
+    still be written to STDOUT/STDERR, if required
+- For users on other operating systems, the system preferences window
+    displayed the wrong location of the FFmpeg/AVConv executable. This has now
+    been fixed
+- There are now two simple ways to specify the video resolution you want to
+    download (for example, 1080p). You can use the download options window
+    (Edit > General download options... > Formats, and then choose a video
+    format like 'any format [1080p]'). You can also use the new spinbutton at
+    the bottom of the Progress Tab. Both of these methods have the same effect,
+    so it's not necessary to use both of them. Tartube will download videos in
+    that resolution if possible, or in the next highest available resolution
+    otherwise
+- The download options window has been simplified, with only the most useful
+    options visible. If you want to see the full range of options, open any
+    download options window, and in the General tab, click the new 'Show
+    advanced download options' button
+
+MINOR NEW FEATURES
+- By default, temporary folders are no longer emptied when Tartube shuts down,
+    but only when Tartube starts up. This means you can continue watching
+    temporary videos you've downloaded even after shutting down Tartube. If you
+    want temporary folders to be emptied on shutdown, as before, select Edit >
+    System preferences... > Videos > Empty temporary folders when Tartube shuts
+    down
+
+MAJOR FIXES
+- Tartube experienced a whole range of problems when downloading videos to a
+    hard drive that was running out of space. Tartube now checks the available
+    disk space before starting to download anything, and continues checking it
+    throughout the download process. You can specify how much disk space should
+    be available in the System Preferences window. If the hard drive, despite
+    your best efforts, actually does run out of space, Tartube is now much more
+    resilient (and can usually halt the download process, rather than
+    crashing). The amount of disk space available is now visible in the System
+    Preferences window
+- Adding a channel/playlist/folder whose name included a slash, for example
+    'Adam/Eve's Channel', had unfortunate consequences, with Tartube creating
+    a directory (folder) at the wrong location. Slashes are now automatically
+    converted to hyphens, which solves the problem
+- In Tartube's window, dragging a channel/playlist/folder to a new location in
+    the tree changes the hard drive, moving a directory (folder) to a new
+    location in the filesystem. If a directory (folder) with the same name
+    already existed at that location, an invisible error occurs. Tartube now
+    displays a visible error so the user can delete the duplicate directory
+    (folder) manually
+- When refreshing the Tartube database (e.g. Operations > Refresh database),
+    the moviepy module freezes if it encounters a corrupted video file. We
+    can't fix the moviepy module, but the Tartube code has been made much more
+    resilient
+- When refreshing the Tartube database, Tartube made bad decisions if it was
+    looking for a video called 'ymca.mp4', but found a video called
+    'ymca.webm'. This has been fixed
+- Tartube is now able to detect if its data directory (into which videos are
+    downloaded) doesn't exist. Usually this is because an external hard drive
+    has not been mounted; the user is now warned about this, so they can mount
+    it
+- On MS Windows, if the user has updated youtube-dl or installed FFmpeg,
+    Tartube no longer freezes on shutdown
+- On MS Windows, Tartube was unable to open a video file in the system's
+    default media player, if the name contained an ampersand. Fixed
+    
+MINOR FIXES
+- When deleting large channels/playlists/folders, sometimes not everything was
+    deleted, and the user had to delete the item a second time. This was due to
+    inconsistencies in the Tartube database, which have now been fixed
+- Channels/playlists/folders beginning with a number, e.g. '5 Pewdiepie', were
+    supposed to be displayed in numerical order, rather than in strict
+    alphabetical order. This did not work as intended (e.g. '11 Pewdiepie' was
+    listed before '1 T-Series'). Fixed again
+- In the 'Delete channel' dialogue window (and so on), the name of the channel
+    to be deleted is now displayed prominently
+- The size of the MS Windows installer has been reduced by about 40%
+    
 v1.2.008 (30 Sep 2019)
 -------------------------------------------------------------------------------
 

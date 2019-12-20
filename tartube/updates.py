@@ -48,8 +48,11 @@ class UpdateManager(threading.Thread):
 
     """Called by mainapp.TartubeApp.update_manager_start().
 
-    Python class to create a system child process, in which we attempt to
-    update youtube-dl to its most recent version.
+    Python class to create a system child process, to do one of two jobs:
+
+    1. Install FFmpeg (on MS Windows only)
+
+    2. Install youtube-dl, or update it to its most recent version.
 
     Reads from the child process STDOUT and STDERR, having set up a
     downloads.PipeReader object to do so in an asynchronous way.
@@ -58,13 +61,16 @@ class UpdateManager(threading.Thread):
 
         app_obj (mainapp.TartubeApp): The main application
 
+        ffmpeg_flag (bool): If True, install FFmpeg (on MS Windows only). If
+            False (or None), installs/updates youtube-dl
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj):
+    def __init__(self, app_obj, ffmpeg_flag=False):
 
         super(UpdateManager, self).__init__()
 
@@ -93,6 +99,11 @@ class UpdateManager(threading.Thread):
 
         # IV list - other
         # ---------------
+        # If True, install FFmpeg. If False (or None), installs/updates
+        #   youtube-dl (on MS Windows only)
+        self.ffmpeg_flag = ffmpeg_flag
+        # Flag set to True if the Update operation succeeds, False if it fails
+        self.success_flag = False
 
         # (For debugging purposes, store any STDOUT/STDERR messages received;
         #   otherwise we would just set a flag if a STDERR message was
@@ -115,6 +126,130 @@ class UpdateManager(threading.Thread):
 
         """Called as a result of self.__init__().
 
+        Initiates the download.
+        """
+
+        if self.ffmpeg_flag:
+            self.install_ffmpeg()
+        else:
+            self.install_ytdl()
+
+
+    def install_ffmpeg(self):
+
+        """Called by self.run().
+
+        A modified version of self.install_ytdl, that installs FFmpeg on an
+        MS Windows system.
+
+        Creates a child process to run the installation process.
+
+        Reads from the child process STDOUT and STDERR, and calls the main
+        application with the result of the update (success or failure).
+        """
+
+        # Show information about the update operation in the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            'Starting update operation, installing FFmpeg',
+        )
+
+        # Create a new child process to install either the 64-bit or 32-bit
+        #   version of FFmpeg, as appropriate
+        if sys.maxsize <= 2147483647:
+            self.create_child_process(
+                ['pacman', '-S', 'mingw-w64-i686-ffmpeg', '--noconfirm'],
+            )
+        else:
+            self.create_child_process(
+                ['pacman', '-S', 'mingw-w64-x86_64-ffmpeg', '--noconfirm'],
+            )
+
+        # So that we can read from the child process STDOUT and STDERR, attach
+        #   a file descriptor to the PipeReader objects
+        if self.child_process is not None:
+
+            self.stdout_reader.attach_file_descriptor(
+                self.child_process.stdout,
+            )
+
+            self.stderr_reader.attach_file_descriptor(
+                self.child_process.stderr,
+            )
+
+        while self.is_child_process_alive():
+
+            # Read from the child process STDOUT, and convert into unicode for
+            #   Python's convenience
+            while not self.stdout_queue.empty():
+
+                stdout = self.stdout_queue.get_nowait().rstrip()
+                stdout = stdout.decode('cp1252')
+
+                if stdout:
+
+                    # Show command line output in the Output Tab
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        1,
+                        stdout,
+                    )
+
+        # The child process has finished
+        while not self.stderr_queue.empty():
+
+            # Read from the child process STDERR queue (we don't need to read
+            #   it in real time), and convert into unicode for python's
+            #   convenience
+            stderr = self.stderr_queue.get_nowait().rstrip()
+            stderr = stderr.decode('cp1252')
+
+            # Ignore pacman warning messages, e.g. 'warning: dependency cycle
+            #   detected:'
+            if stderr and not re.match('warning\:', stderr):
+
+                self.stderr_list.append(stderr)
+
+                # Show command line output in the Output Tab
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    stderr,
+                )
+
+        # (Generate our own error messages for debugging purposes, in certain
+        #   situations)
+        if self.child_process is None:
+            self.stderr_list.append('FFmpeg installation did not start')
+
+        elif self.child_process.returncode > 0:
+            self.stderr_list.append(
+                'Child process exited with non-zero code: {}'.format(
+                    self.child_process.returncode,
+                )
+            )
+
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.update_manager_finished
+        if not self.stderr_list:
+            self.success_flag = True
+
+        # Show a confirmation in the the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            'Update operation finished',
+        )
+
+        # Let the timer run for a few more seconds to prevent Gtk errors (for
+        #   systems with Gtk < 3.24)
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
+
+
+    def install_ytdl(self):
+
+        """Called by self.run().
+
         Based on code from downloads.VideoDownloader.do_download().
 
         Creates a child process to run the youtube-dl update.
@@ -122,6 +257,12 @@ class UpdateManager(threading.Thread):
         Reads from the child process STDOUT and STDERR, and calls the main
         application with the result of the update (success or failure).
         """
+
+        # Show information about the update operation in the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            'Starting update operation, installing/updating youtube-dl',
+        )
 
         # Prepare the system command
 
@@ -132,7 +273,7 @@ class UpdateManager(threading.Thread):
         cmd_list \
         = self.app_obj.ytdl_update_dict[self.app_obj.ytdl_update_current]
 
-        #  Create a new child process using that command
+        # Create a new child process using that command
         self.create_child_process(cmd_list)
 
         # So that we can read from the child process STDOUT and STDERR, attach
@@ -172,9 +313,11 @@ class UpdateManager(threading.Thread):
                         self.intercept_version_from_stdout(stdout)
                         self.stdout_list.append(stdout)
 
-                        if (self.app_obj.ytdl_write_stdout_flag):
-                            print(stdout)
-
+                    # Show command line output in the Output Tab
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        1,
+                        stdout,
+                    )
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -196,44 +339,55 @@ class UpdateManager(threading.Thread):
                 if not re.search('DEPRECATION', stderr):
                     self.stderr_list.append(stderr)
 
-            if (self.app_obj.ytdl_write_stderr_flag):
-                print(stderr)
+                # Show command line output in the Output Tab
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    stderr,
+                )
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
         if self.child_process is None:
-            self.stderr_list.append('youtube-dl update did not start')
+
+            msg = 'youtube-dl update did not start'
+            self.stderr_list.append(msg)
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                msg,
+            )
 
         elif self.child_process.returncode > 0:
-            self.stderr_list.append(
-                'Child process exited with non-zero code: {}'.format(
-                    self.child_process.returncode,
-                )
+
+            msg = 'Child process exited with non-zero code: {}'.format(
+                self.child_process.returncode,
+            )
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                msg,
             )
 
-        # Operation complete; inform the main application of success or failure
-        if self.stderr_list:
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.update_manager_finished
+        if not self.stderr_list:
+            self.success_flag = True
 
-            GObject.timeout_add(
-                0,
-                self.app_obj.update_manager_finished,
-                False,
-                self.ytdl_version,
-            )
+        # Show a confirmation in the the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            'Update operation finished',
+        )
 
-        else:
-
-            GObject.timeout_add(
-                0,
-                self.app_obj.update_manager_finished,
-                True,
-                self.ytdl_version,
-            )
+        # Let the timer run for a few more seconds to prevent Gtk errors (for
+        #   systems with Gtk < 3.24)
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
 
 
     def create_child_process(self, cmd_list):
 
-        """Called by self.run().
+        """Called by self.install_ffmpeg() or .install_ytdl().
 
         Based on code from downloads.VideoDownloader.create_child_process().
 
@@ -281,7 +435,7 @@ class UpdateManager(threading.Thread):
 
     def intercept_version_from_stdout(self, stdout):
 
-        """Called by self.run().
+        """Called by self.install_yt_dl() only.
 
         Check a STDOUT message, hoping to intercept the new youtube-dl version
         number.
@@ -312,7 +466,8 @@ class UpdateManager(threading.Thread):
 
     def is_child_process_alive(self):
 
-        """Called by self.run() and self.stop_update_operation().
+        """Called by self.install_ffmpeg(), .install_ytdl() and
+        .stop_update_operation().
 
         Based on code from downloads.VideoDownloader.is_child_process_alive().
 

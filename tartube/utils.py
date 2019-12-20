@@ -31,6 +31,7 @@ import math
 import os
 import re
 import requests
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -278,6 +279,98 @@ def convert_youtube_to_hooktube(url):
     return url
 
 
+def disk_get_total_space(path, bytes_flag=False):
+
+    """Called by anything.
+
+    Returns the size of the disk on which a specified file/directory exists.
+
+    Args:
+
+        path (str): Path to a file/directory on the disk, typically Tartube's
+            data directory
+
+        bytes_flag (bool): True to return an integer value in MB, false to
+            return a value in bytes
+
+    Return values:
+
+        The total size in MB (or in bytes, if the flag is specified)
+
+    """
+
+    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+        os.path.realpath(path),
+    )
+
+    if not bytes_flag:
+        return int(total_bytes / 1000000)
+    else:
+        return total_bytes
+
+
+def disk_get_used_space(path, bytes_flag=False):
+
+    """Called by anything.
+
+    Returns the size of the disk on which a specified file/directory exists,
+    minus the free space on that disk.
+
+    Args:
+
+        path (str): Path to a file/directory on the disk, typically Tartube's
+            data directory
+
+        bytes_flag (bool): True to return an integer value in MB, false to
+            return a value in bytes
+
+    Return values:
+
+        The used space in MB (or in bytes, if the flag is specified)
+
+    """
+
+    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+        os.path.realpath(path),
+    )
+
+    if not bytes_flag:
+        return int(used_bytes / 1000000)
+    else:
+        return used_bytes
+
+
+def disk_get_free_space(path, bytes_flag=False):
+
+    """Called by anything.
+
+    Returns the size of the disk on which a specified file/directory exists,
+    minus the used space on that disk.
+
+    Args:
+
+        path (str): Path to a file/directory on the disk, typically Tartube's
+            data directory
+
+        bytes_flag (bool): True to return an integer value in MB, false to
+            return a value in bytes
+
+    Return values:
+
+        The free space in MB (or in bytes, if the flag is specified)
+
+    """
+
+    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+        os.path.realpath(path),
+    )
+
+    if not bytes_flag:
+        return int(free_bytes / 1000000)
+    else:
+        return free_bytes
+
+
 def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
     """Called by mainwin.MainWin.results_list_update_row() and
@@ -390,6 +483,9 @@ def open_file(uri):
     """
 
     if sys.platform == "win32":
+        # v1.2.052. If the video file's filename contains an ampersand, MSWin
+        #   is passed a string containing &amp; - so we need to strip that
+        uri = re.sub('\&amp;', '&', uri)
         os.startfile(uri)
     else:
         opener ="open" if sys.platform == "darwin" else "xdg-open"
@@ -474,6 +570,10 @@ def tidy_up_container_name(string, max_length):
     Removes any leading/trailing whitespace. Reduces multiple whitespace
     characters to a single space character. Applies a maximum length.
 
+    Also replaces any forward/backward slashes with hyphens (if the user
+    specifies a name like 'Foo / Bar', that would create a directory on the
+    filesystem called .../Foo/Bar, which is definitely not what we want).
+
     Args:
 
         string (str): The string to convert
@@ -492,6 +592,7 @@ def tidy_up_container_name(string, max_length):
         string = re.sub(r'^\s+', '', string)
         string = re.sub(r'\s+$', '', string)
         string = re.sub(r'\s+', ' ', string)
+        string = re.sub(r'[\/\\]', '-', string)
 
         return string[0:max_length]
 

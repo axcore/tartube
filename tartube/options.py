@@ -320,15 +320,19 @@ class OptionsManager(object):
         second_video_format (str): Video format to download, if the format
             specified by the 'video_format' option isn't available. This option
             is ignored when its value is '0' (or when the value of the
-            'video_format' option is '0'). Otherwise, its value is one of the
-            keys in formats.VIDEO_FORMAT_DICT
+            'video_format' option is '0'), and also if 'video_format' is set
+            to one of the keys in formats.VIDEO_RESOLUTION_DICT (e.g. 1080p).
+            Otherwise, its value is one of the keys in
+            formats.VIDEO_FORMAT_DICT
 
         third_video_format (str): Video format to download, if the formats
             specified by the 'video_format' and 'second_video_format' options
             aren't available. This option is ignored when its value is '0' (or
             when the value of the 'video_format' and 'second_video_format'
-            options are '0'). Otherwise, its value is one of the keys in
-            formats.VIDEO_FORMAT_DICT
+            options are '0'), and also if 'video_format' or
+            'second_video_format' are set to one of the keys in
+            formats.VIDEO_RESOLUTION_DICT (e.g. 1080p). Otherwise, its value is
+            one of the keys in formats.VIDEO_FORMAT_DICT
 
         [used in conjunction with the 'min_filesize' and 'max_filesize' options
 
@@ -818,7 +822,7 @@ class OptionsParser(object):
         # ...then modify various values in the copy. Set the 'save_path' option
         self.build_save_path(download_item_obj, copy_dict)
         # Set the 'video_format' option
-        self.build_video_format(copy_dict)
+        self.build_video_format(download_item_obj, copy_dict)
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
@@ -1039,7 +1043,7 @@ class OptionsParser(object):
         )
 
 
-    def build_video_format(self, copy_dict):
+    def build_video_format(self, download_item_obj, copy_dict):
 
         """Called by self.parse().
 
@@ -1047,11 +1051,51 @@ class OptionsParser(object):
         options dictionary.
 
         Args:
+
+            download_item_obj (downloads.DownloadItem) - The object handling
+                the download
+
             copy_dict (dict): Copy of the original options dictionary.
 
         """
 
-        if copy_dict['video_format'] != '0' and \
+        # The 'video_format', 'second_video_format' and 'third_video_format'
+        #   can have the values of the keys in formats.VIDEO_OPTION_DICT, which
+        #   are either real extractor codes (e.g. '35' representing
+        #   'flv [480p]') or dummy extractor codes (e.g. 'mp4')
+        # Some dummy extractor codes are in the form '720p', '1080p' etc,
+        #   representing progressive scan resolutions. If the user specifies
+        #   at least one of those codes, the first one is used, and all other
+        #   extractor codes (are ignored)
+        resolution_dict = formats.VIDEO_RESOLUTION_DICT.copy()
+        app_obj = self.download_manager_obj.app_obj
+
+        # If the progressive scan resolution is specified, it overrides all
+        #   other video format options
+        if app_obj.video_res_apply_flag:
+            height = resolution_dict[app_obj.video_res_default]
+        elif copy_dict['video_format'] in resolution_dict:
+            height = resolution_dict[copy_dict['video_format']]
+        elif copy_dict['second_video_format'] in resolution_dict:
+            height = resolution_dict[copy_dict['second_video_format']]
+        elif copy_dict['third_video_format'] in resolution_dict:
+            height = resolution_dict[copy_dict['third_video_format']]
+        else:
+            height = None
+
+        if height is not None:
+
+            # Use a youtube-dl argument in the form
+            #   'bestvideo[height<=?height]+bestaudio/best[height<=height]'
+            copy_dict['video_format'] = 'bestvideo[height<=?' \
+            + str(height) + ']+bestaudio/best[height<=?' + str(height) + ']'
+            # After a progressive scan resolution, all other extract codes are
+            #   ignored
+            copy_dict['second_video_format'] = '0'
+            copy_dict['third_video_format'] = '0'
+
+        # Not using a progressive scan resolution
+        elif copy_dict['video_format'] != '0' and \
         copy_dict['second_video_format'] != '0':
 
             if copy_dict['third_video_format'] != '0':
