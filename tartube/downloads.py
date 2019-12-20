@@ -1982,7 +1982,7 @@ class VideoDownloader(object):
             # If the 'Add videos' button was used, the path/filename/extension
             #   won't be set yet
             if not video_obj.file_dir and full_path:
-                video_obj.set_file(path, filename, extension)
+                video_obj.set_file(filename, extension)
 
             # Update any video object IVs that are not set
             if video_obj.name == app_obj.default_video_name \
@@ -2084,6 +2084,7 @@ class VideoDownloader(object):
             #   thumbnail locally
             thumb_path = os.path.abspath(
                 os.path.join(
+                    app_obj.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + remote_ext,
                 ),

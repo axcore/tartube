@@ -1,4 +1,18 @@
-v1.3.0 (20 Sep 2019)
+v1.3.007 (20 Dec 2019)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- v1.3.007 was completely broken when replacing an earlier installation. Fixed
+- When Tartube's data directory was copied from one place to another (for
+    example, from one external drive to another), Tartube did not adapt to the
+    change very well. The way file paths are stored in Tartube's database has
+    been changed to eliminate this problem
+
+MINOR FIXES
+- Fixed an invalid time value which (sometimes) prevented a refresh operation
+    from completing correctly
+    
+v1.3.0 (20 Dec 2019)
 -------------------------------------------------------------------------------
 MAJOR NEW FEATURES
 - Tartube on MS Windows did not recognise FFmpeg or AVConv. You can now tell

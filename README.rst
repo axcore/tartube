@@ -11,40 +11,9 @@ Works with YouTube, BitChute, and hundreds of other websites
 * `1 Introduction`_
 * `2 Why should I use Tartube?`_
 * `3 Quick start guide`_
-* `3.1 MS Windows`_
-* `3.2 Linux/BSD`_
 * `4 Downloads`_
 * `5 Installation`_
-* `5.1 Installation - MS Windows`_
-* `5.2 Installation - MacOS`_
-* `5.3 Installation - Linux/BSD`_
-* `5.3.1 Linux/BSD Installation requirements`_
-* `5.3.2 Optional dependencies`_
-* `5.3.3 Install using PyPI`_
-* `5.3.4 Install from source`_
-* `5.3.5 Run without installing`_
 * `6 Getting started`_
-* `6.1 Choose where to save videos`_
-* `6.2 Check youtube-dl is updated`_
-* `6.3 Setting youtube-dl's location`_
-* `6.4 Setting the location of FFmpeg / AVConv`_
-* `6.4.1 On MS Windows`_
-* `6.4.2 On Linux/BSD`_
-* `6.5 Introducing system folders`_
-* `6.6 Adding videos`_
-* `6.7 Adding channels and playlists`_
-* `6.8 Adding folders`_
-* `6.9 Things you can do`_
-* `6.10 General download options`_
-* `6.11 Other download options`_
-* `6.12 Favourite videos`_
-* `6.13 Watching videos`_
-* `6.14 Combining channels, playlists and folders`_
-* `6.14.1 Combining one channel and many playlists`_
-* `6.14.2 Combining channels from different websites`_
-* `6.14.3 Download all videos to a single folder`_
-* `6.15 Archiving videos`_
-* `6.16 Exporting/importing the Tartube database`_
 * `7. Frequently-Asked Questions`_
 * `8. Future plans`_
 * `9. Known issues`_
@@ -110,11 +79,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 4 Downloads
 ===========
 
-Latest version: **v1.3.0 (20 Dec 2019)**
+Latest version: **v1.3.007 (20 Dec 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.0/install-tartube-1.3.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.0/install-tartube-1.3.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.0/tartube_v1.3.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.007/install-tartube-1.3.007-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.007/install-tartube-1.3.007-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.007/tartube_v1.3.007.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 5 Installation

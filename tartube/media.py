@@ -716,10 +716,10 @@ class GenericContainer(GenericMedia):
 
     def get_dir(self, app_obj, new_name=None):
 
-        """Called by self.__init___(), or any other code.
+        """Can be called by anything.
 
-        Fetches the full path to the sub-directory used by this channel,
-        playlist or folder.
+        Fetches the full path to the sub-directory currently used by this
+        channel, playlist or folder.
 
         Args:
 
@@ -750,6 +750,41 @@ class GenericContainer(GenericMedia):
             dir_list.insert(0, obj.name)
 
         return os.path.abspath(os.path.join(app_obj.downloads_dir, *dir_list))
+
+
+    def get_relative_dir(self, new_name=None):
+
+        """Can be called by anything, for example by media.VideoObj.set_file().
+
+        Fetches the path to the sub-directory used by this channel, playlist or
+        folder, relative to mainapp.TartubeApp.downloads_dir.
+
+        Args:
+
+            new_name (str): If specified, fetches the relative path to the
+                sub-directory that would be used by this channel, playlist or
+                folder, if it were renamed to 'new_name'. If not specified, the
+                channel/playlist/folder's actual name is used
+
+        Returns:
+
+            The path to the directory relative to
+                mainapp.TartubeApp.downloads_dir
+
+        """
+
+        if new_name is not None:
+            dir_list = [new_name]
+        else:
+            dir_list = [self.name]
+
+        obj = self
+        while obj.parent_obj:
+
+            obj = obj.parent_obj
+            dir_list.insert(0, obj.name)
+
+        return os.path.join(*dir_list)
 
 
 class GenericRemoteContainer(GenericContainer):
@@ -1015,7 +1050,8 @@ class Video(GenericMedia):
         #   auto-deleted (but it can still be deleted manually by the user)
         self.archive_flag = False
 
-        # The file's directory, name and extension
+        # The file's directory (relative to mainapp.TartubeApp.downloads_dir),
+        #   name and extension
         self.file_dir = None
         self.file_name = None
         self.file_ext = None
@@ -1099,12 +1135,14 @@ class Video(GenericMedia):
         return False
 
 
-    def fetch_tooltip_text(self, max_length=None):
+    def fetch_tooltip_text(self, app_obj, max_length=None):
 
         """Called by mainwin.SimpleCatalogueItem.update_tooltips() and
         mainwin.ComplexCatalogueItem.update_tooltips().
 
         Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
             max_length (int or None): If specified, the maximum line length, in
                 characters
@@ -1130,6 +1168,7 @@ class Video(GenericMedia):
         else:
             text += os.path.abspath(
                 os.path.join(
+                    app_obj.downloads_dir,
                     self.file_dir,
                     self.file_name + self.file_ext,
                 ),
@@ -1140,7 +1179,6 @@ class Video(GenericMedia):
 
         # Apply a maximum line length, if required
         if max_length is not None:
-#            text = utils.tidy_up_long_string(text, max_length, False)
             text = utils.tidy_up_long_descrip(text, max_length)
 
         return text
@@ -1163,6 +1201,7 @@ class Video(GenericMedia):
 
         descrip_path = os.path.abspath(
             os.path.join(
+                app_obj.downloads_dir,
                 self.file_dir,
                 self.file_name + '.description',
             ),
@@ -1206,14 +1245,14 @@ class Video(GenericMedia):
             self.duration = None
 
 
-    def set_file(self, path, filename, extension):
+    def set_file(self, filename, extension):
 
-        self.file_dir = path
+        self.file_dir = self.parent_obj.get_relative_dir()
         self.file_name = filename
         self.file_ext = extension
 
 
-    def reset_file_dir(self, app_obj):
+    def reset_file_dir(self):
 
         """Called by mainapp.TartubeApp.move_container_to_top_continue()
         and .move_container_continue().
@@ -1223,7 +1262,7 @@ class Video(GenericMedia):
         moved along with it must have its .file_dir IV updated.
         """
 
-        self.file_dir = self.parent_obj.get_dir(app_obj)
+        self.file_dir = self.parent_obj.get_relative_dir()
 
 
     def set_file_size(self, size=None):

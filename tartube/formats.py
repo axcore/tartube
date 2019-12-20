@@ -25,12 +25,21 @@
 
 
 # Import other modules
-#   ...
+import datetime
 
 
 # Import our modules
 #   ...
 
+
+# Some icons are different at Christmas
+today = datetime.date.today()
+day = today.strftime("%d")
+month = today.strftime("%m")
+if (int(month) == 12 and int(day) >= 24) or (int(month) == 1 and int(day) <= 5):
+    xmas_flag = True
+else:
+    xmas_flag = False
 
 # Used by utils.format_bytes()
 KILO_SIZE = 1024.0
@@ -417,9 +426,14 @@ LANGUAGE_CODE_LIST = [
     ['Zulu', 'zu'],
 ]
 
-DIALOGUE_ICON_DICT = {
-    'system_icon': 'system_icon_64.png',
-}
+if not xmas_flag:
+    DIALOGUE_ICON_DICT = {
+        'system_icon': 'system_icon_64.png',
+    }
+else:
+    DIALOGUE_ICON_DICT = {
+        'system_icon': 'system_icon_xmas_64.png',
+    }
 
 TOOLBAR_ICON_DICT = {
     'tool_channel_large': 'channel_large.png',
@@ -514,13 +528,25 @@ SMALL_ICON_DICT = {
     'warning_small': 'warning.png',
 }
 
-WIN_ICON_LIST = [
-    'system_icon_16.png',
-    'system_icon_24.png',
-    'system_icon_32.png',
-    'system_icon_48.png',
-    'system_icon_64.png',
-    'system_icon_128.png',
-    'system_icon_256.png',
-    'system_icon_512.png',
-]
+if not xmas_flag:
+    WIN_ICON_LIST = [
+        'system_icon_16.png',
+        'system_icon_24.png',
+        'system_icon_32.png',
+        'system_icon_48.png',
+        'system_icon_64.png',
+        'system_icon_128.png',
+        'system_icon_256.png',
+        'system_icon_512.png',
+    ]
+else:
+    WIN_ICON_LIST = [
+        'system_icon_xmas_16.png',
+        'system_icon_xmas_24.png',
+        'system_icon_xmas_32.png',
+        'system_icon_xmas_48.png',
+        'system_icon_xmas_64.png',
+        'system_icon_xmas_128.png',
+        'system_icon_xmas_256.png',
+        'system_icon_xmas_512.png',
+    ]    

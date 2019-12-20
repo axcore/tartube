@@ -335,7 +335,7 @@ class RefreshManager(threading.Thread):
                     = child_obj.file_name + child_obj.file_ext
 
                     if not child_relative_path in alt_list:
-                        child_obj.set_file(dir_path, filename, ext)
+                        child_obj.set_file(filename, ext)
 
                 # Eliminate this media.Video object; no other video file should
                 #   match it
@@ -378,7 +378,8 @@ class RefreshManager(threading.Thread):
                 # Set the new video object's IVs
                 filename, ext = os.path.splitext(filter_dict[filename])
                 video_obj.set_name(filename)
-                video_obj.set_file(dir_path, filename, ext)
+                video_obj.set_nickname(filename)
+                video_obj.set_file(filename, ext)
 
                 if ext == '.mkv':
                     video_obj.set_mkv()

@@ -5357,6 +5357,7 @@ class MainWin(Gtk.ApplicationWindow):
             # Get the video's full file path now, as we use it several times
             video_path = os.path.abspath(
                 os.path.join(
+                    self.app_obj.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + video_obj.file_ext,
                 ),
@@ -5371,6 +5372,7 @@ class MainWin(Gtk.ApplicationWindow):
                 mkv_flag = True
                 video_path = os.path.abspath(
                     os.path.join(
+                        self.app_obj.downloads_dir,
                         video_obj.file_dir,
                         video_obj.file_name + '.mkv',
                     ),
@@ -7527,6 +7529,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             path = os.path.abspath(
                 os.path.join(
+                    self.app_obj.downloads_dir,
                     media_data_obj.file_dir,
                     media_data_obj.file_name + media_data_obj.file_ext,
                 ),
@@ -8610,6 +8613,7 @@ class SimpleCatalogueItem(object):
         if self.main_win_obj.app_obj.show_tooltips_flag:
             self.hbox.set_tooltip_text(
                 self.video_obj.fetch_tooltip_text(
+                    self.main_win_obj.app_obj,
                     self.main_win_obj.tooltip_max_len,
                 ),
             )
@@ -9017,6 +9021,7 @@ class ComplexCatalogueItem(object):
         if self.main_win_obj.app_obj.show_tooltips_flag:
             self.frame.set_tooltip_text(
                 self.video_obj.fetch_tooltip_text(
+                    self.main_win_obj.app_obj,
                     self.main_win_obj.tooltip_max_len,
                 ),
             )

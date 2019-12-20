@@ -1936,7 +1936,7 @@ class TartubeApp(Gtk.Application):
             = json_dict['auto_delete_watched_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
 
-        if version >= 1001041:  # v1.1.041
+        if version >= 1002041:  # v1.2.041
             self.delete_on_shutdown_flag = json_dict['delete_on_shutdown_flag']
 
         self.complex_index_flag = json_dict['complex_index_flag']
@@ -2339,7 +2339,7 @@ class TartubeApp(Gtk.Application):
             # To be safe, update every video in the registry
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
-                    media_data_obj.reset_file_dir(self)
+                    media_data_obj.reset_file_dir()
 
         if version < 4015:  # v0.4.015
 
@@ -2434,6 +2434,7 @@ class TartubeApp(Gtk.Application):
                     #   to set the nickname
                     json_path = os.path.abspath(
                         os.path.join(
+                            self.downloads_dir,
                             media_data_obj.file_dir,
                             media_data_obj.file_name + '.info.json',
                         ),
@@ -2550,15 +2551,14 @@ class TartubeApp(Gtk.Application):
                 = options_obj.options_dict['to_audio']
                 options_obj.options_dict.pop('to_audio')
 
-        if version < 1002005:  # v1.2.005
+        if version < 1003004:  # v1.3.004
 
-            # After moving videos from one filesystem location to another,
-            #   some media.Video had the wrong value for their .file_dir IV
-            # To be safe, reset them all
+            # The way that directories are stored in media.VideoObj.file_dir
+            #   has changed. Reset those values for all video objects
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
 
-                    media_data_obj.reset_file_dir(self)
+                    media_data_obj.reset_file_dir()
 
 
     def save_db(self):
@@ -3466,10 +3466,16 @@ class TartubeApp(Gtk.Application):
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
-        time_num = int(
-            self.download_manager_obj.stop_time \
-            - self.download_manager_obj.start_time
-        )
+        # For refresh operations, RefreshManager.stop_time() might not have
+        #   been set at this point (for some reason), so we need to check for
+        #   the equivalent problem
+        if self.download_manager_obj.stop_time is not None:
+            time_num = int(
+                self.download_manager_obj.stop_time \
+                - self.download_manager_obj.start_time
+            )
+        else:
+            time_num = int(time.time() - self.download_manager_obj.start_time)
 
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
@@ -3895,10 +3901,15 @@ class TartubeApp(Gtk.Application):
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
-        time_num = int(
-            self.refresh_manager_obj.stop_time \
-            - self.refresh_manager_obj.start_time
-        )
+        # For some reason, RefreshManager.stop_time() might not be set, so we
+        #   need to check for that
+        if self.refresh_manager_obj.stop_time is not None:
+            time_num = int(
+                self.refresh_manager_obj.stop_time \
+                - self.refresh_manager_obj.start_time
+            )
+        else:
+            time_num = int(time.time() - self.refresh_manager_obj.start_time)
 
         # Any code can check whether a download/update/refresh operation is in
         #   progress, or not, by checking this IV
@@ -3998,7 +4009,7 @@ class TartubeApp(Gtk.Application):
             # If the video was added manually (for example, using the 'Add
             #   videos' button), then its filepath won't be set yet
             if not video_obj.file_dir:
-                video_obj.set_file(dir_path, filename, extension)
+                video_obj.set_file(filename, extension)
 
         else:
 
@@ -4008,9 +4019,20 @@ class TartubeApp(Gtk.Application):
             video_obj = None
             for child_obj in media_data_obj.child_list:
 
+                child_file_dir = None
+                if child_obj.file_dir is not None:
+                    child_file_dir = os.path.abspath(
+                        os.path.join(
+                            self.downloads_dir,
+                            child_obj.file_dir,
+                        ),
+                    )
+
                 if isinstance(child_obj, media.Video) \
-                and child_obj.file_dir and child_obj.file_dir == dir_path \
-                and child_obj.file_name and child_obj.file_name == filename:
+                and child_file_dir \
+                and child_file_dir == dir_path \
+                and child_obj.file_name \
+                and child_obj.file_name == filename:
                     video_obj = child_obj
 
             if video_obj is None:
@@ -4040,7 +4062,7 @@ class TartubeApp(Gtk.Application):
 
                 # Since we have them to hand, set the video's file path IVs
                 #   immediately
-                video_obj.set_file(dir_path, filename, extension)
+                video_obj.set_file(filename, extension)
 
         # If the video is in a channel or a playlist, assume that youtube-dl is
         #   supplying a list of videos in the order of upload, newest first -
@@ -4169,6 +4191,7 @@ class TartubeApp(Gtk.Application):
 
             old_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + '.description',
                 ),
@@ -4185,6 +4208,7 @@ class TartubeApp(Gtk.Application):
 
             old_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + '.info.json',
                 ),
@@ -4202,6 +4226,7 @@ class TartubeApp(Gtk.Application):
 
             old_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + '.annotations.xml',
                 ),
@@ -4256,6 +4281,7 @@ class TartubeApp(Gtk.Application):
 
         video_path = os.path.abspath(
             os.path.join(
+                self.downloads_dir,
                 video_obj.file_dir,
                 video_obj.file_name + video_obj.file_ext,
             )
@@ -4303,6 +4329,7 @@ class TartubeApp(Gtk.Application):
 
         json_path = os.path.abspath(
             os.path.join(
+                self.downloads_dir,
                 video_obj.file_dir,
                 video_obj.file_name + '.info.json',
             ),
@@ -4382,13 +4409,13 @@ class TartubeApp(Gtk.Application):
             this_thread.daemon = True
             this_thread.start()
             this_thread.join(10)         # Timeout after 10 seconds
-            if this_thread.is_alive():
-                self.system_error(
-                    132,
-                    '\'' + video_obj.parent_obj.name + '\': moviepy module' \
-                    + 'failed to fetch duration of video \'' \
-                    + video_obj.name + '\'',
-                )
+#            if this_thread.is_alive():
+#                self.system_error(
+#                    132,
+#                    '\'' + video_obj.parent_obj.name + '\': moviepy module' \
+#                    + 'failed to fetch duration of video \'' \
+#                    + video_obj.name + '\'',
+#                )
 
         # (Can't set the video source directly)
 
@@ -4420,8 +4447,16 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             print('ap 3751 set_duration_from_moviepy')
 
-        clip = moviepy.editor.VideoFileClip(video_path)
-        video_obj.set_duration(clip.duration)
+        try:
+            clip = moviepy.editor.VideoFileClip(video_path)
+            video_obj.set_duration(clip.duration)
+        except:
+            self.system_error(
+                132,
+                '\'' + video_obj.parent_obj.name + '\': moviepy module' \
+                + 'failed to fetch duration of video \'' \
+                + video_obj.name + '\'',
+            )
 
 
     # (Add media data objects)
@@ -4853,13 +4888,8 @@ class TartubeApp(Gtk.Application):
 
         # All videos which are descendents of media_data_obj must have their
         #   .file_dir IV updated to the new location
-#        for video_obj in media_data_obj.compile_all_videos( [] ):
-#            video_obj.reset_file_dir(self)
-        # v1.2.006 This has been observed to fail. Don't know why, yet, so
-        #   reset the .file_dir IV for all videos, just to be safe
-        for other_obj in self.media_reg_dict.values():
-            if isinstance(other_obj, media.Video):
-                other_obj.reset_file_dir(self)
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+            video_obj.reset_file_dir()
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -5046,13 +5076,8 @@ class TartubeApp(Gtk.Application):
 
         # All videos which are descendents of dest_obj must have their
         #   .file_dir IV updated to the new location
-#        for video_obj in source_obj.compile_all_videos( [] ):
-#            video_obj.reset_file_dir(self)
-        # v1.2.006 This has been observed to fail. Don't know why, yet, so
-        #   reset the .file_dir IV for all videos, just to be safe
-        for other_obj in self.media_reg_dict.values():
-            if isinstance(other_obj, media.Video):
-                other_obj.reset_file_dir(self)
+        for video_obj in source_obj.compile_all_videos( [] ):
+            video_obj.reset_file_dir()
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -5135,6 +5160,7 @@ class TartubeApp(Gtk.Application):
 
             video_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + video_obj.file_ext,
                 ),
@@ -5151,6 +5177,7 @@ class TartubeApp(Gtk.Application):
 
             descrip_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + '.description',
                 ),
@@ -5161,6 +5188,7 @@ class TartubeApp(Gtk.Application):
 
             json_path = os.path.abspath(
                 os.path.join(
+                    self.downloads_dir,
                     video_obj.file_dir,
                     video_obj.file_name + '.info.json',
                 ),
@@ -6047,7 +6075,7 @@ class TartubeApp(Gtk.Application):
             # All videos which are descendents of media_data_obj must have
             #   their .file_dir IV updated to the new location
             for video_obj in media_data_obj.compile_all_videos( [] ):
-                video_obj.reset_file_dir(self)
+                video_obj.reset_file_dir()
 
             # Reset the Video Index and the Video Catalogue (this prevents a
             #   lot of problems)
@@ -6943,6 +6971,7 @@ class TartubeApp(Gtk.Application):
 
         path = os.path.abspath(
             os.path.join(
+                self.downloads_dir,
                 video_obj.file_dir,
                 video_obj.file_name + video_obj.file_ext,
             ),

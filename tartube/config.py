@@ -4096,6 +4096,7 @@ class VideoEditWin(GenericEditWin):
             entry6.set_text(
                 os.path.abspath(
                     os.path.join(
+                        self.app_obj.downloads_dir,
                         self.edit_obj.file_dir,
                         self.edit_obj.file_name + self.edit_obj.file_ext,
                     ),

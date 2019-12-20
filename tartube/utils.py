@@ -401,6 +401,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
         # Look in main data directory
         path = os.path.abspath(
             os.path.join(
+                app_obj.downloads_dir,
                 video_obj.file_dir,
                 video_obj.file_name + ext,
             ),
