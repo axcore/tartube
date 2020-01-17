@@ -35,7 +35,7 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '1.3.042'
+__version__ = '1.3.044'
 __date__ = '17 Jan 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
@@ -72,16 +72,6 @@ __icon_dir_list__ = [
     # /usr/share/tartube/icons
     os.path.abspath(os.path.join('/usr', 'share', __packagename__, 'icons')),
 ]
-
-
-# v1.3.041. Attempt to fix installation from PyPI
-# Add module directory to path to prevent import issues
-import importlib.util
-sys.path.append(
-    os.path.abspath(
-        os.path.dirname(importlib.util.find_spec('tartube').origin)
-    )
-)
 
 
 # Start Tartube

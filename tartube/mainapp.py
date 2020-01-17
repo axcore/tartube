@@ -2185,15 +2185,6 @@ class TartubeApp(Gtk.Application):
             'simple_options_flag': self.simple_options_flag,
         }
 
-        # v1.3.041. Attempt to fix installation from PyPI
-        # If config directory doesn't exist, create it
-        config_file_dirname = os.path.dirname(config_file_path)
-        if not os.path.exists(config_file_dirname):
-            try:
-                os.makedirs(config_file_dirname)
-            except:
-                pass
-
         # Try to save the file
         try:
             with open(config_file_path, 'w') as outfile:
