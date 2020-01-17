@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -110,6 +110,37 @@ class GenericContainer(GenericMedia):
 
 
     # Public class methods
+
+
+    def compile_all_containers(self, container_list):
+
+        """Can be called by anything. Currently called by
+        refresh.RefreshManager.run().
+
+        Subsquently called by this function recursively.
+
+        Appends to the specified list this container, then calls all this
+        function recursively for all media.Channel, media.Playlist and
+        media.Folder objects, so they too can be added to the list.
+
+        Args:
+
+            container_list (list): A list of media.Channel, media.Playlist and
+                media.Folder objects
+
+        Returns:
+
+            The modified container_list
+
+        """
+
+        container_list.append(self)
+        for child_obj in self.child_list:
+
+            if not isinstance(child_obj, Video):
+                child_obj.compile_all_containers(container_list)
+
+        return container_list
 
 
     def compile_all_videos(self, video_list):

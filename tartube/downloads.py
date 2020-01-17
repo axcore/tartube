@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -50,7 +50,7 @@ import utils
 
 
 # !!! Debugging flag
-DEBUG_FUNC_FLAG = False
+DEBUG_FUNC_FLAG = True
 
 
 # Decorator to add thread synchronisation to some functions in the
@@ -106,7 +106,7 @@ class DownloadManager(threading.Thread):
     def __init__(self, app_obj, force_sim_flag, download_list_obj):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 109 __init__')
+            utils.debug_time('dld 109 __init__')
 
         super(DownloadManager, self).__init__()
 
@@ -183,12 +183,45 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 186 run')
+            utils.debug_time('dld 186 run')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            'Manager:   Starting download operation',
+        )
+
+        # (Monitor changes to the number of workers, and number of available
+        #   workers, so that we can display a running total in the Output Tab's
+        #   summary page)
+        local_worker_available_count = 0
+        local_worker_total_count = 0
 
         # Perform the download operation until there is nothing left to
         #   download, or until something has called
         #   self.stop_download_operation()
         while self.running_flag:
+
+            # Send a message to the Output Tab's summary page, if required
+            available_count = 0
+            total_count = 0
+            for worker_obj in self.worker_list:
+                total_count += 1
+                if worker_obj.available_flag:
+                    available_count += 1
+
+            if local_worker_available_count != available_count \
+            or local_worker_total_count != total_count:
+                local_worker_available_count = available_count
+                local_worker_total_count = total_count
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    'Manager:   Workers: available: ' \
+                    + str(available_count) + ', total: ' \
+                    + str(total_count),
+                )
+
+            # Fetch information about the next media data object to be
+            #   downloaded
             download_item_obj = self.download_list_obj.fetch_next_item()
 
             # Exit this loop when there are no more downloads.DownloadItem
@@ -198,6 +231,13 @@ class DownloadManager(threading.Thread):
             #   then assign the next downloads.DownloadItem to it
             if not download_item_obj:
                 if self.check_workers_all_finished():
+
+                    # Send a message to the Output Tab's summary page
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        0,
+                        'Manager:   All threads finished',
+                    )
+
                     break
 
             else:
@@ -213,6 +253,16 @@ class DownloadManager(threading.Thread):
 
                     # Otherwise, initialise the worker's IVs for the next job
                     else:
+
+                        # Send a message to the Output Tab's summary page
+                        self.app_obj.main_win_obj.output_tab_write_stdout(
+                            0,
+                            'Thread #' + str(worker_obj.worker_id) \
+                            + ': Downloading \'' \
+                            + download_item_obj.media_data_obj.name + '\'',
+                        )
+
+                        # Initialise IVs
                         worker_obj.prepare_download(download_item_obj)
                         # Change the download stage for that
                         #   downloads.DownloadItem
@@ -238,14 +288,35 @@ class DownloadManager(threading.Thread):
             #   to hog resources)
             time.sleep(self.sleep_time)
 
-        # Download operation complete (or has been stopped)
+        # Download operation complete (or has been stopped). Send messages to
+        #   the Output Tab's summary page
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            'Manager:   Downloads complete (or stopped)',
+        )
+
         # Close all the workers
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            'Manager:   Halting all workers',
+        )
+
         for worker_obj in self.worker_list:
             worker_obj.close()
 
         # Join and collect
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            'Manager:   Join and collect threads',
+        )
+
         for worker_obj in self.worker_list:
             worker_obj.join()
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            'Manager:   Operation complete',
+        )
 
         # Set the stop time
         self.stop_time = int(time.time())
@@ -255,6 +326,12 @@ class DownloadManager(threading.Thread):
         GObject.timeout_add(
             0,
             self.app_obj.main_win_obj.progress_list_display_dl_stats,
+        )
+
+        # Tell the Output Tab to display any remaining messages immediately
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.output_tab_update_pages,
         )
 
         # When youtube-dl reports it is finished, there is a short delay before
@@ -297,7 +374,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 300 change_worker_count')
+            utils.debug_time('dld 300 change_worker_count')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -372,7 +449,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 375 check_master_slave')
+            utils.debug_time('dld 375 check_master_slave')
 
         for worker_obj in self.worker_list:
 
@@ -405,7 +482,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 408 check_workers_all_finished')
+            utils.debug_time('dld 408 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -428,7 +505,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 431 get_available_worker')
+            utils.debug_time('dld 431 get_available_worker')
 
         for worker_obj in self.worker_list:
             if worker_obj.available_flag:
@@ -451,7 +528,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 454 remove_worker')
+            utils.debug_time('dld 454 remove_worker')
 
         new_list = []
 
@@ -474,7 +551,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 477 stop_download_operation')
+            utils.debug_time('dld 477 stop_download_operation')
 
         self.running_flag = False
 
@@ -507,7 +584,7 @@ class DownloadWorker(threading.Thread):
     def __init__(self, download_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 510 __init__')
+            utils.debug_time('dld 510 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -568,7 +645,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 567 run')
+            utils.debug_time('dld 571 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -592,8 +669,24 @@ class DownloadWorker(threading.Thread):
                     self.download_item_obj,
                 )
 
+                # Send a message to the Output Tab's summary page
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    'Thread #' + str(self.worker_id) \
+                    + ': Assigned job \'' \
+                    + self.download_item_obj.media_data_obj.name + '\'',
+                )
+
                 # Then execute the assigned job
                 return_code = self.video_downloader_obj.do_download()
+
+                # Send a message to the Output Tab's summary page
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    'Thread #' + str(self.worker_id) \
+                    + ': Job complete \'' \
+                    + self.download_item_obj.media_data_obj.name + '\'',
+                )
 
                 # Import the media data object (for convenience)
                 media_data_obj = self.download_item_obj.media_data_obj
@@ -631,6 +724,13 @@ class DownloadWorker(threading.Thread):
                 # This worker is now available for a new job
                 self.available_flag = True
 
+                # Send a message to the Output Tab's summary page
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    'Thread #' + str(self.worker_id) \
+                    + ': Worker now available again',
+                )
+
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
             time.sleep(self.sleep_time)
@@ -650,7 +750,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 649 close')
+            utils.debug_time('dld 653 close')
 
         self.running_flag = False
         if self.video_downloader_obj:
@@ -674,7 +774,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 673 prepare_download')
+            utils.debug_time('dld 677 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -691,7 +791,7 @@ class DownloadWorker(threading.Thread):
         """Called by downloads.DownloadManager.change_worker_count()."""
 
         if DEBUG_FUNC_FLAG:
-            print('dl 690 set_doomed_flag')
+            utils.debug_time('dld 694 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -720,7 +820,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 719 data_callback')
+            utils.debug_time('dld 723 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
         GObject.timeout_add(
@@ -765,7 +865,7 @@ class DownloadList(object):
     def __init__(self, app_obj, media_data_list):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 764 __init__')
+            utils.debug_time('dld 768 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -851,7 +951,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 850 change_item_stage')
+            utils.debug_time('dld 854 change_item_stage')
 
         self.download_item_dict[item_id].stage = new_stage
 
@@ -899,7 +999,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 898 create_item')
+            utils.debug_time('dld 902 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -987,7 +1087,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 986 fetch_next_item')
+            utils.debug_time('dld 990 fetch_next_item')
 
         for item_id in self.download_item_list:
             this_item = self.download_item_dict[item_id]
@@ -1023,7 +1123,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1022 get_options_manager')
+            utils.debug_time('dld 1026 get_options_manager')
 
         if media_data_obj.options_obj:
             return media_data_obj.options_obj
@@ -1050,7 +1150,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1049 move_item_to_bottom')
+            utils.debug_time('dld 1053 move_item_to_bottom')
 
         # Move the item to the bottom (end) of the list
         if download_item_obj is None \
@@ -1081,7 +1181,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1080 move_item_to_top')
+            utils.debug_time('dld 1084 move_item_to_top')
 
         # Move the item to the top (beginning) of the list
         if download_item_obj is None \
@@ -1126,7 +1226,7 @@ class DownloadItem(object):
     def __init__(self, item_id, media_data_obj, options_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1125 __init__')
+            utils.debug_time('dld 1129 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1218,7 +1318,7 @@ class VideoDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1217 __init__')
+            utils.debug_time('dld 1221 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1389,7 +1489,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1388 do_download')
+            utils.debug_time('dld 1392 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1597,7 +1697,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1566 check_dl_is_correct_type')
+            utils.debug_time('dld 1600 check_dl_is_correct_type')
 
         if isinstance(self.download_item_obj.media_data_obj, media.Video):
 
@@ -1617,7 +1717,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1586 close')
+            utils.debug_time('dld 1620 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -1646,7 +1746,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1615 confirm_new_video')
+            utils.debug_time('dld 1649 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
             self.video_check_dict[self.video_num] = filename
@@ -1707,7 +1807,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1676 confirm_old_video')
+            utils.debug_time('dld 1710 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1827,7 +1927,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 1796 confirm_sim_video')
+            utils.debug_time('dld 1830 confirm_sim_video')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2036,10 +2136,6 @@ class VideoDownloader(object):
 
             # (Don't replace a file that already exists)
             if not os.path.isfile(descrip_path):
-#                fh = open(descrip_path, 'wb')
-#                fh.write(descrip.encode('utf-8'))
-#                fh.close()
-                # v1.2.039 try/except added in case the device is full
                 try:
                     fh = open(descrip_path, 'wb')
                     fh.write(descrip.encode('utf-8'))
@@ -2055,13 +2151,11 @@ class VideoDownloader(object):
                 json_path = utils.convert_path_to_temp(app_obj, json_path)
 
             if not os.path.isfile(json_path):
-                with open(json_path, 'w') as outfile:
-#                    json.dump(json_dict, outfile, indent=4)
-                # v1.2.039 try/except added in case the device is full
-                    try:
+                try:
+                    with open(json_path, 'w') as outfile:
                         json.dump(json_dict, outfile, indent=4)
-                    except:
-                        pass
+                except:
+                    pass
 
         if options_dict['write_annotations']:
             xml_path = os.path.abspath(
@@ -2176,7 +2270,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2107 create_child_process')
+            utils.debug_time('dld 2173 create_child_process')
 
         info = preexec = None
         if os.name == 'nt':
@@ -2232,7 +2326,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2163 extract_filename')
+            utils.debug_time('dld 2229 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -2280,7 +2374,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2211 extract_stdout_data')
+            utils.debug_time('dld 2277 extract_stdout_data')
 
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
@@ -2515,7 +2609,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2446 extract_stdout_status')
+            utils.debug_time('dld 2512 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
@@ -2543,7 +2637,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2474 get_system_cmd')
+            utils.debug_time('dld 2540 get_system_cmd')
 
         # Import things for convenience
         app_obj = self.download_manager_obj.app_obj
@@ -2558,7 +2652,7 @@ class VideoDownloader(object):
         # If actually downloading videos, create an archive file so that, if
         #   the user deletes the videos, youtube-dl won't try to download them
         #   again
-        else:
+        elif app_obj.allow_ytdl_archive_flag:
 
             # (Create the archive file in the media data object's own
             #   sub-directory, not the alternative download destination, as
@@ -2605,7 +2699,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2536 is_child_process_alive')
+            utils.debug_time('dld 2602 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -2635,7 +2729,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2566 is_debug')
+            utils.debug_time('dld 2632 is_debug')
 
         return stderr.split(' ')[0] == '[debug]'
 
@@ -2659,7 +2753,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2590 is_ignorable')
+            utils.debug_time('dld 2656 is_ignorable')
 
         app_obj = self.download_manager_obj.app_obj
 
@@ -2720,7 +2814,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2644 is_warning')
+            utils.debug_time('dld 2717 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -2742,7 +2836,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2666 last_data_callback')
+            utils.debug_time('dld 2739 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -2794,7 +2888,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2718 set_return_code')
+            utils.debug_time('dld 2791 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -2805,7 +2899,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2729 set_temp_destination')
+            utils.debug_time('dld 2802 set_temp_destination')
 
         self.temp_path = path
         self.temp_filename = filename
@@ -2817,7 +2911,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2741 reset_temp_destination')
+            utils.debug_time('dld 814 reset_temp_destination')
 
         self.temp_path = None
         self.temp_filename = None
@@ -2834,7 +2928,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2758 stop')
+            utils.debug_time('dld 2831 stop')
 
         if self.is_child_process_alive():
 
@@ -2864,7 +2958,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2788 stop_soon')
+            utils.debug_time('dld 2861 stop_soon')
 
         self.stop_soon_flag = True
 
@@ -2900,7 +2994,7 @@ class PipeReader(threading.Thread):
     def __init__(self, queue):
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2824 __init__')
+            utils.debug_time('dld 2897 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -2937,7 +3031,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2861 run')
+            utils.debug_time('dld 2934 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -2978,7 +3072,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2902 attach_file_descriptor')
+            utils.debug_time('dld 2975 attach_file_descriptor')
 
         self.file_descriptor = filedesc
 
@@ -2997,7 +3091,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            print('dl 2921 join')
+            utils.debug_time('dld 2994 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)

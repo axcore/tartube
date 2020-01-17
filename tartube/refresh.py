@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -146,8 +146,11 @@ class RefreshManager(threading.Thread):
         #   one has their own sub-directory inside Tartube's data directory)
         obj_list = []
         if self.init_obj:
-            obj_list.append(self.init_obj)
+            # Add this channel/playlist/folder, and any child channels/
+            #   playlists/folders (but not videos, obviously)
+            obj_list = self.init_obj.compile_all_containers(obj_list)
         else:
+            # Add all channels/playlists/folders in the database
             for dbid in list(self.app_obj.media_name_dict.values()):
 
                 obj = self.app_obj.media_reg_dict[dbid]
@@ -291,7 +294,8 @@ class RefreshManager(threading.Thread):
             if isinstance(child_obj, media.Video) and child_obj.file_dir:
 
                 # Does the video file still exist?
-                if child_obj.dl_flag and not child_obj.file_name in init_list:
+                this_file = child_obj.file_name + child_obj.file_ext
+                if child_obj.dl_flag and not this_file in init_list:
                     self.app_obj.mark_video_downloaded(child_obj, False)
                 else:
                     check_dict[child_obj.file_name] = child_obj

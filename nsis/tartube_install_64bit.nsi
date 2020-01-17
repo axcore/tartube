@@ -1,6 +1,6 @@
 # Tartube v1.3.007 installer script for MS Windows
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software

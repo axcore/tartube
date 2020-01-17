@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -277,6 +277,26 @@ def convert_youtube_to_hooktube(url):
         )
 
     return url
+
+
+def debug_time(msg):
+
+    """Called by all functions in mainapp.py, mainwin.py and downloads.py (but
+    only when debug flags are turned on).
+
+    Writes the current time, and the name of the calling function to STDOUT,
+    e.g. '2020-01-16 08:55:06 ap 91 __init__'.
+    """
+
+    # Uncomment this code to display the time with microseconds
+#    print(str(datetime.datetime.now().time()) + ' ' + msg)
+
+    # Uncomment this code to display the time without microseconds
+    dt = datetime.datetime.now()
+    print(str(dt.replace(microsecond=0)) + ' ' + msg)
+
+    # Uncomment this code to display the message, without a timestamp
+#    print(msg)
 
 
 def disk_get_total_space(path, bytes_flag=False):

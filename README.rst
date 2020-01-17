@@ -494,26 +494,25 @@ This is how to import the data into a different **Tartube** database.
 - In the **Tartube** menu, click **Operations > Refresh database**. **Tartube** will search for video files, and try to match them with the contents of its database
 - The whole process might some time, so be patient
 
+6.18 Converting to audio
+------------------------
+
+**Tartube** can automatically extract the audio from its downloaded videos, if that's what you want.
+
+The first step is to make sure that either FFmpeg or AVconv is installed on your system - see `6.4 Setting the location of FFmpeg / AVconv`_.
+
+The remaining steps are simple:
+
+- In **Tartube**'s main window, click **Edit > General download options...**
+- In the new window, if the **Post-processing** tab is not visible, then click the button **Show advanced download options**
+- Now click on the **Post-processing** tab
+- Click the button **Post-process video files to convert them to audio-only files** to select it
+- If you want, click the button **Keep video file after post-processing it** to select it
+- In the box labelled **Audio format of the post-processed file**, specify what type of audio file you want - **.mp3**, **.wav**, etc 
+- Click the **OK** button at the bottom of the window to apply your changes
+
 7. Frequently-Asked Questions
 =============================
-
-**Q: Why is the installer so big?**
-
-Tartube is a Linux application. The installer for MS Windows contains not just Tartube itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
-
-If you're at all suspicious that such a small application uses such a large installer, you are invited to examine the installed files for yourself: 
-
-**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube**
-
-(You might need to enable hidden folders; this can be done from the Control Panel.)
-
-Everything is copied into this single folder. The installer doesn't modify the Windows registry, nor does it copy files anywhere else (other than to the desktop and the Start Menu). 
-
-The NSIS scripts used to create the installers can be found here:
-
-**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\nsis**
-
-The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
 **Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly / Tartube keeps crashing!**
 
@@ -533,6 +532,10 @@ To find Tartube's data directory (folder), click **Edit > System preferences... 
 Tartube can make more frequent backups of your database file, if you want. See the options in **Edit > System preferences... > Backups**.
 
 Note that Tartube does not create backup copies of the videos you've downloaded. That is your responsibility!
+
+**Q: I want to convert the video files to audio files!**
+
+A: See `6.18 Converting to audio`_
 
 **Q: I want to see all the videos on a single page, not spread over several pages!**
 
@@ -557,6 +560,24 @@ This works well on sites like YouTube, which send information about videos in th
 A: Click **Edit > System preferences... > General > Don't show labels in the toolbar**.
 
 MS Windows users can already see a toolbar without labels.
+
+**Q: Why is the installer so big?**
+
+Tartube is a Linux application. The installer for MS Windows contains not just Tartube itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
+
+If you're at all suspicious that such a small application uses such a large installer, you are invited to examine the installed files for yourself: 
+
+**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube**
+
+(You might need to enable hidden folders; this can be done from the Control Panel.)
+
+Everything is copied into this single folder. The installer doesn't modify the Windows registry, nor does it copy files anywhere else (other than to the desktop and the Start Menu). 
+
+The NSIS scripts used to create the installers can be found here:
+
+**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\nsis**
+
+The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
 8. Future plans
 ===============

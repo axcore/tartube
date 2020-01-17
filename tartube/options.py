@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 A S Lewis
+# Copyright (C) 2019-2020 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -149,7 +149,8 @@ class OptionsManager(object):
             which is at the current time the better downloader for general
             compatibility)
 
-        prefer_ffmpeg (bool): When True, youtube-dl will prefer FFmpeg
+        hls_prefer_ffmpeg (bool): When True, youtube-dl will prefer FFmpeg
+            (N.B. This should not be confused with the 'prefer_ffmpeg' option)
 
         external_downloader (str): Use the specified external downloaded.
             youtube-dl currently supports the strings 'aria2c', 'avconv',
@@ -297,10 +298,10 @@ class OptionsManager(object):
             The string can be 'never', 'warn', 'detect_or_worn' or an empty
             string if disabled
 
-        prefer_avconv (bool): Prefer avconv over ffmpeg for running the
+        prefer_avconv (bool): Prefer AVConv over FFmpeg for running the
             postprocessors
 
-        prefer_ffmpeg (bool): Prefer ffmpeg over avconv for running the
+        prefer_ffmpeg (bool): Prefer FFmpeg over AVConv for running the
             postprocessors
 
     YOUTUBE-DL-GUI OPTIONS (not passed to youtube-dl directly)
@@ -425,6 +426,25 @@ class OptionsManager(object):
     # Public class methods
 
 
+    def clone_options(self, other_options_manager_obj):
+
+        """Called by mainapp.TartubeApp.clone_options_manager(), or by any
+        other code.
+
+        Clones download options from the specified object into those object,
+        completely replacing this object's download options.
+
+        Args:
+
+            other_options_manager_obj (options.OptionsManager): The download
+                options object (usually the General Options Manager), from
+                which options will be cloned
+
+        """
+
+        self.options_dict = other_options_manager_obj.options_dict.copy()
+
+
     def reset_options(self):
 
         """Called by self.__init__().
@@ -468,7 +488,7 @@ class OptionsManager(object):
             'playlist_reverse': False,
             'playlist_random': False,
             'native_hls': True,
-            'prefer_ffmpeg': False,
+            'hls_prefer_ffmpeg': False,
             'external_downloader': '',
             'external_arg_string': '',
             # FILESYSTEM OPTIONS
@@ -646,7 +666,7 @@ class OptionsParser(object):
             # --hls-prefer-native
             OptionHolder('native_hls', '--hls-prefer-native', False),
             # --hls-prefer-ffmpeg
-            OptionHolder('prefer_ffmpeg', '--hls-prefer-ffmpeg', False),
+            OptionHolder('hls_prefer_ffmpeg', '--hls-prefer-ffmpeg', False),
             # --external-downloader COMMAND
             OptionHolder('external_downloader', '--external-downloader', ''),
             # --external-downloader-args ARGS
@@ -1063,36 +1083,63 @@ class OptionsParser(object):
         #   can have the values of the keys in formats.VIDEO_OPTION_DICT, which
         #   are either real extractor codes (e.g. '35' representing
         #   'flv [480p]') or dummy extractor codes (e.g. 'mp4')
-        # Some dummy extractor codes are in the form '720p', '1080p' etc,
+        # Some dummy extractor codes are in the form '720p', '1080p60' etc,
         #   representing progressive scan resolutions. If the user specifies
         #   at least one of those codes, the first one is used, and all other
-        #   extractor codes (are ignored)
+        #   extractor codes are ignored
         resolution_dict = formats.VIDEO_RESOLUTION_DICT.copy()
+        fps_dict = formats.VIDEO_FPS_DICT.copy()
         app_obj = self.download_manager_obj.app_obj
 
         # If the progressive scan resolution is specified, it overrides all
         #   other video format options
+        height = None
+        fps = None
+
         if app_obj.video_res_apply_flag:
             height = resolution_dict[app_obj.video_res_default]
+            # (Currently, formats.VIDEO_FPS_DICT only lists formats with 60fps)
+            if app_obj.video_res_default in fps_dict:
+                fps = fps_dict[app_obj.video_res_default]
+
         elif copy_dict['video_format'] in resolution_dict:
             height = resolution_dict[copy_dict['video_format']]
+            if copy_dict['video_format'] in fps_dict:
+                fps = fps_dict[copy_dict['video_format']]
+
         elif copy_dict['second_video_format'] in resolution_dict:
             height = resolution_dict[copy_dict['second_video_format']]
+            if copy_dict['second_video_format'] in fps_dict:
+                fps = fps_dict[copy_dict['second_video_format']]
+
         elif copy_dict['third_video_format'] in resolution_dict:
             height = resolution_dict[copy_dict['third_video_format']]
-        else:
-            height = None
+            if copy_dict['third_video_format'] in fps_dict:
+                fps = fps_dict[copy_dict['third_video_format']]
+
 
         if height is not None:
 
-            # Use a youtube-dl argument in the form
-            #   'bestvideo[height<=?height]+bestaudio/best[height<=height]'
-            copy_dict['video_format'] = 'bestvideo[height<=?' \
-            + str(height) + ']+bestaudio/best[height<=?' + str(height) + ']'
-            # After a progressive scan resolution, all other extract codes are
-            #   ignored
-            copy_dict['second_video_format'] = '0'
-            copy_dict['third_video_format'] = '0'
+            # (Currently, formats.VIDEO_FPS_DICT only lists formats with 60fps)
+            if fps is None:
+
+                # Use a youtube-dl argument in the form
+                #   'bestvideo[height<=?height]+bestaudio/best[height<=height]'
+                copy_dict['video_format'] = 'bestvideo[height<=?' \
+                + str(height) + ']+bestaudio/best[height<=?' + str(height) \
+                + ']'
+                # After a progressive scan resolution, all other extract codes
+                #   are ignored
+                copy_dict['second_video_format'] = '0'
+                copy_dict['third_video_format'] = '0'
+
+            else:
+
+                copy_dict['video_format'] = 'bestvideo[height<=?' \
+                + str(height) + '][fps<=?' + str(fps) \
+                + ']+bestaudio/best[height<=?' + str(height) + ']'
+                copy_dict['second_video_format'] = '0'
+                copy_dict['third_video_format'] = '0'
 
         # Not using a progressive scan resolution
         elif copy_dict['video_format'] != '0' and \
@@ -1102,7 +1149,7 @@ class OptionsParser(object):
 
                 copy_dict['video_format'] = copy_dict['video_format'] + '+' \
                 + copy_dict['second_video_format'] + '+' \
-                + copy_dict['second_video_format']
+                + copy_dict['third_video_format']
 
             else:
                 copy_dict['video_format'] = copy_dict['video_format'] + '+' \
