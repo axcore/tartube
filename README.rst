@@ -245,6 +245,10 @@ On MS Windows, the usual methods of FFmpeg installation will not work. You **mus
 
 There is no known method of installing a compatible version of AVConv.
 
+To install AtomicParsley (for writing cover images into the file), `download the latest release <https://bitbucket.org/jonhedgerows/atomicparsley/downloads/>`__
+
+Extract AtomicParsley.exe from the zip file to **C:\\Users\\Username\\AppData\\Local\\Tartube\\msys64\\mingw64\\bin** and you're all set!
+
 6.4.2 On Linux/BSD
 ~~~~~~~~~~~~~~~~~~
 
