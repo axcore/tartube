@@ -1,3 +1,86 @@
+v1.3.048 (23 Jan 2019)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube now creates an icon in the user's system tray. Closing the main
+    window now closes to the tray, by default. To disable this behaviour,
+    click Edit > System preferences > Windows > Deselect 'Close to the tray...'
+- When that functionality is enabled, Tartube can be shutdown by clicking
+    File > Quit. Scheduled download operations will still take place if Tartube
+    has been closed to the tray. Implements Github issue #37
+- Tartube can now show a desktop notification at the end of a download
+    operation, rather that a dialogue window. This does not work on MS Windows.
+    On other operating systems, enable desktop notifications by clicking
+    Edit > System preferences... > Operations > Show a desktop notification...
+- When you click the 'Add new video(s)' button, the folder displayed in the
+    dialogue window is now the same folder that's selected in the main window
+    (if any). The same applies for adding channels, playlists and folders.
+    Fixes Github issue #36
+- If you normally use the 'Check all' button rather than the 'Download all'
+    button, and if you want to download a temporary copy of one of the videos,
+    there's now an easier way to do it. In the Videos tab, right-click the
+    video, and select 'Temporary > Download' or 'Temporary > Download and
+    Watch'. A copy of the video is downloaded into the 'Temporary Videos'
+    folder, without affecting any other folders
+
+MINOR NEW FEATURES
+- The icons for channels and playlists have been replaced, to make it easier to
+    tell them apart. Some other icons have been replaced too
+- Videos can now be dragged and dropped from a web browser (or similar
+    application) into Tartube's main window, which automatically adds the video
+    to the currently selected folder (or 'Unsorted Videos', if no folder is
+    selected). Unfortunately, the code is not yet working reliably. We are
+    looking for a solution (Github issue #35)
+- The layout of the Format tab in the download options window has been improved
+    to alleviate confusion experienced by users trying to download a video to
+    a sound format such as .mp3 (only). See the new section in the README file
+- A number of new video/audio formats have been added, for example several new
+    60fps formats, implementing Github issue #40
+- When you apply download options to a video/channel/playlist/folder, the
+    options are now cloned from the default set of options (those visible in
+    Edit > General download options...). To disable this behaviour, click
+    Edit > System preferences... > Operations > When applying download options,
+    automatically clone general download options. Implements Github issue #39
+- The options already applied to a video/channel/playlist/folder can now be
+    reset to match the general options, any time you want. Use the new button
+    at the bottom of the download options window, in the General tab
+
+MAJOR FIXES
+- Fixed a rare crash when the video's JSON filename was too long for the
+    operating system
+- In the download options window, Formats tab, the user can add up to three
+    video formats. The third format, if added, was always ignored. Fixed
+
+MINOR FIXES
+- If you perform a refresh operation on a folder, the operation now applies to
+    all videos, channels, playlists and folders inside it
+- After adding a video to the folder that's currently selected, the video does
+    not appear immediately in the video catalogue. Fixed
+- In the Progress and Errors/Warnings tabs, the column headers scrolled away
+    along with the rest of the list. Fixed; they are now always visible
+- Video nicknames were not set correctly after an update operation. Fixed
+- During a refresh operation, a video's name was compared against the full
+    filepath (filename and extension), which produced none of the intended
+    matches. Fixed
+- The edit/preference windows had a tendency to increase in size without
+    limits. Fixed
+- A video's annotations.xml file was not deleted correctly, when required.
+    Fixed
+- In the download options window, the option 'hls-prefer-ffmpeg' is now working
+    correctly
+- In the download options window, the 'prefer avconv over ffmpeg' options have
+    been desensitised on MS Windows, as there is no known method of using
+    Tartube with avconv on MS Windows
+- youtube-dl creates a file, ytdl-archive.txt, recording all the videos that
+    it has downloaded. This can interfere if the user tries to re-download the
+    video(s) for any reason. Create of the ytdl-archive.txt file can now be
+    disabled (Edit > System preferences... > youtube-dl > Deselect 'Allow
+    youtube-dl to create its own archive...')
+- If creation of the archive file is nonetheless enabled, Tartube can now
+    re-download video(s) without problems
+- In rare circumstances, Tartube was unable to redraw the video catalogue
+    (the right-hand side of the Videos tab). Fxied
+
 v1.3.007 (20 Dec 2019)
 -------------------------------------------------------------------------------
 
@@ -11,7 +94,7 @@ MAJOR FIXES
 MINOR FIXES
 - Fixed an invalid time value which (sometimes) prevented a refresh operation
     from completing correctly
-    
+
 v1.3.0 (20 Dec 2019)
 -------------------------------------------------------------------------------
 MAJOR NEW FEATURES
@@ -84,7 +167,7 @@ MAJOR FIXES
     Tartube no longer freezes on shutdown
 - On MS Windows, Tartube was unable to open a video file in the system's
     default media player, if the name contained an ampersand. Fixed
-    
+
 MINOR FIXES
 - When deleting large channels/playlists/folders, sometimes not everything was
     deleted, and the user had to delete the item a second time. This was due to
@@ -96,7 +179,7 @@ MINOR FIXES
 - In the 'Delete channel' dialogue window (and so on), the name of the channel
     to be deleted is now displayed prominently
 - The size of the MS Windows installer has been reduced by about 40%
-    
+
 v1.2.008 (30 Sep 2019)
 -------------------------------------------------------------------------------
 

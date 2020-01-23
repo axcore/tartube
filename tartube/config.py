@@ -5768,7 +5768,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_dialogue_mode == 'desktop':
             radiobutton2.set_active(True)
-        if os.name != 'nt':
+        if os.name == 'nt':
             radiobutton2.set_sensitive(False)
         # Signal connect appears below
 

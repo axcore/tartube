@@ -36,7 +36,8 @@ import datetime
 today = datetime.date.today()
 day = today.strftime("%d")
 month = today.strftime("%m")
-if (int(month) == 12 and int(day) >= 24) or (int(month) == 1 and int(day) <= 5):
+if (int(month) == 12 and int(day) >= 24) \
+or (int(month) == 1 and int(day) <= 5):
     xmas_flag = True
 else:
     xmas_flag = False

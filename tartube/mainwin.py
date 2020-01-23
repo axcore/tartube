@@ -52,7 +52,7 @@ import utils
 
 
 # !!! Debugging flag
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 
 
 # Classes
@@ -10508,6 +10508,10 @@ class AddVideoDialogue(Gtk.Dialog):
         if folder_obj:
             self.folder_list.insert(0, folder_obj.name)
 
+        # Store the combobox's selected item, so the calling function can
+        #   retrieve it.
+        self.parent_name = self.folder_list[0]
+
         label2 = Gtk.Label('Add the videos to this folder')
         grid.attach(label2, 0, 6, 2, 1)
 
@@ -10551,7 +10555,7 @@ class AddVideoDialogue(Gtk.Dialog):
 
         """Called from callback in self.__init__().
 
-        Store the combobox's selected item, so the calling function can
+        Updates the combobox's selected item, so the calling function can
         retrieve it.
 
         Args:

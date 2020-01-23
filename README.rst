@@ -79,11 +79,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 4 Downloads
 ===========
 
-Latest version: **v1.3.007 (20 Dec 2019)**
+Latest version: **v1.3.048 (23 Jan 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.007/install-tartube-1.3.007-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.007/install-tartube-1.3.007-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.007/tartube_v1.3.007.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.048/install-tartube-1.3.048-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.048/install-tartube-1.3.048-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.048/tartube_v1.3.048.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 5 Installation

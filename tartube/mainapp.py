@@ -72,7 +72,7 @@ import utils
 
 
 # !!! Debugging flag
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 
 
 # Classes

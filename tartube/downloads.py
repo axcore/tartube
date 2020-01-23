@@ -50,7 +50,7 @@ import utils
 
 
 # !!! Debugging flag
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 
 
 # Decorator to add thread synchronisation to some functions in the
