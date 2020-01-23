@@ -2794,7 +2794,9 @@ class TartubeApp(Gtk.Application):
                 if os.path.isfile(bu_path):
                     os.remove(bu_path)
 
-                os.rename(temp_bu_path, bu_path)
+                # (os.rename sometimes fails on external hard drives; this is
+                #   safer)
+                shutil.move(temp_bu_path, bu_path)
 
             elif self.db_backup_mode == 'daily':
 
@@ -2811,7 +2813,8 @@ class TartubeApp(Gtk.Application):
                     if os.path.isfile(daily_bu_path):
                         os.remove(daily_bu_path)
 
-                    os.rename(temp_bu_path, daily_bu_path)
+                    shutil.move(temp_bu_path, daily_bu_path)
+                    
                 else:
 
                     os.remove(temp_bu_path)
@@ -2829,7 +2832,7 @@ class TartubeApp(Gtk.Application):
                 if os.path.isfile(always_bu_path):
                     os.remove(always_bu_path)
 
-                os.rename(temp_bu_path, always_bu_path)
+                shutil.move(temp_bu_path, always_bu_path)
 
 
     def switch_db(self, data_list):
@@ -4681,7 +4684,9 @@ class TartubeApp(Gtk.Application):
             if os.path.isfile(bu_path):
                 os.remove(bu_path)
 
-            os.rename(archive_path, bu_path)
+            # (os.rename sometimes fails on external hard drives; this is
+            #   safer)
+            shutil.move(archive_path, bu_path)
 
             # Store both paths, so self.reset_backup_archive() can retrieve
             #   them
@@ -4710,7 +4715,9 @@ class TartubeApp(Gtk.Application):
             if os.path.isfile(self.ytdl_archive_path):
                 os.remove(self.ytdl_archive_path)
 
-            os.rename(
+            # (os.rename sometimes fails on external hard drives; this is
+            #   safer)
+            shutil.move(
                 self.ytdl_archive_backup_path,
                 self.ytdl_archive_path,
             )
@@ -6335,7 +6342,7 @@ class TartubeApp(Gtk.Application):
             old_dir = media_data_obj.get_dir(self)
             new_dir = media_data_obj.get_dir(self, new_name)
             try:
-                os.rename(old_dir, new_dir)
+                shutil.move(old_dir, new_dir)
 
             except:
                 return self.dialogue_manager_obj.show_msg_dialogue(

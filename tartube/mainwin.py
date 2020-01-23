@@ -38,6 +38,7 @@ import threading
 import time
 # (Desktop notifications don't work on MS Windows, so no need to import Notify)
 if os.name != 'nt':
+    gi.require_version('Notify', '0.7')
     from gi.repository import Notify
 
 
@@ -5905,8 +5906,17 @@ class MainWin(Gtk.ApplicationWindow):
 
                 if not error_flag:
                     textbuffer.insert(textbuffer.get_end_iter(), msg + '\n')
+                    
                 else:
-                    string = '<span color="{:s}">' + msg + '</span>\n'
+                    string = GObject.markup_escape_text(
+                        '<span color="{:s}">' + msg + '</span>\n',
+                    )
+
+                    # The .markup_escape_text() call won't escape curly braces,
+                    #   so we need to replace those manually
+                    string = re.sub('{', '(', string)
+                    string = re.sub('}', ')', string)
+                    
                     textbuffer.insert_markup(
                         textbuffer.get_end_iter(),
                         string.format('cyan'),
@@ -11001,6 +11011,10 @@ class AddFolderDialogue(Gtk.Dialog):
 
         if suggest_parent_name is not None:
             self.folder_list.insert(0, suggest_parent_name)
+
+        # Store the combobox's selected item, so the calling function can
+        #   retrieve it.
+        self.parent_name = self.folder_list[0]
 
         separator2 = Gtk.HSeparator()
         grid.attach(separator2, 0, 5, 2, 1)

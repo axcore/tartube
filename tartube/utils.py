@@ -207,7 +207,8 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
         if os.path.isfile(new_path):
             os.remove(new_path)
 
-        os.rename(old_path, new_path)
+        # (os.rename sometimes fails on external hard drives; this is safer)
+        shutil.move(old_path, new_path)
 
     # Return the converted file path
     return new_path
