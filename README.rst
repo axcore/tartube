@@ -15,11 +15,9 @@ Works with YouTube, BitChute, and hundreds of other websites
 * `5 Installation`_
 * `6 Getting started`_
 * `7. Frequently-Asked Questions`_
-* `8. Future plans`_
-* `9. Known issues`_
-* `10. Contributing`_
-* `11. Authors`_
-* `12. License`_
+* `8. Contributing`_
+* `9. Authors`_
+* `10. License`_
 
 1 Introduction
 ==============
@@ -79,11 +77,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 4 Downloads
 ===========
 
-Latest version: **v1.3.048 (23 Jan 2019)**
+Latest version: **v1.3.077 (26 Jan 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.048/install-tartube-1.3.048-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.048/install-tartube-1.3.048-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.048/tartube_v1.3.048.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.077/tartube_v1.3.077.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 5 Installation
@@ -270,12 +268,12 @@ Videos saved to the **Temporary Videos** folder are deleted when **Tartube** shu
 6.6 Adding videos
 -----------------
 
-You can add individual videos by clicking the **'Videos'** button near the top of the window. A popup window will appear.
+You can add individual videos by clicking the **'Videos'** button near the top of the window. A dialogue window will appear.
 
 .. image:: screenshots/example4.png
   :alt: Adding videos
 
-Copy and paste the video's URL into the popup window. You can copy and paste as many URLs as you like.
+Copy and paste the video's URL into the dialogue window. You can copy and paste as many URLs as you like.
 
 When you're finished, click the **OK** button. 
 
@@ -294,9 +292,29 @@ You can also add a whole channel by clicking the **'Channel'** button or a whole
 .. image:: screenshots/example6.png
   :alt: Adding a channel
 
-Copy and paste the channel's URL into the popup window. You should also give the channel a name. The channel's name is usually the name used on the website (but you can choose any name you like).
+Copy and paste the channel's URL into the dialogue window. You should also give the channel a name. The channel's name is usually the name used on the website (but you can choose any name you like).
 
-6.8 Adding folders
+6.8 Adding videos, channels and playlists together
+--------------------------------------------------
+
+When adding a long list of URLs, containing a mixture of channels, playlists and individual videos, it's quicker to add them all at the same time. Click the **'Videos'** button near the top of the window, and paste all the links into the dialogue window.
+
+**Tartube** doesn't know anything about these links until you actually download them (or check them). If it's expecting an individual video, but receives a channel or a playlist, **Tartube** will the handle the conversion for you.
+
+By default, **Tartube** converts a link into a channel, when necessary. You can change this behaviour, if you want to.
+
+- In **Tartube**'s main window, click **Edit > System preferences... > Operations**
+- Select one of the buttons listed under **URL flexibility preferences**
+
+Unfortunately, there is no way for **Tartube** to distinguish a channel from a playlist. Most video websites don't supply that information.
+
+If your list of URLs contains a mixture of channels and playlists, you can convert one to the other after the download has finished.
+
+- In **Tartube**'s main window, right-click a channel, and select **Channel actions > Convert to playlist**
+- Alternatively, right-click a playlist, and select **Channel actions > Convert to channel**
+- After converting, you can set a name for the new channel/playlist by right-clicking it, and selecting **Filesystem > Rename default location...**
+
+6.9 Adding folders
 ------------------
 
 The left-hand side of the window will quickly still filling up. It's a good idea to create some folders, and to store your channels/playlists inside those folders.
@@ -311,7 +329,7 @@ Then repeat that process to create a folder called **Music**. You can then drag-
 .. image:: screenshots/example8.png
   :alt: A channel inside a folder
 
-6.9 Things you can do
+6.10 Things you can do
 ----------------------
 
 Once you've finished adding videos, channels, playlists and folders, there are basically four things **Tartube** can do:
@@ -331,7 +349,7 @@ To **Check** or **Download** videos, channels and playlists, use the buttons nea
 
 **Protip:** Do a **'Check'** operation before you do **'Refresh'** operation
 
-6.10 General download options
+6.11 General download options
 -----------------------------
 
 **youtube-dl** offers a large number of download options. This is how to set them.
@@ -343,7 +361,7 @@ To **Check** or **Download** videos, channels and playlists, use the buttons nea
 
 A new window opens. Any changes you make in this window aren't actually applied until you click the **'Apply'** or **'OK'** buttons.
 
-6.11 Other download options
+6.12 Other download options
 ---------------------------
 
 Those are the *default* download options. If you want to apply a *different* set of download options to a particular channel or particular playlist, you can do so.
@@ -372,7 +390,7 @@ The previous set of download options still applies to everything in the **Music*
 .. image:: screenshots/example13.png
   :alt: Download options applied to the Village People channel
 
-6.12 Favourite videos
+6.13 Favourite videos
 ---------------------
 
 You can mark channels, playlists and even whole folders as favourites.
@@ -382,7 +400,7 @@ You can mark channels, playlists and even whole folders as favourites.
 
 When you do that, any videos you download will appear in the **Favourite Videos** folder (as well as in their normal location).
 
-6.13 Watching videos
+6.14 Watching videos
 --------------------
 
 If you've downloaded a video, you can watch it by clicking the word **Player**.
@@ -394,7 +412,7 @@ If you haven't downloaded the video yet, you can watch it online by clicking the
 
 If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's often possible to watch the same video without restrictions on the **HookTube** website.
 
-6.14 Combining channels, playlists and folders
+6.15 Combining channels, playlists and folders
 ----------------------------------------------
 
 **Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's hard drive. There are three situations in which this might be useful:
@@ -403,7 +421,7 @@ If it's a YouTube video that is restricted (not available in certain regions, or
 - A creator releases their videos on **BitChute** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
 - You don't care about keeping videos in separate directories/folders on your filesystem. You just want to download all videos to one place
 
-6.14.1 Combining one channel and many playlists
+6.15.1 Combining one channel and many playlists
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might have a single channel, and several playlists. The playlists contain videos from that channel (but not necessarily *every* video).
@@ -417,7 +435,7 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 - Now, right-click on each playlist in turn and select **Playlist actions > Set download destination...**
 - In the dialogue window, click **Choose a different directory/folder**, select the name of the channel, then click the **OK button**
 
-6.14.2 Combining channels from different websites
+6.15.2 Combining channels from different websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might release their videos on **YouTube**, but also on a site like **BitChute**. Sometimes they will only release a particular video on **BitChute**.
@@ -433,7 +451,7 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
 
-6.14.3 Download all videos to a single folder
+6.15.3 Download all videos to a single folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don't care about keeping videos in separate directories/folders on your filesystem, you can download *all* videos into the **Unsorted videos** folder. Regardless of whether you have added one channel or a thousand, all the videos will be stored in that one place.
@@ -444,7 +462,7 @@ If you don't care about keeping videos in separate directories/folders on your f
 
 Alternatively, you could select **Temporary Videos**. If you do, videos will be deleted when you shut down **Tartube** (and will not be re-downloaded in the future).
 
-6.15 Archiving videos
+6.16 Archiving videos
 ---------------------
 
 You can tell **Tartube** to automatically delete videos after some period of time. This is useful if you don't have an infinitely large hard drive.
@@ -463,7 +481,7 @@ You can also archive all the videos in a channel, playlist or folder.
 - This action applies to *all* videos that are *currently* in the folder, including the contents of any channels and playlists in that folder
 - It doesn't apply to any videos you might download in the future
 
-6.16 Exporting/importing the Tartube database
+6.17 Exporting/importing the Tartube database
 ---------------------------------------------
 
 You can export the contents of **Tartube**'s database and, at any time in the future, import that information into a different **Tartube** database, perhaps on a different computer.
@@ -483,7 +501,7 @@ This is how to import the data into a different **Tartube** database.
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
-6.17 Importing videos from other applications
+6.18 Importing videos from other applications
 ---------------------------------------------
 
 **Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, but it is not the only one. If you've downloaded videos using another application, this is how to add them to Tartube's database.
@@ -494,7 +512,7 @@ This is how to import the data into a different **Tartube** database.
 - In the **Tartube** menu, click **Operations > Refresh database**. **Tartube** will search for video files, and try to match them with the contents of its database
 - The whole process might some time, so be patient
 
-6.18 Converting to audio
+6.19 Converting to audio
 ------------------------
 
 **Tartube** can automatically extract the audio from its downloaded videos, if that's what you want.
@@ -504,9 +522,18 @@ The first step is to make sure that either FFmpeg or AVconv is installed on your
 The remaining steps are simple:
 
 - In **Tartube**'s main window, click **Edit > General download options...**
-- In the new window, if the **Post-processing** tab is not visible, then click the button **Show advanced download options**
-- Now click on the **Post-processing** tab
-- Click the button **Post-process video files to convert them to audio-only files** to select it
+
+In the new window, if the **Post-processing** tab is not visible, do this:
+
+- Click the **Sound Only** tab
+- Select the checkbox **Download each video, extract the sound, and then discard the original videos**
+- In the boxes below, select an audio format and an audio quality
+- Click the **OK** button at the bottom of the window to apply your changes
+
+If the **Post-processing** tab *is* visible, do this:
+
+- Click on the **Post-processing** tab
+- Select the checkbox **Post-process video files to convert them to audio-only files** 
 - If you want, click the button **Keep video file after post-processing it** to select it
 - In the box labelled **Audio format of the post-processed file**, specify what type of audio file you want - **.mp3**, **.wav**, etc 
 - Click the **OK** button at the bottom of the window to apply your changes
@@ -535,7 +562,7 @@ Note that Tartube does not create backup copies of the videos you've downloaded.
 
 **Q: I want to convert the video files to audio files!**
 
-A: See `6.18 Converting to audio`_
+A: See `6.19 Converting to audio`_
 
 **Q: I want to see all the videos on a single page, not spread over several pages!**
 
@@ -579,42 +606,18 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
-8. Future plans
+8. Contributing
 ===============
-
--  Fix the endless crashes **DONE**
--  Support for multiple databases (so you can store videos on two external hard    drives at the same time)
--  Add download scheduling **DONE**
--  Add video archiving **DONE**
--  Allow selection of multiple videos in the catalogue, so the same action can be applied to all of them at the same time **DONE**
--  Tie channels and playlists together, so that they won't both download the same video **DONE**
--  Add tooltips for everything **DONE**
--  Add more youtube-dl options **DONE**
--  Expand this guide to explain all features of Tartube
-
-9. Known issues
-===============
-
--  Tartube crashes continuously and often **FIXED**
--  Alphabetic sorting of channels/playlists/folders doesn't always work as intended, due to an unresolved Gtk issue **FIXED**
--  Channels/playlists/folder selection does not always work as intended, due to an unresolved Gtk issue **FIXED**
--  Users can type in comboboxes, but this should not be possible **FIXED**
--  Some MS Windows users report that Tartube will install, but not run **FIXED**
--  Some MS Windows users report that Tartube doesn't recognise FFmpeg **FIXED**
--  Installation via **pip** does not work
-
-10. Contributing
-================
 
 -  Report a bug: Use the Github
    `issues <https://github.com/axcore/tartube/issues>`__ page
 
-11. Authors
-===========
+9. Authors
+==========
 
 See the `AUTHORS <AUTHORS>`__ file.
 
-12. License
+10. License
 ===========
 
 Tartube is licensed under the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`__.

@@ -1148,7 +1148,6 @@ class GenericEditWin(GenericConfigWin):
         entry.set_width_chars(8)
 
         main_win_obj = self.app_obj.main_win_obj
-        parent_obj = self.edit_obj.parent_obj
         if isinstance(self.edit_obj, media.Channel):
             icon_path = main_win_obj.icon_dict['channel_small']
         elif isinstance(self.edit_obj, media.Playlist):
@@ -1190,8 +1189,14 @@ class GenericEditWin(GenericConfigWin):
         )
         label2.set_hexpand(False)
 
+        parent_obj = self.edit_obj.parent_obj
         if parent_obj:
-            icon_path2 = main_win_obj.icon_dict['folder_small']
+            if isinstance(parent_obj, media.Channel):
+                icon_path2 = main_win_obj.icon_dict['channel_small']
+            elif isinstance(parent_obj, media.Playlist):
+                icon_path2 = main_win_obj.icon_dict['playlist_small']
+            else:
+                icon_path2 = main_win_obj.icon_dict['folder_small']
         else:
             icon_path2 = main_win_obj.icon_dict['folder_black_small']
 
@@ -1955,6 +1960,8 @@ class OptionsEditWin(GenericEditWin):
         self.setup_others_tab()
         if not self.app_obj.simple_options_flag:
             self.setup_advanced_tab()
+        else:
+            self.setup_sound_only_tab()
 
 
     def setup_general_tab(self):
@@ -3372,6 +3379,70 @@ class OptionsEditWin(GenericEditWin):
             'prefer_insecure',
             0, 21, grid_width, 1,
         )
+
+
+    def setup_sound_only_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Sound Only' tab.
+        """
+
+        tab, grid = self.add_notebook_tab('_Sound only')
+        grid_width = 4
+
+        # Sound only options
+        self.add_label(grid,
+            '<u>Sound only options</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # (The MS Windows installer includes FFmpeg)
+        text = 'Download each video, extract the sound, and then discard the' \
+        + ' original videos'
+        if os.name != 'nt':
+            text += '\n(requires that FFmpeg or AVConv is installed on your' \
+            + ' system)'
+
+        self.add_checkbutton(grid,
+            text,
+            'extract_audio',
+            0, 1, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            'Use this audio format: ',
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        combo_list = formats.AUDIO_FORMAT_LIST
+        combo_list.insert(0, '')
+        combo = self.add_combo(grid,
+            combo_list,
+            'audio_format',
+            1, 2, 1, 1,
+        )
+        combo.set_hexpand(True)
+
+        label2 = self.add_label(grid,
+            'Use this audio quality: ',
+            2, 2, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        combo2_list = [
+            ['High', '0'],
+            ['Medium', '5'],
+            ['Low', '9'],
+        ]
+
+        combo2 = self.add_combo_with_data(grid,
+            combo2_list,
+            'audio_quality',
+            3, 2, 1, 1,
+        )
+        combo2.set_hexpand(True)
 
 
     # (Tab support functions)
@@ -5345,88 +5416,142 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton6.connect('toggled', self.on_reverse_button_toggled)
 
         checkbutton7 = self.add_checkbutton(grid,
-            'Show system warning messages in the \'Errors/Warnings\' tab',
-            self.app_obj.system_warning_show_flag,
-            True,                   # Can be toggled by user
-            0, 7, 1, 1,
-        )
-        checkbutton7.connect('toggled', self.on_warning_button_toggled)
-
-        checkbutton8 = self.add_checkbutton(grid,
             'Don\'t remove number of system messages from tab label until' \
             + ' \'Clear\' button is clicked',
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 7, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton7.connect('toggled', self.on_system_keep_button_toggled)
 
         # System tray preferences
         self.add_label(grid,
             '<u>System tray preferences</u>',
-            0, 9, 1, 1,
+            0, 8, 1, 1,
         )
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             'Show icon in system tray',
             self.app_obj.show_status_icon_flag,
+            True,               # Can be toggled by user
+            0, 9, 1, 1,
+        )
+        checkbutton8.set_hexpand(False)
+        # signal connnect appears below
+
+        checkbutton9 = self.add_checkbutton(grid,
+            'Close to the tray, rather than closing the application',
+            self.app_obj.close_to_tray_flag,
             True,               # Can be toggled by user
             0, 10, 1, 1,
         )
         checkbutton9.set_hexpand(False)
-        # signal connnect appears below
-
-        checkbutton10 = self.add_checkbutton(grid,
-            'Close to the tray, rather than closing the application',
-            self.app_obj.close_to_tray_flag,
-            True,               # Can be toggled by user
-            0, 11, 1, 1,
-        )
-        checkbutton10.set_hexpand(False)
-        checkbutton10.connect('toggled', self.on_close_to_tray_toggled)
+        checkbutton9.connect('toggled', self.on_close_to_tray_toggled)
         if not self.app_obj.show_status_icon_flag:
-            checkbutton10.set_sensitive(False)
+            checkbutton9.set_sensitive(False)
 
         # signal connect from above
-        checkbutton9.connect(
+        checkbutton8.connect(
             'toggled',
             self.on_show_status_icon_toggled,
-            checkbutton10,
+            checkbutton9,
         )
 
         # Dialogue window preferences
         self.add_label(grid,
             '<u>Dialogue window preferences</u>',
-            0, 13, 1, 1,
+            0, 11, 1, 1,
         )
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             'When adding channels/playlists, keep the dialogue window open',
             self.app_obj.dialogue_keep_open_flag,
             True,               # Can be toggled by user
-            0, 14, 1, 1,
+            0, 12, 1, 1,
         )
-        checkbutton11.set_hexpand(False)
+        checkbutton10.set_hexpand(False)
         # signal connnect appears below
 
-        checkbutton12 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             'When adding videos/channels/playlists, copy URLs from the' \
             + ' system clipboard',
             self.app_obj.dialogue_copy_clipboard_flag,
             True,               # Can be toggled by user
-            0, 15, 1, 1,
+            0, 13, 1, 1,
         )
-        checkbutton12.set_hexpand(False)
-        checkbutton12.connect('toggled', self.on_clipboard_button_toggled)
+        checkbutton11.set_hexpand(False)
+        checkbutton11.connect('toggled', self.on_clipboard_button_toggled)
         if self.app_obj.dialogue_keep_open_flag:
-            checkbutton12.set_sensitive(False)
+            checkbutton11.set_sensitive(False)
 
         # signal connect from above
-        checkbutton11.connect(
+        checkbutton10.connect(
             'toggled',
             self.on_keep_open_button_toggled,
-            checkbutton12,
+            checkbutton11,
         )
+
+        # Error/warning preferences
+        self.add_label(grid,
+            '<u>Error/warning preferences</u>',
+            0, 14, 1, 1,
+        )
+
+        checkbutton12 = self.add_checkbutton(grid,
+            'Show system error messages in the \'Errors/Warnings\' tab',
+            self.app_obj.system_error_show_flag,
+            True,                   # Can be toggled by user
+            0, 15, 1, 1,
+        )
+        checkbutton12.connect('toggled', self.on_error_button_toggled)
+
+        checkbutton13 = self.add_checkbutton(grid,
+            'Show system warning messages in the \'Errors/Warnings\' tab',
+            self.app_obj.system_warning_show_flag,
+            True,                   # Can be toggled by user
+            0, 16, 1, 1,
+        )
+        checkbutton13.connect('toggled', self.on_warning_button_toggled)
+
+        checkbutton14 = self.add_checkbutton(grid,
+            'Ignore \'Requested formats are incompatible for merge\' warnings',
+            self.app_obj.ignore_merge_warning_flag,
+            True,                   # Can be toggled by user
+            0, 17, 1, 1,
+        )
+        checkbutton14.connect('toggled', self.on_merge_button_toggled)
+
+        checkbutton15 = self.add_checkbutton(grid,
+            'Ignore YouTube copyright errors',
+            self.app_obj.ignore_yt_copyright_flag,
+            True,                   # Can be toggled by user
+            0, 18, 1, 1,
+        )
+        checkbutton15.connect('toggled', self.on_copyright_button_toggled)
+
+        checkbutton16 = self.add_checkbutton(grid,
+            'Ignore \'Child process exited with non-zero code\' errors',
+            self.app_obj.ignore_child_process_exit_flag,
+            True,                   # Can be toggled by user
+            0, 19, 1, 1,
+        )
+        checkbutton16.connect('toggled', self.on_child_process_button_toggled)
+
+        checkbutton17 = self.add_checkbutton(grid,
+            'Ignore \'There are no annotations to write\' warnings',
+            self.app_obj.ignore_no_annotations_flag,
+            True,                   # Can be toggled by user
+            0, 20, 1, 1,
+        )
+        checkbutton17.connect('toggled', self.on_no_annotations_button_toggled)
+
+        checkbutton18 = self.add_checkbutton(grid,
+            'Ignore \'Video doesn\'t have subtitles\' warnings',
+            self.app_obj.ignore_no_subtitles_flag,
+            True,                   # Can be toggled by user
+            0, 21, 1, 1,
+        )
+        checkbutton18.connect('toggled', self.on_no_subtitles_button_toggled)
 
 
     def setup_videos_tab(self):
@@ -5799,17 +5924,86 @@ class SystemPrefWin(GenericPrefWin):
             'default',
         )
 
+        # URL flexibility preferences
+        self.add_label(grid,
+            '<u>URL flexibility preferences</u>',
+            0, 7, grid_width, 1,
+        )
+
+        radiobutton4 = self.add_radiobutton(grid,
+            None,
+            'If a video\'s URL represents a channel/playlist, not a video,' \
+            + ' don\'t download it',
+            0, 8, grid_width, 1,
+        )
+        # Signal connect appears below
+
+        radiobutton5 = self.add_radiobutton(grid,
+            radiobutton4,
+#            'If a URL represents a channel/playlist, not a video, download' \
+#            + ' multiple videos',
+            '...or, download multiple videos into the containing folder',
+            0, 9, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'multi':
+            radiobutton5.set_active(True)
+        # Signal connect appears below
+
+        radiobutton6 = self.add_radiobutton(grid,
+            radiobutton5,
+#            'If a URL represents a channel/playlist, not a video, convert' \
+#            + ' the video to a channel',
+            '...or, create a new channel, and download the videos into that',
+            0, 10, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'channel':
+            radiobutton6.set_active(True)
+        # Signal connect appears below
+
+        radiobutton7 = self.add_radiobutton(grid,
+            radiobutton6,
+#            'If a URL represents a channel/playlist, not a video, convert' \
+#            + ' the video to a playlist',
+            '...or, create a new playlist, and download the videos into that',
+            0, 11, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'playlist':
+            radiobutton7.set_active(True)
+        # Signal connect appears below
+
+        # Signal connects from above
+        radiobutton4.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'disable',
+        )
+        radiobutton5.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'multi',
+        )
+        radiobutton6.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'channel',
+        )
+        radiobutton7.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'playlist',
+        )
+
         # Performance limits
         self.add_label(grid,
             '<u>Performance limits</u>',
-            0, 7, grid_width, 1,
+            0, 12, grid_width, 1,
         )
 
         checkbutton3 = self.add_checkbutton(grid,
             'Limit simultaneous downloads to',
             self.app_obj.num_worker_apply_flag,
             True,               # Can be toggled by user
-            0, 8, 1, 1,
+            0, 13, 1, 1,
         )
         checkbutton3.set_hexpand(False)
         checkbutton3.connect('toggled', self.on_worker_button_toggled)
@@ -5819,7 +6013,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.num_worker_max,
             1,                  # Step
             self.app_obj.num_worker_default,
-            1, 8, 1, 1,
+            1, 13, 1, 1,
         )
         spinbutton.connect('value-changed', self.on_worker_spinbutton_changed)
 
@@ -5827,7 +6021,7 @@ class SystemPrefWin(GenericPrefWin):
             'Limit download speed to',
             self.app_obj.bandwidth_apply_flag,
             True,               # Can be toggled by user
-            0, 9, 1, 1,
+            0, 14, 1, 1,
         )
         checkbutton4.set_hexpand(False)
         checkbutton4.connect('toggled', self.on_bandwidth_button_toggled)
@@ -5837,7 +6031,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.bandwidth_max,
             1,                  # Step
             self.app_obj.bandwidth_default,
-            1, 9, 1, 1,
+            1, 14, 1, 1,
         )
         spinbutton2.connect(
             'value-changed',
@@ -5846,14 +6040,14 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             'KiB/s',
-            2, 9, 1, 1,
+            2, 14, 1, 1,
         )
 
         checkbutton5 = self.add_checkbutton(grid,
             'Limit video resolution (overriding video format options) to',
             self.app_obj.video_res_apply_flag,
             True,               # Can be toggled by user
-            0, 10, 1, 1,
+            0, 15, 1, 1,
         )
         checkbutton5.set_hexpand(False)
         checkbutton5.connect('toggled', self.on_video_res_button_toggled)
@@ -5861,7 +6055,7 @@ class SystemPrefWin(GenericPrefWin):
         combo = self.add_combo(grid,
             formats.VIDEO_RESOLUTION_LIST,
             None,
-            1, 10, 1, 1,
+            1, 15, 1, 1,
         )
         combo.set_active(
             formats.VIDEO_RESOLUTION_LIST.index(
@@ -5873,7 +6067,7 @@ class SystemPrefWin(GenericPrefWin):
         # Time-saving preferences
         self.add_label(grid,
             '<u>Time-saving preferences</u>',
-            0, 11, grid_width, 1,
+            0, 16, grid_width, 1,
         )
 
         checkbutton6 = self.add_checkbutton(grid,
@@ -5881,20 +6075,20 @@ class SystemPrefWin(GenericPrefWin):
             + ' sending videos we already have',
             self.app_obj.operation_limit_flag,
             True,               # Can be toggled by user
-            0, 12, grid_width, 1,
+            0, 17, grid_width, 1,
         )
         checkbutton6.set_hexpand(False)
         # Signal connect appears below
 
         self.add_label(grid,
             'Stop after this many videos (when checking)',
-            0, 13, 1, 1,
+            0, 18, 1, 1,
         )
 
         entry = self.add_entry(grid,
             self.app_obj.operation_check_limit,
             True,
-            1, 13, 1, 1,
+            1, 18, 1, 1,
         )
         entry.set_hexpand(False)
         entry.set_width_chars(4)
@@ -5904,13 +6098,13 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             'Stop after this many videos (when downloading)',
-            0, 14, 1, 1,
+            0, 19, 1, 1,
         )
 
         entry2 = self.add_entry(grid,
             self.app_obj.operation_download_limit,
             True,
-            1, 14, 1, 1,
+            1, 19, 1, 1,
         )
         entry2.set_hexpand(False)
         entry2.set_width_chars(4)
@@ -5929,7 +6123,7 @@ class SystemPrefWin(GenericPrefWin):
         # Download options preferences
         self.add_label(grid,
             '<u>Download options preferences</u>',
-            0, 15, grid_width, 1,
+            0, 20, grid_width, 1,
         )
 
         checkbutton7 = self.add_checkbutton(grid,
@@ -5937,7 +6131,7 @@ class SystemPrefWin(GenericPrefWin):
             + ' download options',
             self.app_obj.auto_clone_options_flag,
             True,               # Can be toggled by user
-            0, 16, grid_width, 1,
+            0, 21, grid_width, 1,
         )
         checkbutton7.set_hexpand(False)
         checkbutton7.connect('toggled', self.on_auto_clone_button_toggled)
@@ -6095,52 +6289,6 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton2.connect('toggled', self.on_json_button_toggled)
 
-        # Message filter preferences
-        self.add_label(grid,
-            '<u>Message filter preferences</u>',
-            0, 10, grid_width, 1,
-        )
-
-        checkbutton3 = self.add_checkbutton(grid,
-            'Ignore \'Requested formats are incompatible for merge\' warnings',
-            self.app_obj.ignore_merge_warning_flag,
-            True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
-        )
-        checkbutton3.connect('toggled', self.on_merge_button_toggled)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            'Ignore YouTube copyright errors',
-            self.app_obj.ignore_yt_copyright_flag,
-            True,                   # Can be toggled by user
-            0, 12, grid_width, 1,
-        )
-        checkbutton4.connect('toggled', self.on_copyright_button_toggled)
-
-        checkbutton5 = self.add_checkbutton(grid,
-            'Ignore \'Child process exited with non-zero code\' errors',
-            self.app_obj.ignore_child_process_exit_flag,
-            True,                   # Can be toggled by user
-            0, 13, grid_width, 1,
-        )
-        checkbutton5.connect('toggled', self.on_child_process_button_toggled)
-
-        checkbutton6 = self.add_checkbutton(grid,
-            'Ignore \'There are no annotations to write\' warnings',
-            self.app_obj.ignore_no_annotations_flag,
-            True,                   # Can be toggled by user
-            0, 14, grid_width, 1,
-        )
-        checkbutton6.connect('toggled', self.on_no_annotations_button_toggled)
-
-        checkbutton7 = self.add_checkbutton(grid,
-            'Ignore \'Video doesn\'t have subtitles\' warnings',
-            self.app_obj.ignore_no_subtitles_flag,
-            True,                   # Can be toggled by user
-            0, 15, grid_width, 1,
-        )
-        checkbutton7.connect('toggled', self.on_no_subtitles_button_toggled)
-
 
     def setup_output_tab(self):
 
@@ -6157,171 +6305,203 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 1, 1,
         )
 
+
         checkbutton = self.add_checkbutton(grid,
-            'Display output from youtube-dl\'s STDOUT in the Output Tab',
-            self.app_obj.ytdl_output_stdout_flag,
+            'Display youtube-dl system commands in the Output Tab',
+            self.app_obj.ytdl_output_system_cmd_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
         )
         checkbutton.set_hexpand(False)
-        # Signal connect appears below
+        checkbutton.connect('toggled', self.on_output_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            '...but don\'t write each video\'s JSON data',
-            self.app_obj.ytdl_output_ignore_json_flag,
+            'Display output from youtube-dl\'s STDOUT in the Output Tab',
+            self.app_obj.ytdl_output_stdout_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
         )
         checkbutton2.set_hexpand(False)
-        checkbutton2.connect('toggled', self.on_output_json_button_toggled)
-        if not self.app_obj.ytdl_output_stdout_flag:
-            checkbutton2.set_sensitive(False)
+        # Signal connect appears below
 
         checkbutton3 = self.add_checkbutton(grid,
-            '...but don\'t write each video\'s download progress',
-            self.app_obj.ytdl_output_ignore_progress_flag,
+            '...but don\'t write each video\'s JSON data',
+            self.app_obj.ytdl_output_ignore_json_flag,
             True,               # Can be toggled by user
             0, 3, 1, 1,
         )
         checkbutton3.set_hexpand(False)
-        checkbutton3.connect('toggled', self.on_output_progress_button_toggled)
+        checkbutton3.connect('toggled', self.on_output_json_button_toggled)
         if not self.app_obj.ytdl_output_stdout_flag:
             checkbutton3.set_sensitive(False)
 
-        # Signal connect from above
-        checkbutton.connect(
-            'toggled',
-            self.on_output_stdout_button_toggled,
-            checkbutton2,
-            checkbutton3,
-        )
-
         checkbutton4 = self.add_checkbutton(grid,
-            'Display output from youtube-dl\'s STDERR in the Output Tab',
-            self.app_obj.ytdl_output_stderr_flag,
+            '...but don\'t write each video\'s download progress',
+            self.app_obj.ytdl_output_ignore_progress_flag,
             True,               # Can be toggled by user
             0, 4, 1, 1,
         )
         checkbutton4.set_hexpand(False)
-        checkbutton4.connect('toggled', self.on_output_stderr_button_toggled)
+        checkbutton4.connect('toggled', self.on_output_progress_button_toggled)
+        if not self.app_obj.ytdl_output_stdout_flag:
+            checkbutton4.set_sensitive(False)
+
+        # Signal connect from above
+        checkbutton2.connect(
+            'toggled',
+            self.on_output_stdout_button_toggled,
+            checkbutton3,
+            checkbutton4,
+        )
 
         checkbutton5 = self.add_checkbutton(grid,
-            'Empty pages in the Output Tab at the start of every operation',
-            self.app_obj.ytdl_output_start_empty_flag,
+            'Display output from youtube-dl\'s STDERR in the Output Tab',
+            self.app_obj.ytdl_output_stderr_flag,
             True,               # Can be toggled by user
             0, 5, 1, 1,
         )
         checkbutton5.set_hexpand(False)
-        checkbutton5.connect('toggled', self.on_output_empty_button_toggled)
+        checkbutton5.connect('toggled', self.on_output_stderr_button_toggled)
+
+        checkbutton6 = self.add_checkbutton(grid,
+            'Empty pages in the Output Tab at the start of every operation',
+            self.app_obj.ytdl_output_start_empty_flag,
+            True,               # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton6.set_hexpand(False)
+        checkbutton6.connect('toggled', self.on_output_empty_button_toggled)
+
+        checkbutton7 = self.add_checkbutton(grid,
+            'Show a summary of active threads (changes are applied when ' \
+            + utils.upper_case_first(__main__.__packagename__) + ' restarts',
+            self.app_obj.ytdl_output_show_summary_flag,
+            True,               # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton7.set_hexpand(False)
+        checkbutton7.connect('toggled', self.on_output_summary_button_toggled)
 
         # Terminal window preferences
         self.add_label(grid,
             '<u>Terminal window preferences</u>',
-            0, 6, 1, 1,
-        )
-
-        checkbutton6 = self.add_checkbutton(grid,
-            'Write output from youtube-dl\'s STDOUT to the terminal window',
-            self.app_obj.ytdl_write_stdout_flag,
-            True,               # Can be toggled by user
-            0, 7, 1, 1,
-        )
-        checkbutton6.set_hexpand(False)
-        # Signal connect appears below
-
-        checkbutton7 = self.add_checkbutton(grid,
-            '...but don\'t write each video\'s JSON data',
-            self.app_obj.ytdl_write_ignore_json_flag,
-            True,               # Can be toggled by user
             0, 8, 1, 1,
         )
-        checkbutton7.set_hexpand(False)
-        checkbutton7.connect('toggled', self.on_terminal_json_button_toggled)
-        if not self.app_obj.ytdl_write_stdout_flag:
-            checkbutton7.set_sensitive(False)
 
         checkbutton8 = self.add_checkbutton(grid,
-            '...but don\'t write each video\'s download progress',
-            self.app_obj.ytdl_write_ignore_progress_flag,
+            'Write youtube-dl system commands to the terminal window',
+            self.app_obj.ytdl_write_system_cmd_flag,
             True,               # Can be toggled by user
             0, 9, 1, 1,
         )
         checkbutton8.set_hexpand(False)
-        checkbutton8.connect(
-            'toggled',
-            self.on_terminal_progress_button_toggled,
-        )
-        if not self.app_obj.ytdl_write_stdout_flag:
-            checkbutton8.set_sensitive(False)
-
-        # Signal connect from above
-        checkbutton6.connect(
-            'toggled',
-            self.on_terminal_stdout_button_toggled,
-            checkbutton7,
-            checkbutton8,
-        )
+        checkbutton8.connect('toggled', self.on_terminal_system_button_toggled)
 
         checkbutton9 = self.add_checkbutton(grid,
-            'Write output from youtube-dl\'s STDERR to the terminal window',
-            self.app_obj.ytdl_write_stderr_flag,
+            'Write output from youtube-dl\'s STDOUT to the terminal window',
+            self.app_obj.ytdl_write_stdout_flag,
             True,               # Can be toggled by user
             0, 10, 1, 1,
         )
         checkbutton9.set_hexpand(False)
-        checkbutton9.connect('toggled', self.on_terminal_stderr_button_toggled)
+        # Signal connect appears below
+
+        checkbutton10 = self.add_checkbutton(grid,
+            '...but don\'t write each video\'s JSON data',
+            self.app_obj.ytdl_write_ignore_json_flag,
+            True,               # Can be toggled by user
+            0, 11, 1, 1,
+        )
+        checkbutton10.set_hexpand(False)
+        checkbutton10.connect('toggled', self.on_terminal_json_button_toggled)
+        if not self.app_obj.ytdl_write_stdout_flag:
+            checkbutton10.set_sensitive(False)
+
+        checkbutton11 = self.add_checkbutton(grid,
+            '...but don\'t write each video\'s download progress',
+            self.app_obj.ytdl_write_ignore_progress_flag,
+            True,               # Can be toggled by user
+            0, 12, 1, 1,
+        )
+        checkbutton11.set_hexpand(False)
+        checkbutton11.connect(
+            'toggled',
+            self.on_terminal_progress_button_toggled,
+        )
+        if not self.app_obj.ytdl_write_stdout_flag:
+            checkbutton11.set_sensitive(False)
+
+        # Signal connect from above
+        checkbutton9.connect(
+            'toggled',
+            self.on_terminal_stdout_button_toggled,
+            checkbutton10,
+            checkbutton11,
+        )
+
+        checkbutton12 = self.add_checkbutton(grid,
+            'Write output from youtube-dl\'s STDERR to the terminal window',
+            self.app_obj.ytdl_write_stderr_flag,
+            True,               # Can be toggled by user
+            0, 13, 1, 1,
+        )
+        checkbutton12.set_hexpand(False)
+        checkbutton12.connect(
+            'toggled',
+            self.on_terminal_stderr_button_toggled,
+        )
 
         # Special preferences
         self.add_label(grid,
             '<u>Special preferences (applies to both the Output Tab and the' \
             + ' terminal window)</u>',
-            0, 11, 1, 1,
+            0, 14, 1, 1,
         )
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton13 = self.add_checkbutton(grid,
             'Write verbose output (youtube-dl debugging mode)',
             self.app_obj.ytdl_write_verbose_flag,
             True,               # Can be toggled by user
-            0, 12, 1, 1,
+            0, 15, 1, 1,
         )
-        checkbutton10.set_hexpand(False)
-        checkbutton10.connect('toggled', self.on_verbose_button_toggled)
+        checkbutton13.set_hexpand(False)
+        checkbutton13.connect('toggled', self.on_verbose_button_toggled)
 
         # Refresh operation preferences
         self.add_label(grid,
             '<u>Refresh operation preferences</u>',
-            0, 13, 1, 1,
+            0, 16, 1, 1,
         )
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton14 = self.add_checkbutton(grid,
             'During a refresh operation, show all matching videos in the' \
             + ' Output Tab',
             self.app_obj.refresh_output_videos_flag,
             True,               # Can be toggled by user
-            0, 14, 1, 1,
+            0, 17, 1, 1,
         )
-        checkbutton11.set_hexpand(False)
+        checkbutton14.set_hexpand(False)
         # Signal connect appears below
 
-        checkbutton12 = self.add_checkbutton(grid,
+        checkbutton15 = self.add_checkbutton(grid,
             '...also show all non-matching videos',
             self.app_obj.refresh_output_verbose_flag,
             True,               # Can be toggled by user
-            0, 15, 1, 1,
+            0, 18, 1, 1,
         )
-        checkbutton12.set_hexpand(False)
-        checkbutton12.connect(
+        checkbutton15.set_hexpand(False)
+        checkbutton15.connect(
             'toggled',
             self.on_refresh_verbose_button_toggled,
         )
         if not self.app_obj.refresh_output_videos_flag:
-            checkbutton10.set_sensitive(False)
+            checkbutton11.set_sensitive(False)
 
         # Signal connect from above
-        checkbutton11.connect(
+        checkbutton14.connect(
             'toggled',
             self.on_refresh_videos_button_toggled,
-            checkbutton12,
+            checkbutton15,
         )
 
 
@@ -6642,6 +6822,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.close_to_tray_flag:
             self.app_obj.set_close_to_tray_flag(False)
+
+
+    def on_convert_from_button_toggled(self, radiobutton, mode):
+
+        """Called from callback in self.setup_operations_tab().
+
+        Set what happens when downloading a media.Video object whose URL
+        represents a channel/playlist.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+            mode (str): The new value for the IV: 'disable', 'multi',
+                'channel' or 'playlist'
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_operation_convert_mode(mode)
 
 
     def on_copyright_button_toggled(self, checkbutton):
@@ -6978,6 +7178,29 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_download_limit(int(text))
 
 
+    def on_error_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_tab().
+
+        Enables/disables system errors in the 'Errors/Warnings' tab. Toggling
+        the corresponding Gtk.CheckButton in the Errors/Warnings tab sets the
+        IV (and makes sure the two checkbuttons have the same status).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        other_flag \
+        = self.app_obj.main_win_obj.show_error_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            self.app_obj.main_win_obj.show_error_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            self.app_obj.main_win_obj.show_error_checkbutton.set_active(False)
+
+
     def on_expand_tree_toggled(self, checkbutton):
 
         """Called from callback in self.setup_general_tab().
@@ -7249,6 +7472,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ytdl_output_start_empty_flag(False)
 
 
+    def on_output_summary_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_tab().
+
+        Enables/disables displaying a summary page in the Output Tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_output_show_summary_flag:
+            self.app_obj.set_ytdl_output_show_summary_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_output_show_summary_flag:
+            self.app_obj.set_ytdl_output_show_summary_flag(False)
+
+
     def on_output_stderr_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_ytdl_tab().
@@ -7341,6 +7584,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_output_ignore_progress_flag:
             self.app_obj.set_ytdl_output_ignore_progress_flag(False)
+
+
+    def on_output_system_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_ytdl_tab().
+
+        Enables/disables writing youtube-dl system commands to the Output Tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_output_system_cmd_flag:
+            self.app_obj.set_ytdl_output_system_cmd_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_output_system_cmd_flag:
+            self.app_obj.set_ytdl_output_system_cmd_flag(False)
 
 
     def on_refresh_videos_button_toggled(self, checkbutton, checkbutton2):
@@ -7708,6 +7971,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ytdl_write_ignore_progress_flag(False)
 
 
+    def on_terminal_system_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_ytdl_tab().
+
+        Enables/disables writing youtube-dl system commands to the terminal.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_write_system_cmd_flag:
+            self.app_obj.set_ytdl_write_system_cmd_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_write_system_cmd_flag:
+            self.app_obj.set_ytdl_write_system_cmd_flag(False)
+
+
     def on_update_combo_changed(self, combo):
 
         """Called from a callback in self.setup_ytdl_tab().
@@ -7750,7 +8033,9 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_general_tab().
 
-        Enables/disables system warnings in the 'Errors/Warnings' tab.
+        Enables/disables system warnings in the 'Errors/Warnings' tab. Toggling
+        the corresponding Gtk.CheckButton in the Errors/Warnings tab sets the
+        IV (and makes sure the two checkbuttons have the same status).
 
         Args:
 
@@ -7758,12 +8043,15 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.system_warning_show_flag:
-            self.app_obj.set_system_warning_show_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.system_warning_show_flag:
-            self.app_obj.set_system_warning_show_flag(False)
+        main_win_obj = self.app_obj.main_win_obj
+
+        other_flag \
+        = self.app_obj.main_win_obj.show_warning_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.show_warning_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.show_warning_checkbutton.set_active(False)
 
 
     def on_worker_button_toggled(self, checkbutton):

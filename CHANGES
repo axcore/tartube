@@ -1,3 +1,70 @@
+v1.3.077 (26 Jan 2019)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Drag and drop (for example, from a web browser into Tartube's main window)
+    is now fully working on Linux/BSD. On MS Windows, drag and drop does not
+    work at all for any Gtk application. It is unlikely that the Tartube
+    authors can do anything about this (Git #35)
+- The 'Add new video(s)' dialogue window can now handle URLs representing
+    channels and playlists, as well as URLs representing individual videos.
+    During a download operation, if Tartube is expecting an individual video
+    but receives a channel/playlist, it will automatically create a new
+    channel, and download videos into that channel. You can change this default
+    behaviour, if you want (Edit > System preferences... > URL flexibility
+    preferences)
+- To change the name of the new channel/playlist, right-click it and select
+    'Filesystem > Rename default location...'
+- If Tartube creates a channel, which should really be a playlist, then you
+    can now convert one to the other. Right-click a channel and select
+    'Channel actions > Convert to playlist'. Right-click a playlist and select
+    'Playlist actions > Convert to channel'
+- In the download options windows, it's now very easy to tell Tartube to
+    convert videos to sound files. Open the window by clicking 'Edit >
+    General download options...', click the 'Hide advanced download options'
+    button if necessary, click the 'Sound only' tab, select your preferences,
+    and apply them by clicking the OK button at the bottom of the window
+- You can now see the download options applied to a video, channel, playlist
+    or folder without having to download anything. Right-click a video/channel/
+    playlist/folder and select 'Downloads > Show system command'
+- During a download operation, the system commands used are now visible (by
+    default) in the Output Tab. The system command can also be displayed in the
+    terminal, if required; this is disabled by default
+
+MINOR NEW FEATURES
+- In the Output Tab, the summary page is now hidden by default. To make it
+    visible, click 'Edit > System Preferences... > Output >
+    Show a summary of active threads' and then restart Tartube
+- In the Errors/Warnings Tab, added checkbuttons to filter out errors and/or
+    warning messages, if required (Git #50)
+- In the Progress tab, in the top half of the window, you can now right-click
+    an unnamed video to open it in your web browser. This will be useful in
+    identifying videos that did not download, and whose name is unknown to
+    Tartube (Git #51)
+- Columns in the Progress tab have been rearranged a little, so that the
+    user can more easily see how quickly the download is progressing, when
+    Tartube's main window is small
+
+MAJOR FIXES
+- Fixed multiple issues with Tartube, when running under Python 3.8
+- Replaced all remaining references to the Python os.rename() function, which
+    can cause crashes on some filesystems (Git #34)
+- Fixed crashes caused by the new YouTube error messages (January 2020), which
+    some versions of youtube-dl cannot handle correctly
+- Fixed issues with the default location for videos, again. Fixed an issue
+    with adding folders inside the currently selected folder (Git #36, #46)
+
+MINOR FIXES
+- Fixed various Gtk warning messages, visible only on some systems
+- Videos whose name contains an ampersand (&) character could not be opened by
+    clicking the 'Media player' label in the Video Catalogue. Fixed
+- The properties windows for videos, channels and playlists showed a folder
+    icon, instead of a video/channel/playlist icon. Fixed
+- The popup menu in the Progress tab, in the top half of the tab, did not work
+    as intended during a download operation, and again after a download
+    operation. Fixed both sets of issues
+- Coloured text was not displayed in the Output Tab correctly. Fixed
+
 v1.3.048 (23 Jan 2019)
 -------------------------------------------------------------------------------
 

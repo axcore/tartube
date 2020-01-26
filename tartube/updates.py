@@ -157,13 +157,20 @@ class UpdateManager(threading.Thread):
         # Create a new child process to install either the 64-bit or 32-bit
         #   version of FFmpeg, as appropriate
         if sys.maxsize <= 2147483647:
-            self.create_child_process(
-                ['pacman', '-S', 'mingw-w64-i686-ffmpeg', '--noconfirm'],
-            )
+            binary = 'mingw-w64-i686-ffmpeg'
         else:
-            self.create_child_process(
-                ['pacman', '-S', 'mingw-w64-x86_64-ffmpeg', '--noconfirm'],
-            )
+            binary = 'mingw-w64-x86_64-ffmpeg'
+
+        self.create_child_process(
+            ['pacman', '-S', binary, '--noconfirm'],
+        )
+
+        # Show the system command in the Output Tab
+        space = ' '
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(
+            1,
+            space.join( ['pacman', '-S', binary, '--noconfirm'] ),
+        )
 
         # So that we can read from the child process STDOUT and STDERR, attach
         #   a file descriptor to the PipeReader objects
@@ -275,6 +282,13 @@ class UpdateManager(threading.Thread):
 
         # Create a new child process using that command
         self.create_child_process(cmd_list)
+
+        # Show the system command in the Output Tab
+        space = ' '
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(
+            1,
+            space.join(cmd_list),
+        )
 
         # So that we can read from the child process STDOUT and STDERR, attach
         #   a file descriptor to the PipeReader objects

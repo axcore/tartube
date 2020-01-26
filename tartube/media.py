@@ -95,6 +95,11 @@ class GenericMedia(object):
         self.options_obj = options_obj
 
 
+    def set_parent_obj(self, parent_obj):
+
+        self.parent_obj = parent_obj
+
+
     def set_warning(self, msg):
 
         # The media.Folder object has no error/warning IVs (and shouldn't
@@ -331,6 +336,78 @@ class GenericContainer(GenericMedia):
             return self.child_list.index(child_obj)
         except:
             return None
+
+
+    def find_matching_video(self, app_obj, name):
+
+        """Can be called by anything.
+
+        Checks all of this object's child objects, looking for a media.Video
+        object with a matching name.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            name (string): The name of the media.Video object to find
+
+        Returns:
+
+            The first matching media.Video object found, or None if no matching
+            videos are found.
+
+        """
+
+        method = app_obj.match_method
+        first = app_obj.match_first_chars
+        ignore = app_obj.match_ignore_chars * -1
+
+        # Defend against two different of a name from the same video, one with
+        #   punctuation marks stripped away, and double quotes converted to
+        #   single quotes (thanks, YouTube!) by replacing those characters with
+        #   whitespace
+        # (After extensive testing, this is the only regex sequence I could
+        #   find that worked)
+        test_name = name[:]
+
+        # Remove punctuation
+        test_name = re.sub(r'\W+', ' ', test_name, flags=re.UNICODE)
+        # Also need to replace underline characters
+        test_name = re.sub(r'[\_\s]+', ' ', test_name)
+        # Also need to remove leading/trailing whitespace, in case the original
+        #   video name started/ended with a question mark or something like
+        #   that
+        test_name = re.sub(r'^\s+', '', test_name)
+        test_name = re.sub(r'\s+$', '', test_name)
+
+        for child_obj in self.child_list:
+            if isinstance(child_obj, Video):
+
+                child_name = child_obj.name[:]
+                child_name = re.sub(
+                    r'\W+',
+                    ' ',
+                    child_name,
+                    flags=re.UNICODE,
+                )
+                child_name = re.sub(r'[\_\s]+', ' ', child_name)
+                child_name = re.sub(r'^\s+', '', child_name)
+                child_name = re.sub(r'\s+$', '', child_name)
+
+                if (
+                    method == 'exact_match' \
+                    and child_name == test_name
+                ) or (
+                    method == 'match_first' \
+                    and child_name[:first] == test_name[:first]
+                ) or (
+                    method == 'ignore_last' \
+                    and child_name[:ignore] == test_name[:ignore]
+                ):
+                    return child_obj
+
+        # No matches found
+        return None
 
 
     def get_depth(self):
@@ -737,11 +814,6 @@ class GenericContainer(GenericMedia):
         self.name = name
 
 
-    def set_parent_obj(self, parent_obj):
-
-        self.parent_obj = parent_obj
-
-
     # Get accessors
 
 
@@ -900,78 +972,6 @@ class GenericRemoteContainer(GenericContainer):
             return 0
 
 
-    def find_matching_video(self, app_obj, name):
-
-        """Can be called by anything.
-
-        Checks all of this object's child objects, looking for a media.Video
-        object with a matching name.
-
-        Args:
-
-            app_obj (mainapp.TartubeApp): The main application
-
-            name (string): The name of the media.Video object to find
-
-        Returns:
-
-            The first matching media.Video object found, or None if no matching
-            videos are found.
-
-        """
-
-        method = app_obj.match_method
-        first = app_obj.match_first_chars
-        ignore = app_obj.match_ignore_chars * -1
-
-        # Defend against two different of a name from the same video, one with
-        #   punctuation marks stripped away, and double quotes converted to
-        #   single quotes (thanks, YouTube!) by replacing those characters with
-        #   whitespace
-        # (After extensive testing, this is the only regex sequence I could
-        #   find that worked)
-        test_name = name[:]
-
-        # Remove punctuation
-        test_name = re.sub(r'\W+', ' ', test_name, flags=re.UNICODE)
-        # Also need to replace underline characters
-        test_name = re.sub(r'[\_\s]+', ' ', test_name)
-        # Also need to remove leading/trailing whitespace, in case the original
-        #   video name started/ended with a question mark or something like
-        #   that
-        test_name = re.sub(r'^\s+', '', test_name)
-        test_name = re.sub(r'\s+$', '', test_name)
-
-        for child_obj in self.child_list:
-            if isinstance(child_obj, Video):
-
-                child_name = child_obj.name[:]
-                child_name = re.sub(
-                    r'\W+',
-                    ' ',
-                    child_name,
-                    flags=re.UNICODE,
-                )
-                child_name = re.sub(r'[\_\s]+', ' ', child_name)
-                child_name = re.sub(r'^\s+', '', child_name)
-                child_name = re.sub(r'\s+$', '', child_name)
-
-                if (
-                    method == 'exact_match' \
-                    and child_name == test_name
-                ) or (
-                    method == 'match_first' \
-                    and child_name[:first] == test_name[:first]
-                ) or (
-                    method == 'ignore_last' \
-                    and child_name[:ignore] == test_name[:ignore]
-                ):
-                    return child_obj
-
-        # No matches found
-        return None
-
-
     def sort_children(self):
 
         """Can be called by anything. For example, called by self.add_child().
@@ -998,6 +998,36 @@ class GenericRemoteContainer(GenericContainer):
 
 
     # Set accessors
+
+
+    def clone_properties(self, other_obj):
+
+        """Called by mainapp.TartubeApp.convert_remote_container() only.
+
+        Copies properties from a media data object (about to be deleted) to
+        this media data object.
+
+        Some properties are handled by the calling function; this function
+        handles the rest of them.
+
+        Args:
+
+            other_obj (media.Channel, media.Playlist): The object whose
+                properties should be copied
+
+        """
+
+        self.options_obj = other_obj.options_obj
+        self.nickname = other_obj.nickname
+        self.source = other_obj.source
+        self.dl_sim_flag = other_obj.dl_sim_flag
+        self.dl_disable_flag = other_obj.dl_disable_flag
+        self.fav_flag = other_obj.fav_flag
+        self.new_count = other_obj.new_count
+        self.fav_count = other_obj.fav_count
+        self.dl_count = other_obj.dl_count
+        self.error_list = other_obj.error_list.copy()
+        self.warning_list = other_obj.warning_list.copy()
 
 
     def set_source(self, source):
@@ -1106,9 +1136,12 @@ class Video(GenericMedia):
         self.receive_time = None
         # The video's duration (in integer seconds)
         self.duration = None
-        # For videos in a playlist (i.e. a media.Video object whose parent is
-        #   a media.Playlist object), the video's index in the playlist. For
-        #   all other situations, the value remains as None
+        # For videos in a channel or playlist (i.e. a media.Video object whose
+        #   parent is a media.Channel or media.Playlist object), the video's
+        #   index in the channel/playlist. (The server supplies an index even
+        #   for a channel, and the user might want to convert a channel to a
+        #   playlist)
+        # For videos whose parent is a media.Folder, the value remains as None
         self.index = None
 
         # Video description. A string of any length, containing newline

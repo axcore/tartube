@@ -28,7 +28,6 @@ from gi.repository import Gtk, GObject, GdkPixbuf
 
 # Import Python standard modules
 from gi.repository import Gio
-import cgi
 import datetime
 import json
 import math
@@ -255,8 +254,14 @@ class TartubeApp(Gtk.Application):
         #   the most recently checked or downloaded video appears at the top
         #   of the list)
         self.results_list_reverse_flag = False
-        # Flag set to True if system warning messages should be shown (system
-        #   error messages are always shown)
+        # Flag set to True if system error messages should be shown in the
+        #   Errors/Warnings tab
+        # NB The check is applied by self.system_error(); any part of the
+        #   code could call mainwin.MainWin.errors_list_add_system_warning()
+        #   directly, which would bypass this flag
+        self.system_error_show_flag = True
+        # Flag set to True if system warning messages should be shown in the
+        #   Errors/Warnings tab
         # NB The check is applied by self.system_warning(); any part of the
         #   code could call mainwin.MainWin.errors_list_add_system_warning()
         #   directly, which would bypass this flag
@@ -388,8 +393,11 @@ class TartubeApp(Gtk.Application):
         #   self.ytdl_update_dict, set by self.start()
         self.ytdl_update_current = None
 
-        # Flag set to True if output youtube-dl's STDOUT should be displayed in
+        # Flag set to True if youtube-dl system commands should be displayed in
         #   the Output Tab
+        self.ytdl_output_system_cmd_flag = True
+        # Flag set to True if youtube-dl's STDOUT should be displayed in the
+        #   Output Tab
         self.ytdl_output_stdout_flag = True
         # Flag set to True if we should ignore JSON output when displaying text
         #   in the Output Tab (ignored if self.ytdl_output_stdout_flag is
@@ -405,9 +413,15 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if pages in the Output Tab should be emptied at the
         #   start of each operation
         self.ytdl_output_start_empty_flag = True
+        # Flag set to True if a summary page should be visible in the Output
+        #   Tab. Changes to this flag are applied when Tartube restarts
+        self.ytdl_output_show_summary_flag = False
 
-        # Flag set to True if output youtube-dl's STDOUT should be written to
+        # Flag set to True if youtube-dl system commands should be written to
         #   the terminal window
+        self.ytdl_write_system_cmd_flag = False
+        # Flag set to True if youtube-dl's STDOUT should be written to the
+        #   terminal window
         self.ytdl_write_stdout_flag = False
         # Flag set to True if we should ignore JSON output when writing to the
         #   terminal window (ignored if self.ytdl_write_stdout_flag is False)
@@ -704,6 +718,25 @@ class TartubeApp(Gtk.Application):
         #   desktop notification, or 'default' to do neither
         # NB Desktop notifications don't work on MS Windows
         self.operation_dialogue_mode = 'dialogue'
+        # What to do when the user creates a media.Video object whose URL
+        #   represents a channel or playlist
+        # 'channel' to create a new media.Channel object, and place all the
+        #   downloaded videos inside it (the original media.Video object is
+        #   destroyed)
+        # 'playlist' to create a new media.Playlist object, and place all the
+        #   downloaded videos inside it (the original media.Video object is
+        #   destroyed)
+        # 'multi' to create a new media.Video object for each downloaded video,
+        #   placed in the same folder as the original media.Video object (the
+        #   original is destroyed)
+        # 'disable' to download nothing from the URL
+        # There are some restrictions. If the original media.Video object is
+        #   contained in a folder whose .restrict_flag is False, and if the
+        #   mode is 'channel' or 'playlist', then the new channel/playlist is
+        #   not created in that folder. If the original media.Video object is
+        #   contained in a channel or playlist, all modes to default to
+        #   'disable'
+        self.operation_convert_mode = 'channel'
         # Flag set to True if self.update_video_from_filesystem() should get
         #   the video duration, if not already known, using the moviepy.editor
         #   module (an optional dependency)
@@ -1687,8 +1720,8 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-134)
-            200-299: mainwin.py     (in use: 201-239)
+            100-199: mainapp.py     (in use: 101-135)
+            200-299: mainwin.py     (in use: 201-240)
             300-399: downloads.py   (in use: 301-304)
             400-499: config.py      (in use: 401-404)
 
@@ -1697,7 +1730,7 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 1696 system_error')
 
-        if self.main_win_obj:
+        if self.main_win_obj and self.system_error_show_flag:
             self.main_win_obj.errors_list_add_system_error(error_code, msg)
         else:
             # Emergency fallback: display in the terminal window
@@ -1834,6 +1867,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1000029:  # v1.0.029
             self.results_list_reverse_flag \
             = json_dict['results_list_reverse_flag']
+        if version >= 1003069:  # v1.3.069
+            self.system_error_show_flag \
+            = json_dict['system_error_show_flag']
         if version >= 6006:     # v0.6.006
             self.system_warning_show_flag \
             = json_dict['system_warning_show_flag']
@@ -1864,6 +1900,9 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_list = json_dict['ytdl_update_list']
             self.ytdl_update_current = json_dict['ytdl_update_current']
 
+        if version >= 1003074:  # v1.3.074
+            self.ytdl_output_system_cmd_flag \
+            = json_dict['ytdl_output_system_cmd_flag']
         if version >= 1002030:  # v1.2.030
             self.ytdl_output_stdout_flag = json_dict['ytdl_output_stdout_flag']
             self.ytdl_output_ignore_json_flag \
@@ -1873,7 +1912,13 @@ class TartubeApp(Gtk.Application):
             self.ytdl_output_stderr_flag = json_dict['ytdl_output_stderr_flag']
             self.ytdl_output_start_empty_flag \
             = json_dict['ytdl_output_start_empty_flag']
+        if version >= 1003064:  # v1.3.064
+            self.ytdl_output_show_summary_flag \
+            = json_dict['ytdl_output_show_summary_flag']
 
+        if version >= 1003074:  # v1.3.074
+            self.ytdl_write_system_cmd_flag \
+            = json_dict['ytdl_write_system_cmd_flag']
         self.ytdl_write_stdout_flag = json_dict['ytdl_write_stdout_flag']
         if version >= 5004:     # v0.5.004
             self.ytdl_write_ignore_json_flag \
@@ -1932,6 +1977,8 @@ class TartubeApp(Gtk.Application):
 #        self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
         if version >= 1003028:  # v1.3.028
             self.operation_dialogue_mode = json_dict['operation_dialogue_mode']
+        if version >= 1003060:  # v1.3.060
+            self.operation_convert_mode = json_dict['operation_convert_mode']
 
         self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
 #       # Removed v0.5.003
@@ -2085,6 +2132,7 @@ class TartubeApp(Gtk.Application):
             'close_to_tray_flag': self.close_to_tray_flag,
 
             'results_list_reverse_flag': self.results_list_reverse_flag,
+            'system_error_show_flag': self.system_error_show_flag,
             'system_warning_show_flag': self.system_warning_show_flag,
             'system_msg_keep_totals_flag': self.system_msg_keep_totals_flag,
 
@@ -2099,13 +2147,17 @@ class TartubeApp(Gtk.Application):
             'ytdl_update_list': self.ytdl_update_list,
             'ytdl_update_current': self.ytdl_update_current,
 
+            'ytdl_output_system_cmd_flag': self.ytdl_output_system_cmd_flag,
             'ytdl_output_stdout_flag': self.ytdl_output_stdout_flag,
             'ytdl_output_ignore_json_flag': self.ytdl_output_ignore_json_flag,
             'ytdl_output_ignore_progress_flag': \
             self.ytdl_output_ignore_progress_flag,
             'ytdl_output_stderr_flag': self.ytdl_output_stderr_flag,
             'ytdl_output_start_empty_flag': self.ytdl_output_start_empty_flag,
+            'ytdl_output_show_summary_flag': \
+            self.ytdl_output_show_summary_flag,
 
+            'ytdl_write_system_cmd_flag': self.ytdl_write_system_cmd_flag,
             'ytdl_write_stdout_flag': self.ytdl_write_stdout_flag,
             'ytdl_write_ignore_json_flag': self.ytdl_write_ignore_json_flag,
             'ytdl_write_ignore_progress_flag': \
@@ -2144,6 +2196,7 @@ class TartubeApp(Gtk.Application):
             'operation_auto_update_flag': self.operation_auto_update_flag,
             'operation_save_flag': self.operation_save_flag,
             'operation_dialogue_mode': self.operation_dialogue_mode,
+            'operation_convert_mode': self.operation_convert_mode,
             'use_module_moviepy_flag': self.use_module_moviepy_flag,
 
             'dialogue_copy_clipboard_flag': self.dialogue_copy_clipboard_flag,
@@ -2814,7 +2867,7 @@ class TartubeApp(Gtk.Application):
                         os.remove(daily_bu_path)
 
                     shutil.move(temp_bu_path, daily_bu_path)
-                    
+
                 else:
 
                     os.remove(temp_bu_path)
@@ -3126,6 +3179,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_all_folder = self.add_folder(
             'All Videos',
             None,           # No parent folder
+            False,          # Allow downloads
             True,           # Fixed (folder cannot be removed)
             True,           # Private
             True,           # Can only contain videos
@@ -3135,6 +3189,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_fav_folder = self.add_folder(
             'Favourite Videos',
             None,           # No parent folder
+            False,          # Allow downloads
             True,           # Fixed (folder cannot be removed)
             True,           # Private
             True,           # Can only contain videos
@@ -3145,6 +3200,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_new_folder = self.add_folder(
             'New Videos',
             None,           # No parent folder
+            False,          # Allow downloads
             True,           # Fixed (folder cannot be removed)
             True,           # Private
             True,           # Can only contain videos
@@ -3154,6 +3210,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_temp_folder = self.add_folder(
             'Temporary Videos',
             None,           # No parent folder
+            False,          # Allow downloads
             True,           # Fixed (folder cannot be removed)
             False,          # Public
             False,          # Can contain any media data object
@@ -3163,6 +3220,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_misc_folder = self.add_folder(
             'Unsorted Videos',
             None,           # No parent folder
+            False,          # Allow downloads
             True,           # Fixed (folder cannot be removed)
             False,          # Public
             True,           # Can only contain videos
@@ -4131,7 +4189,6 @@ class TartubeApp(Gtk.Application):
 
     # (Download operation support functions)
 
-
     def create_video_from_download(self, download_item_obj, dir_path, \
     filename, extension, no_sort_flag=False):
 
@@ -4221,6 +4278,7 @@ class TartubeApp(Gtk.Application):
                     video_obj = self.add_video(
                         other_parent_obj,
                         None,
+                        False,
                         no_sort_flag,
                     )
 
@@ -4228,6 +4286,7 @@ class TartubeApp(Gtk.Application):
                     video_obj = self.add_video(
                         media_data_obj,
                         None,
+                        False,
                         no_sort_flag,
                     )
 
@@ -4244,6 +4303,99 @@ class TartubeApp(Gtk.Application):
         if isinstance(video_obj.parent_obj, media.Channel) \
         or isinstance(video_obj.parent_obj, media.Playlist):
             video_obj.set_receive_time()
+
+        return video_obj
+
+
+    def convert_video_from_download(self, container_obj, options_manager_obj,
+    dir_path, filename, extension, no_sort_flag=False):
+
+        """Called downloads.VideoDownloader.confirm_new_video() and
+        .confirm_sim_video().
+
+        A modified version of self.create_video_from_download, called when
+        youtube-dl is about to download a channel or playlist into a
+        media.Video object.
+
+        Args:
+
+            container_obj (media.Folder): The folder into which a replacement
+                media.Video object is to be created
+
+            options_manager_obj (options.OptionsManager): The download options
+                for this media data object
+
+            dir_path (string): The full path to the directory in which the
+                video is saved, e.g. '/home/yourname/tartube/downloads/Videos'
+
+            filename (string): The video's filename, e.g. 'My Video'
+
+            extension (string): The video's extension, e.g. '.mp4'
+
+            no_sort_flag (True or False): True when called by
+                downloads.VideoDownloader.confirm_sim_video(), because the
+                video's parent containers (including the 'All Videos' folder)
+                should delay sorting their lists of child objects until that
+                calling function is ready. False when called by anything else
+
+        Returns:
+
+            video_obj (media.Video) - The video object created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 4166 convert_video_from_download')
+
+        # Does the container object already contain this video?
+        video_obj = None
+        for child_obj in container_obj.child_list:
+
+            child_file_dir = None
+            if child_obj.file_dir is not None:
+                child_file_dir = os.path.abspath(
+                    os.path.join(
+                        self.downloads_dir,
+                        child_obj.file_dir,
+                       ),
+                )
+
+            if isinstance(child_obj, media.Video) \
+            and child_file_dir \
+            and child_file_dir == dir_path \
+            and child_obj.file_name \
+            and child_obj.file_name == filename:
+                video_obj = child_obj
+
+        if video_obj is None:
+
+            # Create a new media data object for the video
+            override_name \
+            = options_manager_obj.options_dict['use_fixed_folder']
+            if override_name is not None \
+            and override_name in self.media_name_dict:
+
+                other_dbid = self.media_name_dict[override_name]
+                other_container_obj = self.media_reg_dict[other_dbid]
+
+                video_obj = self.add_video(
+                    other_container_obj,
+                    None,
+                    False,
+                    no_sort_flag,
+                )
+
+            else:
+                video_obj = self.add_video(
+                    container_obj,
+                    None,
+                    False,
+                    no_sort_flag,
+                )
+
+            # Since we have them to hand, set the video's file path IVs
+            #   immediately
+            video_obj.set_file(filename, extension)
 
         return video_obj
 
@@ -4731,7 +4883,8 @@ class TartubeApp(Gtk.Application):
     # (Add media data objects)
 
 
-    def add_video(self, parent_obj, source=None, no_sort_flag=False):
+    def add_video(self, parent_obj, source=None, dl_sim_flag=False,
+    no_sort_flag=False):
 
         """Can be called by anything. Mostly called by
         self.create_video_from_download() and self.on_menu_add_video().
@@ -4746,7 +4899,10 @@ class TartubeApp(Gtk.Application):
 
             source (string): The video's source URL, if known
 
-            no_sort_flag (True or False): True when
+            dl_sim_flag (bool): If True, the video object's .dl_sim_flag IV is
+                set to True, which forces simulated downloads
+
+            no_sort_flag (bool): True when
                 self.create_video_from_download() is called by
                 downloads.VideoDownloader.confirm_sim_video(), because the
                 video's parent containers (including the 'All Videos' folder)
@@ -4788,6 +4944,9 @@ class TartubeApp(Gtk.Application):
 
         if source is not None:
             video_obj.set_source(source)
+
+        if dl_sim_flag:
+            video_obj.set_dl_sim_flag(True)
 
         # Update IVs
         self.media_reg_count += 1
@@ -4974,8 +5133,8 @@ class TartubeApp(Gtk.Application):
         return playlist_obj
 
 
-    def add_folder(self, name, parent_obj=None, fixed_flag=False, \
-    priv_flag=False, restrict_flag=False, temp_flag=False):
+    def add_folder(self, name, parent_obj=None, dl_sim_flag=False,
+    fixed_flag=False, priv_flag=False, restrict_flag=False, temp_flag=False):
 
         """Can be called by anything. Mostly called by
         self.on_menu_add_folder().
@@ -4989,8 +5148,12 @@ class TartubeApp(Gtk.Application):
             parent_obj (media.Folder): The media data object for which the new
                 media.Channel object is a child (if any)
 
-            fixed_flag, priv_flag, restrict_flag, temp_flag (True, False):
-                flags sent to the object's .__init__() function
+            dl_sim_flag (bool): If True, the folders .dl_sim_flag IV is set to
+                True, which forces simulated downloads for any videos,
+                channels or playlists contained in the folder
+
+            fixed_flag, priv_flag, restrict_flag, temp_flag (bool): Flags sent
+                to the object's .__init__() function
 
         Returns:
 
@@ -5032,6 +5195,9 @@ class TartubeApp(Gtk.Application):
             restrict_flag,
             temp_flag,
         )
+
+        if dl_sim_flag:
+            folder_obj.set_dl_sim_flag(True)
 
         # Update IVs
         self.media_reg_count += 1
@@ -5367,6 +5533,96 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_add_row(source_obj)
         # Select the moving object, which redraws the Video Catalogue
         self.main_win_obj.video_index_select_row(source_obj)
+
+
+    # (Convert channels to playlists, and vice-versa)
+
+
+    def convert_remote_container(self, old_obj):
+
+        """Called by mainwin.MainWin.on_video_index_convert_container().
+
+        Converts a media.Channel object into a media.Playlist object, or vice-
+        versa.
+
+        Usually called after the user has copy-pasted a list of URLs into the
+        mainwin.AddVideoDialogue window, some of which actually represent
+        channels or playlists, not individual videos. During the next
+        download operation, new channels or playlists can be automatically
+        created (depending on the value of self.operation_convert_mode
+
+        The user can then convert a channel to a playlist, and back again, as
+        required.
+
+        Args:
+
+            old_obj (media.Channel, media.Playlist): The media data object to
+                convert
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 5392 delete_video')
+
+        if (
+            not isinstance(old_obj, media.Channel) \
+            and not isinstance(old_obj, media.Playlist)
+        ) or self.current_manager_obj:
+            return self.system_error(
+                135,
+                'Convert container request failed sanity check',
+            )
+
+        # If old_obj is a media.Channel, create a playlist. If old_obj is
+        #   a media.Playlist, create a channel
+        if isinstance(old_obj, media.Channel):
+
+            new_obj = self.add_playlist(
+                old_obj.name,
+                old_obj.parent_obj,
+                old_obj.source,
+                old_obj.dl_sim_flag,
+            )
+
+        elif isinstance(old_obj, media.Playlist):
+
+            new_obj = self.add_channel(
+                old_obj.name,
+                old_obj.parent_obj,
+                old_obj.source,
+                old_obj.dl_sim_flag,
+            )
+
+        # Move any children from the old object to the new one
+        for child_obj in old_obj.child_list:
+
+            # The True argument means to delay sorting the child list
+            new_obj.add_child(child_obj, True)
+            child_obj.set_parent_obj(new_obj)
+
+        # Deal with alternative download destinations
+        if old_obj.master_dbid:
+            new_obj.set_master_dbid(self, old_obj.master_dbid)
+            master_obj = self.media_reg_dict[old_obj.master_dbid]
+            master_obj.del_slave_dbid(old_obj.dbid)
+
+        for slave_dbid in old_obj.slave_dbid_list:
+            slave_obj = self.media_reg_dict[slave_dbid]
+            slave_obj.set_master_dbid(self, new_obj.dbid)
+
+        # Copy remaining properties from the old object to the new one
+        new_obj.clone_properties(old_obj)
+
+        # Remove the old object from the media data registry.
+        #   self.media_name_dict should already be updated
+        del self.media_reg_dict[old_obj.dbid]
+        if old_obj.dbid in self.media_top_level_list:
+            self.media_top_level_list.remove(old_obj.dbid)
+
+        # Remove the old object from the Video Index...
+        self.main_win_obj.video_index_delete_row(old_obj)
+        # ...and add the new one, selecting it at the same time
+        self.main_win_obj.video_index_add_row(new_obj)
 
 
     # (Delete media data objects)
@@ -7282,7 +7538,7 @@ class TartubeApp(Gtk.Application):
             )
 
         else:
-            utils.open_file(cgi.escape(path, quote=True))
+            utils.open_file(path)
 
 
     def download_watch_videos(self, video_list, watch_flag=True):
@@ -8155,6 +8411,7 @@ class TartubeApp(Gtk.Application):
 
         # Retrieve user choices from the dialogue window...
         name = dialogue_win.entry.get_text()
+        dl_sim_flag = dialogue_win.button2.get_active()
 
         # ...and find the name of the parent media data object (a
         #   media.Folder), if one was specified...
@@ -8197,7 +8454,7 @@ class TartubeApp(Gtk.Application):
                     parent_obj = self.media_reg_dict[dbid]
 
                 # Create the new folder
-                folder_obj = self.add_folder(name, parent_obj)
+                folder_obj = self.add_folder(name, parent_obj, dl_sim_flag)
 
                 # Add the folder to the Video Index
                 if folder_obj:
@@ -8379,6 +8636,8 @@ class TartubeApp(Gtk.Application):
             False,
         )
 
+        dl_sim_flag = dialogue_win.button2.get_active()
+
         # ...and find the parent media data object (a media.Channel,
         #   media.Playlist or media.Folder)...
         parent_name = self.fixed_misc_folder.name
@@ -8412,7 +8671,7 @@ class TartubeApp(Gtk.Application):
                 if parent_obj.check_duplicate_video(line):
                     duplicate_list.append(line)
                 else:
-                    self.add_video(parent_obj, line)
+                    self.add_video(parent_obj, line, dl_sim_flag)
 
             # In the Video Index, select the parent media data object, which
             #   updates both the Video Index and the Video Catalogue
@@ -9246,10 +9505,20 @@ class TartubeApp(Gtk.Application):
         self.operation_check_limit = value
 
 
+    def set_operation_convert_mode(self, mode):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9220 set_operation_convert_mode')
+
+        if mode == 'disable' or mode == 'multi' or mode == 'channel' \
+        or mode == 'playlist':
+            self.operation_convert_mode = mode
+
+
     def set_operation_dialogue_mode(self, mode):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 9220 set_operation_dialogue_mode')
+            utils.debug_time('app 9221 set_operation_dialogue_mode')
 
         if mode == 'default' or mode == 'desktop' or mode == 'dialogue':
             self.operation_dialogue_mode = mode
@@ -9421,6 +9690,17 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.enable_tooltips(True)
 
 
+    def set_system_error_show_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9381 set_system_error_show_flag')
+
+        if not flag:
+            self.system_error_show_flag = False
+        else:
+            self.system_error_show_flag = True
+
+
     def set_system_msg_keep_totals_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -9435,7 +9715,7 @@ class TartubeApp(Gtk.Application):
     def set_system_warning_show_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 9406 xxset_system_warning_show_flagxxx')
+            utils.debug_time('app 9406 set_system_warning_show_flag')
 
         if not flag:
             self.system_warning_show_flag = False
@@ -9535,10 +9815,21 @@ class TartubeApp(Gtk.Application):
             self.refresh_output_videos_flag = True
 
 
+    def set_ytdl_output_show_summary_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9509 set_ytdl_output_show_summary_flag')
+
+        if not flag:
+            self.ytdl_output_show_summary_flag = False
+        else:
+            self.ytdl_output_show_summary_flag = True
+
+
     def set_ytdl_output_start_empty_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 9509 set_ytdl_output_start_empty_flag')
+            utils.debug_time('app 9510 set_ytdl_output_start_empty_flag')
 
         if not flag:
             self.ytdl_output_start_empty_flag = False
@@ -9588,6 +9879,17 @@ class TartubeApp(Gtk.Application):
             self.ytdl_output_stdout_flag = False
         else:
             self.ytdl_output_stdout_flag = True
+
+
+    def set_ytdl_output_system_cmd_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9554 set_ytdl_output_system_cmd_flag')
+
+        if not flag:
+            self.ytdl_output_system_cmd_flag = False
+        else:
+            self.ytdl_output_system_cmd_flag = True
 
 
     def set_ytdl_path(self, path):
@@ -9648,6 +9950,17 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_stdout_flag = False
         else:
             self.ytdl_write_stdout_flag = True
+
+
+    def set_ytdl_write_system_cmd_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9614 set_ytdl_write_system_cmd_flag')
+
+        if not flag:
+            self.ytdl_write_system_cmd_flag = False
+        else:
+            self.ytdl_write_system_cmd_flag = True
 
 
     def set_ytdl_write_verbose_flag(self, flag):

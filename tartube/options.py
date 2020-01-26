@@ -571,10 +571,8 @@ class OptionsManager(object):
 
 class OptionsParser(object):
 
-    """Called by downloads.DownloadManager.__init__().
-
-    Each download operation, handled by the downloads.DownloadManager, creates
-    an instance of this class.
+    """Called by downloads.DownloadManager.__init__() and by
+    mainwin.SystemCmdDialogue.update_textbuffer().
 
     This object converts the download options specified by an
     options.OptionsManager object into a list of youtube-dl command line
@@ -582,8 +580,7 @@ class OptionsParser(object):
 
     Args:
 
-        download_manager_obj (downloads.DownloadManager) - The parent
-            download manager object
+        app_obj (mainapp.TartubeApp): The main application
 
     """
 
@@ -591,12 +588,12 @@ class OptionsParser(object):
     # Standard class methods
 
 
-    def __init__(self, download_manager_obj):
+    def __init__(self, app_obj):
 
         # IV list - class objects
         # -----------------------
-        # The parent downloads.DownloadManager object
-        self.download_manager_obj = download_manager_obj
+        # The main application
+        self.app_obj = app_obj
 
 
         # IV list - other
@@ -812,7 +809,7 @@ class OptionsParser(object):
     # Public class methods
 
 
-    def parse(self, download_item_obj, options_dict):
+    def parse(self, media_data_obj, options_manager_obj):
 
         """Called by downloads.DownloadWorker.prepare_download().
 
@@ -822,11 +819,11 @@ class OptionsParser(object):
 
         Args:
 
-            download_item_obj (downloads.DownloadItem) - The object handling
-                the download
+            media_data_obj (media.Video, media.Channel, media.Playlist,
+                media.Folder): The media data object being downloaded
 
-            options_dict (dict): Python dictionary containing download options;
-                taken from options.OptionsManager.options_dict
+            options_manager_obj (options.OptionsManager): The object containing
+                the download options for this media data object
 
         Returns:
 
@@ -838,11 +835,11 @@ class OptionsParser(object):
         options_list = ['--newline']
 
         # Create a copy of the dictionary...
-        copy_dict = options_dict.copy()
+        copy_dict = options_manager_obj.options_dict.copy()
         # ...then modify various values in the copy. Set the 'save_path' option
-        self.build_save_path(download_item_obj, copy_dict)
+        self.build_save_path(media_data_obj, copy_dict)
         # Set the 'video_format' option
-        self.build_video_format(download_item_obj, copy_dict)
+        self.build_video_format(copy_dict)
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
@@ -851,12 +848,9 @@ class OptionsParser(object):
         # Reset the 'playlist_start', 'playlist_end' and 'max_downloads'
         #   options if we're not downloading a video in a playlist
         if (
-            isinstance(download_item_obj.media_data_obj, media.Video) \
-            and not isinstance(
-                download_item_obj.media_data_obj.parent_obj,
-                media.Playlist,
-            )
-        ) or not isinstance(download_item_obj.media_data_obj, media.Playlist):
+            isinstance(media_data_obj, media.Video) \
+            and not isinstance(media_data_obj.parent_obj, media.Playlist)
+        ) or not isinstance(media_data_obj, media.Playlist):
             copy_dict['playlist_start'] = 1
             copy_dict['playlist_end'] = 0
             copy_dict['max_downloads'] = 0
@@ -998,18 +992,19 @@ class OptionsParser(object):
 
         """
 
-        # Import the main app (for convenience)
-        app_obj = self.download_manager_obj.app_obj
-
         # Set the bandwidth limit (e.g. '50K')
-        if app_obj.bandwidth_apply_flag:
+        if self.app_obj.bandwidth_apply_flag:
 
             # The bandwidth limit is divided equally between the workers
-            limit = int(app_obj.bandwidth_default / app_obj.num_worker_default)
+            limit = int(
+                self.app_obj.bandwidth_default
+                / self.app_obj.num_worker_default
+            )
+
             copy_dict['limit_rate'] = str(limit) + 'K'
 
 
-    def build_save_path(self, download_item_obj, copy_dict):
+    def build_save_path(self, media_data_obj, copy_dict):
 
         """Called by self.parse().
 
@@ -1018,16 +1013,14 @@ class OptionsParser(object):
 
         Args:
 
-            download_item_obj (downloads.DownloadItem) - The object handling
-                the download
+            media_data_obj (media.Video, media.Channel, media.Playlist,
+                media.Folder): The media data object being downloaded
 
             copy_dict (dict): Copy of the original options dictionary.
 
         """
 
         # Set the directory in which any downloaded videos will be saved
-        app_obj = self.download_manager_obj.app_obj
-        media_data_obj = download_item_obj.media_data_obj
         override_name = copy_dict['use_fixed_folder']
 
         if not isinstance(media_data_obj, media.Video) \
@@ -1042,15 +1035,9 @@ class OptionsParser(object):
         else:
 
             if isinstance(media_data_obj, media.Video):
-                save_path = media_data_obj.parent_obj.get_dir(
-                    self.download_manager_obj.app_obj
-                )
-
+                save_path = media_data_obj.parent_obj.get_dir(self.app_obj)
             else:
-                save_path = media_data_obj.get_dir(
-                    self.download_manager_obj.app_obj
-                )
-
+                save_path = media_data_obj.get_dir(self.app_obj)
 
         # Set the youtube-dl output template for the video's file
         template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
@@ -1063,7 +1050,7 @@ class OptionsParser(object):
         )
 
 
-    def build_video_format(self, download_item_obj, copy_dict):
+    def build_video_format(self, copy_dict):
 
         """Called by self.parse().
 
@@ -1071,9 +1058,6 @@ class OptionsParser(object):
         options dictionary.
 
         Args:
-
-            download_item_obj (downloads.DownloadItem) - The object handling
-                the download
 
             copy_dict (dict): Copy of the original options dictionary.
 
@@ -1089,18 +1073,17 @@ class OptionsParser(object):
         #   extractor codes are ignored
         resolution_dict = formats.VIDEO_RESOLUTION_DICT.copy()
         fps_dict = formats.VIDEO_FPS_DICT.copy()
-        app_obj = self.download_manager_obj.app_obj
 
         # If the progressive scan resolution is specified, it overrides all
         #   other video format options
         height = None
         fps = None
 
-        if app_obj.video_res_apply_flag:
-            height = resolution_dict[app_obj.video_res_default]
+        if self.app_obj.video_res_apply_flag:
+            height = resolution_dict[self.app_obj.video_res_default]
             # (Currently, formats.VIDEO_FPS_DICT only lists formats with 60fps)
-            if app_obj.video_res_default in fps_dict:
-                fps = fps_dict[app_obj.video_res_default]
+            if self.app_obj.video_res_default in fps_dict:
+                fps = fps_dict[self.app_obj.video_res_default]
 
         elif copy_dict['video_format'] in resolution_dict:
             height = resolution_dict[copy_dict['video_format']]

@@ -152,6 +152,15 @@ class DownloadManager(threading.Thread):
         #   objects which have been allocated to a worker)
         self.job_count = 0
 
+        # If mainapp.TartubeApp.operation_convert_mode is set to any value
+        #   other than 'disable', then a media.Video object whose URL
+        #   represents a channel/playlist is converted into multiple new
+        #   media.Video objects, one for each video actually downloaded
+        # The original media.Video object is added to this list, via a call to
+        #   self.mark_video_as_doomed(). At the end of the whole download
+        #   operation, any media.Video object in this list is destroyed
+        self.doomed_video_list = []
+
 
         # Code
         # ----
@@ -159,7 +168,7 @@ class DownloadManager(threading.Thread):
         # Create an object for converting download options stored in
         #   downloads.DownloadWorker.options_list into a list of youtube-dl
         #   command line options
-        self.options_parser_obj = options.OptionsParser(self)
+        self.options_parser_obj = options.OptionsParser(self.app_obj)
 
         # Create a list of downloads.DownloadWorker objects, each one handling
         #   one of several simultaneous downloads
@@ -333,6 +342,16 @@ class DownloadManager(threading.Thread):
             0,
             self.app_obj.main_win_obj.output_tab_update_pages,
         )
+
+        # Any media.Video objects which have been marked as doomed, can now be
+        #   destroyed
+        for video_obj in self.doomed_video_list:
+            self.app_obj.delete_video(
+                video_obj,
+                True,           # Delete any files associated with the video
+                True,           # Don't update the Video Index yet
+                True,           # Don't update the Video Catalogue yet
+            )
 
         # When youtube-dl reports it is finished, there is a short delay before
         #   the final downloaded video(s) actually exist in the filesystem
@@ -512,6 +531,32 @@ class DownloadManager(threading.Thread):
                 return worker_obj
 
         return None
+
+
+    def mark_video_as_doomed(self, video_obj):
+
+        """Called by VideoDownloader.check_dl_is_correct_type().
+
+        When youtube-dl reports the URL associated with a download item
+        object contains multiple videos (or potentially contains multiple
+        videos), then the URL represents a channel or playlist, not a video.
+
+        If the channel/playlist was about to be downloaded into a media.Video
+        object, then the calling function takes action to prevent it.
+
+        It then calls this function to mark the old media.Video object to be
+        destroyed, once the download operation is complete.
+
+        Args:
+
+            video_obj (media.Video): The video object whose URL is not a video,
+                and which must be destroyed
+
+        """
+
+        if isinstance(video_obj, media.Video) \
+        and not video_obj in self.doomed_video_list:
+            self.doomed_video_list.append(video_obj)
 
 
     def remove_worker(self, worker_obj):
@@ -779,8 +824,8 @@ class DownloadWorker(threading.Thread):
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
         self.options_list = self.download_manager_obj.options_parser_obj.parse(
-            download_item_obj,
-            self.options_manager_obj.options_dict,
+            download_item_obj.media_data_obj,
+            self.options_manager_obj,
         )
 
         self.available_flag = False
@@ -1006,7 +1051,10 @@ class DownloadList(object):
         # (The manager might be specified by obj itself, or it might be
         #   specified by obj's parent, or we might use the default
         #   options.OptionsManager)
-        options_manager_obj = self.get_options_manager(media_data_obj)
+        options_manager_obj = utils.get_options_manager(
+            self.app_obj,
+            media_data_obj,
+        )
 
         # Ignore private folders, and don't download any of their children
         #   (because they are all children of some other non-private folder)
@@ -1097,40 +1145,6 @@ class DownloadList(object):
                 return this_item
 
         return None
-
-
-    def get_options_manager(self, media_data_obj):
-
-        """Called by self.create_item() or by this function recursively.
-
-        Fetches the options.OptionsManager which applies to the specified media
-        data object.
-
-        The media data object might specify its own options.OptionsManager, or
-        we might have to use the parent's, or the parent's parent's (and so
-        on). As a last resort, use General Options Manager.
-
-        Args:
-
-            obj(media.Video, media.Channel, media.Playlist, media.Folder):
-                A media data object
-
-        Returns:
-
-            The options.OptionsManager object that applies to the specified
-                media data object
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1026 get_options_manager')
-
-        if media_data_obj.options_obj:
-            return media_data_obj.options_obj
-        elif media_data_obj.parent_obj:
-            return self.get_options_manager(media_data_obj.parent_obj)
-        else:
-            return self.app_obj.general_options_obj
 
 
     @synchronise(_SYNC_LOCK)
@@ -1441,6 +1455,16 @@ class VideoDownloader(object):
         # The time to wait, in seconds
         self.last_sim_video_wait_time = 60
 
+        # If mainapp.TartubeApp.operation_convert_mode is set to any value
+        #   other than 'disable', then a media.Video object whose URL
+        #   represents a channel/playlist is converted into multiple new
+        #   media.Video objects, one for each video actually downloaded
+        # Flag set to True when self.download_item_obj.media_data_obj is a
+        #   media.Video object, but a channel/playlist is detected (regardless
+        #   of the value of mainapp.TartubeApp.operation_convert_mode)
+        self.url_is_not_video_flag = False
+
+
         # Code
         # ----
         # Initialise IVs depending on whether this is a real or simulated
@@ -1515,7 +1539,26 @@ class VideoDownloader(object):
                 time.sleep(self.long_sleep_time)
 
         # Prepare a system command...
-        cmd_list = self.get_system_cmd()
+        cmd_list = utils.generate_system_cmd(
+            app_obj,
+            self.download_item_obj.media_data_obj,
+            self.download_worker_obj.options_list,
+            self.dl_sim_flag,
+        )
+
+        # ...display it in the Output Tab (if required)...
+        if app_obj.ytdl_output_system_cmd_flag:
+            space = ' '
+            app_obj.main_win_obj.output_tab_write_system_cmd(
+                self.download_worker_obj.worker_id,
+                space.join(cmd_list),
+            )
+
+        # ...and the terminal (if required)...
+        if app_obj.ytdl_write_system_cmd_flag:
+            space = ' '
+            print(space.join(cmd_list))
+
         # ...and create a new child process using that command
         self.create_child_process(cmd_list)
 
@@ -1690,23 +1733,79 @@ class VideoDownloader(object):
 
         When youtube-dl reports the URL associated with the download item
         object contains multiple videos (or potentially contains multiple
-        videos), then the URL is a channel or playlist, not a video.
+        videos), then the URL represents a channel or playlist, not a video.
 
-        Cannot store data for a channel or playlist in a media.Video object,
-        so stop the child process immediately and display a system error.
+        This function checks whether a channel/playlist is about to be
+        downloaded into a media.Video object. If so, it takes action to prevent
+        that from happening.
+
+        The action taken depends on the value of
+        mainapp.TartubeApp.operation_convert_mode.
+
+        Return values:
+            False if a channel/playlist was about to be downloaded into a
+                media.Video object, which has since been replaced by a new
+                media.Channel/media.Playlist object
+
+            True in all other situations (including when a channel/playlist was
+                about to be downloaded into a media.Video object, which was
+                not replaced by a new media.Channel/media.Playlist object)
+
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1600 check_dl_is_correct_type')
 
+        app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
+
         if isinstance(self.download_item_obj.media_data_obj, media.Video):
 
-            self.stop()
-            self.download_item_obj.media_data_obj.set_error(
-                'The video \'' + self.download_item_obj.media_data_obj.name \
-                + '\' has a source URL that points to a channel or a' \
-                + ' playlist, not a video',
-            )
+            # If the mode is 'disable', or if it the original media.Video
+            #   object is contained in a channel or a playlist, then we must
+            #   stop downloading this URL immediately
+            if app_obj.operation_convert_mode == 'disable' \
+            or not isinstance(
+                self.download_item_obj.media_data_obj.parent_obj,
+                media.Folder,
+            ):
+                self.url_is_not_video_flag = True
+
+                # Stop downloading this URL
+                self.stop()
+                media_data_obj.set_error(
+                    'The video \'' + media_data_obj.name \
+                    + '\' has a source URL that points to a channel or a' \
+                    + ' playlist, not a video',
+                )
+
+                # Don't allow self.confirm_sim_video() to be called
+                return False
+
+            # Otherwise, we can create new media.Video objects for each
+            #   video downloaded/checked. The new objects may be placd into a
+            #   new media.Channel or media.Playlist object
+            elif not self.url_is_not_video_flag:
+
+                self.url_is_not_video_flag = True
+
+                # Mark the original media.Video object to be destroyed at the
+                #   end of the download operation
+                self.download_manager_obj.mark_video_as_doomed(media_data_obj)
+
+                if app_obj.operation_convert_mode != 'multi':
+
+                    # Create a new media.Channel or media.Playlist object and
+                    #   add it to the download manager
+                    # Then halt this job, so the new channel/playlist object
+                    #   can be downloaded
+                    self.convert_video_to_container()
+
+                # Don't allow self.confirm_sim_video() to be called
+                return False
+
+        # Do allow self.confirm_sim_video() to be called
+        return True
 
 
     def close(self):
@@ -1749,21 +1848,37 @@ class VideoDownloader(object):
             utils.debug_time('dld 1649 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
+
+            app_obj = self.download_manager_obj.app_obj
             self.video_check_dict[self.video_num] = filename
 
             # Create a new media.Video object for the video
-            app_obj = self.download_manager_obj.app_obj
-            video_obj = app_obj.create_video_from_download(
-                self.download_item_obj,
-                dir_path,
-                filename,
-                extension,
-                True,               # Don't sort parent containers yet
-            )
+            if self.url_is_not_video_flag:
 
-            # If downloading from a playlist, remember the video's index in
-            #   that playlist
-            if isinstance(video_obj.parent_obj, media.Playlist):
+                video_obj = app_obj.convert_video_from_download(
+                    self.download_item_obj.media_data_obj.parent_obj,
+                    self.download_item_obj.options_manager_obj,
+                    dir_path,
+                    filename,
+                    extension,
+                    True,               # Don't sort parent containers yet
+                )
+
+            else:
+
+                video_obj = app_obj.create_video_from_download(
+                    self.download_item_obj,
+                    dir_path,
+                    filename,
+                    extension,
+                    True,               # Don't sort parent containers yet
+                )
+
+            # If downloading from a channel/playlist, remember the video's
+            #   index. (The server supplies an index even for a channel, and
+            #   the user might want to convert a channel to a playlist)
+            if isinstance(video_obj.parent_obj, media.Channel) \
+            or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(self.video_num)
 
             # Fetch the options.OptionsManager object used for this download
@@ -1995,9 +2110,32 @@ class VideoDownloader(object):
         # Does an existing media.Video object match this video?
         media_data_obj = self.download_item_obj.media_data_obj
         video_obj = None
-        if isinstance(media_data_obj, media.Video):
+
+        if self.url_is_not_video_flag:
+
+            # media_data_obj has a URL which represents a channel or playlist,
+            #   but media_data_obj itself is a media.Video object
+            # media_data_obj's parent is a media.Folder object. Check its
+            #   child objects, looking for a matching video
+            # (video_obj is set to None, if no match is found)
+            video_obj = media_data_obj.parent_obj.find_matching_video(
+                app_obj,
+                filename,
+            )
+
+            if not video_obj:
+                video_obj = media_data_obj.parent_obj.find_matching_video(
+                    app_obj,
+                    name,
+                )
+
+        elif isinstance(media_data_obj, media.Video):
+
+            # media_data_obj is a media.Video object
             video_obj = media_data_obj
+
         else:
+
             # media_data_obj is a media.Channel or media.Playlist object. Check
             #   its child objects, looking for a matching video
             # (video_obj is set to None, if no match is found)
@@ -2011,15 +2149,28 @@ class VideoDownloader(object):
             # No matching media.Video object found, so create a new one
             new_flag = True
 
-            video_obj = app_obj.create_video_from_download(
-                self.download_item_obj,
-                path,
-                filename,
-                extension,
-                # Don't sort parent container objects yet; wait for
-                #   mainwin.MainWin.results_list_update_row() to do it
-                True,
-            )
+            if self.url_is_not_video_flag:
+
+                video_obj = app_obj.convert_video_from_download(
+                    self.download_item_obj.media_data_obj.parent_obj,
+                    self.download_item_obj.options_manager_obj,
+                    path,
+                    filename,
+                    extension,
+                    # Don't sort parent container objects yet; wait for
+                    #   mainwin.MainWin.results_list_update_row() to do it
+                    True,
+                )
+
+            else:
+
+                video_obj = app_obj.create_video_from_download(
+                    self.download_item_obj,
+                    path,
+                    filename,
+                    extension,
+                    True,
+                )
 
             # Update its IVs with the JSON information we extracted
             if filename is not None:
@@ -2045,10 +2196,11 @@ class VideoDownloader(object):
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
 
-            # Only save the playlist index when this video is actually stored
-            #   inside a media.Playlist object
-            if isinstance(video_obj.parent_obj, media.Playlist) \
-            and playlist_index is not None:
+            # If downloading from a channel/playlist, remember the video's
+            #   index. (The server supplies an index even for a channel, and
+            #   the user might want to convert a channel to a playlist)
+            if isinstance(video_obj.parent_obj, media.Channel) \
+            or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(playlist_index)
 
             # Now we can sort the parent containers
@@ -2113,11 +2265,11 @@ class VideoDownloader(object):
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
 
-            # Only save the playlist index when this video is actually stored
-            #   inside a media.Playlist object
-            if not video_obj.index \
-            and isinstance(video_obj.parent_obj, media.Playlist) \
-            and playlist_index is not None:
+            # If downloading from a channel/playlist, remember the video's
+            #   index. (The server supplies an index even for a channel, and
+            #   the user might want to convert a channel to a playlist)
+            if isinstance(video_obj.parent_obj, media.Channel) \
+            or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(playlist_index)
 
         # Deal with the video description, JSON data and thumbnail, according
@@ -2246,6 +2398,104 @@ class VideoDownloader(object):
         #   has been checked/downloaded
         elif self.stop_soon_flag:
             self.stop_now_flag = True
+
+
+    def convert_video_to_container (self):
+
+        """Called by self.check_dl_is_correct_type().
+
+        Creates a new media.Channel or media.Playlist object to replace an
+        existing media.Video object. The new object is given some of the
+        properties of the old one.
+
+        This function doesn't destroy the old object; DownloadManager.run()
+        handles that.
+        """
+
+        app_obj = self.download_manager_obj.app_obj
+        old_video_obj = self.download_item_obj.media_data_obj
+        container_obj = old_video_obj.parent_obj
+
+        # Some media.Folder objects cannot contain channels or playlists (for
+        #   example, the 'Unsorted Videos' folder)
+        # If that is the case, the new channel/playlist is created without a
+        #   parent. Otherwise, it is created at the same location as the
+        #   original media.Video object
+        if container_obj.restrict_flag:
+            container_obj = None
+
+        # Decide on a name for the new channel/playlist, e.g. 'channel_1' or
+        #   'playlist_4'. The name must not already be in use. The user can
+        #   customise the name when they're ready
+        # (Prevent any possibility of an infinite loop by giving up after
+        #   thousands of attempts)
+        name = None
+        new_container_obj = None
+
+        for n in range (1, 9999):
+            test_name = app_obj.operation_convert_mode + '_'  + str(n)
+            if not test_name in app_obj.media_name_dict:
+                name = test_name
+                break
+
+        if name is not None:
+
+            # Create the new channel/playlist. Very unlikely that the old
+            #   media.Video object has its .dl_sim_flag set, but we'll use it
+            #   nonetheless
+            if app_obj.operation_convert_mode == 'channel':
+
+                new_container_obj = app_obj.add_channel(
+                    name,
+                    container_obj,      # May be None
+                    source = old_video_obj.source,
+                    dl_sim_flag = old_video_obj.dl_sim_flag,
+                )
+
+            else:
+
+                new_container_obj = app_obj.add_playlist(
+                    name,
+                    container_obj,      # May be None
+                    source = old_video_obj.source,
+                    dl_sim_flag = old_video_obj.dl_sim_flag,
+                )
+
+        if new_container_obj is None:
+
+            # New channel/playlist could not be created (for some reason), so
+            #   stop downloading from this URL
+            self.stop()
+            media_data_obj.set_error(
+                'The video \'' + media_data_obj.name \
+                + '\' has a source URL that points to a channel or a' \
+                + ' playlist, not a video',
+            )
+
+        else:
+
+            # Update IVs for the new channel/playlist object
+            new_container_obj.set_options_obj(old_video_obj.options_obj)
+            new_container_obj.set_source(old_video_obj.source)
+
+            # Add the new channel/playlist to the Video Index (but don't
+            #   select it)
+            app_obj.main_win_obj.video_index_add_row(new_container_obj, True)
+
+            # Add the new channel/playlist to the download manager's list of
+            #   things to download...
+            new_download_item_obj \
+            = self.download_manager_obj.download_list_obj.create_item(
+                new_container_obj,
+            )
+            # ...and add a row the Progress List
+            app_obj.main_win_obj.progress_list_add_row(
+                new_download_item_obj.item_id,
+                new_download_item_obj.media_data_obj,
+            )
+
+            # Stop this download job, allowing the replacement one to start
+            self.stop()
 
 
     def create_child_process(self, cmd_list):
@@ -2453,8 +2703,8 @@ class VideoDownloader(object):
                 dl_stat_dict['playlist_size'] = stdout_list[5]
                 self.video_total = stdout_list[5]
 
-                # If downloading an individual video, rather than a channel or
-                #   a playlist, stop the download immediately
+                # If youtube-dl is about to download a channel or playlist into
+                #   a media.Video object, decide what to do to prevent it
                 self.check_dl_is_correct_type()
 
             # Remove the 'and merged' part of the STDOUT message when using
@@ -2565,15 +2815,26 @@ class VideoDownloader(object):
                         'Invalid JSON data received from server',
                     )
 
-                # (JSON is valid)
-                self.confirm_sim_video(json_dict)
+                if json_dict:
 
-                self.video_num += 1
-                dl_stat_dict['playlist_index'] = self.video_num
-                self.video_total += 1
-                dl_stat_dict['playlist_size'] = self.video_total
+                    # If youtube-dl is about to download a channel or playlist
+                    #   into a media.Video object, decide what to do to prevent
+                    # The called function returns a True/False value,
+                    #   specifically to allow this code block to call
+                    #   self.confirm_sim_video when required
+                    # v1.3.063 At this poitn, self.video_num can be None or 0
+                    #   for a URL that's an individual video, but > 0 for a URL
+                    #   that's actually a channel/playlist
+                    if not self.video_num \
+                    or self.check_dl_is_correct_type():
+                        self.confirm_sim_video(json_dict)
 
-                dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
+                    self.video_num += 1
+                    dl_stat_dict['playlist_index'] = self.video_num
+                    self.video_total += 1
+                    dl_stat_dict['playlist_size'] = self.video_total
+
+                    dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
 
         elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
 
@@ -2619,68 +2880,6 @@ class VideoDownloader(object):
             if dl_stat_dict['status'] == formats.ERROR_STAGE_ABORT:
                 self.set_return_code(self.FILESIZE_ABORT)
                 dl_stat_dict['status'] = None
-
-
-    def get_system_cmd(self):
-
-        """Called by self.do_download().
-
-        Based on YoutubeDLDownloader._get_cmd().
-
-        Prepare the system command that creates the child process, executing
-        youtube-dl.
-
-        Returns:
-
-            Python list that contains the system command to execute.
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2540 get_system_cmd')
-
-        # Import things for convenience
-        app_obj = self.download_manager_obj.app_obj
-        media_data_obj = self.download_item_obj.media_data_obj
-        options_list = self.download_worker_obj.options_list
-
-        # Simulate the download, rather than actually downloading videos, if
-        #   required
-        if self.dl_sim_flag:
-            options_list.append('--dump-json')
-
-        # If actually downloading videos, create an archive file so that, if
-        #   the user deletes the videos, youtube-dl won't try to download them
-        #   again
-        elif app_obj.allow_ytdl_archive_flag:
-
-            # (Create the archive file in the media data object's own
-            #   sub-directory, not the alternative download destination, as
-            #   this helps youtube-dl to work the way we want it)
-            if isinstance(media_data_obj, media.Video):
-                dl_path = media_data_obj.parent_obj.get_dir(app_obj)
-            else:
-                dl_path = media_data_obj.get_dir(app_obj)
-
-            options_list.append('--download-archive')
-            options_list.append(
-                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
-            )
-
-        # Show verbose output (youtube-dl debugging mode), if required
-        if app_obj.ytdl_write_verbose_flag:
-            options_list.append('--verbose')
-
-        # Supply youtube-dl with the path to the ffmpeg/avconv binary, if the
-        #   user has provided one
-        if app_obj.ffmpeg_path is not None:
-            options_list.append('--ffmpeg-location')
-            options_list.append('"' + app_obj.ffmpeg_path + '"')
-
-        # Set the list
-        cmd_list = [app_obj.ytdl_path] + options_list + [media_data_obj.source]
-
-        return cmd_list
 
 
     def is_child_process_alive(self):
