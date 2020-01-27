@@ -1218,9 +1218,20 @@ class Video(GenericMedia):
 
         """
 
-        text = '#' + str(self.dbid) + ':   ' + self.name
+        text = '#' + str(self.dbid) + ':   ' + self.name + '\n\n'
 
-        text += '\n\nSource:\n'
+        if self.parent_obj:
+
+            if isinstance(self.parent_obj, Channel):
+                text += 'Channel: '
+            elif isinstance(self.parent_obj, Playlist):
+                text += 'Playlist: '
+            else:
+                text += 'Folder: '
+                
+            text += self.parent_obj.name + '\n\n'
+            
+        text += 'Source:\n'
         if self.source is None:
             text += ' <unknown>'
         else:
@@ -1336,7 +1347,10 @@ class Video(GenericMedia):
 
     def set_index(self, index):
 
-        self.index = int(index)
+        if index is None:
+            self.index = None
+        else:
+            self.index = int(index)
 
 
     def set_mkv(self):

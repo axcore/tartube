@@ -254,18 +254,19 @@ class TartubeApp(Gtk.Application):
         #   the most recently checked or downloaded video appears at the top
         #   of the list)
         self.results_list_reverse_flag = False
+        
         # Flag set to True if system error messages should be shown in the
         #   Errors/Warnings tab
-        # NB The check is applied by self.system_error(); any part of the
-        #   code could call mainwin.MainWin.errors_list_add_system_warning()
-        #   directly, which would bypass this flag
         self.system_error_show_flag = True
         # Flag set to True if system warning messages should be shown in the
         #   Errors/Warnings tab
-        # NB The check is applied by self.system_warning(); any part of the
-        #   code could call mainwin.MainWin.errors_list_add_system_warning()
-        #   directly, which would bypass this flag
         self.system_warning_show_flag = True
+        # Flag set to True if operation error messages should be shown in the
+        #   Errors/Warnings tab
+        self.operation_error_show_flag = True
+        # Flag set to True if system warning messages should be shown in the
+        #   Errors/Warnings tab
+        self.operation_warning_show_flag = True
         # Flag set to True if the total number of system error/warning messages
         #   shown in the tab label is not reset until the 'Clear the list'
         #   button is explicitly clicked (normally, the total numbers are
@@ -775,9 +776,12 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if YouTube copyright messages should be ignored (in
         #   the Errors/Warnings tab)
         self.ignore_yt_copyright_flag = False
+        # Flag set to True if YouTube age-restriction messages should be
+        #   ignored (in the Errors/Warnings tab)
+        self.ignore_yt_age_restrict_flag = False
         # Flag set to True if 'Child process exited with non-zero code'
         #   messages should be ignored (in the Errors/Warnings tab)
-        self.ignore_child_process_exit_flag = False
+        self.ignore_child_process_exit_flag = True
         # Flag set to True if 'There are no annotations to write' messages
         #   should be ignored (in the Errors/Warnings tab)
         self.ignore_no_annotations_flag = True
@@ -1479,8 +1483,12 @@ class TartubeApp(Gtk.Application):
         and not self.debug_no_dialogue_flag \
         and not os.path.exists(self.data_dir):
 
-            # Ask the user what to do next
-            dialogue_win = mainwin.MountDriveDialogue(self.main_win_obj)
+            # Ask the user what to do next. The False argument tells the
+            #   dialogue window that it's a missing directory
+            dialogue_win = mainwin.MountDriveDialogue(
+                self.main_win_obj,
+                False,
+            )
             dialogue_win.run()
 
             # If the data directory now exists, or can be created in principle
@@ -1497,11 +1505,45 @@ class TartubeApp(Gtk.Application):
 
         # Create Tartube's data directories (if they don't already exist)
         if not os.path.isdir(self.data_dir):
-            os.makedirs(self.data_dir)
 
+            # React to a 'Permission denied' error by asking the user what to
+            #   do next, as above
+            try:
+                os.makedirs(self.data_dir)
+
+            except:
+                # The True argument tells the dialogue window that it's an
+                #   unwriteable directory
+                dialogue_win = mainwin.MountDriveDialogue(
+                    self.main_win_obj,
+                    True,
+                )
+                dialogue_win.run()
+                available_flag = dialogue_win.available_flag
+                dialogue_win.destroy()
+
+                if not available_flag:
+                    return self.main_win_obj.destroy()
+            
         if not os.path.isdir(self.downloads_dir):
-            os.makedirs(self.downloads_dir)
 
+            # React to a 'Permission denied' error by asking the user what to
+            #   do next, as above
+            try:               
+                os.makedirs(self.downloads_dir)
+
+            except:
+                dialogue_win = mainwin.MountDriveDialogue(
+                    self.main_win_obj,
+                    True,
+                )
+                dialogue_win.run()
+                available_flag = dialogue_win.available_flag
+                dialogue_win.destroy()
+
+                if not available_flag:
+                    return self.main_win_obj.destroy()
+                    
         # Create the temporary data directories (or empty them, if they already
         #   exist)
         if os.path.isdir(self.temp_dir):
@@ -1755,7 +1797,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 1722 system_warning')
-
+        
         if self.main_win_obj and self.system_warning_show_flag:
             self.main_win_obj.errors_list_add_system_warning(error_code, msg)
         else:
@@ -1867,12 +1909,24 @@ class TartubeApp(Gtk.Application):
         if version >= 1000029:  # v1.0.029
             self.results_list_reverse_flag \
             = json_dict['results_list_reverse_flag']
+            
+        # (Setting the value of the Gtk widgets automatically sets the IVs)
         if version >= 1003069:  # v1.3.069
-            self.system_error_show_flag \
-            = json_dict['system_error_show_flag']
+            self.main_win_obj.show_system_error_checkbutton.set_active(
+                json_dict['system_error_show_flag'],
+            )
         if version >= 6006:     # v0.6.006
-            self.system_warning_show_flag \
-            = json_dict['system_warning_show_flag']
+            self.main_win_obj.show_system_warning_checkbutton.set_active(
+                json_dict['system_warning_show_flag'],
+            )
+        if version >= 1003079:  # v1.3.079
+            self.main_win_obj.show_operation_error_checkbutton.set_active(
+                json_dict['operation_error_show_flag'],
+            )
+            self.main_win_obj.show_operation_warning_checkbutton.set_active(
+                json_dict['operation_warning_show_flag'],
+            )
+
         if version >= 1000007:  # v1.0.007
             self.system_msg_keep_totals_flag \
             = json_dict['system_msg_keep_totals_flag']
@@ -2007,6 +2061,10 @@ class TartubeApp(Gtk.Application):
         if version >= 5004:     # v0.5.004
             self.ignore_yt_copyright_flag \
             = json_dict['ignore_yt_copyright_flag']
+        if version >= 1003084:  # v1.3.084
+            self.ignore_yt_age_restrict_flag \
+            = json_dict['ignore_yt_age_restrict_flag']            
+        if version >= 5004:     # v0.5.004
             self.ignore_child_process_exit_flag \
             = json_dict['ignore_child_process_exit_flag']
         if version >= 1001077:  # v1.1.077
@@ -2132,8 +2190,11 @@ class TartubeApp(Gtk.Application):
             'close_to_tray_flag': self.close_to_tray_flag,
 
             'results_list_reverse_flag': self.results_list_reverse_flag,
+            
             'system_error_show_flag': self.system_error_show_flag,
             'system_warning_show_flag': self.system_warning_show_flag,
+            'operation_error_show_flag': self.operation_error_show_flag,
+            'operation_warning_show_flag': self.operation_warning_show_flag,
             'system_msg_keep_totals_flag': self.system_msg_keep_totals_flag,
 
             'data_dir': self.data_dir,
@@ -2207,6 +2268,7 @@ class TartubeApp(Gtk.Application):
 
             'ignore_merge_warning_flag': self.ignore_merge_warning_flag,
             'ignore_yt_copyright_flag': self.ignore_yt_copyright_flag,
+            'ignore_yt_age_restrict_flag': self.ignore_yt_age_restrict_flag,
             'ignore_child_process_exit_flag': \
             self.ignore_child_process_exit_flag,
             'ignore_no_annotations_flag': self.ignore_no_annotations_flag,
@@ -9398,10 +9460,21 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_subtitles_flag = True
 
 
+    def set_ignore_yt_age_restrict_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9113 set_ignore_yt_age_restrict_flag')
+
+        if not flag:
+            self.ignore_yt_age_restrict_flag = False
+        else:
+            self.ignore_yt_age_restrict_flag = True
+
+
     def set_ignore_yt_copyright_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 9113 set_ignore_yt_copyright_flag')
+            utils.debug_time('app 9114 set_ignore_yt_copyright_flag')
 
         if not flag:
             self.ignore_yt_copyright_flag = False
@@ -9532,6 +9605,17 @@ class TartubeApp(Gtk.Application):
         self.operation_download_limit = value
 
 
+    def set_operation_error_show_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9230 set_operation_error_show_flag')
+
+        if not flag:
+            self.operation_error_show_flag = False
+        else:
+            self.operation_error_show_flag = True
+
+            
     def set_operation_halted_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -9563,6 +9647,17 @@ class TartubeApp(Gtk.Application):
             self.operation_save_flag = False
         else:
             self.operation_save_flag = True
+
+
+    def set_operation_warning_show_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 9406 set_operation_warning_show_flag')
+
+        if not flag:
+            self.operation_warning_show_flag = False
+        else:
+            self.operation_warning_show_flag = True
 
 
     def set_refresh_moviepy_timeout(self, value):

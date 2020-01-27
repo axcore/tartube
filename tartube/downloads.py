@@ -2961,10 +2961,30 @@ class VideoDownloader(object):
             return True
 
         elif app_obj.ignore_yt_copyright_flag \
-        and re.search(
-            r'This video contains contents from.*copyright grounds',
-            stderr,
-        ):
+        and (
+            re.search(
+                r'This video contains contents from.*copyright grounds',
+                stderr,
+            ) or re.search(
+                r'Sorry about that\.',
+                stderr,
+            )
+        ):            
+            return True
+
+        elif app_obj.ignore_yt_age_restrict_flag \
+        and (
+            re.search(
+                r'ERROR\: Content Warning',
+                stderr,
+            ) or re.search(
+                r'This video may be inappropriate for some users',
+                stderr,
+            ) or re.search(
+                r'Sign in to confirm your age',
+                stderr,
+            )
+        ):            
             return True
 
         elif app_obj.ignore_child_process_exit_flag \

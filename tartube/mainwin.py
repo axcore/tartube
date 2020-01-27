@@ -112,12 +112,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.notebook = None                    # Gtk.Notebook
         self.videos_tab = None                  # Gtk.Box
         self.videos_label = None                # Gtk.Label
-        self.progress_tab = None                # Gkt.Box
+        self.progress_tab = None                # Gtk.Box
         self.progress_label = None              # Gtk.Label
-        self.output_tab = None                  # Gkt.Box
+        self.output_tab = None                  # Gtk.Box
         self.output_label = None                # Gtk.Label
-        self.errors_tab = None                  # Gkt.Box
-        self.errors_label = None                # Gkt.Label
+        self.errors_tab = None                  # Gtk.Box
+        self.errors_label = None                # Gtk.Label
         # (from self.setup_videos_tab)
         self.videos_paned = None                # Gtk.HPaned
         self.video_index_scrolled = None        # Gtk.ScrolledWindow
@@ -125,6 +125,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_treeview = None        # Gtk.TreeView
         self.video_index_treestore = None       # Gtk.TreeStore
         self.video_index_sortmodel = None       # Gtk.TreeModelSort
+        self.video_index_tooltip_column = 2
         self.button_box = None                  # Gtk.VBox
         self.check_media_button = None          # Gtk.Button
         self.download_media_button = None       # Gtk.Button
@@ -148,9 +149,11 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
         self.progress_list_treeview = None      # Gtk.TreeView
         self.progress_list_liststore = None     # Gtk.ListStore
+        self.progress_list_tooltip_column = 2
         self.results_list_scrolled = None       # Gtk.Frame
         self.results_list_treeview = None       # Gtk.TreeView
         self.results_list_liststore = None      # Gtk.ListStore
+        self.results_list_tooltip_column = 1
         self.num_worker_checkbutton = None      # Gtk.CheckButton
         self.num_worker_spinbutton = None       # Gtk.SpinButton
         self.bandwidth_checkbutton = None       # Gtk.CheckButton
@@ -166,8 +169,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.errors_list_scrolled = None        # Gtk.ScrolledWindow
         self.errors_list_treeview = None        # Gtk.TreeView
         self.errors_list_liststore = None       # Gtk.ListStore
-        self.show_error_checkbutton = None      # Gtk.CheckButton
-        self.show_warning_checkbutton = None    # Gtk.CheckButton
+        self.show_system_error_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_warning_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_operation_error_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_operation_warning_checkbutton = None
+                                                # Gtk.CheckButton
         self.error_list_button = None           # Gtk.Button
 
         # (Widgets which must be (de)sensitised during download/update/refresh
@@ -1329,6 +1338,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_treeview = Gtk.TreeView()
         self.progress_list_scrolled.add(self.progress_list_treeview)
         self.progress_list_treeview.set_can_focus(False)
+        # (Tooltips are initially enabled, and disabled by a call to
+        #   self.disable_tooltips() after the config file is loaded, if
+        #   necessary)
+        self.progress_list_treeview.set_tooltip_column(
+            self.progress_list_tooltip_column,      
+        )           
         # (Detect right-clicks on the treeview)
         self.progress_list_treeview.connect(
             'button-press-event',
@@ -1337,8 +1352,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         for i, column_title in enumerate(
             [
-                'hide', 'hide', '', 'Source', '#', 'Status', 'Incoming file',
-                'Ext', '%', 'Speed', 'ETA', 'Size',
+                'hide', 'hide', 'hide', '', 'Source', '#', 'Status',
+                'Incoming file', 'Ext', '%', 'Speed', 'ETA', 'Size',
             ]
         ):
             if not column_title:
@@ -1365,7 +1380,7 @@ class MainWin(Gtk.ApplicationWindow):
                     column_text.set_visible(False)
 
         self.progress_list_liststore = Gtk.ListStore(
-            int, int,
+            int, int, str,
             GdkPixbuf.Pixbuf,
             str, str, str, str, str, str, str, str, str,
         )
@@ -1383,6 +1398,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.results_list_treeview = Gtk.TreeView()
         self.results_list_scrolled.add(self.results_list_treeview)
         self.results_list_treeview.set_can_focus(False)
+        # (Tooltips are initially enabled, and disabled by a call to
+        #   self.disable_tooltips() after the config file is loaded, if
+        #   necessary)
+        self.results_list_treeview.set_tooltip_column(
+            self.results_list_tooltip_column,
+        )         
         # (Detect right-clicks on the treeview)
         self.results_list_treeview.connect(
             'button-press-event',
@@ -1391,8 +1412,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         for i, column_title in enumerate(
             [
-                'hide', '', 'New videos', 'Duration', 'Size', 'Date', 'File',
-                '', 'Downloaded to',
+                'hide', 'hide', '', 'New videos', 'Duration', 'Size', 'Date',
+                'File', '', 'Downloaded to',
             ]
         ):
             if not column_title:
@@ -1429,7 +1450,7 @@ class MainWin(Gtk.ApplicationWindow):
                     column_text.set_visible(False)
 
         self.results_list_liststore = Gtk.ListStore(
-            int,
+            int, str,
             GdkPixbuf.Pixbuf,
             str, str, str, str,
             bool,
@@ -1610,31 +1631,62 @@ class MainWin(Gtk.ApplicationWindow):
         vbox.pack_start(hbox, False, False, self.spacing_size)
         hbox.set_border_width(self.spacing_size)
 
-        self.show_error_checkbutton = Gtk.CheckButton()
-        hbox.pack_start(self.show_error_checkbutton, False, False, 0)
-        self.show_error_checkbutton.set_label('Show system errors')
-        self.show_error_checkbutton.set_active(
+        self.show_system_error_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.show_system_error_checkbutton, False, False, 0)
+        self.show_system_error_checkbutton.set_label('Show system errors')
+        self.show_system_error_checkbutton.set_active(
             self.app_obj.system_error_show_flag,
         )
-        self.show_error_checkbutton.connect(
+        self.show_system_error_checkbutton.connect(
             'toggled',
-            self.on_show_error_checkbutton_changed,
+            self.on_system_error_checkbutton_changed,
         )
 
-        self.show_warning_checkbutton = Gtk.CheckButton()
-        hbox.pack_start(self.show_warning_checkbutton, False, False, 0)
-        self.show_warning_checkbutton.set_label('Show system warnings')
-        self.show_warning_checkbutton.set_active(
+        self.show_system_warning_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.show_system_warning_checkbutton, False, False, 0)
+        self.show_system_warning_checkbutton.set_label('Show system warnings')
+        self.show_system_warning_checkbutton.set_active(
             self.app_obj.system_warning_show_flag,
         )
-        self.show_warning_checkbutton.connect(
+        self.show_system_warning_checkbutton.connect(
             'toggled',
-            self.on_show_warning_checkbutton_changed,
+            self.on_system_warning_checkbutton_changed,
+        )
+
+        self.show_operation_error_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(self.show_operation_error_checkbutton, False, False, 0)
+        self.show_operation_error_checkbutton.set_label(
+            'Show all other errors',
+        )
+        self.show_operation_error_checkbutton.set_active(
+            self.app_obj.operation_error_show_flag,
+        )
+        self.show_operation_error_checkbutton.connect(
+            'toggled',
+            self.on_operation_error_checkbutton_changed,
+        )
+
+        self.show_operation_warning_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(
+            self.show_operation_warning_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.show_operation_warning_checkbutton.set_label(
+            'Show all other warnings',
+        )
+        self.show_operation_warning_checkbutton.set_active(
+            self.app_obj.operation_warning_show_flag,
+        )
+        self.show_operation_warning_checkbutton.connect(
+            'toggled',
+            self.on_operation_warning_checkbutton_changed,
         )
 
         self.error_list_button = Gtk.Button()
         hbox.pack_end(self.error_list_button, False, False, 0)
-        self.error_list_button.set_label('Clear the list')
+        self.error_list_button.set_label('Clear list')
         self.error_list_button.connect(
             'clicked',
             self.on_errors_list_clear,
@@ -2094,13 +2146,28 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 2039 enable_tooltips')
 
-        self.video_index_treeview.set_tooltip_column(2)
-        if update_catalogue_flag:
+        # Update the Video Index
+        self.video_index_treeview.set_tooltip_column(
+            self.video_index_tooltip_column,
+        )
+
+        # Update the Video Catalogue, if a playlist/channel/folder is selected
+        if update_catalogue_flag and self.video_index_current:
             self.video_catalogue_redraw_all(
                 self.video_index_current,
                 self.catalogue_toolbar_current_page,
             )
 
+        # Update the Progress List
+        self.progress_list_treeview.set_tooltip_column(
+             self.progress_list_tooltip_column,    
+        )        
+
+        # Update the Results List
+        self.results_list_treeview.set_tooltip_column(
+            self.results_list_tooltip_column,
+        )         
+        
 
     def disable_tooltips(self, update_catalogue_flag=False):
 
@@ -2119,12 +2186,22 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 2064 disable_tooltips')
 
+        # Update the Video Index. Using a dummy column makes the tooltips
+        #   invisible
         self.video_index_treeview.set_tooltip_column(-1)
-        if update_catalogue_flag:
+
+        # Update the Video Catalogue, if a playlist/channel/folder is selected
+        if update_catalogue_flag and self.video_index_current:
             self.video_catalogue_redraw_all(
                 self.video_index_current,
                 self.catalogue_toolbar_current_page,
             )
+
+        # Update the Progress List
+        self.progress_list_treeview.set_tooltip_column(-1)        
+
+        # Update the Results List
+        self.results_list_treeview.set_tooltip_column(-1)  
 
 
     def enable_dl_all_buttons(self):
@@ -3900,7 +3977,9 @@ class MainWin(Gtk.ApplicationWindow):
         # (Tooltips are initially enabled, and disabled by a call to
         #   self.disable_tooltips() after the config file is loaded, if
         #   necessary)
-        self.video_index_treeview.set_tooltip_column(2)
+        self.video_index_treeview.set_tooltip_column(
+            self.video_index_tooltip_column,
+        )
         # (Detect right-clicks on the treeview)
         self.video_index_treeview.connect(
             'button-press-event',
@@ -5234,7 +5313,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Reset widgets
         self.progress_list_liststore = Gtk.ListStore(
-            int, int,
+            int, int, str,
             GdkPixbuf.Pixbuf,
             str, str, str, str, str, str, str, str, str,
         )
@@ -5317,8 +5396,16 @@ class MainWin(Gtk.ApplicationWindow):
         # Prepare the new row in the treeview
         row_list = []
 
-        row_list.append(item_id)                    # Hidden
-        row_list.append(media_data_obj.dbid)        # Hidden
+        row_list.append(item_id)                                # Hidden
+        row_list.append(media_data_obj.dbid)                    # Hidden
+        row_list.append(                                        # Hidden
+            html.escape(
+                media_data_obj.fetch_tooltip_text(
+                    self.app_obj,
+                    self.tooltip_max_len,            
+                ),
+            ),
+        )
         row_list.append(pixbuf)
         row_list.append(
             utils.shorten_string(media_data_obj.name, self.string_max_len),
@@ -5429,9 +5516,9 @@ class MainWin(Gtk.ApplicationWindow):
             tree_path = Gtk.TreePath(self.progress_list_row_dict[item_id])
 
             # Update statistics displayed in that row
-            # (Columns 0, 1, 2 and 3 are not modified, once the row has been
-            #   added to the treeview)
-            column = 3
+            # (Columns 0-4 are not modified, once the row has been added to the
+            #   treeview)
+            column = 4
 
             for key in (
                 'playlist_index',
@@ -5495,7 +5582,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Reset widgets
         self.results_list_liststore = Gtk.ListStore(
-            int,
+            int, str,
             GdkPixbuf.Pixbuf,
             str, str, str, str,
             bool,
@@ -5569,7 +5656,15 @@ class MainWin(Gtk.ApplicationWindow):
         row_list = []
 
         # Set the row's initial contents
-        row_list.append(video_obj.dbid)
+        row_list.append(video_obj.dbid)                         # Hidden
+        row_list.append(                                        # Hidden
+            html.escape(
+                video_obj.fetch_tooltip_text(
+                    self.app_obj,
+                    self.tooltip_max_len,            
+                ),
+            ),
+        )
         row_list.append(pixbuf)
         row_list.append(
             utils.shorten_string(video_obj.nickname, self.string_max_len),
@@ -5726,7 +5821,7 @@ class MainWin(Gtk.ApplicationWindow):
 
                 self.results_list_liststore.set(
                     row_iter,
-                    2,
+                    3,
                     utils.shorten_string(
                         video_obj.nickname,
                         self.string_max_len,
@@ -5736,7 +5831,7 @@ class MainWin(Gtk.ApplicationWindow):
                 if video_obj.duration is not None:
                     self.results_list_liststore.set(
                         row_iter,
-                        3,
+                        4,
                         utils.convert_seconds_to_string(
                             video_obj.duration,
                         ),
@@ -5745,23 +5840,23 @@ class MainWin(Gtk.ApplicationWindow):
                 if video_obj.file_size:
                     self.results_list_liststore.set(
                         row_iter,
-                        4,
+                        5,
                         video_obj.get_file_size_string(),
                     )
 
                 if video_obj.upload_time:
                     self.results_list_liststore.set(
                         row_iter,
-                        5,
+                        6,
                         video_obj.get_upload_date_string(),
                     )
 
-                self.results_list_liststore.set(row_iter, 6, video_obj.dl_flag)
-                self.results_list_liststore.set(row_iter, 7, pixbuf)
+                self.results_list_liststore.set(row_iter, 7, video_obj.dl_flag)
+                self.results_list_liststore.set(row_iter, 8, pixbuf)
 
                 self.results_list_liststore.set(
                     row_iter,
-                    8,
+                    9,
                     utils.shorten_string(
                         video_obj.parent_obj.name,
                         self.string_max_len,
@@ -6224,8 +6319,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called by downloads.DownloadWorker.run().
 
-        When a download job generates error and/or warning messages, display
-        this function is called to display them in the Errors List.
+        When a download job generates error and/or warning messages, this
+        function is called to display them in the Errors List.
 
         Args:
 
@@ -6243,79 +6338,89 @@ class MainWin(Gtk.ApplicationWindow):
         utc = datetime.datetime.utcfromtimestamp(time.time())
         time_string = str(utc.strftime('%H:%M:%S'))
 
-        for msg in media_data_obj.error_list:
+        if self.app_obj.operation_error_show_flag:
+            
+            for msg in media_data_obj.error_list:
 
-            # Prepare the icons
-            pixbuf = self.pixbuf_dict['error_small']
+                # Prepare the icons
+                pixbuf = self.pixbuf_dict['error_small']
 
-            if isinstance(media_data_obj, media.Video):
-                pixbuf2 = self.pixbuf_dict['video_small']
-            elif isinstance(media_data_obj, media.Channel):
-                pixbuf2 = self.pixbuf_dict['channel_small']
-            elif isinstance(media_data_obj, media.Playlist):
-                pixbuf2 = self.pixbuf_dict['playlist_small']
-            else:
-                return self.app_obj.system_error(
-                    214,
-                    'Errors List add row request failed sanity check',
+                if isinstance(media_data_obj, media.Video):
+                    pixbuf2 = self.pixbuf_dict['video_small']
+                elif isinstance(media_data_obj, media.Channel):
+                    pixbuf2 = self.pixbuf_dict['channel_small']
+                elif isinstance(media_data_obj, media.Playlist):
+                    pixbuf2 = self.pixbuf_dict['playlist_small']
+                else:
+                    return self.app_obj.system_error(
+                        214,
+                        'Errors List add row request failed sanity check',
+                    )
+
+                # Prepare the new row in the treeview
+                row_list = []
+                row_list.append(pixbuf)
+                row_list.append(pixbuf2)
+                row_list.append(time_string)
+                row_list.append(
+                    utils.shorten_string(
+                        media_data_obj.name,
+                        self.string_max_len,
+                    ),
                 )
+                row_list.append(utils.tidy_up_long_string(msg))
 
-            # Prepare the new row in the treeview
-            row_list = []
-            row_list.append(pixbuf)
-            row_list.append(pixbuf2)
-            row_list.append(time_string)
-            row_list.append(
-                utils.shorten_string(media_data_obj.name, self.string_max_len),
-            )
-            row_list.append(utils.tidy_up_long_string(msg))
+                # Create a new row in the treeview. Doing the .show_all() first
+                #   prevents a Gtk error (for unknown reasons)
+                self.errors_list_treeview.show_all()
+                self.errors_list_liststore.append(row_list)
 
-            # Create a new row in the treeview. Doing the .show_all() first
-            #   prevents a Gtk error (for unknown reasons)
-            self.errors_list_treeview.show_all()
-            self.errors_list_liststore.append(row_list)
+                # (Don't update the Errors/Warnings tab label if it's the
+                #   visible tab)
+                if self.visible_tab_num != 3:
+                    self.tab_error_count += 1
 
-            # (Don't update the Errors/Warnings tab label if it's the visible
-            #   tab)
-            if self.visible_tab_num != 3:
-                self.tab_error_count += 1
+        if self.app_obj.operation_warning_show_flag:
+            
+            for msg in media_data_obj.warning_list:
 
-        for msg in media_data_obj.warning_list:
+                # Prepare the icons
+                pixbuf = self.pixbuf_dict['warning_small']
 
-            # Prepare the icons
-            pixbuf = self.pixbuf_dict['warning_small']
+                if isinstance(media_data_obj, media.Video):
+                    pixbuf2 = self.pixbuf_dict['video_small']
+                elif isinstance(media_data_obj, media.Channel):
+                    pixbuf2 = self.pixbuf_dict['channel_small']
+                elif isinstance(media_data_obj, media.Playlist):
+                    pixbuf2 = self.pixbuf_dict['playlist_small']
+                else:
+                    return self.app_obj.system_error(
+                        215,
+                        'Errors List add row request failed sanity check',
+                    )
 
-            if isinstance(media_data_obj, media.Video):
-                pixbuf2 = self.pixbuf_dict['video_small']
-            elif isinstance(media_data_obj, media.Channel):
-                pixbuf2 = self.pixbuf_dict['channel_small']
-            elif isinstance(media_data_obj, media.Playlist):
-                pixbuf2 = self.pixbuf_dict['playlist_small']
-            else:
-                return self.app_obj.system_error(
-                    215,
-                    'Errors List add row request failed sanity check',
+                # Prepare the new row in the treeview
+                row_list = []
+                row_list.append(pixbuf)
+                row_list.append(pixbuf2)
+                row_list.append(time_string)
+                row_list.append(
+                    utils.shorten_string(
+                        media_data_obj.name,
+                        self.string_max_len,
+                    ),
                 )
+                row_list.append(utils.tidy_up_long_string(msg))
 
-            # Prepare the new row in the treeview
-            row_list = []
-            row_list.append(pixbuf)
-            row_list.append(pixbuf2)
-            row_list.append(time_string)
-            row_list.append(
-                utils.shorten_string(media_data_obj.name, self.string_max_len),
-            )
-            row_list.append(utils.tidy_up_long_string(msg))
+                # Create a new row in the treeview. Doing the .show_all() first
+                #   prevents a Gtk error (for unknown reasons)
+                self.errors_list_treeview.show_all()
+                self.errors_list_liststore.append(row_list)
 
-            # Create a new row in the treeview. Doing the .show_all() first
-            #   prevents a Gtk error (for unknown reasons)
-            self.errors_list_treeview.show_all()
-            self.errors_list_liststore.append(row_list)
-
-            # (Don't update the Errors/Warnings tab label if it's the visible
-            #   tab)
-            if self.visible_tab_num != 3:
-                self.tab_warning_count += 1
+                # (Don't update the Errors/Warnings tab label if it's the
+                #   visible tab)
+                if self.visible_tab_num != 3:
+                    self.tab_warning_count += 1
 
         # Update the tab's label to show the number of warnings/errors visible
         if self.visible_tab_num != 3:
@@ -6341,6 +6446,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 6093 errors_list_add_system_error')
+
+        if not self.app_obj.system_error_show_flag:
+            # Do nothing
+            return False
 
         # Prepare the icons
         pixbuf = self.pixbuf_dict['error_small']
@@ -6393,6 +6502,10 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 6144 errors_list_add_system_warning')
 
+        if not self.app_obj.system_warning_show_flag:
+            # Do nothing
+            return False
+
         # Prepare the icons
         pixbuf = self.pixbuf_dict['warning_small']
         pixbuf2 = self.pixbuf_dict['system_warning_small']
@@ -6408,15 +6521,6 @@ class MainWin(Gtk.ApplicationWindow):
         row_list.append(
             utils.upper_case_first(__main__.__packagename__) + ' warning',
         )
-#        row_list.append(
-#            utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg) \
-#            + '\n\n' + utils.tidy_up_long_string(
-#                'To disable system warning messages, click Edit >' \
-#                + ' System preferences... > Windows, and then deselect \'' \
-#                + 'Show system warning messages in the \'Errors/Warnings\'' \
-#                + ' tab\'',
-#            ),
-#        )
         row_list.append(
             utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg),
         )
@@ -9151,7 +9255,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
-    def on_show_error_checkbutton_changed(self, checkbutton):
+    def on_system_error_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_errors_tab().
 
@@ -9164,12 +9268,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8694 on_show_error_checkbutton_changed')
+            utils.debug_time('mwn 8694 on_system_error_checkbutton_changed')
 
         self.app_obj.set_system_error_show_flag(checkbutton.get_active())
 
 
-    def on_show_warning_checkbutton_changed(self, checkbutton):
+    def on_system_warning_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_errors_tab().
 
@@ -9182,9 +9286,47 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8695 on_show_warning_checkbutton_changed')
+            utils.debug_time('mwn 8695 on_system_warning_checkbutton_changed')
 
         self.app_obj.set_system_warning_show_flag(checkbutton.get_active())
+
+
+    def on_operation_error_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of operation error messages in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 8694 on_operation_error_checkbutton_changed')
+
+        self.app_obj.set_operation_error_show_flag(checkbutton.get_active())
+
+
+    def on_operation_warning_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of operation warning messages in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 8695 on_operation_warning_checkbutton_changed',
+            )
+
+        self.app_obj.set_operation_warning_show_flag(checkbutton.get_active())
 
 
     def on_errors_list_clear(self, button):
@@ -12574,11 +12716,15 @@ class CalendarDialogue(Gtk.Dialog):
 class MountDriveDialogue(Gtk.Dialog):
 
     """Python class handling a dialogue window that asks the user what to do,
-    if the drive containing Tartube's data directory is not mounted.
+    if the drive containing Tartube's data directory is not mounted or is
+    unwriteable.
 
     Args:
 
         main_win_obj (mainwin.MainWin): The parent main window
+
+        unwriteable_flag (bool): True if the data directory is unwriteable;
+            False if the data directory is missing altogether
 
     """
 
@@ -12586,7 +12732,7 @@ class MountDriveDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj):
+    def __init__(self, main_win_obj, unwriteable_flag=False):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 12074 __init__')
@@ -12631,10 +12777,16 @@ class MountDriveDialogue(Gtk.Dialog):
             + '</b>',
         )
 
-        label = Gtk.Label(
-            '...but this ' + folder + ' doesn\'t exist',
-        )
-        grid.attach(label, 0, 2, 1, 1)
+        if not unwriteable_flag:
+            label2 = Gtk.Label(
+                '...but this ' + folder + ' doesn\'t exist',
+            )
+        else:
+            label2 = Gtk.Label(
+                '...but ' + script_name + ' cannot write to this ' + folder,
+            )
+            
+        grid.attach(label2, 0, 2, 1, 1)
 
         separator = Gtk.HSeparator()
         grid.attach(separator, 0, 3, 1, 1)

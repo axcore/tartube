@@ -10,8 +10,8 @@ Works with YouTube, BitChute, and hundreds of other websites
 
 * `1 Introduction`_
 * `2 Why should I use Tartube?`_
-* `3 Quick start guide`_
-* `4 Downloads`_
+* `3 Downloads`_
+* `4 Quick start guide`_
 * `5 Installation`_
 * `6 Getting started`_
 * `7. Frequently-Asked Questions`_
@@ -41,10 +41,20 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 -  **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
 -  **Tartube** is free and open-source software
 
-3 Quick start guide 
+3 Downloads
+===========
+
+Latest version: **v1.3.077 (26 Jan 2019)**
+
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.077/tartube_v1.3.077.tar.gz/download>`__ from Sourceforge
+-  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
+
+4 Quick start guide 
 ===================
 
-3.1 MS Windows
+4.1 MS Windows
 --------------
 
 -  Download, install and run Tartube
@@ -59,7 +69,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 -  Click **All Videos** to see that list
 -  If you want to download the videos, click the **Download all** button
 
-3.2 Linux/BSD
+4.2 Linux/BSD
 ~~~~~~~~~~~~~
 
 -  Download and install `youtube-dl <https://youtube-dl.org/>`__
@@ -74,16 +84,6 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 -  Click **All Videos** to see that list
 -  If you want to download the videos, click the **Download all** button
 
-4 Downloads
-===========
-
-Latest version: **v1.3.077 (26 Jan 2019)**
-
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.077/tartube_v1.3.077.tar.gz/download>`__ from Sourceforge
--  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
-
 5 Installation
 ==============
 
@@ -92,7 +92,7 @@ Latest version: **v1.3.077 (26 Jan 2019)**
 
 MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run Tartube. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
-If you want to use **ffmpeg**, see the section below.
+If you want to use **ffmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_.
 
 **Some users report that Tartube will install but won't run**. This problem should be fixed as of v1.2.0 but, if you still have problems, you can try performing a manual installation. This takes about 10-30 minutes, depending on your internet speed.
 
@@ -189,8 +189,7 @@ When you first start **Tartube**, you will be asked to choose where Tartube shou
 
 Regardless of which location you select, you can change it later, if you need to.
 
--  Click **Edit > System preferences...**
--  Click the **General** tab
+-  Click **Edit > System preferences... > Filesystem > Database**
 -  Check the location of the **Tartube data directory**
 -  If you want to change it, click the **Change** button
 
@@ -225,10 +224,9 @@ On other systems, users can modify Tartube's settings. There are several locatio
 .. image:: screenshots/example2.png
   :alt: Updating youtube-dl
 
--  Click **Edit > System preferences...**
--  Click the **youtube-dl** tab
--  Try changing the setting **'Actual path to use during download/update/refresh operations'**
--  Try changing the setting **'Shell command for update operations'**
+-  Click **Edit > System preferences... > youtube-dl**
+-  Try changing the setting **Actual path to use**
+-  Try changing the setting **Shell command for update operations**
 -  Try the update operation again
 
 6.4 Setting the location of FFmpeg / AVConv
@@ -239,7 +237,7 @@ On other systems, users can modify Tartube's settings. There are several locatio
 6.4.1 On MS Windows
 ~~~~~~~~~~~~~~~~~~~
 
-On MS Windows, the usual methods of FFmpeg installation will not work. You **must** download a MinGW-compatible version of FFmpeg. The quickest way to do this is from the main menu: click **Operations > Install FFmpeg**.
+On MS Windows, the usual methods of FFmpeg installation will not work. You **must** download a MinGW-compatible version of FFmpeg. The quickest way to do this is from **Tartube**'s main menu: click **Operations > Install FFmpeg**.
 
 There is no known method of installing a compatible version of AVConv.
 
@@ -303,8 +301,8 @@ When adding a long list of URLs, containing a mixture of channels, playlists and
 
 By default, **Tartube** converts a link into a channel, when necessary. You can change this behaviour, if you want to.
 
-- In **Tartube**'s main window, click **Edit > System preferences... > Operations**
-- Select one of the buttons listed under **URL flexibility preferences**
+- In **Tartube**'s main window, click **Edit > System preferences... > Operations > URL flexibility**
+- Select one of the behaviours listed here
 
 Unfortunately, there is no way for **Tartube** to distinguish a channel from a playlist. Most video websites don't supply that information.
 
@@ -456,7 +454,7 @@ It doesn't matter which of the two channels you use as the download destination.
 
 If you don't care about keeping videos in separate directories/folders on your filesystem, you can download *all* videos into the **Unsorted videos** folder. Regardless of whether you have added one channel or a thousand, all the videos will be stored in that one place.
 
-- Click **Edit > General download options... > Files**
+- Click **Edit > General download options... > Files > Filesystem**
 - Click the **Download all videos into this folder** button to select it
 - In the combo next to it, select **Unsorted Videos**
 
@@ -467,7 +465,7 @@ Alternatively, you could select **Temporary Videos**. If you do, videos will be 
 
 You can tell **Tartube** to automatically delete videos after some period of time. This is useful if you don't have an infinitely large hard drive.
 
-- Click **Edit > System preferences... > Videos** 
+- Click **Edit > System preferences... > Filesystem > Video Deletion** 
 - Click the **Automatically delete downloaded videos after this many days** button to select it
 - If you want to, change the number of days from 30 to some other value
 
@@ -523,16 +521,16 @@ The remaining steps are simple:
 
 - In **Tartube**'s main window, click **Edit > General download options...**
 
-In the new window, if the **Post-processing** tab is not visible, do this:
+In the new window, if the **Sound only** tab is visible, do this:
 
 - Click the **Sound Only** tab
 - Select the checkbox **Download each video, extract the sound, and then discard the original videos**
 - In the boxes below, select an audio format and an audio quality
 - Click the **OK** button at the bottom of the window to apply your changes
 
-If the **Post-processing** tab *is* visible, do this:
+If the **Post-process** tab is visible, do this:
 
-- Click on the **Post-processing** tab
+- Click on the **Post-process** tab
 - Select the checkbox **Post-process video files to convert them to audio-only files** 
 - If you want, click the button **Keep video file after post-processing it** to select it
 - In the box labelled **Audio format of the post-processed file**, specify what type of audio file you want - **.mp3**, **.wav**, etc 
@@ -549,14 +547,14 @@ A: Tartube is beta software. Please report any problems to the authors at our `G
 
 A: Tartube creates a backup copy of the database, before trying to save a new copy. In the unlikely event of a failure, you can replace the broken database file with the backup file. 
 
-To find Tartube's data directory (folder), click **Edit > System preferences... > General**.
+To find Tartube's data directory (folder), click **Edit > System preferences... > Filesystem > Database**.
 
 - You can discard the broken **tartube.db** file
 - Find the **tartube_TEMP_BU.db** file, and rename it **tartube.db**
 - Restart Tartube
 - Click the **Check All** button. Tartube will find all the last set of videos you downloaded, and add them to its database (without having to re-download them)
 
-Tartube can make more frequent backups of your database file, if you want. See the options in **Edit > System preferences... > Backups**.
+Tartube can make more frequent backups of your database file, if you want. See the options in **Edit > System preferences... > Filesystem > Backups**.
 
 Note that Tartube does not create backup copies of the videos you've downloaded. That is your responsibility!
 
@@ -576,7 +574,7 @@ You can drastically reduce the time this takes by telling Tartube to stop checki
 
 This works well on sites like YouTube, which send information about videos in the order they were uploaded, newest first. We can't guarantee it will work on every site.
 
-- Click **Edit > System preferences... > Performance**
+- Click **Edit > System preferences... > Operations > Time-saving**
 - Select the checkbox **Stop checking/downloading a channel/playlist when it starts sending vidoes we already have**
 - In the **Stop after this many videos (when checking)** box, enter the value 3
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
@@ -584,7 +582,7 @@ This works well on sites like YouTube, which send information about videos in th
 
 **Q: The toolbar is too small! There isn't enough room for all the buttons!**
 
-A: Click **Edit > System preferences... > General > Don't show labels in the toolbar**.
+A: Click **Edit > System preferences... > Windows > Main window > Don't show labels in the toolbar**.
 
 MS Windows users can already see a toolbar without labels.
 
