@@ -46,28 +46,47 @@ import media
 # Functions
 
 
-def add_links_from_clipboard(app_obj, widget):
+def add_links_to_textview_from_clipboard(app_obj, textview, mark_start=None,
+mark_end=None, drag_drop_text=None):
 
     """Called by mainwin.AddVideoDialogue.__init__(),
-    mainwin.AddChannelDialogue.__init__() and
-    mainwin.AddPlaylistDialogue.__init__().
+    .clipboard_timer_callback() and .on_window_drag_data_received().
 
     Function to add valid URLs from the clipboard to a Gtk.TextView, ignoring
-    anything that is not a valid URL.
+    anything that is not a valid URL, and ignoring duplicate URLs.
+
+    If some text is supplied as an argument, uses that text rather than the
+    clipboard text
 
     Args:
 
         app_obj (mainapp.TartubeApp): The main application
 
-        widget (Gtk.Entry or Gtk.TextBuffer): The widget to which valis URLs
-            should be added. If an entry, only the first valid URL is added.
-            If a textbuffer, all valid URLs are added
+        textview (Gtk.TextBuffer): The textview to which valis URLs should be
+            added (unless they are duplicates)
+
+        mark_start, mark_end (Gtk.TextMark): The marks at the start/end of the
+            buffer (using marks rather than iters prevents Gtk errors)
+
+        drag_drop_text (str): If specified, use this text and ignore the
+            clipboard
 
     """
 
-    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-    cliptext = clipboard.wait_for_text()
+    if drag_drop_text is None:
 
+        # Get text from the system clipboard
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        cliptext = clipboard.wait_for_text()
+
+    else:
+
+        # Ignore the clipboard, and use the specified text
+        cliptext = drag_drop_text
+
+    # Eliminate empty lines and any lines that are not valid URLs (we assume
+    #   that it's one URL per line)
+    # At the same time, trim initial/final whitespace
     valid_list = []
     if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
         for line in cliptext.split('\n'):
@@ -78,10 +97,116 @@ def add_links_from_clipboard(app_obj, widget):
                     valid_list.append(line)
 
     if valid_list:
-        if isinstance(widget, Gtk.Entry):
-            widget.set_text(valid_list[0])
-        elif isinstance(widget, Gtk.TextBuffer):
-            widget.set_text(str.join('\n', valid_list))
+
+        # Some URLs survived the cull
+
+        # Get the contents of the buffer
+        if mark_start is None or mark_end is None:
+
+            # No Gtk.TextMarks supplied, we're forced to use iters
+            buffer_text = textview.get_text(
+                textview.get_start_iter(),
+                textview.get_end_iter(),
+                # Don't include hidden characters
+                False,
+            )
+
+        else:
+
+            buffer_text = textview.get_text(
+                textview.get_iter_at_mark(mark_start),
+                textview.get_iter_at_mark(mark_end),
+                False,
+            )
+
+        # Remove any URLs that already exist in the buffer
+        line_list = buffer_text.split('\n')
+        mod_list = []
+        for line in valid_list:
+            if not line in line_list:
+                mod_list.append(line)
+
+        # Add any surviving URLs to the buffer, first adding a newline
+        #   character, if the buffer doesn't end in one
+        if mod_list:
+
+            if not re.search('\n\s*$', buffer_text) and buffer_text != '':
+                mod_list[0] = '\n' + mod_list[0]
+
+            textview.insert(
+                textview.get_end_iter(),
+                str.join('\n', mod_list) + '\n',
+            )
+
+
+def add_links_to_entry_from_clipboard(app_obj, entry, duplicate_text=None,
+drag_drop_text=None, no_modify_flag=None):
+
+    """Called by mainwin.AddChannelDialogue.__init__() and
+    .clipboard_timer_callback(), and the same functions in
+    mainwin.AddPlaylistDialogue.
+
+    Function to add valid URLs from the clipboard to a Gtk.Entry, ignoring
+    anything that is not a valid URL.
+
+    A duplicate URL can be specified, when the dialogue window's clipboard
+    monitoring is turned on; it prevents this function adding the same URL
+    that was added the previous time.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        entry (Gtk.Entry): The entry to which valis URLs should be added.
+            Only the first valid URL is added, replacing any previous contents
+            (unless the URL matches the specified duplicate
+
+        duplicate_text (str): If specified, ignore the clipboard contents, if
+            it matches this URL
+
+        drag_drop_text (str): If specified, use this text and ignore the
+            clipboard
+
+        no_modify_flag (bool): If True, the entry is not updated, instead,
+            the URL that would have been added to it is merely returned
+
+    Return values:
+
+        The URL added to the entry (or that would have been added to the entry)
+        or None if no valid and non-duplicate URL was found in the clipboard
+
+    """
+
+    if drag_drop_text is None:
+
+        # Get text from the system clipboard
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        cliptext = clipboard.wait_for_text()
+
+    else:
+
+        # Ignore the clipboard, and use the specified text
+        cliptext = drag_drop_text
+
+    # Eliminate empty lines and any lines that are not valid URLs (we assume
+    #   that it's one URL per line)
+    # Use the first valid line that doesn't match the duplicate (if specified)
+    if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
+
+        for line in cliptext.split('\n'):
+            if check_url(line):
+
+                line = strip_whitespace(line)
+                if re.search('\S', line) \
+                and (duplicate_text is None or line != duplicate_text):
+
+                    if not no_modify_flag:
+                        entry.set_text(line)
+
+                    return line
+
+    # No valid and non-duplicate URL found
+    return None
 
 
 def check_url(url):
@@ -103,7 +228,16 @@ def check_url(url):
     prepared_request = requests.models.PreparedRequest()
     try:
         prepared_request.prepare_url(url, None)
-        return True
+
+        # The requests module allows a lot of URLs that are definitely not of
+        #   interest to us
+        # This filter seems to catch most of the gibberish (although it's not
+        #   perfect)
+        if re.search('^\S+\.\S', url) \
+        or re.search('localhost', url):
+            return True
+        else:
+            return False
     except:
         return False
 
@@ -391,6 +525,48 @@ def disk_get_free_space(path, bytes_flag=False):
         return int(free_bytes / 1000000)
     else:
         return free_bytes
+
+
+def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
+
+    """Can be called by anything.
+
+    mainapp.TartubeApp.media_name_dict stores the names of all media.Channel,
+    media.Playlist and media.Folder objects as keys.
+
+    old_name is the name of an existing media data object. This function
+    slightly modifies the name, converting 'my_name' into 'my_name_N', where N
+    is the smallest positive integer for which the name is available.
+
+    To preclude any possibility of infinite loops, the function will give up
+    after max_value attempts.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        old_name (str): The name which is already in use by a media data object
+
+        min_value (str): The first name to try. 2 by default, so the first
+            name checked will be 'my_name_2'
+
+        max_value (int): When to give up. 9999 by default, meaning that this
+            function will try everything up to 'my_name_9999' before giving up
+
+    Return values:
+
+        None on failure, the new name on success
+
+    """
+
+    for n in range (min_value, max_value):
+
+        new_name = old_name + '_'  + str(n)
+        if not new_name in app_obj.media_name_dict:
+            return new_name
+
+    # Failure
+    return None
 
 
 def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):

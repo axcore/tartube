@@ -27,6 +27,13 @@
 # Import other modules
 import os
 import sys
+import importlib.util
+
+
+# Add module directory to path to prevent import issues
+spec = importlib.util.find_spec('tartube')
+if spec is not None:
+    sys.path.append(os.path.abspath(os.path.dirname(spec.origin)))
 
 
 # Import our modules
@@ -35,11 +42,11 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '1.3.086'
-__date__ = '27 Jan 2020'
+__version__ = '1.4.0'
+__date__ = '2 Feb 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
-Copyright \xc2\xa9 2019-2020 A S Lewis.
+Copyright \xa9 2019-2020 A S Lewis.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

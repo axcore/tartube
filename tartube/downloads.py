@@ -49,7 +49,7 @@ import options
 import utils
 
 
-# !!! Debugging flag
+# Debugging flag (calls utils.debug_time at the start of every function)
 DEBUG_FUNC_FLAG = False
 
 
@@ -152,6 +152,12 @@ class DownloadManager(threading.Thread):
         #   objects which have been allocated to a worker)
         self.job_count = 0
 
+        # On-going counts of how many videos have been downloaded (real or
+        #   simulated), and how much disk space has been consumed (in bytes),
+        #   so that the operation can be auto-stopped, if required
+        self.total_video_count = 0
+        self.total_size_count = 0
+
         # If mainapp.TartubeApp.operation_convert_mode is set to any value
         #   other than 'disable', then a media.Video object whose URL
         #   represents a channel/playlist is converted into multiple new
@@ -228,6 +234,16 @@ class DownloadManager(threading.Thread):
                     + str(available_count) + ', total: ' \
                     + str(total_count),
                 )
+
+            # Auto-stop the download operation, if required
+            if self.app_obj.autostop_time_flag:
+
+                # Calculate the current time limit, in seconds
+                time_limit = self.app_obj.autostop_time_value \
+                * formats.TIME_METRIC_DICT[self.app_obj.autostop_time_unit]
+
+                if (time.time() - self.start_time) > time_limit:
+                    break
 
             # Fetch information about the next media data object to be
             #   downloaded
@@ -559,6 +575,54 @@ class DownloadManager(threading.Thread):
             self.doomed_video_list.append(video_obj)
 
 
+    def register_video(self):
+
+        """Called by VideoDownloader.confirm_new_video(), when a video is
+        downloaded, or by .confirm_sim_video(), when a simulated download finds
+        a new video.
+
+        This function adds the new video to its ongoing total and, if a limit
+        has been reached, stops the download operation.
+
+        """
+
+        self.total_video_count += 1
+
+        if self.app_obj.autostop_videos_flag \
+        and self.total_video_count >= self.app_obj.autostop_videos_value:
+            self.stop_download_operation()
+
+
+    def register_video_size(self, size=None):
+
+        """Called by mainapp.TartubeApp.update_video_when_file_found().
+
+        Called with the size of a video that's just been downloaded. This
+        function adds the size to its ongoing total and, if a limit has been
+        reached, stops the download operation.
+
+        Args:
+
+            size (int): The size of the downloaded video (in bytes)
+
+        """
+
+        # (In case the filesystem didn't detect the file size, for whatever
+        #   reason, we'll check for a None value)
+        if size is not None:
+
+            self.total_size_count += size
+
+            if self.app_obj.autostop_size_flag:
+
+                # Calculate the current limit
+                limit = self.app_obj.autostop_size_value \
+                * formats.FILESIZE_METRIC_DICT[self.app_obj.autostop_size_unit]
+
+                if self.total_size_count >= limit:
+                    self.stop_download_operation()
+
+
     def remove_worker(self, worker_obj):
 
         """Called by self.run().
@@ -844,7 +908,7 @@ class DownloadWorker(threading.Thread):
     # Callback class methods
 
 
-    def data_callback(self, dl_stat_dict):
+    def data_callback(self, dl_stat_dict, last_flag=False):
 
         """Called by downloads.VideoDownloader.do_download() and
         .last_data_callback().
@@ -859,8 +923,11 @@ class DownloadWorker(threading.Thread):
 
         Args:
 
-            dl_stat_dict (dictionary): The dictionary of statistics described
-                above
+            dl_stat_dict (dict): The dictionary of statistics described above
+
+            last_flag (bool): True when called by .last_data_callback(),
+                meaning that the VideoDownloader object has finished, and is
+                sending this function the final set of statistics
 
         """
 
@@ -873,6 +940,7 @@ class DownloadWorker(threading.Thread):
             app_obj.main_win_obj.progress_list_receive_dl_stats,
             self.download_item_obj,
             dl_stat_dict,
+            last_flag,
         )
 
 
@@ -1712,11 +1780,13 @@ class VideoDownloader(object):
 
         elif self.child_process.returncode > 0:
             self.set_return_code(self.ERROR)
-            self.download_item_obj.media_data_obj.set_error(
-                'Child process exited with non-zero code: {}'.format(
-                    self.child_process.returncode,
+
+            if not app_obj.ignore_child_process_exit_flag:
+                self.download_item_obj.media_data_obj.set_error(
+                    'Child process exited with non-zero code: {}'.format(
+                        self.child_process.returncode,
+                    )
                 )
-            )
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -1895,6 +1965,10 @@ class VideoDownloader(object):
                 options_manager_obj.options_dict['keep_annotations'],
                 options_manager_obj.options_dict['keep_thumbnail'],
             )
+
+            # Register the download with DownloadManager, so that download
+            #   limits can be applied, if required
+            self.download_manager_obj.register_video()
 
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
@@ -2144,10 +2218,12 @@ class VideoDownloader(object):
                 video_obj = media_data_obj.find_matching_video(app_obj, name)
 
         new_flag = False
+        update_results_flag = False
         if not video_obj:
 
             # No matching media.Video object found, so create a new one
             new_flag = True
+            update_results_flag = True
 
             if self.url_is_not_video_flag:
 
@@ -2216,7 +2292,8 @@ class VideoDownloader(object):
             if video_obj.file_dir \
             and video_obj.name != app_obj.default_video_name:
 
-                # This video applies towards the limit (if any) specified by
+                # This video must not be displayed in the Results List, and
+                #   does counts towards the limit (if any) specified by
                 #   mainapp.TartubeApp.operation_check_limit
                 self.video_limit_count += 1
 
@@ -2230,6 +2307,12 @@ class VideoDownloader(object):
                     # Limit reached. When we reach the end of this function,
                     #   stop checking videos in this channel playlist
                     stop_flag = True
+
+            else:
+                # This video must be displayed in the Results List, and counts
+                #   towards the limit (if any) specified by
+                #   mainapp.TartubeApp.autostop_videos_value
+                update_results_flag = True
 
             # If the 'Add videos' button was used, the path/filename/extension
             #   won't be set yet
@@ -2352,9 +2435,10 @@ class VideoDownloader(object):
                 except:
                     pass
 
-        # If a new media.Video object was created, add a line to the Results
-        #   List, as well as updating the Video Catalogue
-        if new_flag:
+        # If a new media.Video object was created (or if a video whose name is
+        #   unknown, now has a name), add a line to the Results List, as well
+        #   as updating the Video Catalogue
+        if update_results_flag:
 
             GObject.timeout_add(
                 0,
@@ -2388,6 +2472,13 @@ class VideoDownloader(object):
 
             if (app_obj.ytdl_write_stdout_flag):
                 print(msg)
+
+        # If a new media.Video object was created (or if a video whose name is
+        #   unknown, now has a name), register the simulated download with
+        #   DownloadManager, so that download limits can be applied, if
+        #   required
+        if update_results_flag:
+            self.download_manager_obj.register_video()
 
         # Stop checking videos in this channel/playlist, if a limit has been
         #   reached
@@ -2427,6 +2518,14 @@ class VideoDownloader(object):
         # Decide on a name for the new channel/playlist, e.g. 'channel_1' or
         #   'playlist_4'. The name must not already be in use. The user can
         #   customise the name when they're ready
+        name = utils.find_available_name(
+            app_obj,
+            # # e.g. 'channel'
+            app_obj.operation_convert_mode,
+            # Allow 'channel_1', if available
+            1,
+        )
+
         # (Prevent any possibility of an infinite loop by giving up after
         #   thousands of attempts)
         name = None
@@ -2956,61 +3055,89 @@ class VideoDownloader(object):
 
         app_obj = self.download_manager_obj.app_obj
 
-        if app_obj.ignore_merge_warning_flag \
-        and re.search(r'Requested formats are incompatible for merge', stderr):
-            return True
-
-        elif app_obj.ignore_yt_copyright_flag \
-        and (
-            re.search(
-                r'This video contains contents from.*copyright grounds',
-                stderr,
-            ) or re.search(
-                r'Sorry about that\.',
+        if (
+            app_obj.ignore_http_404_error_flag \
+            and re.search(
+                r'unable to download video data\: HTTP Error 404',
                 stderr,
             )
-        ):            
-            return True
-
-        elif app_obj.ignore_yt_age_restrict_flag \
-        and (
-            re.search(
-                r'ERROR\: Content Warning',
-                stderr,
-            ) or re.search(
-                r'This video may be inappropriate for some users',
-                stderr,
-            ) or re.search(
-                r'Sign in to confirm your age',
+        ) or (
+            app_obj.ignore_data_block_error_flag \
+            and re.search(r'Did not get any data blocks', stderr)
+        ) or (
+            app_obj.ignore_merge_warning_flag \
+            and re.search(
+                r'Requested formats are incompatible for merge',
                 stderr,
             )
-        ):            
-            return True
-
-        elif app_obj.ignore_child_process_exit_flag \
-        and re.search(
-            r'Child process exited with non\-zero code',
-            stderr,
+        ) or (
+            app_obj.ignore_missing_format_error_flag \
+            and re.search(
+                r'No video formats found; please report this issue',
+                stderr,
+            )
+        ) or (
+            app_obj.ignore_no_annotations_flag \
+            and re.search(
+                r'There are no annotations to write',
+                stderr,
+            )
+        ) or (
+            app_obj.ignore_no_subtitles_flag \
+            and re.search(
+                r'video doesn\'t have subtitles',
+                stderr,
+            )
+        ) or (
+            app_obj.ignore_yt_copyright_flag \
+            and (
+                re.search(
+                    r'This video contains content from.*copyright grounds',
+                    stderr,
+                ) or re.search(
+                    r'Sorry about that\.',
+                    stderr,
+                )
+            )
+        ) or (
+            app_obj.ignore_yt_age_restrict_flag \
+            and (
+                re.search(
+                    r'ERROR\: Content Warning',
+                    stderr,
+                ) or re.search(
+                    r'This video may be inappropriate for some users',
+                    stderr,
+                ) or re.search(
+                    r'Sign in to confirm your age',
+                    stderr,
+                )
+            )
+        ) or (
+            app_obj.ignore_yt_uploader_deleted_flag \
+            and (
+                re.search(
+                    r'The uploader has not made this video available',
+                    stderr,
+                )
+            )
         ):
+            # This message is ignorable
             return True
 
-        elif app_obj.ignore_no_annotations_flag \
-        and re.search(
-            r'There are no annotations to write',
-            stderr,
-        ):
-            return True
+        # Check the custom list of messages
+        for item in app_obj.ignore_custom_msg_list:
+            if (
+                (not app_obj.ignore_custom_regex_flag) \
+                and stderr.find(item) > -1
+            ) or (
+                app_obj.ignore_custom_regex_flag and re.search(item, stderr)
+            ):
+                # This message is ignorable
+                return True
 
-        elif app_obj.ignore_no_subtitles_flag \
-        and re.search(
-            r'video doesn\'t have subtitles',
-            stderr,
-        ):
-            return True
-
-        else:
-            # Not ignorable
-            return False
+        # This message is not ignorable
+        return False
 
 
     def is_warning(self, stderr):
@@ -3087,7 +3214,8 @@ class VideoDownloader(object):
         dl_stat_dict['speed'] = ''
         dl_stat_dict['filesize'] = ''
 
-        self.download_worker_obj.data_callback(dl_stat_dict)
+        # The True argument shows that this function is the caller
+        self.download_worker_obj.data_callback(dl_stat_dict, True)
 
 
     def set_return_code(self, code):

@@ -1228,9 +1228,9 @@ class Video(GenericMedia):
                 text += 'Playlist: '
             else:
                 text += 'Folder: '
-                
+
             text += self.parent_obj.name + '\n\n'
-            
+
         text += 'Source:\n'
         if self.source is None:
             text += ' <unknown>'

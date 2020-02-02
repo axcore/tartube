@@ -246,7 +246,9 @@ class OptionsManager(object):
             'ass/srt/best'
 
         subs_lang (str): Language of the subtitles file to download. Requires
-            the 'write_subs' option
+            the 'write_subs' option. Can not be set directly by the user;
+            instead, OptionsParser.parse() converts the option 'subs_lang_list'
+            to a string, and sets this option to that string
 
     AUTHENTIFICATION OPTIONS
 
@@ -308,13 +310,13 @@ class OptionsManager(object):
 
         [used to build the 'save_path' option]
 
-        output_format (int): Option in the range 0-5, which is converted into
+        output_format (int): Option in the range 0-9, which is converted into
             a youtube-dl output template using
-            formats.FILE_OUTPUT_CONVERT_DICT. If the value is 3, then the
+            formats.FILE_OUTPUT_CONVERT_DICT. If the value is 0, then the
             custom 'output_template' is used instead
 
         output_template (str): Can be any output template supported by
-            youtube-dl. Ignored if 'output_format' is not 3
+            youtube-dl. Ignored if 'output_format' is not 0
 
         [used to modify the 'video_format' option]
 
@@ -400,6 +402,9 @@ class OptionsManager(object):
         reject_title_list (list): Skip download for any matching titles (regex
             or caseless sub-string). Each item in the list is passed to
             youtube-dl as a separate --reject-title argument
+
+        subs_lang_list (list): List of language tags which are used to set
+            the 'subs_lang' option
 
     """
 
@@ -519,7 +524,7 @@ class OptionsManager(object):
             'write_auto_subs': False,
             'write_all_subs': False,
             'subs_format': '',
-            'subs_lang': 'en',
+            'subs_lang': '',
             # AUTHENTIFICATION OPTIONS
             'username': '',
             'password': '',
@@ -542,13 +547,8 @@ class OptionsManager(object):
             'prefer_avconv': False,
             'prefer_ffmpeg': False,
             # YOUTUBE-DL-GUI OPTIONS
-            'output_format': 1,
-            'output_template': os.path.abspath(
-                os.path.join(
-                    '%(uploader)s',
-                    '%(title)s.%(ext)s',
-                ),
-            ),
+            'output_format': 2,
+            'output_template': '%(title)s.%(ext)s',
             'second_video_format': '0',
             'third_video_format': '0',
             'max_filesize_unit' : '',
@@ -566,6 +566,7 @@ class OptionsManager(object):
            'use_fixed_folder': None,
            'match_title_list': [],
            'reject_title_list': [],
+           'subs_lang_list': [ 'en' ],
         }
 
 
@@ -733,7 +734,8 @@ class OptionsParser(object):
             OptionHolder('write_all_subs', '--all-subs', False),
             # --sub-format FORMAT
             OptionHolder('subs_format', '--sub-format', ''),
-            # --sub-lang LANGS
+            # --sub-lang LANGS. NB This '--sub-lang' string is not the one
+            #   used as a switch by self.parse()
             OptionHolder('subs_lang', '--sub-lang', '', ['write_subs']),
             # AUTHENTIFICATION OPTIONS
             # -u, --username USERNAME
@@ -784,7 +786,7 @@ class OptionsParser(object):
             # --prefer-ffmpeg
             OptionHolder('prefer_ffmpeg', '--prefer-ffmpeg', False),
             # YOUTUBE-DL-GUI OPTIONS (not given an options.OptionHolder object)
-#           OptionHolder('output_format', '', 1),
+#           OptionHolder('output_format', '', 2),
 #           OptionHolder('output_template', '', ''),
 #           OptionHolder('second_video_format', '', '0'),
 #           OptionHolder('third_video_format', '', '0'),
@@ -803,6 +805,7 @@ class OptionsParser(object):
 #           OptionHolder('use_fixed_folder', '', None),
 #           OptionHolder('match_title_list', '', []),
 #           OptionHolder('reject_title_list', '', []),
+#           OptionHolder('subs_lang_list', '', []),
         ]
 
 
@@ -844,16 +847,6 @@ class OptionsParser(object):
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
         self.build_limit_rate(copy_dict)
-
-        # Reset the 'playlist_start', 'playlist_end' and 'max_downloads'
-        #   options if we're not downloading a video in a playlist
-        if (
-            isinstance(media_data_obj, media.Video) \
-            and not isinstance(media_data_obj.parent_obj, media.Playlist)
-        ) or not isinstance(media_data_obj, media.Playlist):
-            copy_dict['playlist_start'] = 1
-            copy_dict['playlist_end'] = 0
-            copy_dict['max_downloads'] = 0
 
         # Parse basic youtube-dl command line options
         for option_holder_obj in self.option_holder_list:
@@ -904,6 +897,16 @@ class OptionsParser(object):
                 if value != '':
                     options_list.append(option_holder_obj.switch)
                     options_list.append('"' + utils.to_string(value) + '"')
+
+            elif option_holder_obj.name == 'subs_lang_list':
+                # Convert the list to a comma-separated string, that the
+                #   'subs_lang' option can use
+                lang_list = copy_dict[option_holder_obj.name]
+                if lang_list:
+
+                    comma = ','
+                    options_list.append('--sub-lang')
+                    options_list.append(comma.join(lang_list))
 
             # For all other options, just check the value is valid
             elif option_holder_obj.check_requirements(copy_dict):
@@ -1041,7 +1044,7 @@ class OptionsParser(object):
 
         # Set the youtube-dl output template for the video's file
         template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
-        # In the case of copy_dict['output_format'] = 3
+        # In the case of copy_dict['output_format'] = 0
         if template is None:
             template = copy_dict['output_template']
 

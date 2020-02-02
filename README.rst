@@ -44,11 +44,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.3.077 (26 Jan 2019)**
+Latest version: **v1.4.0 (2 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.3.077/install-tartube-1.3.077-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.3.077/tartube_v1.3.077.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.4.0/install-tartube-1.4.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.4.0/install-tartube-1.4.0-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.4.0/tartube_v1.4.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -92,9 +92,14 @@ Latest version: **v1.3.077 (26 Jan 2019)**
 
 MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run Tartube. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
-If you want to use **ffmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_.
+If you want to use **FFmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_. 
 
-**Some users report that Tartube will install but won't run**. This problem should be fixed as of v1.2.0 but, if you still have problems, you can try performing a manual installation. This takes about 10-30 minutes, depending on your internet speed.
+From v1.4, the installer includes a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
+
+5.1.1 Manual installation - MS Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some users report that Tartube will install but won't run. This problem should be fixed as of v1.2.0 but, if you still have problems, you can try performing a manual installation. This takes about 10-30 minutes, depending on your internet speed.
 
 - This section assumes you have a 64-bit computer
 - Download and install MSYS2 from `msys2.org <https://msys2.org>`__. You need the file that looks something like **msys2-x86_64-yyyymmdd.exe**
@@ -153,7 +158,8 @@ Linux/BSD users can use any of the following installation methods.
 -  `Python xdg module <https://pypi.org/project/xdg/>`__ - required if you want to package **Tartube**
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell Tartube about the length of its videos, moviepy can work it out
--  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - see the section below if you want to use FFmpeg or AVConv
+-  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
+-  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 
 5.3.3 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,8 +195,8 @@ When you first start **Tartube**, you will be asked to choose where Tartube shou
 
 Regardless of which location you select, you can change it later, if you need to.
 
--  Click **Edit > System preferences... > Filesystem > Database**
--  Check the location of the **Tartube data directory**
+-  In the main menu, click **File > Change database**
+-  In the new window, check the location of the **Tartube data directory**
 -  If you want to change it, click the **Change** button
 
 6.2 Check youtube-dl is updated
@@ -310,7 +316,7 @@ If your list of URLs contains a mixture of channels and playlists, you can conve
 
 - In **Tartube**'s main window, right-click a channel, and select **Channel actions > Convert to playlist**
 - Alternatively, right-click a playlist, and select **Channel actions > Convert to channel**
-- After converting, you can set a name for the new channel/playlist by right-clicking it, and selecting **Filesystem > Rename default location...**
+- After converting, you can set a name for the new channel/playlist by right-clicking it, and selecting **Filesystem > Rename channel...**
 
 6.9 Adding folders
 ------------------
@@ -545,28 +551,23 @@ A: Tartube is beta software. Please report any problems to the authors at our `G
 
 **Q: After I downloaded some videos, Tartube crashed, and now all my videos are missing!**
 
-A: Tartube creates a backup copy of the database, before trying to save a new copy. In the unlikely event of a failure, you can replace the broken database file with the backup file. 
+A: Tartube creates a backup copy of its database, before trying to save a new copy. In the unlikely event of a failure, you can replace the broken database file with the backup file. 
 
-To find Tartube's data directory (folder), click **Edit > System preferences... > Filesystem > Database**.
-
-- You can discard the broken **tartube.db** file
-- Find the **tartube_TEMP_BU.db** file, and rename it **tartube.db**
-- Restart Tartube
-- Click the **Check All** button. Tartube will find all the last set of videos you downloaded, and add them to its database (without having to re-download them)
+- Open the data directory (folder). If you're not sure where to find Tartube's data directory , you can click **Edit > System preferences... > Filesystem > Database**
+- Make sure **Tartube** is not running. The **Tartube** window is sometimes minimised, and sometimes only visible in the system tray. A good way to make sure is to run Tartube, then close it by clicking **File > Quit**
+- In the data directory is the broken **tartube.db** file. You should rename to something else, in case you want to examine it later
+- In the same directory, you might be able to see a directory called **.backups**
+- If **.backups** is not visible, then it is hidden. (On many Linux/BSD system, pressing **CTRL + H** will reveal hidden folders)
+- Inside the **.backups** directory, you'll find some backup copies of the database file
+- Choose the most recent one, copy it into the directory above, and rename the copy as **tartube.db**, replacing the old broken file
+- Restart **Tartube**
+- Click the **Check All** button. **Tartube** will update its database with any videos you've downloaded that were not in the backup database file
 
 Tartube can make more frequent backups of your database file, if you want. See the options in **Edit > System preferences... > Filesystem > Backups**.
 
 Note that Tartube does not create backup copies of the videos you've downloaded. That is your responsibility!
 
-**Q: I want to convert the video files to audio files!**
-
-A: See `6.19 Converting to audio`_
-
-**Q: I want to see all the videos on a single page, not spread over several pages!**
-
-A: At the bottom of the Tartube window, set the page size to zero, and press ENTER.
-
-**Q: I just want to check for new videos, but it takes so long!**
+**Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!**
 
 A: By default, the underlying **youtube-dl** software checks an entire channel, even if it contains hundreds of videos. 
 
@@ -580,13 +581,40 @@ This works well on sites like YouTube, which send information about videos in th
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
 - Click **OK** to close the window
 
+**Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!**
+
+A: **youtube-dl** can create an archive file especially for the purpose of speeding up downloads, when some of your channels and playlists have no new videos to download, but when others do. 
+
+To enable this functionality, click **Edit > System preferences... > youtube-dl > Allow youtube-dl to create its own archive**. The functionality is enabled by default.
+
+**Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?**
+
+A: This was implemented in v1.4.0. If you installed an earlier version of **Tartube**, you don't need to take any action; **Tartube** can cope with both the old and new file structures.
+
+If you installed an earlier version of **Tartube**, and if you want to move your channels and playlists out of **../tartube-data/downloads**, this is how to do it:
+
+- Open the data directory (folder). If you're not sure where to find Tartube's data directory, you can click **Edit > System preferences... > Filesystem > Database**.
+- Make sure **Tartube** is not running. The **Tartube** window is sometimes minimised, and sometimes only visible in the system tray. A good way to make sure is to run **Tartube**, then close it by clicking **File > Quit**
+- Now open the **downloads** directory
+- Move everything inside that directory into the directory above, e.g. move everything from **../tartube-data/downloads** into **../tartube-data**
+- Delete the empty **downloads** directory
+- You can now restart **Tartube**
+
+**Q: I want to convert the video files to audio files!**
+
+A: See `6.19 Converting to audio`_
+
+**Q: I want to see all the videos on a single page, not spread over several pages!**
+
+A: At the bottom of the Tartube window, set the page size to zero, and press **ENTER**.
+
 **Q: The toolbar is too small! There isn't enough room for all the buttons!**
 
 A: Click **Edit > System preferences... > Windows > Main window > Don't show labels in the toolbar**.
 
 MS Windows users can already see a toolbar without labels.
 
-**Q: Why is the installer so big?**
+**Q: Why is the Windows installer so big?**
 
 Tartube is a Linux application. The installer for MS Windows contains not just Tartube itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
 

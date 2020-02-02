@@ -350,7 +350,12 @@ class UpdateManager(threading.Thread):
                 # If the user has pip installed, rather than pip3, they will by
                 #   now (mid-2019) be seeing a Python 2.7 deprecation warning.
                 #   Ignore that message, if received
-                if not re.search('DEPRECATION', stderr):
+                # If a newer version of pip is available, the user will see a
+                #   'You should consider upgrading' warning. Ignore that too,
+                #   if received
+                if not re.search('DEPRECATION', stderr) \
+                and not re.search('You are using pip version', stderr) \
+                and not re.search('You should consider upgrading', stderr):
                     self.stderr_list.append(stderr)
 
                 # Show command line output in the Output Tab

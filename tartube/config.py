@@ -36,6 +36,7 @@ import formats
 import mainapp
 import mainwin
 import media
+import re
 import utils
 
 
@@ -128,7 +129,7 @@ class GenericConfigWin(Gtk.Window):
         self.notebook.set_scrollable(True)
 
 
-    def add_notebook_tab(self, name, border_width=None):         
+    def add_notebook_tab(self, name, border_width=None):
 
         """Called by various functions in the child edit/preference window.
 
@@ -178,7 +179,7 @@ class GenericConfigWin(Gtk.Window):
         """Called by various functions in the child edit/preference window.
 
         Adds an inner Gtk.Notebook to a tab inside the main Gtk.Notebook.
-        
+
         Args:
 
             grid (Gtk.Grid): The widget to which the notebook is added
@@ -198,13 +199,13 @@ class GenericConfigWin(Gtk.Window):
         return inner_notebook
 
 
-    def add_inner_notebook_tab(self, name, notebook):     
+    def add_inner_notebook_tab(self, name, notebook):
 
         """Called by various functions in the child edit/preference window.
 
         A modified form of self.add_notebook_tab, for tabs to be placd in the
         inner notebook created by a call to self.add_inner_notebook.
-        
+
         Adds a tab to the specified Gtk.Notebook, creating a Gtk.Grid inside
         it, on which the calling function can add more widgets.
 
@@ -884,16 +885,16 @@ class GenericEditWin(GenericConfigWin):
 
         """
 
+        frame = Gtk.Frame()
+        grid.attach(frame, x, y, wid, hei)
+
         scrolled = Gtk.ScrolledWindow()
-        grid.attach(scrolled, x, y, wid, hei)
+        frame.add(scrolled)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
 
-        frame = Gtk.Frame()
-        scrolled.add_with_viewport(frame)
-
         textview = Gtk.TextView()
-        frame.add(textview)
+        scrolled.add(textview)
 
         textbuffer = textview.get_buffer()
 
@@ -930,8 +931,11 @@ class GenericEditWin(GenericConfigWin):
 
         """
 
+        frame = Gtk.Frame()
+        grid.attach(frame, x, y, wid, hei)
+
         scrolled = Gtk.ScrolledWindow()
-        grid.attach(scrolled, x, y, wid, hei)
+        frame.add(scrolled)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
 
@@ -1408,16 +1412,22 @@ class GenericEditWin(GenericConfigWin):
         grid.attach(self.apply_options_button, 0, 1, 1, 1)
         self.apply_options_button.connect(
             'clicked',
-            self.on_button_apply_clicked,
+            self.on_button_apply_options_clicked,
         )
 
         self.edit_button = Gtk.Button('Edit download options')
         grid.attach(self.edit_button, 1, 1, 1, 1)
-        self.edit_button.connect('clicked', self.on_button_edit_clicked)
+        self.edit_button.connect(
+            'clicked',
+            self.on_button_edit_options_clicked,
+        )
 
         self.remove_button = Gtk.Button('Remove download options')
         grid.attach(self.remove_button, 1, 2, 1, 1)
-        self.remove_button.connect('clicked', self.on_button_remove_clicked)
+        self.remove_button.connect(
+            'clicked',
+            self.on_button_remove_options_clicked,
+        )
 
         if self.edit_obj.options_obj:
             self.apply_options_button.set_sensitive(False)
@@ -1426,9 +1436,9 @@ class GenericEditWin(GenericConfigWin):
             self.remove_button.set_sensitive(False)
 
 
-    def on_button_apply_clicked(self, button):
+    def on_button_apply_options_clicked(self, button):
 
-        """Called from callback in self.setup_general_tab().
+        """Called from callback in self.setup_download_options_tab().
 
         Apply download options to the media data object.
 
@@ -1452,9 +1462,9 @@ class GenericEditWin(GenericConfigWin):
         self.remove_options_button.set_sensitive(True)
 
 
-    def on_button_edit_clicked(self, button):
+    def on_button_edit_options_clicked(self, button):
 
-        """Called from callback in self.setup_general_tab().
+        """Called from callback in self.setup_download_options_tab().
 
         Edit download options for the media data object.
 
@@ -1478,9 +1488,9 @@ class GenericEditWin(GenericConfigWin):
         )
 
 
-    def on_button_remove_clicked(self, button):
+    def on_button_remove_options_clicked(self, button):
 
-        """Called from callback in self.setup_general_tab().
+        """Called from callback in self.setup_download_options_tab().
 
         Remove download options from the media data object.
 
@@ -1591,7 +1601,7 @@ class GenericPrefWin(GenericConfigWin):
 
     def add_checkbutton(self, grid, text, set_flag, mod_flag, x, y, wid, hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a Gtk.CheckButton to the tab's Gtk.Grid.
 
@@ -1629,7 +1639,7 @@ class GenericPrefWin(GenericConfigWin):
 
     def add_combo(self, grid, combo_list, active_val, x, y, wid, hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a simple Gtk.ComboBox to the tab's Gtk.Grid.
 
@@ -1679,7 +1689,7 @@ class GenericPrefWin(GenericConfigWin):
 
     def add_entry(self, grid, text, edit_flag, x, y, wid, hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a Gtk.Entry to the tab's Gtk.Grid.
 
@@ -1716,7 +1726,7 @@ class GenericPrefWin(GenericConfigWin):
 
     def add_label(self, grid, text, x, y, wid, hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a Gtk.Label to the tab's Gtk.Grid.
 
@@ -1746,7 +1756,7 @@ class GenericPrefWin(GenericConfigWin):
 
     def add_radiobutton(self, grid, prev_button, text, x, y, wid, hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a Gtk.RadioButton to the tab's Gtk.Grid.
 
@@ -1784,7 +1794,7 @@ class GenericPrefWin(GenericConfigWin):
     def add_spinbutton(self, grid, min_val, max_val, step, val, x, y, wid, \
     hei):
 
-        """Called by various functions in the child edit window.
+        """Called by various functions in the child preference window.
 
         Adds a Gtk.SpinButton to the tab's Gtk.Grid.
 
@@ -1823,6 +1833,47 @@ class GenericPrefWin(GenericConfigWin):
         spinbutton.set_hexpand(False)
 
         return spinbutton
+
+
+    def add_textview(self, grid, contents_list, x, y, wid, hei):
+
+        """Called by various functions in the child preference window.
+
+        Adds a Gtk.TextView to the tab's Gtk.Grid.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which this widget will be placed
+
+            contents_list (list): The initial contents of the textview. Each
+                item in the list is a line in the textview.
+
+            x, y, wid, hei (int): Position on the grid at which the widget is
+                placed
+
+        Returns:
+
+            The textview and textbuffer widgets created
+
+        """
+
+        frame = Gtk.Frame()
+        grid.attach(frame, x, y, wid, hei)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        textview = Gtk.TextView()
+        scrolled.add(textview)
+
+        textbuffer = textview.get_buffer()
+
+        if contents_list:
+            textbuffer.set_text(str.join('\n', contents_list))
+
+        return textview, textbuffer
 
 
     # Callback class methods
@@ -1890,6 +1941,9 @@ class OptionsEditWin(GenericEditWin):
         self.apply_button = None                # Gtk.Button
         self.ok_button = None                   # Gtk.Button
         self.cancel_button = None               # Gtk.Button
+        # The 'embed_subs' option appears in two different places
+        self.embed_checkbutton = None           # Gtk.CheckButton
+        self.embed_checkbutton2 = None          # Gtk.CheckButton
 
 
         # IV list - other
@@ -2034,7 +2088,7 @@ class OptionsEditWin(GenericEditWin):
         if not self.app_obj.simple_options_flag:
             self.setup_post_process_tab()
         else:
-            self.setup_sound_only_tab()            
+            self.setup_sound_only_tab()
         self.setup_subtitles_tab()
         if not self.app_obj.simple_options_flag:
             self.setup_advanced_tab()
@@ -2163,7 +2217,7 @@ class OptionsEditWin(GenericEditWin):
         button3.connect('clicked', self.on_reset_options_clicked)
 
 
-    def setup_files_tab(self):                            
+    def setup_files_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -2183,7 +2237,7 @@ class OptionsEditWin(GenericEditWin):
         self.setup_files_keep_files_tab(inner_notebook)
 
 
-    def setup_files_names_tab(self, inner_notebook):    
+    def setup_files_names_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
@@ -2193,7 +2247,7 @@ class OptionsEditWin(GenericEditWin):
         tab, grid = self.add_inner_notebook_tab('File _names', inner_notebook)
 
         grid_width = 5
-        
+
         # File name options
         self.add_label(grid,
             '<u>File name options</u>',
@@ -2206,7 +2260,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         store = Gtk.ListStore(int, str)
-        num_list = [0, 1, 2, 4, 5, 3]
+        num_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
         for num in num_list:
             store.append( [num, formats.FILE_OUTPUT_NAME_DICT[num]] )
 
@@ -2350,13 +2404,13 @@ class OptionsEditWin(GenericEditWin):
             button4,
         ]
 
-        if current_format == 3:
+        if current_format == 0:
             self.file_tab_sensitise_widgets(True)
         else:
             self.file_tab_sensitise_widgets(False)
 
 
-    def setup_files_filesystem_tab(self, inner_notebook):    
+    def setup_files_filesystem_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
@@ -2440,7 +2494,7 @@ class OptionsEditWin(GenericEditWin):
         combo.connect('changed', self.on_fixed_folder_changed)
 
 
-    def setup_files_write_files_tab(self, inner_notebook):    
+    def setup_files_write_files_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
@@ -2480,7 +2534,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
-    def setup_files_keep_files_tab(self, inner_notebook):    
+    def setup_files_keep_files_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
@@ -2551,7 +2605,7 @@ class OptionsEditWin(GenericEditWin):
             0, 9, 1, 1,
         )
 
-        
+
     def setup_formats_tab(self):
 
         """Called by self.setup_tabs().
@@ -2717,7 +2771,7 @@ class OptionsEditWin(GenericEditWin):
             )
 
 
-    def setup_downloads_tab(self):                            
+    def setup_downloads_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -2730,7 +2784,7 @@ class OptionsEditWin(GenericEditWin):
             tab, grid = self.add_notebook_tab('_Downloads')
 
             row_count = 0
-            
+
             # Download options
             self.add_label(grid,
                 '<u>Download options</u>',
@@ -2741,7 +2795,7 @@ class OptionsEditWin(GenericEditWin):
             row_count = self.downloads_age_widgets(grid, row_count)
             row_count = self.downloads_date_widgets(grid, row_count)
             row_count = self.downloads_views_widgets(grid, row_count)
-        
+
         # All options
         else:
 
@@ -2761,7 +2815,7 @@ class OptionsEditWin(GenericEditWin):
             self.setup_downloads_external_tab(inner_notebook)
 
 
-    def setup_downloads_general_tab(self, inner_notebook):     
+    def setup_downloads_general_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2769,7 +2823,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab('_General', inner_notebook)
-        
+
         # Download options
         self.add_label(grid,
             '<u>Download options</u>',
@@ -2779,9 +2833,9 @@ class OptionsEditWin(GenericEditWin):
         row_count = 1
         row_count = self.downloads_general_widgets(grid, row_count)
         row_count = self.downloads_age_widgets(grid, row_count)
-        
 
-    def setup_downloads_playlists_tab(self, inner_notebook):     
+
+    def setup_downloads_playlists_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2793,7 +2847,7 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_playlist_widgets(grid, 0)
 
 
-    def setup_downloads_size_limits_tab(self, inner_notebook):     
+    def setup_downloads_size_limits_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2805,7 +2859,7 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_size_limit_widgets(grid, 0)
 
 
-    def setup_downloads_dates_tab(self, inner_notebook):     
+    def setup_downloads_dates_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2815,9 +2869,9 @@ class OptionsEditWin(GenericEditWin):
         tab, grid = self.add_inner_notebook_tab('_Dates', inner_notebook)
 
         row_count = self.downloads_date_widgets(grid, 0)
-        
 
-    def setup_downloads_views_tab(self, inner_notebook):     
+
+    def setup_downloads_views_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2829,7 +2883,7 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_views_widgets(grid, 0)
 
 
-    def setup_downloads_filtering_tab(self, inner_notebook):     
+    def setup_downloads_filtering_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -2841,7 +2895,7 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_filtering_widgets(grid, 0)
 
 
-    def setup_downloads_external_tab(self, inner_notebook):     
+    def setup_downloads_external_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
@@ -3014,10 +3068,28 @@ class OptionsEditWin(GenericEditWin):
             0, 7, 1, 1,
         )
 
-        self.add_checkbutton(grid,
+#        # (This option can also be modified in the Subtitles tab)
+#        self.embed_checkbutton = self.add_checkbutton(grid,
+#            'Merge subtitles file with video (.mp4 only)',
+#            None,
+#            1, 7, 1, 1,
+#        )
+#        self.embed_checkbutton.set_active(self.retrieve_val('embed_subs'))
+#        self.embed_checkbutton.connect(
+#            'toggled',
+#            self.on_embed_checkbutton_toggled,
+#        )
+
+        # (This option can also be modified in the Post-process tab)
+        self.embed_checkbutton = self.add_checkbutton(grid,
             'Merge subtitles file with video (.mp4 only)',
-            'embed_subs',
+            None,
             1, 7, 1, 1,
+        )
+        self.embed_checkbutton.set_active(self.retrieve_val('embed_subs'))
+        self.embed_checkbutton.connect(
+            'toggled',
+            self.on_embed_checkbutton_toggled,
         )
 
         self.add_checkbutton(grid,
@@ -3047,13 +3119,25 @@ class OptionsEditWin(GenericEditWin):
 
     def setup_subtitles_tab(self):
 
-        """Called by self.setup_tabs().
+        # Add this tab...
+        tab, grid = self.add_notebook_tab('_Subtitles', 0)
 
-        Sets up the 'Subtitles' tab.
+        # ...and an inner notebook...
+        inner_notebook = self.add_inner_notebook(grid)
+
+        # ...with its own tabs
+        self.setup_subtitles_options_tab(inner_notebook)
+        self.setup_subtitles_more_options_tab(inner_notebook)
+
+
+    def setup_subtitles_options_tab(self, inner_notebook):
+
+        """Called by self.setup_subtitles_tab().
+
+        Sets up the 'Options' inner notebook tab.
         """
 
-        tab, grid = self.add_notebook_tab('_Subtitles')
-        grid.set_column_homogeneous(True)
+        tab, grid = self.add_inner_notebook_tab('_Options', inner_notebook)
 
         # Subtitles options
         self.add_label(grid,
@@ -3061,7 +3145,6 @@ class OptionsEditWin(GenericEditWin):
             0, 0, 2, 1,
         )
 
-        radio_flag = False
         radiobutton = self.add_radiobutton(grid,
             None,
             'Don\'t download the subtitles file',
@@ -3071,7 +3154,6 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('write_subs') is False:
             radiobutton.set_active(True)
-            radio_flag = True
         # Signal connect appears below
 
         radiobutton2 = self.add_radiobutton(grid,
@@ -3081,9 +3163,9 @@ class OptionsEditWin(GenericEditWin):
             None,
             0, 2, 2, 1,
         )
-        if self.retrieve_val('write_auto_subs') is True:
-            radiobutton.set_active(True)
-            radio_flag = True
+        if self.retrieve_val('write_subs') is True \
+        and self.retrieve_val('write_auto_subs') is True:
+            radiobutton2.set_active(True)
         # Signal connect appears below
 
         radiobutton3 = self.add_radiobutton(grid,
@@ -3093,75 +3175,153 @@ class OptionsEditWin(GenericEditWin):
             None,
             0, 3, 2, 1,
         )
-        if self.retrieve_val('write_all_subs') is True:
-            radiobutton2.set_active(True)
-            radio_flag = True
+        if self.retrieve_val('write_subs') is True \
+        and self.retrieve_val('write_all_subs') is True:
+            radiobutton3.set_active(True)
         # Signal connect appears below
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
-            'Download subtitles file for this language',
+            'Download subtitles file for these languages:',
             None,
             None,
-            0, 4, 1, 1,
+            0, 4, 2, 1,
         )
-        if not radio_flag:
-            radiobutton.set_active(True)
+        if self.retrieve_val('write_subs') is True \
+        and self.retrieve_val('write_auto_subs') is False \
+        and self.retrieve_val('write_all_subs') is False:
+            radiobutton4.set_active(True)
         # Signal connect appears below
 
-        combo = self.add_combo_with_data(grid,
-            formats.LANGUAGE_CODE_LIST,
-            'subs_lang',
-            1, 4, 1, 1,
+        treeview, liststore = self.add_treeview(grid,
+            0, 5, 1, 1,
         )
-        if radio_flag:
-            combo.set_sensitive(False)
+        for key in formats.LANGUAGE_CODE_LIST:
+            liststore.append([key])
+
+        # We need a reverse dictionary for quick lookup
+        rev_dict = {}
+        for key in formats.LANGUAGE_CODE_DICT:
+            val = formats.LANGUAGE_CODE_DICT[key]
+            rev_dict[val] = key
+
+        button = Gtk.Button('Add language >>>')
+        grid.attach(button, 0, 6, 1, 1)
+        # Signal connect below
+
+        treeview2, liststore2 = self.add_treeview(grid,
+            1, 5, 1, 1,
+        )
+        lang_list = self.retrieve_val('subs_lang_list')
+        # The option stores ISO 639-1 Language Codes like 'en'; convert them to
+        #   language names like 'English'
+        for lang_code in lang_list:
+            liststore2.append([rev_dict[lang_code]])
+
+        button2 = Gtk.Button('<<< Remove language')
+        grid.attach(button2, 1, 6, 1, 1)
+        # Signal connect below
+
+        # Desensitise the buttons, if the matching radiobutton isn't active
+        if not radiobutton4.get_active():
+            button.set_sensitive(False)
+            button2.set_sensitive(False)
 
         # Signal connects from above
+        button.connect(
+            'clicked',
+            self.on_subtitles_tab_add_clicked,
+            treeview,
+            liststore2,
+            rev_dict,
+        )
+        button2.connect(
+            'clicked',
+            self.on_subtitles_tab_remove_clicked,
+            treeview2,
+            liststore2,
+            rev_dict,
+        )
         radiobutton.connect(
             'toggled',
             self.on_subtitles_toggled,
-            combo,
+            button, button2,
             'write_subs',
         )
         radiobutton2.connect(
             'toggled',
             self.on_subtitles_toggled,
-            combo,
+            button, button2,
             'write_auto_subs',
         )
         radiobutton3.connect(
             'toggled',
             self.on_subtitles_toggled,
-            combo,
+            button, button2,
             'write_all_subs',
         )
         radiobutton4.connect(
             'toggled',
             self.on_subtitles_toggled,
-            combo,
+            button, button2,
             'subs_lang',
+        )
+
+
+    def setup_subtitles_more_options_tab(self, inner_notebook):
+
+        """Called by self.setup_subtitles_tab().
+
+        Sets up the 'Format' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            '_More options',
+            inner_notebook,
         )
 
         # Subtitle format options
         self.add_label(grid,
             '<u>Subtitle format options</u>',
-            0, 5, 2, 1,
+            0, 0, 1, 1,
         )
 
         self.add_label(grid,
             'Preferred subtitle format(s), e.g. \'srt\', \'vtt\',' \
             + ' \'srt/ass/vtt/lrc/best\'',
-            0, 6, 2, 1,
+            0, 1, 1, 1,
         )
 
         self.add_entry(grid,
             'subs_format',
-            1, 7, 1, 1,
+            0, 2, 1, 1,
+        )
+
+        # Post-processing options
+        self.add_label(grid,
+            '<u>Post-processing options</u>',
+            0, 3, 1, 1,
+        )
+
+        self.add_label(grid,
+            '<i>Applies to .mp4 videos only; requires FFmpeg/AVConv</i>',
+            0, 4, 1, 1,
+        )
+
+        # (This option can also be modified in the Post-process tab)
+        self.embed_checkbutton2 = self.add_checkbutton(grid,
+            'During post-processing, merge subtitles file with video',
+            None,
+            0, 5, 1, 1,
+        )
+        self.embed_checkbutton2.set_active(self.retrieve_val('embed_subs'))
+        self.embed_checkbutton2.connect(
+            'toggled',
+            self.on_embed_checkbutton_toggled,
         )
 
 
-    def setup_advanced_tab(self):                           
+    def setup_advanced_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -3181,7 +3341,7 @@ class OptionsEditWin(GenericEditWin):
         self.setup_advanced_workaround_tab(inner_notebook)
 
 
-    def setup_advanced_authentification_tab(self, inner_notebook):    
+    def setup_advanced_authentification_tab(self, inner_notebook):
 
         """Called by self.setup_advanced_tab().
 
@@ -3248,7 +3408,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
-    def setup_advanced_network_tab(self, inner_notebook):    
+    def setup_advanced_network_tab(self, inner_notebook):
 
         """Called by self.setup_advanced_tab().
 
@@ -3308,7 +3468,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
-    def setup_advanced_georestrict_tab(self, inner_notebook):    
+    def setup_advanced_georestrict_tab(self, inner_notebook):
 
         """Called by self.setup_advanced_tab().
 
@@ -3369,9 +3529,9 @@ class OptionsEditWin(GenericEditWin):
             'geo_bypass_ip_block',
             1, 15, 1, 1,
         )
-        
 
-    def setup_advanced_workaround_tab(self, inner_notebook):    
+
+    def setup_advanced_workaround_tab(self, inner_notebook):
 
         """Called by self.setup_advanced_tab().
 
@@ -3430,8 +3590,8 @@ class OptionsEditWin(GenericEditWin):
             'prefer_insecure',
             0, 21, grid_width, 1,
         )
-        
-        
+
+
     # (Tab support functions - general)
 
 
@@ -3484,7 +3644,7 @@ class OptionsEditWin(GenericEditWin):
         """Called by various parts of the Downloads tabs."""
 
         grid_width = 3
-        
+
         self.add_checkbutton(grid,
             'Prefer HLS (HTTP Live Streaming)',
             'native_hls',
@@ -3499,7 +3659,7 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_checkbutton(grid,
             'Include advertisements (experimental feature)',
-            'include_ads',            
+            'include_ads',
             0, (row_count + 2), grid_width, 1,
         )
 
@@ -3522,13 +3682,13 @@ class OptionsEditWin(GenericEditWin):
 
         return row_count + 5
 
-                    
+
     def downloads_age_widgets(self, grid, row_count):
 
         """Called by various parts of the Downloads tabs."""
 
         grid_width = 3
-        
+
         self.add_label(grid,
             'Download videos suitable for this age',
             0, row_count, 1, 1,
@@ -3538,7 +3698,7 @@ class OptionsEditWin(GenericEditWin):
             'age_limit',
             1, row_count, 1, 1,
         )
-                    
+
         return row_count + 2
 
 
@@ -3548,65 +3708,72 @@ class OptionsEditWin(GenericEditWin):
 
         grid_width = 2
 
+        # Playlist options
         self.add_label(grid,
             '<u>Playlist options</u>',
             0, row_count, grid_width, 1,
         )
 
         self.add_label(grid,
+            '<i>youtube-dl treats channels and playlists the same way, so' \
+            + ' these options can be used with both</i>',
+            0, (row_count + 1), grid_width, 1,
+        )
+
+        self.add_label(grid,
             'Start downloading playlist from index',
-            0, (row_count + 1), 1, 1,
+            0, (row_count + 2), 1, 1,
            )
 
         self.add_spinbutton(grid,
             1, None, 1,
             'playlist_start',
-            1, (row_count + 1), 1, 1,
-        )
-
-        self.add_label(grid,
-            'Stop downloading playlist at index',
-            0, (row_count + 2), 1, 1,
-        )
-
-        self.add_spinbutton(grid,
-            0, None, 1,
-            'playlist_end',
             1, (row_count + 2), 1, 1,
         )
 
         self.add_label(grid,
-            'Maximum downloads from a playlist',
+            'Stop downloading playlist at index',
             0, (row_count + 3), 1, 1,
         )
 
         self.add_spinbutton(grid,
             0, None, 1,
-            'max_downloads',
+            'playlist_end',
             1, (row_count + 3), 1, 1,
+        )
+
+        self.add_label(grid,
+            'Abort operation after downloading this many videos',
+            0, (row_count + 4), 1, 1,
+        )
+
+        self.add_spinbutton(grid,
+            0, None, 1,
+            'max_downloads',
+            1, (row_count + 4), 1, 1,
         )
 
         self.add_checkbutton(grid,
             'Abort downloading the playlist if an error occurs',
             'abort_on_error',
-            0, (row_count + 4), grid_width, 1,
+            0, (row_count + 5), grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             'Download playlist in reverse order',
             'playlist_reverse',
-            0, (row_count + 5), grid_width, 1,
+            0, (row_count + 6), grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             'Download playlist in random order',
             'playlist_random',
-            0, (row_count + 6), grid_width, 1,
+            0, (row_count + 7), grid_width, 1,
         )
 
         return row_count + 7
 
-                    
+
     def downloads_size_limit_widgets(self, grid, row_count):
 
         """Called by various parts of the Downloads tabs."""
@@ -3653,7 +3820,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         return row_count + 3
-            
+
 
     def downloads_date_widgets(self, grid, row_count):
 
@@ -3725,7 +3892,7 @@ class OptionsEditWin(GenericEditWin):
             self.on_button_set_date_clicked,
             entry3,
             'date_after',
-        )        
+        )
 
         return row_count + 4
 
@@ -3845,7 +4012,7 @@ class OptionsEditWin(GenericEditWin):
             1, (row_count + 1), 1, 1,
         )
         combo.set_hexpand(True)
-        
+
         self.add_label(grid,
             'Arguments to pass to external downloader',
             0, (row_count + 2), grid_width, 1,
@@ -3858,7 +4025,7 @@ class OptionsEditWin(GenericEditWin):
 
         return row_count + 4
 
-        
+
     # Callback class methods
 
 
@@ -3929,6 +4096,58 @@ class OptionsEditWin(GenericEditWin):
                 'data': [self, self.edit_obj],
             },
         )
+
+
+    def on_embed_checkbutton_toggled(self, checkbutton):
+
+        """Called by callback in self.setup_post_process_tab() or
+        setup_subtitles_tab().
+
+        The 'embed_subs' option appears in both the Formats and Subtitles tabs.
+        When one widget is modified, we need to set the other widgets to match
+        without starting an infinite loop of signal_connects.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        prop = 'embed_subs'
+
+        if checkbutton == self.embed_checkbutton2 \
+        and self.embed_checkbutton is None:
+
+            # An easy case; the Formats tab isn't visible, so there is only one
+            #   widget to think about
+            if not checkbutton.get_active():
+                self.edit_dict[prop] = False
+            else:
+                self.edit_dict[prop] = True
+
+        else:
+
+            # We get around the infinite loop problem by setting the other
+            #   checkbutton, if it's in the opposite state to this checkbutton
+            flag = checkbutton.get_active()
+
+            if checkbutton == self.embed_checkbutton:
+
+                if self.embed_checkbutton2.get_active() != flag:
+                    self.embed_checkbutton2.set_active(flag)
+                elif not checkbutton.get_active():
+                    self.edit_dict[prop] = False
+                else:
+                    self.edit_dict[prop] = True
+
+            else:
+
+                if self.embed_checkbutton.get_active() != flag:
+                    self.embed_checkbutton.set_active(flag)
+                elif not checkbutton.get_active():
+                    self.edit_dict[prop] = False
+                else:
+                    self.edit_dict[prop] = True
 
 
     def on_fixed_folder_toggled(self, checkbutton, combo):
@@ -4028,7 +4247,8 @@ class OptionsEditWin(GenericEditWin):
 
         self.edit_dict['output_format'] = row_id
 
-        if row_id == 3:
+        # The custom template is associated with the index 0
+        if row_id == 0:
             self.file_tab_sensitise_widgets(True)
             entry.set_text(self.retrieve_val('output_template'))
 
@@ -4381,7 +4601,7 @@ class OptionsEditWin(GenericEditWin):
 
             if not self.edit_dict:
                 # User has not changed any options, so redraw the window to
-                #   show the same options.OptionsManager object.
+                #   show the same options.OptionsManager object
                 self.reset_with_new_edit_obj(self.edit_obj)
 
             else:
@@ -4421,7 +4641,120 @@ class OptionsEditWin(GenericEditWin):
                 )
 
 
-    def on_subtitles_toggled(self, radiobutton, combo, prop):
+    def on_subtitles_tab_add_clicked(self, button, treeview, other_liststore,
+    rev_dict):
+
+        """Called by callback in self.setup_subtitles_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeView): The treeview on the left side of the tab
+
+            other_liststore (Gtk.ListStore): The liststore belonging to the
+                treeview on the right side of the tab
+
+            rev_dict (dict): A reversed formats.LANGUAGE_CODE_DICT
+
+        """
+
+        selection = treeview.get_selection()
+        (model, iter) = selection.get_selected()
+        if iter is None:
+
+            # Nothing selected
+            return
+
+        else:
+
+            lang_name = model[iter][0]
+            # Convert a language to its ISO 639-1 Language Code, e.g. convert
+            #   'English' to 'en'
+            lang_code = formats.LANGUAGE_CODE_DICT[lang_name]
+
+            # Retrieve the existing list of languages
+            lang_code_list = self.retrieve_val('subs_lang_list')
+            if not lang_code in lang_code_list:
+
+                lang_code_list.append(lang_code)
+
+            # Sort by language name, not by language code
+            lang_list = []
+            mod_code_list = []
+            for this_code in lang_code_list:
+                lang_list.append(rev_dict[this_code])
+
+            lang_list.sort()
+            for this_lang in lang_list:
+                mod_code_list.append(formats.LANGUAGE_CODE_DICT[this_lang])
+
+            # Update the option...
+            self.edit_dict['subs_lang_list'] = mod_code_list
+            # ...and the textview
+            other_liststore.clear()
+            for this_lang in lang_list:
+                other_liststore.append([this_lang])
+
+
+    def on_subtitles_tab_remove_clicked(self, button, other_treeview,
+    other_liststore, rev_dict):
+
+        """Called by callback in self.setup_subtitles_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            other_treeview (Gtk.TreeView): The treeview on the right side of
+                the tab
+
+            other_liststore (Gtk.ListStore): The liststore belonging to that
+                treeview
+
+            rev_dict (dict): A reversed formats.LANGUAGE_CODE_DICT
+
+        """
+
+        selection = other_treeview.get_selection()
+        (model, iter) = selection.get_selected()
+        if iter is None:
+
+            # Nothing selected
+            return
+
+        else:
+
+            lang_name = model[iter][0]
+            # Convert a language to its ISO 639-1 Language Code, e.g. convert
+            #   'English' to 'en'
+            lang_code = formats.LANGUAGE_CODE_DICT[lang_name]
+
+            # Retrieve the existing list of languages
+            lang_code_list = self.retrieve_val('subs_lang_list')
+            if lang_code in lang_code_list:
+
+                lang_code_list.remove(lang_code)
+
+            # Sort by language name, not by language code
+            lang_list = []
+            mod_code_list = []
+            for this_code in lang_code_list:
+                lang_list.append(rev_dict[this_code])
+
+            lang_list.sort()
+            for this_lang in lang_list:
+                mod_code_list.append(formats.LANGUAGE_CODE_DICT[this_lang])
+
+            # Update the option...
+            self.edit_dict['subs_lang_list'] = mod_code_list
+            # ...and the textview
+            other_liststore.clear()
+            for this_lang in lang_list:
+                other_liststore.append([this_lang])
+
+
+    def on_subtitles_toggled(self, radiobutton, button, button2, prop):
 
         """Called by callback in self.setup_subtitles_tab().
 
@@ -4429,7 +4762,7 @@ class OptionsEditWin(GenericEditWin):
 
             radiobutton (Gtk.RadioButton): The widget clicked
 
-            combo (Gtk.ComboBox): Another widget to be modified by this
+            button, button2 (Gtk.Button): Other widgets to be modified by this
                 function
 
             prop (string): The attribute in self.edit_dict to modify
@@ -4442,25 +4775,29 @@ class OptionsEditWin(GenericEditWin):
                 self.edit_dict['write_subs'] = False
                 self.edit_dict['write_auto_subs'] = False
                 self.edit_dict['write_all_subs'] = False
-                combo.set_sensitive(False)
+                button.set_sensitive(False)
+                button2.set_sensitive(False)
 
             elif prop == 'write_auto_subs':
                 self.edit_dict['write_subs'] = True
                 self.edit_dict['write_auto_subs'] = True
                 self.edit_dict['write_all_subs'] = False
-                combo.set_sensitive(False)
+                button.set_sensitive(False)
+                button2.set_sensitive(False)
 
             elif prop == 'write_all_subs':
                 self.edit_dict['write_subs'] = True
                 self.edit_dict['write_auto_subs'] = False
                 self.edit_dict['write_all_subs'] = True
-                combo.set_sensitive(False)
+                button.set_sensitive(False)
+                button2.set_sensitive(False)
 
             elif prop == 'subs_lang':
                 self.edit_dict['write_subs'] = True
                 self.edit_dict['write_auto_subs'] = False
                 self.edit_dict['write_all_subs'] = False
-                combo.set_sensitive(True)
+                button.set_sensitive(True)
+                button2.set_sensitive(True)
 
 
 class VideoEditWin(GenericEditWin):
@@ -4789,13 +5126,13 @@ class VideoEditWin(GenericEditWin):
     # Callback class methods
 
 
-#   def on_button_apply_clicked():  # Inherited from GenericConfigWin
+#   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
 
 
-#   def on_button_remove_clicked(): # Inherited from GenericConfigWin
+#   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
     def never_called_func(self):
@@ -5079,13 +5416,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
     # Callback class methods
 
 
-#   def on_button_apply_clicked():  # Inherited from GenericConfigWin
+#   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
 
 
-#   def on_button_remove_clicked(): # Inherited from GenericConfigWin
+#   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
+
 
 
     def never_called_func(self):
@@ -5309,13 +5647,14 @@ class FolderEditWin(GenericEditWin):
     # Callback class methods
 
 
-#   def on_button_apply_clicked():  # Inherited from GenericConfigWin
+#   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
 
 
-#   def on_button_remove_clicked(): # Inherited from GenericConfigWin
+#   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
+
 
 
     def never_called_func(self):
@@ -5326,7 +5665,7 @@ class FolderEditWin(GenericEditWin):
         pass
 
 
-class SystemPrefWin(GenericPrefWin):        
+class SystemPrefWin(GenericPrefWin):
 
     """Python class for a 'preference window' to modify various system
     settings.
@@ -5335,13 +5674,16 @@ class SystemPrefWin(GenericPrefWin):
 
         app_obj (mainapp.TartubeApp): The main application object
 
+        switch_db_flag (bool): If True, the tab containing the option to switch
+            Tartube's database is selected as soon as the window is opened
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj):
+    def __init__(self, app_obj, switch_db_flag=False):
 
 
         Gtk.Window.__init__(self, title='System preferences')
@@ -5366,6 +5708,7 @@ class SystemPrefWin(GenericPrefWin):
         # (IVs used to handle widget changes in the 'Filesystem' tab)
         self.entry = None                       # Gtk.Entry
         self.entry2 = None                      # Gtk.Entry
+        self.filesystem_inner_notebook = None   # Gtk.Notebook
 
 
         # IV list - other
@@ -5373,12 +5716,13 @@ class SystemPrefWin(GenericPrefWin):
         # Size (in pixels) of gaps between preference window widgets
         self.spacing_size = self.app_obj.default_spacing_size
 
-
         # Code
         # ----
 
         # Set up the preference window
         self.setup()
+        if switch_db_flag:
+            self.select_switch_db_tab()
 
 
     # Public class methods
@@ -5400,6 +5744,19 @@ class SystemPrefWin(GenericPrefWin):
 
 
 #   def setup_gap():            # Inherited from GenericConfigWin
+
+
+    def select_switch_db_tab(self):
+
+        """Could be called by anything, but currently only called by
+        self.__init__().
+
+        Makes the visible tab the one on which the user can switch Tartube's
+        database.
+        """
+
+        self.notebook.set_current_page(1)
+        self.filesystem_inner_notebook.set_current_page(1)
 
 
     # (Setup tabs)
@@ -5437,11 +5794,11 @@ class SystemPrefWin(GenericPrefWin):
 
         # ...with its own tabs
         self.setup_general_language_tab(inner_notebook)
-        self.setup_general_libraries_tab(inner_notebook)
+        self.setup_general_modules_tab(inner_notebook)
         self.setup_general_video_matching_tab(inner_notebook)
 
 
-    def setup_general_language_tab(self, inner_notebook):   
+    def setup_general_language_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
@@ -5483,59 +5840,25 @@ class SystemPrefWin(GenericPrefWin):
         combo.set_active(0)
 
 
-    def setup_general_libraries_tab(self, inner_notebook):    
+    def setup_general_modules_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
         Sets up the 'Libraries' inner notebook tab.
         """
 
-        tab, grid = self.add_inner_notebook_tab('L_ibraries', inner_notebook)
+        tab, grid = self.add_inner_notebook_tab('_Modules', inner_notebook)
         grid_width = 3
-
-        # Module preferences
-        self.add_label(grid,
-            '<u>Module preferences</u>',
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            'Use \'moviepy\' module to get a video\'s duration, if not known'
-            + ' (may be slow)',
-            self.app_obj.use_module_moviepy_flag,
-            True,                   # Can be toggled by user
-            0, 1, grid_width, 1,
-        )
-        checkbutton.connect('toggled', self.on_moviepy_button_toggled)
-        if not mainapp.HAVE_MOVIEPY_FLAG:
-            checkbutton.set_sensitive(False)
-
-        self.add_label(grid,
-            'Timeout applied when moviepy checks a video file',
-            0, 2, grid_width, 1,
-        )
-
-        spinbutton3 = self.add_spinbutton(grid,
-            0,
-            60,
-            1,                  # Step
-            self.app_obj.refresh_moviepy_timeout,
-            1, 2, 2, 1,
-        )
-        spinbutton3.connect(
-            'value-changed',
-            self.on_moviepy_timeout_spinbutton_changed,
-        )
 
         # Gtk support
         self.add_label(grid,
             '<u>Gtk support</u>',
-            0, 3, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_label(grid,
             'Current version of the system\'s Gtk library',
-            0, 4, 1, 1
+            0, 1, 1, 1
         )
 
         entry = self.add_entry(grid,
@@ -5543,21 +5866,84 @@ class SystemPrefWin(GenericPrefWin):
             + str(self.app_obj.gtk_version_minor) + '.' \
             + str(self.app_obj.gtk_version_micro),
             False,
-            1, 4, 2, 1,
+            1, 1, 2, 1,
         )
         entry.set_sensitive(False)
 
-        checkbutton2 = self.add_checkbutton(grid,
-            'Some features are disabled because this version of the library' \
-            + ' is broken',
+        checkbutton = self.add_checkbutton(grid,
+            'Some (minor) features are disabled because this version of the' \
+            + ' library is broken',
             self.app_obj.gtk_broken_flag,
             False,               # Can't be toggled by user
-            0, 5, grid_width, 1,
+            0, 2, grid_width, 1,
+        )
+        checkbutton.set_hexpand(False)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            'Assume that Gtk is broken, and disable some features anyway',
+            self.app_obj.gtk_emulate_broken_flag,
+            True,               # Can be toggled by user
+            0, 3, grid_width, 1,
         )
         checkbutton2.set_hexpand(False)
+        checkbutton2.connect('toggled', self.on_gtk_emulate_button_toggled)
+
+        # Module availability
+        self.add_label(grid,
+            '<u>Module availability</u>',
+            0, 4, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            'moviepy module is available',
+            mainapp.HAVE_MOVIEPY_FLAG,
+            False,                      # Can't be toggled by user
+            0, 5, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            'XDG module is available',
+            mainapp.HAVE_XDG_FLAG,
+            False,                      # Can't be toggled by user
+            0, 6, grid_width, 1,
+        )
+
+        # Module preferences
+        self.add_label(grid,
+            '<u>Module preferences</u>',
+            0, 7, grid_width, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'Use \'moviepy\' module to get a video\'s duration, if not known'
+            + ' (may be slow)',
+            self.app_obj.use_module_moviepy_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_moviepy_button_toggled)
+        if not mainapp.HAVE_MOVIEPY_FLAG:
+            checkbutton3.set_sensitive(False)
+
+        self.add_label(grid,
+            'Timeout applied when moviepy checks a video file',
+            0, 9, grid_width, 1,
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            0,
+            60,
+            1,                  # Step
+            self.app_obj.refresh_moviepy_timeout,
+            1, 9, 2, 1,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_moviepy_timeout_spinbutton_changed,
+        )
 
 
-    def setup_general_video_matching_tab(self, inner_notebook):    
+    def setup_general_video_matching_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
@@ -5638,7 +6024,7 @@ class SystemPrefWin(GenericPrefWin):
         self.spinbutton2.connect(
             'value-changed',
             self.on_match_spinbutton_changed,
-        )   
+        )
 
 
     def setup_filesystem_tab(self):
@@ -5652,17 +6038,19 @@ class SystemPrefWin(GenericPrefWin):
         tab, grid = self.add_notebook_tab('_Filesystem', 0)
 
         # ...and an inner notebook...
-        inner_notebook = self.add_inner_notebook(grid)
+        self.filesystem_inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_filesystem_device_tab(inner_notebook)
-        self.setup_filesystem_database_tab(inner_notebook)
-        self.setup_filesystem_backups_tab(inner_notebook)
-        self.setup_filesystem_video_deletion_tab(inner_notebook)
-        self.setup_filesystem_temp_folders_tab(inner_notebook)
+        self.setup_filesystem_device_tab(self.filesystem_inner_notebook)
+        self.setup_filesystem_database_tab(self.filesystem_inner_notebook)
+        self.setup_filesystem_backups_tab(self.filesystem_inner_notebook)
+        self.setup_filesystem_video_deletion_tab(
+            self.filesystem_inner_notebook,
+        )
+        self.setup_filesystem_temp_folders_tab(self.filesystem_inner_notebook)
 
 
-    def setup_filesystem_device_tab(self, inner_notebook):  
+    def setup_filesystem_device_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
@@ -5671,7 +6059,7 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab('_Device', inner_notebook)
         grid_width = 3
-        
+
         # Device preferences
         self.add_label(grid,
             '<u>Device preferences</u>',
@@ -5701,7 +6089,7 @@ class SystemPrefWin(GenericPrefWin):
             1, 4, 2, 1,
         )
         self.entry2.set_sensitive(False)
-        
+
         checkbutton = self.add_checkbutton(grid,
             'Warn user if disk space is below (Mb)',
             self.app_obj.disk_space_warn_flag,
@@ -5759,7 +6147,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_filesystem_database_tab(self, inner_notebook):  
+    def setup_filesystem_database_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
@@ -5768,7 +6156,7 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab('D_atabase', inner_notebook)
         grid_width = 3
-        
+
         # Database preferences
         self.add_label(grid,
             '<u>Database preferences</u>',
@@ -5796,7 +6184,7 @@ class SystemPrefWin(GenericPrefWin):
         button.connect('clicked', self.on_data_dir_button_clicked, entry)
 
 
-    def setup_filesystem_backups_tab(self, inner_notebook):   
+    def setup_filesystem_backups_tab(self, inner_notebook):
 
         """Called by self.setup_filesystem_tab().
 
@@ -5879,7 +6267,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_filesystem_video_deletion_tab(self, inner_notebook):   
+    def setup_filesystem_video_deletion_tab(self, inner_notebook):
 
         """Called by self.setup_filesystem_tab().
 
@@ -5937,7 +6325,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.connect('toggled', self.on_delete_watched_button_toggled)
 
 
-    def setup_filesystem_temp_folders_tab(self, inner_notebook):   
+    def setup_filesystem_temp_folders_tab(self, inner_notebook):
 
         """Called by self.setup_filesystem_tab().
 
@@ -5991,10 +6379,10 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_windows_system_tray_tab(inner_notebook)
         self.setup_windows_dialogue_windows_tab(inner_notebook)
         self.setup_windows_errors_warnings_tab(inner_notebook)
-        self.setup_windows_youtube_tab(inner_notebook)
+        self.setup_windows_websites_tab(inner_notebook)
 
 
-    def setup_windows_main_window_tab(self, inner_notebook):    
+    def setup_windows_main_window_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
 
@@ -6062,25 +6450,35 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton6.connect('toggled', self.on_disable_dl_all_toggled)
 
         checkbutton7 = self.add_checkbutton(grid,
-            'Show results in reverse order (most recently checked/' \
-            + 'downloaded video first)',
-            self.app_obj.results_list_reverse_flag,
+            'In the \'Progress\' tab, hide finished videos / channels' \
+            + ' / playlists',
+            self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
             0, 7, 1, 1,
         )
-        checkbutton7.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton7.connect('toggled', self.on_hide_button_toggled)
 
         checkbutton8 = self.add_checkbutton(grid,
-            'Don\'t remove number of system messages from tab label until' \
-            + ' \'Clear\' button is clicked',
-            self.app_obj.system_msg_keep_totals_flag,
+            'In the \'Progress\' tab, show results in reverse order',
+            self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
             0, 8, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_system_keep_button_toggled)    
+        checkbutton8.connect('toggled', self.on_reverse_button_toggled)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            'In the \'Errors/Warnings\' tab, preserve message counts in the' \
+            + ' tab label for longer',
+#            'Don\'t remove number of system messages from tab label until' \
+#            + ' \'Clear\' button is clicked',
+            self.app_obj.system_msg_keep_totals_flag,
+            True,                   # Can be toggled by user
+            0, 9, 1, 1,
+        )
+        checkbutton9.connect('toggled', self.on_system_keep_button_toggled)
 
 
-    def setup_windows_system_tray_tab(self, inner_notebook):    
+    def setup_windows_system_tray_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
 
@@ -6121,10 +6519,10 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_show_status_icon_toggled,
             checkbutton2,
-        )     
+        )
 
 
-    def setup_windows_dialogue_windows_tab(self, inner_notebook):    
+    def setup_windows_dialogue_windows_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
 
@@ -6152,8 +6550,8 @@ class SystemPrefWin(GenericPrefWin):
         # signal connnect appears below
 
         checkbutton2 = self.add_checkbutton(grid,
-            'When adding videos/channels/playlists, copy URLs from the' \
-            + ' system clipboard',
+            'When the dialogue window opens, copy URLs from the system' \
+            + ' clipboard',
             self.app_obj.dialogue_copy_clipboard_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
@@ -6171,7 +6569,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_windows_errors_warnings_tab(self, inner_notebook):    
+    def setup_windows_errors_warnings_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
 
@@ -6183,14 +6581,17 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
-        # Error/warning preferences
+        grid_width = 2
+
+        # Errors/Warnings tab preferences
         self.add_label(grid,
-            '<u>Error/warning preferences</u>',
-            0, 0, 1, 1,
+            '<u>Errors/Warnings tab preferences</u>',
+            0, 0, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            'Show system error messages in the \'Errors/Warnings\' tab',
+            'Show ' + utils.upper_case_first(__main__.__packagename__) \
+            + ' error messages',
             self.app_obj.system_error_show_flag,
             True,                   # Can be toggled by user
             0, 1, 1, 1,
@@ -6198,7 +6599,8 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_system_error_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            'Show system warning messages in the \'Errors/Warnings\' tab',
+            'Show ' + utils.upper_case_first(__main__.__packagename__) \
+            + ' warning messages',
             self.app_obj.system_warning_show_flag,
             True,                   # Can be toggled by user
             0, 2, 1, 1,
@@ -6206,10 +6608,10 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.connect('toggled', self.on_system_warning_button_toggled)
 
         checkbutton3 = self.add_checkbutton(grid,
-            'Show all other error messages in the \'Errors/Warnings\' tab',
+            'Show server error messages',
             self.app_obj.operation_error_show_flag,
             True,                   # Can be toggled by user
-            0, 3, 1, 1,
+            1, 1, 1, 1,
         )
         checkbutton3.connect(
             'toggled',
@@ -6217,83 +6619,169 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton4 = self.add_checkbutton(grid,
-            'Show all other warning messages in the \'Errors/Warnings\' tab',
+            'Show server warning messages',
             self.app_obj.operation_warning_show_flag,
             True,                   # Can be toggled by user
-            0, 4, 1, 1,
+            1, 2, 1, 1,
         )
         checkbutton4.connect(
             'toggled',
             self.on_operation_warning_button_toggled,
         )
 
-    
-    def setup_windows_youtube_tab(self, inner_notebook):    
+        # youtube-dl error/warning preferences
+        self.add_label(grid,
+            '<u>youtube-dl error/warning preferences</u>',
+            0, 3, 1, 1,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            'Ignore \'Child process exited with non-zero code\' errors',
+            self.app_obj.ignore_child_process_exit_flag,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton5.connect('toggled', self.on_child_process_button_toggled)
+
+        checkbutton6 = self.add_checkbutton(grid,
+            'Ignore \'Unable to download video data: HTTP Error 404\' errors',
+            self.app_obj.ignore_http_404_error_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        checkbutton6.connect('toggled', self.on_http_404_button_toggled)
+
+        checkbutton7 = self.add_checkbutton(grid,
+            'Ignore \'Did not get any data blocks\' errors',
+            self.app_obj.ignore_data_block_error_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        checkbutton7.connect('toggled', self.on_data_block_button_toggled)
+
+        checkbutton8 = self.add_checkbutton(grid,
+            'Ignore \'Requested formats are incompatible for merge\' warnings',
+            self.app_obj.ignore_merge_warning_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
+        )
+        checkbutton8.connect('toggled', self.on_merge_button_toggled)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            'Ignore \'No video formats found\' errors',
+            self.app_obj.ignore_missing_format_error_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton9.connect('toggled', self.on_missing_format_button_toggled)
+
+        checkbutton10 = self.add_checkbutton(grid,
+            'Ignore \'There are no annotations to write\' warnings',
+            self.app_obj.ignore_no_annotations_flag,
+            True,                   # Can be toggled by user
+            0, 9, grid_width, 1,
+        )
+        checkbutton10.connect('toggled', self.on_no_annotations_button_toggled)
+
+        checkbutton11 = self.add_checkbutton(grid,
+            'Ignore \'Video doesn\'t have subtitles\' warnings',
+            self.app_obj.ignore_no_subtitles_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
+        checkbutton11.connect('toggled', self.on_no_subtitles_button_toggled)
+
+
+    def setup_windows_websites_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
 
-        Sets up the 'YouTube' inner notebook tab.
+        Sets up the 'Websites' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            '_YouTube',
+            '_Websites',
             inner_notebook,
         )
+
+        grid_width = 2
 
         # Youtube error/warning preferences
         self.add_label(grid,
             '<u>Youtube error/warning preferences</u>',
-            0, 0, 1, 1,
-        )     
+            0, 0, grid_width, 1,
+        )
 
         checkbutton = self.add_checkbutton(grid,
-            'Ignore \'Requested formats are incompatible for merge\' warnings',
-            self.app_obj.ignore_merge_warning_flag,
-            True,                   # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        checkbutton.connect('toggled', self.on_merge_button_toggled)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            'Ignore \'Child process exited with non-zero code\' errors',
-            self.app_obj.ignore_child_process_exit_flag,
-            True,                   # Can be toggled by user
-            0, 2, 1, 1,
-        )
-        checkbutton2.connect('toggled', self.on_child_process_button_toggled)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            'Ignore \'There are no annotations to write\' warnings',
-            self.app_obj.ignore_no_annotations_flag,
-            True,                   # Can be toggled by user
-            0, 3, 1, 1,
-        )
-        checkbutton3.connect('toggled', self.on_no_annotations_button_toggled)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            'Ignore \'Video doesn\'t have subtitles\' warnings',
-            self.app_obj.ignore_no_subtitles_flag,
-            True,                   # Can be toggled by user
-            0, 4, 1, 1,
-        )
-        checkbutton4.connect('toggled', self.on_no_subtitles_button_toggled)
-
-        checkbutton5 = self.add_checkbutton(grid,
             'Ignore YouTube copyright errors',
             self.app_obj.ignore_yt_copyright_flag,
             True,                   # Can be toggled by user
-            0, 5, 1, 1,
+            0, 1, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_copyright_button_toggled)
+        checkbutton.connect('toggled', self.on_copyright_button_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton2 = self.add_checkbutton(grid,
             'Ignore YouTube age-restriction errors',
             self.app_obj.ignore_yt_age_restrict_flag,
             True,                   # Can be toggled by user
-            0, 6, 1, 1,
+            0, 2, grid_width, 1,
         )
-        checkbutton6.connect('toggled', self.on_age_restrict_button_toggled)
-            
+        checkbutton2.connect('toggled', self.on_age_restrict_button_toggled)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'Ignore YouTube deletion by uploader errors',
+            self.app_obj.ignore_yt_uploader_deleted_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_uploader_button_toggled)
+
+        # Custom error/warning preferences
+        self.add_label(grid,
+            '<u>General preferences</u>',
+            0, 4, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>Ignore any errors/warnings which match lines in this list' \
+            + ' (applies to all websites)</i>',
+            0, 5, grid_width, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            self.app_obj.ignore_custom_msg_list,
+            0, 6, grid_width, 1
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            'These are ordinary strings',
+            0, 7, 1, 1,
+        )
+        # Signal connect appears below
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            'These are regular expressions (regexes)',
+            1, 7, 1, 1,
+        )
+        if self.app_obj.ignore_custom_regex_flag:
+            radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        # Signal connects from above
+        textbuffer.connect('changed', self.on_custom_textview_changed)
+        radiobutton.connect(
+            'toggled',
+            self.on_regex_button_toggled,
+            False,
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_regex_button_toggled,
+            True,
+        )
+
 
     def setup_scheduling_tab(self):
 
@@ -6302,12 +6790,31 @@ class SystemPrefWin(GenericPrefWin):
         Sets up the 'Scheduling' tab.
         """
 
-        tab, grid = self.add_notebook_tab('_Scheduling')
+        # Add this tab...
+        tab, grid = self.add_notebook_tab('_Scheduling', 0)
+
+        # ...and an inner notebook...
+        inner_notebook = self.add_inner_notebook(grid)
+
+        # ...with its own tabs
+        self.setup_scheduling_start_tab(inner_notebook)
+        self.setup_scheduling_stop_tab(inner_notebook)
+
+
+    def setup_scheduling_start_tab(self, inner_notebook):
+
+        """Called by self.setup_windows_tab().
+
+        Sets up the 'Start' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab('_Start', inner_notebook)
+
         grid_width = 2
 
-        # Scheduling preferences
+        # Scheduled start preferences
         self.add_label(grid,
-            '<u>Scheduling preferences</u>',
+            '<u>Scheduled start preferences</u>',
             0, 0, grid_width, 1,
         )
 
@@ -6398,7 +6905,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton = self.add_checkbutton(grid,
             'After an automatic \'Download/Check all\' operation, shut down' \
             + script,
-            self.app_obj.scheduled_stop_flag,
+            self.app_obj.scheduled_shutdown_flag,
             True,                   # Can be toggled by user
             0, 5, grid_width, 1,
         )
@@ -6418,7 +6925,142 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_scheduled_stop_button_toggled)
 
 
-    def setup_operations_tab(self):                         
+    def setup_scheduling_stop_tab(self, inner_notebook):
+
+        """Called by self.setup_windows_tab().
+
+        Sets up the 'Stop' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab('S_top', inner_notebook)
+
+        grid_width = 3
+
+        # Scheduled stop preferences
+        self.add_label(grid,
+            '<u>Scheduled stop preferences</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            'Stop all download operations after this much time',
+            self.app_obj.autostop_time_flag,
+            True,                   # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        # Signal connect appears below
+
+        spinbutton = self.add_spinbutton(grid,
+            1, None, 1, self.app_obj.autostop_time_value,
+            1, 1, 1, 1,
+        )
+        if not self.app_obj.autostop_time_flag:
+            spinbutton.set_sensitive(False)
+
+        combo = self.add_combo(grid,
+            formats.TIME_METRIC_LIST,
+            None,
+            2, 1, 1, 1,
+        )
+        combo.set_active(
+            formats.TIME_METRIC_LIST.index(
+                self.app_obj.autostop_time_unit,
+            )
+        )
+        if not self.app_obj.autostop_time_flag:
+            combo.set_sensitive(False)
+        # Signal connect appears below
+
+        # Signal connects from above
+        checkbutton.connect(
+            'toggled',
+            self.on_autostop_time_button_toggled,
+            spinbutton,
+            combo,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_autostop_time_spinbutton_toggled,
+        )
+        combo.connect('changed', self.on_autostop_time_combo_changed)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            'Stop all download operations after this many videos',
+            self.app_obj.autostop_videos_flag,
+            True,                   # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        # Signal connect appears below
+
+        spinbutton2 = self.add_spinbutton(grid,
+            1, None, 1, self.app_obj.autostop_videos_value,
+            1, 2, 1, 1,
+        )
+        if not self.app_obj.autostop_videos_flag:
+            spinbutton2.set_sensitive(False)
+        # Signal connect appears below
+
+        # Signal connects from above
+        checkbutton2.connect(
+            'toggled',
+            self.on_autostop_videos_button_toggled,
+            spinbutton2,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_autostop_videos_spinbutton_toggled,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            'Stop all download operations after this much disk space',
+            self.app_obj.autostop_size_flag,
+            True,                   # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        # Signal connect appears below
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 1, self.app_obj.autostop_size_value,
+            1, 3, 1, 1,
+        )
+        if not self.app_obj.autostop_size_flag:
+            spinbutton3.set_sensitive(False)
+
+        combo3 = self.add_combo(grid,
+            formats.FILESIZE_METRIC_LIST,
+            None,
+            2, 3, 1, 1,
+        )
+        combo3.set_active(
+            formats.FILESIZE_METRIC_LIST.index(
+                self.app_obj.autostop_size_unit,
+            )
+        )
+        if not self.app_obj.autostop_size_flag:
+            combo3.set_sensitive(False)
+        # Signal connect appears below
+
+        # Signal connects from above
+        checkbutton3.connect(
+            'toggled',
+            self.on_autostop_size_button_toggled,
+            spinbutton3,
+            combo3,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_autostop_size_spinbutton_toggled,
+        )
+        combo3.connect('changed', self.on_autostop_size_combo_changed)
+
+        self.add_label(grid,
+            '<i>NB Disk space is estimated, and does not apply to simulated' \
+            + ' downloads (e.g. \'Check all\')</i>',
+            0, 4, grid_width, 1,
+        )
+
+
+    def setup_operations_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -6439,7 +7081,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_time_saving_tab(inner_notebook)
 
 
-    def setup_operations_downloads_tab(self, inner_notebook):  
+    def setup_operations_downloads_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -6483,7 +7125,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.connect('toggled', self.on_auto_clone_button_toggled)
 
 
-    def setup_operations_notifications_tab(self, inner_notebook):  
+    def setup_operations_notifications_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -6549,7 +7191,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_operations_url_flexibility_tab(self, inner_notebook):  
+    def setup_operations_url_flexibility_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -6624,8 +7266,8 @@ class SystemPrefWin(GenericPrefWin):
             'playlist',
         )
 
-              
-    def setup_operations_performance_tab(self, inner_notebook):  
+
+    def setup_operations_performance_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -6711,7 +7353,7 @@ class SystemPrefWin(GenericPrefWin):
         combo.connect('changed', self.on_video_res_combo_changed)
 
 
-    def setup_operations_time_saving_tab(self, inner_notebook):  
+    def setup_operations_time_saving_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -6778,7 +7420,7 @@ class SystemPrefWin(GenericPrefWin):
             entry,
             entry2,
         )
-              
+
 
     def setup_ytdl_tab(self):
 
@@ -6933,7 +7575,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.connect('toggled', self.on_json_button_toggled)
 
 
-    def setup_output_tab(self):                           
+    def setup_output_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -6952,7 +7594,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_output_both_tab(inner_notebook)
 
 
-    def setup_output_outputtab_tab(self, inner_notebook):     
+    def setup_output_outputtab_tab(self, inner_notebook):
 
         """Called by self.setup_output_tab().
 
@@ -7065,7 +7707,7 @@ class SystemPrefWin(GenericPrefWin):
             self.on_refresh_verbose_button_toggled,
         )
         if not self.app_obj.refresh_output_videos_flag:
-            checkbutton8.set_sensitive(False)    
+            checkbutton8.set_sensitive(False)
 
         # Signal connect from above
         checkbutton8.connect(
@@ -7075,7 +7717,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_output_terminal_window_tab(self, inner_notebook):     
+    def setup_output_terminal_window_tab(self, inner_notebook):
 
         """Called by self.setup_output_tab().
 
@@ -7157,7 +7799,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_output_both_tab(self, inner_notebook):     
+    def setup_output_both_tab(self, inner_notebook):
 
         """Called by self.setup_output_tab().
 
@@ -7181,7 +7823,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton.set_hexpand(False)
         checkbutton.connect('toggled', self.on_verbose_button_toggled)
-   
+
 
     # Callback class methods
 
@@ -7313,6 +7955,173 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.operation_auto_update_flag:
             self.app_obj.set_operation_auto_update_flag(False)
+
+
+    def on_autostop_size_button_toggled(self, checkbutton, spinbutton, combo):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        amount of disk space.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+            combo (Gtk.ComboBox): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.autostop_size_flag:
+            self.app_obj.set_autostop_size_flag(True)
+            spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.autostop_size_flag:
+            self.app_obj.set_autostop_size_flag(False)
+            spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
+
+
+    def on_autostop_size_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_scheduling_tab().
+
+        Sets the disk space unit at which a download operation is auto-stopped.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_autostop_size_unit(model[tree_iter][0])
+
+
+    def on_autostop_size_spinbutton_toggled(self, spinbutton):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Sets the disk space value at which a download operation is
+        auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_autostop_size_value(spinbutton.get_value())
+
+
+    def on_autostop_time_button_toggled(self, checkbutton, spinbutton, combo):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        time.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+            combo (Gtk.ComboBox): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.autostop_time_flag:
+            self.app_obj.set_autostop_time_flag(True)
+            spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.autostop_time_flag:
+            self.app_obj.set_autostop_time_flag(False)
+            spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
+
+
+    def on_autostop_time_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_scheduling_tab().
+
+        Sets the time unit at which a download operation is auto-stopped.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_autostop_time_unit(model[tree_iter][0])
+
+
+    def on_autostop_time_spinbutton_toggled(self, spinbutton):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Sets the time value at which a download operation is auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_autostop_time_value(spinbutton.get_value())
+
+
+    def on_autostop_videos_button_toggled(self, checkbutton, spinbutton):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        number of videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.autostop_videos_flag:
+            self.app_obj.set_autostop_videos_flag(True)
+            spinbutton.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.autostop_videos_flag:
+            self.app_obj.set_autostop_videos_flag(False)
+            spinbutton.set_sensitive(False)
+
+
+    def on_autostop_videos_spinbutton_toggled(self, spinbutton):
+
+        """Called from callback in self.setup_scheduling_tab().
+
+        Sets the number of videos at which a download operation is
+        auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_autostop_videos_value(spinbutton.get_value())
 
 
     def on_backup_button_toggled(self, radiobutton, value):
@@ -7480,6 +8289,117 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_child_process_exit_flag(False)
 
 
+    def on_custom_textview_changed(self, textbuffer):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Sets the custom of list of ignorable error messages.
+
+        Args:
+
+            textbuffer (Gtk.TextBuffer): The buffer belonging to the textview
+                whose contents has been modified
+
+        """
+
+        text = textbuffer.get_text(
+            textbuffer.get_start_iter(),
+            textbuffer.get_end_iter(),
+            # Don't include hidden characters
+            False,
+        )
+
+        # Filter out empty lines
+        line_list = text.split("\n")
+        mod_list = []
+        for line in line_list:
+            if re.match(r'\S', line):
+                mod_list.append(line)
+
+        # Apply the changes
+        self.app_obj.set_ignore_custom_msg_list(mod_list)
+
+
+    def on_http_404_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of HTTP 404 error messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_http_404_error_flag:
+            self.app_obj.set_ignore_http_404_error_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_http_404_error_flag:
+            self.app_obj.set_ignore_http_404_error_flag(False)
+
+
+    def on_data_block_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of data block error messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_data_block_error_flag:
+            self.app_obj.set_ignore_data_block_error_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_data_block_error_flag:
+            self.app_obj.set_ignore_data_block_error_flag(False)
+
+
+    def on_missing_format_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of missing format error messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_missing_format_error_flag:
+            self.app_obj.set_ignore_missing_format_error_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_missing_format_error_flag:
+            self.app_obj.set_ignore_missing_format_error_flag(False)
+
+
+    def on_uploader_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables ignoring of deletion by uploader error messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_yt_uploader_deleted_flag:
+            self.app_obj.set_ignore_yt_uploader_deleted_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_yt_uploader_deleted_flag:
+            self.app_obj.set_ignore_yt_uploader_deleted_flag(False)
+
+
     def on_clipboard_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_windows_tab().
@@ -7599,6 +8519,8 @@ class SystemPrefWin(GenericPrefWin):
 
         if response == Gtk.ResponseType.OK:
 
+            dialogue_manager_obj = self.app_obj.dialogue_manager_obj
+
             # In the past, I accidentally created a new database directory
             #   just inside an existing one, rather than switching to the
             #   existing one
@@ -7609,7 +8531,7 @@ class SystemPrefWin(GenericPrefWin):
 
             if not os.path.isfile(db_path):
 
-                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                dialogue_manager_obj.show_msg_dialogue(
                     'Are you sure you want to create\na new database at this' \
                     + ' location?\n\n' + new_path,
                     'question',
@@ -7624,18 +8546,41 @@ class SystemPrefWin(GenericPrefWin):
             # Database file already exists, so try to load it now
             elif not self.app_obj.switch_db([new_path, self]):
 
+                # Load failed
                 if self.app_obj.disable_load_save_flag:
                     button.set_sensitive(False)
 
-                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                    'Database file not loaded',
-                    'error',
-                    'ok',
-                    self,           # Parent window is this window
-                )
+                if self.app_obj.disable_load_save_msg is not None:
+
+                    dialogue_win = dialogue_manager_obj.show_msg_dialogue(
+                        self.app_obj.disable_load_save_msg,
+                        'error',
+                        'ok',
+                        self,           # Parent window is this window
+                    )
+
+                else:
+
+                    dialogue_win = dialogue_manager_obj.show_msg_dialogue(
+                        'Database file not loaded',
+                        'error',
+                        'ok',
+                        self,           # Parent window is this window
+                    )
+
+                # When load/save is disabled, this preference window can't be
+                #   opened
+                # Therefore, if load/save has just been disabled, close this
+                #   window after the dialogue window closes
+                dialogue_win.set_modal(True)
+                dialogue_win.run()
+                dialogue_win.destroy()
+                if self.app_obj.disable_load_save_flag:
+                    self.destroy()
 
             else:
 
+                # Load succeeded
                 entry.set_text(self.app_obj.data_dir)
                 self.entry.set_text(
                     str(utils.disk_get_total_space(self.app_obj.data_dir)),
@@ -7648,12 +8593,23 @@ class SystemPrefWin(GenericPrefWin):
                 if self.app_obj.disable_load_save_flag:
                     button.set_sensitive(False)
 
-                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                    'Database file loaded',
-                    'info',
-                    'ok',
-                    self,           # Parent window is this window
-                )
+                if self.app_obj.disable_load_save_msg is not None:
+
+                    dialogue_manager_obj.show_msg_dialogue(
+                        self.app_obj.disable_load_save_msg,
+                        'info',
+                        'ok',
+                        self,           # Parent window is this window
+                    )
+
+                else:
+
+                    dialogue_manager_obj.show_msg_dialogue(
+                        'Database file loaded',
+                        'info',
+                        'ok',
+                        self,           # Parent window is this window
+                    )
 
 
     def on_delete_shutdown_button_toggled(self, checkbutton):
@@ -7895,6 +8851,48 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.auto_expand_video_index_flag:
             self.app_obj.set_auto_expand_video_index_flag(False)
+
+
+    def on_gtk_emulate_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables emulation of a broken Gtk library.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.gtk_emulate_broken_flag:
+            self.app_obj.set_gtk_emulate_broken_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.gtk_emulate_broken_flag:
+            self.app_obj.set_gtk_emulate_broken_flag(False)
+
+
+    def on_hide_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_general_tab().
+
+        Enables/disables hiding finishe media data objects in the Progress
+        List.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag = main_win_obj.hide_finished_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.hide_finished_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.hide_finished_checkbutton.set_active(False)
 
 
     def on_json_button_toggled(self, checkbutton):
@@ -8377,6 +9375,25 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_refresh_output_verbose_flag(False)
 
 
+    def on_regex_button_toggled(self, radiobutton, flag):
+
+        """Called from callback in self.setup_general_tab().
+
+        Sets whether mainapp.TartubeApp.ignore_custom_msg_list contains
+        ordinary strings or regexes.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+            flag (bool): False for ordinary strings, True for regexes
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_ignore_custom_regex_flag(flag)
+
+
     def on_reset_ffmpeg_button_clicked(self, button, entry):
 
         """Called from callback in self.setup_ytdl_tab().
@@ -8408,12 +9425,13 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.results_list_reverse_flag:
-            self.app_obj.set_results_list_reverse_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.results_list_reverse_flag:
-            self.app_obj.set_results_list_reverse_flag(False)
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag = main_win_obj.reverse_results_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.reverse_results_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.reverse_results_checkbutton.set_active(False)
 
 
     def on_save_button_toggled(self, checkbutton):
@@ -8449,11 +9467,11 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         if checkbutton.get_active() \
-        and not self.app_obj.scheduled_stop_flag:
-            self.app_obj.set_scheduled_stop_flag(True)
+        and not self.app_obj.scheduled_shutdown_flag:
+            self.app_obj.set_scheduled_shutdown_flag(True)
         elif not checkbutton.get_active() \
-        and self.app_obj.scheduled_stop_flag:
-            self.app_obj.set_scheduled_stop_flag(False)
+        and self.app_obj.scheduled_shutdown_flag:
+            self.app_obj.set_scheduled_shutdown_flag(False)
 
 
     def on_set_ffmpeg_button_clicked(self, button, entry):
