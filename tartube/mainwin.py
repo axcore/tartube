@@ -12551,8 +12551,8 @@ class DeleteContainerDialogue(Gtk.Dialog):
 
         # IV list - Gtk widgets
         # ---------------------
-        self.button                             # Gtk.Button
-        self.button2                            # Gtk.Button
+        self.button = None                      # Gtk.Button
+        self.button2 = None                     # Gtk.Button
 
         # IV list - other
         # ---------------
