@@ -67,7 +67,7 @@ class FileManager(threading.Thread):
 
         Args:
 
-            full_path (string): The full path to the JSON file
+            full_path (str): The full path to the JSON file
 
         Returns:
 
@@ -98,7 +98,7 @@ class FileManager(threading.Thread):
 
         Args:
 
-            full_path (string): The full path to the text file
+            full_path (str): The full path to the text file
 
         Returns:
 
@@ -129,7 +129,7 @@ class FileManager(threading.Thread):
 
         Args:
 
-            full_path (string): The full path to the icon file
+            full_path (str): The full path to the icon file
 
             width, height (int or None): If both are specified, the icon is
                 scaled to that size

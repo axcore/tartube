@@ -573,6 +573,8 @@ if not xmas_flag:
         'download_icon': 'status_download_icon_64.png',
         'update_icon': 'status_update_icon_64.png',
         'refresh_icon': 'status_refresh_icon_64.png',
+        'info_icon': 'status_info_icon_64.png',
+        'tidy_icon': 'status_tidy_icon_64.png',
     }
 else:
     STATUS_ICON_DICT = {
@@ -581,6 +583,8 @@ else:
         'download_icon': 'status_download_icon_xmas_64.png',
         'update_icon': 'status_update_icon_xmas_64.png',
         'refresh_icon': 'status_refresh_icon_xmas_64.png',
+        'info_icon': 'status_info_icon_xmas_64.png',
+        'tidy_icon': 'status_tidy_icon_xmas_64.png',
     }
 
 TOOLBAR_ICON_DICT = {

@@ -46,11 +46,80 @@ import media
 # Functions
 
 
+def add_links_to_entry_from_clipboard(app_obj, entry, duplicate_text=None,
+drag_drop_text=None, no_modify_flag=None):
+
+    """Called by various functions in mainWin.AddChannelDialogue and
+    mainwin.AddPlaylistDialogue.
+
+    Function to add valid URLs from the clipboard to a Gtk.Entry, ignoring
+    anything that is not a valid URL.
+
+    A duplicate URL can be specified, when the dialogue window's clipboard
+    monitoring is turned on; it prevents this function adding the same URL
+    that was added the previous time.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        entry (Gtk.Entry): The entry to which valis URLs should be added.
+            Only the first valid URL is added, replacing any previous contents
+            (unless the URL matches the specified duplicate
+
+        duplicate_text (str): If specified, ignore the clipboard contents, if
+            it matches this URL
+
+        drag_drop_text (str): If specified, use this text and ignore the
+            clipboard
+
+        no_modify_flag (bool): If True, the entry is not updated, instead,
+            the URL that would have been added to it is merely returned
+
+    Returns:
+
+        The URL added to the entry (or that would have been added to the entry)
+        or None if no valid and non-duplicate URL was found in the clipboard
+
+    """
+
+    if drag_drop_text is None:
+
+        # Get text from the system clipboard
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        cliptext = clipboard.wait_for_text()
+
+    else:
+
+        # Ignore the clipboard, and use the specified text
+        cliptext = drag_drop_text
+
+    # Eliminate empty lines and any lines that are not valid URLs (we assume
+    #   that it's one URL per line)
+    # Use the first valid line that doesn't match the duplicate (if specified)
+    if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
+
+        for line in cliptext.split('\n'):
+            if check_url(line):
+
+                line = strip_whitespace(line)
+                if re.search('\S', line) \
+                and (duplicate_text is None or line != duplicate_text):
+
+                    if not no_modify_flag:
+                        entry.set_text(line)
+
+                    return line
+
+    # No valid and non-duplicate URL found
+    return None
+
+
 def add_links_to_textview_from_clipboard(app_obj, textview, mark_start=None,
 mark_end=None, drag_drop_text=None):
 
     """Called by mainwin.AddVideoDialogue.__init__(),
-    .clipboard_timer_callback() and .on_window_drag_data_received().
+    .on_window_drag_data_received() and .clipboard_timer_callback().
 
     Function to add valid URLs from the clipboard to a Gtk.TextView, ignoring
     anything that is not a valid URL, and ignoring duplicate URLs.
@@ -139,76 +208,6 @@ mark_end=None, drag_drop_text=None):
             )
 
 
-def add_links_to_entry_from_clipboard(app_obj, entry, duplicate_text=None,
-drag_drop_text=None, no_modify_flag=None):
-
-    """Called by mainwin.AddChannelDialogue.__init__() and
-    .clipboard_timer_callback(), and the same functions in
-    mainwin.AddPlaylistDialogue.
-
-    Function to add valid URLs from the clipboard to a Gtk.Entry, ignoring
-    anything that is not a valid URL.
-
-    A duplicate URL can be specified, when the dialogue window's clipboard
-    monitoring is turned on; it prevents this function adding the same URL
-    that was added the previous time.
-
-    Args:
-
-        app_obj (mainapp.TartubeApp): The main application
-
-        entry (Gtk.Entry): The entry to which valis URLs should be added.
-            Only the first valid URL is added, replacing any previous contents
-            (unless the URL matches the specified duplicate
-
-        duplicate_text (str): If specified, ignore the clipboard contents, if
-            it matches this URL
-
-        drag_drop_text (str): If specified, use this text and ignore the
-            clipboard
-
-        no_modify_flag (bool): If True, the entry is not updated, instead,
-            the URL that would have been added to it is merely returned
-
-    Return values:
-
-        The URL added to the entry (or that would have been added to the entry)
-        or None if no valid and non-duplicate URL was found in the clipboard
-
-    """
-
-    if drag_drop_text is None:
-
-        # Get text from the system clipboard
-        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        cliptext = clipboard.wait_for_text()
-
-    else:
-
-        # Ignore the clipboard, and use the specified text
-        cliptext = drag_drop_text
-
-    # Eliminate empty lines and any lines that are not valid URLs (we assume
-    #   that it's one URL per line)
-    # Use the first valid line that doesn't match the duplicate (if specified)
-    if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
-
-        for line in cliptext.split('\n'):
-            if check_url(line):
-
-                line = strip_whitespace(line)
-                if re.search('\S', line) \
-                and (duplicate_text is None or line != duplicate_text):
-
-                    if not no_modify_flag:
-                        entry.set_text(line)
-
-                    return line
-
-    # No valid and non-duplicate URL found
-    return None
-
-
 def check_url(url):
 
     """Can be called by anything.
@@ -217,7 +216,7 @@ def check_url(url):
 
     Args:
 
-        url (string): The URL to check
+        url (str): The URL to check
 
     Returns:
 
@@ -244,18 +243,19 @@ def check_url(url):
 
 def convert_item(item, to_unicode=False):
 
-    """Based on the convert_item() function in youtube-dl-gui. Now called by
-    various functions in downloads.VideoDownloader and in this module.
+    """Can be called by anything.
+
+    Based on the convert_item() function in youtube-dl-gui.
 
     Convert item between 'unicode' and 'str'.
 
     Args:
 
-        item (-): Can be any python item.
+        item (-): Can be any python item
 
-        to_unicode (boolean): When True it will convert all the 'str' types
-            to 'unicode'. When False it will convert all the 'unicode' types
-            back to 'str'.
+        to_unicode (bool): When True it will convert all the 'str' types to
+            'unicode'. When False it will convert all the 'unicode' types back
+            to 'str'
 
     Returns:
 
@@ -293,8 +293,7 @@ def convert_item(item, to_unicode=False):
 
 def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
-    """Called by mainwin.MainWin.results_list_update_row() and
-    downloads.VideoDownloader.confirm_sim_video().
+    """Can be called by anything.
 
     Converts a full path to a file that would be stored in Tartube's data
     directory (mainapp.TartubeApp.downloads_dir) into the equivalent path in
@@ -310,10 +309,10 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
         app_obj (mainapp.TartubeApp): The main application
 
-        old_path (string): Full path to the existing file
+        old_path (str): Full path to the existing file
 
-        move_flag (True, False): If True, the file is actually moved to the
-            new location
+        move_flag (bool): If True, the file is actually moved to the new
+            location
 
     Returns:
 
@@ -359,7 +358,7 @@ def convert_seconds_to_string(seconds, short_flag=False):
 
         seconds (int or float): The time to convert
 
-        short_flag (True or False): If True, show '05:15' rather than '0:05:15'
+        short_flag (bool): If True, show '05:15' rather than '0:05:15'
 
     Returns:
 
@@ -394,7 +393,8 @@ def convert_youtube_to_hooktube(url):
     to other sites.
 
     Args:
-        url (string): The weblink to convert
+
+        url (str): The weblink to convert
 
     Returns:
 
@@ -415,13 +415,48 @@ def convert_youtube_to_hooktube(url):
     return url
 
 
+def convert_youtube_to_invidious(url):
+
+    """Can be called by anything.
+
+    Converts a YouTube weblink to an Invidious weblink (but doesn't modify
+    links to other sites.
+
+    Args:
+
+        url (str): The weblink to convert
+
+    Returns:
+
+        The converted string
+
+    """
+
+    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+
+        url = re.sub(
+            r'youtube\.com',
+            'invidio.us',
+            url,
+            # Substitute first occurence only
+            1,
+        )
+
+    return url
+
+
 def debug_time(msg):
 
-    """Called by all functions in mainapp.py, mainwin.py and downloads.py (but
-    only when debug flags are turned on).
+    """Called by all functions in downloads.py, info.py, mainapp.py,
+    mainwin.py, refresh.py, tidy.py and updates.py.
 
     Writes the current time, and the name of the calling function to STDOUT,
     e.g. '2020-01-16 08:55:06 ap 91 __init__'.
+
+    Args:
+
+        msg (str): The message to write
+
     """
 
     # Uncomment this code to display the time with microseconds
@@ -434,10 +469,49 @@ def debug_time(msg):
     # Uncomment this code to display the message, without a timestamp
 #    print(msg)
 
+    # This line makes my IDE collapse functions nicely
+    return
+
+
+def disk_get_free_space(path, bytes_flag=False):
+
+    """Can be called by anything.
+
+    Returns the size of the disk on which a specified file/directory exists,
+    minus the used space on that disk.
+
+    Args:
+
+        path (str): Path to a file/directory on the disk, typically Tartube's
+            data directory
+
+        bytes_flag (bool): True to return an integer value in MB, false to
+            return a value in bytes
+
+    Returns:
+
+        The free space in MB (or in bytes, if the flag is specified), or 0 if
+            the size can't be calculated for any reason
+
+    """
+
+    try:
+        total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+            os.path.realpath(path),
+        )
+
+        if not bytes_flag:
+            return int(free_bytes / 1000000)
+        else:
+            return free_bytes
+
+    except:
+        return 0
+
 
 def disk_get_total_space(path, bytes_flag=False):
 
-    """Called by anything.
+    """Can be called by anything.
 
     Returns the size of the disk on which a specified file/directory exists.
 
@@ -449,7 +523,7 @@ def disk_get_total_space(path, bytes_flag=False):
         bytes_flag (bool): True to return an integer value in MB, false to
             return a value in bytes
 
-    Return values:
+    Returns:
 
         The total size in MB (or in bytes, if the flag is specified)
 
@@ -467,7 +541,7 @@ def disk_get_total_space(path, bytes_flag=False):
 
 def disk_get_used_space(path, bytes_flag=False):
 
-    """Called by anything.
+    """Can be called by anything.
 
     Returns the size of the disk on which a specified file/directory exists,
     minus the free space on that disk.
@@ -480,7 +554,7 @@ def disk_get_used_space(path, bytes_flag=False):
         bytes_flag (bool): True to return an integer value in MB, false to
             return a value in bytes
 
-    Return values:
+    Returns:
 
         The used space in MB (or in bytes, if the flag is specified)
 
@@ -494,37 +568,6 @@ def disk_get_used_space(path, bytes_flag=False):
         return int(used_bytes / 1000000)
     else:
         return used_bytes
-
-
-def disk_get_free_space(path, bytes_flag=False):
-
-    """Called by anything.
-
-    Returns the size of the disk on which a specified file/directory exists,
-    minus the used space on that disk.
-
-    Args:
-
-        path (str): Path to a file/directory on the disk, typically Tartube's
-            data directory
-
-        bytes_flag (bool): True to return an integer value in MB, false to
-            return a value in bytes
-
-    Return values:
-
-        The free space in MB (or in bytes, if the flag is specified)
-
-    """
-
-    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
-        os.path.realpath(path),
-    )
-
-    if not bytes_flag:
-        return int(free_bytes / 1000000)
-    else:
-        return free_bytes
 
 
 def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
@@ -551,28 +594,43 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
             name checked will be 'my_name_2'
 
         max_value (int): When to give up. 9999 by default, meaning that this
-            function will try everything up to 'my_name_9999' before giving up
+            function will try everything up to 'my_name_9999' before giving up.
+            If set to -1, this function never gives up
 
-    Return values:
+    Returns:
 
         None on failure, the new name on success
 
     """
 
-    for n in range (min_value, max_value):
+    if max_value != -1:
 
-        new_name = old_name + '_'  + str(n)
-        if not new_name in app_obj.media_name_dict:
-            return new_name
+        for n in range (min_value, max_value):
 
-    # Failure
-    return None
+            new_name = old_name + '_'  + str(n)
+            if not new_name in app_obj.media_name_dict:
+                return new_name
+
+        # Failure
+        return None
+
+    else:
+
+        # Renaming is essential, for example, in calls from
+        #   mainapp.TartubeApp.load_db(). Keep going indefinitely until an
+        #   available name is found
+        n = 1
+        while 1:
+            n += 1
+
+            new_name = old_name + '_'  + str(n)
+            if not new_name in app_obj.media_name_dict:
+                return new_name
 
 
 def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
-    """Called by mainwin.MainWin.results_list_update_row() and
-    mainwin.ComplexCatalogueItem.update_thumb_image().
+    """Can be called by anything.
 
     No way to know which image format is used by all websites for their video
     thumbnails, so look for the most common ones, and return the path to the
@@ -584,26 +642,20 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
         video_obj (media.Video): The video object handling the downloaded video
 
-        temp_dir_flag (True, False): If True, this function will look in
-            Tartube's temporary data directory, if the thumbnail isn't found in
-            the main data directory.
+        temp_dir_flag (bool): If True, this function will look in Tartube's
+            temporary data directory, if the thumbnail isn't found in the main
+            data directory
 
     Returns:
 
-        path (string): The full path to the thumbnail file, or None
+        path (str): The full path to the thumbnail file, or None
 
     """
 
     for ext in ('.jpg', '.png', '.gif'):
 
-        # Look in main data directory
-        path = os.path.abspath(
-            os.path.join(
-                app_obj.downloads_dir,
-                video_obj.file_dir,
-                video_obj.file_name + ext,
-            ),
-        )
+        # Look in Tartube's permanent data directory
+        path = video_obj.get_actual_path_by_ext(app_obj, ext)
 
         if os.path.isfile(path):
             return path
@@ -622,8 +674,9 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
 def format_bytes(num_bytes):
 
-    """Based on the format_bytes() function in youtube-dl-gui. Now called by
-    media.Video.get_file_size_string() and so on.
+    """Can be called by anything.
+
+    Based on the format_bytes() function in youtube-dl-gui.
 
     Convert bytes into a formatted string, e.g. '23.5GiB'.
 
@@ -649,7 +702,7 @@ def format_bytes(num_bytes):
 
 
 def generate_system_cmd(app_obj, media_data_obj, options_list,
-dl_sim_flag=False):
+dl_sim_flag=False, divert_mode=None):
 
     """Called by downloads.VideoDownloader.do_download() and
     mainwin.SystemCmdDialogue.update_textbuffer().
@@ -672,6 +725,13 @@ dl_sim_flag=False):
         dl_sim_flag (bool): True if a simulated download is to take place,
             False if a real download is to take place
 
+        divert_mode (str): If not None, should be one of the values of
+            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube' or
+            'invidious'. If one of the latter two, a media.Video object whose
+            source URL points to YouTube should be converted to HookTube or
+            Invidious (no conversion takes place for channels/playlists/
+            folders)
+
     Returns:
 
         Python list that contains the system command to execute and its
@@ -688,13 +748,13 @@ dl_sim_flag=False):
     #   user deletes the videos, youtube-dl won't try to download them again
     elif app_obj.allow_ytdl_archive_flag:
 
-        # (Create the archive file in the media data object's own
+        # (Create the archive file in the media data object's default
         #   sub-directory, not the alternative download destination, as this
-        #   helps youtube-dl to work the way we want it)
+        #   helps youtube-dl to work the way we want it to work)
         if isinstance(media_data_obj, media.Video):
-            dl_path = media_data_obj.parent_obj.get_dir(app_obj)
+            dl_path = media_data_obj.parent_obj.get_default_dir(app_obj)
         else:
-            dl_path = media_data_obj.get_dir(app_obj)
+            dl_path = media_data_obj.get_default_dir(app_obj)
 
         options_list.append('--download-archive')
         options_list.append(
@@ -711,16 +771,25 @@ dl_sim_flag=False):
         options_list.append('--ffmpeg-location')
         options_list.append('"' + app_obj.ffmpeg_path + '"')
 
+    # Convert a YouTube URL to HookTube/Invidious, if required
+    source = media_data_obj.source
+    if isinstance(media_data_obj, media.Video) and divert_mode:
+        if divert_mode == 'hooktube':
+            source = convert_youtube_to_hooktube(source)
+        elif divert_mode == 'invidious':
+            source = convert_youtube_to_invidious(source)
+
     # Set the list
-    cmd_list = [app_obj.ytdl_path] + options_list + [media_data_obj.source]
+    cmd_list = [app_obj.ytdl_path] + options_list + [source]
 
     return cmd_list
 
 
 def get_encoding():
 
-    """Based on the get_encoding() function in youtube-dl-gui. Now called
-    by utils.convert_item().
+    """Called by utils.convert_item().
+
+    Based on the get_encoding() function in youtube-dl-gui.
 
     Returns:
 
@@ -739,7 +808,7 @@ def get_encoding():
 
 def get_options_manager(app_obj, media_data_obj):
 
-    """Can be called by anything, and is then called by this function
+    """Can be called by anything. Subsequently called by this function
     recursively.
 
     Fetches the options.OptionsManager which applies to the specified media
@@ -771,6 +840,28 @@ def get_options_manager(app_obj, media_data_obj):
         return app_obj.general_options_obj
 
 
+def is_youtube(url):
+
+    """Can be called by anything.
+
+    Checks whether a link is a YouTube link or not.
+
+    Args:
+
+        url (str): The weblink to check
+
+    Returns:
+
+        True if it's a YouTube link, False if not
+
+    """
+
+    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+        return True
+    else:
+        return False
+
+
 def open_file(uri):
 
     """Can be called by anything.
@@ -780,7 +871,7 @@ def open_file(uri):
 
     Args:
 
-        uri (string): The URI to open
+        uri (str): The URI to open
 
     """
 
@@ -791,24 +882,51 @@ def open_file(uri):
         subprocess.call([opener, uri])
 
 
-def remove_shortcuts(path):
+def parse_ytdl_options(options_string):
 
-    """Based on the remove_shortcuts() function in youtube-dl-gui. Now called
-    by options.OptionsParser.build_save_path().
+    """Called by options.OptionsParser.parse() or info.InfoManager.run().
 
-    Return the specified path after removing any shortcuts.
+    Parses the 'extra_cmd_string' option, which can contain arguments inside
+    double quotes "..." (arguments that can therefore contain whitespace)
 
     Args:
 
-        path (string): The path to convert
+        options_string (str): A string containing various youtube-dl
+            download options, as described above
 
     Returns:
 
-        The converted path
+        A separated list of youtube-dl download options
 
     """
 
-    return path.replace('~', os.path.expanduser('~'))
+    # Set a flag for an item beginning with double quotes, and reset it for an
+    #   item ending in double quotes
+    quote_flag = False
+    # Temporary list to hold such quoted arguments
+    quote_list = []
+    # Add options, one at a time, to a list
+    return_list = []
+
+    return_string = ''
+    for item in options_string.split():
+
+        quote_flag = (quote_flag or item[0] == "\"")
+
+        if quote_flag:
+            quote_list.append(item)
+        else:
+            options_list.append(item)
+
+        if quote_flag and item[-1] == "\"":
+
+            # Special case mode is over
+            return_list.append(" ".join(quote_list)[1:-1])
+
+            quote_flag = False
+            quote_list = []
+
+    return return_list
 
 
 def shorten_string(string, num_chars):
@@ -838,7 +956,7 @@ def shorten_string(string, num_chars):
 
 def strip_whitespace(string):
 
-    """Called by anything.
+    """Can be called by anything.
 
     Removes any leading/trailing whitespace from a string.
 
@@ -901,80 +1019,9 @@ def tidy_up_container_name(string, max_length):
         return string
 
 
-def tidy_up_long_string(string, max_length=80, reduce_flag=True):
-
-    """Called by mainwin.MainWin.errors_list_add_row() (or by anything else).
-
-    The specified string can contain any number of newline characters.
-
-    Replaces newline characters with a single space character.
-
-    Optionally reduces multiple whitespace characters and removes initial/
-    final whitespace character(s).
-
-    Then splits the string into a list of lines, each with the specified
-    maximum length.
-
-    Finally recombines those lines into a single string, with lines joined by
-    newline characters.
-
-    Args:
-
-        string (str): The string to convert
-
-        max_length (int): The maximum length of lines, before they are
-            recombined into a single string
-
-        reduce_flag (True, False): If True, initial and final whitespace is
-            removed, and multiple successive whitespace characters are
-            reduced to a single space character
-
-    Returns:
-
-        The converted string
-
-    """
-
-    if string:
-
-        string = re.sub(r'\r\n', ' ', string)
-
-        if reduce_flag:
-            string = re.sub(r'^\s+', '', string)
-            string = re.sub(r'\s+$', '', string)
-            string = re.sub(r'\s+', ' ', string)
-
-        line_list = []
-        for line in string.split('\n'):
-
-            if line == '':
-                # Preserve empty lines
-                line_list.append('')
-
-            else:
-                new_list = textwrap.wrap(
-                    line,
-                    width=max_length,
-                    # Don't split up URLs
-                    break_long_words=False,
-                    break_on_hyphens=False,
-                )
-
-                for mini_line in new_list:
-                    line_list.append(mini_line)
-
-        return '\n'.join(line_list)
-
-    else:
-
-        # Empty string
-        return string
-
-
 def tidy_up_long_descrip(string, max_length=80):
 
-    """Called by media.Video.set_video_descrip(), and also used by
-    .fetch_tooltip_text() functions in media.py.
+    """Can be called by anything.
 
     A modified version of utils.tidy_up_long_string. In this case, the
     specified string can contain any number of newline characters. We begin
@@ -1030,10 +1077,83 @@ def tidy_up_long_descrip(string, max_length=80):
         return string
 
 
+def tidy_up_long_string(string, max_length=80, reduce_flag=True,
+split_words_flag=False):
+
+    """Can be called by anything.
+
+    The specified string can contain any number of newline characters.
+
+    Replaces newline characters with a single space character.
+
+    Optionally reduces multiple whitespace characters and removes initial/
+    final whitespace character(s).
+
+    Then splits the string into a list of lines, each with the specified
+    maximum length.
+
+    Finally recombines those lines into a single string, with lines joined by
+    newline characters.
+
+    Args:
+
+        string (str): The string to convert
+
+        max_length (int): The maximum length of lines, before they are
+            recombined into a single string
+
+        reduce_flag (bool): If True, initial and final whitespace is removed,
+            and multiple successive whitespace characters are reduced to a
+            single space character
+
+        split_words_flag(bool): If True, the function will break words
+            (including hyphenated words) into smaller pieces, if necessary
+
+    Returns:
+
+        The converted string
+
+    """
+
+    if string:
+
+        string = re.sub(r'\r\n', ' ', string)
+
+        if reduce_flag:
+            string = re.sub(r'^\s+', '', string)
+            string = re.sub(r'\s+$', '', string)
+            string = re.sub(r'\s+', ' ', string)
+
+        line_list = []
+        for line in string.split('\n'):
+
+            if line == '':
+                # Preserve empty lines
+                line_list.append('')
+
+            else:
+                new_list = textwrap.wrap(
+                    line,
+                    width=max_length,
+                    # Don't split up URLs by default
+                    break_long_words=split_words_flag,
+                    break_on_hyphens=split_words_flag,
+                )
+
+                for mini_line in new_list:
+                    line_list.append(mini_line)
+
+        return '\n'.join(line_list)
+
+    else:
+
+        # Empty string
+        return string
+
+
 def to_string(data):
 
-    """Based on the to_string() function in youtube-dl-gui. Now called by
-    by options.OptionsParser.parse(), .build_file_sizes() and so on.
+    """Can be called by anything.
 
     Convert any data type to a string.
 
@@ -1052,12 +1172,11 @@ def to_string(data):
 
 def upper_case_first(string):
 
-    """Can be called by anything, but mainly used to capitalise
-    __main__.__packagename__.
+    """Can be called by anything.
 
     Args:
 
-        string (string): The string to capitalise
+        string (str): The string to capitalise
 
     Returns:
 
@@ -1066,4 +1185,3 @@ def upper_case_first(string):
     """
 
     return string[0].upper() + string[1:]
-

@@ -1,4 +1,4 @@
-# Tartube v1.4.0 installer script for MS Windows
+# Tartube v1.5.0 installer script for MS Windows
 #
 # Copyright (C) 2019-2020 A S Lewis
 #
@@ -140,7 +140,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-1.4.0-64bit.exe"
+    OutFile "install-tartube-1.5.0-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -234,18 +234,20 @@ Section "Tartube" SecClient
         "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
 
     # Store installation folder
-    WriteRegStr HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "DisplayName" "Tartube"
-    WriteRegStr HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-    WriteRegStr HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "Publisher" "A S Lewis"
-    WriteRegStr HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-        "DisplayVersion" "1.4.0"
+    # Commented out from v1.5.0; these instructions don't work, and probably
+    #   aren't necessary anyway
+#    WriteRegStr HKLM \
+#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+#        "DisplayName" "Tartube"
+#    WriteRegStr HKLM \
+#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+#        "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+#    WriteRegStr HKLM \
+#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+#        "Publisher" "A S Lewis"
+#    WriteRegStr HKLM \
+#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
+#        "DisplayVersion" "1.5.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

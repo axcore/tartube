@@ -1,3 +1,177 @@
+v1.5.0 (22 Feb 2020)
+-------------------------------------------------------------------------------
+
+This is the first release candidate for v2.0.0.
+
+MAJOR NEW FEATURES
+- You can now run multiple instances of Tartube on your system at the same
+    time. Multiple instances cannot load the same Tartube database; they must
+    each load their own database. Tartube will now remember the databases it
+    has loaded. If there are three databases (perhaps one on your main hard
+    disk and two on an external drive), you can start Tartube three times, and
+    they will each load a different database. This behaviour can be configured,
+    if necessary. Click 'Edit > System preferences... > Filesystem > Database'
+- HookTube acts as a redirection service for YouTube. Because of lawyers and
+    their evil machinations, HookTube's functionality is not as extensive as it
+    once was. Added the Invidious website (https://invidio.us/) as an
+    alternative
+- Added custom downloads. To start a custom download, click 'Operations >
+    Custom download all', or right-click a video/channel/playlist/folder. A
+    custom download is just like a normal download, until you customise it. To
+    do that, click 'Edit > System preferences > Operations > Custom'. Custom
+    downloads can be used to divert YouTube requests to HookTube or Invidious,
+    and to insert a delay between video downloads when the website is
+    complaining about robots
+- Added a new toolbar at the bottom of the main window, below the list of
+    videos. The toolbar is hidden, by default. To reveal it, click the 'Show
+    filter options' button in the bottom right-hand corner. Buttons in the new
+    toolbar can be used to sort the videos alphabetically, rather than by date,
+    and to search for videos whose name matches a string (or regex). The button
+    to search for videos by date has been moved into this toolbar
+- If you find a video that can't be downloaded, and you're not sure why, you
+    can now perform a test download. First, click 'Operations >  Test
+    youtube-dl...' (or right-click a video in the main window's list). Copy the
+    video's URL into the dialogue window, and then click the OK button. Click
+    the Output Tab to see the results. If the test successfully downloads the
+    video, then the problem was with Tartube. If the test fails to download the
+    video, then the problem is with the underlying youtube-dl software (or with
+    the video website)
+- During a test, it's possible to omit the video URL, while specifying some
+    youtube-dl download options. For example, you could fetch the youtube-dl
+    version number with the option --version
+- Added a new operation for tidying up files in Tartube's data directory
+    (folder). To start the operation, click 'Operations > Tidy up files...'.
+    You could also right-click a channel and select 'Channel actions > Tidy up
+    channel', and so on. A dialogue window appears, in which you can specify
+    which files should be tidied up. Choose carefully, because any files
+    deleted as a result of this operation cannot be recovered
+- The main window's switch button (in the toolbar near the top of the window)
+    now has six settings, rather than four. Click the button repeatedly to
+    cycle through them
+- Interesting and important videos can now be bookmarked (e.g., by right-
+    clicking a video and selecting 'Mark video > Video is bookmarked').
+    Bookmarked videos are visible in the new 'Bookmarks' folder. Bookmarking is
+    an alternative to favourites; bookmarks usually apply to a single video,
+    whereas favourites usually apply to a whole channel, playlist or folder
+- Also added a new 'Waiting Videos' folder. This acts as your own private
+    playlist - a list of videos that are waiting to be watched. To make a video
+    visible in this folder, right-click it and select 'Mark video > Video is in
+    waiting list'. When you watch the video, it will automatically disappear
+    from the 'Waiting Videos' folder (this doesn't happen to bookmarked videos)
+- The previous version was unable to delete a channel, playlist or folder (see
+    below). That error caused a partially-deleted channel/playlist/folder to
+    appear in the Videos Tab, on the left-hand side. In case similar errors
+    occur in the future, a feature has been added to look for errors and
+    inconsistencies in the Tartube database and automatically fix them. Click
+    'Edit > System preferences... > Filesystem > DB Errors > Check' to use it
+- Tartube can now fetch a list of available video formats for a video. Right-
+    click the video and select 'Fetch > Available formats'. Click the Output
+    Tab to see the results
+- Tartube can also fetch a list of available subtitles for a video. Right-click
+    the video and select 'Fecth > Available subtitles'. Click the Output Tab to
+    see the results
+- Tartube can now remember the size of its main window, and use the same size
+    when it restarts. This feature is disabled by default. To enable it, click
+    'Edit > System preferences... > Windows > Main window > Remember the size
+    of the main window when shutting down'
+
+MAJOR FIXES
+- In the previous version, Tartube was unable to delete a channel, playlist or
+    folder. Fixed
+- Some procedures took an extremely long time. For example, after right-
+    clicking a channel and selecting 'Channel contents > Mark videos as new',
+    the procedure could take several minutes if the channel had hundreds of
+    videos, or several hours if it contained thousands of videos. The faulty
+    code has been fixed, and the procedure now takes just a few seconds, even
+    for many thousands of videos
+- Videos in a Tartube folder (for example the 'Unsorted Videos' folder) were
+    added to the download list in a 'Check all' operation, even when they had
+    been checked before. This no longer happens, by default. To restore the
+    original behaviour, click 'Edit > System preferences... > Operations >
+    Downloads > For simulate downloads, don't check a video in a folder more
+    than once' to deselect it
+- Fixed the button for finding videos by date, which was not working at all in
+    the previous version
+- Fixed an occasional 'signal is not defined' error when the user stops an
+    operation (for example, a download operation)
+- Various inconsistencies in the way alternative download destinations are
+    handled have all been fixed. Download operations sometimes freezed
+    indefinitely, because Tartube doesn't download two channels/playlists/
+    folders with the same download destination at the same time. The code has
+    been updated to prevent the freeze from ever happening again
+- Fixed some more crashes caused by Gtk during a download operation
+
+MINOR NEW FEATURES
+- Videos downloaded into a temporary folder are deleted when Tartube restarts.
+    After shutting down Tartube, users often like to copy these videos
+    somewhere else on their hard drive. You can now ask Tartube to open the
+    temporary directories (folders), before shutting down, which will remind
+    you to do something with the videos. To enable this behaviour, click
+    'Edit > System preferences... > Filesystem > Temporary folders'
+- In the main window's list of videos, the date is now displayed as 'today' and
+    'yesterday' when possible. This behaviour can be disabled in 'Edit > System
+    preferences... > Windows > Main window'
+- During refresh operations, a progress bar is now visible in the bottom-left
+    corner of the window (just like the one visible during a download
+    operation)
+- When setting an alternative download destination for a channel/playlist/
+    folder (for example, by right-clicking a channel and selecting 'Channel
+    actions > Set download destination...'), the dialogue window has been
+    updated to show the previously selected alternative at the top of the list.
+    This should save a lot of time when setting the alternative download
+    destination for many channels/playlists/folders
+- The alternative download destination, if any, is now visible in the tooltips
+    for the channel/playlist/folder
+- Improved the appearance of the dialogue windows seen when Tartube runs for
+    the first time
+- Tweaked the appearance of the list of channels/playlists/folders in the
+    main window, so that for items with long names, more text is visible
+
+MINOR FIXES
+- Fixed a 'No such file or directory' error seen during a download operation,
+    if an external hard drive suddenly become disconnected (for example, if
+    the cable falls out)
+- Fixed rare problems in loading Tartube's config file
+- After a download operation, the list in the top half of the progress tab
+    often had one or two items in it, even when 'Hide active rows after they
+    are finished' was selected. Fixed
+- The length of lines of text, and spacing between lines, in various dialogue
+    windows has been made uniform
+- Improved the appearance of the main window by adding frames around everything
+- Renamed some misnamed icon files. The old icon files were being used in the
+    MS Windows installer, so fixed that too
+- If the user performed two successive refresh operations, the second one
+    halted after a couple of seconds. Fixed
+- When videos are deleted from Tartube's database, any post-processing
+    artefacts are now deleted with them
+- Fixed a few incorrect regex-matching actions
+- The user can specify that the main 'Download all' button should be
+    desensitised, but the setting was not applied correctly after Tartube
+    restarted. Fixed
+- Removed a duplicate menu option in the Video Index popup menu
+- Tartube channels, playlists and folders keep counts of the number of videos
+    inside them, including the number of favourite videos, downloaded videos,
+    and so on. The code was not working correctly, so the counts were not
+    always accurate. This version updates the code and recalculates all of the
+    counts
+- Fixed folder icons with an incorrect colour in various edit windows
+- Fixed markup errors for videos whose URL contained an ampersand character
+- Fixed the Gtk warning when closing the 'Add new video(s)' dialogue window
+- Updated the installer scripts for MS Windows, so they don't try to update the
+    Windows registry (the code has never worked)
+- You can no longer set videos as favourite, or new (etc), in an empty channel,
+    playlist or folder
+- In the video list, labels can be right-clicked to copy a video's location
+    (for example, so it can be copy-pasted somewhere else). This did not work
+    the same way for every clickable label, and in some cases did not work at
+    all. Fixed
+- Tooltips for videos contained &amp; rather than a simple ampersand character.
+    Fixed
+- Tartube debug messages for the mainapp.py file (which can only be enabled
+    by editing the file) now have a second debug flag, so the timer functions
+    can be filtered out
+- Checked all keyboard shortcuts to remove duplicates
+
 v1.4.0 (2 Feb 2020)
 -------------------------------------------------------------------------------
 

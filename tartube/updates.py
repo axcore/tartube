@@ -31,6 +31,7 @@ import os
 import queue
 import re
 import requests
+import signal
 import subprocess
 import sys
 import threading
@@ -39,6 +40,10 @@ import threading
 # Import our modules
 import downloads
 import utils
+
+
+# Debugging flag (calls utils.debug_time at the start of every function)
+DEBUG_FUNC_FLAG = False
 
 
 # Classes
@@ -61,8 +66,8 @@ class UpdateManager(threading.Thread):
 
         app_obj (mainapp.TartubeApp): The main application
 
-        ffmpeg_flag (bool): If True, install FFmpeg (on MS Windows only). If
-            False (or None), installs/updates youtube-dl
+        update_type (str): 'ffmpeg' to install FFmpeg (on MS Windows only), or
+            'ytdl' to install/update youtube-dl
 
     """
 
@@ -70,7 +75,10 @@ class UpdateManager(threading.Thread):
     # Standard class methods
 
 
-    def __init__(self, app_obj, ffmpeg_flag=False):
+    def __init__(self, app_obj, update_type):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 81 __init__')
 
         super(UpdateManager, self).__init__()
 
@@ -92,18 +100,18 @@ class UpdateManager(threading.Thread):
         # The child process created by self.create_child_process()
         self.child_process = None
 
-        # The youtube-dl version number as a string, if captured from the child
-        #   process (e.g. '2019.07.02')
-        self.ytdl_version = None
-
 
         # IV list - other
         # ---------------
-        # If True, install FFmpeg. If False (or None), installs/updates
-        #   youtube-dl (on MS Windows only)
-        self.ffmpeg_flag = ffmpeg_flag
-        # Flag set to True if the Update operation succeeds, False if it fails
+        # 'ffmpeg' to install FFmpeg (on MS Windows only), or 'ytdl' to
+        #   install/update youtube-dl
+        self.update_type = update_type
+        # Flag set to True if the update operation succeeds, False if it fails
         self.success_flag = False
+
+        # The youtube-dl version number as a string, if captured from the child
+        #   process (e.g. '2019.07.02')
+        self.ytdl_version = None
 
         # (For debugging purposes, store any STDOUT/STDERR messages received;
         #   otherwise we would just set a flag if a STDERR message was
@@ -129,10 +137,58 @@ class UpdateManager(threading.Thread):
         Initiates the download.
         """
 
-        if self.ffmpeg_flag:
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 141 run')
+
+        if self.update_type == 'ffmpeg':
             self.install_ffmpeg()
         else:
             self.install_ytdl()
+
+
+    def create_child_process(self, cmd_list):
+
+        """Called by self.install_ffmpeg() or .install_ytdl().
+
+        Based on code from downloads.VideoDownloader.create_child_process().
+
+        Executes the system command, creating a new child process which
+        executes youtube-dl.
+
+        Args:
+
+            cmd_list (list): Python list that contains the command to execute.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 165 create_child_process')
+
+        info = preexec = None
+
+        if os.name == 'nt':
+            # Hide the child process window that MS Windows helpfully creates
+            #   for us
+            info = subprocess.STARTUPINFO()
+            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            # Make this child process the process group leader, so that we can
+            #   later kill the whole process group with os.killpg
+            preexec = os.setsid
+
+        try:
+            self.child_process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=preexec,
+                startupinfo=info,
+            )
+
+        except (ValueError, OSError) as error:
+            # (The code in self.run() will spot that the child process did not
+            #   start)
+            self.stderr_list.append('Child process did not start')
 
 
     def install_ffmpeg(self):
@@ -147,6 +203,9 @@ class UpdateManager(threading.Thread):
         Reads from the child process STDOUT and STDERR, and calls the main
         application with the result of the update (success or failure).
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 208 install_ffmpeg')
 
         # Show information about the update operation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -264,6 +323,9 @@ class UpdateManager(threading.Thread):
         Reads from the child process STDOUT and STDERR, and calls the main
         application with the result of the update (success or failure).
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 328 install_ytdl')
 
         # Show information about the update operation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -404,54 +466,6 @@ class UpdateManager(threading.Thread):
         )
 
 
-    def create_child_process(self, cmd_list):
-
-        """Called by self.install_ffmpeg() or .install_ytdl().
-
-        Based on code from downloads.VideoDownloader.create_child_process().
-
-        Executes the system command, creating a new child process which
-        executes youtube-dl.
-
-        Args:
-
-            cmd_list (list): Python list that contains the command to execute.
-
-        """
-
-        info = preexec = None
-
-        if os.name == 'nt':
-            # Hide the child process window that MS Windows helpfully creates
-            #   for us
-            info = subprocess.STARTUPINFO()
-            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        else:
-            # Make this child process the process group leader, so that we can
-            #   later kill the whole process group with os.killpg
-            preexec = os.setsid
-
-#        # Encode the system command for the child process, converting unicode
-#        #   to str so the MS Windows shell can accept it (see
-#        #   http://stackoverflow.com/a/9951851/35070 )
-#        if sys.version_info < (3, 0):
-#            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
-
-        try:
-            self.child_process = subprocess.Popen(
-                cmd_list,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=preexec,
-                startupinfo=info,
-            )
-
-        except (ValueError, OSError) as error:
-            # (The code in self.run() will spot that the child process did not
-            #   start)
-            self.stderr_list.append('Child process did not start')
-
-
     def intercept_version_from_stdout(self, stdout):
 
         """Called by self.install_yt_dl() only.
@@ -461,9 +475,12 @@ class UpdateManager(threading.Thread):
 
         Args:
 
-            stdout (string): The STDOUT message
+            stdout (str): The STDOUT message
 
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 483 intercept_version_from_stdout')
 
         substring = re.search(
             'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
@@ -499,6 +516,9 @@ class UpdateManager(threading.Thread):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 520 is_child_process_alive')
+
         if self.child_process is None:
             return False
 
@@ -507,13 +527,16 @@ class UpdateManager(threading.Thread):
 
     def stop_update_operation(self):
 
-        """Called by mainapp.TartubeApp.on_button_stop_operation(), .stop() and
-        a callback in .on_button_stop_operation().
+        """Called by mainapp.TartubeApp.do_shutdown(), .stop_continue(),
+        .on_button_stop_operation() and mainwin.MainWin.on_stop_menu_item().
 
         Based on code from downloads.VideoDownloader.stop().
 
         Terminates the child process.
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('uop 539 stop_update_operation')
 
         if self.is_child_process_alive():
 

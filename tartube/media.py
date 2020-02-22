@@ -46,6 +46,20 @@ class GenericMedia(object):
     media.Playlist and media.Folder."""
 
 
+    # Public class methods
+
+    def get_type(self):
+
+        if isinstance(self, Channel):
+            return 'channel'
+        elif isinstance(self, Playlist):
+            return 'playlist'
+        elif isinstance(self, Folder):
+            return 'folder'
+        else:
+            return 'video'
+
+
     # Set accessors
 
 
@@ -119,10 +133,8 @@ class GenericContainer(GenericMedia):
 
     def compile_all_containers(self, container_list):
 
-        """Can be called by anything. Currently called by
-        refresh.RefreshManager.run().
-
-        Subsquently called by this function recursively.
+        """Can be called by anything. Subsequently called by this function
+        recursively.
 
         Appends to the specified list this container, then calls all this
         function recursively for all media.Channel, media.Playlist and
@@ -150,12 +162,8 @@ class GenericContainer(GenericMedia):
 
     def compile_all_videos(self, video_list):
 
-        """Can be called by anything. Currently called by
-        mainapp.TartubeApp.mark_container_favourite(), and callbacks in
-        mainwin.MainWin.on_video_index_mark_new() and
-        .on_video_index_mark_not_new().
-
-        Subsquently called by this function recursively.
+        """Can be called by anything. Subsequently called by this function
+        recursively.
 
         Appends to the specified list all child objects that are media.Video
         objects, then calls this function recursively for all other child
@@ -183,9 +191,8 @@ class GenericContainer(GenericMedia):
 
     def count_descendants(self, count_list):
 
-        """Can be called by anything. Currently called by
-        mainwin.DeleteContainerDialogue.__init__(), and then again by this
-        function recursively.
+        """Can be called by anything. Subsequently called by this function
+        recursively.
 
         Counts the number of child objects, and then calls this function
         recursively in those child objects to count their child objects.
@@ -243,30 +250,39 @@ class GenericContainer(GenericMedia):
         """
 
         # Check this is really one of our children
-        index = self.find_child_index(child_obj)
-        if index is None:
+        if not child_obj in self.child_list:
             return False
 
         else:
-            del self.child_list[index]
+            self.child_list.remove(child_obj)
+
             if isinstance(child_obj, Video):
                 self.vid_count -= 1
 
-                if child_obj.new_flag:
-                    self.new_count -= 1
+                if child_obj.bookmark_flag:
+                    self.bookmark_count -= 1
+
+                if child_obj.dl_flag:
+                    self.dl_count -= 1
 
                 if child_obj.fav_flag:
                     self.fav_count -= 1
 
-                if child_obj.dl_flag:
-                    self.dl_count -= 1
+                if child_obj.new_flag:
+                    self.new_count -= 1
+
+                if child_obj.waiting_flag:
+                    self.waiting_count -= 1
 
             return True
 
 
     def fetch_tooltip_text(self, app_obj, max_length):
 
-        """Called by mainwin.MainWin.video_index_setup_row().
+        """Can be called by anything.
+
+        Returns a string to be used as a tooltip for this channel, playlist or
+        folder.
 
         Args:
 
@@ -296,11 +312,16 @@ class GenericContainer(GenericMedia):
 
         text += 'Location:\n'
 
-        location = self.get_dir(app_obj)
+        location = self.get_default_dir(app_obj)
         if location is None:
             text += ' <unknown>'
         else:
             text += location
+
+        if self.master_dbid != self.dbid:
+
+            dest_obj = app_obj.media_reg_dict[self.master_dbid]
+            text += '\n\nDownload destination: ' + dest_obj.name
 
         # Need to escape question marks or we'll get a markup error
         text = re.sub('&', '&amp;', text)
@@ -310,32 +331,6 @@ class GenericContainer(GenericMedia):
             text = utils.tidy_up_long_descrip(text, max_length)
 
         return text
-
-
-    def find_child_index(self, child_obj):
-
-        """Can be called by anything.
-
-        Finds the position in self.child_list of a specified child object, or
-        returns None if the specified child object is not in self.child_list.
-
-        Args:
-
-            child_obj (media.Video, media.Channel, media.Playlist,
-                media.Folder): The child object to find
-
-
-        Returns:
-
-            An integer describing the position in self.child_list, or None of
-                the child object is not found in self.child_list
-
-        """
-
-        try:
-            return self.child_list.index(child_obj)
-        except:
-            return None
 
 
     def find_matching_video(self, app_obj, name):
@@ -349,7 +344,7 @@ class GenericContainer(GenericMedia):
 
             app_obj (mainapp.TartubeApp): The main application
 
-            name (string): The name of the media.Video object to find
+            name (str): The name of the media.Video object to find
 
         Returns:
 
@@ -479,8 +474,8 @@ class GenericContainer(GenericMedia):
     def prepare_export(self, include_video_flag, include_channel_flag,
     include_playlist_flag):
 
-        """Called by mainapp.TartubeApp.export_from_db() or by this function
-        recursively.
+        """Called by mainapp.TartubeApp.export_from_db(). Subsequently called
+        by this function recursively.
 
         Creates the dictionary, to be saved as a JSON file, described in the
         comments to that function. This function is called when we want to
@@ -491,13 +486,13 @@ class GenericContainer(GenericMedia):
             include_video_flag (bool): If True, include videos. If False, don't
                 include them
 
-            include_channel_flag (True or False): If True, include channels
-                (and their videos, if allowed). If False, ignore them
+            include_channel_flag (bool): If True, include channels (and their
+                videos, if allowed). If False, ignore them
 
-            include_playlist_flag (True or False): If True, include playlists
-                (and their videos, if allowed). If False, ignore them
+            include_playlist_flag (bool): If True, include playlists (and their
+                videos, if allowed). If False, ignore them
 
-        Return values:
+        Returns:
 
             return_dict (dict): A dictionary described in the comments in the
                 calling function
@@ -582,8 +577,8 @@ class GenericContainer(GenericMedia):
     def prepare_flat_export(self, db_dict, include_video_flag,
     include_channel_flag, include_playlist_flag):
 
-        """Called by mainapp.TartubeApp.export_from_db() or by this function
-        recursively.
+        """Called by mainapp.TartubeApp.export_from_db(). Subsequently called
+        by this function recursively.
 
         Creates the dictionary, to be saved as a JSON file, described in the
         comments to that function. This function is called when we don't want
@@ -597,13 +592,13 @@ class GenericContainer(GenericMedia):
             include_video_flag (bool): If True, include videos. If False, don't
                 include them
 
-            include_channel_flag (True or False): If True, include channels
-                (and their videos, if allowed). If False, ignore them
+            include_channel_flag (bool): If True, include channels (and their
+                videos, if allowed). If False, ignore them
 
-            include_playlist_flag (True or False): If True, include playlists
-                (and their videos, if allowed). If False, ignore them
+            include_playlist_flag (bool): If True, include playlists (and their
+                videos, if allowed). If False, ignore them
 
-        Return values:
+        Returns:
 
             db_dict (dict): The modified dictionary
 
@@ -694,18 +689,46 @@ class GenericContainer(GenericMedia):
         return db_dict
 
 
+    def recalculate_counts(self):
+
+        """Can be called by anything.
+
+        Recalculates all count IVs.
+        """
+
+        self.vid_count = 0
+        self.bookmark_count = 0
+        self.dl_count = 0
+        self.fav_count = 0
+        self.new_count = 0
+        self.waiting_count = 0
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video):
+                self.vid_count += 1
+
+                if child_obj.bookmark_flag:
+                    self.bookmark_count += 1
+
+                if child_obj.dl_flag:
+                    self.dl_count += 1
+
+                if child_obj.fav_flag:
+                    self.fav_count += 1
+
+                if child_obj.new_flag:
+                    self.new_count += 1
+
+                if child_obj.waiting_flag:
+                    self.waiting_count += 1
+
+
     # Set accessors
 
 
-    def set_dl_disable_flag(self, flag):
-
-        if flag:
-            self.dl_disable_flag = True
-        else:
-            self.dl_disable_flag = False
-
-
-    def reset_counts(self, vid_count, new_count, fav_count, dl_count):
+    def reset_counts(self, vid_count, bookmark_count, dl_count, fav_count,
+    new_count, waiting_count):
 
         """Called by mainapp.TartubeApp.update_db().
 
@@ -717,9 +740,21 @@ class GenericContainer(GenericMedia):
         """
 
         self.vid_count = vid_count
-        self.new_count = new_count
-        self.fav_count = fav_count
+        self.bookmark_count = bookmark_count
         self.dl_count = dl_count
+        self.fav_count = fav_count
+        self.new_count = new_count
+        self.waiting_count = waiting_count
+
+
+    def inc_bookmark_count(self):
+
+        self.bookmark_count += 1
+
+
+    def dec_bookmark_count(self):
+
+        self.bookmark_count -= 1
 
 
     def inc_dl_count(self):
@@ -732,6 +767,14 @@ class GenericContainer(GenericMedia):
         self.dl_count -= 1
 
 
+    def set_dl_disable_flag(self, flag):
+
+        if flag:
+            self.dl_disable_flag = True
+        else:
+            self.dl_disable_flag = False
+
+
     def inc_fav_count(self):
 
         self.fav_count += 1
@@ -740,16 +783,6 @@ class GenericContainer(GenericMedia):
     def dec_fav_count(self):
 
         self.fav_count -= 1
-
-
-    def inc_new_count(self):
-
-        self.new_count += 1
-
-
-    def dec_new_count(self):
-
-        self.new_count -= 1
 
 
     def set_master_dbid(self, app_obj, dbid):
@@ -762,8 +795,12 @@ class GenericContainer(GenericMedia):
 
             # Update the old alternative download destination
             if self.master_dbid != self.dbid:
-                old_dest_obj = app_obj.media_reg_dict[self.master_dbid]
-                old_dest_obj.del_slave_dbid(self.dbid)
+
+                # (If mainapp.TartubeApp.fix_integrity_db() is fixing an
+                #   error, the old destination object might not exist)
+                if self.master_dbid in app_obj.media_reg_dict:
+                    old_dest_obj = app_obj.media_reg_dict[self.master_dbid]
+                    old_dest_obj.del_slave_dbid(self.dbid)
 
             # Update this object's IV
             self.master_dbid = dbid
@@ -773,6 +810,26 @@ class GenericContainer(GenericMedia):
                 # Update the new alternative download destination
                 new_dest_obj = app_obj.media_reg_dict[self.master_dbid]
                 new_dest_obj.add_slave_dbid(self.dbid)
+
+
+    def inc_new_count(self):
+
+        self.new_count += 1
+
+
+    def dec_new_count(self):
+
+        self.new_count -= 1
+
+
+    def inc_waiting_count(self):
+
+        self.waiting_count += 1
+
+
+    def dec_waiting_count(self):
+
+        self.waiting_count -= 1
 
 
     def add_slave_dbid(self, dbid):
@@ -792,7 +849,9 @@ class GenericContainer(GenericMedia):
 
     def del_slave_dbid(self, dbid):
 
-        """Called by self.set_master_dbid() only."""
+        """Called by mainapp.TartubeApp.fix_integrity_db() or by
+        self.set_master_dbid() only."""
+
         new_list = []
 
         for slave_dbid in self.slave_dbid_list:
@@ -803,8 +862,6 @@ class GenericContainer(GenericMedia):
 
 
     def set_name(self, name):
-
-        """Must only be called by mainapp.TartubeApp.rename_container()."""
 
         # Update the nickname at the same time, if it has the same value as
         #   this object's name
@@ -817,12 +874,21 @@ class GenericContainer(GenericMedia):
     # Get accessors
 
 
-    def get_dir(self, app_obj, new_name=None):
+    def get_actual_dir(self, app_obj, new_name=None):
 
         """Can be called by anything.
 
-        Fetches the full path to the sub-directory currently used by this
+        Fetches the full path to the sub-directory actually used by this
         channel, playlist or folder.
+
+        If self.dbid and self.master_dbid are the same, then files are
+        downloaded to the default location; the sub-directory belonging to the
+        channel/playlist/folder. In that case, this function returns the same
+        value as self.get_default_dir().
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. This function returns that sub-directory.
 
         Args:
 
@@ -837,7 +903,46 @@ class GenericContainer(GenericMedia):
 
         Returns:
 
-            The full path to the directory
+            The full path to the sub-directory
+
+        """
+
+        if self.master_dbid != self.dbid:
+
+            master_obj = app_obj.media_reg_dict[self.master_dbid]
+            return master_obj.get_default_dir(app_obj, new_name)
+
+        else:
+
+            return self.get_default_dir(app_obj, new_name)
+
+
+    def get_default_dir(self, app_obj, new_name=None):
+
+        """Can be called by anything.
+
+        Fetches the full path to the sub-directory used by this channel,
+        playlist or folder by default.
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. To get the actual download sub-directory, call
+        self.get_actual_dir().
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+        Optional args:
+
+            new_name (str): If specified, fetches the full path to the
+                sub-directory that would be used by this channel, playlist or
+                folder, if it were renamed to 'new_name'. If not specified, the
+                channel/playlist/folder's actual name is used
+
+        Returns:
+
+            The full path to the sub-directory
 
         """
 
@@ -855,12 +960,59 @@ class GenericContainer(GenericMedia):
         return os.path.abspath(os.path.join(app_obj.downloads_dir, *dir_list))
 
 
-    def get_relative_dir(self, new_name=None):
+    def get_relative_actual_dir(self, app_obj, new_name=None):
 
-        """Can be called by anything, for example by media.VideoObj.set_file().
+        """Can be called by anything.
 
         Fetches the path to the sub-directory used by this channel, playlist or
         folder, relative to mainapp.TartubeApp.downloads_dir.
+
+        If self.dbid and self.master_dbid are the same, then files are
+        downloaded to the default location; the sub-directory belonging to the
+        channel/playlist/folder. In that case, this function returns the same
+        value as self.get_default_dir().
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. This function returns that sub-directory.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            new_name (str): If specified, fetches the relative path to the
+                sub-directory that would be used by this channel, playlist or
+                folder, if it were renamed to 'new_name'. If not specified, the
+                channel/playlist/folder's actual name is used
+
+        Returns:
+
+            The path to the sub-directory relative to
+                mainapp.TartubeApp.downloads_dir
+
+        """
+
+        if self.master_dbid != self.dbid:
+
+            master_obj = app_obj.media_reg_dict[self.master_dbid]
+            return master_obj.get_relative_default_dir(app_obj, new_name)
+
+        else:
+
+            return self.get_relative_default_dir(app_obj, new_name)
+
+
+    def get_relative_default_dir(self, new_name=None):
+
+        """Can be called by anything.
+
+        Fetches the path to the sub-directory used by this channel, playlist or
+        folder by default, relative to mainapp.TartubeApp.downloads_dir.
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. To get the actual download sub-directory, call
+        self.get_relative_actual_dir().
 
         Args:
 
@@ -871,7 +1023,7 @@ class GenericContainer(GenericMedia):
 
         Returns:
 
-            The path to the directory relative to
+            The path to the sub-directory relative to
                 mainapp.TartubeApp.downloads_dir
 
         """
@@ -900,7 +1052,7 @@ class GenericRemoteContainer(GenericContainer):
 
     def add_child(self, child_obj, no_sort_flag=False):
 
-        """Called by media.Video.__init__().
+        """Can be called by anything.
 
         Adds a child media data object, which must be a media.Video object.
 
@@ -908,9 +1060,9 @@ class GenericRemoteContainer(GenericContainer):
 
             child_obj (media.Video): The child object
 
-            no_sort_flag (True or False): True when the calling code wants to
-                delay sorting the parent container object, for some reason;
-                False if not
+            no_sort_flag (bool): True when the calling code wants to delay
+                sorting the parent container object, for some reason; False if
+                not
 
         """
 
@@ -979,11 +1131,8 @@ class GenericRemoteContainer(GenericContainer):
         Sorts the child media.Video objects by upload time.
         """
 
-        # v1.0.002: At the end of a download operation, I am seeing 'list
-        #   modified during sort' errors. Not sure what the cause is, but we
-        #   can prevent it by sorting a copy of the list, rather than the list
-        #   itself. If the list itself is modified during the sort, sort it
-        #   again
+        # Sort a copy of the list to prevent 'list modified during sort'
+        #   errors
         while True:
 
             copy_list = self.child_list.copy()
@@ -1023,9 +1172,13 @@ class GenericRemoteContainer(GenericContainer):
         self.dl_sim_flag = other_obj.dl_sim_flag
         self.dl_disable_flag = other_obj.dl_disable_flag
         self.fav_flag = other_obj.fav_flag
-        self.new_count = other_obj.new_count
-        self.fav_count = other_obj.fav_count
+
+        self.bookmark_count = other_obj.bookmark_count
         self.dl_count = other_obj.dl_count
+        self.fav_count = other_obj.fav_count
+        self.new_count = other_obj.new_count
+        self.waiting_count = other_obj.waiting_count
+
         self.error_list = other_obj.error_list.copy()
         self.warning_list = other_obj.warning_list.copy()
 
@@ -1043,7 +1196,7 @@ class Video(GenericMedia):
 
         dbid (int): A unique ID for this media data object
 
-        name (string): The video name
+        name (str): The video name
 
         parent_obj (media.Channel, media.Playlist, media.Folder): The parent
             media data object, if any
@@ -1051,9 +1204,8 @@ class Video(GenericMedia):
         options_obj (options.OptionsManager): The object specifying download
             options for this video, if any
 
-        no_sort_flag (True or False): True when the calling code wants to
-            delay sorting the parent container object, for some reason; False
-            if not
+        no_sort_flag (bool): True when the calling code wants to delay sorting
+            the parent container object, for some reason; False if not
 
     """
 
@@ -1100,20 +1252,25 @@ class Video(GenericMedia):
         #   video, or False if the downloads.DownloadManager object should
         #   decide whether to simulate, or not
         self.dl_sim_flag = False
-        # Flag set to True at the same time self.dl_sim_flag is set to True,
-        #   showing that the video has been downloaded and not watched
-        self.new_flag = False
+
+        # Flag set to True if the video is archived, meaning that it can't be
+        #   auto-deleted (but it can still be deleted manually by the user)
+        self.archive_flag = False
+        # Flag set to True if the video is marked as bookmarked, so that it
+        #   appears in the 'Bookmarks' system folder
+        self.bookmark_flag = False
         # Flag set to True if the video is marked a favourite. Upon download,
         #   it's marked as a favourite if the same IV in the parent channel,
         #   playlist or folder (also in the parent's parent, and so on) is True
         self.fav_flag = False
-        # Flag set to True if the video is archived, meaning that it can't be
-        #   auto-deleted (but it can still be deleted manually by the user)
-        self.archive_flag = False
+        # Flag set to True at the same time self.dl_sim_flag is set to True,
+        #   showing that the video has been downloaded and not watched
+        self.new_flag = False
+        # Flag set to True if the video is marked add as added to the
+        #   'Waiting Videos' system folder
+        self.waiting_flag = False
 
-        # The file's directory (relative to mainapp.TartubeApp.downloads_dir),
-        #   name and extension
-        self.file_dir = None
+        # The video's filename and extension
         self.file_name = None
         self.file_ext = None
 
@@ -1150,7 +1307,7 @@ class Video(GenericMedia):
         self.descrip = None
         # Video short description - the first line in self.descrip, limited to
         #   a certain number of characters (specifically,
-        #   mainwin.MainWin.long_string_max_len)
+        #   mainwin.MainWin.very_long_string_max_len)
         self.short = None
 
         # List of error/warning messages generated the last time the video was
@@ -1201,8 +1358,9 @@ class Video(GenericMedia):
 
     def fetch_tooltip_text(self, app_obj, max_length=None):
 
-        """Called by mainwin.SimpleCatalogueItem.update_tooltips() and
-        mainwin.ComplexCatalogueItem.update_tooltips().
+        """Can be called by anything.
+
+        Returns a string to be used as a tooltip for this video.
 
         Args:
 
@@ -1238,19 +1396,10 @@ class Video(GenericMedia):
             text += self.source
 
         text += '\n\nFile:\n'
-        if self.file_dir is None:
+        if self.file_name is None:
             text += ' <unknown>'
         else:
-            text += os.path.abspath(
-                os.path.join(
-                    app_obj.downloads_dir,
-                    self.file_dir,
-                    self.file_name + self.file_ext,
-                ),
-            )
-
-        # Need to escape question marks or we'll get a markup error
-        text = re.sub('&', '&amp;', text)
+            text += self.get_actual_path(app_obj)
 
         # Apply a maximum line length, if required
         if max_length is not None:
@@ -1274,14 +1423,7 @@ class Video(GenericMedia):
 
         """
 
-        descrip_path = os.path.abspath(
-            os.path.join(
-                app_obj.downloads_dir,
-                self.file_dir,
-                self.file_name + '.description',
-            ),
-        )
-
+        descrip_path = self.get_actual_path_by_ext(app_obj, '.description')
         text = app_obj.file_manager_obj.load_text(descrip_path)
         if text is not None:
             self.set_video_descrip(text, max_length)
@@ -1289,12 +1431,21 @@ class Video(GenericMedia):
 
     # Set accessors
 
+
     def set_archive_flag(self, flag):
 
         if flag:
             self.archive_flag = True
         else:
             self.archive_flag = False
+
+
+    def set_bookmark_flag(self, flag):
+
+        if flag:
+            self.bookmark_flag = True
+        else:
+            self.bookmark_flag = False
 
 
     def set_dl_flag(self, flag=False):
@@ -1322,22 +1473,8 @@ class Video(GenericMedia):
 
     def set_file(self, filename, extension):
 
-        self.file_dir = self.parent_obj.get_relative_dir()
         self.file_name = filename
         self.file_ext = extension
-
-
-    def reset_file_dir(self):
-
-        """Called by mainapp.TartubeApp.move_container_to_top_continue()
-        and .move_container_continue().
-
-        After moving a channel, playlist or folder to a new location in the
-        media data registry's tree, every media.Video object which has been
-        moved along with it must have its .file_dir IV updated.
-        """
-
-        self.file_dir = self.parent_obj.get_relative_dir()
 
 
     def set_file_size(self, size=None):
@@ -1355,7 +1492,8 @@ class Video(GenericMedia):
 
     def set_mkv(self):
 
-        """Called by mainapp.TartubeApp.update_video_when_file_found().
+        """Called by mainapp.TartubeApp.update_video_when_file_found() and
+        refresh.RefreshManager.refresh_from_default_destination().
 
         When the warning 'Requested formats are incompatible for merge and will
         be merged into mkv' has been seen, the calling function has found an
@@ -1368,13 +1506,6 @@ class Video(GenericMedia):
 
 
     def set_name(self, name):
-
-        """Called by mainapp.TartubeApp.update_video_when_file_found() to set
-        the name of an unnamed video, replacing the default name (specified by
-        mainapp.TartubeApp.default_video_name).
-
-        Also called by media.VideoDownloader.confirm_sim_video().
-        """
 
         self.name = name
 
@@ -1407,8 +1538,7 @@ class Video(GenericMedia):
 
     def set_video_descrip(self, descrip, max_length):
 
-        """Called by mainapp.TartubeApp.update_video_from_json() and
-        downloads.VideoDownloader.confirm_sim_video().
+        """Can be caled by anything.
 
         Converts the video description into a list of lines, max_length
         characters long (longer lines are split into shorter ones).
@@ -1418,7 +1548,7 @@ class Video(GenericMedia):
 
         Args:
 
-            descrip (string): The video description
+            descrip (str): The video description
 
             max_length (int): A maximum line size
 
@@ -1434,7 +1564,141 @@ class Video(GenericMedia):
             self.short = None
 
 
+    def set_waiting_flag(self, flag):
+
+        if flag:
+            self.waiting_flag = True
+        else:
+            self.waiting_flag = False
+
+
     # Get accessors
+
+
+    def get_actual_path(self, app_obj):
+
+        """Can be called by anything.
+
+        Returns the full path to the video file in its actual location.
+
+        If self.dbid and self.master_dbid are the same, then files are
+        downloaded to the default location; the sub-directory belonging to the
+        channel/playlist/folder. In that case, this function returns the same
+        value as self.get_default_path().
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. This function returns a path to the file in that
+        sub-directory.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+        """
+
+        return os.path.abspath(
+            os.path.join(
+                self.parent_obj.get_actual_dir(app_obj),
+                self.file_name + self.file_ext,
+            ),
+        )
+
+
+    def get_actual_path_by_ext(self, app_obj, ext):
+
+        """Can be called by anything.
+
+        Returns the full path to a file associated with the video; specifically
+        one with the same file name, but a different extension (for example,
+        the video's thumbnail file).
+
+        If self.dbid and self.master_dbid are the same, then files are
+        downloaded to the default location; the sub-directory belonging to the
+        channel/playlist/folder. In that case, this function returns the same
+        value as self.get_default_path_by_ext().
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. This function returns a path to the file in that
+        sub-directory.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            ext (str): The extension, e.g. 'png' or '.png'
+
+        """
+
+        # Add the full stop, if not supplied by the calling function
+        if not ext.find('.') == 0:
+            ext = '.' + ext
+
+        return os.path.abspath(
+            os.path.join(
+                self.parent_obj.get_actual_dir(app_obj),
+                self.file_name + ext,
+            ),
+        )
+
+
+    def get_default_path(self, app_obj):
+
+        """Can be called by anything.
+
+        Returns the full path to the video file in its default location.
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. To get the actual path to the video file, call
+        self.get_actual_path().
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+        """
+
+        return os.path.abspath(
+            os.path.join(
+                self.parent_obj.get_default_dir(app_obj),
+                self.file_name + self.file_ext,
+            ),
+        )
+
+
+    def get_default_path_by_ext(self, app_obj, ext):
+
+        """Can be called by anything.
+
+        Returns the full path to a file associated with the video; specifically
+        one with the same file name, but a different extension (for example,
+        the video's thumbnail file).
+
+        If self.master_dbid is not the same as self.dbid, then files are
+        actually downloaded into the sub-directory used by another channel,
+        playlist or folder. To get the actual path to the associated file, call
+        self.get_actual_path_by_ext().
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            ext (str): The extension, e.g. 'png' or '.png'
+
+        """
+
+        # Add the full stop, if not supplied by the calling function
+        if not ext.find('.') == 0:
+            ext = '.' + ext
+
+        return os.path.abspath(
+            os.path.join(
+                self.parent_obj.get_default_dir(app_obj),
+                self.file_name + ext,
+            ),
+        )
 
 
     def get_file_size_string(self):
@@ -1493,12 +1757,17 @@ class Video(GenericMedia):
             return None
 
 
-    def get_upload_date_string(self):
+    def get_upload_date_string(self, pretty_flag=False):
 
         """Can be called by anything.
 
         A modified version of self.get_upload_time_string(), returning just the
         date, not the date and the time.
+
+        Args:
+
+            pretty_flag (bool): If True, the strings 'Today' and 'Yesterday'
+                are returned, when possible
 
         Returns:
 
@@ -1506,11 +1775,29 @@ class Video(GenericMedia):
 
         """
 
-        if self.upload_time:
+        if not self.upload_time:
+            return None
+
+        elif not pretty_flag:
             timestamp = datetime.datetime.fromtimestamp(self.upload_time)
             return timestamp.strftime('%Y-%m-%d')
+
         else:
-            return None
+            today = datetime.date.today()
+            today_str = today.strftime('%y%m%d')
+
+            yesterday = datetime.date.today() - datetime.timedelta(days=1)
+            yesterday_str = yesterday.strftime('%y%m%d')
+
+            testday = datetime.datetime.fromtimestamp(self.upload_time)
+            testday_str = testday.strftime('%y%m%d')
+
+            if testday_str == today_str:
+                return 'Today'
+            elif testday_str == yesterday_str:
+                return 'Yesterday'
+            else:
+                return testday.strftime('%Y-%m-%d')
 
 
     def get_upload_time_string(self):
@@ -1542,7 +1829,7 @@ class Channel(GenericRemoteContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (string) - The channel name
+        name (str) - The channel name
 
         parent_obj (media.Folder) - The parent media data object, if any
 
@@ -1592,6 +1879,9 @@ class Channel(GenericRemoteContainer):
         #   filesystem, (2) tying together, for example, a YouTube and a
         #   BitChute account, so that duplicate videos don't exist on the
         #   user's filesystem
+        # NB A media data object can't have an alternative download destination
+        #   and itself be the alternative download destination for another
+        #   media data object; it must be one or the other (or neither)
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
         #   channel as its alternative destination
@@ -1613,11 +1903,14 @@ class Channel(GenericRemoteContainer):
 
         # The total number of child video objects
         self.vid_count = 0
-        # The number of child video objects that are marked as new,
-        #   favourite, and downloaded
-        self.new_count = 0
-        self.fav_count = 0
+        # The number of child video objects that are marked as bookmarked,
+        #   downloaded, favourite, new and in the 'Waiting Videos' system
+        #   folder
+        self.bookmark_count = 0
         self.dl_count = 0
+        self.fav_count = 0
+        self.new_count = 0
+        self.waiting_count = 0
 
         # List of error/warning messages generated the last time the channel
         #   was checked or downloaded. Both set to empty lists if the channel
@@ -1641,40 +1934,46 @@ class Channel(GenericRemoteContainer):
     # Public class methods
 
 
-#   def add_child():            # Inherited from GenericRemoteContainer
+#   def add_child():                # Inherited from GenericRemoteContainer
 
 
-#   def del_child():            # Inherited from GenericContainer
+#   def del_child():                # Inherited from GenericContainer
 
 
-#   def do_sort():              # Inherited from GenericRemoteContainer
+#   def do_sort():                  # Inherited from GenericRemoteContainer
 
 
-#   def find_child_index():     # Inherited from GenericContainer
-
-
-#   def sort_children():        # Inherited from GenericRemoteContainer
+#   def sort_children():            # Inherited from GenericRemoteContainer
 
 
     # Set accessors
 
 
-#   def reset_counts():         # Inherited from GenericContainer
+#   def reset_counts():             # Inherited from GenericContainer
 
 
-#   def set_dl_sim_flag():      # Inherited from GenericMedia
+#   def set_dl_sim_flag():          # Inherited from GenericMedia
 
 
-#   def set_options_obj():      # Inherited from GenericMedia
+#   def set_options_obj():          # Inherited from GenericMedia
 
 
-#   def set_source():           # Inherited from GenericRemoteContainer
+#   def set_source():               # Inherited from GenericRemoteContainer
 
 
     # Get accessors
 
 
-#   def get_dir():              # Inherited from GenericContainer
+#   def get_actual_dir():           # Inherited from GenericContainer
+
+
+#   def get_default_dir():          # Inherited from GenericContainer
+
+
+#   def get_relative_actual_dir():  # Inherited from GenericContainer
+
+
+#   def get_relative_default_dir(): # Inherited from GenericContainer
 
 
     def never_called_func(self):
@@ -1696,7 +1995,7 @@ class Playlist(GenericRemoteContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (string) - The playlist name
+        name (str) - The playlist name
 
         parent_obj (media.Folder) - The parent media data object, if any
 
@@ -1746,6 +2045,9 @@ class Playlist(GenericRemoteContainer):
         #   filesystem, (2) tying together, for example, a YouTube and a
         #   BitChute account, so that duplicate videos don't exist on the
         #   user's filesystem
+        # NB A media data object can't have an alternative download destination
+        #   and itself be the alternative download destination for another
+        #   media data object; it must be one or the other (or neither)
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
         #   playlist as its alternative destination
@@ -1767,11 +2069,14 @@ class Playlist(GenericRemoteContainer):
 
         # The total number of child video objects
         self.vid_count = 0
-        # The number of child video objects that are marked as new,
-        #   favourite, and downloaded
-        self.new_count = 0
-        self.fav_count = 0
+        # The number of child video objects that are marked as bookmarked,
+        #   downloaded, favourite, new and in the 'Waiting Videos' system
+        #   folder
+        self.bookmark_count = 0
         self.dl_count = 0
+        self.fav_count = 0
+        self.new_count = 0
+        self.waiting_count = 0
 
         # List of error/warning messages generated the last time the channel
         #   was checked or downloaded. Both set to empty lists if the channel
@@ -1795,40 +2100,46 @@ class Playlist(GenericRemoteContainer):
     # Public class methods
 
 
-#   def add_child():            # Inherited from GenericRemoteContainer
+#   def add_child():                # Inherited from GenericRemoteContainer
 
 
-#   def del_child():            # Inherited from GenericContainer
+#   def del_child():                # Inherited from GenericContainer
 
 
-#   def do_sort():              # Inherited from GenericRemoteContainer
+#   def do_sort():                  # Inherited from GenericRemoteContainer
 
 
-#   def find_child_index():     # Inherited from GenericContainer
-
-
-#   def sort_children():        # Inherited from GenericRemoteContainer
+#   def sort_children():            # Inherited from GenericRemoteContainer
 
 
     # Set accessors
 
 
-#   def reset_counts():         # Inherited from GenericContainer
+#   def reset_counts():             # Inherited from GenericContainer
 
 
-#   def set_dl_sim_flag():      # Inherited from GenericMedia
+#   def set_dl_sim_flag():          # Inherited from GenericMedia
 
 
-#   def set_options_obj():      # Inherited from GenericMedia
+#   def set_options_obj():          # Inherited from GenericMedia
 
 
-#   def set_source():           # Inherited from GenericRemoteContainer
+#   def set_source():               # Inherited from GenericRemoteContainer
 
 
     # Get accessors
 
 
-#   def get_dir():              # Inherited from GenericContainer
+#   def get_actual_dir():           # Inherited from GenericContainer
+
+
+#   def get_default_dir():          # Inherited from GenericContainer
+
+
+#   def get_relative_actual_dir():  # Inherited from GenericContainer
+
+
+#   def get_relative_default_dir(): # Inherited from GenericContainer
 
 
     def never_called_func(self):
@@ -1852,24 +2163,23 @@ class Folder(GenericContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (string) - The folder name
+        name (str) - The folder name
 
         parent_obj (media.Folder) - The parent media data object, if any
 
         options_obj (options.OptionsManager) - The object specifying download
             options for this channel, if any
 
-        fixed_flag (True, False) - If True, this folder can't be deleted by the
-            user
+        fixed_flag (bool) - If True, this folder can't be deleted by the user
 
-        priv_flag (True, False) - If True, the user can't add anything to this
-            folder, because Tartube uses it for special purposes
+        priv_flag (bool) - If True, the user can't add anything to this folder,
+            because Tartube uses it for special purposes
 
-        restrict_flag (True, False) - If True, this folder cannot contain
-            channels, playlists and other folders (can only contain videos)
+        restrict_flag (bool) - If True, this folder cannot contain channels,
+            playlists and other folders (can only contain videos)
 
-        temp_flag (True, False) - If True, the folder's contents should be
-            deleted when Tartube shuts down (but the folder itself remains)
+        temp_flag (bool) - If True, the folder's contents should be deleted
+            when Tartube shuts down (but the folder itself remains)
 
     """
 
@@ -1915,6 +2225,9 @@ class Folder(GenericContainer):
         #   filesystem, (2) tying together, for example, a YouTube and a
         #   BitChute account, so that duplicate videos don't exist on the
         #   user's filesystem
+        # NB A media data object can't have an alternative download destination
+        #   and itself be the alternative download destination for another
+        #   media data object; it must be one or the other (or neither)
         # NB Fixed folders cannot have an alternative download destination
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
@@ -1957,11 +2270,14 @@ class Folder(GenericContainer):
 
         # The total number of child video objects
         self.vid_count = 0
-        # The number of child video objects that are marked as new,
-        #   favourite, and downloaded
-        self.new_count = 0
-        self.fav_count = 0
+        # The number of child video objects that are marked as bookmarked,
+        #   downloaded, favourite, new and in the 'Waiting Videos' system
+        #   folder
+        self.bookmark_count = 0
         self.dl_count = 0
+        self.fav_count = 0
+        self.new_count = 0
+        self.waiting_count = 0
 
 
         # Code
@@ -1977,11 +2293,7 @@ class Folder(GenericContainer):
 
     def add_child(self, child_obj, no_sort_flag=False):
 
-        """Called by media.Video.__init__(), media.Channel.__init__(),
-        media.Playlist.__init__() or another instance of
-        media.Folder.__init__().
-
-        Also called to add videos to fixed folders like 'All Videos'.
+        """Can be called by anything.
 
         Adds a child media data object, which can be any type of media data
         object (including another media.Folder object).
@@ -1990,6 +2302,9 @@ class Folder(GenericContainer):
 
             child_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): The child object
+
+            no_sort_flag (bool): If True, the child list is not sorted after
+                the new object has been added
 
         """
 
@@ -2006,7 +2321,8 @@ class Folder(GenericContainer):
 
     def check_duplicate_video(self, source):
 
-        """Called by mainapp.TartubeApp.on_menu_add_video().
+        """Called by mainapp.TartubeApp.on_menu_add_video() and
+        mainwin.MainWin.on_window_drag_data_received().
 
         When the user adds new videos using the 'Add Videos' dialogue window,
         the calling function calls this function to check that the folder
@@ -2015,7 +2331,7 @@ class Folder(GenericContainer):
 
         Args:
 
-            source (string): The video URL to check
+            source (str): The video URL to check
 
         Returns:
 
@@ -2036,7 +2352,7 @@ class Folder(GenericContainer):
         return False
 
 
-#   def del_child():            # Inherited from GenericContainer
+#   def del_child():                # Inherited from GenericContainer
 
 
     def do_sort(self, obj1, obj2):
@@ -2122,9 +2438,6 @@ class Folder(GenericContainer):
                 return 0
 
 
-#   def find_child_index():     # Inherited from GenericContainer
-
-
     def sort_children(self):
 
         """Can be called by anything. For example, called by self.add_child().
@@ -2151,10 +2464,10 @@ class Folder(GenericContainer):
     # Set accessors
 
 
-#   def reset_counts():         # Inherited from GenericContainer
+#   def reset_counts():             # Inherited from GenericContainer
 
 
-#   def set_dl_sim_flag():      # Inherited from GenericMedia
+#   def set_dl_sim_flag():          # Inherited from GenericMedia
 
 
     def set_hidden_flag(self, flag):
@@ -2165,13 +2478,22 @@ class Folder(GenericContainer):
             self.hidden_flag = False
 
 
-#   def set_options_obj():      # Inherited from GenericMedia
+#   def set_options_obj():          # Inherited from GenericMedia
 
 
     # Get accessors
 
 
-#   def get_dir():              # Inherited from GenericContainer
+#   def get_actual_dir():           # Inherited from GenericContainer
+
+
+#   def get_default_dir():          # Inherited from GenericContainer
+
+
+#   def get_relative_actual_dir():  # Inherited from GenericContainer
+
+
+#   def get_relative_default_dir(): # Inherited from GenericContainer
 
 
     def never_called_func(self):

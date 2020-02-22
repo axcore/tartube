@@ -40,7 +40,9 @@ import utils
 
 class OptionsManager(object):
 
-    """Partially based on the OptionsManager class in youtube-dl-gui.
+    """Called by mainapp.TartubeApp.OptionsManager().
+
+    Partially based on the OptionsManager class in youtube-dl-gui.
 
     This class handles settings for downloading media. Unlike youtube-dl-gui,
     which has one group of download options applied to all downloads, this
@@ -433,8 +435,8 @@ class OptionsManager(object):
 
     def clone_options(self, other_options_manager_obj):
 
-        """Called by mainapp.TartubeApp.clone_options_manager(), or by any
-        other code.
+        """Called by mainapp.TartubeApp.apply_download_options() and
+        .clone_general_options_manager().
 
         Clones download options from the specified object into those object,
         completely replacing this object's download options.
@@ -814,7 +816,8 @@ class OptionsParser(object):
 
     def parse(self, media_data_obj, options_manager_obj):
 
-        """Called by downloads.DownloadWorker.prepare_download().
+        """Called by downloads.DownloadWorker.prepare_download() and
+        mainwin.MainWin.update_textbuffer().
 
         Converts the download options stored in the specified
         options.OptionsManager object into a list of youtube-dl command line
@@ -921,30 +924,9 @@ class OptionsParser(object):
         # Parse the 'extra_cmd_string' option, which can contain arguments
         #   inside double quotes "..." (arguments that can therefore contain
         #   whitespace)
-
-        # Set a flag for an item beginning with double quotes, and reset it for
-        #   an item ending in double quotes
-        quote_flag = False
-        # Temporary list to hold such quoted arguments
-        quote_list = []
-
-        for item in copy_dict['extra_cmd_string'].split():
-
-            quote_flag = (quote_flag or item[0] == "\"")
-
-            if quote_flag:
-                quote_list.append(item)
-            else:
-                options_list.append(item)
-
-            if quote_flag and item[-1] == "\"":
-
-                # Special case mode is over. Append our special items to the
-                #   options list
-                options_list.append(" ".join(quote_list)[1:-1])
-
-                quote_flag = False
-                quote_list = []
+        parsed_list = utils.parse_ytdl_options(copy_dict['extra_cmd_string'])
+        for item in parsed_list:
+            options_list.append(item)
 
         # Parse the 'match_title_list' and 'reject_title_list'
         for item in copy_dict['match_title_list']:
@@ -967,6 +949,7 @@ class OptionsParser(object):
         store them in the options dictionary.
 
         Args:
+
             copy_dict (dict): Copy of the original options dictionary.
 
         """
@@ -1028,19 +1011,22 @@ class OptionsParser(object):
 
         if not isinstance(media_data_obj, media.Video) \
         and override_name is not None \
-        and override_name in app_obj.media_name_dict:
+        and override_name in self.app_obj.media_name_dict:
 
             # Because of the override, save all videos to a fixed folder
-            other_dbid = app_obj.media_name_dict[override_name]
-            other_obj = app_obj.media_reg_dict[other_dbid]
-            save_path = other_obj.get_dir(app_obj)
+            other_dbid = self.app_obj.media_name_dict[override_name]
+            other_obj = self.app_obj.media_reg_dict[other_dbid]
+            save_path = other_obj.get_default_dir(self.app_obj)
 
         else:
 
             if isinstance(media_data_obj, media.Video):
-                save_path = media_data_obj.parent_obj.get_dir(self.app_obj)
+                save_path = media_data_obj.parent_obj.get_actual_dir(
+                    self.app_obj,
+                )
+
             else:
-                save_path = media_data_obj.get_dir(self.app_obj)
+                save_path = media_data_obj.get_actual_dir(self.app_obj)
 
         # Set the youtube-dl output template for the video's file
         template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
@@ -1156,18 +1142,18 @@ class OptionHolder(object):
 
     Args:
 
-        name (string): Option name. Must be a valid option name
-            from the optionsmanager.OptionsManager class (see the list in
-            at the beginning of the options.OptionsManager class).
+        name (str): Option name. Must be a valid option name from the
+            optionsmanager.OptionsManager class (see the list in at the
+            beginning of the options.OptionsManager class)
 
-        switch (string): The option command line switch. See
+        switch (str): The option command line switch. See
             https://github.com/rg3/youtube-dl/#options
 
         default_value (any): The option default value. Must be the same type
             as the corresponding option from the optionsmanager.OptionsManager
             class.
 
-        requirements (list): The requirements for the given option. This
+        requirement_list (list): The requirements for the given option. This
             argument is a list of strings with the name of all the options
             that this specific option needs. If there are no requirements, the
             IV is set to None. (For example 'subs_lang' needs the 'write_subs'

@@ -27,11 +27,12 @@ from gi.repository import Gtk, GObject, GdkPixbuf
 
 
 # Import other modules
+import os
 import threading
 
 
 # Import our modules
-#   ...
+import utils
 
 
 # Classes
@@ -81,13 +82,13 @@ class DialogueManager(threading.Thread):
 
         Args:
 
-            msg (string): The text to display in the dialogue window
+            msg (str): The text to display in the dialogue window
 
-            msg_type (string): The icon to display in the dialogue window:
-                'info', 'warning', 'question', 'error'
+            msg_type (str): The icon to display in the dialogue window: 'info',
+                'warning', 'question', 'error'
 
-            button_type (string): The buttons to use in the dialogue window:
-                'ok', 'ok-cancel', 'yes-no'
+            button_type (str): The buttons to use in the dialogue window: 'ok',
+                'ok-cancel', 'yes-no'
 
             parent_win_obj (mainwin.MainWin, config.GenericConfigWin or None):
                 The parent window for the dialogue window. If None, the main
@@ -111,6 +112,21 @@ class DialogueManager(threading.Thread):
         if parent_win_obj is None:
             parent_win_obj = self.main_win_obj
 
+        # Rationalise the message. First, split the string into a list of
+        #   lines, preserving \n\n (but not a standalone \n)
+        line_list = msg.split('\n\n')
+        # In each line, convert any standalone \n characters to whitespace.
+        #   Then add new newline characters, if required, to give a maximum
+        #   length per line
+        mod_list = []
+        for line in line_list:
+            mod_list.append(utils.tidy_up_long_string(line, 40))
+
+        # Finally combine everything into a single string, as before
+        double = '\n\n'
+        msg = double.join(mod_list)
+
+        # ...and display the message dialogue
         dialogue_win = MessageDialogue(
             self,
             msg,
@@ -134,12 +150,14 @@ class MessageDialogue(Gtk.MessageDialog):
 
     Args:
 
-        msg (string): The text to display in the dialogue window
+        manager_obj (dialogue.DialogueManager): The parent dialogue manager
 
-        msg_type (string): The icon to display in the dialogue window: 'info',
+        msg (str): The text to display in the dialogue window
+
+        msg_type (str): The icon to display in the dialogue window: 'info',
             'warning', 'question', 'error'
 
-        button_type (string): The buttons to use in the dialogue window: 'ok',
+        button_type (str): The buttons to use in the dialogue window: 'ok',
             'ok-cancel', 'yes-no'
 
         parent_win_obj (mainwin.MainWin, config.GenericConfigWin): The parent
@@ -160,27 +178,27 @@ class MessageDialogue(Gtk.MessageDialog):
     # Standard class methods
 
 
-    def __init__(self, parent, msg, msg_type, button_type, parent_win_obj,
+    def __init__(self, manager_obj, msg, msg_type, button_type, parent_win_obj,
     response_dict):
 
         # Prepare arguments
         if msg_type == 'warning':
-            msg_type = Gtk.MessageType.WARNING
+            gtk_msg_type = Gtk.MessageType.WARNING
         elif msg_type == 'question':
-            msg_type = Gtk.MessageType.QUESTION
+            gtk_msg_type = Gtk.MessageType.QUESTION
         elif msg_type == 'error':
-            msg_type = Gtk.MessageType.ERROR
+            gtk_msg_type = Gtk.MessageType.ERROR
         else:
-            msg_type = Gtk.MessageType.INFO
+            gtk_msg_type = Gtk.MessageType.INFO
 
         if button_type == 'ok-cancel':
-            button_type = Gtk.ButtonsType.OK_CANCEL
+            gtk_button_type = Gtk.ButtonsType.OK_CANCEL
             default_response = Gtk.ResponseType.OK
         elif button_type == 'yes-no':
-            button_type = Gtk.ButtonsType.YES_NO
+            gtk_button_type = Gtk.ButtonsType.YES_NO
             default_response = Gtk.ResponseType.YES
         else:
-            button_type = Gtk.ButtonsType.OK
+            gtk_button_type = Gtk.ButtonsType.OK
             default_response = Gtk.ResponseType.OK
 
         # Set up the dialogue window
@@ -188,21 +206,50 @@ class MessageDialogue(Gtk.MessageDialog):
             self,
             parent_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            msg_type,
-            button_type,
+            gtk_msg_type,
+            gtk_button_type,
             msg,
         )
 
+        spacing_size = manager_obj.app_obj.default_spacing_size
+
+        # Set up responses
         self.set_default_response(default_response)
         self.connect(
             'response',
             self.on_clicked,
-            parent.app_obj,
+            manager_obj.app_obj,
             response_dict,
         )
 
 
     # Public class methods
+
+
+    def create_dialogue(self):
+
+        """Called by dialogue.DialogueManager.show_msg_dialogue().
+
+        Creating the message dialogue window using a Glib timeout keeps this
+        code thread-safe.
+        """
+
+        GObject.timeout_add(0, self.show_dialogue)
+
+
+    def show_dialogue(self):
+
+        """Called by the timer created in self.create_dialogue().
+
+        Creating the message dialogue window using a Glib timeout keeps this
+        code thread-safe.
+        """
+
+        self.show_all()
+        return False
+
+
+    # (Callbacks)
 
 
     def on_clicked(self, widget, response, app_obj, response_dict):
@@ -258,26 +305,3 @@ class MessageDialogue(Gtk.MessageDialog):
                     method(response_dict['data'])
                 else:
                     method()
-
-
-    def create_dialogue(self):
-
-        """Called by dialogue.DialogueManager.show_msg_dialogue().
-
-        Creating the message dialogue window using a Glib timeout keeps this
-        code thread-safe.
-        """
-
-        GObject.timeout_add(0, self.show_dialogue)
-
-
-    def show_dialogue(self):
-
-        """Called by the timer created in self.create_dialogue().
-
-        Creating the message dialogue window using a Glib timeout keeps this
-        code thread-safe.
-        """
-
-        self.show_all()
-        return False

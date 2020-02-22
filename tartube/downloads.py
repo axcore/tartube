@@ -33,8 +33,10 @@ import __main__
 import signal
 import os
 import queue
+import random
 import re
 import requests
+import signal
 import subprocess
 import sys
 import threading
@@ -71,7 +73,7 @@ def synchronise(lock):
 # Classes
 class DownloadManager(threading.Thread):
 
-    """Called by mainapp.TartubeApp.download_manager_start().
+    """Called by mainapp.TartubeApp.download_manager_continue().
 
     Based on the DownloadManager class in youtube-dl-gui.
 
@@ -88,10 +90,12 @@ class DownloadManager(threading.Thread):
 
         app_obj: The mainapp.TartubeApp object
 
-        force_sim_flag (True/False): True if playlists/channels should just be
-            checked for new videos, without downloading anything. False if
+        operation_type (str): 'sim' if channels/playlists should just be
+            checked for new videos, without downloading anything. 'real' if
             videos should be downloaded (or not) depending on each media data
-            object's .dl_sim_flag IV
+            object's .dl_sim_flag IV. 'custom' is like 'real', but with
+            additional options applied (specified by IVs like
+            mainapp.TartubeApp.custom_dl_by_video_flag)
 
         download_list_obj(downloads.DownloadManager): An ordered list of
             media data objects to download, each one represented by a
@@ -103,10 +107,10 @@ class DownloadManager(threading.Thread):
     # Standard class methods
 
 
-    def __init__(self, app_obj, force_sim_flag, download_list_obj):
+    def __init__(self, app_obj, operation_type, download_list_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 109 __init__')
+            utils.debug_time('dld 113 __init__')
 
         super(DownloadManager, self).__init__()
 
@@ -130,11 +134,12 @@ class DownloadManager(threading.Thread):
 
         # IV list - other
         # ---------------
-        # Flag set to True if playlists/channels should just be checked for new
-        #   videos, without downloading anything. False if videos should be
-        #   downloaded (or not) depending on each media data object's
-        #   .dl_sim_flag IV
-        self.force_sim_flag = force_sim_flag
+        # 'sim' if channels/playlists should just be checked for new videos,
+        #   without downloading anything. 'real' if videos should be downloaded
+        #   (or not) depending on each media data object's .dl_sim_flag IV.
+        #   'custom' is like 'real', but with additional options applied
+        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        self.operation_type = operation_type
 
         # The time at which the download operation began (in seconds since
         #   epoch)
@@ -198,7 +203,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 186 run')
+            utils.debug_time('dld 206 run')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
@@ -376,7 +381,7 @@ class DownloadManager(threading.Thread):
         # Let the timer run for a few more seconds to allow those videos to be
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
-        if not self.force_sim_flag:
+        if self.operation_type != 'sim':
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_halt_timer,
@@ -409,7 +414,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 300 change_worker_count')
+            utils.debug_time('dld 417 change_worker_count')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -484,7 +489,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 375 check_master_slave')
+            utils.debug_time('dld 492 check_master_slave')
 
         for worker_obj in self.worker_list:
 
@@ -494,10 +499,7 @@ class DownloadManager(threading.Thread):
                 other_obj = worker_obj.download_item_obj.media_data_obj
 
                 if other_obj.dbid != media_data_obj.dbid \
-                and (
-                    other_obj.dbid == media_data_obj.master_dbid \
-                    or other_obj.dbid in media_data_obj.slave_dbid_list
-                ):
+                and other_obj.dbid == media_data_obj.master_dbid:
                     return True
 
         return False
@@ -517,7 +519,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 408 check_workers_all_finished')
+            utils.debug_time('dld 522 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -540,7 +542,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 431 get_available_worker')
+            utils.debug_time('dld 545 get_available_worker')
 
         for worker_obj in self.worker_list:
             if worker_obj.available_flag:
@@ -570,6 +572,9 @@ class DownloadManager(threading.Thread):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 576 mark_video_as_doomed')
+
         if isinstance(video_obj, media.Video) \
         and not video_obj in self.doomed_video_list:
             self.doomed_video_list.append(video_obj)
@@ -585,6 +590,9 @@ class DownloadManager(threading.Thread):
         has been reached, stops the download operation.
 
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 595 register_video')
 
         self.total_video_count += 1
 
@@ -606,6 +614,9 @@ class DownloadManager(threading.Thread):
             size (int): The size of the downloaded video (in bytes)
 
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 619 register_video_size')
 
         # (In case the filesystem didn't detect the file size, for whatever
         #   reason, we'll check for a None value)
@@ -637,7 +648,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 454 remove_worker')
+            utils.debug_time('dld 651 remove_worker')
 
         new_list = []
 
@@ -650,8 +661,12 @@ class DownloadManager(threading.Thread):
 
     def stop_download_operation(self):
 
-        """Called by mainapp.TartubeApp.do_shutdown(), .stop() and a callback
-        in .on_button_stop_operation().
+        """Called by mainapp.TartubeApp.do_shutdown(), .stop_continue(),
+        .dl_timer_callback(), .on_button_stop_operation().
+
+        Also called by mainwin.StatusIcon.on_stop_menu_item().
+
+        Also called by self.register_video() and .register_video_size().
 
         Based on DownloadManager.stop_downloads().
 
@@ -660,7 +675,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 477 stop_download_operation')
+            utils.debug_time('dld 678 stop_download_operation')
 
         self.running_flag = False
 
@@ -693,7 +708,7 @@ class DownloadWorker(threading.Thread):
     def __init__(self, download_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 510 __init__')
+            utils.debug_time('dld 711 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -754,7 +769,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 571 run')
+            utils.debug_time('dld 772 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -813,14 +828,12 @@ class DownloadWorker(threading.Thread):
                 # In the event of an error, nothing updates the video's row in
                 #   the Video Catalogue, and therefore the error icon won't be
                 #   visible
-                # Do that now (but don't both if mainwin.ComplexCatalogueItem
-                #   aren't being used in the Video Catalogue)
+                # Do that now (but don't if mainwin.ComplexCatalogueItem
+                #   objects aren't being used in the Video Catalogue)
                 if return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
-                and (
-                    app_obj.catalogue_mode == 'complex_hide_parent' \
-                    or app_obj.catalogue_mode == 'complex_show_parent'
-                ):
+                and app_obj.catalogue_mode != 'simple_hide_parent' \
+                and app_obj.catalogue_mode != 'simple_show_parent':
                     GObject.timeout_add(
                         0,
                         app_obj.main_win_obj.video_catalogue_update_row,
@@ -839,6 +852,25 @@ class DownloadWorker(threading.Thread):
                     'Thread #' + str(self.worker_id) \
                     + ': Worker now available again',
                 )
+
+                # During custom downloads, apply a delay if one has been
+                #   specified
+                if self.download_manager_obj.operation_type == 'custom' \
+                and app_obj.custom_dl_delay_flag:
+
+                    # Set the delay (in seconds), a randomised value if
+                    #   required
+                    if app_obj.custom_dl_delay_min:
+                        delay = random.randint(
+                            int(app_obj.custom_dl_delay_min * 60),
+                            int(app_obj.custom_dl_delay_max * 60),
+                        )
+                    else:
+                        delay = int(app_obj.custom_dl_delay_max * 60)
+
+                    print('958 delay')
+                    print(delay)
+                    time.sleep(delay)
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
@@ -859,7 +891,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 653 close')
+            utils.debug_time('dld 894 close')
 
         self.running_flag = False
         if self.video_downloader_obj:
@@ -883,7 +915,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 677 prepare_download')
+            utils.debug_time('dld 918 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -900,7 +932,7 @@ class DownloadWorker(threading.Thread):
         """Called by downloads.DownloadManager.change_worker_count()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 694 set_doomed_flag')
+            utils.debug_time('dld 935 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -932,7 +964,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 723 data_callback')
+            utils.debug_time('dld 967 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
         GObject.timeout_add(
@@ -946,7 +978,7 @@ class DownloadWorker(threading.Thread):
 
 class DownloadList(object):
 
-    """Called by mainapp.TartubeApp.download_manager_start().
+    """Called by mainapp.TartubeApp.download_manager_continue().
 
     Based on the DownloadList class in youtube-dl-gui.
 
@@ -963,6 +995,13 @@ class DownloadList(object):
 
         app_obj (mainapp.TartubeApp): The main application
 
+        operation_type (str): 'sim' if channels/playlists should just be
+            checked for new videos, without downloading anything. 'real' if
+            videos should be downloaded (or not) depending on each media data
+            object's .dl_sim_flag IV. 'custom' is like 'real', but with
+            additional options applied (specified by IVs like
+            mainapp.TartubeApp.custom_dl_by_video_flag)
+
         media_data_list (list): List of media.Video, media.Channel,
             media.Playlist and/or media.Folder objects. If not an empty list,
             only those media data objects and their descendants are checked/
@@ -975,10 +1014,10 @@ class DownloadList(object):
     # Standard class methods
 
 
-    def __init__(self, app_obj, media_data_list):
+    def __init__(self, app_obj, operation_type, media_data_list):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 768 __init__')
+            utils.debug_time('dld 1020 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -987,6 +1026,13 @@ class DownloadList(object):
 
         # IV list - other
         # ---------------
+        # 'sim' if channels/playlists should just be checked for new videos,
+        #   without downloading anything. 'real' if videos should be downloaded
+        #   (or not) depending on each media data object's .dl_sim_flag IV.
+        #   'custom' is like 'real', but with additional options applied
+        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        self.operation_type = operation_type
+
         # Number of download.DownloadItem objects created (used to give each a
         #   unique ID)
         self.download_item_count = 0
@@ -1040,6 +1086,15 @@ class DownloadList(object):
                     #   playlist)
                     self.create_item(media_data_obj, True)
 
+        # Some media data objects have an alternate download destination, for
+        #   example, a playlist ('slave') might download its videos into the
+        #   directory used by a channel ('master')
+        # This can increase the length of the operation, because a 'slave'
+        #   won't start until its 'master' is finished
+        # Make sure all designated 'masters' are handled before 'slaves' (a
+        #   media data object can't be both a master and a slave)
+        self.reorder_master_slave()
+
 
     # Public class methods
 
@@ -1064,7 +1119,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 854 change_item_stage')
+            utils.debug_time('dld 1122 change_item_stage')
 
         self.download_item_dict[item_id].stage = new_stage
 
@@ -1086,9 +1141,15 @@ class DownloadList(object):
                 are already marked as downloaded
             - media.Video objects which have an ancestor (e.g. a parent
                 media.Channel) for which checking/downloading is disabled
+            - media.Video objects whose parent is a media.Folder, and whose
+                file IVs are set, and for which a thumbnail exists, if
+                mainapp.TartubeApp.operation_sim_shortcut_flag is set, and if
+                self.operation_type is set to 'sim'
             - media.Channel and media.Playlist objects for which checking/
                 downloading are disabled, or which have an ancestor (e.g. a
                 parent media.folder) for which checking/downloading is disabled
+            - media.Channel and media.Playlist objects during custom downloads
+                in which videos are to be downloaded independently
             - media.Folder objects
 
         Adds the resulting downloads.DownloadItem object to this object's IVs.
@@ -1098,10 +1159,10 @@ class DownloadList(object):
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): A media data object
 
-            init_flag (True, False): True when called by self.__init__, and
-                False when called by this function recursively. If True and
-                media_data_obj is a media.Video object, we download it even if
-                its parent is a channel or a playlist
+            init_flag (bool): True when called by self.__init__, and False when
+                called by this function recursively. If True and media_data_obj
+                is a media.Video object, we download it even if its parent is a
+                channel or a playlist
 
         Returns:
 
@@ -1112,7 +1173,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 902 create_item')
+            utils.debug_time('dld 1176 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -1135,13 +1196,29 @@ class DownloadList(object):
         #   downloading the channel/playlist downloads the videos it contains)
         # (Exception: download a single video if that's what the calling code
         #   has specifically requested)
+        # (Exception: for custom downloads, do get videos independently of
+        #   their channel/playlist, if allowed)
+        # Don't download videos in a folder, if this is a simulated download,
+        #   and the video has already been checked
         if isinstance(media_data_obj, media.Video):
 
             if media_data_obj.dl_flag \
             or (
                 not isinstance(media_data_obj.parent_obj, media.Folder) \
                 and not init_flag
+                and (
+                    self.operation_type != 'custom'
+                    or not self.app_obj.custom_dl_by_video_flag
+                    or media_data_obj.dl_flag
+                )
             ):
+                return None
+
+            if isinstance(media_data_obj.parent_obj, media.Folder) \
+            and self.operation_type == 'sim' \
+            and self.app_obj.operation_sim_shortcut_flag \
+            and media_data_obj.file_name \
+            and utils.find_thumbnail(self.app_obj, media_data_obj):
                 return None
 
         # Don't create a download.DownloadItem object if the media data object
@@ -1162,9 +1239,31 @@ class DownloadList(object):
 
         # Don't create a download.DownloadItem object for a media.Folder,
         #   obviously
+        # Dont' create a download.DownloadItem object for a media.Channel or
+        #   media.Playlist during a custom download in which videos are to be
+        #   downloaded independently
         download_item_obj = None
-        if not isinstance(media_data_obj, media.Folder):
 
+        if (
+            isinstance(media_data_obj, media.Video)
+            and self.operation_type == 'custom'
+            and self.app_obj.custom_dl_by_video_flag
+            and not media_data_obj.dl_flag
+        ) or (
+            isinstance(media_data_obj, media.Video)
+            and (
+                self.operation_type != 'custom'
+                or not self.app_obj.custom_dl_by_video_flag
+            )
+        ) or (
+            (
+                isinstance(media_data_obj, media.Channel) \
+                or isinstance(media_data_obj, media.Playlist)
+            ) and (
+                self.operation_type != 'custom'
+                or not self.app_obj.custom_dl_by_video_flag
+            )
+        ):
             # Create a new download.DownloadItem object...
             self.download_item_count += 1
             download_item_obj = DownloadItem(
@@ -1203,7 +1302,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 990 fetch_next_item')
+            utils.debug_time('dld 1305 fetch_next_item')
 
         for item_id in self.download_item_list:
             this_item = self.download_item_dict[item_id]
@@ -1232,7 +1331,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1053 move_item_to_bottom')
+            utils.debug_time('dld 1334 move_item_to_bottom')
 
         # Move the item to the bottom (end) of the list
         if download_item_obj is None \
@@ -1263,7 +1362,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1084 move_item_to_top')
+            utils.debug_time('dld 1365 move_item_to_top')
 
         # Move the item to the top (beginning) of the list
         if download_item_obj is None \
@@ -1276,6 +1375,44 @@ class DownloadList(object):
                     self.download_item_list.index(download_item_obj.item_id),
                 ),
             )
+
+
+    def reorder_master_slave(self):
+
+        """Called by self.__init__() after the calls to self.create_item() are
+        finished.
+
+        Some media data objects have an alternate download destination, for
+        example, a playlist ('slave') might download its videos into the
+        directory used by a channel ('master').
+
+        This can increase the length of the operation, because a 'slave' won't
+        start until its 'master' is finished.
+
+        Make sure all designated 'masters' are handled before 'slaves' (a media
+        media data object can't be both a master and a slave).
+
+        Even if this doesn't reduce the time the 'slaves' spend waiting to
+        start, it at least makes the download order predictable.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1400 reorder_master_slave')
+
+        master_list = []
+        other_list = []
+        for item_id in self.download_item_list:
+            download_item_obj = self.download_item_dict[item_id]
+
+            if isinstance(download_item_obj.media_data_obj, media.Video) \
+            or not download_item_obj.media_data_obj.slave_dbid_list:
+                other_list.append(item_id)
+            else:
+                master_list.append(item_id)
+
+        self.download_item_list = []
+        self.download_item_list.extend(master_list)
+        self.download_item_list.extend(other_list)
 
 
 class DownloadItem(object):
@@ -1308,7 +1445,7 @@ class DownloadItem(object):
     def __init__(self, item_id, media_data_obj, options_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1129 __init__')
+            utils.debug_time('dld 1448 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1347,7 +1484,7 @@ class VideoDownloader(object):
     Args:
 
         download_manager_obj (downloads.DownloadManager) - The download
-            manager object handling the entire download operation.
+            manager object handling the entire download operation
 
         download_worker_obj (downloads.DownloadWorker) - The parent download
             worker object. The download manager uses multiple workers to
@@ -1356,10 +1493,10 @@ class VideoDownloader(object):
             download.DownloadItem object. When the worker is assigned a
             download item, it creates a new instance of this object to
             interface with youtube-dl, and waits for this object to return a
-            return code.
+            return code
 
         download_item_obj (downloads.DownloadItem) - The download item object
-            describing the URL from which youtube-dl should download video(s).
+            describing the URL from which youtube-dl should download video(s)
 
     Warnings:
 
@@ -1400,7 +1537,7 @@ class VideoDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1221 __init__')
+            utils.debug_time('dld 1540 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1542,7 +1679,7 @@ class VideoDownloader(object):
         # All media data objects can be marked as simulate downloads only. The
         #   setting applies not just to the media data object, but all of its
         #   descendants
-        if self.download_manager_obj.force_sim_flag:
+        if self.download_manager_obj.operation_type == 'sim':
             dl_sim_flag = True
         else:
             dl_sim_flag = media_data_obj.dl_sim_flag
@@ -1581,7 +1718,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1392 do_download')
+            utils.debug_time('dld 1721 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1607,11 +1744,17 @@ class VideoDownloader(object):
                 time.sleep(self.long_sleep_time)
 
         # Prepare a system command...
+        divert_mode = None
+        if self.download_manager_obj.operation_type == 'custom' \
+        and isinstance(self.download_item_obj.media_data_obj, media.Video):
+            divert_mode = app_obj.custom_dl_divert_mode
+
         cmd_list = utils.generate_system_cmd(
             app_obj,
             self.download_item_obj.media_data_obj,
             self.download_worker_obj.options_list,
             self.dl_sim_flag,
+            divert_mode,
         )
 
         # ...display it in the Output Tab (if required)...
@@ -1681,7 +1824,7 @@ class VideoDownloader(object):
                     and (
                         not app_obj.ytdl_output_ignore_progress_flag \
                         or not re.match(
-                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                            r'\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
                             stdout,
                         )
                     ) and (
@@ -1700,7 +1843,7 @@ class VideoDownloader(object):
                     and (
                         not app_obj.ytdl_write_ignore_progress_flag \
                         or not re.match(
-                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                            r'\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
                             stdout,
                         )
                     ) and (
@@ -1812,7 +1955,8 @@ class VideoDownloader(object):
         The action taken depends on the value of
         mainapp.TartubeApp.operation_convert_mode.
 
-        Return values:
+        Returns:
+
             False if a channel/playlist was about to be downloaded into a
                 media.Video object, which has since been replaced by a new
                 media.Channel/media.Playlist object
@@ -1824,7 +1968,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1600 check_dl_is_correct_type')
+            utils.debug_time('dld 1971 check_dl_is_correct_type')
 
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
@@ -1880,13 +2024,13 @@ class VideoDownloader(object):
 
     def close(self):
 
-        """Called by downloads.DownloadWorker.run() and .close().
+        """Called by DownloadWorker.run().
 
         Destructor function for this object.
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1620 close')
+            utils.debug_time('dld 2033 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -1905,17 +2049,17 @@ class VideoDownloader(object):
 
         Args:
 
-            dir_path (string): The full path to the directory in which the
-                video is saved, e.g. '/home/yourname/tartube/downloads/Videos'
+            dir_path (str): The full path to the directory in which the video
+                is saved, e.g. '/home/yourname/tartube/downloads/Videos'
 
-            filename (string): The video's filename, e.g. 'My Video'
+            filename (str): The video's filename, e.g. 'My Video'
 
-            extension (string): The video's extension, e.g. '.mp4'
+            extension (str): The video's extension, e.g. '.mp4'
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1649 confirm_new_video')
+            utils.debug_time('dld 2062 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
 
@@ -1986,17 +2130,17 @@ class VideoDownloader(object):
 
         Args:
 
-            dir_path (string): The full path to the directory in which the
-                video is saved, e.g. '/home/yourname/tartube/downloads/Videos'
+            dir_path (str): The full path to the directory in which the video
+                is saved, e.g. '/home/yourname/tartube/downloads/Videos'
 
-            filename (string): The video's filename, e.g. 'My Video'
+            filename (str): The video's filename, e.g. 'My Video'
 
-            extension (string): The video's extension, e.g. '.mp4'
+            extension (str): The video's extension, e.g. '.mp4'
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1710 confirm_old_video')
+            utils.debug_time('dld 2143 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2116,7 +2260,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1830 confirm_sim_video')
+            utils.debug_time('dld 2263 confirm_sim_video')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2282,14 +2426,18 @@ class VideoDownloader(object):
             # Now we can sort the parent containers
             video_obj.parent_obj.sort_children()
             app_obj.fixed_all_folder.sort_children()
-            if video_obj.new_flag:
-                app_obj.fixed_new_folder.sort_children()
+            if video_obj.bookmark_flag:
+                app_obj.fixed_bookmark_folder.sort_children()
             if video_obj.fav_flag:
                 app_obj.fixed_fav_folder.sort_children()
+            if video_obj.new_flag:
+                app_obj.fixed_new_folder.sort_children()
+            if video_obj.waiting_flag:
+                app_obj.fixed_waiting_folder.sort_children()
 
         else:
 
-            if video_obj.file_dir \
+            if video_obj.file_name \
             and video_obj.name != app_obj.default_video_name:
 
                 # This video must not be displayed in the Results List, and
@@ -2316,7 +2464,7 @@ class VideoDownloader(object):
 
             # If the 'Add videos' button was used, the path/filename/extension
             #   won't be set yet
-            if not video_obj.file_dir and full_path:
+            if not video_obj.file_name and full_path:
                 video_obj.set_file(filename, extension)
 
             # Update any video object IVs that are not set
@@ -2324,9 +2472,6 @@ class VideoDownloader(object):
             and filename is not None:
                 video_obj.set_name(filename)
 
-#            if video_obj.nickname == app_obj.default_video_name \
-#            and name is not None:
-#                video_obj.set_nickname(name)
             if video_obj.nickname == app_obj.default_video_name:
                 if name is not None:
                     video_obj.set_nickname(name)
@@ -2411,13 +2556,7 @@ class VideoDownloader(object):
 
             # ...and thus get the filename used by youtube-dl when storing the
             #   thumbnail locally
-            thumb_path = os.path.abspath(
-                os.path.join(
-                    app_obj.downloads_dir,
-                    video_obj.file_dir,
-                    video_obj.file_name + remote_ext,
-                ),
-            )
+            thumb_path = video_obj.get_actual_path_by_ext(app_obj, remote_ext)
 
             if not options_dict['sim_keep_thumbnail']:
                 thumb_path = utils.convert_path_to_temp(app_obj, thumb_path)
@@ -2425,8 +2564,6 @@ class VideoDownloader(object):
             if not os.path.isfile(thumb_path):
                 request_obj = requests.get(thumbnail)
 
-#                with open(thumb_path, 'wb') as outfile:
-#                    outfile.write(request_obj.content)
                 # v1.2.006 This crashes if the directory specified by
                 #   thumb_path doesn't exist, so need to use 'try'
                 try:
@@ -2503,6 +2640,9 @@ class VideoDownloader(object):
         handles that.
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 2644 convert_video_to_container')
+
         app_obj = self.download_manager_obj.app_obj
         old_video_obj = self.download_item_obj.media_data_obj
         container_obj = old_video_obj.parent_obj
@@ -2520,7 +2660,7 @@ class VideoDownloader(object):
         #   customise the name when they're ready
         name = utils.find_available_name(
             app_obj,
-            # # e.g. 'channel'
+            # e.g. 'channel'
             app_obj.operation_convert_mode,
             # Allow 'channel_1', if available
             1,
@@ -2619,7 +2759,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2173 create_child_process')
+            utils.debug_time('dld 2762 create_child_process')
 
         info = preexec = None
         if os.name == 'nt':
@@ -2631,12 +2771,6 @@ class VideoDownloader(object):
             # Make this child process the process group leader, so that we can
             #   later kill the whole process group with os.killpg
             preexec = os.setsid
-
-#        # Encode the system command for the child process, converting unicode
-#        #   to str so the MS Windows shell can accept it (see
-#        #   http://stackoverflow.com/a/9951851/35070 )
-#        if sys.version_info < (3, 0):
-#            cmd_list = utils.convert_item(cmd_list, to_unicode=False)
 
         try:
             self.child_process = subprocess.Popen(
@@ -2656,7 +2790,7 @@ class VideoDownloader(object):
 
     def extract_filename(self, input_data):
 
-        """Called by self.extract_stdout_data().
+        """Called by self.confirm_sim_video() and .extract_stdout_data().
 
         Based on the extract_data() function in youtube-dl-gui's
         downloaders.py.
@@ -2664,7 +2798,8 @@ class VideoDownloader(object):
         Extracts various components of a filename.
 
         Args:
-            input_data (string): Full path to a file which has been downloaded
+
+            input_data (str): Full path to a file which has been downloaded
                 and saved to the filesystem
 
         Returns:
@@ -2675,7 +2810,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2229 extract_filename')
+            utils.debug_time('dld 2813 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -2693,10 +2828,12 @@ class VideoDownloader(object):
         Extracts youtube-dl statistics from the child process.
 
         Args:
-            stdout (string): String that contains a line from the child process
+
+            stdout (str): String that contains a line from the child process
                 STDOUT (i.e., a message from youtube-dl)
 
         Returns:
+
             Python dictionary in a standard format also used by the main window
             code. Dictionaries in this format are generally called
             'dl_stat_dict' (or some variation of it).
@@ -2723,7 +2860,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2277 extract_stdout_data')
+            utils.debug_time('dld 2863 extract_stdout_data')
 
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
@@ -2969,7 +3106,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2512 extract_stdout_status')
+            utils.debug_time('dld 3109 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
@@ -2997,7 +3134,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2602 is_child_process_alive')
+            utils.debug_time('dld 3137 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -3017,7 +3154,7 @@ class VideoDownloader(object):
 
         Args:
 
-            stderr (string): A message from the child process STDERR.
+            stderr (str): A message from the child process STDERR
 
         Returns:
 
@@ -3027,7 +3164,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2632 is_debug')
+            utils.debug_time('dld 3167 is_debug')
 
         return stderr.split(' ')[0] == '[debug]'
 
@@ -3041,7 +3178,7 @@ class VideoDownloader(object):
 
         Args:
 
-            stderr (string): A message from the child process STDERR.
+            stderr (str): A message from the child process STDERR
 
         Returns:
 
@@ -3051,7 +3188,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2656 is_ignorable')
+            utils.debug_time('dld 3191 is_ignorable')
 
         app_obj = self.download_manager_obj.app_obj
 
@@ -3151,7 +3288,7 @@ class VideoDownloader(object):
 
         Args:
 
-            stderr (string): A message from the child process STDERR.
+            stderr (str): A message from the child process STDERR
 
         Returns:
 
@@ -3160,7 +3297,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2717 is_warning')
+            utils.debug_time('dld 3300 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -3182,7 +3319,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2739 last_data_callback')
+            utils.debug_time('dld 3322 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -3220,7 +3357,8 @@ class VideoDownloader(object):
 
     def set_return_code(self, code):
 
-        """Called by self.do_download() and self.stop().
+        """Called by self.do_download(), .create_child_process(),
+        .extract_stdout_status() and .stop().
 
         Based on YoutubeDLDownloader._set_returncode().
 
@@ -3235,7 +3373,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2791 set_return_code')
+            utils.debug_time('dld 3376 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -3246,7 +3384,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2802 set_temp_destination')
+            utils.debug_time('dld 3387 set_temp_destination')
 
         self.temp_path = path
         self.temp_filename = filename
@@ -3258,7 +3396,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 814 reset_temp_destination')
+            utils.debug_time('dld 3399 reset_temp_destination')
 
         self.temp_path = None
         self.temp_filename = None
@@ -3267,7 +3405,7 @@ class VideoDownloader(object):
 
     def stop(self):
 
-        """Called by downloads.DownloadWorker.close() and also by
+        """Called by DownloadWorker.close() and also by
         mainwin.MainWin.on_progress_list_stop_now().
 
         Terminates the child process and sets this object's return code to
@@ -3275,7 +3413,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2831 stop')
+            utils.debug_time('dld 3416 stop')
 
         if self.is_child_process_alive():
 
@@ -3305,7 +3443,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2861 stop_soon')
+            utils.debug_time('dld 3446 stop_soon')
 
         self.stop_soon_flag = True
 
@@ -3329,7 +3467,7 @@ class PipeReader(threading.Thread):
 
     Warnings:
 
-        All the operations are based on 'str' types. The calling function must
+        All the actions are based on 'str' types. The calling function must
         convert the queued items back to 'unicode', if necessary.
 
     """
@@ -3341,7 +3479,7 @@ class PipeReader(threading.Thread):
     def __init__(self, queue):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2897 __init__')
+            utils.debug_time('dld 3482 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -3378,7 +3516,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2934 run')
+            utils.debug_time('dld 3519 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -3419,7 +3557,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2975 attach_file_descriptor')
+            utils.debug_time('dld 3560 attach_file_descriptor')
 
         self.file_descriptor = filedesc
 
@@ -3429,7 +3567,7 @@ class PipeReader(threading.Thread):
         """Called by downloads.VideoDownloader.close(), which is the destructor
         function for that object.
 
-        Join the thread and update IVs
+        Join the thread and update IVs.
 
         Args:
 
@@ -3438,7 +3576,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2994 join')
+            utils.debug_time('dld 3579 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)
