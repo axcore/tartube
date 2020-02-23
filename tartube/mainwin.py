@@ -54,6 +54,10 @@ import utils
 
 # Debugging flag (calls utils.debug_time at the start of every function)
 DEBUG_FUNC_FLAG = False
+# ...(but don't call utils.debug_time from anything called by the
+#   mainapp.TartubeApp timer functions, e.g.
+#   self.video_catalogue_retry_insert_items()
+DEBUG_NO_TIMER_FUNC_FLAG = False
 
 
 # Classes
@@ -517,15 +521,20 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 518 setup_pixbufs')
 
-        # The default location for icons is ../icons. Packagers may have moved
-        #   them to one of the directories specified by
-        #   __main__.__icon_dir_list__
-        # Check all locations, and use the first one which actually exists
-        icon_dir_list = __main__.__icon_dir_list__.copy()
-        icon_dir_list.insert(
-            0,
+        # The default location for icons is ../icons. When installed via pypi,
+        #   the icons are moved to ../tartube/icons
+        icon_dir_list = []
+        icon_dir_list.append(
             os.path.abspath(
                 os.path.join(self.app_obj.script_parent_dir, 'icons'),
+            ),
+        )
+        icon_dir_list.append(
+            os.path.abspath(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    'icons',
+                ),
             ),
         )
 
@@ -6051,7 +6060,7 @@ class MainWin(Gtk.ApplicationWindow):
         Catalogue. Add them, if so.
         """
 
-        if DEBUG_FUNC_FLAG:
+        if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
             utils.debug_time('mwn 6068 video_catalogue_retry_insert_items')
 
         if self.video_catalogue_temp_list:

@@ -48,7 +48,8 @@ except:
     HAVE_MOVIEPY_FLAG = False
 
 try:
-    from xdg.BaseDirectory import xdg_config_home
+#    from xdg.BaseDirectory import xdg_config_home
+    from xdg import XDG_config_home
     HAVE_XDG_FLAG = True
 except:
     HAVE_XDG_FLAG = False
@@ -467,7 +468,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.config_file_xdg_path = os.path.abspath(
                 os.path.join(
-                    xdg_config_home,
+                    XDG_CONFIG_HOME,
                     __main__.__packagename__,
                     self.config_file_name,
                    ),
@@ -1845,12 +1846,11 @@ class TartubeApp(Gtk.Application):
         new_config_flag = False
 
         if (
-            not __main__.__debian_install_flag__
-            and os.path.isfile(self.config_file_path)
-        ) or (
-            __main__.__debian_install_flag__
-            and self.config_file_xdg_path is not None
+            self.config_file_xdg_path is not None
             and os.path.isfile(self.config_file_xdg_path)
+        ) or (
+            self.config_file_xdg_path is None
+            and os.path.isfile(self.config_file_path)
         ):
             self.load_config()
 
@@ -1924,7 +1924,6 @@ class TartubeApp(Gtk.Application):
 
             # React to a 'Permission denied' error by asking the user what to
             #   do next. If necessary, shut down Tartube
-            # The True argument means that the drive is unwriteable
             if not self.make_directory(self.data_dir):
                 return self.main_win_obj.destroy()
 
@@ -2070,8 +2069,8 @@ class TartubeApp(Gtk.Application):
                     None,                   # Parent window is main window
                     {
                         'yes': 'update_manager_start',
-                        # Install FFmpeg, not youtube-dl
-                        'data': False,
+                        # Install youtube-dl, not FFmpeg
+                        'data': 'ytdl',
                     },
                 )
 
@@ -2295,9 +2294,8 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 2293 load_config')
 
         # The config file can be stored at one of two locations, depending on
-        #   the value of __main__.__debian_install_flag__
-        if __main__.__debian_install_flag__ \
-        and self.config_file_xdg_path is not None:
+        #   whether xdg is available, or not
+        if self.config_file_xdg_path is not None:
             config_file_path = self.config_file_xdg_path
         else:
             config_file_path = self.config_file_path
@@ -2728,6 +2726,9 @@ class TartubeApp(Gtk.Application):
         self.temp_dl_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'downloads'),
         )
+        self.temp_test_dir = os.path.abspath(
+            os.path.join(self.data_dir, '.temp', 'ytdl-test'),
+        )
 
         # ...and update various widgets
 
@@ -2790,9 +2791,8 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 2788 save_config')
 
         # The config file can be stored at one of two locations, depending on
-        #   the value of __main__.__debian_install_flag__
-        if __main__.__debian_install_flag__ \
-        and self.config_file_xdg_path is not None:
+        #   whether xdg is available, or not
+        if self.config_file_xdg_path is not None:
             config_file_path = self.config_file_xdg_path
         else:
             config_file_path = self.config_file_path
@@ -4020,6 +4020,9 @@ class TartubeApp(Gtk.Application):
         self.temp_dl_dir = os.path.abspath(
             os.path.join(path, '.temp', 'downloads'),
         )
+        self.temp_test_dir = os.path.abspath(
+            os.path.join(path, '.temp', 'ytdl-test'),
+        )
 
         if self.data_dir_add_from_list_flag \
         and not self.data_dir in self.data_dir_alt_list:
@@ -4194,6 +4197,9 @@ class TartubeApp(Gtk.Application):
                     )
                     self.temp_dl_dir = os.path.abspath(
                         os.path.join(self.data_dir, '.temp', 'downloads'),
+                    )
+                    self.temp_test_dir = os.path.abspath(
+                        os.path.join(self.data_dir, '.temp', 'ytdl-test'),
                     )
 
                     return
@@ -5177,7 +5183,15 @@ class TartubeApp(Gtk.Application):
             self.data_dir_alt_list = [ self.data_dir ]
 
             self.downloads_dir = os.path.abspath(
+                os.path.join(self.data_dir),
+            )
+
+            self.alt_downloads_dir = os.path.abspath(
                 os.path.join(self.data_dir, 'downloads'),
+            )
+
+            self.backup_dir = os.path.abspath(
+                os.path.join(self.data_dir, '.backups'),
             )
 
             self.temp_dir = os.path.abspath(
@@ -5186,6 +5200,10 @@ class TartubeApp(Gtk.Application):
 
             self.temp_dl_dir = os.path.abspath(
                 os.path.join(self.data_dir, '.temp', 'downloads'),
+            )
+
+            self.temp_test_dir = os.path.abspath(
+                os.path.join(self.data_dir, '.temp', 'ytdl-test'),
             )
 
         file_chooser_win.destroy()

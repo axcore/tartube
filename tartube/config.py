@@ -6176,6 +6176,29 @@ class SystemPrefWin(GenericPrefWin):
             self.on_disk_stop_spinbutton_changed,
         )
 
+        # Configuration preferences
+        self.add_label(grid,
+            '<u>Configuration preferences</u>',
+            0, 7, grid_width, 1,
+        )
+        
+        self.add_label(grid,
+            __main__.__prettyname__  + ' configuration file loaded from:',
+            0, 8, grid_width, 1,
+        )
+
+        if self.app_obj.config_file_xdg_path is not None:
+            config_path = self.app_obj.config_file_xdg_path
+        else:
+            config_path = self.app_obj.config_file_path
+            
+        entry3 = self.add_entry(grid,
+            config_path,
+            False,
+            0, 9, grid_width, 1,
+        )
+        entry3.set_sensitive(False)
+
 
     def setup_filesystem_database_tab(self, inner_notebook):
 

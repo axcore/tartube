@@ -21,6 +21,7 @@
 
 
 # Import modules
+import glob
 import os
 import setuptools
 import sys
@@ -58,11 +59,28 @@ if env_var_value is not None:
             ),
         )
 
+# Everything in ../icons is copied into ../tartube/icons, so that installations
+#   via pypi can find them
+params = []
+for path in glob.glob('icons/dialogue/*'):
+    params.append(('/tartube/icons/dialogue/', [path]))
+for path in glob.glob('icons/large/*'):
+    params.append(('/tartube/icons/large/', [path]))
+for path in glob.glob('icons/locale/*'):
+    params.append(('/tartube/icons/locale/', [path]))
+for path in glob.glob('icons/small/*'):
+    params.append(('/tartube/icons/small/', [path]))
+for path in glob.glob('icons/status/*'):
+    params.append(('/tartube/icons/status/', [path]))
+for path in glob.glob('icons/toolbar/*'):
+    params.append(('/tartube/icons/toolbar/', [path]))
+for path in glob.glob('icons/win/*'):
+    params.append(('/tartube/icons/win/', [path]))
 
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.5.0',
+    version='1.5.007',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based
@@ -97,4 +115,5 @@ setuptools.setup(
         'Bug Reports': 'https://github.com/axcore/tartube/issues',
         'Source': 'https://github.com/axcore/tartube',
     },
+    data_files=params,
 )

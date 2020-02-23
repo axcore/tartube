@@ -42,11 +42,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.5.0 (22 Feb 2019)**
+Latest version: **v1.5.007 (23 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.0/install-tartube-1.5.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.0/install-tartube-1.5.0-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.0/tartube_v1.5.0.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.007/install-tartube-1.5.007-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.007/install-tartube-1.5.007-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.007/tartube_v1.5.007.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -153,7 +153,7 @@ Linux/BSD users can use any of the following installation methods.
 5.3.2 Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  `Python xdg module <https://pypi.org/project/xdg/>`__ - required if you want to package **Tartube**
+-  `Python xdg module <https://pypi.org/project/xdg/>`__ - recommended so that **Tartube**'s configuration file is saved in a standard location
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
@@ -162,7 +162,11 @@ Linux/BSD users can use any of the following installation methods.
 5.3.3 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installation via ``pip`` does not work. I have given up trying to make it work.
+Installation via ``pip`` works as of **Tartube** v1.5.007. The sequence on Debian-based distros is as follows; other distros are probably similar.
+
+1. Type: ``sudo apt install python3-pip``
+2. Type: ``sudo pip3 install tartube``
+3. Type: ``tartube``
 
 5.3.4 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,8 +181,7 @@ Installation via ``pip`` does not work. I have given up trying to make it work.
 
 1. Download & extract the source
 2. Change directory into the **Tartube** directory
-3. The executable is inside a further sub-directory, so do **cd tartube** again
-4. Type: ``python3 tartube``
+3. Type: ``python3 tartube/tartube``
 
 6 Using Tartube
 ===============
