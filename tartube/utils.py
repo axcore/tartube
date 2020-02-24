@@ -779,8 +779,13 @@ dl_sim_flag=False, divert_mode=None):
         elif divert_mode == 'invidious':
             source = convert_youtube_to_invidious(source)
 
+    # Convert a path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.ytdl_path
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
     # Set the list
-    cmd_list = [app_obj.ytdl_path] + options_list + [source]
+    cmd_list = [ytdl_path] + options_list + [source]
 
     return cmd_list
 

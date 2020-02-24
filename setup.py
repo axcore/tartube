@@ -80,7 +80,7 @@ for path in glob.glob('icons/win/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.5.013',
+    version='1.5.015',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""Tartube is a GUI front-end for youtube-dl, partly based

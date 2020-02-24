@@ -192,11 +192,16 @@ class InfoManager(threading.Thread):
 
         self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
 
+        # Convert a path beginning with ~ (not on MS Windows)
+        ytdl_path = self.app_obj.ytdl_path
+        if os.name != 'nt':
+            ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
         # Prepare the system command
         if self.info_type == 'formats':
 
             cmd_list = [
-                'youtube-dl',
+                ytdl_path,
                 '--list-formats',
                 self.video_obj.source,
             ]
@@ -204,14 +209,14 @@ class InfoManager(threading.Thread):
         elif self.info_type == 'subs':
 
             cmd_list = [
-                'youtube-dl',
+                ytdl_path,
                 '--list-subs',
                 self.video_obj.source,
             ]
 
         else:
 
-            cmd_list = ['youtube-dl']
+            cmd_list = [ytdl_path]
 
             if self.options_string is not None \
             and self.options_string != '':

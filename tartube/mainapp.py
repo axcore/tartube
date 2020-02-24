@@ -532,7 +532,8 @@ class TartubeApp(Gtk.Application):
         #   '/usr/bin/youtube-dl'
         self.ytdl_path_default = None
         # The path to the youtube-dl binary, after installation using PyPI.
-        #   Not used on MS Windows
+        #   Not used on MS Windows. The initial ~ character must be substituted
+        #   for os.path.expanduser('~'), before use
         self.ytdl_path_pypi = '~/.local/bin/youtube-dl'
         # The actual path to use in the shell command during a download or
         #   update operation. Initially given the same value as

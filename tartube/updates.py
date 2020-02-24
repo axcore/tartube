@@ -342,6 +342,10 @@ class UpdateManager(threading.Thread):
         cmd_list \
         = self.app_obj.ytdl_update_dict[self.app_obj.ytdl_update_current]
 
+        # Convert a path beginning with ~ (not on MS Windows)
+        if os.name != 'nt':
+            cmd_list[0] = re.sub('^\~', os.path.expanduser('~'), cmd_list[0])
+
         # Create a new child process using that command
         self.create_child_process(cmd_list)
 

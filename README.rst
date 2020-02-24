@@ -42,11 +42,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.5.013 (24 Feb 2019)**
+Latest version: **v1.5.015 (24 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.013/install-tartube-1.5.013-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.013/install-tartube-1.5.013-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.013/tartube_v1.5.013.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.015/install-tartube-1.5.015-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.015/install-tartube-1.5.015-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.015/tartube_v1.5.015.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -178,7 +178,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
-2. Type: ``sudo pip3 install tartube``
+2. Type: ``pip3 install tartube``
 3. The **Tartube** executable is stored in **~/.local/bin** by default. If that is already in your path, you can start **Tartube** by typing ``tartube``. Otherwise, type ``~/.local/bin/tartube``
 4. **Tartube** asks you to choose a data directory, so do that
 5. In the **Tartube** main window, click **Edit > System preferences... > youtube-dl**
