@@ -42,11 +42,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.5.007 (23 Feb 2019)**
+Latest version: **v1.5.013 (24 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.007/install-tartube-1.5.007-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.007/install-tartube-1.5.007-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.007/tartube_v1.5.007.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.013/install-tartube-1.5.013-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.013/install-tartube-1.5.013-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.013/tartube_v1.5.013.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -162,13 +162,32 @@ Linux/BSD users can use any of the following installation methods.
 5.3.3 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installation via ``pip`` works as of **Tartube** v1.5.007. The sequence on Debian-based distros is as follows; other distros are probably similar.
+**Tartube** can be installed from `PyPI <https://pypi.org/project/tartube/>`__ with or without root privileges.
+
+Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
+
+5.3.4 Install using PyPI (with root privileges)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Make sure **youtube-dl** has been completely removed from your system
+2. Type: ``sudo apt install python3-pip``
+3. Type: ``sudo pip3 install youtube-dl tartube``
+4. Type: ``tartube``
+
+5.3.5 Install using PyPI (without root privileges)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
 2. Type: ``sudo pip3 install tartube``
-3. Type: ``tartube``
+3. The **Tartube** executable is stored in **~/.local/bin** by default. If that is already in your path, you can start **Tartube** by typing ``tartube``. Otherwise, type ``~/.local/bin/tartube``
+4. **Tartube** asks you to choose a data directory, so do that
+5. In the **Tartube** main window, click **Edit > System preferences... > youtube-dl**
+6. In the box marked **Actual path to use**, select **Use PyPI path (\~/.local/bin/youtube-dl)**
+7. Click **OK** to close the dialogue window
+8. Click **Operations > Update youtube-dl**
+9. Once the update has finished, **Tartube** is ready for use
 
-5.3.4 Install from source
+5.3.6 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
@@ -176,7 +195,7 @@ Installation via ``pip`` works as of **Tartube** v1.5.007. The sequence on Debia
 3. Type: ``python3 setup.py install``
 4. Type: ``tartube``
 
-5.3.5 Run without installing
+5.3.7 Run without installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download & extract the source
@@ -750,7 +769,7 @@ If crashes are a problem, you can force **Tartube** to restrict those cosmetic f
 - Click **Edit > System preferences... > General > Modules**
 - Click **Assume that Gtk is broken, and disable some minor features** to select it
 
-**Q: When I try to download videos, nothing happens!**
+**Q: When I try to download videos, nothing happens! In the Errors/Warnings tab, I can see "Download did not start"!**
 
 A: See `6.3 Setting youtube-dl's location`_
 

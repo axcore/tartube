@@ -6181,7 +6181,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>Configuration preferences</u>',
             0, 7, grid_width, 1,
         )
-        
+
         self.add_label(grid,
             __main__.__prettyname__  + ' configuration file loaded from:',
             0, 8, grid_width, 1,
@@ -6191,7 +6191,7 @@ class SystemPrefWin(GenericPrefWin):
             config_path = self.app_obj.config_file_xdg_path
         else:
             config_path = self.app_obj.config_file_path
-            
+
         entry3 = self.add_entry(grid,
             config_path,
             False,
@@ -7872,6 +7872,14 @@ class SystemPrefWin(GenericPrefWin):
                 self.app_obj.ytdl_bin,
             ],
         ]
+        if os.name != 'nt':
+
+            combo_list.append(
+                [
+                    'Use PyPI path (' + self.app_obj.ytdl_path_pypi + ')',
+                    self.app_obj.ytdl_path_pypi,
+                ],
+            )
 
         store = Gtk.ListStore(str, str)
         for mini_list in combo_list:
@@ -7886,6 +7894,8 @@ class SystemPrefWin(GenericPrefWin):
 
         if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
             combo.set_active(0)
+        elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_pypi:
+            combo.set_active(2)
         else:
             combo.set_active(1)
 

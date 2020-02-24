@@ -531,6 +531,9 @@ class TartubeApp(Gtk.Application):
         #   self.start(). On MSWin, it is 'youtube-dl.exe'. On Linux, it is
         #   '/usr/bin/youtube-dl'
         self.ytdl_path_default = None
+        # The path to the youtube-dl binary, after installation using PyPI.
+        #   Not used on MS Windows
+        self.ytdl_path_pypi = '~/.local/bin/youtube-dl'
         # The actual path to use in the shell command during a download or
         #   update operation. Initially given the same value as
         #   self.ytdl_path_default
@@ -1839,6 +1842,9 @@ class TartubeApp(Gtk.Application):
                 'Update using local youtube-dl path': [
                     'youtube-dl', '-U',
                 ],
+                'Update using PyPI youtube-dl path': [
+                    self.ytdl_path_pypi, '-U',
+                ],
             }
             self.ytdl_update_list = [
                 'Update using pip3 (recommended)',
@@ -1847,6 +1853,7 @@ class TartubeApp(Gtk.Application):
                 'Update using pip (omit --user option)',
                 'Update using default youtube-dl path',
                 'Update using local youtube-dl path',
+                'Update using PyPI youtube-dl path',
             ]
             self.ytdl_update_current = 'Update using pip3 (recommended)'
 
@@ -2515,7 +2522,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_dict = json_dict['ytdl_update_dict']
             self.ytdl_update_list = json_dict['ytdl_update_list']
             self.ytdl_update_current = json_dict['ytdl_update_current']
-        # (In version 1.3.903, these IVs were modified a little, but not
+        # (In version v1.3.903, these IVs were modified a little, but not
         #   on MS Windows)
         if os.name != 'nt' and version <= 1003090:   # v1.3.090
             self.ytdl_update_dict['Update using pip3 (recommended)'] \
@@ -2534,6 +2541,12 @@ class TartubeApp(Gtk.Application):
                 'Update using default youtube-dl path',
                 'Update using local youtube-dl path',
             ]
+        # (In version v1.5.012, these IVs were modified a little, but not on
+        #   MS Widnows)
+        if os.name != 'nt' and version <= 1005012:   # v1.5.012
+            self.ytdl_update_dict['Update using PyPI youtube-dl path'] \
+            = [self.ytdl_path_pypi, '-U']
+            self.ytdl_update_list.append('Update using PyPI youtube-dl path')
 
         if version >= 1003074:  # v1.3.074
             self.ytdl_output_system_cmd_flag \
