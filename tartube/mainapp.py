@@ -48,8 +48,7 @@ except:
     HAVE_MOVIEPY_FLAG = False
 
 try:
-#    from xdg.BaseDirectory import xdg_config_home
-    from xdg import XDG_config_home
+    from xdg import XDG_CONFIG_HOME
     HAVE_XDG_FLAG = True
 except:
     HAVE_XDG_FLAG = False
@@ -459,19 +458,28 @@ class TartubeApp(Gtk.Application):
         self.config_file_name = 'settings.json'
         # The config file can be stored at one of two locations, depending on
         #   the value of __main__.__debian_install_flag__
+        self.config_file_dir = os.path.abspath(self.script_parent_dir)
         self.config_file_path = os.path.abspath(
             os.path.join(self.script_parent_dir, self.config_file_name),
         )
 
         if not HAVE_XDG_FLAG:
+            self.config_file_xdg_dir = None
             self.config_file_xdg_path = None
         else:
+            self.config_file_xdg_dir = os.path.abspath(
+                os.path.join(
+                    XDG_CONFIG_HOME,
+                    __main__.__packagename__,
+                ),
+            )
+
             self.config_file_xdg_path = os.path.abspath(
                 os.path.join(
                     XDG_CONFIG_HOME,
                     __main__.__packagename__,
                     self.config_file_name,
-                   ),
+                ),
             )
 
         # Name of the Tartube database file (storing media data objects). The
@@ -1842,14 +1850,39 @@ class TartubeApp(Gtk.Application):
             ]
             self.ytdl_update_current = 'Update using pip3 (recommended)'
 
+        # Make sure the directory containing the config file exists
+        config_dir = None
+        if (
+            self.config_file_xdg_dir is not None
+            and not os.path.isdir(self.config_file_xdg_dir)
+        ):
+            config_dir = self.config_file_xdg_dir
+
+        elif (
+            self.config_file_xdg_dir is None
+            and not os.path.isdir(self.config_file_dir)
+        ):
+            config_dir = self.config_file_dir
+
+        if config_dir is not None and not self.make_directory(config_dir):
+
+            if os.name != 'nt':
+                folder = 'directory'
+            else:
+                folder = 'folder'
+
+            self.disable_load_save(
+                __main__.__prettyname__ + ' can\'t create the ' + folder \
+                + ' in which its configuration file is saved',
+            )
+
         # If the config file exists, load it. If not, create it
         new_config_flag = False
-
         if (
-            self.config_file_xdg_path is not None
+            self.config_file_xdg_path is not None \
             and os.path.isfile(self.config_file_xdg_path)
         ) or (
-            self.config_file_xdg_path is None
+            self.config_file_xdg_path is None \
             and os.path.isfile(self.config_file_path)
         ):
             self.load_config()
@@ -1858,7 +1891,7 @@ class TartubeApp(Gtk.Application):
             self.save_config()
             new_config_flag = True
 
-        else:
+        elif not self.disable_load_save_flag:
 
             # New Tartube installation
             new_config_flag = True
@@ -2026,21 +2059,35 @@ class TartubeApp(Gtk.Application):
                         + __main__.__prettyname__ + ' to load it',
                     )
 
-            if self.disable_load_save_lock_flag:
+#            if self.disable_load_save_lock_flag:
+#
+#                if self.disable_load_save_msg is None:
+#
+#                    self.file_error_dialogue(
+#                        'Because of an error, file load/save has been' \
+#                        + ' disabled',
+#                    )
+#
+#                else:
+#
+#                    self.file_error_dialogue(
+#                        self.disable_load_save_msg + '\n\nBecause of the' \
+#                        + ' error, file load/save has been disabled',
+#                    )
+#
+            if self.disable_load_save_msg is None:
 
-                if self.disable_load_save_msg is None:
+                self.file_error_dialogue(
+                    'Because of an error, file load/save has been' \
+                    + ' disabled',
+                )
 
-                    self.file_error_dialogue(
-                        'Because of an error, file load/save has been' \
-                        + ' disabled',
-                    )
+            else:
 
-                else:
-
-                    self.file_error_dialogue(
-                        self.disable_load_save_msg + '\n\nBecause of the' \
-                        + ' error, file load/save has been disabled',
-                    )
+                self.file_error_dialogue(
+                    self.disable_load_save_msg + '\n\nBecause of the' \
+                    + ' error, file load/save has been disabled',
+                )
 
         # Start the script's GObject slow timer
         self.script_slow_timer_id = GObject.timeout_add(
@@ -2452,6 +2499,8 @@ class TartubeApp(Gtk.Application):
             self.data_dir_use_list_flag = json_dict['data_dir_use_list_flag']
             self.data_dir_add_from_list_flag \
             = json_dict['data_dir_add_from_list_flag']
+        else:
+            self.data_dir_alt_list = [ self.data_dir ]
 
         if version >= 3014:     # v0.3.014
             self.db_backup_mode = json_dict['db_backup_mode']

@@ -750,6 +750,10 @@ If crashes are a problem, you can force **Tartube** to restrict those cosmetic f
 - Click **Edit > System preferences... > General > Modules**
 - Click **Assume that Gtk is broken, and disable some minor features** to select it
 
+**Q: When I try to download videos, nothing happens!**
+
+A: See `6.3 Setting youtube-dl's location`_
+
 **Q: I can't download my favourite video!**
 
 A: Make sure **youtube-dl** is updated; see `6.2 Check youtube-dl is updated`_

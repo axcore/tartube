@@ -16773,7 +16773,8 @@ class SystemCmdDialogue(Gtk.Dialog):
         media_type = media_data_obj.get_type()
         label = Gtk.Label(
             utils.shorten_string(
-                upper(media_type) + ': ' + media_data_obj.name,
+                utils.upper_case_first(media_type) + ': ' \
+                + media_data_obj.name,
                 50,
             ),
         )
@@ -16874,7 +16875,6 @@ class SystemCmdDialogue(Gtk.Dialog):
 
         else:
             system_cmd = ''
-
 
         self.textbuffer.set_text(system_cmd)
         return system_cmd

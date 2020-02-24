@@ -916,7 +916,7 @@ def parse_ytdl_options(options_string):
         if quote_flag:
             quote_list.append(item)
         else:
-            options_list.append(item)
+            return_list.append(item)
 
         if quote_flag and item[-1] == "\"":
 
