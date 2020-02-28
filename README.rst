@@ -31,7 +31,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 2 Why should I use Tartube?
 ===========================
 
--  You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other sites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
+-  You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
 -  You can fetch information about those videos, channels and playlists, without actually downloading anything
 -  **Tartube** will organise your videos into convenient folders
 -  If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
@@ -42,11 +42,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.5.015 (24 Feb 2019)**
+Latest version: **v1.5.031 (28 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.015/install-tartube-1.5.015-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.015/install-tartube-1.5.015-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.015/tartube_v1.5.015.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.031/install-tartube-1.5.031-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.031/install-tartube-1.5.031-64bit.exe/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.031/tartube_v1.5.031.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -153,7 +153,6 @@ Linux/BSD users can use any of the following installation methods.
 5.3.2 Optional dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  `Python xdg module <https://pypi.org/project/xdg/>`__ - recommended so that **Tartube**'s configuration file is saved in a standard location
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
@@ -753,6 +752,13 @@ If the **Post-process** tab is visible, do this:
 - Select the checkbox **Post-process video files to convert them to audio-only files** 
 - If you want, click the button **Keep video file after post-processing it** to select it
 - In the box labelled **Audio format of the post-processed file**, specify what type of audio file you want - **.mp3**, **.wav**, etc 
+- Click the **OK** button at the bottom of the window to apply your changes
+
+N.B. Many video websites, such as **YouTube**, allow you to download the audio (in **.m4a** format) directly, without downloading the whole video, and without using FFmpeg or AVconv. 
+
+- In **Tartube**'s main window, click **Edit > General download options... > Formats**
+- In the list on the left-hand side, select an **.m4a** format
+- Click the **Add format >>>** button to add it to the list
 - Click the **OK** button at the bottom of the window to apply your changes
 
 7. Frequently-Asked Questions

@@ -1,4 +1,4 @@
-# Tartube v1.5.015 installer script for MS Windows
+# Tartube v1.5.031 installer script for MS Windows
 #
 # Copyright (C) 2019-2020 A S Lewis
 #
@@ -81,42 +81,128 @@
 #       C:\testme\msys32\dev
 #       C:\testme\msys32\etc
 #       C:\testme\msys32\home
-#       C:\testme\msys32\mingw32\bin
-#       C:\testme\msys32\mingw32\lib\gdk-pixbuf-2.0
-#       C:\testme\msys32\mingw32\lib\girepository-1.0
-#       C:\testme\msys32\mingw32\lib\glib-2.0
-#       C:\testme\msys32\mingw32\lib\gtk-3.0
-#       C:\testme\msys32\mingw32\lib\python3.7
-#       C:\testme\msys32\mingw32\lib\thread2.8.4
-#       C:\testme\msys32\mingw32\share\gir-1.0
-#       C:\testme\msys32\mingw32\share\glib-2.0
-#       C:\testme\msys32\mingw32\share\gtk-3.0
-#       C:\testme\msys32\mingw32\share\icons
-#       C:\testme\msys32\mingw32\share\locale
-#       C:\testme\msys32\mingw32\share\themes
-#       C:\testme\msys32\mingw32\share\thumbnailers
+#       C:\testme\msys32\minwg32\bin
+#       C:\testme\msys32\minwg32\bin\gdbus*
+#       C:\testme\msys32\minwg32\bin\gdk*
+#       C:\testme\msys32\minwg32\bin\gio*
+#       C:\testme\msys32\minwg32\bin\glib*
+#       C:\testme\msys32\minwg32\bin\gobject*
+#       C:\testme\msys32\minwg32\bin\gtk*
+#       C:\testme\msys32\minwg32\bin\json*
+#       C:\testme\msys32\minwg32\bin\lib*
+#       C:\testme\msys32\minwg32\bin\openssl
+#       C:\testme\msys32\minwg32\bin\pip*
+#       C:\testme\msys32\minwg32\bin\python*
+#       C:\testme\msys32\minwg32\bin\pyenv*
+#       C:\testme\msys32\minwg32\bin\sqlite*
+#       C:\testme\msys32\minwg32\bin\zlib1.dll
+#       C:\testme\msys32\minwg32\include\gdk-pixbuf-2.0
+#       C:\testme\msys32\minwg32\include\gio-win32-2.0
+#       C:\testme\msys32\minwg32\include\glib-2.0
+#       C:\testme\msys32\minwg32\include\gsettings-desktop-schemas
+#       C:\testme\msys32\minwg32\include\gtk-3.0
+#       C:\testme\msys32\minwg32\include\json-glib-1.0
+#       C:\testme\msys32\minwg32\include\ncurses
+#       C:\testme\msys32\minwg32\include\ncursesw
+#       C:\testme\msys32\minwg32\include\openssl
+#       C:\testme\msys32\minwg32\include\pycairo
+#       C:\testme\msys32\minwg32\include\pygobject-3.0
+#       C:\testme\msys32\minwg32\include\python3.7
+#       C:\testme\msys32\minwg32\include\readline
+#       C:\testme\msys32\minwg32\include\tk8.6
+#       C:\testme\msys32\minwg32\lib\gdk-pixbuf-2.0
+#       C:\testme\msys32\minwg32\lib\girepository-1.0
+#       C:\testme\msys32\minwg32\lib\glib-2.0
+#       C:\testme\msys32\minwg32\lib\gtk-3.0
+#       C:\testme\msys32\minwg32\lib\python3.7\collections
+#       C:\testme\msys32\minwg32\lib\python3.7\ctypes
+#       C:\testme\msys32\minwg32\lib\python3.7\distutils
+#       C:\testme\msys32\minwg32\lib\python3.7\email
+#       C:\testme\msys32\minwg32\lib\python3.7\encodings
+#       C:\testme\msys32\minwg32\lib\python3.7\ensurepip
+#       C:\testme\msys32\minwg32\lib\python3.7\html
+#       C:\testme\msys32\minwg32\lib\python3.7\http
+#       C:\testme\msys32\minwg32\lib\python3.7\importlib
+#       C:\testme\msys32\minwg32\lib\python3.7\json
+#       C:\testme\msys32\minwg32\lib\python3.7\lib2to3
+#       C:\testme\msys32\minwg32\lib\python3.7\lib-dynload
+#       C:\testme\msys32\minwg32\lib\python3.7\logging
+#       C:\testme\msys32\minwg32\lib\python3.7\msilib
+#       C:\testme\msys32\minwg32\lib\python3.7\multiprocessing
+#       C:\testme\msys32\minwg32\lib\python3.7\site-packages
+#       C:\testme\msys32\minwg32\lib\python3.7\sqlite3
+#       C:\testme\msys32\minwg32\lib\python3.7\urllib
+#       C:\testme\msys32\minwg32\lib\python3.7\xml
+#       C:\testme\msys32\minwg32\lib\python3.7\xmlrpc
+#       C:\testme\msys32\minwg32\lib\python3.7\*.py
+#       C:\testme\msys32\minwg32\lib\thread2.8.4
+#       C:\testme\msys32\minwg32\lib\tk8.6
+#       C:\testme\msys32\minwg32\share\gir-1.0
+#       C:\testme\msys32\minwg32\share\glib-2.0
+#       C:\testme\msys32\minwg32\share\gtk-3.0
+#       C:\testme\msys32\minwg32\share\icons
+#       C:\testme\msys32\minwg32\share\locale\en*
+#       C:\testme\msys32\minwg32\share\locale\locale.alias
+#       C:\testme\msys32\minwg32\share\themes
+#       C:\testme\msys32\minwg32\share\thumbnailers
+#       C:\testme\msys32\minwg32\ssl
 #       C:\testme\msys32\tmp
 #       C:\testme\msys32\usr\bin\bash
 #       C:\testme\msys32\usr\bin\chmod
 #       C:\testme\msys32\usr\bin\cygpath
 #       C:\testme\msys32\usr\bin\cygwin-console-helper
+#       C:\testme\msys32\usr\bin\dir
 #       C:\testme\msys32\usr\bin\env
 #       C:\testme\msys32\usr\bin\find
 #       C:\testme\msys32\usr\bin\findfs
+#       C:\testme\msys32\usr\bin\gpg*
 #       C:\testme\msys32\usr\bin\hostid
 #       C:\testme\msys32\usr\bin\hostname
 #       C:\testme\msys32\usr\bin\iconv
 #       C:\testme\msys32\usr\bin\id
 #       C:\testme\msys32\usr\bin\ln
+#       C:\testme\msys32\usr\bin\lndir
 #       C:\testme\msys32\usr\bin\locale
+#       C:\testme\msys32\usr\bin\ls
 #       C:\testme\msys32\usr\bin\mintty
 #       C:\testme\msys32\usr\bin\mkdir
 #       C:\testme\msys32\usr\bin\msys-2.0.dll
+#       C:\testme\msys32\usr\bin\msys-assuan-0.dll
+#       C:\testme\msys32\usr\bin\msys-bz2-1.dll
 #       C:\testme\msys32\usr\bin\msys-gcc_s-1.dll
+#       C:\testme\msys32\usr\bin\msys-gcrypt-20.dll
+#       C:\testme\msys32\usr\bin\msys-gio-2.0-0.dll
+#       C:\testme\msys32\usr\bin\msys-glib-2.0-0.dll
+#       C:\testme\msys32\usr\bin\msys-gobject-2.0-0.dll
+#       C:\testme\msys32\usr\bin\msys-gpg-error-0.dll
+#       C:\testme\msys32\usr\bin\msys-gpgme-11.dll
+#       C:\testme\msys32\usr\bin\msys-gpgmepp-6.dll
+#       C:\testme\msys32\usr\bin\msys-gthread-2.0-0.dll
 #       C:\testme\msys32\usr\bin\msys-iconv-2.dll
 #       C:\testme\msys32\usr\bin\msys-intl-8.dll
+#       C:\testme\msys32\usr\bin\msys-ncurses++w6.dll
+#       C:\testme\msys32\usr\bin\msys-ncursesw6.dll
+#       C:\testme\msys32\usr\bin\msys-readline8.dll
+#       C:\testme\msys32\usr\bin\msys-sqlite3-0.dll
+#       C:\testme\msys32\usr\bin\msys-stdc++06.dll
+#       C:\testme\msys32\usr\bin\msys-z.dll
+#       C:\testme\msys32\usr\bin\pac*
 #       C:\testme\msys32\usr\bin\test
 #       C:\testme\msys32\usr\bin\tzset
+#       C:\testme\msys32\usr\lib\gio
+#       C:\testme\msys32\usr\lib\openssl
+#       C:\testme\msys32\usr\lib\python3.7
+#       C:\testme\msys32\usr\share\cygwin
+#       C:\testme\msys32\usr\share\glib-2.0
+#       C:\testme\msys32\usr\share\mintty
+#       C:\testme\msys32\usr\share\Msys
+#       C:\testme\msys32\usr\share\pacman
+#       C:\testme\msys32\usr\share\pactoys
+#       C:\testme\msys32\usr\ssl
+#       C:\testme\msys32\var\lib\pacman
+#
+#   - You can optionally install AtomicParsley at this location:
+#       C:\testme\msys32\usr\bin
 #
 #   - Now go into the C:\testme\msys32\home\YOURNAME\tartube\nsis folder, and
 #       MOVE all the windows batch files into the folder above, i.e. into
@@ -139,7 +225,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-1.5.015-32bit.exe"
+    OutFile "install-tartube-1.5.031-32bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -222,10 +308,6 @@ Section "Tartube" SecClient
     CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" \
         "$INSTDIR\Uninstall.exe" \
         "" "$INSTDIR\tartube_icon.ico"
-    # Temporary Start Menu link for bugfixing on MS Windows 10
-    CreateShortCut "$SMPROGRAMS\Tartube\Test Gtk graphics.lnk" \
-        "$INSTDIR\msys32\home\user\tartube\hello_world_32bit.bat" \
-        "" "$INSTDIR\tartube_icon.ico" ""
 
     # Desktop icon
     CreateShortcut "$DESKTOP\Tartube.lnk" \
@@ -246,7 +328,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "1.5.015"
+#        "DisplayVersion" "1.5.031"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

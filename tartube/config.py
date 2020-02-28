@@ -6181,7 +6181,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>Configuration preferences</u>',
             0, 7, grid_width, 1,
         )
-
+        
         self.add_label(grid,
             __main__.__prettyname__  + ' configuration file loaded from:',
             0, 8, grid_width, 1,
@@ -6191,7 +6191,7 @@ class SystemPrefWin(GenericPrefWin):
             config_path = self.app_obj.config_file_xdg_path
         else:
             config_path = self.app_obj.config_file_path
-
+            
         entry3 = self.add_entry(grid,
             config_path,
             False,
@@ -7354,7 +7354,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 1, 1, 1,
         )
         checkbutton.connect('toggled', self.on_auto_update_button_toggled)
-        if __main__.__debian_install_flag__:
+        if __main__.__pkg_strict_install_flag__:
             checkbutton.set_sensitive(False)
 
         checkbutton2 = self.add_checkbutton(grid,
@@ -7913,7 +7913,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo2.connect('changed', self.on_update_combo_changed)
 
-        if __main__.__debian_install_flag__:
+        if __main__.__pkg_strict_install_flag__:
             combo.set_sensitive(False)
             combo2.set_sensitive(False)
 

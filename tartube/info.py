@@ -196,7 +196,7 @@ class InfoManager(threading.Thread):
         ytdl_path = self.app_obj.ytdl_path
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
-
+        
         # Prepare the system command
         if self.info_type == 'formats':
 

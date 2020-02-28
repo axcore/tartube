@@ -69,10 +69,10 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 + 'and written in Python 3 / Gtk 3'
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
-# There are three executables; this default one, and two others used in Debian/
-#   RPM packaging. The others are identical, except for the values of these
-#   variables
-__pkg_install_flag__ = False
+# There are three executables; a default one, and two others used in Debian/RPM
+#   packaging (of which this is one). The executables are identical, except for
+#   the values of these variables
+__pkg_install_flag__ = True
 __pkg_strict_install_flag__ = False
 
 

@@ -43,8 +43,8 @@ import mainapp
 # 'Global' variables
 __packagename__ = 'tartube'
 __prettyname__ = 'Tartube'
-__version__ = '1.5.015'
-__date__ = '24 Feb 2020'
+__version__ = '1.5.031'
+__date__ = '28 Feb 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2020 A S Lewis.
@@ -69,10 +69,11 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 + 'and written in Python 3 / Gtk 3'
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
-# This is a modified executable, in which youtube-dl updates are disabled
-#   (to meet the demands of Debian packaging). All other users should run the
-#   'tartube' executable (see the comments in setup.py)
-__debian_install_flag__ = True
+# There are three executables; a default one, and two others used in Debian/RPM
+#   packaging (of which this is one). The executables are identical, except for
+#   the values of these variables
+__pkg_install_flag__ = True
+__pkg_strict_install_flag__ = True
 
 
 # Start Tartube

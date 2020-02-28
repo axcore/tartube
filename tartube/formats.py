@@ -172,9 +172,12 @@ video_option_setup_list = [
     '4320p',    'Any format [4320p]',               False,
     '4320p60',  'Any format [4320p 60fps]',         False,
     # Dummy extractor codes - other
+    # v1.5.029 - .m4a files can be downloaded directly from YouTube (unlike
+    #   other audio file formats, for which we need the whole video); so treat
+    #   .m4a like a video format 
     '3gp',      '3gp',                              False,
     'flv',      'flv',                              False,
-    'm4a',      'm4a',                              True,
+    'm4a',      'm4a',                              False,
     'mp4',      'mp4',                              False,
     'webm',     'webm',                             False,
     # Real extractor codes
@@ -194,9 +197,9 @@ video_option_setup_list = [
     '94',       'hls [480p] (3D)',                  False,
     '95',       'hls [720p] (3D)',                  False,
     '96',       'hls [1080p]',                      False,
-    '139',      'm4a 48k (DASH Audio)',             True,
-    '140',      'm4a 128k (DASH Audio)',            True,
-    '141',      'm4a 256k (DASH Audio)',            True,
+    '139',      'm4a 48k (DASH Audio)',             False,
+    '140',      'm4a 128k (DASH Audio)',            False,
+    '141',      'm4a 256k (DASH Audio)',            False,
     '18',       'mp4 [360p]',                       False,
     '22',       'mp4 [720p]',                       False,
     '37',       'mp4 [1080p]',                      False,

@@ -680,6 +680,19 @@ class DownloadManager(threading.Thread):
         self.running_flag = False
 
 
+    def stop_download_operation_soon(self):
+
+        """???"""
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 679 stop_download_operation_soon')
+
+        self.download_list_obj.prevent_fetch_new_items()
+        for worker_obj in self.worker_list:
+            if worker_obj.running_flag:
+                worker_obj.video_downloader_obj.stop_soon()
+                    
+
 class DownloadWorker(threading.Thread):
 
     """Called by downloads.DownloadManager.__init__().
@@ -1032,6 +1045,10 @@ class DownloadList(object):
         #   'custom' is like 'real', but with additional options applied
         #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
         self.operation_type = operation_type
+        # Flag set to True in a call to self.prevent_fetch_new_items(), in
+        #   which case subsequent calls to self.fetch_next_item() return
+        #   nothing, preventing any further downloads
+        self.prevent_fetch_flag = False
 
         # Number of download.DownloadItem objects created (used to give each a
         #   unique ID)
@@ -1304,12 +1321,15 @@ class DownloadList(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1305 fetch_next_item')
 
-        for item_id in self.download_item_list:
-            this_item = self.download_item_dict[item_id]
+        if not self.prevent_fetch_flag:
 
-            # Don't return an item that's marked as formats.MAIN_STAGE_ACTIVE
-            if this_item.stage == formats.MAIN_STAGE_QUEUED:
-                return this_item
+            for item_id in self.download_item_list:
+                this_item = self.download_item_dict[item_id]
+
+                # Don't return an item that's marked as
+                #   formats.MAIN_STAGE_ACTIVE
+                if this_item.stage == formats.MAIN_STAGE_QUEUED:
+                    return this_item
 
         return None
 
@@ -1376,6 +1396,17 @@ class DownloadList(object):
                 ),
             )
 
+
+    @synchronise(_SYNC_LOCK)
+    def prevent_fetch_new_items(self):
+
+        """???"""
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1366 prevent_fetch_new_items')
+
+        self.prevent_fetch_flag = True
+        
 
     def reorder_master_slave(self):
 

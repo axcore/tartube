@@ -47,12 +47,14 @@ try:
 except:
     HAVE_MOVIEPY_FLAG = False
 
-try:
-    from xdg import XDG_CONFIG_HOME
-    HAVE_XDG_FLAG = True
-except:
+if os.name != 'nt':
+    try:
+        from xdg_tartube import XDG_CONFIG_HOME
+        HAVE_XDG_FLAG = True
+    except:
+        HAVE_XDG_FLAG = False
+else:
     HAVE_XDG_FLAG = False
-
 
 # Import our modules
 import __main__
@@ -457,7 +459,7 @@ class TartubeApp(Gtk.Application):
         # Name of the Tartube config file
         self.config_file_name = 'settings.json'
         # The config file can be stored at one of two locations, depending on
-        #   the value of __main__.__debian_install_flag__
+        #   whether XDG is available, or not
         self.config_file_dir = os.path.abspath(self.script_parent_dir)
         self.config_file_path = os.path.abspath(
             os.path.join(self.script_parent_dir, self.config_file_name),
@@ -473,7 +475,7 @@ class TartubeApp(Gtk.Application):
                     __main__.__packagename__,
                 ),
             )
-
+            
             self.config_file_xdg_path = os.path.abspath(
                 os.path.join(
                     XDG_CONFIG_HOME,
@@ -1067,10 +1069,10 @@ class TartubeApp(Gtk.Application):
         self.ignore_missing_format_error_flag = False
         # Flag set to True if 'There are no annotations to write' messages
         #   should be ignored (in the Errors/Warnings tab)
-        self.ignore_no_annotations_flag = False
+        self.ignore_no_annotations_flag = True
         # Flag set to True if 'video doesn't have subtitles' errors should be
         #   ignored (in the Errors/Warnings tab)
-        self.ignore_no_subtitles_flag = False
+        self.ignore_no_subtitles_flag = True
 
         # Flag set to True if YouTube copyright messages should be ignored (in
         #   the Errors/Warnings tab)
@@ -1757,22 +1759,8 @@ class TartubeApp(Gtk.Application):
         # Set the General Options Manager
         self.general_options_obj = options.OptionsManager()
 
-        # Set youtube-dl IVs
-        if __main__.__debian_install_flag__:
-            self.ytdl_bin = 'youtube-dl'
-            self.ytdl_path_default = os.path.abspath(
-                os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
-            )
-            self.ytdl_path = 'youtube-dl'
-            self.ytdl_update_dict = {
-                'youtube-dl updates are disabled': [],
-            }
-            self.ytdl_update_list = [
-                'youtube-dl updates are disabled',
-            ]
-            self.ytdl_update_current = 'youtube-dl updates are disabled'
-
-        elif os.name == 'nt':
+        # Set youtube-dl path IVs
+        if os.name == 'nt':
 
             if 'PROGRAMFILES(X86)' in os.environ:
                 # 64-bit MS Windows
@@ -1818,12 +1806,34 @@ class TartubeApp(Gtk.Application):
             ]
             self.ytdl_update_current = descrip
 
-        else:
+        elif __main__.__pkg_strict_install_flag__:
+                        
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = os.path.abspath(
                 os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
             )
-            self.ytdl_path = 'youtube-dl'
+            self.ytdl_path = self.ytdl_path_pypi
+
+            self.ytdl_update_dict = {
+                'youtube-dl updates are disabled': [],
+            }
+            self.ytdl_update_list = [
+                'youtube-dl updates are disabled',
+            ]
+            self.ytdl_update_current = 'youtube-dl updates are disabled'
+
+        else:
+
+            self.ytdl_bin = 'youtube-dl'
+            self.ytdl_path_default = os.path.abspath(
+                os.path.join(os.sep, 'usr', 'bin', self.ytdl_bin),
+            )
+
+            if __main__.__pkg_install_flag__:
+                self.ytdl_path = self.ytdl_path_pypi
+            else:
+                self.ytdl_path = 'youtube-dl'
+            
             self.ytdl_update_dict = {
                 'Update using pip3 (recommended)': [
                     'pip3', 'install', '--upgrade', '--user', 'youtube-dl',
@@ -1883,7 +1893,7 @@ class TartubeApp(Gtk.Application):
                 __main__.__prettyname__ + ' can\'t create the ' + folder \
                 + ' in which its configuration file is saved',
             )
-
+        
         # If the config file exists, load it. If not, create it
         new_config_flag = False
         if (
@@ -2045,6 +2055,7 @@ class TartubeApp(Gtk.Application):
         #   window
         if self.disable_load_save_flag:
 
+            remove_flag = False
             if self.disable_load_save_lock_flag:
 
                 dialogue_win = mainwin.RemoveLockFileDialogue(
@@ -2067,35 +2078,21 @@ class TartubeApp(Gtk.Application):
                         + __main__.__prettyname__ + ' to load it',
                     )
 
-#            if self.disable_load_save_lock_flag:
-#
-#                if self.disable_load_save_msg is None:
-#
-#                    self.file_error_dialogue(
-#                        'Because of an error, file load/save has been' \
-#                        + ' disabled',
-#                    )
-#
-#                else:
-#
-#                    self.file_error_dialogue(
-#                        self.disable_load_save_msg + '\n\nBecause of the' \
-#                        + ' error, file load/save has been disabled',
-#                    )
-#
-            if self.disable_load_save_msg is None:
+            if not remove_flag:
+                
+                if self.disable_load_save_msg is None:
 
-                self.file_error_dialogue(
-                    'Because of an error, file load/save has been' \
-                    + ' disabled',
-                )
+                    self.file_error_dialogue(
+                        'Because of an error, file load/save has been' \
+                        + ' disabled',
+                    )
 
-            else:
+                else:
 
-                self.file_error_dialogue(
-                    self.disable_load_save_msg + '\n\nBecause of the' \
-                    + ' error, file load/save has been disabled',
-                )
+                    self.file_error_dialogue(
+                        self.disable_load_save_msg + '\n\nBecause of the' \
+                        + ' error, file load/save has been disabled',
+                    )
 
         # Start the script's GObject slow timer
         self.script_slow_timer_id = GObject.timeout_add(
@@ -2509,7 +2506,7 @@ class TartubeApp(Gtk.Application):
             = json_dict['data_dir_add_from_list_flag']
         else:
             self.data_dir_alt_list = [ self.data_dir ]
-
+            
         if version >= 3014:     # v0.3.014
             self.db_backup_mode = json_dict['db_backup_mode']
 
@@ -2546,9 +2543,9 @@ class TartubeApp(Gtk.Application):
         #   MS Widnows)
         if os.name != 'nt' and version <= 1005012:   # v1.5.012
             self.ytdl_update_dict['Update using PyPI youtube-dl path'] \
-            = [self.ytdl_path_pypi, '-U']
+            = [self.ytdl_path_pypi, '-U']       
             self.ytdl_update_list.append('Update using PyPI youtube-dl path')
-
+        
         if version >= 1003074:  # v1.3.074
             self.ytdl_output_system_cmd_flag \
             = json_dict['ytdl_output_system_cmd_flag']
@@ -5473,7 +5470,7 @@ class TartubeApp(Gtk.Application):
             #   operation
             self.operation_waiting_flag = True
             self.operation_waiting_type = operation_type
-            self.operation_waiting_obj_list = media_data_list
+            self.operation_waiting_list = media_data_list
             return
 
         # For the benefit of future scheduled download operations, set the
@@ -5701,9 +5698,9 @@ class TartubeApp(Gtk.Application):
 
             return
 
-        elif __main__.__debian_install_flag__:
-            # Update operation is disabled in the Debian package. It should not
-            #   be possible to call this function, but we'll show an error
+        elif __main__.__pkg_strict_install_flag__:
+            # Update operation is disabled in the Debian/RPM package. It should
+            #   not be possible to call this function, but we'll show an error
             #   message anyway
             return self.system_error(
                 105,

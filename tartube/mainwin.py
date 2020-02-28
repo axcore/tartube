@@ -521,14 +521,17 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 518 setup_pixbufs')
 
-        # The default location for icons is ../icons. When installed via pypi,
-        #   the icons are moved to ../tartube/icons
+        # The default location for icons is ../icons
+        # When installed via PyPI, the icons are moved to ../tartube/icons
+        # When installed via a Debian/RPM package, the icons are moved to
+        #   /usr/share/tartube/icons
         icon_dir_list = []
         icon_dir_list.append(
             os.path.abspath(
                 os.path.join(self.app_obj.script_parent_dir, 'icons'),
             ),
         )
+        
         icon_dir_list.append(
             os.path.abspath(
                 os.path.join(
@@ -536,6 +539,12 @@ class MainWin(Gtk.ApplicationWindow):
                     'icons',
                 ),
             ),
+        )
+        
+        icon_dir_list.append(
+            os.path.join(
+                '/', 'usr', 'share', __main__.__packagename__, 'icons',
+            )
         )
 
         for icon_dir_path in icon_dir_list:
@@ -2054,7 +2063,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.download_all_menu_item.set_sensitive(sens_flag)
         self.refresh_db_menu_item.set_sensitive(sens_flag)
 
-        if __main__.__debian_install_flag__:
+        if __main__.__pkg_strict_install_flag__:
             self.update_ytdl_menu_item.set_sensitive(False)
         else:
             self.update_ytdl_menu_item.set_sensitive(sens_flag)
@@ -2169,7 +2178,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.download_all_toolbutton.set_sensitive(False)
 
-        if not __main__.__debian_install_flag__:
+        if not __main__.__pkg_strict_install_flag__:
             self.update_ytdl_menu_item.set_sensitive(sens_flag)
 
         self.test_ytdl_menu_item.set_sensitive(sens_flag)
@@ -3751,7 +3760,7 @@ class MainWin(Gtk.ApplicationWindow):
         show_submenu = Gtk.Menu()
 
         show_location_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            'Video _location',
+            '_Location',
         )
         show_location_menu_item.connect(
             'activate',
@@ -3761,7 +3770,7 @@ class MainWin(Gtk.ApplicationWindow):
         show_submenu.append(show_location_menu_item)
 
         show_properties_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            'Video _properties...',
+            '_Properties...',
         )
         show_properties_menu_item.connect(
             'activate',
@@ -3773,7 +3782,7 @@ class MainWin(Gtk.ApplicationWindow):
             show_properties_menu_item.set_sensitive(False)
 
         show_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            '_Show',
+            '_Show video',
         )
         show_menu_item.set_submenu(show_submenu)
         popup_menu.append(show_menu_item)
@@ -4278,6 +4287,17 @@ class MainWin(Gtk.ApplicationWindow):
         if not download_manager_obj \
         or video_downloader_obj is None:
             stop_soon_menu_item.set_sensitive(False)
+
+        stop_all_soon_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            'Stop after these v_ideos',
+        )
+        stop_all_soon_menu_item.connect(
+            'activate',
+            self.on_progress_list_stop_all_soon,
+        )
+        popup_menu.append(stop_all_soon_menu_item)
+        if not download_manager_obj:
+            stop_all_soon_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -10696,6 +10716,33 @@ class MainWin(Gtk.ApplicationWindow):
                 )
 
 
+    def on_progress_list_stop_all_soon(self, menu_item):
+        
+        """Called from a callback in self.progress_list_popup_menu().
+
+        Halts checking/downloading the selected media data object, after the
+        current video check/download has finished.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The menu item that was clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 10674 on_progress_list_stop_soon')
+
+        # Check that, since the popup menu was created, the download operation
+        #   hasn't finished
+        if not self.app_obj.download_manager_obj:
+            # Do nothing
+            return
+
+        # Tell the download manager to continue downloading the current videos
+        #   (if any), and then stop
+        self.app_obj.download_manager_obj.stop_download_operation_soon()
+        
+
     def on_progress_list_stop_now(self, menu_item, download_item_obj,
     worker_obj, video_downloader_obj):
 
@@ -16983,7 +17030,10 @@ class TestCmdDialogue(Gtk.Dialog):
             'Test youtube-dl',
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            (Gtk.STOCK_OK, Gtk.ResponseType.OK),
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
         )
 
         self.set_modal(False)

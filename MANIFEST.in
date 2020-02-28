@@ -1,6 +1,7 @@
 include AUTHORS CHANGES LICENSE README.rst
 recursive-include docs *
 recursive-include icons *
+recursive-include pack *
 recursive-include screenshots *
 recursive-include share *
 
