@@ -196,7 +196,7 @@ class InfoManager(threading.Thread):
         ytdl_path = self.app_obj.ytdl_path
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
-        
+
         # Prepare the system command
         if self.info_type == 'formats':
 
@@ -379,7 +379,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 377 create_child_process')
+            utils.debug_time('iop 382 create_child_process')
 
         info = preexec = None
 
@@ -424,7 +424,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 422 is_child_process_alive')
+            utils.debug_time('iop 427 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -443,7 +443,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 441 stop_info_operation')
+            utils.debug_time('iop 446 stop_info_operation')
 
         if self.is_child_process_alive():
 

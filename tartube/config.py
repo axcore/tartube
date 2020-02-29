@@ -1977,7 +1977,9 @@ class OptionsEditWin(GenericEditWin):
         # The 'embed_subs' option appears in two different places
         self.embed_checkbutton = None           # Gtk.CheckButton
         self.embed_checkbutton2 = None          # Gtk.CheckButton
-
+        # The Gtk.ListStore containing the user's preferred video/audio formats
+        #   (which must be redrawn when self.apply_changes() is called)
+        self.formats_liststore = None           # Gtk.ListStore
 
         # IV list - other
         # ---------------
@@ -2009,10 +2011,6 @@ class OptionsEditWin(GenericEditWin):
         self.template_flag = False
         # A list of Gtk widgets to (de)sensitise in when the flag changes
         self.template_widget_list = []
-
-        # IVs used to change label text consistently in the 'Formats' tab
-        self.video_only_text = 'Available video formats'
-        self.video_audio_text = 'Available video/audio formats'
 
         # Code
         # ----
@@ -2065,6 +2063,15 @@ class OptionsEditWin(GenericEditWin):
         # The changes can now be cleared
         self.edit_dict = {}
 
+        # The user can specify up to 3 video/audio formats. If a mixture of
+        #   both is specified, then video formats must be listed before audio
+        #   formats (or youtube-dl won't donwload them all)
+        # Tell the options.OptionManager object to rearrange them, if
+        #   necessary
+        self.edit_obj.rearrange_formats()
+        # ...then redraw the textview in the Formats tab
+        self.redraw_formats_list()
+
 
     def retrieve_val(self, name):
 
@@ -2100,6 +2107,36 @@ class OptionsEditWin(GenericEditWin):
                 404,
                 'Unrecognised property name \'' + name + '\'',
             )
+
+
+    def redraw_formats_list(self):
+
+        """Called by self.setup_formats_tab() and then again by
+        self.apply_changes().
+
+        Update the Gtk.ListStore containing the user's preferrerd video/audio
+        formats.
+        """
+
+        self.formats_liststore.clear()
+
+        # There are three video format options, any or all of which might be
+        #   set
+        val1 = self.retrieve_val('video_format')
+        val2 = self.retrieve_val('second_video_format')
+        val3 = self.retrieve_val('third_video_format')
+
+        # (Need to reverse formats.VIDEO_OPTION_DICT for quick lookup)
+        rev_dict = {}
+        for key in formats.VIDEO_OPTION_DICT:
+            rev_dict[formats.VIDEO_OPTION_DICT[key]] = key
+
+        if val1 != '0':
+            self.formats_liststore.append([rev_dict[val1]])
+        if val2 != '0':
+            self.formats_liststore.append([rev_dict[val2]])
+        if val3 != '0':
+            self.formats_liststore.append([rev_dict[val3]])
 
 
     # (Setup tabs)
@@ -2642,11 +2679,6 @@ class OptionsEditWin(GenericEditWin):
         grid_width = 4
         grid.set_column_homogeneous(True)
 
-        # The first format must be a video format. The second and third formats
-        #   can be either video or audio formats
-        # Work out how many formats we have right now
-        format_count = self.formats_tab_count_formats()
-
         # Format options
         self.add_label(grid,
             '<u>Format options</u>',
@@ -2659,41 +2691,30 @@ class OptionsEditWin(GenericEditWin):
             0, 1, grid_width, 1,
         )
 
-        if format_count == 0:
-
-            label = self.add_label(grid,
-                self.video_only_text,
-                0, 2, 2, 1,
-            )
-
-        else:
-
-            label = self.add_label(grid,
-                self.video_audio_text,
-                0, 2, 2, 1,
-            )
+        # Left column
+        label = self.add_label(grid,
+            'Available video/audio formats',
+            0, 2, 2, 1,
+        )
 
         treeview, liststore = self.add_treeview(grid,
             0, 3, 2, 1,
         )
 
-        if format_count == 0:
-            for key in formats.VIDEO_ONLY_OPTION_LIST:
-                liststore.append([key])
-        else:
-            for key in formats.VIDEO_OPTION_LIST:
-                liststore.append([key])
+        for key in formats.VIDEO_OPTION_LIST:
+            liststore.append([key])
 
         button = Gtk.Button('Add format >>>')
         grid.attach(button, 0, 4, 2, 1)
         # Signal connect below
 
+        # Right column
         label2 = self.add_label(grid,
             'Preference list (up to three formats)',
             2, 2, 2, 1,
         )
 
-        treeview2, liststore2 = self.add_treeview(grid,
+        treeview2, self.formats_liststore = self.add_treeview(grid,
             2, 3, 2, 1,
         )
 
@@ -2704,15 +2725,7 @@ class OptionsEditWin(GenericEditWin):
 
         # There are three video format options, any or all of which might be
         #   set
-        val1 = self.retrieve_val('video_format')
-        val2 = self.retrieve_val('second_video_format')
-        val3 = self.retrieve_val('third_video_format')
-        if val1 != '0':
-            liststore2.append([rev_dict[val1]])
-        if val2 != '0':
-            liststore2.append([rev_dict[val2]])
-        if val3 != '0':
-            liststore2.append([rev_dict[val3]])
+        self.redraw_formats_list()
 
         button2 = Gtk.Button('<<< Remove format')
         grid.attach(button2, 2, 4, 2, 1)
@@ -2727,6 +2740,7 @@ class OptionsEditWin(GenericEditWin):
         # Signal connect below
 
         # Signal connects from above
+        # 'Add format'
         button.connect(
             'clicked',
             self.on_formats_tab_add_clicked,
@@ -2734,25 +2748,23 @@ class OptionsEditWin(GenericEditWin):
             button3,
             button4,
             treeview,
-            liststore,
-            liststore2,
-            label,
         )
+        # 'Remove format'
         button2.connect(
             'clicked',
             self.on_formats_tab_remove_clicked,
             button,
             button3,
             button4,
-            liststore,
             treeview2,
-            label,
         )
+        # 'Move up'
         button3.connect(
             'clicked',
             self.on_formats_tab_up_clicked,
             treeview2,
         )
+        # 'Move down'
         button4.connect(
             'clicked',
             self.on_formats_tab_down_clicked,
@@ -2760,6 +2772,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         # Desensitise buttons, as appropriate
+        format_count = self.formats_tab_count_formats()
         if format_count == 0:
             button2.set_sensitive(False)
             button3.set_sensitive(False)
@@ -4293,7 +4306,7 @@ class OptionsEditWin(GenericEditWin):
 
 
     def on_formats_tab_add_clicked(self, add_button, remove_button, \
-    up_button, down_button, treeview, liststore, other_liststore, label):
+    up_button, down_button, treeview):
 
         """Called by callback in self.setup_formats_tab().
 
@@ -4305,13 +4318,6 @@ class OptionsEditWin(GenericEditWin):
                 to be modified by this function
 
             treeview (Gtk.TreeView): The treeview on the left side of the tab
-
-            liststore (Gtk.TreeView): That treeview's liststore
-
-            other_liststore (Gtk.ListStore): The liststore belonging to the
-                treeview on the right side of the tab
-
-            label (Gtk.Label): Another widget to be modified by this function
 
         """
 
@@ -4325,7 +4331,7 @@ class OptionsEditWin(GenericEditWin):
         else:
 
             name = model[iter][0]
-            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; set the first one whose value
@@ -4352,21 +4358,12 @@ class OptionsEditWin(GenericEditWin):
 
         # Update the other treeview, adding the format to it (and don't modify
         #   this treeview)
-        other_liststore.append([name])
+        self.formats_liststore.append([name])
 
         # Update other widgets, as required
         remove_button.set_sensitive(True)
         up_button.set_sensitive(True)
         down_button.set_sensitive(True)
-
-        label.set_text(self.video_audio_text)
-
-        if self.retrieve_val('second_video_format') == '0':
-            # The first format has just been added, so the left-hand side
-            #   treeview must be reset
-            liststore.clear()
-            for key in formats.VIDEO_OPTION_LIST:
-                liststore.append([key])
 
 
     def on_formats_tab_down_clicked(self, down_button, treeview):
@@ -4393,7 +4390,7 @@ class OptionsEditWin(GenericEditWin):
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
-            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
@@ -4429,7 +4426,7 @@ class OptionsEditWin(GenericEditWin):
 
 
     def on_formats_tab_remove_clicked(self, remove_button, add_button, \
-    up_button, down_button, liststore, other_treeview, label):
+    up_button, down_button, other_treeview):
 
         """Called by callback in self.setup_formats_tab().
 
@@ -4440,13 +4437,8 @@ class OptionsEditWin(GenericEditWin):
             add_button, up_button, down_button (Gtk.Button): Other widgets to
                 be modified by this function
 
-            liststore (Gtk.ListStore): The liststore belonging to the treeview
-                on the left side of the tab
-
             other_treeview (Gtk.TreeView): The treeview on the right side of
                 the tab
-
-            label (Gtk.Label): Another widget to be modified by this function
 
         """
 
@@ -4460,7 +4452,7 @@ class OptionsEditWin(GenericEditWin):
         else:
 
             name = model[iter][0]
-            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
@@ -4494,12 +4486,6 @@ class OptionsEditWin(GenericEditWin):
             up_button.set_sensitive(False)
             down_button.set_sensitive(False)
 
-            label.set_text(self.video_only_text)
-
-            liststore.clear()
-            for key in formats.VIDEO_ONLY_OPTION_LIST:
-                liststore.append([key])
-
 
     def on_formats_tab_up_clicked(self, up_button, treeview):
 
@@ -4525,7 +4511,7 @@ class OptionsEditWin(GenericEditWin):
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
-            # Convert e.g. 'mp4 [360p]' to the extractor code e.g. '18'
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
         # There are three video format options; the selected one might be any
@@ -6181,7 +6167,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>Configuration preferences</u>',
             0, 7, grid_width, 1,
         )
-        
+
         self.add_label(grid,
             __main__.__prettyname__  + ' configuration file loaded from:',
             0, 8, grid_width, 1,
@@ -6191,7 +6177,7 @@ class SystemPrefWin(GenericPrefWin):
             config_path = self.app_obj.config_file_xdg_path
         else:
             config_path = self.app_obj.config_file_path
-            
+
         entry3 = self.add_entry(grid,
             config_path,
             False,
@@ -7914,7 +7900,6 @@ class SystemPrefWin(GenericPrefWin):
         combo2.connect('changed', self.on_update_combo_changed)
 
         if __main__.__pkg_strict_install_flag__:
-            combo.set_sensitive(False)
             combo2.set_sensitive(False)
 
         # Post-processing preferences

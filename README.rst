@@ -42,12 +42,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v1.5.031 (28 Feb 2019)**
+Latest version: **v2.0.0 (29 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.031/install-tartube-1.5.031-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v1.5.031/install-tartube-1.5.031-64bit.exe/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v1.5.031/tartube_v1.5.031.tar.gz/download>`__ from Sourceforge
+-  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-32bit.exe/download>`__ from Sourceforge
+-  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-64bit.exe/download>`__ from Sourceforge
+-  `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.0/python3-tartube_2.0.0.deb/download>`__ from Sourceforge
+-  `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube-2.0.0.rpm/download>`__ from Sourceforge
+-  `Source code <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube_v2.0.0.tar.gz/download>`__ from Sourceforge
 -  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
+
+There are also DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
 4 Quick start guide 
 ===================
@@ -55,11 +59,11 @@ Latest version: **v1.5.031 (28 Feb 2019)**
 4.1 MS Windows
 --------------
 
--  Download, install and run **Tartube**
+-  Download, install and run **Tartube**, using the links above
 -  When prompted, choose a folder where **Tartube** can store videos
 -  When prompted, let **Tartube** install **youtube-dl** for you
 -  It's strongly recommended that you install **FFmeg**. From the menu, click **Operations > Install FFmpeg**
--  Go to the YouTube website, and find your favourite channel
+-  Go to the `YouTube website <https://www.youtube.com/>`__, and find your favourite channel
 -  In **Tartube**, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
 -  In the dialogue window, add the name of the channel and the address (URL)
 -  Click the **OK** button to close the window
@@ -70,11 +74,12 @@ Latest version: **v1.5.031 (28 Feb 2019)**
 4.2 Linux/BSD
 ~~~~~~~~~~~~~
 
--  Download and install `youtube-dl <https://youtube-dl.org/>`__
+-  Install **Tartube** by downloading the DEB or RPM package from the links above. Alternatively, install it from PyPI, using the instructions below
 -  It's strongly recommended that you install  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
--  Download **Tartube**. Installation is not necessary; you can just run the main script (navigate into the **Tartube** directory, open a terminal window, and type **python3 tartube/tartube**)
+-  Run **Tartube**
 -  When prompted, choose a directory where **Tartube** can store videos
--  Go to the YouTube website, and find your favourite channel
+-  Install **youtube-dl** by clicking **Operations > Update youtube-dl**
+-  Go to the `YouTube website <https://www.youtube.com/>`__, and find your favourite channel
 -  In **Tartube**, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
 -  In the dialogue window, add the name of the channel and the address (URL)
 -  Click the **OK** button to close the window
@@ -142,30 +147,38 @@ Some users report that **Tartube** will install but won't run. This problem shou
 
 Linux/BSD users can use any of the following installation methods.
 
-5.3.1 Linux/BSD Installation requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.3.1 Install using the DEB/RPM packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  `youtube-dl <https://youtube-dl.org/>`__
--  `Python 3 <https://www.python.org/downloads>`__
--  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
--  `Python Requests module <https://3.python-requests.org/>`__
+Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above).
 
-5.3.2 Optional dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above).
 
--  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
--  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
--  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
--  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
+**Tartube** requires `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately.
 
-5.3.3 Install using PyPI
+Otherwise, if **pip** is already installed on your system, do this:
+
+1. Run **Tartube**
+2. **Tartube** asks you to choose a data directory, so do that
+3. Click **Operations > Update youtube-dl**
+
+If neither **youtube-dl** nor **pip** are installed on your system, then the recommended way to install **youtube-dl** is from the command line, using **pip**. (Software managers usually don't offer the most recent version of **youtube-dl**.)
+
+This is the procedure on Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
+
+1. Open a terminal window
+2. Type: ``sudo apt install python3-pip``
+3. Type: ``pip3 install youtube-dl``
+4. You can now run **Tartube**.
+
+5.3.2 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can be installed from `PyPI <https://pypi.org/project/tartube/>`__ with or without root privileges.
 
 Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
 
-5.3.4 Install using PyPI (with root privileges)
+5.3.3 Install using PyPI (with root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Make sure **youtube-dl** has been completely removed from your system
@@ -173,7 +186,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 3. Type: ``sudo pip3 install youtube-dl tartube``
 4. Type: ``tartube``
 
-5.3.5 Install using PyPI (without root privileges)
+5.3.4 Install using PyPI (without root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
@@ -186,10 +199,29 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 8. Click **Operations > Update youtube-dl**
 9. Once the update has finished, **Tartube** is ready for use
 
+5.3.5 Manual installation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For any other method of installation, the following dependencies are required:
+
+-  `Python 3 <https://www.python.org/downloads>`__
+-  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
+-  `Python Requests module <https://3.python-requests.org/>`__
+-  `youtube-dl <https://youtube-dl.org/>`__
+
+These dependencies are optional, but recommended:
+
+-  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
+-  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
+-  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
+-  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
+
 5.3.6 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Download & extract the source
+After installing dependencies (see above):
+
+1. Download & extract the source code (see the links above)
 2. Change directory into the **Tartube** directory
 3. Type: ``python3 setup.py install``
 4. Type: ``tartube``
@@ -197,7 +229,9 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 5.3.7 Run without installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Download & extract the source
+After installing dependencies (see above):
+
+1. Download & extract the source code (see the links above)
 2. Change directory into the **Tartube** directory
 3. Type: ``python3 tartube/tartube``
 
@@ -256,7 +290,7 @@ Regardless of which location you select, you can change it later, if you need to
 6.2 Check youtube-dl is updated
 -------------------------------
 
-*This section does not apply if you installed **Tartube** via an official Debian repository.*
+*If you installed Tartube via a repository such as the official Debian repository, then Tartube may not be allowed to update youtube-dl, in which case this section does not apply.*
 
 **Tartube** uses **youtube-dl** to interact with websites like YouTube. You should check that **youtube-dl** is also installed and running correctly.
 
@@ -274,8 +308,6 @@ If you are using MS Windows, you will be prompted to install **youtube-dl**; you
 
 6.3 Setting youtube-dl's location
 ---------------------------------
-
-*This section does not apply if you installed **Tartube** via an official Debian repository.*
 
 If the update operation fails on MS Windows, you should `ask the authors for help <https://github.com/axcore/tartube/>`__.
 

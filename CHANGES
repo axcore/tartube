@@ -1,3 +1,55 @@
+v2.0.0 (29 Feb 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube can now be installed from PyPI, or by using the new DEB/RPM packages
+    (Linux/BSD only; installation from PyPI does not work on MS Windows)
+- DEB/RPM packages marked 'STRICT' are also available for uploads to
+    repositories with lots of rules, such as the official Debian repository.
+    In 'STRICT' packages, updating youtube-dl from within Tartube is disabled.
+    The 'STRICT' packages are compiled using new environment variables,
+    TARTUBE_PKG and TARTUBE_PKG_STRICT (replacing the old TARTUBE_DEBIAN)
+    environment variable. See the comments in setup.py for more details
+- During a download operation, in the Progress Tab, you can now right-click a
+    video and select 'Stop after these videos'. This allows all of the current
+    video downloads to finish, before halting the download operation
+- The download options window (in the Formats tab) did not allow users to
+    select an audio format before selecting a video format. The reason for this
+    restriction was that youtube-dl did not download the right formats, if an
+    audio format was selected first. Unfortuantely, it prevented users from
+    downloading a separate audio file, when this was available (e.g. an .m4a
+    file from YouTube). The restriction has now been removed; instead, Tartube
+    will automatically reorder the specified video/audio formats, so that video
+    formats are passed to youtube-dl first
+
+MAJOR FIXES
+- If an upload operation is automatically performed before a download
+    operation, and if the user tried to download a single video/channel/
+    playlist/folder, everything was downloaded instead of the single video/
+    channel/playlist/folder. Fixed
+- Fixed an error in the 'Show system command' dialogue window, that prevented
+    it from opening at all
+- Fixed parsing of download options inside double quotes "..."
+
+MINOR NEW FEATURES
+- Added a 'Cancel' button to some dialogue windows that didn't already have one
+- Added a copy of the XDG module to the Tartube code, so it is no longer
+    necessary to install it before running/installing Tartube (Linux/BSD only)
+
+MINOR FIXES
+- Fixed a system error during a forced youtube-dl update (MS Windows only)
+- Fixed wrong location for config file backups (MS Windows only)
+- Fixed wrong location for Tartube temporary/test folders (all systems)
+- Fixed missing (or duplicate) dialogue windows after failing to load the
+    config file and/or database file, in some rare situations
+- The config file could not be created if its parent directory did not exist;
+    fixed
+- Fixed loading of the wrong database file, in some rare situations
+- Removed the old 'hello world' code intended for testing on MS Windows; it's
+    no longer required
+- If Tartube can't find its icon files, a simple error message is now generated
+    rather than a long traceback
+
 v1.5.0 (22 Feb 2020)
 -------------------------------------------------------------------------------
 

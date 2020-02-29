@@ -345,7 +345,7 @@ class UpdateManager(threading.Thread):
         # Convert a path beginning with ~ (not on MS Windows)
         if os.name != 'nt':
             cmd_list[0] = re.sub('^\~', os.path.expanduser('~'), cmd_list[0])
-        
+
         # Create a new child process using that command
         self.create_child_process(cmd_list)
 
@@ -484,7 +484,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 483 intercept_version_from_stdout')
+            utils.debug_time('uop 487 intercept_version_from_stdout')
 
         substring = re.search(
             'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
@@ -521,7 +521,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 520 is_child_process_alive')
+            utils.debug_time('uop 524 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -540,7 +540,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 539 stop_update_operation')
+            utils.debug_time('uop 543 stop_update_operation')
 
         if self.is_child_process_alive():
 

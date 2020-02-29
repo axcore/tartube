@@ -52,8 +52,7 @@ param_list = []
 pkg_strict_var = 'TARTUBE_PKG_STRICT'
 pkg_strict_value = os.environ.get( pkg_strict_var, None )
 script_exec = os.path.join('tartube', 'tartube')
-#icon_path = '/tartube/icons/'
-icon_path = 'tartube/icons/'
+icon_path = '/tartube/icons/'
 
 if pkg_strict_value is not None:
 
@@ -114,7 +113,7 @@ for subdir in subdir_list:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='1.5.031',
+    version='2.0.0',
     description='GUI front-end for youtube-dl',
 #    long_description=long_description,
     long_description="""

@@ -682,16 +682,22 @@ class DownloadManager(threading.Thread):
 
     def stop_download_operation_soon(self):
 
-        """???"""
+        """Called by mainwin.MainWin.on_progress_list_stop_all_soon(), after
+        the user clicks the 'Stop after these videos' option in the Progress
+        List.
+
+        Stops the download operation, but only after any videos which are
+        currently being downloaded have finished downloading.
+        """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 679 stop_download_operation_soon')
+            utils.debug_time('dld 694 stop_download_operation_soon')
 
         self.download_list_obj.prevent_fetch_new_items()
         for worker_obj in self.worker_list:
             if worker_obj.running_flag:
                 worker_obj.video_downloader_obj.stop_soon()
-                    
+
 
 class DownloadWorker(threading.Thread):
 
@@ -721,7 +727,7 @@ class DownloadWorker(threading.Thread):
     def __init__(self, download_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 711 __init__')
+            utils.debug_time('dld 730 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -782,7 +788,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 772 run')
+            utils.debug_time('dld 791 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -904,7 +910,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 894 close')
+            utils.debug_time('dld 913 close')
 
         self.running_flag = False
         if self.video_downloader_obj:
@@ -928,7 +934,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 918 prepare_download')
+            utils.debug_time('dld 937 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -945,7 +951,7 @@ class DownloadWorker(threading.Thread):
         """Called by downloads.DownloadManager.change_worker_count()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 935 set_doomed_flag')
+            utils.debug_time('dld 954 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -977,7 +983,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 967 data_callback')
+            utils.debug_time('dld 986 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
         GObject.timeout_add(
@@ -1030,7 +1036,7 @@ class DownloadList(object):
     def __init__(self, app_obj, operation_type, media_data_list):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1020 __init__')
+            utils.debug_time('dld 1039 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1136,7 +1142,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1122 change_item_stage')
+            utils.debug_time('dld 1145 change_item_stage')
 
         self.download_item_dict[item_id].stage = new_stage
 
@@ -1190,7 +1196,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1176 create_item')
+            utils.debug_time('dld 1199 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -1319,7 +1325,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1305 fetch_next_item')
+            utils.debug_time('dld 1328 fetch_next_item')
 
         if not self.prevent_fetch_flag:
 
@@ -1351,7 +1357,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1334 move_item_to_bottom')
+            utils.debug_time('dld 1360 move_item_to_bottom')
 
         # Move the item to the bottom (end) of the list
         if download_item_obj is None \
@@ -1382,7 +1388,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1365 move_item_to_top')
+            utils.debug_time('dld 1391 move_item_to_top')
 
         # Move the item to the top (beginning) of the list
         if download_item_obj is None \
@@ -1400,13 +1406,18 @@ class DownloadList(object):
     @synchronise(_SYNC_LOCK)
     def prevent_fetch_new_items(self):
 
-        """???"""
+        """Called by DownloadManager.stop_download_operation_soon().
+
+        Sets the flag that prevents calls to self.fetch_next_item() from
+        fetching anything new, which allows the download operation to stop as
+        soon as any ongoing video downloads have finished.
+        """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1366 prevent_fetch_new_items')
+            utils.debug_time('dld 1417 prevent_fetch_new_items')
 
         self.prevent_fetch_flag = True
-        
+
 
     def reorder_master_slave(self):
 
@@ -1428,7 +1439,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1400 reorder_master_slave')
+            utils.debug_time('dld 1442 reorder_master_slave')
 
         master_list = []
         other_list = []
@@ -1476,7 +1487,7 @@ class DownloadItem(object):
     def __init__(self, item_id, media_data_obj, options_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1448 __init__')
+            utils.debug_time('dld 1490 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1568,7 +1579,7 @@ class VideoDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1540 __init__')
+            utils.debug_time('dld 1582 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1749,7 +1760,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1721 do_download')
+            utils.debug_time('dld 1763 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1999,7 +2010,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1971 check_dl_is_correct_type')
+            utils.debug_time('dld 2013 check_dl_is_correct_type')
 
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
@@ -2061,7 +2072,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2033 close')
+            utils.debug_time('dld 2075 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -2090,7 +2101,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2062 confirm_new_video')
+            utils.debug_time('dld 2104 confirm_new_video')
 
         if not self.video_num in self.video_check_dict:
 
@@ -2171,7 +2182,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2143 confirm_old_video')
+            utils.debug_time('dld 2185 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2291,7 +2302,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2263 confirm_sim_video')
+            utils.debug_time('dld 2305 confirm_sim_video')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2672,7 +2683,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2644 convert_video_to_container')
+            utils.debug_time('dld 2686 convert_video_to_container')
 
         app_obj = self.download_manager_obj.app_obj
         old_video_obj = self.download_item_obj.media_data_obj
@@ -2790,7 +2801,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2762 create_child_process')
+            utils.debug_time('dld 2804 create_child_process')
 
         info = preexec = None
         if os.name == 'nt':
@@ -2841,7 +2852,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2813 extract_filename')
+            utils.debug_time('dld 2855 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -2891,7 +2902,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2863 extract_stdout_data')
+            utils.debug_time('dld 2905 extract_stdout_data')
 
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
@@ -3137,7 +3148,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3109 extract_stdout_status')
+            utils.debug_time('dld 3151 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
@@ -3165,7 +3176,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3137 is_child_process_alive')
+            utils.debug_time('dld 3179 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -3195,7 +3206,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3167 is_debug')
+            utils.debug_time('dld 3209 is_debug')
 
         return stderr.split(' ')[0] == '[debug]'
 
@@ -3219,7 +3230,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3191 is_ignorable')
+            utils.debug_time('dld 3233 is_ignorable')
 
         app_obj = self.download_manager_obj.app_obj
 
@@ -3328,7 +3339,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3300 is_warning')
+            utils.debug_time('dld 3342 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -3350,7 +3361,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3322 last_data_callback')
+            utils.debug_time('dld 3364 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -3404,7 +3415,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3376 set_return_code')
+            utils.debug_time('dld 3418 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -3415,7 +3426,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3387 set_temp_destination')
+            utils.debug_time('dld 3429 set_temp_destination')
 
         self.temp_path = path
         self.temp_filename = filename
@@ -3427,7 +3438,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3399 reset_temp_destination')
+            utils.debug_time('dld 3441 reset_temp_destination')
 
         self.temp_path = None
         self.temp_filename = None
@@ -3444,7 +3455,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3416 stop')
+            utils.debug_time('dld 3458 stop')
 
         if self.is_child_process_alive():
 
@@ -3474,7 +3485,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3446 stop_soon')
+            utils.debug_time('dld 3488 stop_soon')
 
         self.stop_soon_flag = True
 
@@ -3510,7 +3521,7 @@ class PipeReader(threading.Thread):
     def __init__(self, queue):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3482 __init__')
+            utils.debug_time('dld 3524 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -3547,7 +3558,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3519 run')
+            utils.debug_time('dld 3561 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -3588,7 +3599,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3560 attach_file_descriptor')
+            utils.debug_time('dld 3602 attach_file_descriptor')
 
         self.file_descriptor = filedesc
 
@@ -3607,7 +3618,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3579 join')
+            utils.debug_time('dld 3621 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)

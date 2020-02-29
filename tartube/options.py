@@ -219,6 +219,11 @@ class OptionsManager(object):
             corresponding value to select the video format. See also the
             options 'second_video_format' and 'third_video_format'.
 
+        N.B. The options 'video_format', 'second_video_format' and
+            'third_video_format' are rearranged before being used, so that
+            video formats appear before audio_formats (otherwise, youtube-dl
+            won't download them)
+
         all_formats (bool): If True, download all available video formats
 
         prefer_free_formats (bool): If True, prefer free video formats unless
@@ -450,6 +455,57 @@ class OptionsManager(object):
         """
 
         self.options_dict = other_options_manager_obj.options_dict.copy()
+
+
+    def rearrange_formats(self):
+
+        """Called by config.OptionsEditWin.apply_changes().
+
+        The options 'video_format', 'second_video_format' and
+        'third_video_format' specify video formats, audio formats or a mixture
+        of both.
+
+        youtube-dl won't download the specified formats properly, if audio
+        formats appear before video formats. Therefore, this function is called
+        to rearrange the list, putting all video formats above all audio
+        formats.
+        """
+
+        format_list = [
+            self.options_dict['video_format'],
+            self.options_dict['second_video_format'],
+            self.options_dict['third_video_format'],
+        ]
+        video_list = []
+        audio_list = []
+        comb_list = []
+
+        for code in format_list:
+
+            if code != '0':
+
+                if formats.VIDEO_OPTION_TYPE_DICT[code] is False:
+                    video_list.append(code)
+                else:
+                    audio_list.append(code)
+
+        comb_list.extend(video_list)
+        comb_list.extend(audio_list)
+
+        if len(comb_list) >= 1:
+            self.options_dict['video_format'] = comb_list[0]
+        else:
+            self.options_dict['video_format'] = '0'
+
+        if len(comb_list) >= 2:
+            self.options_dict['second_video_format'] = comb_list[1]
+        else:
+            self.options_dict['second_video_format'] = '0'
+
+        if len(comb_list) == 3:
+            self.options_dict['third_video_format'] = comb_list[2]
+        else:
+            self.options_dict['third_video_format'] = '0'
 
 
     def reset_options(self):
