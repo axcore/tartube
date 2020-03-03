@@ -5153,13 +5153,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         # If the deleted row was the previously selected one, the new selected
         #   row is the one just above/below that
-        # In this situation, unselect the row (which resets the Video
-        #   Catalogue)
+        # In this situation, unselect the row and then redraw the Video
+        #   Catalogue
         if self.video_index_current is not None \
         and self.video_index_current == media_data_obj.name:
 
             selection = self.video_index_treeview.get_selection()
             selection.unselect_all()
+
+            self.video_index_current = None
+            self.video_catalogue_reset()
 
         # Make the changes visible
         self.video_index_treeview.show_all()

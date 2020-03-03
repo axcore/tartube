@@ -26,13 +26,30 @@ import os
 import setuptools
 import sys
 
-# Import documents
-#with open('README.rst', 'r') as f:
-#    long_description = f.read()
-#
-#with open('LICENSE') as f:
-#    license = f.read()
+# Set a standard long_description, modified only for Debian/RPM packages
+long_description="""
+Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui
+and written in Python 3 / Gtk 3.
 
+- You can download individual videos, and even whole channels and
+playlists, from YouTube and hundreds of other websites
+- You can fetch information about those videos, channels and playlists,
+without actually downloading anything
+- Tartube will organise your videos into convenient folders
+- If creators upload their videos to more than one website (YouTube and
+BitChute, for example), you can download videos from both sites without
+creating duplicates
+- Certain popular websites manipulate search results, repeatedly
+unsubscribe people from their favourite channels and/or deliberately
+conceal videos that they don't like. Tartube won't do any of those things
+- Tartube can, in some circumstances, see videos that are region-blocked
+and/or age-restricted
+"""
+
+alt_description = """
+Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui
+and written in Python 3 / Gtk 3.
+"""
 
 # data_files for setuptools.setup are added here
 param_list = []
@@ -53,13 +70,14 @@ pkg_strict_var = 'TARTUBE_PKG_STRICT'
 pkg_strict_value = os.environ.get( pkg_strict_var, None )
 script_exec = os.path.join('tartube', 'tartube')
 icon_path = '/tartube/icons/'
+pkg_flag = False
 
 if pkg_strict_value is not None:
 
     if pkg_strict_value == '1':
         script_exec = os.path.join('pack', 'bin_strict', 'tartube')
-        sys.stderr.write('youtube-dl updates are disabled in this version')
-        icon_path = '/usr/share/tartube/icons/'
+        sys.stderr.write('youtube-dl updates are disabled in this version\n')
+        pkg_flag = True
 
     else:
         sys.stderr.write(
@@ -79,7 +97,7 @@ if pkg_value is not None:
 
     if pkg_value == '1':
         script_exec = os.path.join('pack', 'bin', 'tartube')
-        icon_path = '/usr/share/tartube/icons/'
+        pkg_flag = True
 
     else:
         sys.stderr.write(
@@ -89,10 +107,19 @@ if pkg_value is not None:
             ),
         )
 
-# Add desktop file
-param_list.append(('share/applications', ['pack/tartube.desktop']))
-param_list.append(('share/pixmaps', ['pack/tartube.png']))
-param_list.append(('share/pixmaps', ['pack/tartube.xpm']))
+# Apply changes if either environment variable was specified
+if pkg_flag:
+
+    # Icons must be copied into the right place
+    icon_path = '/usr/share/tartube/icons/'
+    # Use a shorter long description, as the standard one tends to cause errors
+    long_description = alt_description
+    # Add a desktop file
+    param_list.append(('share/applications', ['pack/tartube.desktop']))
+    param_list.append(('share/pixmaps', ['pack/tartube.png']))
+    param_list.append(('share/pixmaps', ['pack/tartube.xpm']))
+    # Add a manpage
+    param_list.append(('share/man/man1', ['pack/tartube.1']))
 
 # For PyPI installations and Debian/RPM packaging, copy everything in ../icons
 #   into a suitable location
@@ -113,28 +140,10 @@ for subdir in subdir_list:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.0.0',
+    version='2.0.006',
     description='GUI front-end for youtube-dl',
-#    long_description=long_description,
-    long_description="""
-    Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui
-    and written in Python 3 / Gtk 3.
-
-    - You can download individual videos, and even whole channels and
-    playlists, from YouTube and hundreds of other websites
-    - You can fetch information about those videos, channels and playlists,
-    without actually downloading anything
-    - Tartube will organise your videos into convenient folders
-    - If creators upload their videos to more than one website (YouTube and
-    BitChute, for example), you can download videos from both sites without
-    creating duplicates
-    - Certain popular websites manipulate search results, repeatedly
-    unsubscribe people from their favourite channels and/or deliberately
-    conceal videos that they don't like. Tartube won't do any of those things
-    - Tartube can, in some circumstances, see videos that are region-blocked
-    and/or age-restricted
-    """,
-    long_description_content_type='text/markdown',
+    long_description=long_description,
+    long_description_content_type='text/plain',
     url='https://tartube.sourceforge.io',
     author='A S Lewis',
     author_email='aslewis@cpan.org',

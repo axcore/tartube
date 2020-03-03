@@ -8996,7 +8996,7 @@ class SystemPrefWin(GenericPrefWin):
 
         selection = treeview.get_selection()
         (model, iter) = selection.get_selected()
-        if iter is not None and not self.app_obj.disable_dl_all_flag:
+        if iter is not None and not self.app_obj.disable_load_save_flag:
 
             data_dir = model[iter][0]
 
@@ -9026,7 +9026,7 @@ class SystemPrefWin(GenericPrefWin):
             button6.set_sensitive(False)
 
         if len(self.app_obj.data_dir_alt_list) <= 1 \
-        or self.app_obj.disable_dl_all_flag:
+        or self.app_obj.disable_load_save_flag:
             button4.set_sensitive(False)
         else:
             button4.set_sensitive(True)

@@ -2350,10 +2350,20 @@ class TartubeApp(Gtk.Application):
 
         # The config file can be stored at one of two locations, depending on
         #   whether xdg is available, or not
-        if self.config_file_xdg_path is not None:
-            config_file_path = self.config_file_xdg_path
-        else:
+        # v2.0.003. The user can force Tartube to use the config file in the
+        #   script's directory (rather than the one in the location described
+        #   by xdg) by placing a 'settings.json' file there. If that file is
+        #   created when Tartube is already running, it can be an empty file
+        #   (because Tartube overwrites it). Otherwise, it should be a copy of
+        #   a legitimate config file
+        if self.config_file_xdg_path is None \
+        or (
+            os.path.isfile(self.config_file_path) \
+            and not __main__.__pkg_strict_install_flag__
+        ):
             config_file_path = self.config_file_path
+        else:
+            config_file_path = self.config_file_xdg_path
 
         # Sanity check
         if self.current_manager_obj \
@@ -2855,10 +2865,20 @@ class TartubeApp(Gtk.Application):
 
         # The config file can be stored at one of two locations, depending on
         #   whether xdg is available, or not
-        if self.config_file_xdg_path is not None:
-            config_file_path = self.config_file_xdg_path
-        else:
+        # v2.0.003. The user can force Tartube to use the config file in the
+        #   script's directory (rather than the one in the location described
+        #   by xdg) by placing a 'settings.json' file there. If that file is
+        #   created when Tartube is already running, it can be an empty file
+        #   (because Tartube overwrites it). Otherwise, it should be a copy of
+        #   a legitimate config file
+        if self.config_file_xdg_path is None \
+        or (
+            os.path.isfile(self.config_file_path) \
+            and not __main__.__pkg_strict_install_flag__
+        ):
             config_file_path = self.config_file_path
+        else:
+            config_file_path = self.config_file_xdg_path
 
         # Sanity check
         if self.current_manager_obj or self.disable_load_save_flag:
