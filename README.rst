@@ -44,12 +44,13 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Latest version: **v2.0.0 (29 Feb 2019)**
 
--  `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-32bit.exe/download>`__ from Sourceforge
--  `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-64bit.exe/download>`__ from Sourceforge
--  `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.0/python3-tartube_2.0.0.deb/download>`__ from Sourceforge
--  `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube-2.0.0.rpm/download>`__ from Sourceforge
--  `Source code <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube_v2.0.0.tar.gz/download>`__ from Sourceforge
--  `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-32bit.exe/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-64bit.exe/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.0/python3-tartube_2.0.0.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube-2.0.0.rpm/download>`__ from Sourceforge
+- `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube_v2.0.0.tar.gz/download>`__ from Sourceforge
+- `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 There are also DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -147,12 +148,10 @@ Some users report that **Tartube** will install but won't run. This problem shou
 
 Linux/BSD users can use any of the following installation methods.
 
-5.3.1 Install using the DEB/RPM packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.3.1 Install using the DEB/RPM/ebuild packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above).
-
-Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above).
+Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above). Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above). Gentoo users can install **Tartube** using the ebuild (see the link above).
 
 **Tartube** requires `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately.
 
