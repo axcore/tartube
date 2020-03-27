@@ -5,6 +5,8 @@ Tartube - The Easy Way To Watch And Download Videos
 Works with YouTube, BitChute, and hundreds of other websites
 ------------------------------------------------------------
 
+Attention `Linux Format <https://www.linuxformat.com/>`__ readers! There are easier ways to install **Tartube**. Go to the main `downloads page <https://sourceforge.net/projects/tartube/>`__ or see below.
+
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
 
