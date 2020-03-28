@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=GymBob
+Version=1.002
+Exec=gymbob
+Icon=gymbob
+Type=Application
+Categories=Network
+Comment=Simple script to prompt the user during a workout
+Terminal=false
+Name[en_GB]=gymbob.desktop
