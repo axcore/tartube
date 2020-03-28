@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tartube
+Version=2.0.006
+Exec=tartube
+Icon=tartube
+Type=Application
+Categories=Network
+Comment=GUI front-end for youtube-dl
+Terminal=false

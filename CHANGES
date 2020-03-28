@@ -1,9 +1,965 @@
-v1.002 (28 Mar 2020)
+v2.0.0 (29 Feb 2020)
 -------------------------------------------------------------------------------
 
-- Fix for PyPI installation problems
+MAJOR NEW FEATURES
+- Tartube can now be installed from PyPI, or by using the new DEB/RPM packages
+    (Linux/BSD only; installation from PyPI does not work on MS Windows)
+- DEB/RPM packages marked 'STRICT' are also available for uploads to
+    repositories with lots of rules, such as the official Debian repository.
+    In 'STRICT' packages, updating youtube-dl from within Tartube is disabled.
+    The 'STRICT' packages are compiled using new environment variables,
+    TARTUBE_PKG and TARTUBE_PKG_STRICT (replacing the old TARTUBE_DEBIAN)
+    environment variable. See the comments in setup.py for more details
+- During a download operation, in the Progress Tab, you can now right-click a
+    video and select 'Stop after these videos'. This allows all of the current
+    video downloads to finish, before halting the download operation
+- The download options window (in the Formats tab) did not allow users to
+    select an audio format before selecting a video format. The reason for this
+    restriction was that youtube-dl did not download the right formats, if an
+    audio format was selected first. Unfortuantely, it prevented users from
+    downloading a separate audio file, when this was available (e.g. an .m4a
+    file from YouTube). The restriction has now been removed; instead, Tartube
+    will automatically reorder the specified video/audio formats, so that video
+    formats are passed to youtube-dl first
 
-v1.0 (27 Mar 2020)
+MAJOR FIXES
+- If an upload operation is automatically performed before a download
+    operation, and if the user tried to download a single video/channel/
+    playlist/folder, everything was downloaded instead of the single video/
+    channel/playlist/folder. Fixed
+- Fixed an error in the 'Show system command' dialogue window, that prevented
+    it from opening at all
+- Fixed parsing of download options inside double quotes "..."
+
+MINOR NEW FEATURES
+- Added a 'Cancel' button to some dialogue windows that didn't already have one
+- Added a copy of the XDG module to the Tartube code, so it is no longer
+    necessary to install it before running/installing Tartube (Linux/BSD only)
+
+MINOR FIXES
+- Fixed a system error during a forced youtube-dl update (MS Windows only)
+- Fixed wrong location for config file backups (MS Windows only)
+- Fixed wrong location for Tartube temporary/test folders (all systems)
+- Fixed missing (or duplicate) dialogue windows after failing to load the
+    config file and/or database file, in some rare situations
+- The config file could not be created if its parent directory did not exist;
+    fixed
+- Fixed loading of the wrong database file, in some rare situations
+- Removed the old 'hello world' code intended for testing on MS Windows; it's
+    no longer required
+- If Tartube can't find its icon files, a simple error message is now generated
+    rather than a long traceback
+
+v1.5.0 (22 Feb 2020)
 -------------------------------------------------------------------------------
 
-- This is the first public release of GymBob
+This is the first release candidate for v2.0.0.
+
+MAJOR NEW FEATURES
+- You can now run multiple instances of Tartube on your system at the same
+    time. Multiple instances cannot load the same Tartube database; they must
+    each load their own database. Tartube will now remember the databases it
+    has loaded. If there are three databases (perhaps one on your main hard
+    disk and two on an external drive), you can start Tartube three times, and
+    they will each load a different database. This behaviour can be configured,
+    if necessary. Click 'Edit > System preferences... > Filesystem > Database'
+- HookTube acts as a redirection service for YouTube. Because of lawyers and
+    their evil machinations, HookTube's functionality is not as extensive as it
+    once was. Added the Invidious website (https://invidio.us/) as an
+    alternative
+- Added custom downloads. To start a custom download, click 'Operations >
+    Custom download all', or right-click a video/channel/playlist/folder. A
+    custom download is just like a normal download, until you customise it. To
+    do that, click 'Edit > System preferences > Operations > Custom'. Custom
+    downloads can be used to divert YouTube requests to HookTube or Invidious,
+    and to insert a delay between video downloads when the website is
+    complaining about robots
+- Added a new toolbar at the bottom of the main window, below the list of
+    videos. The toolbar is hidden, by default. To reveal it, click the 'Show
+    filter options' button in the bottom right-hand corner. Buttons in the new
+    toolbar can be used to sort the videos alphabetically, rather than by date,
+    and to search for videos whose name matches a string (or regex). The button
+    to search for videos by date has been moved into this toolbar
+- If you find a video that can't be downloaded, and you're not sure why, you
+    can now perform a test download. First, click 'Operations >  Test
+    youtube-dl...' (or right-click a video in the main window's list). Copy the
+    video's URL into the dialogue window, and then click the OK button. Click
+    the Output Tab to see the results. If the test successfully downloads the
+    video, then the problem was with Tartube. If the test fails to download the
+    video, then the problem is with the underlying youtube-dl software (or with
+    the video website)
+- During a test, it's possible to omit the video URL, while specifying some
+    youtube-dl download options. For example, you could fetch the youtube-dl
+    version number with the option --version
+- Added a new operation for tidying up files in Tartube's data directory
+    (folder). To start the operation, click 'Operations > Tidy up files...'.
+    You could also right-click a channel and select 'Channel actions > Tidy up
+    channel', and so on. A dialogue window appears, in which you can specify
+    which files should be tidied up. Choose carefully, because any files
+    deleted as a result of this operation cannot be recovered
+- The main window's switch button (in the toolbar near the top of the window)
+    now has six settings, rather than four. Click the button repeatedly to
+    cycle through them
+- Interesting and important videos can now be bookmarked (e.g., by right-
+    clicking a video and selecting 'Mark video > Video is bookmarked').
+    Bookmarked videos are visible in the new 'Bookmarks' folder. Bookmarking is
+    an alternative to favourites; bookmarks usually apply to a single video,
+    whereas favourites usually apply to a whole channel, playlist or folder
+- Also added a new 'Waiting Videos' folder. This acts as your own private
+    playlist - a list of videos that are waiting to be watched. To make a video
+    visible in this folder, right-click it and select 'Mark video > Video is in
+    waiting list'. When you watch the video, it will automatically disappear
+    from the 'Waiting Videos' folder (this doesn't happen to bookmarked videos)
+- The previous version was unable to delete a channel, playlist or folder (see
+    below). That error caused a partially-deleted channel/playlist/folder to
+    appear in the Videos Tab, on the left-hand side. In case similar errors
+    occur in the future, a feature has been added to look for errors and
+    inconsistencies in the Tartube database and automatically fix them. Click
+    'Edit > System preferences... > Filesystem > DB Errors > Check' to use it
+- Tartube can now fetch a list of available video formats for a video. Right-
+    click the video and select 'Fetch > Available formats'. Click the Output
+    Tab to see the results
+- Tartube can also fetch a list of available subtitles for a video. Right-click
+    the video and select 'Fecth > Available subtitles'. Click the Output Tab to
+    see the results
+- Tartube can now remember the size of its main window, and use the same size
+    when it restarts. This feature is disabled by default. To enable it, click
+    'Edit > System preferences... > Windows > Main window > Remember the size
+    of the main window when shutting down'
+
+MAJOR FIXES
+- In the previous version, Tartube was unable to delete a channel, playlist or
+    folder. Fixed
+- Some procedures took an extremely long time. For example, after right-
+    clicking a channel and selecting 'Channel contents > Mark videos as new',
+    the procedure could take several minutes if the channel had hundreds of
+    videos, or several hours if it contained thousands of videos. The faulty
+    code has been fixed, and the procedure now takes just a few seconds, even
+    for many thousands of videos
+- Videos in a Tartube folder (for example the 'Unsorted Videos' folder) were
+    added to the download list in a 'Check all' operation, even when they had
+    been checked before. This no longer happens, by default. To restore the
+    original behaviour, click 'Edit > System preferences... > Operations >
+    Downloads > For simulate downloads, don't check a video in a folder more
+    than once' to deselect it
+- Fixed the button for finding videos by date, which was not working at all in
+    the previous version
+- Fixed an occasional 'signal is not defined' error when the user stops an
+    operation (for example, a download operation)
+- Various inconsistencies in the way alternative download destinations are
+    handled have all been fixed. Download operations sometimes freezed
+    indefinitely, because Tartube doesn't download two channels/playlists/
+    folders with the same download destination at the same time. The code has
+    been updated to prevent the freeze from ever happening again
+- Fixed some more crashes caused by Gtk during a download operation
+
+MINOR NEW FEATURES
+- Videos downloaded into a temporary folder are deleted when Tartube restarts.
+    After shutting down Tartube, users often like to copy these videos
+    somewhere else on their hard drive. You can now ask Tartube to open the
+    temporary directories (folders), before shutting down, which will remind
+    you to do something with the videos. To enable this behaviour, click
+    'Edit > System preferences... > Filesystem > Temporary folders'
+- In the main window's list of videos, the date is now displayed as 'today' and
+    'yesterday' when possible. This behaviour can be disabled in 'Edit > System
+    preferences... > Windows > Main window'
+- During refresh operations, a progress bar is now visible in the bottom-left
+    corner of the window (just like the one visible during a download
+    operation)
+- When setting an alternative download destination for a channel/playlist/
+    folder (for example, by right-clicking a channel and selecting 'Channel
+    actions > Set download destination...'), the dialogue window has been
+    updated to show the previously selected alternative at the top of the list.
+    This should save a lot of time when setting the alternative download
+    destination for many channels/playlists/folders
+- The alternative download destination, if any, is now visible in the tooltips
+    for the channel/playlist/folder
+- Improved the appearance of the dialogue windows seen when Tartube runs for
+    the first time
+- Tweaked the appearance of the list of channels/playlists/folders in the
+    main window, so that for items with long names, more text is visible
+
+MINOR FIXES
+- Fixed a 'No such file or directory' error seen during a download operation,
+    if an external hard drive suddenly become disconnected (for example, if
+    the cable falls out)
+- Fixed rare problems in loading Tartube's config file
+- After a download operation, the list in the top half of the progress tab
+    often had one or two items in it, even when 'Hide active rows after they
+    are finished' was selected. Fixed
+- The length of lines of text, and spacing between lines, in various dialogue
+    windows has been made uniform
+- Improved the appearance of the main window by adding frames around everything
+- Renamed some misnamed icon files. The old icon files were being used in the
+    MS Windows installer, so fixed that too
+- If the user performed two successive refresh operations, the second one
+    halted after a couple of seconds. Fixed
+- When videos are deleted from Tartube's database, any post-processing
+    artefacts are now deleted with them
+- Fixed a few incorrect regex-matching actions
+- The user can specify that the main 'Download all' button should be
+    desensitised, but the setting was not applied correctly after Tartube
+    restarted. Fixed
+- Removed a duplicate menu option in the Video Index popup menu
+- Tartube channels, playlists and folders keep counts of the number of videos
+    inside them, including the number of favourite videos, downloaded videos,
+    and so on. The code was not working correctly, so the counts were not
+    always accurate. This version updates the code and recalculates all of the
+    counts
+- Fixed folder icons with an incorrect colour in various edit windows
+- Fixed markup errors for videos whose URL contained an ampersand character
+- Fixed the Gtk warning when closing the 'Add new video(s)' dialogue window
+- Updated the installer scripts for MS Windows, so they don't try to update the
+    Windows registry (the code has never worked)
+- You can no longer set videos as favourite, or new (etc), in an empty channel,
+    playlist or folder
+- In the video list, labels can be right-clicked to copy a video's location
+    (for example, so it can be copy-pasted somewhere else). This did not work
+    the same way for every clickable label, and in some cases did not work at
+    all. Fixed
+- Tooltips for videos contained &amp; rather than a simple ampersand character.
+    Fixed
+- Tartube debug messages for the mainapp.py file (which can only be enabled
+    by editing the file) now have a second debug flag, so the timer functions
+    can be filtered out
+- Checked all keyboard shortcuts to remove duplicates
+
+v1.4.0 (2 Feb 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- The structures of files and directories (folders) in Tartube's data
+    directory (into which all videos are downloaded) has been changed in
+    response to Git #28. Tartube will be able to recognise both structures
+    forever, so there is no need to move anything around on your computer. (If
+    you actually want to move things around, see the README file)
+- Creating a channel/playlist/folder starting with a full stop (period) is no
+    longer allowed; some channels/playlists/folders might be automatically
+    renamed when you open Tartube
+- The edit and preference windows have been reorganised, adding a second
+    layer of tabs in many windows. This should hopefully make things a little
+    easier to find
+- In the download options window, you can now specify multiple languages for
+    your subtitles, instead of just one (Git #47)
+- Added some more filename formats (in Edit > General download options...
+    > Files > File names). When downloading a partial playlist (for example,
+    starting at the 5th video), youtube-dl cannot create files with the correct
+    number (naming the first file downloaded #1, instead of #5). Tartube can
+    now handle this correctly. In the drop-down box, use one of the formats
+    containing 'Autonumber' (Git #47)
+- You can now limit the length of a download operation. This is particularly
+    useful on small devices, or when leaving Tartube to run overnight. Click
+    Edit > System preferences... > Scheduling > Stop, and choose one or more of
+    the new options (Git #47)
+- When adding new videos, channels or playlists, you can now turn on clipboard
+    monitoring. Simply select a URL (for example, in your web browser), press
+    CTRL+C to copy it to your system's clipboard, and then Tartube will
+    automatically paste it into the dialogue window (Git #52)
+- The MS Windows installer now includes a copy of AtomicParsley, so there is no
+    need to install it yourself. This does not affect Linux/BSD users, who can
+    continue installing AtomicParsley by the usual methods
+- The list in the top half of the Progress Tab is often full, and it's
+    sometimes difficult to see what is being downloaded right at this moment.
+    You can now hide finished rows, if you want to, so that active rows appear
+    at the top of the list
+
+MAJOR FIXES
+- The Gtk graphics libraries have historically been full of bugs, which made
+    applications using Gtk unstable. Most of these bugs are fixed, but the
+    fixes can take years before they propogate into operating systems. If Gtk
+    v3.22 (or lower) is installed on your system, Tartube automatically
+    disables some minor cosmetic features to prevent crashes. If you are using
+    Gtk v3.24 or later, and are still experiencing unexplainable crashes, you
+    can now disable the cosmetic features regardless of Gtk version. Click
+    Edit > System preferences... > General > Modules, and select 'Assume that
+    Gtk is broken...'
+- On Linux/BSD, attempts to update youtube-dl from the Tartube menu so,etimes
+    produced a 'permission denied' error. There are now new settings available
+    in 'Edit > System prefences... > youtube-dl > Shell command for update
+    operations'. If you installed youtube-dl using pip/pip3, the 'recommended'
+    options should now work, if they didn't work before. Some pip3 warning
+    messages, which caused Tartube to think the update had failed, are now
+    filtered out
+- A user complained that his Tartube database file had been corrupted. We are
+    still not sure what the cause was, but the code has been changed to make
+    that kind of corruption impossible
+- Fixed some occasional crashes when, during a download operation, Tartube
+    tried to sort the videos in the selected channel/playlist/folder
+- When switching databases, if Tartube couldn't load the new database, it tried
+    again after being restarted, rather than trying to load the previous
+    (readable) database. This has now been fixed
+- Some youtube-dl download options could be applied to playlists, but not
+    channels, even though youtube-dl allows them to be applied to be both.
+    Fixed, and updated some labels to make it clearer what the options are for
+    (Git #47)
+- In all edit windows, the 'Apply' button at the bottom of the window did not
+    work. Fixed
+
+MINOR NEW FEATURES
+- Tartube icons have been updated, in some cases making them easier to identify
+- In the Progress Tab, added tooltips to assist with identifying undownloaded
+    videos (Git #51)
+- More types of YouTube error message can now be filtered out
+- We have also added a customisable list of strings (or regular expressions);
+    if set, any matching error/warning messages (on any website) are filtered
+    out
+- In the Video Index popup menus, 'rename default location' has been changed
+    to a much more comprehensible 'rename channel', etc
+- You can now open a video in its system directory (folder) by right-clicking
+    it, and selecting 'Show location'
+- You can now switch databases from the main menu. Click File > Change database
+    (which opens the preference window at the correct page; hopefully this is
+    quicker than trying to find the right page yourself)
+- There was no way to save Tartube's config file (except by shutting down
+    Tartube). To do that, you can now click File > Save all
+- If Tartube is unable to read the config file and/or database file, the text
+    in the resulting dialogue windows has been improved. In some circumstances,
+    multiple dialogue windows were produced; this has now been fixed
+- In the download options window, the option to 'embed subtitles with video'
+    now appears in two different places, to make it easier to find (Git #47)
+- If the 'Add new video(s)', 'Add a new channel' or 'Add a new playlist'
+    dialogue windows are open, you can now drag-and-drop into them (Linux/BSD
+    only). Modifications to the code mean that it's no longer possible to
+    drop one URL into the middle of an existing one, rendering both of them
+    useless
+- Tartube checked URLs for validity before adding them, but this did not work
+    as well as intended. The code has been improved, so less garbage should
+    appear in the 'Add new video(s)' dialogue window, and so on
+- You could already download a temporary copy of video(s) by right-clicking
+    them and selecting 'Temporary > Download', but that can be inconvenient
+    for multiple videos, as you had to wait for each download to finish. You
+    can now select 'Temporary > Mark for download' instead, which creates a
+    copy of the video in the 'Temporary Videos' folder. When you're ready to
+    download them all, just download that folder
+- Minor improvements to aesthetics for some textviews and treeviews
+
+MINOR FIXES
+- Fixed incorrect operation of the checkbuttons in the Errors/Warnings Tab.
+    Added new checkbuttons to separate Tartube errors/warnings from youtube-dl
+    errors/warnings (Git #50)
+- 'Child process exited with non-zero code' errors still appeared in the
+    Errors/Warnins tab, even if the user has disabled them. Fixed
+- Tooltips for videos could not be enabled/disabled if no channel/playlist/
+    folder was selected. Fixed
+- On MS Windows, edit/preference windows will no longer increase in size, if
+    there isn't enough room for each window's tabs
+- Fixed rare 'Permission denied' errors when trying to create a directory
+    (folder) on the filesystem
+- In the download options edit window, the combobox for audio formats had
+    multiple and ever-increasing empty spaces. Fixed
+- In the download options window, File > File names, the default value for the
+    custom format was garbled. Fixed, and it should now be working as intended
+- During a simulated download, videos which are not in a channel or playlist
+    (for example, videos in the 'Unsorted Videos' folder) did not appear in
+    the Results List in the Progress Tab. Fixed
+- Fixed an unprintable character in the licence declaration, visible in
+    Tartube's 'About' window
+- When deleting a video, Tartube will now delete more related files (such as
+    those produced when post-processing a video)
+- Removed a few duplicate ISO 639-1 language codes
+
+v1.3.077 (26 Jan 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Drag and drop (for example, from a web browser into Tartube's main window)
+    is now fully working on Linux/BSD. On MS Windows, drag and drop does not
+    work at all for any Gtk application. It is unlikely that the Tartube
+    authors can do anything about this (Git #35)
+- The 'Add new video(s)' dialogue window can now handle URLs representing
+    channels and playlists, as well as URLs representing individual videos.
+    During a download operation, if Tartube is expecting an individual video
+    but receives a channel/playlist, it will automatically create a new
+    channel, and download videos into that channel. You can change this default
+    behaviour, if you want (Edit > System preferences... > URL flexibility
+    preferences)
+- To change the name of the new channel/playlist, right-click it and select
+    'Filesystem > Rename default location...'
+- If Tartube creates a channel, which should really be a playlist, then you
+    can now convert one to the other. Right-click a channel and select
+    'Channel actions > Convert to playlist'. Right-click a playlist and select
+    'Playlist actions > Convert to channel'
+- In the download options windows, it's now very easy to tell Tartube to
+    convert videos to sound files. Open the window by clicking 'Edit >
+    General download options...', click the 'Hide advanced download options'
+    button if necessary, click the 'Sound only' tab, select your preferences,
+    and apply them by clicking the OK button at the bottom of the window
+- You can now see the download options applied to a video, channel, playlist
+    or folder without having to download anything. Right-click a video/channel/
+    playlist/folder and select 'Downloads > Show system command'
+- During a download operation, the system commands used are now visible (by
+    default) in the Output Tab. The system command can also be displayed in the
+    terminal, if required; this is disabled by default
+
+MINOR NEW FEATURES
+- In the Output Tab, the summary page is now hidden by default. To make it
+    visible, click 'Edit > System Preferences... > Output >
+    Show a summary of active threads' and then restart Tartube
+- In the Errors/Warnings Tab, added checkbuttons to filter out errors and/or
+    warning messages, if required (Git #50)
+- In the Progress tab, in the top half of the window, you can now right-click
+    an unnamed video to open it in your web browser. This will be useful in
+    identifying videos that did not download, and whose name is unknown to
+    Tartube (Git #51)
+- Columns in the Progress tab have been rearranged a little, so that the
+    user can more easily see how quickly the download is progressing, when
+    Tartube's main window is small
+
+MAJOR FIXES
+- Fixed multiple issues with Tartube, when running under Python 3.8
+- Replaced all remaining references to the Python os.rename() function, which
+    can cause crashes on some filesystems (Git #34)
+- Fixed crashes caused by the new YouTube error messages (January 2020), which
+    some versions of youtube-dl cannot handle correctly
+- Fixed issues with the default location for videos, again. Fixed an issue
+    with adding folders inside the currently selected folder (Git #36, #46)
+
+MINOR FIXES
+- Fixed various Gtk warning messages, visible only on some systems
+- Videos whose name contains an ampersand (&) character could not be opened by
+    clicking the 'Media player' label in the Video Catalogue. Fixed
+- The properties windows for videos, channels and playlists showed a folder
+    icon, instead of a video/channel/playlist icon. Fixed
+- The popup menu in the Progress tab, in the top half of the tab, did not work
+    as intended during a download operation, and again after a download
+    operation. Fixed both sets of issues
+- Coloured text was not displayed in the Output Tab correctly. Fixed
+
+v1.3.048 (23 Jan 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube now creates an icon in the user's system tray. Closing the main
+    window now closes to the tray, by default. To disable this behaviour,
+    click Edit > System preferences > Windows > Deselect 'Close to the tray...'
+- When that functionality is enabled, Tartube can be shutdown by clicking
+    File > Quit. Scheduled download operations will still take place if Tartube
+    has been closed to the tray. Implements Github issue #37
+- Tartube can now show a desktop notification at the end of a download
+    operation, rather that a dialogue window. This does not work on MS Windows.
+    On other operating systems, enable desktop notifications by clicking
+    Edit > System preferences... > Operations > Show a desktop notification...
+- When you click the 'Add new video(s)' button, the folder displayed in the
+    dialogue window is now the same folder that's selected in the main window
+    (if any). The same applies for adding channels, playlists and folders.
+    Fixes Github issue #36
+- If you normally use the 'Check all' button rather than the 'Download all'
+    button, and if you want to download a temporary copy of one of the videos,
+    there's now an easier way to do it. In the Videos tab, right-click the
+    video, and select 'Temporary > Download' or 'Temporary > Download and
+    Watch'. A copy of the video is downloaded into the 'Temporary Videos'
+    folder, without affecting any other folders
+
+MINOR NEW FEATURES
+- The icons for channels and playlists have been replaced, to make it easier to
+    tell them apart. Some other icons have been replaced too
+- Videos can now be dragged and dropped from a web browser (or similar
+    application) into Tartube's main window, which automatically adds the video
+    to the currently selected folder (or 'Unsorted Videos', if no folder is
+    selected). Unfortunately, the code is not yet working reliably. We are
+    looking for a solution (Github issue #35)
+- The layout of the Format tab in the download options window has been improved
+    to alleviate confusion experienced by users trying to download a video to
+    a sound format such as .mp3 (only). See the new section in the README file
+- A number of new video/audio formats have been added, for example several new
+    60fps formats, implementing Github issue #40
+- When you apply download options to a video/channel/playlist/folder, the
+    options are now cloned from the default set of options (those visible in
+    Edit > General download options...). To disable this behaviour, click
+    Edit > System preferences... > Operations > When applying download options,
+    automatically clone general download options. Implements Github issue #39
+- The options already applied to a video/channel/playlist/folder can now be
+    reset to match the general options, any time you want. Use the new button
+    at the bottom of the download options window, in the General tab
+
+MAJOR FIXES
+- Fixed a rare crash when the video's JSON filename was too long for the
+    operating system
+- In the download options window, Formats tab, the user can add up to three
+    video formats. The third format, if added, was always ignored. Fixed
+
+MINOR FIXES
+- If you perform a refresh operation on a folder, the operation now applies to
+    all videos, channels, playlists and folders inside it
+- After adding a video to the folder that's currently selected, the video does
+    not appear immediately in the video catalogue. Fixed
+- In the Progress and Errors/Warnings tabs, the column headers scrolled away
+    along with the rest of the list. Fixed; they are now always visible
+- Video nicknames were not set correctly after an update operation. Fixed
+- During a refresh operation, a video's name was compared against the full
+    filepath (filename and extension), which produced none of the intended
+    matches. Fixed
+- The edit/preference windows had a tendency to increase in size without
+    limits. Fixed
+- A video's annotations.xml file was not deleted correctly, when required.
+    Fixed
+- In the download options window, the option 'hls-prefer-ffmpeg' is now working
+    correctly
+- In the download options window, the 'prefer avconv over ffmpeg' options have
+    been desensitised on MS Windows, as there is no known method of using
+    Tartube with avconv on MS Windows
+- youtube-dl creates a file, ytdl-archive.txt, recording all the videos that
+    it has downloaded. This can interfere if the user tries to re-download the
+    video(s) for any reason. Create of the ytdl-archive.txt file can now be
+    disabled (Edit > System preferences... > youtube-dl > Deselect 'Allow
+    youtube-dl to create its own archive...')
+- If creation of the archive file is nonetheless enabled, Tartube can now
+    re-download video(s) without problems
+- In rare circumstances, Tartube was unable to redraw the video catalogue
+    (the right-hand side of the Videos tab). Fxied
+
+v1.3.007 (20 Dec 2019)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- v1.3.007 was completely broken when replacing an earlier installation. Fixed
+- When Tartube's data directory was copied from one place to another (for
+    example, from one external drive to another), Tartube did not adapt to the
+    change very well. The way file paths are stored in Tartube's database has
+    been changed to eliminate this problem
+
+MINOR FIXES
+- Fixed an invalid time value which (sometimes) prevented a refresh operation
+    from completing correctly
+
+v1.3.0 (20 Dec 2019)
+-------------------------------------------------------------------------------
+MAJOR NEW FEATURES
+- Tartube on MS Windows did not recognise FFmpeg or AVConv. You can now tell
+    Tartube to download and install a compatible version of FFmpeg from the
+    main menu (Operations > Install FFmpeg). Tartube still cannot recognise
+    the ordinary version of FFmpeg, and it still does not recognise AVConv at
+    all. It is unlikely that this situation can be remedied
+- A new Output Tab has been added, in which you can see what is happening
+    internally when you check or download videos, update youtube-dl, install
+    FFmpeg, or refresh the Tartube database. The amount of information shown
+    can be customised in the System preferences window. The information can
+    still be written to STDOUT/STDERR, if required
+- For users on other operating systems, the system preferences window
+    displayed the wrong location of the FFmpeg/AVConv executable. This has now
+    been fixed
+- There are now two simple ways to specify the video resolution you want to
+    download (for example, 1080p). You can use the download options window
+    (Edit > General download options... > Formats, and then choose a video
+    format like 'any format [1080p]'). You can also use the new spinbutton at
+    the bottom of the Progress Tab. Both of these methods have the same effect,
+    so it's not necessary to use both of them. Tartube will download videos in
+    that resolution if possible, or in the next highest available resolution
+    otherwise
+- The download options window has been simplified, with only the most useful
+    options visible. If you want to see the full range of options, open any
+    download options window, and in the General tab, click the new 'Show
+    advanced download options' button
+
+MINOR NEW FEATURES
+- By default, temporary folders are no longer emptied when Tartube shuts down,
+    but only when Tartube starts up. This means you can continue watching
+    temporary videos you've downloaded even after shutting down Tartube. If you
+    want temporary folders to be emptied on shutdown, as before, select Edit >
+    System preferences... > Videos > Empty temporary folders when Tartube shuts
+    down
+
+MAJOR FIXES
+- Tartube experienced a whole range of problems when downloading videos to a
+    hard drive that was running out of space. Tartube now checks the available
+    disk space before starting to download anything, and continues checking it
+    throughout the download process. You can specify how much disk space should
+    be available in the System Preferences window. If the hard drive, despite
+    your best efforts, actually does run out of space, Tartube is now much more
+    resilient (and can usually halt the download process, rather than
+    crashing). The amount of disk space available is now visible in the System
+    Preferences window
+- Adding a channel/playlist/folder whose name included a slash, for example
+    'Adam/Eve's Channel', had unfortunate consequences, with Tartube creating
+    a directory (folder) at the wrong location. Slashes are now automatically
+    converted to hyphens, which solves the problem
+- In Tartube's window, dragging a channel/playlist/folder to a new location in
+    the tree changes the hard drive, moving a directory (folder) to a new
+    location in the filesystem. If a directory (folder) with the same name
+    already existed at that location, an invisible error occurs. Tartube now
+    displays a visible error so the user can delete the duplicate directory
+    (folder) manually
+- When refreshing the Tartube database (e.g. Operations > Refresh database),
+    the moviepy module freezes if it encounters a corrupted video file. We
+    can't fix the moviepy module, but the Tartube code has been made much more
+    resilient
+- When refreshing the Tartube database, Tartube made bad decisions if it was
+    looking for a video called 'ymca.mp4', but found a video called
+    'ymca.webm'. This has been fixed
+- Tartube is now able to detect if its data directory (into which videos are
+    downloaded) doesn't exist. Usually this is because an external hard drive
+    has not been mounted; the user is now warned about this, so they can mount
+    it
+- On MS Windows, if the user has updated youtube-dl or installed FFmpeg,
+    Tartube no longer freezes on shutdown
+- On MS Windows, Tartube was unable to open a video file in the system's
+    default media player, if the name contained an ampersand. Fixed
+
+MINOR FIXES
+- When deleting large channels/playlists/folders, sometimes not everything was
+    deleted, and the user had to delete the item a second time. This was due to
+    inconsistencies in the Tartube database, which have now been fixed
+- Channels/playlists/folders beginning with a number, e.g. '5 Pewdiepie', were
+    supposed to be displayed in numerical order, rather than in strict
+    alphabetical order. This did not work as intended (e.g. '11 Pewdiepie' was
+    listed before '1 T-Series'). Fixed again
+- In the 'Delete channel' dialogue window (and so on), the name of the channel
+    to be deleted is now displayed prominently
+- The size of the MS Windows installer has been reduced by about 40%
+
+v1.2.008 (30 Sep 2019)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- Tartube now ignores the YouTube 'WARNING: video doesn't have subtitles'
+    by default. You can change this setting, if you want to
+
+MAJOR FIXES
+- When moving a channel/playlist/folder to a different place on your
+    filesystem, or when renaming a channel/playlist/folder, in certain rare
+    situations data in the Tartube database isn't updated correctly. This may
+    lead to a freeze or a crash. I'm not sure yet what the cause is, but I have
+    added temporary code to prevent the problem affecting any user
+- Fixed error messages generated when checking/downloading individual
+    channels/playlists/folders
+- Fixed faulty code for importing videos/channels/playlists/folders into the
+    database
+
+v1.2.0 (31 Aug 2019)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Multiple channels, playlists and/or folders can now download their videos to
+    a single location. The README.rst file explains how it works, and why you
+    might want to do it
+- You can also tell Tartube to download all videos into the 'Unsorted Videos'
+    or 'Temporary Videos' folders, instead of downloading them into separate
+    directories/folders for each channel and playlist
+- Added automatic deletion of videos, disabled by default. Before enabling it,
+    you should do a 'Check all' or 'Download all' operation, which will create
+    the necessary youtube-dl archive files
+- Added archiving. A video, channel, playlist or folder that is marked
+    archived won't be auto-deleted (but can still be deleted manually by the
+    user)
+- You can now disable both checking and downloading a channel, playlist or
+    folder, if you want to. (It was already possible to just disabled
+    downloading them)
+- Download operations can now be scheduled to take place at regular intervals
+- You can now 'Download and watch' a video. The video is opened in your
+    system's default media player as soon as it has been downloaded
+- Tartube can now download a video's annotations file automatically. Warnings
+    generated by YouTube about the lack of annotations are ignored by default
+- For channels/playlists/folders containing many videos, you can now skip to
+    the first video uploaded after a certain date, using the new button in the
+    toolbar at the bottom of the Videos Tab
+- The lists in the Results Tab can now be right-clicked, so you can change the
+    order in which videos/channels/playlists/folders are checked/downloaded,
+    abandon a download, play a video directly from the Results List, delete a
+    video directly from the Results List, and so on
+- The edit window for youtube-dl options has been improved, adding many new
+    options to the GUI interface
+- Plain text exports of Tartube's database can now be re-imported. Some
+    inconsistencies with the import process (from JSON and plain text files)
+    have been fixed
+
+MINOR NEW FEATURES
+- Added tooltips in several places. If you don't want to see tooltips above
+    videos/channels/playlists/folders, you can turn them off
+- You can now select multiple videos in the Video Catalogue, and apply an
+    action to all of them (by right-clicking them)
+- You can now switch to smaller icons in the Video Index (on the left side of
+    the Videos Tab), if you want to
+- You can now force the Video Index to expand its tree whenever you click on a
+    folder, revealing any channels/playlists it contains. This is disabled by
+    default
+- If you only want to check videos, and never download them, you can disable
+    the 'Download all' buttons. Individual videos/channels/playlists/folders
+    can still be downloaded by right-clicking them
+- Tartube's file structure has changed. If you run it from the command line,
+    you might need to use a (slightly) different command. See the README.rst
+    for details of what command to use
+- The path to the FFmpeg/AVConv executable can now be specified by the user.
+    This will be especially helpful for MS Windows users
+- Columns in the Progress Tab can now be manually resized
+- The Tartube website can now be opened from the main window menu
+- XDG has been added as an optional dependency, for the benefit of Debian
+    packagers
+
+MAJOR FIXES
+- The MS Windows installer should now work for everyone
+- Refresh operations are now stable (should not crash) on systems with Gtk 3.22
+    or earlier
+- When downloads were disabled for a folder, downloads for channels/playlists/
+    folders inside that folder were still enabled. This is counter-intuitive,
+    so disabling downloads for a folder disables downloads for everything it
+    contains
+- Marking/unmarking a video as favourite caused certain problems, which should
+    now be fixed
+
+MINOR FIXES
+- Fixed some unicode errors in reading JSON and plain text files
+- Fixed the wrong page size displayed in the toolbar at the bototm of the
+    Videos Tab
+- Empty lines in a video's description are now preserved when they're displayed
+    in Tartube's main window
+
+v1.1.0 (18 Aug 2019)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- You can now create an export of Tartube's database. This export contains
+    details of videos, channels, playlists and/or folders, but not the videos
+    themselves (or any of the thumbnail/description/metadata files). The
+    export can take two forms: JSON data, or plain text. If JSON data, the
+    exported file can later be imported into another Tartube database (imports
+    from plain text are not implemented yet). You can export either the
+    entire database, or just one channel/playlist/folder (and everythng it
+    contains)
+- You can now change the name of a channel, playlist of folder. This doesn't
+    have any effect on your filesystem; it only changes the name displayed in
+    the Video Index (the left-hand side of the Videos Tab). This might be
+    useful for channels and playlists that have weird or very short names. For
+    example, right-click a folder and select 'Folder actions > Set nickname...'
+- You can also rename the channel, playlist or folder, and this action DOES
+    affect the filesystem, changing the directory/folder on your hard drive
+    where the channel/playlist/folder videos are stored. For example, right-
+    click a folder and select 'Filesystem > Rename location...'
+- If you change the format of a downloaded video file from the default 'Title'
+    to, for example, 'Title + ID', the Video catalogue (the right-hand side of
+    the Videos Tab) will now simply display the video's title (which should be
+    easier to read). To see the actual filename, you can right-click the video
+    and select 'Show properties'. This only works if the video's metadata was
+    downloaded when the video itself was downloaded; this is now turned on by
+    default for all new users
+
+MINOR NEW FEATURES
+- When adding videos, channels and playlists, the contents of the system's
+    clipboard was automatically copied into the window. This can now be turned
+    off, if you wish (Edit > System preferences... > Windows > When adding
+    videos/channels/playlists, copy URLs from the system clipboard)
+- When adding channels/playlists, you can set the dialogue window to stay open,
+    which makes adding multiple channels/playlists quicker (Edit >
+    System preferences... > Windows > When adding channels/playlists, keep the
+    dialogue window open)
+- When creating channels/playlists/folders inside an existing parent folder, a
+    dialogue window which stays open can be told to continuously re-use that
+    parent folder (Edit > System preferences... > Windows > When adding
+    channels/playlists, re-use the optional parent folder)
+- When checking/downloading videos, the Results List (the bottom half of the
+    Progress Tab) can now display videos in reverse order, so you don't have to
+    scroll down to see the video that was just checked/downloaded (Edit >
+    System Preferences... > Windows > Show results in reverse order)
+- The number of ystem error and warning messages displayed in their own tab
+    is visible in the tab's label. The label is usually reset when the tab
+    is made visible. You can now disable this behaviour, preserving the numbers
+    until the 'Clear the list' button is explicitly clicked (Edit >
+    System preferences... > Windows > Don't remove number of system messages
+    from tab label until 'Clear' button is clicked)
+- Items in the Video Index (on the left-hand side of the Videos Tab) are sorted
+    alphabetically. The sorting algorithm has been improved to take account of
+    numbered items, such that '1 Music' will now appear before '11 Comedy'
+- For the benefit of package maintainers (such as a Debian package), Tartube
+    now uses an environment variable which will prevent Tartube from updating
+    the youtube-dl binary, if specified. See the comments in setup.py
+
+MAJOR FIXES
+- Users whose system Gtk is earlier than v3.24 (this includes many current
+    Linux distros, but the MS Windows installer) will have experienced graphics
+    issues, and endless error messages in the terminal window, if open. If your
+    system Gtk is earlier than v3.24, Tartube will no longer update the Video
+    Index during a download operation; this should fix the issue at the cost of
+    disabling real-time updates of the number of videos in each channel,
+    playlist and folder. Your system's Gtk version is now visible in Tartube's
+    System Preferences window
+- After loading the config file, the download limits were set, but not
+    displayed in the Progress Tab. Fixed
+- Rarely, Tartube crashes (or freezes) when loading a video's JSON metadata
+    file from your filesystem (but now when downloading it). This should no
+    longer happen
+
+MINOR FIXES
+- The 'Channel properties', 'Folder properties' (etc) windows used the wrong
+    icon (displaying a folder in the wrong colour). Fixed
+- Fixed a 'list modified during sort' error during a download operation
+
+v1.0.0 (31 Jul 2019)
+-------------------------------------------------------------------------------
+
+- First beta release
+- Fixed some issues with the MS Windows installer
+- Some parts of the Tartube window displayed the wrong icons. Fixed
+
+v0.7.0 (7 Jul 2019)
+-------------------------------------------------------------------------------
+
+- This is the first release candidate for v1.0.0
+- The MS Windows installer has been redesigned again (thanks to slartie for his
+    generous assistance in getting it working). Some MS Windows 10 users were
+    still complaining that Tartube would not run; this should be fixed now
+- MS Windows should find that the annoying terminal window is no longer visible
+- Deleting individual videos, then adding them to the Tartube database again,
+    could cause problems with the statistics displayed in the Video Index (e.g.
+    'All Videos (0, -1)'. Fixed
+- Deleting and individual video by right-clicking it removed the video from the
+    database, but didn't delete the video file itself. Fixed
+- If an empty channel/playlist was selected, new videos did not automatically
+    appear in the Video Catalogue during a download operation. Fixed
+- Fixed some issues with the Temporary Videos folder
+- Fixed more issues with videos being dislayed in the wrong order in the Video
+    Catalogue
+- Fixed more issues with the scrollbars not resetting themselves when switching
+    between channels/playlists/folders
+- After right-clicking a folder, selecting Mark Videos > New didn't work. Fixed
+- When marking videos as new/favourite, you can now do this to all videos
+    in a folder, including all child channels/playlists/folders, or you can do
+    it just to the videos actually inside that folder. There are several new
+    popup menu options for emptying a folder, or for removing all its videos
+- Tartube will no longer issue a system error if you drag a folder onto itself
+    in the Video Index
+- Fixed the remaining issues caused by the Gtk graphics libraries
+- Confirmed that various Gtk issues present in Gtk3.22 are not present in
+    Gtk 3.24. Users with Gtk 3.22 on their system will be warned to update it.
+    These warnings can be disabled, if required
+
+v0.6.0 (4 Jul 2019)
+-------------------------------------------------------------------------------
+
+- Some MS Windows users, especially on Windows 10, report that they can't run
+    Tartube at all. In an effort to get around this, the installer has been
+    redesigned. The way Tartube communicates with youtube-dl on MS Windows has
+    been changed. youtube-dl update operations should now work flawlessly.
+    Please report any further problems at our GitHub page; this might be a fix
+    to issue #10
+- Users on Linux/*BSD can now run Tartube directly from the command line, after
+    installing it (see the README)
+- Occasionally, videos were downloaded (or checked) successfully, but Tartube
+    failed to notice them. This issue should now be fixed
+- When checking videos/channels/playlists/folders, only new videos will now
+    appear in the Results List (in the 'Progress' Tab)
+- The toolbar has been redesigned. MS Windows users won't see labels at all
+    (so everything should fit). Users on all system can turn labels on or off.
+    Tooltips have been added to the buttons, in case the labels are turned off
+- Fixed yet another problem with button to switch the location of Tartube's
+    data folder (#6)
+- Tartube no longer requires the python 'validators' module
+- Tartube can now ignore YouTube copyright messages, and also 'Child process
+    exited with non-zero code' messages, meaning that they won't appear in
+    Tartube's Errors/Warnings Tab. (They are not ignored by default)
+- Tartube now applies a 60-second timeout when youtube-dl tries to download
+    a video's metadata (since youtube-dl uses a 10-minute timeout); this can be
+    turned off, if required (#9)
+- Fixed some more issues with the way videos are sorted in the Video Catalogue
+    (it's still not 100%)
+- Users can no longer type in comboboxes
+- Tartube now spots when the user adds a channel or playlist URL as a video;
+    only the first video in the channel/playlist is now downloaded
+- You can no longer remove download options from a media data object when the
+    download options edit window is still open
+- When you update youtube-dl, Tartube will now tell you which youtube-dl
+    version is installed. Tartube will no longer claim the update operation
+    fails if you're using pip (rather than pip3)
+
+v0.5.0 (1 Jul 2019)
+-------------------------------------------------------------------------------
+
+- On MS Windows, the fix from v0.4.0 to prevent a crash whenever the user tries
+    to change the location of Tartube's data directory, did not work. Fixed it
+    again (#6), and added some dialogue window to make it clearer to the user
+    what is going on
+- Fixed problems with dragging-and-dropping (or otherwise moving) a channel,
+    playlist or folder to a new location (such as another folder). The videos
+    were not updated with their new location. The new code will fix any
+    problems in the Tartube database
+- Fixed numerous problems with the code that sorts videos into the right order,
+    and which displays videos in the Video Catalogue in the right order
+- The 'Switch' button no longer resets the page back to the first one
+- When switching between channels/playlists/folders, scrollbars are
+    automatically moved back to the top
+- In the toolbar beneath the Video Catalogue, there are two new buttons for
+    scrolling to the top or bottom of the visible page. Users can now select
+    a different page just by typing the page number and pressing RETURN. The
+    same applies to the page size - there is no button to click any more, just
+    type the new size and press RETURN
+- Fixed several problems which were still preventing selection of different
+    video formats (#3)
+- Added bare-bones aac, m4a, mp3, ogg and wav as recognised video formats
+- A set of download options can now be completely reset to their default values
+- The 'Add Videos' dialogue window, and some others, don't behave well when the
+    user resizes them. Fixed (#4)
+- Added a small folder icon to the the 'Add Videos' dialogue window, and
+    others, so the user is less likely to forget to set a custom location
+- In the 'Add Videos' dialogue window, and others, URLs are now tidied up a
+    bit because being copied from the clipboard, eliminating leading/trailing
+    whitespace and empty lines
+- The Gtk test window, available for MS Windows after using the installer,
+    now contains some text (to make it clear that the window is working as
+    intended)
+
+v0.4.0 (29 Jun 2019)
+------------------------------------------------------------------------------
+
+- Drastic improvements to overall performance. Download operations are now much
+    smoother. You should notice a much lighter burden on your machine's CPU
+- The graphics libraries struggled to draw lists containing hundreds (or
+    thousands!) of videos, so the Video Catalogue has been split into pages. It
+    typically takes less then a second to show the 'All Videos' folder, if it
+    contains hundreds of videos, rather than several minutes
+- If you just want to find new videos, you can now tell Tartube to stop
+    checking/downloading channels/playlists as soon as notifications of videos
+    you've already checked/downloaded start arriving. This works well on
+    YouTube, which sends the newest videos first, but might not work well on
+    all websites. The new functionality is turned off by default. Click
+    'Edit > System preferences > Performance > Time-saving preferences' to turn
+    it on
+- The installer for 32-bit MS Windows failed under all circumstances. Applied a
+    fix
+- On MS Windows, the uninstaller was invisible. It can now be executed from the
+    Start Menu
+- On MS Windows, fixed a crash whenever the user tried to changed the location
+    of Tartube's data directory (#6)
+- Fixed some problems with the 'Add videos' dialogue window, which tried to add
+    all sorts of invalid URLs (such as lines containing only empty space). The
+    other 'Add' dialogue windows were also fixed
+- A limit to the length of a channel/playlist/folder name now applies
+- Leading/trailing whitespace is now removed from URLs and channel/playlist/
+    folder names
+- The 'Add videos' dialogue window now checks for duplicate URLs, and when
+    found, doesn't add them to the database
+- Fixed various problems caused by deleting a video/channel/playlist/folder
+    (such as the numbers visible in the Video Index). If you've been using an
+    earlier version of Tartube, any such problems with the database will be
+    automatically repaired for you (#8)
+- Videos which haven't actually been downloaded can now be deleted from the
+    database by right-clicking them
+- Added new options for making backups of the Tartube database file, in case it
+    becomes corrupted. See the settings in
+    'Edit > System preferences... > Backups'
+- The 'Switch' button now switches between four 'skins' (instead of the
+    previous two). Two of them show the name of a video's parent channel/
+    playlist/folder; the other two show the video's description
+- Fixed incorrect formatting in the DASH and 3D file formats (#3)
+
+v0.3.0 (25 Jun 2019)
+-------------------------------------------------------------------------------
+
+- Tartube will now run on MS Windows
+- Fixed some more crashes
+- Fixed some issues with video descriptions containing quotes and ampersand
+    characters
+
+v0.2.0 (23 Jun 2019)
+-------------------------------------------------------------------------------
+
+- Corrected old Python2 code to work on Python3
+- Greatly expanded the README file
+- Fixed the constant crashes
+- Fixed some Gtk problems (but others remain unfixed)
+- Fixed downloads for users who haven't installed Ffmpeg, and for sites that
+    don't support Ffmpeg
+- Several other minor tweaks/fixes
+
+v0.1.0 (27 May 2019)
+-------------------------------------------------------------------------------
+
+- This is the first public release of Tartube
+
