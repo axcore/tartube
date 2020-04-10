@@ -140,7 +140,7 @@ for subdir in subdir_list:
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.0.006',
+    version='2.0.016',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

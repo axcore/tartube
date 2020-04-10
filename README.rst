@@ -16,10 +16,10 @@ Attention `Linux Format <https://www.linuxformat.com/>`__ readers! There are eas
 * `4 Quick start guide`_
 * `5 Installation`_
 * `6 Using Tartube`_
-* `7. Frequently-Asked Questions`_
-* `8. Contributing`_
-* `9. Authors`_
-* `10. License`_
+* `7 Frequently-Asked Questions`_
+* `8 Contributing`_
+* `9 Authors`_
+* `10 License`_
 
 1 Introduction
 ==============
@@ -44,14 +44,14 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v2.0.0 (29 Feb 2019)**
+Latest version: **v2.0.016 (10 Apr 2020)**
 
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-32bit.exe/download>`__ from Sourceforge
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.0/install-tartube-2.0.0-64bit.exe/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.0/python3-tartube_2.0.0.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube-2.0.0.rpm/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.016/install-tartube-2.0.016-32bit.exe/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.016/install-tartube-2.0.016-64bit.exe/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.016/python3-tartube_2.0.016.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.016/tartube-2.0.016.rpm/download>`__ from Sourceforge
 - `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.0.0/tartube_v2.0.0.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.0.016/tartube_v2.0.016.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 There are also DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
@@ -75,7 +75,7 @@ There are also DEB/RPM packages marked STRICT. In these packages, updates to **y
 -  If you want to download the videos, click the **Download all** button
 
 4.2 Linux/BSD
-~~~~~~~~~~~~~
+-------------
 
 -  Install **Tartube** by downloading the DEB or RPM package from the links above. Alternatively, install it from PyPI, using the instructions below
 -  It's strongly recommended that you install  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
@@ -794,8 +794,8 @@ N.B. Many video websites, such as **YouTube**, allow you to download the audio (
 - Click the **Add format >>>** button to add it to the list
 - Click the **OK** button at the bottom of the window to apply your changes
 
-7. Frequently-Asked Questions
-=============================
+7 Frequently-Asked Questions
+============================
 
 **Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly / Tartube keeps crashing!**
 
@@ -882,6 +882,18 @@ If you installed an earlier version of **Tartube**, and if you want to move your
 - Delete the empty **downloads** directory
 - You can now restart **Tartube**
 
+**Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?**
+
+A: This question has been asked by several people who were storing their videos on some remote filesystem (perhaps in the so-called 'cloud'). They found that the videos could be downloaded to that remote location, but that Tartube couldn't save its database file there.
+
+At the moment, the answer is "**Tartube** is working fine, fix your own computer". Perhaps in the future, someone will think of an urgent need for the database file and the data folder to be split up. Until then, there are a number of good reasons for keeping them together:
+
+- If the database file exists in the folder, **Tartube** can be confident that it's downloading videos to the place you actually intended
+- If **Tartube** can't read/write its own database file, that probably means that it won't be possible to store any videos, thumbnails, descriptions, and so on
+- **Tartube** actually creates a number of temporary files at this location, most of which are invisible but need to be in the same place as the videos
+- If you want to move your videos from one location to another, it's easy - just move a single directory (folder) and everything it contains. There is no need to reconfigure anything; just tell **Tartube** where to find the new directory (folder)
+- Splitting up the data folder and the database file would require a lot of code to be rewritten, and this would probably introduce lots of new bugs
+
 **Q: I want to convert the video files to audio files!**
 
 A: See `6.20 Converting to audio`_
@@ -904,9 +916,23 @@ A: Click **Edit > System preferences... > Windows > Main window > Don't show lab
 
 MS Windows users can already see a toolbar without labels.
 
+**Q: I added my YouTube username and password, but I am still seeing authentification errors!**
+
+A: The questioner is talking about the settings in **Edit > General download options... > Advanced**.
+
+This is a `youtube-dl <https://youtube-dl.org/>`__ issue. A general solution is described in `this post <https://github.com/ytdl-org/youtube-dl/issues/21313#issuecomment-499496235>`__.
+
+The solution describes how to create a cookies.txt file, which can be specified as a download option. 
+
+Having created the file, in the same edit window, click the **General** tab. In the box labelled **Extra youtube-dl command options**, you can add:
+
+**--cookies=YT-cookies.txt**
+
+See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
+
 **Q: Why is the Windows installer so big?**
 
-**Tartube** is a Linux application. The installer for MS Windows contains not just **Tartube** itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
+A: **Tartube** is a Linux application. The installer for MS Windows contains not just **Tartube** itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
 
 If you're at all suspicious that such a small application uses such a large installer, you are invited to examine the installed files for yourself: 
 
@@ -922,19 +948,19 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
-8. Contributing
-===============
+8 Contributing
+==============
 
 -  Report a bug: Use the Github
    `issues <https://github.com/axcore/tartube/issues>`__ page
 
-9. Authors
-==========
+9 Authors
+=========
 
 See the `AUTHORS <AUTHORS>`__ file.
 
-10. License
-===========
+10 License
+==========
 
 **Tartube** is licensed under the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`__.
 

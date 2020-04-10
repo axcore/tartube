@@ -1,3 +1,38 @@
+v2.0.016 (10 Apr 2020)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- Tartube's config file is stored in a standard location for your system, by
+    default. For testing purposes, you can copy a config file into Tartube's
+    installation directory (the one containing this file). If you do so,
+    Tartube will load and later save that config file, rather than the one in
+    the standard location
+- Tartube no longer creates a youtube-dl archive file in its 'Unsorted Videos'
+    and 'Temporary Videos' folders. Any existing archive files in those folders
+    are automatically deleted. Other folders are not affected (Git #64)
+- In the Videos tab, you can expand the tree on the left-hand side of the
+    window by clicking on a folder (if this behaviour has been enabled). This
+    behaviour has now been modified slightly. Clicking on a folder will also
+    collapse the tree, if already expanded. You can tell Tartube to expand the
+    whole tree, not just the folder itself. The settings can be specified by
+    selecting the checkbuttons in Edit > System preferences > Windows >
+    Main window
+
+MINOR FIXES
+- The system preferences window didn't show the correct location for the
+    loaded config file. Fixed
+- The DEB package has been improved to generate fewer Lintian error messages
+- Tartube was unable to switch between databases, if the main 'Download all'
+    button had been disabled. Fixed
+- After deleting a folder, clicking the 'Add a new folder' button generated an
+    error. Fixed
+- If the internet connection goes down during a check operation, Tartube is
+    now less likely to freeze
+- The 'Apply changes without closing the window' button at the bottom of many
+    edit windows did not work as intended. Fixed
+- Video descriptions are no longer editable in a video's 'Video Properties'
+    window
+
 v2.0.0 (29 Feb 2020)
 -------------------------------------------------------------------------------
 

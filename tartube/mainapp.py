@@ -291,10 +291,14 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if small icons should be used in the Video Index,
         #   False if large icons should be used
         self.show_small_icons_in_index = False
-        # Flag set to True if the Video Index treeview should auto-expand
-        #   when an item is clicked, to show its children (only folders
-        #   have children visible in the Video Index, though)
+        # Flag set to True if the Video Index treeview should auto-expand/
+        #   auto-collapse when an item is clicked, to show/hide its children
+        #   (only folders have children visible in the Video Index, though)
         self.auto_expand_video_index_flag = False
+        # Flag set to True if the treeview should be fully expanded when an
+        #   item is clicked; False if only the next level should be expanded
+        #   (ignored if self.auto_expand_video_index_flag is False)
+        self.full_expand_video_index_flag = False
         # Flag set to True if the 'Download all' buttons in the main window
         #   toolbar and in the Videos tab should be disabled (in case the u
         #   user is sure they only want to do simulated downloads)
@@ -1034,6 +1038,7 @@ class TartubeApp(Gtk.Application):
         #   passed, --download-archive, creating the file ytdl-archive.txt
         # If the file exists, youtube-dl won't re-download a video a user has
         #   deleted
+        # Ignored for system folders like 'Unsorted Videos'
         self.allow_ytdl_archive_flag = True
         # If self.allow_ytdl_archive_flag is set, youtube-dl will have created
         #   a ytdl_archive.txt, recording every video ever downloaded in the
@@ -2470,6 +2475,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1001077:  # v1.1.077
             self.auto_expand_video_index_flag \
             = json_dict['auto_expand_video_index_flag']
+        if version >= 2000014:  # v2.0.014
+            self.full_expand_video_index_flag \
+            = json_dict['full_expand_video_index_flag']
         if version >= 1001064:  # v1.1.064
             self.disable_dl_all_flag = json_dict['disable_dl_all_flag']
         if version >= 1004011:  # v1.4.011
@@ -2930,6 +2938,7 @@ class TartubeApp(Gtk.Application):
             'show_tooltips_flag': self.show_tooltips_flag,
             'show_small_icons_in_index': self.show_small_icons_in_index,
             'auto_expand_video_index_flag': self.auto_expand_video_index_flag,
+            'full_expand_video_index_flag': self.full_expand_video_index_flag,
             'disable_dl_all_flag': self.disable_dl_all_flag,
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
 
@@ -3835,6 +3844,36 @@ class TartubeApp(Gtk.Application):
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
                     del media_data_obj.file_dir
+
+        if version < 2000012:  # v2.0.012
+
+            # This version does not add the ytdl-archive.txt file to system
+            #   folders ('Unsorted Videos' and 'Temporary Videos'), but
+            #   continues to add it to channels, playlists and non-system
+            #   folders
+            # Remove the archive file from system folders, if present
+
+            # 'Temporary Videos'
+            temp_path = os.path.abspath(
+                os.path.join(
+                    self.fixed_temp_folder.get_default_dir(self),
+                    'ytdl-archive.txt',
+                ),
+            )
+
+            if os.path.isfile(temp_path):
+                os.remove(temp_path)
+
+            # 'Unsorted Videos'
+            unsorted_path = os.path.abspath(
+                os.path.join(
+                    self.fixed_misc_folder.get_default_dir(self),
+                    'ytdl-archive.txt',
+                ),
+            )
+
+            if os.path.isfile(unsorted_path):
+                os.remove(unsorted_path)
 
 
     def save_db(self):
@@ -13093,6 +13132,17 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 13073 set_ffmpeg_path')
 
         self.ffmpeg_path = path
+
+
+    def set_full_expand_video_index_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13074 set_full_expand_video_index_flag')
+
+        if not flag:
+            self.full_expand_video_index_flag = False
+        else:
+            self.full_expand_video_index_flag = True
 
 
     def set_gtk_emulate_broken_flag(self, flag):

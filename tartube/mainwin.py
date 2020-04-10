@@ -8871,9 +8871,18 @@ class MainWin(Gtk.ApplicationWindow):
 
                 # Expand the tree beneath the selected line, if allowed
                 if self.app_obj.auto_expand_video_index_flag:
-                    self.video_index_treeview.expand_to_path(
+                    if not self.video_index_treeview.row_expanded(
                         model.get_path(iter),
-                    )
+                    ):
+                        self.video_index_treeview.expand_row(
+                            model.get_path(iter),
+                            self.app_obj.full_expand_video_index_flag,
+                        )
+
+                    else:
+                        self.video_index_treeview.collapse_row(
+                            model.get_path(iter),
+                        )
 
                 # Redraw the Video Catalogue, on the first page, and reset its
                 #   scrollbars back to the top

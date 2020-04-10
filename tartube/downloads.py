@@ -2604,13 +2604,16 @@ class VideoDownloader(object):
                 thumb_path = utils.convert_path_to_temp(app_obj, thumb_path)
 
             if not os.path.isfile(thumb_path):
-                request_obj = requests.get(thumbnail)
 
-                # v1.2.006 This crashes if the directory specified by
-                #   thumb_path doesn't exist, so need to use 'try'
+                # v2.0.013 The requets module fails if the connection drops
+                # v1.2.006 Wiriting the file fails if the directory specified
+                #   by thumb_path doesn't exist
+                # Use 'try' so that neither problem is fatal
                 try:
+                    request_obj = requests.get(thumbnail)
                     with open(thumb_path, 'wb') as outfile:
                         outfile.write(request_obj.content)
+
                 except:
                     pass
 

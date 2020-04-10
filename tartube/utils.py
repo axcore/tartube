@@ -746,8 +746,17 @@ dl_sim_flag=False, divert_mode=None):
 
     # If actually downloading videos, create an archive file so that, if the
     #   user deletes the videos, youtube-dl won't try to download them again
-    elif app_obj.allow_ytdl_archive_flag:
-
+    # (Videos downloaded into a system folder should never create an archive
+    #   file)
+    if app_obj.allow_ytdl_archive_flag \
+    and (
+        not isinstance(media_data_obj, media.Folder)
+        or not media_data_obj.fixed_flag
+    ) and (
+        not isinstance(media_data_obj, media.Video)
+        or not isinstance(media_data_obj.parent_obj, media.Folder)
+        or not media_data_obj.parent_obj.fixed_flag
+    ):
         # (Create the archive file in the media data object's default
         #   sub-directory, not the alternative download destination, as this
         #   helps youtube-dl to work the way we want it to work)

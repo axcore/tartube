@@ -424,7 +424,7 @@ class GenericEditWin(GenericConfigWin):
 
         # Apply any changes the user has made
         for key in self.edit_dict.keys():
-            setattr(self.edit_obj, self.edit_dict[key])
+            setattr(self.edit_obj, key, self.edit_dict[key])
 
         # The changes can now be cleared
         self.edit_dict = {}
@@ -497,7 +497,11 @@ class GenericEditWin(GenericConfigWin):
         if name in self.edit_dict:
             return self.edit_dict[name]
         else:
-            return getattr(self.edit_obj, name)
+            attrib = getattr(self.edit_obj, name)
+            if type(attrib) is list or type(attrib) is dict:
+                return attrib.copy()
+            else:
+                return attrib
 
 
     # (Add widgets)
@@ -4863,11 +4867,11 @@ class VideoEditWin(GenericEditWin):
         #   window, the changes are applied to self.edit_obj
         # If the user clicks the 'Reset' or 'Cancel' buttons, the dictionary
         #   is emptied and the changes are lost
-        # The key-value pairs in the dictionary correspond directly to
-        #   the names of attributes, and their balues in self.edit_obj
-        # Key-value pairs are added to this dictionary whenever the user
-        #   makes a change (so if no changes are made when the window is
-        #   closed, the dictionary will still be empty)
+        # The key-value pairs in the dictionary correspond directly to the
+        #   names of attributes, and their values in self.edit_obj
+        # Key-value pairs are added to this dictionary whenever the user makes
+        #   a change (so if no changes are made when the window is closed, the
+        #   dictionary will still be empty)
         self.edit_dict = {}
 
         # String identifying the media type
@@ -5094,10 +5098,11 @@ class VideoEditWin(GenericEditWin):
             0, 0, 1, 1,
         )
 
-        self.add_textview(grid,
+        textview, textbuffer = self.add_textview(grid,
             'descrip',
             0, 1, 1, 1,
         )
+        textview.set_editable(False)
 
 
     def setup_errors_warnings_tab(self):
@@ -6173,10 +6178,14 @@ class SystemPrefWin(GenericPrefWin):
             0, 8, grid_width, 1,
         )
 
-        if self.app_obj.config_file_xdg_path is not None:
-            config_path = self.app_obj.config_file_xdg_path
-        else:
+        if self.app_obj.config_file_xdg_path is None \
+        or (
+            os.path.isfile(self.app_obj.config_file_path) \
+            and not __main__.__pkg_strict_install_flag__
+        ):
             config_path = self.app_obj.config_file_path
+        else:
+            config_path = self.app_obj.config_file_xdg_path
 
         entry3 = self.add_entry(grid,
             config_path,
@@ -6355,7 +6364,7 @@ class SystemPrefWin(GenericPrefWin):
         treeview.connect(
             'cursor-changed',
             self.on_data_dir_cursor_changed,
-            button2,    # Use
+            button2,    # Switch
             button3,    # Forget
             button4,    # Forget all
             button5,    # Move up
@@ -6664,57 +6673,92 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton5.connect('toggled', self.on_complex_button_toggled)
 
         checkbutton6 = self.add_checkbutton(grid,
-            'After clicking on a folder, automatically expand the Video' \
-            + ' Index beneath it',
+            'After clicking on a folder, automatically expand/collapse the' \
+            + ' tree around it',
             self.app_obj.auto_expand_video_index_flag,
             True,                   # Can be toggled by user
             0, 6, 1, 1,
         )
-        checkbutton6.connect('toggled', self.on_expand_tree_toggled)
+        # signal_connect appears below
 
         checkbutton7 = self.add_checkbutton(grid,
+            'Expand the whole tree, not just the level beneath the clicked' \
+            + ' folder',
+            self.app_obj.full_expand_video_index_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        if not self.app_obj.auto_expand_video_index_flag:
+            checkbutton7.set_sensitive(False)
+        # signal_connect appears below
+
+        # signal_connects from above
+        checkbutton6.connect(
+            'toggled',
+            self.on_expand_tree_toggled,
+            checkbutton7,
+        )
+        checkbutton7.connect('toggled', self.on_expand_full_tree_toggled)
+
+        checkbutton8 = self.add_checkbutton(grid,
             'Disable the \'Download all\' buttons in the toolbar and the' \
             + ' Videos Tab',
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
-        checkbutton7.connect('toggled', self.on_disable_dl_all_toggled)
+        checkbutton8.connect('toggled', self.on_disable_dl_all_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+
+    def setup_windows_tabs_tab(self, inner_notebook):
+
+        """Called by self.setup_windows_tab().
+
+        Sets up the 'Tabs' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab('_Tabs', inner_notebook)
+
+        # Tab preferences
+        self.add_label(grid,
+            '<u>Tab preferences</u>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
             'In the Videos Tab, show \'today\' and \'yesterday\' as the' \
             + ' date, when possible',
             self.app_obj.show_pretty_dates_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 1, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_pretty_date_button_toggled)
+        checkbutton.connect('toggled', self.on_pretty_date_button_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton2 = self.add_checkbutton(grid,
             'In the Progress Tab, hide finished videos / channels' \
             + ' / playlists',
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 9, 1, 1,
+            0, 2, 1, 1,
         )
-        checkbutton9.connect('toggled', self.on_hide_button_toggled)
+        checkbutton2.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             'In the Progress Tab, show results in reverse order',
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 10, 1, 1,
+            0, 3, 1, 1,
         )
-        checkbutton10.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton3.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             'In the Errors/Warnings Tab, preserve message counts in the' \
             + ' tab label for longer',
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 11, 1, 1,
+            0, 4, 1, 1,
         )
-        checkbutton11.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton4.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_system_tray_tab(self, inner_notebook):
@@ -7943,8 +7987,8 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            'Allow youtube-dl to create its own archive (so deleted videos' \
-            + ' are not re-downloaded)',
+            'Allow youtube-dl to create its own archive file (so deleted' \
+            + ' videos are not re-downloaded)',
             self.app_obj.allow_ytdl_archive_flag,
             True,                   # Can be toggled by user
             0, 8, grid_width, 1,
@@ -9516,7 +9560,7 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_scheduled_dl_wait_hours(spinbutton.get_value())
 
 
-    def on_expand_tree_toggled(self, checkbutton):
+    def on_expand_tree_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_windows_main_window_tab().
 
@@ -9527,14 +9571,40 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            checkbutton2 (Gtk.CheckButton): Another widget that must be
+                modified
+
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.auto_expand_video_index_flag:
             self.app_obj.set_auto_expand_video_index_flag(True)
+            checkbutton2.set_sensitive(True)
         elif not checkbutton.get_active() \
         and self.app_obj.auto_expand_video_index_flag:
             self.app_obj.set_auto_expand_video_index_flag(False)
+            checkbutton2.set_sensitive(False)
+
+
+    def on_expand_full_tree_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables full auto-expansion of the Video Index after a folder
+        is selected (clicked).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.full_expand_video_index_flag:
+            self.app_obj.set_full_expand_video_index_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.full_expand_video_index_flag:
+            self.app_obj.set_full_expand_video_index_flag(False)
 
 
     def on_gtk_emulate_button_toggled(self, checkbutton):
