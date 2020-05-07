@@ -1,3 +1,68 @@
+v2.1.0 (7 May 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- For everyone who wants a simpler way to download videos, a new Classic Mode
+    Tab has been added, emulating the look and feel of youtube-dl-gui. Videos
+    downloaded in this tab can be downloaded to any location, and are not added
+    to Tartube's database
+- Tartube can now detect livestreams, and alert you when they start. This
+    feature is EXPERIMENTAL, has only been tested on YouTube, and may not be
+    reliable. It does not work at all on the 32-bit MS Windows installer
+- Added internationalisation. If you can contribute a translation to this
+    project, please see the ../docs/translate.rst file. As a proof of concept,
+    Tartube can now be used with either British or American spelling
+- You can now specify unlimited numbers of video/audio formats (the limit was
+    previously three). You can also specify that youtube-dl should try to
+    download each video in each of your preferred formats, rather than in one
+    or all available formats (as was the case before)
+
+MINOR NEW FEATURES
+- Made minor improvements to the look of various dialogue windows
+- Slightly improved the functionality of buttons in the system preference
+    window's database tab
+- If a database can't be loaded (but an alternative database can), an
+    explanatory messages is now added to the Errors/Warnings Tab. If an
+    alternative database can't be loaded (or only one database has been added
+    to Tartube's list), then the dialogue window seen by the user is now
+    slightly more helpful
+- Some startup errors, which were invisible to users not running Tartube from a
+    terminal window, now produce a visible dialogue window
+- The code to force renamig of channels/playlists/folders (when required) has
+    been adjusted so it creates a name like 'Folder_3' rather than
+    'Folder_2_2_2_2'
+- Instructions for Tartube installations have been updated generally. The
+    MS Windows batch/shell files used to start Tartube have been tweaked
+
+MAJOR FIXES
+- The MS Windows installers have been updated to use Python 3.8. This may fix
+    some stability issues for a few users
+- For systems with a broken Gtk library (or if the user has disabled minor
+    cosmetic features anyway), the list of videos in the Videos Tab is no
+    longer updated during a download operation. This should resolve some
+    lingering stability issues. (You can manually update the list by selecting
+    a different channel/playlist/folder, then selecting the original one again)
+- In the Video Catalogue, new videos are sometimes added to the last page,
+    rather than to the first one. Rewrote the code yet again to resolve this
+    issue; hopefully this should be the last rewrite
+- The Python setup file now explicitly mentions more dependencies; this should
+    assist with installation issues for PyPI, DEB and RPM packages
+- The RPM package, which did not work at all on Tartube v2.0.016, is now
+    working again
+
+MINOR FIXES
+- In the general download options window, in the Files tab, there was a
+    duplicate set of template options. Remove the duplicate set, replacing it
+    with a larger set of options
+- Info/Tidy operations complained that they couldn't start while an edit/
+    preference window is open, and then started anyway. Fixed
+- In the Progress List, a video's name is updated as soon as it is known
+    (before, the name was only updated in the Results List)
+- The start of a download operation is now (slightly) quicker, because the
+    setup code is no longer called (incorrectly) for every single video
+- Download operations scheduled to begin when Tartube starts now begin after
+    a few seconds, rather than immediately (for aesthetic reasons)
+
 v2.0.016 (10 Apr 2020)
 -------------------------------------------------------------------------------
 

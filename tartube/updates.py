@@ -40,6 +40,8 @@ import threading
 # Import our modules
 import downloads
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
@@ -78,7 +80,7 @@ class UpdateManager(threading.Thread):
     def __init__(self, app_obj, update_type):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 81 __init__')
+            utils.debug_time('uop 83 __init__')
 
         super(UpdateManager, self).__init__()
 
@@ -138,7 +140,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 141 run')
+            utils.debug_time('uop 143 run')
 
         if self.update_type == 'ffmpeg':
             self.install_ffmpeg()
@@ -162,7 +164,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 165 create_child_process')
+            utils.debug_time('uop 167 create_child_process')
 
         info = preexec = None
 
@@ -188,7 +190,7 @@ class UpdateManager(threading.Thread):
         except (ValueError, OSError) as error:
             # (The code in self.run() will spot that the child process did not
             #   start)
-            self.stderr_list.append('Child process did not start')
+            self.stderr_list.append(_('Child process did not start'))
 
 
     def install_ffmpeg(self):
@@ -205,12 +207,12 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 208 install_ffmpeg')
+            utils.debug_time('uop 210 install_ffmpeg')
 
         # Show information about the update operation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Starting update operation, installing FFmpeg',
+            _('Starting update operation, installing FFmpeg'),
         )
 
         # Create a new child process to install either the 64-bit or 32-bit
@@ -284,11 +286,11 @@ class UpdateManager(threading.Thread):
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
         if self.child_process is None:
-            self.stderr_list.append('FFmpeg installation did not start')
+            self.stderr_list.append(_('FFmpeg installation did not start'))
 
         elif self.child_process.returncode > 0:
             self.stderr_list.append(
-                'Child process exited with non-zero code: {}'.format(
+                _('Child process exited with non-zero code: {}').format(
                     self.child_process.returncode,
                 )
             )
@@ -301,7 +303,7 @@ class UpdateManager(threading.Thread):
         # Show a confirmation in the the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Update operation finished',
+            _('Update operation finished'),
         )
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
@@ -325,12 +327,12 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 328 install_ytdl')
+            utils.debug_time('uop 330 install_ytdl')
 
         # Show information about the update operation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Starting update operation, installing/updating youtube-dl',
+            _('Starting update operation, installing/updating youtube-dl'),
         )
 
         # Prepare the system command
@@ -434,7 +436,7 @@ class UpdateManager(threading.Thread):
         #   situations)
         if self.child_process is None:
 
-            msg = 'youtube-dl update did not start'
+            msg = _('youtube-dl update did not start')
             self.stderr_list.append(msg)
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -443,7 +445,7 @@ class UpdateManager(threading.Thread):
 
         elif self.child_process.returncode > 0:
 
-            msg = 'Child process exited with non-zero code: {}'.format(
+            msg = _('Child process exited with non-zero code: {}').format(
                 self.child_process.returncode,
             )
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -459,7 +461,7 @@ class UpdateManager(threading.Thread):
         # Show a confirmation in the the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Update operation finished',
+            _('Update operation finished'),
         )
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
@@ -484,7 +486,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 487 intercept_version_from_stdout')
+            utils.debug_time('uop 489 intercept_version_from_stdout')
 
         substring = re.search(
             'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
@@ -521,7 +523,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 524 is_child_process_alive')
+            utils.debug_time('uop 526 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -540,7 +542,7 @@ class UpdateManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 543 stop_update_operation')
+            utils.debug_time('uop 545 stop_update_operation')
 
         if self.is_child_process_alive():
 

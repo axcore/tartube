@@ -70,6 +70,7 @@ pkg_strict_var = 'TARTUBE_PKG_STRICT'
 pkg_strict_value = os.environ.get( pkg_strict_var, None )
 script_exec = os.path.join('tartube', 'tartube')
 icon_path = '/tartube/icons/'
+sound_path = '/tartube/sounds/'
 pkg_flag = False
 
 if pkg_strict_value is not None:
@@ -110,8 +111,9 @@ if pkg_value is not None:
 # Apply changes if either environment variable was specified
 if pkg_flag:
 
-    # Icons must be copied into the right place
+    # Icons/sounds must be copied into the right place
     icon_path = '/usr/share/tartube/icons/'
+    sound_path = '/usr/share/tartube/sounds/'
     # Use a shorter long description, as the standard one tends to cause errors
     long_description = alt_description
     # Add a desktop file
@@ -122,7 +124,7 @@ if pkg_flag:
     param_list.append(('share/man/man1', ['pack/tartube.1']))
 
 # For PyPI installations and Debian/RPM packaging, copy everything in ../icons
-#   into a suitable location
+#   and ../sounds into a suitable location
 subdir_list = [
     'dialogue',
     'large',
@@ -137,10 +139,13 @@ for subdir in subdir_list:
     for path in glob.glob('icons/' + subdir + '/*'):
         param_list.append((icon_path + subdir + '/', [path]))
 
+for path in glob.glob('sounds/*'):
+    param_list.append((icon_path + '/', [path]))
+
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.0.016',
+    version='2.1.0',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',
@@ -167,7 +172,8 @@ setuptools.setup(
     ),
     include_package_data=True,
     python_requires='>=3.0, <4',
-    install_requires=['requests'],
+#    install_requires=['requests'],
+    install_requires=['feedparser', 'gi', 'playsound', 'requests'],
     scripts=[script_exec],
     project_urls={
         'Bug Reports': 'https://github.com/axcore/tartube/issues',

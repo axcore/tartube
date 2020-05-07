@@ -38,6 +38,8 @@ import threading
 # Import our modules
 import downloads
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
@@ -97,7 +99,7 @@ class InfoManager(threading.Thread):
     options_string):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 100 __init__')
+            utils.debug_time('iop 102 __init__')
 
         super(InfoManager, self).__init__()
 
@@ -175,20 +177,31 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 178 run')
+            utils.debug_time('iop 180 run')
 
         # Show information about the info operation in the Output Tab
-        msg = 'Starting info operation, '
         if self.info_type == 'test_ytdl':
-            msg += 'testing youtube-dl with specified options'
+
+            msg = _(
+                'Starting info operation, testing youtube-dl with specified' \
+                + ' options',
+            )
 
         else:
-            if self.info_type == 'formats':
-                msg += 'fetching list of video/audio formats'
-            else:
-                msg += 'fetching list of subtitles'
 
-            msg += ' for \'' + self.video_obj.name + '\''
+            if self.info_type == 'formats':
+
+                msg = _(
+                    'Starting info operation, fetching list of video/audio'\
+                    + ' formats for \'{0}\'',
+                ).format(self.video_obj.name)
+
+            else:
+
+                msg = _(
+                    'Starting info operation, fetching list of subtitles'\
+                    + ' for \'{0}\'',
+                ).format(self.video_obj.name)
 
         self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
 
@@ -327,7 +340,7 @@ class InfoManager(threading.Thread):
         #   situations)
         if self.child_process is None:
 
-            msg = 'youtube-dl process did not start'
+            msg = _('youtube-dl process did not start')
             self.stderr_list.append(msg)
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -336,7 +349,7 @@ class InfoManager(threading.Thread):
 
         elif self.child_process.returncode > 0:
 
-            msg = 'Child process exited with non-zero code: {}'.format(
+            msg = _('Child process exited with non-zero code: {}').format(
                 self.child_process.returncode,
             )
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -352,7 +365,7 @@ class InfoManager(threading.Thread):
         # Show a confirmation in the the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Info operation finished',
+            _('Info operation finished'),
         )
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
@@ -379,7 +392,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 382 create_child_process')
+            utils.debug_time('iop 395 create_child_process')
 
         info = preexec = None
 
@@ -405,7 +418,7 @@ class InfoManager(threading.Thread):
         except (ValueError, OSError) as error:
             # (The code in self.run() will spot that the child process did not
             #   start)
-            self.stderr_list.append('Child process did not start')
+            self.stderr_list.append(_('Child process did not start'))
 
 
     def is_child_process_alive(self):
@@ -424,7 +437,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 427 is_child_process_alive')
+            utils.debug_time('iop 440 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -443,7 +456,7 @@ class InfoManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 446 stop_info_operation')
+            utils.debug_time('iop 459 stop_info_operation')
 
         if self.is_child_process_alive():
 

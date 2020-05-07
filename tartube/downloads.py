@@ -17,7 +17,7 @@
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-"""Download operation classes."""
+"""Download and livestream operation classes."""
 
 
 # Import Gtk modules
@@ -49,6 +49,11 @@ import mainapp
 import media
 import options
 import utils
+# Use same gettext translations
+from mainapp import _
+
+if mainapp.HAVE_FEEDPARSER_FLAG:
+    import feedparser
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
@@ -95,7 +100,8 @@ class DownloadManager(threading.Thread):
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
             additional options applied (specified by IVs like
-            mainapp.TartubeApp.custom_dl_by_video_flag)
+            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
+            open, and the user has clicked the download button there
 
         download_list_obj(downloads.DownloadManager): An ordered list of
             media data objects to download, each one represented by a
@@ -110,7 +116,7 @@ class DownloadManager(threading.Thread):
     def __init__(self, app_obj, operation_type, download_list_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 113 __init__')
+            utils.debug_time('dld 119 __init__')
 
         super(DownloadManager, self).__init__()
 
@@ -138,7 +144,9 @@ class DownloadManager(threading.Thread):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
+        #   the Classic Mode Tab is open, and the user has clicked the download
+        #   button there
         self.operation_type = operation_type
 
         # The time at which the download operation began (in seconds since
@@ -153,9 +161,14 @@ class DownloadManager(threading.Thread):
         # Flag set to False if self.stop_download_operation() is called
         # The False value halts the main loop in self.run()
         self.running_flag = True
+
         # Number of download jobs started (number of downloads.DownloadItem
         #   objects which have been allocated to a worker)
         self.job_count = 0
+        # The current downloads.DownloadItem being handled by self.run()
+        #   (stored in this IV so that anything can update the main window's
+        #   progress bar, at any time, by calling self.nudge_progress_bar() )
+        self.current_item_obj = None
 
         # On-going counts of how many videos have been downloaded (real or
         #   simulated), and how much disk space has been consumed (in bytes),
@@ -203,11 +216,13 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 206 run')
+            utils.debug_time('dld 219 run')
+
+        manager_string = _('D/L Manager:') + '   '
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
-            'Manager:   Starting download operation',
+            manager_string + _('Starting download operation'),
         )
 
         # (Monitor changes to the number of workers, and number of available
@@ -235,8 +250,8 @@ class DownloadManager(threading.Thread):
                 local_worker_total_count = total_count
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     0,
-                    'Manager:   Workers: available: ' \
-                    + str(available_count) + ', total: ' \
+                    manager_string + _('Workers: available:') + ' ' \
+                    + str(available_count) + ', ' + _('total:') + ' ' \
                     + str(total_count),
                 )
 
@@ -251,68 +266,62 @@ class DownloadManager(threading.Thread):
                     break
 
             # Fetch information about the next media data object to be
-            #   downloaded
-            download_item_obj = self.download_list_obj.fetch_next_item()
+            #   downloaded (and store it in an IV, so the main window's
+            #   progress bar can be updated at any time, by any code)
+            self.current_item_obj = self.download_list_obj.fetch_next_item()
 
             # Exit this loop when there are no more downloads.DownloadItem
             #   objects whose .status is formats.MAIN_STAGE_QUEUED, and when
             #   all workers have finished their downloads
             # Otherwise, wait for an available downloads.DownloadWorker, and
             #   then assign the next downloads.DownloadItem to it
-            if not download_item_obj:
+            if not self.current_item_obj:
                 if self.check_workers_all_finished():
 
                     # Send a message to the Output Tab's summary page
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         0,
-                        'Manager:   All threads finished',
+                        manager_string + _('All threads finished'),
                     )
 
                     break
 
             else:
                 worker_obj = self.get_available_worker()
-                if worker_obj:
 
-                    # If the worker has been marked as doomed (because the
-                    #   number of simultaneous downloads allowed has decreased)
-                    #   then we can destroy it now
-                    if worker_obj.doomed_flag:
-                        worker_obj.close()
-                        self.remove_worker(worker_obj)
+                # If the worker has been marked as doomed (because the number
+                #   of simultaneous downloads allowed has decreased) then we
+                #   can destroy it now
+                if worker_obj and worker_obj.doomed_flag:
 
-                    # Otherwise, initialise the worker's IVs for the next job
-                    else:
+                    worker_obj.close()
+                    self.remove_worker(worker_obj)
 
-                        # Send a message to the Output Tab's summary page
-                        self.app_obj.main_win_obj.output_tab_write_stdout(
-                            0,
-                            'Thread #' + str(worker_obj.worker_id) \
-                            + ': Downloading \'' \
-                            + download_item_obj.media_data_obj.name + '\'',
-                        )
+                # Otherwise, initialise the worker's IVs for the next job
+                elif worker_obj:
 
-                        # Initialise IVs
-                        worker_obj.prepare_download(download_item_obj)
-                        # Change the download stage for that
-                        #   downloads.DownloadItem
-                        self.download_list_obj.change_item_stage(
-                            download_item_obj.item_id,
-                            formats.MAIN_STAGE_ACTIVE,
-                        )
-                        # Update the main window's progress bar
-                        self.job_count += 1
-                        # Throughout the downloads.py code, instead calling a
-                        #   mainapp.py or mainwin.py function directly (which
-                        #   is not thread-safe), set a Glib timeout to handle
-                        #   it
-                        GObject.timeout_add(
-                            0,
-                            self.app_obj.main_win_obj.update_progress_bar,
-                            download_item_obj.media_data_obj.name,
-                            self.job_count,
-                            len(self.download_list_obj.download_item_list),
-                        )
+                    # Send a message to the Output Tab's summary page
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        0,
+                        _('Thread #') + str(worker_obj.worker_id) \
+                        + ': ' + _('Downloading:') + ' \'' \
+                        + self.current_item_obj.media_data_obj.name + '\'',
+                    )
+
+                    # Initialise IVs
+                    worker_obj.prepare_download(self.current_item_obj)
+                    # Change the download stage for that downloads.DownloadItem
+                    self.download_list_obj.change_item_stage(
+                        self.current_item_obj.item_id,
+                        formats.MAIN_STAGE_ACTIVE,
+                    )
+                    # Update the main window's progress bar
+                    self.job_count += 1
+                    # Throughout the downloads.py code, instead of calling a
+                    #   mainapp.py or mainwin.py function directly (which is
+                    #   not thread-safe), set a Glib timeout to handle it
+                    if self.operation_type != 'classic':
+                        self.nudge_progress_bar()
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
@@ -322,13 +331,13 @@ class DownloadManager(threading.Thread):
         #   the Output Tab's summary page
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
-            'Manager:   Downloads complete (or stopped)',
+            manager_string + _('Downloads complete (or stopped)'),
         )
 
         # Close all the workers
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
-            'Manager:   Halting all workers',
+            manager_string + _('Halting all workers'),
         )
 
         for worker_obj in self.worker_list:
@@ -337,7 +346,7 @@ class DownloadManager(threading.Thread):
         # Join and collect
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
-            'Manager:   Join and collect threads',
+            manager_string + _('Join and collect threads'),
         )
 
         for worker_obj in self.worker_list:
@@ -345,18 +354,27 @@ class DownloadManager(threading.Thread):
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
-            'Manager:   Operation complete',
+            manager_string + _('Operation complete'),
         )
 
         # Set the stop time
         self.stop_time = int(time.time())
 
-        # Tell the Progress Tab to display any remaining download statistics
-        #   immediately
-        GObject.timeout_add(
-            0,
-            self.app_obj.main_win_obj.progress_list_display_dl_stats,
-        )
+        # Tell the Progress List (or Classic Progress List) to display any
+        #   remaining download statistics immediately
+        if self.operation_type != 'classic':
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.progress_list_display_dl_stats,
+            )
+
+        else:
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.classic_mode_tab_display_dl_stats,
+            )
 
         # Tell the Output Tab to display any remaining messages immediately
         GObject.timeout_add(
@@ -381,13 +399,15 @@ class DownloadManager(threading.Thread):
         # Let the timer run for a few more seconds to allow those videos to be
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
-        if self.operation_type != 'sim':
+        if self.operation_type != 'sim' and self.operation_type != 'classic':
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_halt_timer,
             )
         else:
-            # If we're only simulating downloads, we don't need to wait at all
+            # If we're only simulating downloads, and for download operations
+            #   launched from the Classic Mode Tab, we don't need to wait at
+            #   all
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_finished,
@@ -414,7 +434,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 417 change_worker_count')
+            utils.debug_time('dld 437 change_worker_count')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -489,7 +509,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 492 check_master_slave')
+            utils.debug_time('dld 512 check_master_slave')
 
         for worker_obj in self.worker_list:
 
@@ -519,7 +539,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 522 check_workers_all_finished')
+            utils.debug_time('dld 542 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -542,7 +562,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 545 get_available_worker')
+            utils.debug_time('dld 565 get_available_worker')
 
         for worker_obj in self.worker_list:
             if worker_obj.available_flag:
@@ -573,11 +593,37 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 576 mark_video_as_doomed')
+            utils.debug_time('dld 596 mark_video_as_doomed')
 
         if isinstance(video_obj, media.Video) \
         and not video_obj in self.doomed_video_list:
             self.doomed_video_list.append(video_obj)
+
+
+    def nudge_progress_bar (self):
+
+        """Can be called by anything.
+
+        Called by self.run() during the download operation.
+
+        Also called by code in other files, just after that code adds a new
+        media data object to our download list.
+
+        Updates the main window's progress bar.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 616 nudge_progress_bar')
+
+        if self.current_item_obj:
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.update_progress_bar,
+                self.current_item_obj.media_data_obj.name,
+                self.job_count,
+                    len(self.download_list_obj.download_item_list),
+            )
 
 
     def register_video(self):
@@ -592,7 +638,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 595 register_video')
+            utils.debug_time('dld 641 register_video')
 
         self.total_video_count += 1
 
@@ -616,7 +662,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 619 register_video_size')
+            utils.debug_time('dld 665 register_video_size')
 
         # (In case the filesystem didn't detect the file size, for whatever
         #   reason, we'll check for a None value)
@@ -648,7 +694,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 651 remove_worker')
+            utils.debug_time('dld 697 remove_worker')
 
         new_list = []
 
@@ -675,7 +721,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 678 stop_download_operation')
+            utils.debug_time('dld 724 stop_download_operation')
 
         self.running_flag = False
 
@@ -691,7 +737,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 694 stop_download_operation_soon')
+            utils.debug_time('dld 740 stop_download_operation_soon')
 
         self.download_list_obj.prevent_fetch_new_items()
         for worker_obj in self.worker_list:
@@ -710,8 +756,12 @@ class DownloadWorker(threading.Thread):
     which handles a single download.
 
     The download manager runs on a loop, looking for available workers and,
-    when one is found, assigns them something to download. The worker
-    completes that download and then waits for another assignment.
+    when one is found, assigns them something to download.
+
+    After the download is completely, the worker optionally checks a channel's
+    or a playlist's RSS feed, looking for livestreams.
+
+    When all tasks are completed, the worker waits for another assignment.
 
     Args:
 
@@ -727,7 +777,7 @@ class DownloadWorker(threading.Thread):
     def __init__(self, download_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 730 __init__')
+            utils.debug_time('dld 780 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -737,8 +787,11 @@ class DownloadWorker(threading.Thread):
         self.download_manager_obj = download_manager_obj
         # The downloads.DownloadItem object for the current job
         self.download_item_obj = None
-        # The downloads.VideoDownloader object for the current job
+        # The downloads.VideoDownloader object for the current job (if it
+        #   exists)
         self.video_downloader_obj = None
+        # The downloads.JSONFetcher object for the current job (if it exists)
+        self.json_fetcher_obj = None
         # The options.OptionsManager object for the current job
         self.options_manager_obj = None
 
@@ -788,7 +841,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 791 run')
+            utils.debug_time('dld 844 run')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -799,6 +852,9 @@ class DownloadWorker(threading.Thread):
 
             # If this worker is currently assigned a job...
             if not self.available_flag:
+
+                # Import the media data object (for convenience)
+                media_data_obj = self.download_item_obj.media_data_obj
 
                 # youtube-dl-gui used a single instance of a
                 #   YoutubeDLDownloader object for each instance of a Worker
@@ -815,24 +871,13 @@ class DownloadWorker(threading.Thread):
                 # Send a message to the Output Tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
                     0,
-                    'Thread #' + str(self.worker_id) \
-                    + ': Assigned job \'' \
+                    _('Thread #') + str(self.worker_id) \
+                    + ': ' + _('Assigned job:') + ' \'' \
                     + self.download_item_obj.media_data_obj.name + '\'',
                 )
 
                 # Then execute the assigned job
                 return_code = self.video_downloader_obj.do_download()
-
-                # Send a message to the Output Tab's summary page
-                app_obj.main_win_obj.output_tab_write_stdout(
-                    0,
-                    'Thread #' + str(self.worker_id) \
-                    + ': Job complete \'' \
-                    + self.download_item_obj.media_data_obj.name + '\'',
-                )
-
-                # Import the media data object (for convenience)
-                media_data_obj = self.download_item_obj.media_data_obj
 
                 # If the downloads.VideoDownloader object collected any
                 #   youtube-dl error/warning messages, display them in the
@@ -849,7 +894,8 @@ class DownloadWorker(threading.Thread):
                 #   visible
                 # Do that now (but don't if mainwin.ComplexCatalogueItem
                 #   objects aren't being used in the Video Catalogue)
-                if return_code == VideoDownloader.ERROR \
+                if self.download_manager_obj.operation_type != 'classic' \
+                and return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
                 and app_obj.catalogue_mode != 'simple_hide_parent' \
                 and app_obj.catalogue_mode != 'simple_show_parent':
@@ -862,14 +908,43 @@ class DownloadWorker(threading.Thread):
                 # Call the destructor function of VideoDownloader object
                 self.video_downloader_obj.close()
 
+                # If possible, check the channel/playlist RSS feed for videos
+                #   we don't already have, and mark them as livestreams
+                if self.running_flag \
+                and mainapp.HAVE_FEEDPARSER_FLAG \
+                and app_obj.enable_livestreams_flag \
+                and (
+                    isinstance(media_data_obj, media.Channel) \
+                    or isinstance(media_data_obj, media.Playlist)
+                ) and media_data_obj.child_list \
+                and media_data_obj.rss:
+
+                    # Send a message to the Output Tab's summary page
+                    app_obj.main_win_obj.output_tab_write_stdout(
+                        0,
+                        _('Thread #') + str(self.worker_id) \
+                        + ': ' + _('Checking RSS feed'),
+                    )
+
+                    # Check the RSS feed for the media data object
+                    self.check_rss(media_data_obj)
+
+                # Send a message to the Output Tab's summary page
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    _('Thread #') + str(self.worker_id) \
+                    + ': ' + _('Job complete') + ' \'' \
+                    + self.download_item_obj.media_data_obj.name + '\'',
+                )
+
                 # This worker is now available for a new job
                 self.available_flag = True
 
                 # Send a message to the Output Tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
                     0,
-                    'Thread #' + str(self.worker_id) \
-                    + ': Worker now available again',
+                    _('Thread #') + str(self.worker_id) \
+                    + ': ' + _('Worker now available again'),
                 )
 
                 # During custom downloads, apply a delay if one has been
@@ -887,8 +962,6 @@ class DownloadWorker(threading.Thread):
                     else:
                         delay = int(app_obj.custom_dl_delay_max * 60)
 
-                    print('958 delay')
-                    print(delay)
                     time.sleep(delay)
 
             # Pause a moment, before the next iteration of the loop (don't want
@@ -910,11 +983,177 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 913 close')
+            utils.debug_time('dld 986 close')
 
         self.running_flag = False
+
         if self.video_downloader_obj:
             self.video_downloader_obj.stop()
+
+        if self.json_fetcher_obj:
+            self.json_fetcher_obj.stop()
+
+
+    def check_rss(self, container_obj):
+
+        """Called by self.run(), after the VideoDownloader has finished.
+
+        If possible, check the channel/playlist RSS feed for videos we don't
+        already have, and mark them as livestreams.
+
+        This process works on YouTube (each media.Channel and media.Playlist
+        has the URL for its RSS feed set automatically).
+
+        It might work on other compatible websites (the user must set the
+        channel's/playlist's RSS feed manually).
+
+        On a compatible website, when youtube-dl fetches a list of videos in
+        the channel/playlist, it won't fetch any that are livestreams (either
+        waiting to start, or currently broadcasting).
+
+        However, livestreams (both waiting and broadcasting) do appear in the
+        RSS feed. We can compare the RSS feed against the channel's/playlist's
+        list of child media.Video objects (which has just been updated), in
+        order to detect livestreams (with reasonably good accuracy).
+
+        Args:
+
+            container_obj (media.Channel, media.Playlist): The channel or
+                playlist which the VideoDownloader has just checked/downloaded.
+                (This function is not called for media.Folders or for
+                individual media.Video objects)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1029 check_rss')
+
+        app_obj = self.download_manager_obj.app_obj
+
+        # Livestreams are usually the first entry in the RSS feed, having not
+        #   started yet (or being currently broadcast), but there's no
+        #   gurantee of that
+        # In addition, although RSS feeds are normally quite short (with
+        #    dozens of entries, not thousands), there is no guarantee of this
+        # mainapp.TartubeApp.livestream_max_days specifies how many days of
+        #   videos we should check, looking for livestreams
+        # Implement this by stopping when an entry in the RSS feed matches a
+        #   particular media.Video object
+        # (If we can't decide which video to match, the default to searching
+        #   the whole RSS feed)
+        time_limit_video_obj = None
+        check_source_list = []
+
+        if app_obj.livestream_max_days:
+
+            # Stop checking the RSS feed at the first matching video that's
+            #   older than the specified time
+            # (Of course, the 'first video' must not itself be a livestream)
+            older_time = int(
+                time.time() - (app_obj.livestream_max_days * 86400),
+            )
+
+            for child_obj in container_obj.child_list:
+                if child_obj.source:
+
+                    # An entry in the RSS feed is a new livestream, if it
+                    #   doesn't match one of the videos in this list
+                    # (We don't need to check each RSS entry against the
+                    #   entire contents of the channel/playlist - which might
+                    #   be thousands of videos - just those up to the time
+                    #   limit)
+                    check_source_list.append(child_obj.source)
+
+                    # The time limit will apply to this video, when found
+                    if not child_obj.live_mode \
+                    and child_obj.upload_time is not None \
+                    and child_obj.upload_time < older_time:
+                        time_limit_video_obj = child_obj
+                        break
+
+        else:
+
+            # Stop checking the RSS feed at the first matching video
+            for child_obj in container_obj.child_list:
+                if child_obj.source:
+
+                    check_source_list.append(child_obj.source)
+                    if not child_obj.live_mode:
+                        time_limit_video_obj = child_obj
+                        break
+
+        # Fetch the RSS feed
+        try:
+            feed_dict = feedparser.parse(container_obj.rss)
+        except:
+            return
+
+        # Check each entry in the feed, stopping at the first one which matches
+        #   the selected media.Video object
+        for entry_dict in feed_dict['entries']:
+
+            if time_limit_video_obj \
+            and entry_dict['link'] == time_limit_video_obj.source:
+
+                # Found a matching media.Video object, so we can stop looking
+                #   for livestreams now
+                break
+
+            elif not entry_dict['link'] in check_source_list:
+
+                # New livestream detected. Create a new JSONFetcher object to
+                #   fetch its JSON data
+                # If the data is received, the livestream is live. If the data
+                #   is not received, the livestream is waiting to go live
+                self.json_fetcher_obj = JSONFetcher(
+                    self.download_manager_obj,
+                    self,
+                    container_obj,
+                    entry_dict,
+                )
+
+                # Then execute the assigned job
+                self.json_fetcher_obj.do_fetch()
+
+                # Call the destructor function of the JSONFetcher object
+                self.json_fetcher_obj.close()
+                self.json_fetcher_obj = None
+
+#       # v2.0.063 removed - I think the code in downloads.LivestreamManager
+#       #   and MiniJSONFetcher handles this acceptably
+#       # If the livestreamer cancels a livestream, before it goes live, our
+#       #   only clue is that the video no longer appears in the RSS feed
+#       # Therefore, we're forced (reluctantly) to remove any media.Video
+#       #   object which is marked as a livestream, but which is not in the
+#       #   RSS feed
+#       # Compile a dictionary of media.Video objects marked as waiting
+#       #   livestreams, whose parent channel/playlist is container_obj
+#       # (This is hopefully cheaper than checking every media.Video object
+#       #   in container_obj, which might comprise thousands of videos)
+#       waiting_dict = {}
+#       # (The 1 argument specifies that we only want media.Video.live_mode = 1
+#       #   videos)
+#       video_list = container_obj.get_livestreams(app_obj, 1)
+#       for this_obj in video_list:
+#           if this_obj.source:
+#               waiting_dict[this_obj.source] = this_obj
+#
+#       # Check that dictionary against the feed
+#       if waiting_dict:
+#           for entry_dict in feed_dict['entries']:
+#               if entry_dict['link'] in waiting_dict:
+#                   del waiting_dict[entry_dict['link']]
+
+#       # Delete any livestreams not found in the feed
+#       for delete_obj in waiting_dict.values():
+
+#           GObject.timeout_add(
+#               0,
+#               self.app_obj.delete_video,
+#               delete_obj,
+#               True,           # Delete files
+#           )
+        pass
 
 
     def prepare_download(self, download_item_obj):
@@ -934,13 +1173,20 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 937 prepare_download')
+            utils.debug_time('dld 1176 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
+
+        if self.download_manager_obj.operation_type == 'classic':
+            dl_classic_flag = True
+        else:
+            dl_classic_flag = False
+
         self.options_list = self.download_manager_obj.options_parser_obj.parse(
             download_item_obj.media_data_obj,
             self.options_manager_obj,
+            dl_classic_flag,
         )
 
         self.available_flag = False
@@ -951,7 +1197,7 @@ class DownloadWorker(threading.Thread):
         """Called by downloads.DownloadManager.change_worker_count()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 954 set_doomed_flag')
+            utils.debug_time('dld 1200 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -983,16 +1229,29 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 986 data_callback')
+            utils.debug_time('dld 1232 data_callback')
 
         app_obj = self.download_manager_obj.app_obj
-        GObject.timeout_add(
-            0,
-            app_obj.main_win_obj.progress_list_receive_dl_stats,
-            self.download_item_obj,
-            dl_stat_dict,
-            last_flag,
-        )
+
+        if self.download_manager_obj.operation_type != 'classic':
+
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.progress_list_receive_dl_stats,
+                self.download_item_obj,
+                dl_stat_dict,
+                last_flag,
+            )
+
+        else:
+
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.classic_mode_tab_receive_dl_stats,
+                self.download_item_obj,
+                dl_stat_dict,
+                last_flag,
+            )
 
 
 class DownloadList(object):
@@ -1019,13 +1278,17 @@ class DownloadList(object):
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
             additional options applied (specified by IVs like
-            mainapp.TartubeApp.custom_dl_by_video_flag)
+            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
+            open, and the user has clicked the download button there
 
         media_data_list (list): List of media.Video, media.Channel,
             media.Playlist and/or media.Folder objects. If not an empty list,
             only those media data objects and their descendants are checked/
             downloaded. If an empty list, all media data objects are checked/
-            downloaded
+            downloaded. If operation_type is 'classic', then the
+            media_data_list contains a list of dummy media.Video objects from a
+            previous call to this function. If an empty list, all dummy
+            media.Video objects are downloaded
 
     """
 
@@ -1036,7 +1299,7 @@ class DownloadList(object):
     def __init__(self, app_obj, operation_type, media_data_list):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1039 __init__')
+            utils.debug_time('dld 1302 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1049,7 +1312,9 @@ class DownloadList(object):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
+        #   the Classic Mode Tab is open, and the user has clicked the download
+        #   button there
         self.operation_type = operation_type
         # Flag set to True in a call to self.prevent_fetch_new_items(), in
         #   which case subsequent calls to self.fetch_next_item() return
@@ -1062,6 +1327,8 @@ class DownloadList(object):
 
         # An ordered list of downloads.DownloadItem items, one for each
         #   media.Video, media.Channel, media.Playlist or media.Folder object
+        #   (including dummy media.Video objects used by download operations
+        #   launched from the Classic Mode Tab)
         # This list stores each item's .item_id
         self.download_item_list = []
         # Corresponding dictionary of downloads.DownloadItem items for quick
@@ -1074,49 +1341,90 @@ class DownloadList(object):
         # Code
         # ----
 
-        # For each media data object to be downloaded, created a
-        #   downloads.DownloadItem object, and update the IVs above
-        if not media_data_list:
+        if self.operation_type != 'classic':
 
-            # Use all media data objects
-            for dbid in self.app_obj.media_top_level_list:
-                obj = self.app_obj.media_reg_dict[dbid]
-                self.create_item(obj)
+            # For each media data object to be downloaded, create a
+            #   downloads.DownloadItem object, and update the IVs above
+            if not media_data_list:
+
+                # Use all media data objects
+                for dbid in self.app_obj.media_top_level_list:
+                    obj = self.app_obj.media_reg_dict[dbid]
+                    self.create_item(obj)
+
+            else:
+
+                for media_data_obj in media_data_list:
+
+                    if isinstance(media_data_obj, media.Folder) \
+                    and media_data_obj.priv_flag:
+
+                        # Videos in a private folder's .child_list can't be
+                        #   downloaded (since they are also a child of a
+                        #   channel, playlist or a public folder)
+                        GObject.timeout_add(
+                            0,
+                            app_obj.system_error,
+                            301,
+                            _('Cannot download videos in a private folder'),
+                        )
+
+                    else:
+
+                        # Use the specified media data object. The True value
+                        #   tells self.create_item() to download
+                        #   media_data_obj, even if it is a video in a channel
+                        #   or a playlist (which otherwise would be handled by
+                        #   downloading the channel/playlist)
+                        self.create_item(media_data_obj, True)
+
+            # Some media data objects have an alternate download destination,
+            #   for example, a playlist ('slave') might download its videos
+            #   into the directory used by a channel ('master')
+            # This can increase the length of the operation, because a 'slave'
+            #   won't start until its 'master' is finished
+            # Make sure all designated 'masters' are handled before 'slaves' (a
+            #   media data object can't be both a master and a slave)
+            self.reorder_master_slave()
 
         else:
 
-            for media_data_obj in media_data_list:
+            # The download operation was launched from the Classic Mode Tab.
+            #   Each URL to be downloaded is represented by a dummy media.Video
+            #   object (one which is not in the media data registry)
+            main_win_obj = self.app_obj.main_win_obj
 
-                if isinstance(media_data_obj, media.Folder) \
-                and media_data_obj.priv_flag:
+            # The user may have rearranged rows in the Classic Mode Tab, so
+            #   get a list of (all) dummy media.Videos in the rearranged order
+            # (It should be safe to assume that the Gtk.Liststore contains
+            #   exactly the same number of rows, as dummy media.Video objects
+            #   in mainwin.MainWin.classic_media_dict)
+            dbid_list = []
+            for row in main_win_obj.classic_progress_liststore:
+                dbid_list.append(row[0])
 
-                    # Videos in a private folder's .child_list can't be
-                    #   downloaded (since they are also a child of a channel,
-                    #   playlist or a public folder)
-                    GObject.timeout_add(
-                        0,
-                        app_obj.system_error,
-                        301,
-                        'Cannot download videos in a private folder',
-                    )
+            # Compile a list of dummy media.Video objects in the correct order
+            obj_list = []
+            if not media_data_list:
 
-                else:
+                # Use all of them
+                for dbid in dbid_list:
+                    obj_list.append(main_win_obj.classic_media_dict[dbid])
 
-                    # Use the specified media data object. The True value tells
-                    #   self.create_item() to download media_data_obj, even if
-                    #   it is a video in a channel or a playlist (which
-                    #   otherwise would be handled by downloading the channel/
-                    #   playlist)
-                    self.create_item(media_data_obj, True)
+            else:
 
-        # Some media data objects have an alternate download destination, for
-        #   example, a playlist ('slave') might download its videos into the
-        #   directory used by a channel ('master')
-        # This can increase the length of the operation, because a 'slave'
-        #   won't start until its 'master' is finished
-        # Make sure all designated 'masters' are handled before 'slaves' (a
-        #   media data object can't be both a master and a slave)
-        self.reorder_master_slave()
+                # Use a subset of them
+                for dbid in dbid_list:
+
+                    dummy_obj = main_win_obj.classic_media_dict[dbid]
+                    if dummy_obj in media_data_list:
+                        obj_list.append(dummy_obj)
+
+
+            # For each dummy media.Video object, create a
+            #   downloads.DownloadItem object, and update the IVs above
+            for dummy_obj in obj_list:
+                self.create_dummy_item(dummy_obj)
 
 
     # Public class methods
@@ -1142,16 +1450,17 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1145 change_item_stage')
+            utils.debug_time('dld 1453 change_item_stage')
 
         self.download_item_dict[item_id].stage = new_stage
 
 
     def create_item(self, media_data_obj, init_flag=False):
 
-        """Called by self.__init__(),
-        mainapp.TartubeApp.download_watch_videos() or by this function
-        recursively.
+        """Called initially by self.__init__() (or by many other functions,
+        for example in mainapp.TartubeApp.
+
+        Subsequently called by this function recursively.
 
         Creates a downloads.DownloadItem object for media data objects in the
         media data registry.
@@ -1182,10 +1491,10 @@ class DownloadList(object):
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): A media data object
 
-            init_flag (bool): True when called by self.__init__, and False when
-                called by this function recursively. If True and media_data_obj
-                is a media.Video object, we download it even if its parent is a
-                channel or a playlist
+            init_flag (bool): False when called by this function recursively,
+                True when called (for the first time) by anything else. If True
+                and media_data_obj is a media.Video object, we download it even
+                if its parent is a channel or a playlist
 
         Returns:
 
@@ -1196,7 +1505,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1199 create_item')
+            utils.debug_time('dld 1508 create_item')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -1223,6 +1532,8 @@ class DownloadList(object):
         #   their channel/playlist, if allowed)
         # Don't download videos in a folder, if this is a simulated download,
         #   and the video has already been checked
+        # (Exception: do download videos in a folder if they're marked as
+        #   livestreams, in case the livestream has finished)
         if isinstance(media_data_obj, media.Video):
 
             if media_data_obj.dl_flag \
@@ -1241,6 +1552,7 @@ class DownloadList(object):
             and self.operation_type == 'sim' \
             and self.app_obj.operation_sim_shortcut_flag \
             and media_data_obj.file_name \
+            and not media_data_obj.live_mode \
             and utils.find_thumbnail(self.app_obj, media_data_obj):
                 return None
 
@@ -1300,11 +1612,51 @@ class DownloadList(object):
             self.download_item_dict[download_item_obj.item_id] \
             = download_item_obj
 
-        # If the media data object has children, call this function recursively
+        # If a media.Folder object has children, call this function recursively
         #   for each of them
-        if not isinstance(media_data_obj, media.Video):
+        if isinstance(media_data_obj, media.Folder):
             for child_obj in media_data_obj.child_list:
                 self.create_item(child_obj)
+
+        # Procedure complete
+        return download_item_obj
+
+
+    def create_dummy_item(self, media_data_obj):
+
+        """Called by self.__init__() only, when the download operation was
+        launched from the Classic Mode Tab (this function is not called
+        recursively).
+
+        Creates a downloads.DownloadItem object for each dummy media.Video
+        object.
+
+        Adds the resulting downloads.DownloadItem object to this object's IVs.
+
+        Args:
+
+            media_data_obj (media.Video): A media data object
+
+        Returns:
+
+            The downloads.DownloadItem object created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1647 create_dummy_item')
+
+        # Create a new download.DownloadItem object...
+        self.download_item_count += 1
+        download_item_obj = DownloadItem(
+            media_data_obj.dbid,
+            media_data_obj,
+            self.app_obj.general_options_obj,
+        )
+
+        # ...and add it to our list
+        self.download_item_list.append(download_item_obj.item_id)
+        self.download_item_dict[download_item_obj.item_id] = download_item_obj
 
         # Procedure complete
         return download_item_obj
@@ -1325,7 +1677,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1328 fetch_next_item')
+            utils.debug_time('dld 1680 fetch_next_item')
 
         if not self.prevent_fetch_flag:
 
@@ -1357,7 +1709,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1360 move_item_to_bottom')
+            utils.debug_time('dld 1712 move_item_to_bottom')
 
         # Move the item to the bottom (end) of the list
         if download_item_obj is None \
@@ -1388,7 +1740,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1391 move_item_to_top')
+            utils.debug_time('dld 1743 move_item_to_top')
 
         # Move the item to the top (beginning) of the list
         if download_item_obj is None \
@@ -1414,7 +1766,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1417 prevent_fetch_new_items')
+            utils.debug_time('dld 1769 prevent_fetch_new_items')
 
         self.prevent_fetch_flag = True
 
@@ -1439,7 +1791,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1442 reorder_master_slave')
+            utils.debug_time('dld 1794 reorder_master_slave')
 
         master_list = []
         other_list = []
@@ -1473,7 +1825,9 @@ class DownloadItem(object):
             used to give each one a unique ID
 
         media_data_obj (media.Video, media.Channel, media.Playlist,
-            media.Folder): A media data object to be downloaded
+            media.Folder): The media data object to be downloaded. When the
+            download operation was launched from the Classic Mode Tab, a dummy
+            media.Video object
 
         options_manager_obj (options.OptionsManager): The object which
             specifies download options for the media data object
@@ -1487,11 +1841,12 @@ class DownloadItem(object):
     def __init__(self, item_id, media_data_obj, options_manager_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1490 __init__')
+            utils.debug_time('dld 1844 __init__')
 
         # IV list - class objects
         # -----------------------
-        # The media data object to be downloaded
+        # The media data object to be downloaded. When the download operation
+        #   was launched from the Classic Mode Tab, a dummy media.Video object
         self.media_data_obj = media_data_obj
         # The object which specifies download options for the media data object
         self.options_manager_obj = options_manager_obj
@@ -1525,10 +1880,10 @@ class VideoDownloader(object):
 
     Args:
 
-        download_manager_obj (downloads.DownloadManager) - The download
-            manager object handling the entire download operation
+        download_manager_obj (downloads.DownloadManager): The download manager
+            object handling the entire download operation
 
-        download_worker_obj (downloads.DownloadWorker) - The parent download
+        download_worker_obj (downloads.DownloadWorker): The parent download
             worker object. The download manager uses multiple workers to
             implement simultaneous downloads. The download manager checks for
             free workers and, when it finds one, assigns it a
@@ -1537,7 +1892,7 @@ class VideoDownloader(object):
             interface with youtube-dl, and waits for this object to return a
             return code
 
-        download_item_obj (downloads.DownloadItem) - The download item object
+        download_item_obj (downloads.DownloadItem): The download item object
             describing the URL from which youtube-dl should download video(s)
 
     Warnings:
@@ -1579,7 +1934,7 @@ class VideoDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1582 __init__')
+            utils.debug_time('dld 1937 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -1625,7 +1980,10 @@ class VideoDownloader(object):
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
-        self.dl_sim_flag = None
+        self.dl_sim_flag = False
+        # Flag set to True if this download operation was launched from the
+        #   Classic Mode Tab, False if not (set below)
+        self.dl_classic_flag = False
 
         # Flag set to True by a call from any function to self.stop_soon()
         # After being set to True, this VideoDownloader should give up after
@@ -1718,25 +2076,35 @@ class VideoDownloader(object):
         #   download
         media_data_obj = self.download_item_obj.media_data_obj
 
-        # All media data objects can be marked as simulate downloads only. The
-        #   setting applies not just to the media data object, but all of its
+        # All media data objects can be marked as simulate downloads only
+        #   (except when the download operation was launched from the Classic
+        #   Mode Tab)
+        # The setting applies not just to the media data object, but all of its
         #   descendants
-        if self.download_manager_obj.operation_type == 'sim':
-            dl_sim_flag = True
-        else:
-            dl_sim_flag = media_data_obj.dl_sim_flag
-            parent_obj = media_data_obj.parent_obj
+        if self.download_manager_obj.operation_type != 'classic':
 
-            while not dl_sim_flag and parent_obj is not None:
-                dl_sim_flag = parent_obj.dl_sim_flag
-                parent_obj = parent_obj.parent_obj
+            if self.download_manager_obj.operation_type == 'sim':
+                dl_sim_flag = True
+            else:
+                dl_sim_flag = media_data_obj.dl_sim_flag
+                parent_obj = media_data_obj.parent_obj
 
-        if dl_sim_flag:
-            self.dl_sim_flag = True
-            self.video_num = 0
-            self.video_total = 0
+                while not dl_sim_flag and parent_obj is not None:
+                    dl_sim_flag = parent_obj.dl_sim_flag
+                    parent_obj = parent_obj.parent_obj
+
+            if dl_sim_flag:
+                self.dl_sim_flag = True
+                self.video_num = 0
+                self.video_total = 0
+            else:
+                self.dl_sim_flag = False
+                self.video_num = 1
+                self.video_total = 1
+
         else:
-            self.dl_sim_flag = False
+
+            self.dl_classic_flag = True
             self.video_num = 1
             self.video_total = 1
 
@@ -1760,7 +2128,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1763 do_download')
+            utils.debug_time('dld 2131 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1769,26 +2137,32 @@ class VideoDownloader(object):
         #   any problems
         self.return_code = self.OK
 
-        # Reset the errors/warnings stored in the media data object, the last
-        #   time it was checked/downloaded
-        self.download_item_obj.media_data_obj.reset_error_warning()
+        if not self.dl_classic_flag:
 
-        # If two channels/playlists/folders share a download destination, we
-        #   don't want to download both of them at the same time
-        # If this media data obj shares a download destination with another
-        #   downloads.DownloadWorker, wait until that download has finished
-        #   before starting this one
-        if not isinstance(self.download_item_obj.media_data_obj, media.Video):
+            # Reset the errors/warnings stored in the media data object, the
+            #   last time it was checked/downloaded
+            self.download_item_obj.media_data_obj.reset_error_warning()
 
-            while self.download_manager_obj.check_master_slave(
+            # If two channels/playlists/folders share a download destination,
+            #   we don't want to download both of them at the same time
+            # If this media data obj shares a download destination with another
+            #   downloads.DownloadWorker, wait until that download has finished
+            #   before starting this one
+            if not isinstance(
                 self.download_item_obj.media_data_obj,
+                media.Video,
             ):
-                time.sleep(self.long_sleep_time)
+                while self.download_manager_obj.check_master_slave(
+                    self.download_item_obj.media_data_obj,
+                ):
+                    time.sleep(self.long_sleep_time)
 
         # Prepare a system command...
         divert_mode = None
-        if self.download_manager_obj.operation_type == 'custom' \
+        if not self.dl_classic_flag \
+        and self.download_manager_obj.operation_type == 'custom' \
         and isinstance(self.download_item_obj.media_data_obj, media.Video):
+
             divert_mode = app_obj.custom_dl_divert_mode
 
         cmd_list = utils.generate_system_cmd(
@@ -1796,6 +2170,7 @@ class VideoDownloader(object):
             self.download_item_obj.media_data_obj,
             self.download_worker_obj.options_list,
             self.dl_sim_flag,
+            self.dl_classic_flag,
             divert_mode,
         )
 
@@ -1915,7 +2290,6 @@ class VideoDownloader(object):
             if self.stop_now_flag:
                 self.stop()
 
-
         # The child process has finished
         while not self.stderr_queue.empty():
 
@@ -1960,7 +2334,7 @@ class VideoDownloader(object):
         if self.child_process is None:
             self.set_return_code(self.ERROR)
             self.download_item_obj.media_data_obj.set_error(
-                'Download did not start',
+                _('Download did not start'),
             )
 
         elif self.child_process.returncode > 0:
@@ -1968,7 +2342,7 @@ class VideoDownloader(object):
 
             if not app_obj.ignore_child_process_exit_flag:
                 self.download_item_obj.media_data_obj.set_error(
-                    'Child process exited with non-zero code: {}'.format(
+                    _('Child process exited with non-zero code: {}').format(
                         self.child_process.returncode,
                     )
                 )
@@ -2010,8 +2384,14 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2013 check_dl_is_correct_type')
+            utils.debug_time('dld 2387 check_dl_is_correct_type')
 
+        # Special case: if the download operation was launched from the
+        #   Classic Mode Tab, there is no need to do anything
+        if self.dl_classic_flag:
+            return True
+
+        # Otherwise, import IVs (for convenience)
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
 
@@ -2030,9 +2410,10 @@ class VideoDownloader(object):
                 # Stop downloading this URL
                 self.stop()
                 media_data_obj.set_error(
-                    'The video \'' + media_data_obj.name \
-                    + '\' has a source URL that points to a channel or a' \
-                    + ' playlist, not a video',
+                    '\'' + media_data_obj.name + '\' ' + _(
+                        'This video has a URL that points to a channel or a' \
+                        + ' playlist, not a video',
+                    ),
                 )
 
                 # Don't allow self.confirm_sim_video() to be called
@@ -2072,7 +2453,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2075 close')
+            utils.debug_time('dld 2456 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -2101,9 +2482,24 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2104 confirm_new_video')
+            utils.debug_time('dld 2485 confirm_new_video')
 
-        if not self.video_num in self.video_check_dict:
+        # Special case: if the download operation was launched from the
+        #   Classic Mode Tab, then we only need to update the dummy
+        #   media.Video object
+        if self.dl_classic_flag:
+
+            media_data_obj = self.download_item_obj.media_data_obj
+            media_data_obj.set_dummy_path(
+                os.path.abspath(os.path.join(dir_path, filename + extension)),
+            )
+
+            # Register the download with DownloadManager, so that download
+            #   limits can be applied, if required
+            self.download_manager_obj.register_video()
+
+        # All other cases
+        elif not self.video_num in self.video_check_dict:
 
             app_obj = self.download_manager_obj.app_obj
             self.video_check_dict[self.video_num] = filename
@@ -2182,13 +2578,27 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2185 confirm_old_video')
+            utils.debug_time('dld 2581 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
 
-        if isinstance(media_data_obj, media.Video):
+        # Special case: if the download operation was launched from the
+        #   Classic Mode Tab, then we only need to update the dummy
+        #   media.Video object
+        if self.dl_classic_flag:
+
+            media_data_obj.set_dummy_path(
+                os.path.abspath(os.path.join(dir_path, filename, extension)),
+            )
+
+            # Register the download with DownloadManager, so that download
+            #   limits can be applied, if required
+            self.download_manager_obj.register_video()
+
+        # All other cases
+        elif isinstance(media_data_obj, media.Video):
 
             if not media_data_obj.dl_flag:
 
@@ -2302,7 +2712,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2305 confirm_sim_video')
+            utils.debug_time('dld 2715 confirm_sim_video')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -2366,6 +2776,14 @@ class VideoDownloader(object):
             playlist_index = json_dict['playlist_index']
         else:
             playlist_index = None
+
+        if 'is_live' in json_dict:
+            if json_dict['is_live']:
+                live_flag = True
+            else:
+                live_flag = False
+        else:
+            live_flag = False
 
         # Does an existing media.Video object match this video?
         media_data_obj = self.download_item_obj.media_data_obj
@@ -2472,6 +2890,8 @@ class VideoDownloader(object):
                 app_obj.fixed_bookmark_folder.sort_children()
             if video_obj.fav_flag:
                 app_obj.fixed_fav_folder.sort_children()
+            if video_obj.live_mode:
+                app_obj.fixed_live_folder.sort_children()
             if video_obj.new_flag:
                 app_obj.fixed_new_folder.sort_children()
             if video_obj.waiting_flag:
@@ -2499,6 +2919,7 @@ class VideoDownloader(object):
                     stop_flag = True
 
             else:
+
                 # This video must be displayed in the Results List, and counts
                 #   towards the limit (if any) specified by
                 #   mainapp.TartubeApp.autostop_videos_value
@@ -2541,6 +2962,28 @@ class VideoDownloader(object):
             if isinstance(video_obj.parent_obj, media.Channel) \
             or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(playlist_index)
+
+        # Deal with livestreams
+        if video_obj.live_mode != 2 and live_flag:
+
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_live,
+                video_obj,
+                2,                  # Livestream is broadcasting
+                True,               # Don't update Video Index yet
+                True,               # Don't update Video Catalogue yet
+            )
+
+        elif video_obj.live_mode != 0 and not live_flag:
+
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_live,
+                0,                  # Livestream has finished
+                True,               # Don't update Video Index yet
+                True,               # Don't update Video Catalogue yet
+            )
 
         # Deal with the video description, JSON data and thumbnail, according
         #   to the settings in options.OptionsManager
@@ -2644,7 +3087,7 @@ class VideoDownloader(object):
         if (app_obj.ytdl_output_stdout_flag):
 
             msg = '[' + video_obj.parent_obj.name \
-            + '] <Simulated download of \'' + filename + '\'>'
+            + '] <' + _('Simulated download of:') + ' \'' + filename + '\'>'
 
             if (app_obj.ytdl_output_stdout_flag):
                 app_obj.main_win_obj.output_tab_write_stdout(
@@ -2686,7 +3129,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2686 convert_video_to_container')
+            utils.debug_time('dld 3132 convert_video_to_container')
 
         app_obj = self.download_manager_obj.app_obj
         old_video_obj = self.download_item_obj.media_data_obj
@@ -2751,9 +3194,10 @@ class VideoDownloader(object):
             #   stop downloading from this URL
             self.stop()
             media_data_obj.set_error(
-                'The video \'' + media_data_obj.name \
-                + '\' has a source URL that points to a channel or a' \
-                + ' playlist, not a video',
+                '\'' + media_data_obj.name + '\' ' + _(
+                    'This video has a URL that points to a channel or a' \
+                    + ' playlist, not a video',
+                ),
             )
 
         else:
@@ -2785,7 +3229,7 @@ class VideoDownloader(object):
     def create_child_process(self, cmd_list):
 
         """Called by self.do_download() immediately after the call to
-        self.get_system_cmd().
+        utils.generate_system_cmd().
 
         Based on YoutubeDLDownloader._create_process().
 
@@ -2804,7 +3248,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2804 create_child_process')
+            utils.debug_time('dld 3251 create_child_process')
 
         info = preexec = None
         if os.name == 'nt':
@@ -2855,7 +3299,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2855 extract_filename')
+            utils.debug_time('dld 3302 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -2905,7 +3349,10 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2905 extract_stdout_data')
+            utils.debug_time('dld 3352 extract_stdout_data')
+
+        # Import the media data object (for convenience)
+        media_data_obj = self.download_item_obj.media_data_obj
 
         # Initialise the dictionary with default key-value pairs for the main
         #   window to display, to be overwritten (if possible) with new key-
@@ -2986,7 +3433,8 @@ class VideoDownloader(object):
 
                 # If youtube-dl is about to download a channel or playlist into
                 #   a media.Video object, decide what to do to prevent it
-                self.check_dl_is_correct_type()
+                if not self.dl_classic_flag:
+                    self.check_dl_is_correct_type()
 
             # Remove the 'and merged' part of the STDOUT message when using
             #   FFmpeg to merge the formats
@@ -3078,6 +3526,22 @@ class VideoDownloader(object):
 
                 self.confirm_new_video(path, filename, extension)
 
+        elif (
+            isinstance(media_data_obj, media.Channel)
+            and not media_data_obj.rss \
+            and stdout_list[0] == '[youtube:channel]' \
+        ) or (
+            isinstance(media_data_obj, media.Playlist) \
+            and not media_data_obj.rss \
+            and stdout_list[0] == '[youtube:playlist]' \
+            and stdout_list[2] == 'Downloading' \
+            and stdout_list[3] == 'webpage'
+        ):
+            # YouTube only: set the channel/playlist RSS feed, if not already
+            #   set, first removing the final colon that should be there
+            youtube_id = re.sub('\:*$', '', stdout_list[1])
+            media_data_obj.set_rss(youtube_id)
+
         elif stdout_list[0][0] == '{':
 
             # JSON data, the result of a simulated download. Convert to a
@@ -3100,10 +3564,11 @@ class VideoDownloader(object):
 
                     # If youtube-dl is about to download a channel or playlist
                     #   into a media.Video object, decide what to do to prevent
+                    #   that
                     # The called function returns a True/False value,
                     #   specifically to allow this code block to call
                     #   self.confirm_sim_video when required
-                    # v1.3.063 At this poitn, self.video_num can be None or 0
+                    # v1.3.063 At this point, self.video_num can be None or 0
                     #   for a URL that's an individual video, but > 0 for a URL
                     #   that's actually a channel/playlist
                     if not self.video_num \
@@ -3116,6 +3581,22 @@ class VideoDownloader(object):
                     dl_stat_dict['playlist_size'] = self.video_total
 
                     dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
+
+                    # YouTube only: set the channel/playlist RSS feed, if not
+                    #   already set
+                    if isinstance(media_data_obj, media.Channel) \
+                    and not media_data_obj.rss \
+                    and 'channel_id' in json_dict \
+                    and json_dict['channel_id'] \
+                    and utils.is_youtube(media_data_obj.source):
+                        media_data_obj.set_rss(json_dict['channel_id'])
+
+                    elif isinstance(media_data_obj, media.Playlist) \
+                    and not media_data_obj.rss \
+                    and 'playlist_id' in json_dict \
+                    and json_dict['playlist_id'] \
+                    and utils.is_youtube(media_data_obj.source):
+                        media_data_obj.set_rss(json_dict['playlist_id'])
 
         elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
 
@@ -3151,7 +3632,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3151 extract_stdout_status')
+            utils.debug_time('dld 3635 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
@@ -3179,7 +3660,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3179 is_child_process_alive')
+            utils.debug_time('dld 3663 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -3209,7 +3690,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3209 is_debug')
+            utils.debug_time('dld 3693 is_debug')
 
         return stderr.split(' ')[0] == '[debug]'
 
@@ -3233,9 +3714,10 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3233 is_ignorable')
+            utils.debug_time('dld 3717 is_ignorable')
 
         app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
 
         if (
             app_obj.ignore_http_404_error_flag \
@@ -3303,6 +3785,15 @@ class VideoDownloader(object):
                     stderr,
                 )
             )
+        ) or (
+            re.search(r'This video is unavailable', stderr) \
+            and (
+                (
+                    isinstance(media_data_obj, media.Video) \
+                    and media_data_obj.live_mode == 1
+                ) or isinstance(media_data_obj, media.Channel) \
+                or isinstance(media_data_obj, media.Playlist)
+            )
         ):
             # This message is ignorable
             return True
@@ -3342,7 +3833,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3342 is_warning')
+            utils.debug_time('dld 3836 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -3364,7 +3855,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3364 last_data_callback')
+            utils.debug_time('dld 3858 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -3418,7 +3909,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3418 set_return_code')
+            utils.debug_time('dld 3912 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -3429,7 +3920,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3429 set_temp_destination')
+            utils.debug_time('dld 3923 set_temp_destination')
 
         self.temp_path = path
         self.temp_filename = filename
@@ -3441,7 +3932,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3441 reset_temp_destination')
+            utils.debug_time('dld 3935 reset_temp_destination')
 
         self.temp_path = None
         self.temp_filename = None
@@ -3458,7 +3949,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3458 stop')
+            utils.debug_time('dld 3952 stop')
 
         if self.is_child_process_alive():
 
@@ -3488,9 +3979,960 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3488 stop_soon')
+            utils.debug_time('dld 3982 stop_soon')
 
         self.stop_soon_flag = True
+
+
+class JSONFetcher(object):
+
+    """Called by downloads.DownloadWorker.check_rss().
+
+    Python class to download JSON data for a video which is believed to be a
+    livestream, using youtube-dl.
+
+    The video has been found in the channel's/playlist's RSS feed, but not by
+    youtube-dl, when the channel/playlist was last checked downloaded.
+
+    If the data can be downloaded, we assume that the livestream is currently
+    broadcasting. If we get a 'This video is unavailable' error, we assume that
+    the livestream is waiting to start.
+
+    This is the behaviour exhibited on YouTube. It might work on other
+    compatible websites, too, if the user has set manually set the URL for the
+    channel/playlist RSS feed.
+
+    This class creates a system child process and uses the child process to
+    instruct youtube-dl to fetch the JSON data for the video.
+
+    Reads from the child process STDOUT and STDERR, having set up a
+    downloads.PipeReader object to do so in an asynchronous way.
+
+    If one of the two outcomes described above takes place, the media.Video
+    object's IVs are updated to mark it as a livestream.
+
+    Args:
+
+        download_manager_obj (downloads.DownloadManager): The download manager
+            object handling the entire download operation
+
+        download_worker_obj (downloads.DownloadWorker): The parent download
+            worker object. The download manager uses multiple workers to
+            implement simultaneous downloads. The download manager checks for
+            free workers and, when it finds one, assigns it a
+            download.DownloadItem object. When the worker is assigned a
+            download item, it creates a new instance of this object for each
+            detected livestream, and waits for this object to complete its
+            task
+
+        container_obj (media.Channel, media.Playlist): The channel/playlist
+            in which a livestream has been detected
+
+        entry_dict (dict): A dictionary of values generated when reading the
+            RSS feed (provided by the Python feedparser module. The dictionary
+            represents available data for a single livestream video
+
+    Warnings:
+
+        The calling function is responsible for calling the close() method
+        when it's finished with this object, in order for this object to
+        properly close down.
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, download_manager_obj, download_worker_obj, \
+    container_obj, entry_dict):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4051 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # The downloads.DownloadManager object handling the entire download
+        #   operation
+        self.download_manager_obj = download_manager_obj
+        # The parent downloads.DownloadWorker object
+        self.download_worker_obj = download_worker_obj
+        # The media.Channel or media.Playlist object in which a livestream has
+        #   been detected
+        self.container_obj = container_obj
+
+        # This object reads from the child process STDOUT and STDERR in an
+        #   asynchronous way
+        # Standard Python synchronised queue classes
+        self.stdout_queue = queue.Queue()
+        self.stderr_queue = queue.Queue()
+        # The downloads.PipeReader objects created to handle reading from the
+        #   pipes
+        self.stdout_reader = PipeReader(self.stdout_queue)
+        self.stderr_reader = PipeReader(self.stderr_queue)
+
+        # The child process created by self.create_child_process()
+        self.child_process = None
+
+
+        # IV list - other
+        # ---------------
+        # A dictionary of values generated when reading the RSS feed (provided
+        #   by the Python feedparser module. The dictionary represents
+        #   available data for a single livestream video
+        self.entry_dict = entry_dict
+        # Important data is extracted from the entry (below), and added to
+        #   these IVs, ready for use
+        self.video_name = None
+        self.video_source = None
+        self.video_descrip = None
+        self.video_thumb_source = None
+        self.video_upload_time = None
+
+        # The time (in seconds) between iterations of the loop in
+        #   self.do_fetch()
+        self.sleep_time = 0.1
+
+
+        # Code
+        # ----
+        # Initialise IVs from the RSS feed entry for the livestream video
+        #   (saves a bit of time later)
+        if 'title' in entry_dict:
+            self.video_name = entry_dict['title']
+
+        if 'link' in entry_dict:
+            self.video_source = entry_dict['link']
+
+        if 'summary' in entry_dict:
+            self.video_descrip = entry_dict['summary']
+
+        if 'media_thumbnail' in entry_dict \
+        and entry_dict['media_thumbnail'] \
+        and 'url' in entry_dict['media_thumbnail'][0]:
+            self.video_thumb_source = entry_dict['media_thumbnail'][0]['url']
+
+        if 'published_parsed' in entry_dict:
+            # A time.struct_time object; convert to Unix time, to match
+            #   media.Video.upload_time
+            dt_obj = datetime.datetime.fromtimestamp(
+                time.mktime(entry_dict['published_parsed']),
+            )
+
+            self.video_upload_time = int(dt_obj.timestamp())
+
+
+    # Public class methods
+
+
+    def do_fetch(self):
+
+        """Called by downloads.DownloadWorker.check_rss().
+
+        Downloads JSON data for the livestream video whose URL is
+        self.video_source.
+
+        If the data can be downloaded, we assume that the livestream is
+        currently broadcasting. If we get a 'This video is unavailable' error,
+        we assume that the livestream is waiting to start.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 do_fetch')
+
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Convert a youtube-dl path beginning with ~ (not on MS Windows)
+        #   (code copied from utils.generate_system_cmd() )
+        ytdl_path = app_obj.ytdl_path
+        if os.name != 'nt':
+            ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+        # Generate the system command...
+        cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_source]
+        # ...and create a new child process using that command
+        self.create_child_process(cmd_list)
+
+        # So that we can read from the child process STDOUT and STDERR, attach
+        #   a file descriptor to the PipeReader objects
+        if self.child_process is not None:
+
+            self.stdout_reader.attach_file_descriptor(
+                self.child_process.stdout,
+            )
+
+            self.stderr_reader.attach_file_descriptor(
+                self.child_process.stderr,
+            )
+
+        # Wait for the process to finish
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+        # Process has finished. If the JSON data has been received, indicating
+        #   a livestream currently broadcasting, it's in STDOUT
+        new_video_flag = None
+        while not self.stdout_queue.empty():
+
+            stdout = self.stdout_queue.get_nowait().rstrip()
+            if stdout:
+
+                # (Convert bytes to string)
+                stdout = stdout.decode()
+                if stdout[:1] == '{':
+
+                    # Broadcasting livestream detected; create a new
+                    #   media.Video object
+                    GObject.timeout_add(
+                        0,
+                        app_obj.create_livestream_from_download,
+                        self.container_obj,
+                        2,                      # Livestream has started
+                        self.video_name,
+                        self.video_source,
+                        self.video_descrip,
+                        self.video_upload_time,
+                    )
+
+                    new_video_flag = True
+
+        # If a 'This video is unavailable' error has been received, indicating
+        #   a livestream waiting to start, it's in STDERR
+        if not new_video_flag:
+
+            while not self.stderr_queue.empty():
+
+                stderr = self.stderr_queue.get_nowait().rstrip()
+                if stderr:
+
+                    # (Convert bytes to string)
+                    stderr = stderr.decode()
+                    if re.search('This video is unavailable', stderr):
+
+                        # Waiting livestream detected; create a new media.Video
+                        #   object
+                        GObject.timeout_add(
+                            0,
+                            app_obj.create_livestream_from_download,
+                            self.container_obj,
+                            1,                  # Livestream waiting to start
+                            self.video_name,
+                            self.video_source,
+                            self.video_descrip,
+                            self.video_upload_time,
+                        )
+
+                        new_video_flag = True
+
+        if new_video_flag:
+
+            # Download the video's thumbnail, if possible
+            if self.video_thumb_source:
+
+                # Get the thumbnail's extension...
+                remote_file, remote_ext = os.path.splitext(
+                    self.video_thumb_source,
+                )
+
+                # ...and thus get the filename used by youtube-dl when storing
+                #   the thumbnail locally (assuming that the video's name, and
+                #   the filename when it is later downloaded, are the same)
+                local_thumb_path = os.path.abspath(
+                    os.path.join(
+                        self.container_obj.get_actual_dir(app_obj),
+                        self.video_name + remote_ext,
+                    ),
+                )
+
+                options_obj = self.download_worker_obj.options_manager_obj
+                if not options_obj.options_dict['sim_keep_thumbnail']:
+                    local_thumb_path = utils.convert_path_to_temp(
+                        app_obj,
+                        local_thumb_path,
+                    )
+
+                try:
+                    request_obj = requests.get(self.video_thumb_source)
+                    with open(local_thumb_path, 'wb') as outfile:
+                        outfile.write(request_obj.content)
+
+                except:
+                    pass
+
+
+    def close(self):
+
+        """Called by downloads.DownloadWorker.check_rss().
+
+        Destructor function for this object.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4275 close')
+
+        # Tell the PipeReader objects to shut down, thus joining their threads
+        self.stdout_reader.join()
+        self.stderr_reader.join()
+
+
+    def create_child_process(self, cmd_list):
+
+        """Called by self.do_fetch().
+
+        Based on YoutubeDLDownloader._create_process().
+
+        Executes the system command, creating a new child process which
+        executes youtube-dl.
+
+        Args:
+
+            cmd_list (list): Python list that contains the command to execute.
+
+        Returns:
+
+            True on success, False on an error
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4302 create_child_process')
+
+        info = preexec = None
+        if os.name == 'nt':
+            # Hide the child process window that MS Windows helpfully creates
+            #   for us
+            info = subprocess.STARTUPINFO()
+            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            # Make this child process the process group leader, so that we can
+            #   later kill the whole process group with os.killpg
+            preexec = os.setsid
+
+        try:
+            self.child_process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=preexec,
+                startupinfo=info,
+            )
+
+            return True
+
+        except (ValueError, OSError) as error:
+            # (Errors are expected and frequent)
+            return False
+
+
+    def is_child_process_alive(self):
+
+        """Called by self.do_fetch() and self.stop().
+
+        Based on YoutubeDLDownloader._proc_is_alive().
+
+        Called continuously during the self.do_fetch() loop to check whether
+        the child process has finished or not.
+
+        Returns:
+
+            True if the child process is alive, otherwise returns False.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4347 is_child_process_alive')
+
+        if self.child_process is None:
+            return False
+
+        return self.child_process.poll() is None
+
+
+    def stop(self):
+
+        """Called by DownloadWorker.close().
+
+        Terminates the child process.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4363 stop')
+
+        if self.is_child_process_alive():
+
+            if os.name == 'nt':
+                # os.killpg is not available on MS Windows (see
+                #   https://bugs.python.org/issue5115 )
+                self.child_process.kill()
+
+                # When we kill the child process on MS Windows the return code
+                #   gets set to 1, so we want to reset the return code back to
+                #   0
+                self.child_process.returncode = 0
+
+            else:
+                os.killpg(self.child_process.pid, signal.SIGKILL)
+
+
+class LivestreamManager(threading.Thread):
+
+    """Called by mainapp.TartubeApp.livestream_manager_start().
+
+    Python class to create a system child process, to check media.Video objects
+    already marked as livestreams, to see whether they have started or stopped
+    broadcasting.
+
+    Reads from the child process STDOUT and STDERR, having set up a
+    downloads.PipeReader object to do so in an asynchronous way.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, app_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4405 __init__')
+
+        super(LivestreamManager, self).__init__()
+
+        # IV list - class objects
+        # -----------------------
+        # The mainapp.TartubeApp object
+        self.app_obj = app_obj
+        # The downloads.MiniJSONFetcher object used to check each media.Video
+        #   object marked as a livestream
+        self.mini_fetcher_obj = None
+
+
+        # IV list - other
+        # ---------------
+        # A local list of media.Video objects marked as livestreams (in case
+        #   the mainapp.TartubeApp IV changes during the course of this
+        #   operation)
+        # Dictionary in the form:
+        #   key = media data object's unique .dbid
+        #   value = the media data object itself
+        self.video_dict = {}
+        # A subset of self.video_dict, containing only videos whose livestream
+        #   status has changed from waiting to live
+        # Used by mainapp.TartubeApp.livestream_manager_finished() to update
+        #   the Video Catalogue, create a desktop notification and/or open the
+        #   livestream in the system's web browser
+        self.video_started_dict = {}
+        # A subset of self.video_dict, containing only videos whose livestream
+        #   status has changed from live to finished
+        # Used by mainapp.TartubeApp.livestream_manager_stopped() to update
+        #   the Video Catalogue
+        self.video_stopped_dict = {}
+        # A subset of self.video_dict, containing only videos which were
+        #   currently broadcasting livestreams, but for which there is no
+        #   JSON data (indicating that the video has been deleted, or is
+        #   temporarily unavailable on the website)
+        # Used by mainapp.TartubeApp.livestream_manager_finished() to remove
+        #   the video(s) from the Video Catalogue
+        self.video_missing_dict = {}
+
+        # Flag set to False if self.stop_livestream_operation() is called
+        # The False value halts the loop in self.run()
+        self.running_flag = True
+
+        # Code
+        # ----
+
+        # Let's get this party started!
+        self.start()
+
+
+    # Public class methods
+
+
+    def run(self):
+
+        """Called as a result of self.__init__().
+
+        Initiates the download.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4468 run')
+
+        # Generate a local list of media.Video objects marked as livestreams
+        #   (in case the mainapp.TartubeApp IV changes during the course of
+        #   this operation)
+        self.video_dict = self.app_obj.media_reg_live_dict.copy()
+
+        for video_obj in self.video_dict.values():
+
+            if not self.running_flag:
+                break
+
+            # For each media.Video in turn, try to fetch JSON data
+            # If the data is received, assume the livestream is live. If a
+            #   'This video is unavailable' error is received, the livestream
+            #   is waiting to go live
+            self.mini_fetcher_obj = MiniJSONFetcher(self, video_obj)
+
+            # Then execute the assigned job
+            self.mini_fetcher_obj.do_fetch()
+
+            # Call the destructor function of the MiniJSONFetcher object
+            self.mini_fetcher_obj.close()
+            self.mini_fetcher_obj = None
+
+        # Operation complete. If self.stop_livestream_operation() was called,
+        #   then the mainapp.TartubeApp function has already been called
+        if self.running_flag:
+            self.running_flag = False
+            self.app_obj.livestream_manager_finished()
+
+
+    def mark_video_as_missing(self, video_obj):
+
+        """Called by downloads.MiniJSONFetcher.do_fetch().
+
+        If a media.Video object marked as a livestream is missing in the
+        parent channel's/playlist's RSS feed, then add the video to an IV, so
+        that mainapp.TartubeApp.livestream_manager_finished() can take
+        appropriate action, when the livestream operation is finished.
+
+        Args:
+
+            video_obj (media.Video): The livestream video which was not found
+                in the RSS stream
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4517 mark_video_as_missing')
+
+        self.video_missing_dict[video_obj.dbid] = video_obj
+
+
+    def mark_video_as_started(self, video_obj):
+
+        """Called by downloads.MiniJSONFetcher.do_fetch().
+
+        If a media.Video object marked as a livestream has started
+        broadcasting, then add the video to an IV, so that
+        mainapp.TartubeApp.livestream_manager_finished() can take appropriate
+        action, when the livestream operation is finished.
+
+        Args:
+
+            video_obj (media.Video): The livestream video which has started
+                broadcasting
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4539 mark_video_as_started')
+
+        self.video_started_dict[video_obj.dbid] = video_obj
+
+
+    def mark_video_as_stopped(self, video_obj):
+
+        """Called by downloads.MiniJSONFetcher.do_fetch().
+
+        If a media.Video object marked as a livestream has stopped
+        broadcasting, then add the video to an IV, so that
+        mainapp.TartubeApp.livestream_manager_finished() can take appropriate
+        action, when the livestream operation is finished.
+
+        Args:
+
+            video_obj (media.Video): The livestream video which has stopped
+                broadcasting
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4561 mark_video_as_stopped')
+
+        self.video_stopped_dict[video_obj.dbid] = video_obj
+
+
+    def stop_livestream_operation(self):
+
+        """Can be called by anything.
+
+        Based on downloads.DownloadManager.stop_downloads().
+
+        Stops the livestream operation. On the next iteration of self.run()'s
+        loop, the downloads.MiniJSONFetcher objects are cleaned up.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4577 stop_livestream_operation')
+
+        self.running_flag = False
+
+        # Halt the MiniJSONFetcher; it doesn't matter if it was in the middle
+        #   of doing something
+        if self.mini_fetcher_obj:
+            self.mini_fetcher_obj.close()
+            self.mini_fetcher_obj = None
+
+        # Call the mainapp.TartubeApp function to update everything (it's not
+        #   called from self.run(), in this situation)
+        self.app_obj.livestream_manager_finished()
+
+
+class MiniJSONFetcher(object):
+
+    """Called by downloads.LivestreamManager.run().
+
+    A modified version of downlaods.JSONFetcher (the former is called by
+    downloads.DownloadWorker only; using a second Python class for the same
+    objective makes the code somewhat simpler).
+
+    Python class to fetch JSON data for a livestream video, using youtube-dl.
+
+    Creates a system child process and uses the child process to instruct
+    youtube-dl to fetch the JSON data for the video.
+
+    Reads from the child process STDOUT and STDERR, having set up a
+    downloads.PipeReader object to do so in an asynchronous way.
+
+    Args:
+
+        livestream_manager_obj (downloads.LivestreamManager): The livestream
+            manager object handling the entire livestream operation
+
+        video_obj (media.Video): The livestream video whose JSON data should be
+            fetched (the equivalent of right-clicking the video in the Video
+            Catalogue, and selecting 'Check this video')
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, livestream_manager_obj, video_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4626 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # The downloads.LivestreamManager object handling the entire livestream
+        #   operation
+        self.livestream_manager_obj = livestream_manager_obj
+        # The media.Video object for which new JSON data must be fetched
+        #   (the equivalent of right-clicking the video in the Video Catalogue,
+        #   and selecting 'Check this video')
+        self.video_obj = video_obj
+
+        # This object reads from the child process STDOUT and STDERR in an
+        #   asynchronous way
+        # Standard Python synchronised queue classes
+        self.stdout_queue = queue.Queue()
+        self.stderr_queue = queue.Queue()
+        # The downloads.PipeReader objects created to handle reading from the
+        #   pipes
+        self.stdout_reader = PipeReader(self.stdout_queue)
+        self.stderr_reader = PipeReader(self.stderr_queue)
+
+        # The child process created by self.create_child_process()
+        self.child_process = None
+
+
+        # IV list - other
+        # ---------------
+        # The time (in seconds) between iterations of the loop in
+        #   self.do_fetch()
+        self.sleep_time = 0.1
+
+
+    # Public class methods
+
+
+    def do_fetch(self):
+
+        """Called by downloads.LivestreamManager.run().
+
+        Downloads JSON data for the livestream video, self.video_obj.
+
+        If the data can be downloaded, we assume that the livestream is
+        currently broadcasting. If we get a 'This video is unavailable' error,
+        we assume that the livestream is waiting to start.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4674 do_fetch')
+
+        # Import the main app (for convenience)
+        app_obj = self.livestream_manager_obj.app_obj
+
+        # Convert a youtube-dl path beginning with ~ (not on MS Windows)
+        #   (code copied from utils.generate_system_cmd() )
+        ytdl_path = app_obj.ytdl_path
+        if os.name != 'nt':
+            ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+        # Generate the system command...
+        cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_obj.source]
+        # ...and create a new child process using that command
+        self.create_child_process(cmd_list)
+
+        # So that we can read from the child process STDOUT and STDERR, attach
+        #   a file descriptor to the PipeReader objects
+        if self.child_process is not None:
+
+            self.stdout_reader.attach_file_descriptor(
+                self.child_process.stdout,
+            )
+
+            self.stderr_reader.attach_file_descriptor(
+                self.child_process.stderr,
+            )
+
+        # Wait for the process to finish
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+        # Process has finished. Check for JSON data, indicating that it's a
+        #   'live' livestream
+        while not self.stdout_queue.empty():
+
+            stdout = self.stdout_queue.get_nowait().rstrip()
+            if stdout:
+
+                # (Convert bytes to string)
+                stdout = stdout.decode()
+                if stdout[:1] == '{':
+
+                    # Broadcasting livestream detected
+                    json_dict = self.parse_json(stdout)
+                    if self.video_obj.live_mode == 1:
+
+                        # Waiting livestream has gone live
+                        GObject.timeout_add(
+                            0,
+                            app_obj.mark_video_live,
+                            self.video_obj,
+                            2,              # Livestream is broadcasting
+                            True,           # Don't update Video Index yet
+                            True,           # Don't update Video Catalogue yet
+                        )
+                        # (Mark this video as modified, so that
+                        #   mainapp.TartubeApp can update the Video Catalogue
+                        #   once the livestream operation has finished)
+                        self.livestream_manager_obj.mark_video_as_started(
+                            self.video_obj,
+                        )
+
+                    elif self.video_obj.live_mode == 2 \
+                    and not json_dict['is_live']:
+
+                        # Broadcasting livestream has finished
+                        GObject.timeout_add(
+                            0,
+                            app_obj.mark_video_live,
+                            self.video_obj,
+                            0,              # Not a livestream
+                            True,           # Don't update Video Index yet
+                            True,           # Don't update Video Catalogue yet
+                        )
+                        self.livestream_manager_obj.mark_video_as_stopped(
+                            self.video_obj,
+                        )
+
+                    # The video's name and description might change during the
+                    #   livestream; update them, if so
+                    if 'title' in json_dict:
+                        self.video_obj.set_nickname(json_dict['title'])
+
+                    if 'description' in json_dict:
+                        self.video_obj.set_video_descrip(
+                            json_dict['description'],
+                            app_obj.main_win_obj.descrip_line_max_len,
+                        )
+
+        # Check for errors, indicating that it's a 'waiting' livestream
+        while not self.stderr_queue.empty():
+
+            stderr = self.stderr_queue.get_nowait().rstrip()
+            if stderr:
+
+                # (Convert bytes to string)
+                stderr = stderr.decode()
+                if re.search('This video is unavailable', stderr) \
+                and self.video_obj.live_mode == 2:
+
+                    # The livestream broadcast has been deleted by its owner
+                    #   (or is not available on the website, possibly
+                    #   temporarily)
+                    self.livestream_manager_obj.mark_video_as_missing(
+                        self.video_obj,
+                    )
+
+
+    def close(self):
+
+        """Called by downloads.LivestreamManager.run().
+
+        Destructor function for this object.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4794 close')
+
+        # Tell the PipeReader objects to shut down, thus joining their threads
+        self.stdout_reader.join()
+        self.stderr_reader.join()
+
+
+    def create_child_process(self, cmd_list):
+
+        """Called by self.do_fetch().
+
+        Based on YoutubeDLDownloader._create_process().
+
+        Executes the system command, creating a new child process which
+        executes youtube-dl.
+
+        Args:
+
+            cmd_list (list): Python list that contains the command to execute.
+
+        Returns:
+
+            True on success, False on an error
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4821 create_child_process')
+
+        info = preexec = None
+        if os.name == 'nt':
+            # Hide the child process window that MS Windows helpfully creates
+            #   for us
+            info = subprocess.STARTUPINFO()
+            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            # Make this child process the process group leader, so that we can
+            #   later kill the whole process group with os.killpg
+            preexec = os.setsid
+
+        try:
+            self.child_process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=preexec,
+                startupinfo=info,
+            )
+
+            return True
+
+        except (ValueError, OSError) as error:
+            # (Errors are expected and frequent)
+            return False
+
+
+    def is_child_process_alive(self):
+
+        """Called by self.do_fetch() and self.stop().
+
+        Based on YoutubeDLDownloader._proc_is_alive().
+
+        Called continuously during the self.do_fetch() loop to check whether
+        the child process has finished or not.
+
+        Returns:
+
+            True if the child process is alive, otherwise returns False.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4866 is_child_process_alive')
+
+        if self.child_process is None:
+            return False
+
+        return self.child_process.poll() is None
+
+
+    def parse_json(self, stdout):
+
+        """Called by self.do_fetch().
+
+        Code copied from downloads.VideoDownloader.extract_stdout_data().
+
+        Converts the receivd JSON data into a dictionary, and returns the
+        dictionary.
+
+        Args:
+
+            stdout (str): A string of JSON data as it was received from
+                youtube-dl (and starting with the character { )
+
+        Return values:
+
+            The JSON data, converted into a Python dictionary
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4895 parse_json')
+
+        # (Try/except to check for invalid JSON)
+        try:
+            return json.loads(stdout)
+
+        except:
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
+                305,
+                'Invalid JSON data received from server',
+            )
+
+            return {}
+
+
+    def stop(self):
+
+        """Called by DownloadWorker.close().
+
+        Terminates the child process.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4920 stop')
+
+        if self.is_child_process_alive():
+
+            if os.name == 'nt':
+                # os.killpg is not available on MS Windows (see
+                #   https://bugs.python.org/issue5115 )
+                self.child_process.kill()
+
+                # When we kill the child process on MS Windows the return code
+                #   gets set to 1, so we want to reset the return code back to
+                #   0
+                self.child_process.returncode = 0
+
+            else:
+                os.killpg(self.child_process.pid, signal.SIGKILL)
 
 
 class PipeReader(threading.Thread):
@@ -3524,7 +4966,7 @@ class PipeReader(threading.Thread):
     def __init__(self, queue):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3524 __init__')
+            utils.debug_time('dld 4969 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -3561,7 +5003,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3561 run')
+            utils.debug_time('dld 5006 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -3591,7 +5033,8 @@ class PipeReader(threading.Thread):
 
     def attach_file_descriptor(self, filedesc):
 
-        """Called by downloads.VideoDownloader.do_download().
+        """Called by downloads.VideoDownloader.do_download and comparable
+        functions.
 
         Sets the file descriptor for the child process STDOUT or STDERR.
 
@@ -3602,7 +5045,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3602 attach_file_descriptor')
+            utils.debug_time('dld 5048 attach_file_descriptor')
 
         self.file_descriptor = filedesc
 
@@ -3621,7 +5064,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3621 join')
+            utils.debug_time('dld 5067 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)

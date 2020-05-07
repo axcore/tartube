@@ -1,4 +1,4 @@
-# Tartube v2.0.016 installer script for MS Windows
+# Tartube v2.1.0 installer script for MS Windows
 #
 # Copyright (C) 2019-2020 A S Lewis
 #
@@ -44,6 +44,7 @@
 #
 #   - Usually, the terminal window tells you to close it. Do that, and then
 #       open a new mingw64 terminal window
+#
 #   - In the new window, type these commands
 #
 #       pacman -Su
@@ -59,19 +60,6 @@
 #
 #       gtk3-demo
 #
-#   - Now download the Tartube source code from
-#
-#       https://sourceforge.net/projects/tartube/
-#
-#   - Extract it, and copy the whole 'tartube' folder to
-#
-#       C:\testme\msys64\home\YOURNAME
-#
-#   - Note that, throughout this guide, YOURNAME should be substituted for your
-#       actual Windows username. For example, the copied folder might be
-#
-#       C:\testme\msys64\home\alice\tartube
-#
 #   - The C:\testme folder now contains about 2GB of data. If you like, you can
 #       use all of it (which would create an installer of about 600MB). In most
 #       cases, though, you will probably want to remove everything that's not
@@ -82,9 +70,11 @@
 #       C:\testme\msys64\dev
 #       C:\testme\msys64\etc
 #       C:\testme\msys64\home
+#       C:\testme\msys64\mingw64.exe
 #       C:\testme\msys64\mingw64\bin
 #       C:\testme\msys64\mingw64\bin\gdbus*
 #       C:\testme\msys64\mingw64\bin\gdk*
+#       C:\testme\msys64\mingw64\bin\gettext*
 #       C:\testme\msys64\mingw64\bin\gio*
 #       C:\testme\msys64\mingw64\bin\glib*
 #       C:\testme\msys64\mingw64\bin\gobject*
@@ -108,36 +98,38 @@
 #       C:\testme\msys64\mingw64\include\openssl
 #       C:\testme\msys64\mingw64\include\pycairo
 #       C:\testme\msys64\mingw64\include\pygobject-3.0
-#       C:\testme\msys64\mingw64\include\python3.7
+#       C:\testme\msys64\mingw64\include\python3.8
 #       C:\testme\msys64\mingw64\include\readline
 #       C:\testme\msys64\mingw64\include\tk8.6
 #       C:\testme\msys64\mingw64\lib\gdk-pixbuf-2.0
+#       C:\testme\msys64\mingw64\lib\gettext
 #       C:\testme\msys64\mingw64\lib\girepository-1.0
 #       C:\testme\msys64\mingw64\lib\glib-2.0
 #       C:\testme\msys64\mingw64\lib\gtk-3.0
-#       C:\testme\msys64\mingw64\lib\python3.7\collections
-#       C:\testme\msys64\mingw64\lib\python3.7\ctypes
-#       C:\testme\msys64\mingw64\lib\python3.7\distutils
-#       C:\testme\msys64\mingw64\lib\python3.7\email
-#       C:\testme\msys64\mingw64\lib\python3.7\encodings
-#       C:\testme\msys64\mingw64\lib\python3.7\ensurepip
-#       C:\testme\msys64\mingw64\lib\python3.7\html
-#       C:\testme\msys64\mingw64\lib\python3.7\http
-#       C:\testme\msys64\mingw64\lib\python3.7\importlib
-#       C:\testme\msys64\mingw64\lib\python3.7\json
-#       C:\testme\msys64\mingw64\lib\python3.7\lib2to3
-#       C:\testme\msys64\mingw64\lib\python3.7\lib-dynload
-#       C:\testme\msys64\mingw64\lib\python3.7\logging
-#       C:\testme\msys64\mingw64\lib\python3.7\msilib
-#       C:\testme\msys64\mingw64\lib\python3.7\multiprocessing
-#       C:\testme\msys64\mingw64\lib\python3.7\site-packages
-#       C:\testme\msys64\mingw64\lib\python3.7\sqlite3
-#       C:\testme\msys64\mingw64\lib\python3.7\urllib
-#       C:\testme\msys64\mingw64\lib\python3.7\xml
-#       C:\testme\msys64\mingw64\lib\python3.7\xmlrpc
-#       C:\testme\msys64\mingw64\lib\python3.7\*.py
+#       C:\testme\msys64\mingw64\lib\python3.8\collections
+#       C:\testme\msys64\mingw64\lib\python3.8\ctypes
+#       C:\testme\msys64\mingw64\lib\python3.8\distutils
+#       C:\testme\msys64\mingw64\lib\python3.8\email
+#       C:\testme\msys64\mingw64\lib\python3.8\encodings
+#       C:\testme\msys64\mingw64\lib\python3.8\ensurepip
+#       C:\testme\msys64\mingw64\lib\python3.8\html
+#       C:\testme\msys64\mingw64\lib\python3.8\http
+#       C:\testme\msys64\mingw64\lib\python3.8\importlib
+#       C:\testme\msys64\mingw64\lib\python3.8\json
+#       C:\testme\msys64\mingw64\lib\python3.8\lib2to3
+#       C:\testme\msys64\mingw64\lib\python3.8\lib-dynload
+#       C:\testme\msys64\mingw64\lib\python3.8\logging
+#       C:\testme\msys64\mingw64\lib\python3.8\msilib
+#       C:\testme\msys64\mingw64\lib\python3.8\multiprocessing
+#       C:\testme\msys64\mingw64\lib\python3.8\site-packages
+#       C:\testme\msys64\mingw64\lib\python3.8\sqlite3
+#       C:\testme\msys64\mingw64\lib\python3.8\urllib
+#       C:\testme\msys64\mingw64\lib\python3.8\xml
+#       C:\testme\msys64\mingw64\lib\python3.8\xmlrpc
+#       C:\testme\msys64\mingw64\lib\python3.8\*.py
 #       C:\testme\msys64\mingw64\lib\thread2.8.4
 #       C:\testme\msys64\mingw64\lib\tk8.6
+#       C:\testme\msys64\mingw64\share\gettext
 #       C:\testme\msys64\mingw64\share\gir-1.0
 #       C:\testme\msys64\mingw64\share\glib-2.0
 #       C:\testme\msys64\mingw64\share\gtk-3.0
@@ -150,6 +142,7 @@
 #       C:\testme\msys64\tmp
 #       C:\testme\msys64\usr\bin\bash
 #       C:\testme\msys64\usr\bin\chmod
+#       C:\testme\msys64\usr\bin\cut
 #       C:\testme\msys64\usr\bin\cygpath
 #       C:\testme\msys64\usr\bin\cygwin-console-helper
 #       C:\testme\msys64\usr\bin\dir
@@ -190,9 +183,10 @@
 #       C:\testme\msys64\usr\bin\pac*
 #       C:\testme\msys64\usr\bin\test
 #       C:\testme\msys64\usr\bin\tzset
+#       C:\testme\msys64\usr\lib\gettext
 #       C:\testme\msys64\usr\lib\gio
 #       C:\testme\msys64\usr\lib\openssl
-#       C:\testme\msys64\usr\lib\python3.7
+#       C:\testme\msys64\usr\lib\python3.8
 #       C:\testme\msys64\usr\share\cygwin
 #       C:\testme\msys64\usr\share\glib-2.0
 #       C:\testme\msys64\usr\share\mintty
@@ -202,17 +196,41 @@
 #       C:\testme\msys64\usr\ssl
 #       C:\testme\msys64\var\lib\pacman
 #
-#   - You can optionally install AtomicParsley at this location:
+#   - The followng optional dependencies are required for fetching livestreams.
+#       If you decide to install them (it's recommended that you do), run the
+#       mingw64 terminal again, if it's not still open
+#
+#       C:\testme\msys64\mingw64.exe
+#
+#   - In the terminal window, type
+#
+#       pip3 install feedparser
+#       pip3 install playsound
+#
+#   - AtomicParsley, if you want it, can be copied to this location:
+#
 #       C:\testme\msys64\usr\bin
 #
-#   - Now go into the C:\testme\msys64\home\YOURNAME\tartube\nsis folder, and
-#       MOVE all the windows batch files into the folder above, i.e. into
-#       C:\testme\msys64\home\YOURNAME\tartube
-#   - Next, COPY all the remaining files in
+#   - Now download the Tartube source code from
+#
+#       https://sourceforge.net/projects/tartube/
+#
+#   - Extract it, and copy the whole 'tartube' folder to
+#
+#       C:\testme\msys64\home\YOURNAME
+#
+#   - Note that YOURNAME should be substituted for your actual Windows
+#       username. For example, the copied folder might be
+#
+#       C:\testme\msys64\home\alice\tartube
+#
+#   - Next, copy all of the files in
 #       C:\testme\msys64\home\YOURNAME\tartube\nsis to C:\testme
+#
 #   - Create the installer by compiling the NSIS script,
 #       C:\testme\tartube_install_64bit.nsi (the quickest way to do this is
 #       by right-clicking the file and selecting 'Compile NSIS script file')
+#
 #   - When NSIS is finished, the installer appears in C:\testme
 
 # Header files
@@ -226,7 +244,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.0.016-64bit.exe"
+    OutFile "install-tartube-2.1.0-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -329,7 +347,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.0.016"
+#        "DisplayVersion" "2.1.0"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

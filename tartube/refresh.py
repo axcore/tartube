@@ -35,6 +35,8 @@ import time
 import formats
 import media
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
@@ -68,7 +70,7 @@ class RefreshManager(threading.Thread):
     def __init__(self, app_obj, init_obj=None):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 71 __init__')
+            utils.debug_time('rop 73 __init__')
 
         super(RefreshManager, self).__init__()
 
@@ -138,13 +140,13 @@ class RefreshManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 141 run')
+            utils.debug_time('rop 143 run')
 
         # Show information about the refresh operation in the Output Tab
         if not self.init_obj:
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                'Starting refresh operation, analysing whole database',
+                _('Starting refresh operation, analysing whole database'),
             )
 
         else:
@@ -153,8 +155,9 @@ class RefreshManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                'Starting refresh operation, analysing ' + media_type \
-                + ' \'' + self.init_obj.name + '\'',
+                _('Starting refresh operation, analysing \'{}\'').format(
+                    self.init_obj.name,
+                ),
             )
 
         # Compile a list of channels, playlists and folders to refresh (each
@@ -196,24 +199,24 @@ class RefreshManager(threading.Thread):
         # Show a confirmation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Refresh operation finished',
+            _('Refresh operation finished'),
         )
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Number of video files analysed:             ' \
+            '   ' + _('Number of video files analysed:') + '             ' \
             + str(self.video_total_count),
         )
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Video files already in the database:        ' \
+            '   ' + _('Video files already in the database:') + '        ' \
             + str(self.video_match_count),
         )
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   New videos found and added to the database: ' \
+            '   ' + _('New videos found and added to the database:') + ' ' \
             +  str(self.video_new_count),
         )
 
@@ -246,7 +249,7 @@ class RefreshManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 249 refresh_from_default_destination')
+            utils.debug_time('rop 252 refresh_from_default_destination')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -266,11 +269,11 @@ class RefreshManager(threading.Thread):
 
         # Update our progress in the Output Tab
         if isinstance(media_data_obj, media.Channel):
-            string = 'Channel:  '
+            string = _('Channel:') + '  '
         elif isinstance(media_data_obj, media.Playlist):
-            string = 'Playlist: '
+            string = _('Playlist:') + ' '
         else:
-            string = 'Folder:   '
+            string = _('Folder:') + '   '
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
@@ -379,7 +382,7 @@ class RefreshManager(threading.Thread):
 
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     1,
-                    '   Checking:     ' + filename,
+                    '   ' + _('Checking:') + ' '  + filename,
                 )
 
             if filename in check_dict:
@@ -413,7 +416,7 @@ class RefreshManager(threading.Thread):
                 if self.app_obj.refresh_output_videos_flag:
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
-                        '      Match:     ' + child_obj.name,
+                    '   ' + _('Match:') + ' '  + filename,
                     )
 
             elif filename not in slave_dict:
@@ -431,7 +434,7 @@ class RefreshManager(threading.Thread):
                     for failed_path in check_dict.keys():
                         self.app_obj.main_win_obj.output_tab_write_stdout(
                             1,
-                            '      Non-match: ' + failed_path,
+                            '   ' + _('Non-match:') + ' '  + filename,
                         )
 
                 # Create a new media.Video object
@@ -479,15 +482,15 @@ class RefreshManager(threading.Thread):
                 if self.app_obj.refresh_output_videos_flag:
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
-                        '      New video: ' + video_obj.name,
+                        '   ' + _('New video:') + ' '  + filename,
                     )
 
         # Check complete, display totals
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Total videos: ' + str(local_total_count) \
-            + ', matched: ' + str(local_match_count) \
-            + ', new: ' + str(local_new_count),
+            '   ' + _('Total videos:') + ' ' + str(local_total_count) \
+            + ', ' + _('matched:') + ' ' + str(local_match_count) \
+            + ', ' + _('new:') + ' ' + str(local_new_count),
         )
 
 
@@ -513,7 +516,7 @@ class RefreshManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 516 refresh_from_actual_destination')
+            utils.debug_time('rop 519 refresh_from_actual_destination')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -534,11 +537,11 @@ class RefreshManager(threading.Thread):
 
         # Update our progress in the Output Tab
         if isinstance(media_data_obj, media.Channel):
-            string = 'Channel:  '
+            string = _('Channel:') + '  '
         elif isinstance(media_data_obj, media.Playlist):
-            string = 'Playlist: '
+            string = _('Playlist:') + ' '
         else:
-            string = 'Folder:   '
+            string = _('Folder:') + '   '
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
@@ -568,7 +571,7 @@ class RefreshManager(threading.Thread):
                     # Update our progress in the Output Tab (if required)
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
-                        '      Missing:   ' + child_obj.name,
+                        '      ' + _('Missing:') + ' ' + child_obj.name,
                     )
 
                 elif not child_obj.dl_flag and this_file in init_list:
@@ -586,15 +589,15 @@ class RefreshManager(threading.Thread):
                     if self.app_obj.refresh_output_videos_flag:
                         self.app_obj.main_win_obj.output_tab_write_stdout(
                             1,
-                            '      Match:     ' + child_obj.name,
+                            '      ' + _('Match:') + ' ' + child_obj.name,
                         )
 
         # Check complete, display totals
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Total videos: ' + str(local_total_count) \
-            + ', matched: ' + str(local_match_count) \
-            + ', missing: ' + str(local_missing_count),
+            '   ' + _('Total videos:') + ' ' + str(local_total_count) \
+            + ', ' + _('matched:') + ' ' + str(local_match_count) \
+            + ', ' + _('missing:') + ' ' + str(local_missing_count),
         )
 
 
@@ -607,6 +610,6 @@ class RefreshManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 610 stop_refresh_operation')
+            utils.debug_time('rop 613 stop_refresh_operation')
 
         self.running_flag = False

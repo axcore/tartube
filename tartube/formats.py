@@ -26,11 +26,30 @@
 
 # Import other modules
 import datetime
+import re
 
 
 # Import our modules
-#   ...
+# Use same gettext translations
+from mainapp import _
 
+
+# Supported locales: <ISO 639-1>_<ISO 3166-1 alpha-2>
+locale_setup_list = [
+    'en_GB',    'English',
+    'en_US',    'English (American)',
+]
+
+LOCALE_DEFAULT = locale_setup_list[0]
+LOCALE_LIST = []
+LOCALE_DICT = {}
+
+while locale_setup_list:
+    key = locale_setup_list.pop(0)
+    value = locale_setup_list.pop(0)
+
+    LOCALE_LIST.append(key)
+    LOCALE_DICT[key] = value
 
 # Some icons are different at Christmas
 today = datetime.date.today()
@@ -42,47 +61,28 @@ or (int(month) == 1 and int(day) <= 5):
 else:
     xmas_flag = False
 
-# Main stages of the download operation
-MAIN_STAGE_QUEUED = 'Queued'
-MAIN_STAGE_ACTIVE = 'Active'
-MAIN_STAGE_PAUSED = 'Paused'                # (not actually used)
-MAIN_STAGE_COMPLETED = 'Completed'          # (not actually used)
-MAIN_STAGE_ERROR = 'Error'
-# Sub-stages of the 'Active' stage
-ACTIVE_STAGE_PRE_PROCESS = 'Pre-processing'
-ACTIVE_STAGE_DOWNLOAD = 'Downloading'
-ACTIVE_STAGE_POST_PROCESS = 'Post-processing'
-ACTIVE_STAGE_CHECKING = 'Checking'
-# Sub-stages of the 'Completed' stage
-COMPLETED_STAGE_FINISHED = 'Finished'
-COMPLETED_STAGE_WARNING = 'Warning'
-COMPLETED_STAGE_ALREADY = 'Already downloaded'
-# Sub-stages of the 'Error' stage
-ERROR_STAGE_ERROR = 'Error'                 # (not actually used)
-ERROR_STAGE_STOPPED = 'Stopped'
-ERROR_STAGE_ABORT = 'Filesize abort'
-
-
-# Standard dictionaries
-
+# Standard list and dictionaries
 time_metric_setup_list = [
-    'seconds', 1,
-    'minutes', 60,
-    'hours', int(60 * 60),
-    'days', int(60 * 60 * 24),
-    'weeks', int(60 * 60 * 24 * 7),
-    'years', int(60 * 60 * 24 * 365),
+    'seconds', _('seconds'), 1,
+    'minutes', _('minutes'), 60,
+    'hours', _('hours'), int(60 * 60),
+    'days', _('days'), int(60 * 60 * 24),
+    'weeks', _('weeks'), int(60 * 60 * 24 * 7),
+    'years', _('years'), int(60 * 60 * 24 * 365),
 ]
 
 TIME_METRIC_LIST = []
 TIME_METRIC_DICT = {}
+TIME_METRIC_TRANS_DICT = {}
 
 while time_metric_setup_list:
     key = time_metric_setup_list.pop(0)
+    trans_key = time_metric_setup_list.pop(0)
     value = time_metric_setup_list.pop(0)
 
     TIME_METRIC_LIST.append(key)
     TIME_METRIC_DICT[key] = value
+    TIME_METRIC_TRANS_DICT[key] = trans_key
 
 KILO_SIZE = 1024.0
 filesize_metric_setup_list = [
@@ -353,8 +353,8 @@ FILE_SIZE_UNIT_LIST = [
     ['Yotta', 'y'],
 ]
 
-# ISO 639-1 Language Codes
 language_setup_list = [
+    # ISO 639-1 Language Codes
     # English is top of the list, because it's the default setting in
     #   options.OptionsManager
     'English', 'en',
@@ -676,9 +676,15 @@ SMALL_ICON_DICT = {
     'folder_red_small': 'folder_red.png',
     'have_file_small': 'have_file.png',
     'no_file_small': 'no_file.png',
+    'stream_live_small': 'stream_live.png',
+    'stream_wait_small': 'stream_wait.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
     'warning_small': 'warning.png',
+}
+
+EXTERNAL_ICON_DICT = {
+    'ytdl-gui': 'youtube-dl-gui.png',
 }
 
 if not xmas_flag:
@@ -703,3 +709,139 @@ else:
         'system_icon_xmas_256.png',
         'system_icon_xmas_512.png',
     ]
+
+
+def do_translate(config_flag=False):
+
+    """Function called for the first time below, setting various values.
+
+    If mainapp.TartubeApp.load_config() changes the locale to something else,
+    called for a second time to update those values.
+
+    Args:
+
+        config_flag (bool): False for the initial call, True for the second
+            call from mainapp.TartubeApp.load_config()
+
+    """
+
+    global FOLDER_ALL_VIDEOS, FOLDER_BOOKMARKS, FOLDER_FAVOURITE_VIDEOS, \
+    FOLDER_LIVESTREAMS, FOLDER_NEW_VIDEOS, FOLDER_WAITING_VIDEOS, \
+    FOLDER_TEMPORARY_VIDEOS, FOLDER_UNSORTED_VIDEOS
+
+    global YTDL_UPDATE_DICT
+
+    global MAIN_STAGE_QUEUED, MAIN_STAGE_ACTIVE, MAIN_STAGE_PAUSED, \
+    MAIN_STAGE_COMPLETED, MAIN_STAGE_ERROR, ACTIVE_STAGE_PRE_PROCESS, \
+    ACTIVE_STAGE_DOWNLOAD, ACTIVE_STAGE_POST_PROCESS, ACTIVE_STAGE_CHECKING, \
+    COMPLETED_STAGE_FINISHED, COMPLETED_STAGE_WARNING, \
+    COMPLETED_STAGE_ALREADY, ERROR_STAGE_ERROR, ERROR_STAGE_STOPPED, \
+    ERROR_STAGE_ABORT
+
+    global TIME_METRIC_TRANS_DICT
+
+    global FILE_OUTPUT_NAME_DICT, FILE_OUTPUT_CONVERT_DICT
+
+    global VIDEO_OPTION_LIST, VIDEO_OPTION_DICT
+
+    # System folder names
+    FOLDER_ALL_VIDEOS = _('All Videos')
+    FOLDER_BOOKMARKS = _('Bookmarks')
+    FOLDER_FAVOURITE_VIDEOS = _('Favourite Videos')
+    FOLDER_LIVESTREAMS = _('Livestreams')
+    FOLDER_NEW_VIDEOS = _('New Videos')
+    FOLDER_WAITING_VIDEOS = _('Waiting Videos')
+    FOLDER_TEMPORARY_VIDEOS = _('Temporary Videos')
+    FOLDER_UNSORTED_VIDEOS = _('Unsorted Videos')
+
+    # youtube-dl update shell commands
+    YTDL_UPDATE_DICT = {
+        'ytdl_update_default_path':
+            _('Update using default youtube-dl path'),
+        'ytdl_update_local_path':
+            _('Update using local youtube-dl path'),
+        'ytdl_update_pip':
+            _('Update using pip'),
+        'ytdl_update_pip_omit_user':
+            _('Update using pip (omit --user option)'),
+        'ytdl_update_pip3':
+            _('Update using pip3'),
+        'ytdl_update_pip3_omit_user':
+            _('Update using pip3 (omit --user option)'),
+        'ytdl_update_pip3_recommend':
+            _('Update using pip3 (recommended)'),
+        'ytdl_update_pypi_path':
+            _('Update using PyPI youtube-dl path'),
+        'ytdl_update_win_32':
+            _('Windows 32-bit update (recommended)'),
+        'ytdl_update_win_64':
+            _('Windows 64-bit update (recommended)'),
+        'ytdl_update_disabled':
+            _('youtube-dl updates are disabled'),
+    }
+
+    #  Download operation stages
+    MAIN_STAGE_QUEUED = _('Queued')
+    MAIN_STAGE_ACTIVE = _('Active')
+    MAIN_STAGE_PAUSED = _('Paused')                     # (not actually used)
+    MAIN_STAGE_COMPLETED = _('Completed')               # (not actually used)
+    MAIN_STAGE_ERROR = _('Error')
+    # Sub-stages of the 'Active' stage
+    ACTIVE_STAGE_PRE_PROCESS = _('Pre-processing')
+    ACTIVE_STAGE_DOWNLOAD = _('Downloading')
+    ACTIVE_STAGE_POST_PROCESS = _('Post-processing')
+    ACTIVE_STAGE_CHECKING = _('Checking')
+    # Sub-stages of the 'Completed' stage
+    COMPLETED_STAGE_FINISHED = _('Finished')
+    COMPLETED_STAGE_WARNING = _('Warning')
+    COMPLETED_STAGE_ALREADY = _('Already downloaded')
+    # Sub-stages of the 'Error' stage
+    ERROR_STAGE_ERROR = _('Error')                      # (not actually used)
+    ERROR_STAGE_STOPPED = _('Stopped')
+    ERROR_STAGE_ABORT = _('Filesize abort')
+
+    if config_flag:
+
+        for key in TIME_METRIC_TRANS_DICT:
+            TIME_METRIC_TRANS_DICT[key] = _(key)
+
+        # File output templates use a combination of English words, each of
+        #   which must be translated
+        translate_note = _(
+            'TRANSLATOR\'S NOTE: ID refers to a video\'s unique ID on the' \
+            + ' website, e.g. on YouTube "CS9OO0S5w2k"',
+        )
+
+        new_name_dict = {}
+        for key in FILE_OUTPUT_NAME_DICT.keys():
+
+            mod_value \
+            = re.sub('Custom', _('Custom'), FILE_OUTPUT_NAME_DICT[key])
+            mod_value = re.sub('ID', _('ID'), mod_value)
+            mod_value = re.sub('Title', _('Title'), mod_value)
+            mod_value = re.sub('Quality', _('Quality'), mod_value)
+            mod_value = re.sub('Autonumber', _('Autonumber'), mod_value)
+
+            new_name_dict[key] = mod_value
+
+        FILE_OUTPUT_NAME_DICT = new_name_dict
+
+        # Video/audio formats. A number of them contain 'Any format', which
+        #   must be translated
+        new_list = []
+        new_dict = {}
+        for item in VIDEO_OPTION_LIST:
+
+            mod_item = re.sub('Any format', _('Any format'), item)
+            new_list.append(mod_item)
+            new_dict[mod_item] = VIDEO_OPTION_DICT[item]
+
+        VIDEO_OPTION_LIST = new_list
+        VIDEO_OPTION_DICT = new_dict
+
+    # End of this function
+    return
+
+
+# Call the function for the first time
+do_translate()

@@ -1,0 +1,11 @@
+[encoding: UTF-8]
+./mainapp.py
+./mainwin.py
+./config.py
+./downloads.py
+./formats.py
+./info.py
+./media.py
+./refresh.py
+./tidy.py
+./updates.py

@@ -41,6 +41,8 @@ import time
 import formats
 import media
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
@@ -104,7 +106,7 @@ class TidyManager(threading.Thread):
     def __init__(self, app_obj, choices_dict):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 107 __init__')
+            utils.debug_time('top 109 __init__')
 
         super(TidyManager, self).__init__()
 
@@ -204,13 +206,13 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 207 run')
+            utils.debug_time('top 209 run')
 
         # Show information about the tidy operation in the Output Tab
         if not self.init_obj:
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                'Starting tidy operation, tidying up whole data directory',
+                _('Starting tidy operation, tidying up whole data directory'),
             )
 
         else:
@@ -219,112 +221,113 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                'Starting tidy operation, tidying up ' + media_type \
-                + ' \'' + self.init_obj.name + '\'',
+                _('Starting tidy operation, tidying up \'{0}\'').format(
+                    self.init_obj.name,
+                )
             )
 
         if self.corrupt_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Check videos are not corrupted:   ' + text,
+            '   ' + _('Check videos are not corrupted:') + ' ' + text,
         )
 
         if self.corrupt_flag:
 
             if self.del_corrupt_flag:
-                text = 'YES'
+                text = _('YES')
             else:
-                text = 'NO'
+                text = _('NO')
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Delete corrupted videos:          ' + text,
+                '   ' + _('Delete corrupted videos:') + ' ' + text,
             )
 
         if self.exist_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Check videos do/don\'t exist:      ' + text,
+            '   ' + _('Check videos do/don\'t exist:') + ' ' + text,
         )
 
         if self.del_video_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete all video files:           ' + text,
+            '   ' + _('Delete all video files:') + ' ' + text,
         )
 
         if self.del_video_flag:
 
             if self.del_others_flag:
-                text = 'YES'
+                text = _('YES')
             else:
-                text = 'NO'
+                text = _('NO')
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Delete other video/audio files:   ' + text,
+                '   ' + _('Delete other video/audio files:') + ' ' + text,
             )
 
         if self.del_descrip_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete all description files:     ' + text,
+            '   ' + _('Delete all description files:') + ' ' + text,
         )
 
         if self.del_json_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete all metadata (JSON) files: ' + text,
+            '   ' + _('Delete all metadata (JSON) files:') + ' ' + text,
         )
 
         if self.del_xml_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete all annotation files:      ' + text,
+            '   ' + _('Delete all annotation files:') + ' ' + text,
         )
 
         if self.del_thumb_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete all thumbnail files:       ' + text,
+            '   ' + _('Delete all thumbnail files:') + ' ' + text,
         )
 
         if self.del_archive_flag:
-            text = 'YES'
+            text = _('YES')
         else:
-            text = 'NO'
+            text = _('NO')
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            '   Delete youtube-dl archive files:  ' + text,
+            '   ' + _('Delete youtube-dl archive files:') + ' ' + text,
         )
 
         # Compile a list of channels, playlists and folders to tidy up (each
@@ -360,20 +363,20 @@ class TidyManager(threading.Thread):
         # Show a confirmation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Tidy operation finished',
+            _('Tidy operation finished'),
         )
 
         if self.corrupt_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Corrupted videos found:                     ' \
+                '   ' + _('Corrupted videos found:') + ' ' \
                 + str(self.video_corrupt_count),
             )
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Corrupted videos deleted:                   ' \
+                '   ' + _('Corrupted videos deleted:') + ' ' \
                 + str(self.video_corrupt_deleted_count),
             )
 
@@ -381,13 +384,13 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   New video files detected:                   ' \
+                '   ' + _('New video files detected:') + ' ' \
                 + str(self.video_exist_count),
             )
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Missing video files detected:               ' \
+                '   ' + _('Missing video files detected:') + ' ' \
                 + str(self.video_no_exist_count),
             )
 
@@ -395,13 +398,13 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Non-corrupted video files deleted:          ' \
+                '   ' + _('Non-corrupted video files deleted:') + ' ' \
                 + str(self.video_deleted_count),
             )
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Other video/audio files deleted:            ' \
+                '   ' + _('Other video/audio files deleted:') + ' ' \
                 + str(self.other_deleted_count),
             )
 
@@ -409,7 +412,7 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Description files deleted:                  ' \
+                '   ' + _('Description files deleted:') + ' ' \
                 + str(self.descrip_deleted_count),
             )
 
@@ -417,7 +420,7 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Metadata (JSON) files deleted:              ' \
+                '   ' + _('Metadata (JSON) files deleted:') + ' ' \
                 + str(self.json_deleted_count),
             )
 
@@ -425,7 +428,7 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Annotation files deleted:                   ' \
+                '   ' + _('Annotation files deleted:') + ' ' \
                 + str(self.xml_deleted_count),
             )
 
@@ -433,7 +436,7 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Thumbnail files deleted:                    ' \
+                '   ' + _('Thumbnail files deleted:') + ' ' \
                 + str(self.thumb_deleted_count),
             )
 
@@ -441,7 +444,7 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   youtube-dl archive files deleted:           ' \
+                '   ' + _('youtube-dl archive files deleted:') + ' ' \
                 + str(self.archive_deleted_count),
             )
 
@@ -467,7 +470,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 470 tidy_directory')
+            utils.debug_time('top 473 tidy_directory')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -483,7 +486,7 @@ class TidyManager(threading.Thread):
 
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            'Checking ' + media_type + ' \'' + media_data_obj.name + '\'',
+            _('Checking:') + ' \'' + media_data_obj.name + '\'',
         )
 
         if self.corrupt_flag:
@@ -526,7 +529,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 529 check_video_corrupt')
+            utils.debug_time('top 532 check_video_corrupt')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -567,8 +570,9 @@ class TidyManager(threading.Thread):
 
                             self.app_obj.main_win_obj.output_tab_write_stdout(
                                 1,
-                                '   Deleted (possibly) corrupted video'
-                                + ' file: \'' + video_obj.name + '\'',
+                                '   ' + _(
+                                    'Deleted (possibly) corrupted video file:',
+                                ) + ' \'' + video_obj.name + '\'',
                             )
 
                             self.app_obj.mark_video_downloaded(
@@ -581,8 +585,9 @@ class TidyManager(threading.Thread):
                             # Don't delete it
                             self.app_obj.main_win_obj.output_tab_write_stdout(
                                 1,
-                                '   Video file might be corrupt: \'' \
-                                + video_obj.name + '\'',
+                                '   ' + _(
+                                    'Video file might be corrupt:',
+                                ) + ' \'' + video_obj.name + '\'',
                             )
 
 
@@ -602,7 +607,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 605 check_videos_exist')
+            utils.debug_time('top 610 check_videos_exist')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -624,7 +629,9 @@ class TidyManager(threading.Thread):
 
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
-                        '   Video file exists: \'' + video_obj.name + '\'',
+                        '   ' + _(
+                            'Video file exists:',
+                        ) + ' \'' + video_obj.name + '\'',
                     )
 
                 elif video_obj.dl_flag \
@@ -640,8 +647,9 @@ class TidyManager(threading.Thread):
 
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
-                        '   Video file doesn\'t exist: \'' + video_obj.name \
-                        + '\'',
+                        '   ' + _(
+                            'Video file doesn\'t exist:',
+                        ) + ' \'' + video_obj.name + '\'',
                     )
 
 
@@ -660,7 +668,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 663 delete_video')
+            utils.debug_time('top 671 delete_video')
 
         ext_list = formats.VIDEO_FORMAT_LIST.copy()
         ext_list.extend(formats.AUDIO_FORMAT_LIST)
@@ -759,7 +767,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 762 delete_descrip')
+            utils.debug_time('top 770 delete_descrip')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -804,7 +812,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 807 delete_json')
+            utils.debug_time('top 815 delete_json')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -849,7 +857,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 852 delete_xml')
+            utils.debug_time('top 860 delete_xml')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -894,7 +902,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 897 delete_thumb')
+            utils.debug_time('top 905 delete_thumb')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -939,7 +947,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 942 delete_archive')
+            utils.debug_time('top 950 delete_archive')
 
         archive_path = os.path.abspath(
             os.path.join(
@@ -974,7 +982,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 977 call_moviepy')
+            utils.debug_time('top 985 call_moviepy')
 
         try:
             clip = moviepy.editor.VideoFileClip(video_path)
@@ -984,7 +992,8 @@ class TidyManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '   Video file might be corrupt: \'' + video_obj.name + '\'',
+                '   ' + _('Video file might be corrupt:') + ' \'' \
+                + video_obj.name + '\'',
             )
 
 
@@ -1018,7 +1027,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1021 check_video_in_actual_dir')
+            utils.debug_time('top 1030 check_video_in_actual_dir')
 
         if container_obj.dbid == container_obj.master_dbid:
 
@@ -1054,6 +1063,6 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1057 stop_tidy_operation')
+            utils.debug_time('top 1066 stop_tidy_operation')
 
         self.running_flag = False

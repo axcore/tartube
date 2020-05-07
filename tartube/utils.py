@@ -115,7 +115,7 @@ drag_drop_text=None, no_modify_flag=None):
     return None
 
 
-def add_links_to_textview_from_clipboard(app_obj, textview, mark_start=None,
+def add_links_to_textview_from_clipboard(app_obj, textbuffer, mark_start=None,
 mark_end=None, drag_drop_text=None):
 
     """Called by mainwin.AddVideoDialogue.__init__(),
@@ -131,8 +131,8 @@ mark_end=None, drag_drop_text=None):
 
         app_obj (mainapp.TartubeApp): The main application
 
-        textview (Gtk.TextBuffer): The textview to which valis URLs should be
-            added (unless they are duplicates)
+        textbuffer (Gtk.TextBuffer): The textbuffer to which valis URLs should
+            be added (unless they are duplicates)
 
         mark_start, mark_end (Gtk.TextMark): The marks at the start/end of the
             buffer (using marks rather than iters prevents Gtk errors)
@@ -173,18 +173,18 @@ mark_end=None, drag_drop_text=None):
         if mark_start is None or mark_end is None:
 
             # No Gtk.TextMarks supplied, we're forced to use iters
-            buffer_text = textview.get_text(
-                textview.get_start_iter(),
-                textview.get_end_iter(),
+            buffer_text = textbuffer.get_text(
+                textbuffer.get_start_iter(),
+                textbuffer.get_end_iter(),
                 # Don't include hidden characters
                 False,
             )
 
         else:
 
-            buffer_text = textview.get_text(
-                textview.get_iter_at_mark(mark_start),
-                textview.get_iter_at_mark(mark_end),
+            buffer_text = textbuffer.get_text(
+                textbuffer.get_iter_at_mark(mark_start),
+                textbuffer.get_iter_at_mark(mark_end),
                 False,
             )
 
@@ -202,8 +202,8 @@ mark_end=None, drag_drop_text=None):
             if not re.search('\n\s*$', buffer_text) and buffer_text != '':
                 mod_list[0] = '\n' + mod_list[0]
 
-            textview.insert(
-                textview.get_end_iter(),
+            textbuffer.insert(
+                textbuffer.get_end_iter(),
                 str.join('\n', mod_list) + '\n',
             )
 
@@ -383,6 +383,30 @@ def convert_seconds_to_string(seconds, short_flag=False):
 
     else:
         return str(datetime.timedelta(seconds=seconds))
+
+
+def convert_youtube_id_to_rss(media_type, youtube_id):
+
+    """Can be called by anything; usually called by
+    media.GenericRemoteContainer.set_rss().
+
+    Convert the channel/playlist ID provided by YouTube into the full URL for
+    the channel/playlist RSS feed.
+
+    Args:
+
+        media_type (str): 'channel' or 'playlist'
+
+        youtube_id (str): The YouTube channel or playlist ID
+
+    Return values:
+
+        The full URL for the RSS feed
+
+    """
+
+    return 'https://www.youtube.com/feeds/videos.xml?' + media_type \
+    + '_id=' + youtube_id
 
 
 def convert_youtube_to_hooktube(url):
@@ -581,6 +605,11 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
     slightly modifies the name, converting 'my_name' into 'my_name_N', where N
     is the smallest positive integer for which the name is available.
 
+    If the specified old_name is already in that format (for example,
+    'Channel_4'), then the old number is stripped away, and this function
+    starts looking from the first integer after that (for example,
+    'Channel_5').
+
     To preclude any possibility of infinite loops, the function will give up
     after max_value attempts.
 
@@ -603,6 +632,19 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
 
     """
 
+    # If old_name is already in the format 'my_name_N', where N is an integer
+    #   in the range min_value < N < max_value, then strip it away
+    if re.search(r'\_\d+$', old_name):
+
+        number = int(re.sub(r'^.*\_(\d+)$', r'\1', old_name))
+        mod_name = re.sub(r'^(.*)\_\d+$', r'\1', old_name)
+
+        if number >= 2 and number < max_value:
+
+            old_name = mod_name
+            min_value = number + 1
+
+    # Find an available name
     if max_value != -1:
 
         for n in range (min_value, max_value):
@@ -702,7 +744,7 @@ def format_bytes(num_bytes):
 
 
 def generate_system_cmd(app_obj, media_data_obj, options_list,
-dl_sim_flag=False, divert_mode=None):
+dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
 
     """Called by downloads.VideoDownloader.do_download() and
     mainwin.SystemCmdDialogue.update_textbuffer().
@@ -724,6 +766,9 @@ dl_sim_flag=False, divert_mode=None):
 
         dl_sim_flag (bool): True if a simulated download is to take place,
             False if a real download is to take place
+
+        dl_classic_flag (bool): True if the download operation was launched
+            from the Classic Mode Tab, False otherwise
 
         divert_mode (str): If not None, should be one of the values of
             mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube' or
@@ -748,27 +793,39 @@ dl_sim_flag=False, divert_mode=None):
     #   user deletes the videos, youtube-dl won't try to download them again
     # (Videos downloaded into a system folder should never create an archive
     #   file)
-    if app_obj.allow_ytdl_archive_flag \
-    and (
-        not isinstance(media_data_obj, media.Folder)
-        or not media_data_obj.fixed_flag
-    ) and (
-        not isinstance(media_data_obj, media.Video)
-        or not isinstance(media_data_obj.parent_obj, media.Folder)
-        or not media_data_obj.parent_obj.fixed_flag
-    ):
-        # (Create the archive file in the media data object's default
-        #   sub-directory, not the alternative download destination, as this
-        #   helps youtube-dl to work the way we want it to work)
-        if isinstance(media_data_obj, media.Video):
-            dl_path = media_data_obj.parent_obj.get_default_dir(app_obj)
-        else:
-            dl_path = media_data_obj.get_default_dir(app_obj)
+    if app_obj.allow_ytdl_archive_flag:
 
-        options_list.append('--download-archive')
-        options_list.append(
-            os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
-        )
+        if not dl_classic_flag \
+        and (
+            not isinstance(media_data_obj, media.Folder)
+            or not media_data_obj.fixed_flag
+        ) and (
+            not isinstance(media_data_obj, media.Video)
+            or not isinstance(media_data_obj.parent_obj, media.Folder)
+            or not media_data_obj.parent_obj.fixed_flag
+        ):
+            # (Create the archive file in the media data object's default
+            #   sub-directory, not the alternative download destination, as
+            #   this helps youtube-dl to work the way we want it to work)
+            if isinstance(media_data_obj, media.Video):
+                dl_path = media_data_obj.parent_obj.get_default_dir(app_obj)
+            else:
+                dl_path = media_data_obj.get_default_dir(app_obj)
+
+            options_list.append('--download-archive')
+            options_list.append(
+                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
+            )
+
+        elif dl_classic_flag:
+
+            # Create the archive file in destination directory
+            dl_path = media_data_obj.dummy_dir
+
+            options_list.append('--download-archive')
+            options_list.append(
+                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
+            )
 
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:

@@ -35,6 +35,8 @@ import time
 # Import our modules
 import mainapp
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Classes
@@ -268,6 +270,9 @@ class GenericContainer(GenericMedia):
                 if child_obj.fav_flag:
                     self.fav_count -= 1
 
+                if child_obj.live_mode:
+                    self.live_count -= 1
+
                 if child_obj.new_flag:
                     self.new_count -= 1
 
@@ -302,26 +307,30 @@ class GenericContainer(GenericMedia):
 
         if not isinstance(self, Folder):
 
-            text += 'Source:\n'
+            translate_note = _(
+                'TRANSLATOR\'S NOTE: Source = video/channel/playlist URL',
+            )
+
+            text += _('Source:') + '\n'
             if self.source is None:
-                text += ' <unknown>'
+                text += '<' + _('unknown') + '>'
             else:
                 text += self.source
 
             text += '\n\n'
 
-        text += 'Location:\n'
+        text += _('Location:') + '\n'
 
         location = self.get_default_dir(app_obj)
         if location is None:
-            text += ' <unknown>'
+            text += '<' + _('unknown') + '>'
         else:
             text += location
 
         if self.master_dbid != self.dbid:
 
             dest_obj = app_obj.media_reg_dict[self.master_dbid]
-            text += '\n\nDownload destination: ' + dest_obj.name
+            text += '\n\n' + _('Download destination:') + ' ' + dest_obj.name
 
         # Need to escape question marks or we'll get a markup error
         text = re.sub('&', '&amp;', text)
@@ -501,27 +510,14 @@ class GenericContainer(GenericMedia):
 
         # Ignore the types of media data object that we don't require (and all
         #   of their children)
-        if isinstance(self, Video):
-            # (This shouldn't occur)
-            return
+        media_type = self.get_type()
 
-        elif isinstance(self, Channel):
-            if not include_channel_flag:
-                return
-            else:
-                media_type = 'channel'
-
-        elif isinstance(self, Playlist):
-            if not include_playlist_flag:
-                return
-            else:
-                media_type = 'playlist'
-
-        elif isinstance(self, Folder):
-            if self.fixed_flag:
-                return
-            else:
-                media_type = 'folder'
+        # (This function should not be called for media.Video objects)
+        if media_type == 'video' \
+        or (media_type == 'channel' and not include_channel_flag) \
+        or (media_type == 'playlist' and not include_playlist_flag) \
+        or (media_type == 'folder' and self.fixed_flag):
+            return {}
 
         # This dictionary contains values for the children of this object
         db_dict = {}
@@ -606,27 +602,14 @@ class GenericContainer(GenericMedia):
 
         # Ignore the types of media data object that we don't require (and all
         #   of their children)
-        if isinstance(self, Video):
-            # (This shouldn't occur)
+        media_type = self.get_type()
+
+        # (This function should not be called for media.Video objects)
+        if media_type == 'video' \
+        or (media_type == 'channel' and not include_channel_flag) \
+        or (media_type == 'playlist' and not include_playlist_flag) \
+        or (media_type == 'folder' and self.fixed_flag):
             return db_dict
-
-        elif isinstance(self, Channel):
-            if not include_channel_flag:
-                return db_dict
-            else:
-                media_type = 'channel'
-
-        elif isinstance(self, Playlist):
-            if not include_playlist_flag:
-                return db_dict
-            else:
-                media_type = 'playlist'
-
-        elif isinstance(self, Folder):
-            if self.fixed_flag:
-                return db_dict
-            else:
-                media_type = 'folder'
 
         # Add values to the dictionary
         if media_type == 'channel' or media_type == 'playlist':
@@ -700,6 +683,7 @@ class GenericContainer(GenericMedia):
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
+        self.live_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -717,6 +701,9 @@ class GenericContainer(GenericMedia):
                 if child_obj.fav_flag:
                     self.fav_count += 1
 
+                if child_obj.live_mode:
+                    self.live_count += 1
+
                 if child_obj.new_flag:
                     self.new_count += 1
 
@@ -728,7 +715,7 @@ class GenericContainer(GenericMedia):
 
 
     def reset_counts(self, vid_count, bookmark_count, dl_count, fav_count,
-    new_count, waiting_count):
+    live_count, new_count, waiting_count):
 
         """Called by mainapp.TartubeApp.update_db().
 
@@ -743,6 +730,7 @@ class GenericContainer(GenericMedia):
         self.bookmark_count = bookmark_count
         self.dl_count = dl_count
         self.fav_count = fav_count
+        self.live_count = live_count
         self.new_count = new_count
         self.waiting_count = waiting_count
 
@@ -783,6 +771,16 @@ class GenericContainer(GenericMedia):
     def dec_fav_count(self):
 
         self.fav_count -= 1
+
+
+    def inc_live_count(self):
+
+        self.live_count += 1
+
+
+    def dec_live_count(self):
+
+        self.live_count -= 1
 
 
     def set_master_dbid(self, app_obj, dbid):
@@ -1100,13 +1098,21 @@ class GenericRemoteContainer(GenericContainer):
 
         """
 
+        # Livestreams come before everything else
+        if obj1.live_mode > obj2.live_mode:
+            return -1
+        elif obj1.live_mode < obj2.live_mode:
+            return 1
+
         # The video's index is not relevant unless sorting a playlist
-        if isinstance(self, Playlist) \
+        elif isinstance(self, Playlist) \
         and obj1.index is not None and obj2.index is not None:
             if obj1.index < obj2.index:
                 return -1
             else:
                 return 1
+
+        # Otherwise sort by upload time
         elif obj1.upload_time is not None and obj2.upload_time is not None:
             if obj1.upload_time > obj2.upload_time:
                 return -1
@@ -1146,6 +1152,41 @@ class GenericRemoteContainer(GenericContainer):
         self.child_list.sort(key=functools.cmp_to_key(self.do_sort))
 
 
+    def get_livestreams(self, app_obj, live_mode=None):
+
+        """Can be called by anything.
+
+        Returns a list of child media.Video objects which are marked as
+        livestreams.
+
+        If a live_mode is specified, returns either waiting livestreams or
+        broadcasting livestreams (only).
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            live_mode (int or None): 1 to return waiting livestreams only, 2 to
+                return broadcasting livestreams only, None to return all
+                livestreams
+
+        Returns:
+
+            A list of media.Video objects (may be an empty list)
+
+        """
+
+        # Check the mainapp.TartubeApp IV is probably cheaper than checking
+        #   self.child_list, as the latter might contain thousands of videos
+        return_list = []
+
+        for video_obj in app_obj.media_reg_live_dict.values():
+            if live_mode is None or video_obj.live_mode == live_mode:
+                return_list.append(video_obj)
+
+        return return_list
+
+
     # Set accessors
 
 
@@ -1176,11 +1217,42 @@ class GenericRemoteContainer(GenericContainer):
         self.bookmark_count = other_obj.bookmark_count
         self.dl_count = other_obj.dl_count
         self.fav_count = other_obj.fav_count
+        self.live_count = other_obj.live_count
         self.new_count = other_obj.new_count
         self.waiting_count = other_obj.waiting_count
 
         self.error_list = other_obj.error_list.copy()
         self.warning_list = other_obj.warning_list.copy()
+
+
+    def set_rss(self, youtube_id):
+
+        """Can be called by anything; called frequently by
+        downloads.VideoDownloader.extract_stdout_data().
+
+        Set the RSS feed, but only if it's not already set (to save time).
+
+        Args:
+
+            youtube_id (str): The YouTube channel or playlist ID
+
+        """
+
+        if not self.rss:
+
+            if isinstance(self, Channel):
+
+                self.rss = utils.convert_youtube_id_to_rss(
+                    'channel',
+                    youtube_id,
+                )
+
+            else:
+
+                self.rss = utils.convert_youtube_id_to_rss(
+                    'playlist',
+                    youtube_id,
+                )
 
 
     def set_source(self, source):
@@ -1213,8 +1285,8 @@ class Video(GenericMedia):
     # Standard class methods
 
 
-    def __init__(self, dbid, name, parent_obj, options_obj=None,
-    no_sort_flag=False):
+    def __init__(self, dbid, name, parent_obj=None, options_obj=None,
+    no_sort_flag=False, dummy_flag=False):
 
         # IV list - class objects
         # -----------------------
@@ -1230,6 +1302,10 @@ class Video(GenericMedia):
         # IV list - other
         # ---------------
         # Unique media data object ID (an integer)
+        # When a download operation is launched from the Classic Mode Tab,
+        #   the code creates a series of dummy media.Video objects that aren't
+        #   added to the media data registry. Those dummy objects have negative
+        #   dbids
         self.dbid = dbid
 
         # Video name
@@ -1252,6 +1328,12 @@ class Video(GenericMedia):
         #   video, or False if the downloads.DownloadManager object should
         #   decide whether to simulate, or not
         self.dl_sim_flag = False
+        # Livestream mode: 0 if the video is not a livestream (or if it was a
+        #   livestream which has now finished, and behaves like a normal
+        #   uploaded video), 1 if the livestream has not started, 2 if the
+        #   livestream is currently being broadcast
+        # (Using a numerical mode makes the sorting algorithms more efficient)
+        self.live_mode = 0
 
         # Flag set to True if the video is archived, meaning that it can't be
         #   auto-deleted (but it can still be deleted manually by the user)
@@ -1320,12 +1402,27 @@ class Video(GenericMedia):
         self.error_list = []
         self.warning_list = []
 
+        # IVs used only when the download operation is launched from the
+        #   Classic Mode Tab
+        # To save database loading time, these IVs are only added when needed
+        #   (via a call to self.set_dummy() )
+        # Flag set to True if this is a dummy media.Video object
+        self.dummy_flag = False
+#        # The destination directory for the download
+#        self.dummy_dir = None
+#        # The full path to a downloaded file, if available
+#        self.dummy_path = None
+#        # The video/audio format to use; must be one of the strings in
+#        #   formats.VIDEO_FORMAT_LIST or formats.AUDIO_FORMAT_LIST (or None to
+#        #   use the format(s) specified by the General Options Manager)
+#        self.dummy_format = None
 
         # Code
         # ----
 
         # Update the parent
-        self.parent_obj.add_child(self, no_sort_flag)
+        if parent_obj:
+            self.parent_obj.add_child(self, no_sort_flag)
 
 
     # Public class methods
@@ -1376,30 +1473,62 @@ class Video(GenericMedia):
 
         """
 
-        text = '#' + str(self.dbid) + ':   ' + self.name + '\n\n'
+        if not self.dummy_flag:
 
-        if self.parent_obj:
+            translate_note = _(
+                'TRANSLATOR\'S NOTE: WAITING = livestream not started,' \
+                + ' LIVE = livestream started',
+            )
 
-            if isinstance(self.parent_obj, Channel):
-                text += 'Channel: '
-            elif isinstance(self.parent_obj, Playlist):
-                text += 'Playlist: '
+            if self.live_mode == 1:
+                live_str = '<' + _('WAITING') + '>'
+            elif self.live_mode == 2:
+                live_str = '<' + _('LIVE') + '>'
             else:
-                text += 'Folder: '
+                live_str = ''
 
-            text += self.parent_obj.name + '\n\n'
+            text \
+            = ' #' + str(self.dbid) + live_str + ':   ' + self.name + '\n\n'
 
-        text += 'Source:\n'
-        if self.source is None:
-            text += ' <unknown>'
+            if self.parent_obj:
+
+                if isinstance(self.parent_obj, Channel):
+                    text += _('Channel:') + ' '
+                elif isinstance(self.parent_obj, Playlist):
+                    text += _('Playlist:') + ' '
+                else:
+                    text += _('Folder:') + ' '
+
+                text += self.parent_obj.name + '\n\n'
+
+            translate_note = _(
+                'TRANSLATOR\'S NOTE 2: Source = video/channel/playlist URL',
+            )
+
+            text += _('Source:') + '\n'
+            if self.source is None:
+                text += '<' + _('unknown') + '>'
+            else:
+                text += self.source
+
+            text += '\n\n' + _('File:') + '\n'
+            if self.file_name is None:
+                text += '<' + _('unknown') + '>'
+            else:
+                text += self.get_actual_path(app_obj)
+
         else:
-            text += self.source
 
-        text += '\n\nFile:\n'
-        if self.file_name is None:
-            text += ' <unknown>'
-        else:
-            text += self.get_actual_path(app_obj)
+            # When the download operation is launched from the Classic Mode
+            #   tab, there is less to display
+            text = _('Source:') + '\n'
+            if self.source is None:
+                text += '<' + _('unknown') + '>'
+            else:
+                text += self.source
+
+            if self.dummy_path:
+                text += '\n\n' + _('File:') + '\n' + self.dummy_path
 
         # Apply a maximum line length, if required
         if max_length is not None:
@@ -1459,6 +1588,41 @@ class Video(GenericMedia):
 #   def set_dl_sim_flag():      # Inherited from GenericMedia
 
 
+    def set_dummy(self, url, dir_str, format_str):
+
+        """Called by mainwin.MainWin.classic_mode_tab_add_urls(), immediately
+        after the call to self.new().
+
+        Sets up this media.Video object as a dummy object, not added to the
+        media data registry.
+
+        Args:
+
+            url (str): The URL to download (which might reperesent a video,
+                channel or playlist; the dummy media.Video object represents
+                all of them)
+
+            dir_str (str): The destination directory for the download, chosen
+                by the user
+
+            format_str (str): One of the video/audio formats specified by
+                formats.VIDEO_FORMAT_LIST and formats.AUDIO_FORMAT_LIST
+
+        """
+
+        self.dummy_flag = True
+        self.dummy_dir = dir_str
+        self.dummy_path = None
+        self.dummy_format = format_str
+
+        self.source = url
+
+
+    def set_dummy_path(self, path):
+
+        self.dummy_path = path
+
+
     def set_duration(self, duration=None):
 
         if duration is not None:
@@ -1488,6 +1652,11 @@ class Video(GenericMedia):
             self.index = None
         else:
             self.index = int(index)
+
+
+    def set_live_mode(self, mode):
+
+        self.live_mode = mode
 
 
     def set_mkv(self):
@@ -1793,9 +1962,9 @@ class Video(GenericMedia):
             testday_str = testday.strftime('%y%m%d')
 
             if testday_str == today_str:
-                return 'Today'
+                return _('Today')
             elif testday_str == yesterday_str:
-                return 'Yesterday'
+                return _('Yesterday')
             else:
                 return testday.strftime('%Y-%m-%d')
 
@@ -1869,6 +2038,10 @@ class Channel(GenericRemoteContainer):
         self.nickname = name
         # Download source (a URL)
         self.source = None
+        # RSS feed source (a URL), used by livestream operations on compatible
+        #   websites. For YouTube channels, set automatically during a download
+        #   operation. For channels on other websites, can be set manually
+        self.rss = None
 
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
@@ -1904,11 +2077,12 @@ class Channel(GenericRemoteContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, new and in the 'Waiting Videos' system
-        #   folder
+        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
+        #   system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
+        self.live_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -2035,6 +2209,10 @@ class Playlist(GenericRemoteContainer):
         self.nickname = name
         # Download source (a URL)
         self.source = None
+        # RSS feed source (a URL), used by livestream operations on compatible
+        #   websites. Set automatically for YouTube videos, and can be set
+        #   manually by the user for other websites
+        self.rss = None
 
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
@@ -2070,11 +2248,12 @@ class Playlist(GenericRemoteContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, new and in the 'Waiting Videos' system
-        #   folder
+        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
+        #   system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
+        self.live_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -2271,11 +2450,12 @@ class Folder(GenericContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, new and in the 'Waiting Videos' system
-        #   folder
+        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
+        #   system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
+        self.live_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -2386,7 +2566,14 @@ class Folder(GenericContainer):
         ):
             if isinstance(obj1, Video):
 
-                if obj1.upload_time is not None \
+                # Livestreams come before everything else
+                if obj1.live_mode > obj2.live_mode:
+                    return -1
+                elif obj1.live_mode < obj2.live_mode:
+                    return 1
+
+                # Otherwise sort by upload time, then by receive time
+                elif obj1.upload_time is not None \
                 and obj2.upload_time is not None:
                     if obj1.upload_time > obj2.upload_time:
                         return -1

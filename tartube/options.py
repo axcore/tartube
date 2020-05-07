@@ -214,17 +214,13 @@ class OptionsManager(object):
 
         video_format (str): Video format to download. When this option is set
             to '0' youtube-dl will choose the best video format available for
-            the given URL. Otherwise, this option is set to one of the keys in
-            formats.VIDEO_FORMAT_DICT, in which case youtube-dl will use the
-            corresponding value to select the video format. See also the
-            options 'second_video_format' and 'third_video_format'.
+            the given URL. Otherwise, set in a call to
+            OptionsParser.build_video_format(), combining the contents of the
+            'video_format_list' and 'video_format_mode' options. The combined
+            value is passed to youtube-dl with the -f switch
 
-        N.B. The options 'video_format', 'second_video_format' and
-            'third_video_format' are rearranged before being used, so that
-            video formats appear before audio_formats (otherwise, youtube-dl
-            won't download them)
-
-        all_formats (bool): If True, download all available video formats
+        all_formats (bool): If True, download all available video formats.
+            Also set in the call to OptionsParser.build_video_format()
 
         prefer_free_formats (bool): If True, prefer free video formats unless
             one is specfied by video_format, etc
@@ -325,25 +321,6 @@ class OptionsManager(object):
         output_template (str): Can be any output template supported by
             youtube-dl. Ignored if 'output_format' is not 0
 
-        [used to modify the 'video_format' option]
-
-        second_video_format (str): Video format to download, if the format
-            specified by the 'video_format' option isn't available. This option
-            is ignored when its value is '0' (or when the value of the
-            'video_format' option is '0'), and also if 'video_format' is set
-            to one of the keys in formats.VIDEO_RESOLUTION_DICT (e.g. 1080p).
-            Otherwise, its value is one of the keys in
-            formats.VIDEO_FORMAT_DICT
-
-        third_video_format (str): Video format to download, if the formats
-            specified by the 'video_format' and 'second_video_format' options
-            aren't available. This option is ignored when its value is '0' (or
-            when the value of the 'video_format' and 'second_video_format'
-            options are '0'), and also if 'video_format' or
-            'second_video_format' are set to one of the keys in
-            formats.VIDEO_RESOLUTION_DICT (e.g. 1080p). Otherwise, its value is
-            one of the keys in formats.VIDEO_FORMAT_DICT
-
         [used in conjunction with the 'min_filesize' and 'max_filesize' options
 
             max_filesize_unit (str): Maximum file size unit. Available values:
@@ -410,6 +387,21 @@ class OptionsManager(object):
             or caseless sub-string). Each item in the list is passed to
             youtube-dl as a separate --reject-title argument
 
+        video_format_list (list): List of video formats to download, in order
+            of preference. If an empty list, youtube-dl will choose the best
+            video format available for the given URL. Otherwise, the items in
+            this list are keys in formats.VIDEO_FORMAT_DICT. The corresponding
+            values are combined and stored as the 'video_format' option, first
+            being rearrnaged to put video formats before audio formats
+            (otherwise youtube-dl won't download the video formats)
+
+        video_format_mode (str): 'all' to download all available formats,
+            ignoring the preference list (sets the option 'all_formats').
+            'single' to download the first available format in
+            'video_format_list'. 'single_agree' to download the first format in
+            'video_format_list' that's available for all videos. 'multiple' to
+            download all available formats in 'video_format_list'
+
         subs_lang_list (list): List of language tags which are used to set
             the 'subs_lang' option
 
@@ -461,9 +453,8 @@ class OptionsManager(object):
 
         """Called by config.OptionsEditWin.apply_changes().
 
-        The options 'video_format', 'second_video_format' and
-        'third_video_format' specify video formats, audio formats or a mixture
-        of both.
+        The option 'video_format_list' specifies video formats, audio formats
+        or a mixture of both.
 
         youtube-dl won't download the specified formats properly, if audio
         formats appear before video formats. Therefore, this function is called
@@ -471,11 +462,7 @@ class OptionsManager(object):
         formats.
         """
 
-        format_list = [
-            self.options_dict['video_format'],
-            self.options_dict['second_video_format'],
-            self.options_dict['third_video_format'],
-        ]
+        format_list = self.options_dict['video_format_list']
         video_list = []
         audio_list = []
         comb_list = []
@@ -492,20 +479,7 @@ class OptionsManager(object):
         comb_list.extend(video_list)
         comb_list.extend(audio_list)
 
-        if len(comb_list) >= 1:
-            self.options_dict['video_format'] = comb_list[0]
-        else:
-            self.options_dict['video_format'] = '0'
-
-        if len(comb_list) >= 2:
-            self.options_dict['second_video_format'] = comb_list[1]
-        else:
-            self.options_dict['second_video_format'] = '0'
-
-        if len(comb_list) == 3:
-            self.options_dict['third_video_format'] = comb_list[2]
-        else:
-            self.options_dict['third_video_format'] = '0'
+        self.options_dict['video_format_list'] = format_list
 
 
     def reset_options(self):
@@ -607,8 +581,6 @@ class OptionsManager(object):
             # YOUTUBE-DL-GUI OPTIONS
             'output_format': 2,
             'output_template': '%(title)s.%(ext)s',
-            'second_video_format': '0',
-            'third_video_format': '0',
             'max_filesize_unit' : '',
             'min_filesize_unit' : '',
             'extra_cmd_string' : '',
@@ -624,6 +596,8 @@ class OptionsManager(object):
            'use_fixed_folder': None,
            'match_title_list': [],
            'reject_title_list': [],
+           'video_format_list': [],
+           'video_format_mode': 'single',
            'subs_lang_list': [ 'en' ],
         }
 
@@ -846,8 +820,6 @@ class OptionsParser(object):
             # YOUTUBE-DL-GUI OPTIONS (not given an options.OptionHolder object)
 #           OptionHolder('output_format', '', 2),
 #           OptionHolder('output_template', '', ''),
-#           OptionHolder('second_video_format', '', '0'),
-#           OptionHolder('third_video_format', '', '0'),
 #           OptionHolder('max_filesize_unit', '', ''),
 #           OptionHolder('min_filesize_unit', '', ''),
 #           OptionHolder('extra_cmd_string', '', ''),
@@ -863,6 +835,8 @@ class OptionsParser(object):
 #           OptionHolder('use_fixed_folder', '', None),
 #           OptionHolder('match_title_list', '', []),
 #           OptionHolder('reject_title_list', '', []),
+#           OptionHolder('video_format_list', '', []),
+#           OptionHolder('video_format_mode', '', 'single'),
 #           OptionHolder('subs_lang_list', '', []),
         ]
 
@@ -870,7 +844,8 @@ class OptionsParser(object):
     # Public class methods
 
 
-    def parse(self, media_data_obj, options_manager_obj):
+    def parse(self, media_data_obj, options_manager_obj,
+    dl_classic_flag=False):
 
         """Called by downloads.DownloadWorker.prepare_download() and
         mainwin.MainWin.update_textbuffer().
@@ -887,6 +862,10 @@ class OptionsParser(object):
             options_manager_obj (options.OptionsManager): The object containing
                 the download options for this media data object
 
+            dl_classic_flag (bool): True when called by .prepare_download, and
+                when the download operation was launched from the Classic Mode
+                tab. False otherwise
+
         Returns:
 
             List of strings with all the youtube-dl command line options
@@ -899,9 +878,9 @@ class OptionsParser(object):
         # Create a copy of the dictionary...
         copy_dict = options_manager_obj.options_dict.copy()
         # ...then modify various values in the copy. Set the 'save_path' option
-        self.build_save_path(media_data_obj, copy_dict)
-        # Set the 'video_format' option
-        self.build_video_format(copy_dict)
+        self.build_save_path(media_data_obj, copy_dict, dl_classic_flag)
+        # Set the 'video_format' option and 'all_formats' options
+        self.build_video_format(media_data_obj, copy_dict, dl_classic_flag)
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
@@ -1046,7 +1025,7 @@ class OptionsParser(object):
             copy_dict['limit_rate'] = str(limit) + 'K'
 
 
-    def build_save_path(self, media_data_obj, copy_dict):
+    def build_save_path(self, media_data_obj, copy_dict, dl_classic_flag):
 
         """Called by self.parse().
 
@@ -1058,31 +1037,42 @@ class OptionsParser(object):
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): The media data object being downloaded
 
-            copy_dict (dict): Copy of the original options dictionary.
+            copy_dict (dict): Copy of the original options dictionary
+
+            dl_classic_flag (bool): True a download operation was launched from
+                the Classic Mode tab. False otherwise
 
         """
 
-        # Set the directory in which any downloaded videos will be saved
-        override_name = copy_dict['use_fixed_folder']
+        # Special case: if a download operation was launched from the Classic
+        #   Mode Tab, the save path is specified in that tab
+        if dl_classic_flag:
 
-        if not isinstance(media_data_obj, media.Video) \
-        and override_name is not None \
-        and override_name in self.app_obj.media_name_dict:
-
-            # Because of the override, save all videos to a fixed folder
-            other_dbid = self.app_obj.media_name_dict[override_name]
-            other_obj = self.app_obj.media_reg_dict[other_dbid]
-            save_path = other_obj.get_default_dir(self.app_obj)
+            save_path = media_data_obj.dummy_dir
 
         else:
 
-            if isinstance(media_data_obj, media.Video):
-                save_path = media_data_obj.parent_obj.get_actual_dir(
-                    self.app_obj,
-                )
+            # Set the directory in which any downloaded videos will be saved
+            override_name = copy_dict['use_fixed_folder']
+
+            if not isinstance(media_data_obj, media.Video) \
+            and override_name is not None \
+            and override_name in self.app_obj.media_name_dict:
+
+                # Because of the override, save all videos to a fixed folder
+                other_dbid = self.app_obj.media_name_dict[override_name]
+                other_obj = self.app_obj.media_reg_dict[other_dbid]
+                save_path = other_obj.get_default_dir(self.app_obj)
 
             else:
-                save_path = media_data_obj.get_actual_dir(self.app_obj)
+
+                if isinstance(media_data_obj, media.Video):
+                    save_path = media_data_obj.parent_obj.get_actual_dir(
+                        self.app_obj,
+                    )
+
+                else:
+                    save_path = media_data_obj.get_actual_dir(self.app_obj)
 
         # Set the youtube-dl output template for the video's file
         template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
@@ -1095,27 +1085,62 @@ class OptionsParser(object):
         )
 
 
-    def build_video_format(self, copy_dict):
+    def build_video_format(self, media_data_obj, copy_dict, dl_classic_flag):
 
         """Called by self.parse().
 
-        Build the value of the 'video_format' option and store it in the
-        options dictionary.
+        Build the value of the 'video_format' and 'all_formats' options and
+        store them in the options dictionary.
 
         Args:
 
-            copy_dict (dict): Copy of the original options dictionary.
+            media_data_obj (media.Video, media.Channel, media.Playlist,
+                media.Folder): The media data object being downloaded
+
+            copy_dict (dict): Copy of the original options dictionary
+
+            dl_classic_flag (bool): True a download operation was launched from
+                the Classic Mode tab. False otherwise
 
         """
 
-        # The 'video_format', 'second_video_format' and 'third_video_format'
-        #   can have the values of the keys in formats.VIDEO_OPTION_DICT, which
-        #   are either real extractor codes (e.g. '35' representing
-        #   'flv [480p]') or dummy extractor codes (e.g. 'mp4')
+        if isinstance(media_data_obj, media.Video):
+
+            # Special case: if a download operation was launched from the
+            #   Classic Mode Tab, the video format may be specified by that tab
+            if dl_classic_flag and media_data_obj.dummy_format:
+
+                # Ignore all video/audio formats except the one specified by
+                #   the user in the Classic Mode Tab
+                copy_dict['video_format'] = media_data_obj.dummy_format
+                copy_dict['all_formats'] = False
+                copy_dict['video_format_list'] = []
+                copy_dict['video_format_mode'] = ''
+
+                return
+
+            # Special case: for broadcasting livestreams, use only HLS
+            # v2.0.067: Downloading livestreams doesn't work at all for me, so
+            #   I'm not sure whether this is appropriate, or not. Once it's
+            #   fixed, perhaps we can offer the user a choice of formats
+            if media_data_obj.live_mode:
+
+                copy_dict['video_format'] = 95
+                copy_dict['all_formats'] = False
+                copy_dict['video_format_list'] = []
+                copy_dict['video_format_mode'] = ''
+
+                return
+
+        # The 'video_format_list' options contains values corresponding to the
+        #   keys in formats.VIDEO_OPTION_DICT, which are either real extractor
+        #   codes (e.g. '35' representing 'flv [480p]') or dummy extractor
+        #   codes (e.g. 'mp4')
         # Some dummy extractor codes are in the form '720p', '1080p60' etc,
         #   representing progressive scan resolutions. If the user specifies
         #   at least one of those codes, the first one is used, and all other
         #   extractor codes are ignored
+        video_format_list = copy_dict['video_format_list']
         resolution_dict = formats.VIDEO_RESOLUTION_DICT.copy()
         fps_dict = formats.VIDEO_FPS_DICT.copy()
 
@@ -1130,21 +1155,16 @@ class OptionsParser(object):
             if self.app_obj.video_res_default in fps_dict:
                 fps = fps_dict[self.app_obj.video_res_default]
 
-        elif copy_dict['video_format'] in resolution_dict:
-            height = resolution_dict[copy_dict['video_format']]
-            if copy_dict['video_format'] in fps_dict:
-                fps = fps_dict[copy_dict['video_format']]
+        else:
 
-        elif copy_dict['second_video_format'] in resolution_dict:
-            height = resolution_dict[copy_dict['second_video_format']]
-            if copy_dict['second_video_format'] in fps_dict:
-                fps = fps_dict[copy_dict['second_video_format']]
+            for item in video_format_list:
 
-        elif copy_dict['third_video_format'] in resolution_dict:
-            height = resolution_dict[copy_dict['third_video_format']]
-            if copy_dict['third_video_format'] in fps_dict:
-                fps = fps_dict[copy_dict['third_video_format']]
+                if item in resolution_dict:
+                    height = resolution_dict[item]
+                    if item in fps_dict:
+                        fps = fps_dict[item]
 
+                    break
 
         if height is not None:
 
@@ -1156,32 +1176,42 @@ class OptionsParser(object):
                 copy_dict['video_format'] = 'bestvideo[height<=?' \
                 + str(height) + ']+bestaudio/best[height<=?' + str(height) \
                 + ']'
-                # After a progressive scan resolution, all other extract codes
-                #   are ignored
-                copy_dict['second_video_format'] = '0'
-                copy_dict['third_video_format'] = '0'
 
             else:
 
                 copy_dict['video_format'] = 'bestvideo[height<=?' \
                 + str(height) + '][fps<=?' + str(fps) \
                 + ']+bestaudio/best[height<=?' + str(height) + ']'
-                copy_dict['second_video_format'] = '0'
-                copy_dict['third_video_format'] = '0'
+
+            copy_dict['all_formats'] = False
+            copy_dict['video_format_list'] = []
+            copy_dict['video_format_mode'] = ''
 
         # Not using a progressive scan resolution
-        elif copy_dict['video_format'] != '0' and \
-        copy_dict['second_video_format'] != '0':
+        elif video_format_list:
 
-            if copy_dict['third_video_format'] != '0':
+            video_format_mode = copy_dict['video_format_mode']
 
-                copy_dict['video_format'] = copy_dict['video_format'] + '+' \
-                + copy_dict['second_video_format'] + '+' \
-                + copy_dict['third_video_format']
+            if video_format_mode == 'all':
+                copy_dict['video_format'] = 0
+                copy_dict['all_formats'] = True
 
             else:
-                copy_dict['video_format'] = copy_dict['video_format'] + '+' \
-                + copy_dict['second_video_format']
+
+                copy_dict['all_formats'] = False
+
+                if video_format_mode == 'single_agree':
+                    char = '/'
+                elif video_format_mode == 'multiple':
+                    char = ','
+                else:
+                    # mode is 'single'
+                    char = '+'
+
+                copy_dict['video_format'] = char.join(video_format_list)
+
+            copy_dict['video_format_list'] = []
+            copy_dict['video_format_mode'] = ''
 
 
 class OptionHolder(object):

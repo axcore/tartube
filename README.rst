@@ -5,8 +5,6 @@ Tartube - The Easy Way To Watch And Download Videos
 Works with YouTube, BitChute, and hundreds of other websites
 ------------------------------------------------------------
 
-Attention `Linux Format <https://www.linuxformat.com/>`__ readers! There are easier ways to install **Tartube**. Go to the main `downloads page <https://sourceforge.net/projects/tartube/>`__ or see below.
-
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
 
@@ -35,23 +33,31 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 -  You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
 -  You can fetch information about those videos, channels and playlists, without actually downloading anything
--  **Tartube** will organise your videos into convenient folders
+-  **Tartube** will organise your videos into convenient folders (if that's what you want)
+-  **Tartube** can alert you when livestreams are starting (**YouTube** only)
 -  If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
 -  Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
 -  **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
 -  **Tartube** is free and open-source software
 
+2.1 What's new in version 2.1.0
+-------------------------------
+
+- For everyone who wants a simpler way to download videos, a new Classic Mode, emulating the look and feel of `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ - see `6.21 Classic Mode`_
+- **Tartube** can now detect livestreams, and alert you when they start - see `6.22 Livestreams`_. This feature is EXPERIMENTAL, has only been tested on **YouTube**, and may not be reliable. 
+- If you can contribute a translation to this project, `please read this <docs/translate.rst>`__. As a proof of concept, **Tartube** can now be used with either British or American English
+
 3 Downloads
 ===========
 
-Latest version: **v2.0.016 (10 Apr 2020)**
+Latest version: **v2.1.0 (7 May 2020)**
 
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.016/install-tartube-2.0.016-32bit.exe/download>`__ from Sourceforge
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.0.016/install-tartube-2.0.016-64bit.exe/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.0.016/python3-tartube_2.0.016.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.0.016/tartube-2.0.016.rpm/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.0/install-tartube-2.1.0-32bit.exe/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.0/install-tartube-2.1.0-64bit.exe/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.0/python3-tartube_2.1.0.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.0/tartube-2.1.0.rpm/download>`__ from Sourceforge
 - `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.0.016/tartube_v2.0.016.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.0/tartube_v2.1.0.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 There are also DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
@@ -65,7 +71,10 @@ There are also DEB/RPM packages marked STRICT. In these packages, updates to **y
 -  Download, install and run **Tartube**, using the links above
 -  When prompted, choose a folder where **Tartube** can store videos
 -  When prompted, let **Tartube** install **youtube-dl** for you
--  It's strongly recommended that you install **FFmeg**. From the menu, click **Operations > Install FFmpeg**
+-  It's strongly recommended that you install **FFmpeg**. From the menu, click **Operations > Install FFmpeg**
+
+If you don't want **Tartube** to add videos to its database, click the **Classic Mode** Tab. If you *do* want to update the database, do this instead:
+
 -  Go to the `YouTube website <https://www.youtube.com/>`__, and find your favourite channel
 -  In **Tartube**, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
 -  In the dialogue window, add the name of the channel and the address (URL)
@@ -82,6 +91,9 @@ There are also DEB/RPM packages marked STRICT. In these packages, updates to **y
 -  Run **Tartube**
 -  When prompted, choose a directory where **Tartube** can store videos
 -  Install **youtube-dl** by clicking **Operations > Update youtube-dl**
+
+If you don't want **Tartube** to add videos to its database, click the **Classic Mode** Tab. If you *do* want to update the database, do this instead:
+
 -  Go to the `YouTube website <https://www.youtube.com/>`__, and find your favourite channel
 -  In **Tartube**, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
 -  In the dialogue window, add the name of the channel and the address (URL)
@@ -96,7 +108,7 @@ There are also DEB/RPM packages marked STRICT. In these packages, updates to **y
 5.1 Installation - MS Windows
 -----------------------------
 
-MS Windows users should use the installer `available at the **Tartube** website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. You must be using Windows Vista or above; the installer will not work on Windows XP.
+MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
 If you want to use **FFmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_. 
 
@@ -105,7 +117,7 @@ From v1.4, the installer includes a copy of `AtomicParsley <https://bitbucket.or
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some users report that **Tartube** will install but won't run. This problem should be fixed as of v1.2.0 but, if you still have problems, you can try performing a manual installation. This takes about 10-30 minutes, depending on your internet speed.
+Some users report that **Tartube** will install but won't run. This problem should be fixed as of v1.2 but, if you still have problems, you can try performing a manual installation. This takes about 10-30 minutes, depending on your internet speed.
 
 - This section assumes you have a 64-bit computer
 - Download and install MSYS2 from `msys2.org <https://msys2.org>`__. You need the file that looks something like **msys2-x86_64-yyyymmdd.exe**
@@ -130,15 +142,19 @@ Some users report that **Tartube** will install but won't run. This problem shou
         
         **pacman -S mingw-w64-x86_64-gtk3**
         
-        **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**        
+        **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**   
+
+        **pip3 install feedparser**
+        
+        **pip3 install playsound**
         
 - Download the **Tartube** source code from Sourceforge, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
-- Now, to run **Tartube**, type these commands in the MINGW64 terminal:
+- Now, to run **Tartube**, type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
 
-        **cd tartube**
+        **cd /home/YOURNAME/tartube**
         
-        **python3 tartube**
+        **python3 tartube/tartube**
 
 5.2 Installation - MacOS
 ------------------------
@@ -213,7 +229,9 @@ For any other method of installation, the following dependencies are required:
 These dependencies are optional, but recommended:
 
 -  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
+-  `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
+-  `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 
@@ -255,7 +273,7 @@ After installing dependencies (see above):
 * `6.12 Other download options`_
 * `6.13 Custom downloads`_
 * `6.13.1 Independent downloads`_
-* `6.13.2 Diverting to HookTube/Invidious`_
+* `6.13.2 Diverting to HookTube / Invidious`_
 * `6.13.3 Delays between downloads`_
 * `6.14 Watching videos`_
 * `6.15 Filtering and finding videos`_
@@ -273,6 +291,12 @@ After installing dependencies (see above):
 * `6.19.3 Multiple Tartubes`_
 * `6.19.4 Exporting/importing the database`_
 * `6.20 Converting to audio`_
+* `6.21 Classic Mode`_
+* `6.22 Livestreams`_
+* `6.22.1 Detecting livestreams`_
+* `6.22.2 Customising livestreams`_
+* `6.22.3 Livestream notifications`_
+* `6.22.4 Compatible websites`_
 
 6.1 Choose where to save videos
 -------------------------------
@@ -357,6 +381,7 @@ When you start **Tartube**, there are seven folders already visible. You can't r
 - The **All Videos** folder shows every video in **Tartube**'s database, whether it has been downloaded or not
 - The **Bookmarks** folder shows videos you've bookmarked, because they're interesting or important (see `6.16.1 Bookmarked videos`_ )
 - The **Favourite Videos** folder shows videos in a channel, playlist or folder that you've marked as a favourite (see `6.16.2 Favourite channels, playlists and folders`_ )
+- The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
@@ -364,6 +389,8 @@ When you start **Tartube**, there are seven folders already visible. You can't r
 
 6.6 Adding videos
 -----------------
+
+*If you want a simpler way to download videos, see* `6.21 Classic Mode`_.
 
 You can add individual videos by clicking the **'Videos'** button near the top of the window. A dialogue window will appear.
 
@@ -485,12 +512,12 @@ In the new window, click the **'OK'** button. The options are applied to *everyt
 .. image:: screenshots/example15.png
   :alt: Download options applied to the Music folder
 
-Now, suppose you want to add a *different* set of download options, but only for the **Village People** channel.
+Now, suppose you want to add a *different* set of download options, but only for the channel **The Beatles**.
 
 -  Right-click the channel, and select **Apply download options...**
 -  In the new window, click the **'OK'** button
 
-The previous set of download options still applies to everything in the **Music** folder, *except* the **Village People** channel.
+The previous set of download options still applies to everything in the **Music** folder, *except* the channel **The Beatles**.
 
 .. image:: screenshots/example16.png
   :alt: Download options applied to the Village People channel
@@ -498,7 +525,7 @@ The previous set of download options still applies to everything in the **Music*
 6.13 Custom downloads
 ---------------------
 
-By default, **Tartube** downloads videos as quickly as possible using each video's original address (URL). 
+By default, **Tartube** downloads videos as quickly as possible using each video's original web address (URL). 
 
 A **Custom download** enables you to modify this behaviour, if desired. It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 
@@ -518,8 +545,8 @@ If you need to download videos directly, for any reason, you can:
 - Click **In custom downloads, download each video independently of its channel or playlist** to select it
 - You can now start the custom download
 
-6.13.2 Diverting to HookTube/Invidious
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.13.2 Diverting to HookTube / Invidious
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If **Tartube** can't download a video from YouTube, it's sometimes possible to obtain it from an alternative website instead.
 
@@ -551,7 +578,7 @@ If you've downloaded a video, you can watch it by clicking the word **Player**.
 .. image:: screenshots/example17.png
   :alt: Watching a video
 
-If you haven't downloaded the video yet, you can watch it online by clicking the word **YouTube** or **Website**. (One or the other will be visible).
+If you haven't downloaded the video yet, you can watch it online by clicking the word **Website** or **YouTube**. (One or the other will be visible).
 
 If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's sometimes possible to watch the same video without restrictions on the **HookTube** and/or **Invidious** websites.
 
@@ -794,29 +821,170 @@ N.B. Many video websites, such as **YouTube**, allow you to download the audio (
 - Click the **Add format >>>** button to add it to the list
 - Click the **OK** button at the bottom of the window to apply your changes
 
+6.21 Classic Mode
+-----------------
+
+**Tartube** compiles a database of the videos, channels and playlists it has downloaded.
+
+If you want something simpler, then you can click the **Classic Mode** Tab for an interface that looks just like `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__.
+
+.. image:: screenshots/example20.png
+  :alt: The Classic Mode Tab
+
+- Copy and paste the URLs of videos, channels and/or playlists into the box at the top
+- Click the **...** button to select a directory (folder). All the videos are downloaded into this directory
+- Select a video or audio format, or leave the **Default** setting enabled
+- Click the **Add URLs** button
+- If you like, you can add more videos/channels/playlists, using a different directory and/or a different format
+- When you're ready, click the **Download all** button
+
+**Tartube** doesn't add any of these videos to its database. When you restart **Tartube**, all of the URLs will be gone. However, the videos themselves will still be on your hard drive. 
+
+Because the videos aren't in a database, you can move them anywhere you want (once you've finished downloading them).
+
+**PROTIP:** If you *only* use this tab, you can tell **Tartube** to open it automatically. Click **Edit > System preferences... > Windows > Main Window** and select **When Tartube starts, automatically open the Classic Mode Tab**.
+
+6.22 Livestreams
+----------------
+
+Since v2.1.0, **Tartube** has been able to detect livestreams, and to notify you when they start.
+
+This feature is EXPERIMENTAL, has only been tested on **YouTube**, and may not work as intended. 
+
+Livestream detection does not work at all on 32-bit MS Windows.
+
+6.22.1 Detecting livestreams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tartube** searches for livestreams whenever you check or download channels and playlists.
+
+Livestreams are easy to spot. A livestream that hasn't started yet has a red background. A livestream that's streaming now has a green background. (Livestreams that have stopped broadcasting have a normal background.)
+
+.. image:: screenshots/example21.png
+  :alt: The main window with livestreams visible
+
+Every few minutes, **Tartube** checks whether a livestream has started or stopped. This happens automatically in the background; there is no need for you to do anything. 
+
+6.22.2 Customising livestreams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can modify how often livestreams are checked (and whether they are checked at all). Click **Livestreams > Livestream preferences...**.
+
+.. image:: screenshots/example22.png
+  :alt: Livestream preferences
+
+For technical reasons, there are practical limits to what **Tartube** can detect. On busy channels, **Tartube** may not be able to detect livestreams that were announced some time ago. Even if you change the number of days from 7 to a very large number, there is no guarantee that **Tartube** will detect everything. (If you change the value to 0, **Tartube** will only detect livestreams that are listed before any ordinary videos.)
+
+By default, **Tartube** checks a livestream every three minutes, waiting for it to start (or stop). Decreasing this period might not be a good idea; it's possible that the website will think you are spamming. 
+
+If you keep missing the start of your favourite livetreams, pester the creators until they add a short countdown. If you want to force a check, in the main window click **Livestreams > Update existing livestreams**.
+
+A **Tartube** installation includes a number of sound effects. You can choose the one you want to use as an alarm. If you want to add your own sound effects, find the directory (folder) where Tartube is installed, copy the  new **.mp3** or **.wav** files into **../sounds**, and restart **Tartube.**
+
+6.22.3 Livestream notifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tartube can notify you when a livestream starts. (**Desktop notifications** do not work on MS Windows yet.)
+
+The preferences window shows the actions **Tartube** takes by default. These preference are applied to a livestream as soon as it is detected.
+
+Most users will prefer to leave the checkboxes unselected, and instead set up notifications only for the livestreams they want to see.
+
+.. image:: screenshots/example23.png
+  :alt: Some example livestreams
+
+- Click **Notify** to show a desktop notification when the stream starts (does not work on MS Windows)
+- Click **Alarm** to sound an alarm when the stream starts
+- Click **Open** to open the stream in your web browser as soon as it starts
+- If you think the stream might be removed from the website, you can click **D/L on start** or **D/L on stop**. If you click both of them, **Tartube** will download the video twice. (Think of the first one as a backup, in case the second download doesn't succeed.)
+
+To disable any of these actions, simply click the same label again.
+
+**NOTE:** At the time of writing (April 2020), youtube-dl cannot download livestreams while they are broadcasting. Hopefully this is a **youtube-dl** issue that will be fixed in due course.
+
+6.22.4 Compatible websites
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tartube**'s livestream detection has only been tested on **YouTube**. It's possible that it might work on other websites, if they behave in the same way. Here is how to set it up.
+
+Firstly, find the RSS feed for the channel or playlist. You may have to use a search engine to find out how to do that. (For **YouTube** channels/playlists, **Tartube** finds the feed for you automatically.)
+
+Secondly, right-click the channel and select **Show > Channel properties...** (alternatively, right-click a playlist and select **Show > Playlist properties...**
+
+Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the box. Click the **OK** button to close the window.
+
 7 Frequently-Asked Questions
 ============================
 
-**Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly / Tartube keeps crashing!**
+* `7.1 Tartube won't install/won't run/doesn't work`_
+* `7.2 Tartube crashes a lot`_
+* `7.3 "Download did not start" error`_
+* `7.4 Can't download a video`_
+* `7.5 Downloads never finish`_
+* `7.6 Videos are missing after a crash`_
+* `7.7 'Check all' button takes too long`_
+* `7.8 'Download all' button takes too long`_
+* `7.9 Videos downloaded to inconvenient location`_
+* `7.10 Tartube database file is getting in the way`_
+* `7.11 Duplicate video names`_
+* `7.12 Convert video to audio`_
+* `7.13 Too many folders in the main window`_
+* `7.14 Not enough videos in the main window`_
+* `7.15 Toolbar is too small`_
+* `7.16 YouTube name/password not accepted`_
+* `7.17 Georestriction workarounds don't work`_
+* `7.18 MS Windows installer is too big`_
+* `7.19 Tartube can't detect livestreams`_
+* `7.20 Livestream start time not visible`_
+* `7.21 Livestream is already finished`_
+* `7.22 Can't hear livestream alarms`_
+* `7.23 British spelling`_
+* `7.24 No puedo hablar inglés`_
+ 
+7.1 Tartube won't install/won't run/doesn't work
+------------------------------------------------
 
-A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__ 
+*Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly!*
 
-A: Crashes are usually caused by the Gtk graphics library. Depending on the version of the library installed on your system, **Tartube** may restrict some minor cosmetic features, or not, in an effort to avoid such crashes.
+A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
 
-If crashes are a problem, you can force **Tartube** to restrict those cosmetic features, regardless of your current Gtk library.
+A: Tartube is known to fail on Windows 7 systems that have not been updated for some time. The solution is to install `this patch from Microsoft <https://www.microsoft.com/en-us/download/details.aspx?id=26767>`__. The simplest way to install the patch is to let Windows update itself, as normal.
 
-- Click **Edit > System preferences... > General > Modules**
-- Click **Assume that Gtk is broken, and disable some minor features** to select it
+A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
-**Q: When I try to download videos, nothing happens! In the Errors/Warnings tab, I can see "Download did not start"!**
+7.2 Tartube crashes a lot
+-------------------------
+
+*Q: I can install and run Tartube, but it keeps crashing!*
+
+A: Tartube uses the Gtk graphics library. This library is notoriously unreliable and may even cause crashes.
+
+If stability is a problem, you can disable some minor cosmetic features. **Tartube**'s functionality is not affected. You can do anything, even when the cosmetic features are disabled.
+
+- Click **Edit > System preferences... > General > Stability**
+- Click **Assume that Gtk is broken, and disable those features anyway** to select it
+
+Another option is to reduce the number of simultaneous downloads. (On crash-prone systems, two simultaneous downloads seems to be safe, but four is rather less safe.)
+
+- In the main window, click the **Progress** Tab
+- At the bottom of the tab, click the **Max downloads** checkbutton to select it, and reduce the number of simultaneous downloads to 1 or 2
+- (It's not necessary to reduce the download speed; this has no effect on stability)
+
+7.3 "Download did not start" error
+----------------------------------
+
+*Q: When I try to download videos, nothing happens! In the Errors/Warnings tab, I can see "Download did not start"!*
 
 A: See `6.3 Setting youtube-dl's location`_
 
-**Q: I can't download my favourite video!**
+7.4 Can't download a video
+--------------------------
+
+*Q: I can't download my favourite video!*
 
 A: Make sure **youtube-dl** is updated; see `6.2 Check youtube-dl is updated`_
 
-A: Before submitting a `bug report <https://github.com/axcore/tartube/issues>`__, find out whether **Tartube** is responsible for the problem, or not. You can do this by opening a terminal window, and typing something like this:
+Before submitting a `bug report <https://github.com/axcore/tartube/issues>`__, find out whether **Tartube** is responsible for the problem, or not. You can do this by opening a terminal window, and typing something like this:
 
 **youtube-dl <url>**
 
@@ -831,7 +999,22 @@ Because most people don't like typing, **Tartube** offers a shortcut.
 - Click the **Output** Tab to watch the test as it progresses
 - When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl** was able to download
 
-**Q: After I downloaded some videos, Tartube crashed, and now all my videos are missing!**
+7.5 Downloads never finish
+--------------------------
+
+*Q: I clicked the 'Download all' button and it starts, but never finishes!*
+
+A: This generally indicates an error in the Python, Gtk and/or **Tartube** code. If you're running **Tartube** from a terminal window, you should be able to see the error, which you can report on `our GitHub page <https://github.com/axcore/tartube/issues>`__.
+
+There are two things you can try in the meantime:
+
+- Click **Edit > System preferences... > General > Modules**, and select the **Assume that Gtk is broken, and disable some features** box
+- Click **Edit > System preferences... > Filesystem > DB Errors**, and then click the **Check** button
+
+7.6 Videos are missing after a crash
+------------------------------------
+
+*Q: After I downloaded some videos, Tartube crashed, and now all my videos are missing!*
 
 A: **Tartube** creates a backup copy of its database, before trying to save a new copy. In the unlikely event of a failure, you can replace the broken database file with the backup file. 
 
@@ -849,7 +1032,10 @@ A: **Tartube** creates a backup copy of its database, before trying to save a ne
 
 Note that **Tartube** does not create backup copies of the videos you've downloaded. That is your responsibility!
 
-**Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!**
+7.7 'Check all' button takes too long
+-------------------------------------
+
+*Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!*
 
 A: By default, the underlying **youtube-dl** software checks an entire channel, even if it contains hundreds of videos. 
 
@@ -857,19 +1043,25 @@ You can drastically reduce the time this takes by telling **Tartube** to stop ch
 
 This works well on sites like YouTube, which send information about videos in the order they were uploaded, newest first. We can't guarantee it will work on every site.
 
-- Click **Edit > System preferences... > Operations > Time-saving**
+- Click **Edit > System preferences... > Operations > Performance**
 - Select the checkbox **Stop checking/downloading a channel/playlist when it starts sending vidoes we already have**
 - In the **Stop after this many videos (when checking)** box, enter the value 3
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
 - Click **OK** to close the window
 
-**Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!**
+7.8 'Download all' button takes too long
+----------------------------------------
+
+*Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!*
 
 A: **youtube-dl** can create an archive file especially for the purpose of speeding up downloads, when some of your channels and playlists have no new videos to download, but when others do. 
 
 To enable this functionality, click **Edit > System preferences... > youtube-dl > Allow youtube-dl to create its own archive**. The functionality is enabled by default.
 
-**Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?**
+7.9 Videos downloaded to inconvenient location
+----------------------------------------------
+
+*Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?*
 
 A: This was implemented in v1.4.0. If you installed an earlier version of **Tartube**, you don't need to take any action; **Tartube** can cope with both the old and new file structures.
 
@@ -882,7 +1074,10 @@ If you installed an earlier version of **Tartube**, and if you want to move your
 - Delete the empty **downloads** directory
 - You can now restart **Tartube**
 
-**Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?**
+7.10 Tartube database file is getting in the way
+------------------------------------------------
+
+*Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?*
 
 A: This question has been asked by several people who were storing their videos on some remote filesystem (perhaps in the so-called 'cloud'). They found that the videos could be downloaded to that remote location, but that Tartube couldn't save its database file there.
 
@@ -894,11 +1089,28 @@ At the moment, the answer is "**Tartube** is working fine, fix your own computer
 - If you want to move your videos from one location to another, it's easy - just move a single directory (folder) and everything it contains. There is no need to reconfigure anything; just tell **Tartube** where to find the new directory (folder)
 - Splitting up the data folder and the database file would require a lot of code to be rewritten, and this would probably introduce lots of new bugs
 
-**Q: I want to convert the video files to audio files!**
+7.11 Duplicate video names
+--------------------------
+
+*Q: I downloaded a channel, but some of the videos in the channel have the same name. Tartube only downloads one of them!*
+
+A: Tartube can save the video files using a multitude of different filename formats. Video names might be identical, but the video IDs are unique, so you can add the ID to the filename.
+
+- Click **Edit > General download options... > Files > File names**
+- In the box **Format for video file names**, select **Title + ID**
+- Click **OK** to close the window
+
+7.12 Convert video to audio
+---------------------------
+
+*Q: I want to convert the video files to audio files!*
 
 A: See `6.20 Converting to audio`_
 
-**Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!**
+7.13 Too many folders in the main window
+----------------------------------------
+
+*Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
 
 A: Right-click the folders you don't want to see, and select **Folder actions > Hide folder**. To reverse this step, in the main menu click **Media > Show hidden folders**
 
@@ -906,17 +1118,26 @@ A: In the main menu, click **Edit > System preferences... > Windows > Main windo
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop the channels/playlists into it
 
-**Q: I want to see all the videos on a single page, not spread over several pages!**
+7.14 Not enough videos in the main window
+-----------------------------------------
+
+*Q: I want to see all the videos on a single page, not spread over several pages!*
 
 A: At the bottom of the **Tartube** window, set the page size to zero, and press **ENTER**.
 
-**Q: The toolbar is too small! There isn't enough room for all the buttons!**
+7.15 Toolbar is too small
+-------------------------
+
+*Q: The toolbar is too small! There isn't enough room for all the buttons!*
 
 A: Click **Edit > System preferences... > Windows > Main window > Don't show labels in the toolbar**.
 
 MS Windows users can already see a toolbar without labels.
 
-**Q: I added my YouTube username and password, but I am still seeing authentification errors!**
+7.16 YouTube name/password not accepted
+---------------------------------------
+
+*Q: I added my YouTube username and password, but I am still seeing authentification errors!*
 
 A: The questioner is talking about the settings in **Edit > General download options... > Advanced**.
 
@@ -930,7 +1151,21 @@ Having created the file, in the same edit window, click the **General** tab. In 
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-**Q: Why is the Windows installer so big?**
+7.17 Georestriction workarounds don't work
+------------------------------------------
+
+*Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
+
+A: **youtube-dl** provides some options for bypassing region-blocking. These options are visible by clicking **Edit > General download options...**, then click the **Show advanced download options** button if it's visible, then click the tabs **Advanced > Geo-restriction**. 
+
+Unfortunately, although these options exist, websites are not compelled to respect them. **YouTube**, in particular, will completely ignore them.
+
+In many cases, the only remedy is to pay for a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
+
+7.18 MS Windows installer is too big
+------------------------------------
+
+*Q: Why is the Windows installer so big?*
 
 A: **Tartube** is a Linux application. The installer for MS Windows contains not just **Tartube** itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
 
@@ -947,6 +1182,64 @@ The NSIS scripts used to create the installers can be found here:
 **C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\nsis**
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
+
+7.19 Tartube can't detect livestreams
+-------------------------------------
+
+*Q: Tartube can't detect upcoming livestreams at all!*
+
+A: Livestream detection is experimental, has only been tested on **YouTube**, and may not be reliable. It does not work at all on 32-bit MS Windows. See `6.22 Livestreams`_. 
+
+A: Click **Edit > System preferences... General > Modules**. 
+
+If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is not available, you can install it via PyPI. On Linux/BSD, the command to use is something like:
+
+**pip3 install feedparser**
+
+The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
+
+7.20 Livestream start time not visible
+--------------------------------------
+
+*Q: Why doesn't **Tartube** show the start time for livestreams?*
+
+A: Popular video websites like **YouTube** do not provide that information.
+
+7.21 Livestream is already finished
+-----------------------------------
+
+*Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
+
+A: Right-click the video and select **Livestream > Not a livestream**.
+
+7.22 Can't hear livestream alarms
+---------------------------------
+
+*Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
+
+A: Obviously you have already checked that your speakers are turned on, so now click **Edit > System preferences... General > Modules**. 
+
+If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not available, you can install it via PyPI. On Linux/BSD, the command to use is something like:
+
+**pip3 install playsound**
+
+The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
+
+7.23 British spelling
+---------------------
+
+*Q: These British spellings are getting on my nerves!*
+
+A: Click **Edit > System preferences...**. Click the drop-down box and select American English, and then restart **Tartube**
+
+7.24 No puedo hablar inglés
+---------------------------
+
+*Q: ¡No puedo usar YouTube porque no hablo inglés!*
+
+A: Necesitamos más traductores.
+
+If you would like to contribute a translation of this project, please read `this document <docs/translate.rst>`__.
 
 8 Contributing
 ==============

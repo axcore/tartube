@@ -28,6 +28,7 @@ from gi.repository import Gtk, GObject, GdkPixbuf
 
 # Import other modules
 import os
+import re
 import threading
 
 
@@ -99,9 +100,11 @@ class DialogueManager(threading.Thread):
                 clicked the 'yes' or 'no' button). If specified, the keys are
                 0, 1 or more of the values 'ok', 'cancel', 'yes', 'no'. The
                 corresponding values are the mainapp.TartubeApp function called
-                if the user clicks that button. The dictionary can also contain
-                the key 'data'. If it does, the corresponding value is passed
-                to the mainapp.TartubeApp function as an argument
+                if the user clicks that button. (f the value begins with
+                'main_win_', then the rest of the value is the mainwin.MainWin
+                function called). The dictionary can also contain the key
+                'data'. If it does, the corresponding value is passed to the
+                mainapp.TartubeApp function as an argument
 
         Returns:
 
@@ -168,9 +171,10 @@ class MessageDialogue(Gtk.MessageDialog):
             the 'yes' or 'no' button). If specified, the keys are 0, 1 or more
             of the values 'ok', 'cancel', 'yes', 'no'. The corresponding values
             are the mainapp.TartubeApp function called if the user clicks that
-            button. The dictionary can also contain the key 'data'. If it does,
-            the corresponding value is passed to the mainapp.TartubeApp
-            function as an argument
+            button. (f the value begins with 'main_win_', then the rest of the
+            value is the mainwin.MainWin function called). The dictionary can
+            also contain the key 'data'. If it does, the corresponding value is
+            passed to the mainapp.TartubeApp function as an argument
 
     """
 
@@ -272,9 +276,11 @@ class MessageDialogue(Gtk.MessageDialog):
                 clicked the 'yes' or 'no' button). If specified, the keys are
                 0, 1 or more of the values 'ok', 'cancel', 'yes', 'no'. The
                 corresponding values are the mainapp.TartubeApp function called
-                if the user clicks that button. The dictionary can also contain
-                the key 'data'. If it does, the corresponding value is passed
-                to the mainapp.TartubeApp function as an argument
+                if the user clicks that button. (f the value begins with
+                'main_win_', then the rest of the value is the mainwin.MainWin
+                function called). The dictionary can also contain the key
+                'data'. If it does, the corresponding value is passed to the
+                mainapp.TartubeApp function as an argument
 
         """
 
@@ -296,8 +302,18 @@ class MessageDialogue(Gtk.MessageDialog):
                 func = response_dict['no']
 
             if func is not None:
-                # Call the specified mainapp.TartubeApp function
-                method = getattr(app_obj, func)
+
+                # Is it a mainapp.TartubeApp function or a mainwin.MainWin
+                #   function?
+                if re.search('^main_win_', func):
+
+                    # We will call the specified mainwin.MainWin function
+                    method = getattr(app_obj.main_win_obj, func[9::])
+
+                else:
+
+                    # We will call the specified mainapp.TartubeApp function
+                    method = getattr(app_obj, func)
 
                 # If the dictionary contains a key called 'data', use its
                 #   corresponding value as an argument in the call
