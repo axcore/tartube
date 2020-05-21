@@ -236,7 +236,9 @@ class TartubeApp(Gtk.Application):
         #   options.OptionsManager object, then this default object, known as
         #   the General Options Manager, is used
         self.general_options_obj = None
-
+        # The options.OptionsManager object used in the Classic Mode Tab. If
+        #   None, then self.general_options_obj is used
+        self.classic_options_obj = None
 
         # Instance variable (IV) list - other
         # -----------------------------------
@@ -1857,35 +1859,15 @@ class TartubeApp(Gtk.Application):
 
         # Buttons
 
-        classic_options_button_action = Gio.SimpleAction.new(
-            'classic_options_button',
+        classic_menu_button_action = Gio.SimpleAction.new(
+            'classic_menu_button',
             None,
         )
-        classic_options_button_action.connect(
+        classic_menu_button_action.connect(
             'activate',
-            self.on_menu_general_options,
+            self.on_button_classic_menu,
         )
-        self.add_action(classic_options_button_action)
-
-        classic_update_ytdl_button_action = Gio.SimpleAction.new(
-            'classic_update_ytdl_button',
-            None,
-        )
-        classic_update_ytdl_button_action.connect(
-            'activate',
-            self.on_menu_update_ytdl,
-        )
-        self.add_action(classic_update_ytdl_button_action)
-
-        classic_auto_copy_button_action = Gio.SimpleAction.new(
-            'classic_auto_copy_button',
-            None,
-        )
-        classic_auto_copy_button_action.connect(
-            'activate',
-            self.on_button_classic_auto_copy,
-        )
-        self.add_action(classic_auto_copy_button_action)
+        self.add_action(classic_menu_button_action)
 
         classic_dest_dir_button_action = Gio.SimpleAction.new(
             'classic_dest_dir_button',
@@ -1896,6 +1878,16 @@ class TartubeApp(Gtk.Application):
             self.on_button_classic_dest_dir,
         )
         self.add_action(classic_dest_dir_button_action)
+
+        classic_dest_dir_open_action = Gio.SimpleAction.new(
+            'classic_dest_dir_open_button',
+            None,
+        )
+        classic_dest_dir_open_action.connect(
+            'activate',
+            self.on_button_classic_dest_dir_open,
+        )
+        self.add_action(classic_dest_dir_open_action)
 
         classic_add_urls_button_action = Gio.SimpleAction.new(
             'classic_add_urls_button',
@@ -2234,10 +2226,7 @@ class TartubeApp(Gtk.Application):
         if (
             self.config_file_xdg_path is not None \
             and os.path.isfile(self.config_file_xdg_path)
-        ) or (
-            self.config_file_xdg_path is None \
-            and os.path.isfile(self.config_file_path)
-        ):
+        ) or os.path.isfile(self.config_file_path):
             self.load_config()
 
         elif self.debug_no_dialogue_flag:
@@ -2286,7 +2275,6 @@ class TartubeApp(Gtk.Application):
 
             return
 
-
         # Part 4 - Set up the main window
         # -------------------------------
 
@@ -2296,11 +2284,11 @@ class TartubeApp(Gtk.Application):
         # Set up widgets in the Video Catalogue toolbar
         self.main_win_obj.update_show_filter_widgets()
         self.main_win_obj.update_alpha_sort_widgets()
+        # Add the right number of pages to the Output Tab
+        self.main_win_obj.output_tab_setup_pages()
         # If the flag it set, switch to the Classic Mode Tab
         if self.show_classic_tab_on_startup_flag:
             self.main_win_obj.notebook.set_current_page(2)
-        # Add the right number of pages to the Output Tab
-        self.main_win_obj.output_tab_setup_pages()
 
         # Most main widgets are desensitised, until the database file has been
         #   loaded
@@ -2487,7 +2475,7 @@ class TartubeApp(Gtk.Application):
 
             # (If self.show_classic_tab_on_startup_flag, then the Classic Mode
             #   Tab is visible. This looks weird, so quickly switch back to
-            #   the Videos Tab0
+            #   the Videos Tab)
             self.main_win_obj.notebook.set_current_page(0)
 
             if self.disable_load_save_lock_flag:
@@ -2741,8 +2729,8 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-158)
-            200-299: mainwin.py     (in use: 201-248)
+            100-199: mainapp.py     (in use: 101-160)
+            200-299: mainwin.py     (in use: 201-253)
             300-399: downloads.py   (in use: 301-305)
             400-499: config.py      (in use: 401-404)
 
@@ -3908,6 +3896,8 @@ class TartubeApp(Gtk.Application):
 
         # Set IVs to their new values
         self.general_options_obj = load_dict['general_options_obj']
+        if version >= 2001007:  # v2.1.007
+            self.classic_options_obj = load_dict['classic_options_obj']
         self.media_reg_count = load_dict['media_reg_count']
         self.media_reg_dict = load_dict['media_reg_dict']
         self.media_name_dict = load_dict['media_name_dict']
@@ -4599,6 +4589,23 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict.pop('second_video_format')
                 options_obj.options_dict.pop('third_video_format')
 
+        if version < 2001010:  # v2.1.010
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.was_live_flag = False
+
+        if version < 2001012:  # v2.1.012
+
+            # v2.1.005 Addresses problems in which a media.Video might still
+            #   exist inside the 'New videos' folder (etc), but not anywhere
+            #   else in the database
+            # Still not sure what the cause was, but assuming that it was some
+            #   ancient issue, long since fixed, force a silent call to the
+            #   check/fix functions
+            self.check_integrity_db(True)
+
 
     def save_db(self):
 
@@ -4652,6 +4659,7 @@ class TartubeApp(Gtk.Application):
             'save_time': str(utc.strftime('%H:%M:%S')),
             # Data
             'general_options_obj' : self.general_options_obj,
+            'classic_options_obj' : self.classic_options_obj,
             'media_reg_count': self.media_reg_count,
             'media_reg_dict': self.media_reg_dict,
             'media_name_dict': self.media_name_dict,
@@ -5213,9 +5221,10 @@ class TartubeApp(Gtk.Application):
         self.create_fixed_folders()
 
 
-    def check_integrity_db(self):
+    def check_integrity_db(self, no_prompt_flag=False):
 
-        """Called by config.SystemPrefWin.on_data_check_button_clicked().
+        """Called by config.SystemPrefWin.on_data_check_button_clicked() and
+        also by self.update_db().
 
         In case the Tartube database contains inconsistencies of any kind (for
         example, an earlier failure in mainwin.DeleteContainerDialogue left
@@ -5225,6 +5234,12 @@ class TartubeApp(Gtk.Application):
         If inconsistencies are found, prompt the user for permission to
         repair them. The repair process only updates Tartube IVs; it doesn't
         delete any files or folders in the filesystem.
+
+        Args:
+
+            no_prompt_flag (bool): If True, don't prompt the user to repair
+                errors; just go ahead and repair them
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -5333,14 +5348,14 @@ class TartubeApp(Gtk.Application):
                 for child_obj in container_obj.child_list:
                     if isinstance(child_obj, media.Video):
 
-                        if child_obj.dbid in self.media_reg_dict:
+                        if not child_obj.dbid in self.media_reg_dict \
+                        or child_obj != self.media_reg_dict[child_obj.dbid]:
+                            # Child video not OK
+                            error_reg_dict[child_obj.dbid] = child_obj
+                        else:
                             # Child video OK
                             if child_obj.dbid in check_reg_dict:
                                 del check_reg_dict[child_obj.dbid]
-
-                        else:
-                            # Child video not OK
-                            error_reg_dict[child_obj.dbid] = child_obj
 
             else:
                 # Container not OK
@@ -5427,13 +5442,28 @@ class TartubeApp(Gtk.Application):
         and not error_master_dict \
         and not error_slave_dict:
 
-            self.dialogue_manager_obj.show_msg_dialogue(
-                _('Database check complete, no inconsistencies found'),
-                'info',
-                'ok',
-            )
+            if not no_prompt_flag:
+
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('Database check complete, no inconsistencies found'),
+                    'info',
+                    'ok',
+                )
 
             return
+
+        elif no_prompt_flag:
+
+            # Don't prompt the user to repair errors; just go ahead and repair
+            #   them
+            self.fix_integrity_db(
+                [
+                    mod_error_reg_dict,
+                    error_master_dict,
+                    error_slave_dict,
+                ],
+                no_prompt_flag,
+            )
 
         else:
 
@@ -5463,7 +5493,7 @@ class TartubeApp(Gtk.Application):
             )
 
 
-    def fix_integrity_db(self, data_list):
+    def fix_integrity_db(self, data_list, no_prompt_flag=False):
 
         """Called by self.check_integrity_db().
 
@@ -5494,6 +5524,9 @@ class TartubeApp(Gtk.Application):
 
                     (A dictionary of errors in a channel/playlist/folder's
                         .slave_dbid_list IV, which are fixed separately)
+
+            no_prompt_flag (bool): If True, don't show a dialogue window at
+                the end of the procedure
 
         """
 
@@ -5583,12 +5616,14 @@ class TartubeApp(Gtk.Application):
         # Redraw the Video Index and Video Catalogue
         self.main_win_obj.video_index_catalogue_reset()
 
-        # Show confirmation
-        self.dialogue_manager_obj.show_msg_dialogue(
-            _('Database inconsistencies repaired'),
-            'info',
-            'ok',
-        )
+        # Show confirmation (if allowed)
+        if not no_prompt_flag:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('Database inconsistencies repaired'),
+                'info',
+                'ok',
+            )
 
 
     def auto_delete_old_videos(self):
@@ -8072,7 +8107,7 @@ class TartubeApp(Gtk.Application):
     def create_livestream_from_download(self, container_obj, live_mode,
     video_name, video_source, video_descrip, video_upload_time):
 
-        """Called by downloads.JSONFetcher.do_download().
+        """Called by downloads.JSONFetcher.do_fetch().
 
         A modified form of self.create_video_from_download(), called at the end
         of a download operation when the RSS feed for a channel or playlist is
@@ -10335,6 +10370,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the video object's IVs
                 video_obj.set_live_mode(live_mode)
+                video_obj.set_was_live_flag(True)
                 # Update the parent object
                 video_obj.parent_obj.dec_live_count()
 
@@ -10371,6 +10407,14 @@ class TartubeApp(Gtk.Application):
             if video_obj.live_mode == live_mode:
 
                 # Already marked as either a 'waiting' or a 'live' livestream
+                return
+
+            elif video_obj.was_live_flag:
+
+                # A livestream video which has been marked as a normal video
+                #   can never be marked as a livestream video again
+                # (This prevents any problems in reading the RSS feeds from
+                #   continually marking an old video as a livestream again)
                 return
 
             else:
@@ -11482,6 +11526,63 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_update_row_icon(media_data_obj)
 
 
+    def apply_classic_downoad_options(self):
+
+        """Called by mainwin.MainWin.on_classic_menu_apply_options().
+
+        A modified version of self.apply_download_options.
+
+        Creates a download options object (options.OptionsManager) for use only
+        in the Classic Mode Tab.
+
+        The download options are passed to youtube-dl during a download
+        operation.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11472 apply_classic_downoad_options')
+
+        if self.current_manager_obj or self.classic_options_obj:
+            return self.system_error(
+                159,
+                'Apply download options request failed sanity check',
+            )
+
+        # Apply download options
+        self.classic_options_obj = options.OptionsManager()
+        # If required, clone download options from the General Options Manager
+        #   into the new download options manager
+        if self.auto_clone_options_flag:
+            self.classic_options_obj.clone_options(
+                self.general_options_obj,
+            )
+
+
+    def remove_classic_downoad_options(self):
+
+        """Called by mainwin.MainWin.on_classic_menu_remove_options().
+
+        A modified version of self.remove_download_options().
+
+        Removes the download options object (options.OptionsManager) used only
+        in the Classic Mode Tab.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11473 remove_classic_downoad_options')
+
+        if self.current_manager_obj or not self.classic_options_obj:
+            return self.system_error(
+                160,
+                'Remove download options request failed sanity check',
+            )
+
+        # Remove download options
+        self.classic_options_obj = None
+
+
     def check_container_name_is_legal(self, name):
 
         """Can be called by anything.
@@ -12501,7 +12602,8 @@ class TartubeApp(Gtk.Application):
             os.path.join(self.sound_dir, sound_name),
         )
 
-        if os.path.isfile(path):
+        if os.path.isfile(path) \
+        and HAVE_PLAYSOUND_FLAG:
             playsound.playsound(path)
 
 
@@ -12984,27 +13086,6 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.classic_mode_tab_add_urls()
 
 
-    def on_button_classic_auto_copy(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Toggles the auto copy/paste button in the Classic Mode Tab.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 13002 on_button_classic_auto_copy')
-
-        # Toggle the button
-        self.main_win_obj.classic_mode_tab_toggle_auto_copy()
-
-
     def on_button_classic_dest_dir(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -13056,6 +13137,26 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.classic_mode_tab_add_dest_dir()
 
 
+    def on_button_classic_dest_dir_open(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Opens the directory for videos downloaded in the Classic Mode Tab.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13025 on_button_classic_dest_dir_open')
+
+        utils.open_file(self.classic_dir_list[0])
+
+
     def on_button_classic_download(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -13076,6 +13177,27 @@ class TartubeApp(Gtk.Application):
 
         # Start the download operation
         self.download_manager_start('classic')
+
+
+    def on_button_classic_menu(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Opens a popup menu for the Classic Mode Tab.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13076 on_button_classic_menu')
+
+        # Open the popup menu
+        self.main_win_obj.classic_popup_menu()
 
 
     def on_button_classic_move_up(self, action, par):

@@ -2799,6 +2799,25 @@ class OptionsEditWin(GenericEditWin):
             button3.set_sensitive(False)
             button4.set_sensitive(False)
 
+        self.add_label(grid,
+            _(
+            'If a merge is required after post-processing, output to this' \
+            + ' format:',
+            ),
+            0, 5, grid_width, 1,
+        )
+
+        combo_list = ['', 'flv', 'mkv', 'mp4', 'ogg', 'webm']
+        combo = self.add_combo(grid,
+            combo_list,
+            None,
+            (grid_width - 1), 5, 1, 1,
+        )
+        combo.set_active(
+            combo_list.index(self.retrieve_val('merge_output_format')),
+        )
+        combo.connect('changed', self.on_formats_tab_combo_changed)
+
 
     def setup_formats_advanced_tab(self, inner_notebook):
 
@@ -2927,22 +2946,6 @@ class OptionsEditWin(GenericEditWin):
             'yt_skip_dash',
             0, (7 + extra_row), grid_width, 1,
         )
-
-        self.add_label(grid,
-            _(
-            'If a merge is required after post-processing, output to this' \
-            + ' format',
-            ),
-            0, (8 + extra_row), 1, 1,
-        )
-
-        combo_list = ['', 'flv', 'mkv', 'mp4', 'ogg', 'webm']
-        combo = self.add_combo(grid,
-            combo_list,
-            'merge_output_format',
-            1, (8 + extra_row), 1, 1,
-        )
-        combo.set_hexpand(True)
 
 
     def setup_downloads_tab(self):
@@ -4536,6 +4539,40 @@ class OptionsEditWin(GenericEditWin):
         remove_button.set_sensitive(True)
         up_button.set_sensitive(True)
         down_button.set_sensitive(True)
+
+
+    def on_formats_tab_combo_changed(self, combo):
+
+        """Called by callback in self.setup_formats_preferred_tab().
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        val = model[tree_iter][0]
+
+        self.edit_dict['merge_output_format'] = val
+
+        # For some reason, this youtube-dl download option doesn't work if the
+        #   specified format (e.g. 'mp4') isn't also specified in the list of
+        #   preferred formats
+        # Warn the user about that, where appropriate
+        format_list = self.retrieve_val('video_format_list')
+        if val != '' and not val in format_list:
+
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'This option won\'t work unless the format is also added to' \
+                + ' the list of preferred formats above',
+                ),
+                'warning',
+                'ok',
+                self,           # Parent window is this window
+            )
 
 
     def on_formats_tab_down_clicked(self, down_button, treeview):
@@ -7180,17 +7217,6 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton8.connect('toggled', self.on_disable_dl_all_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
-            _('When Tartube starts, automatically open the Classic Mode tab'),
-            self.app_obj.show_classic_tab_on_startup_flag,
-            True,               # Can be toggled by user
-            0, 9, 1, 1,
-        )
-        checkbutton9.connect(
-            'toggled',
-            self.on_show_classic_mode_button_toggled,
-        )
-
 
     def setup_windows_tabs_tab(self, inner_notebook):
 
@@ -7237,15 +7263,26 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.connect('toggled', self.on_reverse_button_toggled)
 
         checkbutton4 = self.add_checkbutton(grid,
+            _('When Tartube starts, automatically open the Classic Mode tab'),
+            self.app_obj.show_classic_tab_on_startup_flag,
+            True,               # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton4.connect(
+            'toggled',
+            self.on_show_classic_mode_button_toggled,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings Tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton5.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_system_tray_tab(self, inner_notebook):
@@ -11496,7 +11533,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_show_classic_mode_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_windows_main_window_tab().
+        """Called from a callback in self.setup_windows_tabs_tab().
 
         Enables/disables automatically opening the Classic Mode tab on startup.
 

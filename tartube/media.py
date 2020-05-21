@@ -1334,6 +1334,12 @@ class Video(GenericMedia):
         #   livestream is currently being broadcast
         # (Using a numerical mode makes the sorting algorithms more efficient)
         self.live_mode = 0
+        # Flag set to True for a video which was a livestream (self.live_mode
+        #   = 1 or 2), but is now not (self.live_mode = 0). Once a livestream
+        #   video has been marked as a normal video, it can't be marked as a
+        #   livestream again. (This prevents any problems in reading the RSS
+        #   feeds from continually marking an old video as a livestream again)
+        self.was_live_flag = False
 
         # Flag set to True if the video is archived, meaning that it can't be
         #   auto-deleted (but it can still be deleted manually by the user)
@@ -1739,6 +1745,14 @@ class Video(GenericMedia):
             self.waiting_flag = True
         else:
             self.waiting_flag = False
+
+
+    def set_was_live_flag(self, flag):
+
+        if flag:
+            self.was_live_flag = True
+        else:
+            self.was_live_flag = False
 
 
     # Get accessors

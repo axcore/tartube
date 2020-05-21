@@ -115,11 +115,13 @@ drag_drop_text=None, no_modify_flag=None):
     return None
 
 
-def add_links_to_textview_from_clipboard(app_obj, textbuffer, mark_start=None,
+def add_links_to_textview(app_obj, link_list, textbuffer, mark_start=None,
 mark_end=None, drag_drop_text=None):
 
     """Called by mainwin.AddVideoDialogue.__init__(),
     .on_window_drag_data_received() and .clipboard_timer_callback().
+
+    Also called by utils.add_links_to_textview_from_clipboard().
 
     Function to add valid URLs from the clipboard to a Gtk.TextView, ignoring
     anything that is not a valid URL, and ignoring duplicate URLs.
@@ -131,39 +133,26 @@ mark_end=None, drag_drop_text=None):
 
         app_obj (mainapp.TartubeApp): The main application
 
+        link_list (list): List of URLs to add to the textview
+
         textbuffer (Gtk.TextBuffer): The textbuffer to which valis URLs should
             be added (unless they are duplicates)
 
         mark_start, mark_end (Gtk.TextMark): The marks at the start/end of the
             buffer (using marks rather than iters prevents Gtk errors)
 
-        drag_drop_text (str): If specified, use this text and ignore the
-            clipboard
-
     """
-
-    if drag_drop_text is None:
-
-        # Get text from the system clipboard
-        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        cliptext = clipboard.wait_for_text()
-
-    else:
-
-        # Ignore the clipboard, and use the specified text
-        cliptext = drag_drop_text
 
     # Eliminate empty lines and any lines that are not valid URLs (we assume
     #   that it's one URL per line)
     # At the same time, trim initial/final whitespace
     valid_list = []
-    if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
-        for line in cliptext.split('\n'):
-            if check_url(line):
+    for line in link_list:
+        if check_url(line):
 
-                line = strip_whitespace(line)
-                if re.search('\S', line):
-                    valid_list.append(line)
+            line = strip_whitespace(line)
+            if re.search('\S', line):
+                valid_list.append(line)
 
     if valid_list:
 
@@ -206,6 +195,55 @@ mark_end=None, drag_drop_text=None):
                 textbuffer.get_end_iter(),
                 str.join('\n', mod_list) + '\n',
             )
+
+
+def add_links_to_textview_from_clipboard(app_obj, textbuffer, mark_start=None,
+mark_end=None, drag_drop_text=None):
+
+    """Called by mainwin.AddVideoDialogue.__init__(),
+    .on_window_drag_data_received() and .clipboard_timer_callback().
+
+    Function to add valid URLs from the clipboard to a Gtk.TextView, ignoring
+    anything that is not a valid URL, and ignoring duplicate URLs.
+
+    If some text is supplied as an argument, uses that text rather than the
+    clipboard text
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        textbuffer (Gtk.TextBuffer): The textbuffer to which valis URLs should
+            be added (unless they are duplicates)
+
+        mark_start, mark_end (Gtk.TextMark): The marks at the start/end of the
+            buffer (using marks rather than iters prevents Gtk errors)
+
+        drag_drop_text (str): If specified, use this text and ignore the
+            clipboard
+
+    """
+
+    if drag_drop_text is None:
+
+        # Get text from the system clipboard
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        cliptext = clipboard.wait_for_text()
+
+    else:
+
+        # Ignore the clipboard, and use the specified text
+        cliptext = drag_drop_text
+
+    # Pass the text on to the next function, first converting it into a list
+    if cliptext is not None:
+        add_links_to_textview(
+            app_obj,
+            cliptext.split('\n'),
+            textbuffer,
+            mark_start,
+            mark_end,
+        )
 
 
 def check_url(url):

@@ -1178,15 +1178,10 @@ class DownloadWorker(threading.Thread):
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
 
-        if self.download_manager_obj.operation_type == 'classic':
-            dl_classic_flag = True
-        else:
-            dl_classic_flag = False
-
         self.options_list = self.download_manager_obj.options_parser_obj.parse(
-            download_item_obj.media_data_obj,
+            self.download_item_obj.media_data_obj,
             self.options_manager_obj,
-            dl_classic_flag,
+            self.download_manager_obj.operation_type,
         )
 
         self.available_flag = False
@@ -1512,10 +1507,17 @@ class DownloadList(object):
         # (The manager might be specified by obj itself, or it might be
         #   specified by obj's parent, or we might use the default
         #   options.OptionsManager)
-        options_manager_obj = utils.get_options_manager(
-            self.app_obj,
-            media_data_obj,
-        )
+        if self.operation_type != 'classic':
+            options_manager_obj = utils.get_options_manager(
+                self.app_obj,
+                media_data_obj,
+            )
+        else:
+            # Classic Mode tab
+            if self.app_obj.classic_options_obj is not None:
+                options_manager_obj = self.app_obj.classic_options_obj
+            else:
+                options_manager_obj = self.app_obj.general_options_obj
 
         # Ignore private folders, and don't download any of their children
         #   (because they are all children of some other non-private folder)
@@ -1646,12 +1648,17 @@ class DownloadList(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1647 create_dummy_item')
 
+        if self.app_obj.classic_options_obj is not None:
+            options_manager_obj = self.app_obj.classic_options_obj
+        else:
+            options_manager_obj = self.app_obj.general_options_obj
+
         # Create a new download.DownloadItem object...
         self.download_item_count += 1
         download_item_obj = DownloadItem(
             media_data_obj.dbid,
             media_data_obj,
-            self.app_obj.general_options_obj,
+            options_manager_obj,
         )
 
         # ...and add it to our list

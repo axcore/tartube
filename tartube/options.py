@@ -845,7 +845,7 @@ class OptionsParser(object):
 
 
     def parse(self, media_data_obj, options_manager_obj,
-    dl_classic_flag=False):
+    operation_type='real'):
 
         """Called by downloads.DownloadWorker.prepare_download() and
         mainwin.MainWin.update_textbuffer().
@@ -862,9 +862,8 @@ class OptionsParser(object):
             options_manager_obj (options.OptionsManager): The object containing
                 the download options for this media data object
 
-            dl_classic_flag (bool): True when called by .prepare_download, and
-                when the download operation was launched from the Classic Mode
-                tab. False otherwise
+            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
+                possible values of downloads.DownloadManager.operation_type)
 
         Returns:
 
@@ -878,9 +877,9 @@ class OptionsParser(object):
         # Create a copy of the dictionary...
         copy_dict = options_manager_obj.options_dict.copy()
         # ...then modify various values in the copy. Set the 'save_path' option
-        self.build_save_path(media_data_obj, copy_dict, dl_classic_flag)
+        self.build_save_path(media_data_obj, copy_dict, operation_type)
         # Set the 'video_format' option and 'all_formats' options
-        self.build_video_format(media_data_obj, copy_dict, dl_classic_flag)
+        self.build_video_format(media_data_obj, copy_dict, operation_type)
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
@@ -1025,7 +1024,7 @@ class OptionsParser(object):
             copy_dict['limit_rate'] = str(limit) + 'K'
 
 
-    def build_save_path(self, media_data_obj, copy_dict, dl_classic_flag):
+    def build_save_path(self, media_data_obj, copy_dict, operation_type):
 
         """Called by self.parse().
 
@@ -1039,14 +1038,14 @@ class OptionsParser(object):
 
             copy_dict (dict): Copy of the original options dictionary
 
-            dl_classic_flag (bool): True a download operation was launched from
-                the Classic Mode tab. False otherwise
+            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
+                possible values of downloads.DownloadManager.operation_type)
 
         """
 
         # Special case: if a download operation was launched from the Classic
         #   Mode Tab, the save path is specified in that tab
-        if dl_classic_flag:
+        if operation_type == 'classic':
 
             save_path = media_data_obj.dummy_dir
 
@@ -1085,7 +1084,7 @@ class OptionsParser(object):
         )
 
 
-    def build_video_format(self, media_data_obj, copy_dict, dl_classic_flag):
+    def build_video_format(self, media_data_obj, copy_dict, operation_type):
 
         """Called by self.parse().
 
@@ -1099,8 +1098,8 @@ class OptionsParser(object):
 
             copy_dict (dict): Copy of the original options dictionary
 
-            dl_classic_flag (bool): True a download operation was launched from
-                the Classic Mode tab. False otherwise
+            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
+                possible values of downloads.DownloadManager.operation_type)
 
         """
 
@@ -1108,14 +1107,25 @@ class OptionsParser(object):
 
             # Special case: if a download operation was launched from the
             #   Classic Mode Tab, the video format may be specified by that tab
-            if dl_classic_flag and media_data_obj.dummy_format:
+            if operation_type == 'classic' \
+            and media_data_obj.dummy_format:
+
+                dummy_format = media_data_obj.dummy_format
 
                 # Ignore all video/audio formats except the one specified by
                 #   the user in the Classic Mode Tab
-                copy_dict['video_format'] = media_data_obj.dummy_format
+                copy_dict['video_format'] = dummy_format
                 copy_dict['all_formats'] = False
                 copy_dict['video_format_list'] = []
                 copy_dict['video_format_mode'] = ''
+
+                # v2.1.009: Since the user doesn't have the possibility of
+                #   setting the -f and --merge-output-format options to the
+                #   same value (e.g. 'mp4'), we must do so artificially
+                if dummy_format == 'mkv' or dummy_format == 'mp4' \
+                or dummy_format == 'ogg' or dummy_format == 'webm' \
+                or dummy_format == 'flv':
+                    copy_dict['merge_output_format'] = dummy_format
 
                 return
 
@@ -1125,12 +1135,25 @@ class OptionsParser(object):
             #   fixed, perhaps we can offer the user a choice of formats
             if media_data_obj.live_mode:
 
-                copy_dict['video_format'] = 95
+                copy_dict['video_format'] = '95'
                 copy_dict['all_formats'] = False
                 copy_dict['video_format_list'] = []
                 copy_dict['video_format_mode'] = ''
 
                 return
+
+        # Special case: for simulated downloads, don't specify any video
+        #   formats; if the format isn't available for some videos, we'll get
+        #   an error for each of them (rather than the simulated download we
+        #   were hoping for)
+        if operation_type == 'sim':
+
+            copy_dict['video_format'] = '0'
+            copy_dict['all_formats'] = False
+            copy_dict['video_format_list'] = []
+            copy_dict['video_format_mode'] = ''
+
+            return
 
         # The 'video_format_list' options contains values corresponding to the
         #   keys in formats.VIDEO_OPTION_DICT, which are either real extractor

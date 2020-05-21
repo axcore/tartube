@@ -236,9 +236,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.error_list_button = None           # Gtk.Button
         # (from self.setup_classic_mode_tab)
         self.classic_grid = None                # Gtk.Grid
-        self.classic_options_button = None      # Gtk.Button
-        self.classic_update_ytdl_button = None  # Gtk.Button
-        self.classic_auto_copy_button = None    # Gtk.Button
+        self.classic_menu_button = None         # Gtk.Button
         self.classic_textview = None            # Gtk.TextView
         self.classic_textbuffer = None          # Gtk.TextBuffer
         self.classic_mark_start = None          # Gtk.TextMark
@@ -246,6 +244,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_dest_dir_liststore = None  # Gtk.ListStore
         self.classic_dest_dir_combo = None      # Gtk.ComboBox
         self.classic_dest_dir_button = None     # Gtk.Button
+        self.classic_dest_dir_open_button = None
+                                                # Gtk.Button
         self.classic_format_liststore = None    # Gtk.ListStore
         self.classic_format_combo = None        # Gtk.ComboBox
         self.classic_add_urls_button = None     # Gtk.Button
@@ -1994,15 +1994,14 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 1995 setup_classic_tab')
 
-        grid_width = 7
+        grid_width = 8
 
         self.classic_grid = Gtk.Grid()
         self.classic_tab.pack_start(self.classic_grid, True, True, 0)
         self.classic_grid.set_column_spacing(self.spacing_size)
         self.classic_grid.set_row_spacing(self.spacing_size * 2)
 
-        # First row - some decoration, and some buttons to edit download
-        #   options, update youtube-dl, and enable automatic copy/paste
+        # First row - some decoration, and a button to open a popup menu
         # --------------------------------------------------------------------
 
         hbox = Gtk.HBox()
@@ -2047,45 +2046,16 @@ class MainWin(Gtk.ApplicationWindow):
             ) + '</b>',
         )
 
-        self.classic_options_button = Gtk.Button.new_from_icon_name(
+        self.classic_menu_button = Gtk.Button.new_from_icon_name(
             Gtk.STOCK_PROPERTIES,
             Gtk.IconSize.BUTTON,
         )
-        hbox.pack_start(self.classic_options_button, False, False, 0)
-        self.classic_options_button.set_action_name(
-            'app.classic_options_button',
+        hbox.pack_start(self.classic_menu_button, False, False, 0)
+        self.classic_menu_button.set_action_name(
+            'app.classic_menu_button',
         )
-        self.classic_options_button.set_tooltip_text(
-            _('General download options'),
-        )
-
-        self.classic_update_ytdl_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_REDO,
-            Gtk.IconSize.BUTTON,
-        )
-        hbox.pack_start(
-            self.classic_update_ytdl_button,
-            False,
-            False,
-            self.spacing_size,
-        )
-        self.classic_update_ytdl_button.set_action_name(
-            'app.classic_update_ytdl_button',
-        )
-        self.classic_update_ytdl_button.set_tooltip_text(
-            _('Update youtube-dl'),
-        )
-
-        self.classic_auto_copy_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_COPY,
-            Gtk.IconSize.BUTTON,
-        )
-        hbox.pack_start(self.classic_auto_copy_button, False, False, 0)
-        self.classic_auto_copy_button.set_action_name(
-            'app.classic_auto_copy_button',
-        )
-        self.classic_auto_copy_button.set_tooltip_text(
-            _('Enable automatic copy/paste'),
+        self.classic_menu_button.set_tooltip_text(
+            _('Open the Classic Mode menu'),
         )
 
         # Second row - a textview for entering URLs. If automatic copy/paste is
@@ -2153,7 +2123,10 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_classic_dest_dir_combo_changed,
         )
 
-        self.classic_dest_dir_button = Gtk.Button('...')
+        self.classic_dest_dir_button = Gtk.Button.new_from_icon_name(
+            Gtk.STOCK_ADD,
+            Gtk.IconSize.BUTTON,
+        )
         self.classic_grid.attach(self.classic_dest_dir_button, 2, 3, 1, 1)
         self.classic_dest_dir_button.set_action_name(
             'app.classic_dest_dir_button',
@@ -2163,9 +2136,22 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.classic_dest_dir_button.set_hexpand(False)
 
+        self.classic_dest_dir_open_button = Gtk.Button.new_from_icon_name(
+            Gtk.STOCK_OPEN,
+            Gtk.IconSize.BUTTON,
+        )
+        self.classic_grid.attach(self.classic_dest_dir_open_button, 3, 3, 1, 1)
+        self.classic_dest_dir_open_button.set_action_name(
+            'app.classic_dest_dir_open_button',
+        )
+        self.classic_dest_dir_open_button.set_tooltip_text(
+            _('Open the destination folder'),
+        )
+        self.classic_dest_dir_open_button.set_hexpand(False)
+
         # Video/audio format
         label5 = Gtk.Label('     ' + _('Format:'))
-        self.classic_grid.attach(label5, 3, 3, 1, 1)
+        self.classic_grid.attach(label5, 4, 3, 1, 1)
 
         combo_list = [_('Default'), _('Video:')]
         for item in formats.VIDEO_FORMAT_LIST:
@@ -2182,7 +2168,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_format_combo = Gtk.ComboBox.new_with_model(
             self.classic_format_liststore,
         )
-        self.classic_grid.attach(self.classic_format_combo, 4, 3, 1, 1)
+        self.classic_grid.attach(self.classic_format_combo, 5, 3, 1, 1)
         renderer_text = Gtk.CellRendererText()
         self.classic_format_combo.pack_start(renderer_text, True)
         self.classic_format_combo.add_attribute(renderer_text, 'text', 0)
@@ -2197,13 +2183,13 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (Add a label for spacing)
         label6 = Gtk.Label('     ')
-        self.classic_grid.attach(label6, 5, 3, 1, 1)
+        self.classic_grid.attach(label6, 6, 3, 1, 1)
 
         # Add URLs button
         self.classic_add_urls_button = Gtk.Button(
             '     ' + _('Add URLs') + '     ',
         )
-        self.classic_grid.attach(self.classic_add_urls_button, 6, 3, 1, 1)
+        self.classic_grid.attach(self.classic_add_urls_button, 7, 3, 1, 1)
         self.classic_add_urls_button.set_action_name(
             'app.classic_add_urls_button',
         )
@@ -2649,11 +2635,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_res_combobox.set_sensitive(sens_flag)
 
         # Classic Mode Tab
-        if __main__.__pkg_strict_install_flag__:
-            self.classic_update_ytdl_button.set_sensitive(False)
-        else:
-            self.classic_update_ytdl_button.set_sensitive(sens_flag)
-
+        self.classic_menu_button.set_sensitive(sens_flag)
         self.classic_redownload_button.set_sensitive(sens_flag)
         self.classic_stop_button.set_sensitive(False)
         self.classic_download_button.set_sensitive(sens_flag)
@@ -3901,6 +3883,19 @@ class MainWin(Gtk.ApplicationWindow):
             tidy_menu_item.set_sensitive(False)
         actions_submenu.append(tidy_menu_item)
 
+        classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Add to _Classic Mode tab'),
+        )
+        classic_dl_menu_item.connect(
+            'activate',
+            self.on_video_index_add_classic,
+            media_data_obj,
+        )
+        actions_submenu.append(classic_dl_menu_item)
+        if isinstance(media_data_obj, media.Folder) \
+        or not media_data_obj.source:
+            classic_dl_menu_item.set_sensitive(False)
+
         if media_type == 'channel':
             msg = _('Channel _actions')
         elif media_type == 'playlist':
@@ -4654,6 +4649,19 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
+        classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Add to _Classic Mode tab'),
+        )
+        classic_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_add_classic_multi,
+            video_list,
+        )
+        popup_menu.append(classic_dl_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
         # Download to Temporary Videos
         temp_submenu = Gtk.Menu()
 
@@ -5119,6 +5127,105 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.popup(None, None, None, None, event.button, event.time)
 
 
+    def classic_popup_menu(self):
+
+        """Called by mainapp.TartubeApp.on_button_classic_menu().
+
+        When the user right-clicks on the menu button in the Classic Mode tab,
+        shows a context-sensitive popup menu.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 5087 classic_popup_menu')
+
+        # Set up the popup menu
+        popup_menu = Gtk.Menu()
+
+        # Automatic copy/paste
+        if not self.classic_auto_copy_flag:
+            label = _('Enable automatic copy/paste')
+        else:
+            label = _('Disable automatic copy/paste')
+
+        automatic_menu_item = Gtk.MenuItem.new_with_mnemonic(label)
+        automatic_menu_item.connect(
+            'activate',
+            self.on_classic_menu_toggle_auto_copy,
+        )
+        popup_menu.append(automatic_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Download options
+        if not self.app_obj.classic_options_obj:
+
+            apply_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('_Apply download options'),
+            )
+            apply_menu_item.set_active(False)
+            apply_menu_item.connect(
+                'activate',
+                self.on_classic_menu_apply_options,
+            )
+            if self.app_obj.current_manager_obj:
+                apply_menu_item.set_sensitive(False)
+            popup_menu.append(apply_menu_item)
+
+        else:
+
+            remove_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('_Remove download options'),
+            )
+            remove_menu_item.set_active(False)
+            remove_menu_item.connect(
+                'activate',
+                self.on_classic_menu_remove_options,
+            )
+            if self.app_obj.current_manager_obj:
+                remove_menu_item.set_sensitive(False)
+            popup_menu.append(remove_menu_item)
+
+        edit_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Edit download options'),
+        )
+        edit_menu_item.connect(
+            'activate',
+            self.on_classic_menu_edit_options,
+        )
+        if self.app_obj.current_manager_obj \
+        or not self.app_obj.classic_options_obj:
+            edit_menu_item.set_sensitive(False)
+        popup_menu.append(edit_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Update youtube-dl
+        update_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Update youtube-dl'),
+        )
+        update_ytdl_menu_item.connect(
+            'activate',
+            self.on_classic_menu_update_ytdl,
+        )
+        popup_menu.append(update_ytdl_menu_item)
+        if self.app_obj.current_manager_obj \
+        or __main__.__pkg_strict_install_flag__:
+            update_ytdl_menu_item.set_sensitive(False)
+
+        # Create the popup menu
+        popup_menu.show_all()
+        popup_menu.popup(
+            None,
+            None,
+            None,
+            None,
+            1,
+            Gtk.get_current_event_time(),
+        )
+
+
     def classic_progress_list_popup_menu(self, event, path, dbid):
 
         """Called by self.on_classic_progress_list_right_click().
@@ -5452,6 +5559,21 @@ class MainWin(Gtk.ApplicationWindow):
                 )
                 alt_menu_item.set_submenu(alt_submenu)
                 popup_menu.append(alt_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Add to _Classic Mode tab'),
+        )
+        classic_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_add_classic,
+            video_obj,
+        )
+        popup_menu.append(classic_dl_menu_item)
+        if not video_obj.source:
+            classic_dl_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -8320,7 +8442,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             new_obj = media.Video(
                 (self.classic_media_total) * -1,    # Negative .dbid
-                'Dummy video',
+                self.app_obj.default_video_name,
             )
 
             new_obj.set_dummy(url, dest_dir, format_str)
@@ -8499,7 +8621,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def classic_mode_tab_timer_callback(self):
 
-        """Called from a callback in self.classic_mode_tab_toggle_auto_copy().
+        """Called from a callback in self.on_classic_menu_toggle_auto_copy().
 
         Periodically checks the system's clipboard, and adds any new URLs to
         the Classic Progress List.
@@ -8517,61 +8639,6 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Return 1 to keep the timer going
         return 1
-
-
-    def classic_mode_tab_toggle_auto_copy(self):
-
-        """Called by mainapp.TartubeApp.on_button_classic_auto_copy().
-
-        Toggles the auto copy/paste button in the Classic Mode tab.
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8530 classic_mode_tab_toggle_auto_copy')
-
-        if not self.classic_auto_copy_flag:
-
-            # Update IVs
-            self.classic_auto_copy_flag = True
-
-            # Update the button itself
-            self.classic_auto_copy_button.set_image(
-                Gtk.Image.new_from_stock(
-                    Gtk.STOCK_PASTE,
-                    Gtk.IconSize.BUTTON,
-                ),
-            )
-
-            self.classic_auto_copy_button.set_tooltip_text(
-                _('Disable automatic copy/paste'),
-            )
-
-            # Start a timer to periodically check the clipboard
-            self.classic_clipboard_timer_id = GObject.timeout_add(
-                self.classic_clipboard_timer_time,
-                self.classic_mode_tab_timer_callback,
-            )
-
-        else:
-
-            # Update IVs
-            self.classic_auto_copy_flag = False
-
-            # Update the button itself
-            self.classic_auto_copy_button.set_image(
-                Gtk.Image.new_from_stock(
-                    Gtk.STOCK_COPY,
-                    Gtk.IconSize.BUTTON,
-                ),
-            )
-
-            self.classic_auto_copy_button.set_tooltip_text(
-                _('Enable automatic copy/paste'),
-            )
-
-            # Stop the timer
-            GObject.source_remove(self.classic_clipboard_timer_id)
-            self.classic_clipboard_timer_id = None
 
 
     # (Output tab)
@@ -9270,6 +9337,40 @@ class MainWin(Gtk.ApplicationWindow):
 
 
     # Callback class methods
+
+
+    def on_video_index_add_classic(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Adds the channel/playlist URL to the textview in the Classic Mode Tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel or media.Playlist): The clicked media
+                data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 9260 on_video_index_add_classic')
+
+        if isinstance(media_data_obj, media.Folder) \
+        or not media_data_obj.source:
+            return self.app_obj.system_error(
+                253,
+                'Callback request denied due to current conditions',
+            )
+
+        utils.add_links_to_textview(
+            self.app_obj,
+            [ media_data_obj.source ],
+            self.classic_textbuffer,
+            self.classic_mark_start,
+            self.classic_mark_end,
+        )
 
 
     def on_video_index_apply_options(self, menu_item, media_data_obj):
@@ -10530,7 +10631,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The clicked menu item
 
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The clicked media data object
 
         """
@@ -10611,6 +10712,67 @@ class MainWin(Gtk.ApplicationWindow):
 
                 # Start the tidy operation now
                 self.tidy_manager_start(choices_dict)
+
+
+    def on_video_catalogue_add_classic(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Adds the selected video's URL to the textview in the Classic Mode Tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 10540 on_video_catalogue_add_classic')
+
+        if media_data_obj.source:
+
+            utils.add_links_to_textview(
+                self.app_obj,
+                [ media_data_obj.source ],
+                self.classic_textbuffer,
+                self.classic_mark_start,
+                self.classic_mark_end,
+            )
+
+
+    def on_video_catalogue_add_classic_multi(self, menu_item, media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Adds the selected videos' URLs to the textview in the Classic Mode Tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_list (list): List of one or more media.Video objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 10541 on_video_catalogue_add_classic_multi')
+
+        source_list = []
+        for media_data_obj in media_data_list:
+            if media_data_obj.source:
+                source_list.append(media_data_obj.source)
+
+        if media_data_obj.source:
+
+            utils.add_links_to_textview(
+                self.app_obj,
+                source_list,
+                self.classic_textbuffer,
+                self.classic_mark_start,
+                self.classic_mark_end,
+            )
 
 
     def on_video_catalogue_apply_options(self, menu_item, media_data_obj):
@@ -12735,6 +12897,156 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_classic_menu_apply_options(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Adds a set of download options for use only in Classic Mode Tab
+        downloads.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12727 on_classic_menu_apply_options')
+
+        if self.app_obj.current_manager_obj \
+        or self.app_obj.classic_options_obj:
+            return self.app_obj.system_error(
+                249,
+                'Callback request denied due to current conditions',
+            )
+
+        # Create the options.OptionsManager object
+        self.app_obj.apply_classic_downoad_options()
+
+        # Open an edit window to show the options immediately
+        config.OptionsEditWin(
+            self.app_obj,
+            self.app_obj.classic_options_obj,
+        )
+
+
+    def on_classic_menu_edit_options(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Edits the download options for use only in Classic Mode Tab downloads.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12728 on_classic_menu_edit_options')
+
+        if self.app_obj.current_manager_obj \
+        or not self.app_obj.classic_options_obj:
+            return self.app_obj.system_error(
+                250,
+                'Callback request denied due to current conditions',
+            )
+
+        # Open an edit window
+        config.OptionsEditWin(
+            self.app_obj,
+            self.app_obj.classic_options_obj,
+        )
+
+
+    def on_classic_menu_remove_options(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Removes the set of download options for use only in Classic Mode Tab
+        downloads.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12729 on_classic_menu_remove_options')
+
+        if self.app_obj.current_manager_obj \
+        or not self.app_obj.classic_options_obj:
+            return self.app_obj.system_error(
+                251,
+                'Callback request denied due to current conditions',
+            )
+
+        # Remove the options.OptionsManager object
+        self.app_obj.remove_classic_downoad_options()
+
+
+    def on_classic_menu_toggle_auto_copy(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Toggles the auto copy/paste button in the Classic Mode tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12730 classic_mode_tab_toggle_auto_copy')
+
+        if not self.classic_auto_copy_flag:
+
+            # Update IVs
+            self.classic_auto_copy_flag = True
+
+            # Start a timer to periodically check the clipboard
+            self.classic_clipboard_timer_id = GObject.timeout_add(
+                self.classic_clipboard_timer_time,
+                self.classic_mode_tab_timer_callback,
+            )
+
+        else:
+
+            # Update IVs
+            self.classic_auto_copy_flag = False
+
+            # Stop the timer
+            GObject.source_remove(self.classic_clipboard_timer_id)
+            self.classic_clipboard_timer_id = None
+
+
+    def on_classic_menu_update_ytdl(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Starts an update operation.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12731 on_classic_menu_update_ytdl')
+
+        if self.app_obj.current_manager_obj:
+            return self.app_obj.system_error(
+                252,
+                'Callback request denied due to current conditions',
+            )
+
+        # Start the update operation
+        self.app_obj.update_manager_start('ytdl')
+
+
     def on_classic_progress_list_get_cmd(self, menu_item, dummy_obj):
 
         """Called from a callback in self.classic_progress_list_popup_menu().
@@ -12760,7 +13072,7 @@ class MainWin(Gtk.ApplicationWindow):
         options_list = options_parser_obj.parse(
             dummy_obj,
             self.app_obj.general_options_obj,
-            True,                                   # Classic Mode Tab
+            'classic',
         )
 
         # Obtain the system command used to download this media data object

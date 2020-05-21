@@ -354,7 +354,7 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
 6.4.1 On MS Windows
 ~~~~~~~~~~~~~~~~~~~
 
-On MS Windows, the usual methods of FFmpeg installation will not work. You **must** download a MinGW-compatible version of FFmpeg. The quickest way to do this is from **Tartube**'s main menu: click **Operations > Install FFmpeg**.
+On MS Windows, the usual methods of FFmpeg installation will not work. You **must** download an Msys2-compatible version of FFmpeg. The quickest way to do this is from **Tartube**'s main menu: click **Operations > Install FFmpeg**.
 
 There is no known method of installing a compatible version of AVConv.
 
@@ -832,7 +832,7 @@ If you want something simpler, then you can click the **Classic Mode** Tab for a
   :alt: The Classic Mode Tab
 
 - Copy and paste the URLs of videos, channels and/or playlists into the box at the top
-- Click the **...** button to select a directory (folder). All the videos are downloaded into this directory
+- Click the **+** button to select a directory (folder). All the videos are downloaded into this directory
 - Select a video or audio format, or leave the **Default** setting enabled
 - Click the **Add URLs** button
 - If you like, you can add more videos/channels/playlists, using a different directory and/or a different format
@@ -842,7 +842,7 @@ If you want something simpler, then you can click the **Classic Mode** Tab for a
 
 Because the videos aren't in a database, you can move them anywhere you want (once you've finished downloading them).
 
-**PROTIP:** If you *only* use this tab, you can tell **Tartube** to open it automatically. Click **Edit > System preferences... > Windows > Main Window** and select **When Tartube starts, automatically open the Classic Mode Tab**.
+**PROTIP:** If you *only* use this tab, you can tell **Tartube** to open it automatically. Click **Edit > System preferences... > Windows > Tabs** and select **When Tartube starts, automatically open the Classic Mode Tab**.
 
 6.22 Livestreams
 ----------------
@@ -928,18 +928,19 @@ Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the b
 * `7.10 Tartube database file is getting in the way`_
 * `7.11 Duplicate video names`_
 * `7.12 Convert video to audio`_
-* `7.13 Too many folders in the main window`_
-* `7.14 Not enough videos in the main window`_
-* `7.15 Toolbar is too small`_
-* `7.16 YouTube name/password not accepted`_
-* `7.17 Georestriction workarounds don't work`_
-* `7.18 MS Windows installer is too big`_
-* `7.19 Tartube can't detect livestreams`_
-* `7.20 Livestream start time not visible`_
-* `7.21 Livestream is already finished`_
-* `7.22 Can't hear livestream alarms`_
-* `7.23 British spelling`_
-* `7.24 No puedo hablar inglés`_
+* `7.13 FFmpeg fails to merge video/audio into single file`_
+* `7.14 Too many folders in the main window`_
+* `7.15 Not enough videos in the main window`_
+* `7.16 Toolbar is too small`_
+* `7.17 YouTube name/password not accepted`_
+* `7.18 Georestriction workarounds don't work`_
+* `7.19 MS Windows installer is too big`_
+* `7.20 Tartube can't detect livestreams`_
+* `7.21 Livestream start time not visible`_
+* `7.22 Livestream is already finished`_
+* `7.23 Can't hear livestream alarms`_
+* `7.24 British spelling`_
+* `7.25 No puedo hablar inglés`_
  
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1107,7 +1108,25 @@ A: Tartube can save the video files using a multitude of different filename form
 
 A: See `6.20 Converting to audio`_
 
-7.13 Too many folders in the main window
+7.13 FFmpeg fails to merge video/audio into single file
+-------------------------------------------------------
+
+*Q: I downloaded a video and expected a single video file, instead Tartube downloaded several files, none of which are playable!*
+
+*Q: I set the download option 'If a merge is required after post-processing, output to this format', but it doesn't work!*
+
+A: The solution to both problems is to install FFmpeg, and to set the output format correctly.
+
+Firstly, make sure FFmpeg is installed on your system - see `6.4 Setting the location of FFmpeg / AVConv`_.
+
+Secondly, set your desired output format. Open the Download options window (for example, click **Edit > General download options... > Formats > Preferred**). Add a format like **mp4** to the **List of preferred formats**, then add the same format to **If a merge is required after post-processing, output to this format**.
+
+For some reason, youtube-dl ignores the download option unless the format is specified in both places. (You will see a warning if you forget.)
+
+.. image:: screenshots/example24.png
+  :alt: The Download options window
+  
+7.14 Too many folders in the main window
 ----------------------------------------
 
 *Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
@@ -1118,14 +1137,14 @@ A: In the main menu, click **Edit > System preferences... > Windows > Main windo
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop the channels/playlists into it
 
-7.14 Not enough videos in the main window
+7.15 Not enough videos in the main window
 -----------------------------------------
 
 *Q: I want to see all the videos on a single page, not spread over several pages!*
 
 A: At the bottom of the **Tartube** window, set the page size to zero, and press **ENTER**.
 
-7.15 Toolbar is too small
+7.16 Toolbar is too small
 -------------------------
 
 *Q: The toolbar is too small! There isn't enough room for all the buttons!*
@@ -1134,7 +1153,7 @@ A: Click **Edit > System preferences... > Windows > Main window > Don't show lab
 
 MS Windows users can already see a toolbar without labels.
 
-7.16 YouTube name/password not accepted
+7.17 YouTube name/password not accepted
 ---------------------------------------
 
 *Q: I added my YouTube username and password, but I am still seeing authentification errors!*
@@ -1151,7 +1170,7 @@ Having created the file, in the same edit window, click the **General** tab. In 
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-7.17 Georestriction workarounds don't work
+7.18 Georestriction workarounds don't work
 ------------------------------------------
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
@@ -1162,7 +1181,7 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to pay for a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
 
-7.18 MS Windows installer is too big
+7.19 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -1183,7 +1202,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
-7.19 Tartube can't detect livestreams
+7.20 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -1198,21 +1217,21 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.20 Livestream start time not visible
+7.21 Livestream start time not visible
 --------------------------------------
 
 *Q: Why doesn't **Tartube** show the start time for livestreams?*
 
 A: Popular video websites like **YouTube** do not provide that information.
 
-7.21 Livestream is already finished
+7.22 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.22 Can't hear livestream alarms
+7.23 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1225,14 +1244,14 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.23 British spelling
+7.24 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences...**. Click the drop-down box and select American English, and then restart **Tartube**
 
-7.24 No puedo hablar inglés
+7.25 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*
