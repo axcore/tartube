@@ -13259,6 +13259,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
 
+            # mainapp.TartubeApp.stop_continue() is not called, so let's save
+            #   the config/database file right now
+            if not self.app_obj.disable_load_save_flag:
+                self.app_obj.save_config()
+                self.app_obj.save_db()
+
             # Allow the application to close as normal
             return False
 

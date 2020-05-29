@@ -922,25 +922,26 @@ Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the b
 * `7.4 Can't download a video`_
 * `7.5 Downloads never finish`_
 * `7.6 Videos are missing after a crash`_
-* `7.7 'Check all' button takes too long`_
-* `7.8 'Download all' button takes too long`_
-* `7.9 Videos downloaded to inconvenient location`_
-* `7.10 Tartube database file is getting in the way`_
-* `7.11 Duplicate video names`_
-* `7.12 Convert video to audio`_
-* `7.13 FFmpeg fails to merge video/audio into single file`_
-* `7.14 Too many folders in the main window`_
-* `7.15 Not enough videos in the main window`_
-* `7.16 Toolbar is too small`_
-* `7.17 YouTube name/password not accepted`_
-* `7.18 Georestriction workarounds don't work`_
-* `7.19 MS Windows installer is too big`_
-* `7.20 Tartube can't detect livestreams`_
-* `7.21 Livestream start time not visible`_
-* `7.22 Livestream is already finished`_
-* `7.23 Can't hear livestream alarms`_
-* `7.24 British spelling`_
-* `7.25 No puedo hablar inglés`_
+* `7.7 Tartube database is broken`_
+* `7.8 'Check all' button takes too long`_
+* `7.9 'Download all' button takes too long`_
+* `7.10 Videos downloaded to inconvenient location`_
+* `7.11 Tartube database file is getting in the way`_
+* `7.12 Duplicate video names`_
+* `7.13 Convert video to audio`_
+* `7.14 FFmpeg fails to merge video/audio into single file`_
+* `7.15 Too many folders in the main window`_
+* `7.16 Not enough videos in the main window`_
+* `7.17 Toolbar is too small`_
+* `7.18 YouTube name/password not accepted`_
+* `7.19 Georestriction workarounds don't work`_
+* `7.20 MS Windows installer is too big`_
+* `7.21 Tartube can't detect livestreams`_
+* `7.22 Livestream start time not visible`_
+* `7.23 Livestream is already finished`_
+* `7.24 Can't hear livestream alarms`_
+* `7.25 British spelling`_
+* `7.26 No puedo hablar inglés`_
  
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1033,7 +1034,30 @@ A: **Tartube** creates a backup copy of its database, before trying to save a ne
 
 Note that **Tartube** does not create backup copies of the videos you've downloaded. That is your responsibility!
 
-7.7 'Check all' button takes too long
+7.7 Tartube database is broken
+------------------------------
+
+*Q: The Tartube database is totally broken! How do I rebuild it? I don't want to download everything again!*
+
+A: There is a built-in database repair tool. Click **Edit > System preferences... > Filesystem > DB Errors** and then click the **Check DB** button
+
+A: Try using one of the database backups - see `7.6 Videos are missing after a crash`_
+
+A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist. If you really want to rebuild the database from scratch, this is how to do it.
+
+Firstly, click **Media > Export from database**. In the dialogue window, it's not necessary to select the button **Include lists of videos**. Click the **OK** button. Let Tartube create the backup file. You now have a backup of the names and URLs for every channel/playlist you've added.
+
+Tartube's data folder contains the database file, **tartube.db**. Rename it (don't delete it).
+
+Now you can restart Tartube. Tartube will create a brand new database file.
+
+Click **Media > Import into database > JSON export file**. Import the file you created moments ago.
+
+All the channels/playlists should now be visible in the main window. Click the **Check All** button in the bottom-left corner and wait for it to finish.
+
+Your new database now contains information about all the videos, but it doesn't know that most of those videos have been downloaded already. Click **Operations > Refresh database...** to take care of that.
+
+7.8 'Check all' button takes too long
 -------------------------------------
 
 *Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!*
@@ -1050,7 +1074,7 @@ This works well on sites like YouTube, which send information about videos in th
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
 - Click **OK** to close the window
 
-7.8 'Download all' button takes too long
+7.9 'Download all' button takes too long
 ----------------------------------------
 
 *Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!*
@@ -1059,7 +1083,7 @@ A: **youtube-dl** can create an archive file especially for the purpose of speed
 
 To enable this functionality, click **Edit > System preferences... > youtube-dl > Allow youtube-dl to create its own archive**. The functionality is enabled by default.
 
-7.9 Videos downloaded to inconvenient location
+7.10 Videos downloaded to inconvenient location
 ----------------------------------------------
 
 *Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?*
@@ -1075,7 +1099,7 @@ If you installed an earlier version of **Tartube**, and if you want to move your
 - Delete the empty **downloads** directory
 - You can now restart **Tartube**
 
-7.10 Tartube database file is getting in the way
+7.11 Tartube database file is getting in the way
 ------------------------------------------------
 
 *Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?*
@@ -1090,7 +1114,7 @@ At the moment, the answer is "**Tartube** is working fine, fix your own computer
 - If you want to move your videos from one location to another, it's easy - just move a single directory (folder) and everything it contains. There is no need to reconfigure anything; just tell **Tartube** where to find the new directory (folder)
 - Splitting up the data folder and the database file would require a lot of code to be rewritten, and this would probably introduce lots of new bugs
 
-7.11 Duplicate video names
+7.12 Duplicate video names
 --------------------------
 
 *Q: I downloaded a channel, but some of the videos in the channel have the same name. Tartube only downloads one of them!*
@@ -1101,14 +1125,14 @@ A: Tartube can save the video files using a multitude of different filename form
 - In the box **Format for video file names**, select **Title + ID**
 - Click **OK** to close the window
 
-7.12 Convert video to audio
+7.13 Convert video to audio
 ---------------------------
 
 *Q: I want to convert the video files to audio files!*
 
 A: See `6.20 Converting to audio`_
 
-7.13 FFmpeg fails to merge video/audio into single file
+7.14 FFmpeg fails to merge video/audio into single file
 -------------------------------------------------------
 
 *Q: I downloaded a video and expected a single video file, instead Tartube downloaded several files, none of which are playable!*
@@ -1126,7 +1150,7 @@ For some reason, youtube-dl ignores the download option unless the format is spe
 .. image:: screenshots/example24.png
   :alt: The Download options window
   
-7.14 Too many folders in the main window
+7.15 Too many folders in the main window
 ----------------------------------------
 
 *Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
@@ -1137,14 +1161,14 @@ A: In the main menu, click **Edit > System preferences... > Windows > Main windo
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop the channels/playlists into it
 
-7.15 Not enough videos in the main window
+7.16 Not enough videos in the main window
 -----------------------------------------
 
 *Q: I want to see all the videos on a single page, not spread over several pages!*
 
 A: At the bottom of the **Tartube** window, set the page size to zero, and press **ENTER**.
 
-7.16 Toolbar is too small
+7.17 Toolbar is too small
 -------------------------
 
 *Q: The toolbar is too small! There isn't enough room for all the buttons!*
@@ -1153,7 +1177,7 @@ A: Click **Edit > System preferences... > Windows > Main window > Don't show lab
 
 MS Windows users can already see a toolbar without labels.
 
-7.17 YouTube name/password not accepted
+7.18 YouTube name/password not accepted
 ---------------------------------------
 
 *Q: I added my YouTube username and password, but I am still seeing authentification errors!*
@@ -1170,7 +1194,7 @@ Having created the file, in the same edit window, click the **General** tab. In 
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-7.18 Georestriction workarounds don't work
+7.19 Georestriction workarounds don't work
 ------------------------------------------
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
@@ -1181,7 +1205,7 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to pay for a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
 
-7.19 MS Windows installer is too big
+7.20 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -1202,7 +1226,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
-7.20 Tartube can't detect livestreams
+7.21 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -1217,21 +1241,21 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.21 Livestream start time not visible
+7.22 Livestream start time not visible
 --------------------------------------
 
 *Q: Why doesn't **Tartube** show the start time for livestreams?*
 
 A: Popular video websites like **YouTube** do not provide that information.
 
-7.22 Livestream is already finished
+7.23 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.23 Can't hear livestream alarms
+7.24 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1244,14 +1268,14 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.24 British spelling
+7.25 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences...**. Click the drop-down box and select American English, and then restart **Tartube**
 
-7.25 No puedo hablar inglés
+7.26 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

@@ -339,9 +339,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if an icon should be displayed in the system tray
         self.show_status_icon_flag = True
         # Flag set to True if the main window should close to the tray, rather
-        #   than halting the application altogether. Ignore if
+        #   than halting the application altogether. Ignored if
         #   self.show_status_icon_flag is False
-        self.close_to_tray_flag = True
+        self.close_to_tray_flag = False
 
         # Flag set to True if rows in the Progress List should be hidden once
         #   the download operation has finished with the corresponding media
@@ -1995,6 +1995,9 @@ class TartubeApp(Gtk.Application):
 
         Clean shutdowns (for example, from the main window's toolbar) are
         handled by self.stop().
+
+        N.B. When called by mainwin.MainWin.on_delete_event(), the config/
+        database files have already been saved.
         """
 
         if DEBUG_FUNC_FLAG:
