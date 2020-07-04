@@ -1362,6 +1362,11 @@ class Video(GenericMedia):
         self.file_name = None
         self.file_ext = None
 
+        # When a video is marked to be downloaded in the fixed 'Temporary
+        #   Videos' folder, we store the name of the original parent channel/
+        #   playlist/folder here, for display in the Video Catalogue
+        self.orig_parent = None
+
         # Flag set to True once the file has been downloaded, and is confirmed
         #   to exist in Tartube's data directory
         self.dl_flag = False
@@ -1583,6 +1588,26 @@ class Video(GenericMedia):
             self.bookmark_flag = False
 
 
+    def set_cloned_name(self, orig_obj):
+
+        """Called by mainwin.MainWin.on_video_catalogue_mark_temp_dl(), etc.
+
+        When a copy of a video is marked to be downloaded in the fixed
+        'Temporary Videos' folder, we can copy across the original video's
+        name and description.
+
+        Args:
+
+            orig_obj (media.Video): The original video
+
+        """
+
+        self.name = orig_obj.name
+        self.nickname = orig_obj.nickname
+        self.descrip = orig_obj.descrip
+        self.short = orig_obj.short
+
+
     def set_dl_flag(self, flag=False):
 
         self.dl_flag = flag
@@ -1694,6 +1719,11 @@ class Video(GenericMedia):
 
 
 #   def set_options_obj():      # Inherited from GenericMedia
+
+
+    def set_orig_parent(self, parent_obj):
+
+        self.orig_parent = parent_obj.name
 
 
     def set_receive_time(self):

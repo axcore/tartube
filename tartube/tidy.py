@@ -94,6 +94,9 @@ class TidyManager(threading.Thread):
 
             del_thumb_flag: True if all thumbnail files should be deleted
 
+            del_webp_flag: True if all thumbnail files in .webp or malformed
+                .jpg format should be deleted (see comments below)
+
             del_archive_flag: True if all youtube-dl archive files should be
                 deleted
 
@@ -106,7 +109,7 @@ class TidyManager(threading.Thread):
     def __init__(self, app_obj, choices_dict):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 109 __init__')
+            utils.debug_time('top 112 __init__')
 
         super(TidyManager, self).__init__()
 
@@ -156,6 +159,13 @@ class TidyManager(threading.Thread):
         self.del_xml_flag = choices_dict['del_xml_flag']
         # True if all thumbnail files should be deleted
         self.del_thumb_flag = choices_dict['del_thumb_flag']
+        # v2.1.027. In June 2020, YouTube started serving .webp thumbnails.
+        #   At the time of writing, Gtk can't display them. A youtube-dl fix is
+        #   expected, which will convert .webp thumbnails to .jpg; in
+        #   anticipation of that, we add an option to remove .webp files
+        # True if all thumbnail files in .webp or malformed .jpg format should
+        #   be deleted
+        self.del_webp_flag = choices_dict['del_webp_flag']
         # True if all youtube-dl archive files should be deleted
         self.del_archive_flag = choices_dict['del_archive_flag']
 
@@ -177,6 +187,7 @@ class TidyManager(threading.Thread):
         self.json_deleted_count = 0
         self.xml_deleted_count = 0
         self.thumb_deleted_count = 0
+        self.webp_deleted_count = 0
         self.archive_deleted_count = 0
 
 
@@ -206,7 +217,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 209 run')
+            utils.debug_time('top 220 run')
 
         # Show information about the tidy operation in the Output Tab
         if not self.init_obj:
@@ -318,6 +329,16 @@ class TidyManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             '   ' + _('Delete all thumbnail files:') + ' ' + text,
+        )
+
+        if self.del_webp_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Delete .webp/malformed .jpg files:') + ' ' + text,
         )
 
         if self.del_archive_flag:
@@ -440,6 +461,14 @@ class TidyManager(threading.Thread):
                 + str(self.thumb_deleted_count),
             )
 
+        if self.del_webp_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('.webp/malformed .jpg files deleted:') + ' ' \
+                + str(self.webp_deleted_count),
+            )
+
         if self.del_archive_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -470,7 +499,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 473 tidy_directory')
+            utils.debug_time('top 502 tidy_directory')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -510,6 +539,9 @@ class TidyManager(threading.Thread):
         if self.del_thumb_flag:
             self.delete_thumb(media_data_obj)
 
+        if self.del_webp_flag:
+            self.delete_webp(media_data_obj)
+
         if self.del_archive_flag:
             self.delete_archive(media_data_obj)
 
@@ -529,7 +561,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 532 check_video_corrupt')
+            utils.debug_time('top 564 check_video_corrupt')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -607,7 +639,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 610 check_videos_exist')
+            utils.debug_time('top 642 check_videos_exist')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -668,7 +700,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 671 delete_video')
+            utils.debug_time('top 703 delete_video')
 
         ext_list = formats.VIDEO_FORMAT_LIST.copy()
         ext_list.extend(formats.AUDIO_FORMAT_LIST)
@@ -767,7 +799,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 770 delete_descrip')
+            utils.debug_time('top 802 delete_descrip')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -812,7 +844,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 815 delete_json')
+            utils.debug_time('top 847 delete_json')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -857,7 +889,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 860 delete_xml')
+            utils.debug_time('top 892 delete_xml')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -902,7 +934,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 905 delete_thumb')
+            utils.debug_time('top 937 delete_thumb')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -932,6 +964,52 @@ class TidyManager(threading.Thread):
                     self.thumb_deleted_count += 1
 
 
+    def delete_webp(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        associated thumbnail file in a .webp or malformed .jpg format exists,
+        delete it
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('top 983 delete_webp')
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.file_name is not None:
+
+                # Thumbnails might be in one of two locations
+                thumb_path = utils.find_thumbnail_webp(self.app_obj, video_obj)
+
+                # If the video's parent container has an alternative download
+                #   destination set, we must check the corresponding media
+                #   data object. If the latter also has a media.Video object
+                #   matching this video, then this function returns None and
+                #   nothing is deleted
+                if thumb_path is not None:
+
+                    thumb_path = self.check_video_in_actual_dir(
+                        media_data_obj,
+                        video_obj,
+                        thumb_path,
+                    )
+
+                if thumb_path is not None \
+                and os.path.isfile(thumb_path):
+
+                    # Delete the thumbnail file
+                    os.remove(thumb_path)
+                    self.webp_deleted_count += 1
+
+
     def delete_archive(self, media_data_obj):
 
         """Called by self.tidy_directory().
@@ -947,7 +1025,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 950 delete_archive')
+            utils.debug_time('top 1028 delete_archive')
 
         archive_path = os.path.abspath(
             os.path.join(
@@ -982,7 +1060,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 985 call_moviepy')
+            utils.debug_time('top 1063 call_moviepy')
 
         try:
             clip = moviepy.editor.VideoFileClip(video_path)
@@ -1027,7 +1105,7 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1030 check_video_in_actual_dir')
+            utils.debug_time('top 1108 check_video_in_actual_dir')
 
         if container_obj.dbid == container_obj.master_dbid:
 
@@ -1063,6 +1141,6 @@ class TidyManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1066 stop_tidy_operation')
+            utils.debug_time('top 1144 stop_tidy_operation')
 
         self.running_flag = False

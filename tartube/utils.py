@@ -26,6 +26,7 @@ from gi.repository import Gtk, Gdk
 
 # Import other modules
 import datetime
+import glob
 import locale
 import math
 import os
@@ -507,6 +508,38 @@ def convert_youtube_to_invidious(url):
     return url
 
 
+def convert_youtube_to_other(app_obj, url):
+
+    """Can be called by anything.
+
+    Converts a YouTube weblink to a weblink pointing at an alternative
+    YouTube front-end (such as Hooktube or Invidious).
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        url (str): The weblink to convert
+
+    Returns:
+
+        The converted string
+
+    """
+
+    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+
+        url = re.sub(
+            r'youtube\.com',
+            app_obj.custom_dl_divert_website,
+            url,
+            # Substitute first occurence only
+            1,
+        )
+
+    return url
+
+
 def debug_time(msg):
 
     """Called by all functions in downloads.py, info.py, mainapp.py,
@@ -732,7 +765,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
     """
 
-    for ext in ('.jpg', '.png', '.gif'):
+    for ext in formats.IMAGE_FORMAT_LIST:
 
         # Look in Tartube's permanent data directory
         path = video_obj.get_actual_path_by_ext(app_obj, ext)
@@ -750,6 +783,43 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
                 return temp_path
 
     return None
+
+
+def find_thumbnail_webp(app_obj, video_obj):
+
+    """Called by tidy.TidyManager.delete_webp().
+
+    In June 2020, YouTube started serving .webp thumbnails. At the time of
+    writing (v2.1.027), Gtk can't display them. A youtube-dl fix is expected,
+    which will convert .webp thumbnails to .jpg; in anticipation of that, we
+    add an option to remove .webp files.
+
+    This is a modified version of utils.find_thumbnail(), which looks for
+    thumbnails in the .webp or malformed .jpg format, and return the path to
+    the thumbnail file if one is found.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video object handling the downloaded video
+
+    Returns:
+
+        path (str): The full path to the thumbnail file, or None
+
+    """
+
+    path = video_obj.get_actual_path_by_ext(app_obj, '.webp')
+    if os.path.isfile(path):
+       return path
+
+    # malformed .jpg thumbnail files have an extension .jpg?sqp=-XXX, where XXX
+    #   is a large number of random characters
+    path = video_obj.get_actual_path_by_ext(app_obj, '.jpg?*')
+    for actual_path in glob.glob(path):
+        if os.path.isfile(actual_path):
+            return actual_path
 
 
 def format_bytes(num_bytes):
@@ -809,11 +879,11 @@ dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
             from the Classic Mode Tab, False otherwise
 
         divert_mode (str): If not None, should be one of the values of
-            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube' or
-            'invidious'. If one of the latter two, a media.Video object whose
-            source URL points to YouTube should be converted to HookTube or
-            Invidious (no conversion takes place for channels/playlists/
-            folders)
+            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube',
+            'invidious' or 'other'. If not 'default', a media.Video object
+            whose source URL points to YouTube should be converted to the
+            specified alternative YouTube front-end (no conversion takes place
+            for channels/playlists/folders)
 
     Returns:
 
@@ -831,7 +901,8 @@ dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
     #   user deletes the videos, youtube-dl won't try to download them again
     # (Videos downloaded into a system folder should never create an archive
     #   file)
-    if app_obj.allow_ytdl_archive_flag:
+    if not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
+    or dl_classic_flag and app_obj.classic_ytdl_archive_flag:
 
         if not dl_classic_flag \
         and (
@@ -873,15 +944,19 @@ dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
     #   user has provided one
     if app_obj.ffmpeg_path is not None:
         options_list.append('--ffmpeg-location')
-        options_list.append('"' + app_obj.ffmpeg_path + '"')
+        options_list.append(app_obj.ffmpeg_path)
 
-    # Convert a YouTube URL to HookTube/Invidious, if required
+    # Convert a YouTube URL to an alternative YouTube front-end, if required
     source = media_data_obj.source
     if isinstance(media_data_obj, media.Video) and divert_mode:
         if divert_mode == 'hooktube':
             source = convert_youtube_to_hooktube(source)
         elif divert_mode == 'invidious':
             source = convert_youtube_to_invidious(source)
+        elif divert_mode == 'custom' \
+        and app_obj.custom_dl_divert_website is not None \
+        and len(app_obj.custom_dl_divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source)
 
     # Convert a path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.ytdl_path

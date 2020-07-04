@@ -448,6 +448,15 @@ class OptionsManager(object):
 
         self.options_dict = other_options_manager_obj.options_dict.copy()
 
+        # In the dictionary's key-value pairs, some values are themselves lists
+        #   that must be copied directly
+        for key in [
+            'match_title_list', 'reject_title_list', 'video_format_list',
+            'subs_lang_list',
+        ]:
+            self.options_dict[key] \
+            = other_options_manager_obj.options_dict[key].copy()
+
 
     def rearrange_formats(self):
 
@@ -600,6 +609,30 @@ class OptionsManager(object):
            'video_format_mode': 'single',
            'subs_lang_list': [ 'en' ],
         }
+
+
+    def set_classic_mode_options(self):
+
+        """Called by mainapp.TartubeApp.apply_classic_downoad_options().
+
+        When the user applies download options in the Classic Mode Tab, a few
+        options should have different default values; this function sets them.
+        """
+
+        self.options_dict['write_description'] = False
+        self.options_dict['write_info'] = False
+        self.options_dict['write_annotations'] = False
+        self.options_dict['write_thumbnail'] = False
+
+        self.options_dict['keep_description'] = False
+        self.options_dict['keep_info'] = False
+        self.options_dict['keep_annotations'] = False
+        self.options_dict['keep_thumbnail'] = False
+
+        self.options_dict['sim_keep_description'] = False
+        self.options_dict['sim_keep_info'] = False
+        self.options_dict['sim_keep_annotations'] = False
+        self.options_dict['sim_keep_thumbnail'] = False
 
 
 class OptionsParser(object):

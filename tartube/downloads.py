@@ -147,6 +147,11 @@ class DownloadManager(threading.Thread):
         #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
         #   the Classic Mode Tab is open, and the user has clicked the download
         #   button there
+        # This is the default value for the download operation, when it starts.
+        #   If the user wants to add new download.DownloadItem objects during
+        #   an operation, the code can call
+        #   downloads.DownloadList.create_item() with a non-default value of
+        #   operation_type
         self.operation_type = operation_type
 
         # The time at which the download operation began (in seconds since
@@ -399,15 +404,14 @@ class DownloadManager(threading.Thread):
         # Let the timer run for a few more seconds to allow those videos to be
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
-        if self.operation_type != 'sim' and self.operation_type != 'classic':
+        if self.operation_type != 'classic':
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_halt_timer,
             )
         else:
-            # If we're only simulating downloads, and for download operations
-            #   launched from the Classic Mode Tab, we don't need to wait at
-            #   all
+            # For download operations launched from the Classic Mode Tab, we
+            #   don't need to wait at all
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_finished,
@@ -894,7 +898,7 @@ class DownloadWorker(threading.Thread):
                 #   visible
                 # Do that now (but don't if mainwin.ComplexCatalogueItem
                 #   objects aren't being used in the Video Catalogue)
-                if self.download_manager_obj.operation_type != 'classic' \
+                if self.download_item_obj.operation_type != 'classic' \
                 and return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
                 and app_obj.catalogue_mode != 'simple_hide_parent' \
@@ -949,7 +953,7 @@ class DownloadWorker(threading.Thread):
 
                 # During custom downloads, apply a delay if one has been
                 #   specified
-                if self.download_manager_obj.operation_type == 'custom' \
+                if self.download_item_obj.operation_type == 'custom' \
                 and app_obj.custom_dl_delay_flag:
 
                     # Set the delay (in seconds), a randomised value if
@@ -1064,23 +1068,29 @@ class DownloadWorker(threading.Thread):
                     #   limit)
                     check_source_list.append(child_obj.source)
 
-                    # The time limit will apply to this video, when found
-                    if not child_obj.live_mode \
-                    and child_obj.upload_time is not None \
-                    and child_obj.upload_time < older_time:
-                        time_limit_video_obj = child_obj
-                        break
+            # The time limit will apply to this video, when found
+            for child_obj in container_obj.child_list:
+                if child_obj.source \
+                and not child_obj.live_mode \
+                and child_obj.upload_time is not None \
+                and child_obj.upload_time < older_time:
+                    time_limit_video_obj = child_obj
+                    break
 
         else:
 
-            # Stop checking the RSS feed at the first matching video
+            # Stop checking the RSS feed at the first matching video, no matter
+            #   how old
             for child_obj in container_obj.child_list:
                 if child_obj.source:
-
                     check_source_list.append(child_obj.source)
-                    if not child_obj.live_mode:
-                        time_limit_video_obj = child_obj
-                        break
+
+            for child_obj in container_obj.child_list:
+                if child_obj.source \
+                and not time_limit_video_obj \
+                and not child_obj.live_mode:
+                    time_limit_video_obj = child_obj
+                    break
 
         # Fetch the RSS feed
         try:
@@ -1119,42 +1129,6 @@ class DownloadWorker(threading.Thread):
                 self.json_fetcher_obj.close()
                 self.json_fetcher_obj = None
 
-#       # v2.0.063 removed - I think the code in downloads.LivestreamManager
-#       #   and MiniJSONFetcher handles this acceptably
-#       # If the livestreamer cancels a livestream, before it goes live, our
-#       #   only clue is that the video no longer appears in the RSS feed
-#       # Therefore, we're forced (reluctantly) to remove any media.Video
-#       #   object which is marked as a livestream, but which is not in the
-#       #   RSS feed
-#       # Compile a dictionary of media.Video objects marked as waiting
-#       #   livestreams, whose parent channel/playlist is container_obj
-#       # (This is hopefully cheaper than checking every media.Video object
-#       #   in container_obj, which might comprise thousands of videos)
-#       waiting_dict = {}
-#       # (The 1 argument specifies that we only want media.Video.live_mode = 1
-#       #   videos)
-#       video_list = container_obj.get_livestreams(app_obj, 1)
-#       for this_obj in video_list:
-#           if this_obj.source:
-#               waiting_dict[this_obj.source] = this_obj
-#
-#       # Check that dictionary against the feed
-#       if waiting_dict:
-#           for entry_dict in feed_dict['entries']:
-#               if entry_dict['link'] in waiting_dict:
-#                   del waiting_dict[entry_dict['link']]
-
-#       # Delete any livestreams not found in the feed
-#       for delete_obj in waiting_dict.values():
-
-#           GObject.timeout_add(
-#               0,
-#               self.app_obj.delete_video,
-#               delete_obj,
-#               True,           # Delete files
-#           )
-        pass
-
 
     def prepare_download(self, download_item_obj):
 
@@ -1181,7 +1155,7 @@ class DownloadWorker(threading.Thread):
         self.options_list = self.download_manager_obj.options_parser_obj.parse(
             self.download_item_obj.media_data_obj,
             self.options_manager_obj,
-            self.download_manager_obj.operation_type,
+            self.download_item_obj.operation_type,
         )
 
         self.available_flag = False
@@ -1228,7 +1202,7 @@ class DownloadWorker(threading.Thread):
 
         app_obj = self.download_manager_obj.app_obj
 
-        if self.download_manager_obj.operation_type != 'classic':
+        if self.download_item_obj.operation_type != 'classic':
 
             GObject.timeout_add(
                 0,
@@ -1310,6 +1284,13 @@ class DownloadList(object):
         #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
         #   the Classic Mode Tab is open, and the user has clicked the download
         #   button there
+        # This IV records the default setting for this operation. Once the
+        #   download operation starts, new download.DownloadItem objects can
+        #   be added to the list in a call to self.create_item(), and that call
+        #   can specify a value ('sim', 'real' or 'custom') that overrides the
+        #   default value, just for that call
+        # Overriding the default value is not possible for download operations
+        #   initiated from the Classic Mode tab
         self.operation_type = operation_type
         # Flag set to True in a call to self.prevent_fetch_new_items(), in
         #   which case subsequent calls to self.fetch_next_item() return
@@ -1345,7 +1326,7 @@ class DownloadList(object):
                 # Use all media data objects
                 for dbid in self.app_obj.media_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
-                    self.create_item(obj)
+                    self.create_item(obj, None, True)
 
             else:
 
@@ -1371,7 +1352,7 @@ class DownloadList(object):
                         #   media_data_obj, even if it is a video in a channel
                         #   or a playlist (which otherwise would be handled by
                         #   downloading the channel/playlist)
-                        self.create_item(media_data_obj, True)
+                        self.create_item(media_data_obj, None, True)
 
             # Some media data objects have an alternate download destination,
             #   for example, a playlist ('slave') might download its videos
@@ -1450,7 +1431,8 @@ class DownloadList(object):
         self.download_item_dict[item_id].stage = new_stage
 
 
-    def create_item(self, media_data_obj, init_flag=False):
+    def create_item(self, media_data_obj, override_operation_type=None,
+    init_flag=False):
 
         """Called initially by self.__init__() (or by many other functions,
         for example in mainapp.TartubeApp.
@@ -1471,7 +1453,7 @@ class DownloadList(object):
             - media.Video objects whose parent is a media.Folder, and whose
                 file IVs are set, and for which a thumbnail exists, if
                 mainapp.TartubeApp.operation_sim_shortcut_flag is set, and if
-                self.operation_type is set to 'sim'
+                the operation_type is 'sim'
             - media.Channel and media.Playlist objects for which checking/
                 downloading are disabled, or which have an ancestor (e.g. a
                 parent media.folder) for which checking/downloading is disabled
@@ -1485,6 +1467,15 @@ class DownloadList(object):
 
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): A media data object
+
+            override_operation_type (str): After the download operation has
+                started, any code can call this function to add new
+                downloads.DownloadItem objects to this downloads.DownloadList,
+                specifying a value that overrides the default value of
+                self.operation_type. Note that this is not allowed when
+                self.operation_type is 'classic', and will cause an error. The
+                value is always None when called by self.__init__(). Otherwise,
+                the value can be None, 'sim', 'real' or 'custom'
 
             init_flag (bool): False when called by this function recursively,
                 True when called (for the first time) by anything else. If True
@@ -1502,12 +1493,34 @@ class DownloadList(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1508 create_item')
 
+        # Apply the operation_type override, if specifed
+        if override_operation_type is not None:
+
+            if self.operation_type == 'classic':
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.system_error,
+                    306,
+                    'Invalid argument in Classic Mode tab download operation',
+                )
+
+                return None
+
+            else:
+
+                operation_type = override_operation_type
+
+        else:
+
+            operation_type = self.operation_type
+
         # Get the options.OptionsManager object that applies to this media
         #   data object
         # (The manager might be specified by obj itself, or it might be
         #   specified by obj's parent, or we might use the default
         #   options.OptionsManager)
-        if self.operation_type != 'classic':
+        if operation_type != 'classic':
             options_manager_obj = utils.get_options_manager(
                 self.app_obj,
                 media_data_obj,
@@ -1543,7 +1556,7 @@ class DownloadList(object):
                 not isinstance(media_data_obj.parent_obj, media.Folder) \
                 and not init_flag
                 and (
-                    self.operation_type != 'custom'
+                    operation_type != 'custom'
                     or not self.app_obj.custom_dl_by_video_flag
                     or media_data_obj.dl_flag
                 )
@@ -1551,7 +1564,7 @@ class DownloadList(object):
                 return None
 
             if isinstance(media_data_obj.parent_obj, media.Folder) \
-            and self.operation_type == 'sim' \
+            and operation_type == 'sim' \
             and self.app_obj.operation_sim_shortcut_flag \
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
@@ -1583,13 +1596,13 @@ class DownloadList(object):
 
         if (
             isinstance(media_data_obj, media.Video)
-            and self.operation_type == 'custom'
+            and operation_type == 'custom'
             and self.app_obj.custom_dl_by_video_flag
             and not media_data_obj.dl_flag
         ) or (
             isinstance(media_data_obj, media.Video)
             and (
-                self.operation_type != 'custom'
+                operation_type != 'custom'
                 or not self.app_obj.custom_dl_by_video_flag
             )
         ) or (
@@ -1597,7 +1610,7 @@ class DownloadList(object):
                 isinstance(media_data_obj, media.Channel) \
                 or isinstance(media_data_obj, media.Playlist)
             ) and (
-                self.operation_type != 'custom'
+                operation_type != 'custom'
                 or not self.app_obj.custom_dl_by_video_flag
             )
         ):
@@ -1607,6 +1620,7 @@ class DownloadList(object):
                 self.download_item_count,
                 media_data_obj,
                 options_manager_obj,
+                operation_type,
             )
 
             # ...and add it to our list
@@ -1618,7 +1632,7 @@ class DownloadList(object):
         #   for each of them
         if isinstance(media_data_obj, media.Folder):
             for child_obj in media_data_obj.child_list:
-                self.create_item(child_obj)
+                self.create_item(child_obj, operation_type)
 
         # Procedure complete
         return download_item_obj
@@ -1659,6 +1673,7 @@ class DownloadList(object):
             media_data_obj.dbid,
             media_data_obj,
             options_manager_obj,
+            self.operation_type,        # 'classic'
         )
 
         # ...and add it to our list
@@ -1839,13 +1854,24 @@ class DownloadItem(object):
         options_manager_obj (options.OptionsManager): The object which
             specifies download options for the media data object
 
+        operation_type (str): The value that applies to this DownloadItem only
+            (might be different from the default value stored in
+            DownloadManager.operation_type): 'sim' if channels/playlists should
+            just be checked for new videos, without downloading anything.
+            'real' if videos should be downloaded (or not) depending on each
+            media data object's .dl_sim_flag IV. 'custom' is like 'real', but
+            with additional options applied (specified by IVs like
+            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
+            open, and the user has clicked the download button there
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, item_id, media_data_obj, options_manager_obj):
+    def __init__(self, item_id, media_data_obj, options_manager_obj,
+    operation_type):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1844 __init__')
@@ -1858,13 +1884,23 @@ class DownloadItem(object):
         # The object which specifies download options for the media data object
         self.options_manager_obj = options_manager_obj
 
-
         # IV list - other
         # ---------------
         # A unique ID for this object
         self.item_id = item_id
         # The current download stage
         self.stage = formats.MAIN_STAGE_QUEUED
+
+        # The value that applies to this DownloadItem only (might be different
+        #   from the default value stored in DownloadManager.operation_type):
+        #   'sim' if channels/playlists should just be checked for new videos,
+        #   without downloading anything. 'real' if videos should be downloaded
+        #   (or not) depending on each media data object's .dl_sim_flag IV.
+        #   'custom' is like 'real', but with additional options applied
+        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
+        #   the Classic Mode Tab is open, and the user has clicked the download
+        #   button there
+        self.operation_type = operation_type
 
 
 class VideoDownloader(object):
@@ -2088,9 +2124,9 @@ class VideoDownloader(object):
         #   Mode Tab)
         # The setting applies not just to the media data object, but all of its
         #   descendants
-        if self.download_manager_obj.operation_type != 'classic':
+        if self.download_item_obj.operation_type != 'classic':
 
-            if self.download_manager_obj.operation_type == 'sim':
+            if self.download_item_obj.operation_type == 'sim':
                 dl_sim_flag = True
             else:
                 dl_sim_flag = media_data_obj.dl_sim_flag
@@ -2167,9 +2203,8 @@ class VideoDownloader(object):
         # Prepare a system command...
         divert_mode = None
         if not self.dl_classic_flag \
-        and self.download_manager_obj.operation_type == 'custom' \
+        and self.download_item_obj.operation_type == 'custom' \
         and isinstance(self.download_item_obj.media_data_obj, media.Video):
-
             divert_mode = app_obj.custom_dl_divert_mode
 
         cmd_list = utils.generate_system_cmd(
@@ -2987,6 +3022,7 @@ class VideoDownloader(object):
             GObject.timeout_add(
                 0,
                 app_obj.mark_video_live,
+                video_obj,
                 0,                  # Livestream has finished
                 True,               # Don't update Video Index yet
                 True,               # Don't update Video Catalogue yet
@@ -3222,6 +3258,7 @@ class VideoDownloader(object):
             new_download_item_obj \
             = self.download_manager_obj.download_list_obj.create_item(
                 new_container_obj,
+                self.download_item_obj.operation_type,
             )
             # ...and add a row the Progress List
             app_obj.main_win_obj.progress_list_add_row(
@@ -4494,8 +4531,11 @@ class LivestreamManager(threading.Thread):
             self.mini_fetcher_obj.do_fetch()
 
             # Call the destructor function of the MiniJSONFetcher object
-            self.mini_fetcher_obj.close()
-            self.mini_fetcher_obj = None
+            #   (first checking it still exists, in case
+            #   self.stop_livestream_operation() has been called)
+            if self.mini_fetcher_obj:
+                self.mini_fetcher_obj.close()
+                self.mini_fetcher_obj = None
 
         # Operation complete. If self.stop_livestream_operation() was called,
         #   then the mainapp.TartubeApp function has already been called

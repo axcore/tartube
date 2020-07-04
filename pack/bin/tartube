@@ -42,8 +42,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.1.020'
-__date__ = '29 May 2020'
+__version__ = '2.1.051'
+__date__ = '4 Jul 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2020 A S Lewis.
@@ -69,6 +69,9 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
 __website_bugs__ = 'https://github.com/axcore/tartube'
+# Flag set to True if multiple instances of Tartube are allowed; False if
+#   only a single instance is allowed
+__multiple_instance_flag__ = True
 # There are three executables; a default one, and two others used in Debian/RPM
 #   packaging (of which this is one). The executables are identical, except for
 #   the values of these variables

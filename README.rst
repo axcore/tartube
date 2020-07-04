@@ -50,17 +50,26 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v2.1.0 (7 May 2020)**
+Latest version: **v2.1.051 (4 Jul 2020)**
 
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.0/install-tartube-2.1.0-32bit.exe/download>`__ from Sourceforge
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.0/install-tartube-2.1.0-64bit.exe/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.0/python3-tartube_2.1.0.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.0/tartube-2.1.0.rpm/download>`__ from Sourceforge
+Official packages:
+
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.051/install-tartube-2.1.051-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.051/install-tartube-2.1.051-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.051/python3-tartube_2.1.051.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-2.1.051.rpm/download>`__ from Sourceforge
+
+The `Sourceforge page <https://sourceforge.net/projects/tartube/>`__ also contains DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
+
+Semi-official packages:
+
 - `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.0/tartube_v2.1.0.tar.gz/download>`__ from Sourceforge
-- `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
+- `Arch AUR package <https://aur.archlinux.org/packages/tartube/>`__
 
-There are also DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
+Source code:
+
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube_v2.1.051.tar.gz/download>`__ from Sourceforge
+- `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
 ===================
@@ -68,7 +77,8 @@ There are also DEB/RPM packages marked STRICT. In these packages, updates to **y
 4.1 MS Windows
 --------------
 
--  Download, install and run **Tartube**, using the links above
+-  Download the MS Windows installer, using the links above
+-  Start **Tartube** from the Start menu, or by clicking the icon on the desktop
 -  When prompted, choose a folder where **Tartube** can store videos
 -  When prompted, let **Tartube** install **youtube-dl** for you
 -  It's strongly recommended that you install **FFmpeg**. From the menu, click **Operations > Install FFmpeg**
@@ -110,9 +120,11 @@ If you don't want **Tartube** to add videos to its database, click the **Classic
 
 MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
+There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat** or **tartube_portable_32bit.bat**.
+
 If you want to use **FFmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_. 
 
-From v1.4, the installer includes a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
+Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,10 +178,21 @@ Some users report that **Tartube** will install but won't run. This problem shou
 
 Linux/BSD users can use any of the following installation methods.
 
-5.3.1 Install using the DEB/RPM/ebuild packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.3.1 Install using the DEB package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above). Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above). Gentoo users can install **Tartube** using the ebuild (see the link above).
+Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above). 
+
+**Tartube** requires `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately. Otherwise, do this:
+
+1. Run **Tartube**
+2. **Tartube** asks you to choose a data directory, so do that
+3. Click **Operations > Update youtube-dl**
+
+5.3.2 Install using the RPM package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above). 
 
 **Tartube** requires `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately.
 
@@ -179,23 +202,32 @@ Otherwise, if **pip** is already installed on your system, do this:
 2. **Tartube** asks you to choose a data directory, so do that
 3. Click **Operations > Update youtube-dl**
 
-If neither **youtube-dl** nor **pip** are installed on your system, then the recommended way to install **youtube-dl** is from the command line, using **pip**. (Software managers usually don't offer the most recent version of **youtube-dl**.)
+If neither **youtube-dl** nor **pip** are installed on your system, then the recommended way to install **youtube-dl** is from the command line, using **pip**. (Software managers usually don't offer the most recent version of **youtube-dl**.) 
 
-This is the procedure on Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
+On Fedora, the procedure is:
 
 1. Open a terminal window
-2. Type: ``sudo apt install python3-pip``
+2. Type: ``dnf -y install python3-pip``
 3. Type: ``pip3 install youtube-dl``
 4. You can now run **Tartube**.
 
-5.3.2 Install using PyPI
+5.3.3 Install using the ebuild/AUR packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Gentoo-based systems, **Tartube** can be installed using an ebuild package. On Arch-based systems, Tartube can be installed using an AUR package. Both of these packages are semi-official (the authors of **Tartube** did not create them), and can be found at the links above.
+
+Tartube requires `youtube-dl <https://youtube-dl.org/>`__.
+
+If you're not sure how to install using ebuild/AUR, then it might be easier to install from PyPI.
+
+5.3.4 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can be installed from `PyPI <https://pypi.org/project/tartube/>`__ with or without root privileges.
 
 Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
 
-5.3.3 Install using PyPI (with root privileges)
+5.3.5 Install using PyPI (with root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Make sure **youtube-dl** has been completely removed from your system
@@ -203,7 +235,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 3. Type: ``sudo pip3 install youtube-dl tartube``
 4. Type: ``tartube``
 
-5.3.4 Install using PyPI (without root privileges)
+5.3.6 Install using PyPI (without root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
@@ -216,7 +248,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 8. Click **Operations > Update youtube-dl**
 9. Once the update has finished, **Tartube** is ready for use
 
-5.3.5 Manual installation
+5.3.7 Manual installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For any other method of installation, the following dependencies are required:
@@ -235,7 +267,7 @@ These dependencies are optional, but recommended:
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 
-5.3.6 Install from source
+5.3.8 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After installing dependencies (see above):
@@ -245,7 +277,7 @@ After installing dependencies (see above):
 3. Type: ``python3 setup.py install``
 4. Type: ``tartube``
 
-5.3.7 Run without installing
+5.3.9 Run without installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After installing dependencies (see above):
@@ -552,10 +584,13 @@ If **Tartube** can't download a video from YouTube, it's sometimes possible to o
 
 - Click **Edit > System preferences... > Operations > Custom** 
 - Click **In custom downloads, obtain the video from HookTube rather than YouTube** to select it
-- Alternatively click **In custom downloads, obtain the video from Invidious rather than YouTube** to select it
 - You can now start the custom download
 
-HookTube/Invidious can only handle requests for videos, not whole channels or playlists. You should normally enable independent downloads as well.
+This only works when requesting individual videos, not whole channels or playlists. You should normally enable independent downloads as well (as described above)
+
+There are a number of alternative YouTube front-ends available. `HookTube <https://hooktube.com/>`__ and `Invidious <https://invidio.us/>`__ are, at the time of writing, the most famous. However, you can specify any alternative website you like.
+
+When specifying an alternative website, it's very important that you type the *exact text* that replaces **youtube.com** in a video's URL. For example, you must type **hooktube.com** not **www.hooktube.com** or **http://www.hooktube.com/**.
 
 6.13.3 Delays between downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -568,7 +603,7 @@ If a video website is complaining that you are downloading videos too quickly, i
 - If you also set a minimum delay, **Tartube** uses a random value between these two numbers
 - You can now start the custom download
 
-The delay is applied after downloading a channel or a playlist. If you want to apply the delay after each video, you should enable independent downloads as well.
+The delay is applied after downloading a channel or a playlist. If you want to apply the delay after each video, you should enable independent downloads as well (as described above).
 
 6.14 Watching videos
 --------------------
@@ -580,7 +615,7 @@ If you've downloaded a video, you can watch it by clicking the word **Player**.
 
 If you haven't downloaded the video yet, you can watch it online by clicking the word **Website** or **YouTube**. (One or the other will be visible).
 
-If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's sometimes possible to watch the same video without restrictions on the **HookTube** and/or **Invidious** websites.
+If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's sometimes possible to watch the same video without restrictions on alternative website, such as `HookTube <https://hooktube.com/>`__ or `Invidious <https://invidio.us/>`__.
 
 6.15 Filtering and finding videos
 ---------------------------------
@@ -933,16 +968,22 @@ Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the b
 * `7.15 Too many folders in the main window`_
 * `7.16 Not enough videos in the main window`_
 * `7.17 Toolbar is too small`_
-* `7.18 YouTube name/password not accepted`_
-* `7.19 Georestriction workarounds don't work`_
-* `7.20 MS Windows installer is too big`_
-* `7.21 Tartube can't detect livestreams`_
-* `7.22 Livestream start time not visible`_
-* `7.23 Livestream is already finished`_
-* `7.24 Can't hear livestream alarms`_
-* `7.25 British spelling`_
-* `7.26 No puedo hablar inglés`_
- 
+* `7.18 Toolbar is too big`_
+* `7.19 YouTube name/password not accepted`_
+* `7.20 Georestriction workarounds don't work`_
+* `7.21 MS Windows installer is too big`_
+* `7.22 Tartube can't detect livestreams`_
+* `7.23 Livestream start time not visible`_
+* `7.24 Livestream is already finished`_
+* `7.25 Can't hear livestream alarms`_
+* `7.26 Some icons not visible`_
+* `7.27 Video thumbnails not visible`_
+* `7.28 Tartube is not visible in the system tray`_
+* `7.29 Tartube is not portable`_
+* `7.30 Tartube hangs on videos with unicode characters`_
+* `7.31 British spelling`_
+* `7.32 No puedo hablar inglés`_
+
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
 
@@ -1084,7 +1125,7 @@ A: **youtube-dl** can create an archive file especially for the purpose of speed
 To enable this functionality, click **Edit > System preferences... > youtube-dl > Allow youtube-dl to create its own archive**. The functionality is enabled by default.
 
 7.10 Videos downloaded to inconvenient location
-----------------------------------------------
+-----------------------------------------------
 
 *Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?*
 
@@ -1177,7 +1218,14 @@ A: Click **Edit > System preferences... > Windows > Main window > Don't show lab
 
 MS Windows users can already see a toolbar without labels.
 
-7.18 YouTube name/password not accepted
+7.18 Toolbar is too big
+-----------------------
+
+*Q: The toolbar is too big! Make it go away!*
+
+A: Click **Edit > System preferences... > Windows > Main window > Don't show the main window toolbar**. The setting is applied when you restart **Tartube**.
+
+7.19 YouTube name/password not accepted
 ---------------------------------------
 
 *Q: I added my YouTube username and password, but I am still seeing authentification errors!*
@@ -1194,7 +1242,7 @@ Having created the file, in the same edit window, click the **General** tab. In 
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-7.19 Georestriction workarounds don't work
+7.20 Georestriction workarounds don't work
 ------------------------------------------
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
@@ -1205,7 +1253,7 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to pay for a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
 
-7.20 MS Windows installer is too big
+7.21 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -1226,7 +1274,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, and compare it with the official one.
 
-7.21 Tartube can't detect livestreams
+7.22 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -1241,21 +1289,21 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.22 Livestream start time not visible
+7.23 Livestream start time not visible
 --------------------------------------
 
 *Q: Why doesn't **Tartube** show the start time for livestreams?*
 
 A: Popular video websites like **YouTube** do not provide that information.
 
-7.23 Livestream is already finished
+7.24 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.24 Can't hear livestream alarms
+7.25 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1268,14 +1316,65 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.25 British spelling
+7.26 Some icons not visible
+---------------------------
+
+*Q: Icons in the Videos tab are broken! They all look the same!*
+
+*Q: Icons in the Classic Mode tab are broken! They all look the same!*
+
+A: **Tartube** uses a set of stock icons wherever possible. If those icons are not installed on your system, you should probably report the problem to the developers of that system (as many applications will be affected).
+
+**Tartube** provides a set of custom icons to replace the stock ones. To enable them, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to select it. Click the **OK** button to close the window, then restart **Tartube**.
+
+7.27 Video thumbnails not visible
+---------------------------------
+
+*Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
+
+A: In June 2020, **YouTube** changed its image format from **.jpg** to **.webp**. Unfortunately, most software (including the graphics libraries used by **Tartube**) don't support **.webp** images yet.
+
+At the time of writing, a youtube-dl fix is expected. The fix is expected to convert **.webp** thumbnails back to **.jpg** thumbnails, after downloading them. The fix may require that `Ffmpeg <https://ffmpeg.org/>`__ is installed on your system.
+
+Tartube can now look for and remove **.webp** fils automatically. You can use this procedure after the youtube-dl fix has been released.
+
+* Click **Operations > Tidy up files...**
+* In the dialogue window, click **Delete .webp/malformed .jpg files** to select it, then click the **OK** button
+* When the operation is completed, click the main **Check all** button to re-download thumbnails for all of your videos
+
+7.28 Tartube is not visible in the system tray
+----------------------------------------------
+
+*Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
+
+A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <https://github.com/linuxmint/Cinnamon>`__) which have still not fixed an ancient bug. Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the icon correctly.
+
+7.29 Tartube is not portable
+----------------------------
+
+*Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
+
+A: On MS Windows, download the portable edition rather than the usual installer - see `5.1 Installation - MS Windows`_.
+
+On other operating systems, just download the source code and run it. Installation is not necessary (as long as you have installed the correct dependencies). See `5.3.9 Run without installing`_.
+
+On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather tha in the system's default location.
+
+7.30 Tartube hangs on videos with unicode characters
+----------------------------------------------------
+
+*Q: All the videos in my favourite channel have names that contain emojis! When I try to check the channel, Tartube hangs indefinitely!*
+
+A: Apologies; the authors have not been able to reproduce this problem, and do not know how to fix it.
+
+7.31 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences...**. Click the drop-down box and select American English, and then restart **Tartube**
 
-7.26 No puedo hablar inglés
+7.32 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

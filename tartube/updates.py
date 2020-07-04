@@ -387,7 +387,10 @@ class UpdateManager(threading.Thread):
                     # "It looks like you installed youtube-dl with a package
                     #   manager, pip, setup.py or a tarball. Please use that to
                     #   update."
-                    if re.search('It looks like you installed', stdout):
+                    # "The script youtube-dl is installed in '...' which is not
+                    #   on PATH. Consider adding this directory to PATH..."
+                    if re.search('It looks like you installed', stdout) \
+                    or re.search('The script youtube-dl is installed', stdout):
                         self.stderr_list.append(stdout)
                     else:
                         # Try to intercept the new version number for

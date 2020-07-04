@@ -341,6 +341,10 @@ while audio_setup_list:
     AUDIO_FORMAT_LIST.append(key)
     AUDIO_FORMAT_DICT[key] = value
 
+# (Used for detecting video thumbnails. Unfortunately Gtk can't display .webp
+#   files yet)
+IMAGE_FORMAT_LIST = ['.jpg', '.png', '.gif']
+
 FILE_SIZE_UNIT_LIST = [
     ['Bytes', ''],
     ['Kilobytes', 'k'],
@@ -575,6 +579,7 @@ if not xmas_flag:
         'refresh_icon': 'status_refresh_icon_64.png',
         'info_icon': 'status_info_icon_64.png',
         'tidy_icon': 'status_tidy_icon_64.png',
+        'livestream_icon': 'status_livestream_icon_64.png',
     }
 else:
     STATUS_ICON_DICT = {
@@ -585,6 +590,7 @@ else:
         'refresh_icon': 'status_refresh_icon_xmas_64.png',
         'info_icon': 'status_info_icon_xmas_64.png',
         'tidy_icon': 'status_tidy_icon_xmas_64.png',
+        'livestream_icon': 'status_livestream_icon_xmas_64.png',
     }
 
 TOOLBAR_ICON_DICT = {
@@ -685,6 +691,29 @@ SMALL_ICON_DICT = {
 
 EXTERNAL_ICON_DICT = {
     'ytdl-gui': 'youtube-dl-gui.png',
+}
+
+# (Replaces system stock icons, if not available)
+STOCK_ICON_DICT = {
+    'stock_add': 'add_small.png',
+    'stock_cancel': 'cancel_small.png',
+    'stock_delete': 'delete_small.png',
+    'stock_find': 'find_small.png',
+    'stock_go_back': 'go_back_small.png',
+    'stock_go_down': 'go_down_small.png',
+    'stock_go_forward': 'go_forward_small.png',
+    'stock_go_up': 'go_up_small.png',
+    'stock_goto_first': 'goto_first_small.png',
+    'stock_goto_last': 'goto_last_small.png',
+    'stock_hide_filter': 'hide_filter_small.png',
+    'stock_index': 'index_small.png',
+    'stock_media_play': 'media_play_small.png',
+    'stock_media_stop': 'media_stop_small.png',
+    'stock_open': 'open_small.png',
+    'stock_properties': 'properties_large.png',
+    'stock_refresh': 'refresh_small.png',
+    'stock_show_filter': 'show_filter_small.png',
+    'stock_spell_check': 'spell_check_small.png',
 }
 
 if not xmas_flag:

@@ -2075,7 +2075,7 @@ class OptionsEditWin(GenericEditWin):
         # The changes can now be cleared
         self.edit_dict = {}
 
-        # The user can specify up to 3 video/audio formats. If a mixture of
+        # The user can specify multiple video/audio formats. If a mixture of
         #   both is specified, then video formats must be listed before audio
         #   formats (or youtube-dl won't donwload them all)
         # Tell the options.OptionManager object to rearrange them, if
@@ -2119,7 +2119,6 @@ class OptionsEditWin(GenericEditWin):
                 404,
                 'Unrecognised property name \'' + name + '\'',
             )
-
 
 
     # (Setup tabs)
@@ -2744,8 +2743,8 @@ class OptionsEditWin(GenericEditWin):
         for key in formats.VIDEO_OPTION_DICT:
             rev_dict[formats.VIDEO_OPTION_DICT[key]] = key
 
-        # There are three video format options, any or all of which might be
-        #   set
+        # There are multiple possible format options, any or all of which might
+        #   be set
         self.formats_tab_redraw_list()
 
         button2 = Gtk.Button('<<< ' + _('Remove format'))
@@ -6297,6 +6296,29 @@ class SystemPrefWin(GenericPrefWin):
 
         label = Gtk.Label()
         vbox.pack_start(label, True, True, self.spacing_size)
+#        label.set_markup(
+#            utils.tidy_up_long_string(
+#                _(
+#                    'Tartube uses the Gtk graphics library. This library is' \
+#                    + ' notoriously unreliable and may even causes crashes.',
+#                ),
+#                label_length,
+#            ) + '\n\n' \
+#            + utils.tidy_up_long_string(
+#                _(
+#                    'If stability is a problem, you can disable some minor' \
+#                    + ' cosmetic features.',
+#                ),
+#                label_length,
+#            ) + '\n\n' \
+#            + utils.tidy_up_long_string(
+#                _(
+#                    'Tartube\'s functionality is not affected. You can do' \
+#                    + ' anything, even when cosmetic features are disabled.',
+#                ),
+#                label_length,
+#            ),
+#        )
         label.set_markup(
             utils.tidy_up_long_string(
                 _(
@@ -6307,15 +6329,17 @@ class SystemPrefWin(GenericPrefWin):
             ) + '\n\n' \
             + utils.tidy_up_long_string(
                 _(
-                    'If stability is a problem, you can disable some minor' \
-                    + ' cosmetic features.',
+                    'By default, some cosmetic features are disabled (for' \
+                    + ' example, in the Videos tab, the list of videos is' \
+                    + ' not updated until the end of a download operation).',
                 ),
                 label_length,
             ) + '\n\n' \
             + utils.tidy_up_long_string(
                 _(
-                    'Tartube\'s functionality is not affected. You can do' \
-                    + ' anything, even when cosmetic features are disabled.',
+                    'If you think that your system Gtk has been fixed (or' \
+                    + ' if you want to test Gtk stability), you can' \
+                    + ' re-enable the cosmetic features.',
                 ),
                 label_length,
             ),
@@ -6323,23 +6347,15 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'Some features are disabled because this version of the library' \
-            + ' is broken',
+                'Disable some cosmetic features to prevent crashes and' \
+                + ' other issues',
             ),
-            self.app_obj.gtk_broken_flag,
-            False,               # Can't be toggled by user
+            self.app_obj.gtk_emulate_broken_flag,
+            True,               # Can be toggled by user
             0, 4, grid_width, 1,
         )
         checkbutton.set_hexpand(False)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Assume that Gtk is broken, and disable those features anyway'),
-            self.app_obj.gtk_emulate_broken_flag,
-            True,               # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        checkbutton2.set_hexpand(False)
-        checkbutton2.connect('toggled', self.on_gtk_emulate_button_toggled)
+        checkbutton.connect('toggled', self.on_gtk_emulate_button_toggled)
 
 
     def setup_general_modules_tab(self, inner_notebook):
@@ -7137,85 +7153,113 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_remember_size_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Don\'t show labels in the toolbar'),
-            self.app_obj.toolbar_squeeze_flag,
+            _('Don\'t show the main window toolbar'),
+            self.app_obj.toolbar_hide_flag,
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        checkbutton2.connect('toggled', self.on_squeeze_button_toggled)
+        # signal connect appears below
 
         checkbutton3 = self.add_checkbutton(grid,
-            _('Show tooltips for videos, channels, playlists and folders'),
-            self.app_obj.show_tooltips_flag,
+            _('Don\'t show labels in the main window toolbar'),
+            self.app_obj.toolbar_squeeze_flag,
             True,                   # Can be toggled by user
             0, 3, 1, 1,
         )
-        checkbutton3.connect('toggled', self.on_show_tooltips_toggled)
+        checkbutton3.connect('toggled', self.on_squeeze_button_toggled)
+        if self.app_obj.toolbar_hide_flag:
+            checkbutton3.set_sensitive(False)
+
+        # signal connect from above
+        checkbutton2.connect(
+            'toggled',
+            self.on_hide_toolbar_button_toggled,
+            checkbutton3,
+        )
 
         checkbutton4 = self.add_checkbutton(grid,
+            _('Show tooltips for videos, channels, playlists and folders'),
+            self.app_obj.show_tooltips_flag,
+            True,                   # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton4.connect('toggled', self.on_show_tooltips_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Replace stock icons with custom icons (in case stock icons' \
+            + ' are not visible)',
+            ),
+            self.app_obj.show_custom_icons_flag,
+            True,                   # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton5.connect('toggled', self.on_show_custom_icons_toggled)
+
+        checkbutton6 = self.add_checkbutton(grid,
             _(
             'Show smaller icons in the Video Index (left side of the' \
             + ' Videos Tab)',
             ),
-            self.app_obj.show_small_icons_in_index,
+            self.app_obj.show_small_icons_in_index_flag,
             True,                   # Can be toggled by user
-            0, 4, 1, 1,
+            0, 6, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_show_small_icons_toggled)
+        checkbutton6.connect('toggled', self.on_show_small_icons_toggled)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'In the Video Index, show detailed statistics about the videos' \
             + ' in each channel / playlist / folder',
             ),
             self.app_obj.complex_index_flag,
             True,               # Can be toggled by user
-            0, 5, 1, 1,
+            0, 7, 1, 1,
         )
-        checkbutton5.connect('toggled', self.on_complex_button_toggled)
+        checkbutton7.connect('toggled', self.on_complex_button_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _(
             'After clicking on a folder, automatically expand/collapse the' \
             + ' tree around it',
             ),
             self.app_obj.auto_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 6, 1, 1,
+            0, 8, 1, 1,
         )
         # signal_connect appears below
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _(
             'Expand the whole tree, not just the level beneath the clicked' \
             + ' folder',
             ),
             self.app_obj.full_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 7, 1, 1,
+            0, 9, 1, 1,
         )
         if not self.app_obj.auto_expand_video_index_flag:
-            checkbutton7.set_sensitive(False)
+            checkbutton9.set_sensitive(False)
         # signal_connect appears below
 
         # signal_connects from above
-        checkbutton6.connect(
+        checkbutton8.connect(
             'toggled',
             self.on_expand_tree_toggled,
-            checkbutton7,
+            checkbutton9,
         )
-        checkbutton7.connect('toggled', self.on_expand_full_tree_toggled)
+        checkbutton9.connect('toggled', self.on_expand_full_tree_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _(
             'Disable the \'Download all\' buttons in the toolbar and the' \
             + ' Videos Tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 10, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_disable_dl_all_toggled)
+        checkbutton10.connect('toggled', self.on_disable_dl_all_toggled)
 
 
     def setup_windows_tabs_tab(self, inner_notebook):
@@ -8003,13 +8047,62 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton.connect('toggled',  self.on_custom_video_button_toggled)
 
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'In custom downloads, apply a delay after each video/channel/' \
+            + 'playlist is download',
+            ),
+            self.app_obj.custom_dl_delay_flag,
+            True,                   # Can be toggled by user
+            0, 2, grid_width, 1,
+        )
+        # signal_connect appears below
+
+        self.add_label(grid,
+            _('Maximum delay to apply (in minutes)'),
+            0, 3, 1, 1,
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            0.2,
+            None,
+            0.2,                    # Step
+            self.app_obj.custom_dl_delay_max,
+            1, 3, 1, 1,
+        )
+        # signal_connect appears below
+        if not self.app_obj.custom_dl_delay_flag:
+            spinbutton.set_sensitive(False)
+
+        self.add_label(grid,
+            _(
+            'Minimum delay to apply (in minutes; randomises the actual' \
+            + ' delay)',
+            ),
+            0, 4, 1, 1,
+        )
+
+        spinbutton2 = self.add_spinbutton(grid,
+            0,
+            self.app_obj.custom_dl_delay_max,
+            0.2,                    # Step
+            self.app_obj.custom_dl_delay_min,
+            1, 4, 1, 1,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_delay_min_spinbutton_changed,
+        )
+        if not self.app_obj.custom_dl_delay_flag:
+            spinbutton2.set_sensitive(False)
+
         radiobutton = self.add_radiobutton(grid,
             None,
             _(
             'In custom downloads, obtain a YouTube video from the original' \
             + ' website',
             ),
-            0, 2, grid_width, 1,
+            0, 5, grid_width, 1,
         )
         # Signal connect appears below
 
@@ -8019,7 +8112,7 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain the video from HookTube rather' \
             + ' than YouTube',
             ),
-            0, 3, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         if self.app_obj.custom_dl_divert_mode == 'hooktube':
             radiobutton2.set_active(True)
@@ -8031,80 +8124,42 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain the video from Invidious rather' \
             + ' than YouTube',
             ),
-            0, 4, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         if self.app_obj.custom_dl_divert_mode == 'invidious':
             radiobutton3.set_active(True)
         # Signal connect appears below
 
-        checkbutton2 = self.add_checkbutton(grid,
+        radiobutton4 = self.add_radiobutton(grid,
+            radiobutton3,
             _(
-            'In custom downloads, apply a delay after each video/channel/' \
-            + 'playlist is download',
+            'In custom downloads, obtain the video from the YouTube' \
+            + ' front-end specified below',
             ),
-            self.app_obj.custom_dl_delay_flag,
-            True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        # signal_connect appears below
+        if self.app_obj.custom_dl_divert_mode == 'other':
+            radiobutton4.set_active(True)
+        # Signal connect appears below
 
-        self.add_label(grid,
-            _('Maximum delay to apply (in minutes)'),
-            0, 6, 1, 1,
+        entry = self.add_entry(grid,
+            self.app_obj.custom_dl_divert_website,
+            True,
+            0, 9, grid_width, 1,
         )
-
-        spinbutton = self.add_spinbutton(grid,
-            0.2,
-            None,
-            0.2,                    # Step
-            self.app_obj.custom_dl_delay_max,
-            1, 6, 1, 1,
-        )
-        # signal_connect appears below
-        if not self.app_obj.custom_dl_delay_flag:
-            spinbutton.set_sensitive(False)
+        entry.connect('changed', self.on_alt_website_changed)
+        if not self.app_obj.custom_dl_divert_mode == 'other':
+            entry.set_sensitive(False)
 
         self.add_label(grid,
             _(
-            'Minimum delay to apply (in minutes; randomises the actual' \
-            + ' delay)',
+            '<i>Type the exact text that replaces</i>' \
+            + '   <b>youtube.com</b>   <i>e.g.   </i><b>hooktube.com</b>',
             ),
-            0, 7, 1, 1,
+            0, 10, grid_width, 1,
         )
-
-        spinbutton2 = self.add_spinbutton(grid,
-            0,
-            self.app_obj.custom_dl_delay_max,
-            0.2,                    # Step
-            self.app_obj.custom_dl_delay_min,
-            1, 7, 1, 1,
-        )
-        spinbutton2.connect(
-            'value-changed',
-            self.on_delay_min_spinbutton_changed,
-        )
-        if not self.app_obj.custom_dl_delay_flag:
-            spinbutton2.set_sensitive(False)
 
         # signal_connects from above
-        radiobutton.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            'default',
-        )
-
-        radiobutton2.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            'hooktube',
-        )
-
-        radiobutton3.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            'invidious',
-        )
-
         checkbutton2.connect(
             'toggled',
             self.on_custom_delay_button_toggled,
@@ -8116,6 +8171,34 @@ class SystemPrefWin(GenericPrefWin):
             'value-changed',
             self.on_delay_max_spinbutton_changed,
             spinbutton2,
+        )
+
+        radiobutton.connect(
+            'toggled',
+            self.on_custom_divert_button_toggled,
+            entry,
+            'default',
+        )
+
+        radiobutton2.connect(
+            'toggled',
+            self.on_custom_divert_button_toggled,
+            entry,
+            'hooktube',
+        )
+
+        radiobutton3.connect(
+            'toggled',
+            self.on_custom_divert_button_toggled,
+            entry,
+            'invidious',
+        )
+
+        radiobutton4.connect(
+            'toggled',
+            self.on_custom_divert_button_toggled,
+            entry,
+            'other',
         )
 
 
@@ -8777,14 +8860,24 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
-            'When checking videos, apply a 60-second timeout while fetching' \
-            + ' JSON data',
+            'Also create an archive file when downloading from the Classic' \
+            + ' Mode tab (not recommended)',
             ),
-            self.app_obj.apply_json_timeout_flag,
+            self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
             0, 9, grid_width, 1,
         )
-        checkbutton2.connect('toggled', self.on_json_button_toggled)
+        checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+            'When checking videos, apply a 60-second timeout',
+            ),
+            self.app_obj.apply_json_timeout_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_json_button_toggled)
 
 
     def setup_output_tab(self):
@@ -9090,6 +9183,21 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_yt_age_restrict_flag(False)
 
 
+    def on_alt_website_changed(self, entry):
+
+        """Called from callback in self.setup_operations_custom_tab().
+
+        Sets the YouTube alternative front end to use.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+        """
+
+        self.app_obj.set_custom_dl_divert_website(entry.get_text())
+
+
     def on_archive_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_ytdl_tab().
@@ -9109,6 +9217,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.allow_ytdl_archive_flag:
             self.app_obj.set_allow_ytdl_archive_flag(False)
+
+
+    def on_archive_classic_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_tab().
+
+        Enables/disables creation of youtube-dl's archive file,
+        ytdl-archive.txt, when downloading from the Classic Mode tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.classic_ytdl_archive_flag:
+            self.app_obj.set_classic_ytdl_archive_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.classic_ytdl_archive_flag:
+            self.app_obj.set_classic_ytdl_archive_flag(False)
 
 
     def on_auto_clone_button_toggled(self, checkbutton):
@@ -9641,7 +9770,7 @@ class SystemPrefWin(GenericPrefWin):
             spinbutton2.set_sensitive(False)
 
 
-    def on_custom_divert_button_toggled(self, radiobutton, value):
+    def on_custom_divert_button_toggled(self, radiobutton, entry,  value):
 
         """Called from callback in self.setup_operations_custom_tab().
 
@@ -9652,12 +9781,20 @@ class SystemPrefWin(GenericPrefWin):
 
             radiobutton (Gtk.RadioButton): The widget clicked
 
+            entry (Gtk.Entry): Another widget to be modified
+
             value (str): The new value of the IV
 
         """
 
         if radiobutton.get_active():
             self.app_obj.set_custom_dl_divert_mode(value)
+
+        if value == 'other':
+            entry.set_sensitive(True)
+        else:
+            entry.set_text('')
+            entry.set_sensitive(False)
 
 
     def on_custom_video_button_toggled(self, checkbutton):
@@ -10457,6 +10594,7 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.enable_livestreams_flag:
             self.app_obj.set_enable_livestreams_flag(False)
+            checkbutton2.set_active(False)
             checkbutton2.set_sensitive(False)
             spinbutton.set_sensitive(False)
             spinbutton2.set_sensitive(False)
@@ -10549,6 +10687,37 @@ class SystemPrefWin(GenericPrefWin):
             main_win_obj.hide_finished_checkbutton.set_active(True)
         elif (not checkbutton.get_active() and other_flag):
             main_win_obj.hide_finished_checkbutton.set_active(False)
+
+
+    def on_hide_toolbar_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables hiding the main window's main toolbar.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another checkbutton to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.toolbar_hide_flag:
+            self.app_obj.set_toolbar_hide_flag(True)
+            checkbutton2.set_sensitive(False)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.toolbar_hide_flag:
+            self.app_obj.set_toolbar_hide_flag(False)
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _('The new setting will be applied when Tartube restarts'),
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
 
 
     def on_http_404_button_toggled(self, checkbutton):
@@ -11551,6 +11720,33 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_show_classic_tab_on_startup_flag(False)
 
 
+    def on_show_custom_icons_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables replacing stock icons with custom icons.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_custom_icons_flag:
+            self.app_obj.set_show_custom_icons_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_custom_icons_flag:
+            self.app_obj.set_show_custom_icons_flag(False)
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _('The new setting will be applied when Tartube restarts'),
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
+
+
     def on_show_small_icons_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_main_window_tab().
@@ -11564,11 +11760,11 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         if checkbutton.get_active() \
-        and not self.app_obj.show_small_icons_in_index:
-            self.app_obj.set_show_small_icons_in_index(True)
+        and not self.app_obj.show_small_icons_in_index_flag:
+            self.app_obj.set_show_small_icons_in_index_flag(True)
         elif not checkbutton.get_active() \
-        and self.app_obj.show_small_icons_in_index:
-            self.app_obj.set_show_small_icons_in_index(False)
+        and self.app_obj.show_small_icons_in_index_flag:
+            self.app_obj.set_show_small_icons_in_index_flag(False)
 
 
     def on_show_status_icon_toggled(self, checkbutton, checkbutton2):

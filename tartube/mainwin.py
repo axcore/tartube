@@ -670,6 +670,13 @@ class MainWin(Gtk.ApplicationWindow):
                     )
                     self.icon_dict[key] = full_path
 
+                for key in formats.STOCK_ICON_DICT:
+                    rel_path = formats.STOCK_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'stock', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
+
                 for locale in formats.LOCALE_LIST:
                     full_path = os.path.abspath(
                         os.path.join(
@@ -1084,9 +1091,10 @@ class MainWin(Gtk.ApplicationWindow):
         if self.main_toolbar:
             self.grid.remove(self.main_toolbar)
 
-        # Create a new toolbar
+        # Create a new toolbar (hidden, if required)
         self.main_toolbar = Gtk.Toolbar()
-        self.grid.attach(self.main_toolbar, 0, 1, 1, 1)
+        if not self.app_obj.toolbar_hide_flag:
+            self.grid.attach(self.main_toolbar, 0, 1, 1, 1)
 
         # Toolbar items. If mainapp.TartubeApp.toolbar_squeeze_flag is True,
         #   we don't display labels in the toolbuttons
@@ -1545,8 +1553,16 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
-        self.catalogue_first_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_FIRST)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_first_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_FIRST)
+        else:
+            self.catalogue_first_button = Gtk.ToolButton.new()
+            self.catalogue_first_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_goto_first'],
+                ),
+            )
         self.catalogue_toolbar.insert(self.catalogue_first_button, -1)
         self.catalogue_first_button.set_sensitive(False)
         self.catalogue_first_button.set_tooltip_text(_('Go to first page'))
@@ -1554,8 +1570,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.first_page_toolbutton',
         )
 
-        self.catalogue_back_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_BACK)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_back_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_BACK)
+        else:
+            self.catalogue_back_button = Gtk.ToolButton.new()
+            self.catalogue_back_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_back']),
+            )
         self.catalogue_toolbar.insert(self.catalogue_back_button, -1)
         self.catalogue_back_button.set_sensitive(False)
         self.catalogue_back_button.set_tooltip_text(_('Go to previous page'))
@@ -1563,8 +1585,16 @@ class MainWin(Gtk.ApplicationWindow):
             'app.previous_page_toolbutton',
         )
 
-        self.catalogue_forwards_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_FORWARD)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_forwards_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_FORWARD)
+        else:
+            self.catalogue_forwards_button = Gtk.ToolButton.new()
+            self.catalogue_forwards_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_go_forward'],
+                ),
+            )
         self.catalogue_toolbar.insert(self.catalogue_forwards_button, -1)
         self.catalogue_forwards_button.set_sensitive(False)
         self.catalogue_forwards_button.set_tooltip_text(_('Go to next page'))
@@ -1572,8 +1602,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.next_page_toolbutton',
         )
 
-        self.catalogue_last_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_LAST)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_last_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GOTO_LAST)
+        else:
+            self.catalogue_last_button = Gtk.ToolButton.new()
+            self.catalogue_last_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_goto_last']),
+            )
         self.catalogue_toolbar.insert(self.catalogue_last_button, -1)
         self.catalogue_last_button.set_sensitive(False)
         self.catalogue_last_button.set_tooltip_text(_('Go to last page'))
@@ -1581,8 +1617,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.last_page_toolbutton',
         )
 
-        self.catalogue_scroll_up_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_UP)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_scroll_up_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_UP)
+        else:
+            self.catalogue_scroll_up_button = Gtk.ToolButton.new()
+            self.catalogue_scroll_up_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_up']),
+            )
         self.catalogue_toolbar.insert(self.catalogue_scroll_up_button, -1)
         self.catalogue_scroll_up_button.set_sensitive(False)
         self.catalogue_scroll_up_button.set_tooltip_text(_('Scroll up'))
@@ -1590,8 +1632,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.scroll_up_toolbutton',
         )
 
-        self.catalogue_scroll_down_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_DOWN)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_scroll_down_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_GO_DOWN)
+        else:
+            self.catalogue_scroll_down_button = Gtk.ToolButton.new()
+            self.catalogue_scroll_down_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_down']),
+            )
         self.catalogue_toolbar.insert(self.catalogue_scroll_down_button, -1)
         self.catalogue_scroll_down_button.set_sensitive(False)
         self.catalogue_scroll_down_button.set_tooltip_text(_('Scroll down'))
@@ -1599,8 +1647,16 @@ class MainWin(Gtk.ApplicationWindow):
             'app.scroll_down_toolbutton',
         )
 
-        self.catalogue_show_filter_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_show_filter_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)
+        else:
+            self.catalogue_show_filter_button = Gtk.ToolButton.new()
+            self.catalogue_show_filter_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_hide_filter']
+                ),
+            )
         self.catalogue_toolbar.insert(self.catalogue_show_filter_button, -1)
         self.catalogue_show_filter_button.set_sensitive(False)
         self.catalogue_show_filter_button.set_tooltip_text(
@@ -1620,8 +1676,16 @@ class MainWin(Gtk.ApplicationWindow):
         label4 = Gtk.Label(_('Sort by'))
         toolitem7.add(label4)
 
-        self.catalogue_sort_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SPELL_CHECK)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_sort_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SPELL_CHECK)
+        else:
+            self.catalogue_sort_button = Gtk.ToolButton.new()
+            self.catalogue_sort_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_spell_check'],
+                ),
+            )
         self.catalogue_toolbar2.insert(self.catalogue_sort_button, -1)
         self.catalogue_sort_button.set_sensitive(False)
         self.catalogue_sort_button.set_tooltip_text(_('Sort alphabetically'))
@@ -1662,8 +1726,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.use_regex_togglebutton',
         )
 
-        self.catalogue_apply_filter_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_apply_filter_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
+        else:
+            self.catalogue_apply_filter_button = Gtk.ToolButton.new()
+            self.catalogue_apply_filter_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
+            )
         self.catalogue_toolbar2.insert(self.catalogue_apply_filter_button, -1)
         self.catalogue_apply_filter_button.set_sensitive(False)
         self.catalogue_apply_filter_button.set_tooltip_text(
@@ -1673,8 +1743,14 @@ class MainWin(Gtk.ApplicationWindow):
             'app.apply_filter_toolbutton',
         )
 
-        self.catalogue_cancel_filter_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CANCEL)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_cancel_filter_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CANCEL)
+        else:
+            self.catalogue_cancel_filter_button = Gtk.ToolButton.new()
+            self.catalogue_cancel_filter_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_cancel']),
+            )
         self.catalogue_toolbar2.insert(self.catalogue_cancel_filter_button, -1)
         self.catalogue_cancel_filter_button.set_sensitive(False)
         self.catalogue_cancel_filter_button.set_tooltip_text(
@@ -1692,8 +1768,14 @@ class MainWin(Gtk.ApplicationWindow):
         label6 = Gtk.Label(_('Find date'))
         toolitem11.add(label6)
 
-        self.catalogue_find_date_button \
-        = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_find_date_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
+        else:
+            self.catalogue_find_date_button = Gtk.ToolButton.new()
+            self.catalogue_find_date_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
+            )
         self.catalogue_toolbar2.insert(self.catalogue_find_date_button, -1)
         self.catalogue_find_date_button.set_sensitive(False)
         self.catalogue_find_date_button.set_tooltip_text(
@@ -2046,10 +2128,18 @@ class MainWin(Gtk.ApplicationWindow):
             ) + '</b>',
         )
 
-        self.classic_menu_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_PROPERTIES,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_menu_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_PROPERTIES,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_menu_button = Gtk.Button.new()
+            self.classic_menu_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_properties'],
+                ),
+            )
         hbox.pack_start(self.classic_menu_button, False, False, 0)
         self.classic_menu_button.set_action_name(
             'app.classic_menu_button',
@@ -2123,10 +2213,16 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_classic_dest_dir_combo_changed,
         )
 
-        self.classic_dest_dir_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_ADD,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_dest_dir_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_ADD,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_dest_dir_button = Gtk.Button.new()
+            self.classic_dest_dir_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_add']),
+            )
         self.classic_grid.attach(self.classic_dest_dir_button, 2, 3, 1, 1)
         self.classic_dest_dir_button.set_action_name(
             'app.classic_dest_dir_button',
@@ -2136,10 +2232,16 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.classic_dest_dir_button.set_hexpand(False)
 
-        self.classic_dest_dir_open_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_OPEN,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_dest_dir_open_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_OPEN,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_dest_dir_open_button = Gtk.Button.new()
+            self.classic_dest_dir_open_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_open']),
+            )
         self.classic_grid.attach(self.classic_dest_dir_open_button, 3, 3, 1, 1)
         self.classic_dest_dir_open_button.set_action_name(
             'app.classic_dest_dir_open_button',
@@ -2262,20 +2364,34 @@ class MainWin(Gtk.ApplicationWindow):
         hbox3 = Gtk.HBox()
         self.classic_grid.attach(hbox3, 0, 5, grid_width, 1)
 
-        self.classic_remove_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_DELETE,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_remove_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_DELETE,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_remove_button = Gtk.Button.new()
+            self.classic_remove_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_delete']),
+            )
         hbox3.pack_start(self.classic_remove_button, False, False, 0)
         self.classic_remove_button.set_action_name(
             'app.classic_remove_button',
         )
         self.classic_remove_button.set_tooltip_text(_('Remove from list'))
 
-        self.classic_play_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_MEDIA_PLAY,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_play_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_MEDIA_PLAY,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_play_button = Gtk.Button.new()
+            self.classic_play_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_media_play'],
+                ),
+            )
         hbox3.pack_start(
             self.classic_play_button,
             False,
@@ -2287,20 +2403,32 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.classic_play_button.set_tooltip_text(_('Play video'))
 
-        self.classic_move_up_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_GO_UP,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_move_up_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_GO_UP,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_move_up_button = Gtk.Button.new()
+            self.classic_move_up_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_up']),
+            )
         hbox3.pack_start(self.classic_move_up_button, False, False, 0)
         self.classic_move_up_button.set_action_name(
             'app.classic_move_up_button',
         )
         self.classic_move_up_button.set_tooltip_text(_('Move up'))
 
-        self.classic_move_down_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_GO_DOWN,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_move_down_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_GO_DOWN,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_move_down_button = Gtk.Button.new()
+            self.classic_move_down_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_down']),
+            )
         hbox3.pack_start(
             self.classic_move_down_button,
             False,
@@ -2312,20 +2440,34 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.classic_move_down_button.set_tooltip_text(_('Move down'))
 
-        self.classic_redownload_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_REFRESH,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_redownload_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_REFRESH,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_redownload_button = Gtk.Button.new()
+            self.classic_redownload_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_refresh']),
+            )
         hbox3.pack_start(self.classic_redownload_button, False, False, 0)
         self.classic_redownload_button.set_action_name(
             'app.classic_redownload_button',
         )
         self.classic_redownload_button.set_tooltip_text(_('Re-download'))
 
-        self.classic_stop_button = Gtk.Button.new_from_icon_name(
-            Gtk.STOCK_MEDIA_STOP,
-            Gtk.IconSize.BUTTON,
-        )
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_stop_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_MEDIA_STOP,
+               Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_stop_button = Gtk.Button.new()
+            self.classic_stop_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_media_stop'],
+                ),
+            )
         hbox3.pack_start(
             self.classic_stop_button,
             False,
@@ -2537,12 +2679,18 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 2552 redraw_main_toolbar')
 
-        self.setup_main_toolbar()
+        if self.app_obj.toolbar_hide_flag:
+            # Toolbar is not visible
+            return
 
-        if self.app_obj.disable_dl_all_flag:
-            self.download_all_menu_item.set_sensitive(False)
+        else:
 
-        self.show_all()
+            self.setup_main_toolbar()
+
+            if self.app_obj.disable_dl_all_flag:
+                self.download_all_menu_item.set_sensitive(False)
+
+            self.show_all()
 
 
     def sensitise_widgets_if_database(self, sens_flag):
@@ -3276,9 +3424,16 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.app_obj.catalogue_show_filter_flag:
 
             # Hide the second row
-            self.catalogue_show_filter_button.set_stock_id(
-                Gtk.STOCK_SORT_ASCENDING,
-            )
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_show_filter_button.set_stock_id(
+                    Gtk.STOCK_SORT_ASCENDING,
+                )
+            else:
+                self.catalogue_show_filter_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_show_filter']
+                    ),
+                )
 
             self.catalogue_show_filter_button.set_tooltip_text(
                 _('Show filter options'),
@@ -3292,9 +3447,16 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             # Show the second row
-            self.catalogue_show_filter_button.set_stock_id(
-                Gtk.STOCK_SORT_DESCENDING,
-            )
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_show_filter_button.set_stock_id(
+                    Gtk.STOCK_SORT_DESCENDING,
+                )
+            else:
+                self.catalogue_show_filter_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_hide_filter']
+                    ),
+                )
 
             self.catalogue_show_filter_button.set_tooltip_text(
                 _('Hide filter options'),
@@ -3333,20 +3495,39 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 3351 update_alpha_sort_widgets')
 
         if not self.app_obj.catalogue_alpha_sort_flag:
-            self.catalogue_sort_button.set_stock_id(
-                Gtk.STOCK_SPELL_CHECK,
-            )
+
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_sort_button.set_stock_id(
+                    Gtk.STOCK_SPELL_CHECK,
+                )
+            else:
+                self.catalogue_sort_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_spell_check']
+                    ),
+                )
 
             self.catalogue_sort_button.set_tooltip_text(
                 _('Sort alphabetically'),
             )
 
         else:
-            self.catalogue_sort_button.set_stock_id(
-                Gtk.STOCK_INDEX,
-            )
+
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_sort_button.set_stock_id(
+                    Gtk.STOCK_INDEX,
+                )
+            else:
+                self.catalogue_sort_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_index']
+                    ),
+                )
 
             self.catalogue_sort_button.set_tooltip_text(_('Sort by date'))
+
+        # (New icon is not visible without a .show_all() call)
+        self.show_all()
 
 
     # (Auto-sort functions for main window widgets)
@@ -3808,6 +3989,20 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.priv_flag:
             set_nickname_menu_item.set_sensitive(False)
 
+        if not isinstance(media_data_obj, media.Folder):
+
+            set_url_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Set _URL...'),
+            )
+            set_url_menu_item.connect(
+                'activate',
+                self.on_video_index_set_url,
+                media_data_obj,
+            )
+            actions_submenu.append(set_url_menu_item)
+            if self.app_obj.current_manager_obj:
+                set_url_menu_item.set_sensitive(False)
+
         set_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Set _download destination...'),
         )
@@ -4154,14 +4349,13 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj,
         )
         # (We can add another video to the downloads.DownloadList object, even
-        #   after a download operation has started, but this isn't allowed when
-        #   a different type of operation is running)
+        #   after a download operation has started)
         if (
             self.app_obj.current_manager_obj \
             and not self.app_obj.download_manager_obj
         ) or (
             self.app_obj.download_manager_obj \
-            and self.app_obj.download_manager_obj.operation_type != 'sim'
+            and self.app_obj.download_manager_obj.operation_type == 'classic'
         ):
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
@@ -4181,7 +4375,8 @@ class MainWin(Gtk.ApplicationWindow):
                 and not self.app_obj.download_manager_obj
             ) or (
                 self.app_obj.download_manager_obj \
-                and self.app_obj.download_manager_obj.operation_type != 'real'
+                and self.app_obj.download_manager_obj.operation_type \
+                == 'classic'
             ) or video_obj.live_mode == 1:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
@@ -4558,14 +4753,13 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
         # (We can add another video to the downloads.DownloadList object, even
-        #   after a download operation has started, but this isn't allowed when
-        #   a different type of operation is running)
+        #   after a download operation has started)
         if (
             self.app_obj.current_manager_obj \
             and not self.app_obj.download_manager_obj
         ) or (
             self.app_obj.download_manager_obj \
-            and self.app_obj.download_manager_obj.operation_type != 'sim'
+            and self.app_obj.download_manager_obj.operation_type == 'classic'
         ):
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
@@ -4584,7 +4778,7 @@ class MainWin(Gtk.ApplicationWindow):
             and not self.app_obj.download_manager_obj
         ) or (
             self.app_obj.download_manager_obj \
-            and self.app_obj.download_manager_obj.operation_type != 'real'
+            and self.app_obj.download_manager_obj.operation_type == 'classic'
         ) or live_wait_flag:
             download_menu_item.set_sensitive(False)
         popup_menu.append(download_menu_item)
@@ -5160,10 +5354,9 @@ class MainWin(Gtk.ApplicationWindow):
         # Download options
         if not self.app_obj.classic_options_obj:
 
-            apply_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('_Apply download options'),
+            apply_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Use _classic download options'),
             )
-            apply_menu_item.set_active(False)
             apply_menu_item.connect(
                 'activate',
                 self.on_classic_menu_apply_options,
@@ -5174,10 +5367,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
 
-            remove_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('_Remove download options'),
+            remove_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Use _general download options'),
             )
-            remove_menu_item.set_active(False)
             remove_menu_item.connect(
                 'activate',
                 self.on_classic_menu_remove_options,
@@ -5187,7 +5379,7 @@ class MainWin(Gtk.ApplicationWindow):
             popup_menu.append(remove_menu_item)
 
         edit_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Edit download options'),
+            _('_Edit classic download options'),
         )
         edit_menu_item.connect(
             'activate',
@@ -6219,15 +6411,14 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Because of Gtk issues, we don't update the Video Index during a
-        #   download/refresh/tidy operation if the flag is set
-        if (
-            self.app_obj.gtk_broken_flag \
-            or self.app_obj.gtk_emulate_broken_flag
-        ) and (
+        # Because of Gtk stability issues, we don't update the Video Index
+        #   during a download/refresh/tidy/livestream operation if the flag is
+        #   set
+        if self.app_obj.gtk_emulate_broken_flag and (
             self.app_obj.download_manager_obj \
             or self.app_obj.refresh_manager_obj \
-            or self.app_obj.tidy_manager_obj
+            or self.app_obj.tidy_manager_obj \
+            or self.app_obj.livestream_manager_obj
         ):
             return
 
@@ -6274,15 +6465,14 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Because of Gtk issues, we don't update the Video Index during a
-        #   download/refresh/tidy operation if the flag is set
-        if (
-            self.app_obj.gtk_broken_flag \
-            or self.app_obj.gtk_emulate_broken_flag
-        ) and (
+        # Because of Gtk stability issues, we don't update the Video Index
+        #   during a download/refresh/tidy/livestream operation if the flag is
+        #       set
+        if self.app_obj.gtk_emulate_broken_flag and (
             self.app_obj.download_manager_obj \
             or self.app_obj.refresh_manager_obj \
-            or self.app_obj.tidy_manager_obj
+            or self.app_obj.tidy_manager_obj \
+            or self.app_obj.livestream_manager_obj \
         ):
             return
 
@@ -6329,15 +6519,14 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Because of Gtk issues, we don't update the Video Index during a
-        #   download/refresh/tidy operation if the flag is set
-        if (
-            self.app_obj.gtk_broken_flag \
-            or self.app_obj.gtk_emulate_broken_flag
-        ) and (
+        # Because of Gtk stability issues, we don't update the Video Index
+        #   during a download/refresh/tidy/livestream operation if the flag is
+        #   set
+        if self.app_obj.gtk_emulate_broken_flag and (
             self.app_obj.download_manager_obj \
             or self.app_obj.refresh_manager_obj \
-            or self.app_obj.tidy_manager_obj
+            or self.app_obj.tidy_manager_obj \
+            or self.app_obj.livestream_manager_obj
         ):
             return
 
@@ -6386,7 +6575,7 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 6264 video_index_get_icon')
 
         icon = None
-        if not self.app_obj.show_small_icons_in_index:
+        if not self.app_obj.show_small_icons_in_index_flag:
 
             # Large icons, bigger selection
             if isinstance(media_data_obj, media.Channel):
@@ -6569,15 +6758,14 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 6448 video_index_render_text')
 
-        # Because of Gtk issues, we don't update the Video Index during a
-        #   download/refresh/tidy operation if the flag is set
-        if (
-            not self.app_obj.gtk_broken_flag \
-            and not self.app_obj.gtk_emulate_broken_flag
-        ) or (
+        # Because of Gtk stability issues, we don't update the Video Index
+        #   during a download/refresh/tidy/livestream operation if the flag is
+        #   set
+        if not self.app_obj.gtk_emulate_broken_flag or (
             not self.app_obj.download_manager_obj \
             and not self.app_obj.refresh_manager_obj \
-            and not self.app_obj.tidy_manager_obj
+            and not self.app_obj.tidy_manager_obj \
+            and not self.app_obj.livestream_manager_obj
         ):
             dbid = model.get_value(tree_iter, 0)
             media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -6847,16 +7035,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         app_obj = self.app_obj
 
-        # Special measures during a download/refresh/tidy operation: don't
-        #   update or create any new rows while the operation is in progress,
-        #   if Gtk is broken
-        if (
-            self.app_obj.gtk_broken_flag
-            or self.app_obj.gtk_emulate_broken_flag
-        ) and (
+        # Special measures during a download/refresh/tidy/livestream operation:
+        #   don't update or create any new rows while the operation is in
+        #   progress, if the flag is set
+        if self.app_obj.gtk_emulate_broken_flag and (
             self.app_obj.download_manager_obj
             or self.app_obj.refresh_manager_obj
             or self.app_obj.tidy_manager_obj
+            or self.app_obj.livestream_manager_obj
         ):
             return
 
@@ -6993,15 +7179,13 @@ class MainWin(Gtk.ApplicationWindow):
         # Force the Gtk.ListBox to sort its rows, so that videos are displayed
         #   in the correct order
         # v1.3.112 this call is suspected of causing occasional crashes due to
-        #   Gtk issues. Disable it, if a download/refresh/tidy operation is in
-        #   progress
-        if (
-            not app_obj.gtk_broken_flag \
-            and not app_obj.gtk_emulate_broken_flag
-        ) or (
+        #   Gtk issues. Disable it, if a download/refresh/tidy/livestream
+        #   operation is in progress
+        if not app_obj.gtk_emulate_broken_flag or (
             not app_obj.download_manager_obj \
             and not app_obj.refresh_manager_obj \
-            and not app_obj.tidy_manager_obj
+            and not app_obj.tidy_manager_obj \
+            and not app_obj.livestream_manager_obj
         ):
             self.catalogue_listbox.invalidate_sort()
 
@@ -7095,13 +7279,11 @@ class MainWin(Gtk.ApplicationWindow):
             # v1.3.112 this call is suspected of causing occasional crashes due
             #   to Gtk issues. Disable it, if a download/refresh/tidy operation
             #   is in progress
-            if (
-                not self.app_obj.gtk_broken_flag \
-                and not self.app_obj.gtk_emulate_broken_flag
-            ) or (
+            if not self.app_obj.gtk_emulate_broken_flag or (
                 not self.app_obj.download_manager_obj \
                 and not self.app_obj.refresh_manager_obj \
-                and not self.app_obj.tidy_manager_obj
+                and not self.app_obj.tidy_manager_obj \
+                and not self.app_obj.livestream_manager_obj
             ):
                 self.catalogue_listbox.invalidate_sort()
 
@@ -7929,7 +8111,7 @@ class MainWin(Gtk.ApplicationWindow):
             pixbuf = self.pixbuf_dict['stream_wait_small']
         elif video_obj.live_mode == 2:
             pixbuf = self.pixbuf_dict['stream_live_small']
-        elif self.app_obj.download_manager_obj.operation_type == 'sim' \
+        elif download_item_obj.operation_type == 'sim' \
         or download_item_obj.media_data_obj.dl_sim_flag:
             pixbuf = self.pixbuf_dict['check_small']
         else:
@@ -10443,7 +10625,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The clicked menu item
 
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The clicked media data object
 
         """
@@ -10484,7 +10666,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The clicked menu item
 
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The clicked media data object
 
         """
@@ -10513,6 +10695,60 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Update the name displayed in the Video Index
             self.video_index_update_row_text(media_data_obj)
+
+
+    def on_video_index_set_url(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Sets (or resets) the URL for the selected channel or playlist.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 10393 on_video_index_set_url')
+
+        if isinstance(media_data_obj, media.Video):
+            return self.app_obj.system_error(
+                231,
+                'Cannot modify the URL of a video',
+            )
+
+        elif isinstance(media_data_obj, media.Folder):
+            return self.app_obj.system_error(
+                254,
+                'Cannot set the URL of a folder',
+            )
+
+        dialogue_win = SetURLDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window, before destroying it
+        url = dialogue_win.entry.get_text()
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            # Check the URL is valid, before updating the media.Video object
+            if url is None or not utils.check_url(url):
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('The URL is not valid'),
+                    'error',
+                    'ok',
+                    None,                   # Parent window is main window
+                )
+
+            else:
+
+                media_data_obj.set_source(url)
 
 
     def on_video_index_show_destination(self, menu_item, media_data_obj):
@@ -10836,7 +11072,7 @@ class MainWin(Gtk.ApplicationWindow):
             and not download_manager_obj
         ) or (
             download_manager_obj \
-            and download_manager_obj.operation_type != 'sim'
+            and download_manager_obj.operation_type == 'classic'
         ):
             return self.app_obj.system_error(
                 235,
@@ -10850,6 +11086,7 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
+                'sim',
                 True,
             )
 
@@ -10898,7 +11135,7 @@ class MainWin(Gtk.ApplicationWindow):
             and not download_manager_obj
         ) or (
             download_manager_obj \
-            and download_manager_obj.operation_type != 'sim'
+            and download_manager_obj.operation_type == 'classic'
         ):
             return self.app_obj.system_error(
                 236,
@@ -10913,6 +11150,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
+                    'sim',
                     True,
                 )
 
@@ -11140,7 +11378,7 @@ class MainWin(Gtk.ApplicationWindow):
             and not download_manager_obj
         ) or (
             self.app_obj.download_manager_obj \
-            and download_manager_obj.operation_type != 'real'
+            and download_manager_obj.operation_type == 'classic'
         ) or media_data_obj.live_mode == 1:
             return self.app_obj.system_error(
                 239,
@@ -11154,6 +11392,7 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
+                'real',
                 True,
             )
 
@@ -11206,7 +11445,7 @@ class MainWin(Gtk.ApplicationWindow):
             and not download_manager_obj
         ) or (
             self.app_obj.download_manager_obj \
-            and download_manager_obj.operation_type != 'real'
+            and download_manager_obj.operation_type == 'classic'
         ) or live_wait_flag:
             return self.app_obj.system_error(
                 240,
@@ -11221,6 +11460,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
+                    'real',
                     True,
                 )
 
@@ -11455,10 +11695,18 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             #   (but don't download anything now)
-            self.app_obj.add_video(
+            new_media_data_obj = self.app_obj.add_video(
                 self.app_obj.fixed_temp_folder,
                 media_data_obj.source,
             )
+
+            if new_media_data_obj:
+
+                # We can set the temporary video's name/description, if known
+                new_media_data_obj.set_cloned_name(media_data_obj)
+                # Remember the name of the original container object, for
+                #   display in the Video catalogue
+                new_media_data_obj.set_orig_parent(media_data_obj.parent_obj)
 
 
     def on_video_catalogue_mark_temp_dl_multi(self, menu_item,
@@ -11503,6 +11751,15 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.fixed_temp_folder,
                     media_data_obj.source,
                 )
+
+                # We can set the temporary video's name/description, if known
+                new_media_data_obj.set_cloned_name(media_data_obj)
+                # Remember the name of the original container object, for
+                #   display in the Video catalogue
+                if new_media_data_obj:
+                    new_media_data_obj.set_orig_parent(
+                        media_data_obj.parent_obj,
+                    )
 
         # Standard de-selection of everything in the Video Catalogue
         self.catalogue_listbox.unselect_all()
@@ -11833,6 +12090,15 @@ class MainWin(Gtk.ApplicationWindow):
 
             if new_media_data_obj:
 
+                # We can set the temporary video's name/description, if known
+                new_media_data_obj.set_cloned_name(media_data_obj)
+                # Remember the name of the original container object, for
+                #   display in the Video catalogue
+                if new_media_data_obj:
+                    new_media_data_obj.set_orig_parent(
+                        media_data_obj.parent_obj,
+                    )
+
                 # Download the video. If a download operation is already in
                 #   progress, the video is added to it
                 # Optionally open the video in the system's default media
@@ -11893,7 +12159,18 @@ class MainWin(Gtk.ApplicationWindow):
                 )
 
                 if new_media_data_obj:
+
                     ready_list.append(new_media_data_obj)
+
+                    # We can set the temporary video's name/description, if
+                    #   known
+                    new_media_data_obj.set_cloned_name(media_data_obj)
+                    # Remember the name of the original container object, for
+                    #   display in the Video catalogue
+                    if new_media_data_obj:
+                        new_media_data_obj.set_orig_parent(
+                            media_data_obj.parent_obj,
+                        )
 
         if ready_list:
 
@@ -14123,20 +14400,34 @@ class SimpleCatalogueItem(object):
         if self.main_win_obj.app_obj.catalogue_mode != 'simple_show_parent':
             return
 
-        if isinstance(self.video_obj.parent_obj, media.Channel):
-            string = _('From channel:') + ' \''
-        elif isinstance(self.video_obj.parent_obj, media.Playlist):
-            string = _('From playlist:') + ' \''
-        else:
-            string = _('From folder:') + ' \''
+        if self.video_obj.orig_parent is not None:
 
-        string2 = html.escape(
-            utils.shorten_string(
-                self.video_obj.parent_obj.name,
-                self.main_win_obj.long_string_max_len,
-            ),
-            quote=True,
-        )
+            string = _('Originally from:') + ' \''
+
+            string2 = html.escape(
+                utils.shorten_string(
+                    self.video_obj.orig_parent,
+                    self.main_win_obj.long_string_max_len,
+                ),
+                quote=True,
+            )
+
+        else:
+
+            if isinstance(self.video_obj.parent_obj, media.Channel):
+                string = _('From channel:') + ' \''
+            elif isinstance(self.video_obj.parent_obj, media.Playlist):
+                string = _('From playlist:') + ' \''
+            else:
+                string = _('From folder:') + ' \''
+
+            string2 = html.escape(
+                utils.shorten_string(
+                    self.video_obj.parent_obj.name,
+                    self.main_win_obj.long_string_max_len,
+                ),
+                quote=True,
+            )
 
         self.parent_label.set_markup(string + string2 + '\'')
 
@@ -14278,6 +14569,7 @@ class ComplexCatalogueItem(object):
         self.watch_web_label = None         # Gtk.Label
         self.watch_hooktube_label = None    # Gtk.Label
         self.watch_invidious_label = None   # Gtk.Label
+        self.watch_other_label = None       # Gtk.Label
         self.temp_box = None                # Gtk.Box
         self.temp_label = None              # Gtk.Label
         self.temp_mark_label = None         # Gtk.Label
@@ -14550,6 +14842,19 @@ class ComplexCatalogueItem(object):
         self.watch_invidious_label.connect(
             'activate-link',
             self.on_click_watch_invidious_label,
+        )
+
+        # Watch on the other YouTube front-end (specified by the user)
+        self.watch_other_label = Gtk.Label('', xalign=0)
+        hbox4.pack_start(
+            self.watch_other_label,
+            False,
+            False,
+            0,
+        )
+        self.watch_other_label.connect(
+            'activate-link',
+            self.on_click_watch_other_label,
         )
 
         # Optional rows
@@ -15004,20 +15309,34 @@ class ComplexCatalogueItem(object):
 
             # Show the name of the parent channel/playlist/folder, optionally
             #   followed by the whole video description, depending on settings
-            if isinstance(self.video_obj.parent_obj, media.Channel):
-                string = _('From channel:') + ' \''
-            elif isinstance(self.video_obj.parent_obj, media.Playlist):
-                string = _('From playlist:') + ' \''
-            else:
-                string = _('From folder:') + ' \''
+            if self.video_obj.orig_parent is not None:
 
-            string += html.escape(
-                utils.shorten_string(
-                    self.video_obj.parent_obj.name,
-                    self.main_win_obj.very_long_string_max_len,
-                ),
-                quote=True,
-            ) + '\''
+                string = _('Originally from:') + ' \''
+
+                string += html.escape(
+                    utils.shorten_string(
+                        self.video_obj.orig_parent,
+                        self.main_win_obj.very_long_string_max_len,
+                    ),
+                    quote=True,
+                ) + '\''
+
+            else:
+
+                if isinstance(self.video_obj.parent_obj, media.Channel):
+                    string = _('From channel:') + ' \''
+                elif isinstance(self.video_obj.parent_obj, media.Playlist):
+                    string = _('From playlist:') + ' \''
+                else:
+                    string = _('From folder:') + ' \''
+
+                string += html.escape(
+                    utils.shorten_string(
+                        self.video_obj.parent_obj.name,
+                        self.main_win_obj.very_long_string_max_len,
+                    ),
+                    quote=True,
+                ) + '\''
 
             if not self.video_obj.descrip:
                 self.descrip_label.set_text(string)
@@ -15236,6 +15555,8 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 14919 update_watch_web')
 
+        app_obj = self.main_win_obj.app_obj
+
         if self.video_obj.source:
 
             # For YouTube URLs, offer alternative links
@@ -15272,11 +15593,35 @@ class ComplexCatalogueItem(object):
                         + _('Invidious') + '</a>',
                     )
 
+                    if app_obj.custom_dl_divert_mode == 'other' \
+                    and app_obj.custom_dl_divert_website is not None \
+                    and len(app_obj.custom_dl_divert_website) > 2:
+
+                        # Link clickable
+                        self.watch_other_label.set_markup(
+                            '<a href="' \
+                            + html.escape(
+                                utils.convert_youtube_to_other(
+                                    app_obj,
+                                    source,
+                                ),
+                                quote=True,
+                            ) \
+                            + '" title="' + app_obj.custom_dl_divert_website \
+                            + '">' + _('Other') + '</a>',
+                        )
+
+                    else:
+
+                        # Link not clickable
+                        self.watch_other_label.set_text('')
+
                 else:
 
                     # Links not clickable
                     self.watch_hooktube_label.set_text('')
                     self.watch_invidious_label.set_text('')
+                    self.watch_other_label.set_text('')
 
             else:
 
@@ -15290,6 +15635,7 @@ class ComplexCatalogueItem(object):
                 # Links not clickable
                 self.watch_hooktube_label.set_text('')
                 self.watch_invidious_label.set_text('')
+                self.watch_other_label.set_text('')
 
         else:
 
@@ -15297,6 +15643,7 @@ class ComplexCatalogueItem(object):
             self.watch_web_label.set_markup('<i>' + _('No link') + '</i>')
             self.watch_hooktube_label.set_text('')
             self.watch_invidious_label.set_text('')
+            self.watch_other_label.set_text('')
 
 
     def update_livestream_labels(self):
@@ -16270,6 +16617,51 @@ class ComplexCatalogueItem(object):
         return True
 
 
+    def on_click_watch_other_label(self, label, uri):
+
+        """Called from callback in self.draw_widgets().
+
+        Watch a YouTube video on the other YouTube front end (specified by the
+        user).
+
+        Args:
+
+            label (Gtk.Label): The clicked widget
+
+            uri (str): Ignored
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15931 on_click_watch_other_label')
+
+        # Launch the video
+        utils.open_file(uri)
+
+        # Mark the video as not new (having been watched)
+        if self.video_obj.new_flag:
+            self.main_win_obj.app_obj.mark_video_new(self.video_obj, False)
+        # Remove the video from the waiting list (having been watched)
+        if self.video_obj.waiting_flag:
+            self.main_win_obj.app_obj.mark_video_waiting(
+                self.video_obj,
+                False,
+            )
+
+        # Because of an unexplained Gtk problem, there is usually a crash after
+        #   this function returns. Workaround is to make the label unclickable,
+        #   then use a Glib timer to restore it (after some small fraction of a
+        #   second)
+        self.watch_other_label.set_markup(_('Other'))
+        GObject.timeout_add(0, self.update_watch_web)
+
+        return True
+
+
     def on_click_watch_player_label(self, label, uri):
 
         """Called from callback in self.draw_widgets().
@@ -16320,6 +16712,7 @@ class ComplexCatalogueItem(object):
                 download_item_obj \
                 = app_obj.download_manager_obj.download_list_obj.create_item(
                     self.video_obj,
+                    'real',
                     True,
                 )
 
@@ -16596,6 +16989,8 @@ class StatusIcon(Gtk.StatusIcon):
             icon = formats.STATUS_ICON_DICT['info_icon']
         elif self.app_obj.tidy_manager_obj:
             icon = formats.STATUS_ICON_DICT['tidy_icon']
+        elif self.app_obj.livestream_manager_obj:
+            icon = formats.STATUS_ICON_DICT['livestream_icon']
         else:
             icon = formats.STATUS_ICON_DICT['default_icon']
 
@@ -20346,7 +20741,6 @@ class SetNicknameDialogue(Gtk.Dialog):
                 + ' to reset the nickname)',
             ).format(media_data_obj.name)
 
-
         label = Gtk.Label(
             utils.tidy_up_long_string(
                 msg,
@@ -20360,6 +20754,97 @@ class SetNicknameDialogue(Gtk.Dialog):
         self.entry = Gtk.Entry()
         grid.attach(self.entry, 0, 1, 1, 1)
         self.entry.set_text(media_data_obj.nickname)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+class SetURLDialogue(Gtk.Dialog):
+
+    """Called by MainWin.on_video_index_set_url().
+
+    Python class handling a dialogue window that prompts the user to set the
+    source URL of a channel or playlist.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        media_data_obj (media.Channel, media.Playlist): The media data object
+            whose source URL is to be changed
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, media_data_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19975 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.entry = None                       # Gtk.Entry
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Set URL'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        spacing_size = self.main_win_obj.spacing_size
+        label_length = self.main_win_obj.long_string_max_len
+
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(spacing_size)
+        grid.set_row_spacing(spacing_size)
+
+        media_type = media_data_obj.get_type()
+        if media_type == 'channel':
+            msg = _(
+                'Update the URL for the channel \'{0}\'',
+            ).format(media_data_obj.name)
+        else:
+            msg = _(
+                'Update the URL for the playlist \'{0}\'',
+            ).format(media_data_obj.name)
+
+        label = Gtk.Label(
+            utils.tidy_up_long_string(
+                msg,
+                label_length,
+            ),
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)
+        self.entry = Gtk.Entry()
+        grid.attach(self.entry, 0, 1, 1, 1)
+        self.entry.set_text(media_data_obj.source)
 
         # Display the dialogue window
         self.show_all()
@@ -20738,6 +21223,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton8 = None                # Gtk.CheckButton
         self.checkbutton9 = None                # Gtk.CheckButton
         self.checkbutton10 = None               # Gtk.CheckButton
+        self.checkbutton11 = None               # Gtk.CheckButton
 
 
         # Code
@@ -20836,9 +21322,17 @@ class TidyDialogue(Gtk.Dialog):
         grid.attach(self.checkbutton9, 1, 3, 1, 1)
         self.checkbutton9.set_label(_('Delete all thumbnail files'))
 
+        # v2.1.027. In June 2020, YouTube started serving .webp thumbnails.
+        #   At the time of writing, Gtk can't display them. A youtube-dl fix is
+        #   expected, which will convert .webp thumbnails to .jpg; in
+        #   anticipation of that, we add an option to remove .webp files
         self.checkbutton10 = Gtk.CheckButton()
         grid.attach(self.checkbutton10, 1, 4, 1, 1)
-        self.checkbutton10.set_label(_('Delete all youtube-dl archive files'))
+        self.checkbutton10.set_label(_('Delete .webp/malformed .jpg files'))
+
+        self.checkbutton11 = Gtk.CheckButton()
+        grid.attach(self.checkbutton11, 1, 5, 1, 1)
+        self.checkbutton11.set_label(_('Delete all youtube-dl archive files'))
 
         # Bottom strip
 
@@ -20929,6 +21423,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton8.set_active(True)
         self.checkbutton9.set_active(True)
         self.checkbutton10.set_active(True)
+        self.checkbutton11.set_active(True)
 
 
     def on_select_none_clicked(self, button):
@@ -20956,3 +21451,4 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton8.set_active(False)
         self.checkbutton9.set_active(False)
         self.checkbutton10.set_active(False)
+        self.checkbutton11.set_active(False)
