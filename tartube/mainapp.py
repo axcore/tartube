@@ -311,12 +311,11 @@ class TartubeApp(Gtk.Application):
         # The slow timer's ID
         self.script_slow_timer_id = None
         # The slow timer interval time (in milliseconds)
-        self.script_slow_timer_time = 60000
+        self.script_slow_timer_time = 30000
         # The fast timer's ID
         self.script_fast_timer_id = None
         # The fast timer interval time (in milliseconds)
         self.script_fast_timer_time = 1000
-
 
         # Flag set to True if the main toolbar should not be drawn when the
         #   main window is opened
@@ -1065,9 +1064,10 @@ class TartubeApp(Gtk.Application):
         #   'start' to perform the operation whenever Tartube starts, or
         #   'scheduled' to perform the operation at regular intervals
         self.scheduled_dl_mode = 'none'
-        # The time (in hours) between 'scheduled' 'Download all' operations, if
-        #   enabled (can be fractional)
-        self.scheduled_dl_wait_hours = 2
+        # The time between 'scheduled' 'Download all' operations, if enabled
+        self.scheduled_dl_wait_value = 2
+        # ...using this unit (any of the values in formats.TIME_METRIC_LIST)
+        self.scheduled_dl_wait_unit = 'hours'
         # The time (system time, in seconds) at which the last 'Download all'
         #   operation started (regardless of whether it was 'scheduled' or not)
         self.scheduled_dl_last_time = 0
@@ -1083,9 +1083,10 @@ class TartubeApp(Gtk.Application):
         #   'start' to perform the operation whenever Tartube starts, or
         #   'scheduled' to perform the operation at regular intervals
         self.scheduled_check_mode = 'none'
-        # The time (in hours) between 'scheduled' 'Check all' operations, if
-        #   enabled (can be fractional)
-        self.scheduled_check_wait_hours = 2
+        # The time between 'scheduled' 'Check all' operations, if enabled
+        self.scheduled_check_wait_value = 2
+        # ...using this unit (any of the values in formats.TIME_METRIC_LIST)
+        self.scheduled_check_wait_unit = 'hours'
         # The time (system time, in seconds) at which the last 'Check all'
         #   operation started (regardless of whether it was scheduled or not)
         self.scheduled_check_last_time = 0
@@ -3130,12 +3131,28 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1001067:  # v1.0.067
             self.scheduled_dl_mode = json_dict['scheduled_dl_mode']
-            self.scheduled_dl_wait_hours = json_dict['scheduled_dl_wait_hours']
-            self.scheduled_dl_last_time = json_dict['scheduled_dl_last_time']
-
             self.scheduled_check_mode = json_dict['scheduled_check_mode']
-            self.scheduled_check_wait_hours \
-            = json_dict['scheduled_check_wait_hours']
+
+            # Renamed in v2.1.056
+            if 'scheduled_dl_wait_value' in json_dict:
+                self.scheduled_dl_wait_value \
+                = json_dict['scheduled_dl_wait_value']
+                self.scheduled_dl_wait_unit \
+                = json_dict['scheduled_dl_wait_unit']
+                self.scheduled_check_wait_value \
+                = json_dict['scheduled_check_wait_value']
+                self.scheduled_check_wait_unit \
+                = json_dict['scheduled_check_wait_unit']
+            else:
+                self.scheduled_dl_wait_value \
+                = json_dict['scheduled_dl_wait_hours']
+                self.scheduled_dl_wait_unit = 'hours'
+                self.scheduled_check_wait_value \
+                = json_dict['scheduled_check_wait_hours']
+                self.scheduled_check_wait_unit = 'hours'
+
+            self.scheduled_dl_last_time \
+            = json_dict['scheduled_dl_last_time']
             self.scheduled_check_last_time \
             = json_dict['scheduled_check_last_time']
 
@@ -3641,11 +3658,13 @@ class TartubeApp(Gtk.Application):
             'operation_download_limit': self.operation_download_limit,
 
             'scheduled_dl_mode': self.scheduled_dl_mode,
-            'scheduled_dl_wait_hours': self.scheduled_dl_wait_hours,
+            'scheduled_dl_wait_value': self.scheduled_dl_wait_value,
+            'scheduled_dl_wait_unit': self.scheduled_dl_wait_unit,
             'scheduled_dl_last_time': self.scheduled_dl_last_time,
 
             'scheduled_check_mode': self.scheduled_check_mode,
-            'scheduled_check_wait_hours': self.scheduled_check_wait_hours,
+            'scheduled_check_wait_value': self.scheduled_check_wait_value,
+            'scheduled_check_wait_unit': self.scheduled_check_wait_unit,
             'scheduled_check_last_time': self.scheduled_check_last_time,
 
             'scheduled_shutdown_flag': self.scheduled_shutdown_flag,
@@ -12816,8 +12835,9 @@ class TartubeApp(Gtk.Application):
 
         """Called by GObject timer created by self.start().
 
-        Once a minute, check whether it's time to perform a scheduled 'Download
-        all' or 'Check all' download operation and, if so, perform it.
+        A few times every minute, check whether it's time to perform a
+        scheduled 'Download all' or 'Check all' download operation and, if so,
+        perform it.
 
         Otherwise, check whether it's time to perform a scheduled livestream
         operation and, if so, perform it.
@@ -12837,7 +12857,9 @@ class TartubeApp(Gtk.Application):
 
             if self.scheduled_dl_mode == 'scheduled':
 
-                wait_time = self.scheduled_dl_wait_hours * 3600
+                wait_time = self.scheduled_dl_wait_value \
+                * formats.TIME_METRIC_DICT[self.scheduled_dl_wait_unit]
+
                 if (self.scheduled_dl_last_time + wait_time) < time.time():
 
                     self.download_manager_start(
@@ -12850,7 +12872,9 @@ class TartubeApp(Gtk.Application):
 
             elif self.scheduled_check_mode == 'scheduled':
 
-                wait_time = self.scheduled_check_wait_hours * 3600
+                wait_time = self.scheduled_check_wait_value \
+                * formats.TIME_METRIC_DICT[self.scheduled_check_wait_unit]
+
                 if (self.scheduled_check_last_time + wait_time) < time.time():
 
                     self.download_manager_start(
@@ -16409,12 +16433,20 @@ class TartubeApp(Gtk.Application):
         self.scheduled_check_mode = value
 
 
-    def set_scheduled_check_wait_hours(self, value):
+    def set_scheduled_check_wait_unit(self, value):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16054 set_scheduled_check_wait_hours')
+            utils.debug_time('app 16054 set_scheduled_check_wait_unit')
 
-        self.scheduled_check_wait_hours = value
+        self.scheduled_check_wait_unit = value
+
+
+    def set_scheduled_check_wait_value(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16055 set_scheduled_check_wait_value')
+
+        self.scheduled_check_wait_value = value
 
 
     def set_scheduled_dl_mode(self, value):
@@ -16425,12 +16457,20 @@ class TartubeApp(Gtk.Application):
         self.scheduled_dl_mode = value
 
 
-    def set_scheduled_dl_wait_hours(self, value):
+    def set_scheduled_dl_wait_unit(self, unit):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16070 set_scheduled_dl_wait_hours')
+            utils.debug_time('app 16070 set_scheduled_dl_wait_unit')
 
-        self.scheduled_dl_wait_hours = value
+        self.scheduled_dl_wait_unit = unit
+
+
+    def set_scheduled_dl_wait_value(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16071 set_scheduled_dl_wait_value')
+
+        self.scheduled_dl_wait_value = value
 
 
     def set_scheduled_livestream_flag(self, flag):

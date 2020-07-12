@@ -7674,7 +7674,7 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab(_('_Start'), inner_notebook)
 
-        grid_width = 2
+        grid_width = 3
 
         # Scheduled start preferences
         self.add_label(grid,
@@ -7694,7 +7694,7 @@ class SystemPrefWin(GenericPrefWin):
         store.append( ['scheduled', _('Performed at regular intervals')] )
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 1, 1, 1)
+        grid.attach(combo, 1, 1, 2, 1)
         combo.set_hexpand(True)
 
         renderer_text = Gtk.CellRendererText()
@@ -7716,11 +7716,31 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         spinbutton = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.scheduled_dl_wait_hours,
+            1, 999, 1, self.app_obj.scheduled_dl_wait_value,
             1, 2, 1, 1,
         )
         if self.app_obj.scheduled_dl_mode != 'scheduled':
              spinbutton.set_sensitive(False)
+        # Signal connect appears below
+
+        store2 = Gtk.ListStore(str, str)
+        for string in formats.TIME_METRIC_LIST:
+            store2.append( [string, formats.TIME_METRIC_TRANS_DICT[string]] )
+
+        combo2 = Gtk.ComboBox.new_with_model(store2)
+        grid.attach(combo2, 2, 2, 1, 1)
+
+        renderer_text = Gtk.CellRendererText()
+        combo2.pack_start(renderer_text, True)
+        combo2.add_attribute(renderer_text, 'text', 1)
+        combo2.set_entry_text_column(1)
+        combo2.set_active(
+            formats.TIME_METRIC_LIST.index(
+                self.app_obj.scheduled_dl_wait_unit,
+            )
+        )
+        if self.app_obj.scheduled_dl_mode != 'scheduled':
+            combo2.set_sensitive(False)
         # Signal connect appears below
 
         self.add_label(grid,
@@ -7728,27 +7748,27 @@ class SystemPrefWin(GenericPrefWin):
             0, 3, 1, 1,
         )
 
-        store2 = Gtk.ListStore(str, str)
+        store3 = Gtk.ListStore(str, str)
 
-        store2.append( ['none', _('Disabled')] )
-        store2.append( ['start', _('Performed when Tartube starts')] )
-        store2.append( ['scheduled', _('Performed at regular intervals')] )
+        store3.append( ['none', _('Disabled')] )
+        store3.append( ['start', _('Performed when Tartube starts')] )
+        store3.append( ['scheduled', _('Performed at regular intervals')] )
 
-        combo2 = Gtk.ComboBox.new_with_model(store2)
-        grid.attach(combo2, 1, 3, 1, 1)
-        combo.set_hexpand(True)
+        combo3 = Gtk.ComboBox.new_with_model(store3)
+        grid.attach(combo3, 1, 3, 2, 1)
+        combo3.set_hexpand(True)
 
         renderer_text = Gtk.CellRendererText()
-        combo2.pack_start(renderer_text, True)
-        combo2.add_attribute(renderer_text, 'text', 1)
-        combo2.set_entry_text_column(1)
+        combo3.pack_start(renderer_text, True)
+        combo3.add_attribute(renderer_text, 'text', 1)
+        combo3.set_entry_text_column(1)
 
         if self.app_obj.scheduled_check_mode == 'start':
-            combo2.set_active(1)
+            combo3.set_active(1)
         elif self.app_obj.scheduled_check_mode == 'scheduled':
-            combo2.set_active(2)
+            combo3.set_active(2)
         else:
-            combo2.set_active(0)
+            combo3.set_active(0)
         # Signal connect appears below
 
         self.add_label(grid,
@@ -7757,11 +7777,31 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         spinbutton2 = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.scheduled_check_wait_hours,
+            1, 999, 1, self.app_obj.scheduled_check_wait_value,
             1, 4, 1, 1,
         )
         if self.app_obj.scheduled_check_mode != 'scheduled':
             spinbutton2.set_sensitive(False)
+        # Signal connect appears below
+
+        store4 = Gtk.ListStore(str, str)
+        for string in formats.TIME_METRIC_LIST:
+            store4.append( [string, formats.TIME_METRIC_TRANS_DICT[string]] )
+
+        combo4 = Gtk.ComboBox.new_with_model(store4)
+        grid.attach(combo4, 2, 4, 1, 1)
+
+        renderer_text = Gtk.CellRendererText()
+        combo4.pack_start(renderer_text, True)
+        combo4.add_attribute(renderer_text, 'text', 1)
+        combo4.set_entry_text_column(1)
+        combo4.set_active(
+            formats.TIME_METRIC_LIST.index(
+                self.app_obj.scheduled_check_wait_unit,
+            )
+        )
+        if self.app_obj.scheduled_check_mode != 'scheduled':
+            combo4.set_sensitive(False)
         # Signal connect appears below
 
         checkbutton = self.add_checkbutton(grid,
@@ -7775,17 +7815,26 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Signal connects from above
-        combo.connect('changed', self.on_dl_mode_combo_changed, spinbutton)
+        combo.connect(
+            'changed',
+            self.on_dl_mode_combo_changed,
+            spinbutton, combo2,
+        )
         spinbutton.connect('value-changed', self.on_dl_wait_spinbutton_changed)
-        combo2.connect(
+        combo2.connect('changed', self.on_dl_wait_combo_changed)
+
+        combo3.connect(
             'changed',
             self.on_check_mode_combo_changed,
             spinbutton2,
+            combo4,
         )
         spinbutton2.connect(
             'value-changed',
             self.on_check_wait_spinbutton_changed,
         )
+        combo4.connect('changed', self.on_check_wait_combo_changed)
+
         checkbutton.connect('toggled', self.on_scheduled_stop_button_toggled)
 
 
@@ -9573,7 +9622,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_check_limit(int(text))
 
 
-    def on_check_mode_combo_changed(self, combo, spinbutton):
+    def on_check_mode_combo_changed(self, combo, spinbutton, combo2):
 
         """Called from a callback in self.setup_scheduling_start_tab().
 
@@ -9586,6 +9635,8 @@ class SystemPrefWin(GenericPrefWin):
 
             spinbutton (Gtk.SpinButton): Another widget to be (de)sensitised
 
+            combo2 (Gtk.ComboBox): Another widget to be (de)sensitised
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -9593,8 +9644,28 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_scheduled_check_mode(model[tree_iter][0])
         if self.app_obj.scheduled_check_mode != 'scheduled':
             spinbutton.set_sensitive(False)
+            combo2.set_sensitive(False)
         else:
             spinbutton.set_sensitive(True)
+            combo2.set_sensitive(True)
+
+
+    def on_check_wait_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_scheduling_start_tab().
+
+        Sets the unit used by the time between scheduled downloads (simulated,
+        not real).
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_scheduled_check_wait_unit(model[tree_iter][0])
 
 
     def on_check_wait_spinbutton_changed(self, spinbutton):
@@ -9609,7 +9680,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.set_scheduled_check_wait_hours(spinbutton.get_value())
+        self.app_obj.set_scheduled_check_wait_value(spinbutton.get_value())
 
 
     def on_child_process_button_toggled(self, checkbutton):
@@ -10508,7 +10579,7 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_disk_space_warn_limit(spinbutton.get_value())
 
 
-    def on_dl_mode_combo_changed(self, combo, spinbutton):
+    def on_dl_mode_combo_changed(self, combo, spinbutton, combo2):
 
         """Called from a callback in self.setup_scheduling_start_tab().
 
@@ -10521,6 +10592,8 @@ class SystemPrefWin(GenericPrefWin):
 
             spinbutton (Gtk.SpinButton): Another widget to be (de)sensitised
 
+            combo2 (Gtk.ComboBox): Another widget to be (de)sensitised
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -10528,8 +10601,10 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_scheduled_dl_mode(model[tree_iter][0])
         if self.app_obj.scheduled_dl_mode != 'scheduled':
             spinbutton.set_sensitive(False)
+            combo2.set_sensitive(False)
         else:
             spinbutton.set_sensitive(True)
+            combo2.set_sensitive(True)
 
 
     def on_dl_limit_changed(self, entry):
@@ -10550,6 +10625,24 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_download_limit(int(text))
 
 
+    def on_dl_wait_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_scheduling_start_tab().
+
+        Sets the unit used by the time between scheduled downloads (real, not
+        simualated).
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_scheduled_dl_wait_unit(model[tree_iter][0])
+
+
     def on_dl_wait_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_scheduling_start_tab().
@@ -10562,7 +10655,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.set_scheduled_dl_wait_hours(spinbutton.get_value())
+        self.app_obj.set_scheduled_dl_wait_value(spinbutton.get_value())
 
 
     def on_enable_livestreams_button_toggled(self, checkbutton, checkbutton2,

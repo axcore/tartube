@@ -211,23 +211,34 @@ On Fedora, the procedure is:
 3. Type: ``pip3 install youtube-dl``
 4. You can now run **Tartube**.
 
-5.3.3 Install using the ebuild/AUR packages
+5.3.3 Install using the AUR package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Arch-based systems. such as Manjaro, Tartube can be installed using the semi-official AUR package. The procedure is:
+
+1. Open a terminal window
+2. Type: ``git clone https://aur.archlinux.org/tartube.git``
+3. Type: ``cd tartube``
+4. Type: ``makepkg -si``
+5. You can now run **Tartube**.
+
+5.3.4 Install using the ebuild/AUR packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Gentoo-based systems, **Tartube** can be installed using an ebuild package. On Arch-based systems, Tartube can be installed using an AUR package. Both of these packages are semi-official (the authors of **Tartube** did not create them), and can be found at the links above.
+On Gentoo-based systems, **Tartube** can be installed using the semi-official ebuild package, using the link above.
 
 Tartube requires `youtube-dl <https://youtube-dl.org/>`__.
 
-If you're not sure how to install using ebuild/AUR, then it might be easier to install from PyPI.
+If you're not sure how to install using ebuild, then it might be easier to install from PyPI.
 
-5.3.4 Install using PyPI
+5.3.5 Install using PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can be installed from `PyPI <https://pypi.org/project/tartube/>`__ with or without root privileges.
 
 Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint. The procedure on other distributions is probably very similar.
 
-5.3.5 Install using PyPI (with root privileges)
+5.3.6 Install using PyPI (with root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Make sure **youtube-dl** has been completely removed from your system
@@ -235,7 +246,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 3. Type: ``sudo pip3 install youtube-dl tartube``
 4. Type: ``tartube``
 
-5.3.6 Install using PyPI (without root privileges)
+5.3.7 Install using PyPI (without root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
@@ -248,7 +259,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 8. Click **Operations > Update youtube-dl**
 9. Once the update has finished, **Tartube** is ready for use
 
-5.3.7 Manual installation
+5.3.8 Manual installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For any other method of installation, the following dependencies are required:
@@ -267,7 +278,7 @@ These dependencies are optional, but recommended:
 -  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 
-5.3.8 Install from source
+5.3.9 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After installing dependencies (see above):
@@ -277,8 +288,8 @@ After installing dependencies (see above):
 3. Type: ``python3 setup.py install``
 4. Type: ``tartube``
 
-5.3.9 Run without installing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.3.10 Run without installing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After installing dependencies (see above):
 
@@ -1356,7 +1367,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 A: On MS Windows, download the portable edition rather than the usual installer - see `5.1 Installation - MS Windows`_.
 
-On other operating systems, just download the source code and run it. Installation is not necessary (as long as you have installed the correct dependencies). See `5.3.9 Run without installing`_.
+On other operating systems, just download the source code and run it. Installation is not necessary (as long as you have installed the correct dependencies). See `5.3.10 Run without installing`_.
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather tha in the system's default location.
 

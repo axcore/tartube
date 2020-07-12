@@ -1145,22 +1145,33 @@ class OptionsParser(object):
 
                 dummy_format = media_data_obj.dummy_format
 
-                # Ignore all video/audio formats except the one specified by
-                #   the user in the Classic Mode Tab
-                copy_dict['video_format'] = dummy_format
-                copy_dict['all_formats'] = False
-                copy_dict['video_format_list'] = []
-                copy_dict['video_format_mode'] = ''
+                if dummy_format in formats.VIDEO_FORMAT_DICT:
 
-                # v2.1.009: Since the user doesn't have the possibility of
-                #   setting the -f and --merge-output-format options to the
-                #   same value (e.g. 'mp4'), we must do so artificially
-                if dummy_format == 'mkv' or dummy_format == 'mp4' \
-                or dummy_format == 'ogg' or dummy_format == 'webm' \
-                or dummy_format == 'flv':
+                    # Ignore all video/audio formats except the one specified
+                    #   by the user in the Classic Mode Tab
+                    copy_dict['video_format'] = dummy_format
+                    copy_dict['all_formats'] = False
+                    copy_dict['video_format_list'] = []
+                    copy_dict['video_format_mode'] = ''
+
+                    # v2.1.009: Since the user doesn't have the possibility of
+                    #   setting the -f and --merge-output-format options to the
+                    #   same value (e.g. 'mp4'), we must do so artificially
                     copy_dict['merge_output_format'] = dummy_format
 
-                return
+                    return
+
+                elif dummy_format in formats.AUDIO_FORMAT_DICT:
+
+                    # Downloading audio formats requires post-processing
+                    copy_dict['video_format'] = '0'
+                    copy_dict['all_formats'] = False
+                    copy_dict['video_format_list'] = []
+                    copy_dict['video_format_mode'] = ''
+                    copy_dict['extract_audio'] = True
+                    copy_dict['audio_format'] = dummy_format
+
+                    return
 
             # Special case: for broadcasting livestreams, use only HLS
             # v2.0.067: Downloading livestreams doesn't work at all for me, so
