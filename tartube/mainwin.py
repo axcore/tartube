@@ -97,8 +97,7 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 97 __init__')
 
         super(MainWin, self).__init__(
-            title=__main__.__packagename__.title() + ' v' \
-            + __main__.__version__,
+            title=__main__.__packagename__.title(),
             application=app_obj
         )
 
@@ -4561,6 +4560,22 @@ class MainWin(Gtk.ApplicationWindow):
         )
         mark_video_submenu.append(fav_video_menu_item)
 
+        missing_video_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+            _('Video is _missing'),
+        )
+        missing_video_menu_item.set_active(video_obj.missing_flag)
+        missing_video_menu_item.connect(
+            'toggled',
+            self.on_video_catalogue_toggle_missing_video,
+            video_obj,
+        )
+        mark_video_submenu.append(missing_video_menu_item)
+        if (
+            not isinstance(video_obj.parent_obj, media.Channel) \
+            and not isinstance(video_obj.parent_obj, media.Playlist)
+        ) or not video_obj.dl_flag:
+            missing_video_menu_item.set_sensitive(False)
+
         new_video_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
             _('Video is _new'),
         )
@@ -4724,6 +4739,14 @@ class MainWin(Gtk.ApplicationWindow):
             if isinstance(video_obj.parent_obj, media.Folder) \
             and video_obj.parent_obj.temp_flag:
                 temp_folder_flag = True
+                break
+
+        # For 'missing' videos, work out if the selected videos are all inside
+        #   a channel or playlist
+        any_folder_flag = False
+        for video_obj in video_list:
+            if isinstance(video_obj.parent_obj, media.Folder):
+                any_folder_flag = True
                 break
 
         # Also work out if any videos are waiting or broadcasting livestreams
@@ -4993,6 +5016,35 @@ class MainWin(Gtk.ApplicationWindow):
         if not dl_flag:
             not_fav_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_fav_menu_item)
+
+        # Separator
+        mark_videos_submenu.append(Gtk.SeparatorMenuItem())
+
+        missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Missing'),
+        )
+        missing_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_toggle_missing_video_multi,
+            True,
+            video_list,
+        )
+        if not dl_flag or any_folder_flag:
+            missing_menu_item.set_sensitive(False)
+        mark_videos_submenu.append(missing_menu_item)
+
+        not_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Not m_issing'),
+        )
+        not_missing_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_toggle_missing_video_multi,
+            False,
+            video_list,
+        )
+        if not dl_flag or any_folder_flag:
+            not_missing_menu_item.set_sensitive(False)
+        mark_videos_submenu.append(not_missing_menu_item)
 
         # Separator
         mark_videos_submenu.append(Gtk.SeparatorMenuItem())
@@ -5581,6 +5633,37 @@ class MainWin(Gtk.ApplicationWindow):
             only_child_videos_flag,
         )
         submenu.append(mark_not_fav_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _missing'),
+        )
+        mark_missing_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_missing,
+            media_data_obj,
+        )
+        submenu.append(mark_missing_menu_item)
+        # Only videos in channels/playlists can be marked as missing
+        if isinstance(media_data_obj, media.Folder):
+            mark_missing_menu_item.set_sensitive(False)
+
+        mark_not_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not m_issing'),
+        )
+        mark_not_missing_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_missing,
+            media_data_obj,
+        )
+        submenu.append(mark_not_missing_menu_item)
+        # Only videos in channels/playlists can be marked as not missing
+        #   (exception: the 'Missing Videos' folder)
+        if isinstance(media_data_obj, media.Folder) \
+        and media_data_obj != self.app_obj.fixed_missing_folder:
+            mark_not_missing_menu_item.set_sensitive(False)
 
         # Separator
         submenu.append(Gtk.SeparatorMenuItem())
@@ -6704,8 +6787,8 @@ class MainWin(Gtk.ApplicationWindow):
             translate_note = _(
                 'TRANSLATOR\'S NOTE: V = number of videos B = (number of' \
                 + ' videos) bookmarked D = downloaded F = favourite' \
-                + ' L = live/livestream N = new W = in waiting list' \
-                + ' E = (number of) errors W = warnings',
+                + ' L = live/livestream M = missing N = new W = in waiting' \
+                + ' list E = (number of) errors W = warnings',
             )
 
             if media_data_obj.vid_count:
@@ -6714,6 +6797,7 @@ class MainWin(Gtk.ApplicationWindow):
                 + ' ' + _('D:') + str(media_data_obj.dl_count) \
                 + ' ' + _('F:') + str(media_data_obj.fav_count) \
                 + ' ' + _('L:') + str(media_data_obj.live_count) \
+                + ' ' + _('M:') + str(media_data_obj.missing_count) \
                 + ' ' + _('N:') + str(media_data_obj.new_count) \
                 + ' ' + _('W:') + str(media_data_obj.waiting_count)
 
@@ -7054,9 +7138,6 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_index_current == video_obj.parent_obj.name
             or self.video_index_current == app_obj.fixed_all_folder.name
             or (
-                self.video_index_current == app_obj.fixed_new_folder.name
-                and video_obj.new_flag
-            ) or (
                 self.video_index_current \
                 == app_obj.fixed_bookmark_folder.name \
                 and video_obj.bookmark_flag
@@ -7066,6 +7147,12 @@ class MainWin(Gtk.ApplicationWindow):
             ) or (
                 self.video_index_current == app_obj.fixed_live_folder.name \
                 and video_obj.live_mode
+            ) or (
+                self.video_index_current == app_obj.fixed_missing_folder.name
+                and video_obj.missing_flag
+            ) or (
+                self.video_index_current == app_obj.fixed_new_folder.name
+                and video_obj.new_flag
             ) or (
                 self.video_index_current == app_obj.fixed_waiting_folder.name \
                 and video_obj.waiting_flag
@@ -7319,9 +7406,6 @@ class MainWin(Gtk.ApplicationWindow):
         elif self.video_index_current != video_obj.parent_obj.name \
         and self.video_index_current != app_obj.fixed_all_folder.name \
         and (
-            self.video_index_current != app_obj.fixed_new_folder.name \
-            or video_obj.new_flag
-        ) and (
             self.video_index_current != app_obj.fixed_bookmark_folder.name \
             or video_obj.bookmark_flag
         ) and (
@@ -7330,6 +7414,12 @@ class MainWin(Gtk.ApplicationWindow):
         ) and (
             self.video_index_current != app_obj.fixed_live_folder.name \
             or video_obj.live_mode
+        ) and (
+            self.video_index_current != app_obj.fixed_missing_folder.name \
+            or video_obj.missing_flag
+        ) and (
+            self.video_index_current != app_obj.fixed_new_folder.name \
+            or video_obj.new_flag
         ) and (
             self.video_index_current != app_obj.fixed_waiting_folder.name \
             or video_obj.waiting_flag
@@ -8281,6 +8371,8 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.fixed_fav_folder.sort_children()
                 if video_obj.live_mode:
                     self.app_obj.fixed_live_folder.sort_children()
+                if video_obj.missing_flag:
+                    self.app_obj.fixed_missing_folder.sort_children()
                 if video_obj.new_flag:
                     self.app_obj.fixed_new_folder.sort_children()
                 if video_obj.waiting_flag:
@@ -10206,6 +10298,67 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             only_child_videos_flag,
         )
+
+
+    def on_video_index_mark_missing(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Mark all of the children of this channel or playlist as missing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 9920 on_video_index_mark_missing')
+
+        if isinstance(media_data_obj, media.Video) \
+        or isinstance(media_data_obj, media.Folder):
+            return self.app_obj.system_error(
+                255,
+                'Callback request denied due to current conditions',
+            )
+
+        self.app_obj.mark_container_missing(media_data_obj, True)
+
+
+    def on_video_index_mark_not_missing(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Mark all of the children of this channel or playlist as not missing.
+        This function can't be called for folders (except for the fixed
+        'Missing Videos' folder).
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 9921 on_video_index_mark_not_missing')
+
+        if isinstance(media_data_obj, media.Video) \
+        or (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj != self.app_obj.fixed_missing_folder
+        ):
+            return self.app_obj.system_error(
+                256,
+                'Callback request denied due to current conditions',
+            )
+
+        self.app_obj.mark_container_missing(media_data_obj, False)
 
 
     def on_video_index_mark_new(self, menu_item, media_data_obj,
@@ -12407,6 +12560,62 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_listbox.unselect_all()
 
 
+    def on_video_catalogue_toggle_missing_video(self, menu_item, \
+    media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Marks the video as missing or not missing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 11962 on_video_catalogue_toggle_missing_video',
+            )
+
+        if not media_data_obj.missing_flag:
+            self.app_obj.mark_video_missing(media_data_obj, True)
+        else:
+            self.app_obj.mark_video_missing(media_data_obj, False)
+
+
+    def on_video_catalogue_toggle_missing_video_multi(self, menu_item,
+    missing_flag, media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Mark the videos as missing or not missing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            missing_flag (bool): True to mark the videos as missing, False to
+                mark the videos as not missing
+
+            media_data_list (list): List of one or more media.Video objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 11963 on_video_catalogue_toggle_missing_video_multi',
+            )
+
+        for media_data_obj in media_data_list:
+            self.app_obj.mark_video_missing(media_data_obj, missing_flag)
+
+        # Standard de-selection of everything in the Video Catalogue
+        self.catalogue_listbox.unselect_all()
+
+
     def on_video_catalogue_toggle_new_video(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_catalogue_popup_menu().
@@ -14580,6 +14789,7 @@ class ComplexCatalogueItem(object):
         self.marked_archive_label = None    # Gtk.Label
         self.marked_bookmark_label = None   # Gtk.Label
         self.marked_fav_label = None        # Gtk.Label
+        self.marked_missing_label = None    # Gtk.Label
         self.marked_new_label = None        # Gtk.Label
         self.marked_waiting_label = None    # Gtk.Label
 
@@ -14941,6 +15151,14 @@ class ComplexCatalogueItem(object):
         self.marked_fav_label.connect(
             'activate-link',
             self.on_click_marked_fav_label,
+        )
+
+        # Missing/not missing
+        self.marked_missing_label = Gtk.Label('', xalign=0)
+        self.marked_box.pack_start(self.marked_missing_label, False, False, 0)
+        self.marked_missing_label.connect(
+            'activate-link',
+            self.on_click_marked_missing_label,
         )
 
         # New/not new
@@ -15829,6 +16047,19 @@ class ComplexCatalogueItem(object):
             self.marked_fav_label.set_markup(
                 text + '<s>' + _('Favourite') + '</s></a>')
 
+        # Missing/not missing
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Mark video as removed by creator') + '">'
+
+        if not self.video_obj.missing_flag:
+            self.marked_missing_label.set_markup(
+                text + _('Missing') + '</a>',
+            )
+        else:
+            self.marked_missing_label.set_markup(
+                text + '<s>' + _('Missing') + '</s></a>',
+            )
+
         # New/not new
         text = '<a href="' + html.escape(link_text) + '" title="' \
         + _('Mark video as never watched') + '">'
@@ -16288,6 +16519,51 @@ class ComplexCatalogueItem(object):
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
         self.marked_fav_label.set_markup(_('Favourite'))
+
+        GObject.timeout_add(0, self.update_marked_labels)
+
+        return True
+
+
+    def on_click_marked_missing_label(self, label, uri):
+
+        """Called from callback in self.draw_widgets().
+
+        Mark the video as missing or not missing.
+
+        Args:
+
+            label (Gtk.Label): The clicked widget
+
+            uri (str): Ignored
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15607 on_click_marked_missing_label')
+
+        # Mark the video as missing/not missing
+        if not self.video_obj.missing_flag:
+            self.main_win_obj.app_obj.mark_video_missing(
+                self.video_obj,
+                True,
+            )
+
+        else:
+            self.main_win_obj.app_obj.mark_video_missing(
+                self.video_obj,
+                False,
+            )
+
+        # Because of an unexplained Gtk problem, there is usually a crash after
+        #   this function returns. Workaround is to make the label unclickable,
+        #   then use a Glib timer to restore it (after some small fraction of a
+        #   second)
+        self.marked_missing_label.set_markup(_('Missing'))
 
         GObject.timeout_add(0, self.update_marked_labels)
 

@@ -852,7 +852,8 @@ def format_bytes(num_bytes):
 
 
 def generate_system_cmd(app_obj, media_data_obj, options_list,
-dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
+dl_sim_flag=False, dl_classic_flag=False, missing_video_check_flag=None,
+divert_mode=None):
 
     """Called by downloads.VideoDownloader.do_download() and
     mainwin.SystemCmdDialogue.update_textbuffer().
@@ -878,6 +879,10 @@ dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
         dl_classic_flag (bool): True if the download operation was launched
             from the Classic Mode Tab, False otherwise
 
+        missing_video_check_flag (bool): True if the download operation is
+            trying to detect missing videos (downloaded by user, but since
+            removed by the creator), False otherwise
+
         divert_mode (str): If not None, should be one of the values of
             mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube',
             'invidious' or 'other'. If not 'default', a media.Video object
@@ -897,13 +902,17 @@ dl_sim_flag=False, dl_classic_flag=False, divert_mode=None):
     if dl_sim_flag:
         options_list.append('--dump-json')
 
-    # If actually downloading videos, create an archive file so that, if the
-    #   user deletes the videos, youtube-dl won't try to download them again
-    # (Videos downloaded into a system folder should never create an archive
-    #   file)
-    if not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
-    or dl_classic_flag and app_obj.classic_ytdl_archive_flag:
-
+    # If actually downloading videos, use (or create) an archive file so that,
+    #   if the user deletes the videos, youtube-dl won't try to download them
+    #   again
+    # We don't use an archive file when:
+    #   1. Downloading into a system folder
+    #   2. Checking for missing videos
+    if not missing_video_check_flag \
+    and (
+        not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
+        or dl_classic_flag and app_obj.classic_ytdl_archive_flag
+    ):
         if not dl_classic_flag \
         and (
             not isinstance(media_data_obj, media.Folder)

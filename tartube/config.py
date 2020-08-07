@@ -2176,6 +2176,7 @@ class OptionsEditWin(GenericEditWin):
                 0, 2, 2, 1,
             )
             entry.set_text(_('All channels, playlists and folders'))
+            entry.set_editable(False)
 
         else:
 
@@ -8748,12 +8749,33 @@ class SystemPrefWin(GenericPrefWin):
         Sets up the 'youtube-dl' tab.
         """
 
+        # Add this tab...
         tab, grid = self.add_notebook_tab('_youtube-dl')
-        grid_width = 4
 
-        # youtube-dl preferences
+        # ...and an inner notebook...
+        self.operations_inner_notebook = self.add_inner_notebook(grid)
+
+        # ...with its own tabs
+        self.setup_ytdl_file_paths_tab(self.operations_inner_notebook)
+        self.setup_ytdl_prefs_tab(self.operations_inner_notebook)
+
+
+    def setup_ytdl_file_paths_tab(self, inner_notebook):
+
+        """Called by self.setup_ytdl_tab().
+
+        Sets up the 'File Paths' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_File paths'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # youtube-dl file paths
         self.add_label(grid,
-            '<u>' + _('youtube-dl preferences') + '</u>',
+            '<u>' + _('youtube-dl file paths') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -8856,44 +8878,120 @@ class SystemPrefWin(GenericPrefWin):
         if __main__.__pkg_strict_install_flag__:
             combo2.set_sensitive(False)
 
+
+    def setup_ytdl_prefs_tab(self, inner_notebook):
+
+        """Called by self.setup_ytdl_tab().
+
+        Sets up the 'Preferences' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Preferences'),
+            inner_notebook,
+        )
+        grid_width = 3
+
         # Post-processing preferences
         self.add_label(grid,
             '<u>' + _('Post-processing preferences') + '</u>',
-            0, 5, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_label(grid,
             _('Path to the ffmpeg/avconv binary'),
-            0, 6, 1, 1,
+            0, 1, 1, 1,
         )
-
-        entry3 = self.add_entry(grid,
-            self.app_obj.ffmpeg_path,
-            False,
-            1, 6, 1, 1,
-        )
-        entry3.set_sensitive(True)
-        entry3.set_editable(False)
-        entry3.set_hexpand(True)
 
         button = Gtk.Button(_('Set'))
-        grid.attach(button, 2, 6, 1, 1)
-        button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry3)
+        grid.attach(button, 1, 1, 1, 1)
+        # (signal_connect appears below)
 
         button2 = Gtk.Button(_('Reset'))
-        grid.attach(button2, 3, 6, 1, 1)
-        button2.connect('clicked', self.on_reset_ffmpeg_button_clicked, entry3)
+        grid.attach(button2, 2, 1, 1, 1)
+        # (signal_connect appears below)
+
+        entry = self.add_entry(grid,
+            self.app_obj.ffmpeg_path,
+            False,
+            0, 2, grid_width, 1,
+        )
+        entry.set_sensitive(True)
+        entry.set_editable(False)
+        entry.set_hexpand(True)
 
         if os.name == 'nt':
-            entry3.set_sensitive(False)
-            entry3.set_text(_('Install from main menu'))
+            entry.set_sensitive(False)
+            entry.set_text(_('Install from main menu'))
             button.set_sensitive(False)
             button2.set_sensitive(False)
+
+        # (signal_connects from above)
+        button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry)
+        button2.connect('clicked', self.on_reset_ffmpeg_button_clicked, entry)
+
+        # Missing video preferences
+        self.add_label(grid,
+            '<u>' + _('Missing video preferences') + '</u>',
+            0, 3, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Add videos which have been removed from a channel/playlist to' \
+            + ' the Missing Videos folder',
+            ),
+            self.app_obj.track_missing_videos_flag,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        # (signal_connect appears below)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Only add videos that were uploaded within this many days',
+            ),
+            self.app_obj.track_missing_time_flag,
+            True,                   # Can be toggled by user
+            0, 5, 2, 1,
+        )
+        if not self.app_obj.track_missing_videos_flag:
+            checkbutton5.set_sensitive(False)
+        # (signal_connect appears below)
+
+        spinbutton = self.add_spinbutton(grid,
+            0,
+            365,
+            1,                  # Step
+            self.app_obj.track_missing_time_days,
+            1, 5, 2, 1,
+        )
+        if not self.app_obj.track_missing_videos_flag \
+        or not self.app_obj.track_missing_time_flag:
+            spinbutton.set_sensitive(False)
+        # (signal_connect appears below)
+
+        # (signal_connects from above)
+        checkbutton4.connect(
+            'toggled',
+            self.on_missing_videos_button_toggled,
+            checkbutton5,
+            spinbutton,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_missing_time_button_toggled,
+            spinbutton,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_missing_time_spinbutton_changed,
+        )
 
         # Other preferences
         self.add_label(grid,
             '<u>' + _('Other preferences') + '</u>',
-            0, 7, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -8903,7 +9001,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.allow_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_archive_button_toggled)
 
@@ -8914,7 +9012,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
 
@@ -8924,7 +9022,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton3.connect('toggled', self.on_json_button_toggled)
 
@@ -9249,7 +9347,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_archive_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ytdl_prefs_tab().
 
         Enables/disables creation of youtube-dl's archive file,
         ytdl-archive.txt.
@@ -9270,7 +9368,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_archive_classic_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ytdl_prefs_tab().
 
         Enables/disables creation of youtube-dl's archive file,
         ytdl-archive.txt, when downloading from the Classic Mode tab.
@@ -10835,10 +10933,10 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_json_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ytdl_prefs_tab().
 
-        Enables/disables apply a 60-second timeout when fetching a video's JSON
-        data.
+        Enables/disables applying a 60-second timeout when fetching a video's
+        JSON data.
 
         Args:
 
@@ -11200,6 +11298,83 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_missing_format_error_flag:
             self.app_obj.set_ignore_missing_format_error_flag(False)
+
+
+    def on_missing_time_button_toggled(self, checkbutton, spinbutton):
+
+        """Called from callback in self.setup_ytdl_prefs_tab().
+
+        Enables/disables a time limit when tracking videos missing from a
+        channel/playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.track_missing_time_flag:
+
+            self.app_obj.set_track_missing_time_flag(True)
+            spinbutton.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.track_missing_time_flag:
+            self.app_obj.set_track_missing_time_flag(False)
+            spinbutton.set_sensitive(False)
+
+
+    def on_missing_time_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_ytdl_prefs_tab().
+
+        Sets a time limit when tracking videos missing from a channel/playlist.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_track_missing_time_days(
+            spinbutton.get_value(),
+        )
+
+
+    def on_missing_videos_button_toggled(self, checkbutton, checkbutton2, \
+    spinbutton):
+
+        """Called from callback in self.setup_ytdl_prefs_tab().
+
+        Enables/disables tracking videos missing from a channel/playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.track_missing_videos_flag:
+
+            self.app_obj.set_track_missing_videos_flag(True)
+            checkbutton2.set_sensitive(True)
+            if self.app_obj.track_missing_time_flag:
+                spinbutton.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.track_missing_videos_flag:
+            checkbutton2.set_active(False)
+            self.app_obj.set_track_missing_videos_flag(False)
+            checkbutton2.set_sensitive(False)
+            spinbutton.set_sensitive(False)
 
 
     def on_moviepy_button_toggled(self, checkbutton):
@@ -11634,7 +11809,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_reset_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ytdl_prefs_tab().
 
         Resets the path to the ffmpeg binary.
 
@@ -11758,7 +11933,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_set_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_tab().
+        """Called from callback in self.setup_ytdl_prefs_tab().
 
         Opens a window in which the user can select the ffmpeg binary, if it is
         installed (and if the user wants it).
@@ -12144,7 +12319,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_update_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_ytdl_tab().
+        """Called from a callback in self.setup_ytdl_file_paths_tab().
 
         Extracts the value visible in the combobox, converts it into another
         value, and uses that value to update the main application's IV.
@@ -12327,7 +12502,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_ytdl_path_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_ytdl_tab().
+        """Called from a callback in self.setup_ytdl_file_paths_tab().
 
         Extracts the value visible in the combobox, converts it into another
         value, and uses that value to update the main application's IV.

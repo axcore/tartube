@@ -1,15 +1,42 @@
+v2.1.065 (7 Aug 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube can now detect videos that were downloaded by the user, and have
+    since been removed by the original uploader. To enable this functionality,
+    click 'Edit > System preferences... > youtube-dl > Preferences' and then
+    click 'Add videos which have been removed from a channel/playlist to the
+    Missing Videos Folder' to select it. Note that youtube-dl's archive file
+    (if enabled) is ignored when missing video detection is enabled (Git #140)
+
+MINOR NEW FEATURES
+- Schedules download times can now be specified in any time unit (for example,
+    minutes), rather than in days only (Git #129)
+- The Tartube version number is no longer displayed in the main window's title
+    bar (this was only supposed to be a temporary feature)
+
+MAJOR FIXES
+- In the Classic Mode tab, the video/audio format selector was broken. It was
+    not possible to change the video/audio format from here. Fixed (Git #124)
+- It was not possible to perform a custom download by right-clicking a channel
+    or playlist. Fixed (Git #134)
+
+MINOR FIXES
+- Added .ICO file for the Tartube logo, for MS Windows users (Git #122)
+- The first entry box in the download options window was editable. Fixed
+
 v2.1.051 (4 Jul 2020)
 -------------------------------------------------------------------------------
 
 ATTENTION YOUTUBE USERS
-- You may be wondering why Tartube cannot display video thumbnails from 
-    newly-uploaded videos. YouTube has changed its video thumbnails to a new 
-    format, .webp. The Gtk graphics libraries don't support this format. A 
-    future release of youtube-dl will convert .webp thumbnails to .jpg, but the 
-    feature is not available yet. When it becomes available, you might need to 
-    install Ffmpeg on your system, if you haven't already done so (see the 
+- You may be wondering why Tartube cannot display video thumbnails from
+    newly-uploaded videos. YouTube has changed its video thumbnails to a new
+    format, .webp. The Gtk graphics libraries don't support this format. A
+    future release of youtube-dl will convert .webp thumbnails to .jpg, but the
+    feature is not available yet. When it becomes available, you might need to
+    install Ffmpeg on your system, if you haven't already done so (see the
     README file)
-    
+
 MAJOR NEW FEATURES
 - For MS Windows users, there is now a portable edition of Tartube, as well as
     the usual installer. Use the portable edition if you want to run Tartube
@@ -22,61 +49,61 @@ MAJOR NEW FEATURES
     new installations). This is for the benefit of users whose systems do not
     have a system tray, or for whom the Tartube icon is not visible for some
     reason (Git #98)
-    
+
 MINOR NEW FEATURES
 - The latest releases of Tartube's graphics library, Gtk, still do not fix the
     many stability issues we've been reporting for some years. As a consequence
     the workarounds that stop Tartube from crashing every two minutes are now
     completely optional (i.e. Tartube no longer applies them regardless of your
     wishes). If you enjoy watching Tartube crash, feel free to disable the
-    workarounds by clicking 'Edit > System preferences... > General 
-    > Stability' and then clicking 'Disable some cosmetic features...' to 
+    workarounds by clicking 'Edit > System preferences... > General
+    > Stability' and then clicking 'Disable some cosmetic features...' to
     deselect it
 - When checking the status of livestreams (which happens every few minutes,
     by default), the Tartube icon in the system tray now looks different. (The
     checks for livestream status were otherwise silent)
 - Various alternative front-ends to YouTube exist. Tartube already recognises
     HookTube and Invidious. You can now specify any alternative you like;
-    perhaps one the several Invidious clones that are currently available. 
-    Click 'Edit > System preferences... > Operations > Custom' to open the 
+    perhaps one the several Invidious clones that are currently available.
+    Click 'Edit > System preferences... > Operations > Custom' to open the
     correct tab. More complete instructions have been added to the README
-- In the Classic Mode tab, the buttons in the top-right corner have been 
+- In the Classic Mode tab, the buttons in the top-right corner have been
     replaced with a popup menu
-- A separate set of download options are now applied to downloads in the 
-    Classic Mode Tab. These download options are applied by default, even on 
-    existing installations. To disable/re-enable them, click the menu in the 
+- A separate set of download options are now applied to downloads in the
+    Classic Mode Tab. These download options are applied by default, even on
+    existing installations. To disable/re-enable them, click the menu in the
     top-right corner of the tab, and select 'Use classic download options' or
     'Use general download options'
 - If download options are applied to the Classic Mode tab, then a video's
-    description, metadata (etc) files are not downloaded in that tab, by 
+    description, metadata (etc) files are not downloaded in that tab, by
     default (Git #77)
 - The youtube-dl archive file is no longer created in downloads from the
-    Classic Mode tab, by default. To re-enable this functionality, click 'Edit 
-    > System preferences... > youtube-dl', and select both 'Allow youtube-dl to 
-    create its own arhive file...' and 'Also create an archive file when 
-    downloading from the Classic Mode tab...'. This change affects new 
+    Classic Mode tab, by default. To re-enable this functionality, click 'Edit
+    > System preferences... > youtube-dl', and select both 'Allow youtube-dl to
+    create its own arhive file...' and 'Also create an archive file when
+    downloading from the Classic Mode tab...'. This change affects new
     installations; users with earlier versions of Tartube installed on their
-    system must remove an existing archive file manually,  if they don't want 
+    system must remove an existing archive file manually,  if they don't want
     it (Git #77)
 - In the Classic Mode tab, added a button to show the contents of the download
     directory/folder
 - In the system preferences window, the 'When Tartube starts, automatically
     open the Classic Mode tab' setting has been moved to a more logical place
     (Windows > Tabs)
-- The toolbar at the top of the Videos tab can now be hidden, if you don't 
+- The toolbar at the top of the Videos tab can now be hidden, if you don't
     like it. Click 'Edit > System preferences... > Windows > Main window', and
     click 'Don't show the main window toolbar' to select it
 - In the Videos tab, you can now add the URL of a video, channel or playlist to
-    the Classic Mode tab by right-clicking it, and then selecting an item in 
+    the Classic Mode tab by right-clicking it, and then selecting an item in
     the popup menu. The original video/channel/playlist is not removed from
     Tartube's database
 - Tidy operations can now remove .webp thumbnails. Once the youtube-dl fix
-    mentioned above has been released, you can remove the thumbnails, then 
+    mentioned above has been released, you can remove the thumbnails, then
     click 'Check all' to re-download them in .jpg format
-- Some users have reported that some icons in Tartube's main window are 
+- Some users have reported that some icons in Tartube's main window are
     invisible on their system. These are stock icons which should be available
-    on all systems (but which, apparently, are not). For the benefit of those 
-    users, an extra set of icons have been created. To enable them, click 
+    on all systems (but which, apparently, are not). For the benefit of those
+    users, an extra set of icons have been created. To enable them, click
     'Edit > System preferences... > Windows > Main window > Replace stock icons
     with custom icons...' (Git #118)
 - In the Temporary Videos folder, you can now see which channel/playlist/folder
@@ -87,8 +114,8 @@ MINOR NEW FEATURES
 MAJOR FIXES
 - Installation via PyPI was broken, because the gi package had been removed.
     This is now fixed
-- Installation using the DEB package will now automatically install 
-    python3-pip (if not already installed), so that youtube-dl can be 
+- Installation using the DEB package will now automatically install
+    python3-pip (if not already installed), so that youtube-dl can be
     installed/updated straight away
 - When closing Tartube using the X button (usually) in the top-right corner of
     the window, and assuming that closing to the system tray is disabled,
@@ -98,20 +125,20 @@ MAJOR FIXES
 - A custom location for the FFmpeg executable can be set in 'Edit > System
     preferences... > youtube-dl'. This did not work on any operationg system
     for various reasons, all of which have been fixed (Git #90)
-- After checking/downloading videos, Tartube checks for livestreams, after 
+- After checking/downloading videos, Tartube checks for livestreams, after
     which it occasionally crashes. This crash has now been fixed
-- Some videos were continually re-marked as livestreams, even after the 
-    livestream had finished broadcasting (and even after the user manually 
+- Some videos were continually re-marked as livestreams, even after the
+    livestream had finished broadcasting (and even after the user manually
     marked the video as not a livestream). Fixed
 - Some livestream videos were continually re-added to Tartube's database,
-    creating a number of duplicate copies of the same video. The problem has 
+    creating a number of duplicate copies of the same video. The problem has
     been fixed; you can delete the duplicates at your leisure
 - When videos are checked, Tartube no longer supplies youtube-dl with a
     preferred media format. If you have specified a rarely-used media format,
-    this change will prevent a great many useless error messages being 
-    generated 
-- When detecting livestreams, Tartube generated many 'Add livestream failed 
-    sanity check' errors. The underlying cause has been fixed, which should 
+    this change will prevent a great many useless error messages being
+    generated
+- When detecting livestreams, Tartube generated many 'Add livestream failed
+    sanity check' errors. The underlying cause has been fixed, which should
     improve livestream detection a little
 
 MINOR FIXES
@@ -120,12 +147,12 @@ MINOR FIXES
     file rather than the system's default location, even if the config file is
     empty or unreadable)
 - Fixed rare problems in updating old Tartube database files to make videos
-    work as livestreams. The database integrity check ('Edit > 
+    work as livestreams. The database integrity check ('Edit >
     System preferences... > Filesystem > DB Errors') now checks for such
     problems
 - In the download options window, the 'If a merge is required after post-
     processing, output to this format' option will not work if the specified
-    media format doesn't also appear in the preferred format list. Moved the 
+    media format doesn't also appear in the preferred format list. Moved the
     two onto the same tab, and added a dialogue window to warn the user that a
     media format must be added twice
 - Also fixed the format selection combobox in the Classic Mode tab, so that
@@ -133,25 +160,25 @@ MINOR FIXES
     processing...' options are set to the same value
 - In the system preferences window, the 'When Tartube starts, automatically
     open the Classic Mode tab' setting was not working properly; fixed it
-- For downloads in the Classic Mode tab, an error was displayed in the 
-    Errors/Warnings tab using the video name 'Dummy Video'; changed that to 
+- For downloads in the Classic Mode tab, an error was displayed in the
+    Errors/Warnings tab using the video name 'Dummy Video'; changed that to
     the standard text for videos whose name is not known
 - Fixed python errors generated when playing a sound effect, on a system for
     which the python playsound module hasn't been installed
 - Fixed a python error generated when shutting down Tartube suddenly, while
     livestreams are being detected
 - For reasons not understood, Tartube might (on extremely rare occasions)
-    create a (red) system folder called 'downloads_2'. This folder could not be 
-    deleted. Until the cause can be found, such invalid system folders can now 
-    now be deleted, and are deleted automatically during a database integrity 
+    create a (red) system folder called 'downloads_2'. This folder could not be
+    deleted. Until the cause can be found, such invalid system folders can now
+    now be deleted, and are deleted automatically during a database integrity
     check
 - In the system preferences window, Operations > Livestreams tab, there are two
-    checkbuttons enabling/disabling livestream detection. The second one could 
-    be enabled even when the first was disabled; this has been fixed, and 
+    checkbuttons enabling/disabling livestream detection. The second one could
+    be enabled even when the first was disabled; this has been fixed, and
     should remove some unexpected behaviour
 - When updating youtube-dl, the warning 'The script youtube-dl is installed...'
     is now intercepted, and is no longer interpreted as a failure
-    
+
 v2.1.0 (7 May 2020)
 -------------------------------------------------------------------------------
 

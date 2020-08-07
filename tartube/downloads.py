@@ -1589,7 +1589,7 @@ class DownloadList(object):
 
         # Don't create a download.DownloadItem object for a media.Folder,
         #   obviously
-        # Dont' create a download.DownloadItem object for a media.Channel or
+        # Don't create a download.DownloadItem object for a media.Channel or
         #   media.Playlist during a custom download in which videos are to be
         #   downloaded independently
         download_item_obj = None
@@ -1628,9 +1628,18 @@ class DownloadList(object):
             self.download_item_dict[download_item_obj.item_id] \
             = download_item_obj
 
-        # If a media.Folder object has children, call this function recursively
-        #   for each of them
-        if isinstance(media_data_obj, media.Folder):
+        # Call this function recursively for any child media data objects in
+        #   the following situations:
+        #   1. A media.Folder object has children
+        #   2. A media.Channel/media.Playlist object has child media.Video
+        #       objects, and this is a custom download in which videos are to
+        #       be downloaded independently of their channel/playlist
+        if isinstance(media_data_obj, media.Folder) \
+        or (
+            not isinstance(media_data_obj, media.Video)
+            and operation_type == 'custom'
+            and self.app_obj.custom_dl_by_video_flag
+        ):
             for child_obj in media_data_obj.child_list:
                 self.create_item(child_obj, operation_type)
 
@@ -2112,6 +2121,12 @@ class VideoDownloader(object):
         #   of the value of mainapp.TartubeApp.operation_convert_mode)
         self.url_is_not_video_flag = False
 
+        # For channels/playlists, a list of child media.Video objects, used to
+        #   track missing videos (when required)
+        self.missing_video_check_list = []
+        # Flag set to true (for convenience) if the list is populated
+        self.missing_video_check_flag = False
+
 
         # Code
         # ----
@@ -2150,6 +2165,23 @@ class VideoDownloader(object):
             self.dl_classic_flag = True
             self.video_num = 1
             self.video_total = 1
+
+        # If the user wants to detect missing videos in channels/playlists
+        #   (those that have been downloaded by the user, but since removed
+        #   from the website by the creator), set that up
+        if (
+            isinstance(media_data_obj, media.Channel) \
+            or isinstance(media_data_obj, media.Playlist)
+        ) and (
+            self.download_item_obj.operation_type == 'real' \
+            or self.download_item_obj.operation_type == 'sim'
+        ) and download_manager_obj.app_obj.track_missing_videos_flag:
+
+            # Compile a list of child videos. Videos can be removed from the
+            #   list as they are detected
+            self.missing_video_check_list = media_data_obj.child_list.copy()
+            if self.missing_video_check_list:
+                self.missing_video_check_flag = True
 
 
     # Public class methods
@@ -2213,6 +2245,7 @@ class VideoDownloader(object):
             self.download_worker_obj.options_list,
             self.dl_sim_flag,
             self.dl_classic_flag,
+            self.missing_video_check_flag,
             divert_mode,
         )
 
@@ -2388,6 +2421,51 @@ class VideoDownloader(object):
                         self.child_process.returncode,
                     )
                 )
+
+        # For channels/playlists, detect missing videos (those downloaded by
+        #   the user, but since deleted from the website by the creator)
+        # We only perform the check if the process completed without errors,
+        #   and was not halted early by the user (or halted by the download
+        #   manager, because too many videos have been downloaded)
+        # We also ignore livestreams
+        detected_list = []
+
+        if app_obj.track_missing_videos_flag \
+        and self.missing_video_check_list \
+        and self.download_manager_obj.running_flag \
+        and not self.stop_soon_flag \
+        and not self.stop_now_flag \
+        and self.return_code <= self.WARNING:
+            for check_obj in self.missing_video_check_list:
+                if check_obj.dbid in app_obj.media_reg_dict \
+                and check_obj.dl_flag \
+                and not check_obj.live_mode:
+
+                    # Filter out videos that are too old
+                    if (
+                        app_obj.track_missing_time_flag \
+                        and app_obj.track_missing_time_days > 0
+                    ):
+                        # Convert the video's upload time from seconds to days
+                        days = check_obj.upload_time / (60 * 60 * 24)
+                        if days <= app_obj.track_missing_time_days:
+
+                            # Mark this video as missing
+                            detected_list.append(check_obj)
+
+                    else:
+
+                        # Mark this video as missing
+                        detected_list.append(check_obj)
+
+        for detected_obj in detected_list:
+            app_obj.mark_video_missing(
+                detected_obj,
+                True,       # Video is missing
+                True,       # Don't update the Video Index
+                True,       # Don't update the Video Catalogue
+                True,       # Don't sort the parent channel/playlist
+            )
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -2658,6 +2736,10 @@ class VideoDownloader(object):
             #   its child objects, looking for a matching video
             match_obj = media_data_obj.find_matching_video(app_obj, filename)
             if match_obj:
+
+                # This video will not be marked as a missing video
+                if match_obj in self.missing_video_check_list:
+                    self.missing_video_check_list.remove(match_obj)
 
                 if not match_obj.dl_flag:
 
@@ -2934,12 +3016,18 @@ class VideoDownloader(object):
                 app_obj.fixed_fav_folder.sort_children()
             if video_obj.live_mode:
                 app_obj.fixed_live_folder.sort_children()
+            if video_obj.missing_flag:
+                app_obj.fixed_missing_folder.sort_children()
             if video_obj.new_flag:
                 app_obj.fixed_new_folder.sort_children()
             if video_obj.waiting_flag:
                 app_obj.fixed_waiting_folder.sort_children()
 
         else:
+
+            # This video will not be marked as a missing video
+            if match_obj in self.missing_video_check_list:
+                self.missing_video_check_list.remove(match_obj)
 
             if video_obj.file_name \
             and video_obj.name != app_obj.default_video_name:

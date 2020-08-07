@@ -31,14 +31,15 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 2 Why should I use Tartube?
 ===========================
 
--  You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
--  You can fetch information about those videos, channels and playlists, without actually downloading anything
--  **Tartube** will organise your videos into convenient folders (if that's what you want)
--  **Tartube** can alert you when livestreams are starting (**YouTube** only)
--  If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
--  Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
--  **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
--  **Tartube** is free and open-source software
+- You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
+- You can fetch information about those videos, channels and playlists, without actually downloading anything
+- **Tartube** will organise your videos into convenient folders (if that's what you want)
+- **Tartube** can alert you when livestreams are starting (**YouTube** only)
+- If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
+- **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
+- You can easily grab just the audio, rather than full videos, if you want
+- Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
+- **Tartube** is free and open-source software
 
 2.1 What's new in version 2.1.0
 -------------------------------
@@ -50,14 +51,14 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v2.1.051 (4 Jul 2020)**
+Latest version: **v2.1.065 (7 Aug 2020)**
 
 Official packages:
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.051/install-tartube-2.1.051-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.051/install-tartube-2.1.051-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.051/python3-tartube_2.1.051.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube-2.1.051.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.065/install-tartube-2.1.065-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.065/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.065/install-tartube-2.1.065-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.065/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.065/python3-tartube_2.1.065.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.065/tartube-2.1.065.rpm/download>`__ from Sourceforge
 
 The `Sourceforge page <https://sourceforge.net/projects/tartube/>`__ also contains DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -68,7 +69,7 @@ Semi-official packages:
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.051/tartube_v2.1.051.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.065/tartube_v2.1.065.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -340,6 +341,7 @@ After installing dependencies (see above):
 * `6.22.2 Customising livestreams`_
 * `6.22.3 Livestream notifications`_
 * `6.22.4 Compatible websites`_
+* `6.23 Detecting missing videos`_
 
 6.1 Choose where to save videos
 -------------------------------
@@ -384,10 +386,10 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
 .. image:: screenshots/example4.png
   :alt: Updating youtube-dl
 
--  Click **Edit > System preferences... > youtube-dl**
--  Try changing the setting **Actual path to use**
--  Try changing the setting **Shell command for update operations**
--  Try the update operation again
+- Click **Edit > System preferences... > youtube-dl > File paths**
+- Try changing the setting **Actual path to use**
+- Try changing the setting **Shell command for update operations**
+- Try the update operation again
 
 6.4 Setting the location of FFmpeg / AVConv
 -------------------------------------------
@@ -409,6 +411,9 @@ On Linux/BSD, **youtube-dl** might be able to detect FFmpeg/AVConv without any h
 .. image:: screenshots/example5.png
   :alt: Updating ffmpeg
 
+- Click **Edit > System preferences... > youtube-dl > Preferences**
+- Click the **Set** button and select the FFmpeg/AVConv executable
+
 6.5 Introducing system folders
 ------------------------------
 
@@ -419,12 +424,13 @@ On the left side of the **Tartube** window is a list of folders. You can store v
 .. image:: screenshots/example6.png
   :alt: Tartube's system folders
   
-When you start **Tartube**, there are seven folders already visible. You can't remove any of these folders (but you can hide them, if you want).
+When you start **Tartube** for the first time, there are several folders already visible. You can't remove any of these folders (but you can hide them, if you want).
 
 - The **All Videos** folder shows every video in **Tartube**'s database, whether it has been downloaded or not
 - The **Bookmarks** folder shows videos you've bookmarked, because they're interesting or important (see `6.16.1 Bookmarked videos`_ )
 - The **Favourite Videos** folder shows videos in a channel, playlist or folder that you've marked as a favourite (see `6.16.2 Favourite channels, playlists and folders`_ )
 - The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
+- The **Missing videos** folder (see `6.23 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
@@ -573,7 +579,7 @@ By default, **Tartube** downloads videos as quickly as possible using each video
 A **Custom download** enables you to modify this behaviour, if desired. It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 
 -  Click **Edit > System preferences... > Operations > Custom**
--  Select one or more of the three options to enable them
+-  Select one or more of the options to enable them
 -  To start the custom download, click **Operations > Custom download all**
 
 6.13.1 Independent downloads
@@ -959,6 +965,22 @@ Secondly, right-click the channel and select **Show > Channel properties...** (a
 
 Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the box. Click the **OK** button to close the window.
 
+6.23 Detecting missing videos
+-----------------------------
+
+Since v2.1.065, **Tartube** has been able to detect videos which you have downloaded, but which have since deleted by the original uploader.
+
+This feature is EXPERIMENTAL and may not work as intended. 
+
+* Click Edit > System preferences... > youtube-dl > Preferences
+* Click the button **Add videos which have been removed from a channel/playlist to the Missing Videos folder** to select it
+
+Having enabled detection, removed videos will appear in the **Missing Videos** folder. To empty that folder, right-click it and select **Folder contents > All contents > Mark as not missing**.
+
+**Tartube** only detects missing videos when checking/downloading whole channels or playlists. If you interrupt a download, no detection occurs.
+
+You should note that enabling detection will disable the archive file used by youtube-dl (see `7.9 'Download all' button takes too long`_ ). Download operations may take longer as a result.
+
 7 Frequently-Asked Questions
 ============================
 
@@ -1303,7 +1325,7 @@ The Tartube installer for 64-bit MS Windows already contains a copy of **feedpar
 7.23 Livestream start time not visible
 --------------------------------------
 
-*Q: Why doesn't **Tartube** show the start time for livestreams?*
+*Q: Why doesn't Tartube show the start time for livestreams?*
 
 A: Popular video websites like **YouTube** do not provide that information.
 

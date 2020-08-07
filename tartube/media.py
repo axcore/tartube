@@ -273,6 +273,9 @@ class GenericContainer(GenericMedia):
                 if child_obj.live_mode:
                     self.live_count -= 1
 
+                if child_obj.missing_flag:
+                    self.missing_count -= 1
+
                 if child_obj.new_flag:
                     self.new_count -= 1
 
@@ -684,6 +687,7 @@ class GenericContainer(GenericMedia):
         self.dl_count = 0
         self.fav_count = 0
         self.live_count = 0
+        self.missing_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -704,6 +708,9 @@ class GenericContainer(GenericMedia):
                 if child_obj.live_mode:
                     self.live_count += 1
 
+                if child_obj.missing_flag:
+                    self.missing_count += 1
+
                 if child_obj.new_flag:
                     self.new_count += 1
 
@@ -715,7 +722,7 @@ class GenericContainer(GenericMedia):
 
 
     def reset_counts(self, vid_count, bookmark_count, dl_count, fav_count,
-    live_count, new_count, waiting_count):
+    live_count, missing_count, new_count, waiting_count):
 
         """Called by mainapp.TartubeApp.update_db().
 
@@ -731,6 +738,7 @@ class GenericContainer(GenericMedia):
         self.dl_count = dl_count
         self.fav_count = fav_count
         self.live_count = live_count
+        self.missing_count = missing_count
         self.new_count = new_count
         self.waiting_count = waiting_count
 
@@ -808,6 +816,16 @@ class GenericContainer(GenericMedia):
                 # Update the new alternative download destination
                 new_dest_obj = app_obj.media_reg_dict[self.master_dbid]
                 new_dest_obj.add_slave_dbid(self.dbid)
+
+
+    def inc_missing_count(self):
+
+        self.missing_count += 1
+
+
+    def dec_missing_count(self):
+
+        self.missing_count -= 1
 
 
     def inc_new_count(self):
@@ -1218,6 +1236,7 @@ class GenericRemoteContainer(GenericContainer):
         self.dl_count = other_obj.dl_count
         self.fav_count = other_obj.fav_count
         self.live_count = other_obj.live_count
+        self.missing_count = other_obj.missing_count
         self.new_count = other_obj.new_count
         self.waiting_count = other_obj.waiting_count
 
@@ -1351,6 +1370,12 @@ class Video(GenericMedia):
         #   it's marked as a favourite if the same IV in the parent channel,
         #   playlist or folder (also in the parent's parent, and so on) is True
         self.fav_flag = False
+        # Flag set to True if the video is marked as missing (the user has
+        #   downloaded it from a channel/playlist, but the video has since
+        #   been removed from that channel/playlist by its creator)
+        # Videos are only marked missing when
+        #   mainapp.TartubeApp.track_missing_videos_flag is set
+        self.missing_flag = False
         # Flag set to True at the same time self.dl_sim_flag is set to True,
         #   showing that the video has been downloaded and not watched
         self.new_flag = False
@@ -1688,6 +1713,14 @@ class Video(GenericMedia):
     def set_live_mode(self, mode):
 
         self.live_mode = mode
+
+
+    def set_missing_flag(self, flag):
+
+        if flag:
+            self.missing_flag = True
+        else:
+            self.missing_flag = False
 
 
     def set_mkv(self):
@@ -2121,12 +2154,13 @@ class Channel(GenericRemoteContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
-        #   system folders
+        #   downloaded, favourite, livestreams, missing, new and in the
+        #   'Waiting Videos' system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
         self.live_count = 0
+        self.missing_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -2292,12 +2326,13 @@ class Playlist(GenericRemoteContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
-        #   system folders
+        #   downloaded, favourite, livestreams, missing, new and in the
+        #   'Waiting Videos' system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
         self.live_count = 0
+        self.missing_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
@@ -2494,12 +2529,13 @@ class Folder(GenericContainer):
         # The total number of child video objects
         self.vid_count = 0
         # The number of child video objects that are marked as bookmarked,
-        #   downloaded, favourite, livestreams, new and in the 'Waiting Videos'
-        #   system folders
+        #   downloaded, favourite, livestreams, missing, new and in the
+        #   'Waiting Videos' system folders
         self.bookmark_count = 0
         self.dl_count = 0
         self.fav_count = 0
         self.live_count = 0
+        self.missing_count = 0
         self.new_count = 0
         self.waiting_count = 0
 
