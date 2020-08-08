@@ -51,7 +51,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Latest version: **v2.1.070 (8 Aug 2020)**
+Latest version: **v2.1.070 (8 Aug 2020)** (see `recent changes <CHANGES>`__)
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
