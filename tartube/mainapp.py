@@ -6202,7 +6202,10 @@ class TartubeApp(Gtk.Application):
                 if os.path.isdir(dir_path):
                     shutil.rmtree(dir_path)
 
-                os.makedirs(dir_path)
+                try:
+                    os.makedirs(dir_path)
+                except:
+                    pass
 
 
     def open_temp_folders(self):
@@ -6335,7 +6338,7 @@ class TartubeApp(Gtk.Application):
 
     def make_directory(self, dir_path):
 
-        """Called by self.start() and .switch_db().
+        """Can be called by anything.
 
         The call to os.makedirs() might fail with a 'Permission denied' error,
         meaning that the specified directory is unwriteable.
@@ -9078,7 +9081,7 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = channel_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+            self.make_directory(dir_path)
 
         return channel_obj
 
@@ -9167,7 +9170,7 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = playlist_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+            self.make_directory(dir_path)
 
         # Procedure complete
         return playlist_obj
@@ -9259,7 +9262,7 @@ class TartubeApp(Gtk.Application):
         # Obviously don't do that for private folders
         dir_path = folder_obj.get_default_dir(self)
         if not folder_obj.priv_flag and not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+            self.make_directory(dir_path)
 
         # Procedure complete
         return folder_obj
@@ -9961,7 +9964,10 @@ class TartubeApp(Gtk.Application):
         # If emptying the container rather than deleting it, just create a
         #   replacement (empty) directory on the filesystem
         if empty_flag:
-            os.makedirs(container_dir)
+            try:
+                os.makedirs(container_dir)
+            except:
+                pass
 
         # Now call self.delete_container_complete() to handle the media data
         #   registry

@@ -355,7 +355,8 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     Returns:
 
-        new_path: The converted full file path
+        new_path: The converted full file path, or None if a filesystem error
+            occurs
 
     """
 
@@ -366,12 +367,18 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     # The destination folder must exist, before moving files into it
     if not os.path.exists(new_dir):
-        os.makedirs(new_dir)
+        try:
+            os.makedirs(new_dir)
+        except:
+            return None
 
     # On MS Windows, a file name new_path must not exist, or an exception will
     #   be raised
     if os.path.isfile(new_path):
-        os.remove(new_path)
+        try:
+            os.remove(new_path)
+        except:
+            return None
 
     # Move the file now, if the calling code requires that
     if move_flag:

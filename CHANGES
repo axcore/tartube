@@ -1,3 +1,10 @@
+v2.1.070 (8 Aug 2020)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- Checking videos (e.g. by clicking the Check All button) was broken. Fixed
+- Fixed a very rare freeze/crash when handling temporary directories
+
 v2.1.065 (7 Aug 2020)
 -------------------------------------------------------------------------------
 

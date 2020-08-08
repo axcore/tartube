@@ -3026,8 +3026,8 @@ class VideoDownloader(object):
         else:
 
             # This video will not be marked as a missing video
-            if match_obj in self.missing_video_check_list:
-                self.missing_video_check_list.remove(match_obj)
+            if video_obj in self.missing_video_check_list:
+                self.missing_video_check_list.remove(video_obj)
 
             if video_obj.file_name \
             and video_obj.name != app_obj.default_video_name:
@@ -3130,8 +3130,10 @@ class VideoDownloader(object):
                     descrip_path,
                 )
 
-            # (Don't replace a file that already exists)
-            if not os.path.isfile(descrip_path):
+            # (Don't replace a file that already exists, and obviously don't
+            #   do anything if the call returned None because of a filesystem
+            #   error)
+            if descrip_path is not None and not os.path.isfile(descrip_path):
                 try:
                     fh = open(descrip_path, 'wb')
                     fh.write(descrip.encode('utf-8'))
@@ -3146,7 +3148,7 @@ class VideoDownloader(object):
             if not options_dict['sim_keep_info']:
                 json_path = utils.convert_path_to_temp(app_obj, json_path)
 
-            if not os.path.isfile(json_path):
+            if json_path is not None and not os.path.isfile(json_path):
                 try:
                     with open(json_path, 'w') as outfile:
                         json.dump(json_dict, outfile, indent=4)
@@ -3177,7 +3179,7 @@ class VideoDownloader(object):
             if not options_dict['sim_keep_thumbnail']:
                 thumb_path = utils.convert_path_to_temp(app_obj, thumb_path)
 
-            if not os.path.isfile(thumb_path):
+            if thumb_path is not None and not os.path.isfile(thumb_path):
 
                 # v2.0.013 The requets module fails if the connection drops
                 # v1.2.006 Wiriting the file fails if the directory specified
@@ -4387,13 +4389,14 @@ class JSONFetcher(object):
                         local_thumb_path,
                     )
 
-                try:
-                    request_obj = requests.get(self.video_thumb_source)
-                    with open(local_thumb_path, 'wb') as outfile:
-                        outfile.write(request_obj.content)
+                if local_thumb_path:
+                    try:
+                        request_obj = requests.get(self.video_thumb_source)
+                        with open(local_thumb_path, 'wb') as outfile:
+                            outfile.write(request_obj.content)
 
-                except:
-                    pass
+                    except:
+                        pass
 
 
     def close(self):
