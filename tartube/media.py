@@ -818,6 +818,11 @@ class GenericContainer(GenericMedia):
                 new_dest_obj.add_slave_dbid(self.dbid)
 
 
+    def reset_master_dbid(self):
+
+        self.master_dbid = self.dbid
+
+
     def inc_missing_count(self):
 
         self.missing_count += 1

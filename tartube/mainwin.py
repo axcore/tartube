@@ -30,15 +30,12 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 import datetime
 from gi.repository import Gio
 import os
+import platform
 from gi.repository import Pango
 import re
 import sys
 import threading
 import time
-# (Desktop notifications don't work on MS Windows, so no need to import Notify)
-if os.name != 'nt':
-    gi.require_version('Notify', '0.7')
-    from gi.repository import Notify
 
 
 # Import our modules
@@ -53,6 +50,11 @@ import utils
 # Use same gettext translations
 from mainapp import _
 
+# (Desktop notifications don't work on MS Windows/MacOS, so no need to import
+#   Notify)
+if mainapp.HAVE_NOTIFY_FLAG:
+    gi.require_version('Notify', '0.7')
+    from gi.repository import Notify
 
 # Debugging flag (calls utils.debug_time at the start of every function)
 DEBUG_FUNC_FLAG = False
@@ -756,7 +758,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Set up desktop notifications. Notifications can be sent by calling
         #   self.notify_desktop()
-        if os.name != 'nt':
+        if mainapp.HAVE_NOTIFY_FLAG:
             Notify.init('Tartube')
 
         # Create main window widgets
@@ -3341,7 +3343,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Can be called by anything.
 
-        Creates a desktop notification.
+        Creates a desktop notification (but not on MS Windows / MacOS)
 
         Args:
 
@@ -3361,8 +3363,8 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 3233 notify_desktop')
 
-        # Desktop notifications don't work on MS Windows
-        if os.name != 'nt':
+        # Desktop notifications don't work on MS Windows/MacOS
+        if mainapp.HAVE_NOTIFY_FLAG:
 
             if title is None:
                 title = 'Tartube'

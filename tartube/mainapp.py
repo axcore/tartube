@@ -33,6 +33,7 @@ import json
 import math
 import os
 import pickle
+import platform
 import re
 import shutil
 import sys
@@ -70,6 +71,17 @@ if os.name != 'nt':
         HAVE_XDG_FLAG = False
 else:
     HAVE_XDG_FLAG = False
+
+if platform.system() != 'Windows' and platform.system != 'Darwin':
+    try:
+        gi.require_version('Notify', '0.7')
+        from gi.repository import Notify
+        HAVE_NOTIFY_FLAG = True
+    except:
+        HAVE_NOTIFY_FLAG = False
+else:
+    HAVE_NOTIFY_FLAG = fALSE
+
 
 # Import our modules
 import __main__
@@ -10032,6 +10044,14 @@ class TartubeApp(Gtk.Application):
             if media_data_obj.dbid in self.media_top_level_list:
                 index = self.media_top_level_list.index(media_data_obj.dbid)
                 del self.media_top_level_list[index]
+
+        # If this container is the alternative download destination for any
+        #   other container(s), then update the other container(s)
+        for other_dbid in media_data_obj.slave_dbid_list:
+            other_obj = self.media_reg_dict[other_dbid]
+            # (No reason why this check should fail, but let's play safe)
+            if other_obj.master_dbid == media_data_obj.dbid:
+                other_obj.reset_master_dbid()
 
         # During the initial call to this function, delete the container
         #   object from the Video Index (which automatically resets the Video

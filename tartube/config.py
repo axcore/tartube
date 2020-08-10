@@ -36,6 +36,7 @@ import formats
 import mainapp
 import mainwin
 import media
+import platform
 import re
 import utils
 # Use same gettext translations
@@ -6415,10 +6416,20 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, grid_width, 1,
         )
 
+        self.add_checkbutton(grid,
+            _(
+            'Notify module is available (shows desktop notifications; Linux/' \
+            + '*BSD only)',
+            ),
+            mainapp.HAVE_NOTIFY_FLAG,
+            False,                      # Can't be toggled by user
+            0, 5, grid_width, 1,
+        )
+
         # Module preferences
         self.add_label(grid,
             '<u>' + _('Module preferences') + '</u>',
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -6428,7 +6439,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
@@ -6436,7 +6447,7 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Timeout applied when moviepy checks a video file'),
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
@@ -6444,7 +6455,7 @@ class SystemPrefWin(GenericPrefWin):
             60,
             1,                  # Step
             self.app_obj.refresh_moviepy_timeout,
-            1, 7, 1, 1,
+            1, 8, 1, 1,
         )
         spinbutton.connect(
             'value-changed',
@@ -8474,17 +8485,20 @@ class SystemPrefWin(GenericPrefWin):
         )
         # Signal connect appears below
 
+        if platform.system() != 'Windows' and platform.system != 'Darwin':
+            text = 'Show a desktop notification at the end of a download' \
+            + '/update/refresh/info/tidy operation'
+        else:
+            text = 'Show a desktop notification (Linux/*BSD only)'
+
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
-            _(
-            'Show a desktop notification at the end of a download/update/' \
-            + 'refresh/info/tidy operation',
-            ),
+            _(text),
             0, 2, 1, 1,
         )
         if self.app_obj.operation_dialogue_mode == 'desktop':
             radiobutton2.set_active(True)
-        if os.name == 'nt':
+        if platform.system() != 'Windows' and platform.system != 'Darwin':
             radiobutton2.set_sensitive(False)
         # Signal connect appears below
 
