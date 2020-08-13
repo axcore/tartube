@@ -98,7 +98,7 @@ If you don't want **Tartube** to add videos to its database, click the **Classic
 -------------------
 
 -  Install **Tartube**, using any of the methods described below
--  It's strongly recommended that you install  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
+-  It's strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
 -  Run **Tartube**
 -  When prompted, choose a directory where **Tartube** can store videos
 -  Install **youtube-dl** by clicking **Operations > Update youtube-dl**
@@ -201,6 +201,10 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 - Install adwaita-icon-theme for icons used by Tartube (optional)
 
         **brew install adwaita-icon-theme**
+
+- It's recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too
+
+        **brew install ffmpeg**
 
 After installing dependencies (see above):
 
