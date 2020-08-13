@@ -80,7 +80,7 @@ if platform.system() != 'Windows' and platform.system != 'Darwin':
     except:
         HAVE_NOTIFY_FLAG = False
 else:
-    HAVE_NOTIFY_FLAG = fALSE
+    HAVE_NOTIFY_FLAG = False
 
 
 # Import our modules

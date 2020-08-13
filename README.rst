@@ -174,6 +174,43 @@ Some users report that **Tartube** will install but won't run. This problem shou
 
 **Tartube** should run on MacOS, but the authors don't have access a MacOS system. If you are a MacOS user, open an issue at our Github page, and we'll work out the installation procedure together.
 
+5.2.1 Run without installing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Install `Python 3 <https://www.python.org/downloads>`__ by downloading an installer or with homebrew
+
+        **brew install python**
+
+- Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
+
+        **pip install pycairo**
+
+        **brew install gobject-introspection**
+
+        **pip install PyGObject**
+
+        **brew install gtk+3**
+
+- Install `Python Requests module <https://3.python-requests.org/>`__
+
+        **pip install requests**
+
+- Install `youtube-dl <https://youtube-dl.org/>`__
+
+        **pip install youtube-dl**
+
+- Install adwaita-icon-theme for icons used by tartube (optional)
+
+        **brew install adwaita-icon-theme**
+
+After installing dependencies (see above):
+
+1. Download & extract the source code (see the links above)
+2. Change directory into the **Tartube** directory
+3. Type: ``python3 tartube/tartube``
+
+
+
 5.3 Installation - Linux/BSD
 ----------------------------
 
