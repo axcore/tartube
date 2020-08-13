@@ -24,7 +24,7 @@ Works with YouTube, BitChute, and hundreds of other websites
 
 **Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, partly based on `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ and written in Python 3 / Gtk 3.
 
-It runs on MS Windows, Linux and BSD. It probably works on MacOS, but the authors have not been able to confirm this.
+It runs on MS Windows, Linux, BSD and MacOS.
 
 Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
@@ -94,10 +94,10 @@ If you don't want **Tartube** to add videos to its database, click the **Classic
 -  Click **All Videos** to see that list
 -  If you want to download the videos, click the **Download all** button
 
-4.2 Linux/BSD
--------------
+4.2 Linux/BSD/MacOS
+-------------------
 
--  Install **Tartube** by downloading the DEB or RPM package from the links above. Alternatively, install it from PyPI, using the instructions below
+-  Install **Tartube**, using any of the methods described below
 -  It's strongly recommended that you install  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
 -  Run **Tartube**
 -  When prompted, choose a directory where **Tartube** can store videos
@@ -172,12 +172,9 @@ Some users report that **Tartube** will install but won't run. This problem shou
 5.2 Installation - MacOS
 ------------------------
 
-**Tartube** should run on MacOS, but the authors don't have access a MacOS system. If you are a MacOS user, open an issue at our Github page, and we'll work out the installation procedure together.
+MacOS users should use the following procedure (with thanks to JeremyShih):
 
-5.2.1 Run without installing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Install `Python 3 <https://www.python.org/downloads>`__ by downloading an installer or with homebrew
+- Install `Python 3 <https://www.python.org/downloads>`__ by downloading an installer, or with homebrew:
 
         **brew install python**
 
@@ -199,7 +196,7 @@ Some users report that **Tartube** will install but won't run. This problem shou
 
         **pip install youtube-dl**
 
-- Install adwaita-icon-theme for icons used by tartube (optional)
+- Install adwaita-icon-theme for icons used by Tartube (optional)
 
         **brew install adwaita-icon-theme**
 
@@ -208,8 +205,6 @@ After installing dependencies (see above):
 1. Download & extract the source code (see the links above)
 2. Change directory into the **Tartube** directory
 3. Type: ``python3 tartube/tartube``
-
-
 
 5.3 Installation - Linux/BSD
 ----------------------------
@@ -343,7 +338,7 @@ After installing dependencies (see above):
 * `6.3 Setting youtube-dl's location`_
 * `6.4 Setting the location of FFmpeg / AVConv`_
 * `6.4.1 On MS Windows`_
-* `6.4.2 On Linux/BSD`_
+* `6.4.2 On Linux/BSD/MacOS`_
 * `6.5 Introducing system folders`_
 * `6.6 Adding videos`_
 * `6.7 Adding channels and playlists`_
@@ -440,10 +435,10 @@ On MS Windows, the usual methods of FFmpeg installation will not work. You **mus
 
 There is no known method of installing a compatible version of AVConv.
 
-6.4.2 On Linux/BSD
-~~~~~~~~~~~~~~~~~~
+6.4.2 On Linux/BSD/MacOS
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux/BSD, **youtube-dl** might be able to detect FFmpeg/AVConv without any help from you. If not, you can tell **Tartube** where to find FFmpeg/AVConv in this same tab.
+On all other operating systems, **youtube-dl** might be able to detect FFmpeg/AVConv without any help from you. If not, you can tell **Tartube** where to find FFmpeg/AVConv in this same tab.
 
 .. image:: screenshots/example5.png
   :alt: Updating ffmpeg
@@ -1135,7 +1130,7 @@ A: **Tartube** creates a backup copy of its database, before trying to save a ne
 - Make sure **Tartube** is not running. The **Tartube** window is sometimes minimised, and sometimes only visible in the system tray. A good way to make sure is to run **Tartube**, then close it by clicking **File > Quit**
 - In the data directory is the broken **tartube.db** file. You should rename to something else, in case you want to examine it later
 - In the same directory, you might be able to see a directory called **.backups**
-- If **.backups** is not visible, then it is hidden. (On many Linux/BSD system, pressing **CTRL + H** will reveal hidden folders)
+- If **.backups** is not visible, then it is hidden. (On many Linux and BSD systems, pressing **CTRL + H** will reveal hidden folders)
 - Inside the **.backups** directory, you'll find some backup copies of the database file
 - Choose the most recent one, copy it into the directory above, and rename the copy as **tartube.db**, replacing the old broken file
 - Restart **Tartube**
