@@ -176,6 +176,8 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
 - Install `Python 3 <https://www.python.org/downloads>`__ by downloading an installer, or with homebrew:
 
+        **brew install pkg-config**
+
         **brew install python**
 
 - Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
