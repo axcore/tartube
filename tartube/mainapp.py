@@ -2278,7 +2278,10 @@ class TartubeApp(Gtk.Application):
             ):
                 config_dir = self.config_file_dir
 
-            if config_dir is not None and not self.make_directory(config_dir):
+            # The True argument prevents the function showing a dialogue window
+            #   of its own
+            if config_dir is not None \
+            and not self.make_directory(config_dir, True):
 
                 # Can't use an ordinary message dialogue without a parent
                 #   window, and most users won't see a message in the terminal,
@@ -6348,7 +6351,7 @@ class TartubeApp(Gtk.Application):
             print('FILE ERROR: ' + msg)
 
 
-    def make_directory(self, dir_path):
+    def make_directory(self, dir_path, no_win_flag=False):
 
         """Can be called by anything.
 
@@ -6362,6 +6365,9 @@ class TartubeApp(Gtk.Application):
 
             dir_path (str): The path to the directory to be created with a
                 call to os.makedirs()
+
+            no_win_flag (bool): If True, do not show a dialogue window on
+                failure
 
         Returns:
 
@@ -6380,12 +6386,21 @@ class TartubeApp(Gtk.Application):
 
             # The True argument tells the dialogue window that it's an
             #   unwriteable directory
-            dialogue_win = mainwin.MountDriveDialogue(self.main_win_obj, True)
-            dialogue_win.run()
-            available_flag = dialogue_win.available_flag
-            dialogue_win.destroy()
+            if not no_win_flag:
 
-            return available_flag
+                dialogue_win = mainwin.MountDriveDialogue(
+                    self.main_win_obj,
+                    True,
+                )
+                dialogue_win.run()
+                available_flag = dialogue_win.available_flag
+                dialogue_win.destroy()
+
+                return available_flag
+
+            else:
+
+                return False
 
 
     def move_backup_files(self):
@@ -6405,7 +6420,12 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 6128 move_backup_files')
 
-        for filename in os.listdir(path=self.data_dir):
+        try:
+            file_list = os.listdir(path=self.data_dir)
+        except:
+            return
+
+        for filename in file_list:
             if re.search(r'^tartube_BU_.*\.db$', filename):
 
                 old_path = os.path.abspath(
@@ -9093,7 +9113,9 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = channel_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            self.make_directory(dir_path)
+            # The True argument prevents the function showing a dialogue window
+            #   for the database on failure
+            self.make_directory(dir_path, True)
 
         return channel_obj
 
@@ -9182,7 +9204,9 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = playlist_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            self.make_directory(dir_path)
+            # The True argument prevents the function showing a dialogue window
+            #   for the database on failure
+            self.make_directory(dir_path, True)
 
         # Procedure complete
         return playlist_obj
@@ -9274,7 +9298,9 @@ class TartubeApp(Gtk.Application):
         # Obviously don't do that for private folders
         dir_path = folder_obj.get_default_dir(self)
         if not folder_obj.priv_flag and not os.path.exists(dir_path):
-            self.make_directory(dir_path)
+            # The True argument prevents the function showing a dialogue window
+            #   for the database on failure
+            self.make_directory(dir_path, True)
 
         # Procedure complete
         return folder_obj
@@ -12426,7 +12452,7 @@ class TartubeApp(Gtk.Application):
         #
         #       display_name
         #               - the media data object's name, indented for display
-        #                   in mainwin.ImportDialogueWin
+        #                   in mainwin.ImportDialogue
         #       video_count
         #               - the number of videos this media data object contains
         #       import_flag
@@ -12986,8 +13012,10 @@ class TartubeApp(Gtk.Application):
                     #   exists in our database. Rename it if the user wants
                     #   that, or if the two have different source URLs
                     if not merge_duplicates_flag \
-                    or old_obj.source != mini_dict['source']:
-
+                    or (
+                        not isinstance(old_obj, media.Folder) \
+                        and old_obj.source != mini_dict['source']
+                    ):
                         # Rename the imported channel/playlist/folder
                         mini_dict['name'] = self.rename_imported_container(
                             mini_dict['name'],

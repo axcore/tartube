@@ -8484,7 +8484,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 1, 1, 1,
         )
         # Signal connect appears below
-
+        
         if platform.system() != 'Windows' and platform.system != 'Darwin':
             text = 'Show a desktop notification at the end of a download' \
             + '/update/refresh/info/tidy operation'

@@ -284,7 +284,11 @@ class RefreshManager(threading.Thread):
         dir_path = media_data_obj.get_default_dir(self.app_obj)
 
         # Get a list of video files in the sub-directory
-        init_list = os.listdir(dir_path)
+        try:
+            init_list = os.listdir(dir_path)
+        except:
+            # Can't read the directory
+            return
 
         # From this list, filter out files without a recognised file extension
         #   (.mp4, .webm, etc)
@@ -552,7 +556,11 @@ class RefreshManager(threading.Thread):
         dir_path = media_data_obj.get_actual_dir(self.app_obj)
 
         # Get a list of video files in that sub-directory
-        init_list = os.listdir(dir_path)
+        try:
+            init_list = os.listdir(dir_path)
+        except:
+            # Can't read the directory
+            return
 
         # Now check each media.Video object, to see if the video file still
         #   exists (or not)

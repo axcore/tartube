@@ -19681,7 +19681,7 @@ class ImportDialogue(Gtk.Dialog):
             if mini_dict['video_count'] == 1:
                 text += '   [ ' + _('1 video') + ' ]'
             elif mini_dict['video_count']:
-                text += '   [ '
+                text += '   [ ' \
                 + _('{0} videos').format(str(mini_dict['video_count'])) + ' ]'
 
             self.liststore.append( [True, pixbuf, text, mini_dict['dbid']] )
