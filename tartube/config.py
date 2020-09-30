@@ -32,6 +32,7 @@ import os
 
 # Import our modules
 import __main__
+import downloads
 import formats
 import mainapp
 import mainwin
@@ -95,8 +96,8 @@ class GenericConfigWin(Gtk.Window):
         self.show_all()
 
         # Inform the main window of this window's birth (so that Tartube
-        #   doesn't allow a download/update/refresh/info/tidy operation to
-        #   start until all configuration windows have closed)
+        #   doesn't allow an operation to start until all configuration windows
+        #   have closed)
         self.app_obj.main_win_obj.add_child_window(self)
         # Add a callback so we can inform the main window of this window's
         #   destruction
@@ -2211,8 +2212,8 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_label(grid,
             _(
-            'Extra youtube-dl command line options (e.g. --help; do not use' \
-            + ' -o or --output)',
+            'Extra command line options (e.g. --help; do not use -o or' \
+            + ' --output)',
             ),
             0, 3, 2, 1,
         )
@@ -2337,7 +2338,7 @@ class OptionsEditWin(GenericEditWin):
         # Signal connect appears below
 
         self.add_label(grid,
-            _('youtube-dl file output template'),
+            _('File output template'),
             0, 3, grid_width, 1,
         )
 
@@ -2397,7 +2398,7 @@ class OptionsEditWin(GenericEditWin):
             _('Video format'),
             [
                 'format',           _('Video format'),
-                'format_id',        _('youtube-dl format code'),
+                'format_id',        _('Video format code'),
                 'width',            _('Video width'),
                 'height',           _('Video height'),
                 'resolution',       _('Video resolution'),
@@ -2564,38 +2565,80 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Write files'),
+            _('_Write/move files'),
             inner_notebook,
         )
 
+        grid_width = 2
+
         # Write other files options
         self.add_label(grid,
-            '<u>' + _('Write other file options') + '</u>',
-            0, 0, 1, 1,
+            '<u>' + _('File write options') + '</u>',
+            0, 0, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             _('Write video\'s description to a .description file'),
             'write_description',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             _('Write video\'s metadata to an .info.json file'),
             'write_info',
-            0, 2, 1, 1,
+            0, 2, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Write video\'s annotations to an .annotations.xml file'),
+            _(
+            'Write video\'s annotations to an .annotations.xml file',
+            ),
             'write_annotations',
-            0, 3, 1, 1,
+            0, 3, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+            'Annotations are not downloaded when checking videos/channels/' \
+            + 'playlists/folders'
+            ) + '</i>',
+            1, 4, 1, 1,
         )
 
         self.add_checkbutton(grid,
             _('Write the video\'s thumbnail to the same folder'),
             'write_thumbnail',
-            0, 4, 1, 1,
+            0, 5, grid_width, 1,
+        )
+
+        # File move options
+        self.add_label(grid,
+            '<u>' + _('File move options') + '</u>',
+            0, 6, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            _('Move video\'s description file into a sub-folder'),
+            'move_description',
+            0, 7, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            _('Write video\'s metadata file into a sub-folder'),
+            'move_info',
+            0, 8, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            _('Write video\'s annotations file into a sub-folder'),
+            'move_annotations',
+            0, 9, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
+            _('Write the video\'s thumbnail into a sub-folder'),
+            'move_thumbnail',
+            0, 10, grid_width, 1,
         )
 
 
@@ -2846,8 +2889,8 @@ class OptionsEditWin(GenericEditWin):
             extra_row = 1
             self.add_label(grid,
                 '<i>' + _(
-                    'Multiple formats will not be downloaded, because' \
-                    + ' youtube-dl is creating an archive file'
+                    'Multiple formats will not be downloaded, because an' \
+                    + ' archive file will be created'
                 ) + '\n' + _(
                     'The archive file can be disabled in the System' \
                     ' Preferences window',
@@ -3168,7 +3211,7 @@ class OptionsEditWin(GenericEditWin):
         Sets up the 'Post-processing' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('_Post-process'))
+        tab, grid = self.add_notebook_tab(_('_Post-processing'))
         grid_width = 2
         grid.set_column_homogeneous(True)
 
@@ -3187,7 +3230,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         button = self.add_checkbutton(grid,
-            _('Prefer avconv over ffmpeg'),
+            _('Prefer AVConv over FFmpeg'),
             'prefer_avconv',
             0, 2, 1, 1,
         )
@@ -3195,7 +3238,7 @@ class OptionsEditWin(GenericEditWin):
             button.set_sensitive(False)
 
         button2 = self.add_checkbutton(grid,
-            _('Prefer ffmpeg over avconv (default)'),
+            _('Prefer FFmpeg over AVConv (default)'),
             'prefer_ffmpeg',
             1, 2, 1, 1,
         )
@@ -3742,7 +3785,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_label(grid,
-            _('Custom user agent for youtube-dl'),
+            _('Custom user agent'),
             0, 17, 1, 1,
         )
 
@@ -3930,7 +3973,7 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_label(grid,
             '<i>' + _(
-                'youtube-dl treats channels and playlists the same way, so' \
+                'Channels and playlists are handled in the same way, so' \
                 + ' these options can be used with both',
             ) + '</i>',
             0, (row_count + 1), grid_width, 1,
@@ -6060,8 +6103,9 @@ class SystemPrefWin(GenericPrefWin):
         app_obj (mainapp.TartubeApp): The main application object
 
         init_mode (str): 'db' to automatically open the tab with options for
-            switching the Tartube database, 'live' to automatically open the
-            tab with livestream options. Any other value is ignored
+            switching the Tartube database, 'paths' to automatically open the
+            tab with youtube-dl paths, 'live' to automatically open the tab
+            with livestream options. Any other value is ignored
 
     """
 
@@ -6113,6 +6157,8 @@ class SystemPrefWin(GenericPrefWin):
         if init_mode is not None:
             if init_mode == 'db':
                 self.select_switch_db_tab()
+            elif init_mode == 'paths':
+                self.select_paths_tab()
             elif init_mode == 'live':
                 self.select_livestream_tab()
 
@@ -6148,6 +6194,17 @@ class SystemPrefWin(GenericPrefWin):
 
         self.notebook.set_current_page(1)
         self.filesystem_inner_notebook.set_current_page(1)
+
+
+    def select_paths_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set youtube-dl
+        options.
+        """
+
+        self.notebook.set_current_page(5)
 
 
     def select_livestream_tab(self):
@@ -6200,6 +6257,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_general_stability_tab(inner_notebook)
         self.setup_general_modules_tab(inner_notebook)
         self.setup_general_video_matching_tab(inner_notebook)
+        self.setup_general_debug_tab(inner_notebook)
 
 
     def setup_general_language_tab(self, inner_notebook):
@@ -6477,7 +6535,7 @@ class SystemPrefWin(GenericPrefWin):
 
         grid_width = 2
 
-       # Video matching preferences
+        # Video matching preferences
         self.add_label(grid,
             '<u>' + _('Video matching preferences') + '</u>',
             0, 0, grid_width, 1,
@@ -6546,6 +6604,111 @@ class SystemPrefWin(GenericPrefWin):
         self.spinbutton2.connect(
             'value-changed',
             self.on_match_spinbutton_changed,
+        )
+
+
+    def setup_general_debug_tab(self, inner_notebook):
+
+        """Called by self.setup_general_tab().
+
+        Sets up the 'Debug' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Debugging'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # Debugging preferences
+        self.add_label(grid,
+            '<u>' + _('Debugging preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+            'Debug messages are only visible in the terminal window. These' \
+            + ' settings are not saved',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Enable application debug messages (code in mainapp.py)'),
+            mainapp.DEBUG_FUNC_FLAG,
+            True,                   # Can be toggled by user
+            0, 2, grid_width, 1,
+        )
+        checkbutton.set_active(mainapp.DEBUG_FUNC_FLAG)
+        # (signal_connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('...but don\'t show timer debug messages'),
+            mainapp.DEBUG_NO_TIMER_FUNC_FLAG,
+            True,                   # Can be toggled by user
+            1, 3, 1, 1,
+        )
+        checkbutton2.set_active(mainapp.DEBUG_NO_TIMER_FUNC_FLAG)
+        if not mainapp.DEBUG_FUNC_FLAG:
+            checkbutton2.set_sensitive(False)
+        # (signal_connect appears below)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Enable main winddow debug messages (code in mainwin.py)'),
+            mainwin.DEBUG_FUNC_FLAG,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton3.set_active(mainwin.DEBUG_FUNC_FLAG)
+        # (signal_connect appears below)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _('...but don\'t show timer debug messages'),
+            mainwin.DEBUG_NO_TIMER_FUNC_FLAG,
+            True,                   # Can be toggled by user
+            1, 5, 1, 1,
+        )
+        checkbutton4.set_active(mainwin.DEBUG_NO_TIMER_FUNC_FLAG)
+        if not mainwin.DEBUG_FUNC_FLAG:
+            checkbutton4.set_sensitive(False)
+        # (signal_connect appears below)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Enabled downloader debug messages (code in downloads.py)'),
+            downloads.DEBUG_FUNC_FLAG,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        checkbutton5.set_active(downloads.DEBUG_FUNC_FLAG)
+        # (signal_connect appears below)
+
+        # (signal_connects from above)
+        checkbutton.connect(
+            'toggled', self.on_system_debug_toggled,
+            'main_app',
+            checkbutton2,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_system_debug_toggled,
+            'main_app_no_timer',
+        )
+        checkbutton3.connect(
+            'toggled', self.on_system_debug_toggled,
+            'main_win',
+            checkbutton4,
+        )
+        checkbutton4.connect(
+            'toggled',
+            self.on_system_debug_toggled,
+            'main_win_no_timer',
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_system_debug_toggled,
+            'downloads',
         )
 
 
@@ -7494,15 +7657,14 @@ class SystemPrefWin(GenericPrefWin):
             self.on_operation_warning_button_toggled,
         )
 
-        # youtube-dl error/warning preferences
+        # Downloader error/warning preferences
         self.add_label(grid,
-            '<u>' + _('youtube-dl error/warning preferences') + '</u>',
+            '<u>' + _('Downloader error/warning preferences') + '</u>',
             0, 3, 1, 1,
         )
 
         translate_note = _(
-            'TRANSLATOR\'S NOTE: These youtube-dl error messages are always' \
-            + ' in English',
+            'TRANSLATOR\'S NOTE: These error messages are always in English',
         )
 
         checkbutton5 = self.add_checkbutton(grid,
@@ -7694,8 +7856,9 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, grid_width, 1,
         )
 
+        # 'Check all'
         self.add_label(grid,
-            _('Automatic \'Download all\' operations'),
+            _('Automatic \'Check all\' operations'),
             0, 1, 1, 1,
         )
 
@@ -7714,9 +7877,9 @@ class SystemPrefWin(GenericPrefWin):
         combo.add_attribute(renderer_text, 'text', 1)
         combo.set_entry_text_column(1)
 
-        if self.app_obj.scheduled_dl_mode == 'start':
+        if self.app_obj.scheduled_check_mode == 'start':
             combo.set_active(1)
-        elif self.app_obj.scheduled_dl_mode == 'scheduled':
+        elif self.app_obj.scheduled_check_mode == 'scheduled':
             combo.set_active(2)
         else:
             combo.set_active(0)
@@ -7728,11 +7891,11 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         spinbutton = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.scheduled_dl_wait_value,
+            1, 999, 1, self.app_obj.scheduled_check_wait_value,
             1, 2, 1, 1,
         )
-        if self.app_obj.scheduled_dl_mode != 'scheduled':
-             spinbutton.set_sensitive(False)
+        if self.app_obj.scheduled_check_mode != 'scheduled':
+            spinbutton.set_sensitive(False)
         # Signal connect appears below
 
         store2 = Gtk.ListStore(str, str)
@@ -7748,15 +7911,16 @@ class SystemPrefWin(GenericPrefWin):
         combo2.set_entry_text_column(1)
         combo2.set_active(
             formats.TIME_METRIC_LIST.index(
-                self.app_obj.scheduled_dl_wait_unit,
+                self.app_obj.scheduled_check_wait_unit,
             )
         )
-        if self.app_obj.scheduled_dl_mode != 'scheduled':
+        if self.app_obj.scheduled_check_mode != 'scheduled':
             combo2.set_sensitive(False)
         # Signal connect appears below
 
+        # 'Download all'
         self.add_label(grid,
-            _('Automatic \'Check all\' operations'),
+            _('Automatic \'Download all\' operations'),
             0, 3, 1, 1,
         )
 
@@ -7775,9 +7939,9 @@ class SystemPrefWin(GenericPrefWin):
         combo3.add_attribute(renderer_text, 'text', 1)
         combo3.set_entry_text_column(1)
 
-        if self.app_obj.scheduled_check_mode == 'start':
+        if self.app_obj.scheduled_dl_mode == 'start':
             combo3.set_active(1)
-        elif self.app_obj.scheduled_check_mode == 'scheduled':
+        elif self.app_obj.scheduled_dl_mode == 'scheduled':
             combo3.set_active(2)
         else:
             combo3.set_active(0)
@@ -7789,11 +7953,11 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         spinbutton2 = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.scheduled_check_wait_value,
+            1, 999, 1, self.app_obj.scheduled_dl_wait_value,
             1, 4, 1, 1,
         )
-        if self.app_obj.scheduled_check_mode != 'scheduled':
-            spinbutton2.set_sensitive(False)
+        if self.app_obj.scheduled_dl_mode != 'scheduled':
+             spinbutton2.set_sensitive(False)
         # Signal connect appears below
 
         store4 = Gtk.ListStore(str, str)
@@ -7809,43 +7973,121 @@ class SystemPrefWin(GenericPrefWin):
         combo4.set_entry_text_column(1)
         combo4.set_active(
             formats.TIME_METRIC_LIST.index(
-                self.app_obj.scheduled_check_wait_unit,
+                self.app_obj.scheduled_dl_wait_unit,
             )
         )
-        if self.app_obj.scheduled_check_mode != 'scheduled':
+        if self.app_obj.scheduled_dl_mode != 'scheduled':
             combo4.set_sensitive(False)
+        # Signal connect appears below
+
+        # Custom 'Download all'
+        self.add_label(grid,
+            _('Automatic custom \'Download all\' operations'),
+            0, 5, 1, 1,
+        )
+
+        store5 = Gtk.ListStore(str, str)
+
+        store5.append( ['none', _('Disabled')] )
+        store5.append( ['start', _('Performed when Tartube starts')] )
+        store5.append( ['scheduled', _('Performed at regular intervals')] )
+
+        combo5 = Gtk.ComboBox.new_with_model(store5)
+        grid.attach(combo5, 1, 5, 2, 1)
+        combo5.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo5.pack_start(renderer_text, True)
+        combo5.add_attribute(renderer_text, 'text', 1)
+        combo5.set_entry_text_column(1)
+
+        if self.app_obj.scheduled_custom_mode == 'start':
+            combo5.set_active(1)
+        elif self.app_obj.scheduled_custom_mode == 'scheduled':
+            combo5.set_active(2)
+        else:
+            combo5.set_active(0)
+        # Signal connect appears below
+
+        self.add_label(grid,
+            _('Time (in hours) between operations'),
+            0, 6, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, 999, 1, self.app_obj.scheduled_custom_wait_value,
+            1, 6, 1, 1,
+        )
+        if self.app_obj.scheduled_custom_mode != 'scheduled':
+             spinbutton3.set_sensitive(False)
+        # Signal connect appears below
+
+        store6 = Gtk.ListStore(str, str)
+        for string in formats.TIME_METRIC_LIST:
+            store6.append( [string, formats.TIME_METRIC_TRANS_DICT[string]] )
+
+        combo6 = Gtk.ComboBox.new_with_model(store6)
+        grid.attach(combo6, 2, 6, 1, 1)
+
+        renderer_text = Gtk.CellRendererText()
+        combo6.pack_start(renderer_text, True)
+        combo6.add_attribute(renderer_text, 'text', 1)
+        combo6.set_entry_text_column(1)
+        combo6.set_active(
+            formats.TIME_METRIC_LIST.index(
+                self.app_obj.scheduled_custom_wait_unit,
+            )
+        )
+        if self.app_obj.scheduled_custom_mode != 'scheduled':
+            combo6.set_sensitive(False)
         # Signal connect appears below
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'After an automatic \'Download/Check all\' operation, shut down' \
-            + ' Tartube',
+            'After an automatic operation, shut down Tartube',
             ),
             self.app_obj.scheduled_shutdown_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
         # Signal connects from above
         combo.connect(
             'changed',
-            self.on_dl_mode_combo_changed,
-            spinbutton, combo2,
-        )
-        spinbutton.connect('value-changed', self.on_dl_wait_spinbutton_changed)
-        combo2.connect('changed', self.on_dl_wait_combo_changed)
-
-        combo3.connect(
-            'changed',
             self.on_check_mode_combo_changed,
-            spinbutton2,
-            combo4,
+            spinbutton,
+            combo2,
         )
-        spinbutton2.connect(
+        spinbutton.connect(
             'value-changed',
             self.on_check_wait_spinbutton_changed,
         )
-        combo4.connect('changed', self.on_check_wait_combo_changed)
+        combo2.connect('changed', self.on_check_wait_combo_changed)
+
+
+
+
+        combo3.connect(
+            'changed',
+            self.on_dl_mode_combo_changed,
+            spinbutton2, combo4,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_dl_wait_spinbutton_changed,
+        )
+        combo4.connect('changed', self.on_dl_wait_combo_changed)
+
+        combo5.connect(
+            'changed',
+            self.on_custom_mode_combo_changed,
+            spinbutton3, combo6,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_custom_wait_spinbutton_changed,
+        )
+        combo6.connect('changed', self.on_custom_wait_combo_changed)
 
         checkbutton.connect('toggled', self.on_scheduled_stop_button_toggled)
 
@@ -8037,7 +8279,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'Automatically update youtube-dl before every download operation',
+            'Automatically update downloader before every download operation',
             ),
             self.app_obj.operation_auto_update_flag,
             True,                   # Can be toggled by user
@@ -8049,8 +8291,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
-            'Automatically save files at the end of a download/update/' \
-            + 'refresh operation',
+            'Automatically save files at the end of all operations',
             ),
             self.app_obj.operation_save_flag,
             True,                   # Can be toggled by user
@@ -8079,6 +8320,36 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, 1, 1,
         )
         checkbutton4.connect('toggled', self.on_operation_sim_button_toggled)
+
+        # Invidious mirror
+        self.add_label(grid,
+            '<u>' + _('Invidious mirror') + '</u>',
+            0, 5, 1, 1,
+        )
+
+        self.add_label(grid,
+            _(
+                'To find an updated list of Invidious mirrors, use any' \
+                + ' search engine!',
+            ),
+            0, 6, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.custom_invidious_mirror,
+            True,
+            0, 7, 1, 1,
+        )
+        entry.connect('changed', self.on_invidious_mirror_changed)
+
+        msg = _('Type the exact text that replaces youtube.com e.g.')
+        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+
+        self.add_label(grid,
+            '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \
+            + '</b></i>',
+            0, 8, 1, 1,
+        )
 
 
     def setup_operations_custom_tab(self, inner_notebook):
@@ -8212,11 +8483,11 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.custom_dl_divert_mode == 'other':
             entry.set_sensitive(False)
 
+        msg = _('Type the exact text that replaces youtube.com e.g.')
+        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+
         self.add_label(grid,
-            _(
-            '<i>Type the exact text that replaces</i>' \
-            + '   <b>youtube.com</b>   <i>e.g.   </i><b>hooktube.com</b>',
-            ),
+            '<i>' + msg + '   <b>hooktube.com</b></i>',
             0, 10, grid_width, 1,
         )
 
@@ -8478,16 +8749,14 @@ class SystemPrefWin(GenericPrefWin):
         radiobutton = self.add_radiobutton(grid,
             None,
             _(
-            'Show a dialogue window at the end of a download/update/refresh/' \
-            + 'info/tidy operation',
+            'Show a dialogue window at the end of an operation',
             ),
             0, 1, 1, 1,
         )
         # Signal connect appears below
-        
+
         if platform.system() != 'Windows' and platform.system != 'Darwin':
-            text = 'Show a desktop notification at the end of a download' \
-            + '/update/refresh/info/tidy operation'
+            text = 'Show a desktop notification at the end of an operation'
         else:
             text = 'Show a desktop notification (Linux/*BSD only)'
 
@@ -8505,8 +8774,7 @@ class SystemPrefWin(GenericPrefWin):
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
             _(
-            'Don\'t notify the user at the end of a download/update/refresh/' \
-            + 'info/tidy operation',
+            'Don\'t notify the user at the end of an operation',
             ),
             0, 3, 1, 1,
         )
@@ -8764,7 +9032,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab('_youtube-dl')
+        tab, grid = self.add_notebook_tab('_' + self.app_obj.get_downloader())
 
         # ...and an inner notebook...
         self.operations_inner_notebook = self.add_inner_notebook(grid)
@@ -8772,6 +9040,7 @@ class SystemPrefWin(GenericPrefWin):
         # ...with its own tabs
         self.setup_ytdl_file_paths_tab(self.operations_inner_notebook)
         self.setup_ytdl_prefs_tab(self.operations_inner_notebook)
+        self.setup_ytdl_ffmpeg_tab(self.operations_inner_notebook)
 
 
     def setup_ytdl_file_paths_tab(self, inner_notebook):
@@ -8793,36 +9062,10 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, grid_width, 1,
         )
 
-
-        label = self.add_label(grid,
-            _('youtube-dl executable (system-dependent)'),
+        # youtube-dl file paths
+        self.add_label(grid,
+            _('Path to youtube-dl executable'),
             0, 1, 1, 1,
-        )
-
-        entry = self.add_entry(grid,
-            self.app_obj.ytdl_bin,
-            False,
-            1, 1, (grid_width - 1), 1,
-        )
-        entry.set_sensitive(True)
-        entry.set_editable(False)
-
-        label2 = self.add_label(grid,
-            _('Default path to youtube-dl executable'),
-            0, 2, 1, 1,
-        )
-
-        entry2 = self.add_entry(grid,
-            self.app_obj.ytdl_path_default,
-            False,
-            1, 2, (grid_width - 1), 1,
-        )
-        entry2.set_sensitive(True)
-        entry2.set_editable(False)
-
-        label3 = self.add_label(grid,
-            _('Actual path to use'),
-            0, 3, 1, 1,
         )
 
         combo_list = [
@@ -8851,24 +9094,22 @@ class SystemPrefWin(GenericPrefWin):
             store.append( [ mini_list[0], mini_list[1] ] )
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 3, (grid_width - 1), 1)
+        grid.attach(combo, 1, 1, (grid_width - 1), 1)
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 0)
         combo.set_entry_text_column(0)
-
         if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
             combo.set_active(0)
         elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_pypi:
             combo.set_active(2)
         else:
             combo.set_active(1)
+        # (signal_connect appears below)
 
-        combo.connect('changed', self.on_ytdl_path_combo_changed)
-
-        label4 = self.add_label(grid,
-            _('Shell command for update operations'),
-            0, 4, 1, 1,
+        self.add_label(grid,
+            _('Command for update operations'),
+            0, 2, 1, 1,
         )
 
         store2 = Gtk.ListStore(str, str)
@@ -8876,7 +9117,7 @@ class SystemPrefWin(GenericPrefWin):
             store2.append( [item, formats.YTDL_UPDATE_DICT[item]] )
 
         combo2 = Gtk.ComboBox.new_with_model(store2)
-        grid.attach(combo2, 1, 4, (grid_width - 1), 1)
+        grid.attach(combo2, 1, 2, (grid_width - 1), 1)
 
         renderer_text = Gtk.CellRendererText()
         combo2.pack_start(renderer_text, True)
@@ -8888,9 +9129,46 @@ class SystemPrefWin(GenericPrefWin):
                 self.app_obj.ytdl_update_current,
             ),
         )
-        combo2.connect('changed', self.on_update_combo_changed)
         if __main__.__pkg_strict_install_flag__:
             combo2.set_sensitive(False)
+        # (signal_connect appears below)
+
+        # Update the combos, so that the youtube-dl fork, rather than
+        #   youtube-dl itself, is visible (if applicable)
+        self.update_ytdl_combos(store, store2)
+
+        # (signal_connects from above)
+        combo.connect('changed', self.on_ytdl_path_combo_changed)
+        combo2.connect('changed', self.on_update_combo_changed)
+
+        # youtube-dl forks
+        self.add_label(grid,
+            '<u>' + _('youtube-dl forks') + '</u>',
+            0, 3, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('Use this fork of youtube-dl'),
+            0, 4, 1, 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            self.app_obj.ytdl_fork,
+            True,
+            1, 4, (grid_width - 1), 1,
+        )
+        entry3.set_sensitive(True)
+        entry3.connect('changed', self.on_ytdl_fork_changed, store, store2)
+
+        self.add_label(grid,
+            '<i>'
+            + _(
+                'If you specify a fork (e.g. youtube-dlc), it must be very' \
+                + ' similar to the original youtube-dl' \
+                + '\nTo use the original youtube-dl, leave the box empty',
+            ) + '</i>',
+            0, 5, grid_width, 1,
+        )
 
 
     def setup_ytdl_prefs_tab(self, inner_notebook):
@@ -8904,50 +9182,12 @@ class SystemPrefWin(GenericPrefWin):
             _('_Preferences'),
             inner_notebook,
         )
-        grid_width = 3
-
-        # Post-processing preferences
-        self.add_label(grid,
-            '<u>' + _('Post-processing preferences') + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            _('Path to the ffmpeg/avconv binary'),
-            0, 1, 1, 1,
-        )
-
-        button = Gtk.Button(_('Set'))
-        grid.attach(button, 1, 1, 1, 1)
-        # (signal_connect appears below)
-
-        button2 = Gtk.Button(_('Reset'))
-        grid.attach(button2, 2, 1, 1, 1)
-        # (signal_connect appears below)
-
-        entry = self.add_entry(grid,
-            self.app_obj.ffmpeg_path,
-            False,
-            0, 2, grid_width, 1,
-        )
-        entry.set_sensitive(True)
-        entry.set_editable(False)
-        entry.set_hexpand(True)
-
-        if os.name == 'nt':
-            entry.set_sensitive(False)
-            entry.set_text(_('Install from main menu'))
-            button.set_sensitive(False)
-            button2.set_sensitive(False)
-
-        # (signal_connects from above)
-        button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry)
-        button2.connect('clicked', self.on_reset_ffmpeg_button_clicked, entry)
+        grid_width = 2
 
         # Missing video preferences
         self.add_label(grid,
             '<u>' + _('Missing video preferences') + '</u>',
-            0, 3, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         checkbutton4 = self.add_checkbutton(grid,
@@ -8957,7 +9197,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.track_missing_videos_flag,
             True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
+            0, 1, grid_width, 1,
         )
         # (signal_connect appears below)
 
@@ -8967,7 +9207,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.track_missing_time_flag,
             True,                   # Can be toggled by user
-            0, 5, 2, 1,
+            0, 2, 1, 1,
         )
         if not self.app_obj.track_missing_videos_flag:
             checkbutton5.set_sensitive(False)
@@ -8978,7 +9218,7 @@ class SystemPrefWin(GenericPrefWin):
             365,
             1,                  # Step
             self.app_obj.track_missing_time_days,
-            1, 5, 2, 1,
+            1, 2, 1, 1,
         )
         if not self.app_obj.track_missing_videos_flag \
         or not self.app_obj.track_missing_time_flag:
@@ -9005,17 +9245,17 @@ class SystemPrefWin(GenericPrefWin):
         # Other preferences
         self.add_label(grid,
             '<u>' + _('Other preferences') + '</u>',
-            0, 6, grid_width, 1,
+            0, 3, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'Allow youtube-dl to create its own archive file (so deleted' \
+            'Allow downloader to create its own archive file (so deleted' \
             + ' videos are not re-downloaded)',
             ),
             self.app_obj.allow_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 4, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_archive_button_toggled)
 
@@ -9026,7 +9266,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 5, grid_width, 1,
         )
         checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
 
@@ -9036,9 +9276,131 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         checkbutton3.connect('toggled', self.on_json_button_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Convert .webp thumbnails into .jpg thumbnails (using FFmpeg)' \
+            + ' after downloading them',
+            ),
+            self.app_obj.ffmpeg_convert_webp_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
+        )
+        checkbutton4.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
+
+
+    def setup_ytdl_ffmpeg_tab(self, inner_notebook):
+
+        """Called by self.setup_ytdl_tab().
+
+        Sets up the 'Preferences' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_FFmpeg / AVConv'),
+            inner_notebook,
+        )
+
+        grid_width = 4
+
+        # Post-processing preferences
+        self.add_label(grid,
+            '<u>' + _('Post-processing preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+        self.add_label(grid,
+            '<i>' + _(
+            'You only need to set these paths if Tartube cannot find' \
+            + ' FFmpeg / AVConv automatically'
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('Path to the FFmpeg executable'),
+            0, 2, 1, 1,
+        )
+
+        button = Gtk.Button(_('Set'))
+        grid.attach(button, 1, 2, 1, 1)
+        # (signal_connect appears below)
+
+        button2 = Gtk.Button(_('Reset'))
+        grid.attach(button2, 2, 2, 1, 1)
+        # (signal_connect appears below)
+
+        button3 = Gtk.Button(_('Use default path'))
+        grid.attach(button3, 3, 2, 1, 1)
+        # (signal_connect appears below)
+
+        entry = self.add_entry(grid,
+            self.app_obj.ffmpeg_path,
+            False,
+            0, 3, grid_width, 1,
+        )
+        entry.set_sensitive(False)
+        entry.set_editable(False)
+        entry.set_hexpand(True)
+
+        if os.name == 'nt':
+            entry.set_sensitive(False)
+            entry.set_text(_('Install from main menu'))
+            button.set_sensitive(False)
+            button2.set_sensitive(False)
+            button3.set_sensitive(False)
+
+        # (signal_connects from above)
+        button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry)
+        button2.connect('clicked', self.on_reset_ffmpeg_button_clicked, entry)
+        button3.connect(
+            'clicked',
+            self.on_default_ffmpeg_button_clicked, entry,
+        )
+
+        self.add_label(grid,
+            _('Path to the AVConv executable'),
+            0, 4, 1, 1,
+        )
+
+        button4 = Gtk.Button(_('Set'))
+        grid.attach(button4, 1, 4, 1, 1)
+        # (signal_connect appears below)
+
+        button5 = Gtk.Button(_('Reset'))
+        grid.attach(button5, 2, 4, 1, 1)
+        # (signal_connect appears below)
+
+        button6 = Gtk.Button(_('Use default path'))
+        grid.attach(button6, 3, 4, 1, 1)
+        # (signal_connect appears below)
+
+        entry2 = self.add_entry(grid,
+            self.app_obj.ffmpeg_path,
+            False,
+            0, 5, grid_width, 1,
+        )
+        entry2.set_sensitive(False)
+        entry2.set_editable(False)
+        entry2.set_hexpand(True)
+
+        if os.name == 'nt':
+            entry2.set_sensitive(False)
+            entry2.set_text(_('Not supported on MS Windows'))
+            button4.set_sensitive(False)
+            button5.set_sensitive(False)
+            button6.set_sensitive(False)
+
+        # (signal_connects from above)
+        button4.connect('clicked', self.on_set_avconv_button_clicked, entry2)
+        button5.connect('clicked', self.on_reset_avconv_button_clicked, entry2)
+        button6.connect(
+            'clicked',
+            self.on_default_avconv_button_clicked,
+            entry2,
+        )
 
 
     def setup_output_tab(self):
@@ -9079,7 +9441,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Display youtube-dl system commands in the Output Tab'),
+            _('Display downloader system commands in the Output Tab'),
             self.app_obj.ytdl_output_system_cmd_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
@@ -9088,7 +9450,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_output_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Display output from youtube-dl\'s STDOUT in the Output Tab'),
+            _('Display output from downloader\'s STDOUT in the Output Tab'),
             self.app_obj.ytdl_output_stdout_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
@@ -9127,7 +9489,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Display output from youtube-dl\'s STDERR in the Output Tab'),
+            _('Display output from downloader\'s STDERR in the Output Tab'),
             self.app_obj.ytdl_output_stderr_flag,
             True,               # Can be toggled by user
             0, 5, 1, 1,
@@ -9158,35 +9520,46 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton8 = self.add_checkbutton(grid,
             _(
+            'During an update operation, automatically switch to the Output' \
+            + ' tab',
+            ),
+            self.app_obj.auto_switch_output_flag,
+            True,                   # Can be toggled by user
+            0, 8, 1, 1,
+        )
+        checkbutton8.connect('toggled', self.on_auto_switch_button_toggled)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            _(
             'During a refresh operation, show all matching videos in the' \
             + ' Output Tab',
             ),
             self.app_obj.refresh_output_videos_flag,
             True,               # Can be toggled by user
-            0, 8, 1, 1,
-        )
-        checkbutton8.set_hexpand(False)
-        # Signal connect appears below
-
-        checkbutton9 = self.add_checkbutton(grid,
-            _('...also show all non-matching videos'),
-            self.app_obj.refresh_output_verbose_flag,
-            True,               # Can be toggled by user
             0, 9, 1, 1,
         )
         checkbutton9.set_hexpand(False)
-        checkbutton9.connect(
+        # Signal connect appears below
+
+        checkbutton10 = self.add_checkbutton(grid,
+            _('...also show all non-matching videos'),
+            self.app_obj.refresh_output_verbose_flag,
+            True,               # Can be toggled by user
+            0, 10, 1, 1,
+        )
+        checkbutton10.set_hexpand(False)
+        checkbutton10.connect(
             'toggled',
             self.on_refresh_verbose_button_toggled,
         )
         if not self.app_obj.refresh_output_videos_flag:
-            checkbutton8.set_sensitive(False)
+            checkbutton9.set_sensitive(False)
 
         # Signal connect from above
-        checkbutton8.connect(
+        checkbutton9.connect(
             'toggled',
             self.on_refresh_videos_button_toggled,
-            checkbutton9,
+            checkbutton10,
         )
 
 
@@ -9209,7 +9582,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Write youtube-dl system commands to the terminal window'),
+            _('Write downloader system commands to the terminal window'),
             self.app_obj.ytdl_write_system_cmd_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
@@ -9218,7 +9591,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_terminal_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Write output from youtube-dl\'s STDOUT to the terminal window'),
+            _('Write output from downloader\'s STDOUT to the terminal window'),
             self.app_obj.ytdl_write_stdout_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
@@ -9260,7 +9633,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Write output from youtube-dl\'s STDERR to the terminal window'),
+            _('Write output from downloader\'s STDERR to the terminal window'),
             self.app_obj.ytdl_write_stderr_flag,
             True,               # Can be toggled by user
             0, 5, 1, 1,
@@ -9291,7 +9664,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Write verbose output (youtube-dl debugging mode)'),
+            _('Write verbose output (downloader debugging mode)'),
             self.app_obj.ytdl_write_verbose_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
@@ -9466,6 +9839,27 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
+
+
+    def on_auto_switch_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables automatically switching to the Output tab when an
+        update operation starts.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_switch_output_flag:
+            self.app_obj.set_auto_switch_output_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_switch_output_flag:
+            self.app_obj.set_auto_switch_output_flag(False)
 
 
     def on_auto_update_button_toggled(self, checkbutton):
@@ -9980,25 +10374,65 @@ class SystemPrefWin(GenericPrefWin):
             entry.set_sensitive(False)
 
 
-    def on_custom_video_button_toggled(self, checkbutton):
+    def on_custom_mode_combo_changed(self, combo, spinbutton, combo2):
 
-        """Called from callback in self.setup_operations_custom_tab().
+        """Called from a callback in self.setup_scheduling_start_tab().
 
-        Enables/disables downloading videos independently of its channel/
-        playlist.
+        Extracts the value visible in the combobox, converts it into another
+        value, and uses that value to update the main application's IV.
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The widget clicked
+            combo (Gtk.ComboBox): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to be (de)sensitised
+
+            combo2 (Gtk.ComboBox): Another widget to be (de)sensitised
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.custom_dl_by_video_flag:
-            self.app_obj.set_custom_dl_by_video_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.custom_dl_by_video_flag:
-            self.app_obj.set_custom_dl_by_video_flag(False)
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_scheduled_custom_mode(model[tree_iter][0])
+        if self.app_obj.scheduled_custom_mode != 'scheduled':
+            spinbutton.set_sensitive(False)
+            combo2.set_sensitive(False)
+        else:
+            spinbutton.set_sensitive(True)
+            combo2.set_sensitive(True)
+
+
+    def on_custom_wait_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_scheduling_start_tab().
+
+        Sets the unit used by the time between scheduled downloads (real, not
+        simualated).
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_scheduled_custom_wait_unit(model[tree_iter][0])
+
+
+    def on_custom_wait_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_scheduling_start_tab().
+
+        Sets the interval between scheduled 'Download all' operations.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_scheduled_custom_wait_value(spinbutton.get_value())
 
 
     def on_custom_textview_changed(self, textbuffer):
@@ -10030,6 +10464,27 @@ class SystemPrefWin(GenericPrefWin):
 
         # Apply the changes
         self.app_obj.set_ignore_custom_msg_list(mod_list)
+
+
+    def on_custom_video_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_custom_tab().
+
+        Enables/disables downloading videos independently of its channel/
+        playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.custom_dl_by_video_flag:
+            self.app_obj.set_custom_dl_by_video_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.custom_dl_by_video_flag:
+            self.app_obj.set_custom_dl_by_video_flag(False)
 
 
     def on_data_block_button_toggled(self, checkbutton):
@@ -10481,6 +10936,42 @@ class SystemPrefWin(GenericPrefWin):
             self.try_switch_db(data_dir, button2)
 
 
+    def on_default_avconv_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+
+        Sets the path to the avconv binary to the default path.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_avconv_path(self.app_obj.default_avconv_path)
+        entry.set_text(self.app_obj.avconv_path)
+
+
+    def on_default_ffmpeg_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+
+        Sets the path to the ffmpeg binary to the default path.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_ffmpeg_path(self.app_obj.default_ffmpeg_path)
+        entry.set_text(self.app_obj.ffmpeg_path)
+
+
     def on_delay_max_spinbutton_changed(self, spinbutton, spinbutton2):
 
         """Called from callback in self.setup_operations_custom_tab().
@@ -10852,6 +11343,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_full_expand_video_index_flag(False)
 
 
+    def on_ffmpeg_convert_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_ytdl_prefs_tab().
+
+        Enables/disables conversion of .webp thumbnails into .jpg thumbnails.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ffmpeg_convert_webp_flag:
+            self.app_obj.set_ffmpeg_convert_webp_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ffmpeg_convert_webp_flag:
+            self.app_obj.set_ffmpeg_convert_webp_flag(False)
+
+
     def on_gtk_emulate_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_general_stability_tab().
@@ -10943,6 +11454,21 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_http_404_error_flag:
             self.app_obj.set_ignore_http_404_error_flag(False)
+
+
+    def on_invidious_mirror_changed(self, entry):
+
+        """Called from callback in self.setup_operations_custom_tab().
+
+        Sets the Invidious mirror to use.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+        """
+
+        self.app_obj.set_custom_invidious_mirror(entry.get_text())
 
 
     def on_json_button_toggled(self, checkbutton):
@@ -11821,9 +12347,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_main_win_save_size_flag(False)
 
 
+    def on_reset_avconv_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_ytdl_avconv_tab().
+
+        Resets the path to the avconv binary.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_avconv_path(None)
+        entry.set_text('')
+
+
     def on_reset_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_ytdl_ffmpeg_tab().
 
         Resets the path to the ffmpeg binary.
 
@@ -11945,9 +12489,46 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_scheduled_shutdown_flag(False)
 
 
+    def on_set_avconv_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+
+        Opens a window in which the user can select the avconv binary, if it is
+        installed (and if the user wants it).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        dialogue_win = Gtk.FileChooserDialog(
+            _('Please select the AVConv executable'),
+            self,
+            Gtk.FileChooserAction.OPEN,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+            ),
+        )
+
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK and new_path:
+
+            self.app_obj.set_avconv_path(new_path)
+            entry.set_text(self.app_obj.avconv_path)
+
+
     def on_set_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_ytdl_ffmpeg_tab().
 
         Opens a window in which the user can select the ffmpeg binary, if it is
         installed (and if the user wants it).
@@ -12130,6 +12711,53 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.toolbar_squeeze_flag:
             self.app_obj.set_toolbar_squeeze_flag(False)
+
+
+    def on_system_debug_toggled(self, checkbutton, debug_type, \
+    checkbutton2=None):
+
+        """Called from callback in self.setup_general_debug_tab().
+
+        Enables/disables system debug messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            debug_type (str): Which debug flag to set; one of the strings
+                'main_app', 'main_app_no_timer', 'main_win',
+                'main_win_no_timer', 'downloads'
+
+            checkbutton2 (Gtk.CheckButton or None): If specified, this
+                checkbutton is (de)sensitised, depending on the state of
+                the first checkbutton
+
+        """
+
+        flag = checkbutton.get_active()
+        if not flag:
+            flag = False
+        else:
+            flag = True
+
+        if debug_type == 'main_app':
+            mainapp.DEBUG_FUNC_FLAG = flag
+        elif debug_type == 'main_app_no_timer':
+            mainapp.DEBUG_NO_TIMER_FUNC_FLAG = flag
+        elif debug_type == 'main_win':
+            mainwin.DEBUG_FUNC_FLAG = flag
+        elif debug_type == 'main_win_no_timer':
+            mainwin.DEBUG_NO_TIMER_FUNC_FLAG = flag
+        elif debug_type == 'downloads':
+            downloads.DEBUG_FUNC_FLAG = flag
+
+        if checkbutton2:
+
+            if flag:
+                checkbutton2.set_sensitive(True)
+            else:
+                checkbutton2.set_active(False)
+                checkbutton2.set_sensitive(False)
 
 
     def on_system_error_button_toggled(self, checkbutton):
@@ -12514,6 +13142,30 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.main_win_obj.set_video_res(model[tree_iter][0])
 
 
+    def on_ytdl_fork_changed(self, entry, store, store2):
+
+        """Called from callback in self.setup_ytdl_file_paths_tab().
+
+        Sets the youtube-dl fork to use, instead of the original youtube-dl
+        itself.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+            store, store2 (Gtk.ListStore): The liststores to update
+
+        """
+
+        text = utils.strip_whitespace(entry.get_text())
+        if text == '':
+            self.app_obj.set_ytdl_fork(None)
+        else:
+            self.app_obj.set_ytdl_fork(text)
+
+        self.update_ytdl_combos(store, store2)
+
+
     def on_ytdl_path_combo_changed(self, combo):
 
         """Called from a callback in self.setup_ytdl_file_paths_tab().
@@ -12556,37 +13208,55 @@ class SystemPrefWin(GenericPrefWin):
         # Database file already exists, so try to load it now
         if not self.app_obj.switch_db([data_dir, self]):
 
-            # Load failed
-            if self.app_obj.disable_load_save_flag:
+            # Load failed, and the user chose to shut down Tartube
+            if self.app_obj.disable_load_save_lock_flag:
+
+                return self.app_obj.stop()
+
+            # Load failed for any other reason
+            elif self.app_obj.disable_load_save_flag:
+
                 button.set_sensitive(False)
 
-            if self.app_obj.disable_load_save_msg is not None:
+                if not self.app_obj.disable_load_save_lock_flag:
 
-                dialogue_win = dialogue_manager_obj.show_msg_dialogue(
-                    self.app_obj.disable_load_save_msg,
-                    'error',
-                    'ok',
-                    self,           # Parent window is this window
-                )
+                    if self.app_obj.disable_load_save_msg is not None:
 
+                        dialogue_win = dialogue_manager_obj.show_msg_dialogue(
+                            self.app_obj.disable_load_save_msg,
+                            'error',
+                            'ok',
+                            self,           # Parent window is this window
+                        )
+
+                    else:
+
+                        dialogue_win = dialogue_manager_obj.show_msg_dialogue(
+                            _('Database file not loaded'),
+                            'error',
+                            'ok',
+                            self,           # Parent window is this window
+                        )
+
+                # When load/save is disabled, this preference window can't be
+                #   opened
+                # Therefore, if load/save has just been disabled, close this
+                #   window after the dialogue window closes
+                dialogue_win.set_modal(True)
+                dialogue_win.run()
+                dialogue_win.destroy()
+                if self.app_obj.disable_load_save_flag:
+                    self.destroy()
+
+            # Load not attempted
             else:
 
                 dialogue_win = dialogue_manager_obj.show_msg_dialogue(
-                    _('Database file not loaded'),
+                    _('Did not try to load the database file'),
                     'error',
                     'ok',
                     self,           # Parent window is this window
                 )
-
-            # When load/save is disabled, this preference window can't be
-            #   opened
-            # Therefore, if load/save has just been disabled, close this
-            #   window after the dialogue window closes
-            dialogue_win.set_modal(True)
-            dialogue_win.run()
-            dialogue_win.destroy()
-            if self.app_obj.disable_load_save_flag:
-                self.destroy()
 
         else:
 
@@ -12612,3 +13282,69 @@ class SystemPrefWin(GenericPrefWin):
                     'ok',
                     self,           # Parent window is this window
                 )
+
+
+    def update_ytdl_combos(self, store, store2):
+
+        """Called initially by self.setup_ytdl_file_paths_tab(), then by
+        self.on_ytdl_fork_changed().
+
+        Updates the contents of the two comboboxes in the tab, so that the
+        youtube-dl fork is visible, rather than yotube-dl itself (if
+        applicable).
+
+        Args:
+
+            store, store2 (Gtk.ListStore): The liststores to update
+
+        """
+
+        fork = standard = 'youtube-dl'
+        if self.app_obj.ytdl_fork is not None:
+            fork = self.app_obj.ytdl_fork
+
+        ytdl_path_default = re.sub(
+            standard,
+            fork,
+            self.app_obj.ytdl_path_default,
+        )
+
+        # First combo: Path to the youtube-dl executable
+        store.set(
+            store.get_iter(Gtk.TreePath(0)),
+            0,
+            _('Use default path') + ' (' + ytdl_path_default + ')',
+        )
+
+        ytdl_bin = re.sub(
+            standard,
+            fork,
+            self.app_obj.ytdl_bin,
+        )
+
+        store.set(
+            store.get_iter(Gtk.TreePath(1)),
+            0,
+            _('Use local path') + ' (' + ytdl_bin + ')',
+        )
+
+        ytdl_path_pypi = re.sub(
+            standard,
+            fork,
+            self.app_obj.ytdl_path_pypi,
+        )
+
+        store.set(
+            store.get_iter(Gtk.TreePath(2)),
+            0,
+            _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
+        )
+
+        # Second combo: Command for update operations
+        count = -1
+        for item in self.app_obj.ytdl_update_list:
+
+            count += 1
+            descrip = re.sub(standard, fork, formats.YTDL_UPDATE_DICT[item])
+            store2.set(store2.get_iter(Gtk.TreePath(count)), 1, descrip)
+

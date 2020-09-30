@@ -44,10 +44,6 @@ import utils
 from mainapp import _
 
 
-# Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
-
-
 # Classes
 
 
@@ -78,9 +74,6 @@ class UpdateManager(threading.Thread):
 
 
     def __init__(self, app_obj, update_type):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 83 __init__')
 
         super(UpdateManager, self).__init__()
 
@@ -139,9 +132,6 @@ class UpdateManager(threading.Thread):
         Initiates the download.
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 143 run')
-
         if self.update_type == 'ffmpeg':
             self.install_ffmpeg()
         else:
@@ -162,9 +152,6 @@ class UpdateManager(threading.Thread):
             cmd_list (list): Python list that contains the command to execute.
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 167 create_child_process')
 
         info = preexec = None
 
@@ -205,9 +192,6 @@ class UpdateManager(threading.Thread):
         Reads from the child process STDOUT and STDERR, and calls the main
         application with the result of the update (success or failure).
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 210 install_ffmpeg')
 
         # Show information about the update operation in the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -326,13 +310,11 @@ class UpdateManager(threading.Thread):
         application with the result of the update (success or failure).
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 330 install_ytdl')
-
         # Show information about the update operation in the Output Tab
+        downloader = self.app_obj.get_downloader()
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
-            _('Starting update operation, installing/updating youtube-dl'),
+            _('Starting update operation, installing/updating ' + downloader),
         )
 
         # Prepare the system command
@@ -344,18 +326,25 @@ class UpdateManager(threading.Thread):
         cmd_list \
         = self.app_obj.ytdl_update_dict[self.app_obj.ytdl_update_current]
 
-        # Convert a path beginning with ~ (not on MS Windows)
-        if os.name != 'nt':
-            cmd_list[0] = re.sub('^\~', os.path.expanduser('~'), cmd_list[0])
+        mod_list = []
+        for arg in cmd_list:
+
+            # Substitute in the fork, if one is specified
+            arg = self.app_obj.check_downloader(arg)
+            # Convert a path beginning with ~ (not on MS Windows)
+            if os.name != 'nt':
+                arg = re.sub('^\~', os.path.expanduser('~'), arg)
+
+            mod_list.append(arg)
 
         # Create a new child process using that command
-        self.create_child_process(cmd_list)
+        self.create_child_process(mod_list)
 
         # Show the system command in the Output Tab
         space = ' '
         self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
-            space.join(cmd_list),
+            space.join(mod_list),
         )
 
         # So that we can read from the child process STDOUT and STDERR, attach
@@ -390,9 +379,14 @@ class UpdateManager(threading.Thread):
                     # "The script youtube-dl is installed in '...' which is not
                     #   on PATH. Consider adding this directory to PATH..."
                     if re.search('It looks like you installed', stdout) \
-                    or re.search('The script youtube-dl is installed', stdout):
+                    or re.search(
+                        'The script ' + downloader + ' is installed',
+                        stdout,
+                    ):
                         self.stderr_list.append(stdout)
+
                     else:
+
                         # Try to intercept the new version number for
                         #   youtube-dl
                         self.intercept_version_from_stdout(stdout)
@@ -439,7 +433,7 @@ class UpdateManager(threading.Thread):
         #   situations)
         if self.child_process is None:
 
-            msg = _('youtube-dl update did not start')
+            msg = _('Update did not start')
             self.stderr_list.append(msg)
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -488,9 +482,6 @@ class UpdateManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 489 intercept_version_from_stdout')
-
         substring = re.search(
             'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
             stdout,
@@ -525,9 +516,6 @@ class UpdateManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 526 is_child_process_alive')
-
         if self.child_process is None:
             return False
 
@@ -543,9 +531,6 @@ class UpdateManager(threading.Thread):
 
         Terminates the child process.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('uop 545 stop_update_operation')
 
         if self.is_child_process_alive():
 

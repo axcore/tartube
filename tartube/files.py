@@ -136,7 +136,8 @@ class FileManager(threading.Thread):
 
         Returns:
 
-            A GdkPixbuf, or None if the file is missing or can't be loaded
+            A GdkPixbuf (as a tuple), or None if the file is missing or can't
+                be loaded
 
         """
 
@@ -144,6 +145,7 @@ class FileManager(threading.Thread):
             return None
 
         try:
+            # (Returns a tuple)
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(full_path)
         except:
             return None

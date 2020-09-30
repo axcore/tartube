@@ -190,10 +190,6 @@ class OptionsManager(object):
         write_thumbnail (bool): If True youtube-dl will write thumbnail image
             to disc
 
-    VERBOSITY / SIMULATION OPTIONS
-
-        youtube_dl_debug (bool): When True, will pass '-v' flag to youtube-dl
-
     WORKAROUNDS
 
         force_encoding (str): Force the specified encoding
@@ -337,6 +333,15 @@ class OptionsManager(object):
             enclosed within double quotes "..."
 
     TARTUBE OPTIONS (not passed to youtube-dl directly)
+
+        move_description (bool):
+        move_info (bool):
+        move_annotations (bool):
+        move_thumbnail (bool):
+            During a download operation (real or simulated), if these values
+            are True, the video description/JSON/annotations files are moved to
+            a '.data' sub-directory, and the thumbnails are moved to a
+            '.thumbs' sub-directory, inside the directory containing the videos
 
         keep_description (bool):
         keep_info (bool):
@@ -594,6 +599,10 @@ class OptionsManager(object):
             'min_filesize_unit' : '',
             'extra_cmd_string' : '',
             # TARTUBE OPTIONS
+           'move_description': False,
+           'move_info': False,
+           'move_annotations': False,
+           'move_thumbnail': False,
            'keep_description': False,
            'keep_info': False,
            'keep_annotations': False,
@@ -623,6 +632,11 @@ class OptionsManager(object):
         self.options_dict['write_info'] = False
         self.options_dict['write_annotations'] = False
         self.options_dict['write_thumbnail'] = False
+
+        self.options_dict['move_description'] = False
+        self.options_dict['move_info'] = False
+        self.options_dict['move_annotations'] = False
+        self.options_dict['move_thumbnail'] = False
 
         self.options_dict['keep_description'] = False
         self.options_dict['keep_info'] = False
@@ -857,6 +871,10 @@ class OptionsParser(object):
 #           OptionHolder('min_filesize_unit', '', ''),
 #           OptionHolder('extra_cmd_string', '', ''),
             # TARTUBE OPTIONS (not given an options.OptionHolder object)
+#           OptionHolder('move_description', '', False),
+#           OptionHolder('move_info', '', False),
+#           OptionHolder('move_annotations', '', False),
+#           OptionHolder('move_thumbnail', '', False),
 #           OptionHolder('keep_description', '', False),
 #           OptionHolder('keep_info', '', False),
 #           OptionHolder('keep_annotations', '', False),

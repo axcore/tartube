@@ -2356,8 +2356,8 @@ class VideoDownloader(object):
                     0,
                     app_obj.system_error,
                     302,
-                    'Enforced timeout on youtube-dl because it took too long' \
-                    + ' to fetch a video\'s JSON data',
+                    'Enforced timeout because downloader took too long to' \
+                    + ' fetch a video\'s JSON data',
                 )
 
             # Stop this video downloader, if required to do so, having just
@@ -2580,6 +2580,78 @@ class VideoDownloader(object):
         self.stderr_reader.join()
 
 
+    def compile_mini_options_dict(self, options_manager_obj):
+
+        """Called by self.confirm_new_video() and .confirm_old_video().
+
+        Compiles a dictionary containing a subset of download options from the
+        specified options.OptionsManager object, to be passed on to
+        mainapp.TartubeApp.announce_video_download().
+
+        Args:
+
+            options_manager_obj (options.OptionsManager): The options manager
+                for this download
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 2457 compile_mini_options_dict')
+
+        mini_options_dict = {
+            'keep_description': \
+                options_manager_obj.options_dict['keep_description'],
+            'keep_info': \
+                options_manager_obj.options_dict['keep_info'],
+            'keep_annotations': \
+                options_manager_obj.options_dict['keep_annotations'],
+            'keep_thumbnail': \
+                options_manager_obj.options_dict['keep_thumbnail'],
+            'move_description': \
+                options_manager_obj.options_dict['move_description'],
+            'move_info': \
+                options_manager_obj.options_dict['move_info'],
+            'move_annotations': \
+                options_manager_obj.options_dict['move_annotations'],
+            'move_thumbnail': \
+                options_manager_obj.options_dict['move_thumbnail'],
+        }
+
+        return mini_options_dict
+
+
+    def confirm_archived_video(self, filename):
+
+        """Called by self.extract_stdout_data().
+
+        A modified version of self.confirm_old_video(), called when
+        youtube-dl's 'has already been recorded in archive' message is detected
+        (but only when checking for missing videos).
+
+        Tries to find a match for the video name and, if one is found, marks it
+        as not missing.
+
+        Args:
+
+            filename (str): The video name, which should match the .name of a
+                media.Video object in self.missing_video_check_list
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 2458 confirm_archived_video')
+
+        # Create shortcut variables (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
+
+        # media_data_obj is a media.Channel or media.Playlist object. Check its
+        #   child objects, looking for a matching video
+        match_obj = media_data_obj.find_matching_video(app_obj, filename)
+        if match_obj and match_obj in self.missing_video_check_list:
+            self.missing_video_check_list.remove(match_obj)
+
+
     def confirm_new_video(self, dir_path, filename, extension):
 
         """Called by self.extract_stdout_data().
@@ -2653,19 +2725,15 @@ class VideoDownloader(object):
             or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(self.video_num)
 
-            # Fetch the options.OptionsManager object used for this download
-            options_manager_obj = self.download_worker_obj.options_manager_obj
-
             # Update the main window
             GObject.timeout_add(
                 0,
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
-                options_manager_obj.options_dict['keep_description'],
-                options_manager_obj.options_dict['keep_info'],
-                options_manager_obj.options_dict['keep_annotations'],
-                options_manager_obj.options_dict['keep_thumbnail'],
+                self.compile_mini_options_dict(
+                    self.download_worker_obj.options_manager_obj,
+                ),
             )
 
             # Register the download with DownloadManager, so that download
@@ -2782,11 +2850,6 @@ class VideoDownloader(object):
                     extension,
                 )
 
-                # Fetch the options.OptionsManager object used for this
-                #   download
-                options_manager_obj \
-                = self.download_worker_obj.options_manager_obj
-
                 # Update the main window
                 if media_data_obj.master_dbid != media_data_obj.dbid:
 
@@ -2809,10 +2872,9 @@ class VideoDownloader(object):
                         app_obj.announce_video_download,
                         self.download_item_obj,
                         video_obj,
-                        options_manager_obj.options_dict['keep_description'],
-                        options_manager_obj.options_dict['keep_info'],
-                        options_manager_obj.options_dict['keep_annotations'],
-                        options_manager_obj.options_dict['keep_thumbnail'],
+                        self.compile_mini_options_dict(
+                            self.download_worker_obj.options_manager_obj,
+                        ),
                     )
 
         # This VideoDownloader can now stop, if required to do so after a video
@@ -3118,13 +3180,17 @@ class VideoDownloader(object):
 
         # Deal with the video description, JSON data and thumbnail, according
         #   to the settings in options.OptionsManager
-        options_dict =self.download_worker_obj.options_manager_obj.options_dict
+        options_dict \
+        = self.download_worker_obj.options_manager_obj.options_dict
 
         if descrip and options_dict['write_description']:
+
             descrip_path = os.path.abspath(
                 os.path.join(path, filename + '.description'),
             )
+
             if not options_dict['sim_keep_description']:
+
                 descrip_path = utils.convert_path_to_temp(
                     app_obj,
                     descrip_path,
@@ -3134,33 +3200,58 @@ class VideoDownloader(object):
             #   do anything if the call returned None because of a filesystem
             #   error)
             if descrip_path is not None and not os.path.isfile(descrip_path):
+
                 try:
                     fh = open(descrip_path, 'wb')
                     fh.write(descrip.encode('utf-8'))
                     fh.close()
+
+                    if options_dict['move_description']:
+                        utils.move_metadata_to_subdir(
+                            app_obj,
+                            video_obj,
+                            '.description',
+                        )
+
                 except:
                     pass
 
         if options_dict['write_info']:
+
             json_path = os.path.abspath(
                 os.path.join(path, filename + '.info.json'),
             )
+
             if not options_dict['sim_keep_info']:
                 json_path = utils.convert_path_to_temp(app_obj, json_path)
 
             if json_path is not None and not os.path.isfile(json_path):
+
                 try:
                     with open(json_path, 'w') as outfile:
                         json.dump(json_dict, outfile, indent=4)
+
+                    if options_dict['move_info']:
+                        utils.move_metadata_to_subdir(
+                            app_obj,
+                            video_obj,
+                            '.info.json',
+                        )
+
                 except:
                     pass
 
-        if options_dict['write_annotations']:
-            xml_path = os.path.abspath(
-                os.path.join(path, filename + '.annotations.xml'),
-            )
-            if not options_dict['sim_keep_annotations']:
-                xml_path = utils.convert_path_to_temp(app_obj, xml_path)
+        # v2.1.101 - Annotations were removed by YouTube in 2019, so this
+        #   feature is not available, and will not be available until the
+        #   authors have some annotations to test
+#        if options_dict['write_annotations']:
+#
+#            xml_path = os.path.abspath(
+#                os.path.join(path, filename + '.annotations.xml'),
+#            )
+#
+#            if not options_dict['sim_keep_annotations']:
+#                xml_path = utils.convert_path_to_temp(app_obj, xml_path)
 
         if thumbnail and options_dict['write_thumbnail']:
 
@@ -3181,8 +3272,8 @@ class VideoDownloader(object):
 
             if thumb_path is not None and not os.path.isfile(thumb_path):
 
-                # v2.0.013 The requets module fails if the connection drops
-                # v1.2.006 Wiriting the file fails if the directory specified
+                # v2.0.013 The requests module fails if the connection drops
+                # v1.2.006 Writing the file fails if the directory specified
                 #   by thumb_path doesn't exist
                 # Use 'try' so that neither problem is fatal
                 try:
@@ -3193,9 +3284,31 @@ class VideoDownloader(object):
                 except:
                     pass
 
+            # Convert .webp thumbnails to .jpg, if required
+            thumb_path = utils.find_thumbnail_webp(app_obj, video_obj)
+            if thumb_path is not None \
+            and not app_obj.ffmpeg_fail_flag \
+            and app_obj.ffmpeg_convert_webp_flag \
+            and not app_obj.ffmpeg_manager_obj.convert_webp(thumb_path):
+
+                app_obj.set_ffmpeg_fail_flag(True)
+                GObject.timeout_add(
+                    0,
+                    app_obj.system_error,
+                    307,
+                    app_obj.ffmpeg_fail_msg,
+                )
+
+            # Move to the sub-directory, if required
+            if options_dict['move_thumbnail']:
+
+                utils.move_thumbnail_to_subdir(app_obj, video_obj)
+
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), add a line to the Results List, as well
         #   as updating the Video Catalogue
+        # The True argument passes on the download options 'move_description',
+        #   etc, but not 'keep_description', etc
         if update_results_flag:
 
             GObject.timeout_add(
@@ -3203,6 +3316,10 @@ class VideoDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
+                # No call to self.compile_mini_options_dict, because this
+                #   function deals with download options like
+                #   'move_description' by itself
+                {},
             )
 
         else:
@@ -3510,6 +3627,9 @@ class VideoDownloader(object):
         stdout_with_spaces_list = stdout.split(' ')
         stdout_list = stdout.split()
 
+        # (Flag set to True when self.confirm_new_video(), etc, are called)
+        confirm_flag = False
+
         # Extract the data
         stdout_list[0] = stdout_list[0].lstrip('\r')
         if stdout_list[0] == '[download]':
@@ -3556,6 +3676,7 @@ class VideoDownloader(object):
                         )
 
                         self.reset_temp_destination()
+                        confirm_flag = True
 
             # Get playlist information (when downloading a channel or a
             #   playlist, this line is received once per video)
@@ -3591,10 +3712,25 @@ class VideoDownloader(object):
                 self.reset_temp_destination()
 
                 self.confirm_old_video(path, filename, extension)
+                confirm_flag = True
 
             # Get filesize abort status
             if stdout_list[-1] == 'Aborting.':
                 dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
+
+            # When checking for missing videos, respond to the 'has already
+            #   been recorded in archive' message (which is otherwise ignored)
+            if not confirm_flag \
+            and self.missing_video_check_list:
+
+                match = re.search(
+                    r'^\[download\]\s(.*)\shas already been recorded in' \
+                    + ' archive$',
+                    stdout,
+                )
+
+                if match:
+                    self.confirm_archived_video(match.group(1))
 
         elif stdout_list[0] == '[hlsnative]':
 
@@ -4279,7 +4415,7 @@ class JSONFetcher(object):
 
         # Convert a youtube-dl path beginning with ~ (not on MS Windows)
         #   (code copied from utils.generate_system_cmd() )
-        ytdl_path = app_obj.ytdl_path
+        ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
@@ -4389,6 +4525,15 @@ class JSONFetcher(object):
                         local_thumb_path,
                     )
 
+                elif options_obj.options_dict['move_thumbnail']:
+                    local_thumb_path = os.path.abspath(
+                        os.path.join(
+                            self.container_obj.get_actual_dir(app_obj),
+                            app_obj.thumbs_sub_dir,
+                            self.video_name + remote_ext,
+                        )
+                    )
+
                 if local_thumb_path:
                     try:
                         request_obj = requests.get(self.video_thumb_source)
@@ -4397,6 +4542,22 @@ class JSONFetcher(object):
 
                     except:
                         pass
+
+                # Convert .webp thumbnails to .jpg, if required
+                if local_thumb_path is not None \
+                and not app_obj.ffmpeg_fail_flag \
+                and app_obj.ffmpeg_convert_webp_flag \
+                and not app_obj.ffmpeg_manager_obj.convert_webp(
+                    local_thumb_path
+                ):
+                    app_obj.set_ffmpeg_fail_flag(True)
+                    GObject.timeout_add(
+                        0,
+                        app_obj.system_error,
+                        308,
+                        app_obj.ffmpeg_fail_msg,
+                    )
+
 
 
     def close(self):
@@ -4816,7 +4977,7 @@ class MiniJSONFetcher(object):
 
         # Convert a youtube-dl path beginning with ~ (not on MS Windows)
         #   (code copied from utils.generate_system_cmd() )
-        ytdl_path = app_obj.ytdl_path
+        ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
@@ -5023,7 +5184,7 @@ class MiniJSONFetcher(object):
             stdout (str): A string of JSON data as it was received from
                 youtube-dl (and starting with the character { )
 
-        Return values:
+        Returns:
 
             The JSON data, converted into a Python dictionary
 

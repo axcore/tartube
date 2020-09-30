@@ -1,3 +1,115 @@
+v2.2.0 (30 Sep 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube is now confirmed to work on MacOS. See the README file for
+    installation instructions
+- Tartube can now handle video thumbnails in the .webp format, as long as
+    FFmpeg is installed. Thumbnails are automatically converted to .jpg (either
+    by youtube-dl, or by Tartube itself, as appropriate). This only affects new
+    downloads. If you want to convert .webp thumbnails you've already
+    downloaded, click Operations > Tidy up files..., select 'Convert .webp
+    thumbnails to .jpg using Ffmpeg', and click OK. (This procedure may take a
+    while if there are thousands of thumbnails to convert) (Git #155 and
+    others)
+- Thumbnails, video description, metadata and annotation files can now be
+    downloaded into a sub-directory, rather than being stored in the same
+    directory as their videos. Thumbnails are stored in /.thumbs, and the
+    others are stored in /.data. On Linux/BSD, those sub-directories are
+    normally invisible by default (typically, pressing CTRL+H will reveal
+    them). This new feature is disabled by default. To enable it, click Edit >
+    Download options... > Files > Write/move files, and select one or more of
+    the checkboxes. The new feature only affects new downloads. If you want to
+    move files you've already downloaded, click Operations > Tidy up files...,
+    select 'Move thumbnails into own folder' and/or 'Move other metadata files
+    into own folder', and click OK (Git #139)
+- You can now select one or more videos, and process them with FFmpeg directly
+    (in other words, after downloads have finished, and without involving
+    youtube-dl). This will be useful if you want to convert one video format to
+    another, change the frame rate, or with countless other tasks. Just select
+    the video(s), right-click them and select 'Process with FFmpeg...'. Since
+    many FFmpeg procedures require a different output filename, you can specify
+    that, too. Note that FFmpeg sometimes takes a very long time; you should
+    test a procedure with a single video, before trying to process hundreds of
+    them (Git #153)
+- Tartube can now use forks of youtube-dl, such as youtube-dlc. (Tartube
+    assumes that a fork is still very similar to the original). A fork can be
+    specified in Edit > System preferences... > youtube-dl (Git #158)
+- New installations of Tartube will now auto-detect the location of youtube-dl,
+    if it is already installed on your system. This will benefit users of the
+    .DEB and .RPM packages, who until now were expected to know how to set the
+    youtube-dl path manually (Git #152)
+- Ffmpeg and AVConv will now also be auto-detected. If you have installed them
+    in unusual locations, you should specify those locations in Edit >
+    System preferences... > youtube-dl > Ffmpeg / AVConv. If not, there is no
+    need to specify either location; just leave the boxes empty. (None of this
+    applies to MS Windows users)
+- When Tartube shuts down unexpectedly, it doesn't have time to mark the
+    database as no longer being in use (i.e. doesn't remove the lockfile). The
+    next time Tartube runs, users were prompted to remove the lockfile, then
+    restart Tartube. Many users were unhappy with this situation, so it has
+    been improved. You will still be prompted to remove the lockfile, but there
+    is no longer any need to restart Tartube
+
+MINOR NEW FEATURES
+- FFmpeg is now required for a lot of Tartube functionality. On new
+    installations, users who have not yet installed FFmpeg will see some
+    additional nag-boxes, and various hints in other configuration windows
+    (Git #155)
+- If users downloadd a video, but only its audio, the video appeared in
+    Tartube's database as downloaded. However, when the user clicked on the
+    'Player' label, the audio file was not opened in the system's media player.
+    Tartube now checks for an audio file (as well as video files in different
+    formats), if the video file it was expecting does not exist
+- When the user clicks Operations > Update youtube-dl, Tartube now
+    automatically makes the Output tab visible. Hopefully this will avoid
+    confusion for new users, who do not notice that the Check all/Download all
+    buttons have been greyed out. This behaviour can be disabled, if required:
+    click Edit > System preferences... > Output > Output Tab, and deselect
+    'During an update operation, automatically switch to the Output Tab'
+    (Git #149)
+- The invidio.us website has closed. There are many mirrors available. Tartube
+    now uses invidious.site as its default mirror. To specify a different
+    mirror, click Edit > System preferences... > Operations > Downloads
+- YouTube phased out video annotations in 2019. The Tartube code was unable to
+    download annotation files during a simulated download (for example, with
+    the 'Check all' button). Now that there is no way of testing any fix, the
+    feature has been removed entirely
+- You can now add automatic custom downloads on a schedule (normal downloads
+    were already available). Click Edit > System preferences... > Scheduling
+    (Git #154)
+- Reduced the compulsory delay at the end of many types of operation. The
+    delay time is not the same for all types of operation
+- Tartube debug messages are visible in the terminal window (if open). Before,
+    the user had to edit the source code to enable debug messages. They can
+    now be enabled from within Tartube itself: click Edit > System
+    preferences... > General > Debugging. These settings are not saved, so when
+    Tartube restarts, you will have to re-enable debug messages again
+- In the Progress and Classic Mode tabs, the name of the incoming file (and
+    other similar columns) are no longer artificially shortened (Git #161)
+
+MAJOR FIXES
+- When one channel downloads into videos into another channel's directory,
+    and the other channel is then deleted, the Tartube database did not update
+    itself properly. Fixed
+- Fixed some issues when using the refresh operation to import videos, that had
+    been downloaded by youtube-dl (without Tartube's) help, into Tartube's
+    database (Git #142)
+- Tartube can now download videos using the youtube-dl archive file, even when
+    missing video detection is turned on (Git #154)
+- Tartube sometimes froze on shutdown, after youtube-dl had been updated.
+    Applied the existing MS Windows fix to all operating systems
+
+MINOR FIXES
+- Fixed issues when importing a JSON export file on MS Windows, and a different
+    issue error when importing it on Linux
+- We were not able to fix export issues reported in Git #143, but we have
+    updated the dialogue window, which should give more information about what
+    is causing the error
+- System folders cannot be deleted. The 'Delete folder' popup menu item is now
+    greyed out. (Nothing happened, even when it was clickable)
+- Warnings about broken Gtk have been removed (probably permanently)
+
 v2.1.070 (8 Aug 2020)
 -------------------------------------------------------------------------------
 

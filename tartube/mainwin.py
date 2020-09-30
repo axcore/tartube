@@ -128,6 +128,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.import_db_menu_item = None         # Gtk.MenuItem
         self.switch_view_menu_item = None       # Gtk.MenuItem
         self.test_menu_item = None              # Gtk.MenuItem
+        self.test_code_menu_item = None         # Gtk.MenuItem
         self.show_hidden_menu_item = None       # Gtk.MenuItem
         self.check_all_menu_item = None         # Gtk.MenuItem
         self.download_all_menu_item = None      # Gtk.MenuItem
@@ -457,8 +458,10 @@ class MainWin(Gtk.ApplicationWindow):
         #       'row_num': the row on the treeview, matching
         #           self.results_list_row_count
         #       'keep_description', 'keep_info', 'keep_annotations',
-        #           'keep_thumbnail': flags from the options.OptionsManager
-        #           object used for to download the video (not added to the
+        #           'keep_thumbnail', 'move_description', 'move_info',
+        #           'move_annotations', 'move_thumbnail': flags from the
+        #           options.OptionsManager object used for to download the
+        #           video ('keep_description', etc, are not not added to the
         #           dictionary at all for simulated downloads)
         self.results_list_temp_list = []
 
@@ -553,10 +556,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.visible_tab_num = 0
 
         # List of configuration windows (anything inheriting from
-        #   config.GenericConfigWin) that are currently open. A download/
-        #   update/refresh/info/tidy operation cannot start when one of these
-        #   windows are open (and the windows cannot be opened during such an
-        #   operation)
+        #   config.GenericConfigWin) that are currently open. An operation
+        #   cannot start when one of these windows are open (and the windows
+        #   cannot be opened during such an operation)
         self.config_win_list = []
 
         # Dialogue window IVs
@@ -936,16 +938,27 @@ class MainWin(Gtk.ApplicationWindow):
         media_sub_menu.append(self.show_hidden_menu_item)
         self.show_hidden_menu_item.set_action_name('app.show_hidden_menu')
 
-        if self.app_obj.debug_test_media_menu_flag:
+        if self.app_obj.debug_test_media_menu_flag \
+        or self.app_obj.debug_test_code_menu_flag:
 
             # Separator
             media_sub_menu.append(Gtk.SeparatorMenuItem())
+
+        if self.app_obj.debug_test_media_menu_flag:
 
             self.test_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('_Add test media'),
             )
             media_sub_menu.append(self.test_menu_item)
             self.test_menu_item.set_action_name('app.test_menu')
+
+        if self.app_obj.debug_test_code_menu_flag:
+
+            self.test_code_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Run test code'),
+            )
+            media_sub_menu.append(self.test_code_menu_item)
+            self.test_code_menu_item.set_action_name('app.test_code_menu')
 
         # Operations column
         ops_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_Operations'))
@@ -982,14 +995,15 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
+        downloader = self.app_obj.get_downloader()
         self.update_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Update _youtube-dl'),
+            _('U_pdate') + ' ' + downloader,
         )
         ops_sub_menu.append(self.update_ytdl_menu_item)
         self.update_ytdl_menu_item.set_action_name('app.update_ytdl_menu')
 
         self.test_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Test youtube-dl...'),
+            _('_Test') + ' ' + downloader,
         )
         ops_sub_menu.append(self.test_ytdl_menu_item)
         self.test_ytdl_menu_item.set_action_name('app.test_ytdl_menu')
@@ -1279,29 +1293,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.switch_view_toolbutton.set_action_name(
             'app.switch_view_toolbutton',
         )
-
-        if self.app_obj.debug_test_media_toolbar_flag:
-
-            if not squeeze_flag:
-                self.test_toolbutton = Gtk.ToolButton.new(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['tool_test_small'],
-                    ),
-                )
-                self.test_toolbutton.set_label(_('Test'))
-                self.test_toolbutton.set_is_important(True)
-            else:
-                self.test_toolbutton = Gtk.ToolButton.new(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['tool_test_large'],
-                    ),
-                )
-
-            self.main_toolbar.insert(self.test_toolbutton, -1)
-            self.test_toolbutton.set_tooltip_text(
-                _('Add test media data objects'),
-            )
-            self.test_toolbutton.set_action_name('app.test_toolbutton')
 
         if squeeze_flag:
             self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
@@ -1875,6 +1866,13 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
+        # Limit the size of the 'Source' and 'Incoming file' columns. The
+        #   others always contain few characters, so let them expand as they
+        #   please
+        for column in [4, 7]:
+            column_obj = self.progress_list_treeview.get_column(column)
+            column_obj.set_fixed_width(200)
+
         # Lower half
         frame2 = Gtk.Frame()
         self.progress_paned.add2(frame2)
@@ -1949,6 +1947,10 @@ class MainWin(Gtk.ApplicationWindow):
             str,
         )
         self.results_list_treeview.set_model(self.results_list_liststore)
+
+        # Limit the size of the 'New videos' column (the 'Downloaded to' column
+        column_obj = self.results_list_treeview.get_column(3)
+        column_obj.set_fixed_width(300)
 
         # Strip of widgets at the bottom, arranged in a grid
         grid = Gtk.Grid()
@@ -2356,6 +2358,13 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_progress_treeview.set_model(
             self.classic_progress_liststore,
         )
+
+        # Limit the size of the 'Source' and 'Incoming file' columns. The
+        #   others always contain few characters, so let them expand as they
+        #   please
+        for column in [2, 5]:
+            column_obj = self.classic_progress_treeview.get_column(column)
+            column_obj.set_fixed_width(150)
 
         # Fifth row - a strip of buttons that apply to rows in the Classic
         #   Progres List. We use another new hbox to avoid messing up the
@@ -2903,9 +2912,10 @@ class MainWin(Gtk.ApplicationWindow):
     def show_progress_bar(self, operation_type):
 
         """Called by mainapp.TartubeApp.download_manager_continue(),
-        .refresh_manager_continue(), .tidy_manager_start().
+        .refresh_manager_continue(), .tidy_manager_start(),
+        .process_manager_start().
 
-        At the start of a download/refresh/tidy operation, replace
+        At the start of a download/refresh/tidy/process operation, replace
         self.download_media_button with a progress bar (and a label just above
         it).
 
@@ -2913,8 +2923,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             operation_type (str): The type of operation: 'download' for a
                 download operation, 'check' for a download operation with
-                simulated downloads, 'refresh' for a refresh operation, or
-                'tidy' for a tidy operation
+                simulated downloads, 'refresh' for a refresh operation, 'tidy'
+                for a tidy operation, or 'process' for a process operation
 
         """
 
@@ -2930,7 +2940,8 @@ class MainWin(Gtk.ApplicationWindow):
         elif operation_type != 'check' \
         and operation_type != 'download' \
         and operation_type != 'refresh' \
-        and operation_type != 'tidy':
+        and operation_type != 'tidy' \
+        and operation_type != 'process':
             return self.app_obj.system_error(
                 202,
                 'Invalid operation type supplied to progress bar',
@@ -2957,8 +2968,10 @@ class MainWin(Gtk.ApplicationWindow):
             self.check_media_button.set_label(_('Downloading...'))
         elif operation_type == 'refresh':
             self.check_media_button.set_label(_('Refreshing...'))
-        else:
+        elif operation_type == 'tidy':
             self.check_media_button.set_label(_('Tidying...'))
+        else:
+            self.check_media_button.set_label(_('FFmpeg processing...'))
 
         # (Put the progress bar inside a box, so it doesn't touch the divider,
         #   because that doesn't look nice)
@@ -2985,8 +2998,10 @@ class MainWin(Gtk.ApplicationWindow):
             self.progress_bar.set_text(_('Downloading...'))
         elif operation_type == 'refresh':
             self.progress_bar.set_text(_('Refreshing...'))
-        else:
+        elif operation_type == 'tidy':
             self.progress_bar.set_text(_('Tidying...'))
+        else:
+            self.progress_bar.set_text(_('FFmpeg Processing...'))
 
         # Make the changes visible
         self.button_box.show_all()
@@ -3076,11 +3091,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called by downloads.DownloadManager.run(),
         refresh.RefreshManager.refresh_from_default_destination(),
-        .refresh_from_actual_destination() and
-        tidy.TidyManager.tidy_directory().
+        .refresh_from_actual_destination(), tidy.TidyManager.tidy_directory()
+        and process.Processmanager.process_video().
 
-        During a download/refresh/tidy operation, updates the progress bar just
-        below the Video Index.
+        During a download/refresh/tidy/process operation, updates the progress
+        bar just below the Video Index.
 
         Args:
 
@@ -3171,12 +3186,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not finish_flag:
 
+            downloader = self.app_obj.get_downloader();
+
             if operation_type == 'ffmpeg':
                 self.check_media_button.set_label(_('Installing'))
                 self.download_media_button.set_label('FFmpeg')
             elif operation_type == 'ytdl':
                 self.check_media_button.set_label(_('Updating'))
-                self.download_media_button.set_label('youtube-dl')
+                self.download_media_button.set_label(downloader)
             elif operation_type == 'formats':
                 self.check_media_button.set_label(_('Fetching'))
                 self.download_media_button.set_label('format list')
@@ -3185,7 +3202,7 @@ class MainWin(Gtk.ApplicationWindow):
                 self.download_media_button.set_label('subtitle list')
             else:
                 self.check_media_button.set_label(_('Testing'))
-                self.download_media_button.set_label('youtube-dl')
+                self.download_media_button.set_label(downloader)
 
             self.check_media_button.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
@@ -3312,8 +3329,7 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 3182 enable_dl_all_buttons')
 
-        # This setting doesn't apply during a download/update/refresh/info/tidy
-        #   operation
+        # This setting doesn't apply during an operation
         if not self.app_obj.current_manager_obj:
             self.download_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
@@ -3331,8 +3347,7 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 3201 disable_dl_all_buttons')
 
-        # This setting doesn't apply during a download/update/refresh/info/tidy
-        #   operation
+        # This setting doesn't apply during an operation
         if not self.app_obj.current_manager_obj:
             self.download_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
@@ -4291,7 +4306,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_index_delete_container,
             media_data_obj,
         )
-        if self.app_obj.current_manager_obj:
+        if self.app_obj.current_manager_obj \
+        or (media_type == 'folder' and media_data_obj.fixed_flag):
             delete_menu_item.set_sensitive(False)
         popup_menu.append(delete_menu_item)
 
@@ -4520,6 +4536,20 @@ class MainWin(Gtk.ApplicationWindow):
         )
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
+
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg,
+            video_obj,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj \
+        or not video_obj.file_name \
+        or not video_obj.dl_flag:
+            process_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -4838,6 +4868,7 @@ class MainWin(Gtk.ApplicationWindow):
             if not source_flag \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
+            or self.app_obj.process_manager_obj \
             or live_flag:
                 dl_watch_menu_item.set_sensitive(False)
 
@@ -4894,6 +4925,19 @@ class MainWin(Gtk.ApplicationWindow):
         )
         temp_submenu.append(mark_temp_dl_menu_item)
 
+        # Process with FFmpeg
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg_multi,
+            video_list,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj or not dl_flag:
+            process_menu_item.set_sensitive(False)
+
         # Separator
         temp_submenu.append(Gtk.SeparatorMenuItem())
 
@@ -4925,6 +4969,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not video_obj.source \
         or self.app_obj.update_manager_obj \
         or self.app_obj.refresh_manager_obj \
+        or self.app_obj.process_manager_obj \
         or temp_folder_flag \
         or live_flag:
             temp_menu_item.set_sensitive(False)
@@ -5355,6 +5400,20 @@ class MainWin(Gtk.ApplicationWindow):
         # Watch video
         self.add_watch_video_menu_items(popup_menu, video_obj)
 
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg,
+            video_obj,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj \
+        or not video_obj.file_name \
+        or not video_obj.dl_flag:
+            process_menu_item.set_sensitive(False)
+
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -5449,7 +5508,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Update youtube-dl
         update_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Update youtube-dl'),
+            _('Update') + ' ' + self.app_obj.get_downloader(),
         )
         update_ytdl_menu_item.connect(
             'activate',
@@ -5751,6 +5810,7 @@ class MainWin(Gtk.ApplicationWindow):
             if not video_obj.source \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
+            or self.app_obj.process_manager_obj \
             or video_obj.live_mode != 0:
                 dl_watch_menu_item.set_sensitive(False)
 
@@ -7366,8 +7426,8 @@ class MainWin(Gtk.ApplicationWindow):
             # All items added. Force the Gtk.ListBox to sort its rows, so that
             #   videos are displayed in the correct order
             # v1.3.112 this call is suspected of causing occasional crashes due
-            #   to Gtk issues. Disable it, if a download/refresh/tidy operation
-            #   is in progress
+            #   to Gtk issues. Disable it, if a download/refresh/tidy/
+            #   livestream operation is in progress
             if not self.app_obj.gtk_emulate_broken_flag or (
                 not self.app_obj.download_manager_obj \
                 and not self.app_obj.refresh_manager_obj \
@@ -7830,12 +7890,7 @@ class MainWin(Gtk.ApplicationWindow):
             ),
         )
         row_list.append(pixbuf)
-        row_list.append(
-            utils.shorten_string(
-                media_data_obj.name,
-                self.medium_string_max_len,
-            ),
-        )
+        row_list.append(media_data_obj.name)
         row_list.append(None)
         row_list.append(_('Waiting'))
         row_list.append(None)
@@ -7990,10 +8045,7 @@ class MainWin(Gtk.ApplicationWindow):
                                 string = string + '/1'
 
                     else:
-                        string = utils.shorten_string(
-                            dl_stat_dict[key],
-                            self.medium_string_max_len,
-                        )
+                        string = dl_stat_dict[key]
 
                     self.progress_list_liststore.set(
                         self.progress_list_liststore.get_iter(tree_path),
@@ -8124,10 +8176,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.progress_list_liststore.set(
                 self.progress_list_liststore.get_iter(tree_path),
                 4,
-                utils.shorten_string(
-                    video_obj.name,
-                    self.medium_string_max_len,
-                ),
+                video_obj.name,
             )
 
 
@@ -8162,8 +8211,7 @@ class MainWin(Gtk.ApplicationWindow):
 
 
     def results_list_add_row(self, download_item_obj, video_obj, \
-    keep_description=None, keep_info=None, keep_annotations=None,
-    keep_thumbnail=None):
+    mini_options_dict):
 
         """Called by mainapp.TartubeApp.announce_video_download().
 
@@ -8186,12 +8234,13 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj (media.Video): The media data object for the downloaded
                 video
 
-            keep_description (True, False, None):
-            keep_info (True, False, None):
-            keep_annotations (True, False, None):
-            keep_thumbnail (bool): Settings from the options.OptionsManager
-                object used to download the video (all of them set to 'None'
-                for a simulated download)
+            mini_options_dict (dict): A dictionary containing a subset of
+                download options from the the options.OptionsManager object
+                used to download the video. It contains zero, some or all of
+                the following download options:
+
+                keep_description keep_info keep_annotations keep_thumbnail
+                move_description move_info move_annotations move_thumbnail
 
         """
 
@@ -8235,12 +8284,7 @@ class MainWin(Gtk.ApplicationWindow):
             ),
         )
         row_list.append(pixbuf)
-        row_list.append(
-            utils.shorten_string(
-                video_obj.nickname,
-                self.medium_string_max_len,
-            ),
-        )
+        row_list.append(video_obj.nickname)
 
         # (For a simulated download, the video duration (etc) will already be
         #   available, so we can display those values)
@@ -8263,12 +8307,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         row_list.append(video_obj.dl_flag)
         row_list.append(pixbuf2)
-        row_list.append(
-            utils.shorten_string(
-                video_obj.parent_obj.name,
-                self.medium_string_max_len,
-            ),
-        )
+        row_list.append(video_obj.parent_obj.name)
 
         # Create a new row in the treeview. Doing the .show_all() first
         #   prevents a Gtk error (for unknown reasons)
@@ -8286,17 +8325,8 @@ class MainWin(Gtk.ApplicationWindow):
             'row_num': self.results_list_row_count,
         }
 
-        if keep_description is not None:
-            temp_dict['keep_description'] = keep_description
-
-        if keep_info is not None:
-            temp_dict['keep_info'] = keep_info
-
-        if keep_annotations is not None:
-            temp_dict['keep_annotations'] = keep_annotations
-
-        if keep_thumbnail is not None:
-            temp_dict['keep_thumbnail'] = keep_thumbnail
+        for key in mini_options_dict.keys():
+            temp_dict[key] = mini_options_dict[key]
 
         # Update IVs
         self.results_list_temp_list.append(temp_dict)
@@ -8398,10 +8428,7 @@ class MainWin(Gtk.ApplicationWindow):
                 self.results_list_liststore.set(
                     row_iter,
                     3,
-                    utils.shorten_string(
-                        video_obj.nickname,
-                        self.medium_string_max_len,
-                    ),
+                    video_obj.nickname,
                 )
 
                 if video_obj.duration is not None:
@@ -8433,10 +8460,7 @@ class MainWin(Gtk.ApplicationWindow):
                 self.results_list_liststore.set(
                     row_iter,
                     9,
-                    utils.shorten_string(
-                        video_obj.parent_obj.name,
-                        self.medium_string_max_len,
-                    ),
+                    video_obj.parent_obj.name,
                 )
 
             else:
@@ -8510,12 +8534,14 @@ class MainWin(Gtk.ApplicationWindow):
                 ),
             ),
         )
-        row_list.append(
-            utils.shorten_string(
-                dummy_obj.source,
-                self.medium_string_max_len,
-            ),
-        )
+
+        # (Don't display the https:// bit, that's just wasted space
+        source = dummy_obj.source
+        match = re.search('^https?\:\/\/(.*)', source)
+        if match:
+            source = match.group(1)
+
+        row_list.append(source)
         row_list.append(None)
         row_list.append(_('Waiting'))
         row_list.append(None)
@@ -8883,10 +8909,7 @@ class MainWin(Gtk.ApplicationWindow):
                                 string = string + '/1'
 
                     else:
-                        string = utils.shorten_string(
-                            dl_stat_dict[key],
-                            self.medium_string_max_len,
-                        )
+                        string = dl_stat_dict[key]
 
                     self.classic_progress_liststore.set(
                         self.classic_progress_liststore.get_iter(row_path),
@@ -9322,14 +9345,29 @@ class MainWin(Gtk.ApplicationWindow):
             adj.set_value(adj.get_upper() - adj.get_page_size())
 
 
+    def output_tab_show_first_page(self):
+
+        """Called by mainapp.TartubeApp.update_manager_start.
+
+        Switches to the first tab of the Output Tab (not including the summary
+        tab, if it's open).
+        """
+
+        self.notebook.set_current_page(3)
+        if not self.output_tab_summary_flag:
+            self.output_notebook.set_current_page(0)
+        else:
+            self.output_notebook.set_current_page(1)
+
+
     def output_tab_reset_pages(self):
 
         """Called by mainapp.TartubeApp.download_manager_continue(),
         .update_manager_start(), .refresh_manager_continue(),
         .info_manager_start() and .tidy_manager_start().
 
-        At the start of a download/update/refresh/info/tidy operation, empty
-        the pages in the Output Tab (if allowed).
+        At the start of an operation, empty the pages in the Output Tab (if
+        allowed).
         """
 
         if DEBUG_FUNC_FLAG:
@@ -10158,7 +10196,7 @@ class MainWin(Gtk.ApplicationWindow):
         count = len(media_data_obj.child_list)
         if count < self.mark_video_lower_limit:
 
-            # The operation should be quick
+            # The procedure should be quick
             for child_obj in media_data_obj.child_list:
                 if isinstance(child_obj, media.Video):
                     self.app_obj.mark_video_bookmark(child_obj, True)
@@ -10211,7 +10249,7 @@ class MainWin(Gtk.ApplicationWindow):
         count = len(media_data_obj.child_list)
         if count < self.mark_video_lower_limit:
 
-            # The operation should be quick
+            # The procedure should be quick
             for child_obj in media_data_obj.child_list:
                 if isinstance(child_obj, media.Video):
                     self.app_obj.mark_video_bookmark(child_obj, False)
@@ -10450,7 +10488,7 @@ class MainWin(Gtk.ApplicationWindow):
         count = len(media_data_obj.child_list)
         if count < self.mark_video_lower_limit:
 
-            # The operation should be quick
+            # The procedure should be quick
             for child_obj in media_data_obj.child_list:
                 if isinstance(child_obj, media.Video):
                     self.app_obj.mark_video_waiting(child_obj, True)
@@ -10503,7 +10541,7 @@ class MainWin(Gtk.ApplicationWindow):
         count = len(media_data_obj.child_list)
         if count < self.mark_video_lower_limit:
 
-            # The operation should be quick
+            # The procedure should be quick
             for child_obj in media_data_obj.child_list:
                 if isinstance(child_obj, media.Video):
                     self.app_obj.mark_video_waiting(child_obj, False)
@@ -11454,10 +11492,12 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 10899 on_video_catalogue_dl_and_watch')
 
         # Can't download the video if it has no source, or if an update/
-        #   refresh operation has started since the popup menu was created
+        #   refresh/process operation has started since the popup menu was
+        #   created
         if not media_data_obj.dl_flag or not media_data_obj.source \
         or self.app_obj.update_manager_obj \
-        or self.app_obj.refresh_manager_obj:
+        or self.app_obj.refresh_manager_obj \
+        or self.app_obj.process_manager_obj:
 
             # Download the video, and mark it to be opened in the system's
             #   default media player as soon as the download operation is
@@ -11493,10 +11533,12 @@ class MainWin(Gtk.ApplicationWindow):
                 mod_list.append(media_data_obj)
 
         # Can't download the videos if none have no source, or if an update/
-        #   refresh operation has started since the popup menu was created
+        #   refresh/process operation has started since the popup menu was
+        #   created
         if mod_list \
         and not self.app_obj.update_manager_obj \
-        and not self.app_obj.refresh_manager_obj:
+        or self.app_obj.refresh_manager_obj \
+        or self.app_obj.process_manager_obj:
 
             # Download the videos, and mark them to be opened in the system's
             #   default media player as soon as the download operation is
@@ -11841,12 +11883,13 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 11284 on_video_catalogue_mark_temp_dl')
 
         # Can't mark the video for download if it has no source, or if an
-        #   update/refresh/tidy operation has started since the popup menu was
-        #   created
+        #   update/refresh/tidy/process operation has started since the popup
+        #   menu was created
         if media_data_obj.source \
         and not self.app_obj.update_manager_obj \
         and not self.app_obj.refresh_manager_obj \
-        and not self.app_obj.tidy_manager_obj:
+        and not self.app_obj.tidy_manager_obj \
+        and not self.app_obj.process_manager_obj:
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             #   (but don't download anything now)
@@ -11891,12 +11934,13 @@ class MainWin(Gtk.ApplicationWindow):
                 mod_list.append(media_data_obj)
 
         # Can't mark the videos for download if they have no source, or if an
-        #   update/refresh/tidy operation has started since the popup menu was
-        #   created
+        #   update/refresh/tidy/process operation has started since the popup
+        #   menu was created
         if mod_list \
         and not self.app_obj.update_manager_obj \
         and not self.app_obj.refresh_manager_obj \
-        and not self.app_obj.tidy_manager_obj:
+        and not self.app_obj.tidy_manager_obj \
+        and not self.app_obj.process_manager_obj:
 
             for media_data_obj in mod_list:
 
@@ -11977,6 +12021,157 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_catalogue_redraw_all(
                 self.video_index_current,
                 int(page_num),
+            )
+
+
+    def on_video_catalogue_process_ffmpeg(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu() and
+        .results_list_popup_menu().
+
+        Sends the right-clicked media.Video object to FFmpeg for
+        post-processing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 11389 on_video_catalogue_process_ffmpeg')
+
+        # Can't start a process operation if another operation has started
+        #   since the popup menu was created, or if the video hasn't been
+        #   downloaded
+        if not self.app_obj.current_manager_obj and media_data_obj.dl_flag:
+
+            # (There is a lot of code, so use one function instead of two)
+            self.on_video_catalogue_process_ffmpeg_multi(
+                menu_item,
+                [ media_data_obj ],
+            )
+
+
+    def on_video_catalogue_process_ffmpeg_multi(self, menu_item, \
+    media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+        For efficiency, also called by
+        self.on_video_catalogue_process_ffmpeg().
+
+        Sends the right-clicked media.Video objects to FFmpeg for
+        post-processing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 11390 on_video_catalogue_process_ffmpeg_multi',
+            )
+
+        # Can't start a process operation if another operation has started
+        #   since the popup menu was created
+        if self.app_obj.current_manager_obj:
+            return
+
+        # Filter out any media.Video objects whose videos haven't been
+        #   downloaded
+        mod_list = []
+        for video_obj in media_data_list:
+
+            if video_obj.file_name and video_obj.dl_flag:
+                mod_list.append(video_obj)
+
+        if not mod_list:
+
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                'Only downloaded videos can be processed by FFmpeg',
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Show the dialogue window, so the user can set FFmpeg options
+        dialogue_win = ProcessDialogue(self, len(mod_list))
+        response = dialogue_win.run()
+
+        # Retrieve the FFmpeg options from the dialogue window
+        option_string = dialogue_win.textbuffer.get_text(
+            dialogue_win.textbuffer.get_start_iter(),
+            dialogue_win.textbuffer.get_end_iter(),
+            False,
+        )
+
+        add_string = dialogue_win.entry.get_text()
+        regex_string = dialogue_win.entry2.get_text()
+        substitute_string = dialogue_win.entry3.get_text()
+        ext_string = dialogue_win.entry4.get_text()
+
+        delete_flag = dialogue_win.checkbutton.get_active()
+        keep_flag = dialogue_win.checkbutton2.get_active()
+
+        # ...before destroying it
+        dialogue_win.destroy()
+
+        # If the user has specified at least one options, then we can proceed
+        if response == Gtk.ResponseType.OK \
+        and (
+            option_string != '' \
+            or add_string != '' \
+            or regex_string != '' \
+            or ext_string != ''
+        ):
+            # Divide the option string into lines, remove empty lines, remove
+            #   leading/trailing whitespace, and recombine into a single string
+            option_string = utils.strip_whitespace_multiline(
+                option_string,
+            )
+
+            # For the other strings, just remove leading and/or trailing
+            #   whitespace, as appropriate
+            add_string = re.sub(r'\s+$', '', add_string)
+#            regex_string = utils.strip_whitespace(regex_string)
+#            substitute_string = utils.strip_whitespace(substitute_string)
+            ext_string = utils.strip_whitespace(ext_string)
+
+            # Add a full stop to the beginning of the file extension, if not
+            #   already present
+            if ext_string != '' and ext_string[0:1] != '.':
+                ext_string = '.' + ext_string
+
+            # Update IVs
+            self.app_obj.set_ffmpeg_keep_flag(keep_flag)
+            if keep_flag:
+
+                self.app_obj.set_ffmpeg_option_strings(
+                    add_string,
+                    regex_string,
+                    substitute_string,
+                    ext_string,
+                )
+
+                self.app_obj.set_ffmpeg_delete_flag(delete_flag)
+
+            # Start the process operation, which sends the specified video to
+            #   FFmpeg for processing with the specified options
+            self.app_obj.process_manager_start(
+                option_string,
+                add_string,
+                regex_string,
+                substitute_string,
+                ext_string,
+                delete_flag,
+                mod_list,
             )
 
 
@@ -12231,11 +12426,13 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 11657 on_video_catalogue_temp_dl')
 
         # Can't download the video if it has no source, or if an update/
-        #   refresh/tidy operation has started since the popup menu was created
+        #   refresh/tidy/process operation has started since the popup menu was
+        #   created
         if media_data_obj.source \
         and not self.app_obj.update_manager_obj \
         and not self.app_obj.refresh_manager_obj \
-        and not self.app_obj.tidy_manager_obj:
+        and not self.app_obj.tidy_manager_obj \
+        and not self.app_obj.process_manager_obj:
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             new_media_data_obj = self.app_obj.add_video(
@@ -12297,12 +12494,14 @@ class MainWin(Gtk.ApplicationWindow):
                 mod_list.append(media_data_obj)
 
         # Can't download the videos if none have no source, or if an update/
-        #   refresh/tidy operation has started since the popup menu was created
+        #   refresh/tidy/process operation has started since the popup menu was
+        #   created
         ready_list = []
         if mod_list \
         and not self.app_obj.update_manager_obj \
         and not self.app_obj.refresh_manager_obj \
-        and not self.app_obj.tidy_manager_obj:
+        and not self.app_obj.tidy_manager_obj \
+        and not self.app_obj.process_manager_obj:
 
             for media_data_obj in mod_list:
 
@@ -12379,8 +12578,7 @@ class MainWin(Gtk.ApplicationWindow):
             # If the user specified either (or both) a URL and youtube-dl
             #   options, then we can proceed
             if response == Gtk.ResponseType.OK \
-            and (source != '' or options_string != ''):
-
+            and (re.search('\S', source) or re.search('\S', options_string)):
                 # Start the info operation, which issues the youtube-dl command
                 #   with the specified options
                 self.app_obj.info_manager_start(
@@ -12776,7 +12974,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Launch the video
         utils.open_file(
-            utils.convert_youtube_to_invidious(media_data_obj.source),
+            utils.convert_youtube_to_invidious(
+                self.app_obj,
+                media_data_obj.source,
+            ),
         )
 
         # Mark the video as not new (having been watched)
@@ -13213,7 +13414,10 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Launch the video
             utils.open_file(
-                utils.convert_youtube_to_invidious(media_data_obj.source),
+                utils.convert_youtube_to_invidious(
+                    self.app_obj,
+                    media_data_obj.source,
+                ),
             )
 
             # Mark the video as not new (having been watched)
@@ -15316,14 +15520,17 @@ class ComplexCatalogueItem(object):
             if path:
 
                 # Thumbnail file exists, so use it
-                thumb_flag = True
-                self.thumb_image.set_from_pixbuf(
-                    self.main_win_obj.app_obj.file_manager_obj.load_to_pixbuf(
-                        path,
-                        self.main_win_obj.thumb_width,
-                        self.main_win_obj.thumb_height,
-                   ),
-                )
+                app_obj = self.main_win_obj.app_obj
+                # (Returns a tuple, who knows why)
+                arglist = app_obj.file_manager_obj.load_to_pixbuf(
+                    path,
+                    self.main_win_obj.thumb_width,
+                    self.main_win_obj.thumb_height,
+                ),
+
+                if arglist[0]:
+                    self.thumb_image.set_from_pixbuf(arglist[0])
+                    thumb_flag = True
 
         # No thumbnail file found, so use a standard icon file
         if not thumb_flag:
@@ -15741,7 +15948,8 @@ class ComplexCatalogueItem(object):
 
         elif self.video_obj.source \
         and not self.main_win_obj.app_obj.update_manager_obj \
-        and not self.main_win_obj.app_obj.refresh_manager_obj:
+        and not self.main_win_obj.app_obj.refresh_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
 
             translate_note = _(
                 'TRANSLATOR\'S NOTE: If you want to use &, use &amp;' \
@@ -15806,7 +16014,10 @@ class ComplexCatalogueItem(object):
                     self.watch_invidious_label.set_markup(
                         '<a href="' \
                         + html.escape(
-                            utils.convert_youtube_to_invidious(source),
+                            utils.convert_youtube_to_invidious(
+                                app_obj,
+                                source,
+                            ),
                             quote=True,
                         ) \
                         + '" title="' + _('Watch on Invidious') + '">' \
@@ -16095,7 +16306,7 @@ class ComplexCatalogueItem(object):
         Checks whether the fifth row of labels (for temporary actions) should
         be visible, or not.
 
-        Return values:
+        Returns:
 
             True if the row should be visible, False if not
 
@@ -16123,7 +16334,7 @@ class ComplexCatalogueItem(object):
         Checks whether the sixth row of labels (for marked video actions)
         should be visible, or not.
 
-        Return values:
+        Returns:
 
             True if the row should be visible, False if not
 
@@ -16676,12 +16887,13 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 15734 on_click_temp_dl_label')
 
-        # Can't download the video if an update/refresh/tidy operation is in
-        #   progress
+        # Can't download the video if an update/refresh/info/tidy/process
+        #   operation is in progress
         if not self.main_win_obj.app_obj.update_manager_obj \
         and not self.main_win_obj.app_obj.refresh_manager_obj \
         and not self.main_win_obj.app_obj.info_manager_obj \
-        and not self.main_win_obj.app_obj.tidy_manager_obj:
+        and not self.main_win_obj.app_obj.tidy_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             new_media_data_obj = self.main_win_obj.app_obj.add_video(
@@ -16731,11 +16943,12 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 15789 on_click_temp_dl_watch_label')
 
-        # Can't download the video if an update/refresh/tidy operation is in
-        #   progress
+        # Can't download the video if an update/refresh/tidy/process operation
+        #   is in progress
         if not self.main_win_obj.app_obj.update_manager_obj \
         and not self.main_win_obj.app_obj.refresh_manager_obj \
-        and not self.main_win_obj.app_obj.tidy_manager_obj:
+        and not self.main_win_obj.app_obj.tidy_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             new_media_data_obj = self.main_win_obj.app_obj.add_video(
@@ -16785,11 +16998,12 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 15843 on_click_temp_mark_label')
 
-        # Can't mark the video for download if an update/refresh/tidy operation
-        #   is in progress
+        # Can't mark the video for download if an update/refresh/tidy/process
+        #   operation is in progress
         if not self.main_win_obj.app_obj.update_manager_obj \
         and not self.main_win_obj.app_obj.refresh_manager_obj \
-        and not self.main_win_obj.app_obj.tidy_manager_obj:
+        and not self.main_win_obj.app_obj.tidy_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
 
             # Create a new media.Video object in the 'Temporary Videos' folder
             new_media_data_obj = self.main_win_obj.app_obj.add_video(
@@ -17007,7 +17221,8 @@ class ComplexCatalogueItem(object):
 
         elif not self.video_obj.dl_flag and self.video_obj.source \
         and not self.main_win_obj.app_obj.update_manager_obj \
-        and not self.main_win_obj.app_obj.refresh_manager_obj:
+        and not self.main_win_obj.app_obj.refresh_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
 
             # Download the video, and mark it to be opened in the system's
             #   default media player as soon as the download operation is
@@ -17244,8 +17459,8 @@ class StatusIcon(Gtk.StatusIcon):
 
     def update_icon(self):
 
-        """Called by self.setup(), and then by mainapp.TartubeApp whenever a
-        download/update/refresh/info/tidy operation starts or stops.
+        """Called by self.setup(), and then by mainapp.TartubeApp whenever am
+        operation starts or stops.
 
         Updates the status icon with the correct icon file. The icon file used
         depends on whether an operation is in progress or not, and which one.
@@ -17269,6 +17484,8 @@ class StatusIcon(Gtk.StatusIcon):
             icon = formats.STATUS_ICON_DICT['tidy_icon']
         elif self.app_obj.livestream_manager_obj:
             icon = formats.STATUS_ICON_DICT['livestream_icon']
+        elif self.app_obj.process_manager_obj:
+            icon = formats.STATUS_ICON_DICT['process_icon']
         else:
             icon = formats.STATUS_ICON_DICT['default_icon']
 
@@ -17421,9 +17638,9 @@ class StatusIcon(Gtk.StatusIcon):
 
         """Called from a callback in self.popup_menu().
 
-        Stops the current download/update/refresh/info/tidy operation (but not
-        livestream operations, which run in the background and are halted
-        immediately, if a different type of operation wants to start).
+        Stops the current operation (but not livestream operations, which run
+        in the background and are halted immediately, if a different type of
+        operation wants to start).
 
         Args:
 
@@ -17448,6 +17665,8 @@ class StatusIcon(Gtk.StatusIcon):
                 self.app_obj.info_manager_obj.stop_info_operation()
             elif self.app_obj.tidy_manager_obj:
                 self.app_obj.tidy_manager_obj.stop_tidy_operation()
+            elif self.app_obj.process_manager_obj:
+                self.app_obj.processs_manager_obj.stop_process_operation()
 
 
     def on_quit_menu_item(self, menu_item):
@@ -19855,6 +20074,192 @@ class ImportDialogue(Gtk.Dialog):
             mini_dict['import_flag'] = False
 
 
+class InstallDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.start() when Tartube first runs on any OS
+    besides MS Windows, when youtube-dl's location was not auto-detected.
+
+    Warns the user about installing both youtube-dl and FFmpeg. If the user
+    clicks the button, auto-detects youtube-dl's location again, and updates
+    IVs accordingly.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18541 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        #   (none)
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Install youtube-dl and FFmpeg'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label_length = self.main_win_obj.long_string_max_len
+        label = Gtk.Label(
+            utils.tidy_up_long_string(
+                _(
+                'Tartube could not auto-detect youtube-dl on your system.' \
+                + ' youtube-dl must be installed before you can use Tartube.',
+                ),
+                label_length,
+            ) + '\n\n' \
+            + utils.tidy_up_long_string(
+                _(
+                'Without FFmpeg, Tartube cannot download high-resolution' \
+                + ' videos. If you have not already installed FFmpeg, then' \
+                + ' we recommend that you install it now.',
+                ),
+                label_length,
+            ),
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
+
+        button = Gtk.Button.new_with_label(
+            utils.tidy_up_long_string(
+                _(
+                'I have now installed youtube-dl, please detect its location',
+                ),
+                label_length,
+            ),
+        )
+        grid.attach(button, 0, 2, 1, 1)
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_auto_detect_clicked)
+
+        button2 = Gtk.Button.new_with_label(
+            utils.tidy_up_long_string(
+                _(
+                'I have now installed youtube-dl, please open the' \
+                + ' preferences window so I can set its location manually',
+                ),
+                label_length,
+            ),
+        )
+        grid.attach(button2, 0, 3, 1, 1)
+        button2.set_hexpand(False)
+        button2.connect('clicked', self.on_open_config_win_clicked)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 4, 1, 1)
+
+        button3 = Gtk.Button.new_with_label('Just close this window')
+        grid.attach(button3, 0, 5, 1, 1)
+        button3.set_hexpand(False)
+        button3.connect('clicked', self.on_close_win_clicked)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_auto_detect_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Mark all channels/playlists/folders to be imported.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18542 on_auto_detect_clicked')
+
+        # Auto-detect youtube-dl location, and update IVs accordingly
+        self.main_win_obj.app_obj.auto_detect_paths()
+        # Open the system preferences window at the right page (as a
+        #   confirmation)
+        config.SystemPrefWin(self.main_win_obj.app_obj, 'paths')
+        # Destroy this window
+        self.destroy()
+
+
+    def on_open_config_win_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Mark all channels/playlists/folders to be not imported.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18543 on_open_config_win_clicked')
+
+        # Open the system preferences window at the right page
+        config.SystemPrefWin(self.main_win_obj.app_obj, 'paths')
+        # Destroy this window
+        self.destroy()
+
+
+    def on_close_win_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Destroys the window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18544 on_close_win_clicked')
+
+        self.destroy()
+
+
 class MountDriveDialogue(Gtk.Dialog):
 
     """Called by mainapp.TartubeApp.start() and .make_directory().
@@ -20165,9 +20570,199 @@ class MountDriveDialogue(Gtk.Dialog):
             self.destroy()
 
 
+class ProcessDialogue(Gtk.Dialog):
+
+    """Called by MainWin.on_video_catalogue_process_ffmpeg_multi().
+
+    Python class handling a dialogue window that lets the user set FFmpeg
+    options, before sending video(s) to FFmpeg for processing (in a process
+    operation).
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        video_count (int): The number of videos to be sent to FFmpeg
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_count):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19169 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.textbuffer = None                  # Gtk.TextBuffer
+        self.checkbutton = None                 # Gtk.CheckButton
+        self.checkbutton2 = None                # Gtk.CheckButton
+        self.entry = None                       # Gtk.Entry
+        self.entry2 = None                      # Gtk.Entry
+        self.entry3 = None                      # Gtk.Entry
+        self.entry4 = None                      # Gtk.Entry
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Process videos with FFmpeg'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+        grid.set_column_spacing(main_win_obj.spacing_size)
+        grid_width = 3
+
+        if video_count == 1:
+            msg = _('Process 1 video with the following options:')
+        else:
+            msg = _('Process {0} videos with the following options:').format(
+                str(video_count),
+            )
+
+        label = Gtk.Label(msg)
+        grid.attach(label, 0, 0, (grid_width - 1), 1)
+        label.set_alignment(0, 0.5)
+
+        button = Gtk.Button.new_with_label(_('Reset all'))
+        grid.attach(button, (grid_width - 1), 0, 1, 1)
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_reset_button_clicked)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 1, grid_width, 1)
+
+        label2 = Gtk.Label(_('Add to end of filename:'))
+        grid.attach(label2, 0, 2, 1, 1)
+        label2.set_alignment(0, 0.5)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)
+        self.entry = Gtk.Entry()
+        grid.attach(self.entry, 1, 2, (grid_width - 1), 1)
+        self.entry.set_text(main_win_obj.app_obj.ffmpeg_add_string)
+
+        label3 = Gtk.Label(_('If regex matches filename:'))
+        grid.attach(label3, 0, 3, 1, 1)
+        label3.set_alignment(0, 0.5)
+
+        self.entry2 = Gtk.Entry()
+        grid.attach(self.entry2, 1, 3, (grid_width - 1), 1)
+        self.entry2.set_text(main_win_obj.app_obj.ffmpeg_regex_string)
+
+        label4 = Gtk.Label(_('...then apply substitution:'))
+        grid.attach(label4, 0, 4, 1, 1)
+        label4.set_alignment(0, 0.5)
+
+        self.entry3 = Gtk.Entry()
+        grid.attach(self.entry3, 1, 4, (grid_width - 1), 1)
+        self.entry3.set_text(main_win_obj.app_obj.ffmpeg_substitute_string)
+
+        label5 = Gtk.Label(_('Change file extension:'))
+        grid.attach(label5, 0, 5, 1, 1)
+        label5.set_alignment(0, 0.5)
+
+        self.entry4 = Gtk.Entry()
+        grid.attach(self.entry4, 1, 5, (grid_width - 1), 1)
+        self.entry4.set_text(main_win_obj.app_obj.ffmpeg_ext_string)
+
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 6, grid_width, 1)
+        frame.set_label(_('FFmpeg command-line options:'))
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_size_request(400, 100)
+
+        textview = Gtk.TextView()
+        scrolled.add(textview)
+        textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_hexpand(False)
+        textview.set_editable(True)
+
+        self.textbuffer = textview.get_buffer()
+        # Initialise the textbuffer's contents
+        self.textbuffer.set_text(main_win_obj.app_obj.ffmpeg_option_string)
+
+        self.checkbutton = Gtk.CheckButton()
+        grid.attach(self.checkbutton, 0, 7, (grid_width - 1), 1)
+        self.checkbutton.set_active(
+            main_win_obj.app_obj.ffmpeg_delete_flag
+        )
+        self.checkbutton.set_label(
+            _('If the video has a new name/extension, delete the original'),
+        )
+
+        self.checkbutton2 = Gtk.CheckButton()
+        grid.attach(self.checkbutton2, 0, 8, grid_width, 1)
+        self.checkbutton2.set_active(
+            main_win_obj.app_obj.ffmpeg_keep_flag
+        )
+        self.checkbutton2.set_label(
+            _('Remember these options for the next time'),
+        )
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 9, grid_width, 1)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_reset_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the 'Reset all' button is clicked, resets the textview and entry
+        boxes.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19169 on_reset_button_clicked')
+
+        self.textbuffer.set_text('')
+        self.entry.set_text('')
+        self.entry2.set_text('')
+        self.entry3.set_text('')
+        self.entry4.set_text('')
+
+
 class RemoveLockFileDialogue(Gtk.Dialog):
 
-    """Called by mainapp.TartubeApp.start().
+    """Called by mainapp.TartubeApp.load_db().
 
     Python class handling a dialogue window that asks the user what to do,
     if the database file can't be loaded because it's protected by a lockfile.
@@ -20176,13 +20771,17 @@ class RemoveLockFileDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
+        switch_flag (bool): False when Tartube starts; True when a database
+            had already been loaded, and the user is trying to switch to a
+            different one
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, main_win_obj):
+    def __init__(self, main_win_obj, switch_flag):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 19197 __init__')
@@ -20242,18 +20841,23 @@ class RemoveLockFileDialogue(Gtk.Dialog):
             utils.tidy_up_long_string(
                 _(
                 'Failed to load the Tartube database file, because another' \
-                + ' instance of Tartube seems to be using it',
+                + ' copy of Tartube seems to be using it',
                 ),
                 label_length,
             ) + '\n\n' \
             + utils.tidy_up_long_string(
                 _(
-                'If you are SURE that this is the only instance of Tartube' \
-                + ' running on your system. click \'Yes\' to remove the' \
-                + ' protection (and then restart Tartube)',
+                'Do you want to load it anyway?',
                 ),
                 label_length,
-            ) + '\n\n' + _('If you are not sure, then click \'No\''),
+            ) + '\n\n' \
+            + utils.tidy_up_long_string(
+                _(
+                '(Only click \'Yes\' if you are sure that other copies of' \
+                + ' Tartube are not using the database right now)',
+                ),
+                label_length,
+            )
         )
         grid.attach(label, 1, 0, grid_width, 1)
 
@@ -20261,15 +20865,18 @@ class RemoveLockFileDialogue(Gtk.Dialog):
         grid.attach(Gtk.HSeparator(), 1, 1, grid_width, 1)
 
         button = Gtk.Button.new_with_label(
-            _('Yes, I\'m sure'),
+            _('Yes, load the file'),
         )
         grid.attach(button, 1, 2, 1, 1)
         button.set_hexpand(True)
         button.connect('clicked', self.on_yes_button_clicked)
 
-        button2 = Gtk.Button.new_with_label(
-            _('No, I\'m not sure'),
-        )
+        if not switch_flag:
+            msg = _('No, just shut down Tartube')
+        else:
+            msg = _('No, don\'t load the file')
+
+        button2 = Gtk.Button.new_with_label(msg)
         grid.attach(button2, 1, 3, 1, 1)
         button2.set_hexpand(True)
         button2.connect('clicked', self.on_no_button_clicked)
@@ -21398,7 +22005,7 @@ class TestCmdDialogue(Gtk.Dialog):
 
         Gtk.Dialog.__init__(
             self,
-            _('Test youtube-dl'),
+            _('Test') + ' ' + main_win_obj.app_obj.get_downloader(),
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -21429,7 +22036,7 @@ class TestCmdDialogue(Gtk.Dialog):
             self.entry.set_text(source_url)
 
         label2 = Gtk.Label(
-            _('youtube-dl command line options (optional)'),
+            _('Command line options (optional)'),
         )
         grid.attach(label2, 0, 2, 1, 1)
 
@@ -21502,6 +22109,8 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton9 = None                # Gtk.CheckButton
         self.checkbutton10 = None               # Gtk.CheckButton
         self.checkbutton11 = None               # Gtk.CheckButton
+        self.checkbutton12 = None               # Gtk.CheckButton
+        self.checkbutton13 = None               # Gtk.CheckButton
 
 
         # Code
@@ -21544,7 +22153,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton = Gtk.CheckButton()
         grid.attach(self.checkbutton, 0, 0, 1, 1)
         self.checkbutton.set_label(_('Check that videos are not corrupted'))
-        self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
+        # (signal_connect appears below)
 
         self.checkbutton2 = Gtk.CheckButton()
         grid.attach(self.checkbutton2, 0, 1, 1, 1)
@@ -21561,7 +22170,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton3.set_label(_('Check that videos do/don\'t exist'))
 
         self.checkbutton4 = Gtk.CheckButton()
-        grid.attach(self.checkbutton4, 0, 3, 1, 2)
+        grid.attach(self.checkbutton4, 0, 3, 1, 1)
         self.checkbutton4.set_label(
             utils.tidy_up_long_string(
                 _(
@@ -21571,10 +22180,10 @@ class TidyDialogue(Gtk.Dialog):
                 label_length,
             ),
         )
-        self.checkbutton4.connect('toggled', self.on_checkbutton4_toggled)
+        # (signal_connect appears below)
 
         self.checkbutton5 = Gtk.CheckButton()
-        grid.attach(self.checkbutton5, 0, 5, 1, 1)
+        grid.attach(self.checkbutton5, 0, 4, 1, 2)
         self.checkbutton5.set_label(
             utils.tidy_up_long_string(
                 _('Also delete all video/audio files with the same name'),
@@ -21583,46 +22192,70 @@ class TidyDialogue(Gtk.Dialog):
         )
         self.checkbutton5.set_sensitive(False)
 
-        # Right column
         self.checkbutton6 = Gtk.CheckButton()
-        grid.attach(self.checkbutton6, 1, 0, 1, 1)
-        self.checkbutton6.set_label(_('Delete all description files'))
+        grid.attach(self.checkbutton6, 0, 6, 1, 1)
+        self.checkbutton6.set_label(_('Delete all archive files'))
 
+        # Right column
         self.checkbutton7 = Gtk.CheckButton()
-        grid.attach(self.checkbutton7, 1, 1, 1, 1)
-        self.checkbutton7.set_label(_('Delete all metadata (JSON) files'))
+        grid.attach(self.checkbutton7, 1, 0, 1, 1)
+        self.checkbutton7.set_label(_('Move thumbnails into own folder'))
+        # (signal_connect appears below)
 
         self.checkbutton8 = Gtk.CheckButton()
-        grid.attach(self.checkbutton8, 1, 2, 1, 1)
-        self.checkbutton8.set_label(_('Delete all annotation files'))
+        grid.attach(self.checkbutton8, 1, 1, 1, 1)
+        self.checkbutton8.set_label(_('Delete all thumbnail files'))
 
         self.checkbutton9 = Gtk.CheckButton()
-        grid.attach(self.checkbutton9, 1, 3, 1, 1)
-        self.checkbutton9.set_label(_('Delete all thumbnail files'))
+        grid.attach(self.checkbutton9, 1, 2, 1, 1)
+        self.checkbutton9.set_label(
+            utils.tidy_up_long_string(
+                _('Convert .webp thumbnails to .jpg using FFmpeg'),
+                label_length,
+            ),
+        )
 
-        # v2.1.027. In June 2020, YouTube started serving .webp thumbnails.
-        #   At the time of writing, Gtk can't display them. A youtube-dl fix is
-        #   expected, which will convert .webp thumbnails to .jpg; in
-        #   anticipation of that, we add an option to remove .webp files
         self.checkbutton10 = Gtk.CheckButton()
-        grid.attach(self.checkbutton10, 1, 4, 1, 1)
-        self.checkbutton10.set_label(_('Delete .webp/malformed .jpg files'))
+        grid.attach(self.checkbutton10, 1, 3, 1, 1)
+        self.checkbutton10.set_label(
+            utils.tidy_up_long_string(
+                _('Move other metadata files into own folder'),
+                label_length,
+            ),
+        )
+        # (signal_connect appears below)
 
         self.checkbutton11 = Gtk.CheckButton()
-        grid.attach(self.checkbutton11, 1, 5, 1, 1)
-        self.checkbutton11.set_label(_('Delete all youtube-dl archive files'))
+        grid.attach(self.checkbutton11, 1, 4, 1, 1)
+        self.checkbutton11.set_label(_('Delete all description files'))
+
+        self.checkbutton12 = Gtk.CheckButton()
+        grid.attach(self.checkbutton12, 1, 5, 1, 1)
+        self.checkbutton12.set_label(_('Delete all metadata (JSON) files'))
+
+        self.checkbutton13 = Gtk.CheckButton()
+        grid.attach(self.checkbutton13, 1, 6, 1, 1)
+        self.checkbutton13.set_label(_('Delete all annotation files'))
 
         # Bottom strip
 
         button = Gtk.Button.new_with_label(_('Select all'))
-        grid.attach(button, 0, 6, 1, 1)
+        grid.attach(button, 0, 7, 1, 1)
         button.set_hexpand(False)
-        button.connect('clicked', self.on_select_all_clicked)
+        # (signal_connect appears below)
 
-        button = Gtk.Button.new_with_label(_('Select none'))
-        grid.attach(button, 1, 6, 1, 1)
-        button.set_hexpand(False)
-        button.connect('clicked', self.on_select_none_clicked)
+        button2 = Gtk.Button.new_with_label(_('Select none'))
+        grid.attach(button2, 1, 7, 1, 1)
+        button2.set_hexpand(False)
+        # (signal_connect appears below)
+
+        # (signal_connects from above)
+        self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
+        self.checkbutton4.connect('toggled', self.on_checkbutton4_toggled)
+        self.checkbutton7.connect('toggled', self.on_checkbutton12_toggled)
+        self.checkbutton10.connect('toggled', self.on_checkbutton13_toggled)
+        button.connect('clicked', self.on_select_all_clicked)
+        button2.connect('clicked', self.on_select_none_clicked)
 
         # Display the dialogue window
         self.show_all()
@@ -21676,6 +22309,63 @@ class TidyDialogue(Gtk.Dialog):
             self.checkbutton5.set_sensitive(True)
 
 
+    def on_checkbutton12_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        When the 'Move thumbnails into to own folder' button is toggled, update
+        other widgets.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 20580 on_checkbutton12_toggled')
+
+        if not checkbutton.get_active():
+            self.checkbutton8.set_sensitive(True)
+
+        else:
+            self.checkbutton8.set_active(False)
+            self.checkbutton8.set_sensitive(False)
+
+
+    def on_checkbutton13_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        When the 'Move other metadata files into own folder' button is toggled,
+        update other widgets.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 20581 on_checkbutton13_toggled')
+
+        if not checkbutton.get_active():
+
+            self.checkbutton11.set_sensitive(True)
+            self.checkbutton12.set_sensitive(True)
+            self.checkbutton13.set_sensitive(True)
+
+        else:
+
+            self.checkbutton11.set_active(False)
+            self.checkbutton12.set_active(False)
+            self.checkbutton13.set_active(False)
+
+            self.checkbutton11.set_sensitive(False)
+            self.checkbutton12.set_sensitive(False)
+            self.checkbutton13.set_sensitive(False)
+
+
     def on_select_all_clicked(self, button):
 
         """Called from a callback in self.__init__().
@@ -21698,10 +22388,17 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton5.set_active(True)
         self.checkbutton6.set_active(True)
         self.checkbutton7.set_active(True)
-        self.checkbutton8.set_active(True)
+        self.checkbutton8.set_active(False)
         self.checkbutton9.set_active(True)
         self.checkbutton10.set_active(True)
-        self.checkbutton11.set_active(True)
+        self.checkbutton11.set_active(False)
+        self.checkbutton12.set_active(False)
+        self.checkbutton13.set_active(False)
+
+        self.checkbutton8.set_sensitive(False)
+        self.checkbutton11.set_sensitive(False)
+        self.checkbutton12.set_sensitive(False)
+        self.checkbutton13.set_sensitive(False)
 
 
     def on_select_none_clicked(self, button):
@@ -21730,3 +22427,15 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton9.set_active(False)
         self.checkbutton10.set_active(False)
         self.checkbutton11.set_active(False)
+        self.checkbutton12.set_active(False)
+        self.checkbutton13.set_active(False)
+
+        if not mainapp.HAVE_MOVIEPY_FLAG \
+        or self.main_win_obj.app_obj.refresh_moviepy_timeout == 0:
+            self.checkbutton.set_sensitive(False)
+            self.checkbutton2.set_sensitive(False)
+
+        self.checkbutton8.set_sensitive(True)
+        self.checkbutton11.set_sensitive(True)
+        self.checkbutton12.set_sensitive(True)
+        self.checkbutton13.set_sensitive(True)

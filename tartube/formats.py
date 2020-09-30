@@ -344,6 +344,8 @@ while audio_setup_list:
 # (Used for detecting video thumbnails. Unfortunately Gtk can't display .webp
 #   files yet)
 IMAGE_FORMAT_LIST = ['.jpg', '.png', '.gif']
+# (The same list including .webp, for any code that needs it)
+IMAGE_FORMAT_EXT_LIST = ['.jpg', '.png', '.gif', '.webp']
 
 FILE_SIZE_UNIT_LIST = [
     ['Bytes', ''],
@@ -580,6 +582,7 @@ if not xmas_flag:
         'info_icon': 'status_info_icon_64.png',
         'tidy_icon': 'status_tidy_icon_64.png',
         'livestream_icon': 'status_livestream_icon_64.png',
+        'process_icon': 'status_process_icon_64.png',
     }
 else:
     STATUS_ICON_DICT = {
@@ -591,6 +594,7 @@ else:
         'info_icon': 'status_info_icon_xmas_64.png',
         'tidy_icon': 'status_tidy_icon_xmas_64.png',
         'livestream_icon': 'status_livestream_icon_xmas_64.png',
+        'process_icon': 'status_process_icon_xmas_64.png',
     }
 
 TOOLBAR_ICON_DICT = {
@@ -610,8 +614,6 @@ TOOLBAR_ICON_DICT = {
     'tool_stop_small': 'stop_small.png',
     'tool_switch_large': 'switch_large.png',
     'tool_switch_small': 'switch_small.png',
-    'tool_test_large': 'test_large.png',
-    'tool_test_small': 'test_small.png',
     'tool_video_large': 'video_large.png',
     'tool_video_small': 'video_small.png',
 }

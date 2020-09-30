@@ -33,6 +33,7 @@ except:
 
 import os
 import re
+import shutil
 import threading
 import time
 
@@ -43,10 +44,6 @@ import media
 import utils
 # Use same gettext translations
 from mainapp import _
-
-
-# Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
 
 
 # Classes
@@ -86,19 +83,25 @@ class TidyManager(threading.Thread):
                 should be deleted (as artefacts of post-processing with FFmpeg
                 or AVConv)
 
+            del_archive_flag: True if all youtube-dl archive files should be
+                deleted
+
+            move_thumb_flag: True if all thumbnail files should be moved into a
+                subdirectory
+
+            del_thumb_flag: True if all thumbnail files should be deleted
+
+            convert_webp_flag: True if all .webp thumbnail files should be
+                converted to .jpg
+
+            move_data_flag: True if description, metadata (JSON) and annotation
+                files should be moved into a subdirectory
+
             del_descrip_flag: True if all description files should be deleted
 
             del_json_flag: True if all metadata (JSON) files should be deleted
 
             del_xml_flag: True if all annotation files should be deleted
-
-            del_thumb_flag: True if all thumbnail files should be deleted
-
-            del_webp_flag: True if all thumbnail files in .webp or malformed
-                .jpg format should be deleted (see comments below)
-
-            del_archive_flag: True if all youtube-dl archive files should be
-                deleted
 
     """
 
@@ -107,9 +110,6 @@ class TidyManager(threading.Thread):
 
 
     def __init__(self, app_obj, choices_dict):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 112 __init__')
 
         super(TidyManager, self).__init__()
 
@@ -151,23 +151,24 @@ class TidyManager(threading.Thread):
         # True if all video/audio files with the same name should be deleted
         #   (as artefacts of post-processing with FFmpeg or AVConv)
         self.del_others_flag = choices_dict['del_others_flag']
+        # True if all youtube-dl archive files should be deleted
+        self.del_archive_flag = choices_dict['del_archive_flag']
+        # True if all thumbnail files should be moved into a subdirectory
+        self.move_thumb_flag = choices_dict['move_thumb_flag']
+        # True if all thumbnail files should be deleted
+        self.del_thumb_flag = choices_dict['del_thumb_flag']
+        # True if all .webp thumbnail files should be converted to .jpg.
+        #   Requires mainapp.TartubeApp.ffmpeg_fail_flag set to False
+        self.convert_webp_flag = choices_dict['convert_webp_flag']
+        # True if description, metadata (JSON) and annotation files should be
+        #   moved into a subdirectory
+        self.move_data_flag = choices_dict['move_data_flag']
         # True if all description files should be deleted
         self.del_descrip_flag = choices_dict['del_descrip_flag']
         # True if all metadata (JSON) files should be deleted
         self.del_json_flag = choices_dict['del_json_flag']
         # True if all annotation files should be deleted
         self.del_xml_flag = choices_dict['del_xml_flag']
-        # True if all thumbnail files should be deleted
-        self.del_thumb_flag = choices_dict['del_thumb_flag']
-        # v2.1.027. In June 2020, YouTube started serving .webp thumbnails.
-        #   At the time of writing, Gtk can't display them. A youtube-dl fix is
-        #   expected, which will convert .webp thumbnails to .jpg; in
-        #   anticipation of that, we add an option to remove .webp files
-        # True if all thumbnail files in .webp or malformed .jpg format should
-        #   be deleted
-        self.del_webp_flag = choices_dict['del_webp_flag']
-        # True if all youtube-dl archive files should be deleted
-        self.del_archive_flag = choices_dict['del_archive_flag']
 
         # The number of media data objects whose directories have been tidied
         #   so far...
@@ -183,16 +184,22 @@ class TidyManager(threading.Thread):
         self.video_no_exist_count = 0
         self.video_deleted_count = 0
         self.other_deleted_count = 0
+        self.archive_deleted_count = 0
+        self.thumb_moved_count = 0
+        self.thumb_deleted_count = 0
+        self.webp_converted_count = 0
+        self.data_moved_count = 0
         self.descrip_deleted_count = 0
         self.json_deleted_count = 0
         self.xml_deleted_count = 0
-        self.thumb_deleted_count = 0
-        self.webp_deleted_count = 0
-        self.archive_deleted_count = 0
 
 
         # Code
         # ----
+
+        # Do not convert .webp thumbnails, if not allowed
+        if self.app_obj.ffmpeg_fail_flag:
+            self.convert_webp_flag = False
 
         # Let's get this party started!
         self.start()
@@ -215,9 +222,6 @@ class TidyManager(threading.Thread):
         Finally informs the main application that the tidy operation is
         complete.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 220 run')
 
         # Show information about the tidy operation in the Output Tab
         if not self.init_obj:
@@ -291,6 +295,57 @@ class TidyManager(threading.Thread):
                 '   ' + _('Delete other video/audio files:') + ' ' + text,
             )
 
+        if self.del_archive_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Delete downloader archive files:') + ' ' + text,
+        )
+
+        if self.move_thumb_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Move thumbnails into own folder:') + ' ' + text,
+        )
+
+        if self.del_thumb_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Delete all thumbnail files:') + ' ' + text,
+        )
+
+        if self.convert_webp_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Convert .webp thumbnails to .jpg:') + ' ' + text,
+        )
+
+        if self.move_data_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Move other metadata files into own folder:') \
+            + ' ' + text,
+        )
+
         if self.del_descrip_flag:
             text = _('YES')
         else:
@@ -319,36 +374,6 @@ class TidyManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             '   ' + _('Delete all annotation files:') + ' ' + text,
-        )
-
-        if self.del_thumb_flag:
-            text = _('YES')
-        else:
-            text = _('NO')
-
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            '   ' + _('Delete all thumbnail files:') + ' ' + text,
-        )
-
-        if self.del_webp_flag:
-            text = _('YES')
-        else:
-            text = _('NO')
-
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            '   ' + _('Delete .webp/malformed .jpg files:') + ' ' + text,
-        )
-
-        if self.del_archive_flag:
-            text = _('YES')
-        else:
-            text = _('NO')
-
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            '   ' + _('Delete youtube-dl archive files:') + ' ' + text,
         )
 
         # Compile a list of channels, playlists and folders to tidy up (each
@@ -429,6 +454,46 @@ class TidyManager(threading.Thread):
                 + str(self.other_deleted_count),
             )
 
+        if self.del_archive_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('Downloader archive files deleted:') + ' ' \
+                + str(self.archive_deleted_count),
+            )
+
+        if self.move_thumb_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('Thumbnail files moved:') + ' ' \
+                + str(self.thumb_moved_count),
+            )
+
+        if self.del_thumb_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('Thumbnail files deleted:') + ' ' \
+                + str(self.thumb_deleted_count),
+            )
+
+        if self.convert_webp_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('.webp thumbnails converted to .jpg:') + ' ' \
+                + str(self.webp_converted_count),
+            )
+
+        if self.move_data_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('Other metadata files moved:') + ' ' \
+                + str(self.data_moved_count),
+            )
+
         if self.del_descrip_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -453,30 +518,6 @@ class TidyManager(threading.Thread):
                 + str(self.xml_deleted_count),
             )
 
-        if self.del_thumb_flag:
-
-            self.app_obj.main_win_obj.output_tab_write_stdout(
-                1,
-                '   ' + _('Thumbnail files deleted:') + ' ' \
-                + str(self.thumb_deleted_count),
-            )
-
-        if self.del_webp_flag:
-
-            self.app_obj.main_win_obj.output_tab_write_stdout(
-                1,
-                '   ' + _('.webp/malformed .jpg files deleted:') + ' ' \
-                + str(self.webp_deleted_count),
-            )
-
-        if self.del_archive_flag:
-
-            self.app_obj.main_win_obj.output_tab_write_stdout(
-                1,
-                '   ' + _('youtube-dl archive files deleted:') + ' ' \
-                + str(self.archive_deleted_count),
-            )
-
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
         GObject.timeout_add(
@@ -497,9 +538,6 @@ class TidyManager(threading.Thread):
                 The media data object whose directory must be tidied up
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 502 tidy_directory')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -527,6 +565,21 @@ class TidyManager(threading.Thread):
         if self.del_video_flag:
             self.delete_video(media_data_obj)
 
+        if self.del_archive_flag:
+            self.delete_archive(media_data_obj)
+
+        if self.move_thumb_flag:
+            self.move_thumb(media_data_obj)
+
+        if self.del_thumb_flag:
+            self.delete_thumb(media_data_obj)
+
+        if self.convert_webp_flag:
+            self.convert_webp(media_data_obj)
+
+        if self.move_data_flag:
+            self.move_data(media_data_obj)
+
         if self.del_descrip_flag:
             self.delete_descrip(media_data_obj)
 
@@ -535,15 +588,6 @@ class TidyManager(threading.Thread):
 
         if self.del_xml_flag:
             self.delete_xml(media_data_obj)
-
-        if self.del_thumb_flag:
-            self.delete_thumb(media_data_obj)
-
-        if self.del_webp_flag:
-            self.delete_webp(media_data_obj)
-
-        if self.del_archive_flag:
-            self.delete_archive(media_data_obj)
 
 
     def check_video_corrupt(self, media_data_obj):
@@ -559,9 +603,6 @@ class TidyManager(threading.Thread):
                 The media data object whose directory must be tidied up
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 564 check_video_corrupt')
 
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
@@ -638,9 +679,6 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 642 check_videos_exist')
-
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
             if video_obj.file_name is not None:
@@ -698,9 +736,6 @@ class TidyManager(threading.Thread):
                 The media data object whose directory must be tidied up
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 703 delete_video')
 
         ext_list = formats.VIDEO_FORMAT_LIST.copy()
         ext_list.extend(formats.AUDIO_FORMAT_LIST)
@@ -784,12 +819,12 @@ class TidyManager(threading.Thread):
                     self.other_deleted_count += 1
 
 
-    def delete_descrip(self, media_data_obj):
+    def delete_archive(self, media_data_obj):
 
         """Called by self.tidy_directory().
 
-        Checks all child videos of the specified media data object. If the
-        associated description file exists, delete it.
+        Checks the specified media data object's directory. If a youtube-dl
+        archive file is found there, delete it.
 
         Args:
 
@@ -798,43 +833,26 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 802 delete_descrip')
+        archive_path = os.path.abspath(
+            os.path.join(
+                media_data_obj.get_default_dir(self.app_obj),
+                'ytdl-archive.txt',
+            ),
+        )
 
-        for video_obj in media_data_obj.compile_all_videos( [] ):
+        if os.path.isfile(archive_path):
 
-            if video_obj.file_name is not None:
-
-                descrip_path = video_obj.get_actual_path_by_ext(
-                    self.app_obj,
-                    '.description',
-                )
-
-                # If the video's parent container has an alternative download
-                #   destination set, we must check the corresponding media
-                #   data object. If the latter also has a media.Video object
-                #   matching this video, then this function returns None and
-                #   nothing is deleted
-                descrip_path = self.check_video_in_actual_dir(
-                    media_data_obj,
-                    video_obj,
-                    descrip_path,
-                )
-
-                if descrip_path is not None \
-                and os.path.isfile(descrip_path):
-
-                    # Delete the description file
-                    os.remove(descrip_path)
-                    self.descrip_deleted_count += 1
+            # Delete the archive file
+            os.remove(archive_path)
+            self.archive_deleted_count += 1
 
 
-    def delete_json(self, media_data_obj):
+    def move_thumb(self, media_data_obj):
 
         """Called by self.tidy_directory().
 
         Checks all child videos of the specified media data object. If the
-        associated metadata (JSON) file exists, delete it.
+        associated thumbnail file exists, moves it into its own sub-directory.
 
         Args:
 
@@ -843,80 +861,53 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 847 delete_json')
-
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
             if video_obj.file_name is not None:
 
-                json_path = video_obj.get_actual_path_by_ext(
+                # Thumbnails might be in one of four locations. If the
+                #   thumbnail has already been moved into /.thumbs, then of
+                #   course we don't move it again (and this function returns an
+                #   empty list)
+                path_list = utils.find_thumbnail_restricted(
                     self.app_obj,
-                    '.info.json',
-                )
-
-                # If the video's parent container has an alternative download
-                #   destination set, we must check the corresponding media
-                #   data object. If the latter also has a media.Video object
-                #   matching this video, then this function returns None and
-                #   nothing is deleted
-                json_path = self.check_video_in_actual_dir(
-                    media_data_obj,
                     video_obj,
-                    json_path,
                 )
 
-                if json_path is not None \
-                and os.path.isfile(json_path):
+                if path_list:
 
-                    # Delete the metadata file
-                    os.remove(json_path)
-                    self.json_deleted_count += 1
+                    main_path = os.path.abspath(
+                        os.path.join(
+                            path_list[0], path_list[1],
+                        ),
+                    )
 
+                    subdir = os.path.abspath(
+                        os.path.join(
+                            path_list[0], self.app_obj.thumbs_sub_dir,
+                        ),
+                    )
 
-    def delete_xml(self, media_data_obj):
+                    subdir_path = os.path.abspath(
+                        os.path.join(
+                            path_list[0],
+                            self.app_obj.thumbs_sub_dir,
+                            path_list[1],
+                        ),
+                    )
 
-        """Called by self.tidy_directory().
+                    if os.path.isfile(main_path) \
+                    and not os.path.isfile(subdir_path):
 
-        Checks all child videos of the specified media data object. If the
-        associated annotation file exists, delete it.
+                        try:
+                            if not os.path.isdir(subdir):
+                                os.makedirs(subdir)
 
-        Args:
+                            shutil.move(main_path, subdir_path)
+                            self.thumb_moved_count += 1
 
-            media_data_obj (media.Channel, media.Playlist or media.Folder):
-                The media data object whose directory must be tidied up
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 892 delete_xml')
-
-        for video_obj in media_data_obj.compile_all_videos( [] ):
-
-            if video_obj.file_name is not None:
-
-                xml_path = video_obj.get_actual_path_by_ext(
-                    self.app_obj,
-                    '.annotations.xml',
-                )
-
-                # If the video's parent container has an alternative download
-                #   destination set, we must check the corresponding media
-                #   data object. If the latter also has a media.Video object
-                #   matching this video, then this function returns None and
-                #   nothing is deleted
-                xml_path = self.check_video_in_actual_dir(
-                    media_data_obj,
-                    video_obj,
-                    xml_path,
-                )
-
-                if xml_path is not None \
-                and os.path.isfile(xml_path):
-
-                    # Delete the annotation file
-                    os.remove(xml_path)
-                    self.xml_deleted_count += 1
+                        except:
+                            pass
 
 
     def delete_thumb(self, media_data_obj):
@@ -933,14 +924,11 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 937 delete_thumb')
-
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
             if video_obj.file_name is not None:
 
-                # Thumbnails might be in one of two locations
+                # Thumbnails might be in one of four locations
                 thumb_path = utils.find_thumbnail(self.app_obj, video_obj)
 
                 # If the video's parent container has an alternative download
@@ -964,13 +952,13 @@ class TidyManager(threading.Thread):
                     self.thumb_deleted_count += 1
 
 
-    def delete_webp(self, media_data_obj):
+    def convert_webp(self, media_data_obj):
 
         """Called by self.tidy_directory().
 
         Checks all child videos of the specified media data object. If the
         associated thumbnail file in a .webp or malformed .jpg format exists,
-        delete it
+        convert it to .jpg.
 
         Args:
 
@@ -979,14 +967,11 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 983 delete_webp')
-
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
             if video_obj.file_name is not None:
 
-                # Thumbnails might be in one of two locations
+                # Thumbnails might be in one of four locations
                 thumb_path = utils.find_thumbnail_webp(self.app_obj, video_obj)
 
                 # If the video's parent container has an alternative download
@@ -1005,17 +990,26 @@ class TidyManager(threading.Thread):
                 if thumb_path is not None \
                 and os.path.isfile(thumb_path):
 
-                    # Delete the thumbnail file
-                    os.remove(thumb_path)
-                    self.webp_deleted_count += 1
+                    # Convert to .jpg
+                    if not self.app_obj.ffmpeg_manager_obj.convert_webp(
+                        thumb_path
+                    ):
+                        # FFmpeg is probably not installed; don't try any more
+                        #   conversions
+                        self.convert_webp_flag = False
+                        self.app_obj.set_ffmpeg_fail_flag(True)
+
+                    else:
+
+                        self.webp_converted_count += 1
 
 
-    def delete_archive(self, media_data_obj):
+    def move_data(self, media_data_obj):
 
         """Called by self.tidy_directory().
 
-        Checks the specified media data object's directory. If a youtube-dl
-        archive file is found there, delete it.
+        Checks all child videos of the specified media data object. If the
+        associated thumbnail file exists, moves it into its own sub-directory.
 
         Args:
 
@@ -1024,21 +1018,230 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1028 delete_archive')
+        for video_obj in media_data_obj.compile_all_videos( [] ):
 
-        archive_path = os.path.abspath(
-            os.path.join(
-                media_data_obj.get_default_dir(self.app_obj),
-                'ytdl-archive.txt',
-            ),
-        )
+            if video_obj.file_name is not None:
 
-        if os.path.isfile(archive_path):
+                # Description/JSON/annotations files might be in one of four
+                #   locations. If the file has already been moved into /.data,
+                #   then of course we don't move it again
+                for ext in ['.description', '.info.json', '.annotations.xml']:
 
-            # Delete the archive file
-            os.remove(archive_path)
-            self.archive_deleted_count += 1
+                    main_path = video_obj.get_actual_path_by_ext(
+                        self.app_obj,
+                        ext,
+                    )
+
+                    subdir = os.path.abspath(
+                        os.path.join(
+                            video_obj.parent_obj.get_actual_dir(self.app_obj),
+                            self.app_obj.metadata_sub_dir,
+                        ),
+                    )
+
+                    subdir_path \
+                    = video_obj.get_actual_path_in_subdirectory_by_ext(
+                        self.app_obj,
+                        ext,
+                    )
+
+                    if os.path.isfile(main_path) \
+                    and not os.path.isfile(subdir_path):
+
+                        try:
+                            if not os.path.isdir(subdir):
+                                os.makedirs(subdir)
+
+                            # (os.rename sometimes fails on external hard
+                            #   drives; this is safer)
+                            shutil.move(main_path, subdir_path)
+                            self.data_moved_count += 1
+
+                        except:
+                            pass
+
+
+    def delete_descrip(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        associated description file exists, delete it.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.file_name is not None:
+
+                main_path = video_obj.get_actual_path_by_ext(
+                    self.app_obj,
+                    '.description',
+                )
+
+                # If the video's parent container has an alternative download
+                #   destination set, we must check the corresponding media
+                #   data object. If the latter also has a media.Video object
+                #   matching this video, then this function returns None and
+                #   nothing is deleted
+                main_path = self.check_video_in_actual_dir(
+                    media_data_obj,
+                    video_obj,
+                    main_path,
+                )
+
+                if main_path is not None \
+                and os.path.isfile(main_path):
+
+                    # Delete the description file
+                    os.remove(main_path)
+                    self.descrip_deleted_count += 1
+
+                # (Repeat for a file that might be in the sub-directory
+                #   '.data')
+                subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+                    self.app_obj,
+                    '.description',
+                )
+
+                subdir_path = self.check_video_in_actual_dir(
+                    subdir_path,
+                    video_obj,
+                    subdir_path,
+                )
+
+                if subdir_path is not None \
+                and os.path.isfile(subdir_path):
+
+                    os.remove(subdir_path)
+                    self.descrip_deleted_count += 1
+
+
+    def delete_json(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        associated metadata (JSON) file exists, delete it.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.file_name is not None:
+
+                main_path = video_obj.get_actual_path_by_ext(
+                    self.app_obj,
+                    '.info.json',
+                )
+
+                # If the video's parent container has an alternative download
+                #   destination set, we must check the corresponding media
+                #   data object. If the latter also has a media.Video object
+                #   matching this video, then this function returns None and
+                #   nothing is deleted
+                main_path = self.check_video_in_actual_dir(
+                    media_data_obj,
+                    video_obj,
+                    main_path,
+                )
+
+                if main_path is not None \
+                and os.path.isfile(main_path):
+
+                    # Delete the metadata file
+                    os.remove(main_path)
+                    self.json_deleted_count += 1
+
+                # (Repeat for a file that might be in the sub-directory
+                #   '.data')
+                subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+                    self.app_obj,
+                    '.info.json',
+                )
+
+                subdir_path = self.check_video_in_actual_dir(
+                    media_data_obj,
+                    video_obj,
+                    subdir_path,
+                )
+
+                if subdir_path is not None \
+                and os.path.isfile(subdir_path):
+
+                    os.remove(subdir_path)
+                    self.json_deleted_count += 1
+
+
+    def delete_xml(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        associated annotation file exists, delete it.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.file_name is not None:
+
+                main_path = video_obj.get_actual_path_by_ext(
+                    self.app_obj,
+                    '.annotations.xml',
+                )
+
+                # If the video's parent container has an alternative download
+                #   destination set, we must check the corresponding media
+                #   data object. If the latter also has a media.Video object
+                #   matching this video, then this function returns None and
+                #   nothing is deleted
+                main_path = self.check_video_in_actual_dir(
+                    media_data_obj,
+                    video_obj,
+                    main_path,
+                )
+
+                if main_path is not None \
+                and os.path.isfile(main_path):
+
+                    # Delete the annotation file
+                    os.remove(main_path)
+                    self.xml_deleted_count += 1
+
+                # (Repeat for a file that might be in the sub-directory
+                #   '.data')
+                subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+                    self.app_obj,
+                    '.annotations.xml',
+                )
+
+                subdir_path = self.check_video_in_actual_dir(
+                    media_data_obj,
+                    video_obj,
+                    subdir_path,
+                )
+
+                if subdir_path is not None \
+                and os.path.isfile(subdir_path):
+
+                    os.remove(subdir_path)
+                    self.xml_deleted_count += 1
 
 
     def call_moviepy(self, video_obj, video_path):
@@ -1059,9 +1262,6 @@ class TidyManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1063 call_moviepy')
-
         try:
             clip = moviepy.editor.VideoFileClip(video_path)
 
@@ -1075,7 +1275,7 @@ class TidyManager(threading.Thread):
             )
 
 
-    def check_video_in_actual_dir(self, container_obj, video_obj, file_path):
+    def check_video_in_actual_dir(self, container_obj, video_obj, delete_path):
 
         """Called by self.delete_video(), .delete_descrip(), .delete_json(),
         .delete_xml() and .delete_thumb().
@@ -1083,8 +1283,8 @@ class TidyManager(threading.Thread):
         If the video's parent container has an alternative download destination
         set, we must check the corresponding media data object. If the latter
         also has a media.Video object matching this video, then this function
-        returns None and nothing is deleted. Otherwise, the specified file_path
-        is returned, so it can be deleted.
+        returns None and nothing is deleted. Otherwise, the specified
+        delete_path is returned, so it can be deleted.
 
         Args:
 
@@ -1094,23 +1294,20 @@ class TidyManager(threading.Thread):
             video_obj (media.Video): A video contained in that channel,
                 playlist or folder
 
-            file_path (str): The path to a file which the calling function
+            delete_path (str): The path to a file which the calling function
                 wants to delete
 
         Returns:
 
-            The specified file_path if it can be deleted, or None if it should
-                not be deleted
+            The specified delete_path if it can be deleted, or None if it
+                should not be deleted
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1108 check_video_in_actual_dir')
 
         if container_obj.dbid == container_obj.master_dbid:
 
             # No alternative download destination to check
-            return file_path
+            return delete_path
 
         else:
 
@@ -1129,7 +1326,7 @@ class TidyManager(threading.Thread):
 
             # There are no videos with the same name, so the file can be
             #   deleted
-            return file_path
+            return delete_path
 
 
     def stop_tidy_operation(self):
@@ -1139,8 +1336,5 @@ class TidyManager(threading.Thread):
 
         Stops the tidy operation.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('top 1144 stop_tidy_operation')
 
         self.running_flag = False

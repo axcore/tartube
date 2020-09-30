@@ -445,7 +445,7 @@ def convert_youtube_id_to_rss(media_type, youtube_id):
 
         youtube_id (str): The YouTube channel or playlist ID
 
-    Return values:
+    Returns:
 
         The full URL for the RSS feed
 
@@ -485,12 +485,12 @@ def convert_youtube_to_hooktube(url):
     return url
 
 
-def convert_youtube_to_invidious(url):
+def convert_youtube_to_invidious(app_obj, url):
 
     """Can be called by anything.
 
     Converts a YouTube weblink to an Invidious weblink (but doesn't modify
-    links to other sites.
+    links to other sites).
 
     Args:
 
@@ -502,11 +502,12 @@ def convert_youtube_to_invidious(url):
 
     """
 
-    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url) \
+    and re.search('\w+\.\w+', app_obj.custom_invidious_mirror):
 
         url = re.sub(
             r'youtube\.com',
-            'invidio.us',
+            app_obj.custom_invidious_mirror,
             url,
             # Substitute first occurence only
             1,
@@ -775,31 +776,87 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
     for ext in formats.IMAGE_FORMAT_LIST:
 
         # Look in Tartube's permanent data directory
-        path = video_obj.get_actual_path_by_ext(app_obj, ext)
-
-        if os.path.isfile(path):
-            return path
+        normal_path = video_obj.check_actual_path_by_ext(app_obj, ext)
+        if normal_path is not None:
+            return normal_path
 
         elif temp_dir_flag:
 
             # Look in temporary data directory
             data_dir_len = len(app_obj.downloads_dir)
 
-            temp_path = app_obj.temp_dl_dir + path[data_dir_len:]
+            temp_path = video_obj.get_actual_path_by_ext(app_obj, ext)
+            temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
             if os.path.isfile(temp_path):
                 return temp_path
 
+    # Catch YouTube .jpg thumbnails, in the form .jpg?...
+    normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
+    for glob_path in glob.glob(normal_path):
+        if os.path.isfile(glob_path):
+            return glob_path
+
+    if temp_dir_flag:
+
+        temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
+        temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+
+        for glob_path in glob.glob(temp_path):
+            if os.path.isfile(glob_path):
+                return glob_path
+
+
+    # No matching thumbnail found
     return None
+
+
+def find_thumbnail_restricted(app_obj, video_obj):
+
+    """Called by mainapp.TartubeApp.update_video_when_file_found().
+
+    Modified version of utils.find_thumbnail().
+
+    Returns the path of the thumbnail in the same directory as its video. The
+    path is returned as a list, so the calling code can convert it into the
+    equivalent path in the '.thumbs' subdirectory.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video object handling the downloaded video
+
+    Returns:
+
+        return_list (list): A list whose items, when combined, will be the full
+            path to the thumbnail file. If no thumbnail file was found, an
+            empty list is returned
+
+    """
+
+    for ext in formats.IMAGE_FORMAT_LIST:
+
+        actual_dir = video_obj.parent_obj.get_actual_dir(app_obj)
+        test_path = os.path.abspath(
+            os.path.join(
+                actual_dir,
+                video_obj.file_name + ext,
+            ),
+        )
+
+        if os.path.isfile(test_path):
+            return [ actual_dir, video_obj.file_name + ext ]
+
+    # No matching thumbnail found
+    return []
 
 
 def find_thumbnail_webp(app_obj, video_obj):
 
-    """Called by tidy.TidyManager.delete_webp().
+    """Can be called by anything.
 
-    In June 2020, YouTube started serving .webp thumbnails. At the time of
-    writing (v2.1.027), Gtk can't display them. A youtube-dl fix is expected,
-    which will convert .webp thumbnails to .jpg; in anticipation of that, we
-    add an option to remove .webp files.
+    In June 2020, YouTube started serving .webp thumbnails. Gtk cannot display
+    them, so Tartube typically converts themto .jpg.
 
     This is a modified version of utils.find_thumbnail(), which looks for
     thumbnails in the .webp or malformed .jpg format, and return the path to
@@ -817,16 +874,36 @@ def find_thumbnail_webp(app_obj, video_obj):
 
     """
 
-    path = video_obj.get_actual_path_by_ext(app_obj, '.webp')
-    if os.path.isfile(path):
-       return path
+    for ext in ('.webp', '.jpg'):
 
-    # malformed .jpg thumbnail files have an extension .jpg?sqp=-XXX, where XXX
-    #   is a large number of random characters
-    path = video_obj.get_actual_path_by_ext(app_obj, '.jpg?*')
-    for actual_path in glob.glob(path):
-        if os.path.isfile(actual_path):
-            return actual_path
+        main_path = video_obj.get_actual_path_by_ext(app_obj, ext)
+        if os.path.isfile(main_path) \
+        and app_obj.ffmpeg_manager_obj.is_webp(main_path):
+            return main_path
+
+        # The extension may be followed by additional characters, e.g.
+        #   .jpg?sqp=-XXX (as well as several other patterns)
+        for actual_path in glob.glob(main_path + '*'):
+            if os.path.isfile(actual_path) \
+            and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
+                return actual_path
+
+        subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+            app_obj,
+            ext,
+        )
+
+        if os.path.isfile(subdir_path) \
+        and app_obj.ffmpeg_manager_obj.is_webp(subdir_path):
+            return subdir_path
+
+        for actual_path in glob.glob(subdir_path + '*'):
+            if os.path.isfile(actual_path) \
+            and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
+                return actual_path
+
+    # No webp thumbnail found
+    return None
 
 
 def format_bytes(num_bytes):
@@ -912,11 +989,8 @@ divert_mode=None):
     # If actually downloading videos, use (or create) an archive file so that,
     #   if the user deletes the videos, youtube-dl won't try to download them
     #   again
-    # We don't use an archive file when:
-    #   1. Downloading into a system folder
-    #   2. Checking for missing videos
-    if not missing_video_check_flag \
-    and (
+    # We don't use an archive file when downloading into a system folder
+    if (
         not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
         or dl_classic_flag and app_obj.classic_ytdl_archive_flag
     ):
@@ -958,9 +1032,17 @@ divert_mode=None):
 
     # Supply youtube-dl with the path to the ffmpeg/avconv binary, if the
     #   user has provided one
-    if app_obj.ffmpeg_path is not None:
+    # If both paths have been set, prefer ffmpeg, unless the 'prefer_avconv'
+    #   download option had been specified
+    if '--prefer-avconv' in options_list and app_obj.avconv_path is not None:
+        options_list.append('--ffmpeg-location')
+        options_list.append(app_obj.avconv_path)
+    elif app_obj.ffmpeg_path is not None:
         options_list.append('--ffmpeg-location')
         options_list.append(app_obj.ffmpeg_path)
+    elif app_obj.avconv_path is not None:
+        options_list.append('--ffmpeg-location')
+        options_list.append(app_obj.avconv_path)
 
     # Convert a YouTube URL to an alternative YouTube front-end, if required
     source = media_data_obj.source
@@ -968,14 +1050,14 @@ divert_mode=None):
         if divert_mode == 'hooktube':
             source = convert_youtube_to_hooktube(source)
         elif divert_mode == 'invidious':
-            source = convert_youtube_to_invidious(source)
+            source = convert_youtube_to_invidious(app_obj, source)
         elif divert_mode == 'custom' \
         and app_obj.custom_dl_divert_website is not None \
         and len(app_obj.custom_dl_divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source)
 
     # Convert a path beginning with ~ (not on MS Windows)
-    ytdl_path = app_obj.ytdl_path
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
     if os.name != 'nt':
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
@@ -1062,6 +1144,100 @@ def is_youtube(url):
         return False
 
 
+def move_metadata_to_subdir(app_obj, video_obj, ext):
+
+    """Can be called by anything.
+
+    Moves a description, JSON or annotations file from the same directory as
+    its video, into the subdirectory '.data'.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The file's parent video
+
+        ext (str): The file extension, which will be one of '.description',
+            '.info.json' or '.annotations.xml'
+
+    """
+
+    main_path = video_obj.get_actual_path_by_ext(app_obj, '.description')
+    subdir = os.path.abspath(
+        os.path.join(
+            video_obj.parent_obj.get_actual_dir(app_obj),
+            app_obj.metadata_sub_dir,
+        ),
+    )
+
+    subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+        app_obj,
+        '.description',
+    )
+
+    if os.path.isfile(main_path) and not os.path.isfile(subdir_path):
+
+        try:
+            if not os.path.isdir(subdir):
+                os.makedirs(subdir)
+
+            # (os.rename sometimes fails on external hard drives; this
+            #   is safer)
+            shutil.move(main_path, subdir_path)
+
+        except:
+            pass
+
+
+def move_thumbnail_to_subdir(app_obj, video_obj):
+
+    """Can be called by anything.
+
+    Moves a thumbnail file from the same directory as its video, into the
+    subdirectory '.thumbs'.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The file's parent video
+
+    """
+
+    path_list = utils.find_thumbnail_restricted(app_obj, video_obj)
+    if path_list:
+
+        main_path = os.path.abspath(
+            os.path.join(
+                path_list[0], path_list[1],
+            ),
+        )
+
+        subdir = os.path.abspath(
+            os.path.join(
+                path_list[0], app_obj.thumbs_sub_dir,
+            ),
+        )
+
+        subdir_path = os.path.abspath(
+            os.path.join(
+                path_list[0], app_obj.thumbs_sub_dir, path_list[1],
+            ),
+        )
+
+        if os.path.isfile(main_path) \
+        and not os.path.isfile(subdir_path):
+
+            try:
+                if not os.path.isdir(subdir):
+                    os.makedirs(subdir)
+
+                shutil.move(main_path, subdir_path)
+
+            except:
+                pass
+
+
 def open_file(uri):
 
     """Can be called by anything.
@@ -1086,8 +1262,14 @@ def parse_ytdl_options(options_string):
 
     """Called by options.OptionsParser.parse() or info.InfoManager.run().
 
+    Also called by process.ProcessManager.__init__, to parse FFmpeg command-
+    line options on the same basis.
+
     Parses the 'extra_cmd_string' option, which can contain arguments inside
     double quotes "..." (arguments that can therefore contain whitespace)
+
+    If options_string contains newline characters, then it terminates an
+    argument, closing newline character or not.
 
     Args:
 
@@ -1100,31 +1282,33 @@ def parse_ytdl_options(options_string):
 
     """
 
-    # Set a flag for an item beginning with double quotes, and reset it for an
-    #   item ending in double quotes
-    quote_flag = False
-    # Temporary list to hold such quoted arguments
-    quote_list = []
     # Add options, one at a time, to a list
     return_list = []
 
-    return_string = ''
-    for item in options_string.split():
+    for line in options_string.splitlines():
 
-        quote_flag = (quote_flag or item[0] == "\"")
+        # Set a flag for an item beginning with double quotes, and reset it for
+        #   an item ending in double quotes
+        quote_flag = False
+        # Temporary list to hold such quoted arguments
+        quote_list = []
 
-        if quote_flag:
-            quote_list.append(item)
-        else:
-            return_list.append(item)
+        for item in line.split():
 
-        if quote_flag and item[-1] == "\"":
+            quote_flag = (quote_flag or item[0] == "\"")
 
-            # Special case mode is over
-            return_list.append(" ".join(quote_list)[1:-1])
+            if quote_flag:
+                quote_list.append(item)
+            else:
+                return_list.append(item)
 
-            quote_flag = False
-            quote_list = []
+            if quote_flag and item[-1] == "\"":
+
+                # Special case mode is over
+                return_list.append(" ".join(quote_list)[1:-1])
+
+                quote_flag = False
+                quote_list = []
 
     return return_list
 
@@ -1175,6 +1359,39 @@ def strip_whitespace(string):
         string = re.sub(r'\s+$', '', string)
 
     return string
+
+
+def strip_whitespace_multiline(string):
+
+    """Can be called by anything.
+
+    An extended version of utils.strip_whitepspace.
+
+    Divides a string into lines, removes empty lines, removes any leading/
+    trailing whitespace from each line, then combines the lines back into a
+    single string (with lines separated by newline characters).
+
+    Args:
+
+        string (str): The string to convert
+
+    Returns:
+
+        The converted string
+
+    """
+
+    line_list = string.splitlines()
+    mod_list = []
+
+    for line in line_list:
+        line = re.sub(r'^\s+', '', line)
+        line = re.sub(r'\s+$', '', line)
+
+        if re.search('\S', line):
+            mod_list.append(line)
+
+    return "\n".join(mod_list)
 
 
 def tidy_up_container_name(string, max_length):

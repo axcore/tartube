@@ -44,6 +44,8 @@ unsubscribe people from their favourite channels and/or deliberately
 conceal videos that they don't like. Tartube won't do any of those things
 - Tartube can, in some circumstances, see videos that are region-blocked
 and/or age-restricted
+
+Note for PyPI users: Tartube should be installed with: pip3 install tartube
 """
 
 alt_description = """
@@ -145,7 +147,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.1.080',
+    version='2.2.0',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',
@@ -171,7 +173,8 @@ setuptools.setup(
         exclude=('docs', 'icons', 'nsis', 'tests'),
     ),
     include_package_data=True,
-    python_requires='>=3.0, <4',
+#    python_requires='>=3.0, <4',
+    python_requires='>=3.0',
     install_requires=['feedparser', 'pgi', 'playsound', 'requests'],
     scripts=[script_exec],
     project_urls={

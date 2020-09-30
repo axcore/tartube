@@ -39,10 +39,6 @@ import utils
 from mainapp import _
 
 
-# Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
-
-
 # Classes
 
 
@@ -68,9 +64,6 @@ class RefreshManager(threading.Thread):
 
 
     def __init__(self, app_obj, init_obj=None):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 73 __init__')
 
         super(RefreshManager, self).__init__()
 
@@ -138,9 +131,6 @@ class RefreshManager(threading.Thread):
         Finally informs the main application that the refresh operation is
         complete.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 143 run')
 
         # Show information about the refresh operation in the Output Tab
         if not self.init_obj:
@@ -247,9 +237,6 @@ class RefreshManager(threading.Thread):
                 The media data object to refresh
 
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 252 refresh_from_default_destination')
 
         # Update the main window's progress bar
         self.job_count += 1
@@ -519,9 +506,6 @@ class RefreshManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 519 refresh_from_actual_destination')
-
         # Update the main window's progress bar
         self.job_count += 1
         GObject.timeout_add(
@@ -616,8 +600,5 @@ class RefreshManager(threading.Thread):
 
         Stops the refresh operation.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('rop 613 stop_refresh_operation')
 
         self.running_flag = False

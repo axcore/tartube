@@ -29,7 +29,7 @@
 
 
 # Import our modules
-#   ...
+import media
 
 
 # Functions
@@ -39,11 +39,11 @@ def add_test_media(app_obj):
 
     """Called by mainapp.TartubeApp.on_menu_test().
 
-    Add a set of media data objects for testing. This function can only be
+    Adds a set of media data objects for testing. This function can only be
     called if the debugging flags are set.
 
-    Enable/disable various media objects by changing the 0s and 1s in the code
-    below.
+    Enables/disables various media objects by changing the 0s and 1s in the
+    code below.
 
     The videos, channels and playlists listed here have been chosen because
     they are short. They have no connection to the Tartube developers.
@@ -134,4 +134,109 @@ def add_test_media(app_obj):
                 folder2,
             )
             app_obj.main_win_obj.video_index_add_row(folder4)
+
+
+def run_test_code(app_obj):
+
+    """Called by mainapp.TartubeApp.on_menu_test_code().
+
+    Executes some arbitrary test code, and returns a result.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+    """
+
+    # ... insert code here ...
+
+    # ...
+
+    # ... insert code here ...
+
+    return "Hello world"
+
+
+def setup_screenshots(app_obj):
+
+    """Call this function from testing.run_test_code, when required.
+
+    Sets up four fake channels, with fake videos, in order to take screenshots
+    for the README.
+
+    """
+
+    folder = app_obj.add_folder(
+        'Comedy',
+        None,           # No parent
+    )
+    app_obj.main_win_obj.video_index_add_row(folder)
+
+    folder2 = app_obj.add_folder(
+        'Music',
+        None,           # No parent
+    )
+    app_obj.main_win_obj.video_index_add_row(folder2)
+
+
+    channel_list = [
+        'PewDiePie',
+        'https://www.youtube.com/user/PewDiePie/videos',
+        4205,
+        'Comedy',
+        'T-Series',
+        'https://www.youtube.com/aashiqui2/videos',
+        14705,
+        'Music',
+        'The Beatles',
+        'https://www.youtube.com/c/TheBeatles/videos',
+        219,
+        'Music',
+        'Luke TheNotable',
+        'https://www.youtube.com/c/LukeTheNotable/videos',
+#        486,
+        476,
+        'Comedy',
+    ]
+
+    while channel_list:
+
+        channel_name = channel_list.pop(0)
+        channel_url = channel_list.pop(0)
+        video_count = channel_list.pop(0)
+        folder_name = channel_list.pop(0)
+        folder_dbid = app_obj.media_name_dict[folder_name]
+        folder_obj = app_obj.media_reg_dict[folder_dbid]
+
+        channel_obj = app_obj.add_channel(
+            channel_name,
+            folder_obj,
+            channel_url,
+            None,
+        )
+        app_obj.main_win_obj.video_index_add_row(channel_obj)
+
+        for i in range(0, video_count):
+            video_obj = app_obj.add_video(
+                channel_obj,
+               'https://www.youtube.com/',  # Fake URL
+            )
+            video_obj.name = video_obj.nickname = 'Fake video'
+            video_obj.upload_time = 1
+            video_obj.receive_time = 1
+
+            app_obj.mark_video_downloaded(video_obj, True)
+
+
+def setup_screenshots2(app_obj):
+
+    """Call this function from testing.run_test_code, when required.
+
+    Makes sure all videos are marked as downloaded.
+    """
+
+    for media_data_obj in app_obj.media_reg_dict.values():
+        if isinstance(media_data_obj, media.Video) \
+        and not media_data_obj.dl_flag:
+            app_obj.mark_video_downloaded(media_data_obj, True)
 

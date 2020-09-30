@@ -42,10 +42,6 @@ import utils
 from mainapp import _
 
 
-# Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
-
-
 # Classes
 
 
@@ -97,9 +93,6 @@ class InfoManager(threading.Thread):
 
     def __init__(self, app_obj, info_type, media_data_obj, url_string,
     options_string):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 102 __init__')
 
         super(InfoManager, self).__init__()
 
@@ -176,14 +169,11 @@ class InfoManager(threading.Thread):
         application with the result of the process (success or failure).
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 180 run')
-
         # Show information about the info operation in the Output Tab
         if self.info_type == 'test_ytdl':
 
             msg = _(
-                'Starting info operation, testing youtube-dl with specified' \
+                'Starting info operation, testing downloader with specified' \
                 + ' options',
             )
 
@@ -206,7 +196,7 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
 
         # Convert a path beginning with ~ (not on MS Windows)
-        ytdl_path = self.app_obj.ytdl_path
+        ytdl_path = self.app_obj.check_downloader(self.app_obj.ytdl_path)
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
@@ -340,7 +330,7 @@ class InfoManager(threading.Thread):
         #   situations)
         if self.child_process is None:
 
-            msg = _('youtube-dl process did not start')
+            msg = _('System process did not start')
             self.stderr_list.append(msg)
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -391,9 +381,6 @@ class InfoManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 395 create_child_process')
-
         info = preexec = None
 
         if os.name == 'nt':
@@ -436,9 +423,6 @@ class InfoManager(threading.Thread):
 
         """
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 440 is_child_process_alive')
-
         if self.child_process is None:
             return False
 
@@ -454,9 +438,6 @@ class InfoManager(threading.Thread):
 
         Terminates the child process.
         """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('iop 459 stop_info_operation')
 
         if self.is_child_process_alive():
 

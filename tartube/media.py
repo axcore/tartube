@@ -33,6 +33,7 @@ import time
 
 
 # Import our modules
+import formats
 import mainapp
 import utils
 # Use same gettext translations
@@ -1593,10 +1594,12 @@ class Video(GenericMedia):
 
         """
 
-        descrip_path = self.get_actual_path_by_ext(app_obj, '.description')
-        text = app_obj.file_manager_obj.load_text(descrip_path)
-        if text is not None:
-            self.set_video_descrip(text, max_length)
+        descrip_path = self.check_actual_path_by_ext(app_obj, '.description')
+        if (descrip_path):
+
+            text = app_obj.file_manager_obj.load_text(descrip_path)
+            if text is not None:
+                self.set_video_descrip(text, max_length)
 
 
     # Set accessors
@@ -1846,6 +1849,10 @@ class Video(GenericMedia):
 
             app_obj (mainapp.TartubeApp): The main application
 
+        Returns:
+
+            The path described above
+
         """
 
         return os.path.abspath(
@@ -1880,6 +1887,10 @@ class Video(GenericMedia):
 
             ext (str): The extension, e.g. 'png' or '.png'
 
+        Returns:
+
+            The full file path (the file may or may not exist)
+
         """
 
         # Add the full stop, if not supplied by the calling function
@@ -1892,6 +1903,129 @@ class Video(GenericMedia):
                 self.file_name + ext,
             ),
         )
+
+
+    def get_actual_path_in_subdirectory_by_ext(self, app_obj, ext):
+
+        """Can be called by anything.
+
+        Modified version of self.get_actual_path_by_ext().
+
+        The file might be stored in the same directory as its video, or in the
+        sub-directory '.thumbs' (for thumbnails) or '.data' (for everything
+        else).
+
+        self.get_actual_path_by_ext() returns the former; this function returns
+        the latter.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            ext (str): The extension, e.g. 'png' or '.png'
+
+        Returns:
+
+            The full file path (the file may or may not exist)
+
+        """
+
+        # Add the full stop, if not supplied by the calling function
+        if not ext.find('.') == 0:
+            ext = '.' + ext
+
+        # There are two sub-directories, one for thumbnails, one for metadata
+        if ext in formats.IMAGE_FORMAT_EXT_LIST:
+
+            return os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_actual_dir(app_obj),
+                    app_obj.thumbs_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
+
+        else:
+
+            return os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_actual_dir(app_obj),
+                    app_obj.metadata_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
+
+
+    def check_actual_path_by_ext(self, app_obj, ext):
+
+        """Can be called by anything.
+
+        Modified version of self.get_actual_path_by_ext().
+
+        The file has the same name as its video, but with a different extension
+        (for example, the video's thumbnail file).
+
+        The file might be stored in the same directory as its video, or in the
+        sub-directory '.thumbs' (for thumbnails) or '.data' (for everything
+        else).
+
+        This function checks to see whether the file exists in the same
+        directory as its folder and, if so, returns the file path. If not, it
+        checks to see whether the file exists in the '.thumbs' or '.data'
+        sub-directory and, if so, returns the file path.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            ext (str): The extension, e.g. 'png' or '.png'
+
+        Returns:
+
+            The full path to the file if it exists, or None if not
+
+        """
+
+        # Add the full stop, if not supplied by the calling function
+        if not ext.find('.') == 0:
+            ext = '.' + ext
+
+        # Check the normal location
+        main_path = os.path.abspath(
+            os.path.join(
+                self.parent_obj.get_actual_dir(app_obj),
+                self.file_name + ext,
+            ),
+        )
+
+        if os.path.isfile(main_path):
+            return main_path
+
+        # Check the sub-directory location
+        if ext in formats.IMAGE_FORMAT_EXT_LIST:
+
+            subdir_path = os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_actual_dir(app_obj),
+                    app_obj.thumbs_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
+
+        else:
+
+            subdir_path = os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_actual_dir(app_obj),
+                    app_obj.metadata_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
+
+        if os.path.isfile(subdir_path):
+            return subdir_path
+        else:
+            return None
 
 
     def get_default_path(self, app_obj):
@@ -1908,6 +2042,10 @@ class Video(GenericMedia):
         Args:
 
             app_obj (mainapp.TartubeApp): The main application
+
+        Returns:
+
+            The full file path (the file may or may not exist)
 
         """
 
@@ -1938,6 +2076,10 @@ class Video(GenericMedia):
 
             ext (str): The extension, e.g. 'png' or '.png'
 
+        Returns:
+
+            The full file path (the file may or may not exist)
+
         """
 
         # Add the full stop, if not supplied by the calling function
@@ -1950,6 +2092,57 @@ class Video(GenericMedia):
                 self.file_name + ext,
             ),
         )
+
+
+    def get_default_path_in_subdirectory_by_ext(self, app_obj, ext):
+
+        """Can be called by anything.
+
+        Modified version of self.get_default_path_by_ext().
+
+        The file might be stored in the same directory as its video, or in the
+        sub-directory '.thumbs' (for thumbnails) or '.data' (for everything
+        else).
+
+        self.get_default_path_by_ext() returns the former; this function
+        returns the latter.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            ext (str): The extension, e.g. 'png' or '.png'
+
+        Returns:
+
+            The full file path (the file may or may not exist)
+
+        """
+
+        # Add the full stop, if not supplied by the calling function
+        if not ext.find('.') == 0:
+            ext = '.' + ext
+
+        # There are two sub-directories, one for thumbnails, one for metadata
+        if ext in formats.IMAGE_FORMAT_EXT_LIST:
+
+            return os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_default_dir(app_obj),
+                    app_obj.thumbs_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
+
+        else:
+
+            return os.path.abspath(
+                os.path.join(
+                    self.parent_obj.get_default_dir(app_obj),
+                    app_obj.metadata_sub_dir,
+                    self.file_name + ext,
+                ),
+            )
 
 
     def get_file_size_string(self):

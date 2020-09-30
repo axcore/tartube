@@ -41,24 +41,28 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 - Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
 - **Tartube** is free and open-source software
 
-2.1 What's new in version 2.1.0
+2.1 What's new in version 2.2.0
 -------------------------------
 
-- For everyone who wants a simpler way to download videos, a new Classic Mode, emulating the look and feel of `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ - see `6.21 Classic Mode`_
-- **Tartube** can now detect livestreams, and alert you when they start - see `6.22 Livestreams`_. This feature is EXPERIMENTAL, has only been tested on **YouTube**, and may not be reliable. 
-- If you can contribute a translation to this project, `please read this <docs/translate.rst>`__. As a proof of concept, **Tartube** can now be used with either British or American English
+- **Tartube** is confirmed to work on MacOS see `5.2 Installation - MacOS`_
+- For a while, **Tartube** has been unable to display video thumbnails, after **YouTube** started using a format that no-one supports. Both **youtube-dl** and **Tartube** have been updated with workarounds; they will only work if you have installed `FFmpeg <https://ffmpeg.org/>`__ (for help with that, see below)
+- If you like tidy directories (folders), you can store the thumbnail and metadata files in a sub-folder, leaving the main folder containing only videos. To enable this, click **Edit > Download options... > Files > Write/move files**
+- Videos can now be sent to FFmpeg directly for processing (in other words, after the download has finished). Right-click one or more videos and select **Process with FFmpeg...**
+- **Tartube** now supports forks of **youtube-dl**, such as `youtube-dlc <https://github.com/blackjack4494/youtube-dlc>`__
+
+For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 3 Downloads
 ===========
 
-Latest version: **v2.1.070 (8 Aug 2020)** (see `recent changes <CHANGES>`__)
+Latest version: **v2.2.0 (30 Sep 2020)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.070/install-tartube-2.1.070-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.070/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.1.070/install-tartube-2.1.070-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.1.070/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.1.070/python3-tartube_2.1.070.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.1.070/tartube-2.1.070.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.0/install-tartube-2.2.0-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.0/install-tartube-2.2.0-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.2.0/python3-tartube_2.2.0.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-2.2.0.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -69,7 +73,7 @@ Semi-official packages:
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.1.070/tartube_v2.1.070.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube_v2.2.0.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -82,7 +86,7 @@ Source code:
 -  Start **Tartube** from the Start menu, or by clicking the icon on the desktop
 -  When prompted, choose a folder where **Tartube** can store videos
 -  When prompted, let **Tartube** install **youtube-dl** for you
--  It's strongly recommended that you install **FFmpeg**. From the menu, click **Operations > Install FFmpeg**
+-  It's strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__ . From the menu, click **Operations > Install FFmpeg**
 
 If you don't want **Tartube** to add videos to its database, click the **Classic Mode** Tab. If you *do* want to update the database, do this instead:
 
@@ -98,7 +102,7 @@ If you don't want **Tartube** to add videos to its database, click the **Classic
 -------------------
 
 -  Install **Tartube**, using any of the methods described below
--  It's strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__, too
+-  It's strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too
 -  Run **Tartube**
 -  When prompted, choose a directory where **Tartube** can store videos
 -  Install **youtube-dl** by clicking **Operations > Update youtube-dl**
@@ -123,7 +127,7 @@ MS Windows users should use the installer `available at the Tartube website <htt
 
 There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat** or **tartube_portable_32bit.bat**.
 
-If you want to use **FFmpeg**, see `6.4 Setting the location of FFmpeg / AVConv`_. 
+It's strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__ - see `6.4 Installing FFmpeg / AVConv`_. 
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
@@ -202,7 +206,7 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
         **brew install adwaita-icon-theme**
 
-- It's recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too
+- It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too
 
         **brew install ffmpeg**
 
@@ -228,6 +232,10 @@ Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install 
 2. **Tartube** asks you to choose a data directory, so do that
 3. Click **Operations > Update youtube-dl**
 
+It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most Debian-based systems, you can open a terminal window and run this command:
+
+        **sudo apt-get install ffmpeg**
+
 5.3.2 Install using the RPM package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -250,6 +258,14 @@ On Fedora, the procedure is:
 3. Type: ``pip3 install youtube-dl``
 4. You can now run **Tartube**.
 
+It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most RHEL-based systems (for example, Fedora 29-32), you can open a terminal window and run these commands:
+
+        **sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm**
+
+        **sudo dnf -y install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm**
+
+        **sudo apt-get install ffmpeg**
+
 5.3.3 Install using the AUR package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -261,12 +277,16 @@ On Arch-based systems. such as Manjaro, Tartube can be installed using the semi-
 4. Type: ``makepkg -si``
 5. You can now run **Tartube**.
 
-5.3.4 Install using the ebuild/AUR packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most Arch-based systems, you can open a terminal window and run this command:
+
+        **sudo pacman -S ffmpeg**
+
+5.3.4 Install using the ebuild package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On Gentoo-based systems, **Tartube** can be installed using the semi-official ebuild package, using the link above.
 
-Tartube requires `youtube-dl <https://youtube-dl.org/>`__.
+Tartube requires `youtube-dl <https://youtube-dl.org/>`__. It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too.
 
 If you're not sure how to install using ebuild, then it might be easier to install from PyPI.
 
@@ -301,7 +321,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 5.3.8 Manual installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For any other method of installation, the following dependencies are required:
+For any other method of installation on Linux/BSD, the following dependencies are required:
 
 -  `Python 3 <https://www.python.org/downloads>`__
 -  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
@@ -314,7 +334,7 @@ These dependencies are optional, but recommended:
 -  `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
 -  `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
--  `Ffmpeg <https://ffmpeg.org/>`__ or `AVConv <https://sourceforge.io/projects/avconv/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg or AVConv
+-  `Ffmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 
 5.3.9 Install from source
@@ -342,7 +362,7 @@ After installing dependencies (see above):
 * `6.1 Choose where to save videos`_
 * `6.2 Check youtube-dl is updated`_
 * `6.3 Setting youtube-dl's location`_
-* `6.4 Setting the location of FFmpeg / AVConv`_
+* `6.4 Installing FFmpeg / AVConv`_
 * `6.4.1 On MS Windows`_
 * `6.4.2 On Linux/BSD/MacOS`_
 * `6.5 Introducing system folders`_
@@ -380,6 +400,13 @@ After installing dependencies (see above):
 * `6.22.3 Livestream notifications`_
 * `6.22.4 Compatible websites`_
 * `6.23 Detecting missing videos`_
+* `6.24 More information about FFmpeg and AVConv`_
+* `6.24.1 Using FFmpeg / AVConv with youtube-dl`_
+* `6.24.2 Using FFmpeg directly`_
+* `6.24.3 Changing the filename`_
+* `6.24.4 Changing the video format`_
+* `6.24.5 FFmpeg command-line options`_
+* `6.25 Using youtube-dl forks`_
 
 6.1 Choose where to save videos
 -------------------------------
@@ -429,10 +456,21 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
 - Try changing the setting **Shell command for update operations**
 - Try the update operation again
 
-6.4 Setting the location of FFmpeg / AVConv
--------------------------------------------
-  
-**youtube-dl** can use the `FFmpeg library <https://ffmpeg.org/>`__ or the `AVConv library <https://sourceforge.io/projects/avconv/>`__ for various video-processing tasks, such as converting video files to audio, and for handling large resolutions (1080p and higher). If you want to use FFmpeg or AVConv, you should first install them on your system.
+6.4 Installing FFmpeg / AVConv
+------------------------------
+
+`FFmpeg <https://ffmpeg.org/>`__ and `AVConv <https://sourceforge.io/projects/avconv/>`__ are commonly use for various video-processing tasks.
+
+**It is strongly recommended that all users install FFmpeg**. Without it, Tartube won't be able to do any of these things:
+
+- Display thumbnails from **YouTube**
+- Download high-resolution videos from any website
+- Download certain other video formats
+- Convert video files to audio
+
+**youtube-dl** uses FFmpeg by default, but it can use AVConv for certain tasks.
+
+For more information about **Tartube**'s use of Ffmpeg and AVConv, see `6.24 More information about FFmpeg and AVConv`_.
 
 6.4.1 On MS Windows
 ~~~~~~~~~~~~~~~~~~~
@@ -444,13 +482,17 @@ There is no known method of installing a compatible version of AVConv.
 6.4.2 On Linux/BSD/MacOS
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-On all other operating systems, **youtube-dl** might be able to detect FFmpeg/AVConv without any help from you. If not, you can tell **Tartube** where to find FFmpeg/AVConv in this same tab.
+On all other operating systems, **Tartube** and **youtube-dl** should be able to use FFmpeg (and AVConv, if it is also installed) without any help from you. 
+
+If the FFmpeg / AVConv executables have been installed to an unusual location, you can tell **Tartube** where to find them. 
 
 .. image:: screenshots/example5.png
-  :alt: Updating ffmpeg
+  :alt: Updating FFmpeg and AVConv
 
-- Click **Edit > System preferences... > youtube-dl > Preferences**
-- Click the **Set** button and select the FFmpeg/AVConv executable
+- Click **Edit > System preferences... > youtube-dl > FFmpeg / AVConv**
+- Click the **Set** buttons and select the FFmpeg or AVConv executable
+- Click the **Reset** buttons to remove that selection
+- Click the the **Use default path** buttons to explictly use the normal location for the executables
 
 6.5 Introducing system folders
 ------------------------------
@@ -549,7 +591,7 @@ Once you've finished adding videos, channels, playlists and folders, you can mak
 -  **Download** - Actually downloads the videos. If you have disabled downloads for a particular item, **Tartube** will just fetch information about it instead
 -  **Custom download** - Downloads videos in a non-standard way; see `6.13 Custom downloads`_
 -  **Refresh** - Examines your filesystem. If you have manually copied any videos into **Tartube**'s data directory, those videos are added to **Tartube**'s database
--  **Update** - Installs or updates **youtube-dl**, as described in `6.2 Check youtube-dl is updated`_. Also installs FFmpeg (on MS Windows only); see `6.4 Setting the location of FFmpeg / AVConv`_
+-  **Update** - Installs or updates **youtube-dl**, as described in `6.2 Check youtube-dl is updated`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
 -  **Info** - Fetches information about a particular video: either the available video/audio formats, or the available subtitles
 -  **Tidy** - Tidies up **Tartube**'s data directory, as well as checking that downloaded videos still exist and are not corrupted
 
@@ -643,7 +685,7 @@ If **Tartube** can't download a video from YouTube, it's sometimes possible to o
 
 This only works when requesting individual videos, not whole channels or playlists. You should normally enable independent downloads as well (as described above)
 
-There are a number of alternative YouTube front-ends available. `HookTube <https://hooktube.com/>`__ and `Invidious <https://invidio.us/>`__ are, at the time of writing, the most famous. However, you can specify any alternative website you like.
+There are a number of alternative YouTube front-ends available, besides `HookTube <https://hooktube.com/>`__. The original `Invidious <https://invidio.us/>`__ closed in September 2020, but there are a number of mirrors, such as `this one <https://invidious.site/>`__. To get a list of mirrors, `see this page <https://instances.invidio.us/>`__, or use your favourite search engine.
 
 When specifying an alternative website, it's very important that you type the *exact text* that replaces **youtube.com** in a video's URL. For example, you must type **hooktube.com** not **www.hooktube.com** or **http://www.hooktube.com/**.
 
@@ -670,7 +712,13 @@ If you've downloaded a video, you can watch it by clicking the word **Player**.
 
 If you haven't downloaded the video yet, you can watch it online by clicking the word **Website** or **YouTube**. (One or the other will be visible).
 
-If it's a YouTube video that is restricted (not available in certain regions, or without confirming your age), it's sometimes possible to watch the same video without restrictions on alternative website, such as `HookTube <https://hooktube.com/>`__ or `Invidious <https://invidio.us/>`__.
+Restricted YouTube videos (not available in your region, or not visible without a Google account) can usually be watched without restrictions on an alternative website, such as `HookTube <https://hooktube.com/>`__ or an Invidious mirror `such as this one <https://invidious.site/>`__.
+
+As mentioned above, the original Invidious has now closed. You can change the Invidious mirror that **Tartube** is using, if you like.
+
+- Click **Edit > System preferences... > Operations > Downloads** 
+- Enter a new mirror in the box
+- You can now watch a video by clicking its **Invidious** label 
 
 6.15 Filtering and finding videos
 ---------------------------------
@@ -883,7 +931,7 @@ This is how to import the data into a different **Tartube** database.
 
 **Tartube** can automatically extract the audio from its downloaded videos, if that's what you want.
 
-The first step is to make sure that either FFmpeg or AVconv is installed on your system - see `6.4 Setting the location of FFmpeg / AVconv`_.
+The first step is to make sure that either FFmpeg or AVconv is installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
 
 The remaining steps are simple:
 
@@ -1006,7 +1054,7 @@ Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the b
 6.23 Detecting missing videos
 -----------------------------
 
-Since v2.1.065, **Tartube** has been able to detect videos which you have downloaded, but which have since deleted by the original uploader.
+**Tartube** can detect videos you have downloaded, but which have been since deleted by the original uploader.
 
 This feature is EXPERIMENTAL and may not work as intended. 
 
@@ -1017,7 +1065,79 @@ Having enabled detection, removed videos will appear in the **Missing Videos** f
 
 **Tartube** only detects missing videos when checking/downloading whole channels or playlists. If you interrupt a download, no detection occurs.
 
-You should note that enabling detection will disable the archive file used by youtube-dl (see `7.9 'Download all' button takes too long`_ ). Download operations may take longer as a result.
+6.24 More information about FFmpeg and AVConv
+---------------------------------------------
+
+6.24.1 Using FFmpeg / AVConv with youtube-dl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you explicitly set the location of the FFmpeg and/or AVConv executables, then those locations are passed on to youtube-dl when you check or download videos.
+
+If *both* locations are set, only one of them is passed on. Usually, that's the location of FFmpeg. However, if you specify the **prefer_avconv** download option, then that is passed on, instead.
+
+- Click **Edit > General download options...**
+- In the new window, if the **Show advanced download options** button is visible, click it
+- Now click the **Post-processing** tab
+- Click the **Prefer AVConv over FFmpeg** button to select it
+- Make sure the **Prefer FFmpeg over AVConv (default)** button is not selected
+- Click **OK** to apply your changes
+
+For more information about download options, see `6.11 General download options`_.
+
+6.24.2 Using FFmpeg directly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can call FFmpeg directly, if you want to. (It only works on videos you have actually downloaded.)
+
+This is useful for converting a video file from one format to another, and many other tasks. 
+
+- Click a video, or select several videos together
+- Right-click them and select **Process with FFmpeg...**
+- In the new dialogue window, select some FFmpeg options
+
+.. image:: screenshots/example24.png
+  :alt: The FFmpeg options window
+
+6.24.3 Changing the filename
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first three boxes allow you to change the video's filename. *This might take a very long time, if you don't add options in the other boxes, too.*
+
+The first box allows you to add some text to the end of the filename, something like **modified**, perhaps.
+
+The second and third boxes allow you to search and replace inside the filename.
+
+In the box **If regex matches filename**, you can enter a regular expression (regex). If the pattern matches the filename, the matching portion is substituted for whatever you put in the box **...then apply substitution**.
+
+If you're familiar with regular expressions, then this should need no further explanation: it's a perfectly ordinary regex substitution.
+
+If not, then there are unlimited tutorials available online. Here's a simple example. To replace the word **rabbit** with **dinosaur**, in every filename that contains it, enter **rabbit** in the regex box and **dinosaur** in the substitution box.
+
+6.24.4 Changing the video format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Converting a video from one format to another is as simple as adding the text **avi** or **mkv** or any other valid video format to the box **Change file extension**,
+
+6.24.5 FFmpeg command-line options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The last box allows you to specify FFmpeg options directly. For example, to convert the framerate of some videos to 24 fps, enter the following text into the box at the bottom:
+
+        **-r 24**
+
+6.25 Using youtube-dl forks
+---------------------------
+
+`youtube-dl <https://youtube-dl.org/>`__ is open-source software, and there are a number of forks available (for example, `youtube-dlc <https://github.com/blackjack4494/youtube-dlc>`__). 
+
+If a youtube-dl fork is still compatible with the original, then **Tartube** can use it instead of the original.
+
+- Click **Edit > System preferences... > youtube-dl**
+- In the box **youtube-dl compatible fork to use**, enter **youtube-dlc** (or the name of the fork)
+- Click **OK** to close the preferences window
+- Now click **Operations > Update youtube-dlc**, which will download (or update) the fork on your system
+
+To switch back to using the original youtube-dl, just empty the same box.
 
 7 Frequently-Asked Questions
 ============================
@@ -1253,13 +1373,13 @@ A: See `6.20 Converting to audio`_
 
 A: The solution to both problems is to install FFmpeg, and to set the output format correctly.
 
-Firstly, make sure FFmpeg is installed on your system - see `6.4 Setting the location of FFmpeg / AVConv`_.
+Firstly, make sure FFmpeg is installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
 
 Secondly, set your desired output format. Open the Download options window (for example, click **Edit > General download options... > Formats > Preferred**). Add a format like **mp4** to the **List of preferred formats**, then add the same format to **If a merge is required after post-processing, output to this format**.
 
 For some reason, youtube-dl ignores the download option unless the format is specified in both places. (You will see a warning if you forget.)
 
-.. image:: screenshots/example24.png
+.. image:: screenshots/example25.png
   :alt: The Download options window
   
 7.15 Too many folders in the main window
@@ -1403,15 +1523,14 @@ A: **Tartube** uses a set of stock icons wherever possible. If those icons are n
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
 
-A: In June 2020, **YouTube** changed its image format from **.jpg** to **.webp**. Unfortunately, most software (including the graphics libraries used by **Tartube**) don't support **.webp** images yet.
+A: In June 2020, **YouTube** changed its image format from **.jpg** to **.webp**. Unfortunately, most software (including the graphics libraries used by **Tartube**) don't support **.webp** images yet. Worse still, **YouTube** begain sending **.webp** thumbnails mislabelled as **.jpg**.
 
-At the time of writing, a youtube-dl fix is expected. The fix is expected to convert **.webp** thumbnails back to **.jpg** thumbnails, after downloading them. The fix may require that `Ffmpeg <https://ffmpeg.org/>`__ is installed on your system.
+In September 2020, **Tartube** and **youtube-dl** added separate fixes for this problem. These fixes both depend on `FFmpeg <https://ffmpeg.org/>`__, so they won't work if FFmpeg is not installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
 
-Tartube can now look for and remove **.webp** fils automatically. You can use this procedure after the youtube-dl fix has been released.
+If you have already downloaded a lot of **.webp** images, you can ask **Tartube** to convert them back to **.jpg**. Once converted, they will be visible in the main window.
 
 * Click **Operations > Tidy up files...**
-* In the dialogue window, click **Delete .webp/malformed .jpg files** to select it, then click the **OK** button
-* When the operation is completed, click the main **Check all** button to re-download thumbnails for all of your videos
+* In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
 7.28 Tartube is not visible in the system tray
 ----------------------------------------------
