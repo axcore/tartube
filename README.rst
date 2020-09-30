@@ -55,14 +55,14 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.2.0 (30 Sep 2020)**
+Latest version: **v2.2.003 (30 Sep 2020)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.0/install-tartube-2.2.0-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.0/install-tartube-2.2.0-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.2.0/python3-tartube_2.2.0.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube-2.2.0.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.003/install-tartube-2.2.003-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.003/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.2.003/install-tartube-2.2.003-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.2.003/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.2.003/python3-tartube_2.2.003.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.2.003/tartube-2.2.003.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -73,7 +73,7 @@ Semi-official packages:
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.2.0/tartube_v2.2.0.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.2.003/tartube_v2.2.003.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 
 4 Quick start guide 
@@ -587,7 +587,7 @@ Then repeat that process to create a folder called **Music**. You can then drag-
 
 Once you've finished adding videos, channels, playlists and folders, you can make **Tartube** do something. **Tartube** offers the following operations:
 
--  **Check** - Fetches information about videos, but don't download them
+-  **Check** - Fetches information about videos, but doesn't download them
 -  **Download** - Actually downloads the videos. If you have disabled downloads for a particular item, **Tartube** will just fetch information about it instead
 -  **Custom download** - Downloads videos in a non-standard way; see `6.13 Custom downloads`_
 -  **Refresh** - Examines your filesystem. If you have manually copied any videos into **Tartube**'s data directory, those videos are added to **Tartube**'s database

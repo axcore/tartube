@@ -3214,7 +3214,8 @@ class TartubeApp(Gtk.Application):
         else:
             # (Before this version, .ffmpeg_path was used for the avconv binary
             #   too)
-            if re.search(r'avconv', self.ffmpeg_path):
+            if self.ffmpeg_path is not None \
+            and re.search(r'avconv', self.ffmpeg_path):
                 self.avconv_path = self.ffmpeg_path
                 self.ffmpeg_path = None
         if version >= 2001098:  # v2.1.098
