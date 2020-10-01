@@ -791,20 +791,27 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
                 return temp_path
 
     # Catch YouTube .jpg thumbnails, in the form .jpg?...
+    # v2.2.005 The glob.glob() call crashes on certain videos. I'm not sure
+    #   why, but we can circumvent the crash with try...except
     normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
-    for glob_path in glob.glob(normal_path):
-        if os.path.isfile(glob_path):
-            return glob_path
+    try:
+        for glob_path in glob.glob(normal_path):
+            if os.path.isfile(glob_path):
+                return glob_path
+    except:
+        pass
 
     if temp_dir_flag:
 
         temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
         temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
 
-        for glob_path in glob.glob(temp_path):
-            if os.path.isfile(glob_path):
-                return glob_path
-
+        try:
+            for glob_path in glob.glob(temp_path):
+                if os.path.isfile(glob_path):
+                    return glob_path
+        except:
+            pass
 
     # No matching thumbnail found
     return None
@@ -883,10 +890,15 @@ def find_thumbnail_webp(app_obj, video_obj):
 
         # The extension may be followed by additional characters, e.g.
         #   .jpg?sqp=-XXX (as well as several other patterns)
-        for actual_path in glob.glob(main_path + '*'):
-            if os.path.isfile(actual_path) \
-            and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
-                return actual_path
+        # v2.2.005 The glob.glob() call crashes on certain videos. I'm not
+        #   sure why, but we can circumvent the crash with try...except
+        try:
+            for actual_path in glob.glob(main_path + '*'):
+                if os.path.isfile(actual_path) \
+                and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
+                    return actual_path
+        except:
+            pass
 
         subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
             app_obj,
@@ -897,10 +909,13 @@ def find_thumbnail_webp(app_obj, video_obj):
         and app_obj.ffmpeg_manager_obj.is_webp(subdir_path):
             return subdir_path
 
-        for actual_path in glob.glob(subdir_path + '*'):
-            if os.path.isfile(actual_path) \
-            and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
-                return actual_path
+        try:
+            for actual_path in glob.glob(subdir_path + '*'):
+                if os.path.isfile(actual_path) \
+                and app_obj.ffmpeg_manager_obj.is_webp(actual_path):
+                    return actual_path
+        except:
+            pass
 
     # No webp thumbnail found
     return None

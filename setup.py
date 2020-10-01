@@ -147,7 +147,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.2.003',
+    version='2.2.007',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',
@@ -173,8 +173,7 @@ setuptools.setup(
         exclude=('docs', 'icons', 'nsis', 'tests'),
     ),
     include_package_data=True,
-#    python_requires='>=3.0, <4',
-    python_requires='>=3.0',
+    python_requires='>=3.0, <4',
     install_requires=['feedparser', 'pgi', 'playsound', 'requests'],
     scripts=[script_exec],
     project_urls={

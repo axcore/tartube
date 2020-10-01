@@ -13328,17 +13328,19 @@ class SystemPrefWin(GenericPrefWin):
             _('Use local path') + ' (' + ytdl_bin + ')',
         )
 
-        ytdl_path_pypi = re.sub(
-            standard,
-            fork,
-            self.app_obj.ytdl_path_pypi,
-        )
+        if os.name != 'nt':
 
-        store.set(
-            store.get_iter(Gtk.TreePath(2)),
-            0,
-            _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
-        )
+            ytdl_path_pypi = re.sub(
+                standard,
+                fork,
+                self.app_obj.ytdl_path_pypi,
+            )
+
+            store.set(
+                store.get_iter(Gtk.TreePath(2)),
+                0,
+                _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
+            )
 
         # Second combo: Command for update operations
         count = -1
