@@ -175,10 +175,12 @@ class DownloadManager(threading.Thread):
         #   progress bar, at any time, by calling self.nudge_progress_bar() )
         self.current_item_obj = None
 
-        # On-going counts of how many videos have been downloaded (real or
+        # On-going counts of how many videos have been downloaded (real and
         #   simulated), and how much disk space has been consumed (in bytes),
         #   so that the operation can be auto-stopped, if required
         self.total_video_count = 0
+        self.total_dl_count = 0
+        self.total_sim_count = 0
         self.total_size_count = 0
 
         # If mainapp.TartubeApp.operation_convert_mode is set to any value
@@ -630,21 +632,33 @@ class DownloadManager(threading.Thread):
             )
 
 
-    def register_video(self):
+    def register_video(self, dl_type):
 
         """Called by VideoDownloader.confirm_new_video(), when a video is
         downloaded, or by .confirm_sim_video(), when a simulated download finds
         a new video.
 
+        (Can also be called by .confirm_old_video() when downloading from the
+        Classic Mode Tab.)
+        
         This function adds the new video to its ongoing total and, if a limit
         has been reached, stops the download operation.
 
+        Args:
+
+            dl_type (str): 'new', 'sim' or 'old', depending on the calling
+                function
+                
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 641 register_video')
 
         self.total_video_count += 1
+        if dl_type == 'new':
+            self.total_dl_count += 1
+        elif dl_type == 'sim':
+            self.total_sim_count += 1
 
         if self.app_obj.autostop_videos_flag \
         and self.total_video_count >= self.app_obj.autostop_videos_value:
@@ -2688,7 +2702,7 @@ class VideoDownloader(object):
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
-            self.download_manager_obj.register_video()
+            self.download_manager_obj.register_video('new')
 
         # All other cases
         elif not self.video_num in self.video_check_dict:
@@ -2738,7 +2752,8 @@ class VideoDownloader(object):
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
-            self.download_manager_obj.register_video()
+            # The True argument specifies that this function is the caller
+            self.download_manager_obj.register_video('new')
 
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
@@ -2783,7 +2798,7 @@ class VideoDownloader(object):
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
-            self.download_manager_obj.register_video()
+            self.download_manager_obj.register_video('old')
 
         # All other cases
         elif isinstance(media_data_obj, media.Video):
@@ -3353,7 +3368,7 @@ class VideoDownloader(object):
         #   DownloadManager, so that download limits can be applied, if
         #   required
         if update_results_flag:
-            self.download_manager_obj.register_video()
+            self.download_manager_obj.register_video('sim')
 
         # Stop checking videos in this channel/playlist, if a limit has been
         #   reached
@@ -3825,7 +3840,7 @@ class VideoDownloader(object):
                 except:
                     GObject.timeout_add(
                         0,
-                        app_obj.system_error,
+                        self.download_manager_obj.app_obj.system_error,
                         304,
                         'Invalid JSON data received from server',
                     )

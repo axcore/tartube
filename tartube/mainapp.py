@@ -108,6 +108,21 @@ DEBUG_FUNC_FLAG = False
 # ...(but don't call utils.debug_time from the timer functions such as
 #   self.script_slow_timer_callback() )
 DEBUG_NO_TIMER_FUNC_FLAG = False
+# Update debugging variables, if a debug.txt file exists (it is notread)
+if os.path.isfile(
+    os.path.abspath(
+        os.path.join(
+            sys.path[0],
+            os.pardir,
+            'debug.txt',
+        ),
+    ),
+):
+    DEBUG_FUNC_FLAG = True
+    DEBUG_NO_TIMER_FUNC_FLAG = False
+    mainwin.DEBUG_FUNC_FLAG = True
+    mainwin.DEBUG_NO_TIMER_FUNC_FLAG = False
+    downloads.DEBUG_FUNC_FLAG = True
 
 
 # Classes
@@ -2316,10 +2331,8 @@ class TartubeApp(Gtk.Application):
             ):
                 config_dir = self.config_file_dir
 
-            # The True argument prevents the function showing a dialogue window
-            #   of its own
             if config_dir is not None \
-            and not self.make_directory(config_dir, True):
+            and not self.make_directory(config_dir):
 
                 # Can't use an ordinary message dialogue without a parent
                 #   window, and most users won't see a message in the terminal,
@@ -2424,76 +2437,109 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj,
         )
 
-        # Part 4 - Load a database file
-        # -----------------------------
+        # Part 4 - Select a database file
+        # -------------------------------
 
-        # Multiple instances of Tartube can share the same config file, but not
-        #   the same database file
-        # If the database file specified by the config file we've just loaded
-        #   is locked (meaning it's in use by another instance), we might be
-        #   able to use an alternative data directory
-        if self.data_dir_use_list_flag and not new_config_flag:
-            self.choose_alt_db()
+        if not new_config_flag \
+        and not self.debug_no_dialogue_flag:
+
+            # Multiple instances of Tartube can share the same config file, but
+            #   not the same database file
+            # If the database file specified by the config file we've just
+            #   loaded is locked (meaning it's in use by another instance), we
+            #   might be able to use an alternative data directory
+            if self.data_dir_use_list_flag:
+                self.choose_alt_db()
 
         # Check that the data directory specified by self.data_dir actually
         #   exists. If not, the most common reason is that the user has
         #   forgotten to mount an external drive
-        if not new_config_flag \
-        and not self.debug_no_dialogue_flag \
-        and not os.path.exists(self.data_dir):
+        # If the directory doesn't exist, prompt the user for further
+        #   instructions. However, for a new installation (or at least, for a
+        #   new config file), go ahead and try to create the directory without
+        #   prompting, but only once
+        first_attempt_flag = new_config_flag
+        make_dir_fail_flag = False
+
+        while not os.path.isdir(self.data_dir):
+
+            # !!! DEBUG: Attempt to resolve Git #167
+            if not first_attempt_flag:
+                if not os.path.exists(self.data_dir):
+                    print('NO EXIST: ' + self.data_dir)
+                else:
+                    print('EXISTS: ' + self.data_dir)
+
+                if not os.path.isdir(self.data_dir):
+                    print('IS NOT DIR: ' + self.data_dir)
+                else:
+                    print('IS DIR: ' + self.data_dir)
 
             # Ask the user what to do next. The False argument tells the
             #   dialogue window that it's a missing directory
-            dialogue_win = mainwin.MountDriveDialogue(
-                self.main_win_obj,
-                False,
-            )
-            dialogue_win.run()
+            if not first_attempt_flag:
 
-            # If the data directory now exists, or can be created in principle
-            #   by the code just below (because the user wants to use the
-            #   default location), then available_flag will be True
-            available_flag = dialogue_win.available_flag
-            dialogue_win.destroy()
+                dialogue_win = mainwin.MountDriveDialogue(
+                    self.main_win_obj,
+                    make_dir_fail_flag,
+                )
+                dialogue_win.run()
 
-            if not available_flag:
+                # If the data directory now exists, or can be created in
+                #   principle by the code just below (because the user wants to
+                #   use the default location), then available_flag will be True
+                available_flag = dialogue_win.available_flag
+                dialogue_win.destroy()
 
-                # The user opted to shut down Tartube. Destroying the main
-                #   window calls self.do_shutdown()
-                return self.main_win_obj.destroy()
+                if not available_flag:
 
-        # Create Tartube's data directories (if they don't already exist)
-        if not os.path.isdir(self.data_dir):
+                    # The user opted to shut down Tartube. Destroying the main
+                    #   window calls self.do_shutdown()
+                    return self.main_win_obj.destroy()
 
-            # React to a 'Permission denied' error by asking the user what to
-            #   do next. If necessary, shut down Tartube
-            if not self.make_directory(self.data_dir):
-                return self.main_win_obj.destroy()
+            # On subsequent loops, always show the dialogue window
+            first_attempt_flag = False
+
+            # Try creating the specified directory, if it doesn't exist. If
+            #   this fails, the loop is repeated
+            make_dir_fail_flag = False
+            if not os.path.isdir(self.data_dir) \
+            and not self.make_directory(self.data_dir):
+
+                make_dir_fail_flag = True
+                if self.debug_no_dialogue_flag:
+
+                    # (If we can't prompt the user, then shut down rather than
+                    #   trying again)
+                    return self.main_win_obj.destroy()
+
+        # Part 5 - Create sub-directories
+        # -------------------------------
+
+        # Create directories within the main directory directory. On failure,
+        #   show system errors
 
         # Create the directory for database file backups
         if not os.path.isdir(self.backup_dir):
-            if not self.make_directory(self.backup_dir):
-                return self.main_win_obj.destroy()
+            self.make_directory(self.backup_dir)
 
         # Create the temporary data directories (or empty them, if they already
         #   exist)
         if os.path.isdir(self.temp_dir):
+
             try:
                 shutil.rmtree(self.temp_dir)
-
             except:
-                if not self.make_directory(self.temp_dir):
-                    return self.main_win_obj.destroy()
-                else:
-                    shutil.rmtree(self.temp_dir)
+                pass
 
-        if not os.path.isdir(self.temp_dir):
-            if not self.make_directory(self.temp_dir):
-                return self.main_win_obj.destroy()
+        else:
+            self.make_directory(self.temp_dir)
 
         if not os.path.isdir(self.temp_dl_dir):
-            if not self.make_directory(self.temp_dl_dir):
-                return self.main_win_obj.destroy()
+            self.make_directory(self.temp_dl_dir)
+
+        # Part 6 - Load the database file
+        # -------------------------------
 
         # If the database file exists, load it. If not, create it
         db_path = os.path.abspath(
@@ -2518,7 +2564,7 @@ class TartubeApp(Gtk.Application):
             self.allow_db_save_flag = True
             self.save_db()
 
-        # Part 5 - Warn user about failed loads
+        # Part 7 - Warn user about failed loads
         # -------------------------------------
 
         # After a stale lockfile, when the user clicked 'No', just shut down
@@ -2552,7 +2598,7 @@ class TartubeApp(Gtk.Application):
                     )
                 )
 
-        # Part 6 - Start system timers
+        # Part 8 - Start system timers
         # ----------------------------
 
         if not self.disable_load_save_flag:
@@ -2569,7 +2615,7 @@ class TartubeApp(Gtk.Application):
                 self.script_fast_timer_callback,
             )
 
-        # Part 7 - Automatically start update/download operations, if required
+        # Part 9 - Automatically start update/download operations, if required
         # --------------------------------------------------------------------
 
         if not self.disable_load_save_flag:
@@ -2805,7 +2851,7 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-166)
+            100-199: mainapp.py     (in use: 101-167)
             200-299: mainwin.py     (in use: 201-256)
             300-399: downloads.py   (in use: 301-308)
             400-499: config.py      (in use: 401-404)
@@ -3461,6 +3507,27 @@ class TartubeApp(Gtk.Application):
         self.temp_test_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'ytdl-test'),
         )
+
+        # !!! DEBUG: Attempt to resolve Git #167
+        if not os.path.exists(self.data_dir):
+            print('NO EXIST: ' + self.data_dir)
+        else:
+            print('EXISTS: ' + self.data_dir)
+
+        if not os.path.isdir(self.data_dir):
+            print('IS NOT DIR: ' + self.data_dir)
+        else:
+            print('IS DIR: ' + self.data_dir)
+
+        if not os.path.exists(self.backup_dir):
+            print('NO EXIST: ' + self.backup_dir)
+        else:
+            print('EXISTS: ' + self.backup_dir)
+
+        if not os.path.isdir(self.backup_dir):
+            print('IS NOT DIR: ' + self.backup_dir)
+        else:
+            print('IS DIR: ' + self.backup_dir)
 
         # If the most-recently selected directory, self.classic_dir_previous,
         #   still exists in self.classic_dir_list, move it to the top, so it's
@@ -5233,17 +5300,28 @@ class TartubeApp(Gtk.Application):
             # Use the new location
             self.downloads_dir = self.data_dir
 
-        # Any of those directories that don't exist should be created
-        if not os.path.isdir(self.data_dir):
-            # React to a 'Permission denied' error by asking the user what to
-            #   do next. If necessary, shut down Tartube
-            # The True argument means that the drive is unwriteable
-            if not self.make_directory(self.data_dir):
-                return False
+        # If the data directory, and/or any of its sub-directories don't exist,
+        #   then try to create them
+        if not os.path.isdir(self.data_dir) \
+        and not self.make_directory(self.data_dir):
 
-        if not os.path.isdir(self.backup_dir):
-            if not self.make_directory(self.backup_dir):
-                return False
+            # !!! DEBUG: Attempt to resolve Git #167
+            if DEBUG_FUNC_FLAG:
+                if not os.path.exists(self.data_dir):
+                    print('NO EXISTS: ' + self.data_dir)
+                else:
+                    print('EXISTS: ' + self.data_dir)
+
+                if not os.path.isdir(self.data_dir):
+                    print('IS NOT DIR: ' + self.data_dir)
+                else:
+                    print('IS DIR: ' + self.data_dir)
+
+            return False
+
+        if not os.path.isdir(self.backup_dir) \
+        and not self.make_directory(self.backup_dir):
+            return False
 
         # If the database file itself doesn't exist, create it. Otherwise, try
         #   to load it
@@ -6745,23 +6823,20 @@ class TartubeApp(Gtk.Application):
             print('FILE ERROR: ' + msg)
 
 
-    def make_directory(self, dir_path, no_win_flag=False):
+    def make_directory(self, dir_path):
 
         """Can be called by anything.
 
         The call to os.makedirs() might fail with a 'Permission denied' error,
         meaning that the specified directory is unwriteable.
 
-        Convenience function to intercept the error, and display a Tartube
-        dialogue instead.
+        Convenience function to intercept the error, and display a system error
+        in response.
 
         Args:
 
             dir_path (str): The path to the directory to be created with a
                 call to os.makedirs()
-
-            no_win_flag (bool): If True, do not show a dialogue window on
-                failure
 
         Returns:
 
@@ -6778,23 +6853,13 @@ class TartubeApp(Gtk.Application):
 
         except:
 
-            # The True argument tells the dialogue window that it's an
-            #   unwriteable directory
-            if not no_win_flag:
+            # Show a system error
+            self.system_error(
+                167,
+                'Failed to create directory  \'' + dir_path + '\'',
+            )
 
-                dialogue_win = mainwin.MountDriveDialogue(
-                    self.main_win_obj,
-                    True,
-                )
-                dialogue_win.run()
-                available_flag = dialogue_win.available_flag
-                dialogue_win.destroy()
-
-                return available_flag
-
-            else:
-
-                return False
+            return False
 
 
     def move_backup_files(self):
@@ -7405,6 +7470,10 @@ class TartubeApp(Gtk.Application):
         else:
             classic_mode_flag = True
 
+        # Get the number of videos downloaded (real and simulated)
+        dl_count = self.download_manager_obj.total_dl_count
+        sim_count = self.download_manager_obj.total_sim_count
+
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
         # For refresh operations, RefreshManager.stop_time() might not have
@@ -7489,12 +7558,23 @@ class TartubeApp(Gtk.Application):
             else:
                 msg = _('Download operation halted')
 
+            if dl_count or sim_count:
+
+                msg += '\n\n' + _('Videos downloaded:') + ' ' + str(dl_count) \
+                + '\n' + _('Videos checked:') + ' ' + str(sim_count)
+
             if time_num >= 10:
                 msg += '\n\n' + _('Time taken:') + ' ' \
                 + utils.convert_seconds_to_string(time_num, True)
 
             if self.operation_dialogue_mode == 'dialogue':
-                self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
+
+                self.dialogue_manager_obj.show_simple_msg_dialogue(
+                    msg,
+                    'info',
+                    'ok',
+                )
+
             elif self.operation_dialogue_mode == 'desktop':
                 self.main_win_obj.notify_desktop(None, msg)
 
@@ -9863,9 +9943,7 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = channel_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            # The True argument prevents the function showing a dialogue window
-            #   for the database on failure
-            self.make_directory(dir_path, True)
+            self.make_directory(dir_path)
 
         return channel_obj
 
@@ -9954,9 +10032,7 @@ class TartubeApp(Gtk.Application):
         #   exist)
         dir_path = playlist_obj.get_default_dir(self)
         if not os.path.exists(dir_path):
-            # The True argument prevents the function showing a dialogue window
-            #   for the database on failure
-            self.make_directory(dir_path, True)
+            self.make_directory(dir_path)
 
         # Procedure complete
         return playlist_obj
@@ -10048,9 +10124,7 @@ class TartubeApp(Gtk.Application):
         # Obviously don't do that for private folders
         dir_path = folder_obj.get_default_dir(self)
         if not folder_obj.priv_flag and not os.path.exists(dir_path):
-            # The True argument prevents the function showing a dialogue window
-            #   for the database on failure
-            self.make_directory(dir_path, True)
+            self.make_directory(dir_path)
 
         # Procedure complete
         return folder_obj

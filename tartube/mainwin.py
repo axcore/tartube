@@ -20262,7 +20262,7 @@ class InstallDialogue(Gtk.Dialog):
 
 class MountDriveDialogue(Gtk.Dialog):
 
-    """Called by mainapp.TartubeApp.start() and .make_directory().
+    """Called by mainapp.TartubeApp.start().
 
     Python class handling a dialogue window that asks the user what to do,
     if the drive containing Tartube's data directory is not mounted or is

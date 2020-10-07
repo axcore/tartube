@@ -143,6 +143,62 @@ class DialogueManager(threading.Thread):
 
         return dialogue_win
 
+    def show_simple_msg_dialogue(self, msg, msg_type, button_type,
+    parent_win_obj=None, response_dict=None):
+
+        """Can be called by anything.
+
+        A modified version of self.show_msg_dialogue(). Behaves in the same
+        way, but does not format msg, as the original function does.
+
+        Args:
+
+            msg (str): The text to display in the dialogue window
+
+            msg_type (str): The icon to display in the dialogue window: 'info',
+                'warning', 'question', 'error'
+
+            button_type (str): The buttons to use in the dialogue window: 'ok',
+                'ok-cancel', 'yes-no'
+
+            parent_win_obj (mainwin.MainWin, config.GenericConfigWin or None):
+                The parent window for the dialogue window. If None, the main
+                window is used as the parent window
+
+            response_dict (dict or None): A dictionary specified if the calling
+                code needs a response (e.g., needs to know whether the user
+                clicked the 'yes' or 'no' button). If specified, the keys are
+                0, 1 or more of the values 'ok', 'cancel', 'yes', 'no'. The
+                corresponding values are the mainapp.TartubeApp function called
+                if the user clicks that button. (f the value begins with
+                'main_win_', then the rest of the value is the mainwin.MainWin
+                function called). The dictionary can also contain the key
+                'data'. If it does, the corresponding value is passed to the
+                mainapp.TartubeApp function as an argument
+
+        Returns:
+
+            Gtk.MessageDialog window
+
+        """
+
+        if parent_win_obj is None:
+            parent_win_obj = self.main_win_obj
+
+        # ...Display the message dialogue
+        dialogue_win = MessageDialogue(
+            self,
+            msg,
+            msg_type,
+            button_type,
+            parent_win_obj,
+            response_dict,
+        )
+
+        dialogue_win.create_dialogue()
+
+        return dialogue_win
+
 
 class MessageDialogue(Gtk.MessageDialog):
 

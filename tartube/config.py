@@ -8755,7 +8755,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         # Signal connect appears below
 
-        if platform.system() != 'Windows' and platform.system != 'Darwin':
+        if platform.system() != 'Windows' and platform.system() != 'Darwin':
             text = 'Show a desktop notification at the end of an operation'
         else:
             text = 'Show a desktop notification (Linux/*BSD only)'
@@ -8767,7 +8767,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_dialogue_mode == 'desktop':
             radiobutton2.set_active(True)
-        if platform.system() != 'Windows' and platform.system != 'Darwin':
+        if platform.system() == 'Windows' or platform.system() == 'Darwin':
             radiobutton2.set_sensitive(False)
         # Signal connect appears below
 
