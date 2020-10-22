@@ -640,7 +640,7 @@ class DownloadManager(threading.Thread):
 
         (Can also be called by .confirm_old_video() when downloading from the
         Classic Mode Tab.)
-        
+
         This function adds the new video to its ongoing total and, if a limit
         has been reached, stops the download operation.
 
@@ -648,7 +648,7 @@ class DownloadManager(threading.Thread):
 
             dl_type (str): 'new', 'sim' or 'old', depending on the calling
                 function
-                
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -1265,13 +1265,14 @@ class DownloadList(object):
             open, and the user has clicked the download button there
 
         media_data_list (list): List of media.Video, media.Channel,
-            media.Playlist and/or media.Folder objects. If not an empty list,
-            only those media data objects and their descendants are checked/
-            downloaded. If an empty list, all media data objects are checked/
-            downloaded. If operation_type is 'classic', then the
+            media.Playlist and/or media.Folder objects. Can also be a list of
+            (exclusively) media.Scheduled objects. If not an empty list, only
+            the specified media data objects (and their children) are
+            checked/downloaded. If an empty list, all media data objects are
+            checked/downloaded. If operation_type is 'classic', then the
             media_data_list contains a list of dummy media.Video objects from a
-            previous call to this function. If an empty list, all dummy
-            media.Video objects are downloaded
+            previous call to this function. If an empty list, all
+            dummy media.Video objects are downloaded
 
     """
 
@@ -1315,23 +1316,79 @@ class DownloadList(object):
         #   unique ID)
         self.download_item_count = 0
 
-        # An ordered list of downloads.DownloadItem items, one for each
+        # An ordered list of downloads.DownloadItem objects, one for each
         #   media.Video, media.Channel, media.Playlist or media.Folder object
         #   (including dummy media.Video objects used by download operations
         #   launched from the Classic Mode Tab)
         # This list stores each item's .item_id
         self.download_item_list = []
-        # Corresponding dictionary of downloads.DownloadItem items for quick
-        #   lookup. Dictionary in the form
-        #       key = download.DownloadItem.item_id
-        #       value = the download.DownloadItem object itself
-        self.download_item_dict = {}
+        # A supplementary list of downloads.DownloadItem objects
+        # Suppose self.download_item_list already contains items A B C, and
+        #   some of part of the code wants to add items X Y Z to the beginning
+        #   of the list, producing the list X Y Z A B C (and not Z Y X A B C)
+        # The new items are added (one at a time) to this temporary list, and
+        #   then added to the beginning/end of self.download_item_list at the
+        #   end of this function (or in the next call to
+        #   self.fetch_next_item() )
+        self.temp_item_list = []
 
+        # Corresponding dictionary of downloads.DownloadItem items for quick
+        #   lookup, containing items from both self.download_item_list and
+        #   self.temp_item_list
+        # Dictionary in the form
+        #   key = download.DownloadItem.item_id
+        #   value = the download.DownloadItem object itself
+        self.download_item_dict = {}
 
         # Code
         # ----
 
-        if self.operation_type != 'classic':
+        if media_data_list and isinstance(media_data_list[0], media.Scheduled):
+
+            # media_data_list is a list of scheduled downloads
+            all_flag = False
+
+            for scheduled_obj in media_data_list:
+                if scheduled_obj.all_flag:
+                    all_flag = True
+                    break
+
+            if all_flag:
+
+                # Use all media data objects
+                for dbid in self.app_obj.media_top_level_list:
+                    obj = self.app_obj.media_reg_dict[dbid]
+                    self.create_item(obj, None, False, True)
+
+            else:
+
+                # Use only media data objects specified by the media.Scheduled
+                #   objects. Don't add the same media data object twice
+                check_dict = {}
+
+                for scheduled_obj in media_data_list:
+
+                    if scheduled_obj.join_mode == 'priority':
+                        priority_flag = True
+                    else:
+                        priority_flag = False
+
+                    for name in scheduled_obj.media_list:
+                        if not name in check_dict:
+
+                            dbid = self.app_obj.media_name_dict[name]
+                            obj = self.app_obj.media_reg_dict[dbid]
+
+                            self.create_item(
+                                obj,
+                                scheduled_obj.dl_mode,
+                                priority_flag,
+                                True,
+                            )
+
+                            check_dict[name] = None
+
+        elif self.operation_type != 'classic':
 
             # For each media data object to be downloaded, create a
             #   downloads.DownloadItem object, and update the IVs above
@@ -1340,7 +1397,7 @@ class DownloadList(object):
                 # Use all media data objects
                 for dbid in self.app_obj.media_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
-                    self.create_item(obj, None, True)
+                    self.create_item(obj, None, False, True)
 
             else:
 
@@ -1366,7 +1423,7 @@ class DownloadList(object):
                         #   media_data_obj, even if it is a video in a channel
                         #   or a playlist (which otherwise would be handled by
                         #   downloading the channel/playlist)
-                        self.create_item(media_data_obj, None, True)
+                        self.create_item(media_data_obj, None, False, True)
 
             # Some media data objects have an alternate download destination,
             #   for example, a playlist ('slave') might download its videos
@@ -1416,6 +1473,13 @@ class DownloadList(object):
             for dummy_obj in obj_list:
                 self.create_dummy_item(dummy_obj)
 
+        # We can now merge the two DownloadItem lists
+        if self.temp_item_list:
+
+            self.download_item_list \
+            = self.temp_item_list + self.download_item_list
+            self.temp_item_list = []
+
 
     # Public class methods
 
@@ -1446,7 +1510,7 @@ class DownloadList(object):
 
 
     def create_item(self, media_data_obj, override_operation_type=None,
-    init_flag=False):
+    priority_flag=False, init_flag=False):
 
         """Called initially by self.__init__() (or by many other functions,
         for example in mainapp.TartubeApp.
@@ -1490,6 +1554,10 @@ class DownloadList(object):
                 self.operation_type is 'classic', and will cause an error. The
                 value is always None when called by self.__init__(). Otherwise,
                 the value can be None, 'sim', 'real' or 'custom'
+
+            priority_flag (bool): True if media_data_obj is to be added to the
+                beginning of the list, False if it is to be added to the end
+                of the list
 
             init_flag (bool): False when called by this function recursively,
                 True when called (for the first time) by anything else. If True
@@ -1638,7 +1706,11 @@ class DownloadList(object):
             )
 
             # ...and add it to our list
-            self.download_item_list.append(download_item_obj.item_id)
+            if priority_flag:
+                self.download_item_list.append(download_item_obj.item_id)
+            else:
+                self.temp_item_list.append(download_item_obj.item_id)
+
             self.download_item_dict[download_item_obj.item_id] \
             = download_item_obj
 
@@ -1655,7 +1727,7 @@ class DownloadList(object):
             and self.app_obj.custom_dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
-                self.create_item(child_obj, operation_type)
+                self.create_item(child_obj, operation_type, priority_flag)
 
         # Procedure complete
         return download_item_obj
@@ -1725,6 +1797,13 @@ class DownloadList(object):
             utils.debug_time('dld 1680 fetch_next_item')
 
         if not self.prevent_fetch_flag:
+
+            # In case of any recent calls to self.create_item(), which want to
+            #   place new DownloadItems at the beginning of the queue, then
+            #   merge the temporary queue into the main one
+            if self.temp_item_list:
+                self.download_item_list \
+                = self.temp_item_list + self.download_item_list
 
             for item_id in self.download_item_list:
                 this_item = self.download_item_dict[item_id]
@@ -3351,6 +3430,13 @@ class VideoDownloader(object):
         #   required)
         if (app_obj.ytdl_output_stdout_flag):
 
+            # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
+            #   get a Python error when print() receives unicode characters
+            # This fix mangles apostrophes, but that's still better than a
+            #   crash
+            if os.name == 'nt':
+                filename = filename.encode().decode('cp1252')
+
             msg = '[' + video_obj.parent_obj.name \
             + '] <' + _('Simulated download of:') + ' \'' + filename + '\'>'
 
@@ -3361,7 +3447,18 @@ class VideoDownloader(object):
                 )
 
             if (app_obj.ytdl_write_stdout_flag):
-                print(msg)
+
+                # v2.2.039 also add a try...except here, just in case
+                try:
+                    print(msg)
+
+                except:
+                    print(
+                        '[' + video_obj.parent_obj.name + '] <' \
+                        + _(
+                        'Simulated download of video with special characters',
+                        ) + '>',
+                    )
 
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), register the simulated download with
@@ -3381,7 +3478,7 @@ class VideoDownloader(object):
             self.stop_now_flag = True
 
 
-    def convert_video_to_container (self):
+    def convert_video_to_container(self):
 
         """Called by self.check_dl_is_correct_type().
 
@@ -4006,9 +4103,14 @@ class VideoDownloader(object):
 
         if (
             app_obj.ignore_http_404_error_flag \
-            and re.search(
-                r'unable to download video data\: HTTP Error 404',
-                stderr,
+            and (
+                re.search(
+                    r'unable to download video data\: HTTP Error 404',
+                    stderr,
+                ) or re.search(
+                    r'Unable to extract video data',
+                    stderr,
+                )
             )
         ) or (
             app_obj.ignore_data_block_error_flag \
@@ -4038,17 +4140,6 @@ class VideoDownloader(object):
                 stderr,
             )
         ) or (
-            app_obj.ignore_yt_copyright_flag \
-            and (
-                re.search(
-                    r'This video contains content from.*copyright grounds',
-                    stderr,
-                ) or re.search(
-                    r'Sorry about that\.',
-                    stderr,
-                )
-            )
-        ) or (
             app_obj.ignore_yt_age_restrict_flag \
             and (
                 re.search(
@@ -4062,6 +4153,24 @@ class VideoDownloader(object):
                     stderr,
                 )
             )
+        ) or (
+            app_obj.ignore_yt_copyright_flag \
+            and (
+                re.search(
+                    r'This video contains content from.*copyright grounds',
+                    stderr,
+                ) or re.search(
+                    r'Sorry about that\.',
+                    stderr,
+                )
+            )
+        ) or (
+            app_obj.ignore_yt_payment_flag \
+            and re.search(
+                r'This video requires payment to watch',
+                stderr,
+            )
+
         ) or (
             app_obj.ignore_yt_uploader_deleted_flag \
             and (

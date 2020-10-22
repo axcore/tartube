@@ -372,7 +372,8 @@ After installing dependencies (see above):
 * `6.9 Adding folders`_
 * `6.10 Things you can do`_
 * `6.11 General download options`_
-* `6.12 Other download options`_
+* `6.11.1 Other download options`_
+* `6.12 Scheduled downloads`_
 * `6.13 Custom downloads`_
 * `6.13.1 Independent downloads`_
 * `6.13.2 Diverting to HookTube / Invidious`_
@@ -587,13 +588,13 @@ Then repeat that process to create a folder called **Music**. You can then drag-
 
 Once you've finished adding videos, channels, playlists and folders, you can make **Tartube** do something. **Tartube** offers the following operations:
 
--  **Check** - Fetches information about videos, but doesn't download them
--  **Download** - Actually downloads the videos. If you have disabled downloads for a particular item, **Tartube** will just fetch information about it instead
--  **Custom download** - Downloads videos in a non-standard way; see `6.13 Custom downloads`_
--  **Refresh** - Examines your filesystem. If you have manually copied any videos into **Tartube**'s data directory, those videos are added to **Tartube**'s database
--  **Update** - Installs or updates **youtube-dl**, as described in `6.2 Check youtube-dl is updated`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
--  **Info** - Fetches information about a particular video: either the available video/audio formats, or the available subtitles
--  **Tidy** - Tidies up **Tartube**'s data directory, as well as checking that downloaded videos still exist and are not corrupted
+- **Check** - Fetches information about videos, but doesn't download them
+- **Download** - Actually downloads the videos. If you have disabled downloads for a particular item, **Tartube** will just fetch information about it instead
+- **Custom download** - Downloads videos in a non-standard way; see `6.13 Custom downloads`_
+- **Refresh** - Examines your filesystem. If you have manually copied any videos into **Tartube**'s data directory, those videos are added to **Tartube**'s database
+- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Check youtube-dl is updated`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
+- **Info** - Fetches information about a particular video: either the available video/audio formats, or the available subtitles
+- **Tidy** - Tidies up **Tartube**'s data directory, as well as checking that downloaded videos still exist and are not corrupted
 
 .. image:: screenshots/example12.png
   :alt: The Check and Download buttons
@@ -622,8 +623,8 @@ To **Tidy** the data directory, use the main menu (or right-click a channel/play
 
 A new window opens. Any changes you make in this window aren't actually applied until you click the **'Apply'** or **'OK'** buttons.
 
-6.12 Other download options
----------------------------
+6.11.1 Other download options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Those are the *default* download options. If you want to apply a *different* set of download options to a particular channel or particular playlist, you can do so.
 
@@ -650,6 +651,40 @@ The previous set of download options still applies to everything in the **Music*
 
 .. image:: screenshots/example16.png
   :alt: Download options applied to the Village People channel
+
+6.12 Scheduled downloads
+------------------------
+
+**Tartube** can check and download videos, channels and playlists on a regular schedule. This is very useful if you want to leave **Tartube** running unattended.
+
+.. image:: screenshots/example26.png
+  :alt: The Scheduling tab
+
+- Click **Edit > System preferences... > Scheduling > Start**
+- In the box, type a name for the scheduled download, for example **test**
+- Click the **Add** button to create the scheduled download
+
+.. image:: screenshots/example27.png
+  :alt: The scheduled download edit window
+
+A new edit window appears. You can use this window to congifure the scheduled download.
+
+- In the **Download mode** box, select whether **Tartube** should check videos, download them, or perform a custom download - see `6.13 Custom downloads`_.
+- In the **Start mode** box, select whether this download should be performed once, when **Tartube** starts, or whether it should be performed at regular intervals
+- If you choose regular intervals, then you can set the length of the interval
+
+.. image:: screenshots/example28.png
+  :alt: The drag-and-drop window
+
+Now click the **Media** tab. By default, a scheduled download checks or downloads everything in **Tartube**'s database, but if you don't want that, you can select individual channels, playlists and folders.
+
+There are several ways to add channels, playlists and folders to this list:
+
+- In the dropdown box, select the channel/playlist/folder, and click **Add**
+- In the main window's **Videos** tab, right-click the channel/playlist/folder and select **Downloads > Add to scheduled download...**
+- Drag and drop the channel/playlist/folder from the main window into this window
+
+You can create as many scheduled downloads as you like. Scheduled downloads are performed in order, from the top of the list to the bottom.
 
 6.13 Custom downloads
 ---------------------
@@ -1180,18 +1215,36 @@ To switch back to using the original youtube-dl, just empty the same box.
 
 *Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly!*
 
-A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
-
 A: Tartube is known to fail on Windows 7 systems that have not been updated for some time. The solution is to install `this patch from Microsoft <https://www.microsoft.com/en-us/download/details.aspx?id=26767>`__. The simplest way to install the patch is to let Windows update itself, as normal.
 
 A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
+A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
+
+It may be helpful to turn on debug messages (which are visible in a terminal window). There are several ways to enable debug messages:
+
+- Place a file called **debug.txt** in the main folder/directory (the one that contains **setup.py**). This works on MS Windows, and if running directly from the source code on other operating systems
+
+- Edit the source code files **mainapp.py**, **mainwin.py** and **downloads.py**. In each file, change the value of **DEBUG_FUNC_FLAG** to **True** (note the capitalisation)
+
+- Click **Edit > System preferences... > General > Debugging**, and click the checkboxes to enable them. (These settings are reset when Tartube restarts)
+
+On MS Windows, this is how to run **Tartube** from inside a terminal window:
+
+- First, enable hidden folders on your system
+- Then, run the application: **C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\mingw64.exe**
+- In this window, type these commands to start **Tartube**:
+
+        **cd /home/user/tartube**
+
+        **python3 tartube/tartube**
+ 
 7.2 Tartube crashes a lot
 -------------------------
 
 *Q: I can install and run Tartube, but it keeps crashing!*
 
-A: Tartube uses the Gtk graphics library. This library is notoriously unreliable and may even cause crashes.
+A: Tartube uses the Gtk graphics library. Regrettably, this library is notoriously unstable.
 
 If stability is a problem, you can disable some minor cosmetic features. **Tartube**'s functionality is not affected. You can do anything, even when the cosmetic features are disabled.
 

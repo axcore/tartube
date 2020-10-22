@@ -206,6 +206,15 @@ class OptionsManager(object):
         referer (str): Specify a custom referer to use if the video access is
             restricted to one domain
 
+        min_sleep_interval (int): Number of seconds to sleep before each
+            download when used alone, or a lower bound of a range for
+            randomised sleep before each download (minimum possible number of
+            seconds to sleep) when used along with max_sleep_interval
+
+        max_sleep_interval (int): Upper bound of a range for randomized sleep
+            before each download (maximum possible number of seconds to sleep).
+            Can only be used along with a non-zero value for min_sleep_interval
+
     VIDEO FORMAT OPTIONS
 
         video_format (str): Video format to download. When this option is set
@@ -416,10 +425,22 @@ class OptionsManager(object):
     # Standard class methods
 
 
-    def __init__(self):
+    def __init__(self, uid, name, dbid=None):
 
         # IV list - other
         # ---------------
+        # Unique ID for this options manager
+        self.uid = uid
+        # A non-unique name for this options manager. Managers that are
+        #   attached to a media data object have the same name as that object.
+        #   (The name is not unique because, for example, videos could have the
+        #   same name as a channel; it's up to the user to avoid duplicate
+        #   names)
+        self.name = name
+        # If this object is attached to a media data object, the .dbid of that
+        #   object; otherwise None
+        self.dbid = dbid
+
         # Dictionary of download options for youtube-dl, set by a call to
         #   self.reset_options
         self.options_dict = {}
@@ -559,6 +580,8 @@ class OptionsManager(object):
             'prefer_insecure': False,
             'user_agent': '',
             'referer': '',
+            'min_sleep_interval': 0,
+            'max_sleep_interval': 0,
             # VIDEO FORMAT OPTIONS
             'video_format': '0',
             'all_formats': False,
@@ -622,7 +645,7 @@ class OptionsManager(object):
 
     def set_classic_mode_options(self):
 
-        """Called by mainapp.TartubeApp.apply_classic_downoad_options().
+        """Called by mainapp.TartubeApp.apply_classic_download_options().
 
         When the user applies download options in the Classic Mode Tab, a few
         options should have different default values; this function sets them.
@@ -647,6 +670,14 @@ class OptionsManager(object):
         self.options_dict['sim_keep_info'] = False
         self.options_dict['sim_keep_annotations'] = False
         self.options_dict['sim_keep_thumbnail'] = False
+
+
+    # Set accessors
+
+
+    def set_dbid(self, dbid):
+
+        self.dbid = dbid
 
 
 class OptionsParser(object):
@@ -785,6 +816,10 @@ class OptionsParser(object):
             OptionHolder('user_agent', '--user-agent', ''),
             # --referer URL
             OptionHolder('referer', '--referer', ''),
+            # --sleep-interval SECONDS
+            OptionHolder('min_sleep_interval', '--sleep-interval', 0),
+            # --max-sleep-interval SECONDS
+            OptionHolder('max_sleep_interval', '--max-sleep-interval', 0),
             # VIDEO FORMAT OPTIONS
             # -f, --format FORMAT
             OptionHolder('video_format', '-f', '0'),

@@ -676,6 +676,7 @@ SMALL_ICON_DICT = {
     'arrow_up_small': 'arrow_up.png',
     'arrow_down_small': 'arrow_down.png',
     'check_small': 'check.png',
+    'delete_small': 'delete.png',
     'download_small': 'download.png',
     'error_small': 'error.png',
     'folder_black_small': 'folder_black.png',

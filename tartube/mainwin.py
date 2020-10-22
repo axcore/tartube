@@ -223,6 +223,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.reverse_results_checkbutton = None # Gtk.CheckButton
         # (from self.setup_output_tab)
         self.output_notebook = None             # Gtk.Notebook
+        self.output_size_checkbutton = None     # Gtk.CheckButton
+        self.output_size_spinbutton = None      # Gtk.SpinButton
         # (from self.setup_errors_tab)
         self.errors_list_scrolled = None        # Gtk.ScrolledWindow
         self.errors_list_treeview = None        # Gtk.TreeView
@@ -464,6 +466,14 @@ class MainWin(Gtk.ApplicationWindow):
         #           video ('keep_description', etc, are not not added to the
         #           dictionary at all for simulated downloads)
         self.results_list_temp_list = []
+        # When a video is deleted, the row in the Results List containing that
+        #   video must be updated. So this can be done efficiently, we also
+        #   compile a dictionary of media.Video objects and the rows they
+        #   occupy
+        # Dictionary in the form
+        #   key = The .dbid of the media.Video for the row
+        #   value = The row number on the treeview
+        self.results_list_row_dict = {}
 
         # Classic Mode Tab IVs
         # During a normal download operation, stats are displayed in the
@@ -1884,10 +1894,10 @@ class MainWin(Gtk.ApplicationWindow):
             Gtk.PolicyType.AUTOMATIC,
         )
 
-        # Results List
-        self.results_list_treeview = Gtk.TreeView()
+        # Results List. Use a modified Gtk.TreeView which permits drag-and-drop
+        #   for multiple rows
+        self.results_list_treeview = MultiDragDropTreeView()
         self.results_list_scrolled.add(self.results_list_treeview)
-        self.results_list_treeview.set_can_focus(False)
         # (Tooltips are initially enabled, and if necessary are disabled by a
         #   call to self.disable_tooltips() shortly afterwards)
         self.results_list_treeview.set_tooltip_column(
@@ -1899,6 +1909,24 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_results_list_right_click,
         )
 
+        # Allow multiple selection...
+        self.results_list_treeview.set_can_focus(True)
+        selection = self.results_list_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.MULTIPLE)
+        # ...and then set up drag and drop from the treeview to an external
+        #   application (for example, an FFmpeg batch converter)
+        self.results_list_treeview.enable_model_drag_source(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.results_list_treeview.drag_source_add_text_targets()
+        self.results_list_treeview.connect(
+            'drag-data-get',
+            self.on_results_list_drag_data_get,
+        )
+
+        # Set up the treeview's model
         for i, column_title in enumerate(
             [
                 'hide', 'hide', '', _('New videos'), _('Duration'), _('Size'),
@@ -2317,7 +2345,7 @@ class MainWin(Gtk.ApplicationWindow):
             Gtk.PolicyType.AUTOMATIC,
         )
 
-        self.classic_progress_treeview = Gtk.TreeView()
+        self.classic_progress_treeview = MultiDragDropTreeView()
         scrolled2.add(self.classic_progress_treeview)
         # (Tooltips are initially enabled, and if necessary are disabled by a
         #   call to self.disable_tooltips() shortly afterwards)
@@ -2329,9 +2357,23 @@ class MainWin(Gtk.ApplicationWindow):
             'button-press-event',
             self.on_classic_progress_list_right_click,
         )
+
         # (Enable selection of multiple lines)
+        self.classic_progress_treeview.set_can_focus(True)
         selection = self.classic_progress_treeview.get_selection()
         selection.set_mode(Gtk.SelectionMode.MULTIPLE)
+        # ...and then set up drag and drop from the treeview to an external
+        #   application (for example, an FFmpeg batch converter)
+        self.classic_progress_treeview.enable_model_drag_source(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.classic_progress_treeview.drag_source_add_text_targets()
+        self.classic_progress_treeview.connect(
+            'drag-data-get',
+            self.on_classic_progress_list_drag_data_get,
+        )
 
         for i, column_title in enumerate(
             [
@@ -2511,8 +2553,12 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 2374 setup_output_tab')
 
-        vbox = Gtk.VBox()
-        self.output_tab.pack_start(vbox, True, True, 0)
+        grid = Gtk.Grid()
+        self.output_tab.pack_start(grid, True, True, 0)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        grid_width = 3
 
         # During a download operation, each page in the Output Tab's
         #   Gtk.Notebook displays output from a single downloads.DownloadWorker
@@ -2520,7 +2566,7 @@ class MainWin(Gtk.ApplicationWindow):
         # The pages are added later, via a call to
         #   self.output_tab_setup_pages()
         self.output_notebook = Gtk.Notebook()
-        vbox.pack_start(self.output_notebook, True, True, 0)
+        grid.attach(self.output_notebook, 0, 0, grid_width, 1)
         self.output_notebook.set_border_width(0)
 
         # When the user switches between notebook pages, scroll the visible
@@ -2529,6 +2575,37 @@ class MainWin(Gtk.ApplicationWindow):
             'switch-page',
             self.on_output_notebook_switch_page,
         )
+
+        # Strip of widgets at the bottom, visible for all tabs
+        self.output_size_checkbutton = Gtk.CheckButton()
+        grid.attach(self.output_size_checkbutton, 1, 1, 1, 1)
+        self.output_size_checkbutton.set_label(_('Maximum page size'))
+        self.output_size_checkbutton.set_active(
+            self.app_obj.output_size_apply_flag,
+        )
+        self.output_size_checkbutton.set_hexpand(False)
+        self.output_size_checkbutton.connect(
+            'toggled',
+            self.on_output_size_checkbutton_changed,
+        )
+
+        self.output_size_spinbutton = Gtk.SpinButton.new_with_range(
+            self.app_obj.output_size_min,
+            self.app_obj.output_size_max,
+            1,
+        )
+        grid.attach(self.output_size_spinbutton, 2, 1, 1, 1)
+        self.output_size_spinbutton.set_value(self.app_obj.output_size_default)
+        self.output_size_spinbutton.set_hexpand(False)
+        self.output_size_spinbutton.connect(
+            'value-changed',
+            self.on_output_size_spinbutton_changed,
+        )
+
+        # (Add an empty label for spacing)
+        label = Gtk.Label()
+        grid.attach(label, 0, 1, 1, 1)
+        label.set_hexpand(True)
 
 
     def setup_errors_tab(self):
@@ -2797,6 +2874,10 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_redownload_button.set_sensitive(sens_flag)
         self.classic_stop_button.set_sensitive(False)
         self.classic_download_button.set_sensitive(sens_flag)
+
+        # Output Tab
+        self.output_size_checkbutton.set_sensitive(sens_flag)
+        self.output_size_spinbutton.set_sensitive(sens_flag)
 
         # Errors/Warnings tab
         self.show_system_error_checkbutton.set_sensitive(sens_flag)
@@ -4181,8 +4262,18 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         downloads_submenu.append(Gtk.SeparatorMenuItem())
 
+        add_scheduled_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Add to s_cheduled download...'),
+        )
+        add_scheduled_menu_item.connect(
+            'activate',
+            self.on_video_index_add_to_scheduled,
+            media_data_obj,
+        )
+        downloads_submenu.append(add_scheduled_menu_item)
+
         show_system_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Show system command'),
+            _('_Show system command...'),
         )
         show_system_menu_item.connect(
             'activate',
@@ -4348,8 +4439,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
 
-            # Otherwise, right-clicking a row selects (and unselects everything
-            #   else)
+            # Otherwise, right-clicking a row selects it (and unselects
+            #   everything else)
             self.catalogue_listbox.unselect_all()
             self.catalogue_listbox.select_row(catalogue_item_obj.catalogue_row)
 
@@ -4429,8 +4520,267 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Watch video
-        self.add_watch_video_menu_items(popup_menu, video_obj)
+        # Watch video in player/download and watch
+        if not video_obj.dl_flag and not self.app_obj.current_manager_obj:
+
+            dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Download and _watch'),
+            )
+            dl_watch_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_dl_and_watch,
+                video_obj,
+            )
+            popup_menu.append(dl_watch_menu_item)
+            if not video_obj.source \
+            or self.app_obj.update_manager_obj \
+            or self.app_obj.refresh_manager_obj \
+            or self.app_obj.process_manager_obj \
+            or video_obj.live_mode != 0:
+                dl_watch_menu_item.set_sensitive(False)
+
+        else:
+
+            watch_player_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Watch in _player'),
+            )
+            watch_player_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_watch_video,
+                video_obj,
+            )
+            popup_menu.append(watch_player_menu_item)
+            if video_obj.live_mode != 0:
+                watch_player_menu_item.set_sensitive(False)
+
+        # Watch video online. For YouTube URLs, offer alternative websites
+        if not video_obj.source or video_obj.live_mode != 0:
+
+            watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Watch on _website'),
+            )
+            if not video_obj.source:
+                watch_website_menu_item.set_sensitive(False)
+            popup_menu.append(watch_website_menu_item)
+
+        else:
+
+            if not utils.is_youtube(video_obj.source):
+
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('Watch on _website'),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_website,
+                    video_obj,
+                )
+                popup_menu.append(watch_website_menu_item)
+
+            else:
+
+                alt_submenu = Gtk.Menu()
+
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_YouTube'),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_website,
+                    video_obj,
+                )
+                alt_submenu.append(watch_website_menu_item)
+
+                watch_hooktube_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_HookTube'),
+                )
+                watch_hooktube_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_hooktube,
+                    video_obj,
+                )
+                alt_submenu.append(watch_hooktube_menu_item)
+
+                watch_invidious_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Invidious'),
+                )
+                watch_invidious_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_invidious,
+                    video_obj,
+                )
+                alt_submenu.append(watch_invidious_menu_item)
+
+                translate_note = _(
+                    'TRANSLATOR\'S NOTE: Watch on YouTube, Watch on' \
+                    + ' HookTube, etc',
+                )
+
+                alt_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('W_atch on'),
+                )
+                alt_menu_item.set_submenu(alt_submenu)
+                popup_menu.append(alt_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Add to _Classic Mode tab'),
+        )
+        classic_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_add_classic,
+            video_obj,
+        )
+        popup_menu.append(classic_dl_menu_item)
+        if not video_obj.source:
+            classic_dl_menu_item.set_sensitive(False)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        if video_obj.live_mode != 0:
+
+            # Livestream
+            livestream_submenu = Gtk.Menu()
+
+            auto_notify_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('Auto _notify'),
+            )
+            if video_obj.dbid in self.app_obj.media_reg_auto_notify_dict:
+                auto_notify_menu_item.set_active(True)
+            auto_notify_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_livestream_toggle,
+                video_obj,
+                'notify',
+            )
+            livestream_submenu.append(auto_notify_menu_item)
+            # Currently disabled on MS Windows
+            if os.name == 'nt':
+                auto_notify_menu_item.set_sensitive(False)
+
+            auto_alarm_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('Auto _sound alarm'),
+            )
+            if video_obj.dbid in self.app_obj.media_reg_auto_alarm_dict:
+                auto_alarm_menu_item.set_active(True)
+            auto_alarm_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_livestream_toggle,
+                video_obj,
+                'alarm',
+            )
+            livestream_submenu.append(auto_alarm_menu_item)
+            if not mainapp.HAVE_PLAYSOUND_FLAG:
+                auto_alarm_menu_item.set_sensitive(False)
+
+            auto_open_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('Auto _open'),
+            )
+            if video_obj.dbid in self.app_obj.media_reg_auto_open_dict:
+                auto_open_menu_item.set_active(True)
+            auto_open_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_livestream_toggle,
+                video_obj,
+                'open',
+            )
+            livestream_submenu.append(auto_open_menu_item)
+
+            auto_dl_start_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('_Download on start'),
+            )
+            if video_obj.dbid in self.app_obj.media_reg_auto_dl_start_dict:
+                auto_dl_start_menu_item.set_active(True)
+            auto_dl_start_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_livestream_toggle,
+                video_obj,
+                'dl_start',
+            )
+            livestream_submenu.append(auto_dl_start_menu_item)
+
+            auto_dl_stop_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+                _('Download on _stop'),
+            )
+            if video_obj.dbid in self.app_obj.media_reg_auto_dl_stop_dict:
+                auto_dl_stop_menu_item.set_active(True)
+            auto_dl_stop_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_livestream_toggle,
+                video_obj,
+                'dl_stop',
+            )
+            livestream_submenu.append(auto_dl_stop_menu_item)
+
+            # Separator
+            livestream_submenu.append(Gtk.SeparatorMenuItem())
+
+            not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Not a _livestream'),
+            )
+            not_live_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_not_livestream,
+                video_obj,
+            )
+            livestream_submenu.append(not_live_menu_item)
+
+            livestream_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Livestream'),
+            )
+            livestream_menu_item.set_submenu(livestream_submenu)
+            popup_menu.append(livestream_menu_item)
+
+        else:
+
+            # Temporary
+            temp_submenu = Gtk.Menu()
+
+            mark_temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Mark for download'))
+            mark_temp_dl_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_mark_temp_dl,
+                video_obj,
+            )
+            temp_submenu.append(mark_temp_dl_menu_item)
+
+            # Separator
+            temp_submenu.append(Gtk.SeparatorMenuItem())
+
+            temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Download'))
+            temp_dl_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_temp_dl,
+                video_obj,
+                False,
+            )
+            temp_submenu.append(temp_dl_menu_item)
+
+            temp_dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Download and _watch'),
+            )
+            temp_dl_watch_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_temp_dl,
+                video_obj,
+                True,
+            )
+            temp_submenu.append(temp_dl_watch_menu_item)
+
+            temp_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Temporary'))
+            temp_menu_item.set_submenu(temp_submenu)
+            popup_menu.append(temp_menu_item)
+            if not video_obj.source \
+            or self.app_obj.current_manager_obj \
+            or (
+                isinstance(video_obj.parent_obj, media.Folder)
+                and video_obj.parent_obj.temp_flag
+            ) or video_obj.live_mode != 0:
+                temp_menu_item.set_sensitive(False)
 
         # Apply/remove/edit download options, show system command, disable
         #   downloads
@@ -4853,126 +5203,16 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Watch video in player/download and watch
-        if not_dl_flag or live_flag:
-
-            dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('D_ownload and watch'),
-            )
-            dl_watch_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_dl_and_watch_multi,
-                video_list,
-            )
-            popup_menu.append(dl_watch_menu_item)
-            if not source_flag \
-            or self.app_obj.update_manager_obj \
-            or self.app_obj.refresh_manager_obj \
-            or self.app_obj.process_manager_obj \
-            or live_flag:
-                dl_watch_menu_item.set_sensitive(False)
-
-        else:
-
-            watch_player_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Watch in _player'),
-            )
-            watch_player_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_watch_video_multi,
-                video_list,
-            )
-            popup_menu.append(watch_player_menu_item)
-
-        watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Watch on _website'),
-        )
-        watch_website_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_watch_website_multi,
+        # Watch video
+        self.add_watch_video_menu_items(
+            popup_menu,
+            dl_flag,
+            not_dl_flag,
+            source_flag,
+            temp_folder_flag,
+            live_flag,
             video_list,
         )
-        if not source_flag:
-            watch_website_menu_item.set_sensitive(False)
-        popup_menu.append(watch_website_menu_item)
-
-        # Separator
-        popup_menu.append(Gtk.SeparatorMenuItem())
-
-        classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Add to _Classic Mode tab'),
-        )
-        classic_dl_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_add_classic_multi,
-            video_list,
-        )
-        popup_menu.append(classic_dl_menu_item)
-
-        # Separator
-        popup_menu.append(Gtk.SeparatorMenuItem())
-
-        # Download to Temporary Videos
-        temp_submenu = Gtk.Menu()
-
-        mark_temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Mark for download'),
-        )
-        mark_temp_dl_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_mark_temp_dl_multi,
-            video_list,
-        )
-        temp_submenu.append(mark_temp_dl_menu_item)
-
-        # Process with FFmpeg
-        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Process with FFmpeg...'),
-        )
-        process_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_process_ffmpeg_multi,
-            video_list,
-        )
-        popup_menu.append(process_menu_item)
-        if self.app_obj.current_manager_obj or not dl_flag:
-            process_menu_item.set_sensitive(False)
-
-        # Separator
-        temp_submenu.append(Gtk.SeparatorMenuItem())
-
-        temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Download'))
-        temp_dl_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_temp_dl_multi,
-            video_list,
-            False,
-        )
-        temp_submenu.append(temp_dl_menu_item)
-
-        temp_dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Download and watch'),
-        )
-        temp_dl_watch_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_temp_dl_multi,
-            video_list,
-            True,
-        )
-        temp_submenu.append(temp_dl_watch_menu_item)
-
-        temp_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Temporary'),
-        )
-        temp_menu_item.set_submenu(temp_submenu)
-        popup_menu.append(temp_menu_item)
-        if not video_obj.source \
-        or self.app_obj.update_manager_obj \
-        or self.app_obj.refresh_manager_obj \
-        or self.app_obj.process_manager_obj \
-        or temp_folder_flag \
-        or live_flag:
-            temp_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -5366,12 +5606,15 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.popup(None, None, None, None, event.button, event.time)
 
 
-    def results_list_popup_menu(self, event, path, dbid):
+    def results_list_popup_menu(self, event, path):
 
         """Called by self.on_results_list_right_click().
 
         When the user right-clicks on the Results List, shows a context-
         sensitive popup menu.
+
+        Unlike the popup menu functions above, here we use a single function
+        for single or multiple selections in the treeview.
 
         Args:
 
@@ -5379,51 +5622,81 @@ class MainWin(Gtk.ApplicationWindow):
 
             path (Gtk.TreePath): Path to the clicked row in the treeview
 
-            dbid (int): The dbid of the clicked video object
-
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 5086 results_list_popup_menu')
 
-        # Find the right-clicked video object, and check it still exists
-        if not dbid in self.app_obj.media_reg_dict:
+
+        # Get the selected media.Video object(s)
+        video_list = self.get_selected_videos_in_treeview(
+            self.results_list_treeview,
+            0,      # Column 0 contains the media.Video's .dbid
+        )
+        # Any videos which have been deleted (but which are still visible in
+        #   the Results List) are not returned, so the list might be empty
+        if not video_list:
             return
 
-        video_obj = self.app_obj.media_reg_dict[dbid]
-        if not isinstance(video_obj, media.Video):
-            return
+        # So we can desensitise some menu items, work out in advance whether
+        #   any of the selected videos are marked as downloaded, or have a
+        #   source URL, or are in a temporary folder
+        dl_flag = False
+        for video_obj in video_list:
+            if video_obj.dl_flag:
+                dl_flag = True
+                break
+
+        not_dl_flag = False
+        for video_obj in video_list:
+            if not video_obj.dl_flag:
+                not_dl_flag = True
+                break
+
+        source_flag = False
+        for video_obj in video_list:
+            if video_obj.source is not None:
+                source_flag = True
+                break
+
+        temp_folder_flag = False
+        for video_obj in video_list:
+            if isinstance(video_obj.parent_obj, media.Folder) \
+            and video_obj.parent_obj.temp_flag:
+                temp_folder_flag = True
+                break
+
+        live_flag = False
+        for video_obj in video_list:
+            if video_obj.live_mode == 1:
+                live_flag = True
+                break
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
         # Watch video
-        self.add_watch_video_menu_items(popup_menu, video_obj)
-
-        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Process with FFmpeg...'),
+        self.add_watch_video_menu_items(
+            popup_menu,
+            dl_flag,
+            not_dl_flag,
+            source_flag,
+            temp_folder_flag,
+            live_flag,
+            video_list,
         )
-        process_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_process_ffmpeg,
-            video_obj,
-        )
-        popup_menu.append(process_menu_item)
-        if self.app_obj.current_manager_obj \
-        or not video_obj.file_name \
-        or not video_obj.dl_flag:
-            process_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Delete video
-        delete_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Delete video'))
+        # Delete videos
+        delete_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Delete video(s)'),
+        )
         delete_menu_item.connect(
             'activate',
-            self.on_results_list_delete_video,
-            video_obj,
-            path,
+            self.on_video_catalogue_delete_video_multi,
+            video_list,
         )
         popup_menu.append(delete_menu_item)
         if self.app_obj.current_manager_obj:
@@ -5450,9 +5723,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Automatic copy/paste
         if not self.classic_auto_copy_flag:
-            label = _('Enable automatic copy/paste')
+            label = _('_Enable automatic copy/paste')
         else:
-            label = _('Disable automatic copy/paste')
+            label = _('_Disable automatic copy/paste')
 
         automatic_menu_item = Gtk.MenuItem.new_with_mnemonic(label)
         automatic_menu_item.connect(
@@ -5465,41 +5738,25 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Download options
-        if not self.app_obj.classic_options_obj:
-
-            apply_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Use _classic download options'),
-            )
-            apply_menu_item.connect(
-                'activate',
-                self.on_classic_menu_apply_options,
-            )
-            if self.app_obj.current_manager_obj:
-                apply_menu_item.set_sensitive(False)
-            popup_menu.append(apply_menu_item)
-
-        else:
-
-            remove_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Use _general download options'),
-            )
-            remove_menu_item.connect(
-                'activate',
-                self.on_classic_menu_remove_options,
-            )
-            if self.app_obj.current_manager_obj:
-                remove_menu_item.set_sensitive(False)
-            popup_menu.append(remove_menu_item)
+        set_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Set download options'),
+        )
+        set_menu_item.connect(
+            'activate',
+            self.on_classic_menu_set_options,
+        )
+        if self.app_obj.current_manager_obj:
+            set_menu_item.set_sensitive(False)
+        popup_menu.append(set_menu_item)
 
         edit_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Edit classic download options'),
+            _('_Edit download options'),
         )
         edit_menu_item.connect(
             'activate',
             self.on_classic_menu_edit_options,
         )
-        if self.app_obj.current_manager_obj \
-        or not self.app_obj.classic_options_obj:
+        if self.app_obj.current_manager_obj:
             edit_menu_item.set_sensitive(False)
         popup_menu.append(edit_menu_item)
 
@@ -5508,7 +5765,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Update youtube-dl
         update_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Update') + ' ' + self.app_obj.get_downloader(),
+            _('_Update') + ' ' + self.app_obj.get_downloader(),
         )
         update_ytdl_menu_item.connect(
             'activate',
@@ -5531,7 +5788,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
-    def classic_progress_list_popup_menu(self, event, path, dbid):
+    def classic_progress_list_popup_menu(self, event, path):
 
         """Called by self.on_classic_progress_list_right_click().
 
@@ -5544,49 +5801,65 @@ class MainWin(Gtk.ApplicationWindow):
 
             path (Gtk.TreePath): Path to the clicked row in the treeview
 
-            dbid (int): The dbid of the clicked video object
-
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 5140 classic_progress_list_popup_menu')
 
-        # Find the right-clicked dummy media.Video object, and check it still
-        #   exists
-        if not dbid in self.classic_media_dict:
-            return
-        else:
-            dummy_obj = self.classic_media_dict[dbid]
+        # Get the selected dummy media.Video object(s)
+        video_list = self.get_selected_videos_in_classic_treeview()
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
-        # Get URL
-        get_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Get _URL'))
-        get_url_menu_item.connect(
+        # Copy file path
+        copy_path_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Copy file _path'),
+        )
+        copy_path_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_get_path,
+            video_list[0],
+        )
+        if len(video_list) > 1:
+            copy_path_menu_item.set_sensitive(False)
+        popup_menu.append(copy_path_menu_item)
+
+        # Copy URL
+        copy_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Copy _URL'))
+        copy_url_menu_item.connect(
             'activate',
             self.on_classic_progress_list_get_url,
-            dummy_obj,
+            video_list[0],
         )
-        popup_menu.append(get_url_menu_item)
+        if len(video_list) > 1:
+            copy_url_menu_item.set_sensitive(False)
+        popup_menu.append(copy_url_menu_item)
 
-        # Get command
-        get_cmd_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Get _command'))
-        get_cmd_menu_item.connect(
+        # Copy system command
+        copy_cmd_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Copy system _command'),
+        )
+        copy_cmd_menu_item.connect(
             'activate',
             self.on_classic_progress_list_get_cmd,
-            dummy_obj,
+            video_list[0],
         )
-        popup_menu.append(get_cmd_menu_item)
+        if len(video_list) > 1:
+            copy_cmd_menu_item.set_sensitive(False)
+        popup_menu.append(copy_cmd_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Open destination
         open_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Open destination'),
+            _('_Open destination(s)'),
         )
         open_destination_menu_item.connect(
             'activate',
             self.on_classic_progress_list_open_destination,
-            dummy_obj,
+            video_list,
         )
         popup_menu.append(open_destination_menu_item)
 
@@ -5777,41 +6050,59 @@ class MainWin(Gtk.ApplicationWindow):
         submenu.append(mark_not_playlist_menu_item)
 
 
-    def add_watch_video_menu_items(self, popup_menu, video_obj):
+    def add_watch_video_menu_items(self, popup_menu, dl_flag,
+    not_dl_flag, source_flag, temp_folder_flag, live_flag, video_list):
 
-        """Called by self.video_catalogue_popup_menu() and
-        self.results_list_popup_menu().
+        """Called by self.video_catalogue_multi_popup_menu() and
+        .results_list_popup_menu().
 
-        Adds common menu items to the popup menu.
+        Adds common menu items to the popup menus.
 
         Args:
 
             popup_menu (Gtk.Menu): The popup menu
 
-            video_obj (media.Video): The video object that was right-clicked
+            dl_flag (bool): Flag set to True if any of the media.Video objects
+                have their .dl_flag IV set
+
+            not_dl_flag (bool): Flag set to True if any of the media.Video
+                objects do not have their .dl_flag IV set
+
+            source_flag (bool): Flag set to True if any of the media.Video
+                objects have their .source IV set
+
+            temp_folder_flag (bool): Flag set to True if any of the media.Video
+                objects' parent objects are media.Folder objects, and if those
+                media.Folder objects have their .temp_flag IV set
+
+            live_flag (bool): Flag set to True if any of the media.Video
+                objects have their .live_mode IV set to any value above 0
+
+            video_list (list): List of one or more media.Video objects on
+                which this popup menu acts
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5353 add_watch_video_menu_items')
+            utils.debug_time('mwn 5354 add_watch_video_menu_items')
 
         # Watch video in player/download and watch
-        if not video_obj.dl_flag and not self.app_obj.current_manager_obj:
+        if not_dl_flag or live_flag:
 
             dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Download and _watch'),
+                _('D_ownload and watch'),
             )
             dl_watch_menu_item.connect(
                 'activate',
-                self.on_video_catalogue_dl_and_watch,
-                video_obj,
+                self.on_video_catalogue_dl_and_watch_multi,
+                video_list,
             )
             popup_menu.append(dl_watch_menu_item)
-            if not video_obj.source \
+            if not source_flag \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
-            or video_obj.live_mode != 0:
+            or live_flag:
                 dl_watch_menu_item.set_sensitive(False)
 
         else:
@@ -5821,24 +6112,28 @@ class MainWin(Gtk.ApplicationWindow):
             )
             watch_player_menu_item.connect(
                 'activate',
-                self.on_video_catalogue_watch_video,
-                video_obj,
+                self.on_video_catalogue_watch_video_multi,
+                video_list,
             )
             popup_menu.append(watch_player_menu_item)
-            if video_obj.live_mode != 0:
-                watch_player_menu_item.set_sensitive(False)
 
-        # Watch video online. For YouTube URLs, offer alternative websites
-        if not video_obj.source or video_obj.live_mode != 0:
+        if len(video_list) > 1 or not source_flag or live_flag:
 
             watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('Watch on _website'),
             )
-            if not video_obj.source:
+            watch_website_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_watch_website_multi,
+                video_list,
+            )
+            if not source_flag:
                 watch_website_menu_item.set_sensitive(False)
             popup_menu.append(watch_website_menu_item)
 
         else:
+
+            video_obj = video_list[0]
 
             if not utils.is_youtube(video_obj.source):
 
@@ -5905,157 +6200,75 @@ class MainWin(Gtk.ApplicationWindow):
         )
         classic_dl_menu_item.connect(
             'activate',
-            self.on_video_catalogue_add_classic,
-            video_obj,
+            self.on_video_catalogue_add_classic_multi,
+            video_list,
         )
         popup_menu.append(classic_dl_menu_item)
-        if not video_obj.source:
-            classic_dl_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        if video_obj.live_mode != 0:
+        # Download to Temporary Videos
+        temp_submenu = Gtk.Menu()
 
-            # Livestream
-            livestream_submenu = Gtk.Menu()
+        mark_temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Mark for download'),
+        )
+        mark_temp_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_mark_temp_dl_multi,
+            video_list,
+        )
+        temp_submenu.append(mark_temp_dl_menu_item)
 
-            auto_notify_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('Auto _notify'),
-            )
-            if video_obj.dbid in self.app_obj.media_reg_auto_notify_dict:
-                auto_notify_menu_item.set_active(True)
-            auto_notify_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_livestream_toggle,
-                video_obj,
-                'notify',
-            )
-            livestream_submenu.append(auto_notify_menu_item)
-            # Currently disabled on MS Windows
-            if os.name == 'nt':
-                auto_notify_menu_item.set_sensitive(False)
+        # Separator
+        temp_submenu.append(Gtk.SeparatorMenuItem())
 
-            auto_alarm_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('Auto _sound alarm'),
-            )
-            if video_obj.dbid in self.app_obj.media_reg_auto_alarm_dict:
-                auto_alarm_menu_item.set_active(True)
-            auto_alarm_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_livestream_toggle,
-                video_obj,
-                'alarm',
-            )
-            livestream_submenu.append(auto_alarm_menu_item)
-            if not mainapp.HAVE_PLAYSOUND_FLAG:
-                auto_alarm_menu_item.set_sensitive(False)
+        temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Download'))
+        temp_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_temp_dl_multi,
+            video_list,
+            False,
+        )
+        temp_submenu.append(temp_dl_menu_item)
 
-            auto_open_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('Auto _open'),
-            )
-            if video_obj.dbid in self.app_obj.media_reg_auto_open_dict:
-                auto_open_menu_item.set_active(True)
-            auto_open_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_livestream_toggle,
-                video_obj,
-                'open',
-            )
-            livestream_submenu.append(auto_open_menu_item)
+        temp_dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Download and watch'),
+        )
+        temp_dl_watch_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_temp_dl_multi,
+            video_list,
+            True,
+        )
+        temp_submenu.append(temp_dl_watch_menu_item)
 
-            auto_dl_start_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('_Download on start'),
-            )
-            if video_obj.dbid in self.app_obj.media_reg_auto_dl_start_dict:
-                auto_dl_start_menu_item.set_active(True)
-            auto_dl_start_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_livestream_toggle,
-                video_obj,
-                'dl_start',
-            )
-            livestream_submenu.append(auto_dl_start_menu_item)
+        temp_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Temporary'),
+        )
+        temp_menu_item.set_submenu(temp_submenu)
+        popup_menu.append(temp_menu_item)
+        if not source_flag \
+        or self.app_obj.update_manager_obj \
+        or self.app_obj.refresh_manager_obj \
+        or self.app_obj.process_manager_obj \
+        or temp_folder_flag \
+        or live_flag:
+            temp_menu_item.set_sensitive(False)
 
-            auto_dl_stop_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-                _('Download on _stop'),
-            )
-            if video_obj.dbid in self.app_obj.media_reg_auto_dl_stop_dict:
-                auto_dl_stop_menu_item.set_active(True)
-            auto_dl_stop_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_livestream_toggle,
-                video_obj,
-                'dl_stop',
-            )
-            livestream_submenu.append(auto_dl_stop_menu_item)
-
-            # Separator
-            livestream_submenu.append(Gtk.SeparatorMenuItem())
-
-            not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Not a _livestream'),
-            )
-            not_live_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_not_livestream,
-                video_obj,
-            )
-            livestream_submenu.append(not_live_menu_item)
-
-            livestream_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Livestream'),
-            )
-            livestream_menu_item.set_submenu(livestream_submenu)
-            popup_menu.append(livestream_menu_item)
-
-        else:
-
-            # Temporary
-            temp_submenu = Gtk.Menu()
-
-            mark_temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Mark for download'))
-            mark_temp_dl_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_mark_temp_dl,
-                video_obj,
-            )
-            temp_submenu.append(mark_temp_dl_menu_item)
-
-            # Separator
-            temp_submenu.append(Gtk.SeparatorMenuItem())
-
-            temp_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Download'))
-            temp_dl_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_temp_dl,
-                video_obj,
-                False,
-            )
-            temp_submenu.append(temp_dl_menu_item)
-
-            temp_dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Download and _watch'),
-            )
-            temp_dl_watch_menu_item.connect(
-                'activate',
-                self.on_video_catalogue_temp_dl,
-                video_obj,
-                True,
-            )
-            temp_submenu.append(temp_dl_watch_menu_item)
-
-            temp_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Temporary'))
-            temp_menu_item.set_submenu(temp_submenu)
-            popup_menu.append(temp_menu_item)
-            if not video_obj.source \
-            or self.app_obj.current_manager_obj \
-            or (
-                isinstance(video_obj.parent_obj, media.Folder)
-                and video_obj.parent_obj.temp_flag
-            ) or video_obj.live_mode != 0:
-                temp_menu_item.set_sensitive(False)
+        # Process with FFmpeg
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg_multi,
+            video_list,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj or not dl_flag:
+            process_menu_item.set_sensitive(False)
 
 
     # (Video Index)
@@ -6982,6 +7195,20 @@ class MainWin(Gtk.ApplicationWindow):
         #   on one of them)
         self.catalogue_listbox.set_activate_on_single_click(False)
 
+        # Set up drag and drop from the listbox to an external application
+        #   (for example, an FFmpeg batch converter)
+        self.catalogue_listbox.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.catalogue_listbox.drag_source_add_text_targets()
+        self.catalogue_listbox.connect(
+            'drag-data-get',
+            self.on_video_catalogue_drag_data_get,
+        )
+
+        # Set up automatic sorting of rows in the listbox
         self.catalogue_listbox.set_sort_func(
             self.video_catalogue_auto_sort,
             None,
@@ -8208,6 +8435,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Reset IVs
         self.results_list_row_count = 0
         self.results_list_temp_list = []
+        self.results_list_row_dict = {}
 
 
     def results_list_add_row(self, download_item_obj, video_obj, \
@@ -8330,6 +8558,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Update IVs
         self.results_list_temp_list.append(temp_dict)
+        self.results_list_row_dict[video_obj.dbid] \
+        = self.results_list_row_count
         # (The number of rows has just increased, so increment the IV for the
         #   next call to this function)
         self.results_list_row_count += 1
@@ -8422,7 +8652,13 @@ class MainWin(Gtk.ApplicationWindow):
                     pixbuf = self.pixbuf_dict['folder_small']
 
                 # Update the corresponding row in the Results List
-                tree_path = Gtk.TreePath(temp_dict['row_num'])
+                row_num = temp_dict['row_num']
+                # New rows are being added to the top, so the real row number
+                #   changes on every call to self.results_list_add_row()
+                if self.app_obj.results_list_reverse_flag:
+                    row_num = self.results_list_row_count - 1 - row_num
+
+                tree_path = Gtk.TreePath(row_num)
                 row_iter = self.results_list_liststore.get_iter(tree_path)
 
                 self.results_list_liststore.set(
@@ -8479,6 +8715,52 @@ class MainWin(Gtk.ApplicationWindow):
         # Any files that don't exist yet must be checked on the next call to
         #   this function
         self.results_list_temp_list = new_temp_list
+
+
+    def results_list_update_row_on_delete(self, dbid):
+
+        """Called by mainapp.TartubeApp.delete_video().
+
+        When a video is deleted, this function is called. If the video is
+        visible in the Results List, we change the icon to mark it as deleted.
+
+        Args:
+
+            dbid (int): The .dbid of the media.Video object which has just been
+                deleted
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7935 results_list_update_row_on_delete')
+
+        if dbid in self.results_list_row_dict:
+
+            row_num = self.results_list_row_dict[dbid]
+            if self.app_obj.results_list_reverse_flag:
+                # New rows are being added to the top, so the real row number
+                #   changes on every call to self.results_list_add_row()
+                row_num = self.results_list_row_count - 1 - row_num
+
+            tree_path = Gtk.TreePath(row_num)
+            row_iter = self.results_list_liststore.get_iter(tree_path)
+            if row_iter:
+
+                self.results_list_liststore.set(
+                    row_iter,
+                    2,
+                    self.pixbuf_dict['delete_small'],
+                )
+
+                self.results_list_liststore.set(row_iter, 7, False)
+
+                self.results_list_liststore.set(
+                    row_iter,
+                    8,
+                    self.pixbuf_dict['delete_small'],
+                )
+
+                self.results_list_liststore.set(row_iter, 9, '')
 
 
     # (Classic Mode tab)
@@ -9249,6 +9531,16 @@ class MainWin(Gtk.ApplicationWindow):
                     textbuffer = textview.get_buffer()
                     update_dict[page_num] = textview
 
+                    # If the buffer is too big, remove the first line to make
+                    #   way for the new one
+                    if self.app_obj.output_size_apply_flag \
+                    and textbuffer.get_line_count() \
+                    > self.app_obj.output_size_default:
+                        textbuffer.delete(
+                            textbuffer.get_start_iter(),
+                            textbuffer.get_iter_at_line_offset(1, 0),
+                        )
+
                     if msg_type != 'default':
 
                         # The .markup_escape_text() call won't escape curly
@@ -9289,6 +9581,35 @@ class MainWin(Gtk.ApplicationWindow):
             # Make the new output visible
             for textview in update_dict.values():
                 textview.show_all()
+
+
+    def output_tab_update_page_size(self):
+
+        """Called by mainapp.TartubeApp.set_output_size_default().
+
+        When a page size is applied, count the number of lines in each
+        textview, and remove the oldest remaining lines, if necessary.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 8866 output_tab_update_page_size')
+
+        if self.app_obj.output_size_apply_flag:
+
+            for page_num in self.output_textview_dict:
+
+                textview = self.output_textview_dict[page_num]
+                textbuffer = textview.get_buffer()
+                line_count = textbuffer.get_line_count()
+
+                if line_count >= self.app_obj.output_size_default:
+                    textbuffer.delete(
+                        textbuffer.get_start_iter(),
+                        textbuffer.get_iter_at_line_offset(
+                            line_count - self.app_obj.output_size_default - 1,
+                            0,
+                        ),
+                    )
 
 
     def output_tab_do_autoscroll(self, textview, rect, scrolled):
@@ -9687,6 +10008,69 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
+    def on_video_index_add_to_scheduled(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Opens a dialogue window giving a list of scheduled downloads, to which
+        the specified media data object can be added.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 9261 on_video_index_add_to_scheduled')
+
+        # Check that at least one scheduled download exists, that doesn't
+        #   already contain the specified media data object
+        available_list = []
+        for scheduled_obj in self.app_obj.scheduled_list:
+            if not media_data_obj.name in scheduled_obj.media_list:
+                available_list.append(scheduled_obj.name)
+
+        if not available_list:
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'There are not scheduled downloads that don\'t already' \
+                + ' contain the channel/playlist/folder',
+                ),
+                'error',
+                'ok',
+                None,                   # Parent window is main window
+            )
+
+            return
+
+        available_list.sort()
+
+        # Show the dialogue window
+        dialogue_win = ScheduledDialogue(self, media_data_obj, available_list)
+        dialogue_win.run()
+        choice = dialogue_win.choice
+        dialogue_win.destroy()
+
+        # Check for the possibility that the media data object and/or
+        #   scheduled download may have been deleted, since the dialouge window
+        #   opened
+        if choice is not None \
+        and media_data_obj.name in self.app_obj.media_name_dict:
+
+            # Find the selected scheduled download
+            match_obj = None
+            for this_obj in self.app_obj.scheduled_list:
+                if this_obj.name == choice:
+                    match_obj = this_obj
+                    break
+
+            if match_obj:
+                match_obj.add_media(media_data_obj.name)
+
+
     def on_video_index_apply_options(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_index_popup_menu().
@@ -9724,7 +10108,6 @@ class MainWin(Gtk.ApplicationWindow):
         config.OptionsEditWin(
             self.app_obj,
             media_data_obj.options_obj,
-            media_data_obj,
         )
 
 
@@ -10008,7 +10391,6 @@ class MainWin(Gtk.ApplicationWindow):
         config.OptionsEditWin(
             self.app_obj,
             media_data_obj.options_obj,
-            media_data_obj,
         )
 
 
@@ -11229,7 +11611,13 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Apply download options to the media data object
-        media_data_obj.set_options_obj(options.OptionsManager())
+        media_data_obj.set_options_obj(
+            self.app_obj.create_options_manager(
+                media_data_obj.name,
+                media_data_obj.dbid,
+            ),
+        )
+
         # Update the video catalogue to show the right icon
         self.video_catalogue_update_row(media_data_obj)
 
@@ -11237,7 +11625,6 @@ class MainWin(Gtk.ApplicationWindow):
         config.OptionsEditWin(
             self.app_obj,
             media_data_obj.options_obj,
-            media_data_obj,
         )
 
 
@@ -11280,6 +11667,7 @@ class MainWin(Gtk.ApplicationWindow):
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 'sim',
+                False,
                 True,
             )
 
@@ -11344,6 +11732,7 @@ class MainWin(Gtk.ApplicationWindow):
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
                     'sim',
+                    False,
                     True,
                 )
 
@@ -11590,6 +11979,7 @@ class MainWin(Gtk.ApplicationWindow):
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 'real',
+                False,
                 True,
             )
 
@@ -11658,6 +12048,7 @@ class MainWin(Gtk.ApplicationWindow):
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
                     'real',
+                    False,
                     True,
                 )
 
@@ -11683,6 +12074,49 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Standard de-selection of everything in the Video Catalogue
         self.catalogue_listbox.unselect_all()
+
+
+    def on_video_catalogue_drag_data_get(self, listbox, drag_context, data, \
+    info, time):
+
+        """Called from callback in self.video_catalogue_reset().
+
+        Set the data to be used when the user drags and drops rows from the
+        Video Catalogue to an external application (for example, an FFmpeg
+        batch converter).
+
+        Args:
+
+            listbox (Gtk.ListBox): The Video Catalogue's listbox
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 11039 on_video_catalogue_drag_data_get')
+
+        # Get the selected media.Video objects. Due to Gtk weirdness, only the
+        #   selected videos are obtainable (which might not include all of the
+        #   dragged videos)
+        video_list = []
+        for catalogue_item_obj in self.catalogue_listbox.get_selected_rows():
+            video_list.append(catalogue_item_obj.video_obj)
+
+        # Transfer to the external application a single string, containing one
+        #   or more full file paths/URLs/video names, separated by newline
+        #   characters
+        # If the path/URL/name isn't known for any videos, then an empty line
+        #   is transferred
+        if info == 0:   # TARGET_ENTRY_TEXT
+            data.set_text(self.set_video_drag_data(video_list), -1)
 
 
     def on_video_catalogue_edit_options(self, menu_item, media_data_obj):
@@ -11713,7 +12147,6 @@ class MainWin(Gtk.ApplicationWindow):
         config.OptionsEditWin(
             self.app_obj,
             media_data_obj.options_obj,
-            media_data_obj,
         )
 
 
@@ -13479,11 +13912,53 @@ class MainWin(Gtk.ApplicationWindow):
         self.results_list_liststore.remove(iter)
 
 
+    def on_results_list_drag_data_get(self, treeview, drag_context, data, info,
+    time):
+
+        """Called from callback in self.setup_progress_tab().
+
+        Set the data to be used when the user drags and drops rows from the
+        Results List to an external application (for example, an FFmpeg batch
+        converter).
+
+        Args:
+
+            treeview (Gtk.TreeView): The Results List treeview
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12619 on_video_catalogue_drag_data_get')
+
+        # Get the selected media.Video object(s)
+        video_list = self.get_selected_videos_in_treeview(
+            self.results_list_treeview,
+            0,      # Column 0 contains the media.Video's .dbid
+        )
+
+        # Transfer to the external application a single string, containing one
+        #   or more full file paths/URLs/video names, separated by newline
+        #   characters
+        # If the path/URL/name isn't known for any videos, then an empty line
+        #   is transferred
+        if info == 0:   # TARGET_ENTRY_TEXT
+            data.set_text(self.set_video_drag_data(video_list), -1)
+
+
     def on_results_list_right_click(self, treeview, event):
 
         """Called from callback in self.setup_progress_tab().
 
-        When the user right-clicks an item in the Results List, create a
+        When the user right-clicks item(s) in the Results List, create a
         context-sensitive popup menu.
 
         Args:
@@ -13514,11 +13989,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             iter = self.results_list_liststore.get_iter(path)
             if iter is not None:
-                self.results_list_popup_menu(
-                    event,
-                    path,
-                    self.results_list_liststore[iter][0],
-                )
+                self.results_list_popup_menu(event, path)
 
 
     def on_errors_list_clear(self, button):
@@ -13589,39 +14060,6 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
-    def on_classic_menu_apply_options(self, menu_item):
-
-        """Called from a callback in self.classic_popup_menu().
-
-        Adds a set of download options for use only in Classic Mode Tab
-        downloads.
-
-        Args:
-
-            menu_item (Gtk.MenuItem): The clicked menu item
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12727 on_classic_menu_apply_options')
-
-        if self.app_obj.current_manager_obj \
-        or self.app_obj.classic_options_obj:
-            return self.app_obj.system_error(
-                249,
-                'Callback request denied due to current conditions',
-            )
-
-        # Create the options.OptionsManager object
-        self.app_obj.apply_classic_downoad_options()
-
-        # Open an edit window to show the options immediately
-        config.OptionsEditWin(
-            self.app_obj,
-            self.app_obj.classic_options_obj,
-        )
-
-
     def on_classic_menu_edit_options(self, menu_item):
 
         """Called from a callback in self.classic_popup_menu().
@@ -13637,26 +14075,34 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 12728 on_classic_menu_edit_options')
 
-        if self.app_obj.current_manager_obj \
-        or not self.app_obj.classic_options_obj:
+        if self.app_obj.current_manager_obj:
+
             return self.app_obj.system_error(
                 250,
                 'Callback request denied due to current conditions',
             )
 
         # Open an edit window
-        config.OptionsEditWin(
-            self.app_obj,
-            self.app_obj.classic_options_obj,
-        )
+        if self.app_obj.classic_options_obj is None:
+
+            config.OptionsEditWin(
+                self.app_obj,
+                self.app_obj.general_options_obj,
+            )
+
+        else:
+
+            config.OptionsEditWin(
+                self.app_obj,
+                self.app_obj.classic_options_obj,
+            )
 
 
-    def on_classic_menu_remove_options(self, menu_item):
+    def on_classic_menu_set_options(self, menu_item):
 
         """Called from a callback in self.classic_popup_menu().
 
-        Removes the set of download options for use only in Classic Mode Tab
-        downloads.
+        Sets the download options for use only in Classic Mode Tab downloads.
 
         Args:
 
@@ -13665,17 +14111,55 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12729 on_classic_menu_remove_options')
+            utils.debug_time('mwn 12728 on_classic_menu_set_options')
 
-        if self.app_obj.current_manager_obj \
-        or not self.app_obj.classic_options_obj:
+        if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                251,
+                249,
                 'Callback request denied due to current conditions',
             )
 
-        # Remove the options.OptionsManager object
-        self.app_obj.remove_classic_downoad_options()
+        # Show the dialogue window
+        dialogue_win = ClassicOptionsDialogue(self)
+        response = dialogue_win.run()
+        # (.choice is the .uid of an existing options.OptionsManager object
+        # .new_flag is True if the user wants to create a new object)
+        options_obj = dialogue_win.options_obj
+        new_flag = dialogue_win.new_flag
+        new_name = dialogue_win.new_name
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            if options_obj is not None:
+
+                if options_obj == self.app_obj.general_options_obj:
+                    self.app_obj.remove_classic_downoad_options()
+                elif options_obj != self.app_obj.classic_options_obj:
+                    self.app_obj.apply_classic_download_options(options_obj)
+
+            elif new_flag and new_name != '':
+
+                # Create a new options.OptionsManager object
+                self.app_obj.apply_classic_download_options(
+                    self.app_obj.create_options_manager(new_name),
+                )
+
+                # If required, clone download options from the General Options
+                #   Manager into the new object
+                if self.app_obj.auto_clone_options_flag:
+                    self.app_obj.classic_options_obj.clone_options(
+                        self.app_obj.general_options_obj,
+                    )
+
+                # Disable downloading the description, annotations (etc) files
+                self.app_obj.classic_options_obj.set_classic_mode_options()
+
+                # Open an edit window to show the new object
+                config.OptionsEditWin(
+                    self.app_obj,
+                    self.app_obj.classic_options_obj,
+                )
 
 
     def on_classic_menu_toggle_auto_copy(self, menu_item):
@@ -13739,6 +14223,54 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.update_manager_start('ytdl')
 
 
+    def on_classic_progress_list_drag_data_get(self, treeview, drag_context,
+    data, info, time):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Set the data to be used when the user drags and drops rows from the
+        Classic Progress List to an external application (for example, an
+        FFmpeg batch converter).
+
+        Args:
+
+            treeview (Gtk.TreeView): The Classic Progress List treeview
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 12732 on_classic_progress_list_drag_data_get',
+            )
+
+        # Get the selected dummy media.Video object(s)
+        video_list = self.get_selected_videos_in_classic_treeview()
+
+        # Transfer to the external application a single string, containing one
+        #   or more full file paths/URLs/video names, separated by newline
+        #   characters
+        # If the path/URL/name isn't known for any videos, then an empty line
+        #   is transferred
+        if info == 0 and video_list:   # TARGET_ENTRY_TEXT
+
+            data.set_text(
+                self.set_video_drag_data(
+                    video_list,
+                    True,       # This is a dummy media.Video object
+                ),
+                -1,
+            )
+
+
     def on_classic_progress_list_get_cmd(self, menu_item, dummy_obj):
 
         """Called from a callback in self.classic_progress_list_popup_menu().
@@ -13750,7 +14282,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The menu item that was clicked
 
-            media_data_obj (media.Video): The dummy media.Video objects on the
+            media_data_obj (media.Video): The dummy media.Video object on the
                 clicked row
 
         """
@@ -13788,6 +14320,29 @@ class MainWin(Gtk.ApplicationWindow):
         clipboard.set_text(system_cmd, -1)
 
 
+    def on_classic_progress_list_get_path(self, menu_item, dummy_obj):
+
+        """Called from a callback in self.classic_progress_list_popup_menu().
+
+        Copies the full file path for the specified dummy media.Video object to
+        the clipboard.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The menu item that was clicked
+
+            media_data_obj (media.Video): The dummy media.Video object on the
+                clicked row
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12804 on_classic_progress_list_get_path')
+
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.set_text(dummy_obj.dummy_path, -1)
+
+
     def on_classic_progress_list_get_url(self, menu_item, dummy_obj):
 
         """Called from a callback in self.classic_progress_list_popup_menu().
@@ -13799,31 +14354,31 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The menu item that was clicked
 
-            media_data_obj (media.Video): The dummy media.Video objects on the
+            media_data_obj (media.Video): The dummy media.Video object on the
                 clicked row
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12804 on_classic_progress_list_get_url')
+            utils.debug_time('mwn 12805 on_classic_progress_list_get_url')
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_text(dummy_obj.source, -1)
 
 
-    def on_classic_progress_list_open_destination(self, menu_item, dummy_obj):
+    def on_classic_progress_list_open_destination(self, menu_item, dummy_list):
 
         """Called from a callback in self.classic_progress_list_popup_menu().
 
         Opens the download destination for the specified dummy media.Video
-        object.
+        objects.
 
         Args:
 
             menu_item (Gtk.MenuItem): The menu item that was clicked
 
-            media_data_obj (media.Video): The dummy media.Video objects on the
-                clicked row
+            dummy_list (list): List of dummy media.Video objects on the clicked
+                row(s)
 
         """
 
@@ -13832,8 +14387,17 @@ class MainWin(Gtk.ApplicationWindow):
                 'mwn 12828 on_classic_progress_list_open_destination',
             )
 
-        if dummy_obj.dummy_dir:
-            utils.open_file(dummy_obj.dummy_dir)
+        # Open every destination, but eliminate duplicates
+        dir_list = []
+
+        for dummy_obj in dummy_list:
+
+            if dummy_obj.dummy_dir \
+            and not dummy_obj.dummy_dir in dir_list:
+                dir_list.append(dummy_obj.dummy_dir)
+
+        for this_dir in dir_list:
+            utils.open_file(this_dir)
 
 
     def on_classic_progress_list_right_click(self, treeview, event):
@@ -13871,11 +14435,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             iter = self.classic_progress_liststore.get_iter(path)
             if iter is not None:
-                self.classic_progress_list_popup_menu(
-                    event,
-                    path,
-                    self.classic_progress_liststore[iter][0],
-                )
+                self.classic_progress_list_popup_menu(event, path)
 
 
     def on_bandwidth_spinbutton_changed(self, spinbutton):
@@ -14197,6 +14757,56 @@ class MainWin(Gtk.ApplicationWindow):
         self.output_tab_scroll_visible_page(page_num + 1)
 
 
+    def on_output_size_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_output_tab().
+
+        In the Output Tab, when the user sets the maximum page size, inform
+        mainapp.TartubeApp.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13185 on_output_size_spinbutton_changed')
+
+        if self.output_size_checkbutton.get_active():
+            self.app_obj.set_output_size_default(
+                int(self.output_size_spinbutton.get_value())
+            )
+
+
+    def on_output_size_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_output_tab().
+
+        In the Output Tab Tab, when the user (dis)applies the maximum pages
+        size, inform mainapp.TartubeApp.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13186 on_output_size_checkbutton_changed')
+
+        if self.output_size_checkbutton.get_active():
+
+            self.app_obj.set_output_size_apply_flag(True)
+            self.app_obj.set_output_size_default(
+                int(self.output_size_spinbutton.get_value())
+            )
+
+        else:
+
+            self.app_obj.set_output_size_apply_flag(False)
+
+
     def on_reverse_results_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_progress_tab().
@@ -14260,6 +14870,23 @@ class MainWin(Gtk.ApplicationWindow):
 
         This function is required for detecting when the user drags and drops
         videos (for example, from a web browser) into the main window.
+
+        Args:
+
+            widget (mainwin.MainWin): The widget into which something has been
+                dragged
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            x, y (int): Where the drop happened
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -14397,6 +15024,91 @@ class MainWin(Gtk.ApplicationWindow):
     # (Callback support functions)
 
 
+    def get_selected_videos_in_treeview(self, treeview, column):
+
+        """Called by self.on_results_list_drag_data_get() and
+        .results_list_popup_menu().
+
+        Retrieves a list of media.Video objects, one for each selected line
+        in the treeview.
+
+        Args:
+
+            treeview (Gkt.TreeView): The treeview listing the videos
+
+            column (int): The column containing the media.Video object's .dbid
+
+        Return values:
+
+            A list media.Video objects (may be an empty list)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13381 get_selected_videos_in_treeview')
+
+        video_list = []
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        for tree_path in path_list:
+
+            tree_iter = model.get_iter(tree_path)
+            if tree_iter:
+
+                dbid = model[tree_iter][0]
+
+                # (Guard against the possibility, that the video has been
+                #   deleted in the meantime)
+                if dbid in self.app_obj.media_reg_dict:
+                    media_data_obj = self.app_obj.media_reg_dict[dbid]
+                    if isinstance(media_data_obj, media.Video):
+                        video_list.append(media_data_obj)
+
+        return video_list
+
+
+    def get_selected_videos_in_classic_treeview(self):
+
+        """Called by self.on_results_list_drag_data_get() and
+        .classic_progress_list_popup_menu().
+
+        A modified version of self.get_selected_videos_in_treeview(), to fetch
+        a list of dummy media.Video objects, one for each selected line in the
+        Classic Progress List's treeview.
+
+        Return values:
+
+            A list media.Video objects (may be an empty list)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 13382 get_selected_videos_in_classic_treeview',
+            )
+
+        video_list = []
+
+        selection = self.classic_progress_treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        for tree_path in path_list:
+
+            tree_iter = model.get_iter(tree_path)
+            if tree_iter:
+
+                dbid = model[tree_iter][0]
+
+                # (Guard against the very unlikely possibility that the row
+                #   has been removed in the meantime)
+                if dbid in self.classic_media_dict:
+                    media_data_obj = self.classic_media_dict[dbid]
+                    if isinstance(media_data_obj, media.Video):
+                        video_list.append(media_data_obj)
+
+        return video_list
+
+
     def get_take_a_while_msg(self, media_data_obj, count):
 
         """Called by self.on_video_index_mark_bookmark(),
@@ -14443,6 +15155,61 @@ class MainWin(Gtk.ApplicationWindow):
         msg += '\n\n' + _('Are you sure you want to continue?')
 
         return msg
+
+
+    def set_video_drag_data(self, video_list, dummy_flag=False):
+
+        """Called by self.on_video_catalogue_drag_data_get(),
+        .on_results_list_drag_data_get() and
+        .on_classic_progress_list_drag_data_get().
+
+        Sets the data to be transferred to an external application, when the
+        user drags a video there.
+
+        Args:
+
+            video_list (list): List of media.Video objects being dragged
+
+            dummy_flag (bool): If True, these are dummy media.Video objects
+                (which are created by the Classic Mode Tab, and are not stored
+                in mainapp.TartubeApp.media_reg_dict)
+
+        Return values:
+            A single string, containing one or more full file paths/URLs/video
+                names, separated by newline characters. If the path/URL/name
+                isn't known for any videos, then an empty line is added to the
+                string
+
+        """
+
+        text = ''
+        for video_obj in video_list:
+
+            if self.app_obj.drag_video_path_flag:
+
+                if not dummy_flag and video_obj.file_name is not None:
+                    text += video_obj.get_actual_path(self.app_obj)
+                elif dummy_flag and video_obj.dummy_path is not None:
+                    text += video_obj.dummy_path
+
+                text += '\n'
+
+            if self.app_obj.drag_video_source_flag:
+
+                if video_obj.source is not None:
+                    text += video_obj.source
+
+                text += '\n'
+
+            if self.app_obj.drag_video_name_flag:
+
+                if video_obj.name is not None:
+                    text += video_obj.name
+
+                text += '\n'
+
+
+        return text
 
 
     # Set accessors
@@ -17205,6 +17972,7 @@ class ComplexCatalogueItem(object):
                 = app_obj.download_manager_obj.download_list_obj.create_item(
                     self.video_obj,
                     'real',
+                    False,
                     True,
                 )
 
@@ -17687,6 +18455,98 @@ class StatusIcon(Gtk.StatusIcon):
         self.app_obj.stop()
 
 
+class MultiDragDropTreeView(Gtk.TreeView):
+
+    """Called by MainWin.setup_progress_tab() and .setup_classic_mode_tab().
+
+    A modified version of Gtk.TreeView by Kevin Mehall, released under the MIT
+    license, and slightly modified to work with PyGObject. See:
+    https://kevinmehall.net/2010/pygtk_multi_select_drag_drop
+
+    This treeview captures mouse events to make drag and drop work properly.
+    """
+
+    # Standard class methods
+
+
+    def __init__(self):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16476 __init__')
+
+        super(MultiDragDropTreeView, self).__init__()
+
+        # Code
+        # ----
+
+        self.connect('button_press_event', self.on_button_press)
+        self.connect('button_release_event', self.on_button_release)
+        self.defer_select = False
+
+
+    def on_button_press(self, widget, event):
+
+        """Intercept mouse clicks on selected items so that we can drag
+        multiple items without the click selecting only one.
+
+        Args:
+
+            widget (mainwin.MultiDragDropTreeView): The widget clicked
+
+            event (Gdk.EventButton): The event occuring as a result
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16477 on_button_press')
+
+        target = self.get_path_at_pos(int(event.x), int(event.y))
+
+        if (
+            target
+            and event.type == Gdk.EventType.BUTTON_PRESS
+            and not (
+                event.state \
+                & (Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK)
+            )
+            and self.get_selection().path_is_selected(target[0])
+        ):
+            # Disable selection
+            self.get_selection().set_select_function(lambda *ignore: False)
+            self.defer_select = target[0]
+
+
+    def on_button_release(self, widget, event):
+
+        """Re-enable selection.
+
+        Args:
+
+
+            widget (mainwin.MultiDragDropTreeView): The widget clicked
+
+            event (Gdk.EventButton): The event occuring as a result
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16478 on_button_release')
+
+        self.get_selection().set_select_function(lambda *ignore: True)
+
+        target = self.get_path_at_pos(int(event.x), int(event.y))
+        if (
+            self.defer_select
+            and target
+            and self.defer_select == target[0]
+            and not (event.x==0 and event.y==0)
+        ):
+            # Certain drag and drop
+            self.set_cursor(target[0], target[1], False)
+
+        self.defer_select=False
+
+
 # (Minor window classes)
 
 
@@ -17918,7 +18778,7 @@ class StartErrorWin(GenericMinorWin):
         # Set up widgets on a grid
         grid = Gtk.Grid()
         self.add(grid)
-        grid.set_border_width(self.spacing_size)
+        grid.set_border_width(self.spacing_size * 2)
         grid.set_row_spacing(self.spacing_size * 2)
         grid.set_column_spacing(self.spacing_size * 2)
 
@@ -17928,7 +18788,7 @@ class StartErrorWin(GenericMinorWin):
         grid.attach(image, 0, 0, 1, 1)
 
         label = Gtk.Label()
-        grid.attach(label, 1, 0, 1, 1)
+        grid.attach(label, 1, 0, 2, 1)
         label.set_markup(
             utils.tidy_up_long_string(
                 _('Tartube failed to start because:'),
@@ -17949,8 +18809,9 @@ class StartErrorWin(GenericMinorWin):
         )
 
         button = Gtk.Button.new_with_label(_('OK'))
-        grid.attach(button, 1, 1, 1, 1)
+        grid.attach(button, 2, 1, 1, 1)
         button.connect('clicked', self.on_button_clicked)
+        button.set_hexpand(False)
 
         # Show the window
         self.show_all()
@@ -19300,6 +20161,300 @@ class CalendarDialogue(Gtk.Dialog):
         self.show_all()
 
 
+class ClassicOptionsDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.on_classic_menu_set_options().
+
+    Prompts the user to specify which options.OptionsManager object should be
+    used in the Classic Mode Tab.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18037 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # Store the user's choices as IVs, so the calling function can retrieve
+        #   them
+        self.options_obj = None
+        self.new_flag = False
+        self.new_name = ''
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Set download options'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Use the general (default) download options'),
+        )
+        grid.attach(radiobutton, 0, 0, 1, 1)
+        # (signal_connect appears below)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
+
+        radiobutton2 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton,
+            _('Use these download options:'),
+        )
+        grid.attach(radiobutton2, 0, 2, 1, 1)
+        if app_obj.classic_options_obj is not None:
+            radiobutton2.set_active(True)
+        # (signal_connect appears below)
+
+        # Add a combo, containing every options.OptionsManager object that
+        #   isn't attached to a media data object (and which isn't the General
+        #   Options Manager)
+        store = Gtk.ListStore(str, int)
+        # (If the user already specified an options object, it goes at the top
+        #   of the list)
+        if app_obj.classic_options_obj:
+            store.append([
+                '#' + str(app_obj.classic_options_obj.uid) + ': ' \
+                + app_obj.classic_options_obj.name,
+                app_obj.classic_options_obj.uid,
+            ])
+
+        for options_obj in app_obj.options_reg_dict.values():
+            if options_obj.dbid is None \
+            and options_obj != app_obj.general_options_obj \
+            and (
+                app_obj.classic_options_obj is None \
+                or options_obj != app_obj.classic_options_obj
+            ):
+                store.append([
+                    '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                    options_obj.uid,
+                ])
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 0, 3, 1, 1)
+        combo.set_hexpand(True)
+        # (signal_connect appears below)
+
+        cell = Gtk.CellRendererText()
+        combo.pack_start(cell, False)
+        combo.add_attribute(cell, 'text', 0)
+        combo.set_active(0)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 4, 1, 1)
+
+        radiobutton3 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton,
+            _('Create new download options named:'),
+        )
+        grid.attach(radiobutton3, 0, 5, 1, 1)
+        # (signal_connect appears below)
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 6, 1, 1)
+
+        # (signal_connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_radiobutton_toggled,
+            combo,
+            entry,
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_radiobutton2_toggled,
+            combo,
+            entry,
+        )
+        combo.connect('changed', self.on_combo_changed)
+        radiobutton3.connect(
+            'toggled',
+            self.on_radiobutton3_toggled,
+            combo,
+            entry,
+        )
+        entry.connect('changed', self.on_entry_changed)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_combo_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18038 on_combo_changed')
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        uid = model[tree_iter][1]
+        self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+
+
+    def on_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Store the entry's text, so the calling function can retrieve it.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18038 on_entry_changed')
+
+        self.new_name = entry.get_text()
+
+
+    def on_radiobutton_toggled(self, button, combo, entry):
+
+        """Called from a callback in self.__init__().
+
+        Set the General Options Manager as the one used in the Classic Mode
+        Tab.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to update
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18039 on_radiobutton_toggled')
+
+        if button.get_active():
+            self.options_obj = self.main_win_obj.app_obj.general_options_obj
+            self.new_flag = False
+            self.new_name = ''
+
+            combo.set_sensitive(False)
+            entry.set_sensitive(False)
+
+
+    def on_radiobutton2_toggled(self, button, combo, entry):
+
+        """Called from a callback in self.__init__().
+
+        Set the General Options Manager as the one specified by the combo.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to update
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18040 on_radiobutton2_toggled')
+
+        if button.get_active():
+
+            tree_iter = combo.get_active_iter()
+            model = combo.get_model()
+            uid = model[tree_iter][1]
+
+            self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.new_flag = False
+            self.new_name = ''
+
+            combo.set_sensitive(True)
+            entry.set_sensitive(False)
+
+
+    def on_radiobutton3_toggled(self, button, combo, entry):
+
+        """Called from a callback in self.__init__().
+
+        Tell the calling code to create a new options.OptionsManager object for
+        use in the Classic Mode Tab.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to update
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18039 on_radiobutton_toggled')
+
+        if button.get_active():
+            self.options_obj = None
+            self.new_flag = True
+            self.new_name = entry.get_text()
+
+            combo.set_sensitive(False)
+            entry.set_sensitive(True)
+
+
 class DeleteContainerDialogue(Gtk.Dialog):
 
     """Called by mainapp.TartubeApp.delete_container().
@@ -20373,7 +21528,7 @@ class MountDriveDialogue(Gtk.Dialog):
             _('Use this data folder:'),
         )
         grid.attach(self.radiobutton2, 1, 5, grid_width, 1)
-        # signal_connect appears below
+        # (signal_connect appears below)
 
         store = Gtk.ListStore(str)
         for item in self.main_win_obj.app_obj.data_dir_alt_list:
@@ -20389,7 +21544,7 @@ class MountDriveDialogue(Gtk.Dialog):
         self.combo.set_active(0)
         self.combo.set_sensitive(False)
 
-        # signal_connect from above
+        # (signal_connect from above)
         self.radiobutton2.connect(
             'toggled',
             self.on_radiobutton_toggled,
@@ -21021,6 +22176,131 @@ class RenameContainerDialogue(Gtk.Dialog):
         self.show_all()
 
 
+class ScheduledDialogue(Gtk.Dialog):
+
+    """Called by MainWin.on_video_index_add_to_scheduled().
+
+    Python class handling a dialogue window that prompts the user to choose a
+    scheduled download. The specified channel/playlist/folder is added to the
+    scheduled download selected by the user (if any).
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        media_data_obj (media.Channel, media.Playlist, media.Folder): The media
+            data object to be added to a scheduled download
+
+        available_list (list): List of names of media.Scheduled objects that
+            don't already contain the specified media data object
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, media_data_obj, available_list):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19357 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - other
+        # ---------------
+        # Store the user's choice as an IV, so the calling function can
+        #   retrieve it
+        self.choice = None
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Add to scheduled download'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        spacing_size = self.main_win_obj.spacing_size
+
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(spacing_size)
+        grid.set_row_spacing(spacing_size)
+
+        media_type = media_data_obj.get_type()
+        if media_type == 'channel':
+            string = _('Add the channel to this scheduled download:')
+        elif media_type == 'playlist':
+            string = _('Add the playlist to this scheduled download:')
+        else:
+            string = _('Add the folder to this scheduled download:')
+
+        label = Gtk.Label(string)
+        grid.attach(label, 0, 0, 1, 1)
+
+        # Add a combo
+        store = Gtk.ListStore(str)
+        for name in available_list:
+            store.append( [name] )
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 0, 1, 1, 1)
+        combo.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+
+        combo.connect('changed', self.on_combo_changed)
+        combo.set_active(0)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_combo_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+            radiobutton2 (Gtk.RadioButton): Another widget to check
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19358 on_combo_changed')
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.choice = model[tree_iter][0]
+
+
 class SetDestinationDialogue(Gtk.Dialog):
 
     """Called by MainWin.on_video_index_set_destination().
@@ -21056,7 +22336,6 @@ class SetDestinationDialogue(Gtk.Dialog):
         # ---------------
         # Store function arguments as IVs, so callback functions can retrieve
         #   them
-        self.main_win_obj = main_win_obj
         self.media_data_obj = media_data_obj
         # Store the user's choice as an IV, so the calling function can
         #   retrieve it

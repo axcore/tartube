@@ -259,29 +259,48 @@ class GenericContainer(GenericMedia):
         else:
             self.child_list.remove(child_obj)
 
+            # Git #169, v2.2.026. A user reports that the counts can fall below
+            #   0. The authors can't reproduce the problem, but we can still
+            #   prevent negative values
             if isinstance(child_obj, Video):
                 self.vid_count -= 1
+                if self.vid_count < 0:
+                    self.vid_count = 0
 
                 if child_obj.bookmark_flag:
                     self.bookmark_count -= 1
+                    if self.bookmark_count < 0:
+                        self.bookmark_count = 0
 
                 if child_obj.dl_flag:
                     self.dl_count -= 1
+                    if self.dl_count < 0:
+                        self.dl_count = 0
 
                 if child_obj.fav_flag:
                     self.fav_count -= 1
+                    if self.fav_count < 0:
+                        self.fav_count = 0
 
                 if child_obj.live_mode:
                     self.live_count -= 1
+                    if self.live_count < 0:
+                        self.live_count = 0
 
                 if child_obj.missing_flag:
                     self.missing_count -= 1
+                    if self.missing_count < 0:
+                        self.missing_count = 0
 
                 if child_obj.new_flag:
                     self.new_count -= 1
+                    if self.new_count < 0:
+                        self.new_count = 0
 
                 if child_obj.waiting_flag:
                     self.waiting_count -= 1
+                    if self.waiting_count < 0:
+                        self.waiting_count = 0
 
             return True
 
@@ -719,6 +738,69 @@ class GenericContainer(GenericMedia):
                     self.waiting_count += 1
 
 
+    def test_counts(self):
+
+        """Can be called by anything.
+
+        Recalculates all count IVs, and compares them against the container's
+        actual counts.
+
+        Return values:
+
+            True if there is a discrepancy; False if the container's actual
+                counts seem to be correct
+
+        """
+
+        vid_count = 0
+        bookmark_count = 0
+        dl_count = 0
+        fav_count = 0
+        live_count = 0
+        missing_count = 0
+        new_count = 0
+        waiting_count = 0
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video):
+                vid_count += 1
+
+                if child_obj.bookmark_flag:
+                    bookmark_count += 1
+
+                if child_obj.dl_flag:
+                    dl_count += 1
+
+                if child_obj.fav_flag:
+                    fav_count += 1
+
+                if child_obj.live_mode:
+                    live_count += 1
+
+                if child_obj.missing_flag:
+                    missing_count += 1
+
+                if child_obj.new_flag:
+                    new_count += 1
+
+                if child_obj.waiting_flag:
+                    waiting_count += 1
+
+        if vid_count != self.vid_count \
+        or bookmark_count != self.bookmark_count \
+        or dl_count != self.dl_count \
+        or fav_count != self.fav_count \
+        or live_count != self.live_count \
+        or missing_count != self.missing_count \
+        or new_count != self.new_count \
+        or waiting_count != self.waiting_count:
+            return True
+
+        else:
+            return False
+
+
     # Set accessors
 
 
@@ -752,6 +834,8 @@ class GenericContainer(GenericMedia):
     def dec_bookmark_count(self):
 
         self.bookmark_count -= 1
+        if self.bookmark_count < 0:
+            self.bookmark_count = 0
 
 
     def inc_dl_count(self):
@@ -762,6 +846,8 @@ class GenericContainer(GenericMedia):
     def dec_dl_count(self):
 
         self.dl_count -= 1
+        if self.dl_count < 0:
+            self.dl_count = 0
 
 
     def set_dl_disable_flag(self, flag):
@@ -780,6 +866,8 @@ class GenericContainer(GenericMedia):
     def dec_fav_count(self):
 
         self.fav_count -= 1
+        if self.fav_count < 0:
+            self.fav_count = 0
 
 
     def inc_live_count(self):
@@ -790,6 +878,8 @@ class GenericContainer(GenericMedia):
     def dec_live_count(self):
 
         self.live_count -= 1
+        if self.live_count < 0:
+            self.live_count = 0
 
 
     def set_master_dbid(self, app_obj, dbid):
@@ -832,6 +922,8 @@ class GenericContainer(GenericMedia):
     def dec_missing_count(self):
 
         self.missing_count -= 1
+        if self.missing_count < 0:
+            self.missing_count = 0
 
 
     def inc_new_count(self):
@@ -842,6 +934,8 @@ class GenericContainer(GenericMedia):
     def dec_new_count(self):
 
         self.new_count -= 1
+        if self.new_count < 0:
+            self.new_count = 0
 
 
     def inc_waiting_count(self):
@@ -852,6 +946,8 @@ class GenericContainer(GenericMedia):
     def dec_waiting_count(self):
 
         self.waiting_count -= 1
+        if self.waiting_count < 0:
+            self.waiting_count = 0
 
 
     def add_slave_dbid(self, dbid):
@@ -2967,3 +3063,113 @@ class Folder(GenericContainer):
         collapse neatly in my IDE."""
 
         pass
+
+
+class Scheduled(object):
+
+    """Python class that handles a scheduled download operation.
+
+    Args:
+
+        name (str): Unique name for the scheduled download (a string, minimum 1
+            character)
+
+        dl_mode (str): Download operation type: 'sim' (for simulated
+            downloads), 'real' (for real downloads) or 'custom' (for custom
+            downloads)
+
+        start_mode (str) 'none' to disable this schedule, 'start' to perform
+            the operation whenever Tartube starts, or 'scheduled' to perform
+            the operation at regular intervals
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, name, dl_mode, start_mode):
+
+        # IV list - other
+        # ---------------
+        # Unique name for the scheduled download (a string, minimum 1
+        #   character)
+        self.name = name
+
+        # Download operation type: 'sim' (for simulated downloads), 'real' (for
+        #   real downloads) or 'custom' (for custom downloads)
+        self.dl_mode = dl_mode
+        # Start mode - 'none' to disable this schedule, 'start' to perform the
+        #   operation whenever Tartube starts, or 'scheduled' to perform the
+        #   operation at regular intervals
+        self.start_mode = start_mode
+
+        # The time between scheduled downloads, when self.start_mode is
+        #   'scheduled' (minimum value 1, ignored for other values of
+        #   self.start_mode)
+        self.wait_value = 2
+        # ...using this unit (any of the values in formats.TIME_METRIC_LIST;
+        #   the 'seconds' value is not available in the edit window's combobox)
+        self.wait_unit = 'hours'
+
+        # The time (system time, in seconds) at which this scheduled download
+        #   last started (regardless of whether it was scheduled to begin at
+        #   that time, or not)
+        self.last_time = 0
+        # When self.start_mode is 'start', mainapp.TartubeApp.start sets this
+        #   value to the time at which the scheduled download should start
+        #   (which will be a few seconds after startup)
+        # Once the scheduled download is started, the value is set back to 0
+        self.only_time = 0
+
+        # When multiple scheduled downloads are due to start at the same time,
+        #   a flag that marks this as an exclusive scheduled download
+        # Scheduled downloads are checked in the order specified by
+        #   mainapp.TartubeApp.scheduled_list. If this is flag is True for any
+        #   of them, only one of the flagged downloads starts
+        self.exclusive_flag = False
+        # When this scheduled download is due to start, what to do if another
+        #   download operation is in progress: 'join' to add media data objects
+        #   to the current download operation (at the end of the existing
+        #   list), 'priority' to add media data objects to the current download
+        #   operation (at the beginning of the existing list), 'skip' to wait
+        #   until the next scheduled operation time instead
+        # Note that this affects a download operation already in progress,
+        #   not one which is about to start (because multiple scheduled
+        #   downloads are due to start at the same time)
+        self.join_mode = 'skip'
+
+        # Flag set to True if Tartube should shut down after this scheduled
+        #   download operation occurs, False if not
+        self.shutdown_flag = False
+
+        # Flag set to True if the download operation should encompass all
+        #   media data objects
+        self.all_flag = True
+        # List of names of media.Channel, media.Playlist and media.Folder
+        #   objects to add to the download operation (not the objects
+        #   themselves). All of their children are also added). Ignored if
+        #   self.all_flag is True
+        self.media_list = []
+
+
+    # Public class methods
+
+
+    # Set accessors
+
+
+    def set_last_time(self, time):
+
+        self.last_time = time
+
+
+    def add_media(self, name):
+
+        self.media_list.append(name)
+        self.all_flag = False
+
+
+    def set_only_time(self, time):
+
+        self.only_time = time

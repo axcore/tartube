@@ -1219,7 +1219,7 @@ def move_thumbnail_to_subdir(app_obj, video_obj):
 
     """
 
-    path_list = utils.find_thumbnail_restricted(app_obj, video_obj)
+    path_list = find_thumbnail_restricted(app_obj, video_obj)
     if path_list:
 
         main_path = os.path.abspath(

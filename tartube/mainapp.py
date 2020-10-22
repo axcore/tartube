@@ -288,6 +288,19 @@ class TartubeApp(Gtk.Application):
         # If this chain of family relationships doesn't provide an
         #   options.OptionsManager object, then this default object, known as
         #   the General Options Manager, is used
+        # Every options.OptionsManager object has a unique .uid IV, and a non-
+        #   unique name (because, for example, a video might have the same
+        #   name as a channel; it's up to the user to avoid duplicate names)
+        # The number of options.OptionsManager objects ever created (including
+        #   any that have been deleted), used to generate the unique .uid
+        self.options_reg_count = 0
+        # A dictionary containing all options.OptionsManager objects (but not
+        #   those which have been deleted)
+        # Dictionary in the form
+        #   key = object's unique .uid
+        #   value = the options manager object itself
+        self.options_reg_dict = {}
+        # The general (default) options.OptionsManager object described above
         self.general_options_obj = None
         # The options.OptionsManager object used in the Classic Mode Tab. If
         #   None, then self.general_options_obj is used
@@ -350,6 +363,14 @@ class TartubeApp(Gtk.Application):
         self.script_slow_timer_id = None
         # The slow timer interval time (in milliseconds)
         self.script_slow_timer_time = 30000
+        # A timer that calls self.script_slow_timer_callback() once, before
+        #   the first call from self.script_slow_timer_id, and just a few
+        #   seconds after Tartube starts
+        # (Any scheduled downloads which are due to start when Tartube starts,
+        #   actually start a few seconds later, for aesthetic reasons)
+        self.script_once_timer_id = None
+        # The once-only timer interval (in milliseconds)
+        self.script_once_timer_time = 3000
         # The fast timer's ID
         self.script_fast_timer_id = None
         # The fast timer interval time (in milliseconds)
@@ -391,6 +412,18 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if we should use 'Today' and 'Yesterday' in the
         #   Video Index, rather than a date
         self.show_pretty_dates_flag = True
+
+        # Flags specifying what data should be transferred to an external
+        #   application, if videos are dragged there from the Video Catalogue
+        #   (and also from the Results List and Classic Progress List)
+        # All or any of the flags may be set. If none are set, no data is
+        #   transferred
+        # Flag set to True if the full file path should be transferred
+        self.drag_video_path_flag = True
+        # Flag set to True if the video's source URL should be transferred
+        self.drag_video_source_flag = False
+        # Flag set to True if the video's name should be transferred
+        self.drag_video_name_flag = False
 
         # Flag set to True if an icon should be displayed in the system tray
         self.show_status_icon_flag = True
@@ -722,6 +755,14 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if the Output tab should be revealed automatically
         #   during an update operation
         self.auto_switch_output_flag = True
+        # Maximum size of textviews in the Output Tab
+        self.output_size_default = 1000
+        # (Absolute minimum and maximum values)
+        self.output_size_max = 10000
+        self.output_size_min = 1
+        # Flag set to True when the limit is actually applied, False when not
+        self.output_size_apply_flag = True
+
         # Flag set to True if an update operation has succeeded at least once
         #   (the first time, we try to auto-detect youtube-dl's location)
         self.ytdl_update_once_flag = False
@@ -1206,69 +1247,15 @@ class TartubeApp(Gtk.Application):
         #   self.announce_video_download()
         self.watch_after_dl_list = []
 
-        # Automatic 'Check all' download operations - 'none' to disable,
-        #   'start' to perform the operation whenever Tartube starts, or
-        #   'scheduled' to perform the operation at regular intervals
-        self.scheduled_check_mode = 'none'
-        # The time between 'scheduled' 'Check all' operations, if enabled
-        self.scheduled_check_wait_value = 2
-        # ...using this unit (any of the values in formats.TIME_METRIC_LIST)
-        self.scheduled_check_wait_unit = 'hours'
-        # The time (system time, in seconds) at which the last 'Check all'
-        #   operation started (regardless of whether it was scheduled or not)
-        self.scheduled_check_last_time = 0
-        # If self.scheduled_check_mode is 'start', on startup we wait a few
-        #   seconds (for aesthetic reasons). The number of seconds to wait
-        self.scheduled_check_start_wait_time = 3
-        # The time (system time, in seconds) at which the scheduled download
-        #   operation should start (if no other operation has started in the
-        #   meantime)
-        self.scheduled_check_start_check_time = None
-
-        # Automatic 'Download all' download operations - 'none' to disable,
-        #   'start' to perform the operation whenever Tartube starts, or
-        #   'scheduled' to perform the operation at regular intervals
-        self.scheduled_dl_mode = 'none'
-        # The time between 'scheduled' 'Download all' operations, if enabled
-        self.scheduled_dl_wait_value = 2
-        # ...using this unit (any of the values in formats.TIME_METRIC_LIST)
-        self.scheduled_dl_wait_unit = 'hours'
-        # The time (system time, in seconds) at which the last 'Download all'
-        #   operation started (regardless of whether it was 'scheduled' or not)
-        self.scheduled_dl_last_time = 0
-        # If self.scheduled_dl_mode is 'start', on startup we wait a few
-        #   seconds (for aesthetic reasons). The number of seconds to wait
-        self.scheduled_dl_start_wait_time = 3
-        # The time (system time, in seconds) at which the scheduled download
-        #   operation should start (if no other operation has started in the
-        #   meantime)
-        self.scheduled_dl_start_check_time = None
-
-        # Automatic custom 'Download all' operations - 'none' to disable,
-        #   'start' to perform the operation whenever Tartube starts, or
-        #   'scheduled' to perform the operation at regular intervals
-        self.scheduled_custom_mode = 'none'
-        # The time between 'scheduled' 'Download all' operations, if enabled
-        self.scheduled_custom_wait_value = 2
-        # ...using this unit (any of the values in formats.TIME_METRIC_LIST)
-        self.scheduled_custom_wait_unit = 'hours'
-        # The time (system time, in seconds) at which the last 'Download all'
-        #   operation started (regardless of whether it was 'scheduled' or not)
-        self.scheduled_custom_last_time = 0
-        # If self.scheduled_custom_mode is 'start', on startup we wait a few
-        #   seconds (for aesthetic reasons). The number of seconds to wait
-        self.scheduled_custom_start_wait_time = 3
-        # The time (system time, in seconds) at which the scheduled download
-        #   operation should start (if no other operation has started in the
-        #   meantime)
-        self.scheduled_custom_start_check_time = None
-
-        # Flag set to True if Tartube should shut down after a 'Check all'
-        #   operation (if self.scheduled_check_mode is not 'none'), after a
-        #   'Download all' operation (if self.scheduled_dl_mode is not 'none'),
-        #   and after a custom 'Download all' operation (if
-        #   self.scheduled_custom_mode is not 'none')
-        self.scheduled_shutdown_flag = False
+        # Scheduled downloads
+        # The user can create as many scheduled downloads as they want (this is
+        #   a change from earlier versions, in which only one of each type of
+        #   scheduled download could be created)
+        # Each scheduled download is represented by a media.Scheduled object.
+        #   The objects are stored in the database file
+        # A list of media.Scheduled objects. When deciding whether to start a
+        #   scheduled download, the objects are checked in this order
+        self.scheduled_list = []
 
         # Flag set to True if Tartube should try to detect livestreams (on
         #   compatible websites only)
@@ -1464,8 +1451,8 @@ class TartubeApp(Gtk.Application):
         #   Errors/Warnings tab)
         self.ignore_child_process_exit_flag = True
         # Flag set to True if 'unable to download video data: HTTP Error 404'
-        #   messages from youtube-dl should be ignored (in the Errors/Warnings
-        #   tab)
+        #   and 'Unable to extract video data' messages from youtube-dl should
+        #   be ignored (in the Errors/Warnings tab)
         self.ignore_http_404_error_flag = False
         # Flag set to True if 'Did not get any data blocks' messages from
         #   youtube-dl should be ignored (in the Errors/Warnings tab)
@@ -1494,6 +1481,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if 'The uploader has not made this video available'
         #   messages should be ignored (in the Errors/Warnings tab)
         self.ignore_yt_uploader_deleted_flag = False
+        # Flag set to True if 'This video requires payment to watch' errors
+        #   should be ignored (in the Errors/Warnings tab)
+        self.ignore_yt_payment_flag = False
 
         # Websites other than YouTube typically use different error messages
         # A custom list of strings or regexes, which are matched against error
@@ -1512,7 +1502,7 @@ class TartubeApp(Gtk.Application):
         #   applied to a download operation immediately, but a decrease is not
         #   applied until one of the download jobs has finished
         self.num_worker_default = 2
-        # (Absoute minimum and maximum values)
+        # (Absolute minimum and maximum values)
         self.num_worker_max = 10
         self.num_worker_min = 1
         # Flag set to True when the limit is actually applied, False when not
@@ -2207,13 +2197,13 @@ class TartubeApp(Gtk.Application):
             self.start()
 
             # Open the system preferences window, if the debugging flag is set
-            if self.debug_open_pref_win_flag:
+            if self.debug_open_pref_win_flag and self.main_win_obj:
                 config.SystemPrefWin(self)
 
             # Open the general download options window, if the debugging flag
             #   is set
-            if self.debug_open_options_win_flag:
-                config.OptionsEditWin(self, self.general_options_obj, None)
+            if self.debug_open_options_win_flag and self.main_win_obj:
+                config.OptionsEditWin(self, self.general_options_obj)
 
 
     def do_shutdown(self):
@@ -2299,9 +2289,10 @@ class TartubeApp(Gtk.Application):
         self.setup_paths()
 
         # Set the General Options Manager
-        self.general_options_obj = options.OptionsManager()
-        # Apply download options to the Classic Mode Tab, by default
-        self.apply_classic_downoad_options()
+        self.general_options_obj = self.create_options_manager('general')
+        # Apply a different set of download options to the Classic Mode Tab, by
+        #   default
+        self.classic_options_obj = self.create_options_manager('classic')
 
         # Compile a list of available sound effects
         self.find_sound_effects()
@@ -2609,6 +2600,13 @@ class TartubeApp(Gtk.Application):
                 self.script_slow_timer_callback,
             )
 
+            # Start the once-only timer, calling the same function as the slow
+            #   timer
+            self.script_once_timer_id = GObject.timeout_add(
+                self.script_once_timer_time,
+                self.script_slow_timer_callback,
+            )
+
             # Start the script's GObject fast timer
             self.script_fast_timer_id = GObject.timeout_add(
                 self.script_fast_timer_time,
@@ -2670,23 +2668,14 @@ class TartubeApp(Gtk.Application):
                         None,                   # Parent window is main window
                     )
 
-            # If a download operation (real or simulated) is scheduled to occur
-            #   on startup, then set the time at which
-            #   self.script_fast_timer_callback() should initiate it
-            elif self.scheduled_check_mode == 'start':
+            # If scheduled download operation(s) are scheduled to occur on
+            #   startup, then prepare them to start
+            # (For aesthetic reasons, that will be a few seconds from now)
+            else:
 
-                self.scheduled_check_start_check_time \
-                = time.time() + self.scheduled_check_start_wait_time
-
-            elif self.scheduled_dl_mode == 'start':
-
-                self.scheduled_dl_start_check_time \
-                = time.time() + self.scheduled_dl_start_wait_time
-
-            elif self.scheduled_custom_mode == 'start':
-
-                self.scheduled_custom_start_check_time \
-                = time.time() + self.scheduled_custom_start_wait_time
+                for scheduled_obj in self.scheduled_list:
+                    if scheduled_obj.start_mode == 'start':
+                        scheduled_obj.set_only_time(time.time())
 
 
     def stop(self):
@@ -2851,7 +2840,7 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-167)
+            100-199: mainapp.py     (in use: 101-168)
             200-299: mainwin.py     (in use: 201-256)
             300-399: downloads.py   (in use: 301-308)
             400-499: config.py      (in use: 401-404)
@@ -3125,6 +3114,11 @@ class TartubeApp(Gtk.Application):
         if version >= 1004011:  # v1.4.011
             self.show_pretty_dates_flag = json_dict['show_pretty_dates_flag']
 
+        if version >= 2002028:  # v2.2.0128
+            self.drag_video_path_flag = json_dict['drag_video_path_flag']
+            self.drag_video_source_flag = json_dict['drag_video_source_flag']
+            self.drag_video_name_flag = json_dict['drag_video_name_flag']
+
         if version >= 1003024:  # v1.3.024
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
             self.close_to_tray_flag = json_dict['close_to_tray_flag']
@@ -3179,6 +3173,10 @@ class TartubeApp(Gtk.Application):
 
         if version >= 2001086:  # v2.1.086:
             self.auto_switch_output_flag = json_dict['auto_switch_output_flag']
+        if version >= 2002043:  # v2.2.043:
+            self.output_size_default = json_dict['output_size_default']
+            self.output_size_apply_flag = json_dict['output_size_apply_flag']
+
         if version >= 2001117:  # v2.1.117:
             self.ytdl_update_once_flag = json_dict['ytdl_update_once_flag']
         else:
@@ -3284,48 +3282,55 @@ class TartubeApp(Gtk.Application):
             self.operation_download_limit \
             = json_dict['operation_download_limit']
 
-        if version >= 1001067:  # v1.0.067
-            self.scheduled_dl_mode = json_dict['scheduled_dl_mode']
-            self.scheduled_check_mode = json_dict['scheduled_check_mode']
+#        # Removed  v2.2.015
+#        if version >= 1001067:  # v1.0.067
+#            self.scheduled_dl_mode = json_dict['scheduled_dl_mode']
+#            self.scheduled_check_mode = json_dict['scheduled_check_mode']
+#
+#            # Renamed in v2.1.056
+#            if 'scheduled_dl_wait_value' in json_dict:
+#                self.scheduled_dl_wait_value \
+#                = json_dict['scheduled_dl_wait_value']
+#                self.scheduled_dl_wait_unit \
+#                = json_dict['scheduled_dl_wait_unit']
+#                self.scheduled_check_wait_value \
+#                = json_dict['scheduled_check_wait_value']
+#                self.scheduled_check_wait_unit \
+#                = json_dict['scheduled_check_wait_unit']
+#            else:
+#                self.scheduled_dl_wait_value \
+#                = json_dict['scheduled_dl_wait_hours']
+#                self.scheduled_dl_wait_unit = 'hours'
+#                self.scheduled_check_wait_value \
+#                = json_dict['scheduled_check_wait_hours']
+#                self.scheduled_check_wait_unit = 'hours'
+#
+#            self.scheduled_dl_last_time \
+#            = json_dict['scheduled_dl_last_time']
+#            self.scheduled_check_last_time \
+#            = json_dict['scheduled_check_last_time']
+#
+#            # Renamed in v1.3.120
+#            if 'scheduled_stop_flag' in json_dict:
+#                self.scheduled_shutdown_flag \
+#                = json_dict['scheduled_stop_flag']
+#            else:
+#                self.scheduled_shutdown_flag \
+#                = json_dict['scheduled_shutdown_flag']
+#
+#        if version >= 2001110:  # v2.1.110
+#            self.scheduled_custom_mode = json_dict['scheduled_custom_mode']
+#            self.scheduled_custom_wait_value \
+#            = json_dict['scheduled_custom_wait_value']
+#            self.scheduled_custom_wait_unit \
+#            = json_dict['scheduled_custom_wait_unit']
+#            self.scheduled_custom_last_time \
+#            = json_dict['scheduled_custom_last_time']
 
-            # Renamed in v2.1.056
-            if 'scheduled_dl_wait_value' in json_dict:
-                self.scheduled_dl_wait_value \
-                = json_dict['scheduled_dl_wait_value']
-                self.scheduled_dl_wait_unit \
-                = json_dict['scheduled_dl_wait_unit']
-                self.scheduled_check_wait_value \
-                = json_dict['scheduled_check_wait_value']
-                self.scheduled_check_wait_unit \
-                = json_dict['scheduled_check_wait_unit']
-            else:
-                self.scheduled_dl_wait_value \
-                = json_dict['scheduled_dl_wait_hours']
-                self.scheduled_dl_wait_unit = 'hours'
-                self.scheduled_check_wait_value \
-                = json_dict['scheduled_check_wait_hours']
-                self.scheduled_check_wait_unit = 'hours'
-
-            self.scheduled_dl_last_time \
-            = json_dict['scheduled_dl_last_time']
-            self.scheduled_check_last_time \
-            = json_dict['scheduled_check_last_time']
-
-            # Renamed in v1.3.120
-            if 'scheduled_stop_flag' in json_dict:
-                self.scheduled_shutdown_flag = json_dict['scheduled_stop_flag']
-            else:
-                self.scheduled_shutdown_flag \
-                = json_dict['scheduled_shutdown_flag']
-
-        if version >= 2001110:  # v2.1.110
-            self.scheduled_custom_mode = json_dict['scheduled_custom_mode']
-            self.scheduled_custom_wait_value \
-            = json_dict['scheduled_custom_wait_value']
-            self.scheduled_custom_wait_unit \
-            = json_dict['scheduled_custom_wait_unit']
-            self.scheduled_custom_last_time \
-            = json_dict['scheduled_custom_last_time']
+        # Import scheduled downloads created before v2.2.015, and convert them
+        #   to the new media.Scheduled objects
+        if version < 2002015:   # v2.2.015
+            self.load_config_import_scheduled(version, json_dict)
 
         if version >= 2000037:  # v2.0.037
             self.enable_livestreams_flag \
@@ -3389,7 +3394,7 @@ class TartubeApp(Gtk.Application):
             = json_dict['dialogue_copy_clipboard_flag']
             self.dialogue_keep_open_flag \
             = json_dict['dialogue_keep_open_flag']
-            # Removed v1.3.022
+#            # Removed v1.3.022
 #            self.dialogue_keep_container_flag \
 #            = json_dict['dialogue_keep_container_flag']
 
@@ -3440,6 +3445,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1003088:  # v1.3.088
             self.ignore_yt_age_restrict_flag \
             = json_dict['ignore_yt_uploader_deleted_flag']
+        if version >= 2002025:  # v2.2.025
+            self.ignore_yt_payment_flag \
+            = json_dict['ignore_yt_payment_flag']
 
         if version >= 1003090:  # v1.3.090
             self.ignore_custom_msg_list \
@@ -3669,9 +3677,138 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_dict[recommended] = mod_list
 
         # (In version v2.1.083, added support for youtube-dl forks)
-        if (version >= 2001083):
+        if version >= 2001083:
 
             self.ytdl_fork = json_dict['ytdl_fork']
+
+
+    def load_config_import_scheduled(self, version, json_dict):
+
+        """"Called by self.load_config().
+
+        Since v2.2.015, scheduled downloads have been handled by
+        media.Scheduled objects. stored in the database file. Before that, they
+        were handled by a set of IVs stored in the config file.
+
+        This function is called when reading a config file for earlier
+        versions. It extracts the values of the old scheduled download IVs,
+        and then converts them to media.Scheduled objects (so any scheduled
+        downloads will happen as normal, without the user needing to do
+        anything).
+
+        Args:
+
+            version (int): The config file's Tartube version, converted to a
+                simple integer in a call to self.convert_version()
+
+            json_dict: The data loaded from the config file
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 3330 load_config_import_scheduled')
+
+        # Set up variables whose values are the default values of the old IVs
+        scheduled_check_mode = 'none'
+        scheduled_check_wait_value = 2
+        scheduled_check_wait_unit = 'hours'
+        scheduled_check_last_time = 0
+
+        scheduled_dl_mode = 'none'
+        scheduled_dl_wait_value = 2
+        scheduled_dl_wait_unit = 'hours'
+        scheduled_dl_last_time = 0
+
+        scheduled_custom_mode = 'none'
+        scheduled_custom_wait_value = 2
+        scheduled_custom_wait_unit = 'hours'
+        scheduled_custom_last_time = 0
+
+        scheduled_shutdown_flag = False
+
+        # Now update those values from the config file
+        if version >= 1001067:  # v1.0.067
+            scheduled_dl_mode = json_dict['scheduled_dl_mode']
+            scheduled_check_mode = json_dict['scheduled_check_mode']
+
+            # Renamed in v2.1.056
+            if 'scheduled_dl_wait_value' in json_dict:
+                scheduled_dl_wait_value = json_dict['scheduled_dl_wait_value']
+                scheduled_dl_wait_unit = json_dict['scheduled_dl_wait_unit']
+                scheduled_check_wait_value \
+                = json_dict['scheduled_check_wait_value']
+                scheduled_check_wait_unit \
+                = json_dict['scheduled_check_wait_unit']
+            else:
+                scheduled_dl_wait_value = json_dict['scheduled_dl_wait_hours']
+                scheduled_dl_wait_unit = 'hours'
+                scheduled_check_wait_value \
+                = json_dict['scheduled_check_wait_hours']
+                scheduled_check_wait_unit = 'hours'
+
+            scheduled_dl_last_time = json_dict['scheduled_dl_last_time']
+            scheduled_check_last_time = json_dict['scheduled_check_last_time']
+
+            # Renamed in v1.3.120
+            if 'scheduled_stop_flag' in json_dict:
+                scheduled_shutdown_flag = json_dict['scheduled_stop_flag']
+            else:
+                scheduled_shutdown_flag = json_dict['scheduled_shutdown_flag']
+
+        if version >= 2001110:  # v2.1.110
+            scheduled_custom_mode = json_dict['scheduled_custom_mode']
+            scheduled_custom_wait_value \
+            = json_dict['scheduled_custom_wait_value']
+            scheduled_custom_wait_unit \
+            = json_dict['scheduled_custom_wait_unit']
+            scheduled_custom_last_time \
+            = json_dict['scheduled_custom_last_time']
+
+        # Finally create new media.Scheduled objects
+        if scheduled_check_mode != 'none':
+
+            new_obj = media.Scheduled(
+                'default_check',
+                'sim',
+                scheduled_check_mode,
+            )
+
+            new_obj.wait_value = scheduled_check_wait_value
+            new_obj.wait_unit = scheduled_check_wait_unit
+            new_obj.last_time = scheduled_check_last_time
+            new_obj.shutdown_flag = scheduled_shutdown_flag
+
+            self.scheduled_list.append(new_obj)
+
+        if scheduled_dl_mode != 'none':
+
+            new_obj = media.Scheduled(
+                'default_download',
+                'real',
+                scheduled_dl_mode,
+            )
+
+            new_obj.wait_value = scheduled_dl_wait_value
+            new_obj.wait_unit = scheduled_dl_wait_unit
+            new_obj.last_time = scheduled_dl_last_time
+            new_obj.shutdown_flag = scheduled_shutdown_flag
+
+            self.scheduled_list.append(new_obj)
+
+        if scheduled_custom_mode != 'none':
+
+            new_obj = media.Scheduled(
+                'default_custom',
+                'custom',
+                scheduled_custom_mode,
+            )
+
+            new_obj.wait_value = scheduled_custom_wait_value
+            new_obj.wait_unit = scheduled_custom_wait_unit
+            new_obj.last_time = scheduled_custom_last_time
+            new_obj.shutdown_flag = scheduled_shutdown_flag
+
+            self.scheduled_list.append(new_obj)
 
 
     def save_config(self):
@@ -3777,6 +3914,10 @@ class TartubeApp(Gtk.Application):
             'disable_dl_all_flag': self.disable_dl_all_flag,
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
 
+            'drag_video_path_flag': self.drag_video_path_flag,
+            'drag_video_source_flag': self.drag_video_source_flag,
+            'drag_video_name_flag': self.drag_video_name_flag,
+
             'show_status_icon_flag': self.show_status_icon_flag,
             'close_to_tray_flag': self.close_to_tray_flag,
 
@@ -3812,6 +3953,9 @@ class TartubeApp(Gtk.Application):
             'ytdl_update_current': self.ytdl_update_current,
 
             'auto_switch_output_flag': self.auto_switch_output_flag,
+            'output_size_default': self.output_size_default,
+            'output_size_apply_flag': self.output_size_apply_flag,
+
             'ytdl_update_once_flag': self.ytdl_update_once_flag,
             'ytdl_fork': self.ytdl_fork,
 
@@ -3870,23 +4014,6 @@ class TartubeApp(Gtk.Application):
             'operation_check_limit': self.operation_check_limit,
             'operation_download_limit': self.operation_download_limit,
 
-            'scheduled_check_mode': self.scheduled_check_mode,
-            'scheduled_check_wait_value': self.scheduled_check_wait_value,
-            'scheduled_check_wait_unit': self.scheduled_check_wait_unit,
-            'scheduled_check_last_time': self.scheduled_check_last_time,
-
-            'scheduled_dl_mode': self.scheduled_dl_mode,
-            'scheduled_dl_wait_value': self.scheduled_dl_wait_value,
-            'scheduled_dl_wait_unit': self.scheduled_dl_wait_unit,
-            'scheduled_dl_last_time': self.scheduled_dl_last_time,
-
-            'scheduled_custom_mode': self.scheduled_custom_mode,
-            'scheduled_custom_wait_value': self.scheduled_custom_wait_value,
-            'scheduled_custom_wait_unit': self.scheduled_custom_wait_unit,
-            'scheduled_custom_last_time': self.scheduled_custom_last_time,
-
-            'scheduled_shutdown_flag': self.scheduled_shutdown_flag,
-
             'enable_livestreams_flag': \
             self.enable_livestreams_flag,
             'livestream_max_days': self.livestream_max_days,
@@ -3944,6 +4071,7 @@ class TartubeApp(Gtk.Application):
             'ignore_yt_age_restrict_flag': self.ignore_yt_age_restrict_flag,
             'ignore_yt_uploader_deleted_flag': \
             self.ignore_yt_uploader_deleted_flag,
+            'ignore_yt_payment_flag': self.ignore_yt_payment_flag,
 
             'ignore_custom_msg_list': self.ignore_custom_msg_list,
             'ignore_custom_regex_flag': self.ignore_custom_regex_flag,
@@ -4211,6 +4339,9 @@ class TartubeApp(Gtk.Application):
             self.downloads_dir = self.data_dir
 
         # Set IVs to their new values
+        if version >= 2002034:  # v2.1.034
+            self.options_reg_count = load_dict['options_reg_count']
+            self.options_reg_dict = load_dict['options_reg_dict']
         self.general_options_obj = load_dict['general_options_obj']
         if version >= 2001007:  # v2.1.007
             self.classic_options_obj = load_dict['classic_options_obj']
@@ -4248,6 +4379,8 @@ class TartubeApp(Gtk.Application):
             self.fixed_missing_folder = load_dict['fixed_missing_folder']
         if version >= 2000098:  # v2.0.098
             self.fixed_folder_locale = load_dict['fixed_folder_locale']
+        if version >= 2002015:  # v2.2.015
+            self.scheduled_list = load_dict['scheduled_list']
 
         # Update the loaded data for this version of Tartube
         self.update_db(version)
@@ -4331,10 +4464,15 @@ class TartubeApp(Gtk.Application):
         ]
 
         options_obj_list = [self.general_options_obj]
+        if self.classic_options_obj:
+            options_obj_list.append(self.classic_options_obj)
+
+        options_media_list = []
         for media_data_obj in self.media_reg_dict.values():
             if media_data_obj.options_obj is not None \
             and not media_data_obj.options_obj in options_obj_list:
                 options_obj_list.append(media_data_obj.options_obj)
+                options_media_list.append(media_data_obj)
 
         if version < 3012:  # v0.3.012
 
@@ -4997,6 +5135,42 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['move_annotations'] = False
                 options_obj.options_dict['move_thumbnail'] = False
 
+        if version < 2002033:      # v2.2.033
+
+            # This version adds a new option to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['min_sleep_interval'] = 0
+                options_obj.options_dict['max_sleep_interval'] = 0
+
+        if version < 2002034:      # v2.2.034
+
+            # This version adds a registry for options.OptionsManager objects,
+            #   and gives each object new IVs. Update all IVs
+            if self.general_options_obj:
+                self.options_reg_count += 1
+                self.general_options_obj.uid = self.options_reg_count
+                self.general_options_obj.name = 'general'
+                self.general_options_obj.dbid = None
+                self.options_reg_dict[self.general_options_obj.uid] \
+                = self.general_options_obj
+
+            if self.classic_options_obj:
+                self.options_reg_count += 1
+                self.classic_options_obj.uid = self.options_reg_count
+                self.classic_options_obj.name = 'classic'
+                self.classic_options_obj.dbid = None
+                self.options_reg_dict[self.classic_options_obj.uid] \
+                = self.classic_options_obj
+
+            for media_data_obj in options_media_list:
+
+                options_obj = media_data_obj.options_obj
+                self.options_reg_count +=1
+                options_obj.uid = self.options_reg_count
+                options_obj.name = media_data_obj.name
+                options_obj.dbid = media_data_obj.dbid
+                self.options_reg_dict[options_obj.uid] = options_obj
+
 
     def save_db(self):
 
@@ -5049,6 +5223,8 @@ class TartubeApp(Gtk.Application):
             'save_date': str(utc.strftime('%d %b %Y')),
             'save_time': str(utc.strftime('%H:%M:%S')),
             # Data
+            'options_reg_count' : self.options_reg_count,
+            'options_reg_dict' : self.options_reg_dict,
             'general_options_obj' : self.general_options_obj,
             'classic_options_obj' : self.classic_options_obj,
             'media_reg_count': self.media_reg_count,
@@ -5071,6 +5247,8 @@ class TartubeApp(Gtk.Application):
             'fixed_temp_folder': self.fixed_temp_folder,
             'fixed_misc_folder': self.fixed_misc_folder,
             'fixed_folder_locale': self.fixed_folder_locale,
+            # Scheduled downloads
+            'scheduled_list': self.scheduled_list,
         }
 
         # Back up any existing file
@@ -5696,7 +5874,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 5188 reset_db')
 
         # Reset IVs to their default states
-        self.general_options_obj = options.OptionsManager()
+        self.general_options_obj = self.create_options_manager('general')
         self.media_reg_count = 0
         self.media_reg_dict = {}
         self.media_name_dict = {}
@@ -5779,6 +5957,8 @@ class TartubeApp(Gtk.Application):
         #   .master_dbid and .slave_dbid_list IVs, which are fixed separately)
         error_master_dict = {}
         error_slave_dict = {}
+        # (The number of channel/playlist/folders whose flag counts are wrong)
+        flag_error_count = 0
 
         # Check that entries in self.media_name_dict appear in
         #   self.media_reg_dict
@@ -5934,6 +6114,18 @@ class TartubeApp(Gtk.Application):
                         if isinstance(child_obj, media.Video):
                             error_reg_dict[child_obj.dbid] = child_obj
 
+        # Check that container counts are correct
+        for dbid in self.media_name_dict.values():
+
+            # (Don't bother checking broken media data objects, since all
+            #   counts for all channels/playlists/folders will be recalculated
+            #   anyway)
+            if dbid not in error_reg_dict:
+
+                media_data_obj = self.media_reg_dict[dbid]
+                if media_data_obj.test_counts():
+                    flag_error_count += 1
+
         # Failsafe check: it shouldn't be possible for system folders to be
         #   in error_reg_dict, but check anyway, and discard them if found
         mod_error_reg_dict = {}
@@ -5952,7 +6144,8 @@ class TartubeApp(Gtk.Application):
         # Check complete
         if not mod_error_reg_dict \
         and not error_master_dict \
-        and not error_slave_dict:
+        and not error_slave_dict \
+        and not flag_error_count:
 
             if not no_prompt_flag:
 
@@ -5980,7 +6173,7 @@ class TartubeApp(Gtk.Application):
         else:
 
             total = len(error_reg_dict) + len(error_master_dict) \
-            + len(error_slave_dict)
+            + len(error_slave_dict) + flag_error_count
 
             # Prompt the user before deleting stuff
             self.dialogue_manager_obj.show_msg_dialogue(
@@ -7156,14 +7349,13 @@ class TartubeApp(Gtk.Application):
                 Tab is open, and the user has clicked the download button there
 
             automatic_flag (bool): True when called by
-                self.script_fast_timer_callback() or
-                self.script_slow_timer_callback(). If the download operation
-                does not start, no dialogue window is displayed (as it normally
-                would be)
+                self.script_slow_timer_callback(). When set, dialogue windows
+                are not displayed (as they ordinarly would be).
 
             media_data_list (list): List of media.Video, media.Channel,
-                media.Playlist and/or media.Folder objects. If not an empty
-                list, only those media data objects and their descendants are
+                media.Playlist and/or media.Folder objects. Can also be a list
+                of (exclusively) media.Scheduled objects. If not an empty list,
+                only the specified media data objects (and their children) are
                 checked/downloaded. If an empty list, all media data objects
                 are checked/downloaded. If operation_type is 'classic', then
                 the media_data_list contains a list of dummy media.Video
@@ -7177,8 +7369,8 @@ class TartubeApp(Gtk.Application):
 
         # The operation may have been scheduled to begin on startup. For
         #   aesthetic reasons, we actually wait a few seconds before
-        #   initiatin those operations. If the user starts a download operation
-        #   before that happens, then cancel the scheduled one
+        #   initiating those operations. If the user starts a download
+        #   operation before that happens, then cancel the scheduled one
         self.scheduled_check_start_check_time = None
         self.scheduled_dl_start_check_time = None
         self.scheduled_custom_start_check_time = None
@@ -7310,7 +7502,9 @@ class TartubeApp(Gtk.Application):
         #   media.Folder)
         # If a list of media data objects was specified by the calling
         #   function, those media data object and all of their descendants are
-        #   are assigned a downloads.DownloadItem object
+        #   are assigned a downloads.DownloadItem object. If that list instead
+        #   contains media.Scheduled objects, then those objects specify the
+        #   media data objects to download
         # Otherwise, all media data objects are assigned a
         #   downloads.DownloadItem object
         # Those downloads.DownloadItem objects are collectively stored in a
@@ -7365,14 +7559,6 @@ class TartubeApp(Gtk.Application):
                 self.scheduled_custom_last_time = int(time.time())
             else:
                 self.scheduled_dl_last_time = int(time.time())
-
-        # If Tartube should shut down after this download operation, set a
-        #   flag that self.download_manager_finished() can check
-        if automatic_flag:
-            if self.scheduled_shutdown_flag:
-                self.halt_after_operation_flag = True
-            else:
-                self.no_dialogue_this_time_flag = True
 
         # During a download operation, show a progress bar in the Videos Tab
         #   (except when launched from the Classic Mode Tab, in which case we
@@ -8727,6 +8913,7 @@ class TartubeApp(Gtk.Application):
                     = self.download_manager_obj.download_list_obj.create_item(
                         video_obj,
                         'real',
+                        False,
                         True,
                     )
 
@@ -10584,6 +10771,11 @@ class TartubeApp(Gtk.Application):
                 'Delete video request failed sanity check',
             )
 
+        # Destroy the options.OptionsManager object attached to this video
+        #   (if any)
+        if video_obj.options_obj:
+            del self.options_reg_dict[video_obj.options_obj.uid]
+
         # Remove the video from its parent object
         video_obj.parent_obj.del_child(video_obj)
 
@@ -10694,6 +10886,9 @@ class TartubeApp(Gtk.Application):
                     self.main_win_obj.video_index_update_row_text(
                         container_obj,
                     )
+
+        # Update a row in the Results List, if the video is visible there
+        self.main_win_obj.results_list_update_row_on_delete(video_obj.dbid)
 
 
     def delete_container(self, media_data_obj, empty_flag=False):
@@ -10877,6 +11072,11 @@ class TartubeApp(Gtk.Application):
 
         # Confirmation has been obtained, and any files have been deleted (if
         #   required), so now deal with the media data registry
+
+        # Destroy the options.OptionsManager object attached to this container
+        #   (if any)
+        if media_data_obj.options_obj:
+            del self.options_reg_dict[media_data_obj.options_obj.uid]
 
         # Recursively remove all of the container object's children. The code
         #   doesn't work as intended, unless we make a copy of the list of
@@ -12995,148 +13195,6 @@ class TartubeApp(Gtk.Application):
         return True
 
 
-    def apply_download_options(self, media_data_obj):
-
-        """Called by mainwin.MainWin.on_video_index_apply_options() and
-        config.GenericEditWin.on_button_apply_options_clicked().
-
-        Applies a download options object (options.OptionsManager) to a media
-        data object, and also to any of its descendants (unless they too have
-        an applied download options object).
-
-        The download options are passed to youtube-dl during a download
-        operation.
-
-        Args:
-
-            media_data_obj (media.Video, media.Channel, media.Playlist or
-                media.Folder): The media data object to which the download
-                options are applied.
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 11426 apply_download_options')
-
-        if self.current_manager_obj \
-        or media_data_obj.options_obj\
-        or (
-            isinstance(media_data_obj, media.Folder)
-            and media_data_obj.priv_flag
-        ):
-            return self.system_error(
-                147,
-                'Apply download options request failed sanity check',
-            )
-
-        # Apply download options to the media data object
-        media_data_obj.set_options_obj(options.OptionsManager())
-        # If required, clone download options from the General Options Manager
-        #   into the new download options manager
-        if self.auto_clone_options_flag:
-            media_data_obj.options_obj.clone_options(
-                self.general_options_obj,
-            )
-
-        # Update the row in the Video Index
-        self.main_win_obj.video_index_update_row_icon(media_data_obj)
-
-
-    def remove_download_options(self, media_data_obj):
-
-        """Called by callbacks in
-        mainwin.MainWin.on_video_index_remove_options() and
-        GenericEditWin.on_button_remove_clicked().
-
-        Removes a download options object (options.OptionsManager) from a media
-        data object, an action which also affects its descendants (unless they
-        too have an applied download options object).
-
-        Args:
-
-            media_data_obj (media.Video, media.Channel, media.Playlist or
-                media.Folder): The media data object from which the download
-                options are removed.
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 11471 remove_download_options')
-
-        if self.current_manager_obj or not media_data_obj.options_obj:
-            return self.system_error(
-                148,
-                'Remove download options request failed sanity check',
-            )
-
-        # Remove download options from the media data object
-        media_data_obj.set_options_obj(None)
-        # Update the row in the Video Index
-        self.main_win_obj.video_index_update_row_icon(media_data_obj)
-
-
-    def apply_classic_downoad_options(self):
-
-        """Called by mainwin.MainWin.on_classic_menu_apply_options().
-
-        Also called by self.start().
-
-        A modified version of self.apply_download_options.
-
-        Creates a download options object (options.OptionsManager) for use only
-        in the Classic Mode Tab.
-
-        The download options are passed to youtube-dl during a download
-        operation.
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 11472 apply_classic_downoad_options')
-
-        if self.current_manager_obj or self.classic_options_obj:
-            return self.system_error(
-                159,
-                'Apply download options request failed sanity check',
-            )
-
-        # Apply download options
-        self.classic_options_obj = options.OptionsManager()
-        # If required, clone download options from the General Options Manager
-        #   into the new download options manager
-        if self.auto_clone_options_flag:
-            self.classic_options_obj.clone_options(
-                self.general_options_obj,
-            )
-
-        # Disable downloading the description, annotations (etc) files
-        self.classic_options_obj.set_classic_mode_options()
-
-
-    def remove_classic_downoad_options(self):
-
-        """Called by mainwin.MainWin.on_classic_menu_remove_options().
-
-        A modified version of self.remove_download_options().
-
-        Removes the download options object (options.OptionsManager) used only
-        in the Classic Mode Tab.
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 11473 remove_classic_downoad_options')
-
-        if self.current_manager_obj or not self.classic_options_obj:
-            return self.system_error(
-                160,
-                'Remove download options request failed sanity check',
-            )
-
-        # Remove download options
-        self.classic_options_obj = None
-
-
     def check_container_name_is_legal(self, name):
 
         """Can be called by anything.
@@ -14072,6 +14130,7 @@ class TartubeApp(Gtk.Application):
                 = self.download_manager_obj.download_list_obj.create_item(
                     video_obj,
                     'real',
+                    False,
                     True,
                 )
 
@@ -14095,6 +14154,189 @@ class TartubeApp(Gtk.Application):
     # (Options manager objects)
 
 
+    def apply_download_options(self, media_data_obj):
+
+        """Called by mainwin.MainWin.on_video_index_apply_options() and
+        config.GenericEditWin.on_button_apply_options_clicked().
+
+        Applies a download options object (options.OptionsManager) to a media
+        data object, and also to any of its descendants (unless they too have
+        an applied download options object).
+
+        The download options are passed to youtube-dl during a download
+        operation.
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist or
+                media.Folder): The media data object to which the download
+                options are applied.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11426 apply_download_options')
+
+        if self.current_manager_obj \
+        or media_data_obj.options_obj\
+        or (
+            isinstance(media_data_obj, media.Folder)
+            and media_data_obj.priv_flag
+        ):
+            return self.system_error(
+                147,
+                'Apply download options request failed sanity check',
+            )
+
+        # Apply download options to the media data object
+        media_data_obj.set_options_obj(
+            self.create_options_manager(
+                media_data_obj.name,
+                media_data_obj.dbid,
+            ),
+        )
+
+        media_data_obj.options_obj.set_dbid(media_data_obj.dbid)
+
+        # If required, clone download options from the General Options Manager
+        #   into the new download options manager
+        if self.auto_clone_options_flag:
+            media_data_obj.options_obj.clone_options(
+                self.general_options_obj,
+            )
+
+        # Update the row in the Video Index
+        self.main_win_obj.video_index_update_row_icon(media_data_obj)
+
+
+    def remove_download_options(self, media_data_obj):
+
+        """Called by callbacks in
+        mainwin.MainWin.on_video_index_remove_options() and
+        GenericEditWin.on_button_remove_clicked().
+
+        Removes a download options object (options.OptionsManager) from a media
+        data object, an action which also affects its descendants (unless they
+        too have an applied download options object).
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist or
+                media.Folder): The media data object from which the download
+                options are removed.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11471 remove_download_options')
+
+        if self.current_manager_obj or not media_data_obj.options_obj:
+            return self.system_error(
+                148,
+                'Remove download options request failed sanity check',
+            )
+
+        # Destroy the options.OptionsManager object itself
+        if media_data_obj.options_obj is not None:
+            del self.options_reg_dict[media_data_obj.options_obj.uid]
+
+        # Remove download options from the media data object
+        media_data_obj.set_options_obj(None)
+
+        # Update the row in the Video Index
+        self.main_win_obj.video_index_update_row_icon(media_data_obj)
+
+
+    def apply_classic_download_options(self, options_obj):
+
+        """Called by mainwin.MainWin.on_classic_menu_set_options().
+
+        Also called by self.start().
+
+        A modified version of self.apply_download_options.
+
+        Applies a specified download options object (options.OptionsManager)
+        for use in the Classic Mode Tab.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11472 apply_classic_download_options')
+
+        if self.current_manager_obj:
+            return self.system_error(
+                159,
+                'Apply download options request failed sanity check',
+            )
+
+        # Apply download options
+        self.classic_options_obj = options_obj
+
+
+    def remove_classic_downoad_options(self):
+
+        """Called by mainwin.MainWin.on_classic_menu_set_options().
+
+        A modified version of self.remove_download_options().
+
+        Removes the download options object (options.OptionsManager) used only
+        in the Classic Mode Tab.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11473 remove_classic_downoad_options')
+
+        if self.current_manager_obj or not self.classic_options_obj:
+            return self.system_error(
+                160,
+                'Remove download options request failed sanity check',
+            )
+
+        # Remove download options
+        self.classic_options_obj = None
+
+
+    def create_options_manager(self, name, dbid=None):
+
+        """Can be called by anything.
+
+        Create a new options.OptionsManager object, and updates the IVs
+        self.options_reg_count and self.options_reg_dict.
+
+        (It is up to the calling code to update self.general_options_obj or
+        self.classic_options_obj, if required.)
+
+        Args:
+
+            name (str): A non-unique name for the options manager
+
+            dbid (int or None): If specified, the .dbid of the media.Video,
+                media.Channel, media.Playlist or media.Folder to which these
+                options are attached
+
+        Return values:
+
+            Returns the options.OptionsManager object created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 12426 create_options_manager')
+
+        self.options_reg_count += 1
+
+        options_obj = options.OptionsManager(
+            self.options_reg_count,
+            name,
+            dbid,
+        )
+
+        self.options_reg_dict[options_obj.uid] = options_obj
+
+        return options_obj
+
+
     def clone_general_options_manager(self, data_list):
 
         """Called by config.OptionsEditWin.on_clone_options_clicked().
@@ -14115,7 +14357,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12426 clone_general_options_manager')
+            utils.debug_time('app 12427 clone_general_options_manager')
 
         edit_win_obj = data_list.pop(0)
         options_obj = data_list.pop(0)
@@ -14135,10 +14377,9 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            data_list (list): List of values supplied by the dialogue window.
-                The first is the edit window for the download options object
-                (which must be reset). The second optional value is the media
-                data object to which the download options object belongs.
+            data_list (list): List of values supplied by the dialogue window,
+                the first of which is the edit window for the download options
+                object (which must be reset)
 
         """
 
@@ -14146,22 +14387,21 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 12454 reset_options_manager')
 
         edit_win_obj = data_list.pop(0)
+        old_options_obj = edit_win_obj.options_obj
 
         # Replace the old object with a new one, which has the effect of
         #   resetting its download options to the default values
-        options_obj = options.OptionsManager()
+        new_options_obj = self.create_options_manager(
+            old_options_obj.name,
+            old_options_obj.dbid,
+        )
 
-        if data_list:
-
-            # The Download Options object belongs to the specified media data
-            #   object
-            media_data_obj = data_list.pop(0)
-            media_data_obj.set_options_obj(options_obj)
-
-        else:
-
-            # The General Download Options object
-            self.general_options_obj = options_obj
+        # Update IVs
+        del self.options_reg_dict[old_options_obj.uid]
+        if self.general_options_obj == old_options_obj:
+            self.general_options_obj = new_options_obj
+        elif self.classic_options_obj == old_options_obj:
+            self.classic_options_obj = new_options_obj
 
         # Reset the edit window to display the new (default) values
         edit_win_obj.reset_with_new_edit_obj(options_obj)
@@ -14218,11 +14458,10 @@ class TartubeApp(Gtk.Application):
 
     def script_slow_timer_callback(self):
 
-        """Called by GObject timer created by self.start().
+        """Called by one of the GObject timers created by self.start().
 
         A few times every minute, check whether it's time to perform a
-        scheduled 'Download all' or 'Check all' download operation and, if so,
-        perform it.
+        scheduled download and, if so, perform it.
 
         Otherwise, check whether it's time to perform a scheduled livestream
         operation and, if so, perform it.
@@ -14236,71 +14475,308 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
             utils.debug_time('app 12531 script_slow_timer_callback')
 
-        if not self.disable_load_save_flag \
+        # No point keeping the timer going, once load/save (and therefore all
+        #   operations) are disabled
+        if self.disable_load_save_flag:
+            return None
+
+        # Depending on settings, one or several scheduled downloads may be
+        #   started at the same time
+        # Compile a list of media.Scheduled objects, each one representing a
+        #   scheduled download that should start now
+        first_list = []
+        next_list = []
+        all_flag = False
+        shutdown_flag = False
+
+        for scheduled_obj in self.scheduled_list:
+
+            wait_time = scheduled_obj.wait_value \
+            + formats.TIME_METRIC_DICT[scheduled_obj.wait_unit]
+
+            if (
+                (
+                    scheduled_obj.start_mode == 'scheduled' \
+                    and scheduled_obj.last_time + wait_time < time.time()
+                ) or (
+                    scheduled_obj.start_mode == 'start' \
+                    and scheduled_obj.only_time > 0 \
+                    and scheduled_obj.only_time < time.time()
+                )
+            ) and (
+                not self.download_manager_obj \
+                or scheduled_obj.join_mode != 'skip'
+            ):
+                if scheduled_obj.exclusive_flag:
+
+                    # Only perform this scheduled download
+                    first_list = [scheduled_obj]
+                    next_list = []
+                    all_flag = scheduled_obj.all_flag
+                    shutdown_flag = scheduled_obj.shutdown_flag
+                    break
+
+                # 'start' should be done before 'scheduled'
+                if scheduled_obj.start_mode == 'start':
+                    first_list.append(scheduled_obj)
+                else:
+                    next_list.append(scheduled_obj)
+
+                if scheduled_obj.all_flag:
+                    all_flag = True
+                if scheduled_obj.shutdown_flag:
+                    shutdown_flag = True
+
+        start_list = first_list + next_list
+
+        # In case there are different values for media.Scheduled.dl_mode and
+        #   media.Scheduled.join_mode, then a custom download takes priority
+        #   over a real download, which takes priority over a simulated
+        #   download
+        dl_mode = None
+        for schedule_obj in start_list:
+
+            if dl_mode is None \
+            or (dl_mode == 'sim' and scheduled_obj.dl_mode != 'sim') \
+            or (
+                dl_mode == 'real'
+                and scheduled_obj.dl_mode == 'custom'
+            ):
+                dl_mode = scheduled_obj.dl_mode
+                join_mode = scheduled_obj.join_mode
+
+        # If any scheduled downloads are due to start, and any of the
+        #   media.Scheduled objects have their .all_flag IV set, then we simply
+        #   download everything
+        if start_list and all_flag:
+
+            if dl_mode is not None:
+
+                # Download everything
+
+                # If no download operation is in progress, start one (if we're
+                #   allowed to)
+                if not self.download_manager_obj \
+                and not self.current_manager_obj \
+                and not self.main_win_obj.config_win_list:
+
+                    self.download_manager_start(
+                        dl_mode,
+                        True,       # This function is the calling function
+                    )
+
+                    # Shutdown Tartube after this d/l operation, if required
+                    if self.download_manager_obj and shutdown_flag:
+                        self.halt_after_operation_flag = True
+
+                    # Set the next download time for each scheduled download
+                    self.script_slow_timer_reset_scheduled_dl(start_list)
+                    # Return 1 to keep the timer going (or 0 to halt the
+                    #   once-only timer)
+                    return self.script_slow_timer_get_return_value()
+
+                # Otherwise, add all media data objects in the top-level list
+                #   (all children are downloaded too)
+                elif self.download_manager_obj and join_mode != 'skip':
+
+                    for dbid in self.media_top_level_list:
+
+                        media_data_obj = self.media_reg_dict[dbid]
+                        # (Don't try to download the 'All Videos' folder, etc)
+                        if not isinstance(media_data_obj. media.Folder) \
+                        or not media_data_obj.priv_flag:
+
+                            self.script_slow_timer_insert_download(
+                                media_data_obj,
+                                dl_mode,
+                                join_mode,
+                            )
+
+                    # Shutdown Tartube after this d/l operation, if required
+                    if shutdown_flag:
+                        self.halt_after_operation_flag = True
+
+                    # Set the next download time for each scheduled download
+                    self.script_slow_timer_reset_scheduled_dl(start_list)
+                    # Return 1 to keep the timer going (or 0 to halt the
+                    #   once-only timer)
+                    return self.script_slow_timer_get_return_value()
+
+        # If any scheduled downloads are still due to start, and a download
+        #   operation is already in progress, then we can simpy add new media
+        #   data objects to it
+        if start_list and self.download_manager_obj:
+
+            for schedule_obj in start_list:
+
+                for name in scheduled_obj.media_list:
+
+                    if not name in self.media_name_dict:
+
+                        self.system_error(
+                            168,
+                            'Scheduled download contains a channel, playlist' \
+                            + ' or folder which no longer exists: \'' \
+                            + name + '\'',
+                        )
+
+                    else:
+
+                        dbid = self.media_name_dict[name]
+                        media_data_obj = self.media_reg_dict[dbid]
+                        self.script_slow_timer_insert_download(
+                            media_data_obj,
+                            scheduled_obj.dl_mode,
+                            scheduled_obj.join_mode,
+                        )
+
+            # Shutdown Tartube after this d/l operation, if required
+            if shutdown_flag:
+                self.halt_after_operation_flag = True
+
+            # Set the next download time for each scheduled download
+            self.script_slow_timer_reset_scheduled_dl(start_list)
+            # Return 1 to keep the timer going (or 0 to halt the once-only
+            #   timer)
+            return self.script_slow_timer_get_return_value()
+
+        # If any scheduled downloads are still to start, and no download
+        #   operation is already in progress, start one (if we're allowed to)
+        if start_list \
+        and not self.download_manager_obj \
         and not self.current_manager_obj \
         and not self.main_win_obj.config_win_list:
 
-            if self.scheduled_check_mode == 'scheduled':
+            # Pass the list of media.Scheduled objects directly to the download
+            #   manager, since each object might have different values for
+            #   their .dl_mode and .join_mode IVs
+            self.download_manager_start(
+                # In this case, the default operation type does not matter, but
+                #   it's still nice to display 'Checking...' in the Videos Tab
+                #   label, if we're only doing simulated downloads
+                dl_mode,
+                True,       # This function is the calling function
+                start_list,
+            )
 
-                wait_time = self.scheduled_check_wait_value \
-                * formats.TIME_METRIC_DICT[self.scheduled_check_wait_unit]
+            # Shutdown Tartube after this d/l operation, if required
+            if self.download_manager_obj and shutdown_flag:
+                self.halt_after_operation_flag = True
 
-                if (self.scheduled_check_last_time + wait_time) < time.time():
+            # Set the next download time for each scheduled download
+            self.script_slow_timer_reset_scheduled_dl(start_list)
+            # Return 1 to keep the timer going (or 0 to halt the once-only
+            #   timer)
+            return self.script_slow_timer_get_return_value()
 
-                    self.download_manager_start(
-                        'sim',      # 'Check all'
-                        True,       # This function is the calling function
-                    )
+        # Otherwise, we're free to start a livestream operation instead (but
+        #   only if there is at least one media.Video object marked as a
+        #   livestream)
+        if self.media_reg_live_dict:
 
-                    # Return 1 to keep the timer going
-                    return 1
+            wait_time = self.scheduled_livestream_wait_mins * 60
+            if (self.scheduled_livestream_last_time + wait_time) < time.time():
 
-            elif self.scheduled_dl_mode == 'scheduled':
+                self.livestream_manager_start()
 
-                wait_time = self.scheduled_dl_wait_value \
-                * formats.TIME_METRIC_DICT[self.scheduled_dl_wait_unit]
+        # Return 1 to keep the timer going (or 0 to halt the once-only timer)
+        return self.script_slow_timer_get_return_value()
 
-                if (self.scheduled_dl_last_time + wait_time) < time.time():
 
-                    self.download_manager_start(
-                        'real',     # 'Download all'
-                        True,       # This function is the calling function
-                    )
+    def script_slow_timer_get_return_value(self):
 
-                    # Return 1 to keep the timer going
-                    return 1
+        """Called by self.script_slow_timer_callback().
 
-            elif self.scheduled_custom_mode == 'scheduled':
+        Provides a return value for the calling function: 1 to keep the
+        GObject timer going, or 0 to halt it.
+        """
 
-                wait_time = self.scheduled_custom_wait_value \
-                * formats.TIME_METRIC_DICT[self.scheduled_custom_wait_unit]
+        if self.script_once_timer_id is not None:
 
-                if (self.scheduled_custom_last_time + wait_time) < time.time():
+            # Halt the once-only timer
+            self.script_once_timer_id = None
+            return 0
 
-                    self.download_manager_start(
-                        'custom',   # Custom 'Download all'
-                        True,       # This function is the calling function
-                    )
+        else:
 
-                    # Return 1 to keep the timer going
-                    return 1
+            # The slow timer keeps going indefinitely
+            return 1
 
-            # If no download operation was started, we're free to start a
-            #   livestream operation instead (but only if there is at least one
-            #   media.Video object marked as a livestream)
-            if self.media_reg_live_dict:
 
-                wait_time = self.scheduled_livestream_wait_mins * 60
-                if (self.scheduled_livestream_last_time + wait_time) \
-                < time.time():
+    def script_slow_timer_insert_download(self, media_data_obj, dl_mode,
+    join_mode):
 
-                    self.livestream_manager_start()
+        """Called by self.script_slow_timer_callback(), when a download
+        operation is already in progress.
 
-                    # Return 1 to keep the timer going
-                    return 1
+        Adds a new download item to the download list.
 
-        # Return 1 to keep the timer going
-        return 1
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist, media.Folder): The
+                media data object to add. It, as well as all of its children,
+                are added to the download queue
+
+            dl_mode (str): 'sim', 'real' or 'multi', matching the value of
+                downloads.DownloadManager.operation_type
+
+            join_mode (str): 'join', 'priority' or 'skip', matching the value
+                of media.Scheduled.join_mode
+
+        """
+
+        if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
+            utils.debug_time('app 12533 script_slow_timer_insert_download')
+
+        if self.download_manager_obj:
+
+            if join_mode == 'priority':
+                priority_flag = True
+            else:
+                priority_flag = False
+
+            download_item_obj \
+            = self.download_manager_obj.download_list_obj.create_item(
+                media_data_obj,
+                dl_mode,
+                priority_flag,
+                True,
+            )
+
+            if download_item_obj:
+
+                # Add a row to the Progress List
+                self.main_win_obj.progress_list_add_row(
+                    download_item_obj.item_id,
+                    media_data_obj,
+                )
+
+                # Update the main window's progress bar
+                self.download_manager_obj.nudge_progress_bar()
+
+
+    def script_slow_timer_reset_scheduled_dl(self, scheduled_list):
+
+        """Called by self.script_slow_timer_callback().
+
+        Given a list of media.Scheduled object(s)s which have just been
+        started, set the time at which the next scheduled download(s) should
+        start.
+
+        Args:
+
+            scheduled_list (list): A list of media.Scheduled objects
+
+        """
+
+        if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
+            utils.debug_time('app 12534 script_slow_timer_reset_scheduled')
+
+        current_time = time.time()
+
+        for scheduled_obj in scheduled_list:
+            scheduled_obj.set_last_time(current_time)
+            scheduled_obj.set_only_time(0)
 
 
     def script_fast_timer_callback(self):
@@ -14309,10 +14785,6 @@ class TartubeApp(Gtk.Application):
 
         Once a second, check whether there are any mainwin.Catalogue objects to
         add to the Video Catalogue and, if so, add them.
-
-        Also checks whether a download operation that was due to beging at
-        startup, should begin now. (For aesthetic reasons, we wait a few
-        seconds before starting the scheduled operation).
 
         Returns:
 
@@ -14325,33 +14797,6 @@ class TartubeApp(Gtk.Application):
 
         # Update the Video Catalogue
         self.main_win_obj.video_catalogue_retry_insert_items()
-
-        # Check scheduled operations
-        current_time = time.time()
-
-        if self.scheduled_check_start_check_time is not None \
-        and self.scheduled_check_start_check_time < current_time:
-
-            self.download_manager_start(
-                'sim',      # 'Check all'
-                True,       # This function is the calling function
-            )
-
-        elif self.scheduled_dl_start_check_time is not None \
-        and self.scheduled_dl_start_check_time < current_time:
-
-            self.download_manager_start(
-                'real',     # 'Download all'
-                True,       # This function is the calling function
-            )
-
-        elif self.scheduled_custom_start_check_time is not None \
-        and self.scheduled_custom_start_check_time < current_time:
-
-            self.download_manager_start(
-                'custom',   # 'Download all'
-                True,       # This function is the calling function
-            )
 
         # Return 1 to keep the timer going
         return 1
@@ -16264,7 +16709,7 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 14465 on_menu_general_options')
 
-        config.OptionsEditWin(self, self.general_options_obj, None)
+        config.OptionsEditWin(self, self.general_options_obj)
 
 
     def on_menu_go_website(self, action, par):
@@ -17142,7 +17587,7 @@ class TartubeApp(Gtk.Application):
         self.classic_dir_previous = directory
 
 
-    def classic_ytdl_archive_flag(self, flag):
+    def set_classic_ytdl_archive_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 15288 classic_ytdl_archive_flag')
@@ -17223,7 +17668,9 @@ class TartubeApp(Gtk.Application):
         # The Video Catalogue must be redrawn to reset the 'Other' label (but
         #   only when ComplexCatalogueItems are visible)
         if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent':
+        and self.catalogue_mode != 'simple_show_parent' \
+        and self.main_win_obj.video_index_current is not None:
+
             self.main_win_obj.video_catalogue_redraw_all(
                 self.main_win_obj.video_index_current,
                 self.main_win_obj.catalogue_toolbar_current_page,
@@ -17240,7 +17687,9 @@ class TartubeApp(Gtk.Application):
         # The Video Catalogue must be redrawn to reset the 'Other' label (but
         #   only when ComplexCatalogueItems are visible)
         if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent':
+        and self.catalogue_mode != 'simple_show_parent' \
+        and self.main_win_obj.video_index_current is not None:
+
             self.main_win_obj.video_catalogue_redraw_all(
                 self.main_win_obj.video_index_current,
                 self.main_win_obj.catalogue_toolbar_current_page,
@@ -17257,7 +17706,9 @@ class TartubeApp(Gtk.Application):
         # The Video Catalogue must be redrawn to reset the 'Invidious' label
         #   (but only when ComplexCatalogueItems are visible)
         if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent':
+        and self.catalogue_mode != 'simple_show_parent' \
+        and self.main_win_obj.video_index_current is not None:
+
             self.main_win_obj.video_catalogue_redraw_all(
                 self.main_win_obj.video_index_current,
                 self.main_win_obj.catalogue_toolbar_current_page,
@@ -17435,6 +17886,39 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 15528 set_disk_space_warn_limit')
 
         self.disk_space_warn_limit = value
+
+
+    def set_drag_video_name_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15529 set_drag_video_name_flag')
+
+        if not flag:
+            self.drag_video_name_flag = False
+        else:
+            self.drag_video_name_flag = True
+
+
+    def set_drag_video_path_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15530 set_drag_video_path_flag')
+
+        if not flag:
+            self.drag_video_path_flag = False
+        else:
+            self.drag_video_path_flag = True
+
+
+    def set_drag_video_source_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15531 set_drag_video_source_flag')
+
+        if not flag:
+            self.drag_video_source_flag = False
+        else:
+            self.drag_video_source_flag = True
 
 
     def set_enable_livestreams_flag(self, flag):
@@ -17660,10 +18144,21 @@ class TartubeApp(Gtk.Application):
             self.ignore_yt_copyright_flag = True
 
 
+    def set_ignore_yt_payment_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15685 set_ignore_yt_payment_flag')
+
+        if not flag:
+            self.ignore_yt_payment_flag = False
+        else:
+            self.ignore_yt_payment_flag = True
+
+
     def set_ignore_yt_uploader_deleted_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 15695 set_ignore_yt_uploader_deleted_flag')
+            utils.debug_time('app 15686 set_ignore_yt_uploader_deleted_flag')
 
         if not flag:
             self.ignore_yt_uploader_deleted_flag = False
@@ -17843,6 +18338,35 @@ class TartubeApp(Gtk.Application):
             self.open_temp_on_desktop_flag = True
 
 
+    def set_output_size_apply_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15688 set_output_size_apply_flag')
+
+        if not flag:
+            self.output_size_apply_flag = False
+        else:
+            self.output_size_apply_flag = True
+
+
+    def set_output_size_default(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15689 set_output_size_default')
+
+        if value < self.output_size_min or value > self.output_size_max:
+            return self.system_error(
+                999,
+                'Set Output Tab page size request failed sanity check',
+            )
+
+        old_value = self.output_size_default
+        self.output_size_default = value
+
+        if self.output_size_apply_flag:
+            self.main_win_obj.output_tab_update_page_size()
+
+
     def set_operation_auto_update_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -18011,76 +18535,56 @@ class TartubeApp(Gtk.Application):
             self.results_list_reverse_flag = True
 
 
-    def set_scheduled_check_mode(self, value):
+    def add_scheduled_list(self, scheduled_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16046 set_scheduled_check_mode')
+            utils.debug_time('app 16036 add_scheduled_list')
 
-        self.scheduled_check_mode = value
-
-
-    def set_scheduled_check_wait_unit(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16054 set_scheduled_check_wait_unit')
-
-        self.scheduled_check_wait_unit = value
+        self.scheduled_list.append(scheduled_obj)
 
 
-    def set_scheduled_check_wait_value(self, value):
+    def del_scheduled_list(self, data_list):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16055 set_scheduled_check_wait_value')
+            utils.debug_time('app 16037 del_scheduled_list')
 
-        self.scheduled_check_wait_value = value
+        scheduled_obj = data_list[0]
+        edit_win = data_list[1]
 
+        if scheduled_obj in self.scheduled_list:
+            self.scheduled_list.remove(scheduled_obj)
 
-    def set_scheduled_custom_mode(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16062 set_scheduled_custom_mode')
-
-        self.scheduled_custom_mode = value
-
-
-    def set_scheduled_custom_wait_unit(self, unit):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16063 set_scheduled_custom_wait_unit')
-
-        self.scheduled_custom_wait_unit = unit
+        if edit_win is not None:
+            edit_win.setup_scheduling_start_tab_update_treeview()
 
 
-    def set_scheduled_custom_wait_value(self, value):
+    def move_scheduled_list(self, name, flag):
+
+        """'flag' is False to move an item up the list, True to move it down
+        the list."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16064 set_scheduled_custom_wait_value')
+            utils.debug_time('app 16038 move_scheduled_list')
 
-        self.scheduled_custom_wait_value = value
+        for scheduled_obj in self.scheduled_list:
+            if scheduled_obj.name == name:
 
+                index = self.scheduled_list.index(scheduled_obj)
+                if not flag and index > 0:
 
-    def set_scheduled_dl_mode(self, value):
+                    self.scheduled_list.insert(
+                        index - 1,
+                        self.scheduled_list.pop(index)
+                    )
 
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16065 set_scheduled_dl_mode')
+                elif flag and index < (len(self.scheduled_list) - 1):
 
-        self.scheduled_dl_mode = value
+                    self.scheduled_list.insert(
+                        index + 1,
+                        self.scheduled_list.pop(index)
+                    )
 
-
-    def set_scheduled_dl_wait_unit(self, unit):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16070 set_scheduled_dl_wait_unit')
-
-        self.scheduled_dl_wait_unit = unit
-
-
-    def set_scheduled_dl_wait_value(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16071 set_scheduled_dl_wait_value')
-
-        self.scheduled_dl_wait_value = value
+                break
 
 
     def set_scheduled_livestream_flag(self, flag):
@@ -18100,17 +18604,6 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 16089 set_scheduled_livestream_wait_mins')
 
         self.scheduled_livestream_wait_mins = value
-
-
-    def set_scheduled_shutdown_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 16097 set_scheduled_shutdown_flag')
-
-        if not flag:
-            self.scheduled_shutdown_flag = False
-        else:
-            self.scheduled_shutdown_flag = True
 
 
     def set_simple_options_flag(self, flag):
