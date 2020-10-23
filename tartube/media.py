@@ -3142,6 +3142,10 @@ class Scheduled(object):
         # Flag set to True if Tartube should shut down after this scheduled
         #   download operation occurs, False if not
         self.shutdown_flag = False
+        # Flag set to True if the whole channel/playlist/folder should be
+        #   checked/downloaded, regardless of the value of
+        #   mainapp.TartubeApp.operation_limit_flag, etc
+        self.ignore_limits_flag = False
 
         # Flag set to True if the download operation should encompass all
         #   media data objects

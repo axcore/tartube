@@ -420,6 +420,28 @@ class DownloadManager(threading.Thread):
             )
 
 
+    def apply_ignore_limits(self):
+
+        """Called by mainapp>TartubeApp.script_slow_timer_callback(), after
+        starting a download operation to check/download everything.
+
+        One of the media.Scheduled objects specified that operation limits
+        should be ignored, so apply that setting to everything in the download
+        list.
+
+        (Doing things this way is a lot simpler than the alternatives.)
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 435 apply_ignore_limits')
+
+        for item_id in self.download_list_obj.download_item_list:
+
+            download_item_obj \
+            = self.download_list_obj.download_item_dict[item_id]
+            download_item_obj.set_ignore_limits_flag()
+
+
     def change_worker_count(self, number):
 
         """Called by mainapp.TartubeApp.set_num_worker_default().
@@ -1347,18 +1369,25 @@ class DownloadList(object):
 
             # media_data_list is a list of scheduled downloads
             all_flag = False
+            ignore_limits_flag = False
 
             for scheduled_obj in media_data_list:
                 if scheduled_obj.all_flag:
                     all_flag = True
-                    break
+                if scheduled_obj.ignore_limits_flag:
+                    ignore_limits_flag = True
 
             if all_flag:
 
                 # Use all media data objects
                 for dbid in self.app_obj.media_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
-                    self.create_item(obj, None, False, True)
+                    self.create_item(
+                        obj,
+                        None,       # override_operation_type
+                        False,      # priority_flag
+                        ignore_limits_flag,
+                    )
 
             else:
 
@@ -1383,7 +1412,7 @@ class DownloadList(object):
                                 obj,
                                 scheduled_obj.dl_mode,
                                 priority_flag,
-                                True,
+                                scheduled_obj.ignore_limits_flag,
                             )
 
                             check_dict[name] = None
@@ -1397,7 +1426,12 @@ class DownloadList(object):
                 # Use all media data objects
                 for dbid in self.app_obj.media_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
-                    self.create_item(obj, None, False, True)
+                    self.create_item(
+                        obj,
+                        None,       # override_operation_type
+                        False,      # priority_flag
+                        False,      # ignore_limits_flag
+                    )
 
             else:
 
@@ -1423,7 +1457,12 @@ class DownloadList(object):
                         #   media_data_obj, even if it is a video in a channel
                         #   or a playlist (which otherwise would be handled by
                         #   downloading the channel/playlist)
-                        self.create_item(media_data_obj, None, False, True)
+                        self.create_item(
+                            media_data_obj,
+                            None,       # override_operation_type
+                            False,      # priority_flag
+                            False,      # ignore_limits_flag
+                        )
 
             # Some media data objects have an alternate download destination,
             #   for example, a playlist ('slave') might download its videos
@@ -1510,10 +1549,10 @@ class DownloadList(object):
 
 
     def create_item(self, media_data_obj, override_operation_type=None,
-    priority_flag=False, init_flag=False):
+    priority_flag=False, ignore_limits_flag=False, recursion_flag=False):
 
         """Called initially by self.__init__() (or by many other functions,
-        for example in mainapp.TartubeApp.
+        for example in mainapp.TartubeApp).
 
         Subsequently called by this function recursively.
 
@@ -1559,10 +1598,13 @@ class DownloadList(object):
                 beginning of the list, False if it is to be added to the end
                 of the list
 
-            init_flag (bool): False when called by this function recursively,
-                True when called (for the first time) by anything else. If True
-                and media_data_obj is a media.Video object, we download it even
-                if its parent is a channel or a playlist
+            ignore_limits_flag (bool): True if operation limits
+                (mainapp.TartubeApp.operation_limit_flag) should be ignored
+
+            recursion_flag (bool): True when called by this function
+                recursively, False when called (for the first time) by anything
+                else. If False and media_data_obj is a media.Video object, we
+                download it even if its parent is a channel or a playlist
 
         Returns:
 
@@ -1636,7 +1678,7 @@ class DownloadList(object):
             if media_data_obj.dl_flag \
             or (
                 not isinstance(media_data_obj.parent_obj, media.Folder) \
-                and not init_flag
+                and recursion_flag
                 and (
                     operation_type != 'custom'
                     or not self.app_obj.custom_dl_by_video_flag
@@ -1703,6 +1745,7 @@ class DownloadList(object):
                 media_data_obj,
                 options_manager_obj,
                 operation_type,
+                ignore_limits_flag,
             )
 
             # ...and add it to our list
@@ -1727,7 +1770,13 @@ class DownloadList(object):
             and self.app_obj.custom_dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
-                self.create_item(child_obj, operation_type, priority_flag)
+                self.create_item(
+                    child_obj,
+                    operation_type,
+                    priority_flag,
+                    ignore_limits_flag,
+                    True,                   # Recursion
+                )
 
         # Procedure complete
         return download_item_obj
@@ -1973,7 +2022,7 @@ class DownloadItem(object):
 
 
     def __init__(self, item_id, media_data_obj, options_manager_obj,
-    operation_type):
+    operation_type, ignore_limits_flag):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1844 __init__')
@@ -2003,6 +2052,23 @@ class DownloadItem(object):
         #   the Classic Mode Tab is open, and the user has clicked the download
         #   button there
         self.operation_type = operation_type
+        # Flag set to True if operation limits
+        #   (mainapp.TartubeApp.operation_limit_flag) should be ignored
+        self.ignore_limits_flag = ignore_limits_flag
+
+
+    # Set accessors
+
+
+    def set_ignore_limits_flag(self):
+
+        """Called by DownloadManager.apply_ignore_limits(), following a call
+        from mainapp>TartubeApp.script_slow_timer_callback()."""
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1844 set_ignore_limits_flag')
+
+        self.ignore_limits_flag = True
 
 
 class VideoDownloader(object):
@@ -2385,8 +2451,23 @@ class VideoDownloader(object):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
+#                    # On MS Windows we use cp1252, so that Tartube can
+#                    #   communicate with the Windows console
+#                    if os.name == 'nt':
+#                        stdout = stdout.decode('cp1252')
+#                    else:
+#                        stdout = stdout.decode('utf-8')
+                    # !!! DEBUG: Attempt to resolve Git #175
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252')
+
+                        # On MS Windows we use cp1252, so that Tartube can
+                        #   communicate with the Windows console; if that
+                        #   fails, revert to utf-8
+                        try:
+                            stdout = stdout.decode('cp1252')
+                        except:
+                            stdout = stdout.decode('utf-8')
+
                     else:
                         stdout = stdout.decode('utf-8')
 
@@ -2465,8 +2546,16 @@ class VideoDownloader(object):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
+#            if os.name == 'nt':
+#                stderr = stderr.decode('cp1252')
+#            else:
+#                stderr = stderr.decode('utf-8')
+            # !!! DEBUG: Attempt to resolve Git #175
             if os.name == 'nt':
-                stderr = stderr.decode('cp1252')
+                try:
+                    stderr = stderr.decode('cp1252')
+                except:
+                    stderr = stderr.decode('utf-8')
             else:
                 stderr = stderr.decode('utf-8')
 
@@ -2923,6 +3012,7 @@ class VideoDownloader(object):
                         self.download_item_obj.media_data_obj,
                         media.Video,
                     ) \
+                    and not self.download_item_obj.ignore_limits_flag \
                     and app_obj.operation_limit_flag \
                     and app_obj.operation_download_limit \
                     and self.video_limit_count >= \
@@ -3197,6 +3287,7 @@ class VideoDownloader(object):
                     self.download_item_obj.media_data_obj,
                     media.Video,
                 ) \
+                and not self.download_item_obj.ignore_limits_flag \
                 and app_obj.operation_limit_flag \
                 and app_obj.operation_check_limit \
                 and self.video_limit_count >= app_obj.operation_check_limit:
@@ -3430,35 +3521,37 @@ class VideoDownloader(object):
         #   required)
         if (app_obj.ytdl_output_stdout_flag):
 
+            app_obj.main_win_obj.output_tab_write_stdout(
+                self.download_worker_obj.worker_id,
+                '[' + video_obj.parent_obj.name + '] <' \
+                + _('Simulated download of:') + ' \'' + filename + '\'>',
+            )
+
+        if (app_obj.ytdl_write_stdout_flag):
+
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
             # This fix mangles apostrophes, but that's still better than a
             #   crash
-            if os.name == 'nt':
-                filename = filename.encode().decode('cp1252')
+            # Also add a try...except here, just in case
+            try:
 
-            msg = '[' + video_obj.parent_obj.name \
-            + '] <' + _('Simulated download of:') + ' \'' + filename + '\'>'
+                if os.name == 'nt':
+                    filename = filename.encode().decode('cp1252')
 
-            if (app_obj.ytdl_output_stdout_flag):
-                app_obj.main_win_obj.output_tab_write_stdout(
-                    self.download_worker_obj.worker_id,
-                    msg,
+                print(
+                    '[' + video_obj.parent_obj.name + '] <' \
+                    + _('Simulated download of:') + ' \'' + filename + '\'>',
                 )
 
-            if (app_obj.ytdl_write_stdout_flag):
+            except:
 
-                # v2.2.039 also add a try...except here, just in case
-                try:
-                    print(msg)
-
-                except:
-                    print(
-                        '[' + video_obj.parent_obj.name + '] <' \
-                        + _(
-                        'Simulated download of video with special characters',
-                        ) + '>',
-                    )
+                print(
+                    '[' + video_obj.parent_obj.name + '] <' \
+                    + _(
+                    'Simulated download of video with special characters',
+                    ) + '>',
+                )
 
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), register the simulated download with
@@ -3578,6 +3671,8 @@ class VideoDownloader(object):
             = self.download_manager_obj.download_list_obj.create_item(
                 new_container_obj,
                 self.download_item_obj.operation_type,
+                False,                  # priority_flag
+                self.download_item_obj.ignore_limits_flag,
             )
             # ...and add a row the Progress List
             app_obj.main_win_obj.progress_list_add_row(

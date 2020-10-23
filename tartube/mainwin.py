@@ -5760,6 +5760,18 @@ class MainWin(Gtk.ApplicationWindow):
             edit_menu_item.set_sensitive(False)
         popup_menu.append(edit_menu_item)
 
+        discard_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Discard download options'),
+        )
+        discard_menu_item.connect(
+            'activate',
+            self.on_classic_menu_discard_options,
+        )
+        if self.app_obj.current_manager_obj \
+        or not self.app_obj.classic_options_list:
+            discard_menu_item.set_sensitive(False)
+        popup_menu.append(discard_menu_item)
+
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -11666,9 +11678,9 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
-                'sim',
-                False,
-                True,
+                'sim',              # override_operation_type
+                False,              # priority_flag
+                False,              # ignore_limits_flag
             )
 
             if download_item_obj:
@@ -11731,9 +11743,9 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
-                    'sim',
-                    False,
-                    True,
+                    'sim',          # override_operation_type
+                    False,          # priority_flag
+                    False,          # ignore_limits_flag
                 )
 
                 if download_item_obj:
@@ -11978,9 +11990,9 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
-                'real',
-                False,
-                True,
+                'real',         # override_operation_type
+                False,          # priority_flag
+                False,          # ignore_limits_flag
             )
 
             if download_item_obj:
@@ -12047,9 +12059,9 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
-                    'real',
-                    False,
-                    True,
+                    'real',             # override_operation_type
+                    False,              # priority_flag
+                    False,              # ignore_limits_flag
                 )
 
                 if download_item_obj:
@@ -14060,11 +14072,13 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
-    def on_classic_menu_edit_options(self, menu_item):
+    def on_classic_menu_discard_options(self, menu_item):
 
         """Called from a callback in self.classic_popup_menu().
 
-        Edits the download options for use only in Classic Mode Tab downloads.
+        Discards one or more options.OptionsManager objects from the list
+        visible in the Classic Mode Tab's menu. (If the objects are attached to
+        a media data object, then they are not destroyed entirely.)
 
         Args:
 
@@ -14073,7 +14087,42 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12728 on_classic_menu_edit_options')
+            utils.debug_time('mwn 12728 on_classic_menu_discard_options')
+
+        if self.app_obj.current_manager_obj:
+
+            return self.app_obj.system_error(
+                257,
+                'Callback request denied due to current conditions',
+            )
+
+        # Show the dialogue window
+        dialogue_win = ClassicDiscardDialogue(self)
+        response = dialogue_win.run()
+        # Get the specified options.OptionsManager object, before destroying
+        #   the window
+        options_obj = dialogue_win.options_obj
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK and options_obj is not None:
+            self.app_obj.discard_classic_download_options(options_obj)
+
+
+    def on_classic_menu_edit_options(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Opens an edit window for the options.OptionsManager object currently
+        selected for use in the Classic Mode Tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12729 on_classic_menu_edit_options')
 
         if self.app_obj.current_manager_obj:
 
@@ -14102,7 +14151,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called from a callback in self.classic_popup_menu().
 
-        Sets the download options for use only in Classic Mode Tab downloads.
+        Sets the options.OptionsManager object for use in Classic Mode Tab.
 
         Args:
 
@@ -14122,10 +14171,10 @@ class MainWin(Gtk.ApplicationWindow):
         # Show the dialogue window
         dialogue_win = ClassicOptionsDialogue(self)
         response = dialogue_win.run()
-        # (.choice is the .uid of an existing options.OptionsManager object
-        # .new_flag is True if the user wants to create a new object)
+        # Get the specified options.OptionsManager object, before destroying
+        #   the window
         options_obj = dialogue_win.options_obj
-        new_flag = dialogue_win.new_flag
+        import_obj = dialogue_win.import_obj
         new_name = dialogue_win.new_name
         dialogue_win.destroy()
 
@@ -14134,11 +14183,14 @@ class MainWin(Gtk.ApplicationWindow):
             if options_obj is not None:
 
                 if options_obj == self.app_obj.general_options_obj:
-                    self.app_obj.remove_classic_downoad_options()
+                    self.app_obj.remove_classic_download_options()
                 elif options_obj != self.app_obj.classic_options_obj:
                     self.app_obj.apply_classic_download_options(options_obj)
 
-            elif new_flag and new_name != '':
+            elif import_obj is not None:
+                self.app_obj.apply_classic_download_options(import_obj)
+
+            elif new_name != '':
 
                 # Create a new options.OptionsManager object
                 self.app_obj.apply_classic_download_options(
@@ -17971,9 +18023,9 @@ class ComplexCatalogueItem(object):
                 download_item_obj \
                 = app_obj.download_manager_obj.download_list_obj.create_item(
                     self.video_obj,
-                    'real',
-                    False,
-                    True,
+                    'real',             # override_operation_type
+                    False,              # priority_flag
+                    False,              # ignore_limits_flag
                 )
 
                 if download_item_obj:
@@ -20161,6 +20213,136 @@ class CalendarDialogue(Gtk.Dialog):
         self.show_all()
 
 
+class ClassicDiscardDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.on_classic_menu_discard_options().
+
+    Prompts the user to specify which options.OptionsManager object(s) should
+    be removed from the list visible in the Classic Mode Tab.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18037 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # Store the user's choice as an IV, so the calling function can
+        #   retrieve them
+        self.options_obj = None
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Discard download options'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 1, 1)
+        label.set_markup('Select the download options to discard')
+
+        # Add a combo, containing the subset of options.OptionsManager objects
+        #   that the user has chosen to make visible here
+        store = Gtk.ListStore(str, int)
+        # (If the user already specified an options object, it goes at the top
+        #   of the list)
+        options_list = []
+        if app_obj.classic_options_obj:
+            options_list.append(app_obj.classic_options_obj)
+
+        for options_obj in app_obj.classic_options_list:
+
+            if not app_obj.classic_options_obj \
+            or options_obj != app_obj.classic_options_obj:
+                options_list.append(options_obj)
+
+        for options_obj in options_list:
+            store.append([
+                '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                options_obj.uid,
+            ])
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 0, 1, 1, 1)
+        combo.set_hexpand(True)
+        combo.set_active(0)
+        combo.connect('changed', self.on_combo_changed)
+
+        cell = Gtk.CellRendererText()
+        combo.pack_start(cell, False)
+        combo.add_attribute(cell, 'text', 0)
+        combo.set_active(0)
+
+        if options_list:
+            self.options_obj = options_list[0]
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    def on_combo_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18038 on_combo_changed')
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        uid = model[tree_iter][1]
+        self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+
+
 class ClassicOptionsDialogue(Gtk.Dialog):
 
     """Called by mainwin.MainWin.on_classic_menu_set_options().
@@ -20199,7 +20381,7 @@ class ClassicOptionsDialogue(Gtk.Dialog):
         # Store the user's choices as IVs, so the calling function can retrieve
         #   them
         self.options_obj = None
-        self.new_flag = False
+        self.import_obj = None
         self.new_name = ''
 
 
@@ -20243,34 +20425,28 @@ class ClassicOptionsDialogue(Gtk.Dialog):
             _('Use these download options:'),
         )
         grid.attach(radiobutton2, 0, 2, 1, 1)
-        if app_obj.classic_options_obj is not None:
-            radiobutton2.set_active(True)
         # (signal_connect appears below)
 
-        # Add a combo, containing every options.OptionsManager object that
-        #   isn't attached to a media data object (and which isn't the General
-        #   Options Manager)
+        # Add a combo, containing the subset of options.OptionsManager objects
+        #   that the user has chosen to make visible here
         store = Gtk.ListStore(str, int)
         # (If the user already specified an options object, it goes at the top
         #   of the list)
+        options_list = []
         if app_obj.classic_options_obj:
-            store.append([
-                '#' + str(app_obj.classic_options_obj.uid) + ': ' \
-                + app_obj.classic_options_obj.name,
-                app_obj.classic_options_obj.uid,
-            ])
+            options_list.append(app_obj.classic_options_obj)
 
-        for options_obj in app_obj.options_reg_dict.values():
-            if options_obj.dbid is None \
-            and options_obj != app_obj.general_options_obj \
-            and (
-                app_obj.classic_options_obj is None \
-                or options_obj != app_obj.classic_options_obj
-            ):
-                store.append([
-                    '#' + str(options_obj.uid) + ': ' + options_obj.name,
-                    options_obj.uid,
-                ])
+        for options_obj in app_obj.classic_options_list:
+
+            if not app_obj.classic_options_obj \
+            or options_obj != app_obj.classic_options_obj:
+                options_list.append(options_obj)
+
+        for options_obj in options_list:
+            store.append([
+                '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                options_obj.uid,
+            ])
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 0, 3, 1, 1)
@@ -20286,26 +20462,71 @@ class ClassicOptionsDialogue(Gtk.Dialog):
         grid.attach(Gtk.HSeparator(), 0, 4, 1, 1)
 
         radiobutton3 = Gtk.RadioButton.new_with_label_from_widget(
-            radiobutton,
-            _('Create new download options named:'),
+            radiobutton2,
+            _('Import from a video/channel/playlist/folder:'),
         )
         grid.attach(radiobutton3, 0, 5, 1, 1)
         # (signal_connect appears below)
 
+        # Add a second combo, containing the subset of options.OptionsManager
+        #   objects, besides the General Options Manager, which do not appear
+        #   in the combo above (i.e. any objects attached to a media data
+        #   object)
+        store2 = Gtk.ListStore(str, int)
+        for options_obj in app_obj.options_reg_dict.values():
+            if not options_obj in options_list \
+            and options_obj != app_obj.general_options_obj:
+                store2.append([
+                    '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                    options_obj.uid,
+                ])
+
+        combo2 = Gtk.ComboBox.new_with_model(store2)
+        grid.attach(combo2, 0, 6, 1, 1)
+        combo2.set_hexpand(True)
+        # (signal_connect appears below)
+
+        cell2 = Gtk.CellRendererText()
+        combo2.pack_start(cell2, False)
+        combo2.add_attribute(cell2, 'text', 0)
+        combo2.set_active(0)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 7, 1, 1)
+
+        radiobutton4 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton3,
+            _('Create new download options named:'),
+        )
+        grid.attach(radiobutton4, 0, 8, 1, 1)
+        # (signal_connect appears below)
+
         entry = Gtk.Entry()
-        grid.attach(entry, 0, 6, 1, 1)
+        grid.attach(entry, 0, 9, 1, 1)
+
+        # (Everything but the section with the selected radiobutton should be
+        #   desensitised)
+        if app_obj.classic_options_obj is not None:
+            radiobutton2.set_active(True)
+        else:
+            combo.set_sensitive(False)
+
+        combo2.set_sensitive(False)
+        entry.set_sensitive(False)
 
         # (signal_connects from above)
         radiobutton.connect(
             'toggled',
             self.on_radiobutton_toggled,
             combo,
+            combo2,
             entry,
         )
         radiobutton2.connect(
             'toggled',
             self.on_radiobutton2_toggled,
             combo,
+            combo2,
             entry,
         )
         combo.connect('changed', self.on_combo_changed)
@@ -20313,6 +20534,15 @@ class ClassicOptionsDialogue(Gtk.Dialog):
             'toggled',
             self.on_radiobutton3_toggled,
             combo,
+            combo2,
+            entry,
+        )
+        combo2.connect('changed', self.on_combo2_changed)
+        radiobutton4.connect(
+            'toggled',
+            self.on_radiobutton4_toggled,
+            combo,
+            combo2,
             entry,
         )
         entry.connect('changed', self.on_entry_changed)
@@ -20346,6 +20576,28 @@ class ClassicOptionsDialogue(Gtk.Dialog):
         self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
 
 
+    def on_combo2_changed(self, combo2):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo2 (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18038 on_combo2_changed')
+
+        tree_iter = combo2.get_active_iter()
+        model = combo2.get_model()
+        uid = model[tree_iter][1]
+        self.import_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+
+
     def on_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
@@ -20364,7 +20616,7 @@ class ClassicOptionsDialogue(Gtk.Dialog):
         self.new_name = entry.get_text()
 
 
-    def on_radiobutton_toggled(self, button, combo, entry):
+    def on_radiobutton_toggled(self, button, combo, combo2, entry):
 
         """Called from a callback in self.__init__().
 
@@ -20375,7 +20627,7 @@ class ClassicOptionsDialogue(Gtk.Dialog):
 
             button (Gtk.Button): The widget clicked
 
-            combo (Gtk.ComboBox): Another widget to update
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
 
             entry (Gtk.Entry): Another widget to update
 
@@ -20386,24 +20638,26 @@ class ClassicOptionsDialogue(Gtk.Dialog):
 
         if button.get_active():
             self.options_obj = self.main_win_obj.app_obj.general_options_obj
-            self.new_flag = False
+            self.import_obj = None
             self.new_name = ''
 
             combo.set_sensitive(False)
+            combo2.set_sensitive(False)
             entry.set_sensitive(False)
 
 
-    def on_radiobutton2_toggled(self, button, combo, entry):
+    def on_radiobutton2_toggled(self, button, combo, combo2, entry):
 
         """Called from a callback in self.__init__().
 
-        Set the General Options Manager as the one specified by the combo.
+        Set a specified options.OptionsManager object as the one used in the
+        Classic Mode Tab.
 
         Args:
 
             button (Gtk.Button): The widget clicked
 
-            combo (Gtk.ComboBox): Another widget to update
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
 
             entry (Gtk.Entry): Another widget to update
 
@@ -20419,14 +20673,50 @@ class ClassicOptionsDialogue(Gtk.Dialog):
             uid = model[tree_iter][1]
 
             self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
-            self.new_flag = False
+            self.import_obj = None
             self.new_name = ''
 
             combo.set_sensitive(True)
+            combo2.set_sensitive(False)
             entry.set_sensitive(False)
 
 
-    def on_radiobutton3_toggled(self, button, combo, entry):
+    def on_radiobutton3_toggled(self, button, combo, combo2, entry):
+
+        """Called from a callback in self.__init__().
+
+        Set a specified options.OptionsManager object as the one used in the
+        Classic Mode Tab.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 18040 on_radiobutton3_toggled')
+
+        if button.get_active():
+
+            tree_iter = combo2.get_active_iter()
+            model = combo2.get_model()
+            uid = model[tree_iter][1]
+
+            self.options_obj = None
+            self.import_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.new_name = ''
+
+            combo.set_sensitive(False)
+            combo2.set_sensitive(True)
+            entry.set_sensitive(False)
+
+
+    def on_radiobutton4_toggled(self, button, combo, combo2, entry):
 
         """Called from a callback in self.__init__().
 
@@ -20437,21 +20727,22 @@ class ClassicOptionsDialogue(Gtk.Dialog):
 
             button (Gtk.Button): The widget clicked
 
-            combo (Gtk.ComboBox): Another widget to update
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
 
             entry (Gtk.Entry): Another widget to update
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18039 on_radiobutton_toggled')
+            utils.debug_time('mwn 18039 on_radiobutton4_toggled')
 
         if button.get_active():
             self.options_obj = None
-            self.new_flag = True
+            self.import_obj = None
             self.new_name = entry.get_text()
 
             combo.set_sensitive(False)
+            combo2.set_sensitive(False)
             entry.set_sensitive(True)
 
 

@@ -265,46 +265,6 @@ class TartubeApp(Gtk.Application):
         # The message dialogue manager, dialogue.DialogueManager, for showing
         #   message dialogue windows safely (i.e. without causing a Gtk crash)
         self.dialogue_manager_obj = None
-        #
-        # Media data classes are those specified in media.py. Those class
-        #   objects are media.Video (for individual videos), media.Channel,
-        #   media.Playlist and media.Folder (reprenting a sub-directory inside
-        #   Tartube's data directory)
-        # Some media data objects have a list of children which are themselves
-        #   media data objects. In that way, the user can organise their videos
-        #   in convenient folders
-        # media.Folder objects can have any media data objects as their
-        #   children (including other media.Folder objects). media.Channel and
-        #   media.Playlist objects can have media.Video objects as their
-        #   children. media.Video objects don't have any children
-        # (Media data objects are stored in IVs below)
-        #
-        # During a download operation, youtube-dl is supplied with a set of
-        #   download options. Those options are specified by an
-        #   options.OptionsManager object
-        # Each media data object may have its own options.OptionsManager
-        #   object. If not, it uses the options.OptionsManager object of its
-        #   parent (or of its parent's parent, and so on)
-        # If this chain of family relationships doesn't provide an
-        #   options.OptionsManager object, then this default object, known as
-        #   the General Options Manager, is used
-        # Every options.OptionsManager object has a unique .uid IV, and a non-
-        #   unique name (because, for example, a video might have the same
-        #   name as a channel; it's up to the user to avoid duplicate names)
-        # The number of options.OptionsManager objects ever created (including
-        #   any that have been deleted), used to generate the unique .uid
-        self.options_reg_count = 0
-        # A dictionary containing all options.OptionsManager objects (but not
-        #   those which have been deleted)
-        # Dictionary in the form
-        #   key = object's unique .uid
-        #   value = the options manager object itself
-        self.options_reg_dict = {}
-        # The general (default) options.OptionsManager object described above
-        self.general_options_obj = None
-        # The options.OptionsManager object used in the Classic Mode Tab. If
-        #   None, then self.general_options_obj is used
-        self.classic_options_obj = None
 
         # Instance variable (IV) list - other
         # -----------------------------------
@@ -894,13 +854,6 @@ class TartubeApp(Gtk.Application):
         #   mainwin.ProcessDialogue window is used
         self.ffmpeg_keep_flag = False
 
-        # Flag set to True if the General Options Manager
-        #   (self.general_options_obj) should be cloned whenever the user
-        #   applies a new options manager to a media data object (e.g. by
-        #   right-clicking a channel in the Video Index, and selecting
-        #   Downloads > Apply options manager)
-        self.auto_clone_options_flag = True
-
         # During a download operation, a GObject timer runs, so that the
         #   Progress Tab and Output Tab can be updated at regular intervals
         # There is also a delay between the instant at which youtube-dl
@@ -1108,6 +1061,18 @@ class TartubeApp(Gtk.Application):
         #   self.operation_limit_flag is False
         self.operation_download_limit = 3
 
+        # Media data classes are those specified in media.py. Those class
+        #   objects are media.Video (for individual videos), media.Channel,
+        #   media.Playlist and media.Folder (reprenting a sub-directory inside
+        #   Tartube's data directory)
+        # Some media data objects have a list of children which are themselves
+        #   media data objects. In that way, the user can organise their videos
+        #   in convenient folders
+        # media.Folder objects can have any media data objects as their
+        #   children (including other media.Folder objects). media.Channel and
+        #   media.Playlist objects can have media.Video objects as their
+        #   children. media.Video objects don't have any children
+        #
         # The media data registry
         # Every media data object has a unique .dbid (which is an integer). The
         #   number of media data objects ever created (including any that have
@@ -1256,6 +1221,50 @@ class TartubeApp(Gtk.Application):
         # A list of media.Scheduled objects. When deciding whether to start a
         #   scheduled download, the objects are checked in this order
         self.scheduled_list = []
+
+        # Download Options and Options Managers
+        # During a download operation, youtube-dl is supplied with a set of
+        #   download options. Those options are specified by an
+        #   options.OptionsManager object
+        # Each media data object may have its own options.OptionsManager
+        #   object. If not, it uses the options.OptionsManager object of its
+        #   parent (or of its parent's parent, and so on)
+        # If this chain of family relationships doesn't provide an
+        #   options.OptionsManager object, then this default object, known as
+        #   the General Options Manager, is used
+        # Every options.OptionsManager object has a unique .uid IV, and a non-
+        #   unique name (because, for example, a video might have the same
+        #   name as a channel; it's up to the user to avoid duplicate names)
+        # The number of options.OptionsManager objects ever created (including
+        #   any that have been deleted), used to generate the unique .uid
+        self.options_reg_count = 0
+        # A dictionary containing all options.OptionsManager objects (but not
+        #   those which have been deleted)
+        # Dictionary in the form
+        #   key = object's unique .uid
+        #   value = the options manager object itself
+        self.options_reg_dict = {}
+        # The general (default) options.OptionsManager object described above
+        self.general_options_obj = None
+        # A list containing a subset of options.OptionsManager objects, that
+        #   are displayed in the Classic Mode Tab's menu. (To keep the menu's
+        #   list to a manageable size, the user can import only the download
+        #   options that they actually need there)
+        # This list never contains self.general_options_obj
+        self.classic_options_list = []
+        # The options.OptionsManager object used in the Classic Mode Tab. If
+        #   None, then self.general_options_obj is used. If set, it will be
+        #   one of the items in self.classic_options_list
+        self.classic_options_obj = None
+        # Flag set to True if the General Options Manager
+        #   (self.general_options_obj) should be cloned whenever the user
+        #   applies a new options manager to a media data object (e.g. by
+        #   right-clicking a channel in the Video Index, and selecting
+        #   Downloads > Apply options manager)
+        self.auto_clone_options_flag = True
+        # Flag set to True if a smaller set of options should be shown in the
+        #   download options edit window (for inexperienced users)
+        self.simple_options_flag = True
 
         # Flag set to True if Tartube should try to detect livestreams (on
         #   compatible websites only)
@@ -1601,10 +1610,6 @@ class TartubeApp(Gtk.Application):
         #   when the searching the catalogue, we match videos using a regex,
         #   rather than a simple string
         self.catologue_use_regex_flag = False
-
-        # Flag set to True if a smaller set of options should be shown in the
-        #   download options edit window (for inexperienced users)
-        self.simple_options_flag = True
 
 
     def do_startup(self):
@@ -2293,6 +2298,9 @@ class TartubeApp(Gtk.Application):
         # Apply a different set of download options to the Classic Mode Tab, by
         #   default
         self.classic_options_obj = self.create_options_manager('classic')
+        # Set up the list of options managers visible in the Classic Mode Tab's
+        #   menu
+        self.classic_options_list = [self.classic_options_obj]
 
         # Compile a list of available sound effects
         self.find_sound_effects()
@@ -2840,8 +2848,8 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-168)
-            200-299: mainwin.py     (in use: 201-256)
+            100-199: mainapp.py     (in use: 101-169)
+            200-299: mainwin.py     (in use: 201-257)
             300-399: downloads.py   (in use: 301-308)
             400-499: config.py      (in use: 401-404)
 
@@ -3223,9 +3231,6 @@ class TartubeApp(Gtk.Application):
         if version >= 1003012:  # v1.3.012
             self.refresh_moviepy_timeout = json_dict['refresh_moviepy_timeout']
 
-        if version >= 1003032:  # v1.3.032
-            self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
-
         if version >= 1002030:  # v1.2.037
             self.disk_space_warn_flag = json_dict['disk_space_warn_flag']
             self.disk_space_warn_limit = json_dict['disk_space_warn_limit']
@@ -3281,6 +3286,11 @@ class TartubeApp(Gtk.Application):
             self.operation_check_limit = json_dict['operation_check_limit']
             self.operation_download_limit \
             = json_dict['operation_download_limit']
+
+        if version >= 1003032:  # v1.3.032
+            self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
+        if version >= 1002013:  # v1.2.013
+            self.simple_options_flag = json_dict['simple_options_flag']
 
 #        # Removed  v2.2.015
 #        if version >= 1001067:  # v1.0.067
@@ -3493,9 +3503,6 @@ class TartubeApp(Gtk.Application):
             = json_dict['catalogue_alpha_sort_flag']
             self.catologue_use_regex_flag \
             = json_dict['catologue_use_regex_flag']
-
-        if version >= 1002013:  # v1.2.013
-            self.simple_options_flag = json_dict['simple_options_flag']
 
         # Having loaded the config file, set various file paths...
         if self.data_dir_use_first_flag:
@@ -3982,8 +3989,6 @@ class TartubeApp(Gtk.Application):
             'refresh_output_verbose_flag': self.refresh_output_verbose_flag,
             'refresh_moviepy_timeout': self.refresh_moviepy_timeout,
 
-            'auto_clone_options_flag': self.auto_clone_options_flag,
-
             'disk_space_warn_flag': self.disk_space_warn_flag,
             'disk_space_warn_limit': self.disk_space_warn_limit,
             'disk_space_stop_flag': self.disk_space_stop_flag,
@@ -4013,6 +4018,9 @@ class TartubeApp(Gtk.Application):
             'operation_limit_flag': self.operation_limit_flag,
             'operation_check_limit': self.operation_check_limit,
             'operation_download_limit': self.operation_download_limit,
+
+            'auto_clone_options_flag': self.auto_clone_options_flag,
+            'simple_options_flag': self.simple_options_flag,
 
             'enable_livestreams_flag': \
             self.enable_livestreams_flag,
@@ -4102,8 +4110,6 @@ class TartubeApp(Gtk.Application):
             'catalogue_show_filter_flag': self.catalogue_show_filter_flag,
             'catalogue_alpha_sort_flag': self.catalogue_alpha_sort_flag,
             'catologue_use_regex_flag': self.catologue_use_regex_flag,
-
-            'simple_options_flag': self.simple_options_flag,
         }
 
         # In case a competing instance of Tartube is saving the same config
@@ -4339,12 +4345,6 @@ class TartubeApp(Gtk.Application):
             self.downloads_dir = self.data_dir
 
         # Set IVs to their new values
-        if version >= 2002034:  # v2.1.034
-            self.options_reg_count = load_dict['options_reg_count']
-            self.options_reg_dict = load_dict['options_reg_dict']
-        self.general_options_obj = load_dict['general_options_obj']
-        if version >= 2001007:  # v2.1.007
-            self.classic_options_obj = load_dict['classic_options_obj']
         self.media_reg_count = load_dict['media_reg_count']
         self.media_reg_dict = load_dict['media_reg_dict']
         self.media_name_dict = load_dict['media_name_dict']
@@ -4381,6 +4381,14 @@ class TartubeApp(Gtk.Application):
             self.fixed_folder_locale = load_dict['fixed_folder_locale']
         if version >= 2002015:  # v2.2.015
             self.scheduled_list = load_dict['scheduled_list']
+        if version >= 2002034:  # v2.1.034
+            self.options_reg_count = load_dict['options_reg_count']
+            self.options_reg_dict = load_dict['options_reg_dict']
+        self.general_options_obj = load_dict['general_options_obj']
+        if version >= 2002051:  # v2.1.051
+            self.classic_options_list = load_dict['classic_options_list']
+        if version >= 2001007:  # v2.1.007
+            self.classic_options_obj = load_dict['classic_options_obj']
 
         # Update the loaded data for this version of Tartube
         self.update_db(version)
@@ -5146,6 +5154,8 @@ class TartubeApp(Gtk.Application):
 
             # This version adds a registry for options.OptionsManager objects,
             #   and gives each object new IVs. Update all IVs
+            self.options_reg_dict = {}
+
             if self.general_options_obj:
                 self.options_reg_count += 1
                 self.general_options_obj.uid = self.options_reg_count
@@ -5170,6 +5180,31 @@ class TartubeApp(Gtk.Application):
                 options_obj.name = media_data_obj.name
                 options_obj.dbid = media_data_obj.dbid
                 self.options_reg_dict[options_obj.uid] = options_obj
+
+        if version < 2002049:      # v2.2.049
+
+            # This version adds an IV to media.Scheduled objects
+            for scheduled_obj in self.scheduled_list:
+                scheduled_obj.ignore_limits_flag = False
+
+        if version < 2002051:      # v2.2.051
+
+            # This version adds a new IV, initially containing any
+            #   options.OptionsManager objects not attached to a media data
+            #   object
+            self.classic_options_list = []
+            if self.classic_options_obj:
+                self.classic_options_list.append(self.classic_options_obj)
+
+            for options_obj in self.options_reg_dict.values():
+
+                if options_obj.dbid is None \
+                and options_obj != self.general_options_obj \
+                and (
+                    self.classic_options_obj is None \
+                    or options_obj != self.classic_options_obj
+                ):
+                    self.classic_options_list.append(options_obj)
 
 
     def save_db(self):
@@ -5222,11 +5257,7 @@ class TartubeApp(Gtk.Application):
             'script_version': __main__.__version__,
             'save_date': str(utc.strftime('%d %b %Y')),
             'save_time': str(utc.strftime('%H:%M:%S')),
-            # Data
-            'options_reg_count' : self.options_reg_count,
-            'options_reg_dict' : self.options_reg_dict,
-            'general_options_obj' : self.general_options_obj,
-            'classic_options_obj' : self.classic_options_obj,
+            # Media data objects
             'media_reg_count': self.media_reg_count,
             'media_reg_dict': self.media_reg_dict,
             'media_name_dict': self.media_name_dict,
@@ -5249,6 +5280,12 @@ class TartubeApp(Gtk.Application):
             'fixed_folder_locale': self.fixed_folder_locale,
             # Scheduled downloads
             'scheduled_list': self.scheduled_list,
+            # Download options
+            'options_reg_count' : self.options_reg_count,
+            'options_reg_dict' : self.options_reg_dict,
+            'general_options_obj' : self.general_options_obj,
+            'classic_options_list' : self.classic_options_list,
+            'classic_options_obj' : self.classic_options_obj,
         }
 
         # Back up any existing file
@@ -7560,6 +7597,10 @@ class TartubeApp(Gtk.Application):
             else:
                 self.scheduled_dl_last_time = int(time.time())
 
+        # Don't show a dialogue window at the end of a scheduled download
+        if automatic_flag:
+            self.no_dialogue_this_time_flag = True
+
         # During a download operation, show a progress bar in the Videos Tab
         #   (except when launched from the Classic Mode Tab, in which case we
         #   just desensitise the existing buttons)
@@ -8912,9 +8953,9 @@ class TartubeApp(Gtk.Application):
                     download_item_obj \
                     = self.download_manager_obj.download_list_obj.create_item(
                         video_obj,
-                        'real',
-                        False,
-                        True,
+                        'real',         # override_operation_type
+                        False,          # priority_flag
+                        False,          # ignore_limits_flag
                     )
 
                     if download_item_obj:
@@ -10772,8 +10813,11 @@ class TartubeApp(Gtk.Application):
             )
 
         # Destroy the options.OptionsManager object attached to this video
-        #   (if any)
-        if video_obj.options_obj:
+        #   (if any), unless the same object has been added to the list
+        #   visible in the Classic Mode Tab (in which case, it continues to
+        #   exist independently of its old parent)
+        if video_obj.options_obj \
+        and not video_obj.options_obj in self.classic_options_list:
             del self.options_reg_dict[video_obj.options_obj.uid]
 
         # Remove the video from its parent object
@@ -11074,8 +11118,11 @@ class TartubeApp(Gtk.Application):
         #   required), so now deal with the media data registry
 
         # Destroy the options.OptionsManager object attached to this container
-        #   (if any)
-        if media_data_obj.options_obj:
+        #   (if any), unless the same object has been added to the list
+        #   visible in the Classic Mode Tab (in which case, it continues to
+        #   exist independently of its old parent)
+        if media_data_obj.options_obj \
+        and not media_data_obj.options_obj in self.classic_options_list:
             del self.options_reg_dict[media_data_obj.options_obj.uid]
 
         # Recursively remove all of the container object's children. The code
@@ -14129,9 +14176,9 @@ class TartubeApp(Gtk.Application):
                 download_item_obj \
                 = self.download_manager_obj.download_list_obj.create_item(
                     video_obj,
-                    'real',
-                    False,
-                    True,
+                    'real',         # override_operation_type
+                    False,          # priority_flag
+                    False,          # ignore_limits_flag
                 )
 
                 if download_item_obj:
@@ -14271,9 +14318,14 @@ class TartubeApp(Gtk.Application):
 
         # Apply download options
         self.classic_options_obj = options_obj
+        # The newly-applied object should be the first item in the list
+        if options_obj in self.classic_options_list:
+            self.classic_options_list.remove(options_obj)
+
+        self.classic_options_list.insert(0, options_obj)
 
 
-    def remove_classic_downoad_options(self):
+    def remove_classic_download_options(self):
 
         """Called by mainwin.MainWin.on_classic_menu_set_options().
 
@@ -14285,7 +14337,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 11473 remove_classic_downoad_options')
+            utils.debug_time('app 11473 remove_classic_download_options')
 
         if self.current_manager_obj or not self.classic_options_obj:
             return self.system_error(
@@ -14294,7 +14346,59 @@ class TartubeApp(Gtk.Application):
             )
 
         # Remove download options
+        if self.classic_options_obj:
+
+            if self.classic_options_obj in self.classic_options_list:
+                self.classic_options_list.remove(self.classic_options_obj)
+
+            if not self.classic_options_obj.dbid:
+
+                # (Not attached to a media data object, so it can be removed
+                #   from the registry)
+                del self.options_reg_dict[self.classic_options_obj.uid]
+
         self.classic_options_obj = None
+
+
+    def discard_classic_download_options(self, options_obj):
+
+        """Called by mainwin.MainWin.on_classic_menu_discard_options().
+
+        A modified version of self.remove_classic_download_options(). The
+        specified object is one of those visible in the Classic Mode Tab's
+        menu, but it may or may not be self.classic_options_obj, and it may or
+        may not be attached to a media data object.
+
+        Updates IVs, as appropriate.
+
+        Args:
+
+            options_obj (options.OptionsManager): The object to be removed from
+                the list visible in the Classic Mode Tab's menu
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11474 discard_classic_download_options')
+
+        if self.current_manager_obj \
+        or not options_obj in self.classic_options_list:
+            return self.system_error(
+                169,
+                'Discard download options request failed sanity check',
+            )
+
+        # Discard download options
+        self.classic_options_list.remove(options_obj)
+        if not options_obj.dbid:
+
+            # (Not attached to a media data object, so it can be removed from
+            #   the registry)
+            del self.options_reg_dict[options_obj.uid]
+
+        if self.classic_options_obj \
+        and self.classic_options_obj == options_obj:
+            self.classic_options_obj = None
 
 
     def create_options_manager(self, name, dbid=None):
@@ -14488,6 +14592,7 @@ class TartubeApp(Gtk.Application):
         next_list = []
         all_flag = False
         shutdown_flag = False
+        ignore_limits_flag = False
 
         for scheduled_obj in self.scheduled_list:
 
@@ -14514,6 +14619,7 @@ class TartubeApp(Gtk.Application):
                     next_list = []
                     all_flag = scheduled_obj.all_flag
                     shutdown_flag = scheduled_obj.shutdown_flag
+                    ignore_limits_flag = scheduled_obj.ignore_limits_flag
                     break
 
                 # 'start' should be done before 'scheduled'
@@ -14526,6 +14632,8 @@ class TartubeApp(Gtk.Application):
                     all_flag = True
                 if scheduled_obj.shutdown_flag:
                     shutdown_flag = True
+                if scheduled_obj.ignore_limits_flag:
+                    ignore_limits_flag = True
 
         start_list = first_list + next_list
 
@@ -14565,6 +14673,10 @@ class TartubeApp(Gtk.Application):
                         True,       # This function is the calling function
                     )
 
+                    # Ignore operation limits, if required
+                    if ignore_limits_flag:
+                        self.download_manager_obj.apply_ignore_limits()
+
                     # Shutdown Tartube after this d/l operation, if required
                     if self.download_manager_obj and shutdown_flag:
                         self.halt_after_operation_flag = True
@@ -14590,6 +14702,7 @@ class TartubeApp(Gtk.Application):
                                 media_data_obj,
                                 dl_mode,
                                 join_mode,
+                                ignore_limits_flag,
                             )
 
                     # Shutdown Tartube after this d/l operation, if required
@@ -14628,6 +14741,7 @@ class TartubeApp(Gtk.Application):
                             media_data_obj,
                             scheduled_obj.dl_mode,
                             scheduled_obj.join_mode,
+                            scheduled_obj.ignore_limits_flag,
                         )
 
             # Shutdown Tartube after this d/l operation, if required
@@ -14704,7 +14818,7 @@ class TartubeApp(Gtk.Application):
 
 
     def script_slow_timer_insert_download(self, media_data_obj, dl_mode,
-    join_mode):
+    join_mode, ignore_limits_flag):
 
         """Called by self.script_slow_timer_callback(), when a download
         operation is already in progress.
@@ -14723,6 +14837,9 @@ class TartubeApp(Gtk.Application):
             join_mode (str): 'join', 'priority' or 'skip', matching the value
                 of media.Scheduled.join_mode
 
+            ignore_limits_flag (bool): True if operation limits
+                (self.operation_limit_flag) should be ignored
+
         """
 
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
@@ -14740,7 +14857,7 @@ class TartubeApp(Gtk.Application):
                 media_data_obj,
                 dl_mode,
                 priority_flag,
-                True,
+                ignore_limits_flag,
             )
 
             if download_item_obj:

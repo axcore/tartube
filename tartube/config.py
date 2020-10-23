@@ -6450,9 +6450,18 @@ class ScheduledEditWin(GenericEditWin):
         )
 
         self.add_checkbutton(grid,
+            _(
+            'Ignore time-saving preferences, and check/download the whole' \
+            + ' channel/playlist/folder',
+            ),
+            'ignore_limits_flag',
+            0, 8, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
             _('Shut down Tartube when this scheduled download has finished'),
             'shutdown_flag',
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
 
 
@@ -6677,8 +6686,9 @@ class ScheduledEditWin(GenericEditWin):
 
         # Update the IV
         self.edit_dict['media_list'] = []
-        # Update the treeview
+        # Update widgets
         liststore.clear()
+        self.radiobutton.set_active(True)
 
 
     def on_remove_button_clicked(self, button, combo, treeview):
@@ -6717,8 +6727,10 @@ class ScheduledEditWin(GenericEditWin):
             media_list.remove(name)
             self.edit_dict['media_list'] = media_list
 
-            # Update the treeview
+            # Update widgets
             self.setup_media_tab_update_treeview(treeview.get_model())
+            if not media_list:
+                self.radiobutton.set_active(True)
 
 
     def on_start_mode_combo_changed(self, combo, spinbutton, combo2):
@@ -8650,10 +8662,11 @@ class SystemPrefWin(GenericPrefWin):
         for i, column_title in enumerate(
             [
                 _('Name'), _('Download'), _('Start mode'), _('Time'),
-                _('Exclusive'), _('Shutdown'), _('All'), _('Join mode'),
+                _('Priority'), _('Whole'), _('Shutdown'), _('D/L All'),
+                _('Join mode'),
             ]
         ):
-            if i >= 4 and i <= 6:
+            if i >= 4 and i <= 7:
                 renderer_toggle = Gtk.CellRendererToggle()
                 column_toggle = Gtk.TreeViewColumn(
                     column_title,
@@ -8673,7 +8686,7 @@ class SystemPrefWin(GenericPrefWin):
                 column_text.set_resizable(True)
 
         self.liststore = Gtk.ListStore(
-            str, str, str, str, bool, bool, bool, str,
+            str, str, str, str, bool, bool, bool, bool, str,
         )
         treeview.set_model(self.liststore)
 
@@ -8783,6 +8796,7 @@ class SystemPrefWin(GenericPrefWin):
             str(scheduled_obj.wait_value) + ' ' + scheduled_obj.wait_unit
         )
         row_list.append(scheduled_obj.exclusive_flag)
+        row_list.append(scheduled_obj.ignore_limits_flag)
         row_list.append(scheduled_obj.shutdown_flag)
         row_list.append(scheduled_obj.all_flag)
         row_list.append(scheduled_obj.join_mode)

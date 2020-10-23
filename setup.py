@@ -147,7 +147,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.2.046',
+    version='2.2.055',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',
