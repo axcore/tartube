@@ -31,14 +31,15 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 2 Why should I use Tartube?
 ===========================
 
-- You can download individual videos, and even whole channels and playlists, from YouTube and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
-- You can fetch information about those videos, channels and playlists, without actually downloading anything
+- You can fetch a list of videos from your favourite channels and playlists on `YouTube <https://www.youtube.com/>`__, `BitChute <https://www.bitchute.com/>`__, and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
+- In buffering is an issue, you can download a temporary copy of a video before automatically opening it in your favourite media player
 - **Tartube** will organise your videos into convenient folders (if that's what you want)
 - **Tartube** can alert you when livestreams are starting (**YouTube** only)
-- If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), you can download videos from both sites without creating duplicates
+- If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), **Tartube** can interact with both sites without creating duplicates
+- Certain websites operate an "only one opinion allowed" policy. If you think that the censors will remove a video, against the wishes of its creators and before you've had a chance to watch it, **Tartube** can make an archive copy
+- Certain websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
 - **Tartube** can, in some circumstances, see videos that are region-blocked and/or age-restricted
-- You can easily grab just the audio, rather than full videos, if you want
-- Certain popular websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
+- If you want to listen to your favourite discussion videos, for example while driving a car, **Tartube** can make an archive copy of just the audio, rather than the full video
 - **Tartube** is free and open-source software
 
 2.1 What's new in version 2.2.0
@@ -578,7 +579,7 @@ Click the **'Folder'** button near the top of the window,  and create a folder c
 .. image:: screenshots/example10.png
   :alt: Adding a folder
 
-Then repeat that process to create a folder called **Music**. You can then drag-and-drop your channels and playlists into those folders.
+Then repeat that process to create a folder called **History**. You can then drag-and-drop your channels and playlists into those folders.
 
 .. image:: screenshots/example11.png
   :alt: A channel inside a folder
@@ -633,21 +634,21 @@ At the moment, the general download options apply to *all* the videos, channels,
 .. image:: screenshots/example14.png
   :alt: The window with only general download options applied
   
-Now, suppose you want to apply some download options to the **Music** folder:
+Now, suppose you want to apply some download options to the **History** folder:
 
 -  Right-click the folder, and select **Apply download options...**
 
-In the new window, click the **'OK'** button. The options are applied to *everything* in the **Music folder**. A pen icon appears above the folder to remind you of this.
+In the new window, click the **'OK'** button. The options are applied to *everything* in the **History folder**. A pen icon appears above the folder to remind you of this.
 
 .. image:: screenshots/example15.png
-  :alt: Download options applied to the Music folder
+  :alt: Download options applied to the History folder
 
-Now, suppose you want to add a *different* set of download options, but only for the channel **The Beatles**.
+Now, suppose you want to add a *different* set of download options, but only for the channel **OverSimplified**.
 
 -  Right-click the channel, and select **Apply download options...**
 -  In the new window, click the **'OK'** button
 
-The previous set of download options still applies to everything in the **Music** folder, *except* the channel **The Beatles**.
+The previous set of download options still applies to everything in the **History** folder, *except* the channel **OverSimplified**.
 
 .. image:: screenshots/example16.png
   :alt: Download options applied to the Village People channel
