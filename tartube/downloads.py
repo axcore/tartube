@@ -1818,6 +1818,7 @@ class DownloadList(object):
             media_data_obj,
             options_manager_obj,
             self.operation_type,        # 'classic'
+            False,                      # ignore_limits_flag
         )
 
         # ...and add it to our list
@@ -1984,7 +1985,8 @@ class DownloadList(object):
 
 class DownloadItem(object):
 
-    """Called by downloads.DownloadList.create_item().
+    """Called by downloads.DownloadList.create_item() and
+    .create_dummy_item().
 
     Based on the DownloadItem class in youtube-dl-gui.
 
@@ -2451,25 +2453,12 @@ class VideoDownloader(object):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
-#                    # On MS Windows we use cp1252, so that Tartube can
-#                    #   communicate with the Windows console
-#                    if os.name == 'nt':
-#                        stdout = stdout.decode('cp1252')
-#                    else:
-#                        stdout = stdout.decode('utf-8')
-                    # !!! DEBUG: Attempt to resolve Git #175
+                    # On MS Windows we use cp1252, so that Tartube can
+                    #   communicate with the Windows console
                     if os.name == 'nt':
-
-                        # On MS Windows we use cp1252, so that Tartube can
-                        #   communicate with the Windows console; if that
-                        #   fails, revert to utf-8
-                        try:
-                            stdout = stdout.decode('cp1252')
-                        except:
-                            stdout = stdout.decode('utf-8')
-
+                        stdout = stdout.decode('cp1252', errors="replace")
                     else:
-                        stdout = stdout.decode('utf-8')
+                        stdout = stdout.decode('utf-8', errors="replace")
 
                     # Convert the statistics into a python dictionary in a
                     #   standard format, specified in the comments for
@@ -2516,7 +2505,12 @@ class VideoDownloader(object):
                         not app_obj.ytdl_write_ignore_json_flag \
                         or stdout[:1] != '{'
                     ):
-                        print(stdout)
+                        # Git #175, Japanese text may produce a codec error
+                        #   here, despite the .decode() call above
+                        try:
+                            print(stdout)
+                        except:
+                            print('STDOUT text with unprintable characters')
 
             # Apply the JSON timeout, if required
             if app_obj.apply_json_timeout_flag \
@@ -2546,18 +2540,10 @@ class VideoDownloader(object):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-#            if os.name == 'nt':
-#                stderr = stderr.decode('cp1252')
-#            else:
-#                stderr = stderr.decode('utf-8')
-            # !!! DEBUG: Attempt to resolve Git #175
             if os.name == 'nt':
-                try:
-                    stderr = stderr.decode('cp1252')
-                except:
-                    stderr = stderr.decode('utf-8')
+                stderr = stderr.decode('cp1252', errors="replace")
             else:
-                stderr = stderr.decode('utf-8')
+                stderr = stderr.decode('utf-8', errors="replace")
 
             if not self.is_ignorable(stderr):
 
@@ -2578,7 +2564,12 @@ class VideoDownloader(object):
 
             # Show output in the terminal (if required)
             if (app_obj.ytdl_write_stderr_flag):
-                print(stderr)
+                # Git #175, Japanese text may produce a codec error here,
+                #   despite the .decode() call above
+                try:
+                    print(stderr)
+                except:
+                    print('STDERR text with unprintable characters')
 
         # We also set the return code to self.ERROR if the download didn't
         #   start or if the child process return code is greater than 0
@@ -3096,7 +3087,9 @@ class VideoDownloader(object):
         = int(time.time()) + self.last_sim_video_wait_time
 
         # From the JSON dictionary, extract the data we need
-        if '_filename' in json_dict:
+        # Git #177 reports that this value might be 'None', so check for that
+        if '_filename' in json_dict \
+        and json_dict['_filename'] is not None:
             full_path = json_dict['_filename']
             path, filename, extension = self.extract_filename(full_path)
         else:
@@ -3531,13 +3524,10 @@ class VideoDownloader(object):
 
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
-            # This fix mangles apostrophes, but that's still better than a
-            #   crash
-            # Also add a try...except here, just in case
-            try:
+            if os.name == 'nt':
+                filename = filename.encode().decode('cp1252', errors="replace")
 
-                if os.name == 'nt':
-                    filename = filename.encode().decode('cp1252')
+            try:
 
                 print(
                     '[' + video_obj.parent_obj.name + '] <' \
@@ -3549,7 +3539,7 @@ class VideoDownloader(object):
                 print(
                     '[' + video_obj.parent_obj.name + '] <' \
                     + _(
-                    'Simulated download of video with special characters',
+                    'Simulated download of video with unprintable characters',
                     ) + '>',
                 )
 

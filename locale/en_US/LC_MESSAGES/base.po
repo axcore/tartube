@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-23 16:26+0100\n"
+"POT-Creation-Date: 2020-10-27 08:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
@@ -5564,26 +5564,26 @@ msgstr ""
 msgid "Cannot download videos in a private folder"
 msgstr ""
 
-#: .././downloads.py:2594
+#: .././downloads.py:2585
 msgid "Download did not start"
 msgstr ""
 
-#: .././downloads.py:2602 .././info.py:342 .././updates.py:277
+#: .././downloads.py:2593 .././info.py:342 .././updates.py:277
 #: .././updates.py:445
 msgid "Child process exited with non-zero code: {}"
 msgstr ""
 
-#: .././downloads.py:2716 .././downloads.py:3653
+#: .././downloads.py:2707 .././downloads.py:3643
 msgid ""
 "This video has a URL that points to a channel or a playlist, not a video"
 msgstr ""
 
-#: .././downloads.py:3527 .././downloads.py:3544
+#: .././downloads.py:3520 .././downloads.py:3534
 msgid "Simulated download of:"
 msgstr ""
 
-#: .././downloads.py:3552
-msgid "Simulated download of video with special characters"
+#: .././downloads.py:3542
+msgid "Simulated download of video with unprintable characters"
 msgstr ""
 
 #: .././formats.py:66
