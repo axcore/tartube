@@ -108,12 +108,12 @@ DEBUG_FUNC_FLAG = False
 # ...(but don't call utils.debug_time from the timer functions such as
 #   self.script_slow_timer_callback() )
 DEBUG_NO_TIMER_FUNC_FLAG = False
-# Update debugging variables, if a debug.txt file exists (it is notread)
+# Update debugging variables, if a debug.txt file exists in the same directory/
+#   folder as the tartube executable
 if os.path.isfile(
     os.path.abspath(
         os.path.join(
             sys.path[0],
-            os.pardir,
             'debug.txt',
         ),
     ),
@@ -280,6 +280,29 @@ class TartubeApp(Gtk.Application):
         self.paned_min_size = 200
         # Default size (in pixels) of space between various widgets
         self.default_spacing_size = 5
+        # Default thumbnail sizes, assuming an original size of 1280x720. All
+        #   sizes are available in the Video Catalogue, when videos are
+        #   displayed as a grid; otherwise only the 'tiny' size is used
+        self.thumb_size_dict = {
+            'tiny' : [128, 72],
+            'small' : [256, 144],
+            'medium' : [384, 216],
+            'large' : [512, 288],
+            'enormous' : [640, 360],
+        }
+        # Ordered list of thumbnail sizes and translations, for use in various
+        #   comboboxes
+        self.thumb_size_list = [
+            _('Tiny'), 'tiny',
+            _('Small'), 'small',
+            _('Medium'), 'medium',
+            _('Large'), 'large',
+            _('Enormous'), 'enormous',
+        ]
+        # A custom thumbnail size; one of the keys in self.thumb_size_dict.
+        #   Used when the Video Catalogue is displaying videos in a grid. (When
+        #   displaying them as a list, the 'small' size is always used)
+        self.thumb_size_custom = 'tiny'
 
         # Custom window sizes
         # Flag set to True if Tartube should remember the main window size
@@ -334,7 +357,7 @@ class TartubeApp(Gtk.Application):
         # The fast timer's ID
         self.script_fast_timer_id = None
         # The fast timer interval time (in milliseconds)
-        self.script_fast_timer_time = 1000
+        self.script_fast_timer_time = 250
 
         # Flag set to True if the main toolbar should not be drawn when the
         #   main window is opened
@@ -372,6 +395,13 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if we should use 'Today' and 'Yesterday' in the
         #   Video Index, rather than a date
         self.show_pretty_dates_flag = True
+
+        # In the Video Catalogue, flag set to True if a frame should be drawn
+        #   around each video, False if not
+        self.catalogue_draw_frame_flag = True
+        # In the Video Catalogue, flag set to True if status icons should be
+        #   drawn, False if not
+        self.catalogue_draw_icons_flag = True
 
         # Flags specifying what data should be transferred to an external
         #   application, if videos are dragged there from the Video Catalogue
@@ -1595,7 +1625,24 @@ class TartubeApp(Gtk.Application):
         #   'complex_hide_parent_ext' - Thumbnail, description & extra labels
         #   'complex_show_parent' - Thumbnail, show parent
         #   'complex_show_parent_ext' - Thumbnail, parent & extra labels
+        #   'grid_show_parent' - Grid mode with thumbnail and parent
+        #   'grid_show_parent_ext' - Grid mode with thumb, parent & extra
+        #       labels
         self.catalogue_mode = 'complex_show_parent'
+        # The current Video Catalogue mode type: 'simple', 'complex' or 'grid'
+        self.catalogue_mode_type = 'complex'
+        # Ordered list of Video Catalogue modes, used for switching between
+        #   them
+        self.catalogue_mode_list = [
+            [ 'simple_hide_parent', 'simple' ],
+            [ 'simple_show_parent', 'simple' ],
+            [ 'complex_hide_parent', 'complex' ],
+            [ 'complex_hide_parent_ext', 'complex' ],
+            [ 'complex_show_parent', 'complex' ],
+            [ 'complex_show_parent_ext', 'complex' ],
+            [ 'grid_show_parent', 'grid' ],
+            [ 'grid_show_parent_ext', 'grid' ],
+        ]
         # The Video Catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
         # The number of videos per page, or 0 to always use a single page
@@ -1711,6 +1758,13 @@ class TartubeApp(Gtk.Application):
         )
         switch_view_menu_action.connect('activate', self.on_button_switch_view)
         self.add_action(switch_view_menu_action)
+
+        hide_private_menu_action = Gio.SimpleAction.new(
+            'hide_private_menu',
+            None,
+        )
+        hide_private_menu_action.connect('activate', self.on_menu_hide_private)
+        self.add_action(hide_private_menu_action)
 
         show_hidden_menu_action = Gio.SimpleAction.new(
             'show_hidden_menu',
@@ -1994,17 +2048,7 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(show_filter_toolbutton_action)
 
-        # (Second row)
-
-        sort_type_toolbutton_action = Gio.SimpleAction.new(
-            'sort_type_toolbutton',
-            None,
-        )
-        sort_type_toolbutton_action.connect(
-            'activate',
-            self.on_button_sort_type,
-        )
-        self.add_action(sort_type_toolbutton_action)
+        # (Second/third rows)
 
         use_regex_togglebutton_action = Gio.SimpleAction.new(
             'use_regex_togglebutton',
@@ -2045,6 +2089,16 @@ class TartubeApp(Gtk.Application):
             self.on_button_find_date,
         )
         self.add_action(find_date_toolbutton_action)
+
+        cancel_date_toolbutton_action = Gio.SimpleAction.new(
+            'cancel_date_toolbutton',
+            None,
+        )
+        cancel_date_toolbutton_action.connect(
+            'activate',
+            self.on_button_cancel_date,
+        )
+        self.add_action(cancel_date_toolbutton_action)
 
         # Videos Tab actions
         # ------------------
@@ -2380,8 +2434,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj = mainwin.MainWin(self)
 
         # Set up widgets in the Video Catalogue toolbar
-        self.main_win_obj.update_show_filter_widgets()
-        self.main_win_obj.update_alpha_sort_widgets()
+        self.main_win_obj.update_catalogue_filter_widgets()
+        self.main_win_obj.update_catalogue_sort_widgets()
+        self.main_win_obj.update_catalogue_thumb_widgets()
         # Add the right number of pages to the Output Tab
         self.main_win_obj.output_tab_setup_pages()
         # If the flag it set, switch to the Classic Mode Tab
@@ -2849,9 +2904,10 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-169)
-            200-299: mainwin.py     (in use: 201-257)
+            200-299: mainwin.py     (in use: 201-260)
             300-399: downloads.py   (in use: 301-308)
             400-499: config.py      (in use: 401-404)
+            500-599: utils.py       (in use: 501)
 
         """
 
@@ -3087,6 +3143,9 @@ class TartubeApp(Gtk.Application):
                 formats.do_translate(True)
 
         # Set IVs to their new values
+        if version >= 2002075:  # v2.2.075
+            self.thumb_size_custom = json_dict['thumb_size_custom']
+
         if version >= 1004040:  # v1.4.040
             self.main_win_save_size_flag = json_dict['main_win_save_size_flag']
             self.main_win_save_width = json_dict['main_win_save_width']
@@ -3121,6 +3180,12 @@ class TartubeApp(Gtk.Application):
             self.disable_dl_all_flag = json_dict['disable_dl_all_flag']
         if version >= 1004011:  # v1.4.011
             self.show_pretty_dates_flag = json_dict['show_pretty_dates_flag']
+
+        if version >= 2002085:  # v2.2.0185
+            self.catalogue_draw_frame_flag \
+            = json_dict['catalogue_draw_frame_flag']
+            self.catalogue_draw_icons_flag \
+            = json_dict['catalogue_draw_icons_flag']
 
         if version >= 2002028:  # v2.2.0128
             self.drag_video_path_flag = json_dict['drag_video_path_flag']
@@ -3494,6 +3559,8 @@ class TartubeApp(Gtk.Application):
         self.complex_index_flag = json_dict['complex_index_flag']
         if version >= 3019:  # v0.3.019
             self.catalogue_mode = json_dict['catalogue_mode']
+        if version >= 2002069:  # v2.2.069
+            self.catalogue_mode_type = json_dict['catalogue_mode_type']
         if version >= 3023:  # v0.3.023
             self.catalogue_page_size = json_dict['catalogue_page_size']
         if version >= 1004005:  # v1.4.005
@@ -3903,6 +3970,8 @@ class TartubeApp(Gtk.Application):
             # Data
             'custom_locale': self.custom_locale,
 
+            'thumb_size_custom': self.thumb_size_custom,
+
             'main_win_save_size_flag': self.main_win_save_size_flag,
             'main_win_save_width': self.main_win_save_width,
             'main_win_save_height': self.main_win_save_height,
@@ -3920,6 +3989,9 @@ class TartubeApp(Gtk.Application):
             'full_expand_video_index_flag': self.full_expand_video_index_flag,
             'disable_dl_all_flag': self.disable_dl_all_flag,
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
+
+            'catalogue_draw_frame_flag': self.catalogue_draw_frame_flag,
+            'catalogue_draw_icons_flag': self.catalogue_draw_icons_flag,
 
             'drag_video_path_flag': self.drag_video_path_flag,
             'drag_video_source_flag': self.drag_video_source_flag,
@@ -4106,6 +4178,7 @@ class TartubeApp(Gtk.Application):
 
             'complex_index_flag': self.complex_index_flag,
             'catalogue_mode': self.catalogue_mode,
+            'catalogue_mode_type': self.catalogue_mode_type,
             'catalogue_page_size': self.catalogue_page_size,
             'catalogue_show_filter_flag': self.catalogue_show_filter_flag,
             'catalogue_alpha_sort_flag': self.catalogue_alpha_sort_flag,
@@ -5749,13 +5822,14 @@ class TartubeApp(Gtk.Application):
         and os.path.isfile(db_file_path) \
         and os.path.isfile(lock_file_path) \
         and not self.debug_ignore_lockfile_flag:
+
+            msg = 'Tartube database \'{0}\' can\'t be loaded - another' \
+                + ' instance of Tartube may be using it. If not, you can' \
+                + ' fix this problem by deleting the lockfile \'{1}\''
+
             self.system_warning(
                 104,
-                _(
-                'Tartube database \'{0}\' can\'t be loaded - another' \
-                + ' instance of Tartube may be using it. If not, you can' \
-                + ' fix this problem by deleting the lockfile \'{1}\'',
-                ).format(self.data_dir, lock_file_path),
+                msg.format(self.data_dir, lock_file_path),
             )
 
             for alt_data_dir in self.data_dir_alt_list:
@@ -5801,14 +5875,14 @@ class TartubeApp(Gtk.Application):
 
                 else:
 
+                    msg = 'Tartube database \'{0}\' can\'t be loaded' \
+                        + '  - another instance of Tartube may be using it.' \
+                        + '  If not, you can fix this problem by deleting' \
+                        + ' the lockfile \'{1}\'',
+
                     self.system_warning(
                         105,
-                        _(
-                        'Tartube database \'{0}\' can\'t be loaded - another' \
-                        + ' instance of Tartube may be using it. If not, you' \
-                        + ' can fix this problem by deleting the lockfile' \
-                        + ' \'{1}\'',
-                        ).format(alt_data_dir, alt_lock_file_path),
+                        msg.format(alt_data_dir, alt_lock_file_path),
                     )
 
 
@@ -6944,7 +7018,7 @@ class TartubeApp(Gtk.Application):
             and media_data_obj.temp_flag \
             and media_data_obj.child_list:
 
-                utils.open_file(media_data_obj.get_default_dir(self))
+                utils.open_file(self, media_data_obj.get_default_dir(self))
 
 
     def disable_load_save(self, error_msg=None, lock_flag=False):
@@ -8512,7 +8586,7 @@ class TartubeApp(Gtk.Application):
         #   open the temporary directory so the user can see what (if
         #   anything) was downloaded
         if url_string is not None and url_string != '':
-             utils.open_file(self.temp_test_dir)
+             utils.open_file(self, self.temp_test_dir)
 
         # Then show a dialogue window/desktop notification, if allowed
         if self.operation_dialogue_mode != 'default':
@@ -8866,20 +8940,20 @@ class TartubeApp(Gtk.Application):
             for video_obj in video_started_dict.values():
 
                 if video_obj.dbid in self.media_reg_dict:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
             for video_obj in video_stopped_dict.values():
 
                 if video_obj.dbid in self.media_reg_dict:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
         # Any code can check whether livestream operation is in progress, or
         #   not, by checking this IV
         self.livestream_manager_obj = None
         # If the automatic sort function in
-        #   mainwin.MainWin.video_catalogue_update_row was suppressed, perform
-        #   it now
-        if self.gtk_emulate_broken_flag:
+        #   mainwin.MainWin.video_catalogue_update_video() was suppressed,
+        #   perform it now
+        if self.catalogue_mode_type != 'grid' and self.gtk_emulate_broken_flag:
             self.main_win_obj.catalogue_listbox.invalidate_sort()
             self.main_win_obj.catalogue_listbox.show_all()
 
@@ -8905,7 +8979,7 @@ class TartubeApp(Gtk.Application):
 
                 if video_obj.dbid in self.media_reg_auto_open_dict \
                 and video_obj.source:
-                    utils.open_file(video_obj.source)
+                    utils.open_file(self, video_obj.source)
 
         # Play a sound effect (but only one) if any waiting livestream has
         #   gone live
@@ -9432,7 +9506,7 @@ class TartubeApp(Gtk.Application):
         # If the video's parent media data object (a channel, playlist or
         #   folder) is selected in the Video Index, update the Video Catalogue
         #   for the downloaded video
-        self.main_win_obj.video_catalogue_update_row(video_obj)
+        self.main_win_obj.video_catalogue_update_video(video_obj)
 
         # Update the Results List
         self.main_win_obj.results_list_add_row(
@@ -10082,7 +10156,7 @@ class TartubeApp(Gtk.Application):
         #   in the Video Catalogue), the new video itself won't be visible
         #   there yet
         # Make sure the video is visible, if appropriate
-        self.main_win_obj.video_catalogue_update_row(video_obj)
+        self.main_win_obj.video_catalogue_update_video(video_obj)
 
         return video_obj
 
@@ -10917,7 +10991,7 @@ class TartubeApp(Gtk.Application):
 
         # Remove the video from the catalogue, if present
         if not no_update_catalogue_flag:
-            self.main_win_obj.video_catalogue_delete_row(video_obj)
+            self.main_win_obj.video_catalogue_delete_video(video_obj)
 
         # Update rows in the Video Index, first checking that the parent
         #   container object is currently drawn there (which it might not be,
@@ -11405,10 +11479,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_bookmark_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_bookmark_count()
@@ -11457,7 +11535,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 self.fixed_all_folder.inc_bookmark_count()
@@ -11683,10 +11761,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_fav_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_fav_count()
@@ -11735,7 +11817,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 self.fixed_all_folder.inc_fav_count()
@@ -11852,10 +11934,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_live_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_live_count()
@@ -11938,7 +12024,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 if not convert_flag:
@@ -12043,10 +12129,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_missing_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_missing_count()
@@ -12100,7 +12190,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 self.fixed_all_folder.inc_missing_count()
@@ -12205,10 +12295,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_new_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_new_count()
@@ -12253,7 +12347,7 @@ class TartubeApp(Gtk.Application):
                     self.fixed_new_folder.inc_waiting_count()
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 self.fixed_all_folder.inc_new_count()
@@ -12356,10 +12450,14 @@ class TartubeApp(Gtk.Application):
                     if self.main_win_obj.video_index_current is not None \
                     and self.main_win_obj.video_index_current \
                     == self.fixed_waiting_folder.name:
-                        self.main_win_obj.video_catalogue_delete_row(video_obj)
+                        self.main_win_obj.video_catalogue_delete_video(
+                            video_obj,
+                        )
 
                     else:
-                        self.main_win_obj.video_catalogue_update_row(video_obj)
+                        self.main_win_obj.video_catalogue_update_video(
+                            video_obj,
+                        )
 
                 # Update other private folders
                 self.fixed_all_folder.dec_waiting_count()
@@ -12408,7 +12506,7 @@ class TartubeApp(Gtk.Application):
 
                 # Update the Video Catalogue, if that folder is the visible one
                 if not no_update_catalogue_flag:
-                    self.main_win_obj.video_catalogue_update_row(video_obj)
+                    self.main_win_obj.video_catalogue_update_video(video_obj)
 
                 # Update other private folders
                 self.fixed_all_folder.inc_waiting_count()
@@ -12430,7 +12528,8 @@ class TartubeApp(Gtk.Application):
 
     def mark_folder_hidden(self, folder_obj, flag):
 
-        """Called by callbacks in self.on_menu_show_hidden() and
+        """Called by callbacks in self.on_menu_show_hidden(),
+        .on_menu_hide_private() and
         mainwin.MainWin.on_video_index_hide_folder().
 
         Marks a folder as hidden (not visible in the Video Index) or not
@@ -14102,7 +14201,7 @@ class TartubeApp(Gtk.Application):
         path = video_obj.get_actual_path(self)
         if os.path.isfile(path):
 
-            utils.open_file(path)
+            utils.open_file(self, path)
 
         else:
 
@@ -14114,13 +14213,13 @@ class TartubeApp(Gtk.Application):
             for test_ext in (formats.VIDEO_FORMAT_LIST):
                 test_path = name + '.' + test_ext
                 if os.path.isfile(test_path):
-                    utils.open_file(test_path)
+                    utils.open_file(self, test_path)
                     return
 
             for test_ext in (formats.AUDIO_FORMAT_LIST):
                 test_path = name + '.' + test_ext
                 if os.path.isfile(test_path):
-                    utils.open_file(test_path)
+                    utils.open_file(self, test_path)
                     return
 
             # Video is completely missing
@@ -14900,8 +14999,12 @@ class TartubeApp(Gtk.Application):
 
         """Called by GObject timer created by self.start().
 
-        Once a second, check whether there are any mainwin.Catalogue objects to
-        add to the Video Catalogue and, if so, add them.
+        Several times a second, check whether there are any mainwin.Catalogue
+        objects to add to the Video Catalogue and, if so, adds them.
+
+        Optionally checks the number of columns that can fit in the available
+        space of the Video Catalogue grid (when visible), and increase/
+        reduces the size of the grid, if necessary.
 
         Returns:
 
@@ -14912,7 +15015,16 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
             utils.debug_time('app 12599 script_fast_timer_callback')
 
-        # Update the Video Catalogue
+        # Update the Video Catalogue, increasing/decreasing the number of
+        #   columns in the grid (if visible, and if necessary)
+        # This happens after the minimum required width of a gridbox is
+        #   established
+        if self.main_win_obj.catalogue_grid_rearrange_flag:
+            self.main_win_obj.video_catalogue_grid_check_size()
+
+        # If a list of videos, rather than a grid, is visible, then insert any
+        #   rows that were to be inserted, but which could not be a few moments
+        #   ago
         self.main_win_obj.video_catalogue_retry_insert_items()
 
         # Return 1 to keep the timer going
@@ -15392,7 +15504,7 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 13025 on_button_classic_dest_dir_open')
 
-        utils.open_file(self.classic_dir_list[0])
+        utils.open_file(self, self.classic_dir_list[0])
 
 
     def on_button_classic_download(self, action, par):
@@ -15525,7 +15637,7 @@ class TartubeApp(Gtk.Application):
         else:
 
             for video_path in video_list:
-                utils.open_file(video_path)
+                utils.open_file(self, video_path)
 
 
     def on_button_classic_redownload(self, action, par):
@@ -15668,6 +15780,27 @@ class TartubeApp(Gtk.Application):
                     worker_obj.video_downloader_obj.stop()
 
 
+    def on_button_cancel_date(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Changes the Video Catalogue page to the first one, after showing a page
+        matching a particular date.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13328 on_button_cancel_date')
+
+        self.main_win_obj.video_catalogue_unshow_date()
+
+
     def on_button_find_date(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -15730,14 +15863,14 @@ class TartubeApp(Gtk.Application):
                 else:
                     count += 1
 
-            # Find the corresponding page in the Video Catalogue...
-            page_num = math.ceil(count / self.catalogue_page_size)
-            # ...and make it visible
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
-                page_num,
-                True,           # Reset scrollbars
-                True,           # Don't cancel the filter, if applied
+            # (If the date is newer than all videos, then use the first video)
+            if count == 0:
+                count = 1
+
+            # Find the corresponding page in the Video Catalogue, and make it
+            #   visible
+            self.main_win_obj.video_catalogue_show_date(
+                math.ceil(count / self.catalogue_page_size),
             )
 
 
@@ -15898,49 +16031,7 @@ class TartubeApp(Gtk.Application):
             self.catalogue_show_filter_flag = False
 
         # Update the button in the Video Catalogue's toolbar
-        self.main_win_obj.update_show_filter_widgets()
-
-
-    def on_button_sort_type(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Sets the type of sorting applied to the Video Catalogue: alphabetically
-        or by date.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 13560 on_button_sort_type')
-
-        # Sanity check
-        if not self.main_win_obj.video_catalogue_dict:
-            return self.system_error(
-                154,
-                'Change catalogue sort type request failed sanity check',
-            )
-
-        # Toggle the flag, and update the icon on the toolbutton
-        if not self.catalogue_alpha_sort_flag:
-            self.catalogue_alpha_sort_flag = True
-        else:
-            self.catalogue_alpha_sort_flag = False
-
-        self.main_win_obj.update_alpha_sort_widgets()
-
-        # Redraw the Video Catalogue, switching to the first page
-        self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
-            1,
-            True,           # Reset scrollbars
-            True,           # Don't cancel the filter, if applied
-        )
+        self.main_win_obj.update_catalogue_filter_widgets()
 
 
     def on_button_stop_operation(self, action, par):
@@ -15984,9 +16075,9 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Toggles between simple and complex views in the Video Catalogue, and
-        between showing the names of each video's parent channel/playlist/
-        folder
+        Switches between Video Catalogue modes. Each mode specifies how videos
+        are displayed in the Video Catalogue, and what data is displayed for
+        each video.
 
         Args:
 
@@ -15999,20 +16090,34 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 13638 on_button_switch_view')
 
-        # There are four modes in a fixed sequence; switch to the next mode in
-        #   the sequence
-        if self.catalogue_mode == 'simple_hide_parent':
-            self.catalogue_mode = 'simple_show_parent'
-        elif self.catalogue_mode == 'simple_show_parent':
-            self.catalogue_mode = 'complex_hide_parent'
-        elif self.catalogue_mode == 'complex_hide_parent':
-            self.catalogue_mode = 'complex_hide_parent_ext'
-        elif self.catalogue_mode == 'complex_hide_parent_ext':
-            self.catalogue_mode = 'complex_show_parent'
-        elif self.catalogue_mode == 'complex_show_parent':
-            self.catalogue_mode = 'complex_show_parent_ext'
-        else:
-            self.catalogue_mode = 'simple_hide_parent'
+        # self.catalogue_mode_list provides an ordered list of values for
+        #   self.catalogue_mode and self.catalogue_mode_type
+        # Find the current setting in the list, and switch to the next setting
+        catalogue_mode_list = self.catalogue_mode_list.copy()
+        while catalogue_mode_list:
+
+            mini_list = catalogue_mode_list.pop(0)
+            if mini_list[0] == self.catalogue_mode:
+
+                if catalogue_mode_list:
+
+                    # Not at the end of the list yet
+                    next_mini_list = catalogue_mode_list[0]
+                    self.catalogue_mode = next_mini_list[0]
+                    self.catalogue_mode_type = next_mini_list[1]
+
+                else:
+
+                    # Go back to the beginning of the list
+                    first_mini_list = self.catalogue_mode_list[0]
+                    self.catalogue_mode = first_mini_list[0]
+                    self.catalogue_mode_type = first_mini_list[1]
+
+                break
+
+        # In case we are switching between two settings for videos displayed on
+        #   a grid, reset the minimum gridbox sizes for each thumbnail size
+        self.main_win_obj.video_catalogue_grid_reset_sizes()
 
         # Redraw the Video Catalogue, but only if something was already drawn
         #   there (and keep the current page number)
@@ -16666,7 +16771,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the Video Catalogue
         for video_obj in video_dict.values():
-            self.main_win_obj.video_catalogue_update_row(video_obj)
+            self.main_win_obj.video_catalogue_update_video(video_obj)
 
         # Show confirmation
         count = len(video_dict)
@@ -16846,7 +16951,37 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 14485 on_menu_go_website')
 
-        utils.open_file(__main__.__website__)
+        utils.open_file(self, __main__.__website__)
+
+
+    def on_menu_hide_private(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Hides all prviate media.Folder objects (except the 'All Videos'
+        folder).
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14689 on_menu_hide_private')
+
+        for name in self.media_name_dict:
+
+            dbid = self.media_name_dict[name]
+            media_data_obj = self.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Folder) \
+            and not media_data_obj.hidden_flag \
+            and media_data_obj.priv_flag \
+            and media_data_obj != self.fixed_all_folder:
+                self.mark_folder_hidden(media_data_obj, True)
 
 
     def on_menu_import_json(self, action, par):
@@ -17030,14 +17165,14 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 14669 on_menu_send_feedback')
 
-        utils.open_file(__main__.__website_bugs__)
+        utils.open_file(self, __main__.__website_bugs__)
 
 
     def on_menu_show_hidden(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Un-hides all hidden media.Folder objects (and their children)
+        Un-hides all hidden media.Folder objects (and their children).
 
         Args:
 
@@ -17688,6 +17823,39 @@ class TartubeApp(Gtk.Application):
         self.bandwidth_default = value
 
 
+    def set_catalogue_alpha_sort_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15556 set_catalogue_alpha_sort_flag')
+
+        if not flag:
+            self.catalogue_alpha_sort_flag = False
+        else:
+            self.catalogue_alpha_sort_flag = True
+
+
+    def set_catalogue_draw_frame_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15769 set_catalogue_draw_frame_flag')
+
+        if not flag:
+            self.catalogue_draw_frame_flag = False
+        else:
+            self.catalogue_draw_frame_flag = True
+
+
+    def set_catalogue_draw_icons_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15769 set_catalogue_draw_icons_flag')
+
+        if not flag:
+            self.catalogue_draw_icons_flag = False
+        else:
+            self.catalogue_draw_icons_flag = True
+
+
     def set_catalogue_page_size(self, size):
 
         if DEBUG_FUNC_FLAG:
@@ -17782,10 +17950,9 @@ class TartubeApp(Gtk.Application):
 
         self.custom_dl_divert_mode = value
 
-        # The Video Catalogue must be redrawn to reset the 'Other' label (but
-        #   only when ComplexCatalogueItems are visible)
-        if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent' \
+        # The Video Catalogue must be redrawn to reset labels (but not when
+        #   SimpleCatalogueItem are visible)
+        if self.catalogue_mode_type != 'simple' \
         and self.main_win_obj.video_index_current is not None:
 
             self.main_win_obj.video_catalogue_redraw_all(
@@ -17801,10 +17968,9 @@ class TartubeApp(Gtk.Application):
 
         self.custom_dl_divert_website = value
 
-        # The Video Catalogue must be redrawn to reset the 'Other' label (but
-        #   only when ComplexCatalogueItems are visible)
-        if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent' \
+        # The Video Catalogue must be redrawn to reset labels (but not when
+        #   SimpleCatalogueItem are visible)
+        if self.catalogue_mode_type != 'simple' \
         and self.main_win_obj.video_index_current is not None:
 
             self.main_win_obj.video_catalogue_redraw_all(
@@ -17820,10 +17986,9 @@ class TartubeApp(Gtk.Application):
 
         self.custom_invidious_mirror = value
 
-        # The Video Catalogue must be redrawn to reset the 'Invidious' label
-        #   (but only when ComplexCatalogueItems are visible)
-        if self.catalogue_mode != 'simple_hide_parent' \
-        and self.catalogue_mode != 'simple_show_parent' \
+        # The Video Catalogue must be redrawn to reset labels (but not when
+        #   SimpleCatalogueItem are visible)
+        if self.catalogue_mode_type != 'simple' \
         and self.main_win_obj.video_index_current is not None:
 
             self.main_win_obj.video_catalogue_redraw_all(
@@ -18869,6 +19034,14 @@ class TartubeApp(Gtk.Application):
             self.system_warning_show_flag = False
         else:
             self.system_warning_show_flag = True
+
+
+    def set_thumb_size_custom(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16235 set_thumb_size_custom')
+
+        self.thumb_size_custom = value
 
 
     def set_toolbar_hide_flag(self, flag):

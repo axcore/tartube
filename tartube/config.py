@@ -39,6 +39,7 @@ import mainwin
 import media
 import platform
 import re
+import sys
 import utils
 # Use same gettext translations
 from mainapp import _
@@ -7298,8 +7299,8 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             '<i>' + _(
-            'Debug messages are only visible in the terminal window. These' \
-            + ' settings are not saved',
+            'Debug messages are only visible in the terminal window (these' \
+            + ' settings are not saved)',
             ) + '</i>',
             0, 1, grid_width, 1,
         )
@@ -7379,6 +7380,27 @@ class SystemPrefWin(GenericPrefWin):
             self.on_system_debug_toggled,
             'downloads',
         )
+
+        # debug.txt
+        self.add_label(grid,
+            '<u>debug.txt</u>',
+            0, 7, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+            'Debugging messages are also visible if an empty file called' \
+            + ' debug.txt exists here:',
+            ) + '</i>',
+            0, 8, grid_width, 1,
+        )
+
+        self.entry = self.add_entry(grid,
+            os.path.abspath(os.path.join(sys.path[0], 'debug.txt')),
+            False,
+            0, 9, grid_width, 1,
+        )
+        self.entry.set_sensitive(False)
 
 
     def setup_filesystem_tab(self):
@@ -8026,7 +8048,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # ...with its own tabs
         self.setup_windows_main_window_tab(inner_notebook)
-        self.setup_windows_tabs_tab(inner_notebook)
+        self.setup_windows_videos_tab(inner_notebook)
         self.setup_windows_drag_tab(inner_notebook)
         self.setup_windows_system_tray_tab(inner_notebook)
         self.setup_windows_dialogues_tab(inner_notebook)
@@ -8086,155 +8108,210 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton4 = self.add_checkbutton(grid,
-            _('Show tooltips for videos, channels, playlists and folders'),
-            self.app_obj.show_tooltips_flag,
-            True,                   # Can be toggled by user
-            0, 4, 1, 1,
-        )
-        checkbutton4.connect('toggled', self.on_show_tooltips_toggled)
-
-        checkbutton5 = self.add_checkbutton(grid,
             _(
             'Replace stock icons with custom icons (in case stock icons' \
             + ' are not visible)',
             ),
             self.app_obj.show_custom_icons_flag,
             True,                   # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton4.connect('toggled', self.on_show_custom_icons_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Show tooltips for videos, channels, playlists and folders'),
+            self.app_obj.show_tooltips_flag,
+            True,                   # Can be toggled by user
             0, 5, 1, 1,
         )
-        checkbutton5.connect('toggled', self.on_show_custom_icons_toggled)
+        checkbutton5.connect('toggled', self.on_show_tooltips_toggled)
 
         checkbutton6 = self.add_checkbutton(grid,
-            _(
-            'Show smaller icons in the Video Index (left side of the' \
-            + ' Videos Tab)',
-            ),
-            self.app_obj.show_small_icons_in_index_flag,
-            True,                   # Can be toggled by user
-            0, 6, 1, 1,
-        )
-        checkbutton6.connect('toggled', self.on_show_small_icons_toggled)
-
-        checkbutton7 = self.add_checkbutton(grid,
-            _(
-            'In the Video Index, show detailed statistics about the videos' \
-            + ' in each channel / playlist / folder',
-            ),
-            self.app_obj.complex_index_flag,
-            True,               # Can be toggled by user
-            0, 7, 1, 1,
-        )
-        checkbutton7.connect('toggled', self.on_complex_button_toggled)
-
-        checkbutton8 = self.add_checkbutton(grid,
-            _(
-            'After clicking on a folder, automatically expand/collapse the' \
-            + ' tree around it',
-            ),
-            self.app_obj.auto_expand_video_index_flag,
-            True,                   # Can be toggled by user
-            0, 8, 1, 1,
-        )
-        # (signal_connect appears below)
-
-        checkbutton9 = self.add_checkbutton(grid,
-            _(
-            'Expand the whole tree, not just the level beneath the clicked' \
-            + ' folder',
-            ),
-            self.app_obj.full_expand_video_index_flag,
-            True,                   # Can be toggled by user
-            0, 9, 1, 1,
-        )
-        if not self.app_obj.auto_expand_video_index_flag:
-            checkbutton9.set_sensitive(False)
-        # (signal_connect appears below)
-
-        # (signal_connects from above)
-        checkbutton8.connect(
-            'toggled',
-            self.on_expand_tree_toggled,
-            checkbutton9,
-        )
-        checkbutton9.connect('toggled', self.on_expand_full_tree_toggled)
-
-        checkbutton10 = self.add_checkbutton(grid,
             _(
             'Disable the \'Download all\' buttons in the toolbar and the' \
             + ' Videos Tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 10, 1, 1,
+            0, 6, 1, 1,
         )
-        checkbutton10.connect('toggled', self.on_disable_dl_all_toggled)
+        checkbutton6.connect('toggled', self.on_disable_dl_all_toggled)
 
-
-    def setup_windows_tabs_tab(self, inner_notebook):
-
-        """Called by self.setup_windows_tab().
-
-        Sets up the 'Tabs' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(_('_Tabs'), inner_notebook)
-
-        # Tab preferences
-        self.add_label(grid,
-            '<u>' + _('Tab preferences') + '</u>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'In the Videos Tab, show \'today\' and \'yesterday\' as the' \
-            + ' date, when possible',
-            ),
-            self.app_obj.show_pretty_dates_flag,
-            True,                   # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        checkbutton.connect('toggled', self.on_pretty_date_button_toggled)
-
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'In the Progress Tab, hide finished videos / channels / playlists',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 2, 1, 1,
+            0, 7, 1, 1,
         )
-        checkbutton2.connect('toggled', self.on_hide_button_toggled)
+        checkbutton7.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _('In the Progress Tab, show results in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 3, 1, 1,
+            0, 8, 1, 1,
         )
-        checkbutton3.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton8.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 4, 1, 1,
+            0, 9, 1, 1,
         )
-        checkbutton4.connect(
+        checkbutton9.connect(
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings Tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 5, 1, 1,
+            0, 10, 1, 1,
         )
-        checkbutton5.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton10.connect('toggled', self.on_system_keep_button_toggled)
+
+
+    def setup_windows_videos_tab(self, inner_notebook):
+
+        """Called by self.setup_windows_tab().
+
+        Sets up the 'Tabs' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(_('_Videos'), inner_notebook)
+
+        grid_width = 2
+
+        # Video Index preferences
+        self.add_label(grid,
+            '<u>' + _('Video Index (left side of the Videos Tab)') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'Show smaller icons in the Video Index',
+            ),
+            self.app_obj.show_small_icons_in_index_flag,
+            True,                   # Can be toggled by user
+            0, 2, grid_width, 1,
+        )
+        checkbutton.connect('toggled', self.on_show_small_icons_toggled)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'In the Video Index, show detailed statistics about the videos' \
+            + ' in each channel / playlist / folder',
+            ),
+            self.app_obj.complex_index_flag,
+            True,               # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton2.connect('toggled', self.on_complex_button_toggled)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+            'After clicking on a folder, automatically expand/collapse the' \
+            + ' tree around it',
+            ),
+            self.app_obj.auto_expand_video_index_flag,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        # (signal_connect appears below)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Expand the whole tree, not just the level beneath the clicked' \
+            + ' folder',
+            ),
+            self.app_obj.full_expand_video_index_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        if not self.app_obj.auto_expand_video_index_flag:
+            checkbutton4.set_sensitive(False)
+        # (signal_connect appears below)
+
+        # (signal_connects from above)
+        checkbutton3.connect(
+            'toggled',
+            self.on_expand_tree_toggled,
+            checkbutton4,
+        )
+        checkbutton4.connect('toggled', self.on_expand_full_tree_toggled)
+
+        # Video Catalogue preferences
+        self.add_label(grid,
+            '<u>' + _('Video Catalogue (right side of the Videos Tab)') \
+            + '</u>',
+            0, 6, grid_width, 1,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Show \'today\' and \'yesterday\' as the date, when possible',
+            ),
+            self.app_obj.show_pretty_dates_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
+        )
+        checkbutton5.connect('toggled', self.on_pretty_date_button_toggled)
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _(
+            'Draw a frame around each video',
+            ),
+            self.app_obj.catalogue_draw_frame_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton6.connect('toggled', self.on_draw_frame_button_toggled)
+
+        checkbutton7 = self.add_checkbutton(grid,
+            _(
+            'Draw status icons for each video',
+            ),
+            self.app_obj.catalogue_draw_icons_flag,
+            True,                   # Can be toggled by user
+            0, 9, grid_width, 1,
+        )
+        checkbutton7.connect('toggled', self.on_draw_icons_button_toggled)
+
+        self.add_label(grid,
+            _('Thumbnail size (when videos are displayed on a grid)'),
+            0, 10, 1, 1,
+        )
+
+        store = Gtk.ListStore(str, str)
+        thumb_size_list = self.app_obj.thumb_size_list.copy()
+        while thumb_size_list:
+            store.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 1, 10, 1, 1)
+        combo.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+
+        # (IV is in groups of two, in the form [translation, actual value])
+        combo.set_active(
+            int(
+                self.app_obj.thumb_size_list.index(
+                    self.app_obj.thumb_size_custom,
+                ) / 2,
+            ),
+        )
+        combo.connect('changed', self.on_thumb_size_combo_changed)
 
 
     def setup_windows_drag_tab(self, inner_notebook):
@@ -10941,7 +11018,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_complex_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_windows_main_window_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Switches between simple/complex views in the Video Index.
 
@@ -11909,6 +11986,45 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_video_source_flag(False)
 
 
+    def on_draw_frame_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_videos_tab().
+
+        Enables/disables drawing a frame around videos in the Video Catalogue.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        # (Changing the checkbutton in the Video Catalogue's toolbar sets the
+        #   IV)
+        self.app_obj.main_win_obj.catalogue_frame_button.set_active(
+            checkbutton.get_active(),
+        )
+
+
+    def on_draw_icons_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_videos_tab().
+
+        Enables/disables drawing status icons besides videos in the Video
+        Catalogue.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        # (Changing the checkbutton in the Video Catalogue's toolbar sets the
+        #   IV)
+        self.app_obj.main_win_obj.catalogue_icons_button.set_active(
+            checkbutton.get_active(),
+        )
+
+
     def on_enable_livestreams_button_toggled(self, checkbutton, checkbutton2,
     spinbutton, spinbutton2):
 
@@ -11946,7 +12062,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_expand_tree_toggled(self, checkbutton, checkbutton2):
 
-        """Called from callback in self.setup_windows_main_window_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables auto-expansion of the Video Index after a folder is
         selected (clicked).
@@ -11972,7 +12088,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_expand_full_tree_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_windows_main_window_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables full auto-expansion of the Video Index after a folder
         is selected (clicked).
@@ -12951,7 +13067,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_pretty_date_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_windows_main_window_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables 'today' and 'yesterday' rather than a numerical date
         in the Videos Tab.
@@ -13426,7 +13542,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_show_classic_mode_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_windows_tabs_tab().
+        """Called from a callback in self.setup_windows_main_window_tab().
 
         Enables/disables automatically opening the Classic Mode tab on startup.
 
@@ -13473,7 +13589,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_show_small_icons_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_windows_main_window_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables smaller icons in the Video Index.
 
@@ -13818,6 +13934,24 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.play_sound()
+
+
+    def on_thumb_size_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_windows_videos_tab().
+
+        Sets the size of thumbanils in the Video Catalogue grid.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        # (Changing the combo in the Video Catalogue's toolbar sets the IV)
+        self.app_obj.main_win_obj.catalogue_thumb_combo.set_active(
+            combo.get_active(),
+        )
 
 
     def on_update_combo_changed(self, combo):

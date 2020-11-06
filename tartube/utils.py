@@ -1253,7 +1253,7 @@ def move_thumbnail_to_subdir(app_obj, video_obj):
                 pass
 
 
-def open_file(uri):
+def open_file(app_obj, uri):
 
     """Can be called by anything.
 
@@ -1262,15 +1262,31 @@ def open_file(uri):
 
     Args:
 
+        app_obj (mainapp.TartubeApp): The main application
+
         uri (str): The URI to open
 
     """
 
     if sys.platform == "win32":
-        os.startfile(uri)
+
+        try:
+            os.startfile(uri)
+        except:
+            app_obj.system_error(
+                501,
+                'Could not open \'' + str(uri) + '\'',
+            )
+
     else:
-        opener ="open" if sys.platform == "darwin" else "xdg-open"
-        subprocess.call([opener, uri])
+
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        # (Assume a return code of 0 on success)
+        if subprocess.call([opener, uri]):
+            app_obj.system_error(
+                502,
+                'Could not open \'' + str(uri) + '\'',
+            )
 
 
 def parse_ytdl_options(options_string):
@@ -1351,6 +1367,85 @@ def shorten_string(string, num_chars):
         string = string[:num_chars] + '...'
 
     return string
+
+
+def shorten_string_two_lines(string, num_chars):
+
+    """Can be called by anything.
+
+    Modified version of shorten_string(). Reduces the string to two lines
+    (separated by a newline character). Each line has the specified maximum
+    length. If there is too much text to fit on the second line, truncates it
+    and adds an ellipsis.
+
+    Args:
+
+        string (string): The string to convert
+
+        num_chars (int): The maximum length of the desired string
+
+    Returns:
+
+        The converted string
+
+    """
+
+    if string and len(string) > num_chars:
+
+        line_list = []
+        current_line = ''
+
+        for word in string.split():
+
+            if len(word) > num_chars:
+
+                # To keep the code simple, the algorithm ends here, with this
+                #   word on a separate line. This may produce a return string
+                #   containing only line
+                if current_line != '':
+                    line_list.append(current_line)
+
+                line_list.append(word[0:num_chars] + '...')
+                break
+
+            else:
+
+                if current_line != '':
+                    mod_line = current_line + ' ' + word
+                else:
+                    mod_line = word
+
+                if len(mod_line) > num_chars:
+
+                    if current_line != '':
+                        line_list.append(current_line)
+
+                    current_line = word
+
+                else:
+
+                    current_line = mod_line
+
+        line_list.append(current_line)
+
+        # Dispense with everything but the first two lines
+        line_count = len(line_list)
+        if line_count > 2:
+
+            return line_list[0] + '\n' + line_list[1] + '...'
+
+        elif line_count == 2:
+
+            return line_list[0] + '\n' + line_list[1]
+
+        else:
+
+            return line_list[0]
+
+    else:
+
+        # 'string' is empty or short, so there's no need to split it up at all
+        return string
 
 
 def strip_whitespace(string):

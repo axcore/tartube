@@ -692,6 +692,32 @@ SMALL_ICON_DICT = {
     'warning_small': 'warning.png',
 }
 
+THUMB_ICON_DICT = {
+    'thumb_none_tiny': 'thumb_none_tiny.png',
+    'thumb_none_small': 'thumb_none_small.png',
+    'thumb_none_medium': 'thumb_none_medium.png',
+    'thumb_none_large': 'thumb_none_large.png',
+    'thumb_none_enormous': 'thumb_none_enormous.png',
+
+    'thumb_left_tiny': 'thumb_left_tiny.png',
+    'thumb_left_small': 'thumb_left_small.png',
+    'thumb_left_medium': 'thumb_left_medium.png',
+    'thumb_left_large': 'thumb_left_large.png',
+    'thumb_left_enormous': 'thumb_left_enormous.png',
+
+    'thumb_right_tiny': 'thumb_right_tiny.png',
+    'thumb_right_small': 'thumb_right_small.png',
+    'thumb_right_medium': 'thumb_right_medium.png',
+    'thumb_right_large': 'thumb_right_large.png',
+    'thumb_right_enormous': 'thumb_right_enormous.png',
+
+    'thumb_both_tiny': 'thumb_both_tiny.png',
+    'thumb_both_small': 'thumb_both_small.png',
+    'thumb_both_medium': 'thumb_both_medium.png',
+    'thumb_both_large': 'thumb_both_large.png',
+    'thumb_both_enormous': 'thumb_both_enormous.png',
+}
+
 EXTERNAL_ICON_DICT = {
     'ytdl-gui': 'youtube-dl-gui.png',
 }

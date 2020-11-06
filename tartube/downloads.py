@@ -937,11 +937,10 @@ class DownloadWorker(threading.Thread):
                 if self.download_item_obj.operation_type != 'classic' \
                 and return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
-                and app_obj.catalogue_mode != 'simple_hide_parent' \
-                and app_obj.catalogue_mode != 'simple_show_parent':
+                and app_obj.catalogue_mode_type != 'simple':
                     GObject.timeout_add(
                         0,
-                        app_obj.main_win_obj.video_catalogue_update_row,
+                        app_obj.main_win_obj.video_catalogue_update_video,
                         media_data_obj,
                     )
 
@@ -3505,7 +3504,7 @@ class VideoDownloader(object):
             # Otherwise, just update the Video Catalogue
             GObject.timeout_add(
                 0,
-                app_obj.main_win_obj.video_catalogue_update_row,
+                app_obj.main_win_obj.video_catalogue_update_video,
                 video_obj,
             )
 

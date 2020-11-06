@@ -1016,7 +1016,7 @@ If you want something simpler, then you can click the **Classic Mode** Tab for a
 
 Because the videos aren't in a database, you can move them anywhere you want (once you've finished downloading them).
 
-**PROTIP:** If you *only* use this tab, you can tell **Tartube** to open it automatically. Click **Edit > System preferences... > Windows > Tabs** and select **When Tartube starts, automatically open the Classic Mode Tab**.
+**PROTIP:** If you *only* use this tab, you can tell **Tartube** to open it automatically. Click **Edit > System preferences... > Windows > Main window** and select **When Tartube starts, automatically open the Classic Mode Tab**.
 
 6.22 Livestreams
 ----------------
@@ -1224,7 +1224,7 @@ A: Please report any problems to the authors at our `Github page <https://github
 
 It may be helpful to turn on debug messages (which are visible in a terminal window). There are several ways to enable debug messages:
 
-- Place a file called **debug.txt** in the main folder/directory (the one that contains **setup.py**). This works on MS Windows, and if running directly from the source code on other operating systems
+- Place an (empty) file called **debug.txt** in the same folder/directory as the tartube executable. If you're not sure where that is, click **Edit > System preferences... > General > Debugging**
 
 - Edit the source code files **mainapp.py**, **mainwin.py** and **downloads.py**. In each file, change the value of **DEBUG_FUNC_FLAG** to **True** (note the capitalisation)
 
@@ -1441,9 +1441,11 @@ For some reason, youtube-dl ignores the download option unless the format is spe
 
 *Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
 
+A: In the main menu, click **Media > Hide (most) system folders**
+
 A: Right-click the folders you don't want to see, and select **Folder actions > Hide folder**. To reverse this step, in the main menu click **Media > Show hidden folders**
 
-A: In the main menu, click **Edit > System preferences... > Windows > Main window > Show smaller icons in the Video Index** to select it
+A: In the main menu, click **Edit > System preferences... > Windows > Videos > Show smaller icons in the Video Index** to select it
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop the channels/playlists into it
 

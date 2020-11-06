@@ -28,10 +28,12 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 # Import other modules
 import datetime
+import functools
 from gi.repository import Gio
 import os
 import platform
 from gi.repository import Pango
+import math
 import re
 import sys
 import threading
@@ -180,6 +182,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_scrolled = None          # Gtk.ScrolledWindow
         self.catalogue_frame = None             # Gtk.Frame
         self.catalogue_listbox = None           # Gtk.ListBox
+        self.catalogue_grid = None              # Gtk.Grid
         self.catalogue_toolbar = None           # Gtk.Toolbar
         self.catalogue_page_entry = None        # Gtk.Entry
         self.catalogue_last_entry = None        # Gtk.Entry
@@ -194,7 +197,11 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_show_filter_button = None
                                                 # Gtk.ToolButton
         self.catalogue_toolbar2 = None          # Gtk.Toolbar
-        self.catalogue_sort_button = None       # Gtk.ToolButton
+        self.catalogue_sort_combo = None        # Gtk.ComboBox
+        self.catalogue_thumb_combo = None       # Gtk.ComboBox
+        self.catalogue_frame_button = None      # Gtk.CheckButton
+        self.catalogue_icons_button = None      # Gtk.CheckButton
+        self.catalogue_toolbar3 = None          # Gtk.Toolbar
         self.catalogue_filter_entry = None      # Gtk.Entry
         self.catalogue_regex_togglebutton = None
                                                 # Gtk.ToggleButton
@@ -203,6 +210,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_cancel_filter_button = None
                                                 # Gtk.ToolButton
         self.catalogue_find_date_button = None  # Gtk.ToolButton
+        self.catalogue_cancel_date_button = None
+                                                # Gtk.ToolButton
         # (from self.setup_progress_tab)
         self.progress_paned = None              # Gtk.VPaned
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
@@ -264,14 +273,52 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_stop_button = None         # Gtk.Button
         self.classic_download_button = None     # Gtk.Button
 
+
         # IV list - other
         # ---------------
         # Size (in pixels) of gaps between main window widgets
         self.spacing_size = self.app_obj.default_spacing_size
-        # Standard size of video thumbnails in the Video Catalogue, in pixels,
-        #   assuming that the actual thumbnail file is 1280x720
-        self.thumb_width = 128
-        self.thumb_height = 76
+
+        # IVs used when vides in the Video Index are displayed in a grid. The
+        #   size of the grid changes as the window is resized. Each location in
+        #   the grid can be occupied by a gridbox (mainwin.CatalogueGridBox),
+        #   containing a single video
+        # The size of the window, the last time a certain signal_connect fired,
+        #   so we can spot real changes to its size, when the same signal fires
+        #   in the future
+        self.win_last_width = None
+        self.win_last_height = None
+        # Also keep track of the position of the slider in the Video Tab's
+        #   Gtk.HPaned, so that when the user actually drags the slider, we can
+        #   adjust the size of the grid
+        self.paned_last_width = None
+
+        # The horizontal size of the grid (the number of gridboxes that can
+        #   fit on a single row of the grid)
+        self.catalogue_grid_column_count = 1
+        # mainapp.TartubeApp defines several thumbnail sizes, from 'tiny' to
+        #   'enormous'
+        # In order to work out how many gridboxes can fit on a single row of
+        #   the grid, we have to know the minimum required size for each
+        #   gridbox. That size is different for each thumbnail size
+        # After drawing the first gridbox(es), the minimum required size is not
+        #   available immediately (for obscure Gtk reasons). Therefore, we
+        #   initially prevent each gridbox from expanding horizontally until
+        #   the size has been obtained; at that point, the grid is redrawn
+        # A dictionary of minimum required sizes, in the form
+        #   key: thumbnail size (one of the keys in
+        #       mainapp.TartubeApp.thumb_size_dict)
+        #   value: The minimum required size for a gridbox (in pixels), or
+        #       'None' if that value is not known yet
+        self.catalogue_grid_width_dict = {}        # Initialised below
+        # Gridboxes may be allowed to expand horizontally to fill the available
+        #   space, or not, depending on aesthetic requirements. This flag is
+        #   True if gridboxes are allowed to expand, False if not
+        self.catalogue_grid_expand_flag = False
+        # Flag set to True by self.video_catalogue_grid_set_gridbox_width(), so
+        #   that mainapp.TartubeApp.script_fast_timer_callback() knows it must
+        #   call self.video_catalogue_grid_check_size()
+        self.catalogue_grid_rearrange_flag = False
 
         # Paths to Tartube standard icon files. Dictionary in the form
         #   key - a string like 'video_both_large'
@@ -346,21 +393,22 @@ class MainWin(Gtk.ApplicationWindow):
 
         # The Video Catalogue is the right-hand side of the main window. When
         #   the user clicks on a channel, playlist or folder, all the videos
-        #   it contains are displayed in the Video catalogue (replacing any
+        #   it contains are displayed in the Video Catalogue (replacing any
         #   previous contents)
-        # Dictionary of mainwin.SimpleCatalogueItem or
-        #   mainwin.ComplexCatalogueItem objects (depending on the current
-        #   value of self.catalogue_mode)
+        # Dictionary of mainwin.SimpleCatalogueItem,
+        #   mainwin.ComplexCatalogueItem or mainwin.GridCatalogueItem objects
+        #   (depending on the current value of
+        #   mainapp.TartubeApp.catalogue_mode)
         # There is one catalogue item object for each row that's currently
         #   visible in the Video Catalogue
         # Dictionary in the form
-        #   key = dbid (of the mainWin.SimpleCatalogueItem or
-        #       mainWin.ComplexCatalogueItem, which matches the dbid of its
-        #       media.Video object)
+        #   key = dbid (of the mainwin.SimpleCatalogueItem,
+        #       mainwin.ComplexCatalogueItem or mainwin.GridCatalogueItem which
+        #       matches the dbid of its media.Video object)
         #   value = the catalogue item itself
         self.video_catalogue_dict = {}
-        # Rows are added to the catalogue in a call to
-        #   self.video_catalogue_insert_item()
+        # Catalogue itme objects are added to the catalogue in a call to
+        #   self.video_catalogue_insert_video()
         # If Gtk issues a warning, complaining that the Gtk.ListBox is being
         #   sorted, the row (actually a CatalogueRow object) is added to this
         #   list temporarily, and then periodic calls to
@@ -379,6 +427,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   livestreams
         self.waiting_colour = Gdk.RGBA(1, 0, 0, 0.1)
         self.live_colour = Gdk.RGBA(0, 1, 0, 0.1)
+        # Background colours used in the Video Catalogue, in grid mode, to
+        #   highlight livestreams and/or selected videos
+        self.grid_select_colour = Gdk.RGBA(0, 0, 1, 0.1)
+        self.grid_waiting_select_colour = Gdk.RGBA(1, 0, 1, 0.1)
+        self.grid_live_select_colour = Gdk.RGBA(0, 1, 1, 0.1)
 
         # The video catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
@@ -601,6 +654,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Create GdkPixbuf.Pixbufs for all Tartube standard icons
         self.setup_pixbufs()
+        # Initialise minimum sizes for gridboxes
+        self.video_catalogue_grid_reset_sizes()
         # Set up the main window
         self.setup_win()
 
@@ -673,6 +728,13 @@ class MainWin(Gtk.ApplicationWindow):
                     rel_path = formats.SMALL_ICON_DICT[key]
                     full_path = os.path.abspath(
                         os.path.join(icon_dir_path, 'small', rel_path),
+                    )
+                    self.icon_dict[key] = full_path
+
+                for key in formats.THUMB_ICON_DICT:
+                    rel_path = formats.THUMB_ICON_DICT[key]
+                    full_path = os.path.abspath(
+                        os.path.join(icon_dir_path, 'thumbs', rel_path),
                     )
                     self.icon_dict[key] = full_path
 
@@ -756,6 +818,10 @@ class MainWin(Gtk.ApplicationWindow):
         # Intercept the user's attempts to close the window, so we can close to
         #   the system tray, if required
         self.connect('delete_event', self.on_delete_event)
+
+        # Detect window resize events, so the size of the Video Catalogue grid
+        #   (when visible) can be adjusted smoothly
+        self.connect('size_allocate', self.on_window_size_allocate)
 
         # Allow the user to drag-and-drop videos (for example, from the web
         #   browser) into the main window, adding it the currently selected
@@ -943,8 +1009,16 @@ class MainWin(Gtk.ApplicationWindow):
         media_sub_menu.append(self.switch_view_menu_item)
         self.switch_view_menu_item.set_action_name('app.switch_view_menu')
 
+        # Separator
+        media_sub_menu.append(Gtk.SeparatorMenuItem())
+
+        self.hide_private_menu_item = \
+        Gtk.MenuItem.new_with_mnemonic(_('_Hide (most) system folders'))
+        media_sub_menu.append(self.hide_private_menu_item)
+        self.hide_private_menu_item.set_action_name('app.hide_private_menu')
+
         self.show_hidden_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic(_('Show _hidden folders'))
+        Gtk.MenuItem.new_with_mnemonic(_('Sh_ow hidden folders'))
         media_sub_menu.append(self.show_hidden_menu_item)
         self.show_hidden_menu_item.set_action_name('app.show_hidden_menu')
 
@@ -1404,6 +1478,12 @@ class MainWin(Gtk.ApplicationWindow):
         # Left-hand side
         self.video_index_vbox = Gtk.VBox()
         self.videos_paned.add1(self.video_index_vbox)
+        # (Detect the user dragging the paned slider by checking the size of
+        #   the vbox)
+        self.video_index_vbox.connect(
+            'size_allocate',
+            self.on_paned_size_allocate,
+        )
 
         self.video_index_frame = Gtk.Frame()
         self.video_index_vbox.pack_start(
@@ -1499,8 +1579,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         toolitem = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem, -1)
-        label = Gtk.Label(_('Page') + '  ')
-        toolitem.add(label)
+        toolitem.add(Gtk.Label(_('Page') + '  '))
 
         toolitem2 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem2, -1)
@@ -1519,8 +1598,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         toolitem3 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem3, -1)
-        label2 = Gtk.Label('  /  ')
-        toolitem3.add(label2)
+        toolitem3.add(Gtk.Label('  /  '))
 
         toolitem4 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem4, -1)
@@ -1535,8 +1613,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         toolitem5 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem5, -1)
-        label3 = Gtk.Label('  ' + _('Size') + '  ')
-        toolitem5.add(label3)
+        toolitem5.add(Gtk.Label('  ' + _('Size') + '  '))
 
         toolitem6 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem6, -1)
@@ -1669,53 +1746,112 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Second toolbar, which is not actually added to the VBox until the
-        #   call to self.update_show_filter_widgets()
+        #   call to self.update_catalogue_filter_widgets()
         self.catalogue_toolbar2 = Gtk.Toolbar()
         self.catalogue_toolbar2.set_visible(False)
 
         toolitem7 = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem7, -1)
-        label4 = Gtk.Label(_('Sort by'))
-        toolitem7.add(label4)
+        toolitem7.add(Gtk.Label(_('Sort') + '   '))
 
-        if not self.app_obj.show_custom_icons_flag:
-            self.catalogue_sort_button \
-            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SPELL_CHECK)
-        else:
-            self.catalogue_sort_button = Gtk.ToolButton.new()
-            self.catalogue_sort_button.set_icon_widget(
-                Gtk.Image.new_from_pixbuf(
-                    self.pixbuf_dict['stock_spell_check'],
-                ),
-            )
-        self.catalogue_toolbar2.insert(self.catalogue_sort_button, -1)
-        self.catalogue_sort_button.set_sensitive(False)
-        self.catalogue_sort_button.set_tooltip_text(_('Sort alphabetically'))
-        self.catalogue_sort_button.set_action_name(
-            'app.sort_type_toolbutton',
+        toolitem8 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem8, -1)
+
+        store = Gtk.ListStore(str, str)
+        store.append( [ _('Upload time') , 'time'] )
+        store.append( [ _('Name') , 'name'] )
+
+        self.catalogue_sort_combo = Gtk.ComboBox.new_with_model(store)
+        toolitem8.add(self.catalogue_sort_combo)
+        renderer_text = Gtk.CellRendererText()
+        self.catalogue_sort_combo.pack_start(renderer_text, True)
+        self.catalogue_sort_combo.add_attribute(renderer_text, 'text', 0)
+        self.catalogue_sort_combo.set_entry_text_column(0)
+        self.catalogue_sort_combo.set_sensitive(False)
+        # (Can't use a named action with a Gtk.ComboBox, so use a callback
+        #   instead)
+        self.catalogue_sort_combo.connect(
+            'changed',
+            self.on_video_catalogue_sort_combo_changed,
+        )
+
+        toolitem9 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem9, -1)
+        toolitem9.add(Gtk.Label('   ' + _('Thumbnail size') + '   '))
+
+        toolitem10 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem10, -1)
+
+        store2 = Gtk.ListStore(str, str)
+        thumb_size_list = self.app_obj.thumb_size_list.copy()
+        while thumb_size_list:
+            store2.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
+
+        self.catalogue_thumb_combo = Gtk.ComboBox.new_with_model(store2)
+        toolitem10.add(self.catalogue_thumb_combo)
+        renderer_text = Gtk.CellRendererText()
+        self.catalogue_thumb_combo.pack_start(renderer_text, True)
+        self.catalogue_thumb_combo.add_attribute(renderer_text, 'text', 0)
+        self.catalogue_thumb_combo.set_entry_text_column(0)
+        self.catalogue_thumb_combo.set_sensitive(False)
+        self.catalogue_thumb_combo.connect(
+            'changed',
+            self.on_video_catalogue_thumb_combo_changed,
         )
 
         # Separator
         self.catalogue_toolbar2.insert(Gtk.SeparatorToolItem(), -1)
 
-        toolitem8 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem8, -1)
-        label5 = Gtk.Label(_('Filter') + '  ')
-        toolitem8.add(label5)
+        toolitem11 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem11, -1)
 
-        toolitem9 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem9, -1)
+        self.catalogue_frame_button = Gtk.CheckButton()
+        toolitem11.add(self.catalogue_frame_button)
+        self.catalogue_frame_button.set_label(_('Frame') + '   ')
+        self.catalogue_frame_button.set_active(
+            self.app_obj.catalogue_draw_frame_flag,
+        )
+        self.catalogue_frame_button.connect(
+            'toggled',
+            self.on_draw_frame_checkbutton_changed,
+        )
+
+        toolitem12 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem12, -1)
+
+        self.catalogue_icons_button = Gtk.CheckButton()
+        toolitem12.add(self.catalogue_icons_button)
+        self.catalogue_icons_button.set_label(_('Icons'))
+        self.catalogue_icons_button.set_active(
+            self.app_obj.catalogue_draw_frame_flag,
+        )
+        self.catalogue_icons_button.connect(
+            'toggled',
+            self.on_draw_icons_checkbutton_changed,
+        )
+
+        # Third toolbar, which is likewise not added to the VBox until the call
+        #   to self.update_catalogue_filter_widgets()
+        self.catalogue_toolbar3 = Gtk.Toolbar()
+        self.catalogue_toolbar3.set_visible(False)
+
+        toolitem13 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem13, -1)
+        toolitem13.add(Gtk.Label(_('Filter') + '  '))
+
+        toolitem14 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem14, -1)
         self.catalogue_filter_entry = Gtk.Entry()
-        toolitem9.add(self.catalogue_filter_entry)
+        toolitem14.add(self.catalogue_filter_entry)
         self.catalogue_filter_entry.set_width_chars(16)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_filter_entry.set_tooltip_text(_('Enter search text'))
 
-        toolitem10 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem10, -1)
+        toolitem15 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem15, -1)
         self.catalogue_regex_togglebutton \
         = Gtk.ToggleButton(_('Regex'))
-        toolitem10.add(self.catalogue_regex_togglebutton)
+        toolitem15.add(self.catalogue_regex_togglebutton)
         self.catalogue_regex_togglebutton.set_sensitive(False)
         if not self.app_obj.catologue_use_regex_flag:
             self.catalogue_regex_togglebutton.set_active(False)
@@ -1736,7 +1872,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_apply_filter_button.set_icon_widget(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
             )
-        self.catalogue_toolbar2.insert(self.catalogue_apply_filter_button, -1)
+        self.catalogue_toolbar3.insert(self.catalogue_apply_filter_button, -1)
         self.catalogue_apply_filter_button.set_sensitive(False)
         self.catalogue_apply_filter_button.set_tooltip_text(
             _('Filter videos'),
@@ -1753,7 +1889,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_cancel_filter_button.set_icon_widget(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_cancel']),
             )
-        self.catalogue_toolbar2.insert(self.catalogue_cancel_filter_button, -1)
+        self.catalogue_toolbar3.insert(self.catalogue_cancel_filter_button, -1)
         self.catalogue_cancel_filter_button.set_sensitive(False)
         self.catalogue_cancel_filter_button.set_tooltip_text(
             _('Cancel filter'),
@@ -1763,12 +1899,11 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Separator
-        self.catalogue_toolbar2.insert(Gtk.SeparatorToolItem(), -1)
+        self.catalogue_toolbar3.insert(Gtk.SeparatorToolItem(), -1)
 
-        toolitem11 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem11, -1)
-        label6 = Gtk.Label(_('Find date'))
-        toolitem11.add(label6)
+        toolitem16 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem16, -1)
+        toolitem16.add(Gtk.Label(_('Find date')))
 
         if not self.app_obj.show_custom_icons_flag:
             self.catalogue_find_date_button \
@@ -1778,13 +1913,30 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_find_date_button.set_icon_widget(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
             )
-        self.catalogue_toolbar2.insert(self.catalogue_find_date_button, -1)
+        self.catalogue_toolbar3.insert(self.catalogue_find_date_button, -1)
         self.catalogue_find_date_button.set_sensitive(False)
         self.catalogue_find_date_button.set_tooltip_text(
             _('Find videos by date'),
         )
         self.catalogue_find_date_button.set_action_name(
             'app.find_date_toolbutton',
+        )
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_cancel_date_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CANCEL)
+        else:
+            self.catalogue_cancel_date_button = Gtk.ToolButton.new()
+            self.catalogue_cancel_date_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_cancel']),
+            )
+        self.catalogue_toolbar3.insert(self.catalogue_cancel_date_button, -1)
+        self.catalogue_cancel_date_button.set_sensitive(False)
+        self.catalogue_cancel_date_button.set_tooltip_text(
+            _('Cancel find videos by date'),
+        )
+        self.catalogue_cancel_date_button.set_action_name(
+            'app.cancel_date_toolbutton',
         )
 
         # Video catalogue
@@ -3435,6 +3587,127 @@ class MainWin(Gtk.ApplicationWindow):
             self.download_media_button.set_sensitive(False)
 
 
+    def update_catalogue_filter_widgets(self):
+
+        """Called by mainapp.TartubeApp.start() and .on_button_show_filter().
+
+        The toolbar just below the Video Catalogue consists of three rows. Only
+        the first is visible by default. Show or hide the remaining rows, as
+        required.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3292 update_catalogue_filter_widgets')
+
+        if not self.app_obj.catalogue_show_filter_flag:
+
+            # Hide the second/third rows
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_show_filter_button.set_stock_id(
+                    Gtk.STOCK_SORT_ASCENDING,
+                )
+            else:
+                self.catalogue_show_filter_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_show_filter']
+                    ),
+                )
+
+            self.catalogue_show_filter_button.set_tooltip_text(
+                _('Show filter options'),
+            )
+
+            if self.catalogue_toolbar2 \
+            in self.catalogue_toolbar_vbox.get_children():
+                self.catalogue_toolbar_vbox.remove(self.catalogue_toolbar2)
+                self.catalogue_toolbar_vbox.remove(self.catalogue_toolbar3)
+                self.catalogue_toolbar_vbox.show_all()
+
+        else:
+
+            # Show the second/third rows
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_show_filter_button.set_stock_id(
+                    Gtk.STOCK_SORT_DESCENDING,
+                )
+            else:
+                self.catalogue_show_filter_button.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_hide_filter']
+                    ),
+                )
+
+            self.catalogue_show_filter_button.set_tooltip_text(
+                _('Hide filter options'),
+            )
+
+            if not self.catalogue_toolbar2 \
+            in self.catalogue_toolbar_vbox.get_children():
+
+                self.catalogue_toolbar_vbox.pack_start(
+                    self.catalogue_toolbar2,
+                    False,
+                    False,
+                    0,
+                )
+
+                self.catalogue_toolbar_vbox.pack_start(
+                    self.catalogue_toolbar3,
+                    False,
+                    False,
+                    0,
+                )
+
+                self.catalogue_toolbar_vbox.show_all()
+
+                # After the parent self.catalogue_toolbar2 is added to its
+                #   VBox, the 'Regex' button is not desensitised correctly
+                #   (for reasons unknown)
+                # Desensitise it, if it should be desensitised
+                if self.video_index_current is None \
+                or not self.video_catalogue_dict:
+                    self.catalogue_regex_togglebutton.set_sensitive(False)
+
+
+    def update_catalogue_sort_widgets(self):
+
+        """Called by mainapp.TartubeApp.start().
+
+        Videos in the Video Catalogue can be sorted by upload time (default),
+        or alphabetically. On startup, set the correct value of the combobox.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3351 update_catalogue_sort_widgets')
+
+        if not self.app_obj.catalogue_alpha_sort_flag:
+            self.catalogue_sort_combo.set_active(0)
+        else:
+            self.catalogue_sort_combo.set_active(1)
+
+
+    def update_catalogue_thumb_widgets(self):
+
+        """Called by mainapp.TartubeApp.start().
+
+        When arranged on a grid, thumbnails in the Video Catalogue can be shown
+        in a variety of different sizes. On startup, set the correct value of
+        the combobox.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3351 update_catalogue_thumb_widgets')
+
+        # (IV is in groups of two, in the form [translation, actual value])
+        self.catalogue_thumb_combo.set_active(
+            int(
+                self.app_obj.thumb_size_list.index(
+                    self.app_obj.thumb_size_custom,
+                ) / 2,
+            ),
+        )
+
+
     def notify_desktop(self, title=None, msg=None, icon_path=None, url=None):
 
         """Can be called by anything.
@@ -3504,127 +3777,6 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Notification is ready; show it
             notify_obj.show()
-
-
-    def update_show_filter_widgets(self):
-
-        """Called by mainapp.TartubeApp.start() and .on_button_show_filter().
-
-        The toolbar just below the Video Catalogue consists of two rows, the
-        second of which is hidden by default. Show or hide the second row,
-        as required.
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3292 update_show_filter_widgets')
-
-        if not self.app_obj.catalogue_show_filter_flag:
-
-            # Hide the second row
-            if not self.app_obj.show_custom_icons_flag:
-                self.catalogue_show_filter_button.set_stock_id(
-                    Gtk.STOCK_SORT_ASCENDING,
-                )
-            else:
-                self.catalogue_show_filter_button.set_icon_widget(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['stock_show_filter']
-                    ),
-                )
-
-            self.catalogue_show_filter_button.set_tooltip_text(
-                _('Show filter options'),
-            )
-
-            if self.catalogue_toolbar2 \
-            in self.catalogue_toolbar_vbox.get_children():
-                self.catalogue_toolbar_vbox.remove(self.catalogue_toolbar2)
-                self.catalogue_toolbar_vbox.show_all()
-
-        else:
-
-            # Show the second row
-            if not self.app_obj.show_custom_icons_flag:
-                self.catalogue_show_filter_button.set_stock_id(
-                    Gtk.STOCK_SORT_DESCENDING,
-                )
-            else:
-                self.catalogue_show_filter_button.set_icon_widget(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['stock_hide_filter']
-                    ),
-                )
-
-            self.catalogue_show_filter_button.set_tooltip_text(
-                _('Hide filter options'),
-            )
-
-            if not self.catalogue_toolbar2 \
-            in self.catalogue_toolbar_vbox.get_children():
-                self.catalogue_toolbar_vbox.pack_start(
-                    self.catalogue_toolbar2,
-                    False,
-                    False,
-                    0,
-                )
-
-                self.catalogue_toolbar_vbox.show_all()
-
-                # After the parent self.catalogue_toolbar2 is added to its
-                #   VBox, the 'Regex' button is not desensitised correctly
-                #   (for reasons unknown)
-                # Desensitise it, if it should be desensitised
-                if self.video_index_current is None \
-                or not self.video_catalogue_dict:
-                    self.catalogue_regex_togglebutton.set_sensitive(False)
-
-
-    def update_alpha_sort_widgets(self):
-
-        """Called by mainapp.TartubeApp.start() and .on_button_sort_type().
-
-        Videos in the Video Catalogue can be sorted by date (default), or
-        alphabetically. When the user switches between them, update the
-        widgets themselves.
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3351 update_alpha_sort_widgets')
-
-        if not self.app_obj.catalogue_alpha_sort_flag:
-
-            if not self.app_obj.show_custom_icons_flag:
-                self.catalogue_sort_button.set_stock_id(
-                    Gtk.STOCK_SPELL_CHECK,
-                )
-            else:
-                self.catalogue_sort_button.set_icon_widget(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['stock_spell_check']
-                    ),
-                )
-
-            self.catalogue_sort_button.set_tooltip_text(
-                _('Sort alphabetically'),
-            )
-
-        else:
-
-            if not self.app_obj.show_custom_icons_flag:
-                self.catalogue_sort_button.set_stock_id(
-                    Gtk.STOCK_INDEX,
-                )
-            else:
-                self.catalogue_sort_button.set_icon_widget(
-                    Gtk.Image.new_from_pixbuf(
-                        self.pixbuf_dict['stock_index']
-                    ),
-                )
-
-            self.catalogue_sort_button.set_tooltip_text(_('Sort by date'))
-
-        # (New icon is not visible without a .show_all() call)
-        self.show_all()
 
 
     # (Auto-sort functions for main window widgets)
@@ -3723,36 +3875,95 @@ class MainWin(Gtk.ApplicationWindow):
                 return 0
 
 
-    def video_catalogue_auto_sort(self, row1, row2, data, notify):
+    def video_catalogue_generic_auto_sort(self, row1, row2, data, notify):
 
-        """Sorting function created by self.video_catalogue_reset().
+        """Sorting function created by self.video_catalogue_reset(), when
+        videos are displayed in a Gtk.ListBox.
 
-        Automatically sorts rows in the Video Catalogue, by date (default) or
-        alphabetically, depending on settings.
+        Automatically sorts rows in the Video Catalogue, by upload time
+        (default) or alphabetically, depending on settings.
+
+        This is a wrapper function, so that self.video_catalogue_compare() can
+        be called, regardless of whether the Video Catalogue is using a listbox
+        or a grid.
 
         Args:
 
-            row1, row2 (mainwin.CatalogueRow): Two rows in the liststore, one
-                of which must be sorted before the other
+            row1, row2 (mainwin.CatalogueRow): Two rows in the Gtk.ListBox's
+                model, one of which must be sorted before the other
 
             data (None): Ignored
 
             notify (False): Ignored
 
         Returns:
-            -1 if row1 comes before row2, 1 if row2 comes before row1, 0 if
-                their order should not be changed
+            -1 if row1 comes before row2, 1 if row2 comes before row1 (the code
+                does not return 0)
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3489 video_catalogue_auto_sort')
+            utils.debug_time('mwn 3489 video_catalogue_generic_auto_sort')
 
-        # Get the media.Video objects displayed on each row
-        obj1 = row1.video_obj
-        obj2 = row2.video_obj
+        return self.video_catalogue_compare(row1.video_obj, row2.video_obj)
 
-        # Sort by date
+
+    def video_catalogue_grid_auto_sort(self, gridbox1, gridbox2):
+
+        """Sorting function created by self.video_catalogue_reset(), when
+        videos are displayed on a Gtk.Grid.
+
+        Automatically sorts gridboxes in the Video Catalogue, by upload time
+        (default) or alphabetically, depending on settings.
+
+        This is a wrapper function, so that self.video_catalogue_compare() can
+        be called, regardless of whether the Video Catalogue is using a listbox
+        or a grid.
+
+        Args:
+
+            gridbox1, gridbox2 (mainwin.CatalogueGridBox): Two gridboxes, one
+                of which must be sorted before the other
+
+        Returns:
+            -1 if gridbox1 comes before gridbox2, 1 if gridbox2 comes before
+                gridbox1 (the code does not return 0)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3489 video_catalogue_grid_auto_sort')
+
+        return self.video_catalogue_compare(
+            gridbox1.video_obj,
+            gridbox2.video_obj,
+        )
+
+
+    def video_catalogue_compare(self, obj1, obj2):
+
+        """Called by self.video_catalogue_generic_auto_sort() or
+        self.video_catalogue_grid_auto_sort().
+
+        Automatically sorts videos in the Video Catalogue, by upload time
+        (default) or alphabetically, depending on settings.
+
+
+        Args:
+
+            obj1, obj2 (media.Video): Two media data objects, one of which must
+                be sorted before the other
+
+        Returns:
+            -1 if obj1 comes before obj2, 1 if obj2 comes before obj1 (the code
+                does not return 0)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3489 video_catalogue_compare')
+
+        # Sort by upload time
         if not self.app_obj.catalogue_alpha_sort_flag:
 
             # Sort videos by livestream mode (if applicable), then by playlist
@@ -3787,8 +3998,6 @@ class MainWin(Gtk.ApplicationWindow):
                             return -1
                         elif obj1.receive_time < obj2.receive_time:
                             return 1
-                        else:
-                            return 0
                     # ...but for everything else, the sorting algorithm is the
                     #   same as for media.GenericRemoteContainer.do_sort(), in
                     #   which we assume the website is sending us videos,
@@ -3798,21 +4007,19 @@ class MainWin(Gtk.ApplicationWindow):
                             return -1
                         elif obj1.receive_time > obj2.receive_time:
                             return 1
-                        else:
-                            return 0
-                else:
-                    return 0
-            else:
-                return 0
 
-        # Sort alphabetically
+        # If the flag to sort alphabetically is set, or if the two objects
+        #   can't be sorted by upload time, then sort alphabetically
+        # If the videos have the same name, sort by .dbid, so that videos are
+        #   listed in a predictable order in successive sorts
+        if obj1.name.lower() < obj2.name.lower():
+            return -1
+        elif obj1.name.lower() > obj2.name.lower():
+            return 1
+        elif obj1.dbid < obj2.ddib:
+            return -1
         else:
-            if obj1.name.lower() < obj2.name.lower():
-                return -1
-            elif obj1.name.lower() > obj2.name.lower():
-                return 1
-            else:
-                return 0
+            return 1
 
 
     # (Popup menu functions for main window widgets)
@@ -4409,8 +4616,9 @@ class MainWin(Gtk.ApplicationWindow):
 
     def video_catalogue_popup_menu(self, event, video_obj):
 
-        """Called by mainwin.SimpleCatalogueItem.on_right_click_row() and
-        mainwin.ComplexCatalogueItem.on_right_click_row().
+        """Called by mainwin.SimpleCatalogueItem.on_right_click_row(),
+        mainwin.ComplexCatalogueItem.on_right_click_row() or
+        mainwin.GridCatalogueItem.on_click_box().
 
         When the user right-clicks on the Video Catalogue, shows a context-
         sensitive popup menu.
@@ -4427,22 +4635,52 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 4130 video_catalogue_popup_menu')
 
-        # Use a different popup menu for multiple selected rows
-        # Because of Gtk weirdness, check that the clicked row is actually
-        #   one of those selected
-        catalogue_item_obj = self.video_catalogue_dict[video_obj.dbid]
-        row_list = self.catalogue_listbox.get_selected_rows()
-        if catalogue_item_obj.catalogue_row in row_list \
-        and len(row_list) > 1:
+        # Use a different popup menu for multiple selected videos
+        video_list = []
+        if self.app_obj.catalogue_mode_type != 'grid':
 
-            return self.video_catalogue_multi_popup_menu(event, row_list)
+            # Because of Gtk weirdness, check that the clicked row is actually
+            #   one of those selected
+            catalogue_item_obj = self.video_catalogue_dict[video_obj.dbid]
+            row_list = self.catalogue_listbox.get_selected_rows()
+            if catalogue_item_obj.catalogue_row in row_list \
+            and len(row_list) > 1:
+
+                # Convert row_list, a list of mainwin.CatalogueRow objects,
+                #   into a list of media.Video objects
+                video_list = []
+                for row in row_list:
+                    video_list.append(row.video_obj)
+
+                return self.video_catalogue_multi_popup_menu(event, video_list)
+
+            else:
+
+                # Otherwise, right-clicking a row selects it (and unselects
+                #   everything else)
+                self.catalogue_listbox.unselect_all()
+                self.catalogue_listbox.select_row(
+                    catalogue_item_obj.catalogue_row,
+                )
 
         else:
 
-            # Otherwise, right-clicking a row selects it (and unselects
-            #   everything else)
-            self.catalogue_listbox.unselect_all()
-            self.catalogue_listbox.select_row(catalogue_item_obj.catalogue_row)
+            # For our custom Gtk.Grid selection code, the same principle
+            #   applies
+            for catalogue_item_obj in self.video_catalogue_dict.values():
+                if catalogue_item_obj.selected_flag:
+                    video_list.append(catalogue_item_obj.video_obj)
+
+            if video_obj in video_list and len(video_list) > 1:
+
+                return self.video_catalogue_multi_popup_menu(event, video_list)
+
+            else:
+
+                self.video_catalogue_grid_select(
+                    'default',  # Like a left-click, with no SHIFT/CTRL key
+                    self.video_catalogue_dict[video_obj.dbid],
+                )
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
@@ -5069,31 +5307,25 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.popup(None, None, None, None, event.button, event.time)
 
 
-    def video_catalogue_multi_popup_menu(self, event, row_list):
+    def video_catalogue_multi_popup_menu(self, event, video_list):
 
         """Called by self.video_catalogue_popup_menu().
 
-        When multiple rows are selected in the Video Catalogue and the user
+        When multiple videos are selected in the Video Catalogue and the user
         right-clicks one of them, shows a context-sensitive popup menu.
 
         Args:
 
             event (Gdk.EventButton): The mouse click event
 
-            row_list (list): List of mainwin.CatalogueRow objects that are
-                currently selected (each one corresponding to a single
-                media.Video object)
+            video_list (list): List of media.Video objects that are currently
+                selected (each one corresponding to a single media.Video
+                object)
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 4503 video_catalogue_multi_popup_menu')
-
-        # Convert row_list, a list of mainwin.CatalogueRow objects, into a
-        #   list of media.Video objects
-        video_list = []
-        for row in row_list:
-            video_list.append(row.video_obj)
 
         # So we can desensitise some menu items, work out in advance whether
         #   any of the selected videos are marked as downloaded, or have a
@@ -7190,42 +7422,83 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Reset IVs (when called by anything)
         self.video_catalogue_dict = {}
+        self.video_catalogue_temp_list = []
+        self.catalogue_grid = None
+        self.catalogue_listbox = None
+        self.catalogue_grid_expand_flag = False
 
         # Set up the widgets
         self.catalogue_scrolled = Gtk.ScrolledWindow()
         self.catalogue_frame.add(self.catalogue_scrolled)
-        self.catalogue_scrolled.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC,
-        )
 
-        self.catalogue_listbox = Gtk.ListBox()
-        self.catalogue_scrolled.add(self.catalogue_listbox)
-        self.catalogue_listbox.set_can_focus(False)
-        self.catalogue_listbox.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
-        # (Without this line, it's not possible to unselect rows by clicking
-        #   on one of them)
-        self.catalogue_listbox.set_activate_on_single_click(False)
+        if self.app_obj.catalogue_mode_type != 'grid':
 
-        # Set up drag and drop from the listbox to an external application
-        #   (for example, an FFmpeg batch converter)
-        self.catalogue_listbox.drag_source_set(
-            Gdk.ModifierType.BUTTON1_MASK,
-            [],
-            Gdk.DragAction.COPY,
-        )
-        self.catalogue_listbox.drag_source_add_text_targets()
-        self.catalogue_listbox.connect(
-            'drag-data-get',
-            self.on_video_catalogue_drag_data_get,
-        )
+            self.catalogue_scrolled.set_policy(
+                Gtk.PolicyType.AUTOMATIC,
+                Gtk.PolicyType.AUTOMATIC,
+            )
 
-        # Set up automatic sorting of rows in the listbox
-        self.catalogue_listbox.set_sort_func(
-            self.video_catalogue_auto_sort,
-            None,
-            False,
-        )
+            self.catalogue_listbox = Gtk.ListBox()
+            self.catalogue_scrolled.add(self.catalogue_listbox)
+            self.catalogue_listbox.set_can_focus(False)
+            self.catalogue_listbox.set_selection_mode(
+                Gtk.SelectionMode.MULTIPLE,
+            )
+            # (Without this line, it's not possible to unselect rows by
+            #   clicking on one of them)
+            self.catalogue_listbox.set_activate_on_single_click(False)
+
+            # Set up drag and drop from the listbox to an external application
+            #   (for example, an FFmpeg batch converter)
+            self.catalogue_listbox.drag_source_set(
+                Gdk.ModifierType.BUTTON1_MASK,
+                [],
+                Gdk.DragAction.COPY,
+            )
+            self.catalogue_listbox.drag_source_add_text_targets()
+            self.catalogue_listbox.connect(
+                'drag-data-get',
+                self.on_video_catalogue_drag_data_get,
+            )
+
+            # Set up automatic sorting of rows in the listbox
+            self.catalogue_listbox.set_sort_func(
+                self.video_catalogue_generic_auto_sort,
+                None,
+                False,
+            )
+
+        else:
+
+            # (No horizontal scrolling in grid mode)
+            self.catalogue_scrolled.set_policy(
+                Gtk.PolicyType.NEVER,
+                Gtk.PolicyType.AUTOMATIC,
+            )
+
+            self.catalogue_grid = Gtk.Grid()
+            self.catalogue_scrolled.add(self.catalogue_grid)
+            self.catalogue_grid.set_can_focus(False)
+            self.catalogue_grid.set_border_width(self.spacing_size)
+            self.catalogue_grid.set_column_spacing(self.spacing_size)
+            self.catalogue_grid.set_row_spacing(self.spacing_size)
+
+            # (Video selection is handled by custom code, not calls to Gtk)
+
+            # Set up drag and drop from the listbox to an external application
+            #   (for example, an FFmpeg batch converter)
+            self.catalogue_grid.drag_source_set(
+                Gdk.ModifierType.BUTTON1_MASK,
+                [],
+                Gdk.DragAction.COPY,
+            )
+            self.catalogue_grid.drag_source_add_text_targets()
+            self.catalogue_grid.connect(
+                'drag-data-get',
+                self.on_video_catalogue_drag_data_get,
+            )
+
+            # (Automatic sorting is handled by custom code, not calls to Gtk)
 
         # Make the changes visible
         self.catalogue_frame.show_all()
@@ -7244,7 +7517,8 @@ class MainWin(Gtk.ApplicationWindow):
         Depending on the value of self.catalogue_mode, the Video Catalogue
         consists of a list of mainwin.SimpleCatalogueItem or
         mainwin.ComplexCatalogueItem objects, one for each row in the
-        Gtk.ListBox (corresponding to a single video).
+        Gtk.ListBox; or a mainwin.GridCatalogueItem, one for each gridbox in
+        the Gtk.Grid. Each row/gridbox corresponds to a single video.
 
         The video catalogue splits its video list into pages (as Gtk struggles
         with a list of hundreds, or thousands, of videos). Only videos on the
@@ -7255,11 +7529,12 @@ class MainWin(Gtk.ApplicationWindow):
         If a filter has been applied, only videos matching the search text
         are visible in the catalogue.
 
-        This function clears the previous contents of the Gtk.ListBox and
-        resets IVs.
+        This function clears the previous contents of the Gtk.ListBox/Gtk.Grid
+        and resets IVs.
 
-        Then, it adds new rows to the Gtk.ListBox and creates a new
-        mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem object for
+        Then, it adds new rows to the Gtk.ListBox, or new gridboxes to the
+        Gtk.Grid, and creates a new mainwin.SimpleCatalogueItem,
+        mainwin.ComplexCatalogueItem or mainwin.GridCatalogueItem object for
         each video on the page.
 
         Args:
@@ -7270,10 +7545,9 @@ class MainWin(Gtk.ApplicationWindow):
             page_num (int): The number of the page to be drawn (a value in the
                 range 1 to self.catalogue_toolbar_last_page)
 
-            reset_scroll_flag (bool): Set to True when called by
-                self.on_video_index_selection_changed(). The scrollbars must
-                always be reset when switching between channels/playlist/
-                folders
+            reset_scroll_flag (bool): True if the vertical scrollbar must be
+                reset (for example, when switching between channels/playlists/
+                folders)
 
             no_cancel_filter_flag (bool): By default, if the filter is applied,
                 it is cancelled by this function. Set to True if the calling
@@ -7352,33 +7626,57 @@ class MainWin(Gtk.ApplicationWindow):
                     continue
 
                 # Create a new catalogue item object for the video
-                if self.app_obj.catalogue_mode == 'simple_hide_parent' \
-                or self.app_obj.catalogue_mode == 'simple_show_parent':
-                    catalogue_item_obj = SimpleCatalogueItem(
-                        self,
-                        child_obj,
-                    )
-
+                if self.app_obj.catalogue_mode_type == 'simple':
+                    catalogue_item_obj = SimpleCatalogueItem(self, child_obj)
+                elif self.app_obj.catalogue_mode_type == 'complex':
+                    catalogue_item_obj = ComplexCatalogueItem(self, child_obj)
                 else:
-                    catalogue_item_obj = ComplexCatalogueItem(
-                        self,
-                        child_obj,
-                    )
+                    catalogue_item_obj = GridCatalogueItem(self, child_obj)
 
+                # Update IVs
                 self.video_catalogue_dict[catalogue_item_obj.dbid] = \
                 catalogue_item_obj
 
-                # Add a row to the Gtk.ListBox
+                # Add the video to the Video Catalogue
+                if self.app_obj.catalogue_mode_type != 'grid':
 
-                # Instead of using Gtk.ListBoxRow directly, use a wrapper class
-                #   so we can quickly retrieve the video displayed on each row
-                wrapper_obj = CatalogueRow(child_obj)
-                self.catalogue_listbox.add(wrapper_obj)
+                    # Add a row to the Gtk.ListBox
 
-                # Populate the row with widgets...
-                catalogue_item_obj.draw_widgets(wrapper_obj)
-                # ...and give them their initial appearance
-                catalogue_item_obj.update_widgets()
+                    # Instead of using Gtk.ListBoxRow directly, use a wrapper
+                    #   class so we can quickly retrieve the video displayed on
+                    #   each row
+                    wrapper_obj = CatalogueRow(child_obj)
+                    self.catalogue_listbox.add(wrapper_obj)
+
+                    # Populate the row with widgets...
+                    catalogue_item_obj.draw_widgets(wrapper_obj)
+                    # ...and give them their initial appearance
+                    catalogue_item_obj.update_widgets()
+
+                else:
+
+                    # Add a gridbox to the Gtk.Grid
+
+                    # Instead of using Gtk.Frame directly, use a wrapper class
+                    #   so we can quickly retrieve the video displayed on each
+                    #   row
+                    wrapper_obj = CatalogueGridBox(self, child_obj)
+
+                    # (Place the first video at 0, 0, so in that case, 'count'
+                    #   must be 0)
+                    count = len(self.video_catalogue_dict) - 1
+                    y_pos = int(count / self.catalogue_grid_column_count)
+                    x_pos = count % self.catalogue_grid_column_count
+                    wrapper_obj.add_to_grid(x_pos, y_pos)
+
+                    # Populate the gridbox with widgets...
+                    catalogue_item_obj.draw_widgets(wrapper_obj)
+                    # ...and give them their initial appearance
+                    catalogue_item_obj.update_widgets()
+
+                    # Gridboxes could be made (un)expandable, depending on the
+                    #   number of gridboxes now on the grid
+                    self.video_catalogue_grid_check_expand()
 
         # Update widgets in the toolbar, now that we know the number of child
         #   videos
@@ -7392,22 +7690,27 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_scrolled.get_vadjustment().set_value(0)
 
         # Procedure complete
-        self.catalogue_listbox.show_all()
+        if self.app_obj.catalogue_mode_type != 'grid':
+            self.catalogue_listbox.show_all()
+        else:
+            self.catalogue_grid.show_all()
 
 
-    def video_catalogue_update_row(self, video_obj):
+    def video_catalogue_update_video(self, video_obj):
 
         """Can be called by anything.
 
         This function is called with a media.Video object. If that video is
         already visible in the Video Catalogue, updates the corresponding
         mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem (which
-        updates the widgets in the Gtk.ListBox).
+        updates the widgets in the Gtk.ListBox), or the corresponding
+        mainwin.GridCatalogueItem (which updates the widgets in the Gtk.Grid).
 
         If the video is now yet visible in the Video Catalogue, but should be
-        drawn on the current page, creates a new mainwin.SimpleCatalogueItem or
-        mainwin.ComplexCatalogueItem object and adds a row to the Gtk.ListBox,
-        removing an existing catalogue item to make room, if necessary.
+        drawn on the current page, creates a new mainwin.SimpleCatalogueItem,
+        mainwin.ComplexCatalogueItem or mainwin.GridCatalogueItem and adds it
+        to the Gtk.ListBox or Gtk.Grid, removing an existing catalogue item to
+        make room, if necessary.
 
         Args:
 
@@ -7416,7 +7719,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6724 video_catalogue_update_row')
+            utils.debug_time('mwn 6724 video_catalogue_update_video')
 
         app_obj = self.app_obj
 
@@ -7461,15 +7764,15 @@ class MainWin(Gtk.ApplicationWindow):
         ):
             return
 
-        # Does a mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem
-        #   object already exist for this video?
+        # Does a mainwin.SimpleCatalogueItem, mainwin.ComplexCatalogueItem or
+        #   mainwin.GridCatalogueItem object already exist for this video?
         already_exist_flag = False
         if video_obj.dbid in self.video_catalogue_dict:
 
             already_exist_flag = True
 
             # Update the catalogue item object, which updates the widgets in
-            #   the Gtk.ListBox
+            #   the Gtk.ListBox/Gtk.Grid
             catalogue_item_obj = self.video_catalogue_dict[video_obj.dbid]
             catalogue_item_obj.update_widgets()
 
@@ -7542,11 +7845,18 @@ class MainWin(Gtk.ApplicationWindow):
             #   visible, but still are
             for dbid in visible_dict:
                 catalogue_item_obj = self.video_catalogue_dict[dbid]
-                self.catalogue_listbox.remove(
-                    catalogue_item_obj.catalogue_row,
-                )
 
-                del self.video_catalogue_dict[dbid]
+                if self.app_obj.catalogue_mode_type != 'grid':
+
+                    self.catalogue_listbox.remove(
+                        catalogue_item_obj.catalogue_row,
+                    )
+
+                else:
+
+                    self.catalogue_grid.remove(
+                        catalogue_item_obj.catalogue_gridbox,
+                    )
 
             # Add any new catalogue items for videos which should be
             #   visible, but aren't
@@ -7556,7 +7866,11 @@ class MainWin(Gtk.ApplicationWindow):
                 missing_obj = app_obj.media_reg_dict[dbid]
 
                 # Create a new catalogue item
-                self.video_catalogue_insert_item(missing_obj)
+                self.video_catalogue_insert_video(missing_obj)
+
+            # Update IVs
+            for dbid in visible_dict:
+                del self.video_catalogue_dict[dbid]
 
         # Update widgets in the toolbar
         self.video_catalogue_toolbar_update(
@@ -7564,29 +7878,41 @@ class MainWin(Gtk.ApplicationWindow):
             sibling_video_count,
         )
 
-        # Force the Gtk.ListBox to sort its rows, so that videos are displayed
-        #   in the correct order
-        # v1.3.112 this call is suspected of causing occasional crashes due to
-        #   Gtk issues. Disable it, if a download/refresh/tidy/livestream
-        #   operation is in progress
-        if not app_obj.gtk_emulate_broken_flag or (
-            not app_obj.download_manager_obj \
-            and not app_obj.refresh_manager_obj \
-            and not app_obj.tidy_manager_obj \
-            and not app_obj.livestream_manager_obj
-        ):
-            self.catalogue_listbox.invalidate_sort()
+        # Sort the visible list
+        if self.app_obj.catalogue_mode_type != 'grid':
+
+            # Force the Gtk.ListBox to sort its rows, so that videos are
+            #   displayed in the correct order
+            # v1.3.112 this call is suspected of causing occasional crashes due
+            #   to Gtk issues. Disable it, if a download/refresh/tidy/
+            #   livestream operation is in progress
+            if not app_obj.gtk_emulate_broken_flag or (
+                not app_obj.download_manager_obj \
+                and not app_obj.refresh_manager_obj \
+                and not app_obj.tidy_manager_obj \
+                and not app_obj.livestream_manager_obj
+            ):
+                self.catalogue_listbox.invalidate_sort()
+
+        else:
+
+            # After sorting gridboxes, rearrange them on the Gtk.Grid
+            self.video_catalogue_grid_rearrange()
 
         # Procedure complete
-        self.catalogue_listbox.show_all()
+        if self.app_obj.catalogue_mode_type != 'grid':
+            self.catalogue_listbox.show_all()
+        else:
+            self.catalogue_grid.show_all()
 
 
-    def video_catalogue_insert_item(self, video_obj):
+    def video_catalogue_insert_video(self, video_obj):
 
-        """Called by self.video_catalogue_update_row() (only).
+        """Called by self.video_catalogue_update_video() (only).
 
-        Adds a new mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem
-        to the Video Catalogue.
+        Adds a new mainwin.SimpleCatalogueItem, mainwin.ComplexCatalogueItem
+        or mainwin.GridCatalogueItem to the Video Catalogue. Each catalogue
+        item handles a single video.
 
         Args:
 
@@ -7596,54 +7922,75 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6905 video_catalogue_insert_item')
+            utils.debug_time('mwn 6905 video_catalogue_insert_video')
 
         # Create the new catalogue item
-        if self.app_obj.catalogue_mode == 'simple_hide_parent' \
-        or self.app_obj.catalogue_mode == 'simple_show_parent':
-            catalogue_item_obj = SimpleCatalogueItem(
-                self,
-                video_obj,
-            )
-
+        if self.app_obj.catalogue_mode_type == 'simple':
+            catalogue_item_obj = SimpleCatalogueItem(self, video_obj)
+        elif self.app_obj.catalogue_mode_type == 'grid':
+            catalogue_item_obj = ComplexCatalogueItem(self, video_obj)
         else:
-            catalogue_item_obj = ComplexCatalogueItem(
-                self,
-                video_obj,
-            )
+            catalogue_item_obj = GridCatalogueItem(self, video_obj)
 
         self.video_catalogue_dict[video_obj.dbid] = catalogue_item_obj
 
-        # Add a row to the Gtk.ListBox
+        if self.app_obj.catalogue_mode_type != 'grid':
 
-        # Instead of using Gtk.ListBoxRow directly, use a wrapper
-        #   class so we can quickly retrieve the video displayed on
-        #   each row
-        wrapper_obj = CatalogueRow(video_obj)
+            # Add a row to the Gtk.ListBox
 
-        # On rare occasions, the line below sometimes causes a warning,
-        #   'Accessing a sequence while it is being sorted or seached is not
-        #   allowed'
-        # If this happens, add it to a temporary list of rows to be added to
-        #   the listbox by self.video_catalogue_retry_insert_items()
-        try:
-            self.catalogue_listbox.add(wrapper_obj)
-        except:
-            self.video_catalogue_temp_list.append(wrapper_obj)
+            # Instead of using Gtk.ListBoxRow directly, use a wrapper class so
+            #   we can quickly retrieve the video displayed on each row
+            wrapper_obj = CatalogueRow(video_obj)
 
-        # Populate the row with widgets...
-        catalogue_item_obj.draw_widgets(wrapper_obj)
-        # ...and give them their initial appearance
-        catalogue_item_obj.update_widgets()
+            # On rare occasions, the line below sometimes causes a warning,
+            #   'Accessing a sequence while it is being sorted or seached is
+            #   not allowed'
+            # If this happens, add it to a temporary list of rows to be added
+            #   to the listbox by self.video_catalogue_retry_insert_items()
+            try:
+                self.catalogue_listbox.add(wrapper_obj)
+            except:
+                self.video_catalogue_temp_list.append(wrapper_obj)
+
+            # Populate the row with widgets...
+            catalogue_item_obj.draw_widgets(wrapper_obj)
+            # ...and give them their initial appearance
+            catalogue_item_obj.update_widgets()
+
+        else:
+
+            # Add a gridbox to the Gtk.Grid
+
+            # Instead of using Gtk.Frame directly, use a wrapper class so we
+            #   can quickly retrieve the video displayed on each row
+            wrapper_obj = CatalogueGridBox(self, video_obj)
+
+            # (Place the first video at 0, 0, so in that case, count must be 0)
+            count = len(self.video_catalogue_dict) - 1
+            y_pos = int(count / self.catalogue_grid_column_count)
+            x_pos = count % self.catalogue_grid_column_count
+            wrapper_obj.add_to_grid(x_pos, y_pos)
+
+            # Populate the gridbox with widgets...
+            catalogue_item_obj.draw_widgets(wrapper_obj)
+            # ...and give them their initial appearance
+            catalogue_item_obj.update_widgets()
+
+            # Gridboxes could be made (un)expandable, depending on the number
+            #   of gridboxes now on the grid, and the number of columns allowed
+            #   in the grid
+            self.video_catalogue_grid_check_expand()
 
 
     def video_catalogue_retry_insert_items(self):
 
         """Called by mainapp.TartubeApp.script_fast_timer_callback().
 
-        If an earlier call to self.video_catalogue_insert_item() failed, one
+        If an earlier call to self.video_catalogue_insert_video() failed, one
         or more CatalogueRow objects are waiting to be added to the Video
         Catalogue. Add them, if so.
+
+        (Not called when videos are arranged on a grid.)
         """
 
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
@@ -7679,13 +8026,17 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_listbox.show_all()
 
 
-    def video_catalogue_delete_row(self, video_obj):
+    def video_catalogue_delete_video(self, video_obj):
 
         """Can be called by anything.
 
         This function is called with a media.Video object. If that video is
         already visible in the Video Catalogue, removes the corresponding
-        mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem .
+        mainwin.SimpleCatalogueItem, mainwin.ComplexCatalogueItem or
+        mainwin.GridCatalogueItem.
+
+        If the current page was already full of videos, create a new
+        catalogue item to fill the gap.
 
         Args:
 
@@ -7694,7 +8045,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7005 video_catalogue_delete_row')
+            utils.debug_time('mwn 7005 video_catalogue_delete_video')
 
         # Is the video's parent channel, playlist or folder the one that is
         #   currently selected in the Video Index? If not, the video is not
@@ -7727,19 +8078,27 @@ class MainWin(Gtk.ApplicationWindow):
         ):
             return
 
-        # Does a mainwin.SimpleCatalogueItem or mainwin.ComplexCatalogueItem
-        #   object exist for this video?
+        # Does a mainwin.SimpleCatalogueItem, mainwin.ComplexCatalogueItem or
+        #   mainwin.GridCatalogueItem object exist for this video?
         if video_obj.dbid in self.video_catalogue_dict:
 
-            # Remove the catalogue item object and its mainwin.CatalogueRow
-            #   object (the latter being a wrapper for Gtk.ListBoxRow)
+            # Remove the catalogue item object and its mainwin.CatalogueRow or
+            #   mainwin.CatalogueGridBox object (the latter being a wrapper for
+            #   Gtk.ListBoxRow or Gtk.Frame)
             catalogue_item_obj = self.video_catalogue_dict[video_obj.dbid]
 
-            # Remove the row from the Gtk.ListBox
-            self.catalogue_listbox.remove(catalogue_item_obj.catalogue_row)
+            # Remove the row from the Gtk.ListBox or Gtk.Grid
+            if self.app_obj.catalogue_mode_type != 'grid':
 
-            # Update IVs
-            del self.video_catalogue_dict[video_obj.dbid]
+                self.catalogue_listbox.remove(
+                    catalogue_item_obj.catalogue_row,
+                )
+
+            else:
+
+                self.catalogue_grid.remove(
+                    catalogue_item_obj.catalogue_gridbox,
+                )
 
             # If the current page is not the last one, we can create a new
             #   catalogue item to replace the removed one
@@ -7752,12 +8111,16 @@ class MainWin(Gtk.ApplicationWindow):
             and self.catalogue_toolbar_current_page \
             < self.catalogue_toolbar_last_page:
 
-                # Get the last mainwin.CatalogueRow object directly from the
-                #   Gtk listbox, as it is auto-sorted frequently
-                row_list = self.catalogue_listbox.get_children()
-                last_row = row_list[-1]
-                if last_row:
-                    last_obj = last_row.video_obj
+                # Get the last catalogue object directly from its parent, as
+                #   the parent is auto-sorted frequently
+                if self.app_obj.catalogue_mode_type != 'grid':
+                    child_list = self.catalogue_listbox.get_children()
+                else:
+                    child_list = self.catalogue_grid.get_children()
+
+                last_obj = child_list[-1]
+                if last_obj:
+                    last_video_obj = last_obj.video_obj
 
                 # Find the video object that would be drawn after that, if the
                 #   videos were all drawn on a single page
@@ -7768,18 +8131,18 @@ class MainWin(Gtk.ApplicationWindow):
                 for child_obj in container_obj.child_list:
                     if isinstance(child_obj, media.Video):
                         video_count += 1
-                        if child_obj.dbid == last_obj.dbid:
+                        if child_obj.dbid == last_video_obj.dbid:
                             # (Use the next video after this one)
                             next_flag = True
 
                         elif next_flag == True:
                             # (Use this video)
-                            move_obj = child_obj
+                            insert_obj = child_obj
                             next_flag = False
 
                 # Create the new catalogue item
-                if move_obj:
-                    self.video_catalogue_update_row(move_obj)
+                if insert_obj:
+                    self.video_catalogue_update_video(insert_obj)
 
             else:
 
@@ -7790,6 +8153,9 @@ class MainWin(Gtk.ApplicationWindow):
                     if isinstance(child_obj, media.Video):
                         video_count += 1
 
+            # Update IVs
+            del self.video_catalogue_dict[video_obj.dbid]
+
             # Update widgets in the Video Catalogue toolbar
             self.video_catalogue_toolbar_update(
                 self.catalogue_toolbar_current_page,
@@ -7797,7 +8163,428 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
             # Procedure complete
-            self.catalogue_listbox.show_all()
+            if self.app_obj.catalogue_mode_type != 'grid':
+
+                self.catalogue_listbox.show_all()
+
+            else:
+
+                # Fill in any empty spaces on the grid
+                self.video_catalogue_grid_rearrange()
+                # Gridboxes could be made (un)expandable, depending on the
+                #   number of gridboxes now on the grid, and the number of
+                #   columns allowed in the grid
+                self.video_catalogue_grid_check_expand()
+
+
+    def video_catalogue_unselect_all(self):
+
+        """Can be called by anything.
+
+        Standard de-selection of all videos in the Video Catalogue (i.e. all
+        mainwin.SimpleCatalogueItem objects, or all
+        mainwin.ComplexCatalogueItem, or all
+        mainwin.GridCatalogueItem objects).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7234 video_catalogue_unselect_all')
+
+        if self.app_obj.catalogue_mode_type != 'grid':
+
+            self.catalogue_listbox.unselect_all()
+
+        else:
+
+            for this_catalogue_obj in self.video_catalogue_dict.values():
+                this_catalogue_obj.do_select(False)
+
+
+    def video_catalogue_grid_set_gridbox_width(self, width):
+
+        """Called by CatalogueGridBox.on_size_allocate().
+
+        Used only when the Video Catalogue is displaying videos on a grid.
+        Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
+        handling a single video.
+
+        As we start to add gridboxes to the grid, the minimum required width
+        (comprising the space needed for all widgets) is not immediately
+        available. Therefore, initially gridboxes are not allowed to expand
+        horizontally, filling all the available space.
+
+        As soon as the width of one of the new gridboxes becomes available,
+        its callback calls this function.
+
+        We set the minimum required width for the current thumbnail size
+        (specified by mainapp.TartubeApp.thumb_size_custom) and set a flag to
+        check the size of the grid, given that minimum width (because it might
+        be possible to put more or fewer gridboxes in each row).
+
+        We also hide each gridbox's frame, if it should be hidden. (In order to
+        obtain the correct minimum width, the frame it is always visible at
+        first.)
+
+        Args:
+
+            width (int): The minimum required width for a gridbox, in pixels
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 6504 video_catalogue_grid_set_gridbox_width')
+
+        # Sanity check: Once the minimum gridbox width for each thumbnail size
+        #   has been established, don't change it
+        thumb_size = self.app_obj.thumb_size_custom
+        if self.catalogue_grid_width_dict[thumb_size] is not None:
+            return self.app_obj.system_error(
+                260,
+                'Redundant setting of minimum gridbox width',
+            )
+
+        # Further sanity check: nothing to do if videos aren't arranged on a
+        #   grid
+        if self.app_obj.catalogue_mode_type == 'grid':
+
+            self.catalogue_grid_width_dict[thumb_size] = width
+
+            # All gridboxes can now be drawn without a frame, if required
+            for catalogue_obj in self.video_catalogue_dict.values():
+
+                catalogue_obj.catalogue_gridbox.enable_visible_frame(
+                    self.app_obj.catalogue_draw_frame_flag,
+                )
+
+            # Gtk is busy, so the horizontal size of the grid cannot be checked
+            #   immediately. Set a flag to let Tartube's fast timer do that
+            self.catalogue_grid_rearrange_flag = True
+
+
+    def video_catalogue_grid_check_size(self):
+
+        """Called by self.on_video_catalogue_thumb_combo_changed(),
+        self.on_window_size_allocate() and .on_paned_size_allocate().
+
+        Also called by mainapp.TartubeApp.script_fast_timer_callback(), after a
+        recent call to self.video_catalogue_grid_set_gridbox_width().
+
+        Used only when the Video Catalogue is displaying videos on a grid.
+        Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
+        handling a single video.
+
+        Check the available size of the grid. Given the minimum required width
+        for a gridbox, increase or decrease the number of columns in the grid,
+        if necessary.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 6504 video_catalogue_grid_check_size')
+
+        # When working out the grid's actual width, take into account small
+        #   gaps between each gridbox, and around the borders of other widgets
+        thumb_size = self.app_obj.thumb_size_custom
+        grid_width = self.win_last_width - self.videos_paned.get_position() \
+        - (self.spacing_size * (self.catalogue_grid_column_count + 7))
+
+        if self.catalogue_grid_width_dict[thumb_size] is None:
+            column_count = 1
+
+        else:
+
+            gridbox_width = self.catalogue_grid_width_dict[thumb_size]
+            column_count = int(grid_width / gridbox_width)
+            if column_count < 1:
+                column_count = 1
+
+        # (The flag is True only when called from
+        #   mainapp.TartubeApp.script_fast_timer_callback(), in which case we
+        #   need to rearrrange the grid, even if the column count hasn't
+        #   changed)
+        if self.catalogue_grid_column_count != column_count \
+        or self.catalogue_grid_rearrange_flag:
+
+            self.catalogue_grid_rearrange_flag = False
+
+            # Change the number of columns to fit more (of fewer) videos on
+            #   each row
+            self.catalogue_grid_column_count = column_count
+
+            # Gridboxes could be made (un)expandable, depending on the number
+            #   of gridboxes now on the grid
+            self.video_catalogue_grid_check_expand()
+
+            # Move video gridboxes to their new positions on the grid
+            # (Any gridboxes which are not expandable, will not appear expanded
+            #   unless this function is called)
+            self.video_catalogue_grid_rearrange()
+
+
+    def video_catalogue_grid_check_expand(self):
+
+        """Called by self.video_catalogue_grid_check_size(),
+        .video_catalogue_redraw_all(), .video_catalogue_insert_video(),
+        .video_catalogue_delete_video().
+
+        Used only when the Video Catalogue is displaying videos on a grid.
+        Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
+        handling a single video.
+
+        For aesthetic reasons, gridboxes should expand to fill the available
+        space, or not.
+
+        This function checks whether expansion should occur. If there has been
+        a change of state, then every gridbox is called to update it (either
+        enabling or disabling its horizontal expansion flag).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 6504 video_catalogue_grid_check_expand')
+
+        thumb_size = self.app_obj.thumb_size_custom
+
+        # (Gridboxes never expand to fill the available space, if the minimum
+        #   required width for a gridbox is not yet known)
+        if self.catalogue_grid_width_dict[thumb_size] is not None:
+
+            toggle_flag = False
+            count = len(self.video_catalogue_dict)
+
+            if (
+                count < self.catalogue_grid_column_count
+                and self.catalogue_grid_expand_flag
+            ):
+                self.catalogue_grid_expand_flag = False
+                toggle_flag = True
+
+            elif (
+                count >= self.catalogue_grid_column_count
+                and not self.catalogue_grid_expand_flag
+            ):
+                self.catalogue_grid_expand_flag = True
+                toggle_flag = True
+
+            if toggle_flag:
+
+                # Change of state; update every gridbox
+                for catalogue_obj in self.video_catalogue_dict.values():
+                    catalogue_obj.catalogue_gridbox.set_expandable(
+                        self.catalogue_grid_expand_flag,
+                    )
+
+
+    def video_catalogue_grid_rearrange(self):
+
+        """Called by self.video_catalogue_grid_check_size(),
+        .video_catalogue_update_video() and .video_catalogue_delete_video().
+
+        Used only when the Video Catalogue is displaying videos on a grid.
+        Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
+        handling a single video.
+
+        Removes every gridbox from the grid. Sorts the gridboxes, and then
+        puts them back onto the grid, using the number of columns specified by
+        self.catalogue_grid_column_count (which may have changed recently), and
+        filling any gaps (if a gridboxes have been removed from the grid).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 6504 video_catalogue_grid_rearrange')
+
+        # Each mainwin.CatalogueGridBox acts as a wrapper for a Gtk.Frame
+        wrapper_list = []
+
+        # Remove every gridbox from the grid
+        for wrapper_obj in self.catalogue_grid.get_children():
+            self.catalogue_grid.remove(wrapper_obj)
+            wrapper_list.append(wrapper_obj)
+
+        # Sort the gridboxes, as if we were sorting the media.Video objects
+        #   directly
+#        wrapper_list.sort(key=self.video_catalogue_grid_auto_sort)
+        wrapper_list.sort(
+            key=functools.cmp_to_key(self.video_catalogue_grid_auto_sort),
+        )
+
+        # Place gridboxes back on the grid, taking into account that the number
+        #   of columns may have changed recently
+        x_pos = 0
+        y_pos = 0
+        for wrapper_obj in wrapper_list:
+
+            wrapper_obj.add_to_grid(x_pos, y_pos)
+
+            x_pos += 1
+            if x_pos >= self.catalogue_grid_column_count:
+                x_pos = 0
+                y_pos += 1
+
+
+    def video_catalogue_grid_reset_sizes(self):
+
+        """Called by self.__init__() and
+        mainapp.TartubeApp.on_button_switch_view().
+
+        When the Video Catalogue displays videos on a grid, each grid location
+        contains a single gridbox (mainwin.CatalogueGridBox) handling a single
+        video.
+
+        In that case, we need to know the minimum required space for a gridbox.
+        After changing mainapp.TartubeApp.catalogue_mode (i.e., after switching
+        between one of the several viewing modes), reset those minimum sizes,
+        so they can be calculated afresh the next time they are needed.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7234 video_catalogue_grid_reset_sizes')
+
+        self.catalogue_grid_width_dict = {}
+
+        for key in self.app_obj.thumb_size_dict:
+            self.catalogue_grid_width_dict[key] = None
+
+
+    def video_catalogue_grid_select(self, select_type, catalogue_obj):
+
+        """Called by self.video_catalogue_popup_menu() and
+        GridCatalogueItem.on_click_box().
+
+        Used only when the Video Catalogue is displaying videos on a grid.
+        Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
+        handling a single video.
+
+        Widgets on a Gtk.Grid can't be selected just by clicking them (as we
+        might select a row in a Gtk.TreeView or Gtk.ListBox, just by clicking
+        it), so Tartube includes custom code to allow gridboxes to be selected
+        and unselected.
+
+        Args:
+
+            select_type (str): 'shift' if the SHIFT key is held down at the
+                moment of the click, 'ctrl' if the CTRL button is held down,
+                and 'default' if neither of those keys are held down
+
+            catalogue_obj (mainwin.GridCatalogueItem): The gridbox that was
+                clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7234 video_catalogue_grid_select')
+
+        # (Sorting function for the code immediately below)
+        def sort_by_grid_posn(obj1, obj2):
+
+            if obj1.y_pos < obj2.y_pos:
+                return -1
+            elif obj1.y_pos > obj2.y_pos:
+                return 1
+            elif obj1.x_pos < obj2.x_pos:
+                return -1
+            else:
+                return 1
+
+        # Select/deselect gridboxes
+        if select_type == 'shift':
+
+            # The user is holding down the SHIFT key. Select one or more
+            #   gridboxes
+
+            # Get a list of gridboxes, and sort them by position on the
+            #   Gtk.Grid (top left to bottom right)
+            gridbox_list = self.catalogue_grid.get_children()
+            gridbox_list.sort(key=functools.cmp_to_key(sort_by_grid_posn))
+
+            # Find the position of the first and last selected gridbox, and the
+            #   position of the gridbox that handles the specified
+            #   catalogue_obj
+            count = -1
+            first_posn = None
+            last_posn = None
+            specified_posn = None
+
+            for gridbox_obj in gridbox_list:
+
+                count += 1
+                this_catalogue_obj \
+                = self.video_catalogue_dict[gridbox_obj.video_obj.dbid]
+
+                if this_catalogue_obj.selected_flag:
+
+                    last_posn = count
+                    if first_posn is None:
+                        first_posn = count
+
+                if gridbox_obj.video_obj == catalogue_obj.video_obj:
+                    specified_posn = count
+
+            # Sanity check
+            if specified_posn is None:
+
+                return self.app_obj.system_error(
+                    258,
+                    'Gridbox not fouind in Video Catalogue',
+                )
+
+            # Select/deselect videos, as required
+            if not catalogue_obj.selected_flag:
+
+                if specified_posn < first_posn:
+
+                    start_posn = specified_posn
+                    stop_posn = first_posn
+
+                elif specified_posn == first_posn:
+
+                    start_posn = specified_posn
+                    stop_posn = specified_posn
+
+                else:
+
+                    start_posn = first_posn
+                    stop_posn = specified_posn
+
+            else:
+
+                if specified_posn < first_posn:
+
+                    start_posn = specified_posn
+                    stop_posn = last_posn
+
+                else:
+
+                    start_posn = first_posn
+                    stop_posn = specified_posn
+
+            count = -1
+            for gridbox_obj in gridbox_list:
+
+                count += 1
+                this_catalogue_obj \
+                = self.video_catalogue_dict[gridbox_obj.video_obj.dbid]
+
+                if count >= start_posn and count <= stop_posn:
+                    this_catalogue_obj.do_select(True)
+                else:
+                    this_catalogue_obj.do_select(False)
+
+        elif select_type == 'ctrl':
+
+            # The user is holding down the CTRL key. Select this gridbox, in
+            #   addition to any gridboxes that are already selected
+
+            catalogue_obj.toggle_select()
+
+        else:
+
+            # The user is holding down neither the SHIFT not CTRL keys. Select
+            #   this gridbox, and unselect all other gridboxes
+            for this_catalogue_obj in self.video_catalogue_dict.values():
+
+                if this_catalogue_obj == catalogue_obj:
+                    this_catalogue_obj.do_select(True)
+                else:
+                    this_catalogue_obj.do_select(False)
 
 
     def video_catalogue_toolbar_reset(self):
@@ -7832,7 +8619,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.catalogue_show_filter_button.set_sensitive(False)
 
-        self.catalogue_sort_button.set_sensitive(False)
+        self.catalogue_sort_combo.set_sensitive(False)
+        self.catalogue_thumb_combo.set_sensitive(False)
+        self.catalogue_frame_button.set_sensitive(False)
+        self.catalogue_icons_button.set_sensitive(False)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_regex_togglebutton.set_sensitive(False)
         self.catalogue_apply_filter_button.set_sensitive(False)
@@ -7843,8 +8633,8 @@ class MainWin(Gtk.ApplicationWindow):
     def video_catalogue_toolbar_update(self, page_num, video_count):
 
         """Called by self.video_catalogue_redraw_all(),
-        self.video_catalogue_update_row() and
-        self.video_catalogue_delete_row().
+        self.video_catalogue_update_video() and
+        self.video_catalogue_delete_video().
 
         After the Video Catalogue is redrawn or updated, update widgets in the
         Video Catalogue toolbar.
@@ -7902,19 +8692,40 @@ class MainWin(Gtk.ApplicationWindow):
         # (If not, the user would not be able to click the 'Cancel filter'
         #   button)
         if not video_count and not self.video_catalogue_filtered_flag:
-            self.catalogue_sort_button.set_sensitive(False)
+            self.catalogue_sort_combo.set_sensitive(False)
+            self.catalogue_thumb_combo.set_sensitive(False)
+            self.catalogue_frame_button.set_sensitive(False)
+            self.catalogue_icons_button.set_sensitive(False)
             self.catalogue_filter_entry.set_sensitive(False)
             self.catalogue_regex_togglebutton.set_sensitive(False)
             self.catalogue_apply_filter_button.set_sensitive(False)
             self.catalogue_cancel_filter_button.set_sensitive(False)
             self.catalogue_find_date_button.set_sensitive(False)
+            self.catalogue_cancel_date_button.set_sensitive(False)
         else:
-            self.catalogue_sort_button.set_sensitive(True)
+            self.catalogue_sort_combo.set_sensitive(True)
+
+            if self.app_obj.catalogue_mode_type != 'grid':
+                self.catalogue_thumb_combo.set_sensitive(False)
+            else:
+                self.catalogue_thumb_combo.set_sensitive(True)
+
+            if self.app_obj.catalogue_mode_type == 'simple':
+
+                self.catalogue_frame_button.set_sensitive(False)
+                self.catalogue_icons_button.set_sensitive(False)
+
+            else:
+
+                self.catalogue_frame_button.set_sensitive(True)
+                self.catalogue_icons_button.set_sensitive(True)
+
             self.catalogue_filter_entry.set_sensitive(True)
             self.catalogue_regex_togglebutton.set_sensitive(True)
             self.catalogue_apply_filter_button.set_sensitive(True)
             self.catalogue_cancel_filter_button.set_sensitive(False)
             self.catalogue_find_date_button.set_sensitive(True)
+            self.catalogue_cancel_date_button.set_sensitive(False)
 
 
     def video_catalogue_apply_filter(self):
@@ -7928,8 +8739,7 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 7234 video_catalogue_apply_filter')
 
-        # Sanity check - something must be selected in the Video Index, and it
-        #   must not be a media.Video object
+        # Sanity check - something must be selected in the Video Index
         parent_obj = None
         if self.video_index_current is not None:
             dbid = self.app_obj.media_name_dict[self.video_index_current]
@@ -7983,7 +8793,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_index_current,
             1,          # Display the first page
             True,       # Reset scrollbars
-            True,       # This function is the caller
+            True,       # Do not cancel the filter we've just applied
         )
 
         # Sensitise widgets, as appropriate
@@ -8013,6 +8823,93 @@ class MainWin(Gtk.ApplicationWindow):
         # Sensitise widgets, as appropriate
         self.catalogue_apply_filter_button.set_sensitive(True)
         self.catalogue_cancel_filter_button.set_sensitive(False)
+
+
+    def video_catalogue_show_date(self, page_num):
+
+        """Called by mainapp.TartubeApp.on_button_find_date().
+
+        Redraw the Video Catalogue to show the page containing the first video
+        uploaded on a specified date.
+
+        (De)sensitise widgets, as appropriate.
+
+        Args:
+
+            page_num (int): The Video Catalogue page number to display (unlike
+                calls to self.video_catalogue_apply_filter(), no videos are
+                filtered out; we just show the first page containing videos
+                for the specified date)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7234 video_catalogue_show_date')
+
+        # Sanity check - something must be selected in the Video Index
+        parent_obj = None
+        if self.video_index_current is not None:
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            parent_obj = self.app_obj.media_reg_dict[dbid]
+
+        if not parent_obj or (isinstance(parent_obj, media.Video)):
+            return self.system_error(
+                999,
+                'Tried to apply find videos by date, but no channel/' \
+                + ' playlist/folder selected in the Video Index',
+            )
+
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            page_num,
+            True,       # Reset scrollbars
+            True,       # Do not cancel the filter, if one has been applied
+        )
+
+        # Sensitise widgets, as appropriate
+        self.catalogue_find_date_button.set_sensitive(False)
+        self.catalogue_cancel_date_button.set_sensitive(True)
+
+
+    def video_catalogue_unshow_date(self):
+
+        """Called by mainapp.TartubeApp.on_button_find_date().
+
+        Having redrawn the Video Catalogue to show the page containing the
+        first video uploaded on a specified date, redraw it to show the first
+        page again.
+
+        (De)sensitise widgets, as appropriate.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7234 video_catalogue_unshow_date')
+
+        # Sanity check - something must be selected in the Video Index
+        parent_obj = None
+        if self.video_index_current is not None:
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            parent_obj = self.app_obj.media_reg_dict[dbid]
+
+        if not parent_obj or (isinstance(parent_obj, media.Video)):
+            return self.system_error(
+                999,
+                'Tried to cancel find videos by date, but no channel/' \
+                + ' playlist/folder selected in the Video Index',
+            )
+
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            1,
+            True,       # Reset scrollbars
+            True,       # Do not cancel the filter, if one has been applied
+        )
+
+        # Sensitise widgets, as appropriate
+        self.catalogue_find_date_button.set_sensitive(True)
+        self.catalogue_cancel_date_button.set_sensitive(False)
 
 
     # (Progress List)
@@ -8653,7 +9550,7 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.fixed_waiting_folder.sort_children()
 
                 # Update the video catalogue in the 'Videos' tab
-                self.video_catalogue_update_row(video_obj)
+                self.video_catalogue_update_video(video_obj)
 
                 # Prepare icons
                 if isinstance(video_obj.parent_obj, media.Channel):
@@ -9635,7 +10532,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             textview (Gtk.TextView): The textview to scroll
 
-            rect (Gdk.Rectangle): Ignored
+            rect (Gdk.Rectangle): Object describing the window's new size
 
             scrolled (Gtk.ScrolledWindow): The scroller which contains the
                 textview
@@ -11198,7 +12095,11 @@ class MainWin(Gtk.ApplicationWindow):
 
                 # Redraw the Video Catalogue, on the first page, and reset its
                 #   scrollbars back to the top
-                self.video_catalogue_redraw_all(name, 1, True)
+                self.video_catalogue_redraw_all(
+                    name,
+                    1,              # Display the first page
+                    True,           # Reset scrollbars
+                )
 
 
     def on_video_index_set_destination(self, menu_item, media_data_obj):
@@ -11361,7 +12262,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         other_obj = self.app_obj.media_reg_dict[media_data_obj.master_dbid]
         path = other_obj.get_actual_dir(self.app_obj)
-        utils.open_file(path)
+        utils.open_file(self.app_obj, path)
 
 
     def on_video_index_show_location(self, menu_item, media_data_obj):
@@ -11386,7 +12287,7 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 10462 on_video_index_show_location')
 
         path = media_data_obj.get_default_dir(self.app_obj)
-        utils.open_file(path)
+        utils.open_file(self.app_obj, path)
 
 
     def on_video_index_show_properties(self, menu_item, media_data_obj):
@@ -11483,11 +12384,14 @@ class MainWin(Gtk.ApplicationWindow):
                 'exist_flag': dialogue_win.checkbutton3.get_active(),
                 'del_video_flag': dialogue_win.checkbutton4.get_active(),
                 'del_others_flag': dialogue_win.checkbutton5.get_active(),
-                'del_descrip_flag': dialogue_win.checkbutton6.get_active(),
-                'del_json_flag': dialogue_win.checkbutton7.get_active(),
-                'del_xml_flag': dialogue_win.checkbutton8.get_active(),
-                'del_thumb_flag': dialogue_win.checkbutton9.get_active(),
-                'del_archive_flag': dialogue_win.checkbutton10.get_active(),
+                'del_archive_flag': dialogue_win.checkbutton6.get_active(),
+                'move_thumb_flag': dialogue_win.checkbutton7.get_active(),
+                'del_thumb_flag': dialogue_win.checkbutton8.get_active(),
+                'convert_webp_flag': dialogue_win.checkbutton9.get_active(),
+                'move_data_flag': dialogue_win.checkbutton10.get_active(),
+                'del_descrip_flag': dialogue_win.checkbutton11.get_active(),
+                'del_json_flag': dialogue_win.checkbutton12.get_active(),
+                'del_xml_flag': dialogue_win.checkbutton13.get_active(),
             }
 
         # Now destroy the window
@@ -11500,22 +12404,28 @@ class MainWin(Gtk.ApplicationWindow):
             if not choices_dict['corrupt_flag'] \
             and not choices_dict['exist_flag'] \
             and not choices_dict['del_video_flag'] \
+            and not choices_dict['del_thumb_flag'] \
+            and not choices_dict['convert_webp_flag'] \
             and not choices_dict['del_descrip_flag'] \
             and not choices_dict['del_json_flag'] \
             and not choices_dict['del_xml_flag'] \
-            and not choices_dict['del_thumb_flag'] \
-            and not choices_dict['del_archive_flag']:
+            and not choices_dict['del_archive_flag'] \
+            and not choices_dict['move_thumb_flag'] \
+            and not choices_dict['move_data_flag']:
                 return
 
             # Prompt the user for confirmation, before deleting any files
+            print(12508)
+            print(choices_dict)
             if choices_dict['del_corrupt_flag'] \
             or choices_dict['del_video_flag'] \
+            or choices_dict['del_thumb_flag'] \
             or choices_dict['del_descrip_flag'] \
             or choices_dict['del_json_flag'] \
             or choices_dict['del_xml_flag'] \
-            or choices_dict['del_thumb_flag'] \
             or choices_dict['del_archive_flag']:
 
+                print(12518)
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _(
                     'Files cannot be recovered, after being deleted. Are you' \
@@ -11534,7 +12444,7 @@ class MainWin(Gtk.ApplicationWindow):
             else:
 
                 # Start the tidy operation now
-                self.tidy_manager_start(choices_dict)
+                self.app_obj.tidy_manager_start(choices_dict)
 
 
     def on_video_catalogue_add_classic(self, menu_item, media_data_obj):
@@ -11631,7 +12541,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Update the video catalogue to show the right icon
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
         # Open an edit window to show the options immediately
         config.OptionsEditWin(
@@ -11769,7 +12679,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_custom_dl(self, menu_item, media_data_obj):
@@ -11826,7 +12736,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.download_manager_start('custom', False, media_data_list)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_delete_video(self, menu_item, media_data_obj):
@@ -11871,7 +12781,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.delete_video(media_data_obj, True)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_dl_and_watch(self, menu_item, media_data_obj):
@@ -11949,7 +12859,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.download_watch_videos(mod_list)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_download(self, menu_item, media_data_obj):
@@ -12085,21 +12995,22 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
-    def on_video_catalogue_drag_data_get(self, listbox, drag_context, data, \
+    def on_video_catalogue_drag_data_get(self, widget, drag_context, data, \
     info, time):
 
         """Called from callback in self.video_catalogue_reset().
 
-        Set the data to be used when the user drags and drops rows from the
+        Set the data to be used when the user drags and drops videos from the
         Video Catalogue to an external application (for example, an FFmpeg
         batch converter).
 
         Args:
 
-            listbox (Gtk.ListBox): The Video Catalogue's listbox
+            widget (Gtk.ListBox or mainwin.GridCatalogueItem): The widget
+                handling the video in the Video Catalogue
 
             drag_context (GdkX11.X11DragContext): Data from the drag procedure
 
@@ -12115,12 +13026,23 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 11039 on_video_catalogue_drag_data_get')
 
-        # Get the selected media.Video objects. Due to Gtk weirdness, only the
-        #   selected videos are obtainable (which might not include all of the
-        #   dragged videos)
+        # Get the selected media.Video objects
         video_list = []
-        for catalogue_item_obj in self.catalogue_listbox.get_selected_rows():
-            video_list.append(catalogue_item_obj.video_obj)
+
+        if self.app_obj.catalogue_mode_type != 'grid':
+
+            # Due to Gtk weirdness, only the selected videos are obtainable
+            #   (which might not include all of the dragged videos)
+            for catalogue_item_obj \
+            in self.catalogue_listbox.get_selected_rows():
+                video_list.append(catalogue_item_obj.video_obj)
+
+        else:
+
+            # Custom (not Gtk) code handles selection on the grid
+            for catalogue_item_obj in self.video_catalogue_dict.values():
+                if catalogue_item_obj.selected_flag:
+                    video_list.append(catalogue_item_obj.video_obj)
 
         # Transfer to the external application a single string, containing one
         #   or more full file paths/URLs/video names, separated by newline
@@ -12196,7 +13118,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             media_data_obj.set_dl_sim_flag(False)
 
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
 
     def on_video_catalogue_fetch_formats(self, menu_item, media_data_obj):
@@ -12306,7 +13228,7 @@ class MainWin(Gtk.ApplicationWindow):
                 self.app_obj.del_auto_dl_stop_dict(media_data_obj)
 
         # Update the catalogue item
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
 
     def on_video_catalogue_mark_temp_dl(self, menu_item, media_data_obj):
@@ -12406,7 +13328,7 @@ class MainWin(Gtk.ApplicationWindow):
                     )
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_not_livestream(self, menu_item, media_data_obj):
@@ -12430,7 +13352,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.mark_video_live(media_data_obj, 0)
 
         # Update the catalogue item
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
 
     def on_video_catalogue_page_entry_activated(self, entry):
@@ -12699,7 +13621,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Remove download options from the media data object
         media_data_obj.set_options_obj(None)
         # Update the video catalogue to show the right icon
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
 
     def on_video_catalogue_size_entry_activated(self, entry):
@@ -12757,7 +13679,7 @@ class MainWin(Gtk.ApplicationWindow):
         parent_obj = media_data_obj.parent_obj
         other_obj = self.app_obj.media_reg_dict[parent_obj.master_dbid]
         path = other_obj.get_actual_dir(self.app_obj)
-        utils.open_file(path)
+        utils.open_file(self.app_obj, path)
 
 
     def on_video_catalogue_show_properties(self, menu_item, media_data_obj):
@@ -12818,7 +13740,7 @@ class MainWin(Gtk.ApplicationWindow):
             config.VideoEditWin(self.app_obj, media_data_obj)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_show_system_cmd(self, menu_item, media_data_obj):
@@ -12843,6 +13765,77 @@ class MainWin(Gtk.ApplicationWindow):
         dialogue_win = SystemCmdDialogue(self, media_data_obj)
         dialogue_win.run()
         dialogue_win.destroy()
+
+
+    def on_video_catalogue_sort_combo_changed(self, combo):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Video Catalogue, sort videos by name or upload date.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12704 on_video_catalogue_sort_combo_changed')
+
+        tree_iter = self.catalogue_sort_combo.get_active_iter()
+        model = self.catalogue_sort_combo.get_model()
+        text = model[tree_iter][1]
+
+        if text == 'time':
+            self.app_obj.set_catalogue_alpha_sort_flag(False)
+        else:
+            self.app_obj.set_catalogue_alpha_sort_flag(True)
+
+        # Redraw the Video Catalogue, switching to the first page
+        if self.video_index_current is not None:
+
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                1,
+                True,           # Reset scrollbars
+                True,           # Don't cancel the filter, if applied
+            )
+
+
+    def on_video_catalogue_thumb_combo_changed(self, combo):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Video Catalogue, when videos are arranged on a grid, set the
+        thumbnail size.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 12704 on_video_catalogue_thumb_combo_changed',
+            )
+
+        tree_iter = self.catalogue_thumb_combo.get_active_iter()
+        model = self.catalogue_thumb_combo.get_model()
+        self.app_obj.set_thumb_size_custom(model[tree_iter][1])
+
+        # Redraw the Video Catalogue, retaining the current page (but only when
+        #   in grid mode)
+        if self.video_index_current is not None \
+        and self.app_obj.catalogue_mode_type == 'grid':
+
+            self.video_catalogue_grid_check_size()
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                self.catalogue_toolbar_current_page,
+                True,           # Reset scrollbars
+                True,           # Don't cancel the filter, if applied
+            )
 
 
     def on_video_catalogue_temp_dl(self, menu_item, media_data_obj, \
@@ -12979,7 +13972,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.download_watch_videos(ready_list, watch_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_test_dl(self, menu_item, media_data_obj):
@@ -13059,7 +14052,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             media_data_obj.set_archive_flag(False)
 
-        self.video_catalogue_update_row(media_data_obj)
+        self.video_catalogue_update_video(media_data_obj)
 
 
     def on_video_catalogue_toggle_archived_video_multi(self, menu_item,
@@ -13087,10 +14080,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         for media_data_obj in media_data_list:
             media_data_obj.set_archive_flag(archived_flag)
-            self.video_catalogue_update_row(media_data_obj)
+            self.video_catalogue_update_video(media_data_obj)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_toggle_bookmark_video(self, menu_item, \
@@ -13146,7 +14139,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.mark_video_bookmark(media_data_obj, bookmark_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_toggle_favourite_video(self, menu_item, \
@@ -13202,7 +14195,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.mark_video_favourite(media_data_obj, fav_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_toggle_missing_video(self, menu_item, \
@@ -13258,7 +14251,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.mark_video_missing(media_data_obj, missing_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_toggle_new_video(self, menu_item, media_data_obj):
@@ -13311,7 +14304,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.mark_video_new(media_data_obj, new_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_toggle_waiting_video(self, menu_item, \
@@ -13367,7 +14360,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.mark_video_waiting(media_data_obj, waiting_flag)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_watch_hooktube(self, menu_item, media_data_obj):
@@ -13389,6 +14382,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Launch the video
         utils.open_file(
+            self.app_obj,
             utils.convert_youtube_to_hooktube(media_data_obj.source),
         )
 
@@ -13419,6 +14413,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Launch the video
         utils.open_file(
+            self.app_obj,
             utils.convert_youtube_to_invidious(
                 self.app_obj,
                 media_data_obj.source,
@@ -13494,7 +14489,7 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.mark_video_waiting(media_data_obj, False)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_video_catalogue_watch_website(self, menu_item, media_data_obj):
@@ -13515,7 +14510,7 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 12219 on_video_catalogue_watch_website')
 
         # Launch the video
-        utils.open_file(media_data_obj.source)
+        utils.open_file(self.app_obj, media_data_obj.source)
 
         # Mark the video as not new (having been watched)
         if media_data_obj.new_flag:
@@ -13550,7 +14545,7 @@ class MainWin(Gtk.ApplicationWindow):
             if media_data_obj.source is not None:
 
                 # Launch the video
-                utils.open_file(media_data_obj.source)
+                utils.open_file(self.app_obj, media_data_obj.source)
 
                 # Mark the video as not new (having been watched)
                 if media_data_obj.new_flag:
@@ -13560,7 +14555,7 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.mark_video_waiting(media_data_obj, False)
 
         # Standard de-selection of everything in the Video Catalogue
-        self.catalogue_listbox.unselect_all()
+        self.video_catalogue_unselect_all()
 
 
     def on_progress_list_dl_last(self, menu_item, download_item_obj):
@@ -13826,6 +14821,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Launch the video
             utils.open_file(
+                self.app_obj,
                 utils.convert_youtube_to_hooktube(media_data_obj.source),
             )
 
@@ -13859,6 +14855,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Launch the video
             utils.open_file(
+                self.app_obj,
                 utils.convert_youtube_to_invidious(
                     self.app_obj,
                     media_data_obj.source,
@@ -13893,7 +14890,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video) \
         and media_data_obj.source:
 
-            utils.open_file(media_data_obj.source)
+            utils.open_file(self.app_obj, media_data_obj.source)
 
 
     def on_results_list_delete_video(self, menu_item, media_data_obj, path):
@@ -14449,7 +15446,7 @@ class MainWin(Gtk.ApplicationWindow):
                 dir_list.append(dummy_obj.dummy_dir)
 
         for this_dir in dir_list:
-            utils.open_file(this_dir)
+            utils.open_file(self.app_obj, this_dir)
 
 
     def on_classic_progress_list_right_click(self, treeview, event):
@@ -14591,6 +15588,64 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.set_progress_list_hide_flag(checkbutton.get_active())
 
 
+    def on_draw_frame_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos Tab, when the user toggles the checkbutton, enable/
+        disable the visible frame around each video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13110 on_draw_frame_checkbutton_changed')
+
+        self.app_obj.set_catalogue_draw_frame_flag(checkbutton.get_active())
+        # (No need to redraw the Video Catalogue, just to enable/disable the
+        #   visible frame around each video)
+        if self.app_obj.catalogue_mode_type == 'complex':
+
+            for catalogue_obj in self.video_catalogue_dict.values():
+                catalogue_obj.enable_visible_frame(
+                    self.app_obj.catalogue_draw_frame_flag,
+                )
+
+        elif self.app_obj.catalogue_mode_type == 'grid':
+
+            for catalogue_obj in self.video_catalogue_dict.values():
+                catalogue_obj.catalogue_gridbox.enable_visible_frame(
+                    self.app_obj.catalogue_draw_frame_flag,
+                )
+
+
+    def on_draw_icons_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos Tab, when the user toggles the checkbutton, enable/
+        disable drawing the status icons for each video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13110 on_draw_icons_checkbutton_changed')
+
+        self.app_obj.set_catalogue_draw_icons_flag(checkbutton.get_active())
+        # (No need to redraw the Video Catalogue, just to make the status icons
+        #   visible/invisible
+        if self.app_obj.catalogue_mode_type != 'simple':
+            for catalogue_obj in self.video_catalogue_dict.values():
+                catalogue_obj.update_status_images()
+
+
     def on_notebook_switch_page(self, notebook, box, page_num):
 
         """Called from callback in self.setup_notebook().
@@ -14660,7 +15715,7 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 13039 on_notify_desktop_clicked')
 
-        utils.open_file(url)
+        utils.open_file(self.app_obj, url)
 
         # This callback isn't needed any more, so we don't need to retain a
         #   reference to the Notify.Notification
@@ -14859,6 +15914,40 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.set_output_size_apply_flag(False)
 
 
+    def on_paned_size_allocate(self, widget, rect):
+
+        """Called from callback in self.setup_videos_tab().
+
+        The size of the Video Tab's slider affects the size of the Video
+        Catalogue grid (when visible). This function is called regularly; if
+        the slider has actually moved, then we need to check whether the grid
+        size needs to be changed.
+
+        Args:
+
+            widget (mainwin.MainWin): The widget the has been resized
+
+            rect (Gdk.Rectangle): Object describing the window's new size
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12937 on_paned_size_allocate')
+
+        if self.paned_last_width is None \
+        or self.paned_last_width != rect.width:
+
+            # Slider position has actually changed
+            self.paned_last_width = rect.width
+
+            if self.video_index_current \
+            and self.app_obj.catalogue_mode_type == 'grid':
+
+                # Check whether the grid should be resized and, if so, resize
+                #   it
+                self.video_catalogue_grid_check_size()
+
+
     def on_reverse_results_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_progress_tab().
@@ -14913,6 +16002,50 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 13241 on_system_warning_checkbutton_changed')
 
         self.app_obj.set_system_warning_show_flag(checkbutton.get_active())
+
+
+    def on_video_res_combobox_changed(self, combo):
+
+        """Called from callback in self.setup_progress_tab().
+
+        In the Progress Tab, when the user sets the video resolution limit,
+        inform mainapp.TartubeApp. The new setting is applied to the next
+        download job.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13358 on_video_res_combobox_changed')
+
+        tree_iter = self.video_res_combobox.get_active_iter()
+        model = self.video_res_combobox.get_model()
+        self.app_obj.set_video_res_default(model[tree_iter][0])
+
+
+    def on_video_res_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_progress_tab().
+
+        In the Progress Tab, when the user turns the video resolution limit
+        on/off, inform mainapp.TartubeApp. The new setting is applied to the
+        next download job.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13380 on_video_res_checkbutton_changed')
+
+        self.app_obj.set_video_res_apply_flag(
+            self.video_res_checkbutton.get_active(),
+        )
 
 
     def on_window_drag_data_received(self, widget, context, x, y, data, info,
@@ -15029,48 +16162,40 @@ class MainWin(Gtk.ApplicationWindow):
         context.finish(True, False, time)
 
 
-    def on_video_res_combobox_changed(self, combo):
+    def on_window_size_allocate(self, widget, rect):
 
-        """Called from callback in self.setup_progress_tab().
+        """Called from callback in self.setup_win().
 
-        In the Progress Tab, when the user sets the video resolution limit,
-        inform mainapp.TartubeApp. The new setting is applied to the next
-        download job.
+        The size of the window affects the size of the Video Catalogue grid
+        (when visible). This function is called regularly; if the window size
+        has actually changed, then we need to check whether the grid size needs
+        to be changed.
 
         Args:
 
-            combo (Gtk.ComboBox): The clicked widget
+            widget (mainwin.MainWin): The widget the has been resized
+
+            rect (Gdk.Rectangle): Object describing the window's new size
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13358 on_video_res_combobox_changed')
+            utils.debug_time('mwn 12937 on_window_size_allocate')
 
-        tree_iter = self.video_res_combobox.get_active_iter()
-        model = self.video_res_combobox.get_model()
-        self.app_obj.set_video_res_default(model[tree_iter][0])
+        if self.win_last_width is None \
+        or self.win_last_width != rect.width \
+        or self.win_last_height != rect.height:
 
+            # Window size has actually changed
+            self.win_last_width = rect.width
+            self.win_last_height = rect.height
 
-    def on_video_res_checkbutton_changed(self, checkbutton):
+            if self.video_index_current \
+            and self.app_obj.catalogue_mode_type == 'grid':
 
-        """Called from callback in self.setup_progress_tab().
-
-        In the Progress Tab, when the user turns the video resolution limit
-        on/off, inform mainapp.TartubeApp. The new setting is applied to the
-        next download job.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The clicked widget
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13380 on_video_res_checkbutton_changed')
-
-        self.app_obj.set_video_res_apply_flag(
-            self.video_res_checkbutton.get_active(),
-        )
+                # Check whether the grid should be resized and, if so, resize
+                #   it
+                self.video_catalogue_grid_check_size()
 
 
     # (Callback support functions)
@@ -15333,11 +16458,11 @@ class MainWin(Gtk.ApplicationWindow):
 class SimpleCatalogueItem(object):
 
     """Called by MainWin.video_catalogue_redraw_all() and
-    .video_catalogue_insert_item().
+    .video_catalogue_insert_video().
 
     Python class that handles a single row in the Video Catalogue.
 
-    Each mainwin.SimpleCatalogueItem objects stores widgets used in that row,
+    Each mainwin.SimpleCatalogueItem object stores widgets used in that row,
     and updates them when required.
 
     This class offers a simple view with a minimum of widgets (for example, no
@@ -15402,7 +16527,7 @@ class SimpleCatalogueItem(object):
     def draw_widgets(self, catalogue_row):
 
         """Called by mainwin.MainWin.video_catalogue_redraw_all() and
-        .video_catalogue_insert_item().
+        .video_catalogue_insert_video().
 
         After a Gtk.ListBoxRow has been created for this object, populate it
         with widgets.
@@ -15465,7 +16590,7 @@ class SimpleCatalogueItem(object):
     def update_widgets(self):
 
         """Called by mainwin.MainWin.video_catalogue_redraw_all(),
-        .video_catalogue_update_row() and .video_catalogue_insert_item().
+        .video_catalogue_update_video() and .video_catalogue_insert_video().
 
         Sets the values displayed by each widget.
         """
@@ -15742,11 +16867,11 @@ class SimpleCatalogueItem(object):
 class ComplexCatalogueItem(object):
 
     """Called by MainWin.video_catalogue_redraw_all() and
-    .video_catalogue_insert_item().
+    .video_catalogue_insert_video().
 
     Python class that handles a single row in the Video Catalogue.
 
-    Each mainwin.ComplexCatalogueItem objects stores widgets used in that row,
+    Each mainwin.ComplexCatalogueItem object stores widgets used in that row,
     and updates them when required.
 
     The mainwin.SimpleCatalogueItem class offers a simple view with a minimum
@@ -15784,7 +16909,7 @@ class ComplexCatalogueItem(object):
         self.frame = None                   # Gtk.Frame
         self.thumb_box = None               # Gtk.Box
         self.thumb_image = None             # Gtk.Image
-        self.label_box = None                # Gtk.Box
+        self.label_box = None               # Gtk.Box
         self.name_label = None              # Gtk.Label
         self.status_image = None            # Gtk.Image
         self.error_image = None             # Gtk.Image
@@ -15855,7 +16980,7 @@ class ComplexCatalogueItem(object):
     def draw_widgets(self, catalogue_row):
 
         """Called by mainwin.MainWin.video_catalogue_redraw_all() and
-        .video_catalogue_insert_item().
+        .video_catalogue_insert_video().
 
         After a Gtk.ListBoxRow has been created for this object, populate it
         with widgets.
@@ -15890,6 +17015,9 @@ class ComplexCatalogueItem(object):
         self.frame = Gtk.Frame()
         event_box.add(self.frame)
         self.frame.set_border_width(self.spacing_size)
+        self.enable_visible_frame(
+            self.main_win_obj.app_obj.catalogue_draw_frame_flag,
+        )
 
         # Highlight livestreams by specifying a background colour
         self.update_background()
@@ -16066,7 +17194,7 @@ class ComplexCatalogueItem(object):
             self.on_click_watch_hooktube_label,
         )
 
-        # Watch on Indvidious
+        # Watch on Invidious
         self.watch_invidious_label = Gtk.Label('', xalign=0)
         hbox4.pack_start(
             self.watch_invidious_label,
@@ -16099,7 +17227,7 @@ class ComplexCatalogueItem(object):
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=0,
         )
-        if self.temp_box_is_visible:
+        if self.temp_box_is_visible():
             self.label_box.pack_start(self.temp_box, True, True, 0)
             self.temp_box_visible_flag = True
 
@@ -16140,7 +17268,7 @@ class ComplexCatalogueItem(object):
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=0,
         )
-        if self.marked_box_is_visible:
+        if self.marked_box_is_visible():
             # (For the sixth row we use .pack_end, so that the fifth row can be
             #   added and removed, without affecting the visible order)
             self.label_box.pack_end(self.marked_box, True, True, 0)
@@ -16180,7 +17308,12 @@ class ComplexCatalogueItem(object):
 
         # Missing/not missing
         self.marked_missing_label = Gtk.Label('', xalign=0)
-        self.marked_box.pack_start(self.marked_missing_label, False, False, 0)
+        self.marked_box.pack_start(
+            self.marked_missing_label,
+            False,
+            False,
+            (self.spacing_size * 2),
+        )
         self.marked_missing_label.connect(
             'activate-link',
             self.on_click_marked_missing_label,
@@ -16188,12 +17321,7 @@ class ComplexCatalogueItem(object):
 
         # New/not new
         self.marked_new_label = Gtk.Label('', xalign=0)
-        self.marked_box.pack_start(
-            self.marked_new_label,
-            False,
-            False,
-            (self.spacing_size * 2),
-        )
+        self.marked_box.pack_start(self.marked_new_label, False, False, 0)
         self.marked_new_label.connect(
             'activate-link',
             self.on_click_marked_new_label,
@@ -16201,7 +17329,12 @@ class ComplexCatalogueItem(object):
 
         # In waiting list/not in waiting list
         self.marked_waiting_label = Gtk.Label('', xalign=0)
-        self.marked_box.pack_start(self.marked_waiting_label, False, False, 0)
+        self.marked_box.pack_start(
+            self.marked_waiting_label,
+            False,
+            False,
+            (self.spacing_size * 2),
+        )
         self.marked_waiting_label.connect(
             'activate-link',
             self.on_click_marked_waiting_list_label,
@@ -16211,7 +17344,7 @@ class ComplexCatalogueItem(object):
     def update_widgets(self):
 
         """Called by mainwin.MainWin.video_catalogue_redraw_all(),
-        .video_catalogue_update_row() and .video_catalogue_insert_item().
+        .video_catalogue_update_video() and .video_catalogue_insert_video().
 
         Sets the values displayed by each widget.
         """
@@ -16340,34 +17473,35 @@ class ComplexCatalogueItem(object):
 
                 # Thumbnail file exists, so use it
                 app_obj = self.main_win_obj.app_obj
+                mini_list = app_obj.thumb_size_dict['tiny']
                 # (Returns a tuple, who knows why)
                 arglist = app_obj.file_manager_obj.load_to_pixbuf(
                     path,
-                    self.main_win_obj.thumb_width,
-                    self.main_win_obj.thumb_height,
+                    mini_list[0],       # width
+                    mini_list[1],       # height
                 ),
 
                 if arglist[0]:
                     self.thumb_image.set_from_pixbuf(arglist[0])
                     thumb_flag = True
 
-        # No thumbnail file found, so use a standard icon file
+        # No thumbnail file found, so use a default files
         if not thumb_flag:
             if self.video_obj.fav_flag and self.video_obj.options_obj:
                 self.thumb_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['video_both_large'],
+                    self.main_win_obj.pixbuf_dict['thumb_both_tiny'],
                 )
             elif self.video_obj.fav_flag:
                 self.thumb_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['video_left_large'],
+                    self.main_win_obj.pixbuf_dict['thumb_left_tiny'],
                 )
             elif self.video_obj.options_obj:
                 self.thumb_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['video_right_large'],
+                    self.main_win_obj.pixbuf_dict['thumb_right_tiny'],
                 )
             else:
                 self.thumb_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['video_none_large'],
+                    self.main_win_obj.pixbuf_dict['thumb_none_tiny'],
                 )
 
 
@@ -16435,62 +17569,71 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 14567 update_status_images')
 
-        # Set the download status
-        if self.video_obj.live_mode == 1:
-            self.status_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['stream_wait_small'],
-            )
-        elif self.video_obj.live_mode == 2:
-            self.status_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['stream_live_small'],
-            )
-        elif self.video_obj.dl_flag:
-            if self.video_obj.archive_flag:
+        # Special case: don't display any images at all, if the flag is not
+        #   set
+        if not self.main_win_obj.app_obj.catalogue_draw_icons_flag:
+            self.status_image.clear()
+            self.warning_image.clear()
+            self.error_image.clear()
+
+        else:
+
+            # Set the download status
+            if self.video_obj.live_mode == 1:
                 self.status_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['archived_small'],
+                    self.main_win_obj.pixbuf_dict['stream_wait_small'],
                 )
+            elif self.video_obj.live_mode == 2:
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['stream_live_small'],
+                )
+            elif self.video_obj.dl_flag:
+                if self.video_obj.archive_flag:
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['archived_small'],
+                    )
+                else:
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['have_file_small'],
+                    )
             else:
                 self.status_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['have_file_small'],
+                    self.main_win_obj.pixbuf_dict['no_file_small'],
                 )
-        else:
-            self.status_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['no_file_small'],
-            )
 
-        # Set an indication of any error/warning messages. If there is an error
-        #   but no warning, show the error icon in the warning image (so there
-        #   isn't a large gap in the middle)
-        if self.video_obj.error_list and self.video_obj.warning_list:
+            # Set an indication of any error/warning messages. If there is an
+            #   error but no warning, show the error icon in the warning image
+            #   (so there isn't a large gap in the middle)
+            if self.video_obj.error_list and self.video_obj.warning_list:
 
-            self.warning_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['warning_small'],
-            )
+                self.warning_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['warning_small'],
+                )
 
-            self.error_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['error_small'],
-            )
+                self.error_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['error_small'],
+                )
 
-        elif self.video_obj.error_list:
+            elif self.video_obj.error_list:
 
-            self.warning_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['error_small'],
-            )
+                self.warning_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['error_small'],
+                )
 
-            self.error_image.clear()
+                self.error_image.clear()
 
-        elif self.video_obj.warning_list:
+            elif self.video_obj.warning_list:
 
-            self.warning_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['warning_small'],
-            )
+                self.warning_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['warning_small'],
+                )
 
-            self.error_image.clear()
+                self.error_image.clear()
 
-        else:
+            else:
 
-            self.error_image.clear()
-            self.warning_image.clear()
+                self.error_image.clear()
+                self.warning_image.clear()
 
 
     def update_video_descrip(self):
@@ -17012,7 +18155,7 @@ class ComplexCatalogueItem(object):
             self.temp_dl_watch_label.set_markup(
                 '<a href="' + html.escape(link_text) + '" title="' \
                 + _('Download to a temporary folder, then watch') \
-                + '">' + _('D/L and watch') + '</a>',
+                + '">' + _('D/L &amp; watch') + '</a>',
             )
 
         else:
@@ -17060,11 +18203,13 @@ class ComplexCatalogueItem(object):
 
         if not self.video_obj.bookmark_flag:
             self.marked_bookmark_label.set_markup(
-                text + _('Bookmarked') + '</a>',
+#                text + _('Bookmarked') + '</a>',
+                text + _('B/mark') + '</a>',
             )
         else:
             self.marked_bookmark_label.set_markup(
-                text + '<s>' + _('Bookmarked') + '</s></a>',
+#                text + '<s>' + _('Bookmarked') + '</s></a>',
+                text + '<s>' + _('B/mark') + '</s></a>',
             )
 
         # Favourite/not favourite
@@ -17110,12 +18255,48 @@ class ComplexCatalogueItem(object):
         + _('Show in Waiting Videos folder') + '">'
         if not self.video_obj.waiting_flag:
             self.marked_waiting_label.set_markup(
-                text + _('In waiting list') + '</a>',
+                text + _('Waiting') + '</a>',
             )
         else:
             self.marked_waiting_label.set_markup(
-                text + '<s>' + _('In Waiting list') + '</s></a>',
+                text + '<s>' + _('Waiting') + '</s></a>',
             )
+
+
+    def enable_visible_frame(self, visible_flag):
+
+        """Called by self.draw_widgets() and
+        mainwin.MainWin.on_draw_frame_checkbutton_changed().
+
+        Enables or disables the visible frame around the edge of the video.
+
+        Args:
+
+            visible_flag (bool): True to enable the frame, False to disable it
+
+        """
+
+        # Sanity check: don't let GridCatalogueItem use this inherited method;
+        #   when displaying videos in a grid, the frame is visible (or not)
+        #   around the mainwin.CatalogueGridBox object
+        if not isinstance(self, ComplexCatalogueItem):
+            return self.main_win_obj.app_obj.system_error(
+                259,
+                'CatalogueGridBox has no frame to toggle',
+            )
+
+        # (When we're still waiting to set the minimum width for a gridbox,
+        #   then the frame must be visible)
+        thumb_size = self.main_win_obj.app_obj.thumb_size_custom
+
+        if visible_flag \
+        or (
+            self.main_win_obj.app_obj.catalogue_mode_type == 'grid'
+            and self.main_win_obj.catalogue_grid_width_dict[thumb_size] is None
+        ):
+            self.frame.set_shadow_type(Gtk.ShadowType.IN)
+        else:
+            self.frame.set_shadow_type(Gtk.ShadowType.NONE)
 
 
     def temp_box_is_visible(self):
@@ -17231,20 +18412,15 @@ class ComplexCatalogueItem(object):
         # Toggle the setting
         if not self.video_obj.dbid \
         in self.main_win_obj.app_obj.media_reg_auto_alarm_dict:
-
             self.main_win_obj.app_obj.add_auto_alarm_dict(self.video_obj)
-            label = _('Undo alarm')
-
         else:
-
             self.main_win_obj.app_obj.del_auto_alarm_dict(self.video_obj)
-            label = _('Alarm')
 
         # Because of an unexplained Gtk problem, there is usually a crash after
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.live_auto_alarm_label.set_markup(label)
+        self.live_auto_alarm_label.set_markup(_('Alarm'))
 
         GObject.timeout_add(0, self.update_livestream_labels)
 
@@ -17275,20 +18451,15 @@ class ComplexCatalogueItem(object):
         # Toggle the setting
         if not self.video_obj.dbid \
         in self.main_win_obj.app_obj.media_reg_auto_dl_start_dict:
-
             self.main_win_obj.app_obj.add_auto_dl_start_dict(self.video_obj)
-            label = _('Don\'t D/L')
-
         else:
-
             self.main_win_obj.app_obj.del_auto_dl_start_dict(self.video_obj)
-            label = _('D/L on start')
 
         # Because of an unexplained Gtk problem, there is usually a crash after
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.live_auto_dl_start_label.set_markup(label)
+        self.live_auto_dl_start_label.set_markup(_('D/L on start'))
 
         GObject.timeout_add(0, self.update_livestream_labels)
 
@@ -17320,20 +18491,15 @@ class ComplexCatalogueItem(object):
         # Toggle the setting
         if not self.video_obj.dbid \
         in self.main_win_obj.app_obj.media_reg_auto_dl_stop_dict:
-
             self.main_win_obj.app_obj.add_auto_dl_stop_dict(self.video_obj)
-            label = _('Don\'t D/L')
-
         else:
-
             self.main_win_obj.app_obj.del_auto_dl_stop_dict(self.video_obj)
-            label = _('D/L on stop')
 
         # Because of an unexplained Gtk problem, there is usually a crash after
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.live_auto_dl_stop_label.set_markup(label)
+        self.live_auto_dl_stop_label.set_markup(_('D/L on stop'))
 
         GObject.timeout_add(0, self.update_livestream_labels)
 
@@ -17364,20 +18530,15 @@ class ComplexCatalogueItem(object):
         # Toggle the setting
         if not self.video_obj.dbid \
         in self.main_win_obj.app_obj.media_reg_auto_notify_dict:
-
             self.main_win_obj.app_obj.add_auto_notify_dict(self.video_obj)
-            label = _('Undo notify')
-
         else:
-
             self.main_win_obj.app_obj.del_auto_notify_dict(self.video_obj)
-            label = _('Notify')
 
         # Because of an unexplained Gtk problem, there is usually a crash after
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.live_auto_notify_label.set_markup(label)
+        self.live_auto_notify_label.set_markup(_('Notify'))
 
         GObject.timeout_add(0, self.update_livestream_labels)
 
@@ -17409,20 +18570,15 @@ class ComplexCatalogueItem(object):
         # Toggle the setting
         if not self.video_obj.dbid \
         in self.main_win_obj.app_obj.media_reg_auto_open_dict:
-
             self.main_win_obj.app_obj.add_auto_open_dict(self.video_obj)
-            label = _('Undo open')
-
         else:
-
             self.main_win_obj.app_obj.del_auto_open_dict(self.video_obj)
-            label = _('Open')
 
         # Because of an unexplained Gtk problem, there is usually a crash after
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.live_auto_open_label.set_markup(label)
+        self.live_auto_open_label.set_markup(_('Open'))
 
         GObject.timeout_add(0, self.update_livestream_labels)
 
@@ -17505,7 +18661,7 @@ class ComplexCatalogueItem(object):
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.marked_bookmark_label.set_markup(_('Not bookmarked'))
+        self.marked_bookmark_label.set_markup(_('Bookmarked'))
 
         GObject.timeout_add(0, self.update_marked_labels)
 
@@ -17678,7 +18834,7 @@ class ComplexCatalogueItem(object):
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        self.marked_waiting_label.set_markup(_('Not in waiting list'))
+        self.marked_waiting_label.set_markup(_('Waiting'))
 
         GObject.timeout_add(0, self.update_marked_labels)
 
@@ -17862,7 +19018,7 @@ class ComplexCatalogueItem(object):
             utils.debug_time('mwn 15886 on_click_watch_hooktube_label')
 
         # Launch the video
-        utils.open_file(uri)
+        utils.open_file(self.main_win_obj.app_obj, uri)
 
         # Mark the video as not new (having been watched)
         if self.video_obj.new_flag:
@@ -17906,7 +19062,7 @@ class ComplexCatalogueItem(object):
             utils.debug_time('mwn 15930 on_click_watch_invidious_label')
 
         # Launch the video
-        utils.open_file(uri)
+        utils.open_file(self.main_win_obj.app_obj, uri)
 
         # Mark the video as not new (having been watched)
         if self.video_obj.new_flag:
@@ -17951,7 +19107,7 @@ class ComplexCatalogueItem(object):
             utils.debug_time('mwn 15931 on_click_watch_other_label')
 
         # Launch the video
-        utils.open_file(uri)
+        utils.open_file(self.main_win_obj.app_obj, uri)
 
         # Mark the video as not new (having been watched)
         if self.video_obj.new_flag:
@@ -18098,7 +19254,7 @@ class ComplexCatalogueItem(object):
             utils.debug_time('mwn 16074 on_click_watch_web_label')
 
         # Launch the video
-        utils.open_file(uri)
+        utils.open_file(self.main_win_obj.app_obj, uri)
 
         # Mark the video as not new (having been watched)
         if self.video_obj.new_flag:
@@ -18128,6 +19284,9 @@ class ComplexCatalogueItem(object):
 
         """Called from callback in self.draw_widgets().
 
+        When the user right-clicks an the box comprising this
+        ComplexCatalogueItem, create a context-sensitive popup menu.
+
         When the user right-clicks an a row, create a context-sensitive popup
         menu.
 
@@ -18146,10 +19305,1280 @@ class ComplexCatalogueItem(object):
             self.main_win_obj.video_catalogue_popup_menu(event, self.video_obj)
 
 
+class GridCatalogueItem(ComplexCatalogueItem):
+
+    """Called by MainWin.video_catalogue_redraw_all() and
+    .video_catalogue_insert_video().
+
+    Python class that handles a single gridbox in the Video Catalogue.
+
+    Each mainwin.GridCatalogueItem object stores widgets used in that gridbox,
+    and updates them when required.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The main window object
+
+        video_obj (media.Video): The media data object itself (always a video)
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 13928 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # The main window object
+        self.main_win_obj = main_win_obj
+        # The media data object itself (always a video)
+        self.video_obj = video_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.catalogue_gridbox = None       # mainwin.CatalogueGridBox
+        self.grid = None                    # Gtk.Grid
+        self.thumb_box = None               # Gtk.HBox
+        self.thumb_image = None             # Gtk.Image
+        self.status_hbox = None             # Gtk.HBox
+        self.status_vbox = None             # Gtk.VBox
+        self.status_image = None            # Gtk.Image
+        self.warning_image = None           # Gtk.Image
+        self.error_image = None             # Gtk.Image
+        self.grid2 = None                   # Gtk.Grid
+        self.name_label = None              # Gtk.Label
+        self.container_label = None         # Gtk.Label
+        self.grid3 = None                   # Gtk.Grid
+        self.live_auto_notify_label = None  # Gtk.Label
+        self.live_auto_alarm_label = None   # Gtk.Label
+        self.live_auto_open_label = None    # Gtk.Label
+        self.live_auto_dl_start_label = None
+                                            # Gtk.Label
+        self.live_auto_dl_stop_label = None # Gtk.Label
+        self.grid4 = None                   # Gtk.Grid
+        self.watch_player_label = None      # Gtk.Label
+        self.watch_web_label = None         # Gtk.Label
+        self.watch_hooktube_label = None    # Gtk.Label
+        self.watch_invidious_label = None   # Gtk.Label
+        self.watch_other_label = None       # Gtk.Label
+        self.grid5 = None                   # Gtk.Grid
+        self.temp_mark_label = None         # Gtk.Label
+        self.temp_dl_label = None           # Gtk.Label
+        self.temp_dl_watch_label = None     # Gtk.Label
+        self.grid6 = None                   # Gtk.Grid
+        self.marked_archive_label = None    # Gtk.Label
+        self.marked_bookmark_label = None   # Gtk.Label
+        self.marked_fav_label = None        # Gtk.Label
+        self.marked_missing_label = None    # Gtk.Label
+        self.marked_new_label = None        # Gtk.Label
+        self.marked_waiting_label = None    # Gtk.Label
+
+
+        # IV list - other
+        # ---------------
+        # Unique ID for this object, matching the .dbid for self.video_obj (an
+        #   integer)
+        self.dbid = video_obj.dbid
+        # Size (in pixels) of gaps between various widgets
+        self.spacing_size = 5
+        # Flag set to True if the video's parent folder is a temporary folder,
+        #   meaning that some widgets don't need to be drawn at all
+        self.no_temp_widgets_flag = False
+
+        # Whenever self.draw_widgets() or .update_widgets() is called, the
+        #   background colour might be changed
+        # This IV shows the value of the self.video_obj.live_mode, the last
+        #   time either of those functions was called. If the value has
+        #   actually changed, then we ask Gtk to change the background
+        #   (otherwise, we don't)
+        self.previous_live_mode = 0
+        # Flag set to True when the temporary labels box (self.temp_box) is
+        #   visible, False when not
+        self.temp_box_visible_flag = False
+        # Flag set to True when the marked labels box (self.marked_box) is
+        #   visible, False when not
+        self.marked_box_visible_flag = False
+
+        # We can't select widgets on a Gtk.Grid directly, so Tartube implements
+        #   its own 'selection' mechanism
+        self.selected_flag = False
+
+
+    # Public class methods
+
+
+    def draw_widgets(self, catalogue_gridbox):
+
+        """Called by mainwin.MainWin.video_catalogue_redraw_all() and
+        .video_catalogue_insert_video().
+
+        After a Gtk.Frame has been created for this object, populate it with
+        widgets.
+
+        Args:
+
+            catalogue_gridbox (mainwin.CatalogueGridBox): A wrapper for a
+                Gtk.Frame object, storing the media.Video object displayed in
+                that row.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14027 draw_widgets')
+
+        # If the video's parent folder is a temporary folder, then we don't
+        #   need one row of widgets at all
+        parent_obj = self.video_obj.parent_obj
+        if isinstance(parent_obj, media.Folder) \
+        and parent_obj.temp_flag:
+            self.no_temp_widgets_flag = True
+        else:
+            self.no_temp_widgets_flag = False
+
+        # Draw the widgets
+        self.catalogue_gridbox = catalogue_gridbox
+
+        event_box = Gtk.EventBox()
+        self.catalogue_gridbox.add(event_box)
+        event_box.connect('button-release-event', self.on_click_box)
+
+        self.grid = Gtk.Grid()
+        event_box.add(self.grid)
+        self.grid.set_border_width(self.spacing_size)
+
+        # Highlight livestreams by specifying a background colour
+        self.update_background()
+
+        # First row - thumbnail image and status/error/warning icons
+        self.thumb_box = Gtk.HBox()
+        self.grid.attach(self.thumb_box, 0, 0, 1, 1)
+        self.thumb_box.set_hexpand(True)
+        self.thumb_box.set_vexpand(False)
+        # (Grid looks better with a small gap under the thumbnail)
+        self.thumb_box.set_border_width(self.spacing_size)
+
+        self.thumb_image = Gtk.Image()
+        # Add extra spacing to the side of the image, so that the status icons
+        #   can be placed there
+        self.thumb_box.pack_start(
+            self.thumb_image,
+            True,
+            True,
+            (self.spacing_size * 4),
+        )
+
+        # Add a second box at the same grid location. This box contains the
+        #   status icons, shifted to the far right. In this way, the
+        #   thumbnail is still centred in the middle of the gridbox, and is
+        #   not drawn over the top of the status icons
+        self.status_hbox = Gtk.HBox()
+        self.grid.attach(self.status_hbox, 0, 0, 1, 1)
+        self.status_hbox.set_hexpand(True)
+        self.status_hbox.set_vexpand(False)
+        self.status_hbox.set_border_width(self.spacing_size)
+
+        self.status_vbox = Gtk.VBox()
+        self.status_hbox.pack_end(self.status_vbox, False, False, 0)
+
+        self.status_image = Gtk.Image()
+        self.status_vbox.pack_start(self.status_image,  False, False, 0)
+        self.status_image.set_hexpand(False)
+
+        self.warning_image = Gtk.Image()
+        self.status_vbox.pack_start(
+            self.warning_image,
+            False,
+            False,
+            self.spacing_size,
+        )
+        self.warning_image.set_hexpand(False)
+
+        self.error_image = Gtk.Image()
+        self.status_vbox.pack_start(self.error_image,  False, False, 0)
+        self.error_image.set_hexpand(False)
+
+        # Second row - video name
+        # (Use sub-grids on several rows so that their column spacing remains
+        #   independent of the others)
+        self.grid2 = Gtk.Grid()
+        self.grid.attach(self.grid2, 0, 1, 1, 1)
+        self.grid2.set_column_spacing(self.spacing_size)
+
+        self.name_label = Gtk.Label('', xalign = 0)
+        self.grid2.attach(self.name_label, 0, 0, 1, 1)
+        self.name_label.set_hexpand(True)
+
+        # Third row - parent channel/playlist/folder name
+        self.container_label = Gtk.Label('', xalign = 0)
+        self.grid2.attach(self.container_label, 0, 1, 1, 1)
+        self.container_label.set_hexpand(True)
+
+        # Fourth row - video stats, or livestream notification options,
+        #   depending on settings
+        self.grid3 = Gtk.Grid()
+        self.grid.attach(self.grid3, 0, 2, 1, 1)
+        self.grid3.set_column_spacing(self.spacing_size)
+
+        # (These labels are visible only for livestreams)
+        # Auto-notify (this label doubles up as the label for video stats,
+        #   when the video is not a livestream)
+        self.live_auto_notify_label = Gtk.Label('', xalign=0)
+        self.grid3.attach(self.live_auto_notify_label, 1, 0, 1, 1)
+        self.live_auto_notify_label.connect(
+            'activate-link',
+            self.on_click_live_auto_notify_label,
+        )
+
+        # Auto-sound alarm
+        self.live_auto_alarm_label = Gtk.Label('', xalign=0)
+        self.grid3.attach(self.live_auto_alarm_label, 2, 0, 1, 1)
+        self.live_auto_alarm_label.connect(
+            'activate-link',
+            self.on_click_live_auto_alarm_label,
+        )
+
+        # Auto-open
+        self.live_auto_open_label = Gtk.Label('', xalign=0)
+        self.grid3.attach(self.live_auto_open_label, 3, 0, 1, 1)
+        self.live_auto_open_label.connect(
+            'activate-link',
+            self.on_click_live_auto_open_label,
+        )
+
+        # D/L on start
+        self.live_auto_dl_start_label = Gtk.Label('', xalign=0)
+        self.grid3.attach(self.live_auto_dl_start_label, 4, 0, 1, 1)
+        self.live_auto_dl_start_label.connect(
+            'activate-link',
+            self.on_click_live_auto_dl_start_label,
+        )
+
+        # D/L on stop
+        self.live_auto_dl_stop_label = Gtk.Label('', xalign=0)
+        self.grid3.attach(self.live_auto_dl_stop_label, 5, 0, 1, 1)
+        self.live_auto_dl_stop_label.connect(
+            'activate-link',
+            self.on_click_live_auto_dl_stop_label,
+        )
+
+        # Fifth row - Watch...
+        self.grid4 = Gtk.Grid()
+        self.grid.attach(self.grid4, 0, 3, 1, 1)
+        self.grid4.set_column_spacing(self.spacing_size)
+
+        # Watch in player
+        self.watch_player_label = Gtk.Label('', xalign=0)
+        self.grid4.attach(self.watch_player_label, 0, 0, 1, 1)
+        self.watch_player_label.connect(
+            'activate-link',
+            self.on_click_watch_player_label,
+        )
+
+        # Watch on website/YouTube
+        self.watch_web_label = Gtk.Label('', xalign=0)
+        self.grid4.attach(self.watch_web_label, 1, 0, 1, 1)
+        self.watch_web_label.connect(
+            'activate-link',
+            self.on_click_watch_web_label,
+        )
+
+        # Watch on HookTube
+        self.watch_hooktube_label = Gtk.Label('', xalign=0)
+        self.grid4.attach(self.watch_hooktube_label, 2, 0, 1, 1)
+        self.watch_hooktube_label.connect(
+            'activate-link',
+            self.on_click_watch_hooktube_label,
+        )
+
+        # Watch on Invidious
+        self.watch_invidious_label = Gtk.Label('', xalign=0)
+        self.grid4.attach(self.watch_invidious_label, 3, 0, 1, 1)
+        self.watch_invidious_label.connect(
+            'activate-link',
+            self.on_click_watch_invidious_label,
+        )
+
+        # Watch on the other YouTube front-end (specified by the user)
+        self.watch_other_label = Gtk.Label('', xalign=0)
+        self.grid4.attach(self.watch_other_label, 4, 0, 1, 1)
+        self.watch_other_label.connect(
+            'activate-link',
+            self.on_click_watch_other_label,
+        )
+
+        # Optional rows
+
+        # Sixth row: Temporary...
+        self.grid5 = Gtk.Grid()
+        if self.temp_box_is_visible():
+            self.grid.attach(self.grid5, 0, 4, 1, 1)
+            self.temp_box_visible_flag = True
+
+        self.grid5.set_column_spacing(self.spacing_size)
+
+        # Mark for download
+        self.temp_mark_label = Gtk.Label('', xalign=0)
+        self.grid5.attach(self.temp_mark_label, 0, 0, 1, 1)
+        self.temp_mark_label.connect(
+            'activate-link',
+            self.on_click_temp_mark_label,
+        )
+
+        # Download
+        self.temp_dl_label = Gtk.Label('', xalign=0)
+        self.grid5.attach(self.temp_dl_label, 1, 0, 1, 1)
+        self.temp_dl_label.connect(
+            'activate-link',
+            self.on_click_temp_dl_label,
+        )
+
+        # Download and watch
+        self.temp_dl_watch_label = Gtk.Label('', xalign=0)
+        self.grid5.attach(self.temp_dl_watch_label, 2, 0, 1, 1)
+        self.temp_dl_watch_label.connect(
+            'activate-link',
+            self.on_click_temp_dl_watch_label,
+        )
+
+        # Seventh row: Marked...
+        self.grid6 = Gtk.Grid()
+        if self.marked_box_is_visible:
+            self.grid.attach(self.grid6, 0, 5, 1, 1)
+            self.marked_box_visible_flag = True
+
+        self.grid6.set_column_spacing(self.spacing_size)
+
+        # Archived/not archived
+        self.marked_archive_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_archive_label, 0, 0, 1, 1)
+        self.marked_archive_label.connect(
+            'activate-link',
+            self.on_click_marked_archive_label,
+        )
+
+        # Bookmarked/not bookmarked
+        self.marked_bookmark_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_bookmark_label, 1, 0, 1, 1)
+        self.marked_bookmark_label.connect(
+            'activate-link',
+            self.on_click_marked_bookmark_label,
+        )
+
+        # Favourite/not favourite
+        self.marked_fav_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_fav_label, 2, 0, 1, 1)
+        self.marked_fav_label.connect(
+            'activate-link',
+            self.on_click_marked_fav_label,
+        )
+
+        # Missing/not missing
+        self.marked_missing_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_missing_label, 3, 0, 1, 1)
+        self.marked_missing_label.connect(
+            'activate-link',
+            self.on_click_marked_missing_label,
+        )
+
+        # New/not new
+        self.marked_new_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_new_label, 4, 0, 1, 1)
+        self.marked_new_label.connect(
+            'activate-link',
+            self.on_click_marked_new_label,
+        )
+
+        # In waiting list/not in waiting list
+        self.marked_waiting_label = Gtk.Label('', xalign=0)
+        self.grid6.attach(self.marked_waiting_label, 5, 0, 1, 1)
+        self.marked_waiting_label.connect(
+            'activate-link',
+            self.on_click_marked_waiting_list_label,
+        )
+
+
+    def update_widgets(self):
+
+        """Called by mainwin.MainWin.video_catalogue_redraw_all(),
+        .video_catalogue_update_video() and .video_catalogue_insert_video().
+
+        Sets the values displayed by each widget.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14354 update_widgets')
+
+        self.update_background()
+        self.update_tooltips()
+        self.update_thumb_image()
+        self.update_status_images()
+        self.update_video_name()
+        self.update_container_name()
+        self.update_video_stats()
+        self.update_watch_player()
+        self.update_watch_web()
+
+        # If the fifth/sixth rows are not currently visible, but need to be
+        #   visible, make them visible (and vice-versa)
+        if not self.temp_box_is_visible():
+
+            if self.temp_box_visible_flag:
+                self.grid.remove(self.grid5)
+                self.temp_box_visible_flag = False
+
+        else:
+
+            self.update_temp_labels()
+            if not self.temp_box_visible_flag:
+                self.grid.attach(self.grid5, 0, 4, 1, 1)
+                self.temp_box_visible_flag = True
+
+        if not self.marked_box_is_visible():
+
+            if self.marked_box_visible_flag:
+                self.grid.remove(self.grid6)
+                self.marked_box_visible_flag = False
+
+        else:
+
+            self.update_marked_labels()
+            if not self.marked_box_visible_flag:
+                self.grid.attach(self.grid6, 0, 5, 1, 1)
+                self.marked_box_visible_flag = True
+
+
+    def update_background(self, force_flag=False):
+
+        """Calledy by self.draw_widgets(), .update_widgets(), .do_select() and
+        .toggle_select().
+
+        Updates the background colour to show which videos are livestreams
+        (but only when a video's livestream mode has changed).
+
+        Note that calls to self.do_select() can also update the background
+        colour.
+
+        Args:
+
+            force_flag (bool): True when called from self.do_select() and
+                .toggle_select(), in which case the background is updated,
+                regardless of whether the media.Video's .live_mode IV has
+                changed
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14404 update_background')
+
+        if force_flag or self.previous_live_mode != self.video_obj.live_mode:
+
+            self.previous_live_mode = self.video_obj.live_mode
+
+            if not self.selected_flag:
+
+                if self.video_obj.live_mode == 0 \
+                or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        None,
+                    )
+                elif self.video_obj.live_mode == 1:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.waiting_colour,
+                    )
+                elif self.video_obj.live_mode == 2:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.live_colour,
+                    )
+
+            else:
+
+                if self.video_obj.live_mode == 0 \
+                or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.grid_select_colour,
+                    )
+                elif self.video_obj.live_mode == 1:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.grid_waiting_select_colour,
+                    )
+                elif self.video_obj.live_mode == 2:
+                    self.catalogue_gridbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.grid_live_select_colour,
+                    )
+
+
+    def update_tooltips(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the tooltips for the Gtk.Frame that contains everything.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14436 update_tooltips')
+
+        if self.main_win_obj.app_obj.show_tooltips_flag:
+            self.catalogue_gridbox.set_tooltip_text(
+                self.video_obj.fetch_tooltip_text(
+                    self.main_win_obj.app_obj,
+                    self.main_win_obj.tooltip_max_len,
+                ),
+            )
+
+
+    def update_thumb_image(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the Gtk.Image widget to display the video's thumbnail, if
+        available.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14456 update_thumb_image')
+
+        app_obj = self.main_win_obj.app_obj
+        thumb_size = app_obj.thumb_size_custom
+        gridbox_min_width \
+        = self.main_win_obj.catalogue_grid_width_dict[thumb_size]
+
+        # See if the video's thumbnail file has been downloaded
+        thumb_flag = False
+        if self.video_obj.file_name:
+
+            # No way to know which image format is used by all websites for
+            #   their video thumbnails, so look for the most common ones
+            # The True argument means that if the thumbnail isn't found in
+            #   Tartube's main data directory, look in the temporary directory
+            #   too
+            path = utils.find_thumbnail(
+                self.main_win_obj.app_obj,
+                self.video_obj,
+                True,
+            )
+
+            if path:
+
+                # Thumbnail file exists, so use it
+                mini_list = app_obj.thumb_size_dict[thumb_size]
+
+                # (Returns a tuple, who knows why)
+                arglist = app_obj.file_manager_obj.load_to_pixbuf(
+                    path,
+                    mini_list[0],       # width
+                    mini_list[1],       # height
+                ),
+
+                if arglist[0]:
+                    self.thumb_image.set_from_pixbuf(arglist[0])
+                    thumb_flag = True
+
+        # No thumbnail file found, so use a standard icon file
+        if not thumb_flag:
+
+            if self.video_obj.fav_flag and self.video_obj.options_obj:
+
+                self.thumb_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['thumb_both_' + thumb_size],
+                )
+
+            elif self.video_obj.fav_flag:
+
+                self.thumb_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['thumb_left_' + thumb_size],
+                )
+
+            elif self.video_obj.options_obj:
+
+                self.thumb_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['thumb_right_' + thumb_size],
+                )
+
+            else:
+
+                self.thumb_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['thumb_none_' + thumb_size],
+                )
+
+
+    def update_video_name(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the Gtk.Label widget to display the video's current name.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14513 update_video_name')
+
+        app_obj = self.main_win_obj.app_obj
+        thumb_size = app_obj.thumb_size_custom
+        gridbox_min_width \
+        = self.main_win_obj.catalogue_grid_width_dict[thumb_size]
+
+        # For videos whose name is unknown, display the URL, rather than the
+        #   usual '(video with no name)' string
+        name = self.video_obj.nickname
+        if name is None or name == app_obj.default_video_name:
+
+            if self.video_obj.source is not None:
+
+                # Using pango markup to display a URL is too risky, so just use
+                #   ordinary text
+                self.name_label.set_text(
+                    utils.shorten_string(
+                        self.video_obj.source,
+                        self.main_win_obj.quite_long_string_max_len,
+                    ),
+                )
+
+                return
+
+            else:
+
+                # No URL to show, so we're forced to use '(video with no name)'
+                name = app_obj.default_video_name
+
+        string = ''
+        if self.video_obj.new_flag:
+            string += ' font_weight="bold"'
+
+        if self.video_obj.dl_sim_flag:
+            string += ' style="italic"'
+
+        # The video name is split into two lines, if there is enough text.
+        #   Set the length of a the lines matching the size of the thumbnail
+        if thumb_size == 'tiny':
+            max_line_length = self.main_win_obj.medium_string_max_len
+        elif thumb_size == 'small':
+            max_line_length = self.main_win_obj.quite_long_string_max_len
+        elif thumb_size == 'medium':
+            max_line_length = self.main_win_obj.long_string_max_len
+        elif thumb_size == 'large':
+            max_line_length = self.main_win_obj.very_long_string_max_len
+        else:
+            max_line_length = self.main_win_obj.exceedingly_long_string_max_len
+
+        self.name_label.set_markup(
+            '<span font_size="large"' + string + '>' + \
+            html.escape(
+                utils.shorten_string_two_lines(
+                    name,
+                    max_line_length,
+                ),
+                quote=True,
+            ) + '</span>'
+        )
+
+
+    def update_container_name(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the Gtk.Label widget to display the parent channel/playlist/
+        folder name
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14513 update_container_name')
+
+        if self.video_obj.orig_parent is not None:
+
+            self.container_label.set_markup(
+                '<i>' + html.escape(
+                    utils.shorten_string(
+                        self.video_obj.orig_parent,
+                        self.main_win_obj.very_long_string_max_len,
+                    ),
+                    quote=True,
+                ) + '</i>',
+            )
+
+        else:
+
+            self.container_label.set_markup(
+                '<i>' + html.escape(
+                    utils.shorten_string(
+                        self.video_obj.parent_obj.name,
+                        self.main_win_obj.very_long_string_max_len,
+                    ),
+                    quote=True,
+                ) + '</i>',
+            )
+
+
+    def update_video_stats(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the Gtk.Label widget to display the video's current side/
+        duration/date information.
+
+        For livestreams, instead displays livestream options.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14736 update_video_stats')
+
+        if not self.video_obj.live_mode:
+
+            if self.video_obj.duration is not None:
+                string = utils.convert_seconds_to_string(
+                    self.video_obj.duration,
+                    True,
+                )
+
+            else:
+                string = _('unknown')
+
+            size = self.video_obj.get_file_size_string()
+            if size is not None:
+                string = string + '  -  '  + size
+            else:
+                string = string + '  -  ' + _('unknown')
+
+            date = self.video_obj.get_upload_date_string(
+                self.main_win_obj.app_obj.show_pretty_dates_flag,
+            )
+
+            if date is not None:
+                string = string + '  -  ' + date
+            else:
+                string = string + '  -  ' + _('unknown')
+
+            self.live_auto_notify_label.set_markup(string)
+            self.live_auto_alarm_label.set_text('')
+            self.live_auto_open_label.set_text('')
+            self.live_auto_dl_start_label.set_text('')
+            self.live_auto_dl_stop_label.set_text('')
+
+        else:
+
+            name = html.escape(self.video_obj.name)
+            app_obj = self.main_win_obj.app_obj
+            dbid = self.video_obj.dbid
+
+            if dbid in app_obj.media_reg_auto_notify_dict:
+                label = '<s>' + _('Notify') + '</s>'
+            else:
+                label = _('Notify')
+
+            # Currently disabled on MS Windows
+            if os.name == 'nt':
+                self.live_auto_notify_label.set_markup(_('Notify'))
+            else:
+                self.live_auto_notify_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream starts, notify the user') \
+                    + '">' + label + '</a>',
+                )
+
+            if not mainapp.HAVE_PLAYSOUND_FLAG:
+
+                self.live_auto_alarm_label.set_markup('Alarm')
+
+            else:
+
+                if dbid in app_obj.media_reg_auto_alarm_dict:
+                    label = '<s>' + _('Alarm') + '</s>'
+                else:
+                    label = _('Alarm')
+
+                self.live_auto_alarm_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream starts, sound an alarm') \
+                    + '">' + label + '</a>',
+                )
+
+            if dbid in app_obj.media_reg_auto_open_dict:
+                label = '<s>' + _('Open') + '</s>'
+            else:
+                label = _('Open')
+
+            self.live_auto_open_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream starts, open it') \
+                + '">' + label + '</a>',
+            )
+
+            if dbid in app_obj.media_reg_auto_dl_start_dict:
+                label = '<s>' + _('D/L on start') + '</s>'
+            else:
+                label = _('D/L on start')
+
+            self.live_auto_dl_start_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream starts, download it') \
+                + '">' + label + '</a>',
+            )
+
+            if dbid in app_obj.media_reg_auto_dl_stop_dict:
+                label = '<s>' + _('D/L on stop') + '</s>'
+            else:
+                label = _('D/L on stop')
+
+            self.live_auto_dl_stop_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream stops, download it') \
+                + '">' + label + '</a>',
+            )
+
+
+    def update_watch_player(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the clickable Gtk.Label widget for watching the video in an
+        external media player.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14858 update_watch_player')
+
+        if self.video_obj.live_mode == 1:
+
+            translate_note = _('TRANSLATOR\'S NOTE: D/L means download')
+
+            # Link not clickable
+            self.watch_player_label.set_markup(_('D/L'))
+
+        elif self.video_obj.live_mode == 2:
+
+            # Link clickable
+            self.watch_player_label.set_markup(
+                '<a href="' + html.escape(self.video_obj.source) \
+                + '" title="' + _('Download this video') + '">' \
+                + _('D/L') + '</a>',
+            )
+
+        elif self.video_obj.file_name and self.video_obj.dl_flag:
+
+            # Link clickable
+            self.watch_player_label.set_markup(
+                '<a href="' \
+                + html.escape(
+                    self.video_obj.get_actual_path(self.main_win_obj.app_obj),
+                ) + '" title="' + _('Watch in your media player') + '">' \
+                + _('Player') + '</a>',
+            )
+
+        elif self.video_obj.source \
+        and not self.main_win_obj.app_obj.update_manager_obj \
+        and not self.main_win_obj.app_obj.refresh_manager_obj \
+        and not self.main_win_obj.app_obj.process_manager_obj:
+
+            translate_note = _(
+                'TRANSLATOR\'S NOTE: If you want to use &, use &amp;' \
+                + ' - if you want to use a different word (e.g. French et)' \
+                + ', then just use that word',
+            )
+
+            # Link clickable
+            self.watch_player_label.set_markup(
+                '<a href="' + html.escape(self.video_obj.source) \
+                + '" title="' + _('Download and watch in your media player') \
+                + '">' + _('D/L &amp; watch') + '</a>',
+            )
+
+        else:
+
+            # Link not clickable
+            self.watch_player_label.set_markup(
+                '<i>' + _('Can\'t D/L') + '</i>',
+            )
+
+
+    def update_marked_labels(self):
+
+        """Called by anything, but mainly called by self.update_widgets().
+
+        Updates the clickable Gtk.Label widget for video properties.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15118 update_marked_labels')
+
+        if self.video_obj.file_name:
+            link_text = self.video_obj.get_actual_path(
+                self.main_win_obj.app_obj,
+            )
+        elif self.video_obj.source:
+            link_text = self.video_obj.source
+        else:
+            link_text = ''
+
+        translate_note = _(
+            'TRANSLATOR\'S NOTE: This section contains shortened' \
+            + ' labels: Archive = Archived, B/Mark = Bookmarked,' \
+            + ' Waiting: In waiting list',
+        )
+
+        # Archived/not archived
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Prevent automatic deletion of the video') + '">'
+
+        if not self.video_obj.archive_flag:
+            self.marked_archive_label.set_markup(
+                text + _('Archived') + '</a>',
+            )
+        else:
+            self.marked_archive_label.set_markup(
+                text + '<s>' + _('Archived') + '</s></a>',
+            )
+
+        # Bookmarked/not bookmarked
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Show video in Bookmarks folder') + '">'
+
+        if not self.video_obj.bookmark_flag:
+            self.marked_bookmark_label.set_markup(
+                text + _('B/mark') + '</a>',
+            )
+        else:
+            self.marked_bookmark_label.set_markup(
+                text + '<s>' + _('B/mark') + '</s></a>',
+            )
+
+        # Favourite/not favourite
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Show in Favourite Videos folder') + '">'
+
+        if not self.video_obj.fav_flag:
+            self.marked_fav_label.set_markup(
+                text + _('Favourite') + '</a>',
+            )
+        else:
+            self.marked_fav_label.set_markup(
+                text + '<s>' + _('Favourite') + '</s></a>')
+
+        # Missing/not missing
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Mark video as removed by creator') + '">'
+
+        if not self.video_obj.missing_flag:
+            self.marked_missing_label.set_markup(
+                text + _('Missing') + '</a>',
+            )
+        else:
+            self.marked_missing_label.set_markup(
+                text + '<s>' + _('Missing') + '</s></a>',
+            )
+
+        # New/not new
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Mark video as never watched') + '">'
+
+        if not self.video_obj.new_flag:
+            self.marked_new_label.set_markup(
+                text + _('New') + '</a>',
+            )
+        else:
+            self.marked_new_label.set_markup(
+                text + '<s>' + _('New') + '</s></a>',
+            )
+
+        # In waiting list/not in waiting list
+        text = '<a href="' + html.escape(link_text) + '" title="' \
+        + _('Show in Waiting Videos folder') + '">'
+        if not self.video_obj.waiting_flag:
+            self.marked_waiting_label.set_markup(
+                text + _('Waiting') + '</a>',
+            )
+        else:
+            self.marked_waiting_label.set_markup(
+                text + '<s>' + _('Waiting') + '</s></a>',
+            )
+
+
+    def temp_box_is_visible(self):
+
+        """Called by self.draw_widgets and .update_widgets().
+
+        Checks whether the fifth row of labels (for temporary actions) should
+        be visible, or not.
+
+        Returns:
+
+            True if the row should be visible, False if not
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15207 temp_box_is_visible')
+
+        if (
+            self.main_win_obj.app_obj.catalogue_mode
+            == 'grid_show_parent_ext'
+        ) and not self.no_temp_widgets_flag \
+        and not self.video_obj.live_mode:
+            return True
+        else:
+            return False
+
+
+    def marked_box_is_visible(self):
+
+        """Called by self.draw_widgets and .update_widgets().
+
+        Checks whether the sixth row of labels (for marked video actions)
+        should be visible, or not.
+
+        Returns:
+
+            True if the row should be visible, False if not
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15235 marked_box_is_visible')
+
+        if (
+            self.main_win_obj.app_obj.catalogue_mode \
+            == 'grid_show_parent_ext' \
+        ) and not self.video_obj.live_mode:
+            return True
+        else:
+            return False
+
+
+    # (Methods unique to this class)
+
+
+    def toggle_select(self):
+
+        """Called by mainwin.MainWin.video_catalogue_grid_select().
+
+        Selects/unselects this catalogue object.
+        """
+
+        if not self.selected_flag:
+            self.selected_flag = True
+        else:
+            self.selected_flag = False
+
+        # (The True argument marks this function as the caller)
+        self.update_background(True)
+
+
+    def do_select(self, select_flag):
+
+        """Called by mainwin.MainWin.video_catalogue_unselect_all() and
+        .video_catalogue_grid_select().
+
+        Selects/unselects this catalogue object.
+        """
+
+        if not select_flag:
+            self.selected_flag = False
+        else:
+            self.selected_flag = True
+
+        # (The True argument marks this function as the caller)
+        self.update_background(True)
+
+
+
+    # Callback methods
+
+
+    def on_click_marked_archive_label(self, label, uri):
+
+        """Called from callback in self.draw_widgets().
+
+        Mark the video as archived or not archived.
+
+        Args:
+
+            label (Gtk.Label): The clicked widget
+
+            uri (str): Ignored
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15523 on_click_marked_archive_label')
+
+        # Mark the video as archived/not archived
+        if not self.video_obj.archive_flag:
+            self.video_obj.set_archive_flag(True)
+        else:
+            self.video_obj.set_archive_flag(False)
+
+        # Because of an unexplained Gtk problem, there is usually a crash after
+        #   this function returns. Workaround is to make the label unclickable,
+        #   then use a Glib timer to restore it (after some small fraction of a
+        #   second)
+        self.marked_archive_label.set_markup(_('Archived'))
+
+        GObject.timeout_add(0, self.update_marked_labels)
+
+        return True
+
+
+    def on_click_marked_bookmark_label(self, label, uri):
+
+        """Called from callback in self.draw_widgets().
+
+        Mark the video as bookmarked or not bookmarked.
+
+        Args:
+
+            label (Gtk.Label): The clicked widget
+
+            uri (str): Ignored
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15561 on_click_marked_bookmark_label')
+
+        # Mark the video as bookmarked/not bookmarked
+        if not self.video_obj.bookmark_flag:
+            self.main_win_obj.app_obj.mark_video_bookmark(
+                self.video_obj,
+                True,
+            )
+
+        else:
+            self.main_win_obj.app_obj.mark_video_bookmark(
+                self.video_obj,
+                False,
+            )
+
+        # Because of an unexplained Gtk problem, there is usually a crash after
+        #   this function returns. Workaround is to make the label unclickable,
+        #   then use a Glib timer to restore it (after some small fraction of a
+        #   second)
+        self.marked_bookmark_label.set_markup(_('B/mark'))
+
+        GObject.timeout_add(0, self.update_marked_labels)
+
+        return True
+
+
+    def on_click_marked_waiting_list_label(self, label, uri):
+
+        """Called from callback in self.draw_widgets().
+
+        Mark the video as in the waiting list or not in the waiting list.
+
+        Args:
+
+            label (Gtk.Label): The clicked widget
+
+            uri (str): Ignored
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 15689 on_click_marked_waiting_list_label')
+
+        # Mark the video as in waiting list/not in waiting list
+        if not self.video_obj.waiting_flag:
+            self.main_win_obj.app_obj.mark_video_waiting(
+                self.video_obj,
+                True,
+            )
+
+        else:
+            self.main_win_obj.app_obj.mark_video_waiting(
+                self.video_obj,
+                False,
+            )
+
+        # Because of an unexplained Gtk problem, there is usually a crash after
+        #   this function returns. Workaround is to make the label unclickable,
+        #   then use a Glib timer to restore it (after some small fraction of a
+        #   second)
+        self.marked_waiting_label.set_markup(_('Waiting'))
+
+        GObject.timeout_add(0, self.update_marked_labels)
+
+        return True
+
+
+    def on_click_box(self, event_box, event):
+
+        """Called from callback in self.draw_widgets().
+
+        When the user left-clicks the box comprising this GridCatalogueItem,
+        'select' or 'unselect' it.
+
+        When the user rights the box, create a context-sensitive popup menu..
+
+        Args:
+
+            event_box (Gtk.EventBox), event (Gtk.EventButton): Data from the
+                signal emitted by the click
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16118 on_right_click_box')
+
+        if event.type == Gdk.EventType.BUTTON_RELEASE:
+
+            if event.button == 1:
+
+                # We can't select widgets on a Gtk.Grid directly, so Tartube
+                #   implements its own 'selection' mechanism
+                if (event.state & Gdk.ModifierType.SHIFT_MASK):
+
+                    self.main_win_obj.video_catalogue_grid_select(
+                        'shift',
+                        self,
+                    )
+
+                elif (event.state & Gdk.ModifierType.CONTROL_MASK):
+
+                    self.main_win_obj.video_catalogue_grid_select(
+                        'ctrl',
+                        self,
+                    )
+
+                else:
+
+                    self.main_win_obj.video_catalogue_grid_select(
+                        'default',
+                        self,
+                    )
+
+            elif event.button == 3:
+
+                self.main_win_obj.video_catalogue_popup_menu(
+                    event,
+                    self.video_obj,
+                )
+
+
 class CatalogueRow(Gtk.ListBoxRow):
 
     """Called by MainWin.video_catalogue_redraw_all() and
-    .video_catalogue_insert_item().
+    .video_catalogue_insert_video().
 
     Python class acting as a wrapper for Gtk.ListBoxRow, so that we can
     retrieve the media.Video object displayed in each row.
@@ -18175,6 +20604,187 @@ class CatalogueRow(Gtk.ListBoxRow):
         # -----------------------
 
         self.video_obj = video_obj
+
+
+class CatalogueGridBox(Gtk.Frame):
+
+    """Called by MainWin.video_catalogue_redraw_all() and
+    .video_catalogue_insert_video().
+
+    Python class acting as a wrapper for Gtk.Frame, so that we can retrieve the
+    media.Video object displayed in each gridbox.
+
+    Args:
+
+        video_obj (media.Video): The video object displayed in this gridbox
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16146 __init__')
+
+        super(Gtk.Frame, self).__init__()
+
+        # IV list - class objects
+        # -----------------------
+        self.main_win_obj = main_win_obj
+        self.video_obj = video_obj
+
+
+        # IV list - other
+        # ---------------
+        # The coordinates of the gridbox on the Gtk.Grid (required so that
+        #   selection can be handled correctly)
+        self.x_pos = None
+        self.y_pos = None
+
+
+        # Code
+        # ----
+
+        self.enable_visible_frame(
+            main_win_obj.app_obj.catalogue_draw_frame_flag,
+        )
+
+        # When the Tartube main window first opens, we don't know how much
+        #   horizontal space will be consumed by a gridbox until some time
+        #   after a gridbox is drawn
+        # Therefore, don't let gridboxes expand vertically until the minimum
+        #   size has been determined
+        self.set_vexpand(False)
+
+        thumb_size = main_win_obj.app_obj.thumb_size_custom
+        if not main_win_obj.catalogue_grid_expand_flag:
+            self.set_hexpand(False)
+        else:
+            self.set_hexpand(True)
+
+        # This callback will set the size of the first CatalogueGridBox, which
+        #   tells us the minimum required size for all future gridboxes
+        self.connect('size_allocate', self.on_size_allocate)
+
+
+    # Public class methods
+
+
+    def add_to_grid(self, x_pos, y_pos):
+
+        """Called by mainwin.MainWin.video_catalogue_redraw_all(),
+        .video_catalogue_insert_video() and .video_catalogue_grid_rearrange().
+
+        Adds this catalogue object to the Video Catalogue's grid at the
+        specified coordinates.
+
+        Keep a copy of the coordinates so that selection can be handled
+        properly.
+
+        Args:
+
+            x_pos, y_pos (int): Coordinates on a Gtk.Grid
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16074 add_to_grid')
+
+        self.main_win_obj.catalogue_grid.attach(self, x_pos, y_pos, 1, 1)
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+
+
+    def enable_visible_frame(self, visible_flag):
+
+        """Called by self.__init__(),
+        mainwin.MainWin.video_catalogue_grid_set_gridbox_width() and
+        .on_draw_frame_checkbutton_changed().
+
+        Enables/disables the visible frame drawn around the edge of the
+        gridbox (if allowed).
+
+        Args:
+
+            visible_flag (bool): True to enable the frame, False to disable it
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16074 enable_visible_frame')
+
+        thumb_size = self.main_win_obj.app_obj.thumb_size_custom
+
+        # (When we're still waiting to set the minimum width for a gridbox,
+        #   then the frame must be visible, regardless of the specified flag)
+        if visible_flag \
+        or self.main_win_obj.catalogue_grid_width_dict[thumb_size] is None:
+            self.set_shadow_type(Gtk.ShadowType.IN)
+        else:
+            self.set_shadow_type(Gtk.ShadowType.NONE)
+
+
+    # Callback class methods
+
+
+    def on_size_allocate(self, widget, rect):
+
+        """Called from callback in self.draw_widgets().
+
+        When gridboxes are added to the Video Catalogue, the minimum horizontal
+        space required to fit all of its widgets is not available.
+
+        When it becomes available, this function is called, so that the size
+        can be passed on to the main window's code.
+
+        Args:
+
+            widget (mainwin.CatalogueGridBox): The clicked widget
+
+            rect (Gdk.Rectangle): Object describing the window's new size
+
+        Returns:
+
+            True to show the action has been handled
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16074 on_size_allocate')
+
+        thumb_size = self.main_win_obj.app_obj.thumb_size_custom
+        min_width = self.main_win_obj.catalogue_grid_width_dict[thumb_size]
+
+        if rect.width > 1 and min_width is None:
+            self.main_win_obj.video_catalogue_grid_set_gridbox_width(
+                rect.width,
+            )
+
+
+    # Set accessors
+
+
+    def set_expandable(self, expand_flag):
+
+        """Called by mainwin.MainWin.video_catalogue_grid_check_expand().
+
+        Allows/prevents this gridbox to expand horizontally in its parent
+        Gtk.Grid, depending on various aesthetic requirements.
+
+        Args:
+
+            expand_flag (bool): True to allow horizontal expansion, False to
+                prevent it
+
+        """
+
+        if not expand_flag:
+            self.set_hexpand(False)
+        else:
+            self.set_hexpand(True)
 
 
 class StatusIcon(Gtk.StatusIcon):
@@ -20801,7 +23411,8 @@ class DeleteContainerDialogue(Gtk.Dialog):
 
         media_type = media_data_obj.get_type()
         if media_type == 'video':
-            return self.app_obj.system_error(
+
+            return main_win_obj.app_obj.system_error(
                 248,
                 'Dialogue window setup failed sanity check',
             )
