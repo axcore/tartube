@@ -896,28 +896,35 @@ class DownloadWorker(threading.Thread):
                 # Import the media data object (for convenience)
                 media_data_obj = self.download_item_obj.media_data_obj
 
-                # youtube-dl-gui used a single instance of a
-                #   YoutubeDLDownloader object for each instance of a Worker
-                #   object.
-                # This causes problems, so Tartube will use a new
-                #   downloads.VideoDownloader object each time
-                # Set up the new downloads.VideoDownloader object
-                self.video_downloader_obj = VideoDownloader(
-                    self.download_manager_obj,
-                    self,
-                    self.download_item_obj,
-                )
+                # If the download stalls, the VideoDownloader may need to be
+                #   replaced with a new one. Use a while loop for that
+                first_flag = True
+                while True:
 
-                # Send a message to the Output Tab's summary page
-                app_obj.main_win_obj.output_tab_write_stdout(
-                    0,
-                    _('Thread #') + str(self.worker_id) \
-                    + ': ' + _('Assigned job:') + ' \'' \
-                    + self.download_item_obj.media_data_obj.name + '\'',
-                )
+                    # Set up the new downloads.VideoDownloader object
+                    self.video_downloader_obj = VideoDownloader(
+                        self.download_manager_obj,
+                        self,
+                        self.download_item_obj,
+                    )
 
-                # Then execute the assigned job
-                return_code = self.video_downloader_obj.do_download()
+                    if first_flag:
+
+                        first_flag = False
+                        # Send a message to the Output Tab's summary page
+                        app_obj.main_win_obj.output_tab_write_stdout(
+                            0,
+                            _('Thread #') + str(self.worker_id) \
+                            + ': ' + _('Assigned job:') + ' \'' \
+                            + self.download_item_obj.media_data_obj.name \
+                            + '\'',
+                        )
+
+                    # Execute the assigned job
+                    return_code = self.video_downloader_obj.do_download()
+                    # If a restart is required, -1 is returned
+                    if return_code > -1:
+                        break
 
                 # If the downloads.VideoDownloader object collected any
                 #   youtube-dl error/warning messages, display them in the
@@ -2137,6 +2144,9 @@ class VideoDownloader(object):
     ALREADY = 4
     # 5 - The download operation was stopped by the user
     STOPPED = 5
+    # 6 - The download operation has stalled, and must be restarted by the
+    #   parent worker
+    RESTART = -1
 
 
     # Standard class methods
@@ -2189,6 +2199,10 @@ class VideoDownloader(object):
         #   a common download destination with this media data object, to
         #   finish downloading
         self.long_sleep_time = 10
+        # The time (matches time.time() ) at which the last activity occured
+        #   (last output to STDOUT); used to restart a stalled download, if
+        #   required
+        self.last_activity_time = None
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
@@ -2452,6 +2466,8 @@ class VideoDownloader(object):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
+                    self.last_activity_time = time.time()
+
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
                     if os.name == 'nt':
@@ -2526,6 +2542,27 @@ class VideoDownloader(object):
                     'Enforced timeout because downloader took too long to' \
                     + ' fetch a video\'s JSON data',
                 )
+
+            # Restart a stalled download, if required
+            restart_time = (app_obj.operation_auto_restart_time * 60)
+            if app_obj.operation_auto_restart_flag \
+            and self.last_activity_time is not None \
+            and (self.last_activity_time + restart_time) < time.time():
+
+                # Show confirmation of the restart
+                if app_obj.ytdl_output_stdout_flag:
+                    app_obj.main_win_obj.output_tab_write_stdout(
+                        self.download_worker_obj.worker_id,
+                        _('Tartube is restarting stalled download'),
+                    )
+
+                if app_obj.ytdl_write_stdout_flag:
+                    print(_('Tartube is restarting stalled download'))
+
+                # Tell the parent worker to replace this VideoDownloader with a
+                #   new one
+                self.stop()
+                return self.RESTART
 
             # Stop this video downloader, if required to do so, having just
             #   finished checking/downloading a video
@@ -3340,6 +3377,7 @@ class VideoDownloader(object):
                 app_obj.mark_video_live,
                 video_obj,
                 2,                  # Livestream is broadcasting
+                {},                 # No livestream data
                 True,               # Don't update Video Index yet
                 True,               # Don't update Video Catalogue yet
             )
@@ -3351,6 +3389,7 @@ class VideoDownloader(object):
                 app_obj.mark_video_live,
                 video_obj,
                 0,                  # Livestream has finished
+                {},                 # Reset any livestream data
                 True,               # Don't update Video Index yet
                 True,               # Don't update Video Catalogue yet
             )
@@ -4019,12 +4058,15 @@ class VideoDownloader(object):
                     json_dict = json.loads(stdout)
 
                 except:
+
                     GObject.timeout_add(
                         0,
                         self.download_manager_obj.app_obj.system_error,
                         304,
                         'Invalid JSON data received from server',
                     )
+
+                    return dl_stat_dict
 
                 if json_dict:
 
@@ -4263,16 +4305,9 @@ class VideoDownloader(object):
                     stderr,
                 )
             )
-        ) or (
-            re.search(r'This video is unavailable', stderr) \
-            and (
-                (
-                    isinstance(media_data_obj, media.Video) \
-                    and media_data_obj.live_mode == 1
-                ) or isinstance(media_data_obj, media.Channel) \
-                or isinstance(media_data_obj, media.Playlist)
-            )
-        ):
+        ) or re.search(r'This live event will begin', stderr) \
+        or re.search(r'Premiere will begin', stderr) \
+        or re.search(r'Premieres in', stderr):
             # This message is ignorable
             return True
 
@@ -4653,7 +4688,7 @@ class JSONFetcher(object):
 
         # Process has finished. If the JSON data has been received, indicating
         #   a livestream currently broadcasting, it's in STDOUT
-        new_video_flag = None
+        new_video_flag = False
         while not self.stdout_queue.empty():
 
             stdout = self.stdout_queue.get_nowait().rstrip()
@@ -4678,8 +4713,8 @@ class JSONFetcher(object):
 
                     new_video_flag = True
 
-        # If a 'This video is unavailable' error has been received, indicating
-        #   a livestream waiting to start, it's in STDERR
+        # Messages indicating that a livestream is waiting to start are in
+        #   STDERR (for some reason)
         if not new_video_flag:
 
             while not self.stderr_queue.empty():
@@ -4689,7 +4724,8 @@ class JSONFetcher(object):
 
                     # (Convert bytes to string)
                     stderr = stderr.decode()
-                    if re.search('This video is unavailable', stderr):
+                    live_data_dict = utils.extract_livestream_data(stderr)
+                    if live_data_dict:
 
                         # Waiting livestream detected; create a new media.Video
                         #   object
@@ -4702,6 +4738,7 @@ class JSONFetcher(object):
                             self.video_source,
                             self.video_descrip,
                             self.video_upload_time,
+                            live_data_dict,
                         )
 
                         new_video_flag = True
@@ -4765,7 +4802,6 @@ class JSONFetcher(object):
                         308,
                         app_obj.ffmpeg_fail_msg,
                     )
-
 
 
     def close(self):
@@ -5213,8 +5249,8 @@ class MiniJSONFetcher(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-        # Process has finished. Check for JSON data, indicating that it's a
-        #   'live' livestream
+        # Process has finished. If the JSON data has been received, indicating
+        #   a livestream currently broadcasting, it's in STDOUT
         while not self.stdout_queue.empty():
 
             stdout = self.stdout_queue.get_nowait().rstrip()
@@ -5234,6 +5270,7 @@ class MiniJSONFetcher(object):
                             app_obj.mark_video_live,
                             self.video_obj,
                             2,              # Livestream is broadcasting
+                            {},             # No livestream data
                             True,           # Don't update Video Index yet
                             True,           # Don't update Video Catalogue yet
                         )
@@ -5252,7 +5289,8 @@ class MiniJSONFetcher(object):
                             0,
                             app_obj.mark_video_live,
                             self.video_obj,
-                            0,              # Not a livestream
+                            {},             # Reset any livestream data
+                            None,           # Reset any l/s server messages
                             True,           # Don't update Video Index yet
                             True,           # Don't update Video Catalogue yet
                         )
@@ -5271,7 +5309,8 @@ class MiniJSONFetcher(object):
                             app_obj.main_win_obj.descrip_line_max_len,
                         )
 
-        # Check for errors, indicating that it's a 'waiting' livestream
+        # Messages indicating that a livestream is waiting to start are in
+        #   STDERR (for some reason)
         while not self.stderr_queue.empty():
 
             stderr = self.stderr_queue.get_nowait().rstrip()
@@ -5279,8 +5318,17 @@ class MiniJSONFetcher(object):
 
                 # (Convert bytes to string)
                 stderr = stderr.decode()
-                if re.search('This video is unavailable', stderr) \
-                and self.video_obj.live_mode == 2:
+
+                # (v2.2.100: In approximately October 2020, YouTube started
+                #   using a new error message for livestreams waiting to start
+                if self.video_obj.live_mode == 1:
+
+                    live_data_dict = utils.extract_livestream_data(stderr)
+                    if live_data_dict:
+                        self.video_obj.set_live_data(live_data_dict)
+
+                elif self.video_obj.live_mode == 2 \
+                and re.search('This video is unavailable', stderr):
 
                     # The livestream broadcast has been deleted by its owner
                     #   (or is not available on the website, possibly

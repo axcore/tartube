@@ -1223,6 +1223,10 @@ class GenericRemoteContainer(GenericContainer):
             return -1
         elif obj1.live_mode < obj2.live_mode:
             return 1
+        elif obj1.live_time < obj2.live_time:
+            return -1
+        elif obj1.live_time > obj2.live_time:
+            return 1
 
         # The video's index is not relevant unless sorting a playlist
         elif isinstance(self, Playlist) \
@@ -1270,41 +1274,6 @@ class GenericRemoteContainer(GenericContainer):
 
 
         self.child_list.sort(key=functools.cmp_to_key(self.do_sort))
-
-
-    def get_livestreams(self, app_obj, live_mode=None):
-
-        """Can be called by anything.
-
-        Returns a list of child media.Video objects which are marked as
-        livestreams.
-
-        If a live_mode is specified, returns either waiting livestreams or
-        broadcasting livestreams (only).
-
-        Args:
-
-            app_obj (mainapp.TartubeApp): The main application
-
-            live_mode (int or None): 1 to return waiting livestreams only, 2 to
-                return broadcasting livestreams only, None to return all
-                livestreams
-
-        Returns:
-
-            A list of media.Video objects (may be an empty list)
-
-        """
-
-        # Check the mainapp.TartubeApp IV is probably cheaper than checking
-        #   self.child_list, as the latter might contain thousands of videos
-        return_list = []
-
-        for video_obj in app_obj.media_reg_live_dict.values():
-            if live_mode is None or video_obj.live_mode == live_mode:
-                return_list.append(video_obj)
-
-        return return_list
 
 
     # Set accessors
@@ -1449,18 +1418,35 @@ class Video(GenericMedia):
         #   video, or False if the downloads.DownloadManager object should
         #   decide whether to simulate, or not
         self.dl_sim_flag = False
+
         # Livestream mode: 0 if the video is not a livestream (or if it was a
         #   livestream which has now finished, and behaves like a normal
         #   uploaded video), 1 if the livestream has not started, 2 if the
         #   livestream is currently being broadcast
         # (Using a numerical mode makes the sorting algorithms more efficient)
         self.live_mode = 0
+        # YouTube 'premiere' videos and actual livestreams are treated in the
+        #   same way, except that for the former, this flag is set to True
+        #   (and a different background colour is used in the Video Catalogue)
+        self.live_debut_flag = False
         # Flag set to True for a video which was a livestream (self.live_mode
         #   = 1 or 2), but is now not (self.live_mode = 0). Once a livestream
         #   video has been marked as a normal video, it can't be marked as a
         #   livestream again. (This prevents any problems in reading the RSS
         #   feeds from continually marking an old video as a livestream again)
         self.was_live_flag = False
+        # The time (matches time.time()) at which a livestream is due to start.
+        #   YouTube supplies an approximate time (perhaps in hours or days),
+        #   but it's still useful for sorting
+        # (For the benefit of the sorting functions, the default value is 0)
+        self.live_time = 0
+        # When YouTube provides a livestream message,
+        #   utils.extract_livestream_data() converts it into some text that can
+        #   be displayed in the Video Catalogue
+        # The text to display. If the video is not a livestream, or has already
+        #   started, or has already finished, or no recognised message was
+        #   provided, an empty string
+        self.live_msg = ''
 
         # Flag set to True if the video is archived, meaning that it can't be
         #   auto-deleted (but it can still be deleted manually by the user)
@@ -1816,7 +1802,32 @@ class Video(GenericMedia):
 
     def set_live_mode(self, mode):
 
+        print(1893)
+        print(mode)
+
         self.live_mode = mode
+
+
+    def set_live_data(self, live_data_dict):
+
+        """Interprets the dictionary returned by
+        utils.extract_livestream_data().
+        """
+
+        if 'live_msg' in live_data_dict:
+            self.live_msg = live_data_dict['live_msg']
+        else:
+            self.live_msg = ''
+
+        if 'live_time' in live_data_dict:
+            self.live_time = live_data_dict['live_time']
+        else:
+            self.live_time = 0
+
+        if 'live_debut_flag' in live_data_dict:
+            self.live_debut_flag = live_data_dict['live_debut_flag']
+        else:
+            self.live_debut_flag = False
 
 
     def set_missing_flag(self, flag):
@@ -2945,6 +2956,10 @@ class Folder(GenericContainer):
                     return -1
                 elif obj1.live_mode < obj2.live_mode:
                     return 1
+                elif obj1.live_time < obj2.live_time:
+                    return -1
+                elif obj1.live_time > obj2.live_time:
+                    return 1
 
                 # Otherwise sort by upload time, then by receive time
                 elif obj1.upload_time is not None \
@@ -2962,8 +2977,6 @@ class Folder(GenericContainer):
                                 return -1
                             elif obj1.receive_time < obj2.receive_time:
                                 return 1
-                            else:
-                                return 0
                         # ...but for everything else, the sorting algorithm is
                         #   the same as for GenericRemoteContainer.do_sort(),
                         #   in which we assume the website is sending us
@@ -2973,20 +2986,22 @@ class Folder(GenericContainer):
                                 return -1
                             elif obj1.receive_time > obj2.receive_time:
                                 return 1
-                            else:
-                                return 0
-                    else:
-                        return 0
-                else:
-                    return 0
+
+            # If the videos can't be sorted by time, then sort alphabetically
+            #   (or by .dbid as a last resort)
+            # For other classes of object, do that every time
+            if obj1.name.lower() < obj2.name.lower():
+                return -1
+            elif obj1.name.lower() > obj2.name.lower():
+                return 1
+            elif obj1.dbid < obj2.dbid:
+                return -1
             else:
-                if obj1.name.lower() < obj2.name.lower():
-                    return -1
-                elif obj1.name.lower() > obj2.name.lower():
-                    return 1
-                else:
-                    return 0
+                return 1
+
         else:
+
+            # Sort by class
             if isinstance(obj1, Folder):
                 return -1
             elif isinstance(obj2, Folder):

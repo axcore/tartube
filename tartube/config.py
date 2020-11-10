@@ -5409,60 +5409,87 @@ class VideoEditWin(GenericEditWin):
         else:
             entry.set_text(_('Not a livestream'))
 
+        label2 = self.add_label(grid,
+            _('Livestream message'),
+            0, 2, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        entry2 = self.add_entry(grid,
+            None,
+            1, 2, 1, 1,
+        )
+        entry2.set_text(self.edit_obj.live_msg)
+        entry2.set_editable(False)
+
+        checkbutton = Gtk.CheckButton()
+        grid.attach(checkbutton, 0, 3, grid_width, 1)
+        checkbutton.set_label(
+            _('Video is pre-recorded'),
+        )
+        if self.edit_obj.live_debut_flag:
+            checkbutton.set_active(True)
+        checkbutton.set_sensitive(False)
+
+        self.add_label(grid,
+            '<u>' + _('Livestream actions') + '</u>',
+            0, 4, grid_width, 1,
+        )
+
         if self.edit_obj.live_mode:
 
-            checkbutton = Gtk.CheckButton()
-            grid.attach(checkbutton, 0, 2, grid_width, 1)
-            checkbutton.set_label(
+            checkbutton2 = Gtk.CheckButton()
+            grid.attach(checkbutton2, 0, 5, grid_width, 1)
+            checkbutton2.set_label(
                 _('When the livestream starts, show a desktop notification'),
             )
             if self.edit_obj.dbid in self.app_obj.media_reg_auto_notify_dict:
-                checkbutton.set_active(True)
-            checkbutton.set_sensitive(False)
-
-            checkbutton2 = Gtk.CheckButton()
-            grid.attach(checkbutton2, 0, 3, grid_width, 1)
-            checkbutton2.set_label(
-                _('When the livestream starts, play an alarm'),
-            )
-            if self.edit_obj.dbid in self.app_obj.media_reg_auto_alarm_dict:
                 checkbutton2.set_active(True)
             checkbutton2.set_sensitive(False)
 
             checkbutton3 = Gtk.CheckButton()
-            grid.attach(checkbutton3, 0, 4, grid_width, 1)
+            grid.attach(checkbutton3, 0, 6, grid_width, 1)
             checkbutton3.set_label(
+                _('When the livestream starts, play an alarm'),
+            )
+            if self.edit_obj.dbid in self.app_obj.media_reg_auto_alarm_dict:
+                checkbutton3.set_active(True)
+            checkbutton3.set_sensitive(False)
+
+            checkbutton4 = Gtk.CheckButton()
+            grid.attach(checkbutton4, 0, 7, grid_width, 1)
+            checkbutton4.set_label(
                 _(
                 'When the livestream starts, open it in the system\'s web' \
                 + ' browser',
                 ),
             )
             if self.edit_obj.dbid in self.app_obj.media_reg_auto_open_dict:
-                checkbutton3.set_active(True)
-            checkbutton3.set_sensitive(False)
+                checkbutton4.set_active(True)
+            checkbutton4.set_sensitive(False)
 
-            checkbutton4 = Gtk.CheckButton()
-            grid.attach(checkbutton4, 0, 5, grid_width, 1)
-            checkbutton4.set_label(
+            checkbutton5 = Gtk.CheckButton()
+            grid.attach(checkbutton5, 0, 8, grid_width, 1)
+            checkbutton5.set_label(
                 _(
                 'When the livestream starts, begin downloading it immediately',
                 ),
             )
             if self.edit_obj.dbid in self.app_obj.media_reg_auto_dl_start_dict:
-                checkbutton4.set_active(True)
-            checkbutton4.set_sensitive(False)
+                checkbutton5.set_active(True)
+            checkbutton5.set_sensitive(False)
 
-            checkbutton5 = Gtk.CheckButton()
-            grid.attach(checkbutton5, 0, 6, grid_width, 1)
-            checkbutton5.set_label(
+            checkbutton6 = Gtk.CheckButton()
+            grid.attach(checkbutton6, 0, 9, grid_width, 1)
+            checkbutton6.set_label(
                 _(
                 'When a livestream stops, download it (overwriting any' \
                 + ' earlier file)',
                 ),
             )
             if self.edit_obj.dbid in self.app_obj.media_reg_auto_dl_stop_dict:
-                checkbutton5.set_active(True)
-            checkbutton5.set_sensitive(False)
+                checkbutton6.set_active(True)
+            checkbutton6.set_sensitive(False)
 
 
     def setup_descrip_tab(self):
@@ -8313,6 +8340,17 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo.connect('changed', self.on_thumb_size_combo_changed)
 
+        checkbutton8 = self.add_checkbutton(grid,
+            _('Show livestreams with a different background colour'),
+            self.app_obj.livestream_use_colour_flag,
+            True,                   # Can be toggled by user
+            0, 11, grid_width, 1,
+        )
+        checkbutton8.connect(
+            'toggled',
+            self.on_livestream_colour_button_toggled,
+        )
+
 
     def setup_windows_drag_tab(self, inner_notebook):
 
@@ -9038,14 +9076,327 @@ class SystemPrefWin(GenericPrefWin):
         self.operations_inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
+        self.setup_operations_performance_tab(self.operations_inner_notebook)
+        self.setup_operations_prefs_tab(self.operations_inner_notebook)
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_tab(self.operations_inner_notebook)
         self.setup_operations_livestreams_tab(self.operations_inner_notebook)
-        self.setup_operations_notifications_tab(self.operations_inner_notebook)
-        self.setup_operations_url_flexibility_tab(
-            self.operations_inner_notebook,
+        self.setup_operations_notify_tab(self.operations_inner_notebook)
+        self.setup_operations_options_tab(self.operations_inner_notebook)
+
+
+    def setup_operations_performance_tab(self, inner_notebook):
+
+        """Called by self.setup_operations_tab().
+
+        Sets up the 'Performance' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Performance'),
+            inner_notebook,
         )
-        self.setup_operations_performance_tab(self.operations_inner_notebook)
+
+        grid_width = 3
+
+        # Performance limits
+        self.add_label(grid,
+            '<u>' + _('Performance limits') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Limit simultaneous downloads to'),
+            self.app_obj.num_worker_apply_flag,
+            True,               # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+        checkbutton.connect('toggled', self.on_worker_button_toggled)
+
+        spinbutton = self.add_spinbutton(grid,
+            self.app_obj.num_worker_min,
+            self.app_obj.num_worker_max,
+            1,                  # Step
+            self.app_obj.num_worker_default,
+            1, 1, 1, 1,
+        )
+        spinbutton.connect('value-changed', self.on_worker_spinbutton_changed)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Limit download speed to'),
+            self.app_obj.bandwidth_apply_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton2.set_hexpand(False)
+        checkbutton2.connect('toggled', self.on_bandwidth_button_toggled)
+
+        spinbutton2 = self.add_spinbutton(grid,
+            self.app_obj.bandwidth_min,
+            self.app_obj.bandwidth_max,
+            1,                  # Step
+            self.app_obj.bandwidth_default,
+            1, 2, 1, 1,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_bandwidth_spinbutton_changed,
+        )
+
+        self.add_label(grid,
+            'KiB/s',
+            2, 2, 1, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Overriding video format options, limit video resolution to'),
+            self.app_obj.video_res_apply_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        checkbutton3.connect('toggled', self.on_video_res_button_toggled)
+
+        combo = self.add_combo(grid,
+            formats.VIDEO_RESOLUTION_LIST,
+            None,
+            1, 3, 1, 1,
+        )
+        combo.set_active(
+            formats.VIDEO_RESOLUTION_LIST.index(
+                self.app_obj.video_res_default,
+            )
+        )
+        combo.connect('changed', self.on_video_res_combo_changed)
+
+        # Time-saving settings
+        self.add_label(grid,
+            '<u>' + _('Time-saving settings') + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Stop checking/downloading a channel/playlist when it starts' \
+            + ' sending videos we already have',
+            ),
+            self.app_obj.operation_limit_flag,
+            True,               # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        # Signal connect appears below
+
+        self.add_label(grid,
+            _('Stop after this many videos (when checking)'),
+            0, 6, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.operation_check_limit,
+            True,
+            1, 6, 1, 1,
+        )
+        entry.set_width_chars(4)
+        entry.connect('changed', self.on_check_limit_changed)
+        if not self.app_obj.operation_limit_flag:
+            entry.set_sensitive(False)
+
+        self.add_label(grid,
+            _('Stop after this many videos (when downloading)'),
+            0, 7, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            self.app_obj.operation_download_limit,
+            True,
+            1, 7, 1, 1,
+        )
+        entry2.set_width_chars(4)
+        entry2.connect('changed', self.on_dl_limit_changed)
+        if not self.app_obj.operation_limit_flag:
+            entry2.set_sensitive(False)
+
+        # Signal connect from above
+        checkbutton4.connect(
+            'toggled',
+            self.on_limit_button_toggled,
+            entry,
+            entry2,
+        )
+
+
+    def setup_operations_prefs_tab(self, inner_notebook):
+
+        """Called by self.setup_operations_tab().
+
+        Sets up the 'Preferences' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('P_references'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # URL flexibility preferences
+        self.add_label(grid,
+            '<u>' + _('URL flexibility preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            _(
+            'If a video\'s URL represents a channel/playlist, not a video,' \
+            + ' don\'t download it',
+            ),
+            0, 1, grid_width, 1,
+        )
+        # Signal connect appears below
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            _('...or, download multiple videos into the containing folder'),
+            0, 2, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'multi':
+            radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        radiobutton3 = self.add_radiobutton(grid,
+            radiobutton2,
+            _(
+            '...or, create a new channel, and download the videos into that',
+            ),
+            0, 3, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'channel':
+            radiobutton3.set_active(True)
+        # Signal connect appears below
+
+        radiobutton4 = self.add_radiobutton(grid,
+            radiobutton3,
+            _(
+            '...or, create a new playlist, and download the videos into that',
+            ),
+            0, 4, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'playlist':
+            radiobutton4.set_active(True)
+        # Signal connect appears below
+
+        # Signal connects from above
+        radiobutton.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'disable',
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'multi',
+        )
+        radiobutton3.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'channel',
+        )
+        radiobutton4.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'playlist',
+        )
+
+        # Missing video preferences
+        self.add_label(grid,
+            '<u>' + _('Missing video preferences') + '</u>',
+            0, 5, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'Add videos which have been removed from a channel/playlist to' \
+            + ' the Missing Videos folder',
+            ),
+            self.app_obj.track_missing_videos_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        # (signal_connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'Only add videos that were uploaded within this many days',
+            ),
+            self.app_obj.track_missing_time_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        if not self.app_obj.track_missing_videos_flag:
+            checkbutton2.set_sensitive(False)
+        # (signal_connect appears below)
+
+        spinbutton = self.add_spinbutton(grid,
+            0,
+            365,
+            1,                  # Step
+            self.app_obj.track_missing_time_days,
+            1, 7, 1, 1,
+        )
+        if not self.app_obj.track_missing_videos_flag \
+        or not self.app_obj.track_missing_time_flag:
+            spinbutton.set_sensitive(False)
+        # (signal_connect appears below)
+
+        # (signal_connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_missing_videos_button_toggled,
+            checkbutton2,
+            spinbutton,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_missing_time_button_toggled,
+            spinbutton,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_missing_time_spinbutton_changed,
+        )
+
+        # Invidious mirror
+        self.add_label(grid,
+            '<u>' + _('Invidious mirror') + '</u>',
+            0, 8, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _(
+                'To find an updated list of Invidious mirrors, use any' \
+                + ' search engine!',
+            ),
+            0, 9, grid_width, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.custom_invidious_mirror,
+            True,
+            0, 10, grid_width, 1,
+        )
+        entry.connect('changed', self.on_invidious_mirror_changed)
+
+        msg = _('Type the exact text that replaces youtube.com e.g.')
+        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+
+        self.add_label(grid,
+            '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \
+            + '</b></i>',
+            0, 11, grid_width, 1,
+        )
 
 
     def setup_operations_downloads_tab(self, inner_notebook):
@@ -9060,10 +9411,12 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
+        grid_width = 2
+
         # Download operation preferences
         self.add_label(grid,
             '<u>' + _('Download operation preferences') + '</u>',
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -9072,7 +9425,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.operation_auto_update_flag,
             True,                   # Can be toggled by user
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_auto_update_button_toggled)
         if __main__.__pkg_strict_install_flag__:
@@ -9084,61 +9437,95 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.operation_save_flag,
             True,                   # Can be toggled by user
-            0, 2, 1, 1,
+            0, 2, grid_width, 1,
         )
         checkbutton2.connect('toggled', self.on_save_button_toggled)
 
         checkbutton3 = self.add_checkbutton(grid,
-            _(
-            'When applying download options to something, clone the general' \
-            + ' download options',
-            ),
-            self.app_obj.auto_clone_options_flag,
-            True,                   # Can be toggled by user
-            0, 3, 1, 1,
-        )
-        checkbutton3.connect('toggled', self.on_auto_clone_button_toggled)
-
-        checkbutton4 = self.add_checkbutton(grid,
             _(
             'For simulated downloads, don\'t check a video in a folder' \
             + ' more than once',
             ),
             self.app_obj.operation_sim_shortcut_flag,
             True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_operation_sim_button_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'If a download stalls, restart it after this many minutes',
+            ),
+            self.app_obj.operation_auto_restart_flag,
+            True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_operation_sim_button_toggled)
+        # (signal_connect appears below)
 
-        # Invidious mirror
-        self.add_label(grid,
-            '<u>' + _('Invidious mirror') + '</u>',
-            0, 5, 1, 1,
+        spinbutton = self.add_spinbutton(grid,
+            1,
+            None,
+            1,                     # Step
+            self.app_obj.operation_auto_restart_time,
+            1, 4, 1, 1,
+        )
+        # (signal_connect appears below)
+        if not self.app_obj.operation_auto_restart_flag:
+            spinbutton.set_sensitive(False)
+
+        # (signal_connects from above)
+        checkbutton4.connect(
+            'toggled',
+            self.on_auto_restart_button_toggled,
+            spinbutton,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_auto_restart_spinbutton_changed,
         )
 
-        self.add_label(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             _(
-                'To find an updated list of Invidious mirrors, use any' \
-                + ' search engine!',
+            'Allow downloader to create its own archive file (so deleted' \
+            + ' videos are not re-downloaded)',
             ),
-            0, 6, 1, 1,
+            self.app_obj.allow_ytdl_archive_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
         )
+        checkbutton5.connect('toggled', self.on_archive_button_toggled)
 
-        entry = self.add_entry(grid,
-            self.app_obj.custom_invidious_mirror,
-            True,
-            0, 7, 1, 1,
+        checkbutton6 = self.add_checkbutton(grid,
+            _(
+            'Also create an archive file when downloading from the Classic' \
+            + ' Mode tab (not recommended)',
+            ),
+            self.app_obj.classic_ytdl_archive_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
         )
-        entry.connect('changed', self.on_invidious_mirror_changed)
+        checkbutton6.connect('toggled', self.on_archive_classic_button_toggled)
 
-        msg = _('Type the exact text that replaces youtube.com e.g.')
-        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
-
-        self.add_label(grid,
-            '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \
-            + '</b></i>',
-            0, 8, 1, 1,
+        checkbutton7 = self.add_checkbutton(grid,
+            _(
+            'When checking videos, apply a 60-second timeout',
+            ),
+            self.app_obj.apply_json_timeout_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
         )
+        checkbutton7.connect('toggled', self.on_json_button_toggled)
+
+        checkbutton8 = self.add_checkbutton(grid,
+            _(
+            'Convert .webp thumbnails into .jpg thumbnails (using FFmpeg)' \
+            + ' after downloading them',
+            ),
+            self.app_obj.ffmpeg_convert_webp_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton8.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
 
     def setup_operations_custom_tab(self, inner_notebook):
@@ -9393,11 +9780,26 @@ class SystemPrefWin(GenericPrefWin):
             spinbutton2.set_sensitive(False)
         # Signal connect appears below
 
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Check more frequently when a livestream is due to start'),
+            self.app_obj.scheduled_livestream_extra_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag \
+        or not self.app_obj.scheduled_livestream_flag:
+            checkbutton3.set_sensitive(False)
+        checkbutton3.connect(
+            'toggled',
+            self.on_extra_livestreams_button_toggled,
+        )
+
         # Signal connects from above
         checkbutton.connect(
             'toggled',
             self.on_enable_livestreams_button_toggled,
             checkbutton2,
+            checkbutton3,
             spinbutton,
             spinbutton2,
         )
@@ -9410,6 +9812,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.connect(
             'toggled',
             self.on_scheduled_livestreams_button_toggled,
+            checkbutton3,
             spinbutton2,
         )
 
@@ -9418,29 +9821,12 @@ class SystemPrefWin(GenericPrefWin):
             self.on_scheduled_livestreams_spinbutton_changed,
         )
 
-        # Video catalogue options
-        self.add_label(grid,
-            '<u>' + _('Video Catalogue options') + '</u>',
-            0, 3, grid_width, 1,
-        )
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Show livestreams with a different background colour'),
-            self.app_obj.livestream_use_colour_flag,
-            True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
-        )
-        checkbutton3.connect(
-            'toggled',
-            self.on_livestream_colour_button_toggled,
-        )
-
         # Livestream actions
         self.add_label(grid,
             '<u>' + _(
                 'Livestream actions (can be toggled for individual videos)',
             ) + '</u>',
-            0, 5, grid_width, 1,
+            0, 4, grid_width, 1,
         )
 
         # Currently disabled on MS Windows
@@ -9454,7 +9840,7 @@ class SystemPrefWin(GenericPrefWin):
             + string,
             self.app_obj.livestream_auto_notify_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 5, grid_width, 1,
         )
         checkbutton4.connect(
             'toggled',
@@ -9467,7 +9853,7 @@ class SystemPrefWin(GenericPrefWin):
             _('When a livestream starts, sound an alarm'),
             self.app_obj.livestream_auto_alarm_flag,
             True,                   # Can be toggled by user
-            0, 7, 1, 1,
+            0, 6, 1, 1,
         )
         if not mainapp.HAVE_PLAYSOUND_FLAG:
             checkbutton5.set_sensitive(False)
@@ -9479,14 +9865,14 @@ class SystemPrefWin(GenericPrefWin):
         combo = self.add_combo(grid,
             self.app_obj.sound_list,
             self.app_obj.sound_custom,
-            1, 7, 1, 1,
+            1, 6, 1, 1,
         )
         combo.connect('changed', self.on_sound_custom_changed)
         if not mainapp.HAVE_PLAYSOUND_FLAG:
             combo.set_sensitive(False)
 
         button = Gtk.Button(_('Test'))
-        grid.attach(button, 2, 7, 1, 1)
+        grid.attach(button, 2, 6, 1, 1)
         button.set_tooltip_text(_('Plays the selected sound effect'))
         button.connect('clicked', self.on_test_sound_clicked, combo)
         if not mainapp.HAVE_PLAYSOUND_FLAG:
@@ -9498,7 +9884,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.livestream_auto_open_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         checkbutton6.connect(
             'toggled',
@@ -9509,7 +9895,7 @@ class SystemPrefWin(GenericPrefWin):
             _('When a livestream starts, begin downloading it immediately'),
             self.app_obj.livestream_auto_dl_start_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton7.connect(
             'toggled',
@@ -9523,7 +9909,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.livestream_auto_dl_stop_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton8.connect(
             'toggled',
@@ -9531,7 +9917,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_operations_notifications_tab(self, inner_notebook):
+    def setup_operations_notify_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -9539,7 +9925,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Notifications'),
+            _('_Notify'),
             inner_notebook,
         )
 
@@ -9603,228 +9989,44 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_operations_url_flexibility_tab(self, inner_notebook):
+    def setup_operations_options_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
-        Sets up the 'URL flexibility' inner notebook tab.
+        Sets up the 'Options' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_URL flexibility'),
+            _('_Options'),
             inner_notebook,
         )
 
-        # URL flexibility preferences
+        # Download options preferences
         self.add_label(grid,
-            '<u>' + _('URL flexibility preferences') + '</u>',
+            '<u>' + _('Download options preferences') + '</u>',
             0, 0, 1, 1,
         )
 
-        radiobutton = self.add_radiobutton(grid,
-            None,
+        checkbutton = self.add_checkbutton(grid,
             _(
-            'If a video\'s URL represents a channel/playlist, not a video,' \
-            + ' don\'t download it',
+            'When applying download options to something, clone the general' \
+            + ' download options',
             ),
+            self.app_obj.auto_clone_options_flag,
+            True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
-        # Signal connect appears below
-
-        radiobutton2 = self.add_radiobutton(grid,
-            radiobutton,
-            _('...or, download multiple videos into the containing folder'),
-            0, 2, 1, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'multi':
-            radiobutton2.set_active(True)
-        # Signal connect appears below
-
-        radiobutton3 = self.add_radiobutton(grid,
-            radiobutton2,
-            _(
-            '...or, create a new channel, and download the videos into that',
-            ),
-            0, 3, 1, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'channel':
-            radiobutton3.set_active(True)
-        # Signal connect appears below
-
-        radiobutton4 = self.add_radiobutton(grid,
-            radiobutton3,
-            _(
-            '...or, create a new playlist, and download the videos into that',
-            ),
-            0, 4, 1, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'playlist':
-            radiobutton4.set_active(True)
-        # Signal connect appears below
-
-        # Signal connects from above
-        radiobutton.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'disable',
-        )
-        radiobutton2.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'multi',
-        )
-        radiobutton3.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'channel',
-        )
-        radiobutton4.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'playlist',
-        )
-
-
-    def setup_operations_performance_tab(self, inner_notebook):
-
-        """Called by self.setup_operations_tab().
-
-        Sets up the 'Performance' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Performance'),
-            inner_notebook,
-        )
-
-        grid_width = 3
-
-        # Performance limits
-        self.add_label(grid,
-            '<u>' + _('Performance limits') + '</u>',
-            0, 0, grid_width, 1,
-        )
+        checkbutton.connect('toggled', self.on_auto_clone_button_toggled)
 
         checkbutton = self.add_checkbutton(grid,
-            _('Limit simultaneous downloads to'),
-            self.app_obj.num_worker_apply_flag,
-            True,               # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        checkbutton.set_hexpand(False)
-        checkbutton.connect('toggled', self.on_worker_button_toggled)
-
-        spinbutton = self.add_spinbutton(grid,
-            self.app_obj.num_worker_min,
-            self.app_obj.num_worker_max,
-            1,                  # Step
-            self.app_obj.num_worker_default,
-            1, 1, 1, 1,
-        )
-        spinbutton.connect('value-changed', self.on_worker_spinbutton_changed)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Limit download speed to'),
-            self.app_obj.bandwidth_apply_flag,
-            True,               # Can be toggled by user
+            _(
+            'After downloading a video, remove its download options',
+            ),
+            self.app_obj.auto_delete_options_flag,
+            True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        checkbutton2.set_hexpand(False)
-        checkbutton2.connect('toggled', self.on_bandwidth_button_toggled)
-
-        spinbutton2 = self.add_spinbutton(grid,
-            self.app_obj.bandwidth_min,
-            self.app_obj.bandwidth_max,
-            1,                  # Step
-            self.app_obj.bandwidth_default,
-            1, 2, 1, 1,
-        )
-        spinbutton2.connect(
-            'value-changed',
-            self.on_bandwidth_spinbutton_changed,
-        )
-
-        self.add_label(grid,
-            'KiB/s',
-            2, 2, 1, 1,
-        )
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Overriding video format options, limit video resolution to'),
-            self.app_obj.video_res_apply_flag,
-            True,               # Can be toggled by user
-            0, 3, 1, 1,
-        )
-        checkbutton3.set_hexpand(False)
-        checkbutton3.connect('toggled', self.on_video_res_button_toggled)
-
-        combo = self.add_combo(grid,
-            formats.VIDEO_RESOLUTION_LIST,
-            None,
-            1, 3, 1, 1,
-        )
-        combo.set_active(
-            formats.VIDEO_RESOLUTION_LIST.index(
-                self.app_obj.video_res_default,
-            )
-        )
-        combo.connect('changed', self.on_video_res_combo_changed)
-
-        # Time-saving preferences
-        self.add_label(grid,
-            '<u>' + _('Time-saving preferences') + '</u>',
-            0, 4, grid_width, 1,
-        )
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-            'Stop checking/downloading a channel/playlist when it starts' \
-            + ' sending videos we already have',
-            ),
-            self.app_obj.operation_limit_flag,
-            True,               # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        checkbutton4.set_hexpand(False)
-        # Signal connect appears below
-
-        self.add_label(grid,
-            _('Stop after this many videos (when checking)'),
-            0, 6, 1, 1,
-        )
-
-        entry = self.add_entry(grid,
-            self.app_obj.operation_check_limit,
-            True,
-            1, 6, 1, 1,
-        )
-        entry.set_width_chars(4)
-        entry.connect('changed', self.on_check_limit_changed)
-        if not self.app_obj.operation_limit_flag:
-            entry.set_sensitive(False)
-
-        self.add_label(grid,
-            _('Stop after this many videos (when downloading)'),
-            0, 7, 1, 1,
-        )
-
-        entry2 = self.add_entry(grid,
-            self.app_obj.operation_download_limit,
-            True,
-            1, 7, 1, 1,
-        )
-        entry2.set_width_chars(4)
-        entry2.connect('changed', self.on_dl_limit_changed)
-        if not self.app_obj.operation_limit_flag:
-            entry2.set_sensitive(False)
-
-        # Signal connect from above
-        checkbutton4.connect(
-            'toggled',
-            self.on_limit_button_toggled,
-            entry,
-            entry2,
-        )
+        checkbutton.connect('toggled', self.on_auto_delete_button_toggled)
 
 
     def setup_ytdl_tab(self):
@@ -9842,7 +10044,6 @@ class SystemPrefWin(GenericPrefWin):
 
         # ...with its own tabs
         self.setup_ytdl_file_paths_tab(self.operations_inner_notebook)
-        self.setup_ytdl_prefs_tab(self.operations_inner_notebook)
         self.setup_ytdl_ffmpeg_tab(self.operations_inner_notebook)
 
 
@@ -9972,127 +10173,6 @@ class SystemPrefWin(GenericPrefWin):
             ) + '</i>',
             0, 5, grid_width, 1,
         )
-
-
-    def setup_ytdl_prefs_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdl_tab().
-
-        Sets up the 'Preferences' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Preferences'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Missing video preferences
-        self.add_label(grid,
-            '<u>' + _('Missing video preferences') + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-            'Add videos which have been removed from a channel/playlist to' \
-            + ' the Missing Videos folder',
-            ),
-            self.app_obj.track_missing_videos_flag,
-            True,                   # Can be toggled by user
-            0, 1, grid_width, 1,
-        )
-        # (signal_connect appears below)
-
-        checkbutton5 = self.add_checkbutton(grid,
-            _(
-            'Only add videos that were uploaded within this many days',
-            ),
-            self.app_obj.track_missing_time_flag,
-            True,                   # Can be toggled by user
-            0, 2, 1, 1,
-        )
-        if not self.app_obj.track_missing_videos_flag:
-            checkbutton5.set_sensitive(False)
-        # (signal_connect appears below)
-
-        spinbutton = self.add_spinbutton(grid,
-            0,
-            365,
-            1,                  # Step
-            self.app_obj.track_missing_time_days,
-            1, 2, 1, 1,
-        )
-        if not self.app_obj.track_missing_videos_flag \
-        or not self.app_obj.track_missing_time_flag:
-            spinbutton.set_sensitive(False)
-        # (signal_connect appears below)
-
-        # (signal_connects from above)
-        checkbutton4.connect(
-            'toggled',
-            self.on_missing_videos_button_toggled,
-            checkbutton5,
-            spinbutton,
-        )
-        checkbutton5.connect(
-            'toggled',
-            self.on_missing_time_button_toggled,
-            spinbutton,
-        )
-        spinbutton.connect(
-            'value-changed',
-            self.on_missing_time_spinbutton_changed,
-        )
-
-        # Other preferences
-        self.add_label(grid,
-            '<u>' + _('Other preferences') + '</u>',
-            0, 3, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'Allow downloader to create its own archive file (so deleted' \
-            + ' videos are not re-downloaded)',
-            ),
-            self.app_obj.allow_ytdl_archive_flag,
-            True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
-        )
-        checkbutton.connect('toggled', self.on_archive_button_toggled)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-            'Also create an archive file when downloading from the Classic' \
-            + ' Mode tab (not recommended)',
-            ),
-            self.app_obj.classic_ytdl_archive_flag,
-            True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _(
-            'When checking videos, apply a 60-second timeout',
-            ),
-            self.app_obj.apply_json_timeout_flag,
-            True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
-        )
-        checkbutton3.connect('toggled', self.on_json_button_toggled)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-            'Convert .webp thumbnails into .jpg thumbnails (using FFmpeg)' \
-            + ' after downloading them',
-            ),
-            self.app_obj.ffmpeg_convert_webp_flag,
-            True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
-        )
-        checkbutton4.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
 
     def setup_ytdl_ffmpeg_tab(self, inner_notebook):
@@ -10560,7 +10640,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_archive_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_downloads_tab().
 
         Enables/disables creation of youtube-dl's archive file,
         ytdl-archive.txt.
@@ -10581,7 +10661,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_archive_classic_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_downloads_tab().
 
         Enables/disables creation of youtube-dl's archive file,
         ytdl-archive.txt, when downloading from the Classic Mode tab.
@@ -10602,7 +10682,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_clone_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_downloads_tab().
+        """Called from callback in self.setup_operations_options_tab().
 
         Enables/disables auto-cloning of the General Options Manager.
 
@@ -10618,6 +10698,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.auto_clone_options_flag:
             self.app_obj.set_auto_clone_options_flag(False)
+
+
+    def on_auto_delete_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_options_tab().
+
+        Enables/disables auto-deleting of download options applied to a
+        media.Video, after it has been downloaded.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_delete_options_flag:
+            self.app_obj.set_auto_delete_options_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_delete_options_flag:
+            self.app_obj.set_auto_delete_options_flag(False)
 
 
     def on_auto_delete_button_toggled(self, checkbutton, spinbutton,
@@ -10665,6 +10766,46 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
+
+
+    def on_auto_restart_button_toggled(self, checkbutton, spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Enables/disables restarting a stalled download operation.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.operation_auto_restart_flag:
+            self.app_obj.set_operation_auto_restart_flag(True)
+            spinbutton.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.operation_auto_restart_flag:
+            self.app_obj.set_operation_auto_restart_flag(False)
+            spinbutton.set_sensitive(False)
+
+
+    def on_auto_restart_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Sets the time after which a stalled download job is restarted.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_operation_auto_restart_time(spinbutton.get_value())
 
 
     def on_auto_switch_button_toggled(self, checkbutton):
@@ -11044,7 +11185,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_convert_from_button_toggled(self, radiobutton, mode):
 
-        """Called from callback in self.setup_operations_url_flexibility_tab().
+        """Called from callback in self.setup_operations_prefs_tab().
 
         Set what happens when downloading a media.Video object whose URL
         represents a channel/playlist.
@@ -11784,7 +11925,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_dialogue_button_toggled(self, radiobutton, mode):
 
-        """Called from callback in self.setup_operations_notifications_tab().
+        """Called from callback in self.setup_operations_notify_tab().
 
         Sets whether a desktop notification, dialogue window or neither should
         be shown to the user at the end of a download/update/refresh/info/tidy
@@ -12026,7 +12167,7 @@ class SystemPrefWin(GenericPrefWin):
 
 
     def on_enable_livestreams_button_toggled(self, checkbutton, checkbutton2,
-    spinbutton, spinbutton2):
+    checkbutton3, spinbutton, spinbutton2):
 
         """Called from callback in self.setup_operations_livestreams_tab().
 
@@ -12036,8 +12177,8 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
-            checkbutton2 (Gtk.CheckButton): Another widget to sensitise/
-                desensitise, according to the new value of the flag
+            checkbutton2, checkbutton3 (Gtk.CheckButton): Other widgets to
+                sensitise/desensitise, according to the new value of the flag
 
             spinbutton, spinbutton2 (Gtk.SpinButton): Another widget to
                 sensitise/desensitise, according to the new value of the flag
@@ -12048,6 +12189,7 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.enable_livestreams_flag:
             self.app_obj.set_enable_livestreams_flag(True)
             checkbutton2.set_sensitive(True)
+            checkbutton3.set_sensitive(True)
             spinbutton.set_sensitive(True)
             spinbutton2.set_sensitive(True)
 
@@ -12056,6 +12198,8 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_enable_livestreams_flag(False)
             checkbutton2.set_active(False)
             checkbutton2.set_sensitive(False)
+            checkbutton3.set_active(False)
+            checkbutton3.set_sensitive(False)
             spinbutton.set_sensitive(False)
             spinbutton2.set_sensitive(False)
 
@@ -12107,9 +12251,30 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_full_expand_video_index_flag(False)
 
 
+    def on_extra_livestreams_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables performing more frequent livestream operations when a
+        livestream is due to start.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.scheduled_livestream_extra_flag:
+            self.app_obj.set_scheduled_livestream_extra_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.scheduled_livestream_extra_flag:
+            self.app_obj.set_scheduled_livestream_extra_flag(False)
+
+
     def on_ffmpeg_convert_flag_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_downloads_tab().
 
         Enables/disables conversion of .webp thumbnails into .jpg thumbnails.
 
@@ -12222,7 +12387,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_invidious_mirror_changed(self, entry):
 
-        """Called from callback in self.setup_operations_custom_tab().
+        """Called from callback in self.setup_operations_prefs_tab().
 
         Sets the Invidious mirror to use.
 
@@ -12237,7 +12402,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_json_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_downloads_tab().
 
         Enables/disables applying a 60-second timeout when fetching a video's
         JSON data.
@@ -12414,7 +12579,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_colour_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables coloured backgrounds for livestream videos in the
         Video Catalogue.
@@ -12606,7 +12771,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_missing_time_button_toggled(self, checkbutton, spinbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_prefs_tab().
 
         Enables/disables a time limit when tracking videos missing from a
         channel/playlist.
@@ -12633,7 +12798,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_missing_time_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_prefs_tab().
 
         Sets a time limit when tracking videos missing from a channel/playlist.
 
@@ -12651,7 +12816,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_missing_videos_button_toggled(self, checkbutton, checkbutton2, \
     spinbutton):
 
-        """Called from callback in self.setup_ytdl_prefs_tab().
+        """Called from callback in self.setup_operations_prefs_tab().
 
         Enables/disables tracking videos missing from a channel/playlist.
 
@@ -13422,7 +13587,8 @@ class SystemPrefWin(GenericPrefWin):
                 )
 
 
-    def on_scheduled_livestreams_button_toggled(self, checkbutton, spinbutton):
+    def on_scheduled_livestreams_button_toggled(self, checkbutton,
+    checkbutton2, spinbutton):
 
         """Called from callback in self.setup_operations_livestreams_tab().
 
@@ -13433,6 +13599,9 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            checkbutton2 (Gtk.CheckButton): Another widget to sensitise/
+                desensitise, according to the new value of the flag
+
             spinbutton (Gtk.SpinButton): Another widget to sensitise/
                 desensitise, according to the new value of the flag
 
@@ -13442,11 +13611,14 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.scheduled_livestream_flag:
             self.app_obj.set_scheduled_livestream_flag(True)
             spinbutton.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
 
         elif not checkbutton.get_active() \
         and self.app_obj.scheduled_livestream_flag:
             self.app_obj.set_scheduled_livestream_flag(False)
             spinbutton.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
 
 
     def on_scheduled_livestreams_spinbutton_changed(self, spinbutton):

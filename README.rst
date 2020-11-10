@@ -314,7 +314,7 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 3. The **Tartube** executable is stored in **~/.local/bin** by default. If that is already in your path, you can start **Tartube** by typing ``tartube``. Otherwise, type ``~/.local/bin/tartube``
 4. **Tartube** asks you to choose a data directory, so do that
 5. In the **Tartube** main window, click **Edit > System preferences... > youtube-dl**
-6. In the box marked **Actual path to use**, select **Use PyPI path (\~/.local/bin/youtube-dl)**
+6. In the box marked **Path to youtube-dl executable**, select **Use PyPI path (\~/.local/bin/youtube-dl)**
 7. Click **OK** to close the dialogue window
 8. Click **Operations > Update youtube-dl**
 9. Once the update has finished, **Tartube** is ready for use
@@ -454,8 +454,8 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
   :alt: Updating youtube-dl
 
 - Click **Edit > System preferences... > youtube-dl > File paths**
-- Try changing the setting **Actual path to use**
-- Try changing the setting **Shell command for update operations**
+- Try changing the setting **Path to youtube-dl executable**
+- Try changing the setting **Command for update operations**
 - Try the update operation again
 
 6.4 Installing FFmpeg / AVConv
@@ -558,8 +558,8 @@ When adding a long list of URLs, containing a mixture of channels, playlists and
 
 By default, **Tartube** converts a link into a channel, when necessary. You can change this behaviour, if you want to.
 
-- In **Tartube**'s main window, click **Edit > System preferences... > Operations > URL flexibility**
-- Select one of the behaviours listed there
+- In **Tartube**'s main window, click **Edit > System preferences... > Operations > Preferences**
+- Select one of the buttons under **URL flexibility preferences**
 
 Unfortunately, there is no way for **Tartube** to distinguish a channel from a playlist. Most video websites don't supply that information.
 
@@ -752,7 +752,7 @@ Restricted YouTube videos (not available in your region, or not visible without 
 
 As mentioned above, the original Invidious has now closed. You can change the Invidious mirror that **Tartube** is using, if you like.
 
-- Click **Edit > System preferences... > Operations > Downloads** 
+- Click **Edit > System preferences... > Operations > Preferences** 
 - Enter a new mirror in the box
 - You can now watch a video by clicking its **Invidious** label 
 
@@ -1021,18 +1021,18 @@ Because the videos aren't in a database, you can move them anywhere you want (on
 6.22 Livestreams
 ----------------
 
-Since v2.1.0, **Tartube** has been able to detect livestreams, and to notify you when they start.
+**Tartube** can detect livestreams, and to notify you when they start.
 
-This feature is EXPERIMENTAL, has only been tested on **YouTube**, and may not work as intended. 
-
-Livestream detection does not work at all on 32-bit MS Windows.
+At the moment, this feature only works on **YouTube**, and it doesn't work at all on 32-bit MS Windows.
 
 6.22.1 Detecting livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** searches for livestreams whenever you check or download channels and playlists.
 
-Livestreams are easy to spot. A livestream that hasn't started yet has a red background. A livestream that's streaming now has a green background. (Livestreams that have stopped broadcasting have a normal background.)
+Livestreams are easy to spot. A livestream that hasn't started yet has a red background. A video that's streaming now has a green background. (Livestreams that have finished have a normal background.)
+
+**YouTube** sometimes 'streams' a pre-recorded video at an appointed time, as if were a livestream. These *debut* videos are shown in slightly different colours - orange before the stream starts, and cyan while it is in progress.
 
 .. image:: screenshots/example21.png
   :alt: The main window with livestreams visible
@@ -1092,9 +1092,7 @@ Now click the **RSS feed** tab. Enter the address (URL) of the RSS feed in the b
 
 **Tartube** can detect videos you have downloaded, but which have been since deleted by the original uploader.
 
-This feature is EXPERIMENTAL and may not work as intended. 
-
-* Click Edit > System preferences... > youtube-dl > Preferences
+* Click **Edit > System preferences... > Operations > Preferences**
 * Click the button **Add videos which have been removed from a channel/playlist to the Missing Videos folder** to select it
 
 Having enabled detection, removed videos will appear in the **Missing Videos** folder. To empty that folder, right-click it and select **Folder contents > All contents > Mark as not missing**.
@@ -1168,7 +1166,7 @@ The last box allows you to specify FFmpeg options directly. For example, to conv
 
 If a youtube-dl fork is still compatible with the original, then **Tartube** can use it instead of the original.
 
-- Click **Edit > System preferences... > youtube-dl**
+- Click **Edit > System preferences... > youtube-dl > File paths**
 - In the box **youtube-dl compatible fork to use**, enter **youtube-dlc** (or the name of the fork)
 - Click **OK** to close the preferences window
 - Now click **Operations > Update youtube-dlc**, which will download (or update) the fork on your system
@@ -1200,16 +1198,15 @@ To switch back to using the original youtube-dl, just empty the same box.
 * `7.20 Georestriction workarounds don't work`_
 * `7.21 MS Windows installer is too big`_
 * `7.22 Tartube can't detect livestreams`_
-* `7.23 Livestream start time not visible`_
-* `7.24 Livestream is already finished`_
-* `7.25 Can't hear livestream alarms`_
-* `7.26 Some icons not visible`_
-* `7.27 Video thumbnails not visible`_
-* `7.28 Tartube is not visible in the system tray`_
-* `7.29 Tartube is not portable`_
-* `7.30 Tartube hangs on videos with unicode characters`_
-* `7.31 British spelling`_
-* `7.32 No puedo hablar inglés`_
+* `7.23 Livestream is already finished`_
+* `7.24 Can't hear livestream alarms`_
+* `7.25 Some icons not visible`_
+* `7.26 Video thumbnails not visible`_
+* `7.27 Tartube is not visible in the system tray`_
+* `7.28 Tartube is not portable`_
+* `7.29 Tartube hangs on videos with unicode characters`_
+* `7.30 British spelling`_
+* `7.31 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1367,7 +1364,7 @@ This works well on sites like YouTube, which send information about videos in th
 
 A: **youtube-dl** can create an archive file especially for the purpose of speeding up downloads, when some of your channels and playlists have no new videos to download, but when others do. 
 
-To enable this functionality, click **Edit > System preferences... > youtube-dl > Allow youtube-dl to create its own archive**. The functionality is enabled by default.
+To enable this functionality, click **Edit > System preferences... > Operations > Downloads > Allow downloader to create its own archive file...**. The functionality is enabled by default.
 
 7.10 Videos downloaded to inconvenient location
 -----------------------------------------------
@@ -1526,8 +1523,6 @@ The scripts contain full instructions, so you should be able to create your own 
 
 *Q: Tartube can't detect upcoming livestreams at all!*
 
-A: Livestream detection is experimental, has only been tested on **YouTube**, and may not be reliable. It does not work at all on 32-bit MS Windows. See `6.22 Livestreams`_. 
-
 A: Click **Edit > System preferences... General > Modules**. 
 
 If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is not available, you can install it via PyPI. On Linux/BSD, the command to use is something like:
@@ -1536,21 +1531,14 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.23 Livestream start time not visible
---------------------------------------
-
-*Q: Why doesn't Tartube show the start time for livestreams?*
-
-A: Popular video websites like **YouTube** do not provide that information.
-
-7.24 Livestream is already finished
+7.23 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.25 Can't hear livestream alarms
+7.24 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1563,7 +1551,7 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.26 Some icons not visible
+7.25 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -1574,7 +1562,7 @@ A: **Tartube** uses a set of stock icons wherever possible. If those icons are n
 
 **Tartube** provides a set of custom icons to replace the stock ones. To enable them, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to select it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.27 Video thumbnails not visible
+7.26 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
@@ -1588,14 +1576,14 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.28 Tartube is not visible in the system tray
+7.27 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
 
 A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <https://github.com/linuxmint/Cinnamon>`__) which have still not fixed an ancient bug. Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the icon correctly.
 
-7.29 Tartube is not portable
+7.28 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -1606,21 +1594,21 @@ On other operating systems, just download the source code and run it. Installati
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather tha in the system's default location.
 
-7.30 Tartube hangs on videos with unicode characters
+7.29 Tartube hangs on videos with unicode characters
 ----------------------------------------------------
 
 *Q: All the videos in my favourite channel have names that contain emojis! When I try to check the channel, Tartube hangs indefinitely!*
 
 A: Apologies; the authors have not been able to reproduce this problem, and do not know how to fix it.
 
-7.31 British spelling
+7.30 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences...**. Click the drop-down box and select American English, and then restart **Tartube**
 
-7.32 No puedo hablar inglés
+7.31 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

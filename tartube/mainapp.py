@@ -272,12 +272,12 @@ class TartubeApp(Gtk.Application):
         self.custom_locale = 'en_GB'
 
         # Default window sizes (in pixels)
-        self.main_win_width = 800
-        self.main_win_height = 600
+        self.main_win_width = 1000
+        self.main_win_height = 800
         self.config_win_width = 650
         self.config_win_width = 650
         self.config_win_height = 450
-        self.paned_min_size = 200
+        self.paned_min_size = 250
         # Default size (in pixels) of space between various widgets
         self.default_spacing_size = 5
         # Default thumbnail sizes, assuming an original size of 1280x720. All
@@ -302,7 +302,7 @@ class TartubeApp(Gtk.Application):
         # A custom thumbnail size; one of the keys in self.thumb_size_dict.
         #   Used when the Video Catalogue is displaying videos in a grid. (When
         #   displaying them as a list, the 'small' size is always used)
-        self.thumb_size_custom = 'tiny'
+        self.thumb_size_custom = 'small'
 
         # Custom window sizes
         # Flag set to True if Tartube should remember the main window size
@@ -370,6 +370,9 @@ class TartubeApp(Gtk.Application):
             self.toolbar_squeeze_flag = False
         else:
             self.toolbar_squeeze_flag = True
+        # Flag set to True if the 'Show' button on the main toolbar (which
+        #   hides most system folders) is selected
+        self.toolbar_system_hide_flag = False
         # Flag set to True if tooltips should be visible in the Video Index
         #   and the Video Catalogue
         self.show_tooltips_flag = True
@@ -1292,6 +1295,9 @@ class TartubeApp(Gtk.Application):
         #   right-clicking a channel in the Video Index, and selecting
         #   Downloads > Apply options manager)
         self.auto_clone_options_flag = True
+        # Flag set to True if options applied to a media.Video object should be
+        #   deleted, once the video has been downloaded
+        self.auto_delete_options_flag = True
         # Flag set to True if a smaller set of options should be shown in the
         #   download options edit window (for inexperienced users)
         self.simple_options_flag = True
@@ -1355,6 +1361,9 @@ class TartubeApp(Gtk.Application):
         # The time (system time, in seconds) at which the last livestream
         #   operation started
         self.scheduled_livestream_last_time = 0
+        # Flag set to True if livestream operations should be performed at
+        #   least every minute, when any livestream is due to start
+        self.scheduled_livestream_extra_flag = True
 
         # Flag set to True if a download operation should auto-stop after a
         #   certain period of time (applies to both real and simulated
@@ -1406,6 +1415,12 @@ class TartubeApp(Gtk.Application):
         # (This does not affect real downloads, in which such videos are never
         #   added to the download list)
         self.operation_sim_shortcut_flag = True
+        # Flag set to True if, during download operations (of all kinds), if a
+        #   job stalls, it should be restarted
+        self.operation_auto_restart_flag = False
+        # How many minutes of inactivity before restarting the job (minimum
+        #   value is 1, ignored if self.operation_sim_shortcut_flag is not set)
+        self.operation_auto_restart_time = 10
         # How to notify the user at the end of each download/update/refresh
         #   operation: 'dialogue' to use a dialogue window, 'desktop' to use a
         #   desktop notification, or 'default' to do neither
@@ -1628,9 +1643,9 @@ class TartubeApp(Gtk.Application):
         #   'grid_show_parent' - Grid mode with thumbnail and parent
         #   'grid_show_parent_ext' - Grid mode with thumb, parent & extra
         #       labels
-        self.catalogue_mode = 'complex_show_parent'
+        self.catalogue_mode = 'grid_show_parent'
         # The current Video Catalogue mode type: 'simple', 'complex' or 'grid'
-        self.catalogue_mode_type = 'complex'
+        self.catalogue_mode_type = 'grid'
         # Ordered list of Video Catalogue modes, used for switching between
         #   them
         self.catalogue_mode_list = [
@@ -1759,12 +1774,12 @@ class TartubeApp(Gtk.Application):
         switch_view_menu_action.connect('activate', self.on_button_switch_view)
         self.add_action(switch_view_menu_action)
 
-        hide_private_menu_action = Gio.SimpleAction.new(
-            'hide_private_menu',
+        hide_system_menu_action = Gio.SimpleAction.new(
+            'hide_system_menu',
             None,
         )
-        hide_private_menu_action.connect('activate', self.on_menu_hide_private)
-        self.add_action(hide_private_menu_action)
+        hide_system_menu_action.connect('activate', self.on_menu_hide_system)
+        self.add_action(hide_system_menu_action)
 
         show_hidden_menu_action = Gio.SimpleAction.new(
             'show_hidden_menu',
@@ -1970,6 +1985,16 @@ class TartubeApp(Gtk.Application):
             self.on_button_switch_view,
         )
         self.add_action(switch_view_button_action)
+
+        hide_system_button_action = Gio.SimpleAction.new(
+            'hide_system_toolbutton',
+            None,
+        )
+        hide_system_button_action.connect(
+            'activate',
+            self.on_button_hide_system,
+        )
+        self.add_action(hide_system_button_action)
 
         quit_button_action = Gio.SimpleAction.new('quit_toolbutton', None)
         quit_button_action.connect('activate', self.on_menu_quit)
@@ -3159,6 +3184,9 @@ class TartubeApp(Gtk.Application):
             self.toolbar_hide_flag = json_dict['toolbar_hide_flag']
         if version >= 5024:     # v0.5.024
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
+        if version >= 2002109:  # v2.2.109
+            self.toolbar_system_hide_flag \
+            = json_dict['toolbar_system_hide_flag']
         if version >= 1001064:  # v1.1.064
             self.show_tooltips_flag = json_dict['show_tooltips_flag']
         if version >= 2001036:  # v2.1.036
@@ -3354,6 +3382,9 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1003032:  # v1.3.032
             self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
+        if version >= 2002116:  # v2.2.116
+            self.auto_delete_options_flag \
+            = json_dict['auto_delete_options_flag']
         if version >= 1002013:  # v1.2.013
             self.simple_options_flag = json_dict['simple_options_flag']
 
@@ -3435,6 +3466,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['scheduled_livestream_wait_mins']
             self.scheduled_livestream_last_time \
             = json_dict['scheduled_livestream_last_time']
+        if version >= 2002108:  # v2.2.108
+            self.scheduled_livestream_extra_flag \
+            = json_dict['scheduled_livestream_extra_flag']
 
         if version >= 1003112:  # v1.3.112
             self.autostop_time_flag = json_dict['autostop_time_flag']
@@ -3452,6 +3486,11 @@ class TartubeApp(Gtk.Application):
         if version >= 1004003:  # v1.4.003
             self.operation_sim_shortcut_flag \
             = json_dict['operation_sim_shortcut_flag']
+        if version >= 2002112:  # v2.2.112
+            self.operation_auto_restart_flag \
+            = json_dict['operation_auto_restart_flag']
+            self.operation_auto_restart_time \
+            = json_dict['operation_auto_restart_time']
 #       # Removed v1.3.028
 #        self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
         if version >= 1003028:  # v1.3.028
@@ -3981,6 +4020,7 @@ class TartubeApp(Gtk.Application):
 
             'toolbar_hide_flag': self.toolbar_hide_flag,
             'toolbar_squeeze_flag': self.toolbar_squeeze_flag,
+            'toolbar_system_hide_flag': self.toolbar_system_hide_flag,
             'show_tooltips_flag': self.show_tooltips_flag,
             'show_custom_icons_flag': self.show_custom_icons_flag,
             'show_small_icons_in_index_flag': \
@@ -4092,6 +4132,7 @@ class TartubeApp(Gtk.Application):
             'operation_download_limit': self.operation_download_limit,
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
+            'auto_delete_options_flag': self.auto_delete_options_flag,
             'simple_options_flag': self.simple_options_flag,
 
             'enable_livestreams_flag': \
@@ -4109,6 +4150,8 @@ class TartubeApp(Gtk.Application):
             self.scheduled_livestream_wait_mins,
             'scheduled_livestream_last_time': \
             self.scheduled_livestream_last_time,
+            'scheduled_livestream_extra_flag': \
+            self.scheduled_livestream_extra_flag,
 
             'autostop_time_flag': self.autostop_time_flag,
             'autostop_time_value': self.autostop_time_value,
@@ -4122,6 +4165,8 @@ class TartubeApp(Gtk.Application):
             'operation_auto_update_flag': self.operation_auto_update_flag,
             'operation_save_flag': self.operation_save_flag,
             'operation_sim_shortcut_flag': self.operation_sim_shortcut_flag,
+            'operation_auto_restart_flag': self.operation_auto_restart_flag,
+            'operation_auto_restart_time': self.operation_auto_restart_time,
             'operation_dialogue_mode': self.operation_dialogue_mode,
             'operation_convert_mode': self.operation_convert_mode,
             'use_module_moviepy_flag': self.use_module_moviepy_flag,
@@ -5020,9 +5065,9 @@ class TartubeApp(Gtk.Application):
                 container_obj.bookmark_count = 0
                 container_obj.waiting_count = 0
 
-                # Some of the count IVs were not working 100%, so we'll just
-                #   recalculate them all
-                container_obj.recalculate_counts()
+#                # Some of the count IVs were not working 100%, so we'll just
+#                #   recalculate them all
+#                container_obj.recalculate_counts()
 
         if version < 1004043:  # v1.4.043
 
@@ -5126,8 +5171,10 @@ class TartubeApp(Gtk.Application):
                 else:
                     options_obj.options_dict['video_format_mode'] = 'single'
 
-                options_obj.options_dict.pop('second_video_format')
-                options_obj.options_dict.pop('third_video_format')
+                if 'second_video_format' in options_obj.options_dict:
+                    options_obj.options_dict.pop('second_video_format')
+                if 'third_video_format' in options_obj.options_dict:
+                    options_obj.options_dict.pop('third_video_format')
 
         if version < 2001010:  # v2.1.010
 
@@ -5136,16 +5183,15 @@ class TartubeApp(Gtk.Application):
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.was_live_flag = False
 
-        if version < 2001012:  # v2.1.012
-
-            # v2.1.005 Addresses problems in which a media.Video might still
-            #   exist inside the 'New videos' folder (etc), but not anywhere
-            #   else in the database
-            # Still not sure what the cause was, but assuming that it was some
-            #   ancient issue, long since fixed, force a silent call to the
-            #   check/fix functions
-            self.check_integrity_db(True)
-
+#        if version < 2001012:  # v2.1.012
+#
+#            # v2.1.005 Addresses problems in which a media.Video might still
+#            #   exist inside the 'New videos' folder (etc), but not anywhere
+#            #   else in the database
+#            # Still not sure what the cause was, but assuming that it was some
+#            #   ancient issue, long since fixed, force a silent call to the
+#            #   check/fix functions
+#            self.check_integrity_db(True)
 
         if version < 2001037:  # v2.1.037
 
@@ -5278,6 +5324,28 @@ class TartubeApp(Gtk.Application):
                     or options_obj != self.classic_options_obj
                 ):
                     self.classic_options_list.append(options_obj)
+
+        if version < 2002101:      # v2.2.101
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.live_msg = ''
+
+        if version < 2002107:      # v2.2.107
+
+            # This version adds new IVs to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.live_debut_flag = False
+                    media_data_obj.live_time = 0
+
+        if version < 2002115:       # v2.2.115
+
+            # The update code for v1.4.037 and v2.1.012 crashes with a python
+            #   error, when loading a v1.4 database
+            # Can fix both problems by doing a silent database integrity check
+            self.check_integrity_db(True)
 
 
     def save_db(self):
@@ -8925,28 +8993,6 @@ class TartubeApp(Gtk.Application):
             #   with the video (the thumbnail, in this case)
             self.delete_video(video_obj, True)
 
-        # Any videos whose livestream status has changed must be redrawn in
-        #   the Video catalogue
-        if self.main_win_obj.video_index_current \
-        == self.fixed_live_folder.name:
-
-            # Livestreams folder visible; just redraw it
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.fixed_live_folder.name,
-            )
-
-        else:
-
-            for video_obj in video_started_dict.values():
-
-                if video_obj.dbid in self.media_reg_dict:
-                    self.main_win_obj.video_catalogue_update_video(video_obj)
-
-            for video_obj in video_stopped_dict.values():
-
-                if video_obj.dbid in self.media_reg_dict:
-                    self.main_win_obj.video_catalogue_update_video(video_obj)
-
         # Any code can check whether livestream operation is in progress, or
         #   not, by checking this IV
         self.livestream_manager_obj = None
@@ -8956,6 +9002,34 @@ class TartubeApp(Gtk.Application):
         if self.catalogue_mode_type != 'grid' and self.gtk_emulate_broken_flag:
             self.main_win_obj.catalogue_listbox.invalidate_sort()
             self.main_win_obj.catalogue_listbox.show_all()
+
+        # Any videos whose livestream status has changed must be redrawn in
+        #   the Video catalogue
+        # (This function is called from the downloads.LivestreamManager object,
+        #   so to prevent a crash, its calls must be wrapper in a timer)
+        if self.main_win_obj.video_index_current \
+        == self.fixed_live_folder.name:
+
+            # Livestreams folder visible; just redraw it
+            GObject.timeout_add(
+                0,
+                self.main_win_obj.video_catalogue_redraw_all,
+                self.fixed_live_folder.name,
+            )
+
+        else:
+
+            for video_obj in self.media_reg_live_dict.values():
+
+                if video_obj.live_mode == 1 \
+                or video_obj.dbid in video_started_dict \
+                or video_obj.dbid in video_stopped_dict:
+
+                    GObject.timeout_add(
+                        0,
+                        self.main_win_obj.video_catalogue_update_video,
+                        video_obj,
+                    )
 
         # Update the status icon in the system tray
         self.status_icon_obj.update_icon()
@@ -9367,9 +9441,10 @@ class TartubeApp(Gtk.Application):
 
             self.mark_video_live(
                 video_obj,
-                0,                   # Not a livestream
-                True,                # Don't update Video Index yet
-                True,                # Don't update Video Catalogue yet
+                0,                  # Not a livestream
+                {},                 # No livestream data
+                True,               # Don't update Video Index yet
+                True,               # Don't update Video Catalogue yet
                 no_sort_flag,
             )
 
@@ -9517,7 +9592,8 @@ class TartubeApp(Gtk.Application):
 
 
     def create_livestream_from_download(self, container_obj, live_mode,
-    video_name, video_source, video_descrip, video_upload_time):
+    video_name, video_source, video_descrip, video_upload_time,
+    live_data_dict={}):
 
         """Called by downloads.JSONFetcher.do_fetch().
 
@@ -9541,6 +9617,18 @@ class TartubeApp(Gtk.Application):
 
             video_upload_time (int): The video's upload time (in Unix time, to
                 match media.Video.upload_time)
+
+            live_data_dict (dict): Dictionary of additional data obtained from
+                the YouTube STDERR message (empty for a livestream already
+                broadcasting, or if the message couldn't be interpreted).
+                Dictionary in the form
+
+                live_msg (str): Text that can be displayed in the Video
+                    Catalogue
+                live_time (int): Approximate time (matching time.time()) at
+                    which the livestream is due to start
+                live_debut_flag (bool): True for a YouTube 'premiere' video,
+                    False for an ordinary livestream
 
         """
 
@@ -9581,7 +9669,7 @@ class TartubeApp(Gtk.Application):
         video_obj.set_file(video_name, '.mp4')
 
         # Mark it as a livestream
-        self.mark_video_live(video_obj, live_mode)
+        self.mark_video_live(video_obj, live_mode, live_data_dict)
 
         # We can now sort the parent containers
         video_obj.parent_obj.sort_children()
@@ -11673,6 +11761,11 @@ class TartubeApp(Gtk.Application):
                 if not not_new_flag:
                     self.mark_video_new(video_obj, True, True)
 
+                # If a download options object (options.OptionsManager) has
+                #   been applied to this video, remove it (if required)
+                if video_obj.options_obj and self.auto_delete_options_flag:
+                    self.remove_download_options(video_obj)
+
         # Update rows in the Video Index
         for container_obj in update_list:
             self.main_win_obj.video_index_update_row_text(container_obj)
@@ -11837,7 +11930,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_update_row_text(container_obj)
 
 
-    def mark_video_live(self, video_obj, live_mode, \
+    def mark_video_live(self, video_obj, live_mode, live_data_dict={}, \
     no_update_index_flag=False, no_update_catalogue_flag=False, \
     no_sort_flag=False):
 
@@ -11855,6 +11948,18 @@ class TartubeApp(Gtk.Application):
                 livestream which has now finished, and behaves like a normal
                 uploaded video), 1 if the livestream has not started, 2 if the
                 livestream is currently being broadcast
+
+            live_data_dict (dict): Dictionary of additional data obtained from
+                the YouTube STDERR message (empty for a livestream already
+                broadcasting, or if the message couldn't be interpreted).
+                Dictionary in the form
+
+                live_msg (str): Text that can be displayed in the Video
+                    Catalogue
+                live_time (int): Approximate time (matching time.time()) at
+                    which the livestream is due to start
+                live_debut_flag (bool): True for a YouTube 'premiere' video,
+                    False for an ordinary livestream
 
             no_update_index_flag (bool): True if the Video Index should not be
                 updated (except for the system 'Livestreams' folder), because
@@ -11921,6 +12026,7 @@ class TartubeApp(Gtk.Application):
                 # Update the video object's IVs
                 video_obj.set_live_mode(live_mode)
                 video_obj.set_was_live_flag(True)
+                video_obj.set_live_data(live_data_dict)
                 # Update the parent object
                 video_obj.parent_obj.dec_live_count()
 
@@ -12001,6 +12107,8 @@ class TartubeApp(Gtk.Application):
 
                 # Update the video object's IVs
                 video_obj.set_live_mode(live_mode)
+                video_obj.set_live_data(live_data_dict)
+
                 # Update the parent object
                 if not convert_flag:
                     video_obj.parent_obj.inc_waiting_count()
@@ -12529,7 +12637,7 @@ class TartubeApp(Gtk.Application):
     def mark_folder_hidden(self, folder_obj, flag):
 
         """Called by callbacks in self.on_menu_show_hidden(),
-        .on_menu_hide_private() and
+        .on_menu_hide_system() and
         mainwin.MainWin.on_video_index_hide_folder().
 
         Marks a folder as hidden (not visible in the Video Index) or not
@@ -14376,11 +14484,19 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 11471 remove_download_options')
 
-        if self.current_manager_obj or not media_data_obj.options_obj:
-            return self.system_error(
-                148,
-                'Remove download options request failed sanity check',
-            )
+        # Sanity check. Removing an options manager object during an operation
+        #   is not allowed, with one exception: during a download operation,
+        #   a video marked as downloaded can have its options manager removed
+        if not (
+            self.download_manager_obj \
+            and isinstance(media_data_obj, media.Video) \
+            and media_data_obj.dl_flag
+        ):
+            if self.current_manager_obj or not media_data_obj.options_obj:
+                return self.system_error(
+                    148,
+                    'Remove download options request failed sanity check',
+                )
 
         # Destroy the options.OptionsManager object itself
         if media_data_obj.options_obj is not None:
@@ -14590,7 +14706,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 12454 reset_options_manager')
 
         edit_win_obj = data_list.pop(0)
-        old_options_obj = edit_win_obj.options_obj
+        old_options_obj = edit_win_obj.edit_obj
 
         # Replace the old object with a new one, which has the effect of
         #   resetting its download options to the default values
@@ -14607,7 +14723,7 @@ class TartubeApp(Gtk.Application):
             self.classic_options_obj = new_options_obj
 
         # Reset the edit window to display the new (default) values
-        edit_win_obj.reset_with_new_edit_obj(options_obj)
+        edit_win_obj.reset_with_new_edit_obj(new_options_obj)
 
 
     # (Sound effects)
@@ -14885,11 +15001,29 @@ class TartubeApp(Gtk.Application):
         # Otherwise, we're free to start a livestream operation instead (but
         #   only if there is at least one media.Video object marked as a
         #   livestream)
-        if self.media_reg_live_dict:
+        if self.scheduled_livestream_flag and self.media_reg_live_dict:
+
+            start_flag = False
 
             wait_time = self.scheduled_livestream_wait_mins * 60
             if (self.scheduled_livestream_last_time + wait_time) < time.time():
 
+                start_flag = True
+
+            # If any livestreams are due to start soon, start a livestream
+            #   operation once a minute (if allowed)
+            elif self.scheduled_livestream_extra_flag \
+            and self.scheduled_livestream_last_time + 60 < time.time():
+
+                for video_obj in self.media_reg_live_dict.values():
+
+                    if video_obj.live_mode == 1 \
+                    and (video_obj.live_time - wait_time) < time.time():
+                        start_flag = True
+                        print('15497 starting extra check')
+                        break
+
+            if start_flag:
                 self.livestream_manager_start()
 
         # Return 1 to keep the timer going (or 0 to halt the once-only timer)
@@ -15895,6 +16029,72 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_current,
             1,
         )
+
+
+    def on_button_hide_system(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Show or hide (most) system folders, depending on whether the
+        togglebutton is selected, or not.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app on_button_hide_system')
+
+        # Set the IV
+        if not self.main_win_obj.hide_system_toolbutton.get_active():
+
+            self.toolbar_system_hide_flag = False
+            # (Toggle the menu item to match; it won't call this function in
+            #   an infinite loop)
+            if self.main_win_obj.hide_system_menu_item.get_active():
+                self.main_win_obj.hide_system_menu_item.set_active(False)
+
+        else:
+
+            self.toolbar_system_hide_flag = True
+            if not self.main_win_obj.hide_system_menu_item.get_active():
+                self.main_win_obj.hide_system_menu_item.set_active(True)
+
+        # After system folders are revealed/hidden, Gtk helpfully selects a
+        #   new channel/playlist/folder in the Video Index for us
+        # Not sure how to stop it, other than by temporarily preventing
+        #   selections altogether (temporarily)
+        selection = self.main_win_obj.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.NONE)
+
+        # Show/hide system folders
+        for name in self.media_name_dict:
+
+            dbid = self.media_name_dict[name]
+            media_data_obj = self.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.priv_flag \
+            and media_data_obj != self.fixed_all_folder:
+                self.mark_folder_hidden(
+                    media_data_obj,
+                    self.toolbar_system_hide_flag,
+                )
+
+        # Re-enable selections, and select the previously-selected channel/
+        #   playlist/folder (if any)
+        selection = self.main_win_obj.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.SINGLE)
+
+        if self.main_win_obj.video_index_current is not None:
+
+            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
+            media_data_obj = self.media_reg_dict[dbid]
+            self.main_win_obj.video_index_select_row(media_data_obj)
 
 
     def on_button_last_page(self, action, par):
@@ -16954,12 +17154,12 @@ class TartubeApp(Gtk.Application):
         utils.open_file(self, __main__.__website__)
 
 
-    def on_menu_hide_private(self, action, par):
+    def on_menu_hide_system(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Hides all prviate media.Folder objects (except the 'All Videos'
-        folder).
+        Show or hide (most) system folders, depending on whether the menu item
+        is selected, or not.
 
         Args:
 
@@ -16970,18 +17170,16 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 14689 on_menu_hide_private')
+            utils.debug_time('app 14689 on_menu_hide_system')
 
-        for name in self.media_name_dict:
+        # (Toggle the toolbar button to match, which sets the IV)
+        if not self.main_win_obj.hide_system_menu_item.get_active() \
+        and self.main_win_obj.hide_system_toolbutton.get_active():
+            self.main_win_obj.hide_system_toolbutton.set_active(False)
 
-            dbid = self.media_name_dict[name]
-            media_data_obj = self.media_reg_dict[dbid]
-
-            if isinstance(media_data_obj, media.Folder) \
-            and not media_data_obj.hidden_flag \
-            and media_data_obj.priv_flag \
-            and media_data_obj != self.fixed_all_folder:
-                self.mark_folder_hidden(media_data_obj, True)
+        elif self.main_win_obj.hide_system_menu_item.get_active() \
+        and not self.main_win_obj.hide_system_toolbutton.get_active():
+            self.main_win_obj.hide_system_toolbutton.set_active(True)
 
 
     def on_menu_import_json(self, action, par):
@@ -17583,6 +17781,17 @@ class TartubeApp(Gtk.Application):
             self.auto_clone_options_flag = False
         else:
             self.auto_clone_options_flag = True
+
+
+    def set_auto_delete_options_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15049 set_auto_delete_options_flag')
+
+        if not flag:
+            self.auto_delete_options_flag = False
+        else:
+            self.auto_delete_options_flag = True
 
 
     def set_auto_delete_flag(self, flag):
@@ -18649,6 +18858,25 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.output_tab_update_page_size()
 
 
+    def set_operation_auto_restart_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15725 set_operation_auto_restart_flag')
+
+        if not flag:
+            self.operation_auto_restart_flag = False
+        else:
+            self.operation_auto_restart_flag = True
+
+
+    def set_operation_auto_restart_time(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15689 set_operation_auto_restart_time')
+
+        self.operation_auto_restart_time = value
+
+
     def set_operation_auto_update_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -18878,6 +19106,17 @@ class TartubeApp(Gtk.Application):
             self.scheduled_livestream_flag = False
         else:
             self.scheduled_livestream_flag = True
+
+
+    def set_scheduled_livestream_extra_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16089 set_scheduled_livestream_extra_flag')
+
+        if not flag:
+            self.scheduled_livestream_extra_flag = False
+        else:
+            self.scheduled_livestream_extra_flag = True
 
 
     def set_scheduled_livestream_wait_mins(self, value):
@@ -19161,6 +19400,9 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 16301 set_ytdl_fork')
 
         self.ytdl_fork = value
+
+        # Update main window menu items
+        self.main_win_obj.update_menu()
 
 
     def set_ytdl_output_ignore_json_flag(self, flag):

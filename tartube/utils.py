@@ -36,12 +36,15 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import time
 
 
 # Import our modules
 import formats
 import mainapp
 import media
+# Use same gettext translations
+from mainapp import _
 
 
 # Functions
@@ -671,6 +674,167 @@ def disk_get_used_space(path, bytes_flag=False):
         return int(used_bytes / 1000000)
     else:
         return used_bytes
+
+
+def extract_livestream_data(stderr):
+
+    """Called by downloads.JSONFetcher.do_fetch() and
+    MiniJSONFetcher.do_fetch().
+
+    For some reason, YouTube messages giving the (approximate) start time of a
+    livestream are written to STDERR.
+
+    Extracts various data and returns it.
+
+    Args:
+
+        stderr (text): A standard YouTube message
+
+    Return values:
+
+        If extraction is successful, returns a dictionary of three values:
+            live_msg (str): Text that can be displayed in the Video Catalogue
+            live_time (int): Approximate time (matching time.time()) at which
+                the livestream is due to start
+            live_debut_flag (bool): True for a YouTube 'premiere' video, False
+                for an ordinary livestream
+
+        If extraction fails, returns an empty list
+
+    """
+
+    # This live event will begin in a few moments.
+    match_list = re.search(
+        'This live event will begin in a few moments',
+        stderr,
+    )
+
+    if match_list:
+
+        return {
+            'live_msg': _('Live soon'),
+            'live_time': int(time.time()),
+            'live_debut_flag': False,
+        }
+
+    # Premiere will begin shortly
+    match_list = re.search(
+        'Premiere will begin shortly',
+        stderr,
+    )
+
+    if match_list:
+
+        return {
+            'live_msg': _('Debut soon'),
+            'live_time': int(time.time()),
+            'live_debut_flag': True,
+        }
+
+    # This live event will begin in N minutes.
+    match_list = re.search(
+        'This live event will begin in (\d+) minute',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Live in {0} minutes').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 60),
+            'live_debut_flag': False,
+        }
+
+    # Premieres in N minutes
+    match_list = re.search(
+        'Premieres in (\d+) minute',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Debut in {0} minutes').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 60),
+            'live_debut_flag': True,
+        }
+
+    # This live event will begin in N hours.
+    match_list = re.search(
+        'This live event will begin in (\d+) hour',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Live in {0} hours').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 3600),
+            'live_debut_flag': False,
+        }
+
+    # Premieres in N hours
+    match_list = re.search(
+        'Premieres in (\d+) hour',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Debut in {0} hours').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 3600),
+            'live_debut_flag': True,
+        }
+
+    # This live event will begin in N days.
+    match_list = re.search(
+        'This live event will begin in (\d+) day',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Live in {0} days').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 86400),
+            'live_debut_flag': False,
+        }
+
+    # Premieres in N days
+    match_list = re.search(
+        'Premieres in (\d+) day',
+        stderr,
+    )
+
+    if match_list:
+
+        group_list = match_list.groups()
+        number = int(group_list[0])
+
+        return {
+            'live_msg': _('Debut in {0} days').format(group_list[0]),
+            'live_time': int(time.time()) + (number * 86400),
+            'live_debut_flag': True,
+        }
+
+    # Not a livestream, return an empty dictionary
+    return {}
 
 
 def find_available_name(app_obj, old_name, min_value=2, max_value=9999):

@@ -129,6 +129,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.export_db_menu_item = None         # Gtk.MenuItem
         self.import_db_menu_item = None         # Gtk.MenuItem
         self.switch_view_menu_item = None       # Gtk.MenuItem
+        self.hide_system_menu_item = None       # Gtk.MenuItem
         self.test_menu_item = None              # Gtk.MenuItem
         self.test_code_menu_item = None         # Gtk.MenuItem
         self.show_hidden_menu_item = None       # Gtk.MenuItem
@@ -152,6 +153,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.download_all_toolbutton = None     # Gtk.ToolButton
         self.stop_operation_toolbutton = None   # Gtk.ToolButton
         self.switch_view_toolbutton = None      # Gtk.ToolButton
+        self.hide_system_toolbutton = None      # Gtk.ToolButton
         self.test_toolbutton = None             # Gtk.ToolButton
         # (from self.setup_notebook)
         self.notebook = None                    # Gtk.Notebook
@@ -424,14 +426,16 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_filtered_list = []
 
         # Background colours used in the Video Catalogue to highlight
-        #   livestreams
-        self.waiting_colour = Gdk.RGBA(1, 0, 0, 0.1)
-        self.live_colour = Gdk.RGBA(0, 1, 0, 0.1)
+        #   livestream videos (we use different colours for a debut video)
+        self.live_wait_colour = Gdk.RGBA(1, 0, 0, 0.1)
+        self.live_now_colour = Gdk.RGBA(0, 1, 0, 0.1)
+        self.debut_wait_colour = Gdk.RGBA(1, 1, 0, 0.1)
+        self.debut_now_colour = Gdk.RGBA(0, 1, 1, 0.1)
         # Background colours used in the Video Catalogue, in grid mode, to
-        #   highlight livestreams and/or selected videos
+        #   highlight selected livestream/debut videos
         self.grid_select_colour = Gdk.RGBA(0, 0, 1, 0.1)
-        self.grid_waiting_select_colour = Gdk.RGBA(1, 0, 1, 0.1)
-        self.grid_live_select_colour = Gdk.RGBA(0, 1, 1, 0.1)
+        self.grid_select_wait_colour = Gdk.RGBA(1, 0, 1, 0.1)
+        self.grid_select_live_colour = Gdk.RGBA(1, 0, 1, 0.2)
 
         # The video catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
@@ -817,17 +821,17 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Intercept the user's attempts to close the window, so we can close to
         #   the system tray, if required
-        self.connect('delete_event', self.on_delete_event)
+        self.connect('delete-event', self.on_delete_event)
 
         # Detect window resize events, so the size of the Video Catalogue grid
         #   (when visible) can be adjusted smoothly
-        self.connect('size_allocate', self.on_window_size_allocate)
+        self.connect('size-allocate', self.on_window_size_allocate)
 
         # Allow the user to drag-and-drop videos (for example, from the web
         #   browser) into the main window, adding it the currently selected
         #   folder (or to 'Unsorted Videos' if something else is selected, or
         #   into the Classic Mode Tab if it is visible)
-        self.connect('drag_data_received', self.on_window_drag_data_received)
+        self.connect('drag-data-received', self.on_window_drag_data_received)
         # (Without this line, we get Gtk warnings on some systems)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
         # (Continuing)
@@ -1012,10 +1016,13 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         media_sub_menu.append(Gtk.SeparatorMenuItem())
 
-        self.hide_private_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic(_('_Hide (most) system folders'))
-        media_sub_menu.append(self.hide_private_menu_item)
-        self.hide_private_menu_item.set_action_name('app.hide_private_menu')
+        self.hide_system_menu_item = \
+        Gtk.CheckMenuItem.new_with_mnemonic(_('_Hide (most) system folders'))
+        media_sub_menu.append(self.hide_system_menu_item)
+        self.hide_system_menu_item.set_active(
+            self.app_obj.toolbar_system_hide_flag,
+        )
+        self.hide_system_menu_item.set_action_name('app.hide_system_menu')
 
         self.show_hidden_menu_item = \
         Gtk.MenuItem.new_with_mnemonic(_('Sh_ow hidden folders'))
@@ -1378,6 +1385,33 @@ class MainWin(Gtk.ApplicationWindow):
             'app.switch_view_toolbutton',
         )
 
+        if not squeeze_flag:
+            self.hide_system_toolbutton = Gtk.ToggleToolButton.new()
+            self.hide_system_toolbutton.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_hide_small'],
+                ),
+            )
+            self.hide_system_toolbutton.set_label(_('Hide'))
+            self.hide_system_toolbutton.set_is_important(True)
+        else:
+            self.hide_system_toolbutton = Gtk.ToggleToolButton.new()
+            self.hide_system_toolbutton.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_hide_large'],
+                ),
+            )
+
+        self.main_toolbar.insert(self.hide_system_toolbutton, -1)
+        if self.app_obj.toolbar_system_hide_flag:
+            self.hide_system_toolbutton.set_active(True)
+        self.hide_system_toolbutton.set_tooltip_text(
+            _('Hide most system folders'),
+        )
+        self.hide_system_toolbutton.set_action_name(
+            'app.hide_system_toolbutton',
+        )
+
         if squeeze_flag:
             self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
@@ -1481,7 +1515,7 @@ class MainWin(Gtk.ApplicationWindow):
         # (Detect the user dragging the paned slider by checking the size of
         #   the vbox)
         self.video_index_vbox.connect(
-            'size_allocate',
+            'size-allocate',
             self.on_paned_size_allocate,
         )
 
@@ -2351,7 +2385,6 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.classic_textview = Gtk.TextView()
         scrolled.add(self.classic_textview)
-
         self.classic_textbuffer = self.classic_textview.get_buffer()
 
         # (Some callbacks will complain about invalid iterators, if we try to
@@ -2365,6 +2398,14 @@ class MainWin(Gtk.ApplicationWindow):
             'mark_end',
             self.classic_textbuffer.get_end_iter(),
             False,              # Not left gravity
+        )
+
+        # (When the user copy-pastes URLs into the textview, insert an
+        #   initial newline character, so they don't have to continuously
+        #   do that themselves)
+        self.classic_textview.connect(
+            'paste-clipboard',
+            self.on_classic_textview_paste,
         )
 
         # Third row - widgets to set the download destination and video/audio
@@ -2905,6 +2946,30 @@ class MainWin(Gtk.ApplicationWindow):
             self.set_visible(False)
         else:
             self.set_visible(True)
+
+
+    def update_menu(self):
+
+        """Called by mainapp.TartubeApp.set_ytdl_fork().
+
+        Updates the text of the two menu items that show the name of the
+        youtube-dl fork.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 2552 update_menu')
+
+        if self.update_ytdl_menu_item is not None:
+
+            downloader = self.app_obj.get_downloader()
+
+            self.update_ytdl_menu_item.set_label(
+                ('U_pdate') + ' ' + downloader,
+            )
+
+            self.test_ytdl_menu_item.set_label(
+                _('_Test') + ' ' + downloader,
+            )
 
 
     def redraw_main_toolbar(self):
@@ -3975,6 +4040,10 @@ class MainWin(Gtk.ApplicationWindow):
                 return -1
             elif obj1.live_mode < obj2.live_mode:
                 return 1
+            elif obj1.live_time < obj2.live_time:
+                return -1
+            elif obj1.live_time > obj2.live_time:
+                return 1
 
             elif isinstance(obj1.parent_obj, media.Playlist) \
             and not self.video_index_current_priv_flag \
@@ -4016,7 +4085,7 @@ class MainWin(Gtk.ApplicationWindow):
             return -1
         elif obj1.name.lower() > obj2.name.lower():
             return 1
-        elif obj1.dbid < obj2.ddib:
+        elif obj1.dbid < obj2.dbid:
             return -1
         else:
             return 1
@@ -7927,7 +7996,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Create the new catalogue item
         if self.app_obj.catalogue_mode_type == 'simple':
             catalogue_item_obj = SimpleCatalogueItem(self, video_obj)
-        elif self.app_obj.catalogue_mode_type == 'grid':
+        elif self.app_obj.catalogue_mode_type == 'complex':
             catalogue_item_obj = ComplexCatalogueItem(self, video_obj)
         else:
             catalogue_item_obj = GridCatalogueItem(self, video_obj)
@@ -8154,7 +8223,8 @@ class MainWin(Gtk.ApplicationWindow):
                         video_count += 1
 
             # Update IVs
-            del self.video_catalogue_dict[video_obj.dbid]
+            if video_obj.dbid in self.video_catalogue_dict:
+                del self.video_catalogue_dict[video_obj.dbid]
 
             # Update widgets in the Video Catalogue toolbar
             self.video_catalogue_toolbar_update(
@@ -9386,9 +9456,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Prepare the icons
         if video_obj.live_mode == 1:
-            pixbuf = self.pixbuf_dict['stream_wait_small']
+            if not video_obj.live_debut_flag:
+                pixbuf = self.pixbuf_dict['live_wait_small']
+            else:
+                pixbuf = self.pixbuf_dict['debut_wait_small']
         elif video_obj.live_mode == 2:
-            pixbuf = self.pixbuf_dict['stream_live_small']
+            if not video_obj.live_debut_flag:
+                pixbuf = self.pixbuf_dict['live_now_small']
+            else:
+                pixbuf = self.pixbuf_dict['debut_now_small']
         elif download_item_obj.operation_type == 'sim' \
         or download_item_obj.media_data_obj.dl_sim_flag:
             pixbuf = self.pixbuf_dict['check_small']
@@ -12049,10 +12125,11 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 10282 on_video_index_selection_changed')
 
         (model, iter) = selection.get_selected()
-        if iter is None or not model.iter_is_valid(iter):
-            return
-        else:
-            name = model[iter][1]
+        if iter is not None:
+            if not model.iter_is_valid(iter):
+                iter = None
+            else:
+                name = model[iter][1]
 
         # Don't update the Video Catalogue during certain procedures, such as
         #   removing a row from the Video Index (in which case, the flag will
@@ -13349,7 +13426,10 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 11364 on_video_catalogue_not_livestream')
 
         # Update the video
-        self.app_obj.mark_video_live(media_data_obj, 0)
+        self.app_obj.mark_video_live(
+            media_data_obj,
+            0,                  # Not a livestream
+        )
 
         # Update the catalogue item
         self.video_catalogue_update_video(media_data_obj)
@@ -15020,6 +15100,34 @@ class MainWin(Gtk.ApplicationWindow):
         self.errors_list_reset()
 
 
+    def on_classic_textview_paste(self, textview):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        When the user copy-pastes URLs into the textview, insert an initial
+        newline character, so they don't have to continuously do that
+        themselves.
+
+        Args:
+
+            textview (Gtk.TextView): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12704 on_classic_textview_paste')
+
+        text = self.classic_textbuffer.get_text(
+            self.classic_textbuffer.get_start_iter(),
+            self.classic_textbuffer.get_end_iter(),
+            # Don't include hidden characters
+            False,
+        )
+
+        if not (re.search('\n+\s*$', text)):
+            self.classic_textbuffer.set_text(text + '\n')
+
+
     def on_classic_dest_dir_combo_changed(self, combo):
 
         """Called from callback in self.setup_classic_mode_tab().
@@ -16602,7 +16710,7 @@ class SimpleCatalogueItem(object):
         self.update_tooltips()
         self.update_status_image()
         self.update_video_name()
-        self.update_parent_name()
+        self.update_container_name()
         self.update_video_stats()
 
 
@@ -16623,20 +16731,43 @@ class SimpleCatalogueItem(object):
 
             if self.video_obj.live_mode == 0 \
             or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+
                 self.hbox.override_background_color(
                     Gtk.StateType.NORMAL,
                     None,
                 )
+
             elif self.video_obj.live_mode == 1:
-                self.hbox.override_background_color(
-                    Gtk.StateType.NORMAL,
-                    self.main_win_obj.waiting_colour,
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.hbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.live_wait_colour,
+                    )
+
+                else:
+
+                    self.hbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.debut_wait_colour,
+                    )
+
             elif self.video_obj.live_mode == 2:
-                self.hbox.override_background_color(
-                    Gtk.StateType.NORMAL,
-                    self.main_win_obj.live_colour,
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.hbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.live_now_colour,
+                    )
+
+                else:
+
+                    self.hbox.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.debut_now_colour,
+                    )
 
 
     def update_tooltips(self):
@@ -16670,23 +16801,49 @@ class SimpleCatalogueItem(object):
 
         # Set the download status
         if self.video_obj.live_mode == 1:
-            self.status_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['stream_wait_small'],
-            )
+
+            if not self.video_obj.live_debut_flag:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['live_wait_small'],
+                )
+
+            else:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['debut_wait_small'],
+                )
+
         elif self.video_obj.live_mode == 2:
-            self.status_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['stream_live_small'],
-            )
+
+            if not self.video_obj.live_debut_flag:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['live_now_small'],
+                )
+
+            else:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['debut_now_small'],
+                )
+
         elif self.video_obj.dl_flag:
+
             if self.video_obj.archive_flag:
+
                 self.status_image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['archived_small'],
                 )
+
             else:
+
                 self.status_image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['have_file_small'],
                 )
+
         else:
+
             self.status_image.set_from_pixbuf(
                 self.main_win_obj.pixbuf_dict['no_file_small'],
             )
@@ -16745,7 +16902,7 @@ class SimpleCatalogueItem(object):
         )
 
 
-    def update_parent_name(self):
+    def update_container_name(self):
 
         """Called by anything, but mainly called by self.update_widgets().
 
@@ -16754,7 +16911,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13803 update_parent_name')
+            utils.debug_time('mwn 13803 update_container_name')
 
         if self.main_win_obj.app_obj.catalogue_mode != 'simple_show_parent':
             return
@@ -16774,11 +16931,11 @@ class SimpleCatalogueItem(object):
         else:
 
             if isinstance(self.video_obj.parent_obj, media.Channel):
-                string = _('From channel:') + ' \''
+                string = _('From channel')
             elif isinstance(self.video_obj.parent_obj, media.Playlist):
-                string = _('From playlist:') + ' \''
+                string = _('From playlist')
             else:
-                string = _('From folder:') + ' \''
+                string = _('From folder')
 
             string2 = html.escape(
                 utils.shorten_string(
@@ -16788,7 +16945,7 @@ class SimpleCatalogueItem(object):
                 quote=True,
             )
 
-        self.parent_label.set_markup(string + string2 + '\'')
+        self.parent_label.set_markup('<i>' + string + '</i>: ' + string2)
 
 
     def update_video_stats(self):
@@ -16802,13 +16959,14 @@ class SimpleCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 13835 update_video_stats')
 
-        if self.video_obj.live_mode == 1:
+        if self.video_obj.live_mode:
 
-            msg = _('Livestream has not started yet')
-
-        elif self.video_obj.live_mode == 2:
-
-            msg = _('Livestream has started')
+            if self.video_obj.live_mode == 2:
+                msg = _('Livestream has started')
+            elif self.video_obj.live_msg == '':
+                msg = _('Livestream has not started yet')
+            else:
+                msg = self.video_obj.live_msg
 
         else:
 
@@ -16914,6 +17072,7 @@ class ComplexCatalogueItem(object):
         self.status_image = None            # Gtk.Image
         self.error_image = None             # Gtk.Image
         self.warning_image = None           # Gtk.Image
+        self.options_image = None           # Gtk.Image
         self.descrip_label = None           # Gtk.Label
         self.expand_label = None            # Gtk.Label
         self.stats_label = None             # Gtk.Label
@@ -17066,6 +17225,9 @@ class ComplexCatalogueItem(object):
 
         self.error_image = Gtk.Image()
         hbox2.pack_end(self.error_image, False, False, self.spacing_size)
+
+        self.options_image = Gtk.Image()
+        hbox2.pack_end(self.options_image, False, False, self.spacing_size)
 
         # Second row - video description (incorporating the the More/Less
         #   label), or the name of the parent channel/playlist/folder,
@@ -17408,20 +17570,43 @@ class ComplexCatalogueItem(object):
 
             if self.video_obj.live_mode == 0 \
             or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+
                 self.frame.override_background_color(
                     Gtk.StateType.NORMAL,
                     None,
                 )
+
             elif self.video_obj.live_mode == 1:
-                self.frame.override_background_color(
-                    Gtk.StateType.NORMAL,
-                    self.main_win_obj.waiting_colour,
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.frame.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.live_wait_colour,
+                    )
+
+                else:
+
+                    self.frame.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.debut_wait_colour,
+                    )
+
             elif self.video_obj.live_mode == 2:
-                self.frame.override_background_color(
-                    Gtk.StateType.NORMAL,
-                    self.main_win_obj.live_colour,
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.frame.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.live_now_colour,
+                    )
+
+                else:
+
+                    self.frame.override_background_color(
+                        Gtk.StateType.NORMAL,
+                        self.main_win_obj.debut_now_colour,
+                    )
 
 
     def update_tooltips(self):
@@ -17580,60 +17765,83 @@ class ComplexCatalogueItem(object):
 
             # Set the download status
             if self.video_obj.live_mode == 1:
-                self.status_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['stream_wait_small'],
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['live_wait_small'],
+                    )
+
+                else:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['debut_wait_small'],
+                    )
+
             elif self.video_obj.live_mode == 2:
-                self.status_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['stream_live_small'],
-                )
+
+                if not self.video_obj.live_debut_flag:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['live_now_small'],
+                    )
+
+                else:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['debut_now_small'],
+                    )
+
             elif self.video_obj.dl_flag:
+
                 if self.video_obj.archive_flag:
+
                     self.status_image.set_from_pixbuf(
                         self.main_win_obj.pixbuf_dict['archived_small'],
                     )
+
                 else:
+
                     self.status_image.set_from_pixbuf(
                         self.main_win_obj.pixbuf_dict['have_file_small'],
                     )
+
             else:
+
                 self.status_image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['no_file_small'],
                 )
 
-            # Set an indication of any error/warning messages. If there is an
-            #   error but no warning, show the error icon in the warning image
-            #   (so there isn't a large gap in the middle)
-            if self.video_obj.error_list and self.video_obj.warning_list:
+            # Set an images containing representing error messages, warning
+            #   messages, and applied download options
+            # To prevent an unsightly gap between these images, use the first
+            #   available Gtk.Image
+            image_list = [
+                self.warning_image,
+                self.error_image,
+                self.options_image,
+            ]
 
-                self.warning_image.set_from_pixbuf(
+            if self.video_obj.warning_list:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['warning_small'],
                 )
 
-                self.error_image.set_from_pixbuf(
+            if self.video_obj.error_list:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['error_small'],
                 )
 
-            elif self.video_obj.error_list:
-
-                self.warning_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['error_small'],
+            if self.video_obj.options_obj:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['dl_options_small'],
                 )
 
-                self.error_image.clear()
-
-            elif self.video_obj.warning_list:
-
-                self.warning_image.set_from_pixbuf(
-                    self.main_win_obj.pixbuf_dict['warning_small'],
-                )
-
-                self.error_image.clear()
-
-            else:
-
-                self.error_image.clear()
-                self.warning_image.clear()
+            for image in image_list:
+                image.clear()
 
 
     def update_video_descrip(self):
@@ -17712,20 +17920,21 @@ class ComplexCatalogueItem(object):
 
             else:
 
+                string = '<i>'
                 if isinstance(self.video_obj.parent_obj, media.Channel):
-                    string = _('From channel:') + ' \''
+                    string += _('From channel')
                 elif isinstance(self.video_obj.parent_obj, media.Playlist):
-                    string = _('From playlist:') + ' \''
+                    string += _('From playlist')
                 else:
-                    string = _('From folder:') + ' \''
+                    string += _('From folder')
 
-                string += html.escape(
+                string += '</i>: ' + html.escape(
                     utils.shorten_string(
                         self.video_obj.parent_obj.name,
                         self.main_win_obj.very_long_string_max_len,
                     ),
                     quote=True,
-                ) + '\''
+                )
 
             if not self.video_obj.descrip:
                 self.descrip_label.set_text(string)
@@ -17804,7 +18013,12 @@ class ComplexCatalogueItem(object):
             app_obj = self.main_win_obj.app_obj
             dbid = self.video_obj.dbid
 
-            self.stats_label.set_markup(_('Live:') + '   ')
+            if self.video_obj.live_mode == 2:
+                self.stats_label.set_markup(_('Live now') + ':   ')
+            elif self.video_obj.live_msg == '':
+                self.stats_label.set_markup(_('Live soon') + ':   ')
+            else:
+                self.stats_label.set_markup(self.video_obj.live_msg + ':   ')
 
             if dbid in app_obj.media_reg_auto_notify_dict:
                 label = '<s>' + _('Notify') + '</s>'
@@ -19351,6 +19565,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         self.status_image = None            # Gtk.Image
         self.warning_image = None           # Gtk.Image
         self.error_image = None             # Gtk.Image
+        self.options_image = None           # Gtk.Image
         self.grid2 = None                   # Gtk.Grid
         self.name_label = None              # Gtk.Label
         self.container_label = None         # Gtk.Label
@@ -19500,8 +19715,22 @@ class GridCatalogueItem(ComplexCatalogueItem):
         self.warning_image.set_hexpand(False)
 
         self.error_image = Gtk.Image()
-        self.status_vbox.pack_start(self.error_image,  False, False, 0)
+        self.status_vbox.pack_start(
+            self.error_image,
+            False,
+            False,
+            self.spacing_size,
+        )
         self.error_image.set_hexpand(False)
+
+        self.options_image = Gtk.Image()
+        self.status_vbox.pack_start(
+            self.options_image,
+            False,
+            False,
+            self.spacing_size,
+        )
+        self.options_image.set_hexpand(False)
 
         # Second row - video name
         # (Use sub-grids on several rows so that their column spacing remains
@@ -19784,38 +20013,68 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
                 if self.video_obj.live_mode == 0 \
                 or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+
                     self.catalogue_gridbox.override_background_color(
                         Gtk.StateType.NORMAL,
                         None,
                     )
+
                 elif self.video_obj.live_mode == 1:
-                    self.catalogue_gridbox.override_background_color(
-                        Gtk.StateType.NORMAL,
-                        self.main_win_obj.waiting_colour,
-                    )
+
+                    if not self.video_obj.live_debut_flag:
+
+                        self.catalogue_gridbox.override_background_color(
+                            Gtk.StateType.NORMAL,
+                            self.main_win_obj.live_wait_colour,
+                        )
+
+                    else:
+
+                        self.catalogue_gridbox.override_background_color(
+                            Gtk.StateType.NORMAL,
+                            self.main_win_obj.debut_wait_colour,
+                        )
+
                 elif self.video_obj.live_mode == 2:
-                    self.catalogue_gridbox.override_background_color(
-                        Gtk.StateType.NORMAL,
-                        self.main_win_obj.live_colour,
-                    )
+
+                    if not self.video_obj.live_debut_flag:
+
+                        self.catalogue_gridbox.override_background_color(
+                            Gtk.StateType.NORMAL,
+                            self.main_win_obj.live_now_colour,
+                        )
+
+                    else:
+
+                        self.catalogue_gridbox.override_background_color(
+                            Gtk.StateType.NORMAL,
+                            self.main_win_obj.debut_now_colour,
+                        )
 
             else:
 
+                # (For selected gridboxes, simplify the colour scheme by not
+                #   distinguishing between debut and non-debut videos)
                 if self.video_obj.live_mode == 0 \
                 or not self.main_win_obj.app_obj.livestream_use_colour_flag:
+
                     self.catalogue_gridbox.override_background_color(
                         Gtk.StateType.NORMAL,
                         self.main_win_obj.grid_select_colour,
                     )
+
                 elif self.video_obj.live_mode == 1:
+
                     self.catalogue_gridbox.override_background_color(
                         Gtk.StateType.NORMAL,
-                        self.main_win_obj.grid_waiting_select_colour,
+                        self.main_win_obj.grid_select_wait_colour,
                     )
+
                 elif self.video_obj.live_mode == 2:
+
                     self.catalogue_gridbox.override_background_color(
                         Gtk.StateType.NORMAL,
-                        self.main_win_obj.grid_live_select_colour,
+                        self.main_win_obj.grid_select_live_colour,
                     )
 
 
@@ -20008,14 +20267,24 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
         else:
 
+            if isinstance(self.video_obj.parent_obj, media.Channel):
+                string = _('Channel:') + ' '
+            elif isinstance(self.video_obj.parent_obj, media.Playlist):
+                string = _('Playlist:') + ' '
+            else:
+                string = _('Folder:') + ' '
+
+            string2 = html.escape(
+                utils.shorten_string(
+                    self.video_obj.parent_obj.name,
+                    self.main_win_obj.very_long_string_max_len,
+                ),
+                quote=True,
+            )
+
+
             self.container_label.set_markup(
-                '<i>' + html.escape(
-                    utils.shorten_string(
-                        self.video_obj.parent_obj.name,
-                        self.main_win_obj.very_long_string_max_len,
-                    ),
-                    quote=True,
-                ) + '</i>',
+                '<i>' + string + '</i> ' + string2,
             )
 
 
@@ -20149,12 +20418,22 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
         if self.video_obj.live_mode == 1:
 
-            translate_note = _('TRANSLATOR\'S NOTE: D/L means download')
+            if self.video_obj.live_msg == '':
 
-            # Link not clickable
-            self.watch_player_label.set_markup(_('D/L'))
+                # Link not clickable
+                self.watch_player_label.set_markup(
+                    _('Live soon') + ':',
+                )
+
+            else:
+
+                self.watch_player_label.set_markup(
+                    self.video_obj.live_msg + ':',
+                )
 
         elif self.video_obj.live_mode == 2:
+
+            translate_note = _('TRANSLATOR\'S NOTE: D/L means download')
 
             # Link clickable
             self.watch_player_label.set_markup(
@@ -20667,7 +20946,7 @@ class CatalogueGridBox(Gtk.Frame):
 
         # This callback will set the size of the first CatalogueGridBox, which
         #   tells us the minimum required size for all future gridboxes
-        self.connect('size_allocate', self.on_size_allocate)
+        self.connect('size-allocate', self.on_size_allocate)
 
 
     # Public class methods
@@ -20853,8 +21132,8 @@ class StatusIcon(Gtk.StatusIcon):
         self.set_tooltip_text('Tartube')
 
         # signal connects
-        self.connect('button_press_event', self.on_button_press_event)
-        self.connect('popup_menu', self.on_popup_menu)
+        self.connect('button-press-event', self.on_button_press_event)
+        self.connect('popup-menu', self.on_popup_menu)
 
 
     def show_icon(self):
@@ -21141,8 +21420,8 @@ class MultiDragDropTreeView(Gtk.TreeView):
         # Code
         # ----
 
-        self.connect('button_press_event', self.on_button_press)
-        self.connect('button_release_event', self.on_button_release)
+        self.connect('button-press-event', self.on_button_press)
+        self.connect('button-release-event', self.on_button_release)
         self.defer_select = False
 
 
@@ -21435,7 +21714,7 @@ class StartErrorWin(GenericMinorWin):
 
         # Intercept the user's attempts to close the window, so we can halt
         #   the main application
-        self.connect('delete_event', self.on_delete_event)
+        self.connect('delete-event', self.on_delete_event)
 
         # Set up widgets on a grid
         grid = Gtk.Grid()
