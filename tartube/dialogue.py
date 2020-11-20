@@ -143,6 +143,7 @@ class DialogueManager(threading.Thread):
 
         return dialogue_win
 
+
     def show_simple_msg_dialogue(self, msg, msg_type, button_type,
     parent_win_obj=None, response_dict=None):
 
@@ -196,6 +197,72 @@ class DialogueManager(threading.Thread):
         )
 
         dialogue_win.create_dialogue()
+
+        return dialogue_win
+
+
+    def show_file_chooser(self, msg, parent_win_obj, action=None,
+    file_path=None):
+
+        """Can be called by anything.
+
+        Creates a standard Gtk.FileChooserAction window.
+
+        Gtk (who knows why) likes to create file chooser dialogues bigger than
+        the size of the observable universe. If it's too big, resize it
+        automatically.
+
+        Args:
+
+            msg (str): The text to display in the dialogue window
+
+            parent_win_obj (mainwin.MainWin, config.GenericConfigWin or None):
+                The parent window for the dialogue window. If None, the main
+                window is used as the parent window
+
+            action (Gtk.FileChooserAction or None): The type of fille chooser
+                to create. If None, Gtk.FileChooserAction.SAVE is used
+
+            file_path (str or None): If not None, the file path to suggest to
+                the user
+
+        Returns:
+
+            Gtk.MessageDialog window
+
+        """
+
+        if parent_win_obj is None:
+            parent_win_obj = self.main_win_obj
+
+        if action is None:
+            action = Gtk.FileChooserAction.SAVE
+
+        # Create the file chooser dialogue
+        dialogue_win = FileChooserDialogue(
+            msg,
+            parent_win_obj,
+            action,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+            ),
+        )
+
+        if file_path is not None:
+            dialogue_win.set_current_name(file_path)
+
+        # Save the universe
+        dialogue_win.set_default_size(
+            self.app_obj.config_win_width,
+            self.app_obj.config_win_height,
+        )
+
+        dialogue_win.connect(
+            'size-allocate',
+            dialogue_win.on_size_allocate,
+            self.app_obj,
+        )
 
         return dialogue_win
 
@@ -377,3 +444,54 @@ class MessageDialogue(Gtk.MessageDialog):
                     method(response_dict['data'])
                 else:
                     method()
+
+
+class FileChooserDialogue(Gtk.FileChooserDialog):
+
+    """Called by dialogue.DialogueManager.show_file_chooser_dialogue().
+
+    Sub-class for the standard Gtk file chooser dialogue, with a callback to
+    reduce its size below the the size of the observable universe.
+    """
+
+    # Standard class methods
+
+
+    # Public class methods
+
+
+    # (Callbacks)
+
+
+    def on_size_allocate(self, widget, rect, app_obj):
+
+        """Called from callback in DialogueManager.show_file_chooser().
+
+        If the window is bigger than the size of the observable universe, then
+        resize it.
+
+        Args:
+
+            widget (mainwin.MainWin): The widget the has been resized
+
+            rect (Gdk.Rectangle): Object describing the window's new size
+
+            app_obj (mainapp.TartubeApp): The main application object
+
+        """
+
+        resize_flag = False
+
+        width = rect.width
+        if width > app_obj.config_win_width:
+            width = app_obj.config_win_width
+            resize_flag = True
+
+        height = rect.height
+        if height > app_obj.config_win_height:
+            height = app_obj.config_win_height
+            resize_flag = True
+
+        if resize_flag:
+            widget.resize(width, height)
+

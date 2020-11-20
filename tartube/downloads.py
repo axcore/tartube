@@ -100,8 +100,13 @@ class DownloadManager(threading.Thread):
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
             additional options applied (specified by IVs like
-            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
-            open, and the user has clicked the download button there
+            mainapp.TartubeApp.custom_dl_by_video_flag).
+
+            For downloads launched from the Classic Mode Tab, 'classic_real'
+            for an ordinary download, 'classic_sim' for a simulated download,
+            and 'classic_custom' for a custom download. A download operation
+            using 'classic_sim' is always followed by another one using
+            'classic_custom'
 
         download_list_obj(downloads.DownloadManager): An ordered list of
             media data objects to download, each one represented by a
@@ -144,15 +149,22 @@ class DownloadManager(threading.Thread):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
-        #   the Classic Mode Tab is open, and the user has clicked the download
-        #   button there
+        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag).
+        # For downloads launched from the Classic Mode Tab, 'classic_real'
+        #   for an ordinary download, 'classic_sim' for a simulated download,
+        #   and 'classic_custom' for a custom download. A download operation
+        #   using 'classic_sim' is always followed by another one using
+        #   'classic_custom'
         # This is the default value for the download operation, when it starts.
         #   If the user wants to add new download.DownloadItem objects during
         #   an operation, the code can call
         #   downloads.DownloadList.create_item() with a non-default value of
         #   operation_type
         self.operation_type = operation_type
+        # Shortcut flag to test the operation type; True for 'classic_sim',
+        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
+        #   'custom'
+        self.operation_classic_flag = False         # (Set below)
 
         # The time at which the download operation began (in seconds since
         #   epoch)
@@ -191,10 +203,26 @@ class DownloadManager(threading.Thread):
         #   self.mark_video_as_doomed(). At the end of the whole download
         #   operation, any media.Video object in this list is destroyed
         self.doomed_video_list = []
-
+        # When the self.operation_type is 'classic_sim', we just compile a list
+        #   of all video URLs detected
+        # A second download operation is due to be launched when this one
+        #   finishes, with self.operation_type set to 'classic_custom'. During
+        #   that operation, each of these URLs will be downloaded individually
+        # The list is in groups of two, in the form
+        #   [ parent_obj, URL ]
+        # ...where 'parent_obj' is a 'dummy' media.Video object representing a
+        #   video, channel or playlist, from which a URL representing a video
+        #   has been extracted
+        self.classic_extract_list = []
 
         # Code
         # ----
+
+        # Set the flag
+        if operation_type == 'classic_sim' \
+        or operation_type == 'classic_real' \
+        or operation_type == 'classic_custom':
+            self.operation_classic_flag = True
 
         # Create an object for converting download options stored in
         #   downloads.DownloadWorker.options_list into a list of youtube-dl
@@ -327,7 +355,7 @@ class DownloadManager(threading.Thread):
                     # Throughout the downloads.py code, instead of calling a
                     #   mainapp.py or mainwin.py function directly (which is
                     #   not thread-safe), set a Glib timeout to handle it
-                    if self.operation_type != 'classic':
+                    if not self.operation_classic_flag:
                         self.nudge_progress_bar()
 
             # Pause a moment, before the next iteration of the loop (don't want
@@ -369,7 +397,7 @@ class DownloadManager(threading.Thread):
 
         # Tell the Progress List (or Classic Progress List) to display any
         #   remaining download statistics immediately
-        if self.operation_type != 'classic':
+        if not self.operation_classic_flag:
 
             GObject.timeout_add(
                 0,
@@ -406,12 +434,15 @@ class DownloadManager(threading.Thread):
         # Let the timer run for a few more seconds to allow those videos to be
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
-        if self.operation_type != 'classic':
+        if not self.operation_classic_flag:
+
             GObject.timeout_add(
                 0,
                 self.app_obj.download_manager_halt_timer,
             )
+
         else:
+
             # For download operations launched from the Classic Mode Tab, we
             #   don't need to wait at all
             GObject.timeout_add(
@@ -652,6 +683,33 @@ class DownloadManager(threading.Thread):
                 self.job_count,
                     len(self.download_list_obj.download_item_list),
             )
+
+
+    def register_classic_url(self, parent_obj, url):
+
+        """Called by VideoDownloader.extract_stdout_data().
+
+        When the self.operation_type is 'classic_sim', we just compile a list
+        of all video URLs detected.
+
+        A second download operation is due to be launched when this one
+        finishes, with self.operation_type set to 'classic_custom'. During that
+        operation, each of these URLs will be downloaded individually.
+
+        Args:
+
+            parent_obj (media.Video, media.Channel, media.Playlist): The
+                media data object from which the URL was extracted
+
+            url (str): A URL for a video (and not for a channel or playlist)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 641 register_classic_url')
+
+        self.classic_extract_list.append(parent_obj)
+        self.classic_extract_list.append(url)
 
 
     def register_video(self, dl_type):
@@ -941,7 +999,7 @@ class DownloadWorker(threading.Thread):
                 #   visible
                 # Do that now (but don't if mainwin.ComplexCatalogueItem
                 #   objects aren't being used in the Video Catalogue)
-                if self.download_item_obj.operation_type != 'classic' \
+                if not self.download_item_obj.operation_classic_flag \
                 and return_code == VideoDownloader.ERROR \
                 and isinstance(media_data_obj, media.Video) \
                 and app_obj.catalogue_mode_type != 'simple':
@@ -995,8 +1053,11 @@ class DownloadWorker(threading.Thread):
 
                 # During custom downloads, apply a delay if one has been
                 #   specified
-                if self.download_item_obj.operation_type == 'custom' \
-                and app_obj.custom_dl_delay_flag:
+                if (
+                    self.download_item_obj.operation_type == 'custom' \
+                    or self.download_item_obj.operation_type \
+                    == 'classic_custom'
+                ) and app_obj.custom_dl_delay_flag:
 
                     # Set the delay (in seconds), a randomised value if
                     #   required
@@ -1244,7 +1305,7 @@ class DownloadWorker(threading.Thread):
 
         app_obj = self.download_manager_obj.app_obj
 
-        if self.download_item_obj.operation_type != 'classic':
+        if not self.download_item_obj.operation_classic_flag:
 
             GObject.timeout_add(
                 0,
@@ -1289,8 +1350,13 @@ class DownloadList(object):
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
             additional options applied (specified by IVs like
-            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
-            open, and the user has clicked the download button there
+            mainapp.TartubeApp.custom_dl_by_video_flag)
+
+            For downloads launched from the Classic Mode Tab, 'classic_real'
+            for an ordinary download, 'classic_sim' for a simulated download,
+            and 'classic_custom' for a custom download. A download operation
+            using 'classic_sim' is always followed by another one using
+            'classic_custom'
 
         media_data_list (list): List of media.Video, media.Channel,
             media.Playlist and/or media.Folder objects. Can also be a list of
@@ -1324,9 +1390,12 @@ class DownloadList(object):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
-        #   the Classic Mode Tab is open, and the user has clicked the download
-        #   button there
+        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        # For downloads launched from the Classic Mode Tab, 'classic_real'
+        #   for an ordinary download, 'classic_sim' for a simulated download,
+        #   and 'classic_custom' for a custom download. A download operation
+        #   using 'classic_sim' is always followed by another one using
+        #   'classic_custom'
         # This IV records the default setting for this operation. Once the
         #   download operation starts, new download.DownloadItem objects can
         #   be added to the list in a call to self.create_item(), and that call
@@ -1335,6 +1404,10 @@ class DownloadList(object):
         # Overriding the default value is not possible for download operations
         #   initiated from the Classic Mode tab
         self.operation_type = operation_type
+        # Shortcut flag to test the operation type; True for 'classic_sim',
+        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
+        #   'custom'
+        self.operation_classic_flag = False         # (Set below)
         # Flag set to True in a call to self.prevent_fetch_new_items(), in
         #   which case subsequent calls to self.fetch_next_item() return
         #   nothing, preventing any further downloads
@@ -1371,6 +1444,13 @@ class DownloadList(object):
         # Code
         # ----
 
+        # Set the flag
+        if operation_type == 'classic_sim' \
+        or operation_type == 'classic_real' \
+        or operation_type == 'classic_custom':
+            self.operation_classic_flag = True
+
+        # Compile the list
         if media_data_list and isinstance(media_data_list[0], media.Scheduled):
 
             # media_data_list is a list of scheduled downloads
@@ -1423,7 +1503,7 @@ class DownloadList(object):
 
                             check_dict[name] = None
 
-        elif self.operation_type != 'classic':
+        elif not self.operation_classic_flag:
 
             # For each media data object to be downloaded, create a
             #   downloads.DownloadItem object, and update the IVs above
@@ -1596,9 +1676,10 @@ class DownloadList(object):
                 downloads.DownloadItem objects to this downloads.DownloadList,
                 specifying a value that overrides the default value of
                 self.operation_type. Note that this is not allowed when
-                self.operation_type is 'classic', and will cause an error. The
-                value is always None when called by self.__init__(). Otherwise,
-                the value can be None, 'sim', 'real' or 'custom'
+                self.operation_type is 'classic_real', 'classic_sim' or
+                'classic_custom', and will cause an error. The value is always
+                None when called by self.__init__(). Otherwise, the value can
+                be None, 'sim', 'real' or 'custom'
 
             priority_flag (bool): True if media_data_obj is to be added to the
                 beginning of the list, False if it is to be added to the end
@@ -1623,10 +1704,10 @@ class DownloadList(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1508 create_item')
 
-        # Apply the operation_type override, if specifed
+        # Apply the operation_type override, if specified
         if override_operation_type is not None:
 
-            if self.operation_type == 'classic':
+            if self.operation_classic_flag:
 
                 GObject.timeout_add(
                     0,
@@ -1645,17 +1726,27 @@ class DownloadList(object):
 
             operation_type = self.operation_type
 
+        if operation_type == 'custom' or operation_type == 'classic_custom':
+            custom_flag = True
+        else:
+            custom_flag = False
+
         # Get the options.OptionsManager object that applies to this media
         #   data object
         # (The manager might be specified by obj itself, or it might be
         #   specified by obj's parent, or we might use the default
         #   options.OptionsManager)
-        if operation_type != 'classic':
+        if operation_type == 'sim' \
+        or operation_type == 'real' \
+        or operation_type == 'custom':
+
             options_manager_obj = utils.get_options_manager(
                 self.app_obj,
                 media_data_obj,
             )
+
         else:
+
             # Classic Mode tab
             if self.app_obj.classic_options_obj is not None:
                 options_manager_obj = self.app_obj.classic_options_obj
@@ -1686,7 +1777,7 @@ class DownloadList(object):
                 not isinstance(media_data_obj.parent_obj, media.Folder) \
                 and recursion_flag
                 and (
-                    operation_type != 'custom'
+                    not custom_flag
                     or not self.app_obj.custom_dl_by_video_flag
                     or media_data_obj.dl_flag
                 )
@@ -1694,7 +1785,7 @@ class DownloadList(object):
                 return None
 
             if isinstance(media_data_obj.parent_obj, media.Folder) \
-            and operation_type == 'sim' \
+            and (operation_type == 'sim' or operation_type == 'classic_sim') \
             and self.app_obj.operation_sim_shortcut_flag \
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
@@ -1726,13 +1817,13 @@ class DownloadList(object):
 
         if (
             isinstance(media_data_obj, media.Video)
-            and operation_type == 'custom'
+            and custom_flag
             and self.app_obj.custom_dl_by_video_flag
             and not media_data_obj.dl_flag
         ) or (
             isinstance(media_data_obj, media.Video)
             and (
-                operation_type != 'custom'
+                not custom_flag
                 or not self.app_obj.custom_dl_by_video_flag
             )
         ) or (
@@ -1740,7 +1831,7 @@ class DownloadList(object):
                 isinstance(media_data_obj, media.Channel) \
                 or isinstance(media_data_obj, media.Playlist)
             ) and (
-                operation_type != 'custom'
+                not custom_flag
                 or not self.app_obj.custom_dl_by_video_flag
             )
         ):
@@ -1772,7 +1863,7 @@ class DownloadList(object):
         if isinstance(media_data_obj, media.Folder) \
         or (
             not isinstance(media_data_obj, media.Video)
-            and operation_type == 'custom'
+            and custom_flag
             and self.app_obj.custom_dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
@@ -1823,7 +1914,8 @@ class DownloadList(object):
             media_data_obj.dbid,
             media_data_obj,
             options_manager_obj,
-            self.operation_type,        # 'classic'
+            self.operation_type,        # 'classic_real'. 'classic_sim' or
+                                        #   'classic_custom'
             False,                      # ignore_limits_flag
         )
 
@@ -2015,13 +2107,22 @@ class DownloadItem(object):
 
         operation_type (str): The value that applies to this DownloadItem only
             (might be different from the default value stored in
-            DownloadManager.operation_type): 'sim' if channels/playlists should
-            just be checked for new videos, without downloading anything.
-            'real' if videos should be downloaded (or not) depending on each
-            media data object's .dl_sim_flag IV. 'custom' is like 'real', but
-            with additional options applied (specified by IVs like
-            self.custom_dl_by_video_flag). 'classic' if the Classic Mode Tab is
-            open, and the user has clicked the download button there
+            DownloadManager.operation_type)
+
+            'sim' if channels/playlists should just be checked for new videos,
+            without downloading anything. 'real' if videos should be downloaded
+            (or not) depending on each media data object's .dl_sim_flag IV.
+            'custom' is like 'real', but with additional options applied
+            (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+
+            For downloads launched from the Classic Mode Tab, 'classic_real'
+            for an ordinary download, 'classic_sim' for a simulated download,
+            and 'classic_custom' for a custom download. A download operation
+            using 'classic_sim' is always followed by another one using
+            'classic_custom'
+
+        ignore_limits_flag (bool): Flag set to True if operation limits
+            (mainapp.TartubeApp.operation_limit_flag) should be ignored
 
     """
 
@@ -2051,18 +2152,36 @@ class DownloadItem(object):
         self.stage = formats.MAIN_STAGE_QUEUED
 
         # The value that applies to this DownloadItem only (might be different
-        #   from the default value stored in DownloadManager.operation_type):
-        #   'sim' if channels/playlists should just be checked for new videos,
+        #   from the default value stored in DownloadManager.operation_type)
+        # 'sim' if channels/playlists should just be checked for new videos,
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like self.custom_dl_by_video_flag). 'classic' if
-        #   the Classic Mode Tab is open, and the user has clicked the download
-        #   button there
+        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        # For downloads launched from the Classic Mode Tab, 'classic_real' for
+        #   an ordinary download, 'classic_sim' for a simulated download, and
+        #   'classic_custom' for a custom download. A download operation using
+        #   'classic_sim' is always followed by another one using
+        #   'classic_custom'
         self.operation_type = operation_type
+        # Shortcut flag to test the operation type; True for 'classic_sim',
+        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
+        #   'custom'
+        self.operation_classic_flag = False         # (Set below)
+
         # Flag set to True if operation limits
         #   (mainapp.TartubeApp.operation_limit_flag) should be ignored
         self.ignore_limits_flag = ignore_limits_flag
+
+
+        # Code
+        # ----
+
+        # Set the flag
+        if operation_type == 'classic_sim' \
+        or operation_type == 'classic_real' \
+        or operation_type == 'classic_custom':
+            self.operation_classic_flag = True
 
 
     # Set accessors
@@ -2199,10 +2318,13 @@ class VideoDownloader(object):
         #   a common download destination with this media data object, to
         #   finish downloading
         self.long_sleep_time = 10
+
         # The time (matches time.time() ) at which the last activity occured
         #   (last output to STDOUT); used to restart a stalled download, if
         #   required
         self.last_activity_time = None
+        # The number of downloads restarted, after a stall
+        self.restart_count = 0
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
@@ -2313,7 +2435,7 @@ class VideoDownloader(object):
         #   Mode Tab)
         # The setting applies not just to the media data object, but all of its
         #   descendants
-        if self.download_item_obj.operation_type != 'classic':
+        if not self.download_item_obj.operation_classic_flag:
 
             if self.download_item_obj.operation_type == 'sim':
                 dl_sim_flag = True
@@ -2337,6 +2459,9 @@ class VideoDownloader(object):
         else:
 
             self.dl_classic_flag = True
+            if self.download_item_obj.operation_type == 'classic_sim':
+                self.dl_sim_flag = True
+
             self.video_num = 1
             self.video_total = 1
 
@@ -2408,9 +2533,10 @@ class VideoDownloader(object):
 
         # Prepare a system command...
         divert_mode = None
-        if not self.dl_classic_flag \
-        and self.download_item_obj.operation_type == 'custom' \
-        and isinstance(self.download_item_obj.media_data_obj, media.Video):
+        if (
+            self.download_item_obj.operation_type == 'custom' \
+            or self.download_item_obj.operation_type == 'classic_custom'
+        ) and isinstance(self.download_item_obj.media_data_obj, media.Video):
             divert_mode = app_obj.custom_dl_divert_mode
 
         cmd_list = utils.generate_system_cmd(
@@ -2425,16 +2551,14 @@ class VideoDownloader(object):
 
         # ...display it in the Output Tab (if required)...
         if app_obj.ytdl_output_system_cmd_flag:
-            space = ' '
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
-                space.join(cmd_list),
+                ' '.join(cmd_list),
             )
 
         # ...and the terminal (if required)...
         if app_obj.ytdl_write_system_cmd_flag:
-            space = ' '
-            print(space.join(cmd_list))
+            print(' '.join(cmd_list))
 
         # ...and create a new child process using that command
         self.create_child_process(cmd_list)
@@ -2451,8 +2575,8 @@ class VideoDownloader(object):
                 self.child_process.stderr,
             )
 
-        # While downloading the video, update the callback function with
-        #   the status of the current job
+        # While downloading the media data object, update the callback function
+        #   with the status of the current job
         while self.is_child_process_alive():
 
             # Pause a moment between each iteration of the loop (we don't want
@@ -2547,17 +2671,23 @@ class VideoDownloader(object):
             restart_time = (app_obj.operation_auto_restart_time * 60)
             if app_obj.operation_auto_restart_flag \
             and self.last_activity_time is not None \
-            and (self.last_activity_time + restart_time) < time.time():
+            and (self.last_activity_time + restart_time) < time.time() \
+            and (
+                app_obj.operation_auto_restart_max == 0 \
+                or app_obj.operation_auto_restart_max \
+                > (self.restart_count + 1)
+            ):
+                self.restart_count += 1
 
                 # Show confirmation of the restart
                 if app_obj.ytdl_output_stdout_flag:
                     app_obj.main_win_obj.output_tab_write_stdout(
                         self.download_worker_obj.worker_id,
-                        _('Tartube is restarting stalled download'),
+                        _('Tartube is restarting a stalled download'),
                     )
 
                 if app_obj.ytdl_write_stdout_flag:
-                    print(_('Tartube is restarting stalled download'))
+                    print(_('Tartube is restarting a stalled download'))
 
                 # Tell the parent worker to replace this VideoDownloader with a
                 #   new one
@@ -2988,7 +3118,7 @@ class VideoDownloader(object):
         if self.dl_classic_flag:
 
             media_data_obj.set_dummy_path(
-                os.path.abspath(os.path.join(dir_path, filename, extension)),
+                os.path.abspath(os.path.join(dir_path, filename + extension)),
             )
 
             # Register the download with DownloadManager, so that download
@@ -3283,20 +3413,20 @@ class VideoDownloader(object):
                 video_obj.set_index(playlist_index)
 
             # Now we can sort the parent containers
-            video_obj.parent_obj.sort_children()
-            app_obj.fixed_all_folder.sort_children()
+            video_obj.parent_obj.sort_children(app_obj)
+            app_obj.fixed_all_folder.sort_children(app_obj)
             if video_obj.bookmark_flag:
-                app_obj.fixed_bookmark_folder.sort_children()
+                app_obj.fixed_bookmark_folder.sort_children(app_obj)
             if video_obj.fav_flag:
-                app_obj.fixed_fav_folder.sort_children()
+                app_obj.fixed_fav_folder.sort_children(app_obj)
             if video_obj.live_mode:
-                app_obj.fixed_live_folder.sort_children()
+                app_obj.fixed_live_folder.sort_children(app_obj)
             if video_obj.missing_flag:
-                app_obj.fixed_missing_folder.sort_children()
+                app_obj.fixed_missing_folder.sort_children(app_obj)
             if video_obj.new_flag:
-                app_obj.fixed_new_folder.sort_children()
+                app_obj.fixed_new_folder.sort_children(app_obj)
             if video_obj.waiting_flag:
-                app_obj.fixed_waiting_folder.sort_children()
+                app_obj.fixed_waiting_folder.sort_children(app_obj)
 
         else:
 
@@ -4070,6 +4200,25 @@ class VideoDownloader(object):
 
                 if json_dict:
 
+                    # For some Classic Mode custom downloads, Tartube performs
+                    #   two consecutive download operations: one simulated
+                    #   download to fetch URLs of individual vidoes, and
+                    #   another to download each video separately
+                    # If we're on the first operation, the dummy media.Video
+                    #   object's URL may represent an individual video, or a
+                    #   channel or playlist
+                    # In both cases, we simply make a list of each video URL we
+                    #   detect, ready for the second operation
+                    if self.download_item_obj.operation_type == 'classic_sim':
+
+                        # (If the URL can't be retrieved for any reason, then
+                        #   just ignore this batch of JSON)
+                        if 'webpage_url' in json_dict:
+                            self.download_manager_obj.register_classic_url(
+                                self.download_item_obj.media_data_obj,
+                                json_dict['webpage_url'],
+                            )
+
                     # If youtube-dl is about to download a channel or playlist
                     #   into a media.Video object, decide what to do to prevent
                     #   that
@@ -4079,7 +4228,7 @@ class VideoDownloader(object):
                     # v1.3.063 At this point, self.video_num can be None or 0
                     #   for a URL that's an individual video, but > 0 for a URL
                     #   that's actually a channel/playlist
-                    if not self.video_num \
+                    elif not self.video_num \
                     or self.check_dl_is_correct_type():
                         self.confirm_sim_video(json_dict)
 

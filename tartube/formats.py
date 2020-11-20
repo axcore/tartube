@@ -566,10 +566,12 @@ while language_setup_list:
 if not xmas_flag:
     DIALOGUE_ICON_DICT = {
         'system_icon': 'system_icon_64.png',
+        'ready_icon': 'ready_icon_64.png',
     }
 else:
     DIALOGUE_ICON_DICT = {
         'system_icon': 'system_icon_xmas_64.png',
+        'ready_icon': 'ready_icon_64.png',
     }
 
 if not xmas_flag:
@@ -732,6 +734,7 @@ STOCK_ICON_DICT = {
     'stock_add': 'add_small.png',
     'stock_cancel': 'cancel_small.png',
     'stock_delete': 'delete_small.png',
+    'stock_execute': 'ffmpeg_small.png',
     'stock_find': 'find_small.png',
     'stock_go_back': 'go_back_small.png',
     'stock_go_down': 'go_down_small.png',

@@ -228,7 +228,7 @@ class InfoManager(threading.Thread):
                 #   Gtk.TextView, so it can contain newline and/or multiple
                 #   whitepsace characters. Whitespace characters within
                 #   double quotes "..." must be preserved
-                option_list = utils.parse_ytdl_options(self.options_string)
+                option_list = utils.parse_options(self.options_string)
                 for item in option_list:
                     cmd_list.append(item)
 

@@ -28,6 +28,7 @@ from gi.repository import GObject
 # Import other modules
 import os
 import re
+import shutil
 import threading
 import time
 
@@ -47,34 +48,17 @@ class ProcessManager(threading.Thread):
     """Called by mainapp.TartubeApp.process_manager_start().
 
     Python class to manage the process operation, in which media.Video objects
-    are sent to FFmpeg for post-processing.
+    are processed with FFmpeg, using the options specified by a
+    ffmpeg_tartube.FFmpegOptionsManager object.
 
     Args:
 
         app_obj (mainapp.TartubeApp): The main application
 
-        option_string (str): A string of FFmpeg options (usually a copy of
-            mainapp.TartubeApp.ffmpeg_option_string)
+        options_obj (ffmpeg_tartube.FFmpegOptionsManager): Object specifying
+            the FFmpeg options to apply
 
-        add_string (str): Text to add to the end of every filename (usually a
-            copy of mainapp.TartubeApp.ffmpeg_add_string)
-
-        regex_string, substitute_string (str): A regex substitution to apply to
-            every filename (usually a copy of
-            mainapp.TartubeApp.ffmpeg_regex_string and
-            .ffmpeg_substitute_string); ignored if regex_string is an empty
-            string, not ignored if substitute_string is an empty string
-
-        ext_string (str): The replacement file extension to use (usually a copy
-            of mainapp.TartubeApp.ffmpeg_ext_string); ignored if an empty
-            string
-
-        delete_flag (bool): True if the old video file should be deleted (and
-            media.Video IVs updated) if FFmpeg's output file has a different
-            name (for example, if the file extension has changed); False
-            otherwise
-
-        video_list (list): A list of media.Video objects to be passed to FFmpeg
+        video_list (list): A list of media.Video objects
 
     """
 
@@ -82,8 +66,7 @@ class ProcessManager(threading.Thread):
     # Standard class methods
 
 
-    def __init__(self, app_obj, option_string, add_string, regex_string,
-    substitute_string, ext_string, delete_flag, video_list):
+    def __init__(self, app_obj, options_obj, video_list):
 
         super(ProcessManager, self).__init__()
 
@@ -91,7 +74,10 @@ class ProcessManager(threading.Thread):
         # -----------------------
         # The mainapp.TartubeApp object
         self.app_obj = app_obj
-        # A list of media.Video objects to be passed to FFmpeg
+        # ffmpeg_tartube.FFmpegOptionsManager object specifying the FFmpeg
+        #   options to apply
+        self.options_obj = options_obj
+        # A list of media.Video objects to be processed with FFmpeg
         self.video_list = video_list
 
 
@@ -115,37 +101,13 @@ class ProcessManager(threading.Thread):
         # ...and the total number to process (these numbers are displayed in
         #   the progress bar in the Videos tab)
         self.job_total = len(video_list)
+        # The total number of successful and failed FFmpeg procedures
+        self.success_count = 0
+        self.fail_count = 0
 
-        # A string of FFmpeg options (usually a copy of
-        #   mainapp.TartubeApp.ffmpeg_option_string)
-        self.option_string = option_string
-        # That string, converted to a list of options by self.run
-        self.option_list = []
-
-        # Text to add to the end of every filename (usually a copy of
-        #   mainapp.TartubeApp.ffmpeg_add_string)
-        self.add_string = add_string
-        # A regex substitution to apply to every filename (usually a copy of
-        #   mainapp.TartubeApp.ffmpeg_regex_string and
-        #   .ffmpeg_substitute_string); ignored if regex_string is an
-        #   empty string, not ignored if substitute_string is an empty string
-        self.regex_string = regex_string
-        self.substitute_string = substitute_string
-        # The replacement file extension to use (usually a copy of
-        #   mainapp.TartubeApp.ffmpeg_ext_string); ignored if an empty string
-        self.ext_string = ext_string
-        # Flag set to True if the old video file should be deleted (and
-        #   media.Video IVs updated) if FFmpeg's output file has a different
-        #   name (for example, if the file extension has changed); False
-        #   otherwise
-        self.delete_flag = delete_flag
 
         # Code
         # ----
-
-        # Prepare a list of FFmpeg options, from the option string specified by
-        #   the user
-        self.option_list = utils.parse_ytdl_options(self.option_string)
 
         # Let's get this party started!
         self.start()
@@ -209,31 +171,55 @@ class ProcessManager(threading.Thread):
 
         """
 
-        # Get the path to the video file, which might be in the directory of
-        #   its parent channel/playlist/folder, or in a different directory
-        #   altogether
-        input_path = video_obj.get_actual_path(self.app_obj)
-        # Set the output path; the same as the input path, unless the user has
-        #   requested changes
-        output_file, output_ext = os.path.splitext(input_path)
+        self.job_count += 1
 
-        if self.add_string != '':
-            output_file += self.add_string
+        # Update our progress in the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            _('Video') + ' ' + str(self.job_count) + '/' \
+            + str(self.job_total) + ': ' + video_obj.name,
+        )
 
-        if self.substitute_string != '':
-            output_file = re.sub(
-                self.regex_string,
-                self.substitute_string,
-                output_file,
+        # Special case: 'dummy' video objects (those downloaded in the Classic
+        #   Mode tab) use different IVs
+        if hasattr(video_obj, 'dummy_path'):
+            dummy_flag = True
+        else:
+            dummy_flag = True
+
+        # mainwin.MainWin.on_video_catalogue_process_ffmpeg_multi() should have
+        #   filtered any media.Video objects whose .file_name is unknown, but
+        #   just in case, check again
+        if video_obj.file_name is None \
+        and (not dummy_flag or video_obj.dummy_path is None):
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _('FAILED: File name is not known'),
             )
 
-        if self.ext_string != '':
-            output_ext = self.ext_string
+            self.fail_count += 1
 
-        output_path = output_file + output_ext
+            return
+
+        # Get the source/output files, ahd the FFmpeg system command (as a
+        #   list)
+        source_path, output_path, cmd_list = self.options_obj.get_system_cmd(
+            self.app_obj,
+            video_obj,
+        )
+
+        if source_path is None:
+
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _('FAILED: File not found'),
+            )
+
+            self.fail_count += 1
+
+            return
 
         # Update the main window's progress bar
-        self.job_count += 1
         GObject.timeout_add(
             0,
             self.app_obj.main_win_obj.update_progress_bar,
@@ -242,55 +228,127 @@ class ProcessManager(threading.Thread):
             self.job_total,
         )
 
-        # Update our progress in the Output Tab
-        self.app_obj.main_win_obj.output_tab_write_stdout(
+        # Update the Output Tab again
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
-            '   ' + _('Video') + ' ' + str(self.job_count) + '/' \
-            + str(self.job_total) + ': ' + video_obj.name,
+            ' '.join(cmd_list),
         )
 
-        # Show the system command we're about to execute...
-        test_list = self.app_obj.ffmpeg_manager_obj.run_ffmpeg(
-            input_path,
-            output_path,
-            self.option_list,
-            True,
+        # Process the video
+        success_flag, msg \
+        = self.app_obj.ffmpeg_manager_obj.run_ffmpeg_with_options(
+            video_obj,
+            source_path,
+            cmd_list,
         )
 
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            '      ' + _('Input:') + ' ' + ' '.join(test_list[1]),
-        )
+        if not success_flag:
 
-        # ...and then send the command to FFmpeg for processing, which returns
-        #   a list in the form (success_flag, optional_message)
-        result_list = self.app_obj.ffmpeg_manager_obj.run_ffmpeg(
-            input_path,
-            output_path,
-            self.option_list,
-        )
+            self.fail_count += 1
 
-        if not result_list or not result_list[0]:
-            self.app_obj.main_win_obj.output_tab_write_stdout(
+            self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
-                '      ' + _('Output: FAILED:') + ' ' + result_list[1],
+                _('FAILED') + ': ' + msg,
             )
 
         else:
 
+            self.success_count += 1
+
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                '      ' + _('Output:') + ' ' +  output_path,
+                _('Output file') + ': ' + output_path,
             )
 
-            # Delete the original video file, and update media.Video IVs, if
-            #   required
-            if self.delete_flag \
-            and os.path.isfile(input_path) \
+            # Delete the original video file, if required
+            if self.options_obj.options_dict['delete_original_flag'] \
+            and os.path.isfile(source_path) \
             and os.path.isfile(output_path) \
-            and input_path != output_path:
-                os.remove(input_path)
-                video_obj.set_file(output_file, output_ext)
+            and source_path != output_path:
+
+                try:
+
+                    os.remove(source_path)
+
+                except:
+
+                    self.fail_count += 1
+
+                    self.app_obj.main_win_obj.output_tab_write_stderr(
+                        1,
+                        _('Could not delete the original file') + ': ' \
+                        + source_path,
+                    )
+
+            # Ignoring changes to the extension, has the video/audio filename
+            #   changed?
+            new_dir, new_file = os.path.split(output_path)
+            new_name, new_ext = os.path.splitext(new_file)
+            old_name = video_obj.name
+
+            rename_flag = False
+            if (
+                self.options_obj.options_dict['add_end_filename'] != '' \
+                or self.options_obj.options_dict['regex_match_filename'] \
+                != '' \
+            ) and old_name != new_name:
+                rename_flag = True
+
+            # If the flag is set, rename a thumbnail file to match the
+            #   video file
+            if rename_flag \
+            and self.options_obj.options_dict['rename_both_flag']:
+
+                thumb_path = utils.find_thumbnail(
+                    self.app_obj,
+                    video_obj,
+                    True,           # Rename a temporary thumbnail too
+                )
+
+                if thumb_path:
+
+                    thumb_name, thumb_ext = os.path.splitext(thumb_path)
+                    new_thumb_path = os.path.abspath(
+                        os.path.join(
+                            new_dir,
+                            new_name + thumb_ext,
+                        ),
+                    )
+
+                    # (Don't call utils.rename_file(), as we need our own
+                    #   try/except)
+                    try:
+
+                        # (On MSWin, can't do os.rename if the destination file
+                        #   already exists)
+                        if os.path.isfile(new_thumb_path):
+                            os.remove(new_thumb_path)
+
+                        # (os.rename sometimes fails on external hard drives;
+                        #   this is safer)
+                        shutil.move(thumb_path, new_thumb_path)
+
+                    except:
+
+                        self.fail_count += 1
+
+                        self.app_obj.main_win_obj.output_tab_write_stderr(
+                            1,
+                            _('Could not rename the thumbnail') + ': ' \
+                            + thumb_path,
+                        )
+
+            # If a video/audio file was processed, update its filename
+            if self.options_obj.options_dict['input_mode'] != 'thumb':
+
+                if not dummy_flag:
+                    video_obj.set_file_from_path(output_path)
+                else:
+                    video_obj.set_dummy_path(output_path)
+
+                # Also update its .name IV (but its .nickname)
+                if rename_flag:
+                    video_obj.set_name(new_name)
 
 
     def stop_process_operation(self):

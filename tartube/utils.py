@@ -386,12 +386,7 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
     # Move the file now, if the calling code requires that
     if move_flag:
 
-        # (On MSWin, can't do os.rename if the destination file already exists)
-        if os.path.isfile(new_path):
-            os.remove(new_path)
-
-        # (os.rename sometimes fails on external hard drives; this is safer)
-        shutil.move(old_path, new_path)
+        rename_file(app_obj, old_path, new_path)
 
     # Return the converted file path
     return new_path
@@ -937,48 +932,68 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
     """
 
-    for ext in formats.IMAGE_FORMAT_LIST:
+    if hasattr(video_obj, 'dummy_path'):
 
-        # Look in Tartube's permanent data directory
-        normal_path = video_obj.check_actual_path_by_ext(app_obj, ext)
-        if normal_path is not None:
-            return normal_path
+        # Special case: 'dummy' video objects (those downloaded in the Classic
+        #   Mode tab) use different IVs
+        if video_obj.dummy_path is None:
+            return None
 
-        elif temp_dir_flag:
+        file_name, file_ext = os.path.splitext(video_obj.dummy_path)
+        for this_ext in formats.IMAGE_FORMAT_LIST:
 
-            # Look in temporary data directory
-            data_dir_len = len(app_obj.downloads_dir)
+            thumb_path = file_name + this_ext
+            if os.path.isfile(thumb_path):
+                return thumb_path
 
-            temp_path = video_obj.get_actual_path_by_ext(app_obj, ext)
-            temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
-            if os.path.isfile(temp_path):
-                return temp_path
+        # No matching thumbnail found
+        return None
 
-    # Catch YouTube .jpg thumbnails, in the form .jpg?...
-    # v2.2.005 The glob.glob() call crashes on certain videos. I'm not sure
-    #   why, but we can circumvent the crash with try...except
-    normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
-    try:
-        for glob_path in glob.glob(normal_path):
-            if os.path.isfile(glob_path):
-                return glob_path
-    except:
-        pass
+    else:
 
-    if temp_dir_flag:
+        # All other media.Video objects
+        for ext in formats.IMAGE_FORMAT_LIST:
 
-        temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
-        temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+            # Look in Tartube's permanent data directory
+            normal_path = video_obj.check_actual_path_by_ext(app_obj, ext)
+            if normal_path is not None:
+                return normal_path
 
+            elif temp_dir_flag:
+
+                # Look in temporary data directory
+                data_dir_len = len(app_obj.downloads_dir)
+
+                temp_path = video_obj.get_actual_path_by_ext(app_obj, ext)
+                temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+                if os.path.isfile(temp_path):
+                    return temp_path
+
+        # Catch YouTube .jpg thumbnails, in the form .jpg?...
+        # v2.2.005 The glob.glob() call crashes on certain videos. I'm not sure
+        #   why, but we can circumvent the crash with try...except
+        normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
         try:
-            for glob_path in glob.glob(temp_path):
+            for glob_path in glob.glob(normal_path):
                 if os.path.isfile(glob_path):
                     return glob_path
         except:
             pass
 
-    # No matching thumbnail found
-    return None
+        if temp_dir_flag:
+
+            temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
+            temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+
+            try:
+                for glob_path in glob.glob(temp_path):
+                    if os.path.isfile(glob_path):
+                        return glob_path
+            except:
+                pass
+
+        # No matching thumbnail found
+        return None
 
 
 def find_thumbnail_restricted(app_obj, video_obj):
@@ -1453,12 +1468,12 @@ def open_file(app_obj, uri):
             )
 
 
-def parse_ytdl_options(options_string):
+def parse_options(options_string):
 
     """Called by options.OptionsParser.parse() or info.InfoManager.run().
 
-    Also called by process.ProcessManager.__init__, to parse FFmpeg command-
-    line options on the same basis.
+    Also called by ffmpeg_tartube.FFmpegOptionsManager.get_system_cmd() to
+    parse FFmpeg command-line options on the same basis.
 
     Parses the 'extra_cmd_string' option, which can contain arguments inside
     double quotes "..." (arguments that can therefore contain whitespace)
@@ -1506,6 +1521,38 @@ def parse_ytdl_options(options_string):
                 quote_list = []
 
     return return_list
+
+
+def rename_file(app_obj, old_path, new_path):
+
+    """Can be called by anything.
+
+    Renames (mmoves) a file. (Is not usually called for directories, but could
+    be.)
+
+    Args:
+
+        old_path (str): Full path to the file to be renamed
+
+        new_path (str): Full path to the renamed file
+
+    """
+
+    try:
+
+        # (On MSWin, can't do os.rename if the destination file already exists)
+        if os.path.isfile(new_path):
+            os.remove(new_path)
+
+        # (os.rename sometimes fails on external hard drives; this is safer)
+        shutil.move(old_path, new_path)
+
+    except:
+
+        app_obj.system_error(
+            502,
+            'Could not rename \'' + str(old_path) + '\'',
+        )
 
 
 def shorten_string(string, num_chars):
@@ -1749,13 +1796,15 @@ def tidy_up_long_descrip(string, max_length=80):
 
             else:
 
-                new_list = textwrap.wrap(
-                    line,
+                w = ModTextWrapper(
                     width=max_length,
-                    # Don't split up URLs
                     break_long_words=False,
-                    break_on_hyphens=False,
+                    # Split up URLs on the forward slash character, as well as
+                    #   on hyphen(s)
+                    break_on_hyphens=True,
                 )
+
+                new_list = w.wrap(line)
 
                 for mini_line in new_list:
                     line_list.append(mini_line)
@@ -1823,13 +1872,16 @@ split_words_flag=False):
                 line_list.append('')
 
             else:
-                new_list = textwrap.wrap(
-                    line,
+
+                w = ModTextWrapper(
                     width=max_length,
-                    # Don't split up URLs by default
                     break_long_words=split_words_flag,
+                    # Split up URLs on the forward slash character, as well as
+                    #   on hyphen(s)
                     break_on_hyphens=split_words_flag,
                 )
+
+                new_list = w.wrap(line)
 
                 for mini_line in new_list:
                     line_list.append(mini_line)
@@ -1876,3 +1928,52 @@ def upper_case_first(string):
     """
 
     return string[0].upper() + string[1:]
+
+
+# Classes
+
+
+class ModTextWrapper(textwrap.TextWrapper):
+
+    """Python class to modify the behaviour of textwrap by Gregory P. Ward.
+
+    If 'break_on_hyphens' is specified, wrap the text on both hyphens and
+    forward slashes. In that way, we can break up long URLs in calls to
+    utils.tidy_up_long_descrip() and utils.tidy_up_long_string().
+
+    """
+
+    def _split(self, text):
+
+        _whitespace = '\t\n\x0b\x0c\r '
+
+        word_punct = r'[\w!"\'&.,?]'
+        letter = r'[^\d\W]'
+        whitespace = r'[%s]' % re.escape(_whitespace)
+        nowhitespace = '[^' + whitespace[1:]
+        mod_wordsep_re = re.compile(r'''
+            ( # any whitespace
+              %(ws)s+
+            | # em-dash between words
+              (?<=%(wp)s) -{2,} (?=\w)
+            | # word, possibly hyphenated
+              %(nws)s+? (?:
+                # hyphenated word, or word with forward slash
+                  [-\/](?: (?<=%(lt)s{2}[-\/]) | (?<=%(lt)s[-\/]%(lt)s[-\/]))
+                  (?= %(lt)s [-\/]? %(lt)s)
+                | # end of word
+                  (?=%(ws)s|\Z)
+                | # em-dash
+                  (?<=%(wp)s) (?=-{2,}\w)
+                )
+            )''' % {'wp': word_punct, 'lt': letter,
+                    'ws': whitespace, 'nws': nowhitespace},
+            re.VERBOSE)
+
+        if self.break_on_hyphens is True:
+            chunks = mod_wordsep_re.split(text)
+        else:
+            chunks = self.wordsep_simple_re.split(text)
+        chunks = [c for c in chunks if c]
+        return chunks
+

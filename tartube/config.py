@@ -68,6 +68,9 @@ class GenericConfigWin(Gtk.Window):
     # Public class methods
 
 
+#   def is_duplicate():         # Provided by child object
+
+
     def setup(self):
 
         """Called by self.__init__().
@@ -375,6 +378,39 @@ class GenericEditWin(GenericConfigWin):
 
 
     # Public class methods
+
+
+    def is_duplicate(self, app_obj, edit_obj):
+
+        """Called by self.__init__.
+
+        Don't open this edit window, if another with the same .edit_obj is
+        already open.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application object
+
+            edit_obj (options.OptionsManager): The object whose attributes will
+                be edited in this window
+
+        Return values:
+
+            True if a duplicate is found, False if not
+
+        """
+
+        for config_win_obj in app_obj.main_win_obj.config_win_list:
+
+            if isinstance(config_win_obj, GenericEditWin) \
+            and config_win_obj.edit_obj == edit_obj:
+
+                # Duplicate found
+                config_win_obj.present()
+                return True
+
+        # Not a duplicate
+        return False
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -819,7 +855,7 @@ class GenericEditWin(GenericConfigWin):
 
             prev_button (Gtk.RadioButton or None): When this is the first
                 radio button in the group, None. Otherwise, the previous
-                radio button in the group. Use of this IV links the radio
+                radio button in the group. Use of this argument links the radio
                 buttons together, ensuring that only one of them can be active
                 at any time
 
@@ -1577,6 +1613,35 @@ class GenericPrefWin(GenericConfigWin):
     # Public class methods
 
 
+    def is_duplicate(self, app_obj):
+
+        """Called by self.__init__.
+
+        Don't open this preference window, if another preference window of the
+        same class is already open.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application object
+
+        Return values:
+
+            True if a duplicate is found, False if not
+
+        """
+
+        for config_win_obj in app_obj.main_win_obj.config_win_list:
+
+            if type(self) == type(config_win_obj):
+
+                # Duplicate found
+                config_win_obj.present()
+                return True
+
+        # Not a duplicate
+        return False
+
+
 #   def setup():                # Inherited from GenericConfigWin
 
 
@@ -1810,7 +1875,7 @@ class GenericPrefWin(GenericConfigWin):
 
             prev_button (Gtk.RadioButton or None): When this is the first
                 radio button in the group, None. Otherwise, the previous
-                radio button in the group. Use of this IV links the radio
+                radio button in the group. Use of this argument links the radio
                 buttons together, ensuring that only one of them can be active
                 at any time
 
@@ -1964,6 +2029,9 @@ class OptionsEditWin(GenericEditWin):
 
         Gtk.Window.__init__(self, title=_('Download options'))
 
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
         # IV list - class objects
         # -----------------------
         # The mainapp.TartubeApp object
@@ -2037,6 +2105,9 @@ class OptionsEditWin(GenericEditWin):
     # Public class methods
 
 
+#   def is_duplicate():         # Inherited from GenericConfigWin
+
+
 #   def setup():                # Inherited from GenericConfigWin
 
 
@@ -2073,7 +2144,15 @@ class OptionsEditWin(GenericEditWin):
 
         # Apply any changes the user has made
         for key in self.edit_dict.keys():
-            self.edit_obj.options_dict[key] = self.edit_dict[key]
+
+            if key in self.edit_obj.options_dict:
+                self.edit_obj.options_dict[key] = self.edit_dict[key]
+
+        # The name can also be updated, if it has been changed (but it the
+        #   entry was blank, keep the old name)
+        if 'name' in self.edit_dict \
+        and self.edit_dict['name'] != '':
+            self.edit_obj.name = self.edit_dict['name']
 
         # The changes can now be cleared
         self.edit_dict = {}
@@ -2204,17 +2283,10 @@ class OptionsEditWin(GenericEditWin):
             entry3.set_editable(False)
             entry3.set_hexpand(True)
 
-            # (This block is for the benefit of translators)
-            if media_type == 'video':
-                string = _('Video')
-            if media_type == 'channel':
-                string = _('Channel')
-            elif media_type == 'playlist':
-                string = _('Playlist')
-            else:
-                string = _('Folder')
-
-            entry3.set_text(string + ': ' + self.media_data_obj.name)
+            entry3.set_text(
+                self.media_data_obj.get_translated_type(True) \
+                + ': ' + self.media_data_obj.name,
+            )
 
         else:
 
@@ -4388,7 +4460,7 @@ class OptionsEditWin(GenericEditWin):
 
     def on_clone_options_clicked(self, button):
 
-        """Called by callback in self.setup_general_tab().
+        """Called by callback in self.setup_name_tab().
 
         Args:
 
@@ -4396,9 +4468,6 @@ class OptionsEditWin(GenericEditWin):
 
         """
 
-        # Editing an Options Manager object attached to a particular media
-        #   data object (this function can't be called for the General Options
-        #   Manager)
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
             _(
             'This procedure cannot be reversed. Are you sure you want to' \
@@ -4818,7 +4887,7 @@ class OptionsEditWin(GenericEditWin):
 
     def on_reset_options_clicked(self, button):
 
-        """Called by callback in self.setup_general_tab().
+        """Called by callback in self.setup_name_tab().
 
         Args:
 
@@ -4867,8 +4936,9 @@ class OptionsEditWin(GenericEditWin):
                 #   before switching between simple/advanced options
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _(
-                    'When the window is re-opened, some download options' \
-                    + ' will be hidden',
+                    'Fewer download options will be visible when you click' \
+                    + ' the \'Apply\' or \'Reset\' buttons (or when you' \
+                    + ' close and then re-open the window)',
                     ),
                     'info',
                     'ok',
@@ -4889,8 +4959,9 @@ class OptionsEditWin(GenericEditWin):
             else:
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _(
-                    'When the window is re-opened, all download options' \
-                    + ' will be visible',
+                    'More download options will be visible when you click' \
+                    + ' the \'Apply\' or \'Reset\' buttons (or when you' \
+                    + ' close and then re-open the window)',
                     ),
                     'info',
                     'ok',
@@ -5099,6 +5170,1892 @@ class OptionsEditWin(GenericEditWin):
             self.edit_dict['video_format_mode'] = value
 
 
+class FFmpegOptionsEditWin(GenericEditWin):
+
+    """Python class for an 'edit window' to modify values in an
+    ffmpeg_tartube.FFmpegOptionsManager object.
+
+    Adapted from FFmpeg Command Line Wizard, by AndreKR
+        (https://github.com/AndreKR/ffmpeg-command-line-wizard).
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application object
+
+        edit_obj (ffmpeg_tartube.FFmpegOptionsManager): The object whose
+            attributes will be edited in this window
+
+        video_list (list): An optional list of media.Video objects. If not
+            empty, when the edit window closes, a process operation will
+            start, using the FFmpeg options specified by 'edit_obj' to process
+            all the videos in the list. If empty, no operation is started; the
+            modified FFmpeg options are just updated as normal
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, app_obj, edit_obj, video_list=[]):
+
+        Gtk.Window.__init__(self, title=_('FFmpeg options'))
+
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
+        # IV list - class objects
+        # -----------------------
+        # The mainapp.TartubeApp object
+        self.app_obj = app_obj
+        # The ffmpeg_tartube.FFmpegOptionsManager object being edited
+        self.edit_obj = edit_obj
+        # An optional list of media.Video objects. If not empty, when the edit
+        #   window closes, a process operation will start, using the FFmpeg
+        #   options specified by 'edit_obj' to process all the videos in the
+        #   list. If empty, no operation is started; the modified FFmpeg
+        #   options are just updated as normal
+        self.video_list = video_list
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.grid = None                        # Gtk.Grid
+        self.notebook = None                    # Gtk.Notebook
+        self.reset_button = None                # Gtk.Button
+        self.apply_button = None                # Gtk.Button
+        self.ok_button = None                   # Gtk.Button
+        self.cancel_button = None               # Gtk.Button
+        # (Because of the need to (de)sensitise widgets so often, more of them
+        #   than usual have their own IVs)
+        # (Name tab)
+        self.extra_cmd_string_textview = None   # Gtk.TextView
+        self.extra_cmd_string_textbuffer = None # Gtk.TextBuffer
+        self.result_textview = None             # Gtk.TextView
+        self.results_textbuffer = None          # Gtk.TextBuffer
+        # (File tab)
+        self.add_end_filename_entry = None      # Gtk.Entry
+        self.regex_match_filename_entry = None  # Gtk.Entry
+        self.regex_apply_subst_entry = None     # Gtk.Entry
+        self.rename_both_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.change_file_ext_entry = None       # Gtk.Entry
+        self.delete_original_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        # (Settings tab)
+        self.input_mode_radiobutton = None      # Gtk.RadioButton
+        self.input_mode_radiobutton2 = None     # Gtk.RadioButton
+        self.audio_flag_checkbutton = None      # Gtk.CheckButton
+        self.output_mode_radiobutton = None     # Gtk.RadioButton
+        self.output_mode_radiobutton2 = None    # Gtk.RadioButton
+        self.output_mode_radiobutton3 = None    # Gtk.RadioButton
+        self.h264_grid = None                   # Gtk.Grid
+        self.gif_grid = None                    # Gtk.Grid
+        self.thumb_grid = None                  # Gtk.Grid
+        # (Settings tab, H.264 grid)
+        self.audio_bitrate_spinbutton = None    # Gtk.SpinButton
+        self.quality_mode_radiobutton = None    # Gtk.RadioButton
+        self.quality_mode_radiobutton2 = None   # Gtk.RadioButton
+        self.rate_factor_scale = None           # Gtk.Scale
+        self.dummy_file_combo = None            # Gtk.ComboBox
+        self.patience_preset_combo = None       # Gtk.ComboBox
+        # (Settings tab, GIF grid)
+        self.palette_mode_radiobutton = None    # Gtk.RadioButton
+        self.palette_mode_radiobutton2 = None   # Gtk.RadioButton
+        # (Optimise tab)
+        self.seek_flag_checkbutton = None       # Gtk.CheckButton
+        self.tuning_film_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.tuning_animation_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.tuning_grain_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.tuning_still_image_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.tuning_fast_decode_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.profile_flag_checkbutton = None    # Gtk.CheckButton
+        self.fast_start_flag_checkbutton = None # Gtk.CheckButton
+        self.tuning_zero_latency_flag_checkbutton = None
+                                                # Gtk.CheckButton
+        self.limit_flag_checkbutton = None      # Gtk.CheckButton
+        self.limit_mbps_spinbutton = None       # Gtk.SpinButton
+        self.limit_buffer_spinbutton = None     # Gtk.SpinButton
+
+
+        # IV list - other
+        # ---------------
+        # Size (in pixels) of gaps between edit window widgets
+        self.spacing_size = self.app_obj.default_spacing_size
+        # Flag set to True if all four buttons ('Reset', 'Apply', 'Cancel' and
+        #   'OK') are required, or False if just the 'OK' button is required
+        self.multi_button_flag = True
+
+        # When the user changes a value, it is not applied to self.edit_obj
+        #   immediately; instead, it is stored temporarily in this dictionary
+        # If the user clicks the 'OK' or 'Apply' buttons at the bottom of the
+        #   window, the changes are applied to self.edit_obj
+        # If the user clicks the 'Reset' or 'Cancel' buttons, the dictionary
+        #   is emptied and the changes are lost
+        # In this edit window, the key-value pairs directly correspond to those
+        #   in ffmpeg_tartube.FFmpegOptionsManager.options_dict, rather than
+        #   corresponding directly to attributes in the
+        #   ffmpeg_tartube.FFmpegOptionsManager object
+        # Because of that, we use our own .apply_changes() and .retrieve_val()
+        #   functions, rather than relying on the generic functions
+        # Key-value pairs are added to this dictionary whenever the user
+        #   makes a change (so if no changes are made when the window is
+        #   closed, the dictionary will still be empty)
+        self.edit_dict = {}
+
+
+        # Code
+        # ----
+
+        # Sort the video list by .dbid (so the Videos tab looks nice)
+        self.video_list.sort(key=lambda x: x.dbid)
+
+        # Set up the edit window
+        self.setup()
+
+
+    # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
+
+
+#   def setup():                # Inherited from GenericConfigWin
+
+
+#   def setup_grid():           # Inherited from GenericConfigWin
+
+
+#   def setup_notebook():       # Inherited from GenericConfigWin
+
+
+#   def add_notebook_tab():     # Inherited from GenericConfigWin
+
+
+#   def setup_button_strip():   # Inherited from GenericEditWin
+
+
+#   def setup_gap():            # Inherited from GenericConfigWin
+
+
+    # (Non-widget functions)
+
+
+    def apply_changes(self, apply_button_flag=False):
+
+        """Called by self.on_button_ok_clicked() and
+        self.on_button_apply_clicked().
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+        Apply to those changes to the object being edited.
+
+        In this edit window we apply changes to self.edit_obj.options_dict
+        (rather than to self.edit_obj's attributes directly, as in the generic
+        function.)
+
+        Args:
+
+            apply_button_flag (bool): True when self.apply_button was clicked,
+                False when self.ok_button was clicked. When True, we do not
+                start a process operation
+
+        """
+
+        # For 'change_file_ext', remove the initial . (e.g. in '.mp4', if
+        #   specified
+        if 'change_file_ext' in self.edit_dict:
+            self.edit_dict['change_file_ext'] = re.sub(
+                '^\.',
+                '',
+                self.edit_dict['change_file_ext'],
+            )
+
+        # Apply any changes the user has made
+        for key in self.edit_dict.keys():
+
+            if key in self.edit_obj.options_dict:
+                self.edit_obj.options_dict[key] = self.edit_dict[key]
+
+        # The name can also be updated, if it has been changed (but it the
+        #   entry was blank, keep the old name)
+        if 'name' in self.edit_dict \
+        and self.edit_dict['name'] != '':
+            self.edit_obj.name = self.edit_dict['name']
+
+        # The changes can now be cleared
+        self.edit_dict = {}
+
+        # If a list of videos was supplied, start a process operation
+        if self.video_list and not apply_button_flag:
+
+            # Check that every media.Video object still exists, eliminating any
+            #   that don't
+            mod_list = []
+            for video_obj in self.video_list:
+
+                # (Special case: 'dummy' video objects (those downloaded in the
+                #   Classic Mode tab) use different IVs)
+                if hasattr(video_obj, 'dummy_path') \
+                or (
+                    video_obj.dbid in self.app_obj.media_reg_dict \
+                    and self.app_obj.media_reg_dict[video_obj.dbid] \
+                    == video_obj
+                ):
+                    mod_list.append(video_obj)
+
+            if mod_list:
+
+                self.app_obj.process_manager_start(
+                    self.edit_obj,
+                    mod_list,
+                )
+
+
+    def retrieve_val(self, name):
+
+        """Can be called by anything.
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+
+        In the generic function, each key corresponds to an attribute in the
+        object being edited, self.edit_obj. In this window, it corresponds to a
+        key in self.edit_obj.options_dict.
+
+        If 'name' exists as a key in that dictionary, retrieve the
+        corresponding value and return it. Otherwise, the user hasn't yet
+        modified the value, so retrieve directly from the attribute in the
+        object being edited.
+
+        Args:
+
+            name (str): The name of the attribute in the object being edited
+
+        Returns:
+
+            The original or modified value of that attribute.
+
+        """
+
+        if name in self.edit_dict:
+
+            return self.edit_dict[name]
+
+        elif name == 'uid' or name == 'name':
+
+            return getattr(self.edit_obj, name)
+
+        elif name in self.edit_obj.options_dict:
+
+            return self.edit_obj.options_dict[name]
+
+        else:
+
+            return self.app_obj.system_error(
+                405,
+                'Unrecognised property name \'' + name + '\'',
+            )
+
+
+    # (Setup tabs)
+
+
+    def setup_tabs(self):
+
+        """Called by self.setup(), .on_button_apply_clicked() and
+        .on_button_reset_clicked().
+
+        Sets up the tabs for this edit window.
+        """
+
+        self.setup_name_tab()
+        self.setup_file_tab()
+
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            self.setup_settings_tab()
+            self.setup_optimise_tab()
+
+        if self.video_list:
+            self.setup_videos_tab()
+
+        # Unusual step: if a list of media.Video objects to be processed has
+        #   been supplied, use a different label for the OK button
+        if self.video_list:
+
+            self.ok_button.set_label(_('Process files'))
+            self.ok_button.set_tooltip_text(
+                _('Process the files with FFmpeg'),
+            )
+            self.ok_button.get_child().set_width_chars(15)
+
+
+    def setup_name_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Name' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Name'))
+
+        grid_width = 4
+
+        self.add_label(grid,
+            _('Name for these FFmpeg options'),
+            0, 0, 2, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'name',
+            2, 0, 2, 1,
+        )
+
+        self.add_label(grid,
+            _('Extra command line options (e.g. --help)'),
+            0, 1, grid_width, 1,
+        )
+
+        self.extra_cmd_string_textview, \
+        self.extra_cmd_string_textbuffer = self.add_textview(grid,
+            'extra_cmd_string',
+            0, 2, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('System command, based on all FFmpeg options in this window') \
+            + ':',
+            0, 3, grid_width, 1,
+        )
+
+        self.result_textview, self.results_textbuffer = self.add_textview(grid,
+            None,
+            0, 4, grid_width, 1,
+        )
+        self.result_textview.set_editable(False)
+        self.result_textview.set_can_focus(False)
+        self.result_textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        # (Set the system command, as it stands)
+        self.update_system_cmd()
+
+        if self.app_obj.simple_options_flag:
+            frame = self.add_pixbuf(grid,
+                'hand_right_large',
+                0, 5, 1, 1,
+            )
+            frame.set_hexpand(False)
+
+        else:
+            frame = self.add_pixbuf(grid,
+                'hand_left_large',
+                0, 5, 1, 1,
+            )
+            frame.set_hexpand(False)
+
+        button = Gtk.Button()
+        grid.attach(button, 1, 5, (grid_width - 1), 1)
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            button.set_label(_('Show fewer FFmpeg options'))
+        else:
+            button.set_label(_('Show more FFmpeg options'))
+        button.connect('clicked', self.on_simple_options_clicked)
+
+        frame2 = self.add_pixbuf(grid,
+            'copy_large',
+            0, 6, 1, 1,
+        )
+        frame2.set_hexpand(False)
+
+        button2 = Gtk.Button(
+            _('Import current FFmpeg options into this window'),
+        )
+        grid.attach(button2, 1, 6, (grid_width - 1), 1)
+        button2.connect('clicked', self.on_clone_options_clicked)
+        if self.edit_obj == self.app_obj.ffmpeg_options_obj:
+            # No point cloning the current options manager into itself
+            button2.set_sensitive(False)
+
+        frame3 = self.add_pixbuf(grid,
+            'warning_large',
+            0, 7, 1, 1,
+        )
+        frame3.set_hexpand(False)
+
+        button3 = Gtk.Button(
+            _('Completely reset all FFmpeg options to their default values'),
+        )
+        grid.attach(button3, 1, 7, (grid_width - 1), 1)
+        button3.connect('clicked', self.on_reset_options_clicked)
+
+
+    def setup_file_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'File' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_File'))
+
+        self.add_label(grid,
+            _('Add to end of filename') + ':',
+            0, 0, 1, 1,
+        )
+
+        self.add_end_filename_entry = self.add_entry(grid,
+            'add_end_filename',
+            1, 0, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('If regex matches filename') + ':',
+            0, 1, 1, 1,
+        )
+
+        self.regex_match_filename_entry = self.add_entry(grid,
+            None,
+            1, 1, 1, 1,
+        )
+        self.regex_match_filename_entry.set_text(
+            self.retrieve_val('regex_match_filename'),
+        )
+        # Signal connect appears below
+
+        self.add_label(grid,
+            _('...then apply substitution') + ':',
+            0, 2, 1, 1,
+        )
+
+        self.regex_apply_subst_entry = self.add_entry(grid,
+            'regex_apply_subst',
+            1, 2, 1, 1,
+        )
+        if self.retrieve_val('regex_match_filename') == '':
+            self.regex_apply_subst_entry.set_sensitive(False)
+
+        self.rename_both_flag_checkbutton = self.add_checkbutton(grid,
+            _(
+            'If the video/audio file is renamed, also rename the thumbnail' \
+            + ' (but not vice-versa)',
+            ),
+            'rename_both_flag',
+            0, 3, 2, 1,
+        )
+        if self.retrieve_val('add_end_filename') == '' \
+        and self.retrieve_val('regex_match_filename') == '':
+            self.rename_both_flag_checkbutton.set_sensitive(False)
+
+        self.add_label(grid,
+            _('Change file extension') + ':',
+            0, 4, 1, 1,
+        )
+
+        self.change_file_ext_entry = self.add_entry(grid,
+            None,
+            1, 4, 1, 1,
+        )
+        self.change_file_ext_entry.set_text(
+            self.retrieve_val('change_file_ext'),
+        )
+        # Signal connect appears below
+
+        self.delete_original_flag_checkbutton = self.add_checkbutton(grid,
+            _('After changing the file extension, delete the original file'),
+            'delete_original_flag',
+            0, 5, 1, 1,
+        )
+        if self.retrieve_val('change_file_ext') == '':
+            self.delete_original_flag_checkbutton.set_sensitive(False)
+
+        # Signal connects from above
+        self.regex_match_filename_entry.connect(
+            'changed',
+            self.on_regex_match_filename_entry_changed,
+        )
+
+        self.change_file_ext_entry.connect(
+            'changed',
+            self.on_change_file_ext_entry_changed,
+        )
+
+
+    def setup_settings_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Settings' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Settings'))
+
+        grid_width = 6
+        self.settings_grid = grid
+
+        # Input mode
+        label = self.add_label(grid,
+            '<u>' + _('Source file') + '</u>',
+            0, 0, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        self.input_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Downloaded video/audio'),
+            None,
+            None,
+            1, 0, 2, 1,
+        )
+        self.input_mode_radiobutton.set_hexpand(False)
+        # Signal connect appears below
+
+        self.audio_flag_checkbutton = self.add_checkbutton(grid,
+            _('with audio'),
+            None,
+            3, 0, 1, 1,
+        )
+        self.audio_flag_checkbutton.set_hexpand(False)
+        if self.retrieve_val('audio_flag'):
+            self.audio_flag_checkbutton.set_active(True)
+        if self.retrieve_val('input_mode') != 'video':
+            self.audio_flag_checkbutton.set_sensitive(False)
+        # Signal connect appears below
+
+        self.input_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.input_mode_radiobutton,
+            _('Video thumbnail'),
+            None,
+            None,
+            4, 0, 1, 1,
+        )
+        self.input_mode_radiobutton2.set_hexpand(False)
+        if self.retrieve_val('input_mode') == 'thumb':
+            self.input_mode_radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        # (Empty label for spacing)
+        label2 = self.add_label(grid,
+            '',
+            5, 0, 1, 1,
+        )
+        label2.set_hexpand(True)
+
+        # Output mode
+        label3 = self.add_label(grid,
+            '<u>' + _('Output file') + '</u>',
+            0, 1, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        self.output_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            'H.264',
+            None,
+            None,
+            1, 1, 1, 1,
+        )
+        self.output_mode_radiobutton.set_hexpand(False)
+        # Signal connect appears below
+
+        self.output_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.output_mode_radiobutton,
+            'GIF',
+            None,
+            None,
+            2, 1, 1, 1,
+        )
+        self.output_mode_radiobutton2.set_hexpand(False)
+        if self.retrieve_val('output_mode') == 'gif':
+            self.output_mode_radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        self.output_mode_radiobutton3 = self.add_radiobutton(grid,
+            self.output_mode_radiobutton2,
+            'Video thumbnail',
+            None,
+            None,
+            4, 1, 1, 1,
+        )
+        self.output_mode_radiobutton3.set_hexpand(False)
+        if self.retrieve_val('output_mode') == 'thumb':
+            self.output_mode_radiobutton3.set_active(True)
+        # Signal connect appears below
+
+        # Supplementary grids: one for each 'output_mode'
+        # Only one of them is visible at any time (this saves a lot of time
+        #   (de)sensitising widgets
+        self.h264_grid = self.setup_settings_tab_h264_grid(2, grid_width)
+        self.gif_grid = self.setup_settings_tab_gif_grid(2, grid_width)
+        self.thumb_grid = self.setup_settings_tab_thumb_grid(2, grid_width)
+
+        # Signal connects from above
+        self.input_mode_radiobutton.connect(
+            'toggled',
+            self.on_input_mode_radiobutton_toggled,
+        )
+        self.audio_flag_checkbutton.connect(
+            'toggled',
+            self.on_audio_flag_checkbutton_toggled,
+        )
+        self.input_mode_radiobutton2.connect(
+            'toggled',
+            self.on_input_mode_radiobutton_toggled,
+        )
+
+        self.output_mode_radiobutton.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+        self.output_mode_radiobutton2.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+        self.output_mode_radiobutton3.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+
+
+    def setup_settings_tab_h264_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'h264'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'h264':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        inner_width = 3
+
+        self.add_label(grid,
+            _('Audio bitrate'),
+            0, 0, 1, 1,
+        )
+
+        self.audio_bitrate_spinbutton = self.add_spinbutton(grid,
+            16, None, 16,
+            'audio_bitrate',
+            1, 0, 1, 1,
+        )
+        if self.retrieve_val('input_mode') != 'video' \
+        or not self.retrieve_val('audio_flag'):
+            self.audio_bitrate_spinbutton.set_sensitive(False)
+
+        label = self.add_label(grid,
+            _('How to set the quality') + ' ⓘ',
+            0, 1, 1, 1,
+        )
+        label.set_tooltip_text(
+            _(
+            'FFmpeg always encodes according to a Rate Factor that specifies' \
+            + ' the quality of the result.',
+            ) + '\n\n' + _(
+            'Instead of directly specifying the Rate Factor, an average bit' \
+            + ' rate can be specified. FFmpeg will then determine the' \
+            + ' optimal Rate Factor in a first pass.',
+            ) + '\n\n' + _(
+            'In fact the first pass is only used for determining the Rate' \
+            + ' Factor, no other data is carried over into the second pass.',
+            ) + '\n\n' + _(
+            'Specifying an average bitrate but running only one pass is' \
+            + ' possible, but not recommended. FFmpeg would then encode the' \
+            + ' beginning of the video with a random Rate Factor and then' \
+            + ' change it near the end of the video to eventually reach the' \
+            + ' target bitrate.',
+            ),
+        )
+
+        # N.B. In the original 'FFmpeg command line wizard', the second of this
+        #   pair of radiobuttons are disabled (for unknown reasons); here it is
+        #   enabled
+        self.quality_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Manual rate factor'),
+            None,
+            None,
+            1, 1, (inner_width - 1), 1,
+        )
+        # Signal connect appears below
+
+        self.quality_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.quality_mode_radiobutton,
+            _('Determine from target bitrate (2-Pass)'),
+            None,
+            None,
+            1, 2, (inner_width - 1), 1,
+        )
+        if self.retrieve_val('quality_mode') == 'abr':
+            self.quality_mode_radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        self.add_label(grid,
+            _('Rate factor'),
+            0, 3, 1, 1,
+        )
+
+        # (Use yet another grid to avoid messing up the surrounding layout)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 1, 3, (inner_width - 1), 1)
+        grid2.set_border_width(self.spacing_size)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        label2 = self.add_label(grid2,
+            _('Lossless') + '\n' + _('Large file'),
+            0, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        self.rate_factor_scale = Gtk.Scale().new_with_range(
+            Gtk.Orientation.HORIZONTAL,
+            0,
+            51,
+            1,
+        )
+        grid2.attach(self.rate_factor_scale, 1, 0, 1, 1)
+        self.rate_factor_scale.set_draw_value(True)
+        self.rate_factor_scale.set_value(
+            self.retrieve_val('rate_factor'),
+        )
+        self.rate_factor_scale.set_hexpand(True)
+        if self.retrieve_val('quality_mode') == 'abr':
+            self.rate_factor_scale.set_sensitive(False)
+        # Signal connect appears below
+
+        label3 = self.add_label(grid2,
+            _('Bad quality') + '\n' + _('Small file'),
+            2, 0, 1, 1,
+        )
+        label3.set_hexpand(False)
+        # (End of the yet another grid)
+
+        label4 = self.add_label(grid,
+            _('Name of dummy file') + ' ⓘ',
+            0, 4, 1, 1,
+        )
+        label4.set_tooltip_text(
+            _('A dummy file is created during the first pass.'),
+        )
+
+        combo_list = [
+            [_('Use the output file'), 'output'],
+            [_('Dummy'), 'dummy'],
+            [_('/dev/null (Linux)'), '/dev/null'],
+            [_('NUL (MS Windows)'), 'NUL'],
+        ]
+
+        self.dummy_file_combo = self.add_combo_with_data(grid,
+            combo_list,
+            'dummy_file',
+            1, 4, (inner_width - 1), 1,
+        )
+        if self.retrieve_val('quality_mode') != 'abr':
+            self.dummy_file_combo.set_sensitive(False)
+
+        self.add_label(grid,
+            _('Patience preset'),
+            0, 5, 1, 1,
+        )
+
+        combo_list2 = [
+            [_('Ultra fast'), 'ultrafast'],
+            [_('Super fast'), 'superfast'],
+            [_('Very fast'), 'veryfast'],
+            [_('Faster'), 'faster'],
+            [_('Fast'), 'fast'],
+            [_('Medium (default)'), 'medium'],
+            [_('Slow (file about 5-10% smaller than medium)'), 'slow'],
+            [_('Slower (file about 15% smaller than medium)'), 'slower'],
+            [_('Very slow (file about 17% smaller than medium)'), 'veryslow'],
+        ]
+
+        self.patience_preset_combo = self.add_combo_with_data(grid,
+            combo_list2,
+            'patience_preset',
+            1, 5, (inner_width - 1), 1,
+        )
+        self.patience_preset_combo.set_hexpand(False)
+
+        # Signal connects from above
+        self.quality_mode_radiobutton.connect(
+            'toggled',
+            self.on_quality_mode_radiobutton_toggled,
+        )
+        self.quality_mode_radiobutton2.connect(
+            'toggled',
+            self.on_quality_mode_radiobutton_toggled,
+        )
+
+        self.rate_factor_scale.connect(
+            'value-changed',
+            self.on_rate_factor_scale_changed,
+        )
+
+        return grid
+
+
+    def setup_settings_tab_gif_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'gif'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'gif':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        self.add_label(grid,
+            _('Palette') + ':',
+            0, 0, 1, 1,
+        )
+
+        self.palette_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Faster') + '\n' \
+            + _('Uses dithering to a standard palette provided by FFmpeg') \
+            + '\n' + _('Can cause dithering artefacts and slight banding'),
+            None,
+            None,
+            1, 0, 1, 1,
+        )
+        # Signal connect appears below
+
+        self.palette_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.palette_mode_radiobutton,
+            _('Better') + '\n' \
+            + _('Determines an optimized palette for the video') + '\n' \
+            + _('Uses two passes and a temporary file for the palette'),
+            None,
+            None,
+            1, 1, 1, 1,
+        )
+        if self.retrieve_val('palette_mode') == 'better':
+            self.palette_mode_radiobutton2.set_active(True)
+        # Signal connect appears below
+
+        # Signal connects from above
+        self.palette_mode_radiobutton.connect(
+            'toggled',
+            self.on_palette_mode_radiobutton_toggled,
+        )
+        self.palette_mode_radiobutton2.connect(
+            'toggled',
+            self.on_palette_mode_radiobutton_toggled,
+        )
+
+        return grid
+
+
+    def setup_settings_tab_thumb_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'thumb'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'thumb':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'The thumbnail\'s format can be changed in the File tab',
+            ) + '</i>',
+            0, 0, 1, 1,
+        )
+
+        return grid
+
+
+    def setup_optimise_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Optimisations' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Optimisations'))
+
+        grid_width = 2
+
+        self.seek_flag_checkbutton = self.add_checkbutton(grid,
+            _(
+                'Optimise for fast seeking (shorter keyframe interval, about' \
+                + ' 10% larger file)',
+            ),
+            'seek_flag',
+            0, 0, grid_width, 1,
+        )
+
+        self.tuning_film_flag_checkbutton = self.add_checkbutton(grid,
+            _('Input video is a high-quality movie'),
+            'tuning_film_flag',
+            0, 1, grid_width, 1,
+        )
+
+        self.tuning_animation_flag_checkbutton = self.add_checkbutton(grid,
+            _('Input video is an animated movie'),
+            'tuning_animation_flag',
+            0, 2, grid_width, 1,
+        )
+
+        self.tuning_grain_flag_checkbutton = self.add_checkbutton(grid,
+            _('Input video contains film grain'),
+            'tuning_grain_flag',
+            0, 3, grid_width, 1,
+        )
+
+        self.tuning_still_image_flag_checkbutton = self.add_checkbutton(grid,
+            _('Input video is an image slideshow'),
+            'tuning_still_image_flag',
+            0, 4, grid_width, 1,
+        )
+
+        self.tuning_fast_decode_flag_checkbutton = self.add_checkbutton(grid,
+            _('Optimise for really weak CPU playback devices'),
+            'tuning_fast_decode_flag',
+            0, 5, grid_width, 1,
+        )
+
+        self.profile_flag_checkbutton = self.add_checkbutton(grid,
+            _(
+                'Optimise for really old devices (requires rate factor' \
+                + ' above 0)',
+            ),
+            'profile_flag',
+            0, 6, grid_width, 1,
+        )
+        if not self.retrieve_val('rate_factor'):
+            self.profile_flag_checkbutton.set_sensitive(False)
+
+        self.fast_start_flag_checkbutton = self.add_checkbutton(grid,
+            _(
+                'Move headers to beginning of file (so it can play while' \
+                + ' still downloading)',
+            ),
+            'fast_start_flag',
+            0, 7, grid_width, 1,
+        )
+
+        self.tuning_zero_latency_flag_checkbutton = self.add_checkbutton(grid,
+            _('Fast encoding and low latency streaming'),
+            'tuning_zero_latency_flag',
+            0, 8, grid_width, 1,
+        )
+
+        self.limit_flag_checkbutton = self.add_checkbutton(grid,
+            _('Limit bitrate (Mbit/s)'),
+            None,
+            0, 9, 1, 1,
+        )
+        if self.retrieve_val('limit_flag'):
+            self.limit_flag_checkbutton.set_active(True)
+        # (Signal connect appears below)
+
+        self.limit_mbps_spinbutton = self.add_spinbutton(grid,
+            0, None, 0.2,
+            'limit_mbps',
+            1, 9, 1, 1,
+        )
+        if not self.retrieve_val('limit_flag'):
+            self.limit_mbps_spinbutton.set_sensitive(False)
+
+        self.add_label(grid,
+            '          ' + _('Assuming a receiving buffer (seconds)'),
+            0, 10, 1, 1,
+        )
+
+        self.limit_buffer_spinbutton = self.add_spinbutton(grid,
+            0, None, 0.2,
+            'limit_buffer',
+            1, 10, 1, 1,
+        )
+        if not self.retrieve_val('limit_flag'):
+            self.limit_buffer_spinbutton.set_sensitive(False)
+
+        # (De)sensitise all of these widgets, depending on the value of the
+        #   'output_mode' setting
+        if self.retrieve_val('output_mode') == 'h264':
+            self.setup_optimise_tab_set_sensitive(True)
+        else:
+            self.setup_optimise_tab_set_sensitive(False)
+
+        # (Signal connects from above)
+        self.limit_flag_checkbutton.connect(
+            'toggled',
+            self.on_limit_flag_checkbutton_toggled,
+        )
+
+
+    def setup_optimise_tab_set_sensitive(self, sens_flag):
+
+        """Called by self.setup_optimise_tab() and various callbacks.
+
+        (De)sensitises all widgets in the tab, as required.
+
+        Args:
+
+            sens_flag (bool): True to sensitise widgets, False to desensitise
+                them
+
+        """
+
+        self.seek_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_film_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_animation_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_grain_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_still_image_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_fast_decode_flag_checkbutton.set_sensitive(sens_flag)
+
+        if not self.retrieve_val('rate_factor'):
+            self.profile_flag_checkbutton.set_sensitive(False)
+        else:
+            self.profile_flag_checkbutton.set_sensitive(sens_flag)
+
+        self.fast_start_flag_checkbutton.set_sensitive(sens_flag)
+
+        self.limit_flag_checkbutton.set_sensitive(sens_flag)
+        self.tuning_zero_latency_flag_checkbutton.set_sensitive(sens_flag)
+
+        if not self.retrieve_val('limit_flag'):
+            self.limit_mbps_spinbutton.set_sensitive(False)
+        else:
+            self.limit_mbps_spinbutton.set_sensitive(sens_flag)
+
+        if not self.retrieve_val('limit_flag'):
+            self.limit_buffer_spinbutton.set_sensitive(False)
+        else:
+            self.limit_buffer_spinbutton.set_sensitive(sens_flag)
+
+
+    def setup_videos_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Videos' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Videos'))
+
+        # List of videos to be processed
+        self.add_label(grid,
+            '<u>' + _('List of videos to be processed') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, 1, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ '#', _('Video'), _('Thumbnail'), _('Name') ]
+        ):
+            if i == 1 or i == 2:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        liststore = Gtk.ListStore(str, bool, bool, str)
+        treeview.set_model(liststore)
+
+        # Initialise the list
+        self.setup_videos_tab_update_treeview(liststore)
+
+        # Add editing buttons
+        button = Gtk.Button()
+        grid.attach(button, 0, 2, 1, 1)
+        button.set_label(_('Remove video from list'))
+        button.connect(
+            'clicked',
+            self.on_video_remove_button_clicked,
+            treeview,
+        )
+
+
+    def setup_videos_tab_update_treeview(self, liststore):
+
+        """Called by self.setup_videos_tab().
+
+        Fills or updates the treeview.
+
+        Args:
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        liststore.clear()
+
+        for video_obj in self.video_list:
+
+            if utils.find_thumbnail(self.app_obj, video_obj):
+                thumb_flag = True
+            else:
+                thumb_flag = True
+
+            if hasattr(video_obj, 'dummy_path'):
+
+                # Special case: 'dummy' video objects (those downloaded in the
+                #   Classic Mode tab) use different IVs
+                if video_obj.dummy_path is not None \
+                and os.path.isfile(video_obj.dummy_path):
+                    dl_flag = True
+                else:
+                    dl_flag = False
+
+                liststore.append(
+                    [
+                        'n/a',
+                        dl_flag,
+                        thumb_flag,
+                        video_obj.dummy_path,
+                    ],
+                )
+
+            else:
+
+                # All other media.Video objects
+                liststore.append(
+                    [
+                        str(video_obj.dbid),
+                        video_obj.dl_flag,
+                        thumb_flag,
+                        video_obj.name,
+                    ],
+                )
+
+
+    # (Tab support functions)
+
+
+    def update_system_cmd(self):
+
+        """Called after any widget is manipulated.
+
+        Updates the contents of the textview showing a specimen system command,
+        incorporating the modified value.
+
+        """
+
+        # This particular call returns a list inside a tuple, for no obvious
+        #   reason (and an identical call from ProcessManager.process_video()
+        #   does not)
+        # Don't know why, but the FFmpeg system command, as a list, is at
+        #   [0][2])
+        result_list = self.edit_obj.get_system_cmd(
+            self.app_obj,
+            None,           # Use a specimen source file
+            self.edit_dict,
+        ),
+
+        if result_list:
+            self.results_textbuffer.set_text(' '.join(result_list[0][2]))
+        else:
+            self.results_textbuffer.set_text('')
+
+
+    # Callback class methods
+
+
+    def on_audio_flag_checkbutton_toggled(self, checkbutton):
+
+        """Called by callback in self.setup_settings_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if not checkbutton.get_active():
+
+            self.edit_dict['audio_flag'] = False
+
+            self.audio_bitrate_spinbutton.set_sensitive(False)
+
+        else:
+
+            self.edit_dict['audio_flag'] = True
+
+            if self.retrieve_val('input_mode') == 'video':
+                self.audio_bitrate_spinbutton.set_sensitive(True)
+            else:
+                self.audio_bitrate_spinbutton.set_sensitive(False)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_change_file_ext_entry_changed(self, entry):
+
+        """Called by callback in self.setup_file_tab().
+
+        Args:
+
+            entry (Gtk.Entry): The widget clicked
+
+        """
+
+        value = entry.get_text()
+
+        self.edit_dict['change_file_ext'] = value
+        if value == '':
+
+            self.delete_original_flag_checkbutton.set_active(False)
+            self.delete_original_flag_checkbutton.set_sensitive(False)
+
+        else:
+            self.delete_original_flag_checkbutton.set_sensitive(True)
+
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_clone_options_clicked(self, button):
+
+        """Called by callback in self.setup_name_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _(
+            'This procedure cannot be reversed. Are you sure you want to' \
+            + ' continue?',
+            ),
+            'question',
+            'yes-no',
+            self,           # Parent window is this window
+            {
+                'yes': 'clone_ffmpeg_options_manager',
+                'data': [self, self.edit_obj],
+            },
+        )
+
+
+    def on_input_mode_radiobutton_toggled(self, radiobutton):
+
+        """Called by callback in self.setup_settings_tab().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if self.input_mode_radiobutton.get_active():
+
+            self.edit_dict['input_mode'] = 'video'
+
+            self.output_mode_radiobutton.set_active(True)
+            self.output_mode_radiobutton.set_sensitive(True)
+            self.output_mode_radiobutton2.set_sensitive(True)
+            self.output_mode_radiobutton3.set_sensitive(False)
+
+            self.audio_flag_checkbutton.set_sensitive(True)
+            if not self.retrieve_val('audio_flag'):
+                self.audio_bitrate_spinbutton.set_sensitive(False)
+            else:
+                self.audio_bitrate_spinbutton.set_sensitive(True)
+
+        else:
+
+            self.edit_dict['input_mode'] = 'thumb'
+
+            self.output_mode_radiobutton3.set_active(True)
+            self.output_mode_radiobutton.set_sensitive(False)
+            self.output_mode_radiobutton2.set_sensitive(False)
+            self.output_mode_radiobutton3.set_sensitive(True)
+
+            self.audio_flag_checkbutton.set_sensitive(False)
+            self.audio_bitrate_spinbutton.set_sensitive(False)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_limit_flag_checkbutton_toggled(self, checkbutton):
+
+        """Called by callback in self.setup_optimise_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if not checkbutton.get_active():
+
+            self.edit_dict['limit_flag'] = False
+
+            self.limit_mbps_spinbutton.set_sensitive(False)
+            self.limit_buffer_spinbutton.set_sensitive(False)
+
+        else:
+
+            self.edit_dict['audio_flag'] = True
+
+            self.limit_mbps_spinbutton.set_sensitive(True)
+            self.limit_buffer_spinbutton.set_sensitive(True)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_output_mode_radiobutton_toggled(self, radiobutton, grid_width):
+
+        """Called by callback in self.setup_settings_tab().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+            grid_width (int): The width of self.settings_grid
+
+        """
+
+        old_value = self.retrieve_val('output_mode')
+        if old_value == 'h264':
+            self.settings_grid.remove(self.h264_grid)
+        elif old_value == 'gif':
+            self.settings_grid.remove(self.gif_grid)
+        else:
+            self.settings_grid.remove(self.thumb_grid)
+
+        if self.output_mode_radiobutton.get_active():
+
+            self.edit_dict['output_mode'] = 'h264'
+
+            self.settings_grid.attach(self.h264_grid, 0, 2, grid_width, 1)
+            self.setup_optimise_tab_set_sensitive(True)
+
+        elif self.output_mode_radiobutton2.get_active():
+
+            self.edit_dict['output_mode'] = 'gif'
+
+            self.settings_grid.attach(self.gif_grid, 0, 2, grid_width, 1)
+            self.setup_optimise_tab_set_sensitive(False)
+
+        elif self.output_mode_radiobutton3.get_active():
+
+            self.edit_dict['output_mode'] = 'thumb'
+
+            self.settings_grid.attach(self.thumb_grid, 0, 2, grid_width, 1)
+            self.setup_optimise_tab_set_sensitive(False)
+
+        self.show_all()
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_palette_mode_radiobutton_toggled(self, radiobutton):
+
+        """Called by callback in self.setup_settings_tab_gif_grid().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if self.palette_mode_radiobutton.get_active():
+            self.edit_dict['palette_mode'] = 'faster'
+        else:
+            self.edit_dict['palette_mode'] = 'better'
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_quality_mode_radiobutton_toggled(self, radiobutton):
+
+        """Called by callback in self.setup_settings_tab_h264_grid().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if self.quality_mode_radiobutton.get_active():
+
+            self.edit_dict['quality_mode'] = 'crf'
+
+            self.rate_factor_scale.set_sensitive(True)
+            self.dummy_file_combo.set_sensitive(False)
+
+        else:
+
+            self.edit_dict['quality_mode'] = 'abr'
+
+            self.rate_factor_scale.set_sensitive(False)
+            self.dummy_file_combo.set_sensitive(True)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_rate_factor_scale_changed(self, scale):
+
+        """Called by callback in self.setup_settings_tab_h264_grid().
+
+        Args:
+
+            scale (Gtk.Scale): The widget clicked
+
+        """
+
+        value = int(self.rate_factor_scale.get_value())
+
+        self.edit_dict['rate_factor'] = value
+
+        if not value:
+            self.profile_flag_checkbutton.set_sensitive(False)
+        else:
+            self.profile_flag_checkbutton.set_sensitive(True)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_regex_match_filename_entry_changed(self, entry):
+
+        """Called by callback in self.setup_file_tab().
+
+        Args:
+
+            entry (Gtk.Entry): The widget clicked
+
+        """
+
+        value = entry.get_text()
+
+        self.edit_dict['regex_match_filename'] = value
+        if value == '':
+
+            self.regex_apply_subst_entry.set_text('')
+            self.regex_apply_subst_entry.set_sensitive(False)
+
+        else:
+
+            self.regex_apply_subst_entry.set_sensitive(True)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_reset_options_clicked(self, button):
+
+        """Called by callback in self.setup_name_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _(
+            'This procedure cannot be reversed. Are you sure you want to' \
+            + ' continue?',
+            ),
+            'question',
+            'yes-no',
+            self,           # Parent window is this window
+            {
+                'yes': 'reset_ffmpeg_manager',
+                # (Reset this edit window, if the user clicks 'yes')
+                'data': [self],
+            },
+        )
+
+
+    def on_simple_options_clicked(self, button):
+
+        """Called by callback in self.setup_name_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        redraw_flag = False
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            self.app_obj.set_ffmpeg_simple_options_flag(True)
+
+            if not self.edit_dict:
+
+                # User has not changed any options, so redraw the window to
+                #   show the same options.OptionsManager object
+                self.reset_with_new_edit_obj(self.edit_obj)
+
+            else:
+
+                # User has already changed some options. We don't want to lose
+                #   them, so wait for the window to close and be re-opened,
+                #   before switching between simple/advanced options
+                redraw_flag = True
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _(
+                    'Fewer FFmpeg options will be visible when you click the' \
+                    + ' \'Apply\' or \'Reset\' buttons (or when you close' \
+                    + ' and then re-open the window)',
+                    ),
+                    'info',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+                button.set_label(
+                    _('Show more FFmpeg options (when window re-opens)'),
+                )
+
+        else:
+
+            self.app_obj.set_ffmpeg_simple_options_flag(False)
+
+            if not self.edit_dict:
+
+                self.reset_with_new_edit_obj(self.edit_obj)
+
+            else:
+
+                redraw_flag = True
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _(
+                    'More FFmpeg options will be visible when you click the' \
+                    + ' \'Apply\' or \'Reset\' buttons (or when you close' \
+                    + ' and then re-open the window)',
+                    ),
+                    'info',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+                button.set_label(
+                    _('Show fewer FFmpeg options (when window re-opens)'),
+                )
+
+        if redraw_flag:
+
+            # Discard the list of videos, so that this becomes an ordinary
+            #   edit window, with an 'OK' button that stores changes (and no
+            #   'Process files' button that starts a process operation
+            self.video_list = []
+
+            self.ok_button.set_label(_('OK'))
+            self.ok_button.get_child().set_width_chars(10)
+            self.ok_button.set_tooltip_text(
+                _('Apply changes'),
+            )
+
+
+    def on_video_remove_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_videos_tab().
+
+        Removes a video from the list of videos to be processed by FFmpeg.
+
+        If there are no videos left, this edit window reverts to its default
+        state, in which we just save any changes to the FFmpeg options.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeView): The treeview to be updated
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        dbid = model[this_iter][0]
+        for video_obj in self.video_list:
+
+            if video_obj.dbid == dbid:
+                self.video_list.remove(video_obj)
+                break
+
+        # Update the visible list
+        self.setup_videos_tab_update_treeview(model)
+        # If all videos have been removed, restore the OK button
+        if not self.video_list:
+
+            self.ok_button.set_label(_('OK'))
+            self.ok_button.get_child().set_width_chars(10)
+            self.ok_button.set_tooltip_text(
+                _('Apply changes'),
+            )
+
+
+    # (Redefined button strip callbacks)
+
+
+    def on_button_apply_clicked(self, button):
+
+        """Called from a callback in self.setup_button_strip().
+
+        Applies any changes made by the user and re-draws the window's tabs,
+        showing their new values.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        # Apply any changes the user has made. The True argument identifies
+        #   this function as the caller, and prevents a process operation from
+        #   starting
+        self.apply_changes(True)
+
+        # Remove all existing tabs from the notebook
+        number = self.notebook.get_n_pages()
+        if number:
+
+            for count in range(0, number):
+                self.notebook.remove_page(0)
+
+        # Re-draw all the tabs
+        self.setup_tabs()
+
+        # Render the changes
+        self.show_all()
+
+
+    # (Redefined generic callbacks)
+
+
+    def on_checkbutton_toggled(self, checkbutton, prop):
+
+        """Modified form of the GenericEditWin callback, in which we
+        automatically update the system command visible in the 'Name' tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            prop (str): The attribute in self.edit_obj to modify
+
+        """
+
+        if not checkbutton.get_active():
+            self.edit_dict[prop] = False
+        else:
+            self.edit_dict[prop] = True
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_combo_with_data_changed(self, combo, prop):
+
+        """Modified form of the GenericEditWin callback, in which we
+        automatically update the system command visible in the 'Name' tab.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            prop (str): The attribute in self.edit_obj to modify
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.edit_dict[prop] = model[tree_iter][1]
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_entry_changed(self, entry, prop):
+
+        """Modified form of the GenericEditWin callback, in which we
+        automatically update the system command visible in the 'Name' tab.
+
+        Args:
+
+            entry (Gtk.Entry): The widget clicked
+
+            prop (str): The attribute in self.edit_obj to modify
+
+        """
+
+        self.edit_dict[prop] = entry.get_text()
+
+        # (De)sensitise the checkbutton for 'rename_both_flag', if required
+        if entry == self.add_end_filename_entry \
+        or entry == self.regex_match_filename_entry:
+
+            if self.retrieve_val('add_end_filename') == '' \
+            and self.retrieve_val('regex_match_filename') == '':
+                self.rename_both_flag_checkbutton.set_active(False)
+                self.rename_both_flag_checkbutton.set_sensitive(False)
+            else:
+                self.rename_both_flag_checkbutton.set_sensitive(True)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_spinbutton_changed(self, spinbutton, prop):
+
+        """Modified form of the GenericEditWin callback, in which we
+        automatically update the system command visible in the 'Name' tab.
+
+        Args:
+
+            spinbutton (Gtk.SpinkButton): The widget clicked
+
+            prop (str): The attribute in self.edit_obj to modify
+
+        """
+
+        self.edit_dict[prop] = int(spinbutton.get_value())
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_textview_changed(self, textbuffer, prop):
+
+        """Modified form of the GenericEditWin callback, in which we
+        automatically update the system command visible in the 'Name' tab.
+
+        Args:
+
+            textbuffer (Gtk.TextBuffer): The widget modified
+
+            prop (str): The attribute in self.edit_obj to modify
+
+        """
+
+        text = textbuffer.get_text(
+            textbuffer.get_start_iter(),
+            textbuffer.get_end_iter(),
+            # Don't include hidden characters
+            False,
+        )
+
+        old_value = self.retrieve_val(prop)
+
+        if type(old_value) is list:
+            self.edit_dict[prop] = text.split()
+        elif type(old_value) is tuple:
+            self.edit_dict[prop] = text.split()
+        else:
+             self.edit_dict[prop] = text
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
 class VideoEditWin(GenericEditWin):
 
     """Python class for an 'edit window' to modify values in a media.Video
@@ -5120,6 +7077,9 @@ class VideoEditWin(GenericEditWin):
     def __init__(self, app_obj, edit_obj):
 
         Gtk.Window.__init__(self, title=_('Video properties'))
+
+        if self.is_duplicate(app_obj, edit_obj):
+            return
 
         # IV list - class objects
         # -----------------------
@@ -5176,6 +7136,9 @@ class VideoEditWin(GenericEditWin):
 
 
     # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -5608,6 +7571,9 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         Gtk.Window.__init__(self, title=win_title)
 
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
         # IV list - class objects
         # -----------------------
         # The mainapp.TartubeApp object
@@ -5663,6 +7629,9 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
 
     # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -5969,6 +7938,9 @@ class FolderEditWin(GenericEditWin):
 
         Gtk.Window.__init__(self, title=_('Folder properties'))
 
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
         # IV list - class objects
         # -----------------------
         # The mainapp.TartubeApp object
@@ -6024,6 +7996,9 @@ class FolderEditWin(GenericEditWin):
 
 
     # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -6196,6 +8171,9 @@ class ScheduledEditWin(GenericEditWin):
 
         Gtk.Window.__init__(self, title=_('Scheduled download'))
 
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
         # IV list - class objects
         # -----------------------
         # The mainapp.TartubeApp object
@@ -6249,6 +8227,9 @@ class ScheduledEditWin(GenericEditWin):
 
 
     # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -6884,10 +8865,12 @@ class SystemPrefWin(GenericPrefWin):
 
         app_obj (mainapp.TartubeApp): The main application object
 
-        init_mode (str): 'db' to automatically open the tab with options for
-            switching the Tartube database, 'paths' to automatically open the
-            tab with youtube-dl paths, 'live' to automatically open the tab
-            with livestream options. Any other value is ignored
+        init_mode (str or None): 'db' to open the tab with options for
+            switching the Tartube database, 'paths' to open the tab with
+            youtube-dl paths, 'live' to open the tab with livestream options,
+            'options' to open the tab with the list of download options,
+            'custom_dl' to open the tab with custom download preferences. Any
+            other value is ignored
 
     """
 
@@ -6897,8 +8880,10 @@ class SystemPrefWin(GenericPrefWin):
 
     def __init__(self, app_obj, init_mode=None):
 
-
         Gtk.Window.__init__(self, title=_('System preferences'))
+
+        if self.is_duplicate(app_obj, init_mode):
+            return
 
         # IV list - class objects
         # -----------------------
@@ -6920,10 +8905,16 @@ class SystemPrefWin(GenericPrefWin):
         # (IVs used to handle widget changes in the 'Filesystem' tab)
         self.entry = None                       # Gtk.Entry
         self.entry2 = None                      # Gtk.Entry
+        # (IVs used to handle widget changes in the 'Downloader' tab)
+        self.path_liststore = None              # Gtk.ListStore
+        self.cmd_liststore = None               # Gtk.ListStore
         # (IVs used to handle widget changes in the 'Scheduling' tab)
-        self.liststore = None                   # Gtk.ListStore
+        self.schedule_liststore = None          # Gtk.ListStore
+        # (IVs used to handle widget changes in the 'Options' tab)
+        self.options_liststore = None           # Gtk.ListStore
+        self.ffmpeg_liststore = None            # Gtk.ListStore
         # (IVs used to open the window at a particular tab)
-        self.filesystem_inner_notebook = None   # Gtk.Notebook
+        self.filesinner_notebook = None         # Gtk.Notebook
         self.operations_inner_notebook = None   # Gtk.Notebook
 
 
@@ -6938,16 +8929,53 @@ class SystemPrefWin(GenericPrefWin):
         # Set up the preference window
         self.setup()
 
-        if init_mode is not None:
-            if init_mode == 'db':
-                self.select_switch_db_tab()
-            elif init_mode == 'paths':
-                self.select_paths_tab()
-            elif init_mode == 'live':
-                self.select_livestream_tab()
+        # Automatically open a particular tab, if required
+        self.select_tab(init_mode)
 
 
     # Public class methods
+
+
+    def is_duplicate(self, app_obj, init_mode=None):
+
+        """Called by self.__init__.
+
+        Don't open this preference window, if another preference window of the
+        same class is already open.
+
+        If 'init_mode' is specified, switch the visible tab in the existing
+        preference window (if any)
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application object
+
+            init_mode (str or None): 'db' to open the tab with options for
+                switching the Tartube database, 'paths' to open the tab with
+                youtube-dl paths, 'live' to open the tab with livestream
+                options, 'options' to open the tab with the list of download
+                options, 'custom_dl' to open the tab with custom download
+                preferences. Any other value is ignored
+
+        Return values:
+
+            True if a duplicate is found, False if not
+
+        """
+
+        for config_win_obj in app_obj.main_win_obj.config_win_list:
+
+            if type(self) == type(config_win_obj):
+
+                # Duplicate found. Make it prominent...
+                config_win_obj.present()
+                # ...and switch to a particular tab, if required
+                config_win_obj.select_tab(init_mode)
+
+                return True
+
+        # Not a duplicate
+        return False
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -6968,6 +8996,37 @@ class SystemPrefWin(GenericPrefWin):
 #   def setup_gap():            # Inherited from GenericConfigWin
 
 
+    def select_tab(self, init_mode=None):
+
+        """Called by self.__init__().
+
+        On startup, automatically open a particular tab, if required.
+
+        Args:
+
+            init_mode (str): 'db' to open the tab with options for switching
+                the Tartube database, 'paths' to open the tab with youtube-dl
+                paths, 'live' to open the tab with livestream options,
+                'options' to open the tab with the list of download options,
+                'custom_dl' to open the tab with custom download preferences.
+                Any other value is ignored
+
+        """
+
+        if init_mode is not None:
+
+            if init_mode == 'db':
+                self.select_switch_db_tab()
+            elif init_mode == 'paths':
+                self.select_paths_tab()
+            elif init_mode == 'live':
+                self.select_livestream_tab()
+            elif init_mode == 'options':
+                self.select_options_tab()
+            elif init_mode == 'custom_dl':
+                self.select_custom_dl_tab()
+
+
     def select_switch_db_tab(self):
 
         """Can be called by anything.
@@ -6977,7 +9036,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(1)
-        self.filesystem_inner_notebook.set_current_page(1)
+        self.files_inner_notebook.set_current_page(1)
 
 
     def select_paths_tab(self):
@@ -7000,7 +9059,30 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(2)
+        self.operations_inner_notebook.set_current_page(4)
+
+
+    def select_options_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the a list of download options
+        is displayed.
+        """
+
+        self.notebook.set_current_page(6)
+
+
+    def select_custom_dl_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the custom download preferences
+        are displayed.
+        """
+
+        self.notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(3)
 
 
     # (Setup tabs)
@@ -7015,11 +9097,12 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.setup_general_tab()
-        self.setup_filesystem_tab()
+        self.setup_files_tab()
         self.setup_windows_tab()
         self.setup_scheduling_tab()
         self.setup_operations_tab()
-        self.setup_ytdl_tab()
+        self.setup_downloader_tab()
+        self.setup_options_tab()
         self.setup_output_tab()
 
 
@@ -7430,31 +9513,31 @@ class SystemPrefWin(GenericPrefWin):
         self.entry.set_sensitive(False)
 
 
-    def setup_filesystem_tab(self):
+    def setup_files_tab(self):
 
         """Called by self.setup_tabs().
 
-        Sets up the 'Filesystem' tab.
+        Sets up the 'Files' tab.
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab(_('_Filesystem'), 0)
+        tab, grid = self.add_notebook_tab(_('_Files'), 0)
 
         # ...and an inner notebook...
-        self.filesystem_inner_notebook = self.add_inner_notebook(grid)
+        self.files_inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_filesystem_device_tab(self.filesystem_inner_notebook)
-        self.setup_filesystem_database_tab(self.filesystem_inner_notebook)
-        self.setup_filesystem_db_errors_tab(self.filesystem_inner_notebook)
-        self.setup_filesystem_backups_tab(self.filesystem_inner_notebook)
-        self.setup_filesystem_videos_tab(self.filesystem_inner_notebook)
-        self.setup_filesystem_temp_folders_tab(self.filesystem_inner_notebook)
+        self.setup_files_device_tab(self.files_inner_notebook)
+        self.setup_files_database_tab(self.files_inner_notebook)
+        self.setup_files_db_errors_tab(self.files_inner_notebook)
+        self.setup_files_backups_tab(self.files_inner_notebook)
+        self.setup_files_videos_tab(self.files_inner_notebook)
+        self.setup_files_temp_folders_tab(self.files_inner_notebook)
 
 
-    def setup_filesystem_device_tab(self, inner_notebook):
+    def setup_files_device_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'Device' inner notebook tab.
         """
@@ -7576,9 +9659,9 @@ class SystemPrefWin(GenericPrefWin):
         entry3.set_sensitive(False)
 
 
-    def setup_filesystem_database_tab(self, inner_notebook):
+    def setup_files_database_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'Database' inner notebook tab.
         """
@@ -7754,9 +9837,9 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_filesystem_db_errors_tab(self, inner_notebook):
+    def setup_files_db_errors_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'DB Errors' inner notebook tab.
         """
@@ -7787,9 +9870,9 @@ class SystemPrefWin(GenericPrefWin):
         button.connect('clicked', self.on_data_check_button_clicked)
 
 
-    def setup_filesystem_backups_tab(self, inner_notebook):
+    def setup_files_backups_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'Backups' inner notebook tab.
         """
@@ -7877,9 +9960,9 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_filesystem_videos_tab(self, inner_notebook):
+    def setup_files_videos_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'Videos' inner notebook tab.
         """
@@ -8006,9 +10089,9 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_filesystem_temp_folders_tab(self, inner_notebook):
+    def setup_files_temp_folders_tab(self, inner_notebook):
 
-        """Called by self.setup_filesystem_tab().
+        """Called by self.setup_files_tab().
 
         Sets up the 'Temporary folders' inner notebook tab.
         """
@@ -8397,6 +10480,14 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, 1, 1,
         )
         checkbutton3.connect('toggled', self.on_drag_name_button_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _('Transfer the thumbnail\'s full file path'),
+            self.app_obj.drag_thumb_path_flag,
+            True,                   # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton4.connect('toggled', self.on_drag_thumb_button_toggled)
 
 
     def setup_windows_system_tray_tab(self, inner_notebook):
@@ -8800,10 +10891,10 @@ class SystemPrefWin(GenericPrefWin):
                 treeview.append_column(column_text)
                 column_text.set_resizable(True)
 
-        self.liststore = Gtk.ListStore(
+        self.schedule_liststore = Gtk.ListStore(
             str, str, str, str, bool, bool, bool, bool, str,
         )
-        treeview.set_model(self.liststore)
+        treeview.set_model(self.schedule_liststore)
 
         # Initialise the list
         self.setup_scheduling_start_tab_update_treeview()
@@ -8872,11 +10963,11 @@ class SystemPrefWin(GenericPrefWin):
         """ Called by self.setup_scheduling_start_tab() and
         mainapp.TartubeApp.del_scheduled_list().
 
-        Fills the treeview.
+        Fills or updates the treeview.
 
         """
 
-        self.liststore.clear()
+        self.schedule_liststore.clear()
 
         for scheduled_obj in self.app_obj.scheduled_list:
             self.setup_scheduling_start_tab_add_row(scheduled_obj)
@@ -8884,7 +10975,8 @@ class SystemPrefWin(GenericPrefWin):
 
     def setup_scheduling_start_tab_add_row(self, scheduled_obj):
 
-        """Called by self.setup_scheduling_start_tab().
+        """Called by self.setup_scheduling_start_tab_update_treeview() and
+        .on_scheduled_add_button_clicked().
 
         Adds a row to the treeview.
 
@@ -8916,7 +11008,7 @@ class SystemPrefWin(GenericPrefWin):
         row_list.append(scheduled_obj.all_flag)
         row_list.append(scheduled_obj.join_mode)
 
-        self.liststore.append(row_list)
+        self.schedule_liststore.append(row_list)
 
 
     def setup_scheduling_stop_tab(self, inner_notebook):
@@ -9082,7 +11174,6 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_custom_tab(self.operations_inner_notebook)
         self.setup_operations_livestreams_tab(self.operations_inner_notebook)
         self.setup_operations_notify_tab(self.operations_inner_notebook)
-        self.setup_operations_options_tab(self.operations_inner_notebook)
 
 
     def setup_operations_performance_tab(self, inner_notebook):
@@ -9473,15 +11564,37 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.operation_auto_restart_flag:
             spinbutton.set_sensitive(False)
 
+        self.add_label(grid,
+            '     ' \
+            + _('Maximum restarts after a stalled download (0 for no maximum'),
+            0, 5, 1, 1,
+        )
+
+        spinbutton2 = self.add_spinbutton(grid,
+            0,
+            None,
+            1,                     # Step
+            self.app_obj.operation_auto_restart_max,
+            1, 5, 1, 1,
+        )
+        # (signal_connect appears below)
+        if not self.app_obj.operation_auto_restart_flag:
+            spinbutton2.set_sensitive(False)
+
         # (signal_connects from above)
         checkbutton4.connect(
             'toggled',
             self.on_auto_restart_button_toggled,
             spinbutton,
+            spinbutton2,
         )
         spinbutton.connect(
             'value-changed',
-            self.on_auto_restart_spinbutton_changed,
+            self.on_auto_restart_time_spinbutton_changed,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_auto_restart_max_spinbutton_changed,
         )
 
         checkbutton5 = self.add_checkbutton(grid,
@@ -9491,7 +11604,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.allow_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         checkbutton5.connect('toggled', self.on_archive_button_toggled)
 
@@ -9502,7 +11615,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         checkbutton6.connect('toggled', self.on_archive_classic_button_toggled)
 
@@ -9512,7 +11625,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton7.connect('toggled', self.on_json_button_toggled)
 
@@ -9523,7 +11636,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.ffmpeg_convert_webp_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton8.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
@@ -9989,47 +12102,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_operations_options_tab(self, inner_notebook):
-
-        """Called by self.setup_operations_tab().
-
-        Sets up the 'Options' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Options'),
-            inner_notebook,
-        )
-
-        # Download options preferences
-        self.add_label(grid,
-            '<u>' + _('Download options preferences') + '</u>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'When applying download options to something, clone the general' \
-            + ' download options',
-            ),
-            self.app_obj.auto_clone_options_flag,
-            True,                   # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        checkbutton.connect('toggled', self.on_auto_clone_button_toggled)
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'After downloading a video, remove its download options',
-            ),
-            self.app_obj.auto_delete_options_flag,
-            True,                   # Can be toggled by user
-            0, 2, 1, 1,
-        )
-        checkbutton.connect('toggled', self.on_auto_delete_button_toggled)
-
-
-    def setup_ytdl_tab(self):
+    def setup_downloader_tab(self):
 
         """Called by self.setup_tabs().
 
@@ -10037,19 +12110,161 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab('_' + self.app_obj.get_downloader())
+        tab, grid = self.add_notebook_tab('_Downloader')
 
         # ...and an inner notebook...
-        self.operations_inner_notebook = self.add_inner_notebook(grid)
+        inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_ytdl_file_paths_tab(self.operations_inner_notebook)
-        self.setup_ytdl_ffmpeg_tab(self.operations_inner_notebook)
+        self.setup_downloader_forks_tab(inner_notebook)
+        self.setup_downloader_paths_tab(inner_notebook)
+        self.setup_downloader_ffmpeg_tab(inner_notebook)
 
 
-    def setup_ytdl_file_paths_tab(self, inner_notebook):
+    def setup_downloader_forks_tab(self, inner_notebook):
 
-        """Called by self.setup_ytdl_tab().
+        """Called by self.setup_downloader_tab().
+
+        Sets up the 'Forks' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Forks'),
+            inner_notebook,
+        )
+
+        # Forks of youtube-dl
+        self.add_label(grid,
+            '<u>' + _('Forks of youtube-dl') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        # youtube-dlc
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, 1, 1)
+        frame.set_border_width(self.spacing_size)
+
+        grid2 = Gtk.Grid()
+        frame.add(grid2)
+        grid2.set_border_width(self.spacing_size)
+
+        self.add_label(grid2,
+            utils.tidy_up_long_string(
+                '<b>youtube-dlc</b>: <i>' \
+                + self.app_obj.ytdl_fork_descrip_dict['youtube-dlc'] \
+                + '</i>',
+            ),
+            0, 0, 1, 1,
+        )
+
+        radiobutton = self.add_radiobutton(grid2,
+            None,
+            '   ' + _('Use youtube-dlc'),
+            0, 1, 1, 1,
+        )
+        # Signal connect appears below
+
+        # youtube-dl
+        frame2 = Gtk.Frame()
+        grid.attach(frame2, 0, 2, 1, 1)
+        frame2.set_border_width(self.spacing_size)
+
+        grid3 = Gtk.Grid()
+        frame2.add(grid3)
+        grid3.set_border_width(self.spacing_size)
+
+        self.add_label(grid3,
+            utils.tidy_up_long_string(
+                '<b>youtube-dl</b>: <i>' \
+                + self.app_obj.ytdl_fork_descrip_dict['youtube-dl'] \
+                + '</i>',
+            ),
+            0, 0, 1, 1,
+        )
+
+        radiobutton2 = self.add_radiobutton(grid3,
+            radiobutton,
+            '   ' + _('Use youtube-dl'),
+            0, 1, 1, 1,
+        )
+        # Signal connect appears below
+
+        # Any other fork
+        frame3 = Gtk.Frame()
+        grid.attach(frame3, 0, 3, 1, 1)
+        frame3.set_border_width(self.spacing_size)
+
+        grid4 = Gtk.Grid()
+        frame3.add(grid4)
+        grid4.set_border_width(self.spacing_size)
+        grid4.set_row_spacing(self.spacing_size)
+
+        self.add_label(grid4,
+            '<i>' + utils.tidy_up_long_string(
+                self.app_obj.ytdl_fork_descrip_dict['custom'],
+            ) + '</i>',
+            0, 0, 2, 1,
+        )
+
+        radiobutton3 = self.add_radiobutton(grid4,
+            radiobutton2,
+            '   ' + _('Use a different fork of youtube-dl') + ':',
+            0, 1, 1, 1,
+        )
+        # Signal connect appears below
+
+        entry = self.add_entry(grid4,
+            None,
+            True,
+            1, 1, 1, 1,
+        )
+        entry.set_sensitive(True)
+        # Signal connect appears below
+
+        # Set widgets initial state
+        if self.app_obj.ytdl_fork is None \
+        or self.app_obj.ytdl_fork == 'youtube-dl':
+            radiobutton2.set_active(True)
+            entry.set_sensitive(False)
+        elif self.app_obj.ytdl_fork == 'youtube-dlc':
+            radiobutton.set_active(True)
+            entry.set_sensitive(False)
+        else:
+            radiobutton3.set_active(True)
+            if self.app_obj.ytdl_fork is not None:
+                entry.set_text(self.app_obj.ytdl_fork)
+            else:
+                entry.set_text('')
+            entry.set_sensitive(True)
+
+        # Signal connects from above
+        radiobutton.connect(
+            'toggled',
+            self.on_ytdl_fork_button_toggled,
+            entry,
+            'youtube-dlc',
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_ytdl_fork_button_toggled,
+            entry,
+            'youtube-dl',
+        )
+        radiobutton3.connect(
+            'toggled',
+            self.on_ytdl_fork_button_toggled,
+            entry,
+        )
+        entry.connect(
+            'changed',
+            self.on_ytdl_fork_changed,
+            radiobutton3,
+        )
+
+
+    def setup_downloader_paths_tab(self, inner_notebook):
+
+        """Called by self.setup_downloader_tab().
 
         Sets up the 'File Paths' inner notebook tab.
         """
@@ -10060,15 +12275,15 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 2
 
-        # youtube-dl file paths
+        # Downloader file paths
         self.add_label(grid,
-            '<u>' + _('youtube-dl file paths') + '</u>',
+            '<u>' + _('Downlaoder file paths') + '</u>',
             0, 0, grid_width, 1,
         )
 
         # youtube-dl file paths
         self.add_label(grid,
-            _('Path to youtube-dl executable'),
+            _('Path to the executable'),
             0, 1, 1, 1,
         )
 
@@ -10093,11 +12308,11 @@ class SystemPrefWin(GenericPrefWin):
                 ],
             )
 
-        store = Gtk.ListStore(str, str)
+        self.path_liststore = Gtk.ListStore(str, str)
         for mini_list in combo_list:
-            store.append( [ mini_list[0], mini_list[1] ] )
+            self.path_liststore.append( [ mini_list[0], mini_list[1] ] )
 
-        combo = Gtk.ComboBox.new_with_model(store)
+        combo = Gtk.ComboBox.new_with_model(self.path_liststore)
         grid.attach(combo, 1, 1, (grid_width - 1), 1)
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
@@ -10116,11 +12331,11 @@ class SystemPrefWin(GenericPrefWin):
             0, 2, 1, 1,
         )
 
-        store2 = Gtk.ListStore(str, str)
+        self.cmd_liststore = Gtk.ListStore(str, str)
         for item in self.app_obj.ytdl_update_list:
-            store2.append( [item, formats.YTDL_UPDATE_DICT[item]] )
+            self.cmd_liststore.append( [item, formats.YTDL_UPDATE_DICT[item]] )
 
-        combo2 = Gtk.ComboBox.new_with_model(store2)
+        combo2 = Gtk.ComboBox.new_with_model(self.cmd_liststore)
         grid.attach(combo2, 1, 2, (grid_width - 1), 1)
 
         renderer_text = Gtk.CellRendererText()
@@ -10139,45 +12354,16 @@ class SystemPrefWin(GenericPrefWin):
 
         # Update the combos, so that the youtube-dl fork, rather than
         #   youtube-dl itself, is visible (if applicable)
-        self.update_ytdl_combos(store, store2)
+        self.update_ytdl_combos()
 
         # (signal_connects from above)
         combo.connect('changed', self.on_ytdl_path_combo_changed)
         combo2.connect('changed', self.on_update_combo_changed)
 
-        # youtube-dl forks
-        self.add_label(grid,
-            '<u>' + _('youtube-dl forks') + '</u>',
-            0, 3, grid_width, 1,
-        )
 
-        self.add_label(grid,
-            _('Use this fork of youtube-dl'),
-            0, 4, 1, 1,
-        )
+    def setup_downloader_ffmpeg_tab(self, inner_notebook):
 
-        entry3 = self.add_entry(grid,
-            self.app_obj.ytdl_fork,
-            True,
-            1, 4, (grid_width - 1), 1,
-        )
-        entry3.set_sensitive(True)
-        entry3.connect('changed', self.on_ytdl_fork_changed, store, store2)
-
-        self.add_label(grid,
-            '<i>'
-            + _(
-                'If you specify a fork (e.g. youtube-dlc), it must be very' \
-                + ' similar to the original youtube-dl' \
-                + '\nTo use the original youtube-dl, leave the box empty',
-            ) + '</i>',
-            0, 5, grid_width, 1,
-        )
-
-
-    def setup_ytdl_ffmpeg_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdl_tab().
+        """Called by self.setup_downloader_tab().
 
         Sets up the 'Preferences' inner notebook tab.
         """
@@ -10286,6 +12472,483 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def setup_options_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Options' tab.
+        """
+
+        # Add this tab...
+        tab, grid = self.add_notebook_tab('O_ptions')
+
+        # ...and an inner notebook...
+        inner_notebook = self.add_inner_notebook(grid)
+
+        # ...with its own tabs
+        self.setup_options_dl_list_tab(inner_notebook)
+        self.setup_options_dl_prefs_tab(inner_notebook)
+        self.setup_options_ffmpeg_list_tab(inner_notebook)
+
+
+    def setup_options_dl_list_tab(self, inner_notebook):
+
+        """Called by self.setup_options_tab().
+
+        Sets up the 'Download options' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Download options'),
+            inner_notebook,
+        )
+        grid_width = 4
+
+        # List of download options managers
+        self.add_label(grid,
+            '<u>' + _('List of download options managers') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [
+                '#', _('Name'), _('Default'), _('Classic Mode'),
+                _('Applied to media'),
+            ]
+        ):
+            if i == 2 or i == 3:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        self.options_liststore = Gtk.ListStore(int, str, bool, bool, str)
+        treeview.set_model(self.options_liststore)
+
+        # Initialise the list
+        self.setup_options_dl_list_tab_update_treeview()
+
+        # Add editing buttons
+        self.add_label(grid,
+            'Manager name',
+            0, 2, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            True,
+            1, 2, 1, 1,
+        )
+
+        button = Gtk.Button()
+        grid.attach(button, 2, 2, 1, 1)
+        button.set_label(_('Add'))
+        button.connect(
+            'clicked',
+            self.on_options_add_button_clicked,
+            entry,
+        )
+
+        button2 = Gtk.Button()
+        grid.attach(button2, 3, 2, 1, 1)
+        button2.set_label(_('Import'))
+        button2.connect(
+            'clicked',
+            self.on_options_import_button_clicked,
+            entry,
+        )
+
+        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
+        #   mess up the formatting)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 3, grid_width, 1)
+
+        button3 = Gtk.Button()
+        grid2.attach(button3, 0, 0, 1, 1)
+        button3.set_label(_('Edit'))
+        button3.connect(
+            'clicked',
+            self.on_options_edit_button_clicked,
+            treeview,
+        )
+
+        button4 = Gtk.Button()
+        grid2.attach(button4, 1, 0, 1, 1)
+        button4.set_label(_('Export'))
+        button4.connect(
+            'clicked',
+            self.on_options_export_button_clicked,
+            treeview,
+        )
+
+        button5 = Gtk.Button()
+        grid2.attach(button5, 2, 0, 1, 1)
+        button5.set_label(_('Use in Classic Mode tab'))
+        button5.connect(
+            'clicked',
+            self.on_options_use_classic_button_clicked,
+            treeview,
+        )
+
+        button6 = Gtk.Button()
+        grid2.attach(button6, 3, 0, 1, 1)
+        button6.set_label(_('Delete'))
+        button6.connect(
+            'clicked',
+            self.on_options_delete_button_clicked,
+            treeview,
+        )
+
+        # (Use an empty label for spacing)
+        label = self.add_label(grid2,
+            '',
+            4, 0, 1, 1,
+        )
+        label.set_hexpand(True)
+
+        button7 = Gtk.Button()
+        grid2.attach(button7, 5, 0, 1, 1)
+        button7.set_label(_('Refresh list'))
+        button7.connect(
+            'clicked',
+            self.setup_options_dl_list_tab_update_treeview,
+        )
+
+
+    def setup_options_dl_list_tab_update_treeview(self):
+
+        """Can be called by anything.
+
+        Fills or updates the treeview.
+
+        """
+
+        self.options_liststore.clear()
+
+        for uid in sorted(self.app_obj.options_reg_dict):
+            self.setup_options_dl_list_tab_add_row(
+                self.app_obj.options_reg_dict[uid],
+            )
+
+
+    def setup_options_dl_list_tab_add_row(self, options_obj):
+
+        """Can be called by anything.
+
+        Adds a row to the treeview.
+
+        Args:
+
+            options_obj (options.OptionsManager) - The options manager object
+                to display on this row
+
+        """
+
+        row_list = []
+
+        row_list.append(options_obj.uid)
+        row_list.append(
+            utils.tidy_up_long_string(
+                options_obj.name,
+                self.app_obj.main_win_obj.short_string_max_len,
+            ),
+        )
+
+        if self.app_obj.general_options_obj \
+        and self.app_obj.general_options_obj == options_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
+
+        if self.app_obj.classic_options_obj \
+        and self.app_obj.classic_options_obj == options_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
+
+        if options_obj.dbid is None:
+
+            row_list.append('')
+
+        else:
+
+            media_data_obj = self.app_obj.media_reg_dict[options_obj.dbid]
+            row_list.append(
+                media_data_obj.get_translated_type(True) \
+                + ': ' + media_data_obj.name,
+            )
+
+        self.options_liststore.append(row_list)
+
+
+    def setup_options_dl_prefs_tab(self, inner_notebook):
+
+        """Called by self.setup_downloader_tab().
+
+        Sets up the 'Preferences' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Preferences'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Download options preferences
+        self.add_label(grid,
+            '<u>' + _('Download options preferences') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'When applying download options to something, clone the general' \
+            + ' download options',
+            ),
+            self.app_obj.auto_clone_options_flag,
+            True,                   # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        checkbutton.connect('toggled', self.on_auto_clone_button_toggled)
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'After downloading a video, remove its download options',
+            ),
+            self.app_obj.auto_delete_options_flag,
+            True,                   # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton.connect('toggled', self.on_auto_delete_button_toggled)
+
+
+    def setup_options_ffmpeg_list_tab(self, inner_notebook):
+
+        """Called by self.setup_options_tab().
+
+        Sets up the 'FFmpeg options' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_FFmpeg options'),
+            inner_notebook,
+        )
+        grid_width = 4
+
+        # List of FFmpeg options managers
+        self.add_label(grid,
+            '<u>' + _('List of FFmpeg options managers') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        # (Fourth column is empty, to keep the 3rd column at a minimum width)
+        for i, column_title in enumerate(
+            [ '#', _('Name'), _('Current'), '' ]
+        ):
+            if i == 2:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        self.ffmpeg_liststore = Gtk.ListStore(int, str, bool, str)
+        treeview.set_model(self.ffmpeg_liststore)
+
+        # Initialise the list
+        self.setup_options_ffmpeg_list_tab_update_treeview()
+
+        # Add editing buttons
+        self.add_label(grid,
+            'Manager name',
+            0, 2, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            True,
+            1, 2, 1, 1,
+        )
+
+        button = Gtk.Button()
+        grid.attach(button, 2, 2, 1, 1)
+        button.set_label(_('Add'))
+        button.connect(
+            'clicked',
+            self.on_ffmpeg_add_button_clicked,
+            entry,
+        )
+
+        button2 = Gtk.Button()
+        grid.attach(button2, 3, 2, 1, 1)
+        button2.set_label(_('Import'))
+        button2.connect(
+            'clicked',
+            self.on_ffmpeg_import_button_clicked,
+            entry,
+        )
+
+        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
+        #   mess up the formatting)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 3, grid_width, 1)
+
+        button3 = Gtk.Button()
+        grid2.attach(button3, 0, 0, 1, 1)
+        button3.set_label(_('Edit'))
+        button3.connect(
+            'clicked',
+            self.on_ffmpeg_edit_button_clicked,
+            treeview,
+        )
+
+        button4 = Gtk.Button()
+        grid2.attach(button4, 1, 0, 1, 1)
+        button4.set_label(_('Export'))
+        button4.connect(
+            'clicked',
+            self.on_ffmpeg_export_button_clicked,
+            treeview,
+        )
+
+        button5 = Gtk.Button()
+        grid2.attach(button5, 2, 0, 1, 1)
+        button5.set_label(_('Use these options'))
+        button5.connect(
+            'clicked',
+            self.on_ffmpeg_use_button_clicked,
+            treeview,
+        )
+
+        button6 = Gtk.Button()
+        grid2.attach(button6, 3, 0, 1, 1)
+        button6.set_label(_('Delete'))
+        button6.connect(
+            'clicked',
+            self.on_ffmpeg_delete_button_clicked,
+            treeview,
+        )
+
+        # (Use an empty label for spacing)
+        label = self.add_label(grid2,
+            '',
+            4, 0, 1, 1,
+        )
+        label.set_hexpand(True)
+
+        button7 = Gtk.Button()
+        grid2.attach(button7, 5, 0, 1, 1)
+        button7.set_label(_('Refresh list'))
+        button7.connect(
+            'clicked',
+            self.setup_options_ffmpeg_list_tab_update_treeview,
+        )
+
+
+    def setup_options_ffmpeg_list_tab_update_treeview(self):
+
+        """Can be called by anything.
+
+        Fills or updates the treeview.
+
+        """
+
+        self.ffmpeg_liststore.clear()
+
+        for uid in sorted(self.app_obj.ffmpeg_reg_dict):
+            self.setup_options_ffmpeg_list_tab_add_row(
+                self.app_obj.ffmpeg_reg_dict[uid],
+            )
+
+
+    def setup_options_ffmpeg_list_tab_add_row(self, options_obj):
+
+        """Can be called by anything.
+
+        Adds a row to the treeview.
+
+        Args:
+
+            options_obj (ffmpeg_tartube.FFmpegOptionsManager): The FFmpeg
+                options manager object to display on this row
+
+        """
+
+        row_list = []
+
+        row_list.append(options_obj.uid)
+        row_list.append(
+            utils.tidy_up_long_string(
+                options_obj.name,
+                self.app_obj.main_win_obj.short_string_max_len,
+            ),
+        )
+
+        if self.app_obj.ffmpeg_options_obj \
+        and self.app_obj.ffmpeg_options_obj == options_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
+
+        # (Fourth column is empty, to keep the 3rd column at a minimum width)
+        row_list.append('')
+
+        self.ffmpeg_liststore.append(row_list)
+
+
     def setup_output_tab(self):
 
         """Called by self.setup_tabs().
@@ -10294,7 +12957,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab(_('Out_put'), 0)
+        tab, grid = self.add_notebook_tab(_('O_utput'), 0)
 
         # ...and an inner notebook...
         inner_notebook = self.add_inner_notebook(grid)
@@ -10584,7 +13247,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_add_from_list_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Enables/disables automatic adding of new Tartube data directories to
         the list of recent directories.
@@ -10682,7 +13345,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_clone_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_options_tab().
+        """Called from callback in self.setup_options_prefs().
 
         Enables/disables auto-cloning of the General Options Manager.
 
@@ -10702,7 +13365,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_delete_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_options_tab().
+        """Called from callback in self.setup_options_prefs().
 
         Enables/disables auto-deleting of download options applied to a
         media.Video, after it has been downloaded.
@@ -10724,7 +13387,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_auto_delete_button_toggled(self, checkbutton, spinbutton,
     checkbutton2):
 
-        """Called from callback in self.setup_filesystem_video_deletion_tab().
+        """Called from callback in self.setup_files_video_deletion_tab().
 
         Enables/disables automatic deletion of downloaded videos.
 
@@ -10754,7 +13417,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_delete_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_filesystem_video_deletion_tab().
+        """Called from callback in self.setup_files_video_deletion_tab().
 
         Sets the number of days after which downloaded videos should be
         deleted.
@@ -10768,7 +13431,8 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
 
 
-    def on_auto_restart_button_toggled(self, checkbutton, spinbutton):
+    def on_auto_restart_button_toggled(self, checkbutton, spinbutton,
+    spinbutton2):
 
         """Called from callback in self.setup_operations_downloads_tab().
 
@@ -10778,7 +13442,7 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
-            spinbutton (Gtk.SpinButton): Another widget to modify
+            spinbutton, spinbutton2 (Gtk.SpinButton): Ohter widgets to modify
 
         """
 
@@ -10786,14 +13450,31 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.operation_auto_restart_flag:
             self.app_obj.set_operation_auto_restart_flag(True)
             spinbutton.set_sensitive(True)
+            spinbutton2.set_sensitive(True)
 
         elif not checkbutton.get_active() \
         and self.app_obj.operation_auto_restart_flag:
             self.app_obj.set_operation_auto_restart_flag(False)
             spinbutton.set_sensitive(False)
+            spinbutton2.set_sensitive(False)
 
 
-    def on_auto_restart_spinbutton_changed(self, spinbutton):
+    def on_auto_restart_max_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Sets the maximum number of restarts after a stalled download.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_operation_auto_restart_max(spinbutton.get_value())
+
+
+    def on_auto_restart_time_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_operations_downloads_tab().
 
@@ -11019,7 +13700,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_backup_button_toggled(self, radiobutton, value):
 
-        """Called from callback in self.setup_filesystem_backups_tab().
+        """Called from callback in self.setup_files_backups_tab().
 
         Updates IVs in the main application.
 
@@ -11373,7 +14054,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_data_check_button_clicked(self, button):
 
-        """Called from callback in self.setup_filesystem_db_errors_tab().
+        """Called from callback in self.setup_files_db_errors_tab().
 
         Checks the Tartube database for inconsistencies, and fixes them.
 
@@ -11388,7 +14069,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_data_dir_change_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Opens a window in which the user can select Tartube's data directoy.
         If the user actually selects it, call the main application to take
@@ -11403,14 +14084,10 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = Gtk.FileChooserDialog(
+        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
             _('Please select Tartube\'s data folder'),
             self,
             Gtk.FileChooserAction.SELECT_FOLDER,
-            (
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
-            ),
         )
 
         response = dialogue_win.run()
@@ -11456,7 +14133,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_data_dir_cursor_changed(self, treeview, button2, button3, button4,
     button5, button6):
 
-        """Called by self.setup_filesystem_database_tab().
+        """Called by self.setup_files_database_tab().
 
         When a data directory in the list is selected, (de)sensitise buttons
         in response.
@@ -11510,7 +14187,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_data_dir_forget_button_clicked(self, button, treeview):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Removes the selected the data directory from the list of alternative
         data directories.
@@ -11555,7 +14232,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_data_dir_forget_all_button_clicked(self, button, treeview):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Removes all data directories from the list of alternatives, except for
         the current one.
@@ -11593,7 +14270,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_data_dir_move_down_button_clicked(self, button, treeview, \
     liststore, button2):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Moves the selected data directory down one position in the list of
         alternative data directories.
@@ -11666,7 +14343,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_data_dir_move_up_button_clicked(self, button, treeview, liststore,
     button2):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Moves the selected data directory up one position in the list of
         alternative data directories.
@@ -11738,7 +14415,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_data_dir_switch_button_clicked(self, button, button2, treeview, \
     entry):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Changes the Tartube data directory to the one selected in the
         textview.
@@ -11802,7 +14479,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_default_avconv_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+        """Called from callback in self.setup_downloader_ffmpeg_tab().
 
         Sets the path to the avconv binary to the default path.
 
@@ -11820,7 +14497,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_default_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+        """Called from callback in self.setup_downloader_ffmpeg_tab().
 
         Sets the path to the ffmpeg binary to the default path.
 
@@ -11879,7 +14556,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_delete_shutdown_button_toggled(self, checkbutton, checkbutton2):
 
-        """Called from callback in self.setup_filesystem_temp_folders_tab().
+        """Called from callback in self.setup_files_temp_folders_tab().
 
         Enables/disables emptying temporary folders when Tartube shuts down.
 
@@ -11904,7 +14581,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_delete_watched_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_filesystem_video_deletion_tab().
+        """Called from callback in self.setup_files_video_deletion_tab().
 
         Enables/disables automatic deletion of videos, but only those that have
         been watched.
@@ -11967,7 +14644,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_disk_stop_button_toggled(self, checkbutton, spinbutton):
 
-        """Called from a callback in self.setup_filesystem_device_tab().
+        """Called from a callback in self.setup_files_device_tab().
 
         Enables/disables halting a download operation when the system is
         running out of disk space.
@@ -11992,7 +14669,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_disk_stop_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_filesystem_device_tab().
+        """Called from callback in self.setup_files_device_tab().
 
         Sets the amount of free disk space below which download operations
         will be halted.
@@ -12008,7 +14685,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_disk_warn_button_toggled(self, checkbutton, spinbutton):
 
-        """Called from a callback in self.setup_filesystem_device_tab().
+        """Called from a callback in self.setup_files_device_tab().
 
         Enables/disables warnings when the system is running out of disk space.
 
@@ -12032,7 +14709,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_disk_warn_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_filesystem_device_tab().
+        """Called from callback in self.setup_files_device_tab().
 
         Sets the amount of free disk space below which a warning will be
         issued.
@@ -12125,6 +14802,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.drag_video_source_flag:
             self.app_obj.set_drag_video_source_flag(False)
+
+
+    def on_drag_thumb_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the video thumbnail's path when dragging
+        and dropping to an external application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_thumb_path_flag:
+            self.app_obj.set_drag_thumb_path_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_thumb_path_flag:
+            self.app_obj.set_drag_thumb_path_flag(False)
 
 
     def on_draw_frame_button_toggled(self, checkbutton):
@@ -12272,6 +14970,32 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_scheduled_livestream_extra_flag(False)
 
 
+    def on_ffmpeg_add_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Adds a new ffmpeg_tartube.FFmpegOptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Widget providiing a name for the new object
+
+        """
+
+        new_obj = self.app_obj.create_ffmpeg_options_manager(entry.get_text())
+
+        # Update the treeview
+        self.setup_options_ffmpeg_list_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+        # All other widgets for creating an options manager object open its
+        #   edit window, so we'll do the same here
+        FFmpegOptionsEditWin(self.app_obj, new_obj)
+
+
     def on_ffmpeg_convert_flag_toggled(self, checkbutton):
 
         """Called from callback in self.setup_operations_downloads_tab().
@@ -12290,6 +15014,176 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ffmpeg_convert_webp_flag:
             self.app_obj.set_ffmpeg_convert_webp_flag(False)
+
+
+    def on_ffmpeg_delete_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Deletes the selected ffmpeg_tartube.FFmpegOptionsManager object, if
+        allowed.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        uid = model[this_iter][0]
+        if not uid in self.app_obj.ffmpeg_reg_dict:
+            return
+
+        options_obj = self.app_obj.ffmpeg_reg_dict[uid]
+        if self.app_obj.ffmpeg_options_obj \
+        and self.app_obj.ffmpeg_options_obj == options_obj:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('The current options manager cannot be deleted'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        # Prompt for confirmation
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _('Are you sure you want to delete this options manager?'),
+            'question',
+            'yes-no',
+            None,                   # Parent window is main window
+            {
+                'yes': 'delete_ffmpeg_options',
+                # Specified options
+                'data': options_obj,
+            },
+        )
+
+
+    def on_ffmpeg_edit_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Opens an edit window for the selected
+        ffmpeg_tartube.FFmpegOptionsManager.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.ffmpeg_reg_dict:
+
+                    FFmpegOptionsEditWin(
+                        self.app_obj,
+                        self.app_obj.ffmpeg_reg_dict[uid],
+                    )
+
+
+    def on_ffmpeg_export_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Exports the selected offmpeg_tartube.FFmpegOptionsManager object to a
+        JSON file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.ffmpeg_reg_dict:
+
+                    self.app_obj.export_ffmpeg_manager(
+                        self.app_obj.ffmpeg_reg_dict[uid],
+                    )
+
+
+    def on_ffmpeg_import_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Imports a JSON file and creates a new
+        ffmpeg_tartube.FFmpegOptionsManager for it.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Widget providiing a name for the new object.
+                If the entry is empty, then the name specified by the JSON file
+                itself is used
+
+        """
+
+        self.app_obj.import_ffmpeg_manager(entry.get_text())
+
+        # Update the treeview
+        self.setup_options_ffmpeg_list_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+
+    def on_ffmpeg_use_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Sets the selected ffmpeg_tartube.FFmpegOptionsManager object as the
+        current one.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.ffmpeg_reg_dict:
+
+                    self.app_obj.set_ffmpeg_options_obj(
+                        self.app_obj.ffmpeg_reg_dict[uid],
+                    )
+
+        # Update the treeview
+        self.setup_options_ffmpeg_list_tab_update_treeview()
 
 
     def on_gtk_emulate_button_toggled(self, checkbutton):
@@ -12674,7 +15568,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_match_button_toggled(self, radiobutton):
 
-        """Called from callback in self.setup_filesystem_video_deletion_tab().
+        """Called from callback in self.setup_files_video_deletion_tab().
 
         Updates IVs in the main application and sensities/desensities widgets.
 
@@ -12712,7 +15606,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_match_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_filesystem_video_deletion_tab().
+        """Called from callback in self.setup_files_video_deletion_tab().
 
         Updates IVs in the main application and sensities/desensities widgets.
 
@@ -12925,7 +15819,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_open_desktop_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_filesystem_temp_folders_tab().
+        """Called from callback in self.setup_files_temp_folders_tab().
 
         Enables/disables opening temporary folders on the desktop when Tartube
         shuts down.
@@ -13011,6 +15905,220 @@ class SystemPrefWin(GenericPrefWin):
             main_win_obj.show_operation_warning_checkbutton.set_active(True)
         elif (not checkbutton.get_active() and other_flag):
             main_win_obj.show_operation_warning_checkbutton.set_active(False)
+
+
+    def on_options_add_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Adds a new options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Widget providiing a name for the new object
+
+        """
+
+        new_obj = self.app_obj.create_options_manager(entry.get_text())
+
+        # If required, clone download options from the General Options Manager
+        #   into the new object
+        if self.app_obj.auto_clone_options_flag:
+            new_obj.clone_options(self.app_obj.general_options_obj)
+
+        # On the assumption that objects created here will be applied (mostly)
+        #   in the Classic Mode tab, disable downloading the description,
+        #   annotations (etc) files
+        new_obj.set_classic_mode_options()
+
+        # Update the treeview
+        self.setup_options_dl_list_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+        # All other widgets for creating an options manager object open its
+        #   edit window, so we'll do the same here
+        OptionsEditWin(self.app_obj, new_obj)
+
+
+    def on_options_delete_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Deletes the selected options.OptionsManager object, if allowed.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        uid = model[this_iter][0]
+        if not uid in self.app_obj.options_reg_dict:
+            return
+
+        options_obj = self.app_obj.options_reg_dict[uid]
+        if self.app_obj.general_options_obj \
+        and self.app_obj.general_options_obj == options_obj:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('The default options manager cannot be deleted'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        # Prompt for confirmation
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _('Are you sure you want to delete this options manager?'),
+            'question',
+            'yes-no',
+            None,                   # Parent window is main window
+            {
+                'yes': 'delete_download_options',
+                # Specified options
+                'data': options_obj,
+            },
+        )
+
+
+    def on_options_edit_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Opens an edit window for the selected options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.options_reg_dict:
+
+                    OptionsEditWin(
+                        self.app_obj,
+                        self.app_obj.options_reg_dict[uid],
+                    )
+
+
+    def on_options_export_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Exports the selected options.OptionsManager object to a JSON file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.options_reg_dict:
+
+                    self.app_obj.export_options_manager(
+                        self.app_obj.options_reg_dict[uid],
+                    )
+
+
+    def on_options_import_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Imports a JSON file and creates a new options.OptionsManager for it.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Widget providiing a name for the new object.
+                If the entry is empty, then the name specified by the JSON file
+                itself is used
+
+        """
+
+        self.app_obj.import_options_manager(entry.get_text())
+
+        # Update the treeview
+        self.setup_options_dl_list_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+
+    def on_options_use_classic_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Applies the selected options.OptionsManager object to the Classic Mode
+        tab.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.options_reg_dict:
+
+                    options_obj = self.app_obj.options_reg_dict[uid]
+
+                    # If this is already the options manager for the Classic
+                    #   Mode tab, then remove it (but don't delete the object
+                    #   itself)
+                    if self.app_obj.classic_options_obj \
+                    and self.app_obj.classic_options_obj == options_obj:
+
+                        self.app_obj.disapply_classic_download_options()
+
+                    else:
+
+                        self.app_obj.apply_classic_download_options(
+                            self.app_obj.options_reg_dict[uid],
+                        )
+
+        # Update the treeview
+        self.setup_options_dl_list_tab_update_treeview()
 
 
     def on_output_empty_button_toggled(self, checkbutton):
@@ -13358,7 +16466,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_reset_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+        """Called from callback in self.setup_downloader_ffmpeg_tab().
 
         Resets the path to the ffmpeg binary.
 
@@ -13576,7 +16684,7 @@ class SystemPrefWin(GenericPrefWin):
         for path in path_list:
 
             this_iter = model.get_iter(path)
-            if model.iter_previous(this_iter):
+            if this_iter is not None:
 
                 name = model[this_iter][0]
                 self.app_obj.move_scheduled_list(name, False)
@@ -13640,7 +16748,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_set_avconv_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+        """Called from callback in self.setup_downloader_ffmpeg_tab().
 
         Opens a window in which the user can select the avconv binary, if it is
         installed (and if the user wants it).
@@ -13653,14 +16761,10 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = Gtk.FileChooserDialog(
+        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
             _('Please select the AVConv executable'),
             self,
             Gtk.FileChooserAction.OPEN,
-            (
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
-            ),
         )
 
         response = dialogue_win.run()
@@ -13677,7 +16781,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_set_ffmpeg_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_ytdl_ffmpeg_tab().
+        """Called from callback in self.setup_downloader_ffmpeg_tab().
 
         Opens a window in which the user can select the ffmpeg binary, if it is
         installed (and if the user wants it).
@@ -13690,14 +16794,10 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = Gtk.FileChooserDialog(
+        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
             _('Please select the FFmpeg executable'),
             self,
             Gtk.FileChooserAction.OPEN,
-            (
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
-            ),
         )
 
         response = dialogue_win.run()
@@ -14128,7 +17228,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_update_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_ytdl_file_paths_tab().
+        """Called from a callback in self.setup_downloader_paths_tab().
 
         Extracts the value visible in the combobox, converts it into another
         value, and uses that value to update the main application's IV.
@@ -14166,7 +17266,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_use_first_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Enables/disables automatic loading of the first database file in the
         list.
@@ -14187,7 +17287,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_use_list_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_filesystem_database_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Enables/disables automatic loading of an alternative database file, if
         the default one is locked.
@@ -14309,33 +17409,73 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.main_win_obj.set_video_res(model[tree_iter][0])
 
 
-    def on_ytdl_fork_changed(self, entry, store, store2):
+    def on_ytdl_fork_button_toggled(self, radiobutton, entry, fork_type=None):
 
-        """Called from callback in self.setup_ytdl_file_paths_tab().
+        """Called from callback in self.setup_downloader_forks_tab().
 
-        Sets the youtube-dl fork to use, instead of the original youtube-dl
-        itself.
+        Sets the youtube-dl fork to be used. See also
+        self.on_ytdl_fork_changed().
+
+        Args:
+
+            radiobutton (Gtk.Radiobutton): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be updated
+
+            fork_type (str): 'youtube-dlc', 'youtube-dl', or None for any other
+                fork
+
+        """
+
+        if radiobutton.get_active():
+
+            if fork_type is None:
+
+                self.app_obj.set_ytdl_fork(None)
+                entry.set_sensitive(True)
+
+            elif fork_type == 'youtube-dl':
+
+                self.app_obj.set_ytdl_fork(None)
+                entry.set_text('')
+                entry.set_sensitive(False)
+
+            elif fork_type == 'youtube-dlc':
+
+                self.app_obj.set_ytdl_fork(fork_name)
+                entry.set_text('')
+                entry.set_sensitive(False)
+
+        self.update_ytdl_combos()
+
+
+    def on_ytdl_fork_changed(self, entry, radiobutton):
+
+        """Called from callback in self.setup_downloader_forks_tab().
+
+        Sets the youtube-dl fork to be used. See also
+        self.on_ytdl_fork_button_toggled().
 
         Args:
 
             entry (Gtk.Entry): The widget changed
 
-            store, store2 (Gtk.ListStore): The liststores to update
-
         """
 
-        text = utils.strip_whitespace(entry.get_text())
-        if text == '':
-            self.app_obj.set_ytdl_fork(None)
-        else:
-            self.app_obj.set_ytdl_fork(text)
+        if radiobutton.get_active():
 
-        self.update_ytdl_combos(store, store2)
+            text = utils.strip_whitespace(entry.get_text())
+            if text == '':
+                self.app_obj.set_ytdl_fork(None)
+            else:
+                self.app_obj.set_ytdl_fork(text)
+
+            self.update_ytdl_combos()
 
 
     def on_ytdl_path_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_ytdl_file_paths_tab().
+        """Called from a callback in self.setup_downloader_paths_tab().
 
         Extracts the value visible in the combobox, converts it into another
         value, and uses that value to update the main application's IV.
@@ -14451,18 +17591,14 @@ class SystemPrefWin(GenericPrefWin):
                 )
 
 
-    def update_ytdl_combos(self, store, store2):
+    def update_ytdl_combos(self):
 
-        """Called initially by self.setup_ytdl_file_paths_tab(), then by
+        """Called initially by self.setup_downloader_paths_tab(), then by
         self.on_ytdl_fork_changed().
 
         Updates the contents of the two comboboxes in the tab, so that the
         youtube-dl fork is visible, rather than yotube-dl itself (if
         applicable).
-
-        Args:
-
-            store, store2 (Gtk.ListStore): The liststores to update
 
         """
 
@@ -14477,8 +17613,8 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # First combo: Path to the youtube-dl executable
-        store.set(
-            store.get_iter(Gtk.TreePath(0)),
+        self.path_liststore.set(
+            self.path_liststore.get_iter(Gtk.TreePath(0)),
             0,
             _('Use default path') + ' (' + ytdl_path_default + ')',
         )
@@ -14489,8 +17625,8 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.ytdl_bin,
         )
 
-        store.set(
-            store.get_iter(Gtk.TreePath(1)),
+        self.path_liststore.set(
+            self.path_liststore.get_iter(Gtk.TreePath(1)),
             0,
             _('Use local path') + ' (' + ytdl_bin + ')',
         )
@@ -14503,8 +17639,8 @@ class SystemPrefWin(GenericPrefWin):
                 self.app_obj.ytdl_path_pypi,
             )
 
-            store.set(
-                store.get_iter(Gtk.TreePath(2)),
+            self.path_liststore.set(
+                self.path_liststore.get_iter(Gtk.TreePath(2)),
                 0,
                 _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
             )
@@ -14515,5 +17651,9 @@ class SystemPrefWin(GenericPrefWin):
 
             count += 1
             descrip = re.sub(standard, fork, formats.YTDL_UPDATE_DICT[item])
-            store2.set(store2.get_iter(Gtk.TreePath(count)), 1, descrip)
+            self.cmd_liststore.set(
+                self.cmd_liststore.get_iter(Gtk.TreePath(count)),
+                1,
+                descrip,
+            )
 

@@ -63,6 +63,31 @@ class GenericMedia(object):
             return 'video'
 
 
+    def get_translated_type(self, upper_flag=False):
+
+        if not upper_flag:
+
+            if isinstance(self, Channel):
+                return _('channel')
+            elif isinstance(self, Playlist):
+                return _('playlist')
+            elif isinstance(self, Folder):
+                return _('folder')
+            else:
+                return _('video')
+
+        else:
+
+            if isinstance(self, Channel):
+                return _('Channel')
+            elif isinstance(self, Playlist):
+                return _('Playlist')
+            elif isinstance(self, Folder):
+                return _('Folder')
+            else:
+                return _('Video')
+
+
     # Set accessors
 
 
@@ -1168,13 +1193,15 @@ class GenericRemoteContainer(GenericContainer):
     # Public class methods
 
 
-    def add_child(self, child_obj, no_sort_flag=False):
+    def add_child(self, app_obj, child_obj, no_sort_flag=False):
 
         """Can be called by anything.
 
         Adds a child media data object, which must be a media.Video object.
 
         Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
             child_obj (media.Video): The child object
 
@@ -1190,75 +1217,23 @@ class GenericRemoteContainer(GenericContainer):
 
             self.child_list.append(child_obj)
             if not no_sort_flag:
-                self.sort_children()
+                self.sort_children(app_obj)
 
             if isinstance(child_obj, Video):
                 self.vid_count += 1
 
 
-    def do_sort(self, obj1, obj2):
-
-        """Sorting function used by functools.cmp_to_key(), and called by
-        self.sort_children().
-
-        Sort videos by upload time, with the most recent video first.
-
-        When downloading a channel or playlist, we assume that YouTube (etc)
-        supplies us with the most recent upload first. Therefore, when the
-        upload time is the same, sort by the order in youtube-dl fetches the
-        videos.
-
-        Args:
-
-            obj1, obj2 (media.Video) - Video objects being sorted
-
-        Returns:
-
-            -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-
-        """
-
-        # Livestreams come before everything else
-        if obj1.live_mode > obj2.live_mode:
-            return -1
-        elif obj1.live_mode < obj2.live_mode:
-            return 1
-        elif obj1.live_time < obj2.live_time:
-            return -1
-        elif obj1.live_time > obj2.live_time:
-            return 1
-
-        # The video's index is not relevant unless sorting a playlist
-        elif isinstance(self, Playlist) \
-        and obj1.index is not None and obj2.index is not None:
-            if obj1.index < obj2.index:
-                return -1
-            else:
-                return 1
-
-        # Otherwise sort by upload time
-        elif obj1.upload_time is not None and obj2.upload_time is not None:
-            if obj1.upload_time > obj2.upload_time:
-                return -1
-            elif obj1.upload_time < obj2.upload_time:
-                return 1
-            elif obj1.receive_time is not None \
-            and obj2.receive_time is not None:
-                if obj1.receive_time < obj2.receive_time:
-                    return -1
-                elif obj1.receive_time > obj2.receive_time:
-                    return 1
-                else:
-                    return 0
-        else:
-            return 0
-
-
-    def sort_children(self):
+    def sort_children(self, app_obj):
 
         """Can be called by anything. For example, called by self.add_child().
 
-        Sorts the child media.Video objects by upload time.
+        Sorts the child media.Video objects using the standard video-sorting
+        function.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
         """
 
         # Sort a copy of the list to prevent 'list modified during sort'
@@ -1266,14 +1241,11 @@ class GenericRemoteContainer(GenericContainer):
         while True:
 
             copy_list = self.child_list.copy()
-            copy_list.sort(key=functools.cmp_to_key(self.do_sort))
+            copy_list.sort(key=functools.cmp_to_key(app_obj.video_compare))
 
             if len(copy_list) == len(self.child_list):
                 self.child_list = copy_list.copy()
                 break
-
-
-        self.child_list.sort(key=functools.cmp_to_key(self.do_sort))
 
 
     # Set accessors
@@ -1356,6 +1328,9 @@ class Video(GenericMedia):
 
     Args:
 
+        app_obj (mainapp.TartubeApp): The main application (not stored as an
+            IV)
+
         dbid (int): A unique ID for this media data object
 
         name (str): The video name
@@ -1375,7 +1350,7 @@ class Video(GenericMedia):
     # Standard class methods
 
 
-    def __init__(self, dbid, name, parent_obj=None, options_obj=None,
+    def __init__(self, app_obj, dbid, name, parent_obj=None, options_obj=None,
     no_sort_flag=False, dummy_flag=False):
 
         # IV list - class objects
@@ -1546,7 +1521,7 @@ class Video(GenericMedia):
 
         # Update the parent
         if parent_obj:
-            self.parent_obj.add_child(self, no_sort_flag)
+            self.parent_obj.add_child(app_obj, self, no_sort_flag)
 
 
     # Public class methods
@@ -1783,6 +1758,14 @@ class Video(GenericMedia):
 
     def set_file(self, filename, extension):
 
+        self.file_name = filename
+        self.file_ext = extension
+
+
+    def set_file_from_path(self, path):
+
+        directory, this_file = os.path.split(path)
+        filename, extension = os.path.splitext(this_file)
         self.file_name = filename
         self.file_ext = extension
 
@@ -2425,6 +2408,12 @@ class Channel(GenericRemoteContainer):
         #   operation. For channels on other websites, can be set manually
         self.rss = None
 
+        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
+        #   self.sort_children() was called. (When the user changes the sort
+        #   mode, we don't sort self.child_list() until we actually need to
+        #   display it)
+        self.last_sort_mode = 'default'
+
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this channel; but can be set to the
@@ -2485,7 +2474,7 @@ class Channel(GenericRemoteContainer):
 
         # Update the parent (if any)
         if self.parent_obj:
-            self.parent_obj.add_child(self)
+            self.parent_obj.add_child(app_obj, self)
 
 
     # Public class methods
@@ -2495,9 +2484,6 @@ class Channel(GenericRemoteContainer):
 
 
 #   def del_child():                # Inherited from GenericContainer
-
-
-#   def do_sort():                  # Inherited from GenericRemoteContainer
 
 
 #   def sort_children():            # Inherited from GenericRemoteContainer
@@ -2597,6 +2583,12 @@ class Playlist(GenericRemoteContainer):
         #   manually by the user for other websites
         self.rss = None
 
+        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
+        #   self.sort_children() was called. (When the user changes the sort
+        #   mode, we don't sort self.child_list() until we actually need to
+        #   display it)
+        self.last_sort_mode = 'default'
+
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this playlist; but can be set to the
@@ -2657,7 +2649,7 @@ class Playlist(GenericRemoteContainer):
 
         # Update the parent (if any)
         if self.parent_obj:
-            self.parent_obj.add_child(self)
+            self.parent_obj.add_child(app_obj, self)
 
 
     # Public class methods
@@ -2667,9 +2659,6 @@ class Playlist(GenericRemoteContainer):
 
 
 #   def del_child():                # Inherited from GenericContainer
-
-
-#   def do_sort():                  # Inherited from GenericRemoteContainer
 
 
 #   def sort_children():            # Inherited from GenericRemoteContainer
@@ -2779,6 +2768,12 @@ class Folder(GenericContainer):
         #   folder can't be changed
         self.nickname = name
 
+        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
+        #   self.sort_children() was called. (When the user changes the sort
+        #   mode, we don't sort self.child_list() until we actually need to
+        #   display it)
+        self.last_sort_mode = 'default'
+
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this folder; but can be set to the
@@ -2850,13 +2845,13 @@ class Folder(GenericContainer):
 
         # Update the parent (if any)
         if self.parent_obj:
-            self.parent_obj.add_child(self)
+            self.parent_obj.add_child(app_obj, self)
 
 
     # Public class methods
 
 
-    def add_child(self, child_obj, no_sort_flag=False):
+    def add_child(self, app_obj, child_obj, no_sort_flag=False):
 
         """Can be called by anything.
 
@@ -2864,6 +2859,8 @@ class Folder(GenericContainer):
         object (including another media.Folder object).
 
         Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
             child_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): The child object
@@ -2878,7 +2875,7 @@ class Folder(GenericContainer):
 
             self.child_list.append(child_obj)
             if not no_sort_flag:
-                self.sort_children()
+                self.sort_children(app_obj)
 
             if isinstance(child_obj, Video):
                 self.vid_count += 1
@@ -2920,101 +2917,7 @@ class Folder(GenericContainer):
 #   def del_child():                # Inherited from GenericContainer
 
 
-    def do_sort(self, obj1, obj2):
-
-        """Sorting function used by functools.cmp_to_key(), and called by
-        self.sort_children().
-
-        Sorts the child media.Video, media.Channel, media.Playlist and
-        media.Folder objects.
-
-        Firstly, sort by class - folders, channels/playlists, then videos.
-
-        Within folders, channels and playlists, sort alphabetically. Within
-        videos, sort by upload time.
-
-        Args:
-
-            obj1, obj2 (media.Video, media.Channel, media.Playlist or
-                media.Folder) - Media data objects being sorted
-
-        Returns:
-
-            -1 if obj1 comes first, 1 if obj2 comes first, 0 if they are equal
-
-        """
-
-        if str(obj1.__class__) == str(obj2.__class__) \
-        or (
-            isinstance(obj1, GenericRemoteContainer) \
-            and isinstance(obj2, GenericRemoteContainer)
-        ):
-            if isinstance(obj1, Video):
-
-                # Livestreams come before everything else
-                if obj1.live_mode > obj2.live_mode:
-                    return -1
-                elif obj1.live_mode < obj2.live_mode:
-                    return 1
-                elif obj1.live_time < obj2.live_time:
-                    return -1
-                elif obj1.live_time > obj2.live_time:
-                    return 1
-
-                # Otherwise sort by upload time, then by receive time
-                elif obj1.upload_time is not None \
-                and obj2.upload_time is not None:
-                    if obj1.upload_time > obj2.upload_time:
-                        return -1
-                    elif obj1.upload_time < obj2.upload_time:
-                        return 1
-                    elif obj1.receive_time is not None \
-                    and obj2.receive_time is not None:
-                        # In private folders (e.g. 'All Videos'), the most
-                        #   recently received video goes to the top of the list
-                        if self.priv_flag:
-                            if obj1.receive_time > obj2.receive_time:
-                                return -1
-                            elif obj1.receive_time < obj2.receive_time:
-                                return 1
-                        # ...but for everything else, the sorting algorithm is
-                        #   the same as for GenericRemoteContainer.do_sort(),
-                        #   in which we assume the website is sending us
-                        #   videos, newest first
-                        else:
-                            if obj1.receive_time < obj2.receive_time:
-                                return -1
-                            elif obj1.receive_time > obj2.receive_time:
-                                return 1
-
-            # If the videos can't be sorted by time, then sort alphabetically
-            #   (or by .dbid as a last resort)
-            # For other classes of object, do that every time
-            if obj1.name.lower() < obj2.name.lower():
-                return -1
-            elif obj1.name.lower() > obj2.name.lower():
-                return 1
-            elif obj1.dbid < obj2.dbid:
-                return -1
-            else:
-                return 1
-
-        else:
-
-            # Sort by class
-            if isinstance(obj1, Folder):
-                return -1
-            elif isinstance(obj2, Folder):
-                return 1
-            elif isinstance(obj1, Channel) or isinstance(obj1, Playlist):
-                return -1
-            elif isinstance(obj2, Channel) or isinstance(obj2, Playlist):
-                return 1
-            else:
-                return 0
-
-
-    def sort_children(self):
+    def sort_children(self, app_obj):
 
         """Can be called by anything. For example, called by self.add_child().
 
@@ -3022,15 +2925,14 @@ class Folder(GenericContainer):
         media.Folder objects.
         """
 
-        # v1.0.002: At the end of a download operation, I am seeing 'list
-        #   modified during sort' errors. Not sure what the cause is, but we
-        #   can prevent it by sorting a copy of the list, rather than the list
-        #   itself. If the list itself is modified during the sort, sort it
-        #   again
+        # Sort a copy of the list to prevent 'list modified during sort'
+        #   errors
         while True:
 
             copy_list = self.child_list.copy()
-            copy_list.sort(key=functools.cmp_to_key(self.do_sort))
+            copy_list.sort(
+                key=functools.cmp_to_key(app_obj.folder_child_compare),
+            )
 
             if len(copy_list) == len(self.child_list):
                 self.child_list = copy_list.copy()

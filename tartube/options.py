@@ -40,9 +40,7 @@ import utils
 
 class OptionsManager(object):
 
-    """Called by mainapp.TartubeApp.OptionsManager().
-
-    Partially based on the OptionsManager class in youtube-dl-gui.
+    """Partially based on the OptionsManager class in youtube-dl-gui.
 
     This class handles settings for downloading media. Unlike youtube-dl-gui,
     which has one group of download options applied to all downloads, this
@@ -337,7 +335,7 @@ class OptionsManager(object):
 
         [in youtube-dl-gui, this was named 'cmd_args']
 
-        extra_cmd_string: String that contains extra youtube-dl options
+        extra_cmd_string (str): String that contains extra youtube-dl options
             separated by spaces. Components containing whitespace can be
             enclosed within double quotes "..."
 
@@ -461,7 +459,7 @@ class OptionsManager(object):
         """Called by mainapp.TartubeApp.apply_download_options() and
         .clone_general_options_manager().
 
-        Clones download options from the specified object into those object,
+        Clones download options from the specified object into this object,
         completely replacing this object's download options.
 
         Args:
@@ -948,8 +946,9 @@ class OptionsParser(object):
             options_manager_obj (options.OptionsManager): The object containing
                 the download options for this media data object
 
-            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
-                possible values of downloads.DownloadManager.operation_type)
+            operation_type (str): 'sim', 'real', 'custom', 'classic_sim',
+                'classic_real', 'classic_custom' (matching possible values of
+                downloads.DownloadManager.operation_type)
 
         Returns:
 
@@ -1044,7 +1043,7 @@ class OptionsParser(object):
         # Parse the 'extra_cmd_string' option, which can contain arguments
         #   inside double quotes "..." (arguments that can therefore contain
         #   whitespace)
-        parsed_list = utils.parse_ytdl_options(copy_dict['extra_cmd_string'])
+        parsed_list = utils.parse_options(copy_dict['extra_cmd_string'])
         for item in parsed_list:
             options_list.append(item)
 
@@ -1124,14 +1123,17 @@ class OptionsParser(object):
 
             copy_dict (dict): Copy of the original options dictionary
 
-            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
-                possible values of downloads.DownloadManager.operation_type)
+            operation_type (str): 'sim', 'real', 'custom', 'classic_sim',
+                'classic_real', 'classic_custom' (matching possible values of
+                downloads.DownloadManager.operation_type)
 
         """
 
         # Special case: if a download operation was launched from the Classic
         #   Mode Tab, the save path is specified in that tab
-        if operation_type == 'classic':
+        if operation_type == 'classic_sim' \
+        or operation_type == 'classic_real' \
+        or operation_type == 'classic_custom':
 
             save_path = media_data_obj.dummy_dir
 
@@ -1193,8 +1195,11 @@ class OptionsParser(object):
 
             # Special case: if a download operation was launched from the
             #   Classic Mode Tab, the video format may be specified by that tab
-            if operation_type == 'classic' \
-            and media_data_obj.dummy_format:
+            if (
+                operation_type == 'classic_sim' \
+                or operation_type == 'classic_real' \
+                or operation_type == 'classic_custom'
+            ) and media_data_obj.dummy_format:
 
                 dummy_format = media_data_obj.dummy_format
 
@@ -1243,7 +1248,7 @@ class OptionsParser(object):
         #   formats; if the format isn't available for some videos, we'll get
         #   an error for each of them (rather than the simulated download we
         #   were hoping for)
-        if operation_type == 'sim':
+        if operation_type == 'sim' or operation_type == 'classic_sim':
 
             copy_dict['video_format'] = '0'
             copy_dict['all_formats'] = False

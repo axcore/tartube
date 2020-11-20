@@ -49,7 +49,8 @@ from mainapp import _
 
 class UpdateManager(threading.Thread):
 
-    """Called by mainapp.TartubeApp.update_manager_start().
+    """Called by mainapp.TartubeApp.update_manager_start() or
+    .update_manager_start_from_wizwin().
 
     Python class to create a system child process, to do one of two jobs:
 
@@ -67,13 +68,16 @@ class UpdateManager(threading.Thread):
         update_type (str): 'ffmpeg' to install FFmpeg (on MS Windows only), or
             'ytdl' to install/update youtube-dl
 
+        wiz_win_obj (wizwin.SetupWizWin or None): The calling setup wizard
+            window (if set, the main window doesn't exist yet)
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj, update_type):
+    def __init__(self, app_obj, update_type, wiz_win_obj=None):
 
         super(UpdateManager, self).__init__()
 
@@ -81,6 +85,9 @@ class UpdateManager(threading.Thread):
         # -----------------------
         # The mainapp.TartubeApp object
         self.app_obj = app_obj
+        # The calling setup wizard window (if set, the main window doesn't
+        #   exist yet)
+        self.wiz_win_obj = wiz_win_obj
 
         # This object reads from the child process STDOUT and STDERR in an
         #   asynchronous way
@@ -194,8 +201,7 @@ class UpdateManager(threading.Thread):
         """
 
         # Show information about the update operation in the Output Tab
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
+        self.install_ffmpeg_write_output(
             _('Starting update operation, installing FFmpeg'),
         )
 
@@ -211,10 +217,9 @@ class UpdateManager(threading.Thread):
         )
 
         # Show the system command in the Output Tab
-        space = ' '
-        self.app_obj.main_win_obj.output_tab_write_system_cmd(
-            1,
-            space.join( ['pacman', '-S', binary, '--noconfirm'] ),
+        self.install_ffmpeg_write_output(
+            ' '.join( ['pacman', '-S', binary, '--noconfirm'] ),
+            True,                   # A system command, not a message
         )
 
         # So that we can read from the child process STDOUT and STDERR, attach
@@ -240,11 +245,9 @@ class UpdateManager(threading.Thread):
 
                 if stdout:
 
-                    # Show command line output in the Output Tab
-                    self.app_obj.main_win_obj.output_tab_write_stdout(
-                        1,
-                        stdout,
-                    )
+                    # Show command line output in the Output Tab (or wizard
+                    #   window textview)
+                    self.install_ffmpeg_write_output(stdout)
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -261,11 +264,9 @@ class UpdateManager(threading.Thread):
 
                 self.stderr_list.append(stderr)
 
-                # Show command line output in the Output Tab
-                self.app_obj.main_win_obj.output_tab_write_stdout(
-                    1,
-                    stderr,
-                )
+                # Show command line output in the Output Tab (or wizard window
+                #   textview)
+                self.install_ffmpeg_write_output(stderr)
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
@@ -284,11 +285,8 @@ class UpdateManager(threading.Thread):
         if not self.stderr_list:
             self.success_flag = True
 
-        # Show a confirmation in the the Output Tab
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            _('Update operation finished'),
-        )
+        # Show a confirmation in the the Output Tab (or wizard window textview)
+        self.install_ffmpeg_write_output(_('Update operation finished'))
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
@@ -296,6 +294,35 @@ class UpdateManager(threading.Thread):
             0,
             self.app_obj.update_manager_halt_timer,
         )
+
+
+    def install_ffmpeg_write_output(self, msg, system_cmd_flag=False):
+
+        """Called by self.install_ffmpeg().
+
+        Writes a message to the Output Tab (or to the setup wizard window, if
+        called from there).
+
+        Args:
+
+            msg (str): The message to display
+
+            system_cmd_flag (bool): If True, display system commands in a
+                different colour in the Output Tab (ignored when writing in
+                the setup wizard window)
+
+        """
+
+        if not self.wiz_win_obj:
+
+            if not system_cmd_flag:
+                self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
+            else:
+                self.app_obj.main_win_obj.output_tab_write_system_cmd(1, msg)
+
+        else:
+
+            self.wiz_win_obj.ffmpeg_page_write(msg)
 
 
     def install_ytdl(self):
@@ -310,10 +337,10 @@ class UpdateManager(threading.Thread):
         application with the result of the update (success or failure).
         """
 
-        # Show information about the update operation in the Output Tab
-        downloader = self.app_obj.get_downloader()
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
+        # Show information about the update operation in the Output Tab (or in
+        #   the setup wizard window, if called from there)
+        downloader = self.app_obj.get_downloader(self.wiz_win_obj)
+        self.install_ytdl_write_output(
             _('Starting update operation, installing/updating ' + downloader),
         )
 
@@ -330,7 +357,7 @@ class UpdateManager(threading.Thread):
         for arg in cmd_list:
 
             # Substitute in the fork, if one is specified
-            arg = self.app_obj.check_downloader(arg)
+            arg = self.app_obj.check_downloader(arg, self.wiz_win_obj)
             # Convert a path beginning with ~ (not on MS Windows)
             if os.name != 'nt':
                 arg = re.sub('^\~', os.path.expanduser('~'), arg)
@@ -341,10 +368,9 @@ class UpdateManager(threading.Thread):
         self.create_child_process(mod_list)
 
         # Show the system command in the Output Tab
-        space = ' '
-        self.app_obj.main_win_obj.output_tab_write_system_cmd(
-            1,
-            space.join(mod_list),
+        self.install_ytdl_write_output(
+            ' '.join(mod_list),
+            True,                   # A system command, not a message
         )
 
         # So that we can read from the child process STDOUT and STDERR, attach
@@ -392,11 +418,9 @@ class UpdateManager(threading.Thread):
                         self.intercept_version_from_stdout(stdout)
                         self.stdout_list.append(stdout)
 
-                    # Show command line output in the Output Tab
-                    self.app_obj.main_win_obj.output_tab_write_stdout(
-                        1,
-                        stdout,
-                    )
+                    # Show command line output in the Output Tab (or wizard
+                    #   window textview)
+                    self.install_ytdl_write_output(stdout)
 
         # The child process has finished
         while not self.stderr_queue.empty():
@@ -423,43 +447,35 @@ class UpdateManager(threading.Thread):
                 and not re.search('You should consider upgrading', stderr):
                     self.stderr_list.append(stderr)
 
-                # Show command line output in the Output Tab
-                self.app_obj.main_win_obj.output_tab_write_stdout(
-                    1,
-                    stderr,
-                )
+                # Show command line output in the Output Tab (or wizard window
+                #   textview)
+                self.install_ytdl_write_output(stderr)
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
         if self.child_process is None:
 
             msg = _('Update did not start')
+
             self.stderr_list.append(msg)
-            self.app_obj.main_win_obj.output_tab_write_stdout(
-                1,
-                msg,
-            )
+            self.install_ytdl_write_output(msg)
 
         elif self.child_process.returncode > 0:
 
             msg = _('Child process exited with non-zero code: {}').format(
                 self.child_process.returncode,
             )
-            self.app_obj.main_win_obj.output_tab_write_stdout(
-                1,
-                msg,
-            )
+
+            self.stderr_list.append(msg)
+            self.install_ytdl_write_output(msg)
 
         # Operation complete. self.success_flag is checked by
         #   mainapp.TartubeApp.update_manager_finished
         if not self.stderr_list:
             self.success_flag = True
 
-        # Show a confirmation in the the Output Tab
-        self.app_obj.main_win_obj.output_tab_write_stdout(
-            1,
-            _('Update operation finished'),
-        )
+        # Show a confirmation in the the Output Tab (or wizard window textview)
+        self.install_ytdl_write_output(_('Update operation finished'))
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
@@ -467,6 +483,35 @@ class UpdateManager(threading.Thread):
             0,
             self.app_obj.update_manager_halt_timer,
         )
+
+
+    def install_ytdl_write_output(self, msg, system_cmd_flag=False):
+
+        """Called by self.install_ytdl().
+
+        Writes a message to the Output Tab (or to the setup wizard window, if
+        called from there).
+
+        Args:
+
+            msg (str): The message to display
+
+            system_cmd_flag (bool): If True, display system commands in a
+                different colour in the Output Tab (ignored when writing in
+                the setup wizard window)
+
+        """
+
+        if not self.wiz_win_obj:
+
+            if not system_cmd_flag:
+                self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
+            else:
+                self.app_obj.main_win_obj.output_tab_write_system_cmd(1, msg)
+
+        else:
+
+            self.wiz_win_obj.downloader_page_write(msg)
 
 
     def intercept_version_from_stdout(self, stdout):
@@ -483,7 +528,7 @@ class UpdateManager(threading.Thread):
         """
 
         substring = re.search(
-            'Requirement already up\-to\-date.*\(([\d\.]+)\)\s*$',
+            'Requirement already up\-to\-date.*\(([^\(\)]+)\)\s*$',
             stdout,
         )
 
@@ -492,7 +537,7 @@ class UpdateManager(threading.Thread):
 
         else:
             substring = re.search(
-                'Successfully installed youtube\-dl\-([\d\.]+)\s*$',
+                'Successfully installed youtube\-dl\-([^\(\)]+)\s*$',
                 stdout,
             )
 

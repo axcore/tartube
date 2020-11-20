@@ -10,5 +10,9 @@ FatCow Web Hosting https://www.fatcow.com/>
 Mr. Hopnguyen <https://www.iconfinder.com/Mr.hopnguyen>
 
 Other credits:
-Tartube is partially based on youtube-dl-gui
-
+Tartube is partially based on youtube-dl-gui by MrS0m30n3
+    https://github.com/MrS0m30n3/youtube-dl-gui
+FFmpeg thumbnail code adapted from youtube-dl
+    http://youtube-dl.org/
+FFmpeg options adapted from FFmpeg Command Line Wizard by AndreKR 
+    https://github.com/AndreKR/ffmpeg-command-line-wizard
