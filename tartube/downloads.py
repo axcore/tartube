@@ -5438,6 +5438,7 @@ class MiniJSONFetcher(object):
                             0,
                             app_obj.mark_video_live,
                             self.video_obj,
+                            0,                  # Livestream has finished
                             {},             # Reset any livestream data
                             None,           # Reset any l/s server messages
                             True,           # Don't update Video Index yet

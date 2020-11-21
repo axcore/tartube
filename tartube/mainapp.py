@@ -97,7 +97,7 @@ import media
 import options
 import process
 import refresh
-#import testing
+import testing
 import tidy
 import updates
 import utils
@@ -5470,6 +5470,16 @@ class TartubeApp(Gtk.Application):
                 if not isinstance(media_data_obj, media.Video):
                     media_data_obj.last_sort_mode = 'default'
 
+        if version < 2002175:      # v2.2.175
+
+            # In recent versions of Tartube, the value of media.Video.live_mode
+            #   could have been set to a dictionary, rather than a valid
+            #   integer. Fix that problem
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video) \
+                and type(media_data_obj.live_mode) is dict:
+                    media_data_obj.live_mode = 0            
+                    
 
     def save_db(self):
 

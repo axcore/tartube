@@ -14084,7 +14084,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select Tartube\'s data folder'),
             self,
             Gtk.FileChooserAction.SELECT_FOLDER,
@@ -16761,7 +16761,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select the AVConv executable'),
             self,
             Gtk.FileChooserAction.OPEN,
@@ -16794,7 +16794,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select the FFmpeg executable'),
             self,
             Gtk.FileChooserAction.OPEN,

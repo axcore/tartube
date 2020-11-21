@@ -1785,9 +1785,6 @@ class Video(GenericMedia):
 
     def set_live_mode(self, mode):
 
-        print(1893)
-        print(mode)
-
         self.live_mode = mode
 
 
