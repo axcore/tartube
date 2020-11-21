@@ -97,7 +97,7 @@ import media
 import options
 import process
 import refresh
-import testing
+#import testing
 import tidy
 import updates
 import utils
