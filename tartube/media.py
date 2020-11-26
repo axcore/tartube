@@ -1503,18 +1503,16 @@ class Video(GenericMedia):
 
         # IVs used only when the download operation is launched from the
         #   Classic Mode Tab
-        # To save database loading time, these IVs are only added when needed
-        #   (via a call to self.set_dummy() )
         # Flag set to True if this is a dummy media.Video object
         self.dummy_flag = False
-#        # The destination directory for the download
-#        self.dummy_dir = None
-#        # The full path to a downloaded file, if available
-#        self.dummy_path = None
-#        # The video/audio format to use; must be one of the strings in
-#        #   formats.VIDEO_FORMAT_LIST or formats.AUDIO_FORMAT_LIST (or None to
-#        #   use the format(s) specified by the General Options Manager)
-#        self.dummy_format = None
+        # The destination directory for the download
+        self.dummy_dir = None
+        # The full path to a downloaded file, if available
+        self.dummy_path = None
+        # The video/audio format to use; must be one of the strings in
+        #   formats.VIDEO_FORMAT_LIST or formats.AUDIO_FORMAT_LIST (or None to
+        #   use the format(s) specified by the General Options Manager)
+        self.dummy_format = None
 
         # Code
         # ----
@@ -1580,9 +1578,9 @@ class Video(GenericMedia):
             )
 
             if self.live_mode == 1:
-                live_str = '<' + _('WAITING') + '>'
+                live_str = ' <' + _('WAITING') + '>'
             elif self.live_mode == 2:
-                live_str = '<' + _('LIVE') + '>'
+                live_str = ' <' + _('LIVE') + '>'
             else:
                 live_str = ''
 
@@ -1626,7 +1624,7 @@ class Video(GenericMedia):
             else:
                 text += self.source
 
-            if self.dummy_path:
+            if self.dummy_path is not None:
                 text += '\n\n' + _('File:') + '\n' + self.dummy_path
 
         # Apply a maximum line length, if required
@@ -2250,12 +2248,17 @@ class Video(GenericMedia):
             return None
 
 
-    def get_receive_date_string(self):
+    def get_receive_date_string(self, pretty_flag=False):
 
         """Can be called by anything.
 
         A modified version of self.get_receive_time_string(), returning just
         the date, not the date and the time.
+
+        Args:
+
+            pretty_flag (bool): If True, the strings 'Today' and 'Yesterday'
+                are returned, when possible
 
         Returns:
 
@@ -2263,11 +2266,29 @@ class Video(GenericMedia):
 
         """
 
-        if self.receive_time:
+        if not self.receive_time:
+            return None
+
+        elif not pretty_flag:
             timestamp = datetime.datetime.fromtimestamp(self.receive_time)
             return timestamp.strftime('%Y-%m-%d')
+
         else:
-            return None
+            today = datetime.date.today()
+            today_str = today.strftime('%y%m%d')
+
+            yesterday = datetime.date.today() - datetime.timedelta(days=1)
+            yesterday_str = yesterday.strftime('%y%m%d')
+
+            testday = datetime.datetime.fromtimestamp(self.receive_time)
+            testday_str = testday.strftime('%y%m%d')
+
+            if testday_str == today_str:
+                return _('Today')
+            elif testday_str == yesterday_str:
+                return _('Yesterday')
+            else:
+                return testday.strftime('%Y-%m-%d')
 
 
     def get_receive_time_string(self):
@@ -2906,6 +2927,41 @@ class Folder(GenericContainer):
             and child_obj.source == source:
                 # Duplicate found
                 return True
+
+        # No duplicate found
+        return False
+
+
+    def check_duplicate_video_by_path(self, app_obj, path):
+
+        """Called by mainwin.MainWin.on_window_drag_data_received().
+
+        A modified version of self.check_duplicate_video(), which checks for
+        media.Video objects with duplicate paths, instead of dupliate URLs.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            path (str): The full file path to check
+
+        Returns:
+
+            True if any of the child media.Video objects in this folder have
+                the same source URL; False otherwise
+
+        """
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video) \
+            and child_obj.file_name is not None:
+
+                child_path = child_obj.get_actual_path(app_obj)
+                if child_path is not None and child_path == path:
+
+                    # Duplicate found
+                    return True
 
         # No duplicate found
         return False

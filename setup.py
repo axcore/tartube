@@ -57,28 +57,55 @@ and written in Python 3 / Gtk 3.
 param_list = []
 
 # For Debian/RPM packaging, use environment variables
-# For example, the package maintainer might use either of the following:
+# For example, the package maintainer might use any of the following:
 #   TARTUBE_PKG=1 python3 setup.py build
 #   TARTUBE_PKG_STRICT=1 python3 setup.py build
-# (Specifying both variables is the same as specifying TARTUBE_PKG_STRICT
-#   alone)
+#   TARTUBE_PKG_NO_DOWNLOAD=1 python3 setup.py build
 #
-# There are three executables: the default one in ../tartube, and two
-#   alternative ones in ../pack/bin and ../pack/bin_strict
-# If TARTUBE_PKG_STRICT is specified, then ../pack/bin_strict/tartube is the
+# There are four executables: the default one in ../tartube, and alternative
+#   ones in ../pack/bin, ../pack/bin_strict and ../pack/bin_no_download
+#
+# If TARTUBE_PKG is specified, then ../pack/bin/pkg/tartube is the executable,
+#   which means that youtube-dl updates are enabled. Also, icon files are
+#   copied into /usr/share/tartube/icons
+pkg_var = 'TARTUBE_PKG'
+pkg_value = os.environ.get( pkg_var, None )
+# If TARTUBE_PKG_STRICT is specified, then ../pack/bin/strict/tartube is the
 #   executable, which means that youtube-dl updates are disabled. Also, icon
 #   files are copied into /usr/share/tartube/icons
 pkg_strict_var = 'TARTUBE_PKG_STRICT'
 pkg_strict_value = os.environ.get( pkg_strict_var, None )
+# TARTUBE_PKG_NO_DOWNLOAD has all the features of TARTUBE_PKG_STRICT and, in
+#   addition, videos cannot be downloaded. Tartube can still fetch a list of
+#   videos in channels/playlists, monitor when livestreams start, and so on.
+#   The executable is ../pack/bin/no_download/tartube
+pkg_no_download_var = 'TARTUBE_PKG_NO_DOWNLOAD'
+pkg_no_download_value = os.environ.get( pkg_no_download_var, None )
+
 script_exec = os.path.join('tartube', 'tartube')
 icon_path = '/tartube/icons/'
 sound_path = '/tartube/sounds/'
 pkg_flag = False
 
-if pkg_strict_value is not None:
+if pkg_no_download_value is not None:
+
+    if pkg_no_download_value == '1':
+        script_exec = os.path.join('pack', 'bin', 'no_download', 'tartube')
+        sys.stderr.write('youtube-dl updates are disabled in this version\n')
+        pkg_flag = True
+
+    else:
+        sys.stderr.write(
+            "Unrecognised '%s=%s' environment variable!\n" % (
+                pkg_no_download_var,
+                pkg_no_download_value,
+            ),
+        )
+
+elif pkg_strict_value is not None:
 
     if pkg_strict_value == '1':
-        script_exec = os.path.join('pack', 'bin_strict', 'tartube')
+        script_exec = os.path.join('pack', 'bin', 'strict', 'tartube')
         sys.stderr.write('youtube-dl updates are disabled in this version\n')
         pkg_flag = True
 
@@ -90,16 +117,10 @@ if pkg_strict_value is not None:
             ),
         )
 
-# If TARTUBE_PKG is specified, then ../pack/bin/tartube is the executable,
-#   which means that youtube-dl updates are enabled. Also, icon files are
-#   copied into /usr/share/tartube/icons
-pkg_var = 'TARTUBE_PKG'
-pkg_value = os.environ.get( pkg_var, None )
-
-if pkg_value is not None:
+elif pkg_value is not None:
 
     if pkg_value == '1':
-        script_exec = os.path.join('pack', 'bin', 'tartube')
+        script_exec = os.path.join('pack', 'bin', 'pkg', 'tartube')
         pkg_flag = True
 
     else:
@@ -147,7 +168,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.2.176',
+    version='2.2.198',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

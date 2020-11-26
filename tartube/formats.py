@@ -578,7 +578,9 @@ if not xmas_flag:
     STATUS_ICON_DICT = {
         'default_icon': 'status_default_icon_64.png',
         'check_icon': 'status_check_icon_64.png',
+        'check_live_icon': 'status_check_live_icon_64.png',
         'download_icon': 'status_download_icon_64.png',
+        'download_live_icon': 'status_download_live_icon_64.png',
         'update_icon': 'status_update_icon_64.png',
         'refresh_icon': 'status_refresh_icon_64.png',
         'info_icon': 'status_info_icon_64.png',
@@ -590,7 +592,9 @@ else:
     STATUS_ICON_DICT = {
         'default_icon': 'status_default_icon_xmas_64.png',
         'check_icon': 'status_check_icon_xmas_64.png',
+        'check_live_icon': 'status_check_live_icon_xmas_64.png',
         'download_icon': 'status_download_icon_xmas_64.png',
+        'download_live_icon': 'status_download_live_icon_xmas_64.png',
         'update_icon': 'status_update_icon_xmas_64.png',
         'refresh_icon': 'status_refresh_icon_xmas_64.png',
         'info_icon': 'status_info_icon_xmas_64.png',
@@ -799,10 +803,10 @@ def do_translate(config_flag=False):
 
     global MAIN_STAGE_QUEUED, MAIN_STAGE_ACTIVE, MAIN_STAGE_PAUSED, \
     MAIN_STAGE_COMPLETED, MAIN_STAGE_ERROR, ACTIVE_STAGE_PRE_PROCESS, \
-    ACTIVE_STAGE_DOWNLOAD, ACTIVE_STAGE_POST_PROCESS, ACTIVE_STAGE_CHECKING, \
-    COMPLETED_STAGE_FINISHED, COMPLETED_STAGE_WARNING, \
-    COMPLETED_STAGE_ALREADY, ERROR_STAGE_ERROR, ERROR_STAGE_STOPPED, \
-    ERROR_STAGE_ABORT
+    ACTIVE_STAGE_DOWNLOAD, ACTIVE_STAGE_POST_PROCESS, ACTIVE_STAGE_CAPTURE, \
+    ACTIVE_STAGE_MERGE, ACTIVE_STAGE_CHECKING, COMPLETED_STAGE_FINISHED, \
+    COMPLETED_STAGE_WARNING, COMPLETED_STAGE_ALREADY, ERROR_STAGE_ERROR, \
+    ERROR_STAGE_STOPPED, ERROR_STAGE_ABORT
 
     global TIME_METRIC_TRANS_DICT
 
@@ -857,6 +861,8 @@ def do_translate(config_flag=False):
     ACTIVE_STAGE_PRE_PROCESS = _('Pre-processing')
     ACTIVE_STAGE_DOWNLOAD = _('Downloading')
     ACTIVE_STAGE_POST_PROCESS = _('Post-processing')
+    ACTIVE_STAGE_CAPTURE = _('Capturing')               # Used by YTSC
+    ACTIVE_STAGE_MERGE = _('Merging')                   # Used by YTSC
     ACTIVE_STAGE_CHECKING = _('Checking')
     # Sub-stages of the 'Completed' stage
     COMPLETED_STAGE_FINISHED = _('Finished')

@@ -234,9 +234,14 @@ class TartubeApp(Gtk.Application):
         # The current tidy.TidyManager object, if a tidy operation is in
         #   progress (or None, if not)
         self.tidy_manager_obj = None
-        # A livestream operation is handled by a downloads.LivestreamManager
+        # A livestream operation is handled by a downloads.StreamManager
         #   object. It checks media.Video objects marked as livestreams, to
         #   see whether have started or stopped broadcasting
+        # Livestreams operations can take place when a download operation is
+        #   already running (but not when any other kind of operation is
+        #   running)
+        # If a download operation is started when a livestream operation is
+        #   running, the livestream operation is cancelled immediately
         self.livestream_manager_obj = None
         # A process operation is handled by a process.ProcessManager object. It
         #   sends a list of media.Video objects to FFmpeg for processing
@@ -568,6 +573,16 @@ class TartubeApp(Gtk.Application):
                 'ytdl-test',
             ),
         )
+        # Inside the temporary directory, a folder for Youtube Stream Capture
+        #   downlaods
+        self.temp_ytsc_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+                '.temp',
+                'ytsc',
+            ),
+        )
 
         # When the user tries to switch databases (in a call to
         #   self.switch_db() ), we make backup copies of those IVs. If the
@@ -580,6 +595,7 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
+        self.backup_temp_ytsc_dir = None
         self.backup_data_dir_alt_list = None
 
         # The user can opt to move thumbnails to a '.thumbs' sub-directory, and
@@ -836,6 +852,10 @@ class TartubeApp(Gtk.Application):
         #   --verbose option). The setting applies to both the Output Tab and
         #   the terminal window
         self.ytdl_write_verbose_flag = False
+        # Flag set to True if Youtube Stream Capture should show verbose
+        #   output. This setting applies to both the Output Tab and the
+        #   terminal window
+        self.ytsc_write_verbose_flag = False
 
         # Flag set to True if, during a refresh operation, videos should be
         #   displayed in the Output Tab. Set to False if only channels,
@@ -889,6 +909,34 @@ class TartubeApp(Gtk.Application):
         #   window, into .jpg thumbnails, which can be displayed
         # Ignored if self.ffmpeg_fail_flag is True
         self.ffmpeg_convert_webp_flag = True
+
+        # Paths to the Youtube Stream Capture (YTSC) binary. If not set, we
+        #   assume that YTSC is in the user's path
+        # (These values are used on all operating systems)
+        # Default path to the YTSC binary, included with the Tartube
+        #   distribution
+        self.default_ytsc_path = os.path.abspath(
+            os.path.join(
+                self.script_parent_dir,
+                'ytsc',
+                'youtube_stream_capture.py',
+            ),
+        )
+        # Path to the YTSC binary
+        self.ytsc_path = self.default_ytsc_path
+        # Flag set to True if Youtube Stream Capture should be used (when
+        #   available); False if youtube-dl should be used instead. Note that
+        #   youtube-dl probably cannot download broadcasting livestreams from
+        #   YouTube successfully
+        self.ytsc_priority_flag = True
+        # YTSC sometimes fails to commence downloading a stream, but succeeds
+        #   after a restart. The time to wait (in minutes) for the first
+        #   segment to be downloaded (minimum value 1, fractional values are
+        #   allowed) before giving up...
+        self.ytsc_wait_time = 1
+        # ...and the number of restarts allowed (minimum value 0 for no
+        #   restarts) before giving up entirely
+        self.ytsc_restart_max = 5
 
         # During a download operation, a GObject timer runs, so that the
         #   Progress Tab and Output Tab can be updated at regular intervals
@@ -1590,6 +1638,13 @@ class TartubeApp(Gtk.Application):
         self.num_worker_min = 1
         # Flag set to True when the limit is actually applied, False when not
         self.num_worker_apply_flag = True
+        # Flag set to True if the maximum simultaneous downloads limit should
+        #   be bypassed, if a broadcasting livestream is to be downloaded
+        # (For example, the maximum is two, but three livestreams are
+        #   broadcasting; in that case, we allow the creation of an extra
+        #   downloads.DownloadWorker to handle it. That worker is only used
+        #   for broadcasting livestreams, and otherwise stands idle)
+        self.num_worker_bypass_flag = True
 
         # During a download operation, the bandwith limit (in KiB/s)
         # NB Because Tartube just passes a set of instructions to youtube-dl,
@@ -2438,13 +2493,13 @@ class TartubeApp(Gtk.Application):
         # ----------------------------
 
         # Set the General Options Manager
-        self.general_options_obj = self.create_options_manager('general')
+        self.general_options_obj = self.create_download_options('general')
         # Apply a different set of download options to the Classic Mode Tab, by
         #   default
-        self.classic_options_obj = self.create_options_manager('classic')
+        self.classic_options_obj = self.create_download_options('classic')
 
         # Set the current FFmpeg Options Manager
-        self.ffmpeg_options_obj = self.create_ffmpeg_options_manager('default')
+        self.ffmpeg_options_obj = self.create_ffmpeg_options('default')
 
         # Start the dialogue manager (thread-safe code for Gtk message dialogue
         #   windows)
@@ -2649,18 +2704,6 @@ class TartubeApp(Gtk.Application):
         make_dir_fail_flag = False
 
         while not os.path.isdir(self.data_dir):
-
-            # !!! DEBUG: Attempt to resolve Git #167
-            if not first_attempt_flag:
-                if not os.path.exists(self.data_dir):
-                    print('NO EXIST: ' + self.data_dir)
-                else:
-                    print('EXISTS: ' + self.data_dir)
-
-                if not os.path.isdir(self.data_dir):
-                    print('IS NOT DIR: ' + self.data_dir)
-                else:
-                    print('IS DIR: ' + self.data_dir)
 
             # Ask the user what to do next. The False argument tells the
             #   dialogue window that it's a missing directory
@@ -3393,6 +3436,7 @@ class TartubeApp(Gtk.Application):
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
 
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
+        self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
 
         if version >= 1002024:  # v1.2.024
             self.refresh_output_videos_flag \
@@ -3442,6 +3486,14 @@ class TartubeApp(Gtk.Application):
         if version >= 2001098:  # v2.1.098
             self.ffmpeg_convert_webp_flag \
             = json_dict['ffmpeg_convert_webp_flag']
+
+        if version >= 2002178:  # v2.2.178
+            self.ytsc_path = json_dict['ytsc_path']
+        if version >= 2002181:  # v2.2.181
+            self.ytsc_path = json_dict['ytsc_path']
+            self.ytsc_priority_flag = json_dict['ytsc_priority_flag']
+            self.ytsc_wait_time = json_dict['ytsc_wait_time']
+            self.ytsc_restart_max = json_dict['ytsc_restart_max']
 
         # Remove v2.2.156
 #        if version >= 2001104:  # v2.1.104
@@ -3654,6 +3706,8 @@ class TartubeApp(Gtk.Application):
 
         self.num_worker_default = json_dict['num_worker_default']
         self.num_worker_apply_flag = json_dict['num_worker_apply_flag']
+        if version >= 2002184:  # v2.2.184
+            self.num_worker_bypass_flag = json_dict['num_worker_bypass_flag']
 
         self.bandwidth_default = json_dict['bandwidth_default']
         self.bandwidth_apply_flag = json_dict['bandwidth_apply_flag']
@@ -3719,27 +3773,9 @@ class TartubeApp(Gtk.Application):
         self.temp_test_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'ytdl-test'),
         )
-
-        # !!! DEBUG: Attempt to resolve Git #167
-        if not os.path.exists(self.data_dir):
-            print('NO EXIST: ' + self.data_dir)
-        else:
-            print('EXISTS: ' + self.data_dir)
-
-        if not os.path.isdir(self.data_dir):
-            print('IS NOT DIR: ' + self.data_dir)
-        else:
-            print('IS DIR: ' + self.data_dir)
-
-        if not os.path.exists(self.backup_dir):
-            print('NO EXIST: ' + self.backup_dir)
-        else:
-            print('EXISTS: ' + self.backup_dir)
-
-        if not os.path.isdir(self.backup_dir):
-            print('IS NOT DIR: ' + self.backup_dir)
-        else:
-            print('IS DIR: ' + self.backup_dir)
+        self.temp_ytsc_dir = os.path.abspath(
+            os.path.join(self.data_dir, '.temp', 'ytsc'),
+        )
 
         # If the most-recently selected directory, self.classic_dir_previous,
         #   still exists in self.classic_dir_list, move it to the top, so it's
@@ -4202,6 +4238,7 @@ class TartubeApp(Gtk.Application):
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
 
             'ytdl_write_verbose_flag': self.ytdl_write_verbose_flag,
+            'ytsc_write_verbose_flag': self.ytsc_write_verbose_flag,
 
             'refresh_output_videos_flag': self.refresh_output_videos_flag,
             'refresh_output_verbose_flag': self.refresh_output_verbose_flag,
@@ -4224,6 +4261,11 @@ class TartubeApp(Gtk.Application):
             'ffmpeg_path': self.ffmpeg_path,
             'avconv_path': self.avconv_path,
             'ffmpeg_convert_webp_flag': self.ffmpeg_convert_webp_flag,
+
+            'ytsc_path': self.ytsc_path,
+            'ytsc_priority_flag': self.ytsc_priority_flag,
+            'ytsc_wait_time': self.ytsc_wait_time,
+            'ytsc_restart_max': self.ytsc_restart_max,
 
             'operation_limit_flag': self.operation_limit_flag,
             'operation_check_limit': self.operation_check_limit,
@@ -4302,6 +4344,7 @@ class TartubeApp(Gtk.Application):
 
             'num_worker_default': self.num_worker_default,
             'num_worker_apply_flag': self.num_worker_apply_flag,
+            'num_worker_bypass_flag': self.num_worker_bypass_flag,
 
             'bandwidth_default': self.bandwidth_default,
             'bandwidth_apply_flag': self.bandwidth_apply_flag,
@@ -5478,8 +5521,32 @@ class TartubeApp(Gtk.Application):
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video) \
                 and type(media_data_obj.live_mode) is dict:
-                    media_data_obj.live_mode = 0            
-                    
+                    media_data_obj.live_mode = 0
+
+        if version < 2002188:      # v2.2.188
+
+            # media.Video IVs that only existed for 'dummy' videos are added to
+            #   all videos in this version
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    if not hasattr(media_data_obj, 'dummy_dir'):
+                        media_data_obj.dummy_dir = None
+                        media_data_obj.dummy_path = None
+                        media_data_obj.dummy_format = None
+
+        if version < 2002191:      # v2.2.191
+
+            # Before this version, drag-and-drop into the main window could
+            #   create a media.Video object whose .source should have been a
+            #   URL, but was instead a URI to a file path, in the form
+            #   'file://PATH'
+            # Check every video to remove the invalid sources
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video) \
+                and media_data_obj.source is not None \
+                and re.search('^file\:\/\/', media_data_obj.source):
+                    media_data_obj.source = None
+
 
     def save_db(self):
 
@@ -5762,6 +5829,9 @@ class TartubeApp(Gtk.Application):
         self.temp_test_dir = os.path.abspath(
             os.path.join(path, '.temp', 'ytdl-test'),
         )
+        self.temp_ytsc_dir = os.path.abspath(
+            os.path.join(path, '.temp', 'ytsc'),
+        )
 
         if self.data_dir_add_from_list_flag \
         and not self.data_dir in self.data_dir_alt_list:
@@ -5784,19 +5854,6 @@ class TartubeApp(Gtk.Application):
         #   then try to create them
         if not os.path.isdir(self.data_dir) \
         and not self.make_directory(self.data_dir):
-
-            # !!! DEBUG: Attempt to resolve Git #167
-            if DEBUG_FUNC_FLAG:
-                if not os.path.exists(self.data_dir):
-                    print('NO EXISTS: ' + self.data_dir)
-                else:
-                    print('EXISTS: ' + self.data_dir)
-
-                if not os.path.isdir(self.data_dir):
-                    print('IS NOT DIR: ' + self.data_dir)
-                else:
-                    print('IS DIR: ' + self.data_dir)
-
             return False
 
         if not os.path.isdir(self.backup_dir) \
@@ -5906,6 +5963,7 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = self.temp_dir
         self.backup_temp_dl_dir = self.temp_dl_dir
         self.backup_temp_test_dir = self.temp_test_dir
+        self.backup_temp_ytsc_dir = self.temp_ytsc_dir
         self.backup_data_dir_alt_list = self.data_dir_alt_list.copy()
 
 
@@ -5927,6 +5985,7 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
+        self.backup_temp_ytsc_dir = None
         self.backup_data_dir_alt_list = None
 
 
@@ -5949,6 +6008,7 @@ class TartubeApp(Gtk.Application):
         self.temp_dir = self.backup_temp_dir
         self.temp_dl_dir = self.backup_temp_dl_dir
         self.temp_test_dir = self.backup_temp_test_dir
+        self.temp_ytsc_dir = self.backup_temp_ytsc_dir
         self.data_dir_alt_list = self.backup_data_dir_alt_list.copy()
 
 
@@ -6061,6 +6121,9 @@ class TartubeApp(Gtk.Application):
                     )
                     self.temp_test_dir = os.path.abspath(
                         os.path.join(self.data_dir, '.temp', 'ytdl-test'),
+                    )
+                    self.temp_ytsc_dir = os.path.abspath(
+                        os.path.join(self.data_dir, '.temp', 'ytsc'),
                     )
 
                     return
@@ -6177,7 +6240,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 5188 reset_db')
 
         # Reset IVs to their default states
-        self.general_options_obj = self.create_options_manager('general')
+        self.general_options_obj = self.create_download_options('general')
         self.media_reg_count = 0
         self.media_reg_dict = {}
         self.media_name_dict = {}
@@ -7492,6 +7555,10 @@ class TartubeApp(Gtk.Application):
                 os.path.join(self.data_dir, '.temp', 'ytdl-test'),
             )
 
+            self.temp_ytsc_dir = os.path.abspath(
+                os.path.join(self.data_dir, '.temp', 'ytsc'),
+            )
+
         dialogue_win.destroy()
         if response == Gtk.ResponseType.OK:
 
@@ -7570,6 +7637,9 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 6220 get_downloader')
+
         if not wiz_win_obj:
 
             if self.ytdl_fork is not None:
@@ -7583,6 +7653,78 @@ class TartubeApp(Gtk.Application):
                 return wiz_win_obj.ytdl_fork
             else:
                 return self.ytdl_bin
+
+
+    def retrieve_videos_from_db(self, data_list, dummy_flag=False):
+
+        """Can be called by anything.
+
+        Given a list of data, which can contain a mix of full paths to a video/
+        audio file and/or URLs, searches the media data registry for a
+        matching media.Video objects.
+
+        Optionally checks the list of 'dummy' media.Video objects maintained
+        by mainwin.MainWin, too.
+
+        Returns a list of matching media.Video objects (without duplicates).
+
+        Args:
+
+            data_list (list): A list of full paths and/or URLs
+
+        Return values:
+
+            A list of matching media.Video objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 6220 get_downloader')
+
+        return_list = []
+
+        # Search the media data registry
+        for media_data_obj in self.media_reg_dict.values():
+            if isinstance(media_data_obj, media.Video):
+
+                source = media_data_obj.source
+                if media_data_obj.file_name is not None:
+                    path = media_data_obj.get_actual_path(self)
+                else:
+                    path = None
+
+                for data in data_list:
+
+                    if data is not None \
+                    and data != '' \
+                    and (
+                        (source is not None and source == data)
+                        or (path is not None and path == data)
+                    ):
+                        return_list.append(media_data_obj)
+                        break
+
+        if dummy_flag:
+
+            # Search the list of 'dummy' media.Video objects created by the
+            #   Classic Mode tab
+            for video_obj in self.main_win_obj.classic_media_dict.values():
+
+                source = video_obj.source
+                path = video_obj.get_actual_path(self)
+
+                for data in data_list:
+
+                    if data is not None \
+                    and data != '' \
+                    and (
+                        (source is not None and source == data)
+                        or (path is not None and path == data)
+                    ) and not video_obj in return_list:
+                        return_list.append(video_obj)
+                        break
+
+        return return_list
 
 
     # (Operations)
@@ -9115,8 +9257,8 @@ class TartubeApp(Gtk.Application):
 
         If a current livestream has finished, the JSON data will say so.
 
-        Creates a new downloads.LivestreamManager object to handle the
-        livestream operation. When the operation is complete,
+        Creates a new downloads.StreamManager object to handle the livestream
+        operation. When the operation is complete,
         self.livestream_manager_finished() is called.
 
         """
@@ -9125,8 +9267,10 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 7649 livestream_manager_start')
 
         # Operation already in progress, or a configuration window is open, or
-        #   there are no livestreams to check:
-        if self.current_manager_obj \
+        #   there are no livestreams to check
+        # A livestream operation is allowed to start when a download operation
+        #   is already running (but not when any other operation is running)
+        if (self.current_manager_obj and not self.download_manager_obj) \
         or self.livestream_manager_obj \
         or self.main_win_obj.config_win_list \
         or not self.media_reg_live_dict:
@@ -9144,7 +9288,7 @@ class TartubeApp(Gtk.Application):
         # (NB Since livestream operations run silently in the background and
         #   since no functionality is disabled during a livestream operation,
         #   self.current_manager_obj remains set to None)
-        self.livestream_manager_obj = downloads.LivestreamManager(self)
+        self.livestream_manager_obj = downloads.StreamManager(self)
 
         # Update the status icon in the system tray
         self.status_icon_obj.update_icon()
@@ -9152,7 +9296,7 @@ class TartubeApp(Gtk.Application):
 
     def livestream_manager_finished(self):
 
-        """Called by downloads.LivestreamManager.run().
+        """Called by downloads.StreamManager.run().
 
         The livestream operation has finished, so update IVs and main window
         widgets.
@@ -9163,7 +9307,7 @@ class TartubeApp(Gtk.Application):
 
         # The operation generated three dictionaries of videos whose livestream
         #   status has changed
-        # Before destroying the downloads.LivestreamManager object, import them
+        # Before destroying the downloads.StreamManager object, import them
         video_started_dict \
         = self.livestream_manager_obj.video_started_dict.copy()
         video_stopped_dict \
@@ -9172,11 +9316,14 @@ class TartubeApp(Gtk.Application):
         = self.livestream_manager_obj.video_missing_dict.copy()
 
         # Any videos marked as missing can be removed from the media registry
-        for video_obj in video_missing_dict.values():
+        # (Note that if a download operation is running, this function won't
+        #   do everything that it would normally do)
+        if not self.download_manager_obj:
+            for video_obj in video_missing_dict.values():
 
-            # The True argument tells the function to delete files associated
-            #   with the video (the thumbnail, in this case)
-            self.delete_video(video_obj, True)
+                # The True argument tells the function to delete files
+                #   associated with the video (the thumbnail, in this case)
+                self.delete_video(video_obj, True)
 
         # Any code can check whether livestream operation is in progress, or
         #   not, by checking this IV
@@ -9184,14 +9331,16 @@ class TartubeApp(Gtk.Application):
         # If the automatic sort function in
         #   mainwin.MainWin.video_catalogue_update_video() was suppressed,
         #   perform it now
-        if self.catalogue_mode_type != 'grid' and self.gtk_emulate_broken_flag:
+        if not self.download_manager_obj \
+        and self.catalogue_mode_type != 'grid' \
+        and self.gtk_emulate_broken_flag:
             self.main_win_obj.catalogue_listbox.invalidate_sort()
             self.main_win_obj.catalogue_listbox.show_all()
 
         # Any videos whose livestream status has changed must be redrawn in
         #   the Video catalogue
-        # (This function is called from the downloads.LivestreamManager object,
-        #   so to prevent a crash, its calls must be wrapper in a timer)
+        # (This function is called from the downloads.StreamManager object, so
+        #   to prevent a crash, its calls must be wrapper in a timer)
         if self.main_win_obj.video_index_current \
         == self.fixed_live_folder.name:
 
@@ -9279,8 +9428,7 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                # Download operation already in progress (unlikely, but
-                #   possible)
+                # Download operation already in progress
                 for video_obj in dl_dict.values():
 
                     download_item_obj \
@@ -14769,7 +14917,7 @@ class TartubeApp(Gtk.Application):
         # Create a new options manager, if none was specified
         if not options_obj:
 
-            options_obj = self.create_options_manager(
+            options_obj = self.create_download_options(
                 media_data_obj.name,
                 media_data_obj.dbid,
             )
@@ -14964,7 +15112,7 @@ class TartubeApp(Gtk.Application):
                 config_win_obj.setup_options_dl_list_tab_update_treeview()
 
 
-    def create_options_manager(self, name, dbid=None):
+    def create_download_options(self, name, dbid=None):
 
         """Can be called by anything.
 
@@ -14989,7 +15137,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12426 create_options_manager')
+            utils.debug_time('app 12426 create_download_options')
 
         self.options_reg_count += 1
 
@@ -15004,7 +15152,7 @@ class TartubeApp(Gtk.Application):
         return options_obj
 
 
-    def clone_general_options_manager(self, data_list):
+    def clone_general_download_options(self, data_list):
 
         """Called by config.OptionsEditWin.on_clone_options_clicked().
 
@@ -15024,7 +15172,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12427 clone_general_options_manager')
+            utils.debug_time('app 12427 clone_general_download_options')
 
         edit_win_obj = data_list.pop(0)
         options_obj = data_list.pop(0)
@@ -15035,7 +15183,7 @@ class TartubeApp(Gtk.Application):
         edit_win_obj.reset_with_new_edit_obj(options_obj)
 
 
-    def reset_options_manager(self, data_list):
+    def reset_download_options(self, data_list):
 
         """Called by config.OptionsEditWin.on_reset_options_clicked().
 
@@ -15051,14 +15199,14 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 reset_options_manager')
+            utils.debug_time('app 12454 reset_download_options')
 
         edit_win_obj = data_list.pop(0)
         old_options_obj = edit_win_obj.edit_obj
 
         # Replace the old object with a new one, which has the effect of
         #   resetting its download options to the default values
-        new_options_obj = self.create_options_manager(
+        new_options_obj = self.create_download_options(
             old_options_obj.name,
             old_options_obj.dbid,
         )
@@ -15074,14 +15222,15 @@ class TartubeApp(Gtk.Application):
         edit_win_obj.reset_with_new_edit_obj(new_options_obj)
 
 
-    def export_options_manager(self, options_obj):
+    def export_download_options(self, options_obj):
 
         """Called by callback in
         config.SystemPrefWin.on_options_export_button_clicked().
 
         Exports data from the specified options.OptionsManager object as a
         JSON file. The data can be-imported (probably when a different
-        Tartube database is loaded) in a call to self.import_options_manager().
+        Tartube database is loaded) in a call to
+        self.import_download_options().
 
         Args:
 
@@ -15091,7 +15240,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 export_options_manager')
+            utils.debug_time('app 12454 export_download_options')
 
         # Prompt the user for the file path to use
         dialogue_win = self.dialogue_manager_obj.show_file_chooser(
@@ -15157,13 +15306,13 @@ class TartubeApp(Gtk.Application):
         )
 
 
-    def import_options_manager(self, options_name=None):
+    def import_download_options(self, options_name=None):
 
         """Called by a callback in
         config.SystemPrefWin.on_options_import_button_clicked().
 
         Imports the contents of a JSON export file generated by a call to
-        self.export_options_manager().
+        self.export_download_options().
 
         Creates a new options.OptionsManager object, and copies the imported
         data into it.
@@ -15178,7 +15327,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 import_options_manager')
+            utils.debug_time('app 12454 import_download_options')
 
         # Prompt the user for the export file to load
         dialogue_win = self.dialogue_manager_obj.show_file_chooser(
@@ -15224,7 +15373,7 @@ class TartubeApp(Gtk.Application):
             )
 
         # Retrieve the data itself. export_dict is in the form described in the
-        #   comments in self.export_options_manager()
+        #   comments in self.export_download_options()
         export_dict = json_dict['export_dict']
 
         if not export_dict:
@@ -15240,7 +15389,7 @@ class TartubeApp(Gtk.Application):
         if options_name is None or options_name == '':
             options_name = export_dict['name']
 
-        options_obj = self.create_options_manager(options_name)
+        options_obj = self.create_download_options(options_name)
 
         # Set the new object's options. To guard against future code updates,
         #   do it one key at a time
@@ -15253,7 +15402,7 @@ class TartubeApp(Gtk.Application):
 
         # Show a confirmation
         self.dialogue_manager_obj.show_msg_dialogue(
-            ('Imported') + ': ' + options_name,
+            ('Imported:') + ' ' + options_name,
             'info',
             'ok',
         )
@@ -15262,7 +15411,7 @@ class TartubeApp(Gtk.Application):
     # (FFmpeg options manager objects)
 
 
-    def create_ffmpeg_options_manager(self, name):
+    def create_ffmpeg_options(self, name):
 
         """Can be called by anything.
 
@@ -15283,7 +15432,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12426 create_ffmpeg_options_manager')
+            utils.debug_time('app 12426 create_ffmpeg_options')
 
         self.ffmpeg_reg_count += 1
 
@@ -15297,7 +15446,7 @@ class TartubeApp(Gtk.Application):
         return options_obj
 
 
-    def clone_ffmpeg_options_manager(self, data_list):
+    def clone_ffmpeg_options(self, data_list):
 
         """Called by config.FFmpegOptionsEditWin.on_clone_options_clicked().
 
@@ -15314,7 +15463,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12427 clone_ffmpeg_options_manager')
+            utils.debug_time('app 12427 clone_ffmpeg_options')
 
         edit_win_obj = data_list.pop(0)
         options_obj = data_list.pop(0)
@@ -15325,7 +15474,7 @@ class TartubeApp(Gtk.Application):
         edit_win_obj.reset_with_new_edit_obj(options_obj)
 
 
-    def reset_ffmpeg_manager(self, data_list):
+    def reset_ffmpeg_options(self, data_list):
 
         """Called by config.FFmpegOptionsEditWin.on_reset_options_clicked().
 
@@ -15341,16 +15490,14 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 reset_ffmpeg_manager')
+            utils.debug_time('app 12454 reset_ffmpeg_options')
 
         edit_win_obj = data_list.pop(0)
         old_options_obj = edit_win_obj.edit_obj
 
         # Replace the old object with a new one, which has the effect of
         #   resetting its FFmpeg options to the default values
-        new_options_obj = self.create_ffmpeg_options_manager(
-            old_options_obj.name,
-        )
+        new_options_obj = self.create_ffmpeg_options(old_options_obj.name)
 
         # Update IVs
         del self.ffmpeg_reg_dict[old_options_obj.uid]
@@ -15395,7 +15542,7 @@ class TartubeApp(Gtk.Application):
                 config_win_obj.setup_options_ffmpeg_list_tab_update_treeview()
 
 
-    def export_ffmpeg_manager(self, options_obj):
+    def export_ffmpeg_options(self, options_obj):
 
         """Called by callback in
         config.SystemPrefWin.on_ffmpeg_export_button_clicked().
@@ -15403,7 +15550,7 @@ class TartubeApp(Gtk.Application):
         Exports data from the specified ffmpeg_tartube.FFmpegOptionsManager
         object as a JSON file. The data can be-imported (probably when a
         different Tartube database is loaded) in a call to
-        self.import_ffmpeg_manager().
+        self.import_ffmpeg_options().
 
         Args:
 
@@ -15413,7 +15560,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 export_ffmpeg_manager')
+            utils.debug_time('app 12454 export_ffmpeg_options')
 
         # Prompt the user for the file path to use
         dialogue_win = self.dialogue_manager_obj.show_file_chooser(
@@ -15479,13 +15626,13 @@ class TartubeApp(Gtk.Application):
         )
 
 
-    def import_ffmpeg_manager(self, options_name=None):
+    def import_ffmpeg_options(self, options_name=None):
 
         """Called by a callback in
         config.SystemPrefWin.on_ffmpeg_import_button_clicked().
 
         Imports the contents of a JSON export file generated by a call to
-        self.export_ffmpeg_manager().
+        self.export_ffmpeg_options().
 
         Creates a new ffmpeg_tartube.FFmpegOptionsManager object, and copies
         the imported data into it.
@@ -15500,7 +15647,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 12454 import_ffmpeg_manager')
+            utils.debug_time('app 12454 import_ffmpeg_options')
 
         # Prompt the user for the export file to load
         dialogue_win = self.dialogue_manager_obj.show_file_chooser(
@@ -15546,7 +15693,7 @@ class TartubeApp(Gtk.Application):
             )
 
         # Retrieve the data itself. export_dict is in the form described in the
-        #   comments in self.export_ffmpeg_manager()
+        #   comments in self.export_ffmpeg_options()
         export_dict = json_dict['export_dict']
 
         if not export_dict:
@@ -15562,7 +15709,7 @@ class TartubeApp(Gtk.Application):
         if options_name is None or options_name == '':
             options_name = export_dict['name']
 
-        options_obj = self.create_ffmpeg_options_manager(options_name)
+        options_obj = self.create_ffmpeg_options(options_name)
 
         # Set the new object's options. To guard against future code updates,
         #   do it one key at a time
@@ -15575,7 +15722,7 @@ class TartubeApp(Gtk.Application):
 
         # Show a confirmation
         self.dialogue_manager_obj.show_msg_dialogue(
-            ('Imported') + ': ' + options_name,
+            ('Imported:') + ' ' + options_name,
             'info',
             'ok',
         )
@@ -15868,14 +16015,13 @@ class TartubeApp(Gtk.Application):
             # If any livestreams are due to start soon, start a livestream
             #   operation once a minute (if allowed)
             elif self.scheduled_livestream_extra_flag \
-            and self.scheduled_livestream_last_time + 60 < time.time():
+            and (self.scheduled_livestream_last_time + 60) < time.time():
 
                 for video_obj in self.media_reg_live_dict.values():
 
                     if video_obj.live_mode == 1 \
                     and (video_obj.live_time - wait_time) < time.time():
                         start_flag = True
-                        print('15497 starting extra check')
                         break
 
             if start_flag:
@@ -16874,7 +17020,7 @@ class TartubeApp(Gtk.Application):
                 and worker_obj.download_item_obj \
                 and worker_obj.download_item_obj.media_data_obj.dbid \
                 in dbid_dict:
-                    worker_obj.video_downloader_obj.stop()
+                    worker_obj.downloader_obj.stop()
 
 
     def on_button_cancel_date(self, action, par):
@@ -18276,7 +18422,7 @@ class TartubeApp(Gtk.Application):
         if not self.disable_load_save_flag:
 
             self.dialogue_manager_obj.show_msg_dialogue(
-                _('Data saved'),
+                _('All Tartube data has been saved'),
                 'info',
                 'ok',
             )
@@ -18602,7 +18748,7 @@ class TartubeApp(Gtk.Application):
         #   the user goes to the trouble of clicking a menu item in the
         #   main window's menu, tell them why nothing is happening
         msg = _('Cannot update existing livestreams because')
-        if self.current_manager_obj:
+        if (self.current_manager_obj and not self.download_manager_obj):
             msg += ' ' + _('there is another operation running')
         elif self.livestream_manager_obj:
             msg += ' ' + _('they are currently being updated')
@@ -19792,6 +19938,17 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.output_tab_setup_pages()
 
 
+    def set_num_worker_bypass_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15725 set_num_worker_bypass_flag')
+
+        if not flag:
+            self.num_worker_bypass_flag = False
+        else:
+            self.num_worker_bypass_flag = True
+
+
     def set_open_temp_on_desktop_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -20544,3 +20701,50 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_verbose_flag = False
         else:
             self.ytdl_write_verbose_flag = True
+
+
+    def set_ytsc_path(self, path):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15379 set_ytsc_path')
+
+        self.ytsc_path = path
+
+
+    def set_ytsc_priority_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16024 set_ytsc_priority_flag')
+
+        if not flag:
+            self.ytsc_priority_flag = False
+        else:
+            self.ytsc_priority_flag = True
+
+
+    def set_ytsc_restart_max(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15379 set_ytsc_restart_max')
+
+        self.ytsc_restart_max = value
+
+
+    def set_ytsc_wait_time(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15379 set_ytsc_wait_time')
+
+        self.ytsc_wait_time = value
+
+
+    def set_ytsc_write_verbose_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16462 set_ytsc_write_verbose_flag')
+
+        if not flag:
+            self.ytsc_write_verbose_flag = False
+        else:
+            self.ytsc_write_verbose_flag = True
+

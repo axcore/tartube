@@ -271,13 +271,16 @@ class DownloadManager(threading.Thread):
         #   self.stop_download_operation()
         while self.running_flag:
 
-            # Send a message to the Output Tab's summary page, if required
+            # Send a message to the Output Tab's summary page, if required.
+            #   The number of workers shown doesn't include those dedicated to
+            #   broadcasting livestreams
             available_count = 0
             total_count = 0
             for worker_obj in self.worker_list:
-                total_count += 1
-                if worker_obj.available_flag:
-                    available_count += 1
+                if not worker_obj.broadcast_flag:
+                    total_count += 1
+                    if worker_obj.available_flag:
+                        available_count += 1
 
             if local_worker_available_count != available_count \
             or local_worker_total_count != total_count:
@@ -322,7 +325,9 @@ class DownloadManager(threading.Thread):
                     break
 
             else:
-                worker_obj = self.get_available_worker()
+                worker_obj = self.get_available_worker(
+                    self.current_item_obj.media_data_obj,
+                )
 
                 # If the worker has been marked as doomed (because the number
                 #   of simultaneous downloads allowed has decreased) then we
@@ -350,8 +355,11 @@ class DownloadManager(threading.Thread):
                         self.current_item_obj.item_id,
                         formats.MAIN_STAGE_ACTIVE,
                     )
-                    # Update the main window's progress bar
-                    self.job_count += 1
+                    # Update the main window's progress bar (but not for
+                    #   workers dedicated to broadcasting livestreams)
+                    if not worker_obj.broadcast_flag:
+                        self.job_count += 1
+
                     # Throughout the downloads.py code, instead of calling a
                     #   mainapp.py or mainwin.py function directly (which is
                     #   not thread-safe), set a Glib timeout to handle it
@@ -607,11 +615,55 @@ class DownloadManager(threading.Thread):
         return True
 
 
-    def get_available_worker(self):
+    def create_bypass_worker(self):
+
+        """Called by downloads.DownloadList.create_item().
+
+        For a broadcasting livestream, we create additional workers if
+        required, possibly bypassing the limit specified by
+        mainapp.TartubeApp.num_worker_default.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 437 create_bypass_worker')
+
+        # How many workers do we have already?
+        current = len(self.worker_list)
+        # If this object hasn't set up its worker pool yet, let the setup code
+        #   proceed as normal
+        if not current:
+            return
+
+        # If we don't already have the maximum number of workers (or if no
+        #   limit currently applies), then we don't need to create any more
+        if not self.app_obj.num_worker_apply_flag \
+        or current < self.app_obj.num_worker_default:
+            return
+
+        # Check the existing workers, in case one is already available
+        for worker_obj in self.worker_list:
+            if worker_obj.available_flag:
+                return
+
+        # Bypass the worker limit to create an additional worker, to be used
+        #   only for broadcasting livestreams
+        self.worker_list.append(DownloadWorker(self, True))
+        # Create an additional page in the main window's Output Tab, if
+        #   required
+        self.app_obj.main_win_obj.output_tab_setup_pages()
+
+
+    def get_available_worker(self, media_data_obj):
 
         """Called by self.run().
 
         Based on DownloadManager._get_worker().
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist or
+                media.Folder): The media data object which is the next to be
+                downloaded
 
         Returns:
 
@@ -623,8 +675,18 @@ class DownloadManager(threading.Thread):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 565 get_available_worker')
 
+        # Some workers are only available when media_data_obj is media.Video
+        #   that's a broadcasting livestream
+        if isinstance(media_data_obj, media.Video) \
+        and media_data_obj.live_mode == 2:
+            broadcast_flag = True
+        else:
+            broadcast_flag = False
+
         for worker_obj in self.worker_list:
-            if worker_obj.available_flag:
+
+            if worker_obj.available_flag \
+            and (broadcast_flag or not worker_obj.broadcast_flag):
                 return worker_obj
 
         return None
@@ -840,7 +902,7 @@ class DownloadManager(threading.Thread):
         self.download_list_obj.prevent_fetch_new_items()
         for worker_obj in self.worker_list:
             if worker_obj.running_flag:
-                worker_obj.video_downloader_obj.stop_soon()
+                worker_obj.downloader_obj.stop_soon()
 
 
 class DownloadWorker(threading.Thread):
@@ -864,7 +926,11 @@ class DownloadWorker(threading.Thread):
     Args:
 
         download_manager_obj (downloads.DownloadManager): The parent download
-            manager object.
+            manager object
+
+        broadcast_flag (bool): True if this worker has been created
+            specifically to handle broadcasting livestreams (see comments
+            below); False if not
 
     """
 
@@ -872,7 +938,7 @@ class DownloadWorker(threading.Thread):
     # Standard class methods
 
 
-    def __init__(self, download_manager_obj):
+    def __init__(self, download_manager_obj, broadcast_flag=False):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 780 __init__')
@@ -885,9 +951,9 @@ class DownloadWorker(threading.Thread):
         self.download_manager_obj = download_manager_obj
         # The downloads.DownloadItem object for the current job
         self.download_item_obj = None
-        # The downloads.VideoDownloader object for the current job (if it
-        #   exists)
-        self.video_downloader_obj = None
+        # The downloads.VideoDownloader or downloads.StreamDownloader object
+        #   for the current job (if it exists)
+        self.downloader_obj = None
         # The downloads.JSONFetcher object for the current job (if it exists)
         self.json_fetcher_obj = None
         # The options.OptionsManager object for the current job
@@ -911,6 +977,12 @@ class DownloadWorker(threading.Thread):
         #   to do that
         # The worker is not destroyed until its current download is complete
         self.doomed_flag = False
+        # Downloads of broadcasting livestreams must start as soon as possible.
+        #   If the worker limit (mainapp.TartubeApp.num_worker_default) has
+        #   been reached, additional workers are created to handle them
+        # If True, this worker can only be used for broadcasting livestreams.
+        #   If False, it can be used for anything
+        self.broadcast_flag = broadcast_flag
 
         # Options list (used by downloads.VideoDownloader)
         # Initialised in the call to self.prepare_download()
@@ -935,7 +1007,8 @@ class DownloadWorker(threading.Thread):
         """Called as a result of self.__init__().
 
         Waits until this worker has been assigned a job, at which time we
-        create a new downloads.VideoDownloader object and wait for the result.
+        create a new downloads.VideoDownloader or downloads.StreamDownloader
+        object and wait for the result.
         """
 
         if DEBUG_FUNC_FLAG:
@@ -954,84 +1027,19 @@ class DownloadWorker(threading.Thread):
                 # Import the media data object (for convenience)
                 media_data_obj = self.download_item_obj.media_data_obj
 
-                # If the download stalls, the VideoDownloader may need to be
-                #   replaced with a new one. Use a while loop for that
-                first_flag = True
-                while True:
-
-                    # Set up the new downloads.VideoDownloader object
-                    self.video_downloader_obj = VideoDownloader(
-                        self.download_manager_obj,
-                        self,
-                        self.download_item_obj,
-                    )
-
-                    if first_flag:
-
-                        first_flag = False
-                        # Send a message to the Output Tab's summary page
-                        app_obj.main_win_obj.output_tab_write_stdout(
-                            0,
-                            _('Thread #') + str(self.worker_id) \
-                            + ': ' + _('Assigned job:') + ' \'' \
-                            + self.download_item_obj.media_data_obj.name \
-                            + '\'',
-                        )
-
-                    # Execute the assigned job
-                    return_code = self.video_downloader_obj.do_download()
-                    # If a restart is required, -1 is returned
-                    if return_code > -1:
-                        break
-
-                # If the downloads.VideoDownloader object collected any
-                #   youtube-dl error/warning messages, display them in the
-                #   Error List
-                if media_data_obj.error_list or media_data_obj.warning_list:
-                    GObject.timeout_add(
-                        0,
-                        app_obj.main_win_obj.errors_list_add_row,
-                        media_data_obj,
-                    )
-
-                # In the event of an error, nothing updates the video's row in
-                #   the Video Catalogue, and therefore the error icon won't be
-                #   visible
-                # Do that now (but don't if mainwin.ComplexCatalogueItem
-                #   objects aren't being used in the Video Catalogue)
-                if not self.download_item_obj.operation_classic_flag \
-                and return_code == VideoDownloader.ERROR \
+                # When downloading a livestream that's broadcasting now, we
+                #   can use Youtube Stream Capture. Otherwise, use youtube-dl
+                #   for all downloading tasks
+                if app_obj.ytsc_priority_flag \
                 and isinstance(media_data_obj, media.Video) \
-                and app_obj.catalogue_mode_type != 'simple':
-                    GObject.timeout_add(
-                        0,
-                        app_obj.main_win_obj.video_catalogue_update_video,
-                        media_data_obj,
-                    )
-
-                # Call the destructor function of VideoDownloader object
-                self.video_downloader_obj.close()
-
-                # If possible, check the channel/playlist RSS feed for videos
-                #   we don't already have, and mark them as livestreams
-                if self.running_flag \
-                and mainapp.HAVE_FEEDPARSER_FLAG \
-                and app_obj.enable_livestreams_flag \
-                and (
-                    isinstance(media_data_obj, media.Channel) \
-                    or isinstance(media_data_obj, media.Playlist)
-                ) and media_data_obj.child_list \
-                and media_data_obj.rss:
-
-                    # Send a message to the Output Tab's summary page
-                    app_obj.main_win_obj.output_tab_write_stdout(
-                        0,
-                        _('Thread #') + str(self.worker_id) \
-                        + ': ' + _('Checking RSS feed'),
-                    )
-
-                    # Check the RSS feed for the media data object
-                    self.check_rss(media_data_obj)
+                and not media_data_obj.dummy_flag \
+                and self.download_item_obj.operation_type != 'sim' \
+                and self.download_item_obj.operation_type != 'classic_sim' \
+                and media_data_obj.live_mode == 2 \
+                and utils.is_youtube(media_data_obj.source):
+                    self.run_stream_downloader(media_data_obj)
+                else:
+                    self.run_video_downloader(media_data_obj)
 
                 # Send a message to the Output Tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
@@ -1076,6 +1084,170 @@ class DownloadWorker(threading.Thread):
             time.sleep(self.sleep_time)
 
 
+    def run_video_downloader(self, media_data_obj):
+
+        """Called by self.run()
+
+        Creates a new downloads.VideoDownloader to handle the download(s) for
+        this job, and destroys it when it's finished.
+
+        If possible, checks the channel/playlist RSS feed for videos we don't
+        already have, and mark them as livestreams
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist,
+                media.Folder): The media data object being downloaded. When the
+                download operation was launched from the Classic Mode Tab, a
+                dummy media.Video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 844 run_video_downloader')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # If the download stalls, the VideoDownloader may need to be replaced
+        #   with a new one. Use a while loop for that
+        first_flag = True
+        while True:
+
+            # Set up the new downloads.VideoDownloader object
+            self.downloader_obj = VideoDownloader(
+                self.download_manager_obj,
+                self,
+                self.download_item_obj,
+            )
+
+            if first_flag:
+
+                first_flag = False
+                # Send a message to the Output Tab's summary page
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    0,
+                    _('Thread #') + str(self.worker_id) \
+                    + ': ' + _('Assigned job:') + ' \'' \
+                    + self.download_item_obj.media_data_obj.name \
+                    + '\'',
+                )
+
+            # Execute the assigned job
+            return_code = self.downloader_obj.do_download()
+            # If a restart is required, -1 is returned
+            if return_code > -1:
+                break
+
+        # If the downloads.VideoDownloader object collected any youtube-dl
+        #   error/warning messages, display them in the Error List
+        if media_data_obj.error_list or media_data_obj.warning_list:
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.errors_list_add_row,
+                media_data_obj,
+            )
+
+        # In the event of an error, nothing updates the video's row in the
+        #   Video Catalogue, and therefore the error icon won't be visible
+        # Do that now (but don't if mainwin.ComplexCatalogueItem objects aren't
+        #   being used in the Video Catalogue)
+        if not self.download_item_obj.operation_classic_flag \
+        and return_code == VideoDownloader.ERROR \
+        and isinstance(media_data_obj, media.Video) \
+        and app_obj.catalogue_mode_type != 'simple':
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.video_catalogue_update_video,
+                media_data_obj,
+            )
+
+        # Call the destructor function of VideoDownloader object
+        self.downloader_obj.close()
+
+        # If possible, check the channel/playlist RSS feed for videos we don't
+        #   already have, and mark them as livestreams
+        if self.running_flag \
+        and mainapp.HAVE_FEEDPARSER_FLAG \
+        and app_obj.enable_livestreams_flag \
+        and (
+            isinstance(media_data_obj, media.Channel) \
+            or isinstance(media_data_obj, media.Playlist)
+        ) and media_data_obj.child_list \
+        and media_data_obj.rss:
+
+            # Send a message to the Output Tab's summary page
+            app_obj.main_win_obj.output_tab_write_stdout(
+                0,
+                _('Thread #') + str(self.worker_id) \
+                + ': ' + _('Checking RSS feed'),
+            )
+
+            # Check the RSS feed for the media data object
+            self.check_rss(media_data_obj)
+
+
+    def run_stream_downloader(self, media_data_obj):
+
+        """Called by self.run()
+
+        A modified version of self.run_video_downloader(), used when
+        downloading a media.Video object that's a livestream broadcasting now.
+        In that case, we can use Youtube Stream Capture, rather than
+        youtube-dl.
+
+        Creates a new downloads.StreamDownloader to handle the download for
+        this job, and destroys it when it's finished.
+
+        Args:
+
+            media_data_obj (media.Video): The media data object being
+                downloaded
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 844 run_stream_downloader')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Set up the new downloads.StreamDownloader object
+        self.downloader_obj = StreamDownloader(
+            self.download_manager_obj,
+            self,
+            self.download_item_obj,
+        )
+
+        # Send a message to the Output Tab's summary page
+        app_obj.main_win_obj.output_tab_write_stdout(
+            0,
+            _('Thread #') + str(self.worker_id) \
+            + ': ' + _('Assigned job:') + ' \'' \
+            + self.download_item_obj.media_data_obj.name \
+            + '\'',
+        )
+
+        # Execute the assigned job
+        return_code = self.downloader_obj.do_capture()
+
+        # In the event of an error, nothing updates the video's row in the
+        #   Video Catalogue, and therefore the error icon won't be visible
+        # Do that now (but don't if mainwin.ComplexCatalogueItem objects aren't
+        #   being used in the Video Catalogue)
+        if not self.download_item_obj.operation_classic_flag \
+        and return_code == StreamDownloader.ERROR \
+        and app_obj.catalogue_mode_type != 'simple':
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.video_catalogue_update_video,
+                media_data_obj,
+            )
+
+        # Call the destructor function of StreamDownloader object
+        self.downloader_obj.close()
+
+
     def close(self):
 
         """Called by downloads.DownloadManager.run().
@@ -1094,8 +1266,8 @@ class DownloadWorker(threading.Thread):
 
         self.running_flag = False
 
-        if self.video_downloader_obj:
-            self.video_downloader_obj.stop()
+        if self.downloader_obj:
+            self.downloader_obj.stop()
 
         if self.json_fetcher_obj:
             self.json_fetcher_obj.stop()
@@ -1538,11 +1710,7 @@ class DownloadList(object):
 
                     else:
 
-                        # Use the specified media data object. The True value
-                        #   tells self.create_item() to download
-                        #   media_data_obj, even if it is a video in a channel
-                        #   or a playlist (which otherwise would be handled by
-                        #   downloading the channel/playlist)
+                        # Use the specified media data object
                         self.create_item(
                             media_data_obj,
                             None,       # override_operation_type
@@ -1835,6 +2003,22 @@ class DownloadList(object):
                 or not self.app_obj.custom_dl_by_video_flag
             )
         ):
+            # (Broadcasting livestreams should always take priority over
+            #   everything else)
+            if isinstance(media_data_obj, media.Video) \
+            and media_data_obj.live_mode == 2:
+
+                broadcast_flag = True
+                # For a broadcasting livestream, we create additional workers
+                #   if required, possibly bypassing the limit specified by
+                #   mainapp.TartubeApp.num_worker_default
+                if self.app_obj.download_manager_obj:
+                    self.app_obj.download_manager_obj.create_bypass_worker()
+
+            else:
+
+                broadcast_flag = False
+
             # Create a new download.DownloadItem object...
             self.download_item_count += 1
             download_item_obj = DownloadItem(
@@ -1846,10 +2030,12 @@ class DownloadList(object):
             )
 
             # ...and add it to our list
-            if priority_flag:
-                self.download_item_list.append(download_item_obj.item_id)
-            else:
+            if broadcast_flag:
+                self.download_item_list.insert(0, download_item_obj.item_id)
+            elif priority_flag:
                 self.temp_item_list.append(download_item_obj.item_id)
+            else:
+                self.download_item_list.append(download_item_obj.item_id)
 
             self.download_item_dict[download_item_obj.item_id] \
             = download_item_obj
@@ -2200,7 +2386,7 @@ class DownloadItem(object):
 
 class VideoDownloader(object):
 
-    """Called by downloads.DownloadWorker.run().
+    """Called by downloads.DownloadWorker.run_video_downloader().
 
     Based on the YoutubeDLDownloader class in youtube-dl-gui.
 
@@ -2488,7 +2674,7 @@ class VideoDownloader(object):
 
     def do_download(self):
 
-        """Called by downloads.DownloadWorker.run().
+        """Called by downloads.DownloadWorker.run_video_downloader().
 
         Based on YoutubeDLDownloader.download().
 
@@ -2906,7 +3092,7 @@ class VideoDownloader(object):
 
     def close(self):
 
-        """Called by DownloadWorker.run().
+        """Can be called by anything.
 
         Destructor function for this object.
         """
@@ -4646,6 +4832,942 @@ class VideoDownloader(object):
         self.stop_soon_flag = True
 
 
+class StreamDownloader(object):
+
+    """Called by downloads.DownloadWorker.run_stream_downloader().
+
+    Python class to create a system child process. Uses the child process to
+    instruct Youtube Stream Capture (YTSC) to download the currently-
+    broadcasting livestream associated with the URL described by a
+    downloads.DownloadItem object (which is always an individual video).
+
+    Reads from the child process STDOUT, having set up a downloads.PipeReader
+    object to do so in an asynchronous way. (STDERR is available, but is
+    currently ignored).
+
+    Sets self.return_code to a value in the range 0-5, described below. The
+    parent downloads.DownloadWorker object checks that return code once this
+    object's child process has finished.
+
+    Args:
+
+        download_manager_obj (downloads.DownloadManager): The download manager
+            object handling the entire download operation
+
+        download_worker_obj (downloads.DownloadWorker): The parent download
+            worker object. The download manager uses multiple workers to
+            implement simultaneous downloads. The download manager checks for
+            free workers and, when it finds one, assigns it a
+            download.DownloadItem object. When the worker is assigned a
+            download item, it creates a new instance of this object to
+            interface with youtube-dl, and waits for this object to return a
+            return code
+
+        download_item_obj (downloads.DownloadItem): The download item object
+            describing the URL from which Youtube Stream Capture should
+            download a livestream video.
+
+    Warnings:
+
+        The calling function is responsible for calling the close() method
+        when it's finished with this object, in order for this object to
+        properly close down.
+
+    """
+
+    # Attributes
+
+
+    # Valid vlues for self.return_code, following the model established by
+    #   downloads.VideoDownloader (but with a smaller set of values)
+    # 0 - The download operation completed successfully
+    OK = 0
+    # 2 - An error occured during the download operation
+    ERROR = 2
+    # 5 - The download operation was stopped by the user
+    STOPPED = 5
+
+
+    # Standard class methods
+
+
+    def __init__(self, download_manager_obj, download_worker_obj, \
+    download_item_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4051 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # The downloads.DownloadManager object handling the entire download
+        #   operation
+        self.download_manager_obj = download_manager_obj
+        # The parent downloads.DownloadWorker object
+        self.download_worker_obj = download_worker_obj
+        # The downloads.DownloadItem object describing the URL from which
+        #   youtube-dl should download video(s)
+        self.download_item_obj = download_item_obj
+
+        # This object reads from the child process STDOUT in an asynchronous
+        #   way. STDERR is not read, but for conformity with
+        #   downloads.VideoDownloader (and for future changes to the code), it
+        #   is available
+        # Standard Python synchronised queue classes
+        self.stdout_queue = queue.Queue()
+        self.stderr_queue = queue.Queue()
+        # The downloads.PipeReader objects created to handle reading from the
+        #   pipes
+        self.stdout_reader = PipeReader(self.stdout_queue)
+        self.stderr_reader = PipeReader(self.stderr_queue)
+
+        # The child process created by self.create_child_process()
+        self.child_process = None
+
+
+        # IV list - other
+        # ---------------
+        # The current return code, using values in the range 0-5, as described
+        #   above
+        # The value remains set to self.OK unless we encounter any problems
+        # The larger the number, the higher in the hierarchy of return codes.
+        #   Codes lower in the hierarchy (with a smaller number) cannot
+        #   overwrite higher in the hierarchy (with a bigger number)
+        self.return_code = self.OK
+        # The time (in seconds) between iterations of the loop in
+        #   self.do_child_process()
+        self.sleep_time = 0.1
+
+        # Name of the two YTSC scipts used
+        self.ytsc_capture_script = 'youtube_stream_capture.py'
+        self.ytsc_merge_script = 'merge.py'
+        # Actualy path to the YTSC script; used to find the merge script (which
+        #   should be in the same directory)
+        self.ytsc_capture_path = None
+        self.ytsc_merge_path = None
+
+        # The directory in which YTSC stores video segments, before they are
+        #   merged into the eventual output video
+        self.segments_dir = None
+        # Full path to the temporary directory used for this download
+        self.temp_dir_path = None
+        # Full path to the output file
+        self.output_path = None
+
+        # YTSC sometimes fails to commence downloading a stream, but succeeds
+        #   after a restart. The number of restarts attempted to far
+        self.restart_count = 0
+        # On the current attempt, the time (matches time.time()) at which we
+        #   should either restart, or give up
+        self.restart_time = None
+        # Flag set to True by self.do_child_process(), if the child process has
+        #   been halted, but a restart should be performed
+        self.do_restart_flag = False
+        # Flag set to True after a call to self.stop(), meaning that no more
+        #   restarts are allowed (for example, once the user has clicked the
+        #   main window's 'Stop' button
+        self.no_restart_flag = False
+
+        # YTSC splits a video into segments, downloaded individually and later
+        #   merged into an output video file. The highest segment number
+        #   downloaded so far
+        self.segment_count = 0
+
+
+    # Public class methods
+
+
+    def do_capture(self):
+
+        """Called by downloads.DownloadWorker.run_stream_downloader().
+
+        YTSC runs in two stages. First, it downloads the broadcasting
+        livestream in segments, and stores them in a segments directory (with
+        a custom name). That stage is handled by this function.
+
+        If the first stage is successful, the second stage is handled by a call
+        to self.do_merge(), in which the segments are merged into a video
+        output file.
+
+        This function returns the final return code, regardless of whether
+        the second stage is performed, or not.
+
+        Returns:
+
+            The final return code, a value in the range 0-5 (as described
+            above)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 do_capture')
+
+        # Import the main app and the media.Video object (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+        video_obj = self.download_item_obj.media_data_obj
+
+        # This object creates more messages for the Output Tab and/or terminal,
+        #   than downloads.VideoDownloader would do, as the output generated by
+        #   Youtube Stream Capture is not easy for the user to interpret
+        self.show_msg(_('Tartube is starting the stream capture...'))
+
+        # Create a temporary directory, in which the video segments (and the
+        #   merged output file) can be kept during the process
+        # For some reason, the system will not delete the sub-directory
+        #   containing the video segments, at the moment the proceeds
+        #   completes. However, Tartube's temporary directories are all
+        #   deleted on shutdown anyway
+        self.temp_dir_path = os.path.abspath(
+            os.path.join(app_obj.temp_ytsc_dir, 'dbid_' + str(video_obj.dbid)),
+        )
+
+        try:
+            if not os.path.isdir(self.temp_dir_path):
+                os.makedirs(self.temp_dir_path)
+
+        except:
+            self.download_item_obj.media_data_obj.set_error(
+                _('Could not create a destination directory, capture halted'),
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        # Set the path to the capture script; if nont has been specified,
+        #   assume the file is in the user's path
+        if app_obj.ytsc_path is not None:
+            self.ytsc_capture_path = app_obj.ytsc_path
+        else:
+            self.ytsc_capture_path = self.ytsc_capture_script
+
+        if not os.path.isfile(self.ytsc_capture_path):
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Youtube Stream Capture script not found:') + ' ' \
+                + self.ytsc_capture_path,
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        # Get the full paths to the merge script
+        if self.ytsc_capture_path == self.ytsc_capture_script:
+
+            self.ytsc_merge_path = self.ytsc_merge_script
+
+        else:
+
+            capture_dir, capture_file = os.path.split(self.ytsc_capture_path)
+            self.ytsc_merge_path = os.path.abspath(
+                os.path.join(
+                    capture_dir, self.ytsc_merge_script,
+                ),
+            )
+
+        if not os.path.isfile(self.ytsc_merge_path):
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Youtube Stream Capture script not found:') + ' ' \
+                + self.ytsc_merge_path,
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        # Stream capture attempts sometimes fail without getting started, in
+        #   which case the capture can be restarted (if settings permit it;
+        #   otherwise only one attempt is made)
+        while not self.restart_count \
+        or (self.do_restart_flag and not self.no_restart_flag):
+
+            # Set the time after which we should stop waiting for the first
+            #   segment
+            self.restart_time \
+            = int(time.time() + (app_obj.ytsc_wait_time * 60))
+            # (The flag is set back to True later, if another restart is
+            #   required)
+            self.do_restart_flag = False
+            self.restart_count += 1
+
+            # Generate the system command; if none has been specified, assume
+            #   the file is in the user's path
+            cmd_list = ['python3'] + [self.ytsc_capture_path] \
+            + [video_obj.source] + ['--output-directory'] \
+            + [self.temp_dir_path]
+
+            # ...and display it in the Output Tab/terminal, if required
+            self.show_cmd(' '.join(cmd_list))
+
+            # Create a new child process using that system command...
+            self.create_child_process(cmd_list)
+            # ...and let it run until it has finished
+            self.do_capture_child_process()
+
+        # YTSC produces a return code of 0 on success and -1 on failure
+        # Other values have been observed, commonly -9 (when self.stop() is
+        #   called, and sometimes for other unknown reasons). After that, the
+        #   video segments cannot be merged
+        # If 0, we can proceed to the next stage. Otherwise, we must stop now
+        msg = ''
+        if self.child_process is None:
+
+            msg = _('Download did not start')
+
+        elif self.child_process.returncode == -1:
+
+            msg = _('Failed to capture the livestream')
+
+        elif self.child_process.returncode == -9:
+
+            msg = _('Stream capture terminated')
+
+        elif self.child_process.returncode != 0:
+
+            msg = _('Child process exited with non-zero code: {}').format(
+                self.child_process.returncode,
+            )
+
+        elif not self.segment_count:
+
+            msg = _('Stream captured terminated without downloading any' \
+                + ' video segments (indicating an error with the stream)',
+            )
+
+        if msg != '':
+
+            self.show_msg(msg)
+            self.download_item_obj.media_data_obj.set_error(msg)
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        else:
+
+            # Capture successful
+            self.show_msg(_('Stream capture successful'))
+
+            # Now start another system process to merge the segments together
+            #   into a single output video, and return the return code of that
+            #   process
+            return self.do_merge()
+
+
+    def do_merge(self):
+
+        """Called by self.do_capture().
+
+        Having completed the download, locate the video segments and attempt to
+        merge them into a single video output file.
+
+        Returns:
+
+            The final return code, a value in the range 0-5 (as described
+            above)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 844 do_merge')
+
+        # Import the main app and the media.Video object (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+        video_obj = self.download_item_obj.media_data_obj
+
+        # Show a confirmation message
+        self.show_msg(_('Merging file segments...'))
+
+        # Generate the system command...
+        cmd_list = ['python3'] + [self.ytsc_merge_path] + [video_obj.source] \
+        + ['--output-directory'] + [self.temp_dir_path]
+        # ...and display it in the Output Tab/terminal, if required
+        self.show_cmd(' '.join(cmd_list))
+
+        # Create a new child process using that system command...
+        self.create_child_process(cmd_list)
+        # ...and let it run until it has finished
+        self.do_merge_child_process()
+
+        # We also set the return code to self.ERROR if the download didn't
+        #   start
+        # (At the moment, the merge scripts do not return non-zero return
+        #   codes)
+        if self.child_process is None:
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Segment merge did not start'),
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        # Check that a merged file was detected, and that it exists
+        if self.output_path is None:
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Segment merge completed, but path not detected'),
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        elif not os.path.isfile(self.output_path):
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Segment merge completed, but output file not found'),
+            )
+
+            self.set_return_code(self.ERROR)
+            return self.return_code
+
+        # Move the merged file to its permanent location
+        container_dir = video_obj.parent_obj.get_actual_dir(app_obj)
+        output_file, output_ext = os.path.splitext(self.output_path)
+        new_path = os.path.abspath(
+            os.path.join(
+                container_dir,
+                video_obj.file_name + output_ext,
+            ),
+        )
+
+        utils.rename_file(app_obj, self.output_path, new_path)
+
+        if os.path.isfile(new_path):
+
+            self.show_msg(_('File moved to:') + ' ' + new_path)
+            video_obj.set_file_from_path(new_path)
+            app_obj.mark_video_downloaded(video_obj, True)
+            app_obj.mark_video_live(video_obj, 0)
+
+            self.show_msg(_('Livestream download is complete'))
+
+        else:
+
+            self.download_item_obj.media_data_obj.set_error(
+                _('Failed to move output file'),
+            )
+
+            self.set_return_code(self.ERROR)
+
+        # All done
+        return self.return_code
+
+
+    def do_capture_child_process(self):
+
+        """Called by self.do_capture().
+
+        YTSC runs in two stages. First, it downloads the broadcasting
+        livestream in segments, and stores them in a segments directory (with
+        a custom name). Then, it merges the segments into a single video
+        output file.
+
+        This function is called at the first stage to create the child process
+        and to check YTSC's output to STDOUT.
+
+        The function returns after the child process stops.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 do_capture_child_process')
+
+
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # So that we can read from the child process STDOUT and STDERR, attach
+        #   a file descriptor to the PipeReader objects
+        # (As described above, STDERR is currently ignored, but might be used
+        #   in the future)
+        if self.child_process is not None:
+
+            self.stdout_reader.attach_file_descriptor(
+                self.child_process.stdout,
+            )
+
+            self.stderr_reader.attach_file_descriptor(
+                self.child_process.stderr,
+            )
+
+        # While capturing the stream or merging the video segments, update the
+        #   callback function with the status of the current job
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT, and convert into unicode for
+            #   Python's convenience
+            while not self.stdout_queue.empty():
+
+                stdout = self.stdout_queue.get_nowait().rstrip()
+                if stdout:
+
+                    # On MS Windows we use cp1252, so that Tartube can
+                    #   communicate with the Windows console
+                    if os.name == 'nt':
+                        stdout = stdout.decode('cp1252', errors="replace")
+                    else:
+                        stdout = stdout.decode('utf-8', errors="replace")
+
+                    # Intercept various STDOUT messages
+                    finished_flag = False
+                    write_flag = False
+
+                    # Intercept the segment number, and update the IV (but
+                    #   don't display that line in the Output Tab)
+                    match = re.search('^Segment number\: (\d+)', stdout)
+                    if match:
+
+                        segment_num = int(match.group(1))
+                        if segment_num > self.segment_count:
+                            self.segment_count = segment_num
+
+                    # Intercept the segments directory, if we don't already
+                    #   have it
+                    if not write_flag and self.segments_dir is None:
+
+                        match = re.search(
+                            '^[INFO] Created directory (.*)',
+                            stdout,
+                        )
+
+                        if match:
+
+                            write_flag = True
+                            self.segments_dir = match.group(1)
+
+                    # Intercept other messages which can be displayed, even
+                    #   when verbose output is turned off
+                    # (Some of lines captured here, could also have been
+                    #   captured by the code block above)
+                    if not write_flag \
+                    and (
+                        re.search('^\w+\|OK\s+\|', stdout) \
+                        or re.search('^\w+\|ERR\s+\|', stdout)
+                    ):
+                        write_flag = True
+
+                    # Intercept the message, showing that the first stage is
+                    #   complete
+                    if not write_flag:
+
+                        match = re.search('Exceeded.*retries', stdout)
+                        if match:
+                            finished_flag = True
+                            write_flag = True
+
+                    # Pass a dictionary of values to self.download_worker_obj
+                    #   so the main window can be updated
+                    # The dictionary is based on the one created by
+                    #   downloads.VideoDownloader (but with far fewer values
+                    #   included)
+                    dl_stat_dict = {
+                        'playlist_index': self.segment_count,
+                        'playlist_size': '?',
+                        'dl_sim_flag': False,
+                        'status': formats.ACTIVE_STAGE_CAPTURE,
+                    }
+
+                    self.download_worker_obj.data_callback(dl_stat_dict)
+
+                    # Show output in the Output Tab (if required)
+                    if app_obj.ytsc_write_verbose_flag \
+                    or (app_obj.ytdl_output_stdout_flag and write_flag):
+                        app_obj.main_win_obj.output_tab_write_stdout(
+                            self.download_worker_obj.worker_id,
+                            stdout,
+                        )
+
+                    # Show output in the terminal (if required)
+                    if app_obj.ytsc_write_verbose_flag \
+                    or (app_obj.ytdl_write_stdout_flag and write_flag):
+                        # Git #175, Japanese text may produce a codec error
+                        #   here, despite the .decode() call above
+                        try:
+                            print(stdout)
+                        except:
+                            print('STDOUT text with unprintable characters')
+
+                    # If the download appears to be complete, stop the child
+                    #   process
+                    if finished_flag:
+                        self.stop()
+
+            # If no segments have been received and it's time to give up (or to
+            #   restart the child process), then do so
+            if not self.segment_count \
+            and self.restart_time < time.time():
+
+                # Halt the child process, but don't let it forbid restarts
+                self.stop(True)
+
+                if not self.no_restart_flag \
+                and self.restart_count <= app_obj.ytsc_restart_max:
+
+                    self.do_restart_flag = True
+                    self.show_msg(
+                        _(
+                            'Stream capture is frozen, trying again' \
+                            + ' (restart #{0})'.format(self.restart_count),
+                        ),
+                    )
+
+                else:
+
+                    self.show_msg(_('Stream capture is frozen, giving up'))
+
+                # (In both cases, self.is_child_process_alive() might return
+                #   True right now, so return control to the calling function
+                #   early)
+                break
+
+
+    def do_merge_child_process(self):
+
+        """Called by self.do_merge().
+
+        YTSC runs in two stages. First, it downloads the broadcasting
+        livestream in segments, and stores them in a segments directory (with
+        a custom name). Then, it merges the segments into a single video
+        output file.
+
+        This function is called at the second stage to create the child process
+        and to check YTSC's output to STDOUT.
+
+        The function returns after the child process stops.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 do_merge_child_process')
+
+
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # So that we can read from the child process STDOUT and STDERR, attach
+        #   a file descriptor to the PipeReader objects
+        # (As described above, STDERR is currently ignored, but might be used
+        #   in the future)
+        if self.child_process is not None:
+
+            self.stdout_reader.attach_file_descriptor(
+                self.child_process.stdout,
+            )
+
+            self.stderr_reader.attach_file_descriptor(
+                self.child_process.stderr,
+            )
+
+        # While capturing the stream or merging the video segments, update the
+        #   callback function with the status of the current job
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT, and convert into unicode for
+            #   Python's convenience
+            while not self.stdout_queue.empty():
+
+                stdout = self.stdout_queue.get_nowait().rstrip()
+                if stdout:
+
+                    # On MS Windows we use cp1252, so that Tartube can
+                    #   communicate with the Windows console
+                    if os.name == 'nt':
+                        stdout = stdout.decode('cp1252', errors="replace")
+                    else:
+                        stdout = stdout.decode('utf-8', errors="replace")
+
+                    # Intercept various STDOUT messages, depending on whether
+                    #   the merge has started yet, or not
+                    finished_flag = False
+                    write_flag = False
+
+                    # Intercept output file information
+                    if re.search('^\[INFO\]', stdout) \
+                    or re.search('^\[WARNING\]', stdout):
+                        write_flag = True
+
+                    else:
+
+                        match = re.search('^Output file\: (.*)', stdout)
+                        if match:
+                            self.output_path = match.group(1)
+                            finished_flag = True
+                            write_flag = True
+
+                    # Pass a dictionary of values to self.download_worker_obj
+                    #   so the main window can be updated
+                    # The dictionary is based on the one created by
+                    #   downloads.VideoDownloader (but with far fewer values
+                    #   included)
+                    dl_stat_dict = {
+                        'playlist_index': self.segment_count,
+                        'playlist_size': '?',
+                        'dl_sim_flag': False,
+                        'status': formats.ACTIVE_STAGE_MERGE,
+                    }
+
+                    self.download_worker_obj.data_callback(dl_stat_dict)
+
+                    # Show output in the Output Tab (if required)
+                    if app_obj.ytsc_write_verbose_flag \
+                    or (app_obj.ytdl_output_stdout_flag and write_flag):
+                        app_obj.main_win_obj.output_tab_write_stdout(
+                            self.download_worker_obj.worker_id,
+                            stdout,
+                        )
+
+                    # Show output in the terminal (if required)
+                    if app_obj.ytsc_write_verbose_flag \
+                    or (app_obj.ytdl_write_stdout_flag and write_flag):
+                        # Git #175, Japanese text may produce a codec error
+                        #   here, despite the .decode() call above
+                        try:
+                            print(stdout)
+                        except:
+                            print('STDOUT text with unprintable characters')
+
+                    # If the download appears to be complete, stop the child
+                    #   process
+                    if finished_flag:
+                        self.stop()
+
+
+    def close(self):
+
+        """Can be called by anything.
+
+        Destructor function for this object.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4275 close')
+
+        # Tell the PipeReader objects to shut down, thus joining their threads
+        self.stdout_reader.join()
+        self.stderr_reader.join()
+
+
+    def create_child_process(self, cmd_list):
+
+        """Called by self.do_child_process().
+
+        Based on YoutubeDLDownloader._create_process().
+
+        Executes the system command, creating a new child process which
+        executes youtube-dl.
+
+        Args:
+
+            cmd_list (list): Python list that contains the command to execute.
+
+        Returns:
+
+            True on success, False on an error
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4302 create_child_process')
+
+        info = preexec = None
+        if os.name == 'nt':
+            # Hide the child process window that MS Windows helpfully creates
+            #   for us
+            info = subprocess.STARTUPINFO()
+            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            # Make this child process the process group leader, so that we can
+            #   later kill the whole process group with os.killpg
+            preexec = os.setsid
+
+        try:
+            self.child_process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=preexec,
+                startupinfo=info,
+            )
+
+            return True
+
+        except (ValueError, OSError) as error:
+            # (Errors are expected and frequent)
+            return False
+
+
+    def is_child_process_alive(self):
+
+        """Called by self.do_child_process() and self.stop().
+
+        Based on YoutubeDLDownloader._proc_is_alive().
+
+        Called continuously during the self.do_fetch() loop to check whether
+        the child process has finished or not.
+
+        Returns:
+
+            True if the child process is alive, otherwise returns False.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4347 is_child_process_alive')
+
+        if self.child_process is None:
+            return False
+
+        return self.child_process.poll() is None
+
+
+    def set_return_code(self, code):
+
+        """Called by self.do_capture() and .do_merge().
+
+        Based on YoutubeDLDownloader._set_returncode().
+
+        After the child process has terminated with an error of some kind,
+        sets a new value for self.return_code, but only if the new return code
+        is higher in the hierarchy of return codes than the current value.
+
+        Args:
+
+            code (int): A return code in the range 0-5
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 3912 set_return_code')
+
+        if code >= self.return_code:
+            self.return_code = code
+
+
+    def show_cmd(self, cmd):
+
+        """Called by self.do_capture() and .do_merge().
+
+        Shows a system command in the Output Tab and/or terminal window, if
+        required.
+
+        Args:
+
+            cmd (str): The system command to display
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 show_cmd')
+
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Display the command in the Output Tab, if allowed
+        if app_obj.ytdl_output_system_cmd_flag:
+
+            app_obj.main_win_obj.output_tab_write_system_cmd(
+                self.download_worker_obj.worker_id,
+                cmd,
+            )
+
+        # Display the message in the terminal, if allowed
+        if app_obj.ytdl_write_system_cmd_flag:
+            try:
+                print(cmd)
+            except:
+                print('Command echoed in STDOUT with unprintable characters')
+
+
+    def show_msg(self, msg):
+
+        """Called by self.do_capture() and .do_merge().
+
+        Shows a message in the Output Tab and/or terminal window, if required.
+
+        Args:
+
+            msg (str): The message to display
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4141 show_msg')
+
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Display the message in the Output Tab, if allowed
+        if app_obj.ytdl_output_stdout_flag:
+
+            app_obj.main_win_obj.output_tab_write_stdout(
+                self.download_worker_obj.worker_id,
+                msg,
+            )
+
+        # Display the message in the terminal, if allowed
+        if app_obj.ytdl_write_stdout_flag:
+            try:
+                print(msg)
+            except:
+                print('Message echoed in STDOUT with unprintable characters')
+
+
+    def stop(self, restart_flag=False):
+
+        """Called by DownloadWorker.close() and self.do_child_process().
+
+        Terminates the child process.
+
+        Args:
+
+            restart_flag (bool): If False, no restarts are allowed (perhaps
+                because the user has clicked the 'Stop' button in the main
+                window's toolbar). If True, don't explicitly forbid restarts
+                yet
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4363 stop')
+
+        if not restart_flag:
+            self.no_restart_flag = True
+
+        if self.is_child_process_alive():
+
+            if os.name == 'nt':
+                # os.killpg is not available on MS Windows (see
+                #   https://bugs.python.org/issue5115 )
+                self.child_process.kill()
+
+                # When we kill the child process on MS Windows the return code
+                #   gets set to 1, so we want to reset the return code back to
+                #   0
+                self.child_process.returncode = 0
+
+            else:
+                os.killpg(self.child_process.pid, signal.SIGKILL)
+
+
+    def stop_soon(self):
+
+        """Can be called by anything. Currently called by
+        mainwin.MainWin.on_progress_list_stop_soon().
+
+        This objects only downloads a single video, so we can ignore an
+        instruction to stop after that download has finished.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 3982 stop_soon')
+
+        pass
+
+
 class JSONFetcher(object):
 
     """Called by downloads.DownloadWorker.check_rss().
@@ -5067,7 +6189,7 @@ class JSONFetcher(object):
                 os.killpg(self.child_process.pid, signal.SIGKILL)
 
 
-class LivestreamManager(threading.Thread):
+class StreamManager(threading.Thread):
 
     """Called by mainapp.TartubeApp.livestream_manager_start().
 
@@ -5093,7 +6215,7 @@ class LivestreamManager(threading.Thread):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 4405 __init__')
 
-        super(LivestreamManager, self).__init__()
+        super(StreamManager, self).__init__()
 
         # IV list - class objects
         # -----------------------
@@ -5283,9 +6405,9 @@ class LivestreamManager(threading.Thread):
 
 class MiniJSONFetcher(object):
 
-    """Called by downloads.LivestreamManager.run().
+    """Called by downloads.StreamManager.run().
 
-    A modified version of downlaods.JSONFetcher (the former is called by
+    A modified version of downloads.JSONFetcher (the former is called by
     downloads.DownloadWorker only; using a second Python class for the same
     objective makes the code somewhat simpler).
 
@@ -5299,7 +6421,7 @@ class MiniJSONFetcher(object):
 
     Args:
 
-        livestream_manager_obj (downloads.LivestreamManager): The livestream
+        livestream_manager_obj (downloads.StreamManager): The livestream
             manager object handling the entire livestream operation
 
         video_obj (media.Video): The livestream video whose JSON data should be
@@ -5319,7 +6441,7 @@ class MiniJSONFetcher(object):
 
         # IV list - class objects
         # -----------------------
-        # The downloads.LivestreamManager object handling the entire livestream
+        # The downloads.StreamManager object handling the entire livestream
         #   operation
         self.livestream_manager_obj = livestream_manager_obj
         # The media.Video object for which new JSON data must be fetched
@@ -5353,7 +6475,7 @@ class MiniJSONFetcher(object):
 
     def do_fetch(self):
 
-        """Called by downloads.LivestreamManager.run().
+        """Called by downloads.StreamManager.run().
 
         Downloads JSON data for the livestream video, self.video_obj.
 
@@ -5490,7 +6612,7 @@ class MiniJSONFetcher(object):
 
     def close(self):
 
-        """Called by downloads.LivestreamManager.run().
+        """Called by downloads.StreamManager.run().
 
         Destructor function for this object.
         """

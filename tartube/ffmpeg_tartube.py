@@ -504,8 +504,10 @@ class FFmpegOptionsManager(object):
 
         output_mode (str): Always set to 'thumb' if 'input_mode' is set to
             'thumb'. Otherwise, the default value is 'h264'. The other possible
-            value is 'gif', in which case the video format is changed to .GIF
-            (and the 'change_file_ext' option is ignored)
+            values are 'gif' (in which case the video format is changed to
+            .GIF) and 'merge' (in which case the video is merged with au audio
+            file with the same file name); in both cases, the 'change_file_ext'
+            option is ignored)
 
         audio_flag (bool): If True, and if 'input_mode' is 'video', the video's
             audio is preserved when the file is converted. Ignored if
@@ -601,7 +603,7 @@ class FFmpegOptionsManager(object):
 
     def clone_options(self, other_options_manager_obj):
 
-        """Called by mainapp.TartubeApp.clone_ffmpeg_options_manager().
+        """Called by mainapp.TartubeApp.clone_ffmpeg_options().
 
         Clones FFmpeg options from the specified object into this object,
         completely replacing this object's FFmpeg options.
@@ -638,7 +640,7 @@ class FFmpegOptionsManager(object):
             # SETTINGS TAB
              # 'video', 'thumb'
             'input_mode': 'video',
-            # 'h264', 'gif', 'thumb'
+            # 'h264', 'gif', 'merge', 'thumb'
             'output_mode': 'h264',
             # SETTINGS TAB ('output_mode' = h264)
             'audio_flag': True,
@@ -749,52 +751,67 @@ class FFmpegOptionsManager(object):
         if video_obj is None:
 
             source_video_path = 'source.ext'
+            source_audio_path = 'source.ext'
             source_thumb_path = 'source.jpg'
-
-        elif hasattr(video_obj, 'dummy_path'):
-
-            # Special case: 'dummy' video objects (those downloaded in the
-            #   Classic Mode tab) use different IVs
-            dummy_flag = True
-
-            # If a specified media.Video has an unknown path, then return
-            #   an empty list; there is nothing for FFmpeg to convert
-            if video_obj.dummy_path is None:
-                return None
-
-            # Check the video/audio file actually exists. If not, there is
-            #   nothing for FFmpeg to convert
-            source_video_path = video_obj.dummy_path
-            if not os.path.exists(source_video_path) and input_mode == 'video':
-                return None, None, []
-
-            # Find the video's thumbnail
-            source_thumb_path = utils.find_thumbnail(app_obj, video_obj, True)
-            if source_thumb_path is None and input_mode == 'thumb':
-                # Return an empty list; there is nothing for FFmpeg to convert
-                return None, None, []
 
         else:
 
-            # If a specified media.Video has an unknown filename, then return
-            #   an empty list; there is nothing for FFmpeg to convert
-            if video_obj.file_name is None:
-                return None, None, []
+            if video_obj.dummy_flag:
 
-            # Check the video/audio file actually exists, and is marked as
-            #   downloaded. If not, there is nothing for FFmpeg to convert
-            source_video_path = video_obj.get_actual_path(app_obj)
-            if (
-                not os.path.exists(source_video_path) \
-                or not video_obj.dl_flag
-            ) and input_mode == 'video':
-                return None, None, []
+                # (Special case: 'dummy' video objects (those downloaded in the
+                #   Classic Mode tab) use different IVs)
+
+                # If a specified media.Video has an unknown path, then return
+                #   an empty list; there is nothing for FFmpeg to convert
+                if video_obj.dummy_path is None:
+                    return None
+
+                # Check the video/audio file actually exists. If not, there is
+                #   nothing for FFmpeg to convert
+                source_video_path = video_obj.dummy_path
+                if not os.path.exists(source_video_path) \
+                and input_mode == 'video':
+                    return None, None, []
+
+            else:
+
+                # If a specified media.Video has an unknown filename, then
+                #   return an empty list; there is nothing for FFmpeg to
+                #   convert
+                if video_obj.file_name is None:
+                    return None, None, []
+
+                # Check the video/audio file actually exists, and is marked as
+                #   downloaded. If not, there is nothing for FFmpeg to convert
+                source_video_path = video_obj.get_actual_path(app_obj)
+                if (
+                    not os.path.exists(source_video_path) \
+                    or not video_obj.dl_flag
+                ) and input_mode == 'video':
+                    return None, None, []
 
             # Find the video's thumbnail
             source_thumb_path = utils.find_thumbnail(app_obj, video_obj, True)
             if source_thumb_path is None and input_mode == 'thumb':
                 # Return an empty list; there is nothing for FFmpeg to convert
                 return None, None, []
+
+            # If 'output_mode' is 'merge', then look for an audio file with the
+            #   same name as the video file (but otherwise don't bother)
+            source_audio_path = None
+            if output_mode == 'merge':
+
+                name, video_ext = os.path.splitext(source_video_path)
+                for audio_ext in formats.AUDIO_FORMAT_LIST:
+
+                    audio_path = os.path.abspath(os.path.join(name, audio_ext))
+                    if os.path.isfile(audio_path):
+                        source_audio_path = audio_path
+                        break
+
+                if source_audio_path is None:
+                    # Nothing merge
+                    return None, None, []
 
         # Break down the full path into its components, so that we can set the
         #   output file, after applying optional modifications
@@ -1020,6 +1037,21 @@ class FFmpegOptionsManager(object):
                     return_list.extend(extra_cmd_list)
 
                 return_list.append(output_name + '.gif')
+
+        # Merge video/audio
+        elif output_mode == 'merge':
+
+            return_list.append(binary)
+            return_list.extend(opt_list)
+
+            return_list.append('-i')
+            return_list.append(source_audio_path)
+            return_list.append('-c:v')
+            return_list.append('copy')
+            return_list.append('-c:a')
+            return_list.append('copy')
+
+            return_list.append(output_path)
 
         # Video thumbnails
         else:

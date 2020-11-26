@@ -38,6 +38,7 @@ import re
 import sys
 import threading
 import time
+import urllib.parse
 
 
 # Import our modules
@@ -287,7 +288,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   size of the grid changes as the window is resized. Each location in
         #   the grid can be occupied by a gridbox (mainwin.CatalogueGridBox),
         #   containing a single video
-        # The size of the window, the last time a certain signal_connect fired,
+        # The size of the window, the last time a certain signal connect fired,
         #   so we can spot real changes to its size, when the same signal fires
         #   in the future
         self.win_last_width = None
@@ -399,15 +400,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Background colours used in the Video Catalogue to highlight
         #   livestream videos (we use different colours for a debut video)
-        self.live_wait_colour = Gdk.RGBA(1, 0, 0, 0.1)
-        self.live_now_colour = Gdk.RGBA(0, 1, 0, 0.1)
-        self.debut_wait_colour = Gdk.RGBA(1, 1, 0, 0.1)
-        self.debut_now_colour = Gdk.RGBA(0, 1, 1, 0.1)
+        self.live_wait_colour = Gdk.RGBA(1, 0, 0, 0.2)
+        self.live_now_colour = Gdk.RGBA(0, 1, 0, 0.2)
+        self.debut_wait_colour = Gdk.RGBA(1, 1, 0, 0.2)
+        self.debut_now_colour = Gdk.RGBA(0, 1, 1, 0.2)
         # Background colours used in the Video Catalogue, in grid mode, to
         #   highlight selected livestream/debut videos
-        self.grid_select_colour = Gdk.RGBA(0, 0, 1, 0.15)
-        self.grid_select_wait_colour = Gdk.RGBA(1, 0, 1, 0.1)
-        self.grid_select_live_colour = Gdk.RGBA(1, 0, 1, 0.2)
+        self.grid_select_colour = Gdk.RGBA(0, 0, 1, 0.25)
+        self.grid_select_wait_colour = Gdk.RGBA(1, 0, 1, 0.25)
+        self.grid_select_live_colour = Gdk.RGBA(1, 0, 1, 0.25)
 
         # The video catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
@@ -459,12 +460,13 @@ class MainWin(Gtk.ApplicationWindow):
         # A dictionary of Gdk.keyval_name values that should be intercepted,
         #   for quick lookup
         self.catalogue_grid_intercept_dict = {
-            'Up' : None,
-            'Down' : None,
-            'Left' : None,
-            'Right' : None,
-            'Page_Up'  : None,
-            'Page_Down' : None,
+            'Up': None,
+            'Down': None,
+            'Left': None,
+            'Right': None,
+            'Page_Up': None,
+            'Page_Down': None,
+            'a': None,              # Intercepts CTRL+A
         }
 
         # Progress Tab IVs
@@ -3276,7 +3278,10 @@ class MainWin(Gtk.ApplicationWindow):
         self.test_ytdl_menu_item.set_sensitive(sens_flag)
         self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
 
-        self.update_live_menu_item.set_sensitive(sens_flag)
+        if not_dl_operation_flag:
+            self.update_live_menu_item.set_sensitive(sens_flag)
+        else:
+            self.update_live_menu_item.set_sensitive(True)
 
         # (The 'Add videos', 'Add channel' etc menu items/buttons are
         #   sensitised during a download operation, but desensitised during
@@ -5784,7 +5789,7 @@ class MainWin(Gtk.ApplicationWindow):
         download_list_obj = None
         download_item_obj = None
         worker_obj = None
-        video_downloader_obj = None
+        downloader_obj = None
 
         if download_manager_obj:
 
@@ -5794,9 +5799,9 @@ class MainWin(Gtk.ApplicationWindow):
             for this_worker_obj in download_manager_obj.worker_list:
                 if this_worker_obj.running_flag \
                 and this_worker_obj.download_item_obj == download_item_obj \
-                and this_worker_obj.video_downloader_obj is not None:
+                and this_worker_obj.downloader_obj is not None:
                     worker_obj = this_worker_obj
-                    video_downloader_obj = this_worker_obj.video_downloader_obj
+                    downloader_obj = this_worker_obj.downloader_obj
                     break
 
         # Find the media data object itself. If the download operation has
@@ -5815,11 +5820,11 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_progress_list_stop_now,
             download_item_obj,
             worker_obj,
-            video_downloader_obj,
+            downloader_obj,
         )
         popup_menu.append(stop_now_menu_item)
         if not download_manager_obj \
-        or video_downloader_obj is None:
+        or downloader_obj is None:
             stop_now_menu_item.set_sensitive(False)
 
         stop_soon_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -5830,11 +5835,11 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_progress_list_stop_soon,
             download_item_obj,
             worker_obj,
-            video_downloader_obj,
+            downloader_obj,
         )
         popup_menu.append(stop_soon_menu_item)
         if not download_manager_obj \
-        or video_downloader_obj is None:
+        or downloader_obj is None:
             stop_soon_menu_item.set_sensitive(False)
 
         stop_all_soon_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8793,6 +8798,21 @@ class MainWin(Gtk.ApplicationWindow):
                     this_catalogue_obj.do_select(False)
 
 
+    def video_catalogue_grid_select_all(self):
+
+        """Called by CatalogueGridBox.on_key_press_event().
+
+        When the user presses CTRL+A, select all gridboxes in the grid.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 7118 video_catalogue_grid_select_all')
+
+        for catalogue_item_obj in self.video_catalogue_dict.values():
+            catalogue_item_obj.do_select(True)
+
+
     def video_catalogue_grid_scroll_on_select(self, gridbox_obj, keyval,
     select_type):
 
@@ -9380,6 +9400,10 @@ class MainWin(Gtk.ApplicationWindow):
             pixbuf = self.pixbuf_dict['playlist_small']
         elif isinstance(media_data_obj, media.Folder):
             pixbuf = self.pixbuf_dict['folder_small']
+        elif media_data_obj.live_mode == 2:
+            pixbuf = self.pixbuf_dict['live_now_small']
+        elif media_data_obj.live_mode == 1:
+            pixbuf = self.pixbuf_dict['live_wait_small']
         else:
             pixbuf = self.pixbuf_dict['video_small']
 
@@ -9554,11 +9578,23 @@ class MainWin(Gtk.ApplicationWindow):
                     else:
                         string = dl_stat_dict[key]
 
-                    self.progress_list_liststore.set(
-                        self.progress_list_liststore.get_iter(tree_path),
-                        column,
-                        string,
-                    )
+                    # GIt 34 reports that the .get_iter() call causes a crash,
+                    #   when finished rows are being hidden. This may be a Gtk
+                    #   issue, so intercept the error directly
+                    try:
+                        tree_iter = self.progress_list_liststore.get_iter(
+                            tree_path
+                        )
+
+                        self.progress_list_liststore.set(
+                            tree_iter,
+                            column,
+                            string,
+                        )
+
+                    except:
+                        # (Don't display stats for this hidden line)
+                        break
 
 
     def progress_list_check_hide_rows(self, force_flag=False):
@@ -9633,7 +9669,7 @@ class MainWin(Gtk.ApplicationWindow):
         row_count = self.progress_list_row_count - 1
 
         # Remove the row
-        path = Gtk.TreePath(row_num),
+        path = Gtk.TreePath(row_num)
         iter = self.progress_list_liststore.get_iter(path)
         self.progress_list_liststore.remove(iter)
 
@@ -10236,7 +10272,7 @@ class MainWin(Gtk.ApplicationWindow):
                     and worker_obj.download_item_obj \
                     and worker_obj.download_item_obj.media_data_obj.dbid \
                     == dbid:
-                        worker_obj.video_downloader_obj.stop()
+                        worker_obj.downloader_obj.stop()
 
             # Delete the dummy media.Video object
             del self.classic_media_dict[dbid]
@@ -10673,13 +10709,27 @@ class MainWin(Gtk.ApplicationWindow):
             self.output_tab_summary_flag = True
 
         # The number of pages in the notebook (not including the summary page)
-        #   should match the highest value of
-        #   mainapp.TartubeApp.num_worker_default during this session (i.e. if
-        #   the user reduces its value, we don't remove pages; but we do add
-        #   pages if the user increases its value)
-        if self.output_page_count < self.app_obj.num_worker_default:
+        #   should match the highest value of these two things during this
+        #   session:
+        #
+        #   - The maximum simultaneous downloads allowed
+        #   - If a download operation is in progress, the actual number of
+        #       download.DownloadWorker objects created
+        #
+        # Thus, if the user reduces the maximum, we don't remove pages, but we
+        #   do add new pages if the maximum is increased
+        # Broadcasting livestreams might be exempt from the maximum, so the
+        #   number of workers might be larger than it
+        count = self.app_obj.num_worker_default
+        if self.app_obj.download_manager_obj:
 
-            for num in range(1, (self.app_obj.num_worker_default + 1)):
+            worker_count = len(self.app_obj.download_manager_obj.worker_list)
+            if worker_count > count:
+                count = worker_count
+
+        if self.output_page_count < count:
+
+            for num in range(1, (count + 1)):
                 if not num in self.output_textview_dict:
                     self.output_tab_add_page()
 
@@ -15106,7 +15156,7 @@ class MainWin(Gtk.ApplicationWindow):
         for this_worker_obj in self.app_obj.download_manager_obj.worker_list:
             if this_worker_obj.running_flag \
             and this_worker_obj.download_item_obj == download_item_obj \
-            and this_worker_obj.video_downloader_obj is not None:
+            and this_worker_obj.downloader_obj is not None:
                 return
 
         # Assign this media data object to the last available worker
@@ -15153,7 +15203,7 @@ class MainWin(Gtk.ApplicationWindow):
         for this_worker_obj in self.app_obj.download_manager_obj.worker_list:
             if this_worker_obj.running_flag \
             and this_worker_obj.download_item_obj == download_item_obj \
-            and this_worker_obj.video_downloader_obj is not None:
+            and this_worker_obj.downloader_obj is not None:
                 return
 
         # Assign this media data object to the next available worker
@@ -15243,7 +15293,7 @@ class MainWin(Gtk.ApplicationWindow):
 
 
     def on_progress_list_stop_now(self, menu_item, download_item_obj,
-    worker_obj, video_downloader_obj):
+    worker_obj, downloader_obj):
 
         """Called from a callback in self.progress_list_popup_menu().
 
@@ -15259,8 +15309,9 @@ class MainWin(Gtk.ApplicationWindow):
             worker_obj (downloads.DownloadWorker): The worker currently
                 handling checking/downloading this media data object
 
-            video_downloader_obj (downloads.VideoDownloader): The video
-                downloader handling checking/downloading this media data object
+            downloader_obj (downloads.VideoDownloader or
+                downloads.StreamDownloader): The downloader handling checking/
+                downloading this media data object
 
         """
 
@@ -15273,17 +15324,17 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.app_obj.download_manager_obj \
         or not worker_obj.running_flag \
         or worker_obj.download_item_obj != download_item_obj \
-        or worker_obj.video_downloader_obj is None:
+        or worker_obj.downloader_obj is None:
             # Do nothing
             return
 
         # Stop the video downloader (causing the worker to be assigned a new
         #   downloads.DownloadItem, if there are any left)
-        video_downloader_obj.stop()
+        downloader_obj.stop()
 
 
     def on_progress_list_stop_soon(self, menu_item, download_item_obj,
-    worker_obj, video_downloader_obj):
+    worker_obj, downloader_obj):
 
         """Called from a callback in self.progress_list_popup_menu().
 
@@ -15300,8 +15351,9 @@ class MainWin(Gtk.ApplicationWindow):
             worker_obj (downloads.DownloadWorker): The worker currently
                 handling checking/downloading this media data object
 
-            video_downloader_obj (downloads.VideoDownloader): The video
-                downloader handling checking/downloading this media data object
+            downloader_obj (downloads.VideoDownloader or
+                downloads.StreamDownloader): The downloader handling checking/
+                downloading this media data object
 
         """
 
@@ -15314,13 +15366,13 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.app_obj.download_manager_obj \
         or not worker_obj.running_flag \
         or worker_obj.download_item_obj != download_item_obj \
-        or worker_obj.video_downloader_obj is None:
+        or worker_obj.downloader_obj is None:
             # Do nothing
             return
 
         # Tell the video downloader to stop after the current video check/
         #   download has finished
-        video_downloader_obj.stop_soon()
+        downloader_obj.stop_soon()
 
 
     def on_progress_list_watch_hooktube(self, menu_item, media_data_obj):
@@ -16715,14 +16767,55 @@ class MainWin(Gtk.ApplicationWindow):
 
         if text is not None:
 
-            # Hopefully, 'text' contains one or more valid URLs
+            # Hopefully, 'text' contains one or more valid URLs or paths to
+            #   video/audio files
 
-            # Decide where to add this video
+            # On MS Windows, drag and drop from an external application doesn't
+            #   work at all, so we don't have to worry about it
+            # On Linux, URLs are received as expected, but paths to media
+            #   data files are received as 'file://PATH'
+
+            # Split 'text' into two lists, and handle them separately. Filter
+            #   out any duplicate paths or duplicate URLs. For URLs, eliminate
+            #   any invalid URLs
+            path_list = []
+            url_list = []
+            duplicate_list = []
+
+            for line in text.split('\n'):
+
+                # Remove leading/trailing whitespace
+                line = utils.strip_whitespace(line)
+
+                match = re.search('^file\:\/\/(.*)', line)
+                if match:
+
+                    # (Only accept video/audio files with a supported file
+                    #   extension)
+                    path = urllib.parse.unquote(match.group(1))
+                    name, ext = os.path.splitext(path)
+                    # (Take account of the initial . in the extension)
+                    if ext[1:] in formats.VIDEO_FORMAT_LIST:
+
+                        if not path in path_list:
+                            path_list.append(path)
+                        else:
+                            duplicate_list.append(path)
+
+                else:
+
+                    if not line in url_list:
+                        if utils.check_url(line):
+                            url_list.append(line)
+                    else:
+                        duplicate_list.append(line)
+
+            # Decide where to add the video(s)
             # If a suitable folder is selected in the Video Index, use
             #   that; otherwise, use 'Unsorted Videos'
-            # However, if the Classic Mode Tab is visible, copy the URL
-            #   into its textview instead
-            if self.notebook.get_current_page == 2:
+            # However, if the Classic Mode Tab is visible, copy URL(s) into its
+            #   textview (and ignore any file paths)
+            if self.notebook.get_current_page == 2 and url_list:
 
                 # Classic Mode Tab is visible. The final argument tells the
                 #   called function to use that argument, instead of the
@@ -16732,14 +16825,16 @@ class MainWin(Gtk.ApplicationWindow):
                     self.classic_textbuffer,
                     self.classic_mark_start,
                     self.classic_mark_end,
-                    text,
+                    '\n'.join(url_list),
                 )
 
-            else:
+            elif self.notebook.get_current_page != 2 \
+            and (path_list or url_list):
 
                 # Classic Mode Tab is not visible
                 parent_obj = None
                 if self.video_index_current is not None:
+
                     dbid \
                     = self.app_obj.media_name_dict[self.video_index_current]
                     parent_obj = self.app_obj.media_reg_dict[dbid]
@@ -16750,44 +16845,46 @@ class MainWin(Gtk.ApplicationWindow):
                 if not parent_obj:
                     parent_obj = self.app_obj.fixed_misc_folder
 
-                # Split text into a list of lines and filter out invalid URLs
-                video_list = []
-                duplicate_list = []
-                for line in text.split('\n'):
+                # Add videos by path
+                for path in path_list:
 
-                    # Remove leading/trailing whitespace
-                    line = utils.strip_whitespace(line)
+                    # Check for duplicate media.Video objects in the same
+                    #   folder
+                    if parent_obj.check_duplicate_video_by_path(
+                        self.app_obj,
+                        path,
+                    ):
+                        duplicate_list.append(path)
+                    else:
+                        new_video_obj = self.app_obj.add_video(parent_obj)
+                        new_video_obj.set_file_from_path(path)
 
-                    # Perform checks on the URL. If it passes, remove leading/
-                    #   trailing whitespace
-                    if utils.check_url(line):
-                        video_list.append(utils.strip_whitespace(line))
+                # Add vidoes by URL
+                for url in url_list:
 
-                    # Check everything in the list against other media.Video
-                    #   objects with the same parent folder
-                    for line in video_list:
-                        if parent_obj.check_duplicate_video(line):
-                            duplicate_list.append(line)
-                        else:
-                            self.app_obj.add_video(parent_obj, line)
+                    # Check for duplicate media.Video objects in the same
+                    #   folder
+                    if parent_obj.check_duplicate_video(url):
+                        duplicate_list.append(url)
+                    else:
+                        self.app_obj.add_video(parent_obj, url)
 
-                    # In the Video Index, select the parent media data object,
-                    #   which updates both the Video Index and the Video
-                    #   Catalogue
-                    self.video_index_select_row(parent_obj)
+                # In the Video Index, select the parent media data object,
+                #   which updates both the Video Index and the Video Catalogue
+                self.video_index_select_row(parent_obj)
 
-                    # If any duplicates were found, inform the user
-                    if duplicate_list:
+                # If any duplicates were found, inform the user
+                if duplicate_list:
 
-                        msg = _('The following videos are duplicates:')
-                        for line in duplicate_list:
-                            msg += '\n\n' + line
+                    msg = _('The following items are duplicates:')
+                    for line in duplicate_list:
+                        msg += '\n\n' + line
 
-                        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                            msg,
-                            'warning',
-                            'ok',
-                        )
+                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                        msg,
+                        'warning',
+                        'ok',
+                    )
 
         # Without this line, the user's cursor is permanently stuck in drag
         #   and drop mode
@@ -17082,19 +17179,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         elif isinstance(media_data_obj, media.Video):
 
-            if media_data_obj.dbid < 0:
-                dummy_flag = True
-            else:
-                dummy_flag = False
-
-            if media_data_obj.dbid >= 0 \
+            if not media_data_obj.dummy_flag \
             and media_data_obj.file_name is not None:
 
                 return_list.append(
                     media_data_obj.get_actual_path(self.app_obj),
                 )
 
-            elif media_data_obj.dbid < 0 \
+            elif media_data_obj.dummy_flag \
             and media_data_obj.dummy_path is not None:
                 return_list.append(media_data_obj.dummy_path)
 
@@ -18601,6 +18693,9 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 14736 update_video_stats')
 
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
         if not self.video_obj.live_mode:
 
             if self.video_obj.duration is not None:
@@ -18620,15 +18715,22 @@ class ComplexCatalogueItem(object):
                 string = string + '  -  ' + _('Size:') + ' <i>' \
                 + _('unknown') + '</i>'
 
-            date = self.video_obj.get_upload_date_string(
-                self.main_win_obj.app_obj.show_pretty_dates_flag,
-            )
+            pretty_flag = self.main_win_obj.app_obj.show_pretty_dates_flag
+            if app_obj.catalogue_sort_mode == 'receive':
+
+                date = self.video_obj.get_receive_date_string(pretty_flag)
+                text = _('Received:')
+
+            else:
+
+                date = self.video_obj.get_upload_date_string(pretty_flag)
+                text = _('Date:')
 
             if date is not None:
-                string = string + '  -  ' + _('Date:') + ' ' + date
+                string = string + '  -  ' + text + ' ' + date
             else:
-                string = string + '  -  ' + _('Date:') + ' <i>' \
-                + _('unknown') + '</i>'
+                string = string + '  -  ' + text + ' <i>' + _('unknown') \
+                + '</i>'
 
             self.stats_label.set_markup(string)
 
@@ -18641,13 +18743,12 @@ class ComplexCatalogueItem(object):
         else:
 
             name = html.escape(self.video_obj.name)
-            app_obj = self.main_win_obj.app_obj
             dbid = self.video_obj.dbid
 
             if self.video_obj.live_mode == 2:
-                self.stats_label.set_markup(_('Live now') + ':   ')
+                self.stats_label.set_markup(_('Live now:') + '   ')
             elif self.video_obj.live_msg == '':
-                self.stats_label.set_markup(_('Live soon') + ':   ')
+                self.stats_label.set_markup(_('Live soon:') + '   ')
             else:
                 self.stats_label.set_markup(self.video_obj.live_msg + ':   ')
 
@@ -18694,16 +18795,23 @@ class ComplexCatalogueItem(object):
                 + '">' + label + '</a>',
             )
 
-            if dbid in app_obj.media_reg_auto_dl_start_dict:
-                label = '<s>' + _('D/L on start') + '</s>'
-            else:
-                label = _('D/L on start')
+            if self.video_obj.live_mode == 2:
 
-            self.live_auto_dl_start_label.set_markup(
-                '<a href="' + name + '" title="' \
-                + _('When the livestream starts, download it') \
-                + '">' + label + '</a>',
-            )
+                # (Livestream already broadcasting)
+                self.live_auto_dl_start_label.set_markup(_('D/L on start'))
+
+            else:
+
+                if dbid in app_obj.media_reg_auto_dl_start_dict:
+                    label = '<s>' + _('D/L on start') + '</s>'
+                else:
+                    label = _('D/L on start')
+
+                self.live_auto_dl_start_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream starts, download it') \
+                    + '">' + label + '</a>',
+                )
 
             if dbid in app_obj.media_reg_auto_dl_stop_dict:
                 label = '<s>' + _('D/L on stop') + '</s>'
@@ -20932,6 +21040,9 @@ class GridCatalogueItem(ComplexCatalogueItem):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 14736 update_video_stats')
 
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
         if not self.video_obj.live_mode:
 
             if self.video_obj.duration is not None:
@@ -20949,9 +21060,11 @@ class GridCatalogueItem(ComplexCatalogueItem):
             else:
                 string = string + '  -  ' + _('unknown')
 
-            date = self.video_obj.get_upload_date_string(
-                self.main_win_obj.app_obj.show_pretty_dates_flag,
-            )
+            pretty_flag = self.main_win_obj.app_obj.show_pretty_dates_flag
+            if app_obj.catalogue_sort_mode == 'receive':
+                date = self.video_obj.get_receive_date_string(pretty_flag)
+            else:
+                date = self.video_obj.get_upload_date_string(pretty_flag)
 
             if date is not None:
                 string = string + '  -  ' + date
@@ -20967,7 +21080,6 @@ class GridCatalogueItem(ComplexCatalogueItem):
         else:
 
             name = html.escape(self.video_obj.name)
-            app_obj = self.main_win_obj.app_obj
             dbid = self.video_obj.dbid
 
             if dbid in app_obj.media_reg_auto_notify_dict:
@@ -21013,16 +21125,23 @@ class GridCatalogueItem(ComplexCatalogueItem):
                 + '">' + label + '</a>',
             )
 
-            if dbid in app_obj.media_reg_auto_dl_start_dict:
-                label = '<s>' + _('D/L on start') + '</s>'
-            else:
-                label = _('D/L on start')
+            if self.video_obj.live_mode == 2:
 
-            self.live_auto_dl_start_label.set_markup(
-                '<a href="' + name + '" title="' \
-                + _('When the livestream starts, download it') \
-                + '">' + label + '</a>',
-            )
+                # (Livestream already broadcasting)
+                self.live_auto_dl_start_label.set_markup(_('D/L on start'))
+
+            else:
+
+                if dbid in app_obj.media_reg_auto_dl_start_dict:
+                    label = '<s>' + _('D/L on start') + '</s>'
+                else:
+                    label = _('D/L on start')
+
+                self.live_auto_dl_start_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream starts, download it') \
+                    + '">' + label + '</a>',
+                )
 
             if dbid in app_obj.media_reg_auto_dl_stop_dict:
                 label = '<s>' + _('D/L on stop') + '</s>'
@@ -21053,7 +21172,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
                 # Link not clickable
                 self.watch_player_label.set_markup(
-                    _('Live soon') + ':',
+                    _('Live soon:'),
                 )
 
             else:
@@ -21687,7 +21806,7 @@ class CatalogueGridBox(Gtk.Frame):
         if event.type != Gdk.EventType.KEY_PRESS:
             return
 
-        # 'Up', 'Left', 'Page_Up', etc
+        # 'Up', 'Left', 'Page_Up', etc. Also 'a' for CTRL+A
         keyval = Gdk.keyval_name(event.keyval)
         if not keyval in self.main_win_obj.catalogue_grid_intercept_dict:
             return False
@@ -21701,14 +21820,30 @@ class CatalogueGridBox(Gtk.Frame):
             else:
                 select_type = 'default'
 
-            self.main_win_obj.video_catalogue_grid_scroll_on_select(
-                self,
-                keyval,
-                select_type,
-            )
+            if keyval == 'a':
 
-            # Return True to show that we have interfered with this keypress
-            return True
+                if select_type == 'ctrl':
+
+                    self.main_win_obj.video_catalogue_grid_select_all()
+
+                    # Return True to show that we have interfered with this
+                    #   keypress
+                    return True
+
+                else:
+                    return False
+
+            else:
+
+                self.main_win_obj.video_catalogue_grid_scroll_on_select(
+                    self,
+                    keyval,
+                    select_type,
+                )
+
+                # Return True to show that we have interfered with this
+                #   keypress
+                return True
 
 
     def on_size_allocate(self, widget, rect):
@@ -21813,7 +21948,7 @@ class StatusIcon(Gtk.StatusIcon):
 
         """Called by self.__init__.
 
-        Sets up the Gtk widget, and creates signal_connects for left- and
+        Sets up the Gtk widget, and creates signal connects for left- and
         right-clicks on the status icon.
         """
 
@@ -21829,7 +21964,7 @@ class StatusIcon(Gtk.StatusIcon):
         self.set_has_tooltip(True)
         self.set_tooltip_text('Tartube')
 
-        # signal connects
+        # Signal connects
         self.connect('button-press-event', self.on_button_press_event)
         self.connect('popup-menu', self.on_popup_menu)
 
@@ -21878,9 +22013,15 @@ class StatusIcon(Gtk.StatusIcon):
 
         if self.app_obj.download_manager_obj:
             if self.app_obj.download_manager_obj.operation_type == 'sim':
-                icon = formats.STATUS_ICON_DICT['check_icon']
+                if not self.app_obj.livestream_manager_obj:
+                    icon = formats.STATUS_ICON_DICT['check_icon']
+                else:
+                    icon = formats.STATUS_ICON_DICT['check_live_icon']
             else:
-                icon = formats.STATUS_ICON_DICT['download_icon']
+                if not self.app_obj.livestream_manager_obj:
+                    icon = formats.STATUS_ICON_DICT['download_icon']
+                else:
+                    icon = formats.STATUS_ICON_DICT['download_live_icon']
         elif self.app_obj.update_manager_obj:
             icon = formats.STATUS_ICON_DICT['update_icon']
         elif self.app_obj.refresh_manager_obj:
@@ -23412,7 +23553,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             _('Create new download options'),
         )
         grid.attach(radiobutton, 0, 0, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         # Separator
         grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
@@ -23422,7 +23563,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             _('Use these download options:'),
         )
         grid.attach(radiobutton2, 0, 2, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         # Add a combo, containing any options.OptionsManager objects (besides
         #   the General Options Manager) that are not already attached to a
@@ -23444,14 +23585,14 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         grid.attach(combo, 0, 3, 1, 1)
         combo.set_hexpand(True)
         combo.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         cell = Gtk.CellRendererText()
         combo.pack_start(cell, False)
         combo.add_attribute(cell, 'text', 0)
         combo.set_active(0)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_radiobutton_toggled,
@@ -24516,7 +24657,7 @@ class MountDriveDialogue(Gtk.Dialog):
             _('Use this data folder:'),
         )
         grid.attach(self.radiobutton2, 1, 5, grid_width, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         store = Gtk.ListStore(str)
         for item in self.main_win_obj.app_obj.data_dir_alt_list:
@@ -24532,7 +24673,7 @@ class MountDriveDialogue(Gtk.Dialog):
         self.combo.set_active(0)
         self.combo.set_sensitive(False)
 
-        # (signal_connect from above)
+        # (Signal connect from above)
         self.radiobutton2.connect(
             'toggled',
             self.on_radiobutton_toggled,
@@ -25219,12 +25360,12 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         radiobutton = Gtk.RadioButton.new_with_label_from_widget(None, string)
         grid.attach(radiobutton, 0, 2, 1, 1)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = Gtk.RadioButton.new_from_widget(radiobutton)
         radiobutton2.set_label('Choose a different system folder:')
         grid.attach(radiobutton2, 0, 3, 1, 1)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # Get a list of channels/playlists/folders
         app_obj = main_win_obj.app_obj
@@ -25305,7 +25446,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         combo.add_attribute(renderer_text, 'text', 1)
 
         combo.set_active(0)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         if media_data_obj.master_dbid == media_data_obj.dbid:
             combo.set_sensitive(False)
@@ -25313,7 +25454,7 @@ class SetDestinationDialogue(Gtk.Dialog):
             radiobutton2.set_active(True)
             combo.set_sensitive(True)
 
-        # Signal connects from above
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_radiobutton_toggled,
@@ -26036,7 +26177,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton = Gtk.CheckButton()
         grid.attach(self.checkbutton, 0, 0, 1, 1)
         self.checkbutton.set_label(_('Check that videos are not corrupted'))
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.checkbutton2 = Gtk.CheckButton()
         grid.attach(self.checkbutton2, 0, 1, 1, 1)
@@ -26063,7 +26204,7 @@ class TidyDialogue(Gtk.Dialog):
                 label_length,
             ),
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.checkbutton5 = Gtk.CheckButton()
         grid.attach(self.checkbutton5, 0, 4, 1, 2)
@@ -26083,7 +26224,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton7 = Gtk.CheckButton()
         grid.attach(self.checkbutton7, 1, 0, 1, 1)
         self.checkbutton7.set_label(_('Move thumbnails into own folder'))
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.checkbutton8 = Gtk.CheckButton()
         grid.attach(self.checkbutton8, 1, 1, 1, 1)
@@ -26106,7 +26247,7 @@ class TidyDialogue(Gtk.Dialog):
                 label_length,
             ),
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.checkbutton11 = Gtk.CheckButton()
         grid.attach(self.checkbutton11, 1, 4, 1, 1)
@@ -26125,14 +26266,14 @@ class TidyDialogue(Gtk.Dialog):
         button = Gtk.Button.new_with_label(_('Select all'))
         grid.attach(button, 0, 7, 1, 1)
         button.set_hexpand(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button2 = Gtk.Button.new_with_label(_('Select none'))
         grid.attach(button2, 1, 7, 1, 1)
         button2.set_hexpand(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
         self.checkbutton4.connect('toggled', self.on_checkbutton4_toggled)
         self.checkbutton7.connect('toggled', self.on_checkbutton12_toggled)

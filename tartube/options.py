@@ -457,7 +457,7 @@ class OptionsManager(object):
     def clone_options(self, other_options_manager_obj):
 
         """Called by mainapp.TartubeApp.apply_download_options() and
-        .clone_general_options_manager().
+        .clone_general_download_options().
 
         Clones download options from the specified object into this object,
         completely replacing this object's download options.

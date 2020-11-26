@@ -16,3 +16,7 @@ FFmpeg thumbnail code adapted from youtube-dl
     http://youtube-dl.org/
 FFmpeg options adapted from FFmpeg Command Line Wizard by AndreKR 
     https://github.com/AndreKR/ffmpeg-command-line-wizard
+Upgraded Textview by Kevin Mehall
+    https://kevinmehall.net/2010/pygtk_multi_select_drag_drop
+Youtube Stream Capture by mrwnwttk
+    https://github.com/mrwnwttk

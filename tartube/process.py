@@ -180,18 +180,13 @@ class ProcessManager(threading.Thread):
             + str(self.job_total) + ': ' + video_obj.name,
         )
 
-        # Special case: 'dummy' video objects (those downloaded in the Classic
-        #   Mode tab) use different IVs
-        if hasattr(video_obj, 'dummy_path'):
-            dummy_flag = True
-        else:
-            dummy_flag = True
-
         # mainwin.MainWin.on_video_catalogue_process_ffmpeg_multi() should have
         #   filtered any media.Video objects whose .file_name is unknown, but
         #   just in case, check again
+        # (Special case: 'dummy' video objects (those downloaded in the Classic
+        #   Mode tab) use different IVs)
         if video_obj.file_name is None \
-        and (not dummy_flag or video_obj.dummy_path is None):
+        and (not video_obj.dummy_flag or video_obj.dummy_path is None):
             self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
                 _('FAILED: File name is not known'),
@@ -248,7 +243,7 @@ class ProcessManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
-                _('FAILED') + ': ' + msg,
+                _('FAILED:') + ' ' + msg,
             )
 
         else:
@@ -257,7 +252,7 @@ class ProcessManager(threading.Thread):
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
-                _('Output file') + ': ' + output_path,
+                _('Output file:') + ' ' + output_path,
             )
 
             # Delete the original video file, if required
@@ -276,7 +271,7 @@ class ProcessManager(threading.Thread):
 
                     self.app_obj.main_win_obj.output_tab_write_stderr(
                         1,
-                        _('Could not delete the original file') + ': ' \
+                        _('Could not delete the original file:') + ' ' \
                         + source_path,
                     )
 
@@ -334,14 +329,14 @@ class ProcessManager(threading.Thread):
 
                         self.app_obj.main_win_obj.output_tab_write_stderr(
                             1,
-                            _('Could not rename the thumbnail') + ': ' \
+                            _('Could not rename the thumbnail:') + ' ' \
                             + thumb_path,
                         )
 
             # If a video/audio file was processed, update its filename
             if self.options_obj.options_dict['input_mode'] != 'thumb':
 
-                if not dummy_flag:
+                if not video_obj.dummy_flag:
                     video_obj.set_file_from_path(output_path)
                 else:
                     video_obj.set_dummy_path(output_path)

@@ -40,6 +40,7 @@ import media
 import platform
 import re
 import sys
+import urllib.parse
 import utils
 # Use same gettext translations
 from mainapp import _
@@ -2428,7 +2429,7 @@ class OptionsEditWin(GenericEditWin):
         combo.add_attribute(renderer_text, "text", 1)
         combo.set_entry_text_column(1)
         combo.set_active(num_list.index(current_format))
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('File output template'),
@@ -2440,9 +2441,9 @@ class OptionsEditWin(GenericEditWin):
             0, 4, grid_width, 1,
         )
         entry.set_text(current_template)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         combo.connect('changed', self.on_file_tab_combo_changed, entry)
         entry.connect('changed', self.on_file_tab_entry_changed)
 
@@ -2608,7 +2609,7 @@ class OptionsEditWin(GenericEditWin):
             None,
             0, 4, 1, 1,
         )
-        # Signal connect below
+        # (Signal connect appears below)
 
         # (Currently, only two fixed folders are elligible for this mode, so
         #   we'll just add them individually)
@@ -2627,7 +2628,7 @@ class OptionsEditWin(GenericEditWin):
         combo.pack_start(renderer_text5, True)
         combo.add_attribute(renderer_text5, 'text', 1)
         combo.set_entry_text_column(1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         current_override = self.edit_obj.options_dict['use_fixed_folder']
         if current_override is None:
@@ -2645,7 +2646,7 @@ class OptionsEditWin(GenericEditWin):
                 #   use 'Unsorted Videos'
                 combo.set_active(0)
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton.connect('toggled', self.on_fixed_folder_toggled, combo)
         combo.connect('changed', self.on_fixed_folder_changed)
 
@@ -2864,7 +2865,7 @@ class OptionsEditWin(GenericEditWin):
 
         button = Gtk.Button(_('Add format') + ' >>>')
         grid.attach(button, 0, 3, 2, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         # Right column
         label2 = self.add_label(grid,
@@ -2887,17 +2888,17 @@ class OptionsEditWin(GenericEditWin):
 
         button2 = Gtk.Button('<<< ' + _('Remove format'))
         grid.attach(button2, 2, 3, 2, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         button3 = Gtk.Button('^ ' + _('Move up'))
         grid.attach(button3, 2, 4, 1, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         button4 = Gtk.Button('v ' + _('Move down'))
         grid.attach(button4, 3, 4, 1, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         # 'Add format'
         button.connect(
             'clicked',
@@ -3003,7 +3004,7 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('video_format_mode') == 'single':
             radiobutton.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -3017,7 +3018,7 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('video_format_mode') == 'single_agree':
             radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -3031,7 +3032,7 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('video_format_mode') == 'multiple':
             radiobutton3.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton2,
@@ -3042,9 +3043,9 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('video_format_mode') == 'all':
             radiobutton4.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_video_format_mode_toggled,
@@ -3480,7 +3481,7 @@ class OptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('write_subs') is False:
             radiobutton.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -3492,7 +3493,7 @@ class OptionsEditWin(GenericEditWin):
         if self.retrieve_val('write_subs') is True \
         and self.retrieve_val('write_auto_subs') is True:
             radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -3504,7 +3505,7 @@ class OptionsEditWin(GenericEditWin):
         if self.retrieve_val('write_subs') is True \
         and self.retrieve_val('write_all_subs') is True:
             radiobutton3.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
@@ -3517,7 +3518,7 @@ class OptionsEditWin(GenericEditWin):
         and self.retrieve_val('write_auto_subs') is False \
         and self.retrieve_val('write_all_subs') is False:
             radiobutton4.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         treeview, liststore = self.add_treeview(grid,
             0, 5, 1, 1,
@@ -3533,7 +3534,7 @@ class OptionsEditWin(GenericEditWin):
 
         button = Gtk.Button(_('Add language') + ' >>>')
         grid.attach(button, 0, 6, 1, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         treeview2, liststore2 = self.add_treeview(grid,
             1, 5, 1, 1,
@@ -3546,14 +3547,14 @@ class OptionsEditWin(GenericEditWin):
 
         button2 = Gtk.Button('<<< ' + _('Remove language'))
         grid.attach(button2, 1, 6, 1, 1)
-        # Signal connect below
+        # (Signal connect appears below)
 
         # Desensitise the buttons, if the matching radiobutton isn't active
         if not radiobutton4.get_active():
             button.set_sensitive(False)
             button2.set_sensitive(False)
 
-        # Signal connects from above
+        # (Signal connects from above)
         button.connect(
             'clicked',
             self.on_subtitles_tab_add_clicked,
@@ -3907,7 +3908,7 @@ class OptionsEditWin(GenericEditWin):
             None,
             1, 3, 1, 1
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Maximum seconds to sleep before each download'),
@@ -3922,7 +3923,7 @@ class OptionsEditWin(GenericEditWin):
         if self.edit_obj.options_dict['min_sleep_interval'] == 0:
             spinbutton2.set_sensitive(False)
 
-        # (signal_connect from above)
+        # (Signal connect from above)
         spinbutton.connect(
             'value-changed',
             self.on_sleep_button_changed,
@@ -4477,7 +4478,7 @@ class OptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'clone_general_options_manager',
+                'yes': 'clone_general_download_options',
                 'data': [self, self.edit_obj],
             },
         )
@@ -4490,7 +4491,7 @@ class OptionsEditWin(GenericEditWin):
 
         The 'embed_subs' option appears in both the Formats and Subtitles tabs.
         When one widget is modified, we need to set the other widgets to match
-        without starting an infinite loop of signal_connects.
+        without starting an infinite loop of signal connects.
 
         Args:
 
@@ -4904,7 +4905,7 @@ class OptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'reset_options_manager',
+                'yes': 'reset_download_options',
                 # (Reset this edit window, if the user clicks 'yes')
                 'data': [self],
             },
@@ -5249,8 +5250,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.output_mode_radiobutton = None     # Gtk.RadioButton
         self.output_mode_radiobutton2 = None    # Gtk.RadioButton
         self.output_mode_radiobutton3 = None    # Gtk.RadioButton
+        self.output_mode_radiobutton4 = None    # Gtk.RadioButton
         self.h264_grid = None                   # Gtk.Grid
         self.gif_grid = None                    # Gtk.Grid
+        self.merge_grid = None                  # Gtk.Grid
         self.thumb_grid = None                  # Gtk.Grid
         # (Settings tab, H.264 grid)
         self.audio_bitrate_spinbutton = None    # Gtk.SpinButton
@@ -5281,7 +5284,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.limit_flag_checkbutton = None      # Gtk.CheckButton
         self.limit_mbps_spinbutton = None       # Gtk.SpinButton
         self.limit_buffer_spinbutton = None     # Gtk.SpinButton
-
+        # (Videox tab)
+        self.video_liststore = None              # Gtk.ListStore
 
         # IV list - other
         # ---------------
@@ -5311,9 +5315,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         # Code
         # ----
-
-        # Sort the video list by .dbid (so the Videos tab looks nice)
-        self.video_list.sort(key=lambda x: x.dbid)
 
         # Set up the edit window
         self.setup()
@@ -5400,7 +5401,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
                 # (Special case: 'dummy' video objects (those downloaded in the
                 #   Classic Mode tab) use different IVs)
-                if hasattr(video_obj, 'dummy_path') \
+                if video_obj.dummy_flag \
                 or (
                     video_obj.dbid in self.app_obj.media_reg_dict \
                     and self.app_obj.media_reg_dict[video_obj.dbid] \
@@ -5479,8 +5480,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.setup_settings_tab()
             self.setup_optimise_tab()
 
-        if self.video_list:
-            self.setup_videos_tab()
+        self.setup_videos_tab()
 
         # Unusual step: if a list of media.Video objects to be processed has
         #   been supplied, use a different label for the OK button
@@ -5526,8 +5526,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
         self.add_label(grid,
-            _('System command, based on all FFmpeg options in this window') \
-            + ':',
+            _('System command, based on all FFmpeg options in this window:'),
             0, 3, grid_width, 1,
         )
 
@@ -5601,7 +5600,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_File'))
 
         self.add_label(grid,
-            _('Add to end of filename') + ':',
+            _('Add to end of filename:'),
             0, 0, 1, 1,
         )
 
@@ -5611,7 +5610,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
         self.add_label(grid,
-            _('If regex matches filename') + ':',
+            _('If regex matches filename:'),
             0, 1, 1, 1,
         )
 
@@ -5622,10 +5621,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.regex_match_filename_entry.set_text(
             self.retrieve_val('regex_match_filename'),
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.add_label(grid,
-            _('...then apply substitution') + ':',
+            _('...then apply substitution:'),
             0, 2, 1, 1,
         )
 
@@ -5649,7 +5648,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.rename_both_flag_checkbutton.set_sensitive(False)
 
         self.add_label(grid,
-            _('Change file extension') + ':',
+            _('Change file extension:'),
             0, 4, 1, 1,
         )
 
@@ -5660,7 +5659,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.change_file_ext_entry.set_text(
             self.retrieve_val('change_file_ext'),
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.delete_original_flag_checkbutton = self.add_checkbutton(grid,
             _('After changing the file extension, delete the original file'),
@@ -5670,7 +5669,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         if self.retrieve_val('change_file_ext') == '':
             self.delete_original_flag_checkbutton.set_sensitive(False)
 
-        # Signal connects from above
+        # (Signal connects from above)
         self.regex_match_filename_entry.connect(
             'changed',
             self.on_regex_match_filename_entry_changed,
@@ -5709,7 +5708,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             1, 0, 2, 1,
         )
         self.input_mode_radiobutton.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.audio_flag_checkbutton = self.add_checkbutton(grid,
             _('with audio'),
@@ -5721,7 +5720,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.audio_flag_checkbutton.set_active(True)
         if self.retrieve_val('input_mode') != 'video':
             self.audio_flag_checkbutton.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.input_mode_radiobutton2 = self.add_radiobutton(grid,
             self.input_mode_radiobutton,
@@ -5733,7 +5732,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.input_mode_radiobutton2.set_hexpand(False)
         if self.retrieve_val('input_mode') == 'thumb':
             self.input_mode_radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # (Empty label for spacing)
         label2 = self.add_label(grid,
@@ -5757,7 +5756,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             1, 1, 1, 1,
         )
         self.output_mode_radiobutton.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.output_mode_radiobutton2 = self.add_radiobutton(grid,
             self.output_mode_radiobutton,
@@ -5769,28 +5768,41 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.output_mode_radiobutton2.set_hexpand(False)
         if self.retrieve_val('output_mode') == 'gif':
             self.output_mode_radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.output_mode_radiobutton3 = self.add_radiobutton(grid,
             self.output_mode_radiobutton2,
+            'Merge video/audio',
+            None,
+            None,
+            3, 1, 1, 1,
+        )
+        self.output_mode_radiobutton3.set_hexpand(False)
+        if self.retrieve_val('output_mode') == 'merge':
+            self.output_mode_radiobutton3.set_active(True)
+        # (Signal connect appears below)
+
+        self.output_mode_radiobutton4 = self.add_radiobutton(grid,
+            self.output_mode_radiobutton3,
             'Video thumbnail',
             None,
             None,
             4, 1, 1, 1,
         )
-        self.output_mode_radiobutton3.set_hexpand(False)
+        self.output_mode_radiobutton4.set_hexpand(False)
         if self.retrieve_val('output_mode') == 'thumb':
-            self.output_mode_radiobutton3.set_active(True)
-        # Signal connect appears below
+            self.output_mode_radiobutton4.set_active(True)
+        # (Signal connect appears below)
 
         # Supplementary grids: one for each 'output_mode'
         # Only one of them is visible at any time (this saves a lot of time
         #   (de)sensitising widgets
         self.h264_grid = self.setup_settings_tab_h264_grid(2, grid_width)
         self.gif_grid = self.setup_settings_tab_gif_grid(2, grid_width)
+        self.merge_grid = self.setup_settings_tab_merge_grid(2, grid_width)
         self.thumb_grid = self.setup_settings_tab_thumb_grid(2, grid_width)
 
-        # Signal connects from above
+        # (Signal connects from above)
         self.input_mode_radiobutton.connect(
             'toggled',
             self.on_input_mode_radiobutton_toggled,
@@ -5815,6 +5827,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
             grid_width,
         )
         self.output_mode_radiobutton3.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+        self.output_mode_radiobutton4.connect(
             'toggled',
             self.on_output_mode_radiobutton_toggled,
             grid_width,
@@ -5900,7 +5917,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             None,
             1, 1, (inner_width - 1), 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.quality_mode_radiobutton2 = self.add_radiobutton(grid,
             self.quality_mode_radiobutton,
@@ -5911,7 +5928,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('quality_mode') == 'abr':
             self.quality_mode_radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Rate factor'),
@@ -5945,7 +5962,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.rate_factor_scale.set_hexpand(True)
         if self.retrieve_val('quality_mode') == 'abr':
             self.rate_factor_scale.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         label3 = self.add_label(grid2,
             _('Bad quality') + '\n' + _('Small file'),
@@ -6001,7 +6018,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
         self.patience_preset_combo.set_hexpand(False)
 
-        # Signal connects from above
+        # (Signal connects from above)
         self.quality_mode_radiobutton.connect(
             'toggled',
             self.on_quality_mode_radiobutton_toggled,
@@ -6049,7 +6066,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         grid.set_row_spacing(self.spacing_size)
 
         self.add_label(grid,
-            _('Palette') + ':',
+            _('Palette:'),
             0, 0, 1, 1,
         )
 
@@ -6062,7 +6079,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             None,
             1, 0, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.palette_mode_radiobutton2 = self.add_radiobutton(grid,
             self.palette_mode_radiobutton,
@@ -6075,9 +6092,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
         if self.retrieve_val('palette_mode') == 'better':
             self.palette_mode_radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         self.palette_mode_radiobutton.connect(
             'toggled',
             self.on_palette_mode_radiobutton_toggled,
@@ -6085,6 +6102,47 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.palette_mode_radiobutton2.connect(
             'toggled',
             self.on_palette_mode_radiobutton_toggled,
+        )
+
+        return grid
+
+
+    def setup_settings_tab_merge_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'merge'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'merge':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'This merges a video and audio file with the same name' \
+                + ' into a single video file,\nusing the extension' \
+                + ' specified in the File tab',
+            ) + '</i>',
+            0, 0, 1, 1,
         )
 
         return grid
@@ -6341,11 +6399,24 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 treeview.append_column(column_text)
                 column_text.set_resizable(True)
 
-        liststore = Gtk.ListStore(str, bool, bool, str)
-        treeview.set_model(liststore)
+        self.video_liststore = Gtk.ListStore(str, bool, bool, str)
+        treeview.set_model(self.video_liststore)
+
+        # Allow drag and drop from the Video Catalogue, or an external
+        #   application, hoping to receive full paths to a video/audio file
+        #   and/or URLs, which are associated with a media.Video object
+        scrolled.connect(
+            'drag-data-received',
+            self.on_video_drag_data_received,
+        )
+        # (Without this line, we get Gtk warnings on some systems)
+        scrolled.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+        # (Continuing)
+        scrolled.drag_dest_set_target_list(None)
+        scrolled.drag_dest_add_text_targets()
 
         # Initialise the list
-        self.setup_videos_tab_update_treeview(liststore)
+        self.setup_videos_tab_update_treeview()
 
         # Add editing buttons
         button = Gtk.Button()
@@ -6358,57 +6429,71 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
-    def setup_videos_tab_update_treeview(self, liststore):
+    def setup_videos_tab_update_treeview(self):
 
         """Called by self.setup_videos_tab().
 
         Fills or updates the treeview.
 
+        """
+
+        self.video_liststore.clear()
+
+        # Sort the video list by .dbid (so the Videos tab looks nice)
+        self.video_list.sort(key=lambda x: x.dbid)
+
+        # Add a row for each video in the list
+        for video_obj in self.video_list:
+            self.setup_videos_tab_add_row(video_obj)
+
+
+    def setup_videos_tab_add_row(self, video_obj):
+
+        """Called by self.setup_videos_tab_update_treeview.
+
+        Adds a row to the treeview for a specified media.Video object.
+
         Args:
 
-            liststore (Gtk.ListStore): The treeview's model
+            video_obj (media.Video): The video to add
 
         """
 
-        liststore.clear()
+        if utils.find_thumbnail(self.app_obj, video_obj):
+            thumb_flag = True
+        else:
+            thumb_flag = True
 
-        for video_obj in self.video_list:
+        if video_obj.dummy_flag:
 
-            if utils.find_thumbnail(self.app_obj, video_obj):
-                thumb_flag = True
+            # Special case: 'dummy' video objects (those downloaded in the
+            #   Classic Mode tab) use different IVs
+            if video_obj.dummy_path is not None \
+            and os.path.isfile(video_obj.dummy_path):
+                dl_flag = True
             else:
-                thumb_flag = True
+                dl_flag = False
 
-            if hasattr(video_obj, 'dummy_path'):
+            self.video_liststore.append(
+                [
+                    'n/a',
+                    dl_flag,
+                    thumb_flag,
+                    video_obj.dummy_path,
+                ],
+            )
 
-                # Special case: 'dummy' video objects (those downloaded in the
-                #   Classic Mode tab) use different IVs
-                if video_obj.dummy_path is not None \
-                and os.path.isfile(video_obj.dummy_path):
-                    dl_flag = True
-                else:
-                    dl_flag = False
+        else:
 
-                liststore.append(
-                    [
-                        'n/a',
-                        dl_flag,
-                        thumb_flag,
-                        video_obj.dummy_path,
-                    ],
-                )
-
-            else:
-
-                # All other media.Video objects
-                liststore.append(
-                    [
-                        str(video_obj.dbid),
-                        video_obj.dl_flag,
-                        thumb_flag,
-                        video_obj.name,
-                    ],
-                )
+            # All other media.Video objects
+            self.video_liststore.append(
+                [
+                    str(video_obj.dbid),
+                    video_obj.dl_flag,
+                    thumb_flag,
+                       video_obj.name,
+                ],
+            )
 
 
     # (Tab support functions)
@@ -6517,7 +6602,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'clone_ffmpeg_options_manager',
+                'yes': 'clone_ffmpeg_options',
                 'data': [self, self.edit_obj],
             },
         )
@@ -6540,7 +6625,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.output_mode_radiobutton.set_active(True)
             self.output_mode_radiobutton.set_sensitive(True)
             self.output_mode_radiobutton2.set_sensitive(True)
-            self.output_mode_radiobutton3.set_sensitive(False)
+            self.output_mode_radiobutton3.set_sensitive(True)
+            self.output_mode_radiobutton4.set_sensitive(False)
 
             self.audio_flag_checkbutton.set_sensitive(True)
             if not self.retrieve_val('audio_flag'):
@@ -6555,7 +6641,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.output_mode_radiobutton3.set_active(True)
             self.output_mode_radiobutton.set_sensitive(False)
             self.output_mode_radiobutton2.set_sensitive(False)
-            self.output_mode_radiobutton3.set_sensitive(True)
+            self.output_mode_radiobutton3.set_sensitive(False)
+            self.output_mode_radiobutton4.set_sensitive(True)
 
             self.audio_flag_checkbutton.set_sensitive(False)
             self.audio_bitrate_spinbutton.set_sensitive(False)
@@ -6609,6 +6696,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.settings_grid.remove(self.h264_grid)
         elif old_value == 'gif':
             self.settings_grid.remove(self.gif_grid)
+        elif old_value == 'merge':
+            self.settings_grid.remove(self.merge_grid)
         else:
             self.settings_grid.remove(self.thumb_grid)
 
@@ -6627,6 +6716,13 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.setup_optimise_tab_set_sensitive(False)
 
         elif self.output_mode_radiobutton3.get_active():
+
+            self.edit_dict['output_mode'] = 'merge'
+
+            self.settings_grid.attach(self.merge_grid, 0, 2, grid_width, 1)
+            self.setup_optimise_tab_set_sensitive(False)
+
+        elif self.output_mode_radiobutton4.get_active():
 
             self.edit_dict['output_mode'] = 'thumb'
 
@@ -6754,7 +6850,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'reset_ffmpeg_manager',
+                'yes': 'reset_ffmpeg_options',
                 # (Reset this edit window, if the user clicks 'yes')
                 'data': [self],
             },
@@ -6835,7 +6931,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             # Discard the list of videos, so that this becomes an ordinary
             #   edit window, with an 'OK' button that stores changes (and no
-            #   'Process files' button that starts a process operation
+            #   'Process files' button that starts a process operation)
             self.video_list = []
 
             self.ok_button.set_label(_('OK'))
@@ -6843,6 +6939,92 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.ok_button.set_tooltip_text(
                 _('Apply changes'),
             )
+
+
+    def on_video_drag_data_received(self, widget, context, x, y, data, info,
+    time):
+
+        """Called from callback in self.setup_videos_tab().
+
+        This function is required for detecting when the user drags and drops
+        data into the Videos Tab.
+
+        If the data contains full paths to a video/audio file and/or URLs,
+        then we can search the media data registry, looking for matching
+        media.Video objects.
+
+        Those objects can then be added to self.video_list.
+
+        Args:
+
+            widget (mainwin.MainWin): The widget into which something has been
+                dragged
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            x, y (int): Where the drop happened
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        text = None
+        if info == 0:
+            text = data.get_text()
+
+        if text is not None:
+
+            # Hopefully, 'text' contains one or more valid URLs or paths to
+            #   video/audio files
+            line_list = text.split('\n')
+            mod_list = []
+
+            for line in line_list:
+                mod_line = utils.strip_whitespace(urllib.parse.unquote(line))
+                if mod_line != '':
+
+                    # On Linux, URLs are received as expected, but paths to
+                    #   media data files are received as 'file://PATH'
+                    match = re.search('^file\:\/\/(.*)', mod_line)
+                    if match:
+                        mod_list.append(match.group(1))
+                    else:
+                        mod_list.append(mod_line)
+
+            # The True argument means to include 'dummy' media.Videos from the
+            #   Classic Mode Tab in the search
+            video_list = self.app_obj.retrieve_videos_from_db(mod_list, True)
+
+            # (Remember if the video list is currently empty, or not)
+            old_size = len(self.video_list)
+
+            # Add videos to the list, but don't add duplicates
+            for video_obj in video_list:
+
+                if not video_obj in self.video_list:
+                    self.video_list.append(video_obj)
+
+            # Redraw the whole video list by calling this function, which also
+            #   sorts self.video_list nicely
+            self.setup_videos_tab_update_treeview()
+
+            if old_size == 0 and self.video_list:
+
+                # Replace the 'OK' button with a 'Process files' button
+                self.ok_button.set_label(_('Process files'))
+                self.ok_button.set_tooltip_text(
+                    _('Process the files with FFmpeg'),
+                )
+                self.ok_button.get_child().set_width_chars(15)
+
+        # Without this line, the user's cursor is permanently stuck in drag
+        #   and drop mode
+        context.finish(True, False, time)
 
 
     def on_video_remove_button_clicked(self, button, treeview):
@@ -6874,7 +7056,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             return
 
-        dbid = model[this_iter][0]
+        dbid = int(model[this_iter][0])
         for video_obj in self.video_list:
 
             if video_obj.dbid == dbid:
@@ -6882,7 +7064,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 break
 
         # Update the visible list
-        self.setup_videos_tab_update_treeview(model)
+        self.setup_videos_tab_update_treeview()
         # If all videos have been removed, restore the OK button
         if not self.video_list:
 
@@ -8366,7 +8548,7 @@ class ScheduledEditWin(GenericEditWin):
             1, 3, (grid_width - 1), 1,
         )
         combo2.set_hexpand(True)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Time between scheduled downloads'),
@@ -8404,7 +8586,7 @@ class ScheduledEditWin(GenericEditWin):
         else:
             combo2.set_active(0)
 
-        # (signal_connect from above)
+        # (Signal connect from above)
         combo2.connect(
             'changed',
             self.on_start_mode_combo_changed,
@@ -9422,7 +9604,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 2, grid_width, 1,
         )
         checkbutton.set_active(mainapp.DEBUG_FUNC_FLAG)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('...but don\'t show timer debug messages'),
@@ -9433,7 +9615,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.set_active(mainapp.DEBUG_NO_TIMER_FUNC_FLAG)
         if not mainapp.DEBUG_FUNC_FLAG:
             checkbutton2.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Enable main winddow debug messages (code in mainwin.py)'),
@@ -9442,7 +9624,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 4, grid_width, 1,
         )
         checkbutton3.set_active(mainwin.DEBUG_FUNC_FLAG)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton4 = self.add_checkbutton(grid,
             _('...but don\'t show timer debug messages'),
@@ -9453,7 +9635,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4.set_active(mainwin.DEBUG_NO_TIMER_FUNC_FLAG)
         if not mainwin.DEBUG_FUNC_FLAG:
             checkbutton4.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton5 = self.add_checkbutton(grid,
             _('Enabled downloader debug messages (code in downloads.py)'),
@@ -9462,9 +9644,9 @@ class SystemPrefWin(GenericPrefWin):
             0, 6, grid_width, 1,
         )
         checkbutton5.set_active(downloads.DEBUG_FUNC_FLAG)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled', self.on_system_debug_toggled,
             'main_app',
@@ -9581,7 +9763,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 5, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             0, None,
@@ -9591,7 +9773,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.disk_space_warn_flag:
             spinbutton.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('Halt downloads if disk space is less than'),
@@ -9599,7 +9781,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 6, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         spinbutton2 = self.add_spinbutton(grid,
             0, None,
@@ -9609,9 +9791,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.disk_space_stop_flag:
             spinbutton2.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
-        # (signal_connect from above)
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_disk_warn_button_toggled,
@@ -9710,7 +9892,7 @@ class SystemPrefWin(GenericPrefWin):
         treeview.set_vexpand(False)
         for item in self.app_obj.data_dir_alt_list:
             liststore.append([item])
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button2 = Gtk.Button(_('Switch'))
         grid.attach(button2, 2, 3, 1, 1)
@@ -9755,7 +9937,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Move the selected folder up the list'),
         )
         button5.set_sensitive(False)
-        # signal connect appears below
+        # (Signal connect appears below)
 
         button6 = Gtk.Button(_('Move down'))
         grid.attach(button6, 2, 7, 1, 1)
@@ -9763,9 +9945,9 @@ class SystemPrefWin(GenericPrefWin):
             _('Move the selected folder down the list'),
         )
         button6.set_sensitive(False)
-        # signal connect appers below
+        # (Signal connect appears below)
 
-        # signal conencts from above
+        # (Signal connects from above)
         button5.connect(
             'clicked',
             self.on_data_dir_move_up_button_clicked,
@@ -9825,7 +10007,7 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(False)
             checkbutton3.set_sensitive(False)
 
-        # (signal_connect from above)
+        # (More signal connects from above)
         treeview.connect(
             'cursor-changed',
             self.on_data_dir_cursor_changed,
@@ -9900,7 +10082,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             0, 2, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -9911,7 +10093,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.db_backup_mode == 'single':
             radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -9923,7 +10105,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.db_backup_mode == 'daily':
             radiobutton3.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
@@ -9932,9 +10114,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.db_backup_mode == 'always':
             radiobutton4.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_backup_button_toggled,
@@ -9986,13 +10168,13 @@ class SystemPrefWin(GenericPrefWin):
             True,               # Can be toggled by user
             0, 1, (grid_width - 1), 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.auto_delete_days,
             2, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('...but only delete videos which have been watched'),
@@ -10000,11 +10182,11 @@ class SystemPrefWin(GenericPrefWin):
             True,               # Can be toggled by user
             0, 2, grid_width, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
         if not self.app_obj.auto_delete_flag:
             checkbutton2.set_sensitive(False)
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_auto_delete_button_toggled,
@@ -10033,20 +10215,20 @@ class SystemPrefWin(GenericPrefWin):
             _('The video names must match exactly'),
             0, 5, grid_width, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.radiobutton2 = self.add_radiobutton(grid,
             self.radiobutton,
             _('The first # characters must match exactly'),
             0, 6, (grid_width - 1), 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_first_chars,
             2, 6, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.radiobutton3 = self.add_radiobutton(grid,
             self.radiobutton2,
@@ -10056,13 +10238,13 @@ class SystemPrefWin(GenericPrefWin):
             ),
             0, 7, (grid_width - 1), 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.spinbutton2 = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_ignore_chars,
             2, 7, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # (Widgets are sensitised/desensitised, based on the radiobutton)
         if self.app_obj.match_method == 'exact_match':
@@ -10075,7 +10257,7 @@ class SystemPrefWin(GenericPrefWin):
             self.radiobutton3.set_active(True)
             self.spinbutton.set_sensitive(False)
 
-        # Signal connects from above
+        # (Signal connects from above)
         self.radiobutton.connect('toggled', self.on_match_button_toggled)
         self.radiobutton2.connect('toggled', self.on_match_button_toggled)
         self.radiobutton3.connect('toggled', self.on_match_button_toggled)
@@ -10113,7 +10295,7 @@ class SystemPrefWin(GenericPrefWin):
             True,               # Can be toggled by user
             0, 1, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             '<i>' + _(
@@ -10135,7 +10317,7 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.delete_on_shutdown_flag:
             checkbutton2.set_sensitive(False)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_delete_shutdown_button_toggled,
@@ -10198,7 +10380,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        # signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Don\'t show labels in the main window toolbar'),
@@ -10210,7 +10392,7 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.toolbar_hide_flag:
             checkbutton3.set_sensitive(False)
 
-        # signal connect from above
+        # (Signal connect from above)
         checkbutton2.connect(
             'toggled',
             self.on_hide_toolbar_button_toggled,
@@ -10335,7 +10517,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 4, grid_width, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton4 = self.add_checkbutton(grid,
             _(
@@ -10348,9 +10530,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.auto_expand_video_index_flag:
             checkbutton4.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton3.connect(
             'toggled',
             self.on_expand_tree_toggled,
@@ -10515,7 +10697,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 1, 1, 1,
         )
         checkbutton.set_hexpand(False)
-        # signal connnect appears below
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('Close to the tray, rather than closing the application'),
@@ -10528,7 +10710,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.show_status_icon_flag:
             checkbutton2.set_sensitive(False)
 
-        # signal connect from above
+        # (Signal connect from above)
         checkbutton.connect(
             'toggled',
             self.on_show_status_icon_toggled,
@@ -10561,7 +10743,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 1, 1, 1,
         )
         checkbutton.set_hexpand(False)
-        # signal connnect appears below
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
@@ -10577,7 +10759,7 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.dialogue_keep_open_flag:
             checkbutton2.set_sensitive(False)
 
-        # signal connect from above
+        # (Signal connect from above)
         checkbutton.connect(
             'toggled',
             self.on_keep_open_button_toggled,
@@ -10791,7 +10973,7 @@ class SystemPrefWin(GenericPrefWin):
             _('These are ordinary strings'),
             0, 7, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -10800,9 +10982,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.ignore_custom_regex_flag:
             radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         textbuffer.connect('changed', self.on_custom_textview_changed)
         radiobutton.connect(
             'toggled',
@@ -11034,7 +11216,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_time_value,
@@ -11061,9 +11243,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.autostop_time_flag:
             combo.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_autostop_time_button_toggled,
@@ -11082,7 +11264,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         spinbutton2 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_videos_value,
@@ -11090,9 +11272,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.autostop_videos_flag:
             spinbutton2.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton2.connect(
             'toggled',
             self.on_autostop_videos_button_toggled,
@@ -11109,7 +11291,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 3, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         spinbutton3 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_size_value,
@@ -11130,9 +11312,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.autostop_size_flag:
             combo3.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton3.connect(
             'toggled',
             self.on_autostop_size_button_toggled,
@@ -11173,6 +11355,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_tab(self.operations_inner_notebook)
         self.setup_operations_livestreams_tab(self.operations_inner_notebook)
+        self.setup_operations_actions_tab(self.operations_inner_notebook)
         self.setup_operations_notify_tab(self.operations_inner_notebook)
 
 
@@ -11277,7 +11460,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 5, grid_width, 1,
         )
         checkbutton4.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Stop after this many videos (when checking)'),
@@ -11309,7 +11492,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.operation_limit_flag:
             entry2.set_sensitive(False)
 
-        # Signal connect from above
+        # (Signal connect from above)
         checkbutton4.connect(
             'toggled',
             self.on_limit_button_toggled,
@@ -11346,7 +11529,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             0, 1, grid_width, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -11355,7 +11538,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_convert_mode == 'multi':
             radiobutton2.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -11366,7 +11549,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_convert_mode == 'channel':
             radiobutton3.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
@@ -11377,9 +11560,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_convert_mode == 'playlist':
             radiobutton4.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_convert_from_button_toggled,
@@ -11416,7 +11599,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 6, grid_width, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
@@ -11428,7 +11611,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.track_missing_videos_flag:
             checkbutton2.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             0,
@@ -11440,9 +11623,9 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.track_missing_videos_flag \
         or not self.app_obj.track_missing_time_flag:
             spinbutton.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_missing_videos_button_toggled,
@@ -11551,7 +11734,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1,
@@ -11560,7 +11743,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.operation_auto_restart_time,
             1, 4, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
         if not self.app_obj.operation_auto_restart_flag:
             spinbutton.set_sensitive(False)
 
@@ -11577,11 +11760,11 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.operation_auto_restart_max,
             1, 5, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
         if not self.app_obj.operation_auto_restart_flag:
             spinbutton2.set_sensitive(False)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton4.connect(
             'toggled',
             self.on_auto_restart_button_toggled,
@@ -11666,7 +11849,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 1, grid_width, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
@@ -11677,7 +11860,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 2, grid_width, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Maximum delay to apply (in minutes)'),
@@ -11691,7 +11874,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.custom_dl_delay_max,
             1, 3, 1, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
         if not self.app_obj.custom_dl_delay_flag:
             spinbutton.set_sensitive(False)
 
@@ -11725,7 +11908,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             0, 5, grid_width, 1,
         )
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
@@ -11737,7 +11920,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.custom_dl_divert_mode == 'hooktube':
             radiobutton2.set_active(True)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -11749,7 +11932,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.custom_dl_divert_mode == 'invidious':
             radiobutton3.set_active(True)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
@@ -11761,7 +11944,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.custom_dl_divert_mode == 'other':
             radiobutton4.set_active(True)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         entry = self.add_entry(grid,
             self.app_obj.custom_dl_divert_website,
@@ -11787,7 +11970,7 @@ class SystemPrefWin(GenericPrefWin):
             radiobutton4.set_sensitive(False)
             entry.set_sensitive(False)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_custom_video_button_toggled,
@@ -11849,7 +12032,7 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
-        grid_width = 3
+        grid_width = 2
 
         # Livestream preferences
         self.add_label(grid,
@@ -11865,14 +12048,14 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
         spinbutton = self.add_spinbutton(grid,
             0, None, 1, self.app_obj.livestream_max_days,
             1, 1, 1, 1,
         )
         if not self.app_obj.enable_livestreams_flag:
             spinbutton.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('How often to check the status of livestreams (in minutes)'),
@@ -11882,7 +12065,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         if not self.app_obj.enable_livestreams_flag:
             checkbutton2.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         spinbutton2 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
@@ -11891,7 +12074,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.enable_livestreams_flag \
         or not self.app_obj.scheduled_livestream_flag:
             spinbutton2.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Check more frequently when a livestream is due to start'),
@@ -11907,7 +12090,7 @@ class SystemPrefWin(GenericPrefWin):
             self.on_extra_livestreams_button_toggled,
         )
 
-        # Signal connects from above
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_enable_livestreams_button_toggled,
@@ -11934,12 +12117,108 @@ class SystemPrefWin(GenericPrefWin):
             self.on_scheduled_livestreams_spinbutton_changed,
         )
 
+        # Broadcast preferences
+        self.add_label(grid,
+            '<u>' + _(
+                'Broadcast preferences (compatible websites only)',
+            ) + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+                'Use Youtube Stream Capture to download broadcasting' \
+                + ' livestreams',
+            ),
+            self.app_obj.ytsc_priority_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Timeout after this many minutes of inactivity'),
+            0, 6, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 0.2,
+            self.app_obj.ytsc_wait_time,
+            1, 6, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Number of restarts after a timeout'),
+            0, 7, 1, 1,
+        )
+
+        spinbutton4 = self.add_spinbutton(grid,
+            0, None, 1,
+            self.app_obj.ytsc_restart_max,
+            1, 7, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton4.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Bypass usual limits on simultaneous downloads, so that' \
+            + ' all broadcasts can be downloaded',
+            ),
+            self.app_obj.num_worker_bypass_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            checkbutton5.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton4.connect(
+            'toggled',
+            self.on_ytsc_priority_button_toggled,
+            spinbutton3,
+            spinbutton4,
+            checkbutton5,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_ytsc_wait_time_spinbutton_changed,
+        )
+        spinbutton4.connect(
+            'value-changed',
+            self.on_ytsc_restart_max_spinbutton_changed,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_worker_bypass_button_toggled,
+        )
+
+
+    def setup_operations_actions_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Actions' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Actions'),
+            inner_notebook,
+        )
+
+        grid_width = 3
+
         # Livestream actions
         self.add_label(grid,
             '<u>' + _(
                 'Livestream actions (can be toggled for individual videos)',
             ) + '</u>',
-            0, 4, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         # Currently disabled on MS Windows
@@ -11948,29 +12227,29 @@ class SystemPrefWin(GenericPrefWin):
         else:
             string = ''
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton = self.add_checkbutton(grid,
             _('When a livestream starts, show a desktop notification') \
             + string,
             self.app_obj.livestream_auto_notify_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 1, grid_width, 1,
         )
-        checkbutton4.connect(
+        checkbutton.connect(
             'toggled',
             self.on_livestream_auto_notify_button_toggled,
         )
         if os.name == 'nt':
-            checkbutton4.set_sensitive(False)
+            checkbutton.set_sensitive(False)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton2 = self.add_checkbutton(grid,
             _('When a livestream starts, sound an alarm'),
             self.app_obj.livestream_auto_alarm_flag,
             True,                   # Can be toggled by user
-            0, 6, 1, 1,
+            0, 2, 1, 1,
         )
         if not mainapp.HAVE_PLAYSOUND_FLAG:
-            checkbutton5.set_sensitive(False)
-        checkbutton5.connect(
+            checkbutton2.set_sensitive(False)
+        checkbutton2.connect(
             'toggled',
             self.on_livestream_auto_alarm_button_toggled,
         )
@@ -11978,53 +12257,53 @@ class SystemPrefWin(GenericPrefWin):
         combo = self.add_combo(grid,
             self.app_obj.sound_list,
             self.app_obj.sound_custom,
-            1, 6, 1, 1,
+            1, 2, 1, 1,
         )
         combo.connect('changed', self.on_sound_custom_changed)
         if not mainapp.HAVE_PLAYSOUND_FLAG:
             combo.set_sensitive(False)
 
         button = Gtk.Button(_('Test'))
-        grid.attach(button, 2, 6, 1, 1)
+        grid.attach(button, 2, 2, 1, 1)
         button.set_tooltip_text(_('Plays the selected sound effect'))
         button.connect('clicked', self.on_test_sound_clicked, combo)
         if not mainapp.HAVE_PLAYSOUND_FLAG:
             button.set_sensitive(False)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _(
             'When a livestream starts, open it in the system\'s web browser',
             ),
             self.app_obj.livestream_auto_open_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 3, grid_width, 1,
         )
-        checkbutton6.connect(
+        checkbutton3.connect(
             'toggled',
             self.on_livestream_auto_open_button_toggled,
         )
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             _('When a livestream starts, begin downloading it immediately'),
             self.app_obj.livestream_auto_dl_start_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 4, grid_width, 1,
         )
-        checkbutton7.connect(
+        checkbutton4.connect(
             'toggled',
             self.on_livestream_auto_dl_start_button_toggled,
         )
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'When a livestream stops, download it (overwriting any earlier' \
             + ' file)',
             ),
             self.app_obj.livestream_auto_dl_stop_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 5, grid_width, 1,
         )
-        checkbutton8.connect(
+        checkbutton5.connect(
             'toggled',
             self.on_livestream_auto_dl_stop_button_toggled,
         )
@@ -12055,7 +12334,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         if platform.system() != 'Windows' and platform.system() != 'Darwin':
             text = 'Show a desktop notification at the end of an operation'
@@ -12071,7 +12350,7 @@ class SystemPrefWin(GenericPrefWin):
             radiobutton2.set_active(True)
         if platform.system() == 'Windows' or platform.system() == 'Darwin':
             radiobutton2.set_sensitive(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
@@ -12082,9 +12361,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         if self.app_obj.operation_dialogue_mode == 'default':
             radiobutton3.set_active(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
-        # Signal connects from above
+        # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_dialogue_button_toggled,
@@ -12110,7 +12389,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab('_Downloader')
+        tab, grid = self.add_notebook_tab('_Downloaders')
 
         # ...and an inner notebook...
         inner_notebook = self.add_inner_notebook(grid)
@@ -12119,6 +12398,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_downloader_forks_tab(inner_notebook)
         self.setup_downloader_paths_tab(inner_notebook)
         self.setup_downloader_ffmpeg_tab(inner_notebook)
+        self.setup_downloader_ytsc_tab(inner_notebook)
 
 
     def setup_downloader_forks_tab(self, inner_notebook):
@@ -12139,9 +12419,14 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 1, 1,
         )
 
-        # youtube-dlc
+        # youtube-dlc. Use an event box so the downloader can be selected by
+        #   clicking anywhere in the frame
+        event_box = Gtk.EventBox()
+        grid.attach(event_box, 0, 1, 1, 1)
+        # (Signal connect appears below)
+
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 1, 1, 1)
+        event_box.add(frame)
         frame.set_border_width(self.spacing_size)
 
         grid2 = Gtk.Grid()
@@ -12162,11 +12447,15 @@ class SystemPrefWin(GenericPrefWin):
             '   ' + _('Use youtube-dlc'),
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # youtube-dl
+        event_box2 = Gtk.EventBox()
+        grid.attach(event_box2, 0, 2, 1, 1)
+        # (Signal connect appears below)
+
         frame2 = Gtk.Frame()
-        grid.attach(frame2, 0, 2, 1, 1)
+        event_box2.add(frame2)
         frame2.set_border_width(self.spacing_size)
 
         grid3 = Gtk.Grid()
@@ -12187,11 +12476,15 @@ class SystemPrefWin(GenericPrefWin):
             '   ' + _('Use youtube-dl'),
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # Any other fork
+        event_box3 = Gtk.EventBox()
+        grid.attach(event_box3, 0, 3, 1, 1)
+        # (Signal connect appears below)
+
         frame3 = Gtk.Frame()
-        grid.attach(frame3, 0, 3, 1, 1)
+        event_box3.add(frame3)
         frame3.set_border_width(self.spacing_size)
 
         grid4 = Gtk.Grid()
@@ -12208,10 +12501,10 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton3 = self.add_radiobutton(grid4,
             radiobutton2,
-            '   ' + _('Use a different fork of youtube-dl') + ':',
+            '   ' + _('Use a different fork of youtube-dl:'),
             0, 1, 1, 1,
         )
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         entry = self.add_entry(grid4,
             None,
@@ -12219,7 +12512,7 @@ class SystemPrefWin(GenericPrefWin):
             1, 1, 1, 1,
         )
         entry.set_sensitive(True)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         # Set widgets initial state
         if self.app_obj.ytdl_fork is None \
@@ -12237,7 +12530,22 @@ class SystemPrefWin(GenericPrefWin):
                 entry.set_text('')
             entry.set_sensitive(True)
 
-        # Signal connects from above
+        # (Signal connects from above)
+        event_box.connect(
+            'button-press-event',
+            self.on_ytdl_fork_frame_clicked,
+            radiobutton,
+        )
+        event_box2.connect(
+            'button-press-event',
+            self.on_ytdl_fork_frame_clicked,
+            radiobutton2,
+        )
+        event_box3.connect(
+            'button-press-event',
+            self.on_ytdl_fork_frame_clicked,
+            radiobutton3,
+        )
         radiobutton.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
@@ -12277,7 +12585,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # Downloader file paths
         self.add_label(grid,
-            '<u>' + _('Downlaoder file paths') + '</u>',
+            '<u>' + _('Downloader file paths') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -12324,7 +12632,7 @@ class SystemPrefWin(GenericPrefWin):
             combo.set_active(2)
         else:
             combo.set_active(1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Command for update operations'),
@@ -12350,13 +12658,13 @@ class SystemPrefWin(GenericPrefWin):
         )
         if __main__.__pkg_strict_install_flag__:
             combo2.set_sensitive(False)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         # Update the combos, so that the youtube-dl fork, rather than
         #   youtube-dl itself, is visible (if applicable)
         self.update_ytdl_combos()
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         combo.connect('changed', self.on_ytdl_path_combo_changed)
         combo2.connect('changed', self.on_update_combo_changed)
 
@@ -12365,7 +12673,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called by self.setup_downloader_tab().
 
-        Sets up the 'Preferences' inner notebook tab.
+        Sets up the 'FFmpeg / AVConv' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -12375,9 +12683,9 @@ class SystemPrefWin(GenericPrefWin):
 
         grid_width = 4
 
-        # Post-processing preferences
+        # Post-processor file paths
         self.add_label(grid,
-            '<u>' + _('Post-processing preferences') + '</u>',
+            '<u>' + _('Post-processing file paths') + '</u>',
             0, 0, grid_width, 1,
         )
         self.add_label(grid,
@@ -12395,15 +12703,15 @@ class SystemPrefWin(GenericPrefWin):
 
         button = Gtk.Button(_('Set'))
         grid.attach(button, 1, 2, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button2 = Gtk.Button(_('Reset'))
         grid.attach(button2, 2, 2, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button3 = Gtk.Button(_('Use default path'))
         grid.attach(button3, 3, 2, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         entry = self.add_entry(grid,
             self.app_obj.ffmpeg_path,
@@ -12421,7 +12729,7 @@ class SystemPrefWin(GenericPrefWin):
             button2.set_sensitive(False)
             button3.set_sensitive(False)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry)
         button2.connect('clicked', self.on_reset_ffmpeg_button_clicked, entry)
         button3.connect(
@@ -12436,15 +12744,15 @@ class SystemPrefWin(GenericPrefWin):
 
         button4 = Gtk.Button(_('Set'))
         grid.attach(button4, 1, 4, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button5 = Gtk.Button(_('Reset'))
         grid.attach(button5, 2, 4, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         button6 = Gtk.Button(_('Use default path'))
         grid.attach(button6, 3, 4, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         entry2 = self.add_entry(grid,
             self.app_obj.ffmpeg_path,
@@ -12462,7 +12770,7 @@ class SystemPrefWin(GenericPrefWin):
             button5.set_sensitive(False)
             button6.set_sensitive(False)
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         button4.connect('clicked', self.on_set_avconv_button_clicked, entry2)
         button5.connect('clicked', self.on_reset_avconv_button_clicked, entry2)
         button6.connect(
@@ -12470,6 +12778,65 @@ class SystemPrefWin(GenericPrefWin):
             self.on_default_avconv_button_clicked,
             entry2,
         )
+
+
+    def setup_downloader_ytsc_tab(self, inner_notebook):
+
+        """Called by self.setup_downloader_tab().
+
+        Sets up the 'Stream Capture' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Stream Capture'),
+            inner_notebook,
+        )
+
+        grid_width = 4
+
+        # Youtube Stream Capture file path
+        self.add_label(grid,
+            '<u>' + _('Youtube Stream Capture file path') + '</u>',
+            0, 0, grid_width, 1,
+        )
+        self.add_label(grid,
+            '<i>' + _(
+            'Tartube includes a copy of this script, but you can use a' \
+            + ' different copy, if you want',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('Path to the YT Stream Capture executable'),
+            0, 2, 1, 1,
+        )
+
+        button = Gtk.Button(_('Set'))
+        grid.attach(button, 1, 2, 1, 1)
+        # (Signal connect appears below)
+
+        button2 = Gtk.Button(_('Reset'))
+        grid.attach(button2, 2, 2, 1, 1)
+        # (Signal connect appears below)
+
+        button3 = Gtk.Button(_('Use default path'))
+        grid.attach(button3, 3, 2, 1, 1)
+        # (Signal connect appears below)
+
+        entry = self.add_entry(grid,
+            self.app_obj.ytsc_path,
+            False,
+            0, 3, grid_width, 1,
+        )
+        entry.set_sensitive(False)
+        entry.set_editable(False)
+        entry.set_hexpand(True)
+
+        # (Signal connects from above)
+        button.connect('clicked', self.on_set_ytsc_button_clicked, entry)
+        button2.connect('clicked', self.on_reset_ytsc_button_clicked, entry)
+        button3.connect('clicked', self.on_default_ytsc_button_clicked, entry)
 
 
     def setup_options_tab(self):
@@ -13004,7 +13371,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 2, grid_width, 1,
         )
         checkbutton2.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('...but don\'t write each video\'s JSON data'),
@@ -13028,7 +13395,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.ytdl_output_stdout_flag:
             checkbutton4.set_sensitive(False)
 
-        # Signal connect from above
+        # (Signal connect from above)
         checkbutton2.connect(
             'toggled',
             self.on_output_stdout_button_toggled,
@@ -13108,7 +13475,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 10, grid_width, 1,
         )
         checkbutton10.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton11 = self.add_checkbutton(grid,
             _('...also show all non-matching videos'),
@@ -13124,7 +13491,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.refresh_output_videos_flag:
             checkbutton10.set_sensitive(False)
 
-        # Signal connect from above
+        # (Signal connect from above)
         checkbutton10.connect(
             'toggled',
             self.on_refresh_videos_button_toggled,
@@ -13166,7 +13533,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 2, 1, 1,
         )
         checkbutton2.set_hexpand(False)
-        # Signal connect appears below
+        # (Signal connect appears below)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('...but don\'t write each video\'s JSON data'),
@@ -13193,7 +13560,7 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.ytdl_write_stdout_flag:
             checkbutton4.set_sensitive(False)
 
-        # Signal connect from above
+        # (Signal connect from above)
         checkbutton2.connect(
             'toggled',
             self.on_terminal_stdout_button_toggled,
@@ -13233,13 +13600,22 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Write verbose output (downloader debugging mode)'),
+            _('Downloader writes verbose output (youtube-dl debugging mode)'),
             self.app_obj.ytdl_write_verbose_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
         )
         checkbutton.set_hexpand(False)
-        checkbutton.connect('toggled', self.on_verbose_button_toggled)
+        checkbutton.connect('toggled', self.on_ytdl_verbose_button_toggled)
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Youtube Stream Capture writes verbose output'),
+            self.app_obj.ytsc_write_verbose_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+        checkbutton.connect('toggled', self.on_ytsc_verbose_button_toggled)
 
 
     # Callback class methods
@@ -14513,6 +14889,24 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text(self.app_obj.ffmpeg_path)
 
 
+    def on_default_ytsc_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_ytsc_tab().
+
+        Sets the path to the Youtube Stream Capture binary to the default path.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_ytsc_path(self.app_obj.default_ytsc_path)
+        entry.set_text(self.app_obj.ytsc_path)
+
+
     def on_delay_max_spinbutton_changed(self, spinbutton, spinbutton2):
 
         """Called from callback in self.setup_operations_custom_tab().
@@ -14984,7 +15378,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        new_obj = self.app_obj.create_ffmpeg_options_manager(entry.get_text())
+        new_obj = self.app_obj.create_ffmpeg_options(entry.get_text())
 
         # Update the treeview
         self.setup_options_ffmpeg_list_tab_update_treeview()
@@ -15124,7 +15518,7 @@ class SystemPrefWin(GenericPrefWin):
                 uid = model[this_iter][0]
                 if uid in self.app_obj.ffmpeg_reg_dict:
 
-                    self.app_obj.export_ffmpeg_manager(
+                    self.app_obj.export_ffmpeg_options(
                         self.app_obj.ffmpeg_reg_dict[uid],
                     )
 
@@ -15146,7 +15540,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.import_ffmpeg_manager(entry.get_text())
+        self.app_obj.import_ffmpeg_options(entry.get_text())
 
         # Update the treeview
         self.setup_options_ffmpeg_list_tab_update_treeview()
@@ -15372,7 +15766,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_auto_alarm_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Enables/disables sounding an alarm when a livestream starts.
 
@@ -15392,7 +15786,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_auto_dl_start_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Enables/disables downloading a livestream as soon as it starts.
 
@@ -15412,7 +15806,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_auto_dl_stop_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Enables/disables downloading a livestream as soon as it stops.
 
@@ -15432,7 +15826,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_auto_notify_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Enables/disables desktop notifications when a livestream starts.
 
@@ -15452,7 +15846,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_livestream_auto_open_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Enables/disables opening a livestream in the system's web browser when
         it starts.
@@ -15921,7 +16315,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        new_obj = self.app_obj.create_options_manager(entry.get_text())
+        new_obj = self.app_obj.create_download_options(entry.get_text())
 
         # If required, clone download options from the General Options Manager
         #   into the new object
@@ -16048,7 +16442,7 @@ class SystemPrefWin(GenericPrefWin):
                 uid = model[this_iter][0]
                 if uid in self.app_obj.options_reg_dict:
 
-                    self.app_obj.export_options_manager(
+                    self.app_obj.export_download_options(
                         self.app_obj.options_reg_dict[uid],
                     )
 
@@ -16069,7 +16463,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.import_options_manager(entry.get_text())
+        self.app_obj.import_download_options(entry.get_text())
 
         # Update the treeview
         self.setup_options_dl_list_tab_update_treeview()
@@ -16468,7 +16862,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_downloader_ffmpeg_tab().
 
-        Resets the path to the ffmpeg binary.
+        Resets the path to the FFmpeg binary.
 
         Args:
 
@@ -16479,6 +16873,24 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.set_ffmpeg_path(None)
+        entry.set_text('')
+
+
+    def on_reset_ytsc_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_ytsc_tab().
+
+        Resets the path to the Youtube Stream Capture binary.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_ytsc_path(None)
         entry.set_text('')
 
 
@@ -16783,7 +17195,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_downloader_ffmpeg_tab().
 
-        Opens a window in which the user can select the ffmpeg binary, if it is
+        Opens a window in which the user can select the FFmpeg binary, if it is
         installed (and if the user wants it).
 
         Args:
@@ -16810,6 +17222,39 @@ class SystemPrefWin(GenericPrefWin):
 
             self.app_obj.set_ffmpeg_path(new_path)
             entry.set_text(self.app_obj.ffmpeg_path)
+
+
+    def on_set_ytsc_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_ytsc_tab().
+
+        Opens a window in which the user can select the Youtube Stream Capture
+        binary, if it is installed (and if the user wants it).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Please select the Youtube Stream Capture executable'),
+            self,
+            Gtk.FileChooserAction.OPEN,
+        )
+
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK and new_path:
+
+            self.app_obj.set_ytsc_path(new_path)
+            entry.set_text(self.app_obj.ytsc_path)
 
 
     def on_show_classic_mode_button_toggled(self, checkbutton):
@@ -16927,7 +17372,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_sound_custom_changed(self, combo):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Sets the user's preferred sound effect for livestream alarms.
 
@@ -17192,7 +17637,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_test_sound_clicked(self, button, combo):
 
-        """Called from callback in self.setup_operations_livestreams_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Plays the sound effect selected in the combobox.
 
@@ -17306,7 +17751,29 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_data_dir_use_list_flag(False)
 
 
-    def on_verbose_button_toggled(self, checkbutton):
+    def on_ytdl_fork_frame_clicked(self, event_box, event_button, radiobutton):
+
+        """Called from a callback in self.setup_downloader_forks_tab().
+
+        Enables/disables selecting a downloader by clicking anywhere in its
+        containing frame.
+
+        Args:
+
+            event_box (Gtk.EventBox): Ignored
+
+            event_button (Gdk.EventButton): Ignored
+
+            radiobutton (Gtk.RadioButton): The radiobutton inside the clicked
+                frame, which should be made active
+
+        """
+
+        if not radiobutton.get_active():
+            radiobutton.set_active(True)
+
+
+    def on_ytdl_verbose_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_output_both_tab().
 
@@ -17324,6 +17791,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_write_verbose_flag:
             self.app_obj.set_ytdl_write_verbose_flag(False)
+
+
+    def on_ytsc_verbose_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_both_tab().
+
+        Enables/disables writing verbose output for Youtube Stream Capture.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytsc_write_verbose_flag:
+            self.app_obj.set_ytsc_write_verbose_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytsc_write_verbose_flag:
+            self.app_obj.set_ytsc_write_verbose_flag(False)
 
 
     def on_worker_button_toggled(self, checkbutton):
@@ -17347,6 +17834,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.main_win_obj.num_worker_checkbutton.set_active(True)
         elif (not checkbutton.get_active() and other_flag):
             self.app_obj.main_win_obj.num_worker_checkbutton.set_active(False)
+
+
+    def on_worker_bypass_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables bypassing the maximum simultaneous downloads limit
+        when downloading broadcasting livestreams.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.num_worker_bypass_flag:
+            self.app_obj.setnum_worker_bypass_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.num_worker_bypass_flag:
+            self.app_obj.set_num_worker_bypass_flag(False)
 
 
     def on_worker_spinbutton_changed(self, spinbutton):
@@ -17431,7 +17939,14 @@ class SystemPrefWin(GenericPrefWin):
 
             if fork_type is None:
 
-                self.app_obj.set_ytdl_fork(None)
+                fork_name = entry.get_text()
+                # (If the 'other fork' option is selected, but nothing is
+                #   entered in the entry box, use youtube-dl as the downloader)
+                if fork_name == '':
+                    self.app_obj.set_ytdl_fork(None)
+                else:
+                    self.app_obj.set_ytdl_fork(fork_name)
+
                 entry.set_sensitive(True)
 
             elif fork_type == 'youtube-dl':
@@ -17442,7 +17957,7 @@ class SystemPrefWin(GenericPrefWin):
 
             elif fork_type == 'youtube-dlc':
 
-                self.app_obj.set_ytdl_fork(fork_name)
+                self.app_obj.set_ytdl_fork(fork_type)
                 entry.set_text('')
                 entry.set_sensitive(False)
 
@@ -17489,6 +18004,74 @@ class SystemPrefWin(GenericPrefWin):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         self.app_obj.set_ytdl_path(model[tree_iter][1])
+
+
+    def on_ytsc_priority_button_toggled(self, checkbutton, spinbutton,
+    spinbutton2, checkbutton2):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables desktop notifications when a livestream starts.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton, spinbutton2 (Gtk.SpinButton): Other widgets to modify
+
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytsc_priority_flag:
+
+            self.app_obj.set_ytsc_priority_flag(True)
+            spinbutton.set_sensitive(True)
+            spinbutton2.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytsc_priority_flag:
+            self.app_obj.set_ytsc_priority_flag(False)
+            spinbutton.set_sensitive(False)
+            spinbutton2.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
+
+
+    def on_ytsc_restart_max_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Sets the maximum number of restarts for YTSC stream captures.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_ytsc_restart_max(
+            spinbutton.get_value(),
+        )
+
+
+    def on_ytsc_wait_time_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Sets the timeout (in minutes) for YTSC stream captures.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_ytsc_wait_time(
+            spinbutton.get_value(),
+        )
 
 
     # (Callback support functions)

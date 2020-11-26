@@ -22,7 +22,7 @@
 
 # Import Gtk modules
 #   ...
-6
+
 
 # Import other modules
 import os
@@ -89,7 +89,7 @@ __multiple_instance_flag__ = True
 # There are four executables; this default one, and three others used in
 #   packaging. The others are identical, except for the values of these
 #   variables
-__pkg_install_flag__ = False
+__pkg_install_flag__ = True
 __pkg_strict_install_flag__ = False
 __pkg_no_download_flag__ = False
 

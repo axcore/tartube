@@ -42,8 +42,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.2.176'
-__date__ = '21 Nov 2020'
+__version__ = '2.2.198'
+__date__ = '26 Nov 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2020 A S Lewis.
@@ -72,6 +72,10 @@ __credit_list__ = [
     'FFmpeg options adapted from FFmpeg Command',
     'Line Wizard by AndreKR',
     'https://github.com/AndreKR/ffmpeg-command-line-wizard',
+    'Upgraded Textview by Kevin Mehall',
+    'https://kevinmehall.net/2010/pygtk_multi_select_drag_drop',
+    'Youtube Stream Capture by mrwnwttk',
+    'https://github.com/mrwnwttk',
 ]
 __description__ = 'A front-end GUI for youtube-dl,\n' \
 + 'partly based on youtube-dl-gui\n' \
@@ -82,11 +86,12 @@ __website_bugs__ = 'https://github.com/axcore/tartube'
 # Flag set to True if multiple instances of Tartube are allowed; False if
 #   only a single instance is allowed
 __multiple_instance_flag__ = True
-# There are three executables; a default one, and two others used in Debian/RPM
-#   packaging (of which this is one). The executables are identical, except for
-#   the values of these variables
+# There are four executables; this default one, and three others used in
+#   packaging. The others are identical, except for the values of these
+#   variables
 __pkg_install_flag__ = True
 __pkg_strict_install_flag__ = True
+__pkg_no_download_flag__ = True
 
 
 # Start Tartube

@@ -932,7 +932,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
     """
 
-    if hasattr(video_obj, 'dummy_path'):
+    if video_obj.dummy_flag:
 
         # Special case: 'dummy' video objects (those downloaded in the Classic
         #   Mode tab) use different IVs
@@ -1223,6 +1223,13 @@ divert_mode=None):
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:
         options_list.append('--verbose')
+
+    # Specify a standard location for the cookie jar (otherwise youtube-dl
+    #   will write it to ../tartube/tartube)
+    options_list.append('--cookies')
+    options_list.append(
+        os.path.abspath(os.path.join(app_obj.data_dir, 'cookies.txt')),
+    )
 
     # Supply youtube-dl with the path to the ffmpeg/avconv binary, if the
     #   user has provided one

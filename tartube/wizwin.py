@@ -781,12 +781,12 @@ class SetupWizWin(GenericWizWin):
 
         button = Gtk.Button(_('Choose'))
         self.inner_grid.attach(button, 1, 6, 1, 1)
-        # (signal_connect appears below)
+        # (Signal connect appears below)
 
         if not self.mswin_flag:
             button2 = Gtk.Button(_('Use default location'))
             self.inner_grid.attach(button2, 1, 7, 1, 1)
-            # (signal_connect appears below)
+            # (Signal connect appears below)
 
         # (Empty label for spacing)
         self.add_empty_label(0, 8, grid_width, 1)
@@ -807,7 +807,7 @@ class SetupWizWin(GenericWizWin):
                 0, 9, grid_width, 1,
             )
 
-        # (signal_connects from above)
+        # (Signal connects from above)
         button.connect(
             'clicked',
             self.on_button_choose_folder_clicked,
@@ -945,8 +945,14 @@ class SetupWizWin(GenericWizWin):
         else:
             grid_width = 2
 
+        # (Use an event box so the downloader can be selected by clicking
+        #   anywhere in the frame)
+        event_box = Gtk.EventBox()
+        self.inner_grid.attach(event_box, 1, row, 1, 1)
+        # (Signal connect appears below)
+        
         frame = Gtk.Frame()
-        self.inner_grid.attach(frame, 1, row, 1, 1)
+        event_box.add(frame)
         frame.set_border_width(self.spacing_size)
         frame.set_hexpand(False)
 
@@ -967,6 +973,13 @@ class SetupWizWin(GenericWizWin):
         radiobutton2.set_label('   ' + radio_text)
         # (Signal connect appears in the calling function)
 
+        # (Signal connect from above)
+        event_box.connect(
+            'button-press-event',
+            self.on_frame_downloader_clicked,
+            radiobutton2,
+        )
+        
         if not custom_flag:
 
             return radiobutton2
@@ -1014,7 +1027,7 @@ class SetupWizWin(GenericWizWin):
         self.downloader_button = Gtk.Button(_('Install and update downloader'))
         self.inner_grid.attach(self.downloader_button, 1, 3, 1, 1)
         self.downloader_button.set_hexpand(False)
-        # (signal connect appears below)
+        # (Signal connect appears below)
 
         # (Empty label for spacing)
         self.add_empty_label(0, 4, grid_width, 1)
@@ -1024,7 +1037,7 @@ class SetupWizWin(GenericWizWin):
             0, 5, grid_width, 1,
         )
 
-        # (signal connects from above)
+        # (Signal connects from above)
         self.downloader_button.connect(
             'clicked',
             self.on_button_fetch_downloader_clicked,
@@ -1078,7 +1091,7 @@ class SetupWizWin(GenericWizWin):
         self.ffmpeg_button = Gtk.Button(_('Install FFmpeg'))
         self.inner_grid.attach(self.ffmpeg_button, 1, 5, 1, 1)
         self.ffmpeg_button.set_hexpand(False)
-        # (signal connect appears below)
+        # (Signal connect appears below)
 
         # (Empty label for spacing)
         self.add_empty_label(0, 6, grid_width, 1)
@@ -1088,7 +1101,7 @@ class SetupWizWin(GenericWizWin):
             0, 7, grid_width, 1,
         )
 
-        # (signal connects from above)
+        # (Signal connects from above)
         self.ffmpeg_button.connect(
             'clicked',
             self.on_button_fetch_ffmpeg_clicked,
@@ -1497,14 +1510,14 @@ class SetupWizWin(GenericWizWin):
 
             if fork_type is None:
 
-                entry_text = entry.get_text()
+                fork_name = entry.get_text()
                 # (As in the preference window, if the 'other fork' option is
                 #   selected, but nothing is entered in the entry box, use
-                #   youtube-dl as the system default)
-                if entry_text == '':
+                #   youtube-dl as the downloader)
+                if fork_name == '':
                     self.ytdl_fork = None
                 else:
-                    self.ytdl_fork = entry_text
+                    self.ytdl_fork = fork_name
 
                 entry.set_sensitive(True)
 
@@ -1516,7 +1529,7 @@ class SetupWizWin(GenericWizWin):
 
             elif fork_type == 'youtube-dlc':
 
-                self.ytdl_fork = fork_name
+                self.ytdl_fork = fork_type
                 entry.set_text('')
                 entry.set_sensitive(False)
 
@@ -1544,3 +1557,27 @@ class SetupWizWin(GenericWizWin):
                 self.ytdl_fork = None
             else:
                 self.ytdl_fork = entry_text
+
+
+    def on_frame_downloader_clicked(self, event_box, event_button,
+    radiobutton): 
+
+        """Called from callback in self.setup_set_downloader_page().
+
+        Enables/disables selecting a downloader by clicking anywhere in its
+        containing frame.
+        
+        Args:
+
+            event_box (Gtk.EventBox): Ignored
+            
+            event_button (Gdk.EventButton): Ignored
+            
+            radiobutton (Gtk.RadioButton): The radiobutton inside the clicked
+                frame, which should be made active
+                
+        """
+
+        if not radiobutton.get_active():
+            radiobutton.set_active(True)
+            
