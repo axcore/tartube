@@ -3436,8 +3436,9 @@ class TartubeApp(Gtk.Application):
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
 
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
-        self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
-
+        if version >= 2002179:  # v2.2.179
+            self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
+            
         if version >= 1002024:  # v1.2.024
             self.refresh_output_videos_flag \
             = json_dict['refresh_output_videos_flag']
