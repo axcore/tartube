@@ -350,8 +350,13 @@ class UpdateManager(threading.Thread):
         #   depending on how it was installed
         # (For example, if youtube-dl was installed via pip, then it must be
         #   updated via pip)
-        cmd_list \
-        = self.app_obj.ytdl_update_dict[self.app_obj.ytdl_update_current]
+        if self.wiz_win_obj \
+        and self.wiz_win_obj.ytdl_update_current is not None:
+            ytdl_update_current = self.wiz_win_obj.ytdl_update_current
+        else:
+            ytdl_update_current = self.app_obj.ytdl_update_current
+
+        cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
 
         mod_list = []
         for arg in cmd_list:

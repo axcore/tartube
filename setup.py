@@ -28,22 +28,36 @@ import sys
 
 # Set a standard long_description, modified only for Debian/RPM packages
 long_description="""
-Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui
-and written in Python 3 / Gtk 3.
+Tartube is a GUI front-end for youtube-dlc, youtube-dl and other compatible
+video downloaders.
 
-- You can download individual videos, and even whole channels and
-playlists, from YouTube and hundreds of other websites
-- You can fetch information about those videos, channels and playlists,
-without actually downloading anything
-- Tartube will organise your videos into convenient folders
+It is partly based on youtube-dl-gui and is written in Python 3 / Gtk 3.
+Tartube runs on MS Windows, Linux, BSD and MacOS.
+
+- You can fetch a list of videos from your favourite channels and playlists on
+YouTube, BitChute, and hundreds of other websites
+- In buffering is an issue, you can download a temporary copy of a video before
+automatically opening it in your favourite media player
+- Tartube will organise your videos into convenient folders (if that's what you
+want)
+- Tartube can alert you when livestreams and debut videos are starting (YouTube
+only)
 - If creators upload their videos to more than one website (YouTube and
-BitChute, for example), you can download videos from both sites without
-creating duplicates
-- Certain popular websites manipulate search results, repeatedly
-unsubscribe people from their favourite channels and/or deliberately
-conceal videos that they don't like. Tartube won't do any of those things
-- Tartube can, in some circumstances, see videos that are region-blocked
-and/or age-restricted
+BitChute, for example), Tartube can interact with both sites without creating
+duplicates
+- Certain websites operate an "only one opinion allowed" policy. If you think
+that the censors will remove a video, against the wishes of its creators and
+before you've had a chance to watch it, Tartube can make an archive copy
+- Certain websites frequently place restrictions on a video, not because it is
+unsuitable for some audiences, but for purely political reasons. Tartube can,
+in some circumstances, see videos that are region-blocked and/or age-restricted
+- Certain websites manipulate search results, repeatedly unsubscribe people
+from their favourite channels and/or deliberately conceal videos that they
+don't like. Tartube won't do any of those things
+- If you want to listen to your favourite discussion videos, for example while
+driving a car, Tartube can make an archive copy of just the audio, rather than
+the full video
+- Tartube is free and open-source software
 
 Note for PyPI users: Tartube should be installed with: pip3 install tartube
 """
@@ -168,7 +182,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.2.198',
+    version='2.3.0',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

@@ -1236,6 +1236,8 @@ class GenericRemoteContainer(GenericContainer):
 
         """
 
+        self.last_sort_mode = app_obj.catalogue_sort_mode
+
         # Sort a copy of the list to prevent 'list modified during sort'
         #   errors
         while True:
@@ -1804,8 +1806,6 @@ class Video(GenericMedia):
 
         if 'live_debut_flag' in live_data_dict:
             self.live_debut_flag = live_data_dict['live_debut_flag']
-        else:
-            self.live_debut_flag = False
 
 
     def set_missing_flag(self, flag):
@@ -2977,6 +2977,8 @@ class Folder(GenericContainer):
         Sorts the child media.Video, media.Channel, media.Playlist and
         media.Folder objects.
         """
+
+        self.last_sort_mode = app_obj.catalogue_sort_mode
 
         # Sort a copy of the list to prevent 'list modified during sort'
         #   errors

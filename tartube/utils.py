@@ -1323,6 +1323,40 @@ def get_options_manager(app_obj, media_data_obj):
         return app_obj.general_options_obj
 
 
+def get_ytsc_scripts(app_obj):
+
+    """Called by downloads.DownloadWorker.check_ytsc().
+
+    Returns a list of paths to the scripts comprising Youtube Stream Capture.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+    Return values:
+
+        A list of three items, giving paths to the scripts
+            [ youtube_stream_capture.py, merge_v1.py, merge_v2.py ]
+
+        If the path to YTSC's directory is unknown, returns three None values
+            instead
+
+    """
+
+    if app_obj.ytsc_path is None:
+        return []
+
+    else:
+
+        script_dir, filename = os.path.split(app_obj.ytsc_path)
+
+        return [
+            app_obj.ytsc_path,
+            os.path.abspath(os.path.join(script_dir, 'merge_v1.py')),
+            os.path.abspath(os.path.join(script_dir, 'merge_v2.py')),
+        ]
+
+
 def is_youtube(url):
 
     """Can be called by anything.
@@ -1557,7 +1591,7 @@ def rename_file(app_obj, old_path, new_path):
     except:
 
         app_obj.system_error(
-            502,
+            503,
             'Could not rename \'' + str(old_path) + '\'',
         )
 

@@ -100,7 +100,7 @@ class MainWin(Gtk.ApplicationWindow):
     def __init__(self, app_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 97 __init__')
+            utils.debug_time('mwn 103 __init__')
 
         super(MainWin, self).__init__(
             title=__main__.__packagename__.title(),
@@ -202,6 +202,7 @@ class MainWin(Gtk.ApplicationWindow):
                                                 # Gtk.ToolButton
         self.catalogue_toolbar2 = None          # Gtk.Toolbar
         self.catalogue_sort_combo = None        # Gtk.ComboBox
+        self.catalogue_resort_button = None     # Gtk.ToolButton
         self.catalogue_thumb_combo = None       # Gtk.ComboBox
         self.catalogue_frame_button = None      # Gtk.CheckButton
         self.catalogue_icons_button = None      # Gtk.CheckButton
@@ -339,6 +340,16 @@ class MainWin(Gtk.ApplicationWindow):
         self.mark_video_lower_limit = 50
         # Take shortcuts, and prompt the user
         self.mark_video_higher_limit = 1000
+
+        # Dictionary of tabs in the main window's notebook (self.notebook), and
+        #   their corresponding page numbers. If __pkg_no_download_flag__ is
+        #   set, the Classic Mode Tab is not visible, so page numbers will
+        #   differ
+        # Dictionary in the form
+        #   key - the string 'videos', 'progress', 'classic', 'output' or
+        #           'error'
+        #   value - The tab number, in the range 0-4
+        self.notebook_tab_dict = {}                # Set below
 
         # Videos Tab IVs
         # The Video Index is the left-hand side of the main window, and
@@ -688,6 +699,18 @@ class MainWin(Gtk.ApplicationWindow):
         # Code
         # ----
 
+        # Set tab numbers for each visible tab in the main window
+        self.notebook_tab_dict['videos'] = 0
+        self.notebook_tab_dict['progress'] = 1
+        if not __main__.__pkg_no_download_flag__:
+            self.notebook_tab_dict['classic'] = 2
+            self.notebook_tab_dict['output'] = 3
+            self.notebook_tab_dict['errors'] = 4
+        else:
+            self.notebook_tab_dict['classic'] = None
+            self.notebook_tab_dict['output'] = 2
+            self.notebook_tab_dict['errors'] = 3
+
         # Create GdkPixbuf.Pixbufs for all Tartube standard icons
         self.setup_pixbufs()
         # Initialise minimum sizes for gridboxes
@@ -706,7 +729,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 607 setup_pixbufs')
+            utils.debug_time('mwn 732 setup_pixbufs')
 
         # The default location for icons is ../icons
         # When installed via PyPI, the icons are moved to ../tartube/icons
@@ -841,7 +864,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 725 setup_win')
+            utils.debug_time('mwn 867 setup_win')
 
         # Set the default window size
         self.set_default_size(
@@ -896,7 +919,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 779 setup_grid')
+            utils.debug_time('mwn 922 setup_grid')
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -910,7 +933,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 793 setup_menubar')
+            utils.debug_time('mwn 936 setup_menubar')
 
         self.menubar = Gtk.MenuBar()
         self.grid.attach(self.menubar, 0, 0, 1, 1)
@@ -1010,7 +1033,7 @@ class MainWin(Gtk.ApplicationWindow):
         media_sub_menu.append(Gtk.SeparatorMenuItem())
 
         self.export_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Export from database'),
+            _('_Export from database...'),
         )
         media_sub_menu.append(self.export_db_menu_item)
         self.export_db_menu_item.set_action_name('app.export_db_menu')
@@ -1018,13 +1041,13 @@ class MainWin(Gtk.ApplicationWindow):
         import_sub_menu = Gtk.Menu()
 
         import_json_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_JSON export file'),
+            _('_JSON export file...'),
         )
         import_sub_menu.append(import_json_menu_item)
         import_json_menu_item.set_action_name('app.import_json_menu')
 
         import_text_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Plain _text export file'),
+            _('Plain _text export file...'),
         )
         import_sub_menu.append(import_text_menu_item)
         import_text_menu_item.set_action_name('app.import_text_menu')
@@ -1133,7 +1156,7 @@ class MainWin(Gtk.ApplicationWindow):
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
         self.install_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Install FFmpeg'),
+            _('_Install FFmpeg...'),
         )
         ops_sub_menu.append(self.install_ffmpeg_menu_item)
         self.install_ffmpeg_menu_item.set_action_name(
@@ -1221,7 +1244,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 1081 setup_main_toolbar')
+            utils.debug_time('mwn 1247 setup_main_toolbar')
 
         # If a toolbar already exists, destroy it to make room for the new one
         if self.main_toolbar:
@@ -1436,11 +1459,11 @@ class MainWin(Gtk.ApplicationWindow):
         self.main_toolbar.insert(self.hide_system_toolbutton, -1)
         if not self.app_obj.toolbar_system_hide_flag:
             self.hide_system_toolbutton.set_tooltip_text(
-                _('Hide most system folders'),
+                _('Hide (most) system folders'),
             )
         else:
             self.hide_system_toolbutton.set_tooltip_text(
-                _('Show most system folders'),
+                _('Show all system folders'),
             )
         self.hide_system_toolbutton.set_action_name(
             'app.hide_system_toolbutton',
@@ -1478,7 +1501,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 1329 setup_notebook')
+            utils.debug_time('mwn 1504 setup_notebook')
 
         self.notebook = Gtk.Notebook()
         self.grid.attach(self.notebook, 0, 2, 1, 1)
@@ -1504,7 +1527,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Classic Tab
         self.classic_tab = Gtk.Box()
         self.classic_label = Gtk.Label.new_with_mnemonic(_('_Classic Mode'))
-        self.notebook.append_page(self.classic_tab, self.classic_label)
+        if not __main__.__pkg_no_download_flag__:
+            self.notebook.append_page(self.classic_tab, self.classic_label)
         self.classic_tab.set_hexpand(True)
         self.classic_tab.set_vexpand(True)
         self.classic_tab.set_border_width(self.spacing_size)
@@ -1536,7 +1560,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 1387 setup_videos_tab')
+            utils.debug_time('mwn 1563 setup_videos_tab')
 
         self.videos_paned = Gtk.HPaned()
         self.videos_tab.pack_start(self.videos_paned, True, True, 0)
@@ -1845,6 +1869,23 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_catalogue_sort_combo_changed,
         )
 
+        if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_resort_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REDO)
+        else:
+            self.catalogue_resort_button = Gtk.ToolButton.new()
+            self.catalogue_resort_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_redo']),
+            )
+        self.catalogue_toolbar2.insert(self.catalogue_resort_button, -1)
+        self.catalogue_resort_button.set_sensitive(False)
+        self.catalogue_resort_button.set_tooltip_text(
+            _('Resort videos'),
+        )
+        self.catalogue_resort_button.set_action_name(
+            'app.resort_toolbutton',
+        )
+
         toolitem9 = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem9, -1)
         toolitem9.add(Gtk.Label('   ' + _('Thumbnail size') + '   '))
@@ -2021,7 +2062,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 1718 setup_progress_tab')
+            utils.debug_time('mwn 2065 setup_progress_tab')
 
         vbox = Gtk.VBox()
         self.progress_tab.pack_start(vbox, True, True, 0)
@@ -2325,7 +2366,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 1995 setup_classic_tab')
+            utils.debug_time('mwn 2369 setup_classic_tab')
 
         vbox = Gtk.VBox()
         self.classic_tab.pack_start(vbox, True, True, 0)
@@ -2822,7 +2863,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2374 setup_output_tab')
+            utils.debug_time('mwn 2866 setup_output_tab')
 
         grid = Gtk.Grid()
         self.output_tab.pack_start(grid, True, True, 0)
@@ -2887,7 +2928,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2404 setup_errors_tab')
+            utils.debug_time('mwn 2931 setup_errors_tab')
 
         vbox = Gtk.VBox()
         self.errors_tab.pack_start(vbox, True, True, 0)
@@ -3047,7 +3088,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2535 toggle_visibility')
+            utils.debug_time('mwn 3091 toggle_visibility')
 
         if self.is_visible():
             self.set_visible(False)
@@ -3064,7 +3105,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2552 update_menu')
+            utils.debug_time('mwn 3108 update_menu')
 
         if self.update_ytdl_menu_item is not None:
 
@@ -3088,7 +3129,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2552 redraw_main_toolbar')
+            utils.debug_time('mwn 3132 redraw_main_toolbar')
 
         if self.app_obj.toolbar_hide_flag:
             # Toolbar is not visible
@@ -3098,10 +3139,73 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.setup_main_toolbar()
 
-            if self.app_obj.disable_dl_all_flag:
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
                 self.download_all_menu_item.set_sensitive(False)
+                self.custom_dl_all_menu_item.set_sensitive(False)
 
             self.show_all()
+
+
+    def update_window_after_show_hide(self):
+
+        """Called by mainapp.TartubeApp.on_menu_hide_system().
+
+        Shows or hides system folders, as required.
+
+        Updates the appearance of the main window's toolbutton, depending on
+        the current setting of mainapp.TartubeApp.toolbar_system_hide_flag.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3161 update_window_after_show_hide')
+
+        # Update the appearance of the toolbar button
+        if not self.app_obj.toolbar_system_hide_flag:
+
+            self.hide_system_toolbutton.set_label(_('Hide'))
+            self.hide_system_toolbutton.set_tooltip_text(
+                _('Hide (most) system folders'),
+            )
+
+        else:
+
+            self.hide_system_toolbutton.set_label(_('Show'))
+            self.hide_system_toolbutton.set_tooltip_text(
+                _('Show all system folders'),
+            )
+
+        # After system folders are revealed/hidden, Gtk helpfully selects a
+        #   new channel/playlist/folder in the Video Index for us
+        # Not sure how to stop it, other than by temporarily preventing
+        #   selections altogether (temporarily)
+        selection = self.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.NONE)
+
+        # Show/hide system folders
+        for name in self.app_obj.media_name_dict:
+
+            dbid = self.app_obj.media_name_dict[name]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.priv_flag \
+            and media_data_obj != self.app_obj.fixed_all_folder:
+                self.app_obj.mark_folder_hidden(
+                    media_data_obj,
+                    self.app_obj.toolbar_system_hide_flag,
+                )
+
+        # Re-enable selections, and select the previously-selected channel/
+        #   playlist/folder (if any)
+        selection = self.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.SINGLE)
+
+        if self.video_index_current is not None:
+
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            self.video_index_select_row(media_data_obj)
 
 
     def sensitise_widgets_if_database(self, sens_flag):
@@ -3121,7 +3225,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2579 sensitise_widgets_if_database')
+            utils.debug_time('mwn 3228 sensitise_widgets_if_database')
 
         # Menu items
         self.change_db_menu_item.set_sensitive(sens_flag)
@@ -3142,7 +3246,13 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_hidden_menu_item.set_sensitive(sens_flag)
 
         self.check_all_menu_item.set_sensitive(sens_flag)
-        self.download_all_menu_item.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.download_all_menu_item.set_sensitive(False)
+            self.custom_dl_all_menu_item.set_sensitive(False)
+        else:
+            self.download_all_menu_item.set_sensitive(sens_flag)
+            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
         self.refresh_db_menu_item.set_sensitive(sens_flag)
 
         if __main__.__pkg_strict_install_flag__:
@@ -3169,7 +3279,11 @@ class MainWin(Gtk.ApplicationWindow):
         self.add_folder_toolbutton.set_sensitive(sens_flag)
 
         self.check_all_toolbutton.set_sensitive(sens_flag)
-        self.download_all_toolbutton.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.download_all_toolbutton.set_sensitive(False)
+        else:
+            self.download_all_toolbutton.set_sensitive(sens_flag)
         self.stop_operation_toolbutton.set_sensitive(False)
         self.switch_view_toolbutton.set_sensitive(sens_flag)
 
@@ -3180,7 +3294,8 @@ class MainWin(Gtk.ApplicationWindow):
         if self.check_media_button:
             self.check_media_button.set_sensitive(sens_flag)
         if self.download_media_button:
-            if self.app_obj.disable_dl_all_flag:
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
                 self.download_media_button.set_sensitive(False)
             else:
                 self.download_media_button.set_sensitive(sens_flag)
@@ -3195,11 +3310,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Classic Mode Tab
         self.classic_menu_button.set_sensitive(sens_flag)
-        self.classic_redownload_button.set_sensitive(sens_flag)
         self.classic_stop_button.set_sensitive(False)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_download_button.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.classic_redownload_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+        else:
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
 
         # Output Tab
         self.output_size_checkbutton.set_sensitive(sens_flag)
@@ -3222,7 +3342,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2678 desensitise_test_widgets')
+            utils.debug_time('mwn 3345 desensitise_test_widgets')
 
         if self.test_menu_item:
             self.test_menu_item.set_sensitive(False)
@@ -3251,7 +3371,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2707 sensitise_operation_widgets')
+            utils.debug_time('mwn 3374 sensitise_operation_widgets')
 
         self.system_prefs_menu_item.set_sensitive(sens_flag)
         self.gen_options_menu_item.set_sensitive(sens_flag)
@@ -3259,18 +3379,22 @@ class MainWin(Gtk.ApplicationWindow):
         self.import_db_menu_item.set_sensitive(sens_flag)
         self.check_all_menu_item.set_sensitive(sens_flag)
 
-        if not self.app_obj.disable_dl_all_flag:
-            self.download_all_menu_item.set_sensitive(sens_flag)
-        else:
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
             self.download_all_menu_item.set_sensitive(False)
+            self.custom_dl_all_menu_item.set_sensitive(False)
+        else:
+            self.download_all_menu_item.set_sensitive(sens_flag)
+            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
 
         self.refresh_db_menu_item.set_sensitive(sens_flag)
         self.check_all_toolbutton.set_sensitive(sens_flag)
 
-        if not self.app_obj.disable_dl_all_flag:
-            self.download_all_toolbutton.set_sensitive(sens_flag)
-        else:
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
             self.download_all_toolbutton.set_sensitive(False)
+        else:
+            self.download_all_toolbutton.set_sensitive(sens_flag)
 
         if not __main__.__pkg_strict_install_flag__:
             self.update_ytdl_menu_item.set_sensitive(sens_flag)
@@ -3314,11 +3438,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         # The corresponding buttons in the Classic Mode Tab must also be
         #   updated
-        self.classic_redownload_button.set_sensitive(sens_flag)
         self.classic_stop_button.set_sensitive(not sens_flag)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_download_button.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.classic_redownload_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+        else:
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
 
 
     def show_progress_bar(self, operation_type):
@@ -3341,7 +3470,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2791 show_progress_bar')
+            utils.debug_time('mwn 3473 show_progress_bar')
 
         if self.progress_bar:
             return self.app_obj.system_error(
@@ -3429,7 +3558,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2874 hide_progress_bar')
+            utils.debug_time('mwn 3561 hide_progress_bar')
 
         if not self.progress_bar:
             return self.app_obj.system_error(
@@ -3467,10 +3596,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (For some reason, the button must be desensitised after setting the
         #   action name)
-        if not self.app_obj.disable_dl_all_flag:
-            self.download_media_button.set_sensitive(True)
-        else:
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
             self.download_media_button.set_sensitive(False)
+        else:
+            self.download_media_button.set_sensitive(True)
 
         # Make the changes visible
         self.button_box.show_all()
@@ -3492,12 +3622,20 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2937 sensitise_progress_bar')
+            utils.debug_time('mwn 3625 sensitise_progress_bar')
 
         self.check_media_button.set_sensitive(sens_flag)
-        self.download_media_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_download_button.set_sensitive(sens_flag)
+
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.download_media_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+            self.classic_redownload_button.set_sensitive(False)
+        else:
+            self.download_media_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
+            self.classic_redownload_button.set_sensitive(sens_flag)
 
 
     def update_progress_bar(self, text, count, total):
@@ -3526,7 +3664,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 2970 update_progress_bar')
+            utils.debug_time('mwn 3667 update_progress_bar')
 
         if not self.progress_bar:
             return self.app_obj.system_error(
@@ -3567,7 +3705,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3011 sensitise_check_dl_buttons')
+            utils.debug_time('mwn 3708 sensitise_check_dl_buttons')
 
         if operation_type is not None \
         and operation_type != 'ffmpeg' and operation_type != 'ytdl' \
@@ -3635,10 +3773,11 @@ class MainWin(Gtk.ApplicationWindow):
                 _('Download all videos, channels, playlists and folders'),
             )
 
-            if not self.app_obj.disable_dl_all_flag:
-                self.download_media_button.set_sensitive(True)
-            else:
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
                 self.download_media_button.set_sensitive(False)
+            else:
+                self.download_media_button.set_sensitive(True)
 
             self.sensitise_operation_widgets(True, True)
 
@@ -3662,7 +3801,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3104 enable_tooltips')
+            utils.debug_time('mwn 3804 enable_tooltips')
 
         # Update the Video Index
         self.video_index_treeview.set_tooltip_column(
@@ -3709,7 +3848,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3151 disable_tooltips')
+            utils.debug_time('mwn 3851 disable_tooltips')
 
         # Update the Video Index. Using a dummy column makes the tooltips
         #   invisible
@@ -3740,13 +3879,19 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3182 enable_dl_all_buttons')
+            utils.debug_time('mwn 3882 enable_dl_all_buttons')
 
-        # This setting doesn't apply during an operation
-        if not self.app_obj.current_manager_obj:
+        # This setting doesn't apply during an operation. The calling code
+        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
+        #   False
+        if not self.app_obj.current_manager_obj \
+        and not __main__.__pkg_no_download_flag__:
             self.download_all_menu_item.set_sensitive(True)
+            self.custom_dl_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
             self.download_media_button.set_sensitive(True)
+            self.classic_download_button.set_sensitive(True)
+            self.classic_redownload_button.set_sensitive(True)
 
 
     def disable_dl_all_buttons(self):
@@ -3758,13 +3903,19 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3201 disable_dl_all_buttons')
+            utils.debug_time('mwn 3906 disable_dl_all_buttons')
 
-        # This setting doesn't apply during an operation
-        if not self.app_obj.current_manager_obj:
+        # This setting doesn't apply during an operation. The calling code
+        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
+        #   True
+        if not self.app_obj.current_manager_obj \
+        or __main__.__pkg_no_download_flag__:
             self.download_all_menu_item.set_sensitive(False)
+            self.custom_dl_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+            self.classic_redownload_button.set_sensitive(False)
 
 
     def update_catalogue_filter_widgets(self):
@@ -3777,7 +3928,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3292 update_catalogue_filter_widgets')
+            utils.debug_time('mwn 3931 update_catalogue_filter_widgets')
 
         if not self.app_obj.catalogue_show_filter_flag:
 
@@ -3858,7 +4009,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3351 update_catalogue_sort_widgets')
+            utils.debug_time('mwn 4012 update_catalogue_sort_widgets')
 
         mode = self.app_obj.catalogue_sort_mode
         if mode == 'default':
@@ -3881,7 +4032,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3351 update_catalogue_thumb_widgets')
+            utils.debug_time('mwn 4035 update_catalogue_thumb_widgets')
 
         # (IV is in groups of two, in the form [translation, actual value])
         self.catalogue_thumb_combo.set_active(
@@ -3915,7 +4066,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3233 notify_desktop')
+            utils.debug_time('mwn 4069 notify_desktop')
 
         # Desktop notifications don't work on MS Windows/MacOS
         if mainapp.HAVE_NOTIFY_FLAG:
@@ -3990,7 +4141,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3396 video_index_auto_sort')
+            utils.debug_time('mwn 4144 video_index_auto_sort')
 
         # If auto-sorting is disabled temporarily, we can prevent the list
         #   being sorted by returning -1 for all cases
@@ -4088,7 +4239,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3489 video_catalogue_generic_auto_sort')
+            utils.debug_time('mwn 4242 video_catalogue_generic_auto_sort')
 
         return self.app_obj.video_compare(row1.video_obj, row2.video_obj)
 
@@ -4117,7 +4268,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3489 video_catalogue_grid_auto_sort')
+            utils.debug_time('mwn 4271 video_catalogue_grid_auto_sort')
 
         return self.app_obj.video_compare(
             gridbox1.video_obj,
@@ -4144,7 +4295,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 3577 video_index_popup_menu')
+            utils.debug_time('mwn 4298 video_index_popup_menu')
 
         # Find the right-clicked media data object (and a string to describe
         #   its type)
@@ -4190,7 +4341,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_index_download,
             media_data_obj,
         )
-        if self.app_obj.current_manager_obj \
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.current_manager_obj \
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.priv_flag
@@ -4211,7 +4363,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_index_custom_dl,
             media_data_obj,
         )
-        if self.app_obj.current_manager_obj \
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.current_manager_obj \
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.priv_flag
@@ -4494,7 +4647,8 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         actions_submenu.append(classic_dl_menu_item)
-        if isinstance(media_data_obj, media.Folder) \
+        if __main__.__pkg_no_download_flag__ \
+        or isinstance(media_data_obj, media.Folder) \
         or not media_data_obj.source:
             classic_dl_menu_item.set_sensitive(False)
 
@@ -4636,6 +4790,8 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(_('D_ownloads'))
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
+        if __main__.__pkg_no_download_flag__:
+            downloads_menu_item.set_sensitive(False)
 
         # Show
         show_submenu = Gtk.Menu()
@@ -4736,7 +4892,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 4130 video_catalogue_popup_menu')
+            utils.debug_time('mwn 4895 video_catalogue_popup_menu')
 
         # Use a different popup menu for multiple selected videos
         video_list = []
@@ -4819,7 +4975,8 @@ class MainWin(Gtk.ApplicationWindow):
                 self.on_video_catalogue_download,
                 video_obj,
             )
-            if (
+            if __main__.__pkg_no_download_flag__ \
+            or (
                 self.app_obj.current_manager_obj \
                 and not self.app_obj.download_manager_obj
             ) or (
@@ -4839,7 +4996,8 @@ class MainWin(Gtk.ApplicationWindow):
                 self.on_video_catalogue_re_download,
                 video_obj,
             )
-            if self.app_obj.current_manager_obj \
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.current_manager_obj \
             or video_obj.live_mode == 1:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
@@ -4852,7 +5010,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_catalogue_custom_dl,
             video_obj,
         )
-        if self.app_obj.current_manager_obj \
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.current_manager_obj \
         or video_obj.live_mode != 0:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
@@ -4872,7 +5031,8 @@ class MainWin(Gtk.ApplicationWindow):
                 video_obj,
             )
             popup_menu.append(dl_watch_menu_item)
-            if not video_obj.source \
+            if __main__.__pkg_no_download_flag__ \
+            or not video_obj.source \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
@@ -4974,7 +5134,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj,
         )
         popup_menu.append(classic_dl_menu_item)
-        if not video_obj.source:
+        if __main__.__pkg_no_download_flag__ \
+        or not video_obj.source:
             classic_dl_menu_item.set_sensitive(False)
 
         # Separator
@@ -5041,6 +5202,8 @@ class MainWin(Gtk.ApplicationWindow):
                 'dl_start',
             )
             livestream_submenu.append(auto_dl_start_menu_item)
+            if __main__.__pkg_no_download_flag__:
+                auto_dl_start_menu_item.set_sensitive(False)
 
             auto_dl_stop_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
                 _('Download on _stop'),
@@ -5054,6 +5217,8 @@ class MainWin(Gtk.ApplicationWindow):
                 'dl_stop',
             )
             livestream_submenu.append(auto_dl_stop_menu_item)
+            if __main__.__pkg_no_download_flag__:
+                auto_dl_stop_menu_item.set_sensitive(False)
 
             # Separator
             livestream_submenu.append(Gtk.SeparatorMenuItem())
@@ -5114,7 +5279,8 @@ class MainWin(Gtk.ApplicationWindow):
             temp_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Temporary'))
             temp_menu_item.set_submenu(temp_submenu)
             popup_menu.append(temp_menu_item)
-            if not video_obj.source \
+            if __main__.__pkg_no_download_flag__ \
+            or not video_obj.source \
             or self.app_obj.current_manager_obj \
             or (
                 isinstance(video_obj.parent_obj, media.Folder)
@@ -5226,6 +5392,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
+        if __main__.__pkg_no_download_flag__:
+            downloads_menu_item.set_sensitive(False)
 
         process_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Process with FFmpeg...'),
@@ -5426,7 +5594,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 4503 video_catalogue_multi_popup_menu')
+            utils.debug_time('mwn 5597 video_catalogue_multi_popup_menu')
 
         # So we can desensitise some menu items, work out in advance whether
         #   any of the selected videos are marked as downloaded, or have a
@@ -5511,7 +5679,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
             live_wait_flag,
         )
-        if (
+        if __main__.__pkg_no_download_flag__ \
+        or (
             self.app_obj.current_manager_obj \
             and not self.app_obj.download_manager_obj
         ) or (
@@ -5529,7 +5698,9 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_catalogue_custom_dl_multi,
             video_list,
         )
-        if self.app_obj.current_manager_obj or live_flag:
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.current_manager_obj \
+        or live_flag:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
 
@@ -5781,7 +5952,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 4910 progress_list_popup_menu')
+            utils.debug_time('mwn 5955 progress_list_popup_menu')
 
         # Find the downloads.VideoDownloader which is currently handling the
         #   clicked media data object (if any)
@@ -5958,7 +6129,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5086 results_list_popup_menu')
+            utils.debug_time('mwn 6132 results_list_popup_menu')
 
 
         # Get the selected media.Video object(s)
@@ -6049,7 +6220,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5087 classic_popup_menu')
+            utils.debug_time('mwn 6223 classic_popup_menu')
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
@@ -6190,7 +6361,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5140 classic_progress_list_popup_menu')
+            utils.debug_time('mwn 6364 classic_progress_list_popup_menu')
 
         # Get the selected dummy media.Video object(s)
         video_list = self.get_selected_videos_in_classic_treeview()
@@ -6282,7 +6453,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5210 video_index_setup_contents_submenu')
+            utils.debug_time('mwn 6456 video_index_setup_contents_submenu')
 
         mark_archived_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Mark as _archived'),
@@ -6474,7 +6645,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5354 add_watch_video_menu_items')
+            utils.debug_time('mwn 6648 add_watch_video_menu_items')
 
         # Watch video in player/download and watch
         if not_dl_flag or live_flag:
@@ -6488,7 +6659,8 @@ class MainWin(Gtk.ApplicationWindow):
                 video_list,
             )
             popup_menu.append(dl_watch_menu_item)
-            if not source_flag \
+            if __main__.__pkg_no_download_flag__ \
+            or not source_flag \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
@@ -6594,6 +6766,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
         popup_menu.append(classic_dl_menu_item)
+        if __main__.__pkg_no_download_flag__:
+            classic_dl_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -6639,7 +6813,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         temp_menu_item.set_submenu(temp_submenu)
         popup_menu.append(temp_menu_item)
-        if not source_flag \
+        if __main__.__pkg_no_download_flag__ \
+        or not source_flag \
         or self.app_obj.update_manager_obj \
         or self.app_obj.refresh_manager_obj \
         or self.app_obj.process_manager_obj \
@@ -6680,7 +6855,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5621 video_index_catalogue_reset')
+            utils.debug_time('mwn 6858 video_index_catalogue_reset')
 
         video_index_current = self.video_index_current
 
@@ -6707,7 +6882,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5648 video_index_reset')
+            utils.debug_time('mwn 6885 video_index_reset')
 
         # Reset IVs
         self.video_index_current = None
@@ -6836,7 +7011,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5777 video_index_populate')
+            utils.debug_time('mwn 7014 video_index_populate')
 
         for dbid in self.app_obj.media_top_level_list:
 
@@ -6873,7 +7048,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5814 video_index_setup_row')
+            utils.debug_time('mwn 7051 video_index_setup_row')
 
         # Don't show a hidden folder, or any of its children
         if isinstance(media_data_obj, media.Folder) \
@@ -6936,7 +7111,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5877 video_index_add_row')
+            utils.debug_time('mwn 7114 video_index_add_row')
 
         # Don't add a hidden folder, or any of its children
         if media_data_obj.is_hidden():
@@ -7039,7 +7214,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 5980 video_index_delete_row')
+            utils.debug_time('mwn 7217 video_index_delete_row')
 
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
@@ -7092,7 +7267,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6033 video_index_select_row')
+            utils.debug_time('mwn 7270 video_index_select_row')
 
         # Cannot select a hidden folder, or any of its children
         if isinstance(media_data_obj, media.Video) \
@@ -7145,7 +7320,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6086 video_index_update_row_icon')
+            utils.debug_time('mwn 7323 video_index_update_row_icon')
 
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
@@ -7199,7 +7374,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6141 video_index_update_row_text')
+            utils.debug_time('mwn 7377 video_index_update_row_text')
 
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
@@ -7253,7 +7428,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6196 video_index_update_row_tooltip')
+            utils.debug_time('mwn 7431 video_index_update_row_tooltip')
 
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
@@ -7320,7 +7495,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6264 video_index_get_icon')
+            utils.debug_time('mwn 7498 video_index_get_icon')
 
         icon = None
         if not self.app_obj.show_small_icons_in_index_flag:
@@ -7434,7 +7609,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6378 video_index_get_text')
+            utils.debug_time('mwn 7612 video_index_get_text')
 
         text = utils.shorten_string(
             media_data_obj.nickname,
@@ -7505,7 +7680,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6448 video_index_render_text')
+            utils.debug_time('mwn 7683 video_index_render_text')
 
         # Because of Gtk stability issues, we don't update the Video Index
         #   during a download/refresh/tidy/livestream operation if the flag is
@@ -7560,7 +7735,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6504 video_catalogue_reset')
+            utils.debug_time('mwn 7738 video_catalogue_reset')
 
         # If not called by self.setup_videos_tab()...
         if self.catalogue_frame.get_child():
@@ -7596,18 +7771,7 @@ class MainWin(Gtk.ApplicationWindow):
             #   clicking on one of them)
             self.catalogue_listbox.set_activate_on_single_click(False)
 
-            # Set up drag and drop from the listbox to an external application
-            #   (for example, an FFmpeg batch converter)
-            self.catalogue_listbox.drag_source_set(
-                Gdk.ModifierType.BUTTON1_MASK,
-                [],
-                Gdk.DragAction.COPY,
-            )
-            self.catalogue_listbox.drag_source_add_text_targets()
-            self.catalogue_listbox.connect(
-                'drag-data-get',
-                self.on_video_catalogue_drag_data_get,
-            )
+            # (Drag and drop is now handled by mainwin.CatalogueRow directly)
 
             # Set up automatic sorting of rows in the listbox
             self.catalogue_listbox.set_sort_func(
@@ -7633,18 +7797,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             # (Video selection is handled by custom code, not calls to Gtk)
 
-            # Set up drag and drop from the listbox to an external application
-            #   (for example, an FFmpeg batch converter)
-            self.catalogue_grid.drag_source_set(
-                Gdk.ModifierType.BUTTON1_MASK,
-                [],
-                Gdk.DragAction.COPY,
-            )
-            self.catalogue_grid.drag_source_add_text_targets()
-            self.catalogue_grid.connect(
-                'drag-data-get',
-                self.on_video_catalogue_drag_data_get,
-            )
+            # (Drag and drop is now handled by mainwin.CatalogueGridBox
+            #   directly)
 
             # (Automatic sorting is handled by custom code, not calls to Gtk)
 
@@ -7705,7 +7859,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6591 video_catalogue_redraw_all')
+            utils.debug_time('mwn 7862 video_catalogue_redraw_all')
 
         # If actually switching to a different channel/playlist/folder, or a
         #   different page on the same channel/playlist/folder, must reset the
@@ -7800,7 +7954,7 @@ class MainWin(Gtk.ApplicationWindow):
                     # Instead of using Gtk.ListBoxRow directly, use a wrapper
                     #   class so we can quickly retrieve the video displayed on
                     #   each row
-                    wrapper_obj = CatalogueRow(child_obj)
+                    wrapper_obj = CatalogueRow(self, child_obj)
                     self.catalogue_listbox.add(wrapper_obj)
 
                     # Populate the row with widgets...
@@ -7878,7 +8032,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6724 video_catalogue_update_video')
+            utils.debug_time('mwn 8035 video_catalogue_update_video')
 
         app_obj = self.app_obj
 
@@ -8079,7 +8233,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6905 video_catalogue_insert_video')
+            utils.debug_time('mwn 8236 video_catalogue_insert_video')
 
         # Create the new catalogue item
         if self.app_obj.catalogue_mode_type == 'simple':
@@ -8097,7 +8251,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Instead of using Gtk.ListBoxRow directly, use a wrapper class so
             #   we can quickly retrieve the video displayed on each row
-            wrapper_obj = CatalogueRow(video_obj)
+            wrapper_obj = CatalogueRow(self, video_obj)
 
             # On rare occasions, the line below sometimes causes a warning,
             #   'Accessing a sequence while it is being sorted or seached is
@@ -8155,7 +8309,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
-            utils.debug_time('mwn 6956 video_catalogue_retry_insert_items')
+            utils.debug_time('mwn 8312 video_catalogue_retry_insert_items')
 
         if self.video_catalogue_temp_list:
 
@@ -8206,7 +8360,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7005 video_catalogue_delete_video')
+            utils.debug_time('mwn 8363 video_catalogue_delete_video')
 
         # Is the video's parent channel, playlist or folder the one that is
         #   currently selected in the Video Index? If not, the video is not
@@ -8349,7 +8503,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_unselect_all')
+            utils.debug_time('mwn 8506 video_catalogue_unselect_all')
 
         if self.app_obj.catalogue_mode_type != 'grid':
 
@@ -8359,6 +8513,40 @@ class MainWin(Gtk.ApplicationWindow):
 
             for this_catalogue_obj in self.video_catalogue_dict.values():
                 this_catalogue_obj.do_select(False)
+
+
+    def video_catalogue_force_resort(self):
+
+        """Called by mainapp.TartubeApp.on_button_resort_catalogue().
+
+        In case of incorrect sorting in the Video Catalogue, the user can click
+        the button to force a re-sort.
+
+        Children of the visible media.Channel, media.Playlist or media.Folder
+        are resorted, then the Video Catalogue is redrawn.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 8531 video_catalogue_force_resort')
+
+        if self.video_index_current is None:
+            return
+
+        else:
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            container_obj = self.app_obj.media_reg_dict[dbid]
+
+            # Force the resort
+            container_obj.sort_children(self.app_obj)
+
+            # Redraw the Video Catalogue, switching to the first page
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                1,
+                True,           # Reset scrollbars
+                True,           # Don't cancel the filter, if applied
+            )
 
 
     def video_catalogue_grid_set_gridbox_width(self, width):
@@ -8393,14 +8581,14 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6504 video_catalogue_grid_set_gridbox_width')
+            utils.debug_time('mwn 8584 video_catalogue_grid_set_gridbox_width')
 
         # Sanity check: Once the minimum gridbox width for each thumbnail size
         #   has been established, don't change it
         thumb_size = self.app_obj.thumb_size_custom
         if self.catalogue_grid_width_dict[thumb_size] is not None:
             return self.app_obj.system_error(
-                260,
+                215,
                 'Redundant setting of minimum gridbox width',
             )
 
@@ -8440,7 +8628,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6504 video_catalogue_grid_check_size')
+            utils.debug_time('mwn 8631 video_catalogue_grid_check_size')
 
         # When working out the grid's actual width, take into account small
         #   gaps between each gridbox, and around the borders of other widgets
@@ -8480,6 +8668,16 @@ class MainWin(Gtk.ApplicationWindow):
             #   unless this function is called)
             self.video_catalogue_grid_rearrange()
 
+            # After maximising the window, Gtk refuses to do a redraw, meaning
+            #   that the user sees a bigger window, but not a change in the
+            #   number of columns
+            # Only solution I can find is to adjust the size of the paned
+            #   temporarily
+            if column_count > 1:
+                posn = self.videos_paned.get_position()
+                self.videos_paned.set_position(posn + 1)
+                self.videos_paned.set_position(posn - 1)
+
 
     def video_catalogue_grid_check_expand(self):
 
@@ -8500,7 +8698,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6504 video_catalogue_grid_check_expand')
+            utils.debug_time('mwn 8701 video_catalogue_grid_check_expand')
 
         thumb_size = self.app_obj.thumb_size_custom
 
@@ -8552,7 +8750,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 video_catalogue_grid_attach_gridbox')
+            utils.debug_time('mwn 8753 video_catalogue_grid_attach_gridbox')
 
         self.catalogue_grid.attach(
             wrapper_obj,
@@ -8585,7 +8783,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 6504 video_catalogue_grid_rearrange')
+            utils.debug_time('mwn 8786 video_catalogue_grid_rearrange')
 
         # Each mainwin.CatalogueGridBox acts as a wrapper for a Gtk.Frame
         wrapper_list = []
@@ -8638,7 +8836,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_grid_reset_sizes')
+            utils.debug_time('mwn 8839 video_catalogue_grid_reset_sizes')
 
         self.catalogue_grid_width_dict = {}
 
@@ -8675,7 +8873,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_grid_select')
+            utils.debug_time('mwn 8876 video_catalogue_grid_select')
 
         # (Sorting function for the code immediately below)
         def sort_by_grid_posn(obj1, obj2):
@@ -8729,7 +8927,7 @@ class MainWin(Gtk.ApplicationWindow):
             if specified_posn is None:
 
                 return self.app_obj.system_error(
-                    258,
+                    216,
                     'Gridbox not fouind in Video Catalogue',
                 )
 
@@ -8807,7 +9005,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7118 video_catalogue_grid_select_all')
+            utils.debug_time('mwn 9008 video_catalogue_grid_select_all')
 
         for catalogue_item_obj in self.video_catalogue_dict.values():
             catalogue_item_obj.do_select(True)
@@ -8837,7 +9035,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7118 video_catalogue_grid_scroll_on_select')
+            utils.debug_time('mwn 9038 video_catalogue_grid_scroll_on_select')
 
         # Get the GridCatalogueItem of the gridbox which intercepted the
         #   keypress
@@ -8988,7 +9186,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7118 video_catalogue_toolbar_reset')
+            utils.debug_time('mwn 9189 video_catalogue_toolbar_reset')
 
         self.catalogue_toolbar_current_page = 1
         self.catalogue_toolbar_last_page = 1
@@ -9011,6 +9209,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_show_filter_button.set_sensitive(False)
 
         self.catalogue_sort_combo.set_sensitive(False)
+        self.catalogue_resort_button.set_sensitive(False)
         self.catalogue_thumb_combo.set_sensitive(False)
         self.catalogue_frame_button.set_sensitive(False)
         self.catalogue_icons_button.set_sensitive(False)
@@ -9041,7 +9240,7 @@ class MainWin(Gtk.ApplicationWindow):
          """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7168 video_catalogue_toolbar_update')
+            utils.debug_time('mwn 9243 video_catalogue_toolbar_update')
 
         self.catalogue_toolbar_current_page = page_num
 
@@ -9084,6 +9283,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   button)
         if not video_count and not self.video_catalogue_filtered_flag:
             self.catalogue_sort_combo.set_sensitive(False)
+            self.catalogue_resort_button.set_sensitive(False)
             self.catalogue_thumb_combo.set_sensitive(False)
             self.catalogue_frame_button.set_sensitive(False)
             self.catalogue_icons_button.set_sensitive(False)
@@ -9095,6 +9295,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_cancel_date_button.set_sensitive(False)
         else:
             self.catalogue_sort_combo.set_sensitive(True)
+            self.catalogue_resort_button.set_sensitive(True)
 
             if self.app_obj.catalogue_mode_type != 'grid':
                 self.catalogue_thumb_combo.set_sensitive(False)
@@ -9113,8 +9314,12 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.catalogue_filter_entry.set_sensitive(True)
             self.catalogue_regex_togglebutton.set_sensitive(True)
-            self.catalogue_apply_filter_button.set_sensitive(True)
-            self.catalogue_cancel_filter_button.set_sensitive(False)
+            if self.video_catalogue_filtered_flag:
+                self.catalogue_apply_filter_button.set_sensitive(False)
+                self.catalogue_cancel_filter_button.set_sensitive(True)
+            else:
+                self.catalogue_apply_filter_button.set_sensitive(True)
+                self.catalogue_cancel_filter_button.set_sensitive(False)
             self.catalogue_find_date_button.set_sensitive(True)
             self.catalogue_cancel_date_button.set_sensitive(False)
 
@@ -9128,7 +9333,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_apply_filter')
+            utils.debug_time('mwn 9336 video_catalogue_apply_filter')
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
@@ -9138,7 +9343,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.system_error(
-                215,
+                217,
                 'Tried to apply filter, but no channel/playlist/folder' \
                 + ' selected in the Video Index',
             )
@@ -9203,7 +9408,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7310 video_catalogue_cancel_filter')
+            utils.debug_time('mwn 9411 video_catalogue_cancel_filter')
 
         # Reset IVs...
         self.video_catalogue_filtered_flag = False
@@ -9235,7 +9440,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_show_date')
+            utils.debug_time('mwn 9443 video_catalogue_show_date')
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
@@ -9245,7 +9450,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.system_error(
-                999,
+                218,
                 'Tried to apply find videos by date, but no channel/' \
                 + ' playlist/folder selected in the Video Index',
             )
@@ -9275,7 +9480,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7234 video_catalogue_unshow_date')
+            utils.debug_time('mwn 9483 video_catalogue_unshow_date')
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
@@ -9285,7 +9490,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.system_error(
-                999,
+                219,
                 'Tried to cancel find videos by date, but no channel/' \
                 + ' playlist/folder selected in the Video Index',
             )
@@ -9317,7 +9522,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7337 progress_list_reset')
+            utils.debug_time('mwn 9525 progress_list_reset')
 
         # Reset widgets
         self.progress_list_liststore = Gtk.ListStore(
@@ -9358,7 +9563,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7378 progress_list_init')
+            utils.debug_time('mwn 9566 progress_list_init')
 
         # For each download item object, add a row to the treeview, and store
         #   the download item's .dbid IV so that
@@ -9391,7 +9596,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7411 progress_list_add_row')
+            utils.debug_time('mwn 9599 progress_list_add_row')
 
         # Prepare the icon
         if isinstance(media_data_obj, media.Channel):
@@ -9479,13 +9684,13 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7500 progress_list_receive_dl_stats')
+            utils.debug_time('mwn 9687 progress_list_receive_dl_stats')
 
         # Check that the Progress List actually has a row for the specified
         #   downloads.DownloadItem object
         if not download_item_obj.item_id in self.progress_list_row_dict:
             return self.app_obj.system_error(
-                216,
+                220,
                 'Missing row in Progress List',
             )
 
@@ -9521,7 +9726,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7542 progress_list_display_dl_stats')
+            utils.debug_time('mwn 9729 progress_list_display_dl_stats')
 
         # Import the contents of the IV (in case it gets updated during the
         #   call to this function), and use the imported copy
@@ -9620,7 +9825,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7632 progress_list_check_hide_rows')
+            utils.debug_time('mwn 9828 progress_list_check_hide_rows')
 
         current_time = time.time()
         hide_list = []
@@ -9651,7 +9856,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7663 progress_list_do_hide_row')
+            utils.debug_time('mwn 9859 progress_list_do_hide_row')
 
         row_num = self.progress_list_row_dict[item_id]
 
@@ -9706,7 +9911,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7718 progress_list_update_video_name')
+            utils.debug_time('mwn 9914 progress_list_update_video_name')
 
         if download_item_obj.item_id in self.progress_list_row_dict \
         and download_item_obj.media_data_obj == video_obj:
@@ -9735,7 +9940,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7750 results_list_reset')
+            utils.debug_time('mwn 9943 results_list_reset')
 
         # Reset widgets
         self.results_list_liststore = Gtk.ListStore(
@@ -9789,7 +9994,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7803 results_list_add_row')
+            utils.debug_time('mwn 9997 results_list_add_row')
 
         # Prepare the icons
         if video_obj.live_mode == 1:
@@ -9816,7 +10021,7 @@ class MainWin(Gtk.ApplicationWindow):
             pixbuf2 = self.pixbuf_dict['folder_small']
         else:
             return self.app_obj.system_error(
-                217,
+                221,
                 'Results List add row request failed sanity check',
             )
 
@@ -9909,7 +10114,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7934 results_list_update_row')
+            utils.debug_time('mwn 10117 results_list_update_row')
 
         new_temp_list = []
 
@@ -10066,7 +10271,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 7935 results_list_update_row_on_delete')
+            utils.debug_time('mwn 10274 results_list_update_row_on_delete')
 
         if dbid in self.results_list_row_dict:
 
@@ -10109,7 +10314,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8074 classic_mode_tab_add_dest_dir')
+            utils.debug_time('mwn 10317 classic_mode_tab_add_dest_dir')
 
         # Reset the contents of the combobox
         self.classic_dest_dir_liststore = Gtk.ListStore(str)
@@ -10136,7 +10341,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8101 classic_mode_tab_add_row')
+            utils.debug_time('mwn 10344 classic_mode_tab_add_row')
 
         # Prepare the new row in the treeview
         row_list = []
@@ -10187,7 +10392,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8150 classic_mode_tab_move_row')
+            utils.debug_time('mwn 10395 classic_mode_tab_move_row')
 
         selection = self.classic_progress_treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
@@ -10253,7 +10458,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8215 classic_mode_tab_remove_rows')
+            utils.debug_time('mwn 10461 classic_mode_tab_remove_rows')
 
         # (Import IVs for convenience)
         manager_obj = self.app_obj.download_manager_obj
@@ -10293,7 +10498,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8255 classic_mode_tab_add_urls')
+            utils.debug_time('mwn 10501 classic_mode_tab_add_urls')
 
         # Get the specified download destination
         tree_iter = self.classic_dest_dir_combo.get_active_iter()
@@ -10397,7 +10602,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8255 classic_mode_tab_create_dummy_video')
+            utils.debug_time('mwn 10605 classic_mode_tab_create_dummy_video')
 
         self.classic_media_total += 1
 
@@ -10444,7 +10649,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8255 classic_mode_tab_extract_pending_urls')
+            utils.debug_time('mwn 10652 classic_mode_tab_extract_pending_urls')
 
         # Extract a list of URLs from the textview
         url_string = self.classic_textbuffer.get_text(
@@ -10493,7 +10698,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8255 classic_mode_tab_restore_urls')
+            utils.debug_time('mwn 10701 classic_mode_tab_restore_urls')
 
         self.classic_textbuffer.set_text(
             '\n'.join(url_list),
@@ -10510,7 +10715,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8360 classic_mode_tab_add_urls')
+            utils.debug_time('mwn 10718 classic_mode_tab_add_urls')
 
         for row in self.classic_progress_liststore:
             if self.classic_progress_liststore[row.iter][0] == dbid:
@@ -10544,7 +10749,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8394 classic_mode_tab_receive_dl_stats')
+            utils.debug_time('mwn 10752 classic_mode_tab_receive_dl_stats')
 
         # Temporarily store the dictionary of download statistics
         if not download_item_obj.item_id in self.classic_temp_dict:
@@ -10570,7 +10775,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8420 classic_mode_tab_display_dl_stats')
+            utils.debug_time('mwn 10778 classic_mode_tab_display_dl_stats')
 
         # Import the contents of the IV (in case it gets updated during the
         #   call to this function), and use the imported copy
@@ -10656,7 +10861,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8509 classic_mode_tab_timer_callback')
+            utils.debug_time('mwn 10864 classic_mode_tab_timer_callback')
 
         # If the user manually empties the textview, don't re-paste whatever
         #   is currently in the clipboard
@@ -10699,7 +10904,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8590 output_tab_setup_pages')
+            utils.debug_time('mwn 10907 output_tab_setup_pages')
 
         # The first page in the Output Tab's notebook shows a summary of what
         #   the threads created by downloads.py are doing
@@ -10748,7 +10953,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8625 output_tab_add_page')
+            utils.debug_time('mwn 10956 output_tab_add_page')
 
         # Each page (except the summary page) corresponds to a single
         #   downloads.DownloadWorker object. The page number matches the
@@ -10863,7 +11068,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8740 output_tab_set_textview_css')
+            utils.debug_time('mwn 11071 output_tab_set_textview_css')
 
         style_provider = Gtk.CssProvider()
         style_provider.load_from_data(bytes(css_string.encode()))
@@ -10903,7 +11108,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8780 output_tab_write_stdout')
+            utils.debug_time('mwn 11111 output_tab_write_stdout')
 
         self.output_tab_insert_list.extend( [page_num, msg, 'default'] )
 
@@ -10934,7 +11139,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8811 output_tab_write_stderr')
+            utils.debug_time('mwn 11142 output_tab_write_stderr')
 
         self.output_tab_insert_list.extend( [page_num, msg, 'error_warning'] )
 
@@ -10964,7 +11169,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8841 output_tab_write_system_cmd')
+            utils.debug_time('mwn 11172 output_tab_write_system_cmd')
 
         self.output_tab_insert_list.extend( [page_num, msg, 'system_cmd'] )
 
@@ -10988,7 +11193,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8865 output_tab_update_pages')
+            utils.debug_time('mwn 11196 output_tab_update_pages')
 
         update_dict = {}
 
@@ -11007,7 +11212,7 @@ class MainWin(Gtk.ApplicationWindow):
 
                     textview = self.output_textview_dict[page_num]
                     textbuffer = textview.get_buffer()
-                    update_dict[page_num] = textview
+                    update_dict[page_num] = None
 
                     # If the buffer is too big, remove the first line to make
                     #   way for the new one
@@ -11056,9 +11261,10 @@ class MainWin(Gtk.ApplicationWindow):
                             msg + '\n',
                         )
 
-            # Make the new output visible
-            for textview in update_dict.values():
-                textview.show_all()
+            # Make the new output visible, and scroll to the bottom of every
+            #   updated page
+            for page_num in update_dict:
+                self.output_tab_scroll_visible_page(page_num)
 
 
     def output_tab_update_page_size(self):
@@ -11070,7 +11276,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8866 output_tab_update_page_size')
+            utils.debug_time('mwn 11279 output_tab_update_page_size')
 
         if self.app_obj.output_size_apply_flag:
 
@@ -11109,7 +11315,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8947 output_tab_do_autoscroll')
+            utils.debug_time('mwn 11318 output_tab_do_autoscroll')
 
         adj = scrolled.get_vadjustment()
         adj.set_value(adj.get_upper() - adj.get_page_size())
@@ -11131,7 +11337,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8969 output_tab_scroll_visible_page')
+            utils.debug_time('mwn 11340 output_tab_scroll_visible_page')
 
         if page_num in self.output_textview_dict:
             textview = self.output_textview_dict[page_num]
@@ -11143,6 +11349,8 @@ class MainWin(Gtk.ApplicationWindow):
             adj = scrolled.get_vadjustment()
             adj.set_value(adj.get_upper() - adj.get_page_size())
 
+            textview.show_all()
+
 
     def output_tab_show_first_page(self):
 
@@ -11152,7 +11360,10 @@ class MainWin(Gtk.ApplicationWindow):
         tab, if it's open).
         """
 
-        self.notebook.set_current_page(3)
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 11365 output_tab_show_first_page')
+
+        self.notebook.set_current_page(self.notebook_tab_dict['output'])
         if not self.output_tab_summary_flag:
             self.output_notebook.set_current_page(0)
         else:
@@ -11170,7 +11381,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 8993 output_tab_reset_pages')
+            utils.debug_time('mwn 11384 output_tab_reset_pages')
 
         for textview in self.output_textview_dict.values():
             textbuffer = textview.get_buffer()
@@ -11190,7 +11401,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9013 errors_list_reset')
+            utils.debug_time('mwn 11404 errors_list_reset')
 
         # Reset widgets
         self.errors_list_liststore = Gtk.ListStore(
@@ -11221,7 +11432,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9043 errors_list_add_row')
+            utils.debug_time('mwn 11435 errors_list_add_row')
 
         # Create a new row for every error and warning message
         # Use the same time on each
@@ -11243,7 +11454,7 @@ class MainWin(Gtk.ApplicationWindow):
                     pixbuf2 = self.pixbuf_dict['playlist_small']
                 else:
                     return self.app_obj.system_error(
-                        218,
+                        222,
                         'Errors List add row request failed sanity check',
                     )
 
@@ -11286,7 +11497,7 @@ class MainWin(Gtk.ApplicationWindow):
                     pixbuf2 = self.pixbuf_dict['playlist_small']
                 else:
                     return self.app_obj.system_error(
-                        219,
+                        223,
                         'Errors List add row request failed sanity check',
                     )
                 # Prepare the new row in the treeview, starting with the three
@@ -11336,7 +11547,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9157 errors_list_add_system_error')
+            utils.debug_time('mwn 11550 errors_list_add_system_error')
 
         if not self.app_obj.system_error_show_flag:
             # Do nothing
@@ -11392,7 +11603,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9210 errors_list_add_system_warning')
+            utils.debug_time('mwn 11606 errors_list_add_system_warning')
 
         if not self.app_obj.system_warning_show_flag:
             # Do nothing
@@ -11444,7 +11655,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9259 errors_list_refresh_label')
+            utils.debug_time('mwn 11658 errors_list_refresh_label')
 
         text = _('_Errors')
         if self.tab_error_count:
@@ -11476,12 +11687,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9260 on_video_index_add_classic')
+            utils.debug_time('mwn 11690 on_video_index_add_classic')
 
         if isinstance(media_data_obj, media.Folder) \
         or not media_data_obj.source:
             return self.app_obj.system_error(
-                253,
+                224,
                 'Callback request denied due to current conditions',
             )
 
@@ -11510,7 +11721,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9261 on_video_index_add_to_scheduled')
+            utils.debug_time('mwn 11724 on_video_index_add_to_scheduled')
 
         # Check that at least one scheduled download exists, that doesn't
         #   already contain the specified media data object
@@ -11574,7 +11785,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9292 on_video_index_apply_options')
+            utils.debug_time('mwn 11788 on_video_index_apply_options')
 
         if self.app_obj.current_manager_obj \
         or media_data_obj.options_obj\
@@ -11583,7 +11794,7 @@ class MainWin(Gtk.ApplicationWindow):
             and media_data_obj.priv_flag
         ):
             return self.app_obj.system_error(
-                220,
+                225,
                 'Callback request denied due to current conditions',
             )
 
@@ -11652,11 +11863,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9332 on_video_index_check')
+            utils.debug_time('mwn 11866 on_video_index_check')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                221,
+                226,
                 'Callback request denied due to current conditions',
             )
 
@@ -11680,11 +11891,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9360 on_video_index_convert_container')
+            utils.debug_time('mwn 11894 on_video_index_convert_container')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                222,
+                227,
                 'Callback request denied due to current conditions',
             )
 
@@ -11707,11 +11918,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9387 on_video_index_custom_dl')
+            utils.debug_time('mwn 11921 on_video_index_custom_dl')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                223,
+                228,
                 'Callback request denied due to current conditions',
             )
 
@@ -11735,7 +11946,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9415 on_video_index_delete_container')
+            utils.debug_time('mwn 11949 on_video_index_delete_container')
 
         self.app_obj.delete_container(media_data_obj)
 
@@ -11756,11 +11967,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9436 on_video_index_dl_disable')
+            utils.debug_time('mwn 11970 on_video_index_dl_disable')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                224,
+                229,
                 'Callback request denied due to current conditions',
             )
 
@@ -11788,11 +11999,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9468 on_video_index_download')
+            utils.debug_time('mwn 12002 on_video_index_download')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                225,
+                230,
                 'Callback request denied due to current conditions',
             )
 
@@ -11825,7 +12036,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9505 on_video_index_drag_data_received')
+            utils.debug_time('mwn 12039 on_video_index_drag_data_received')
 
         # Must override the usual Gtk handler
         treeview.stop_emission('drag_data_received')
@@ -11876,7 +12087,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9556 on_video_index_drag_drop')
+            utils.debug_time('mwn 12090 on_video_index_drag_drop')
 
         # Must override the usual Gtk handler
         treeview.stop_emission('drag_drop')
@@ -11904,11 +12115,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9584 on_video_index_edit_options')
+            utils.debug_time('mwn 12118 on_video_index_edit_options')
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                226,
+                231,
                 'Callback request denied due to current conditions',
             )
 
@@ -11934,7 +12145,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9615 on_video_index_empty_folder')
+            utils.debug_time('mwn 12148 on_video_index_empty_folder')
 
         # The True flag tells the function to empty the container, rather than
         #   delete it
@@ -11958,11 +12169,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9639 on_video_index_enforce_check')
+            utils.debug_time('mwn 12172 on_video_index_enforce_check')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                227,
+                232,
                 'Callback request denied due to current conditions',
             )
 
@@ -11991,7 +12202,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9672 on_video_index_export')
+            utils.debug_time('mwn 12205 on_video_index_export')
 
         self.app_obj.export_from_db( [media_data_obj] )
 
@@ -12012,7 +12223,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9693 on_video_index_hide_folder')
+            utils.debug_time('mwn 12226 on_video_index_hide_folder')
 
         self.app_obj.mark_folder_hidden(media_data_obj, True)
 
@@ -12039,7 +12250,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9720 on_video_index_mark_archived')
+            utils.debug_time('mwn 12253 on_video_index_mark_archived')
 
         self.app_obj.mark_container_archived(
             media_data_obj,
@@ -12070,7 +12281,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9751 on_video_index_mark_not_archived')
+            utils.debug_time('mwn 12284 on_video_index_mark_not_archived')
 
         self.app_obj.mark_container_archived(
             media_data_obj,
@@ -12096,7 +12307,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9777 on_video_index_mark_bookmark')
+            utils.debug_time('mwn 12310 on_video_index_mark_bookmark')
 
         # In earlier versions of Tartube, this action could take a very long
         #   time (perhaps hours)
@@ -12149,7 +12360,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9830 on_video_index_mark_not_bookmark')
+            utils.debug_time('mwn 12363 on_video_index_mark_not_bookmark')
 
         # In earlier versions of Tartube, this action could take a very long
         #   time (perhaps hours)
@@ -12207,7 +12418,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9888 on_video_index_mark_favourite')
+            utils.debug_time('mwn 12421 on_video_index_mark_favourite')
 
         self.app_obj.mark_container_favourite(
             media_data_obj,
@@ -12238,7 +12449,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9919 on_video_index_mark_not_favourite')
+            utils.debug_time('mwn 12452 on_video_index_mark_not_favourite')
 
         self.app_obj.mark_container_favourite(
             media_data_obj,
@@ -12263,12 +12474,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9920 on_video_index_mark_missing')
+            utils.debug_time('mwn 12477 on_video_index_mark_missing')
 
         if isinstance(media_data_obj, media.Video) \
         or isinstance(media_data_obj, media.Folder):
             return self.app_obj.system_error(
-                255,
+                233,
                 'Callback request denied due to current conditions',
             )
 
@@ -12293,7 +12504,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9921 on_video_index_mark_not_missing')
+            utils.debug_time('mwn 12507 on_video_index_mark_not_missing')
 
         if isinstance(media_data_obj, media.Video) \
         or (
@@ -12301,7 +12512,7 @@ class MainWin(Gtk.ApplicationWindow):
             and media_data_obj != self.app_obj.fixed_missing_folder
         ):
             return self.app_obj.system_error(
-                256,
+                234,
                 'Callback request denied due to current conditions',
             )
 
@@ -12331,7 +12542,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9951 on_video_index_mark_new')
+            utils.debug_time('mwn 12545 on_video_index_mark_new')
 
         self.app_obj.mark_container_new(
             media_data_obj,
@@ -12362,7 +12573,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 9982 on_video_index_mark_not_new')
+            utils.debug_time('mwn 12576 on_video_index_mark_not_new')
 
         self.app_obj.mark_container_new(
             media_data_obj,
@@ -12388,7 +12599,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10008 on_video_index_mark_waiting')
+            utils.debug_time('mwn 12602 on_video_index_mark_waiting')
 
         # In earlier versions of Tartube, this action could take a very long
         #   time (perhaps hours)
@@ -12441,7 +12652,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10061 on_video_index_mark_not_waiting')
+            utils.debug_time('mwn 12655 on_video_index_mark_not_waiting')
 
         # In earlier versions of Tartube, this action could take a very long
         #   time (perhaps hours)
@@ -12494,7 +12705,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10114 on_video_index_move_to_top')
+            utils.debug_time('mwn 12708 on_video_index_move_to_top')
 
         self.app_obj.move_container_to_top(media_data_obj)
 
@@ -12517,11 +12728,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10137 on_video_index_refresh')
+            utils.debug_time('mwn 12731 on_video_index_refresh')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                228,
+                235,
                 'Callback request denied due to current conditions',
             )
 
@@ -12546,12 +12757,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10166 on_video_index_remove_options')
+            utils.debug_time('mwn 12760 on_video_index_remove_options')
 
         if self.app_obj.current_manager_obj \
         or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                229,
+                236,
                 'Callback request denied due to current conditions',
             )
 
@@ -12575,7 +12786,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10195 on_video_index_remove_videos')
+            utils.debug_time('mwn 12789 on_video_index_remove_videos')
 
         for child_obj in media_data_obj.child_list:
             if isinstance(child_obj, media.Video):
@@ -12599,7 +12810,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10219 on_video_index_rename_location')
+            utils.debug_time('mwn 12813 on_video_index_rename_location')
 
         self.app_obj.rename_container(media_data_obj)
 
@@ -12620,7 +12831,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10240 on_video_index_right_click')
+            utils.debug_time('mwn 12834 on_video_index_right_click')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -12662,7 +12873,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10282 on_video_index_selection_changed')
+            utils.debug_time('mwn 12876 on_video_index_selection_changed')
 
         (model, iter) = selection.get_selected()
         if iter is not None:
@@ -12729,11 +12940,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10351 on_video_index_set_destination')
+            utils.debug_time('mwn 12943 on_video_index_set_destination')
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                230,
+                237,
                 'Cannot set the download destination of a video',
             )
 
@@ -12770,11 +12981,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10392 on_video_index_set_nickname')
+            utils.debug_time('mwn 12984 on_video_index_set_nickname')
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                231,
+                238,
                 'Cannot set the nickname of a video',
             )
 
@@ -12811,17 +13022,17 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10393 on_video_index_set_url')
+            utils.debug_time('mwn 13025 on_video_index_set_url')
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                231,
+                239,
                 'Cannot modify the URL of a video',
             )
 
         elif isinstance(media_data_obj, media.Folder):
             return self.app_obj.system_error(
-                254,
+                240,
                 'Cannot set the URL of a folder',
             )
 
@@ -12868,7 +13079,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10436 on_video_index_show_destination')
+            utils.debug_time('mwn 13082 on_video_index_show_destination')
 
         other_obj = self.app_obj.media_reg_dict[media_data_obj.master_dbid]
         path = other_obj.get_actual_dir(self.app_obj)
@@ -12894,7 +13105,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10462 on_video_index_show_location')
+            utils.debug_time('mwn 13108 on_video_index_show_location')
 
         path = media_data_obj.get_default_dir(self.app_obj)
         utils.open_file(self.app_obj, path)
@@ -12916,11 +13127,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10484 on_video_index_show_properties')
+            utils.debug_time('mwn 13130 on_video_index_show_properties')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                232,
+                241,
                 'Callback request denied due to current conditions',
             )
 
@@ -12947,7 +13158,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10515 on_video_index_show_system_cmd')
+            utils.debug_time('mwn 13161 on_video_index_show_system_cmd')
 
         # Show the dialogue window
         dialogue_win = SystemCmdDialogue(self, media_data_obj)
@@ -12971,11 +13182,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10539 on_video_index_tidy')
+            utils.debug_time('mwn 13185 on_video_index_tidy')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                233,
+                242,
                 'Callback request denied due to current conditions',
             )
 
@@ -13072,7 +13283,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10540 on_video_catalogue_add_classic')
+            utils.debug_time('mwn 13286 on_video_catalogue_add_classic')
 
         if media_data_obj.source:
 
@@ -13100,7 +13311,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10541 on_video_catalogue_add_classic_multi')
+            utils.debug_time('mwn 13314 on_video_catalogue_add_classic_multi')
 
         source_list = []
         for media_data_obj in media_data_list:
@@ -13134,11 +13345,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10632 on_video_catalogue_apply_options')
+            utils.debug_time('mwn 13348 on_video_catalogue_apply_options')
 
         if self.app_obj.current_manager_obj or media_data_obj.options_obj:
             return self.app_obj.system_error(
-                234,
+                243,
                 'Callback request denied due to current conditions',
             )
 
@@ -13206,7 +13417,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10668 on_video_catalogue_check')
+            utils.debug_time('mwn 13420 on_video_catalogue_check')
 
         download_manager_obj = self.app_obj.download_manager_obj
 
@@ -13218,7 +13429,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                235,
+                244,
                 'Callback request denied due to current conditions',
             )
 
@@ -13270,7 +13481,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10730 on_video_catalogue_check_multi')
+            utils.debug_time('mwn 13484 on_video_catalogue_check_multi')
 
         download_manager_obj = self.app_obj.download_manager_obj
 
@@ -13282,7 +13493,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                236,
+                245,
                 'Callback request denied due to current conditions',
             )
 
@@ -13338,11 +13549,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10796 on_video_catalogue_custom_dl')
+            utils.debug_time('mwn 13552 on_video_catalogue_custom_dl')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                237,
+                246,
                 'Callback request denied due to current conditions',
             )
 
@@ -13365,11 +13576,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10823 on_video_catalogue_custom_dl_multi')
+            utils.debug_time('mwn 13579 on_video_catalogue_custom_dl_multi')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                238,
+                247,
                 'Callback request denied due to current conditions',
             )
 
@@ -13395,7 +13606,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10853 on_video_catalogue_delete_video')
+            utils.debug_time('mwn 13609 on_video_catalogue_delete_video')
 
         self.app_obj.delete_video(media_data_obj, True)
 
@@ -13416,7 +13627,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10874 on_video_catalogue_delete_video_multi')
+            utils.debug_time('mwn 13630 on_video_catalogue_delete_video_multi')
 
         for media_data_obj in media_data_list:
             self.app_obj.delete_video(media_data_obj, True)
@@ -13441,7 +13652,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10899 on_video_catalogue_dl_and_watch')
+            utils.debug_time('mwn 13655 on_video_catalogue_dl_and_watch')
 
         # Can't download the video if it has no source, or if an update/
         #   refresh/process operation has started since the popup menu was
@@ -13476,7 +13687,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10932 on_video_catalogue_dl_and_watch_multi')
+            utils.debug_time('mwn 13690 on_video_catalogue_dl_and_watch_multi')
 
         # Only download videos which have a source URL
         mod_list = []
@@ -13518,7 +13729,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 10972 on_video_catalogue_download')
+            utils.debug_time('mwn 13732 on_video_catalogue_download')
 
         download_manager_obj = self.app_obj.download_manager_obj
 
@@ -13530,7 +13741,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ) or media_data_obj.live_mode == 1:
             return self.app_obj.system_error(
-                239,
+                248,
                 'Callback request denied due to current conditions',
             )
 
@@ -13586,7 +13797,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11038 on_video_catalogue_download_multi')
+            utils.debug_time('mwn 13800 on_video_catalogue_download_multi')
 
         download_manager_obj = self.app_obj.download_manager_obj
 
@@ -13598,7 +13809,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ) or live_wait_flag:
             return self.app_obj.system_error(
-                240,
+                249,
                 'Callback request denied due to current conditions',
             )
 
@@ -13639,61 +13850,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_unselect_all()
 
 
-    def on_video_catalogue_drag_data_get(self, widget, drag_context, data, \
-    info, time):
-
-        """Called from callback in self.video_catalogue_reset().
-
-        Set the data to be used when the user drags and drops videos from the
-        Video Catalogue to an external application (for example, an FFmpeg
-        batch converter).
-
-        Args:
-
-            widget (Gtk.ListBox or mainwin.GridCatalogueItem): The widget
-                handling the video in the Video Catalogue
-
-            drag_context (GdkX11.X11DragContext): Data from the drag procedure
-
-            data (Gtk.SelectionData): The object to be filled with drag data
-
-            info (int): Info that has been registered with the target in the
-                Gtk.TargetList
-
-            time (int): A timestamp
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11039 on_video_catalogue_drag_data_get')
-
-        # Get the selected media.Video objects
-        video_list = []
-
-        if self.app_obj.catalogue_mode_type != 'grid':
-
-            # Due to Gtk weirdness, only the selected videos are obtainable
-            #   (which might not include all of the dragged videos)
-            for catalogue_item_obj \
-            in self.catalogue_listbox.get_selected_rows():
-                video_list.append(catalogue_item_obj.video_obj)
-
-        else:
-
-            # Custom (not Gtk) code handles selection on the grid
-            for catalogue_item_obj in self.video_catalogue_dict.values():
-                if catalogue_item_obj.selected_flag:
-                    video_list.append(catalogue_item_obj.video_obj)
-
-        # Transfer to the external application a single string, containing one
-        #   or more full file paths/URLs/video names, separated by newline
-        #   characters
-        # If the path/URL/name isn't known for any videos, then an empty line
-        #   is transferred
-        if info == 0:   # TARGET_ENTRY_TEXT
-            data.set_text(self.get_video_drag_data(video_list), -1)
-
-
     def on_video_catalogue_edit_options(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_catalogue_popup_menu().
@@ -13710,11 +13866,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11105 on_video_catalogue_edit_options')
+            utils.debug_time('mwn 13869 on_video_catalogue_edit_options')
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                241,
+                250,
                 'Callback request denied due to current conditions',
             )
 
@@ -13741,7 +13897,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11137 on_video_catalogue_enforce_check')
+            utils.debug_time('mwn 13900 on_video_catalogue_enforce_check')
 
         # (Don't allow the user to change the setting of
         #   media.Video.dl_sim_flag if the video is in a channel or playlist,
@@ -13750,7 +13906,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj \
         or not isinstance(media_data_obj.parent_obj, media.Folder):
             return self.app_obj.system_error(
-                242,
+                251,
                 'Callback request denied due to current conditions',
             )
 
@@ -13778,7 +13934,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11174 on_video_catalogue_fetch_formats')
+            utils.debug_time('mwn 13937 on_video_catalogue_fetch_formats')
 
         # Can't start an info operation if any type of operation has started
         #   since the popup menu was created
@@ -13805,7 +13961,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11201 on_video_catalogue_fetch_subs')
+            utils.debug_time('mwn 13964 on_video_catalogue_fetch_subs')
 
         # Can't start an info operation if any type of operation has started
         #   since the popup menu was created
@@ -13834,7 +13990,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11230 on_video_catalogue_livestream_toggle')
+            utils.debug_time('mwn 13993 on_video_catalogue_livestream_toggle')
 
         # Update the IV
         if action == 'notify':
@@ -13888,7 +14044,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11284 on_video_catalogue_mark_temp_dl')
+            utils.debug_time('mwn 14047 on_video_catalogue_mark_temp_dl')
 
         # Can't mark the video for download if it has no source, or if an
         #   update/refresh/tidy/process operation has started since the popup
@@ -13933,7 +14089,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11320 on_video_catalogue_temp_dl_multi')
+            utils.debug_time('mwn 14092 on_video_catalogue_temp_dl_multi')
 
         # Only download videos which have a source URL
         mod_list = []
@@ -13987,7 +14143,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11364 on_video_catalogue_not_livestream')
+            utils.debug_time('mwn 14146 on_video_catalogue_not_livestream')
 
         # Update the video
         self.app_obj.mark_video_live(
@@ -14014,7 +14170,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11388 on_video_catalogue_page_entry_activated',
+                'mwn 14173 on_video_catalogue_page_entry_activated',
             )
 
         page_num = utils.strip_whitespace(entry.get_text())
@@ -14052,7 +14208,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11389 on_video_catalogue_process_ffmpeg')
+            utils.debug_time('mwn 14211 on_video_catalogue_process_ffmpeg')
 
         # Can't start a process operation if another operation has started
         #   since the popup menu was created, or if the video hasn't been
@@ -14087,7 +14243,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11390 on_video_catalogue_process_ffmpeg_multi',
+                'mwn 14246 on_video_catalogue_process_ffmpeg_multi',
             )
 
         # Can't start a process operation if another operation has started
@@ -14138,11 +14294,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11424 on_video_catalogue_re_download')
+            utils.debug_time('mwn 14297 on_video_catalogue_re_download')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                243,
+                252,
                 'Callback request denied due to current conditions',
             )
 
@@ -14191,11 +14347,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11477 on_video_catalogue_remove_options')
+            utils.debug_time('mwn 14350 on_video_catalogue_remove_options')
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                244,
+                253,
                 'Callback request denied due to current conditions',
             )
 
@@ -14218,7 +14374,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11506 on_video_catalogue_size_entry_activated',
+                'mwn 14377 on_video_catalogue_size_entry_activated',
             )
 
         size = utils.strip_whitespace(entry.get_text())
@@ -14253,7 +14409,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11541 on_video_catalogue_show_location')
+            utils.debug_time('mwn 14412 on_video_catalogue_show_location')
 
         parent_obj = media_data_obj.parent_obj
         other_obj = self.app_obj.media_reg_dict[parent_obj.master_dbid]
@@ -14276,11 +14432,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11564 on_video_catalogue_show_properties')
+            utils.debug_time('mwn 14435 on_video_catalogue_show_properties')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                245,
+                254,
                 'Callback request denied due to current conditions',
             )
 
@@ -14305,12 +14461,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11593 on_video_catalogue_show_properties_multi',
+                'mwn 14464 on_video_catalogue_show_properties_multi',
             )
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                246,
+                255,
                 'Callback request denied due to current conditions',
             )
 
@@ -14338,7 +14494,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11626 on_video_catalogue_show_system_cmd')
+            utils.debug_time('mwn 14497 on_video_catalogue_show_system_cmd')
 
         # Show the dialogue window
         dialogue_win = SystemCmdDialogue(self, media_data_obj)
@@ -14359,7 +14515,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12704 on_video_catalogue_sort_combo_changed')
+            utils.debug_time('mwn 14518 on_video_catalogue_sort_combo_changed')
 
         tree_iter = self.catalogue_sort_combo.get_active_iter()
         model = self.catalogue_sort_combo.get_model()
@@ -14391,7 +14547,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12704 on_video_catalogue_thumb_combo_changed',
+                'mwn 14550 on_video_catalogue_thumb_combo_changed',
             )
 
         tree_iter = self.catalogue_thumb_combo.get_active_iter()
@@ -14435,7 +14591,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11657 on_video_catalogue_temp_dl')
+            utils.debug_time('mwn 14594 on_video_catalogue_temp_dl')
 
         # Can't download the video if it has no source, or if an update/
         #   refresh/tidy/process operation has started since the popup menu was
@@ -14497,7 +14653,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11708 on_video_catalogue_temp_dl_multi')
+            utils.debug_time('mwn 14656 on_video_catalogue_temp_dl_multi')
 
         # Only download videos which have a source URL
         mod_list = []
@@ -14566,7 +14722,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11764 on_video_catalogue_test_dl')
+            utils.debug_time('mwn 14725 on_video_catalogue_test_dl')
 
         # Can't start an info operation if any type of operation has started
         #   since the popup menu was created
@@ -14618,7 +14774,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11817 on_video_catalogue_toggle_archived_video',
+                'mwn 14777 on_video_catalogue_toggle_archived_video',
             )
 
         if not media_data_obj.archive_flag:
@@ -14649,7 +14805,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11848 on_video_catalogue_toggle_archived_video_multi',
+                'mwn 14808 on_video_catalogue_toggle_archived_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14677,7 +14833,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11876 on_video_catalogue_toggle_bookmark_video',
+                'mwn 14836 on_video_catalogue_toggle_bookmark_video',
             )
 
         if not media_data_obj.bookmark_flag:
@@ -14706,7 +14862,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11905 on_video_catalogue_toggle_bookmark_video_multi',
+                'mwn 14865 on_video_catalogue_toggle_bookmark_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14733,7 +14889,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11932 on_video_catalogue_toggle_favourite_video',
+                'mwn 14892 on_video_catalogue_toggle_favourite_video',
             )
 
         if not media_data_obj.fav_flag:
@@ -14762,7 +14918,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11961 on_video_catalogue_toggle_favourite_video_multi',
+                'mwn 14921 on_video_catalogue_toggle_favourite_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14789,7 +14945,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11962 on_video_catalogue_toggle_missing_video',
+                'mwn 14948 on_video_catalogue_toggle_missing_video',
             )
 
         if not media_data_obj.missing_flag:
@@ -14818,7 +14974,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 11963 on_video_catalogue_toggle_missing_video_multi',
+                'mwn 14977 on_video_catalogue_toggle_missing_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14843,7 +14999,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 11986 on_video_catalogue_toggle_new_video')
+            utils.debug_time('mwn 15002 on_video_catalogue_toggle_new_video')
 
         if not media_data_obj.new_flag:
             self.app_obj.mark_video_new(media_data_obj, True)
@@ -14871,7 +15027,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12014 on_video_catalogue_toggle_new_video_multi',
+                'mwn 15030 on_video_catalogue_toggle_new_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14898,7 +15054,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12041 on_video_catalogue_toggle_waiting_video',
+                'mwn 15057 on_video_catalogue_toggle_waiting_video',
             )
 
         if not media_data_obj.waiting_flag:
@@ -14927,7 +15083,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12070 on_video_catalogue_toggle_waiting_video_multi',
+                'mwn 15086 on_video_catalogue_toggle_waiting_video_multi',
             )
 
         for media_data_obj in media_data_list:
@@ -14952,7 +15108,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12095 on_video_catalogue_watch_hooktube')
+            utils.debug_time('mwn 15111 on_video_catalogue_watch_hooktube')
 
         # Launch the video
         utils.open_file(
@@ -14983,7 +15139,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12125 on_video_catalogue_watch_invidious')
+            utils.debug_time('mwn 15142 on_video_catalogue_watch_invidious')
 
         # Launch the video
         utils.open_file(
@@ -15018,7 +15174,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12156 on_video_catalogue_watch_video')
+            utils.debug_time('mwn 15177 on_video_catalogue_watch_video')
 
         # Launch the video
         self.app_obj.watch_video_in_player(media_data_obj)
@@ -15047,7 +15203,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12185 on_video_catalogue_watch_video_multi')
+            utils.debug_time('mwn 15206 on_video_catalogue_watch_video_multi')
 
         # Only watch videos which are marked as downloaded
         for media_data_obj in media_data_list:
@@ -15081,7 +15237,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12219 on_video_catalogue_watch_website')
+            utils.debug_time('mwn 15240 on_video_catalogue_watch_website')
 
         # Launch the video
         utils.open_file(self.app_obj, media_data_obj.source)
@@ -15111,7 +15267,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12249 on_video_catalogue_watch_website_multi',
+                'mwn 15270 on_video_catalogue_watch_website_multi',
             )
 
         # Only watch videos which have a source URL
@@ -15149,7 +15305,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12287 on_progress_list_dl_last')
+            utils.debug_time('mwn 15308 on_progress_list_dl_last')
 
         # Check that, since the popup menu was created, the media data object
         #   hasn't been assigned a worker
@@ -15196,7 +15352,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12234 on_progress_list_dl_next')
+            utils.debug_time('mwn 15355 on_progress_list_dl_next')
 
         # Check that, since the popup menu was created, the media data object
         #   hasn't been assigned a worker
@@ -15239,7 +15395,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12377 on_progress_list_right_click')
+            utils.debug_time('mwn 15398 on_progress_list_right_click')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -15279,7 +15435,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12417 on_progress_list_stop_soon')
+            utils.debug_time('mwn 15438 on_progress_list_stop_soon')
 
         # Check that, since the popup menu was created, the download operation
         #   hasn't finished
@@ -15316,7 +15472,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12453 on_progress_list_stop_now')
+            utils.debug_time('mwn 15475 on_progress_list_stop_now')
 
         # Check that, since the popup menu was created, the video downloader
         #   hasn't already finished checking/downloading the selected media
@@ -15358,7 +15514,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12494 on_progress_list_stop_soon')
+            utils.debug_time('mwn 15517 on_progress_list_stop_soon')
 
         # Check that, since the popup menu was created, the video downloader
         #   hasn't already finished checking/downloading the selected media
@@ -15391,7 +15547,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12527 on_progress_list_watch_hooktube')
+            utils.debug_time('mwn 15550 on_progress_list_watch_hooktube')
 
         if isinstance(media_data_obj, media.Video):
 
@@ -15425,7 +15581,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12560 on_progress_list_watch_invidious')
+            utils.debug_time('mwn 15584 on_progress_list_watch_invidious')
 
         if isinstance(media_data_obj, media.Video):
 
@@ -15461,7 +15617,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12592 on_progress_list_watch_website')
+            utils.debug_time('mwn 15620 on_progress_list_watch_website')
 
         if isinstance(media_data_obj, media.Video) \
         and media_data_obj.source:
@@ -15487,7 +15643,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12618 on_results_list_delete_video')
+            utils.debug_time('mwn 15646 on_results_list_delete_video')
 
         # Delete the video
         self.app_obj.delete_video(media_data_obj, True)
@@ -15522,7 +15678,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12619 on_video_catalogue_drag_data_get')
+            utils.debug_time('mwn 15681 on_results_list_drag_data_get')
 
         # Get the selected media.Video object(s)
         video_list = self.get_selected_videos_in_treeview(
@@ -15555,7 +15711,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12644 on_results_list_right_click')
+            utils.debug_time('mwn 15714 on_results_list_right_click')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -15591,7 +15747,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12684 on_errors_list_clear')
+            utils.debug_time('mwn 15750 on_errors_list_clear')
 
         self.errors_list_reset()
 
@@ -15621,7 +15777,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12619 on_errors_list_drag_data_get')
+            utils.debug_time('mwn 15780 on_errors_list_drag_data_get')
 
         # For each selected line, retrieve values from the three hidden columns
         string = ''
@@ -15667,7 +15823,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12704 on_classic_textview_paste')
+            utils.debug_time('mwn 15826 on_classic_textview_paste')
 
         text = self.classic_textbuffer.get_text(
             self.classic_textbuffer.get_start_iter(),
@@ -15696,7 +15852,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12704 on_classic_dest_dir_combo_changed')
+            utils.debug_time('mwn 15855 on_classic_dest_dir_combo_changed')
 
         tree_iter = self.classic_dest_dir_combo.get_active_iter()
         model = self.classic_dest_dir_combo.get_model()
@@ -15718,7 +15874,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12726 on_classic_format_combo_changed')
+            utils.debug_time('mwn 15877 on_classic_format_combo_changed')
 
         tree_iter = self.classic_format_combo.get_active_iter()
         model = self.classic_format_combo.get_model()
@@ -15744,12 +15900,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12729 on_classic_menu_custom_dl_prefs')
+            utils.debug_time('mwn 15903 on_classic_menu_custom_dl_prefs')
 
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                261,
+                256,
                 'Callback request denied due to current conditions',
             )
 
@@ -15771,12 +15927,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12729 on_classic_menu_edit_options')
+            utils.debug_time('mwn 15930 on_classic_menu_edit_options')
 
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                250,
+                257,
                 'Callback request denied due to current conditions',
             )
 
@@ -15809,11 +15965,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12728 on_classic_menu_set_options')
+            utils.debug_time('mwn 15968 on_classic_menu_set_options')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                249,
+                258,
                 'Callback request denied due to current conditions',
             )
 
@@ -15836,12 +15992,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12728 on_classic_menu_use_general_options')
+            utils.debug_time('mwn 15995 on_classic_menu_use_general_options')
 
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                257,
+                259,
                 'Callback request denied due to current conditions',
             )
 
@@ -15861,7 +16017,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12730 classic_mode_tab_toggle_auto_copy')
+            utils.debug_time('mwn 16020 classic_mode_tab_toggle_auto_copy')
 
         if not self.classic_auto_copy_flag:
 
@@ -15897,12 +16053,12 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12730 on_classic_menu_toggle_custom_dl')
+            utils.debug_time('mwn 16056 on_classic_menu_toggle_custom_dl')
 
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                262,
+                260,
                 'Callback request denied due to current conditions',
             )
 
@@ -15926,7 +16082,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12730 on_classic_menu_toggle_remember_urls')
+            utils.debug_time('mwn 16085 on_classic_menu_toggle_remember_urls')
 
         self.app_obj.toggle_classic_pending_flag()
 
@@ -15944,11 +16100,11 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12731 on_classic_menu_update_ytdl')
+            utils.debug_time('mwn 16103 on_classic_menu_update_ytdl')
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                252,
+                261,
                 'Callback request denied due to current conditions',
             )
 
@@ -15982,7 +16138,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12732 on_classic_progress_list_drag_data_get',
+                'mwn 16141 on_classic_progress_list_drag_data_get',
             )
 
         # Get the selected dummy media.Video object(s)
@@ -16021,7 +16177,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12755 on_classic_progress_list_get_cmd')
+            utils.debug_time('mwn 16180 on_classic_progress_list_get_cmd')
 
         # Generate the list of download options for the dummy media.Video
         #   object
@@ -16070,7 +16226,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12804 on_classic_progress_list_get_path')
+            utils.debug_time('mwn 16229 on_classic_progress_list_get_path')
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_text(dummy_obj.dummy_path, -1)
@@ -16093,7 +16249,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12805 on_classic_progress_list_get_url')
+            utils.debug_time('mwn 16252 on_classic_progress_list_get_url')
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_text(dummy_obj.source, -1)
@@ -16117,7 +16273,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 12828 on_classic_progress_list_open_destination',
+                'mwn 16276 on_classic_progress_list_open_destination',
             )
 
         # Open every destination, but eliminate duplicates
@@ -16149,7 +16305,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12851 on_classic_progress_list_right_click')
+            utils.debug_time('mwn 16308 on_classic_progress_list_right_click')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -16186,7 +16342,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12892 on_bandwidth_spinbutton_changed')
+            utils.debug_time('mwn 16345 on_bandwidth_spinbutton_changed')
 
         self.app_obj.set_bandwidth_default(
             int(self.bandwidth_spinbutton.get_value())
@@ -16208,7 +16364,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12914 on_bandwidth_checkbutton_changed')
+            utils.debug_time('mwn 16367 on_bandwidth_checkbutton_changed')
 
         self.app_obj.set_bandwidth_apply_flag(
             self.bandwidth_checkbutton.get_active(),
@@ -16231,7 +16387,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12937 on_delete_event')
+            utils.debug_time('mwn 16390 on_delete_event')
 
         if self.app_obj.status_icon_obj \
         and self.app_obj.show_status_icon_flag \
@@ -16267,7 +16423,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12967 on_hide_finished_checkbutton_changed')
+            utils.debug_time('mwn 16426 on_hide_finished_checkbutton_changed')
 
         self.app_obj.set_progress_list_hide_flag(checkbutton.get_active())
 
@@ -16286,7 +16442,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13110 on_draw_frame_checkbutton_changed')
+            utils.debug_time('mwn 16445 on_draw_frame_checkbutton_changed')
 
         self.app_obj.set_catalogue_draw_frame_flag(checkbutton.get_active())
         # (No need to redraw the Video Catalogue, just to enable/disable the
@@ -16320,7 +16476,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13110 on_draw_icons_checkbutton_changed')
+            utils.debug_time('mwn 16479 on_draw_icons_checkbutton_changed')
 
         self.app_obj.set_catalogue_draw_icons_flag(checkbutton.get_active())
         # (No need to redraw the Video Catalogue, just to make the status icons
@@ -16350,7 +16506,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12992 on_notebook_switch_page')
+            utils.debug_time('mwn 16509 on_notebook_switch_page')
 
         self.visible_tab_num = page_num
 
@@ -16397,7 +16553,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13039 on_notify_desktop_clicked')
+            utils.debug_time('mwn 16556 on_notify_desktop_clicked')
 
         utils.open_file(self.app_obj, url)
 
@@ -16424,7 +16580,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13066 on_notify_desktop_closed')
+            utils.debug_time('mwn 16583 on_notify_desktop_closed')
 
         if notify_id in self.notify_desktop_dict:
             del self.notify_desktop_dict[notify_id]
@@ -16445,7 +16601,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13087 on_num_worker_spinbutton_changed')
+            utils.debug_time('mwn 16604 on_num_worker_spinbutton_changed')
 
         if self.num_worker_checkbutton.get_active():
             self.app_obj.set_num_worker_default(
@@ -16468,7 +16624,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13110 on_num_worker_checkbutton_changed')
+            utils.debug_time('mwn 16627 on_num_worker_checkbutton_changed')
 
         if self.num_worker_checkbutton.get_active():
 
@@ -16496,7 +16652,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 13138 on_operation_error_checkbutton_changed',
+                'mwn 16655 on_operation_error_checkbutton_changed',
             )
 
         self.app_obj.set_operation_error_show_flag(checkbutton.get_active())
@@ -16516,7 +16672,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 13158 on_operation_warning_checkbutton_changed',
+                'mwn 16675 on_operation_warning_checkbutton_changed',
             )
 
         self.app_obj.set_operation_warning_show_flag(checkbutton.get_active())
@@ -16542,7 +16698,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13184 on_output_notebook_switch_page')
+            utils.debug_time('mwn 16701 on_output_notebook_switch_page')
 
         # Output Tab IVs number the first page as #1, and so on
         self.output_tab_scroll_visible_page(page_num + 1)
@@ -16562,7 +16718,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13185 on_output_size_spinbutton_changed')
+            utils.debug_time('mwn 16721 on_output_size_spinbutton_changed')
 
         if self.output_size_checkbutton.get_active():
             self.app_obj.set_output_size_default(
@@ -16584,7 +16740,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13186 on_output_size_checkbutton_changed')
+            utils.debug_time('mwn 16743 on_output_size_checkbutton_changed')
 
         if self.output_size_checkbutton.get_active():
 
@@ -16616,7 +16772,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12937 on_paned_size_allocate')
+            utils.debug_time('mwn 16775 on_paned_size_allocate')
 
         if self.paned_last_width is None \
         or self.paned_last_width != rect.width:
@@ -16646,7 +16802,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 13204 on_reverse_results_checkbutton_changed',
+                'mwn 16805 on_reverse_results_checkbutton_changed',
             )
 
         self.app_obj.set_results_list_reverse_flag(checkbutton.get_active())
@@ -16665,7 +16821,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13223 on_system_error_checkbutton_changed')
+            utils.debug_time('mwn 16824 on_system_error_checkbutton_changed')
 
         self.app_obj.set_system_error_show_flag(checkbutton.get_active())
 
@@ -16683,7 +16839,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13241 on_system_warning_checkbutton_changed')
+            utils.debug_time('mwn 16842 on_system_warning_checkbutton_changed')
 
         self.app_obj.set_system_warning_show_flag(checkbutton.get_active())
 
@@ -16703,7 +16859,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13358 on_video_res_combobox_changed')
+            utils.debug_time('mwn 16862 on_video_res_combobox_changed')
 
         tree_iter = self.video_res_combobox.get_active_iter()
         model = self.video_res_combobox.get_model()
@@ -16725,7 +16881,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13380 on_video_res_checkbutton_changed')
+            utils.debug_time('mwn 16884 on_video_res_checkbutton_changed')
 
         self.app_obj.set_video_res_apply_flag(
             self.video_res_checkbutton.get_active(),
@@ -16759,7 +16915,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13256 on_window_drag_data_received')
+            utils.debug_time('mwn 16918 on_window_drag_data_received')
 
         text = None
         if info == 0:
@@ -16815,7 +16971,10 @@ class MainWin(Gtk.ApplicationWindow):
             #   that; otherwise, use 'Unsorted Videos'
             # However, if the Classic Mode Tab is visible, copy URL(s) into its
             #   textview (and ignore any file paths)
-            if self.notebook.get_current_page == 2 and url_list:
+            classic_tab = self.notebook_tab_dict['classic']
+            if classic_tab is not None \
+            and self.notebook.get_current_page == classic_tab \
+            and url_list:
 
                 # Classic Mode Tab is visible. The final argument tells the
                 #   called function to use that argument, instead of the
@@ -16828,8 +16987,10 @@ class MainWin(Gtk.ApplicationWindow):
                     '\n'.join(url_list),
                 )
 
-            elif self.notebook.get_current_page != 2 \
-            and (path_list or url_list):
+            elif (
+                classic_tab is None \
+                or self.notebook.get_current_page != classic_tab
+            ) and (path_list or url_list):
 
                 # Classic Mode Tab is not visible
                 parent_obj = None
@@ -16909,7 +17070,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12937 on_window_size_allocate')
+            utils.debug_time('mwn 17073 on_window_size_allocate')
 
         if self.win_last_width is None \
         or self.win_last_width != rect.width \
@@ -16951,7 +17112,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13381 get_selected_videos_in_treeview')
+            utils.debug_time('mwn 17115 get_selected_videos_in_treeview')
 
         video_list = []
 
@@ -16991,7 +17152,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time(
-                'mwn 13382 get_selected_videos_in_classic_treeview',
+                'mwn 17155 get_selected_videos_in_classic_treeview',
             )
 
         video_list = []
@@ -17034,7 +17195,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13409 get_take_a_while_msg')
+            utils.debug_time('mwn 17198 get_take_a_while_msg')
 
         media_type = media_data_obj.get_type()
         if media_type == 'channel':
@@ -17065,9 +17226,10 @@ class MainWin(Gtk.ApplicationWindow):
 
     def get_video_drag_data(self, video_list, dummy_flag=False):
 
-        """Called by self.on_video_catalogue_drag_data_get(),
-        .on_results_list_drag_data_get() and
-        .on_classic_progress_list_drag_data_get().
+        """Called by self.on_results_list_drag_data_get(),
+        .on_classic_progress_list_drag_data_get(),
+        CatalogueRow.on_drag_data_get() and
+        CatalogueGridBox.on_drag_data_get().
 
         Returns the data to be transferred to an external application, when the
         user drags a video there.
@@ -17089,7 +17251,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13409 get_video_drag_data')
+            utils.debug_time('mwn 17254 get_video_drag_data')
 
         text = ''
         for video_obj in video_list:
@@ -17168,7 +17330,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13409 get_media_drag_data_as_list')
+            utils.debug_time('mwn 17333 get_media_drag_data_as_list')
 
         return_list = []
 
@@ -17228,13 +17390,13 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13454 add_child_window')
+            utils.debug_time('mwn 17393 add_child_window')
 
         # Check that the window isn't already in the list (unlikely, but check
         #   anyway)
         if config_win_obj in self.config_win_list:
             return self.app_obj.system_error(
-                247,
+                262,
                 'Callback request denied due to current conditions',
             )
 
@@ -17259,7 +17421,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13482 del_child_window')
+            utils.debug_time('mwn 17424 del_child_window')
 
         # Update IVs
         # (Don't show an error if the window isn't in the list, as it's
@@ -17281,7 +17443,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13499 set_previous_alt_dest_dbid')
+            utils.debug_time('mwn 17446 set_previous_alt_dest_dbid')
 
         self.previous_alt_dest_dbid = value
 
@@ -17315,7 +17477,7 @@ class SimpleCatalogueItem(object):
     def __init__(self, main_win_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13533 __init__')
+            utils.debug_time('mwn 17480 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -17372,7 +17534,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13590 draw_widgets')
+            utils.debug_time('mwn 17537 draw_widgets')
 
         self.catalogue_row = catalogue_row
 
@@ -17427,7 +17589,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13645 update_widgets')
+            utils.debug_time('mwn 17592 update_widgets')
 
         self.update_background()
         self.update_tooltips()
@@ -17446,7 +17608,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13664 update_background')
+            utils.debug_time('mwn 17611 update_background')
 
         if self.previous_live_mode != self.video_obj.live_mode:
 
@@ -17462,7 +17624,8 @@ class SimpleCatalogueItem(object):
 
             elif self.video_obj.live_mode == 1:
 
-                if not self.video_obj.live_debut_flag:
+                if not self.video_obj.live_debut_flag \
+                or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                     self.hbox.override_background_color(
                         Gtk.StateType.NORMAL,
@@ -17478,7 +17641,8 @@ class SimpleCatalogueItem(object):
 
             elif self.video_obj.live_mode == 2:
 
-                if not self.video_obj.live_debut_flag:
+                if not self.video_obj.live_debut_flag \
+                or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                     self.hbox.override_background_color(
                         Gtk.StateType.NORMAL,
@@ -17501,7 +17665,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13696 update_tooltips')
+            utils.debug_time('mwn 17668 update_tooltips')
 
         if self.main_win_obj.app_obj.show_tooltips_flag:
             self.hbox.set_tooltip_text(
@@ -17520,7 +17684,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13715 update_status_image')
+            utils.debug_time('mwn 17687 update_status_image')
 
         # Set the download status
         if self.video_obj.live_mode == 1:
@@ -17580,7 +17744,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13749 update_video_name')
+            utils.debug_time('mwn 17747 update_video_name')
 
         # For videos whose name is unknown, display the URL, rather than the
         #   usual '(video with no name)' string
@@ -17634,7 +17798,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13803 update_container_name')
+            utils.debug_time('mwn 17801 update_container_name')
 
         if self.main_win_obj.app_obj.catalogue_mode != 'simple_show_parent':
             return
@@ -17680,16 +17844,27 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13835 update_video_stats')
+            utils.debug_time('mwn 17847 update_video_stats')
 
         if self.video_obj.live_mode:
 
-            if self.video_obj.live_mode == 2:
-                msg = _('Livestream has started')
-            elif self.video_obj.live_msg == '':
-                msg = _('Livestream has not started yet')
+            if not self.video_obj.live_debut_flag:
+
+                if self.video_obj.live_mode == 2:
+                    msg = _('Livestream has started')
+                elif self.video_obj.live_msg == '':
+                    msg = _('Livestream has not started yet')
+                else:
+                    msg = self.video_obj.live_msg
+
             else:
-                msg = self.video_obj.live_msg
+
+                if self.video_obj.live_mode == 2:
+                    msg = _('Debut has started')
+                elif self.video_obj.live_msg == '':
+                    msg = _('Debut has not started yet')
+                else:
+                    msg = self.video_obj.live_msg
 
         else:
 
@@ -17738,7 +17913,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13892 on_right_click_row')
+            utils.debug_time('mwn 17916 on_right_click_row')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -17774,7 +17949,7 @@ class ComplexCatalogueItem(object):
     def __init__(self, main_win_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13928 __init__')
+            utils.debug_time('mwn 17952 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -17876,7 +18051,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14027 draw_widgets')
+            utils.debug_time('mwn 18054 draw_widgets')
 
         # If the video's parent folder is a temporary folder, then we don't
         #   need one row of widgets at all
@@ -18235,7 +18410,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14354 update_widgets')
+            utils.debug_time('mwn 18413 update_widgets')
 
         self.update_background()
         self.update_tooltips()
@@ -18285,7 +18460,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14404 update_background')
+            utils.debug_time('mwn 18463 update_background')
 
         if self.previous_live_mode != self.video_obj.live_mode:
 
@@ -18301,7 +18476,8 @@ class ComplexCatalogueItem(object):
 
             elif self.video_obj.live_mode == 1:
 
-                if not self.video_obj.live_debut_flag:
+                if not self.video_obj.live_debut_flag \
+                or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                     self.frame.override_background_color(
                         Gtk.StateType.NORMAL,
@@ -18317,7 +18493,8 @@ class ComplexCatalogueItem(object):
 
             elif self.video_obj.live_mode == 2:
 
-                if not self.video_obj.live_debut_flag:
+                if not self.video_obj.live_debut_flag \
+                or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                     self.frame.override_background_color(
                         Gtk.StateType.NORMAL,
@@ -18340,7 +18517,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14436 update_tooltips')
+            utils.debug_time('mwn 18520 update_tooltips')
 
         if self.main_win_obj.app_obj.show_tooltips_flag:
             self.frame.set_tooltip_text(
@@ -18360,7 +18537,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14456 update_thumb_image')
+            utils.debug_time('mwn 18540 update_thumb_image')
 
         # See if the video's thumbnail file has been downloaded
         thumb_flag = False
@@ -18421,7 +18598,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14513 update_video_name')
+            utils.debug_time('mwn 18601 update_video_name')
 
         # For videos whose name is unknown, display the URL, rather than the
         #   usual '(video with no name)' string
@@ -18475,7 +18652,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14567 update_status_images')
+            utils.debug_time('mwn 18655 update_status_images')
 
         # Special case: don't display any images at all, if the flag is not
         #   set
@@ -18576,7 +18753,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14636 update_video_descrip')
+            utils.debug_time('mwn 18756 update_video_descrip')
 
         if self.main_win_obj.app_obj.catalogue_mode == 'complex_hide_parent' \
         or self.main_win_obj.app_obj.catalogue_mode \
@@ -18691,7 +18868,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14736 update_video_stats')
+            utils.debug_time('mwn 18871 update_video_stats')
 
         # Import the main application (for convenience)
         app_obj = self.main_win_obj.app_obj
@@ -18745,12 +18922,27 @@ class ComplexCatalogueItem(object):
             name = html.escape(self.video_obj.name)
             dbid = self.video_obj.dbid
 
-            if self.video_obj.live_mode == 2:
-                self.stats_label.set_markup(_('Live now:') + '   ')
-            elif self.video_obj.live_msg == '':
-                self.stats_label.set_markup(_('Live soon:') + '   ')
+            if not self.video_obj.live_debut_flag:
+
+                if self.video_obj.live_mode == 2:
+                    self.stats_label.set_markup(_('Live now:') + '   ')
+                elif self.video_obj.live_msg == '':
+                    self.stats_label.set_markup(_('Live soon:') + '   ')
+                else:
+                    self.stats_label.set_markup(
+                        self.video_obj.live_msg + ':   ',
+                    )
+
             else:
-                self.stats_label.set_markup(self.video_obj.live_msg + ':   ')
+
+                if self.video_obj.live_mode == 2:
+                    self.stats_label.set_markup(_('Debut now:') + '   ')
+                elif self.video_obj.live_msg == '':
+                    self.stats_label.set_markup(_('Debut soon:') + '   ')
+                else:
+                    self.stats_label.set_markup(
+                        self.video_obj.live_msg + ':   ',
+                    )
 
             if dbid in app_obj.media_reg_auto_notify_dict:
                 label = '<s>' + _('Notify') + '</s>'
@@ -18795,7 +18987,8 @@ class ComplexCatalogueItem(object):
                 + '">' + label + '</a>',
             )
 
-            if self.video_obj.live_mode == 2:
+            if __main__.__pkg_no_download_flag__ \
+            or self.video_obj.live_mode == 2:
 
                 # (Livestream already broadcasting)
                 self.live_auto_dl_start_label.set_markup(_('D/L on start'))
@@ -18813,16 +19006,22 @@ class ComplexCatalogueItem(object):
                     + '">' + label + '</a>',
                 )
 
-            if dbid in app_obj.media_reg_auto_dl_stop_dict:
-                label = '<s>' + _('D/L on stop') + '</s>'
-            else:
-                label = _('D/L on stop')
+            if __main__.__pkg_no_download_flag__:
 
-            self.live_auto_dl_stop_label.set_markup(
-                '<a href="' + name + '" title="' \
-                + _('When the livestream stops, download it') \
-                + '">' + label + '</a>',
-            )
+                self.live_auto_dl_stop_label.set_markup(_('D/L on stop'))
+
+            else:
+
+                if dbid in app_obj.media_reg_auto_dl_stop_dict:
+                    label = '<s>' + _('D/L on stop') + '</s>'
+                else:
+                    label = _('D/L on stop')
+
+                self.live_auto_dl_stop_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream stops, download it') \
+                    + '">' + label + '</a>',
+                )
 
 
     def update_watch_player(self):
@@ -18834,9 +19033,27 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14858 update_watch_player')
+            utils.debug_time('mwn 19036 update_watch_player')
 
-        if self.video_obj.live_mode == 1:
+        if self.video_obj.file_name:
+            watch_text = '<a href="' + html.escape(
+                self.video_obj.get_actual_path(self.main_win_obj.app_obj),
+            ) + '" title="' + _('Watch in your media player') + '">' \
+            + _('Player') + '</a>'
+
+        if __main__.__pkg_no_download_flag__:
+
+            if self.video_obj.file_name and self.video_obj.dl_flag:
+
+                # Link clickable
+                self.watch_player_label.set_markup(watch_text)
+
+            else:
+
+                # Link not clickable
+                self.watch_player_label.set_markup(_('Download'))
+
+        elif self.video_obj.live_mode == 1:
 
             # Link not clickable
             self.watch_player_label.set_markup(_('Download'))
@@ -18853,13 +19070,7 @@ class ComplexCatalogueItem(object):
         elif self.video_obj.file_name and self.video_obj.dl_flag:
 
             # Link clickable
-            self.watch_player_label.set_markup(
-                '<a href="' \
-                + html.escape(
-                    self.video_obj.get_actual_path(self.main_win_obj.app_obj),
-                ) + '" title="' + _('Watch in your media player') + '">' \
-                + _('Player') + '</a>',
-            )
+            self.watch_player_label.set_markup(watch_text)
 
         elif self.video_obj.source \
         and not self.main_win_obj.app_obj.update_manager_obj \
@@ -18896,7 +19107,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14919 update_watch_web')
+            utils.debug_time('mwn 19110 update_watch_web')
 
         app_obj = self.main_win_obj.app_obj
 
@@ -19000,7 +19211,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14992 update_livestream_labels')
+            utils.debug_time('mwn 19214 update_livestream_labels')
 
         name = html.escape(self.video_obj.name)
         app_obj = self.main_win_obj.app_obj
@@ -19079,7 +19290,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15071 update_temp_labels')
+            utils.debug_time('mwn 19293 update_temp_labels')
 
         if self.video_obj.file_name:
             link_text = self.video_obj.get_actual_path(
@@ -19126,7 +19337,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15118 update_marked_labels')
+            utils.debug_time('mwn 19340 update_marked_labels')
 
         if self.video_obj.file_name:
             link_text = self.video_obj.get_actual_path(
@@ -19229,12 +19440,15 @@ class ComplexCatalogueItem(object):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 19444 enable_visible_frame')
+
         # Sanity check: don't let GridCatalogueItem use this inherited method;
         #   when displaying videos in a grid, the frame is visible (or not)
         #   around the mainwin.CatalogueGridBox object
         if not isinstance(self, ComplexCatalogueItem):
             return self.main_win_obj.app_obj.system_error(
-                259,
+                263,
                 'CatalogueGridBox has no frame to toggle',
             )
 
@@ -19266,9 +19480,11 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15207 temp_box_is_visible')
+            utils.debug_time('mwn 19483 temp_box_is_visible')
 
-        if (
+        if __main__.__pkg_no_download_flag__:
+            return False
+        elif (
             self.main_win_obj.app_obj.catalogue_mode \
             == 'complex_hide_parent_ext' \
             or self.main_win_obj.app_obj.catalogue_mode \
@@ -19294,7 +19510,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15235 marked_box_is_visible')
+            utils.debug_time('mwn 19513 marked_box_is_visible')
 
         if (
             self.main_win_obj.app_obj.catalogue_mode \
@@ -19326,7 +19542,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15267 on_click_descrip_label')
+            utils.debug_time('mwn 19545 on_click_descrip_label')
 
         if not self.expand_descrip_flag:
             self.expand_descrip_flag = True
@@ -19360,7 +19576,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15301 on_click_live_auto_alarm_label')
+            utils.debug_time('mwn 19579 on_click_live_auto_alarm_label')
 
         # Toggle the setting
         if not self.video_obj.dbid \
@@ -19399,7 +19615,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15345 on_click_live_auto_dl_start_label')
+            utils.debug_time('mwn 19618 on_click_live_auto_dl_start_label')
 
         # Toggle the setting
         if not self.video_obj.dbid \
@@ -19439,7 +19655,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15390 on_click_live_auto_dl_stop_label')
+            utils.debug_time('mwn 19658 on_click_live_auto_dl_stop_label')
 
         # Toggle the setting
         if not self.video_obj.dbid \
@@ -19478,7 +19694,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15434 on_click_live_auto_notify_label')
+            utils.debug_time('mwn 19697 on_click_live_auto_notify_label')
 
         # Toggle the setting
         if not self.video_obj.dbid \
@@ -19518,7 +19734,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15479 on_click_live_auto_open_label')
+            utils.debug_time('mwn 19737 on_click_live_auto_open_label')
 
         # Toggle the setting
         if not self.video_obj.dbid \
@@ -19557,7 +19773,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15523 on_click_marked_archive_label')
+            utils.debug_time('mwn 19776 on_click_marked_archive_label')
 
         # Mark the video as archived/not archived
         if not self.video_obj.archive_flag:
@@ -19595,7 +19811,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15561 on_click_marked_bookmark_label')
+            utils.debug_time('mwn 19814 on_click_marked_bookmark_label')
 
         # Mark the video as bookmarked/not bookmarked
         if not self.video_obj.bookmark_flag:
@@ -19640,7 +19856,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15606 on_click_marked_fav_label')
+            utils.debug_time('mwn 19859 on_click_marked_fav_label')
 
         # Mark the video as favourite/not favourite
         if not self.video_obj.fav_flag:
@@ -19685,7 +19901,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15607 on_click_marked_missing_label')
+            utils.debug_time('mwn 19904 on_click_marked_missing_label')
 
         # Mark the video as missing/not missing
         if not self.video_obj.missing_flag:
@@ -19730,7 +19946,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15651 on_click_marked_new_label')
+            utils.debug_time('mwn 19949 on_click_marked_new_label')
 
         # Mark the video as new/not new
         if not self.video_obj.new_flag:
@@ -19768,7 +19984,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15689 on_click_marked_waiting_list_label')
+            utils.debug_time('mwn 19987 on_click_marked_waiting_list_label')
 
         # Mark the video as in waiting list/not in waiting list
         if not self.video_obj.waiting_flag:
@@ -19813,7 +20029,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15734 on_click_temp_dl_label')
+            utils.debug_time('mwn 20032 on_click_temp_dl_label')
 
         # Can't download the video if an update/refresh/info/tidy/process
         #   operation is in progress
@@ -19869,7 +20085,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15789 on_click_temp_dl_watch_label')
+            utils.debug_time('mwn 20088 on_click_temp_dl_watch_label')
 
         # Can't download the video if an update/refresh/tidy/process operation
         #   is in progress
@@ -19924,7 +20140,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15843 on_click_temp_mark_label')
+            utils.debug_time('mwn 20143 on_click_temp_mark_label')
 
         # Can't mark the video for download if an update/refresh/tidy/process
         #   operation is in progress
@@ -19968,7 +20184,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15886 on_click_watch_hooktube_label')
+            utils.debug_time('mwn 20187 on_click_watch_hooktube_label')
 
         # Launch the video
         utils.open_file(self.main_win_obj.app_obj, uri)
@@ -20012,7 +20228,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15930 on_click_watch_invidious_label')
+            utils.debug_time('mwn 20231 on_click_watch_invidious_label')
 
         # Launch the video
         utils.open_file(self.main_win_obj.app_obj, uri)
@@ -20057,7 +20273,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15931 on_click_watch_other_label')
+            utils.debug_time('mwn 20276 on_click_watch_other_label')
 
         # Launch the video
         utils.open_file(self.main_win_obj.app_obj, uri)
@@ -20102,7 +20318,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15975 on_click_watch_player_label')
+            utils.debug_time('mwn 20321 on_click_watch_player_label')
 
         if self.video_obj.live_mode == 2:
 
@@ -20204,7 +20420,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 on_click_watch_web_label')
+            utils.debug_time('mwn 20423 on_click_watch_web_label')
 
         # Launch the video
         utils.open_file(self.main_win_obj.app_obj, uri)
@@ -20251,7 +20467,7 @@ class ComplexCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16118 on_right_click_row')
+            utils.debug_time('mwn 20470 on_right_click_row')
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 
@@ -20283,7 +20499,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
     def __init__(self, main_win_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 13928 __init__')
+            utils.debug_time('mwn 20502 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -20384,7 +20600,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14027 draw_widgets')
+            utils.debug_time('mwn 20603 draw_widgets')
 
         # If the video's parent folder is a temporary folder, then we don't
         #   need one row of widgets at all
@@ -20680,7 +20896,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14354 update_widgets')
+            utils.debug_time('mwn 20899 update_widgets')
 
         self.update_background()
         self.update_tooltips()
@@ -20742,7 +20958,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14404 update_background')
+            utils.debug_time('mwn 20961 update_background')
 
         if force_flag or self.previous_live_mode != self.video_obj.live_mode:
 
@@ -20760,7 +20976,8 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
                 elif self.video_obj.live_mode == 1:
 
-                    if not self.video_obj.live_debut_flag:
+                    if not self.video_obj.live_debut_flag \
+                    or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                         self.catalogue_gridbox.override_background_color(
                             Gtk.StateType.NORMAL,
@@ -20776,7 +20993,8 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
                 elif self.video_obj.live_mode == 2:
 
-                    if not self.video_obj.live_debut_flag:
+                    if not self.video_obj.live_debut_flag \
+                    or self.main_win_obj.app_obj.livestream_simple_colour_flag:
 
                         self.catalogue_gridbox.override_background_color(
                             Gtk.StateType.NORMAL,
@@ -20825,7 +21043,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14436 update_tooltips')
+            utils.debug_time('mwn 21046 update_tooltips')
 
         if self.main_win_obj.app_obj.show_tooltips_flag:
             self.catalogue_gridbox.set_tooltip_text(
@@ -20845,7 +21063,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14456 update_thumb_image')
+            utils.debug_time('mwn 21066 update_thumb_image')
 
         app_obj = self.main_win_obj.app_obj
         thumb_size = app_obj.thumb_size_custom
@@ -20919,7 +21137,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14513 update_video_name')
+            utils.debug_time('mwn 21140 update_video_name')
 
         app_obj = self.main_win_obj.app_obj
         thumb_size = app_obj.thumb_size_custom
@@ -20990,7 +21208,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14513 update_container_name')
+            utils.debug_time('mwn 21211 update_container_name')
 
         if self.video_obj.orig_parent is not None:
 
@@ -21038,7 +21256,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14736 update_video_stats')
+            utils.debug_time('mwn 21259 update_video_stats')
 
         # Import the main application (for convenience)
         app_obj = self.main_win_obj.app_obj
@@ -21125,7 +21343,8 @@ class GridCatalogueItem(ComplexCatalogueItem):
                 + '">' + label + '</a>',
             )
 
-            if self.video_obj.live_mode == 2:
+            if __main__.__pkg_no_download_flag__ \
+            or self.video_obj.live_mode == 2:
 
                 # (Livestream already broadcasting)
                 self.live_auto_dl_start_label.set_markup(_('D/L on start'))
@@ -21143,16 +21362,22 @@ class GridCatalogueItem(ComplexCatalogueItem):
                     + '">' + label + '</a>',
                 )
 
-            if dbid in app_obj.media_reg_auto_dl_stop_dict:
-                label = '<s>' + _('D/L on stop') + '</s>'
-            else:
-                label = _('D/L on stop')
+            if __main__.__pkg_no_download_flag__:
 
-            self.live_auto_dl_stop_label.set_markup(
-                '<a href="' + name + '" title="' \
-                + _('When the livestream stops, download it') \
-                + '">' + label + '</a>',
-            )
+                self.live_auto_dl_stop_label.set_markup(_('D/L on stop'))
+
+            else:
+
+                if dbid in app_obj.media_reg_auto_dl_stop_dict:
+                    label = '<s>' + _('D/L on stop') + '</s>'
+                else:
+                    label = _('D/L on stop')
+
+                self.live_auto_dl_stop_label.set_markup(
+                    '<a href="' + name + '" title="' \
+                    + _('When the livestream stops, download it') \
+                    + '">' + label + '</a>',
+                )
 
 
     def update_watch_player(self):
@@ -21164,16 +21389,35 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 14858 update_watch_player')
+            utils.debug_time('mwn 21392 update_watch_player')
 
-        if self.video_obj.live_mode == 1:
+        if self.video_obj.file_name:
+            watch_text = '<a href="' + html.escape(
+                self.video_obj.get_actual_path(self.main_win_obj.app_obj),
+            ) + '" title="' + _('Watch in your media player') + '">' \
+            + _('Player') + '</a>'
+
+        if __main__.__pkg_no_download_flag__:
+
+            if self.video_obj.file_name and self.video_obj.dl_flag:
+
+                # Link clickable
+                self.watch_player_label.set_markup(watch_text)
+
+            else:
+
+                # Link not clickable
+                self.watch_player_label.set_markup(_('Download'))
+
+        elif self.video_obj.live_mode == 1:
 
             if self.video_obj.live_msg == '':
 
                 # Link not clickable
-                self.watch_player_label.set_markup(
-                    _('Live soon:'),
-                )
+                if not self.video_obj.live_debut_flag:
+                    self.watch_player_label.set_markup(_('Live soon:'))
+                else:
+                    self.watch_player_label.set_markup(_('Debut soon:'))
 
             else:
 
@@ -21189,19 +21433,13 @@ class GridCatalogueItem(ComplexCatalogueItem):
             self.watch_player_label.set_markup(
                 '<a href="' + html.escape(self.video_obj.source) \
                 + '" title="' + _('Download this video') + '">' \
-                + _('D/L') + '</a>',
+                + _('Download') + '</a>',
             )
 
         elif self.video_obj.file_name and self.video_obj.dl_flag:
 
             # Link clickable
-            self.watch_player_label.set_markup(
-                '<a href="' \
-                + html.escape(
-                    self.video_obj.get_actual_path(self.main_win_obj.app_obj),
-                ) + '" title="' + _('Watch in your media player') + '">' \
-                + _('Player') + '</a>',
-            )
+            self.watch_player_label.set_markup(watch_text)
 
         elif self.video_obj.source \
         and not self.main_win_obj.app_obj.update_manager_obj \
@@ -21237,7 +21475,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15118 update_marked_labels')
+            utils.debug_time('mwn 21478 update_marked_labels')
 
         if self.video_obj.file_name:
             link_text = self.video_obj.get_actual_path(
@@ -21345,9 +21583,11 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15207 temp_box_is_visible')
+            utils.debug_time('mwn 21586 temp_box_is_visible')
 
-        if (
+        if __main__.__pkg_no_download_flag__:
+            return False
+        elif (
             self.main_win_obj.app_obj.catalogue_mode
             == 'grid_show_parent_ext'
         ) and not self.no_temp_widgets_flag \
@@ -21371,7 +21611,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15235 marked_box_is_visible')
+            utils.debug_time('mwn 21614 marked_box_is_visible')
 
         if (
             self.main_win_obj.app_obj.catalogue_mode \
@@ -21391,6 +21631,9 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
         Selects/unselects this catalogue object.
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 21636 toggle_select')
 
         if not self.selected_flag:
 
@@ -21421,6 +21664,9 @@ class GridCatalogueItem(ComplexCatalogueItem):
                 unselect it
 
         """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 21669 toggle_select')
 
         if not select_flag:
 
@@ -21459,7 +21705,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15523 on_click_marked_archive_label')
+            utils.debug_time('mwn 21708 on_click_marked_archive_label')
 
         # Mark the video as archived/not archived
         if not self.video_obj.archive_flag:
@@ -21497,7 +21743,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15561 on_click_marked_bookmark_label')
+            utils.debug_time('mwn 21746 on_click_marked_bookmark_label')
 
         # Mark the video as bookmarked/not bookmarked
         if not self.video_obj.bookmark_flag:
@@ -21542,7 +21788,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 15689 on_click_marked_waiting_list_label')
+            utils.debug_time('mwn 21791 on_click_marked_waiting_list_label')
 
         # Mark the video as in waiting list/not in waiting list
         if not self.video_obj.waiting_flag:
@@ -21585,7 +21831,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16118 on_right_click_box')
+            utils.debug_time('mwn 21834 on_right_click_box')
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
 
@@ -21632,6 +21878,8 @@ class CatalogueRow(Gtk.ListBoxRow):
 
     Args:
 
+        main_win_obj (mainwin.MainWin): The main window
+
         video_obj (media.Video): The video object displayed on this row
 
     """
@@ -21640,17 +21888,92 @@ class CatalogueRow(Gtk.ListBoxRow):
     # Standard class methods
 
 
-    def __init__(self, video_obj):
+    def __init__(self, main_win_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16146 __init__')
+            utils.debug_time('mwn 21894 __init__')
 
         super(Gtk.ListBoxRow, self).__init__()
 
         # IV list - class objects
         # -----------------------
-
+        self.main_win_obj = main_win_obj
         self.video_obj = video_obj
+
+
+        # Code
+        # ----
+
+        # Set up drag and drop from the listbox row to an external application
+        #   (for example, an FFmpeg batch converter)
+        self.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.drag_source_add_text_targets()
+        self.connect(
+            'drag-data-get',
+            self.on_drag_data_get,
+        )
+
+
+    # Callback class methods
+
+
+    def on_drag_data_get(self, widget, drag_context, data, \
+    info, time):
+
+        """Called from callback in self.__init__().
+
+        Set the data to be used when the user drags and drops videos from the
+        Video Catalogue to an external application (for example, an FFmpeg
+        batch converter).
+
+        Args:
+
+            widget (mainwin.CatalogueRow): The widget handling the video in the
+                Video Catalogue
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 21950 on_drag_data_get')
+
+        if info == 0:   # TARGET_ENTRY_TEXT
+
+            # If this row is selected, and other rows are also selected, they
+            #   are all dragged together. Otherwise, only this row is dragged
+            selected_list = []
+            for catalogue_item_obj \
+            in self.main_win_obj.catalogue_listbox.get_selected_rows():
+                selected_list.append(catalogue_item_obj.video_obj)
+
+            if self.video_obj in selected_list:
+                video_list = selected_list.copy()
+            else:
+                video_list = [ self.video_obj ]
+
+            # Transfer to the external application a single string, containing
+            #   one or more full file paths/URLs/video names, separated by
+            #   newline characters
+            # If the path/URL/name isn't known for any videos, then an empty
+            #   line is transferred
+            if info == 0:   # TARGET_ENTRY_TEXT
+
+                data.set_text(
+                    self.main_win_obj.get_video_drag_data(video_list),
+                    -1,
+                )
 
 
 class CatalogueGridBox(Gtk.Frame):
@@ -21663,6 +21986,8 @@ class CatalogueGridBox(Gtk.Frame):
 
     Args:
 
+        main_win_obj (mainwin.MainWin): The main window
+
         video_obj (media.Video): The video object displayed in this gridbox
 
     """
@@ -21674,7 +21999,7 @@ class CatalogueGridBox(Gtk.Frame):
     def __init__(self, main_win_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16146 __init__')
+            utils.debug_time('mwn 22002 __init__')
 
         super(Gtk.Frame, self).__init__()
 
@@ -21721,6 +22046,19 @@ class CatalogueGridBox(Gtk.Frame):
         self.set_can_focus(True)
         self.connect('key-press-event', self.on_key_press_event)
 
+        # Set up drag and drop from the gridbox to an external application
+        #   (for example, an FFmpeg batch converter)
+        self.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.drag_source_add_text_targets()
+        self.connect(
+            'drag-data-get',
+            self.on_drag_data_get,
+        )
+
 
     # Public class methods
 
@@ -21740,7 +22078,7 @@ class CatalogueGridBox(Gtk.Frame):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 set_posn')
+            utils.debug_time('mwn 22081 set_posn')
 
         self.x_pos = x_pos
         self.y_pos = y_pos
@@ -21762,7 +22100,7 @@ class CatalogueGridBox(Gtk.Frame):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 enable_visible_frame')
+            utils.debug_time('mwn 22103 enable_visible_frame')
 
         thumb_size = self.main_win_obj.app_obj.thumb_size_custom
 
@@ -21776,6 +22114,63 @@ class CatalogueGridBox(Gtk.Frame):
 
 
     # Callback class methods
+
+
+    def on_drag_data_get(self, widget, drag_context, data, \
+    info, time):
+
+        """Called from callback in self.__init__().
+
+        Set the data to be used when the user drags and drops videos from the
+        Video Catalogue to an external application (for example, an FFmpeg
+        batch converter).
+
+        Args:
+
+            widget (mainwin.CatalogueGridBox): The widget handling the video in
+                the Video Catalogue
+
+            drag_context (GdkX11.X11DragContext): Data from the drag procedure
+
+            data (Gtk.SelectionData): The object to be filled with drag data
+
+            info (int): Info that has been registered with the target in the
+                Gtk.TargetList
+
+            time (int): A timestamp
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22145 on_drag_data_get')
+
+        if info == 0:   # TARGET_ENTRY_TEXT
+
+            # If this gridbox is selected, and other gridboxes are also
+            #   selected, they are all dragged together. Otherwise, only this
+            #   gridbox is dragged
+            selected_list = []
+            for catalogue_item_obj \
+            in self.main_win_obj.video_catalogue_dict.values():
+                if catalogue_item_obj.selected_flag:
+                    selected_list.append(catalogue_item_obj.video_obj)
+
+            if self.video_obj in selected_list:
+                video_list = selected_list.copy()
+            else:
+                video_list = [ self.video_obj ]
+
+            # Transfer to the external application a single string, containing
+            #   one or more full file paths/URLs/video names, separated by
+            #   newline characters
+            # If the path/URL/name isn't known for any videos, then an empty
+            #   line is transferred
+            if info == 0:   # TARGET_ENTRY_TEXT
+
+                data.set_text(
+                    self.main_win_obj.get_video_drag_data(video_list),
+                    -1,
+                )
 
 
     def on_key_press_event(self, widget, event):
@@ -21801,7 +22196,7 @@ class CatalogueGridBox(Gtk.Frame):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 on_key_press_event')
+            utils.debug_time('mwn 22199 on_key_press_event')
 
         if event.type != Gdk.EventType.KEY_PRESS:
             return
@@ -21865,7 +22260,7 @@ class CatalogueGridBox(Gtk.Frame):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16074 on_size_allocate')
+            utils.debug_time('mwn 22263 on_size_allocate')
 
         thumb_size = self.main_win_obj.app_obj.thumb_size_custom
         min_width = self.main_win_obj.catalogue_grid_width_dict[thumb_size]
@@ -21893,6 +22288,9 @@ class CatalogueGridBox(Gtk.Frame):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22292 set_expandable')
+
         if not expand_flag:
             self.set_hexpand(False)
         else:
@@ -21918,7 +22316,7 @@ class StatusIcon(Gtk.StatusIcon):
     def __init__(self, app_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16175 __init__')
+            utils.debug_time('mwn 22319 __init__')
 
         super(Gtk.StatusIcon, self).__init__()
 
@@ -21953,7 +22351,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16210 setup')
+            utils.debug_time('mwn 22354 setup')
 
         # Display the default status icon, to start with...
         self.update_icon()
@@ -21977,7 +22375,7 @@ class StatusIcon(Gtk.StatusIcon):
         visible)."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16234 show_icon')
+            utils.debug_time('mwn 22378 show_icon')
 
         if not self.icon_visible_flag:
             self.icon_visible_flag = True
@@ -21992,7 +22390,7 @@ class StatusIcon(Gtk.StatusIcon):
         invisible)."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16249 hide_icon')
+            utils.debug_time('mwn 22393 hide_icon')
 
         if self.icon_visible_flag:
             self.icon_visible_flag = False
@@ -22009,7 +22407,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16266 update_icon')
+            utils.debug_time('mwn 22410 update_icon')
 
         if self.app_obj.download_manager_obj:
             if self.app_obj.download_manager_obj.operation_type == 'sim':
@@ -22070,7 +22468,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16317 on_button_press_event')
+            utils.debug_time('mwn 22471 on_button_press_event')
 
         if event_button.button == 1:
             self.app_obj.main_win_obj.toggle_visibility()
@@ -22097,7 +22495,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16344 on_popup_menu')
+            utils.debug_time('mwn 22498 on_popup_menu')
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
@@ -22157,7 +22555,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16404 on_check_menu_item')
+            utils.debug_time('mwn 22558 on_check_menu_item')
 
         if not self.app_obj.current_manager_obj:
             self.app_obj.download_manager_start('sim')
@@ -22176,7 +22574,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16423 on_download_menu_item')
+            utils.debug_time('mwn 22577 on_download_menu_item')
 
         if not self.app_obj.current_manager_obj:
             self.app_obj.download_manager_start('real')
@@ -22197,7 +22595,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16444 on_stop_menu_item')
+            utils.debug_time('mwn 22598 on_stop_menu_item')
 
         if self.app_obj.current_manager_obj:
 
@@ -22230,7 +22628,7 @@ class StatusIcon(Gtk.StatusIcon):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16475 on_quit_menu_item')
+            utils.debug_time('mwn 22631 on_quit_menu_item')
 
         self.app_obj.stop()
 
@@ -22252,7 +22650,7 @@ class MultiDragDropTreeView(Gtk.TreeView):
     def __init__(self):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16476 __init__')
+            utils.debug_time('mwn 22653 __init__')
 
         super(MultiDragDropTreeView, self).__init__()
 
@@ -22278,7 +22676,7 @@ class MultiDragDropTreeView(Gtk.TreeView):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16477 on_button_press')
+            utils.debug_time('mwn 22679 on_button_press')
 
         target = self.get_path_at_pos(int(event.x), int(event.y))
 
@@ -22310,7 +22708,7 @@ class MultiDragDropTreeView(Gtk.TreeView):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16478 on_button_release')
+            utils.debug_time('mwn 22711 on_button_release')
 
         self.get_selection().set_select_function(lambda *ignore: True)
 
@@ -22361,7 +22759,7 @@ class AddChannelDialogue(Gtk.Dialog):
     dl_sim_flag=False, monitor_flag=False):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 16892 __init__')
+            utils.debug_time('mwn 22762 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -22563,7 +22961,7 @@ class AddChannelDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17094 on_checkbutton_toggled')
+            utils.debug_time('mwn 22964 on_checkbutton_toggled')
 
         if not checkbutton.get_active() \
         and self.clipboard_timer_id is not None:
@@ -22595,7 +22993,7 @@ class AddChannelDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17126 on_combo_changed')
+            utils.debug_time('mwn 22996 on_combo_changed')
 
         self.parent_name = self.folder_list[combo.get_active()]
 
@@ -22609,7 +23007,7 @@ class AddChannelDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17140 on_window_drag_data_received')
+            utils.debug_time('mwn 23010 on_window_drag_data_received')
 
         utils.add_links_to_entry_from_clipboard(
             self.main_win_obj.app_obj,
@@ -22633,7 +23031,7 @@ class AddChannelDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17164 clipboard_timer_callback')
+            utils.debug_time('mwn 23034 clipboard_timer_callback')
 
         utils.add_links_to_entry_from_clipboard(
             self.main_win_obj.app_obj,
@@ -22669,7 +23067,7 @@ class AddFolderDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, suggest_parent_name=None):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17200 __init__')
+            utils.debug_time('mwn 23070 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -22821,7 +23219,7 @@ class AddFolderDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17352 on_combo_changed')
+            utils.debug_time('mwn 23222 on_combo_changed')
 
         self.parent_name = self.folder_list[combo.get_active()]
 
@@ -22857,7 +23255,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
     dl_sim_flag=False, monitor_flag=False):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17388 __init__')
+            utils.debug_time('mwn 23258 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -23058,7 +23456,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17589 on_checkbutton_toggled')
+            utils.debug_time('mwn 23459 on_checkbutton_toggled')
 
         if not checkbutton.get_active() \
         and self.clipboard_timer_id is not None:
@@ -23090,7 +23488,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17621 on_combo_changed')
+            utils.debug_time('mwn 23491 on_combo_changed')
 
         self.parent_name = self.folder_list[combo.get_active()]
 
@@ -23104,7 +23502,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17635 on_window_drag_data_received')
+            utils.debug_time('mwn 23505 on_window_drag_data_received')
 
         utils.add_links_to_entry_from_clipboard(
             self.main_win_obj.app_obj,
@@ -23128,7 +23526,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17659 clipboard_timer_callback')
+            utils.debug_time('mwn 23529 clipboard_timer_callback')
 
         utils.add_links_to_entry_from_clipboard(
             self.main_win_obj.app_obj,
@@ -23160,7 +23558,7 @@ class AddVideoDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17691 __init__')
+            utils.debug_time('mwn 23561 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -23396,7 +23794,7 @@ class AddVideoDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17927 on_checkbutton_toggled')
+            utils.debug_time('mwn 23797 on_checkbutton_toggled')
 
         if not checkbutton.get_active() \
         and self.clipboard_timer_id is not None:
@@ -23428,7 +23826,7 @@ class AddVideoDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17959 on_combo_changed')
+            utils.debug_time('mwn 23829 on_combo_changed')
 
         self.parent_name = self.folder_list[combo.get_active()]
 
@@ -23442,7 +23840,7 @@ class AddVideoDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17973 on_window_drag_data_received')
+            utils.debug_time('mwn 23843 on_window_drag_data_received')
 
         utils.add_links_to_textview_from_clipboard(
             self.main_win_obj.app_obj,
@@ -23467,7 +23865,7 @@ class AddVideoDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17998 clipboard_timer_callback')
+            utils.debug_time('mwn 23868 clipboard_timer_callback')
 
         utils.add_links_to_textview_from_clipboard(
             self.main_win_obj.app_obj,
@@ -23501,7 +23899,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18037 __init__')
+            utils.debug_time('mwn 23902 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -23626,7 +24024,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18038 on_combo_changed')
+            utils.debug_time('mwn 24027 on_combo_changed')
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
@@ -23649,7 +24047,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18039 on_radiobutton_toggled')
+            utils.debug_time('mwn 24050 on_radiobutton_toggled')
 
         if button.get_active():
             self.options_obj = None
@@ -23674,7 +24072,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18040 on_radiobutton2_toggled')
+            utils.debug_time('mwn 24075 on_radiobutton2_toggled')
 
         if button.get_active():
 
@@ -23712,7 +24110,7 @@ class CalendarDialogue(Gtk.Dialog):
     def __init__(self, parent_win_obj, date=None):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18036 __init__')
+            utils.debug_time('mwn 24113 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -23796,7 +24194,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj, empty_flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18120 __init__')
+            utils.debug_time('mwn 24197 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -23826,7 +24224,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         if media_type == 'video':
 
             return main_win_obj.app_obj.system_error(
-                248,
+                264,
                 'Dialogue window setup failed sanity check',
             )
 
@@ -24057,7 +24455,7 @@ class ExportDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, whole_flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18380 __init__')
+            utils.debug_time('mwn 24468 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -24182,7 +24580,7 @@ class ExportDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18505 on_checkbutton_toggled')
+            utils.debug_time('mwn 24583 on_checkbutton_toggled')
 
         if not checkbutton.get_active():
             self.checkbutton.set_sensitive(True)
@@ -24217,7 +24615,7 @@ class ImportDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, db_dict):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18540 __init__')
+            utils.debug_time('mwn 24618 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -24425,7 +24823,7 @@ class ImportDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18748 convert_to_list')
+            utils.debug_time('mwn 24826 convert_to_list')
 
         # (Sorting function for the code immediately below)
         def sort_dict_by_name(this_dict):
@@ -24488,7 +24886,7 @@ class ImportDialogue(Gtk.Dialog):
 
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18811 on_checkbutton_toggled')
+            utils.debug_time('mwn 24889 on_checkbutton_toggled')
 
         # The user has clicked on the checkbutton widget, so toggle the widget
         #   itself
@@ -24513,7 +24911,7 @@ class ImportDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18836 on_select_all_clicked')
+            utils.debug_time('mwn 24914 on_select_all_clicked')
 
         for path in range(0, len(self.liststore)):
             self.liststore[path][0] = True
@@ -24535,7 +24933,7 @@ class ImportDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18858 on_deselect_all_clicked')
+            utils.debug_time('mwn 24936 on_deselect_all_clicked')
 
         for path in range(0, len(self.liststore)):
             self.liststore[path][0] = False
@@ -24568,7 +24966,7 @@ class MountDriveDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, unwriteable_flag=False):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 18891 __init__')
+            utils.debug_time('mwn 24969 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -24731,7 +25129,7 @@ class MountDriveDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19054 on_ok_button_clicked')
+            utils.debug_time('mwn 25132 on_ok_button_clicked')
 
         if self.radiobutton.get_active():
             self.do_try_again()
@@ -24772,7 +25170,7 @@ class MountDriveDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19095 on_cancel_button_clicked')
+            utils.debug_time('mwn 25173 on_cancel_button_clicked')
 
         self.available_flag = False
         self.destroy()
@@ -24792,7 +25190,7 @@ class MountDriveDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19115 on_radiobutton_toggled')
+            utils.debug_time('mwn 25193 on_radiobutton_toggled')
 
         if button.get_active():
             self.combo.set_sensitive(True)
@@ -24811,7 +25209,7 @@ class MountDriveDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19134 do_try_again')
+            utils.debug_time('mwn 25212 do_try_again')
 
         app_obj = self.main_win_obj.app_obj
 
@@ -24845,7 +25243,7 @@ class MountDriveDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19168 do_select_dir')
+            utils.debug_time('mwn 25246 do_select_dir')
 
         if (self.main_win_obj.app_obj.prompt_user_for_data_dir()):
 
@@ -24878,7 +25276,7 @@ class RemoveLockFileDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, switch_flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19197 __init__')
+            utils.debug_time('mwn 25279 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -24996,7 +25394,7 @@ class RemoveLockFileDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19307 on_yes_button_clicked')
+            utils.debug_time('mwn 25397 on_yes_button_clicked')
 
         self.remove_flag = True
         self.destroy()
@@ -25016,7 +25414,7 @@ class RemoveLockFileDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19327 on_no_button_clicked')
+            utils.debug_time('mwn 25417 on_no_button_clicked')
 
         self.remove_flag = False
         self.destroy()
@@ -25045,7 +25443,7 @@ class RenameContainerDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19356 __init__')
+            utils.debug_time('mwn 25446 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25142,7 +25540,7 @@ class ScheduledDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj, available_list):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19357 __init__')
+            utils.debug_time('mwn 25543 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25233,7 +25631,7 @@ class ScheduledDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19358 on_combo_changed')
+            utils.debug_time('mwn 25634 on_combo_changed')
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
@@ -25263,7 +25661,7 @@ class SetDestinationDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19449 __init__')
+            utils.debug_time('mwn 25664 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25489,7 +25887,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19676 on_combo_changed')
+            utils.debug_time('mwn 25890 on_combo_changed')
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
@@ -25525,7 +25923,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19712 on_radiobutton_toggled')
+            utils.debug_time('mwn 25926 on_radiobutton_toggled')
 
         if radiobutton.get_active():
             combo.set_sensitive(False)
@@ -25551,7 +25949,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19378 on_radiobutton2_toggled')
+            utils.debug_time('mwn 25952 on_radiobutton2_toggled')
 
         if radiobutton2.get_active():
             combo.set_sensitive(True)
@@ -25593,7 +25991,7 @@ class SetNicknameDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19974 __init__')
+            utils.debug_time('mwn 25994 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25691,7 +26089,7 @@ class SetURLDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 19975 __init__')
+            utils.debug_time('mwn 26092 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25784,7 +26182,7 @@ class SystemCmdDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20075 __init__')
+            utils.debug_time('mwn 26185 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -25894,7 +26292,7 @@ class SystemCmdDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20185 update_textbuffer')
+            utils.debug_time('mwn 26295 update_textbuffer')
 
         # Get the options.OptionsManager object that applies to this media
         #   data object
@@ -25950,7 +26348,7 @@ class SystemCmdDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20241 on_copy_clicked')
+            utils.debug_time('mwn 26351 on_copy_clicked')
 
         # Obtain the system command used to download this media data object,
         #   and display it in the textbuffer
@@ -25978,7 +26376,7 @@ class SystemCmdDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20269 on_update_clicked')
+            utils.debug_time('mwn 26379 on_update_clicked')
 
         # Obtain the system command used to download this media data object,
         #   and display it in the textbuffer
@@ -26010,7 +26408,7 @@ class TestCmdDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, source_url=None):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20301 __init__')
+            utils.debug_time('mwn 26411 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -26112,7 +26510,7 @@ class TidyDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, media_data_obj=None):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20403 __init__')
+            utils.debug_time('mwn 26513 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -26299,7 +26697,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20555 on_checkbutton_toggled')
+            utils.debug_time('mwn 26700 on_checkbutton_toggled')
 
         if not checkbutton.get_active():
             self.checkbutton2.set_active(False)
@@ -26323,7 +26721,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20579 on_checkbutton4_toggled')
+            utils.debug_time('mwn 26724 on_checkbutton4_toggled')
 
         if not checkbutton.get_active():
             self.checkbutton5.set_active(False)
@@ -26347,7 +26745,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20580 on_checkbutton12_toggled')
+            utils.debug_time('mwn 26748 on_checkbutton12_toggled')
 
         if not checkbutton.get_active():
             self.checkbutton8.set_sensitive(True)
@@ -26371,7 +26769,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20581 on_checkbutton13_toggled')
+            utils.debug_time('mwn 26772 on_checkbutton13_toggled')
 
         if not checkbutton.get_active():
 
@@ -26403,7 +26801,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20602 on_select_all_clicked')
+            utils.debug_time('mwn 26804 on_select_all_clicked')
 
         self.checkbutton.set_active(True)
         self.checkbutton2.set_active(True)
@@ -26438,7 +26836,7 @@ class TidyDialogue(Gtk.Dialog):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 20629 on_select_none_clicked')
+            utils.debug_time('mwn 26839 on_select_none_clicked')
 
         self.checkbutton.set_active(False)
         self.checkbutton2.set_active(False)

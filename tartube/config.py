@@ -6449,7 +6449,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
     def setup_videos_tab_add_row(self, video_obj):
 
-        """Called by self.setup_videos_tab_update_treeview.
+        """Called by self.setup_videos_tab_update_treeview().
 
         Adds a row to the treeview for a specified media.Video object.
 
@@ -6638,7 +6638,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             self.edit_dict['input_mode'] = 'thumb'
 
-            self.output_mode_radiobutton3.set_active(True)
+            self.output_mode_radiobutton4.set_active(True)
             self.output_mode_radiobutton.set_sensitive(False)
             self.output_mode_radiobutton2.set_sensitive(False)
             self.output_mode_radiobutton3.set_sensitive(False)
@@ -9824,17 +9824,8 @@ class SystemPrefWin(GenericPrefWin):
             0, 8, grid_width, 1,
         )
 
-        if self.app_obj.config_file_xdg_path is None \
-        or (
-            os.path.isfile(self.app_obj.config_file_path) \
-            and not __main__.__pkg_strict_install_flag__
-        ):
-            config_path = self.app_obj.config_file_path
-        else:
-            config_path = self.app_obj.config_file_xdg_path
-
         entry3 = self.add_entry(grid,
-            config_path,
+            self.app_obj.get_config_path(),
             False,
             0, 9, grid_width, 1,
         )
@@ -10457,6 +10448,8 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
+        if __main__.__pkg_no_download_flag__:
+            checkbutton9.set_sensitive(False)
 
         checkbutton10 = self.add_checkbutton(grid,
             _(
@@ -10611,9 +10604,27 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 11, grid_width, 1,
         )
+        # (Signal connect appears below)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            _('Use same background colours for livestream and debut videos'),
+            self.app_obj.livestream_simple_colour_flag,
+            True,                   # Can be toggled by user
+            0, 12, grid_width, 1,
+        )
+        if not self.app_obj.livestream_use_colour_flag:
+            checkbutton9.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
         checkbutton8.connect(
             'toggled',
             self.on_livestream_colour_button_toggled,
+            checkbutton9,
+        )
+        checkbutton9.connect(
+            'toggled',
+            self.on_livestream_simple_button_toggled,
         )
 
 
@@ -11453,7 +11464,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4 = self.add_checkbutton(grid,
             _(
             'Stop checking/downloading a channel/playlist when it starts' \
-            + ' sending videos we already have',
+            + ' sending videos you already have',
             ),
             self.app_obj.operation_limit_flag,
             True,               # Can be toggled by user
@@ -12128,12 +12139,14 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4 = self.add_checkbutton(grid,
             _(
                 'Use Youtube Stream Capture to download broadcasting' \
-                + ' livestreams',
+                + ' livestreams (requires aria2)',
             ),
             self.app_obj.ytsc_priority_flag,
             True,                   # Can be toggled by user
             0, 5, grid_width, 1,
         )
+        if os.name == 'nt':
+            checkbutton4.set_sensitive(False)
         # (Signal connect appears below)
 
         self.add_label(grid,
@@ -15865,7 +15878,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_livestream_auto_open_flag(False)
 
 
-    def on_livestream_colour_button_toggled(self, checkbutton):
+    def on_livestream_colour_button_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_windows_videos_tab().
 
@@ -15876,14 +15889,27 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.livestream_use_colour_flag:
             self.app_obj.set_livestream_use_colour_flag(True)
+            checkbutton2.set_sensitive(True)
+
         elif not checkbutton.get_active() \
         and self.app_obj.livestream_use_colour_flag:
             self.app_obj.set_livestream_use_colour_flag(False)
+            checkbutton2.set_sensitive(False)
+
+        # Redraw the Video Catalogue, at its current page, to update the
+        #   backgrounds
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
+        )
 
 
     def on_livestream_max_days_spinbutton_changed(self, spinbutton):
@@ -15900,6 +15926,35 @@ class SystemPrefWin(GenericPrefWin):
 
         self.app_obj.set_livestream_max_days(
             spinbutton.get_value(),
+        )
+
+
+    def on_livestream_simple_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_videos_tab().
+
+        Enables/disables using the same background colour for livestream and
+        debut videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.livestream_simple_colour_flag:
+            self.app_obj.set_livestream_simple_colour_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.livestream_simple_colour_flag:
+            self.app_obj.set_livestream_simple_colour_flag(False)
+
+        # Redraw the Video Catalogue, at its current page, to update the
+        #   backgrounds
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
         )
 
 

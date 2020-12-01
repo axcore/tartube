@@ -28,6 +28,7 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 # Import other modules
 import os
+import re
 
 
 # Import our modules
@@ -562,6 +563,9 @@ class SetupWizWin(GenericWizWin):
         # (Textbuffers used to display output of an update operation, and the
         #   buttons used to initiate that operation)
         self.downloader_button = None           # Gtk.Button
+        self.update_button = None               # Gtk.Button
+        self.update_combo = None                # Gtk.ComboBox
+        self.update_liststore = None            # Gtk.ListStore
         self.downloader_scrolled = None         # Gtk.ScrolledWindow
         self.downloader_textview = None         # Gtk.TextView
         self.downloader_textbuffer = None       # Gtk.TextBuffer
@@ -593,6 +597,12 @@ class SetupWizWin(GenericWizWin):
         # The name of the youtube-dl fork to use ('None' when youtube-dl itself
         #   should be used)
         self.ytdl_fork = 'youtube-dlc'
+        # The new value of mainapp.TartubeApp.ytdl_update_current(), if any.
+        self.ytdl_update_current = None
+
+        # Flag set to True, once the 'More options' button has been clicked,
+        #   so that it is never visible again
+        self.more_options_flag = False
 
         # Code
         # ----
@@ -655,9 +665,15 @@ class SetupWizWin(GenericWizWin):
 
         if self.data_dir is not None:
             self.app_obj.set_data_dir(self.data_dir)
+            self.app_obj.set_data_dir_alt_list( [ self.data_dir ] )
+            self.app_obj.update_data_dirs()
 
         # (None values are acceptable)
         self.app_obj.set_ytdl_fork(self.ytdl_fork)
+
+        # (A None value, only if it hasn't been changed)
+        if self.ytdl_update_current is not None:
+            self.app_obj.set_ytdl_update_current(self.ytdl_update_current)
 
         # Continue with general initialisation
         self.app_obj.open_wiz_win_continue()
@@ -667,10 +683,28 @@ class SetupWizWin(GenericWizWin):
 
         """Called by self.on_button_cancel_clicked().
 
-        The main application needs to be shut down.
+        Tartube needs to be shut down (unless an update operation is running,
+        in which case we stop it.)
         """
 
-        self.app_obj.stop()
+        if self.app_obj.update_manager_obj:
+
+            self.app_obj.update_manager_obj.stop_update_operation()
+
+        else:
+
+            # (Prevent the shutdown code from saving the config file and/or
+            #   database)
+            self.app_obj.disable_load_save()
+
+            # (Delete the config file, so that this window will appear again,
+            #   the next time Tartube runs)
+            config_path = self.app_obj.get_config_path()
+            if os.path.isfile(config_path):
+                os.remove(config_path)
+
+            # Shut down Tartube
+            self.app_obj.stop()
 
 
 #   def close():                # Inherited from GenericWizWin
@@ -697,21 +731,49 @@ class SetupWizWin(GenericWizWin):
             0, 1, 1, 1,
         )
 
+        if __main__.__pkg_no_download_flag__:
+
+            edition = _('Video downloads are disabled in this package')
+
+        elif __main__.__pkg_strict_install_flag__:
+
+            edition = _(
+                'For this package, youtube-dl(c) and FFmpeg must be' \
+                + ' installed separately',
+            )
+
+        elif __main__.__pkg_install_flag__:
+
+            edition = _('Package edition')
+
+        elif os.name == 'nt':
+
+            edition = _('MS Windows edition')
+
+        else:
+
+            edition = _('Standard edition')
+
+        self.add_label(
+            '<span style="italic">' + edition + '</span>',
+            0, 2, 1, 1,
+        )
+
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, 1, 1)
+        self.add_empty_label(0, 3, 1, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
             + _('Please take a few moments to set up the application') \
             + '</span>',
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + _('Click the <b>Next</b> button to get started') \
             + '</span>',
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
 
 
@@ -803,7 +865,7 @@ class SetupWizWin(GenericWizWin):
 
             label = self.add_label(
                 '<span font_size="large" font_weight="bold">' \
-                + self.app_obj.data_dir + '</span>',
+                + self.data_dir + '</span>',
                 0, 9, grid_width, 1,
             )
 
@@ -950,7 +1012,7 @@ class SetupWizWin(GenericWizWin):
         event_box = Gtk.EventBox()
         self.inner_grid.attach(event_box, 1, row, 1, 1)
         # (Signal connect appears below)
-        
+
         frame = Gtk.Frame()
         event_box.add(frame)
         frame.set_border_width(self.spacing_size)
@@ -979,7 +1041,7 @@ class SetupWizWin(GenericWizWin):
             self.on_frame_downloader_clicked,
             radiobutton2,
         )
-        
+
         if not custom_flag:
 
             return radiobutton2
@@ -1029,6 +1091,47 @@ class SetupWizWin(GenericWizWin):
         self.downloader_button.set_hexpand(False)
         # (Signal connect appears below)
 
+        self.update_button = Gtk.Button(_('More options'))
+        # (Making the button invisible doesn't work, so instead don't add it
+        #   to the grid at all)
+        if os.name != 'nt' and not self.more_options_flag:
+            self.inner_grid.attach(self.update_button, 1, 4, 1, 1)
+        self.update_button.set_hexpand(False)
+        # (Signal connect appears below)
+
+        # (When the update button is clicked, it is made invisible, and this
+        #   widget is made visible instead)
+        self.update_liststore = Gtk.ListStore(str, str)
+        for item in self.app_obj.ytdl_update_list:
+            self.update_liststore.append(
+                [item, formats.YTDL_UPDATE_DICT[item]],
+            )
+
+        self.update_combo = Gtk.ComboBox.new_with_model(self.update_liststore)
+        if os.name != 'nt':
+            self.inner_grid.attach(self.update_combo, 1, 4, 1, 1)
+        if not self.more_options_flag:
+            self.update_combo.set_visible(False)
+
+        renderer_text = Gtk.CellRendererText()
+        self.update_combo.pack_start(renderer_text, True)
+        self.update_combo.add_attribute(renderer_text, 'text', 1)
+        self.update_combo.set_entry_text_column(1)
+
+        if self.ytdl_update_current is not None:
+            ytdl_update_current = self.ytdl_update_current
+        else:
+            ytdl_update_current = self.app_obj.ytdl_update_current
+
+        self.update_combo.set_active(
+            self.app_obj.ytdl_update_list.index(ytdl_update_current),
+        )
+        # (Signal connect appears below)
+
+        # Update the combo, so that the youtube-dl fork, rather than
+        #   youtube-dl itself, is visible (if applicable)
+        self.refresh_update_combo()
+
         # (Empty label for spacing)
         self.add_empty_label(0, 4, grid_width, 1)
 
@@ -1042,6 +1145,14 @@ class SetupWizWin(GenericWizWin):
             'clicked',
             self.on_button_fetch_downloader_clicked,
         )
+
+        self.update_button.connect(
+            'clicked',
+            self.on_button_update_path_clicked,
+        )
+
+        # (Signal connects from above)
+        self.update_combo.connect('changed', self.on_combo_update_changed)
 
 
     def setup_fetch_ffmpeg_page(self):
@@ -1288,15 +1399,21 @@ class SetupWizWin(GenericWizWin):
 
         """
 
-        self.downloader_textbuffer.insert(
-            self.downloader_textbuffer.get_end_iter(),
-            msg + '\n',
-        )
+        # v2.2.209 This install sometimes freezes on MS Windows, due to some
+        #   Gtk problem or other. Solution is to split up long messages in the
+        #   textview
+        msg = utils.tidy_up_long_string(msg)
+        for line in msg.split('\n'):
+
+            self.downloader_textbuffer.insert(
+                self.downloader_textbuffer.get_end_iter(),
+                line + '\n',
+            )
 
         adjust = self.downloader_scrolled.get_vadjustment()
         adjust.set_value(adjust.get_upper())
 
-        self.show_all()
+        self.downloader_textview.queue_draw()
 
 
     def downloader_fetch_finished(self, msg):
@@ -1332,15 +1449,21 @@ class SetupWizWin(GenericWizWin):
 
         """
 
-        self.ffmpeg_textbuffer.insert(
-            self.ffmpeg_textbuffer.get_end_iter(),
-            msg + '\n',
-        )
+        # v2.2.209 This install sometimes freezes on MS Windows, due to some
+        #   Gtk problem or other. Solution is to split up long messages in the
+        #   textview
+        msg = utils.tidy_up_long_string(msg)
+        for line in msg.split('\n'):
+
+            self.ffmpeg_textbuffer.insert(
+                self.ffmpeg_textbuffer.get_end_iter(),
+                line + '\n',
+            )
 
         adjust = self.ffmpeg_scrolled.get_vadjustment()
         adjust.set_value(adjust.get_upper())
 
-        self.show_all()
+        self.downloader_textview.queue_draw()
 
 
     def ffmpeg_fetch_finished(self, msg):
@@ -1363,7 +1486,50 @@ class SetupWizWin(GenericWizWin):
         self.prev_button.set_sensitive(True)
 
 
+    def refresh_update_combo(self):
+
+        """Called by self.setup_fetch_downloader_page().
+
+        When the youtube-dl fork is changed, updates the contents of the
+        combo created by self.setup_fetch_downloader_page().
+        """
+
+        fork = standard = 'youtube-dl'
+        if self.ytdl_fork is not None:
+            fork = self.ytdl_fork
+
+        count = -1
+        for item in self.app_obj.ytdl_update_list:
+
+            count += 1
+            descrip = re.sub(standard, fork, formats.YTDL_UPDATE_DICT[item])
+            self.update_liststore.set(
+                self.update_liststore.get_iter(Gtk.TreePath(count)),
+                1,
+                descrip,
+            )
+
+
     # (Callbacks)
+
+
+    def on_button_cancel_clicked(self, button):
+
+        """Modified version of the standard function, called from a callback in
+        self.setup_button_strip().
+
+        Closes the wizard window without applying any changes, unless an
+        update operation is in progress.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.reset_changes()
+        if not self.app_obj.update_manager_obj:
+            self.destroy()
 
 
     def on_button_choose_folder_clicked(self, button, label):
@@ -1488,6 +1654,27 @@ class SetupWizWin(GenericWizWin):
             self.prev_button.set_sensitive(True)
 
 
+    def on_button_update_path_clicked(self, button):
+
+        """Called from a callback in self.setup_fetch_page().
+
+        Makes the 'More options' button invisible, and the update path combo
+        visible.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        button.set_visible(False)
+        self.update_combo.set_visible(True)
+
+        # Flag set to True, once the 'More options' button has been clicked,
+        #   so that it is never visible again
+        self.more_options_flag = True
+
+
     def on_button_ytdl_fork_toggled(self, radiobutton, entry, fork_type=None):
 
         """Called from callback in self.setup_set_downloader_page().
@@ -1534,6 +1721,23 @@ class SetupWizWin(GenericWizWin):
                 entry.set_sensitive(False)
 
 
+    def on_combo_update_changed(self, combo):
+
+        """Called from callback in self.setup_fetch_downloader_page().
+
+        Sets the youtube-dl install/update method.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.ytdl_update_current = model[tree_iter][0]
+
+
     def on_entry_ytdl_fork_changed(self, entry, radiobutton):
 
         """Called from callback in self.setup_set_downloader_page().
@@ -1560,24 +1764,24 @@ class SetupWizWin(GenericWizWin):
 
 
     def on_frame_downloader_clicked(self, event_box, event_button,
-    radiobutton): 
+    radiobutton):
 
         """Called from callback in self.setup_set_downloader_page().
 
         Enables/disables selecting a downloader by clicking anywhere in its
         containing frame.
-        
+
         Args:
 
             event_box (Gtk.EventBox): Ignored
-            
+
             event_button (Gdk.EventButton): Ignored
-            
+
             radiobutton (Gtk.RadioButton): The radiobutton inside the clicked
                 frame, which should be made active
-                
+
         """
 
         if not radiobutton.get_active():
             radiobutton.set_active(True)
-            
+
