@@ -32,7 +32,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 ===========================
 
 - You can fetch a list of videos from your favourite channels and playlists on `YouTube <https://www.youtube.com/>`__, `BitChute <https://www.bitchute.com/>`__, and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
-- In buffering is an issue, you can download a temporary copy of a video before automatically opening it in your favourite media player
+- If buffering is an issue, you can download a temporary copy of a video before automatically opening it in your favourite media player
 - **Tartube** will organise your videos into convenient folders (if that's what you want)
 - **Tartube** can alert you when livestreams and debut videos are starting (**YouTube** only)
 - If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), **Tartube** can interact with both sites without creating duplicates
