@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-04 09:34+0000\n"
+"POT-Creation-Date: 2020-12-04 13:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -130,8 +130,8 @@ msgstr ""
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr ""
 
-#: .././mainapp.py:4386 .././mainapp.py:4426 .././mainapp.py:5697
-#: .././mainapp.py:5753 .././mainapp.py:5759
+#: .././mainapp.py:4386 .././mainapp.py:4426 .././mainapp.py:5708
+#: .././mainapp.py:5764 .././mainapp.py:5770
 msgid "File load/save has been disabled"
 msgstr ""
 
@@ -163,500 +163,500 @@ msgstr ""
 msgid "This might take a few minutes, so please be patient"
 msgstr ""
 
-#: .././mainapp.py:5691 .././mainapp.py:5749 .././mainapp.py:5758
+#: .././mainapp.py:5702 .././mainapp.py:5760 .././mainapp.py:5769
 msgid "Failed to save the Tartube database file"
 msgstr ""
 
-#: .././mainapp.py:5694
+#: .././mainapp.py:5705
 msgid "(Could not make a backup copy of the existing file)"
 msgstr ""
 
-#: .././mainapp.py:5730
+#: .././mainapp.py:5741
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
 
-#: .././mainapp.py:5751
+#: .././mainapp.py:5762
 msgid "A backup of the previous file can be found at:"
 msgstr ""
 
-#: .././mainapp.py:5932 .././mainapp.py:5942
+#: .././mainapp.py:5943 .././mainapp.py:5953
 msgid "Database file created"
 msgstr ""
 
-#: .././mainapp.py:6320
+#: .././mainapp.py:6341
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr ""
 
-#: .././mainapp.py:6532
+#: .././mainapp.py:6553
 msgid "Database check complete, no inconsistencies found"
 msgstr ""
 
-#: .././mainapp.py:6559
+#: .././mainapp.py:6580
 msgid "Database check complete, problems found:"
 msgstr ""
 
-#: .././mainapp.py:6562
+#: .././mainapp.py:6583
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
 msgstr ""
 
-#: .././mainapp.py:6707
+#: .././mainapp.py:6728
 msgid "Database inconsistencies repaired"
 msgstr ""
 
-#: .././mainapp.py:7575 .././config.py:14475
+#: .././mainapp.py:7596 .././config.py:14475
 msgid "Please select Tartube's data folder"
 msgstr ""
 
-#: .././mainapp.py:7849
+#: .././mainapp.py:7870
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:7873 .././mainapp.py:7895
+#: .././mainapp.py:7894 .././mainapp.py:7916
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr ""
 
-#: .././mainapp.py:7898 .././mainapp.py:13348 .././mainapp.py:13464
-#: .././mainapp.py:13638 .././mainwin.py:17222
+#: .././mainapp.py:7919 .././mainapp.py:13369 .././mainapp.py:13485
+#: .././mainapp.py:13659 .././mainwin.py:17222
 msgid "Are you sure you want to continue?"
 msgstr ""
 
-#: .././mainapp.py:7985
+#: .././mainapp.py:8006
 msgid "There is nothing to check!"
 msgstr ""
 
-#: .././mainapp.py:7987
+#: .././mainapp.py:8008
 msgid "There is nothing to download!"
 msgstr ""
 
-#: .././mainapp.py:8210
+#: .././mainapp.py:8231
 msgid "Download operation complete"
 msgstr ""
 
-#: .././mainapp.py:8212
+#: .././mainapp.py:8233
 msgid "Download operation halted"
 msgstr ""
 
-#: .././mainapp.py:8216
+#: .././mainapp.py:8237
 msgid "Videos downloaded:"
 msgstr ""
 
-#: .././mainapp.py:8217
+#: .././mainapp.py:8238
 msgid "Videos checked:"
 msgstr ""
 
-#: .././mainapp.py:8220 .././mainapp.py:8821 .././mainapp.py:9274
-#: .././mainapp.py:9673
+#: .././mainapp.py:8241 .././mainapp.py:8842 .././mainapp.py:9295
+#: .././mainapp.py:9694
 msgid "Time taken:"
 msgstr ""
 
-#: .././mainapp.py:8325
+#: .././mainapp.py:8346
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:8511
+#: .././mainapp.py:8532
 msgid "Installation failed"
 msgstr ""
 
-#: .././mainapp.py:8513
+#: .././mainapp.py:8534
 msgid "Installation complete"
 msgstr ""
 
-#: .././mainapp.py:8517
+#: .././mainapp.py:8538
 msgid "Update operation failed"
 msgstr ""
 
-#: .././mainapp.py:8519
+#: .././mainapp.py:8540
 msgid "Update operation halted"
 msgstr ""
 
-#: .././mainapp.py:8521
+#: .././mainapp.py:8542
 msgid "Update operation complete"
 msgstr ""
 
-#: .././mainapp.py:8523
+#: .././mainapp.py:8544
 msgid "version:"
 msgstr ""
 
-#: .././mainapp.py:8527
+#: .././mainapp.py:8548
 msgid "(unknown)"
 msgstr ""
 
-#: .././mainapp.py:8614
+#: .././mainapp.py:8635
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:8627
+#: .././mainapp.py:8648
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
 msgstr ""
 
-#: .././mainapp.py:8631
+#: .././mainapp.py:8652
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
 msgstr ""
 
-#: .././mainapp.py:8638
+#: .././mainapp.py:8659
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr ""
 
-#: .././mainapp.py:8645
+#: .././mainapp.py:8666
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr ""
 
-#: .././mainapp.py:8652
+#: .././mainapp.py:8673
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
 msgstr ""
 
-#: .././mainapp.py:8659
+#: .././mainapp.py:8680
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr ""
 
-#: .././mainapp.py:8664
+#: .././mainapp.py:8685
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr ""
 
-#: .././mainapp.py:8816
+#: .././mainapp.py:8837
 msgid "Refresh operation complete"
 msgstr ""
 
-#: .././mainapp.py:8818
+#: .././mainapp.py:8839
 msgid "Refresh operation halted"
 msgstr ""
 
-#: .././mainapp.py:8918
+#: .././mainapp.py:8939
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:9030
+#: .././mainapp.py:9051
 msgid "Operation failed"
 msgstr ""
 
-#: .././mainapp.py:9032 .././downloads.py:400
+#: .././mainapp.py:9053 .././downloads.py:400
 msgid "Operation complete"
 msgstr ""
 
-#: .././mainapp.py:9034
+#: .././mainapp.py:9055
 msgid "Click the Output Tab to see the results"
 msgstr ""
 
-#: .././mainapp.py:9141
+#: .././mainapp.py:9162
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
 msgstr ""
 
-#: .././mainapp.py:9269
+#: .././mainapp.py:9290
 msgid "Tidy operation complete"
 msgstr ""
 
-#: .././mainapp.py:9271
+#: .././mainapp.py:9292
 msgid "Tidy operation halted"
 msgstr ""
 
-#: .././mainapp.py:9437 .././mainwin.py:17854
+#: .././mainapp.py:9458 .././mainwin.py:17854
 msgid "Livestream has started"
 msgstr ""
 
-#: .././mainapp.py:9662
+#: .././mainapp.py:9683
 msgid "Process operation complete"
 msgstr ""
 
-#: .././mainapp.py:9664
+#: .././mainapp.py:9685
 msgid "Process operation halted"
 msgstr ""
 
-#: .././mainapp.py:9668
+#: .././mainapp.py:9689
 msgid "Files processed:"
 msgstr ""
 
-#: .././mainapp.py:9669
+#: .././mainapp.py:9690
 msgid "Errors:"
 msgstr ""
 
-#: .././mainapp.py:10903 .././mainapp.py:11078
+#: .././mainapp.py:10924 .././mainapp.py:11099
 msgid "Cannot move anything to:"
 msgstr ""
 
-#: .././mainapp.py:10905 .././mainapp.py:11080
+#: .././mainapp.py:10926 .././mainapp.py:11101
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
 msgstr ""
 
-#: .././mainapp.py:10909
+#: .././mainapp.py:10930
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
 msgstr ""
 
-#: .././mainapp.py:10923 .././mainapp.py:11098
+#: .././mainapp.py:10944 .././mainapp.py:11119
 msgid "Are you sure you want to move this channel:"
 msgstr ""
 
-#: .././mainapp.py:10925 .././mainapp.py:11100
+#: .././mainapp.py:10946 .././mainapp.py:11121
 msgid "Are you sure you want to move this playlist:"
 msgstr ""
 
-#: .././mainapp.py:10927 .././mainapp.py:11102
+#: .././mainapp.py:10948 .././mainapp.py:11123
 msgid "Are you sure you want to move this folder:"
 msgstr ""
 
-#: .././mainapp.py:10932
+#: .././mainapp.py:10953
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
 msgstr ""
 
-#: .././mainapp.py:11032
+#: .././mainapp.py:11053
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr ""
 
-#: .././mainapp.py:11045
+#: .././mainapp.py:11066
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr ""
 
-#: .././mainapp.py:11058
+#: .././mainapp.py:11079
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr ""
 
-#: .././mainapp.py:11085
+#: .././mainapp.py:11106
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
 msgstr ""
 
-#: .././mainapp.py:11104
+#: .././mainapp.py:11125
 msgid "into this folder:"
 msgstr ""
 
-#: .././mainapp.py:11108
+#: .././mainapp.py:11129
 msgid "This procedure will move all downloaded files to the new location"
 msgstr ""
 
-#: .././mainapp.py:11114
+#: .././mainapp.py:11135
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
 msgstr ""
 
-#: .././mainapp.py:11527
+#: .././mainapp.py:11548
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr ""
 
-#: .././mainapp.py:13332 .././mainapp.py:13448 .././mainapp.py:13622
+#: .././mainapp.py:13353 .././mainapp.py:13469 .././mainapp.py:13643
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:13338 .././mainapp.py:13454 .././mainapp.py:13628
+#: .././mainapp.py:13359 .././mainapp.py:13475 .././mainapp.py:13649
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:13344 .././mainapp.py:13460 .././mainapp.py:13634
+#: .././mainapp.py:13365 .././mainapp.py:13481 .././mainapp.py:13655
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:13702 .././mainapp.py:17682 .././mainapp.py:17814
-#: .././mainapp.py:17945
+#: .././mainapp.py:13723 .././mainapp.py:17703 .././mainapp.py:17835
+#: .././mainapp.py:17966
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr ""
 
-#: .././mainapp.py:13711
+#: .././mainapp.py:13732
 #, python-brace-format
 msgid "The name '{0}' is already in use"
 msgstr ""
 
-#: .././mainapp.py:13724
+#: .././mainapp.py:13745
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr ""
 
-#: .././mainapp.py:14071
+#: .././mainapp.py:14092
 msgid "Select where to save the database export"
 msgstr ""
 
-#: .././mainapp.py:14192
+#: .././mainapp.py:14213
 msgid "There is nothing to export!"
 msgstr ""
 
-#: .././mainapp.py:14232 .././mainapp.py:14298
+#: .././mainapp.py:14253 .././mainapp.py:14319
 msgid "Failed to save the database export file:"
 msgstr ""
 
-#: .././mainapp.py:14306
+#: .././mainapp.py:14327
 msgid "Database export file saved to:"
 msgstr ""
 
-#: .././mainapp.py:14343
+#: .././mainapp.py:14364
 msgid "Select the database export"
 msgstr ""
 
-#: .././mainapp.py:14364 .././mainapp.py:14378
+#: .././mainapp.py:14385 .././mainapp.py:14399
 msgid "Failed to load the database export file"
 msgstr ""
 
-#: .././mainapp.py:14395
+#: .././mainapp.py:14416
 msgid "The database export file is invalid"
 msgstr ""
 
-#: .././mainapp.py:14406
+#: .././mainapp.py:14427
 msgid "The database export file is invalid (or empty)"
 msgstr ""
 
-#: .././mainapp.py:14450
+#: .././mainapp.py:14471
 msgid "Nothing was imported from the database export file"
 msgstr ""
 
 #. Show a confirmation
-#: .././mainapp.py:14464
+#: .././mainapp.py:14485
 msgid "Imported"
 msgstr ""
 
-#: .././mainapp.py:14465 .././mainwin.py:1268
+#: .././mainapp.py:14486 .././mainwin.py:1268
 msgid "Videos"
 msgstr ""
 
-#: .././mainapp.py:14466
+#: .././mainapp.py:14487
 msgid "Channels"
 msgstr ""
 
-#: .././mainapp.py:14467
+#: .././mainapp.py:14488
 msgid "Playlists"
 msgstr ""
 
-#: .././mainapp.py:14468
+#: .././mainapp.py:14489
 msgid "Folders"
 msgstr ""
 
-#: .././mainapp.py:14852
+#: .././mainapp.py:14873
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
 msgstr ""
 
-#: .././mainapp.py:15302 .././mainapp.py:15622
+#: .././mainapp.py:15323 .././mainapp.py:15643
 msgid "Select where to save the options export"
 msgstr ""
 
-#: .././mainapp.py:15350 .././mainapp.py:15670
+#: .././mainapp.py:15371 .././mainapp.py:15691
 msgid "Failed to save the options export file:"
 msgstr ""
 
-#: .././mainapp.py:15358
+#: .././mainapp.py:15379
 msgid "Download options exported to to:"
 msgstr ""
 
-#: .././mainapp.py:15389 .././mainapp.py:15709
+#: .././mainapp.py:15410 .././mainapp.py:15730
 msgid "Select the options export file"
 msgstr ""
 
-#: .././mainapp.py:15408 .././mainapp.py:15728
+#: .././mainapp.py:15429 .././mainapp.py:15749
 msgid "Failed to load the options export file"
 msgstr ""
 
-#: .././mainapp.py:15425 .././mainapp.py:15745
+#: .././mainapp.py:15446 .././mainapp.py:15766
 msgid "The options export file is invalid"
 msgstr ""
 
-#: .././mainapp.py:15436 .././mainapp.py:15756
+#: .././mainapp.py:15457 .././mainapp.py:15777
 msgid "The options export file is invalid (or empty)"
 msgstr ""
 
-#: .././mainapp.py:15678
+#: .././mainapp.py:15699
 msgid "FFmpeg options exported to to:"
 msgstr ""
 
-#: .././mainapp.py:16652
+#: .././mainapp.py:16673
 msgid "Please select a destination folder"
 msgstr ""
 
 #. Prompt for confirmation
-#: .././mainapp.py:16724
+#: .././mainapp.py:16745
 msgid "Are you sure you want to clear this list?"
 msgstr ""
 
-#: .././mainapp.py:16817 .././mainwin.py:14265
+#: .././mainapp.py:16838 .././mainwin.py:14265
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr ""
 
-#: .././mainapp.py:16934
+#: .././mainapp.py:16955
 msgid "No video(s) have been downloaded"
 msgstr ""
 
 #. Prompt for confirmation
-#: .././mainapp.py:17024
+#: .././mainapp.py:17045
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr ""
 
-#: .././mainapp.py:17673
+#: .././mainapp.py:17694
 msgid "You must give the channel a name"
 msgstr ""
 
-#: .././mainapp.py:17691 .././mainapp.py:17954
+#: .././mainapp.py:17712 .././mainapp.py:17975
 msgid "You must enter a valid URL"
 msgstr ""
 
-#: .././mainapp.py:17806
+#: .././mainapp.py:17827
 msgid "You must give the folder a name"
 msgstr ""
 
-#: .././mainapp.py:17936
+#: .././mainapp.py:17957
 msgid "You must give the playlist a name"
 msgstr ""
 
-#: .././mainapp.py:18091
+#: .././mainapp.py:18112
 msgid "The following videos are duplicates:"
 msgstr ""
 
-#: .././mainapp.py:18155
+#: .././mainapp.py:18176
 msgid "There were no livestream alerts to cancel"
 msgstr ""
 
-#: .././mainapp.py:18157
+#: .././mainapp.py:18178
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr ""
 
-#: .././mainapp.py:18160
+#: .././mainapp.py:18181
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr ""
 
-#: .././mainapp.py:18489
+#: .././mainapp.py:18510
 msgid "All Tartube data has been saved"
 msgstr ""
 
-#: .././mainapp.py:18519
+#: .././mainapp.py:18540
 msgid "Database saved"
 msgstr ""
 
-#: .././mainapp.py:18774 .././mainwin.py:13252
+#: .././mainapp.py:18795 .././mainwin.py:13252
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -665,39 +665,39 @@ msgstr ""
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:18814
+#: .././mainapp.py:18835
 msgid "Cannot update existing livestreams because"
 msgstr ""
 
-#: .././mainapp.py:18816
+#: .././mainapp.py:18837
 msgid "there is another operation running"
 msgstr ""
 
-#: .././mainapp.py:18818
+#: .././mainapp.py:18839
 msgid "they are currently being updated"
 msgstr ""
 
-#: .././mainapp.py:18820
+#: .././mainapp.py:18841
 msgid "one or more configuration windows are open"
 msgstr ""
 
-#: .././mainapp.py:18822
+#: .././mainapp.py:18843
 msgid "there are no livestreams to update"
 msgstr ""
 
-#: .././mainapp.py:18896
+#: .././mainapp.py:18917
 msgid "There is already a channel with that name"
 msgstr ""
 
-#: .././mainapp.py:18898
+#: .././mainapp.py:18919
 msgid "There is already a playlist with that name"
 msgstr ""
 
-#: .././mainapp.py:18900
+#: .././mainapp.py:18921
 msgid "There is already a folder with that name"
 msgstr ""
 
-#: .././mainapp.py:18903
+#: .././mainapp.py:18924
 msgid "(so please choose a different name)"
 msgstr ""
 

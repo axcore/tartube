@@ -163,7 +163,7 @@ def xdg_runtime_dir() -> Optional[Path]:
         return None
 
 
-# The following variables are deprecated, but remain for backward compatibility.
+# The following variables are deprecated, but remain for backward compatibility
 XDG_CACHE_HOME = xdg_cache_home()
 XDG_CONFIG_DIRS = xdg_config_dirs()
 XDG_CONFIG_HOME = xdg_config_home()

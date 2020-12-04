@@ -27,7 +27,7 @@ def print_info(message):
 
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
     return sorted(data, key=alphanum_key)
 
 def merge_v1(audio_list, video_list, video_key, output_directory, segment_folder_name, final_export=0):
@@ -96,7 +96,7 @@ output_directory = ""
 for index, element in enumerate(args):
     if '?v=' in element:
         video_key = element.split('?v=')[1]
-        if '&' in video_key:
+        if '&' in video_key: 
             video_key = video_key.split('&')[0]
         segment_folder_name = f"segments_{video_key}"
 

@@ -1,3 +1,22 @@
+v2.3.008 (4 Dec 2020)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- Fixed major error caused when switching between databases; some data from the
+    old database leaked into the new one, which caused any number of problems
+    (Git #209)
+- When right-clicking a channel (etc), fixed broken 'Folder Contents > All
+    contents > Mark as not new', and several other similar actions (Git #206)
+- Update imported XDG code (Tartube's xdg_tartube.py file) to match the most 
+    recent release of the Python XDG module; hoping to fix an installation
+    error with the Debian package. The new Debian package has not been tested
+    yet, so the error may not be resolved (Git #205)
+    
+MINOR FIXES
+- Updated imported Youtube Stream Capture code to the new release; the authors
+    states that it contains some bug fixes. The new version still does not work
+    on MS Windows 
+    
 v2.3.0 (1 Dec 2020)
 -------------------------------------------------------------------------------
 

@@ -5592,6 +5592,17 @@ class TartubeApp(Gtk.Application):
                 and re.search('^file\:\/\/', media_data_obj.source):
                     media_data_obj.source = None
 
+        if version < 2003006:      # v2.3.006
+
+            # Fix an error, in which self.reset_db did not reset all IVs that
+            #   are saved in the Tartube database file
+            # Nothing we can do to reverse time, but we can make sure that
+            #   options.OptionsManager.dbid points to the a valid DBID
+            for options_obj in self.options_reg_dict.values():
+                if options_obj.dbid is not None \
+                and not options_obj.dbid in self.options_reg_dict:
+                    options_obj.dbid = None
+
 
     def save_db(self):
 
@@ -6253,7 +6264,6 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 6253 reset_db')
 
         # Reset IVs to their default states
-        self.general_options_obj = self.create_download_options('general')
         self.media_reg_count = 0
         self.media_reg_dict = {}
         self.media_name_dict = {}
@@ -6273,6 +6283,17 @@ class TartubeApp(Gtk.Application):
         self.fixed_waiting_folder = None
         self.fixed_temp_folder = None
         self.fixed_misc_folder = None
+        self.fixed_folder_locale = self.custom_locale
+        self.scheduled_list = []
+        self.options_reg_count = 0
+        self.options_reg_dict = {}
+        self.general_options_obj = self.create_download_options('general')
+        self.classic_options_obj = self.create_download_options('classic')
+        self.ffmpeg_reg_count = 0
+        self.ffmpeg_reg_dict = {}
+        self.ffmpeg_options_obj = self.create_ffmpeg_options('default')
+        self.ffmpeg_simple_options_flag = True
+        self.toolbar_system_hide_flag = False
 
         # Create new fixed folders (which sets the values of
         #   self.fixed_all_folder, etc)
