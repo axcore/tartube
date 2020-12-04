@@ -12991,7 +12991,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_update_row_text(container_obj)
 
 
-    def mark_folder_hidden(self, folder_obj, flag):
+    def mark_folder_hidden(self, folder_obj, hidden_flag):
 
         """Called by callbacks in self.on_menu_show_hidden(),
         .on_menu_hide_system() and
@@ -13005,8 +13005,8 @@ class TartubeApp(Gtk.Application):
 
             folder_obj (media.Folder): The folder object to mark
 
-            flag (bool): True to mark the folder as hidden, False to mark it as
-                not hidden
+            hidden_flag (bool): True to mark the folder as hidden, False to
+                mark it as not hidden
 
         """
 
@@ -13019,7 +13019,7 @@ class TartubeApp(Gtk.Application):
                 'Mark folder as hidden request failed sanity check',
             )
 
-        if not flag:
+        if not hidden_flag:
 
             # Mark folder as not hidden
             if not folder_obj.hidden_flag:
@@ -13229,7 +13229,7 @@ class TartubeApp(Gtk.Application):
                 and other_obj.bookmark_flag:
                     video_list.append(other_obj)
 
-        elif not flag and media_data_obj == self.fixed_fav_folder:
+        elif not fav_flag and media_data_obj == self.fixed_fav_folder:
 
             # Check videos in this folder
             for other_obj in self.fixed_fav_folder.child_list:
@@ -13535,7 +13535,7 @@ class TartubeApp(Gtk.Application):
                 and other_obj.bookmark_flag:
                     video_list.append(other_obj)
 
-        elif not flag and media_data_obj == self.fixed_fav_folder:
+        elif not new_flag and media_data_obj == self.fixed_fav_folder:
 
             # Check videos in this folder
             for other_obj in self.fixed_fav_folder.child_list:

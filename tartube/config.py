@@ -12145,8 +12145,6 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 5, grid_width, 1,
         )
-        if os.name == 'nt':
-            checkbutton4.set_sensitive(False)
         # (Signal connect appears below)
 
         self.add_label(grid,

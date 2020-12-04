@@ -17,7 +17,7 @@ If you're more of a visual learner, [here is a video](https://www.youtube.com/wa
 ## Usage
 Starting the livestream capture:
 ```
-$ python3 youtube_stream_capture.py [Link to the livestream] [optional: --output-directory (PATH TO DIRECTORY)] [optional: --start-segment (INT)]
+$ python3 youtube_stream_capture.py [Link to the livestream] [optional: --output-directory (PATH TO DIRECTORY)] [optional: --start-segment (INT)] [optional: --cookie-file (PATH TO COOKIE.TXT)]
 ```
 
 Merging all the segments after the stream has ended:
@@ -40,7 +40,16 @@ $ python3 merge.py https://www.youtube.com/watch?v=OIW4RnlYvgs --output-director
 Note: if you used the `--output-directory` parameter to start the livestream recording, then you also need to use it as a parameter for `merge.py`.
 
 
-The `cookie` field inside of `youtube_stream_capture.py` has intentionally been left empty. If you run into any 429 errors (Too many requests), filling in the cookie with one from the Chrome inspect tool can help.
+The `cookie` inside of `youtube_stream_capture.py` has intentionally been left empty. If you run into any 429 errors (Too many requests), try to use your own. Simply export it using a browser extension such as [cookies.txt](https://addons.mozilla.org/de/firefox/addon/cookies-txt/) and pass it as an argument into the script.
+
+Example for Linux:
+```
+$ python3 youtube_stream_capture.py https://www.youtube.com/watch?v=ADyrjlsfcs --cookie-file /mnt/c/Users/mrwnwttk/Desktop/cookie.txt
+
+[INFO] Found cookie at /mnt/c/Users/X1C4/Downloads/e11d26ef-2825-4311-8ab1-89af050d6b37.txt
+[INFO] Cookie: {'VISITOR_INFO1_LIVE': 'XXXXXXXXXXX', 'LOGIN_INFO': 'XXXXXXXXXXXXXXXXXXXXXXXXXX', 'HSID': 'XXXXXXXXXXXXXXXXX', 'SSID': 'XXXXXXXXXXXXX', 'APISID': 'XXXXXXXXXXXX/XXXXXXXXXXXXXXXXX', 'SAPISID': 'XXXXXXXXXXXXXX/XXXXXXXXXXXXXX', '__Secure-3PAPISID': 'XXXXXXX/XXXXXXXXX', 'CONSENT': 'XXXX', '__Secure-3PSID': 'XXXXXXXXX', 'SID': 'XXXXXXXXXXXXXXXXXXXX', 'PREF': 'XXXXXXXX', 'YSC': 'XXXXXXXXXXX', 'SIDCC': 'XXXXXXXXXXXXXXXXXXXXXX', '__Secure-3PSIDCC': 'XXXXXXXXXXXXXXXXXXXX'}
+```
+
 
 ## Support
 Livestreams that have been running for multiple days (such as the 24/7 music livestreams) are not supported. youtube_stream_capture attempts to go back to the very first segment of a livestream by design. The first segments of those livestreams have long been deleted at this point, so the script just fails. The time limit here is usually about 12 hours.

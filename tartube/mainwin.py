@@ -1147,7 +1147,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.update_ytdl_menu_item.set_action_name('app.update_ytdl_menu')
 
         self.test_ytdl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Test') + ' ' + downloader,
+            _('_Test') + ' ' + downloader + '...',
         )
         ops_sub_menu.append(self.test_ytdl_menu_item)
         self.test_ytdl_menu_item.set_action_name('app.test_ytdl_menu')
