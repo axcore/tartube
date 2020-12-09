@@ -1112,6 +1112,8 @@ class DownloadWorker(threading.Thread):
         # If the download stalls, the VideoDownloader may need to be replaced
         #   with a new one. Use a while loop for that
         first_flag = True
+        restart_count = 0
+
         while True:
 
             # Set up the new downloads.VideoDownloader object
@@ -1135,9 +1137,28 @@ class DownloadWorker(threading.Thread):
 
             # Execute the assigned job
             return_code = self.downloader_obj.do_download()
-            # If a restart is required, -1 is returned
-            if return_code > -1:
+
+            # If the download stalled, -1 is returned. If we're allowed to
+            #   restart a stalled download, do that; otherwise give up
+            if return_code > -1 \
+            or (
+                app_obj.operation_auto_restart_max != 0
+                and app_obj.operation_auto_restart_max >= restart_count
+            ):
                 break
+
+            else:
+                restart_count += 1
+
+                # Show confirmation of the restart
+                if app_obj.ytdl_output_stdout_flag:
+                    app_obj.main_win_obj.output_tab_write_stdout(
+                        self.download_worker_obj.worker_id,
+                        _('Tartube is restarting a stalled download'),
+                    )
+
+                if app_obj.ytdl_write_stdout_flag:
+                    print(_('Tartube is restarting a stalled download'))
 
         # If the downloads.VideoDownloader object collected any youtube-dl
         #   error/warning messages, display them in the Error List
@@ -2449,9 +2470,9 @@ class VideoDownloader(object):
     ALREADY = 4
     # 5 - The download operation was stopped by the user
     STOPPED = 5
-    # 6 - The download operation has stalled, and must be restarted by the
-    #   parent worker
-    RESTART = -1
+    # 6 - The download operation has stalled. The parent worker can restart it,
+    #   if required
+    STALLED = -1
 
 
     # Standard class methods
@@ -2509,8 +2530,6 @@ class VideoDownloader(object):
         #   (last output to STDOUT); used to restart a stalled download, if
         #   required
         self.last_activity_time = None
-        # The number of downloads restarted, after a stall
-        self.restart_count = 0
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
@@ -2853,32 +2872,23 @@ class VideoDownloader(object):
                     + ' fetch a video\'s JSON data',
                 )
 
-            # Restart a stalled download, if required
+            # If a download has stalled (there has been no activity for some
+            #   time), halt the child process (allowing the parent worker to
+            #   restart the stalled download, if required)
             restart_time = (app_obj.operation_auto_restart_time * 60)
             if app_obj.operation_auto_restart_flag \
             and self.last_activity_time is not None \
-            and (self.last_activity_time + restart_time) < time.time() \
-            and (
-                app_obj.operation_auto_restart_max == 0 \
-                or app_obj.operation_auto_restart_max \
-                > (self.restart_count + 1)
-            ):
-                self.restart_count += 1
+            and (self.last_activity_time + restart_time) < time.time():
 
-                # Show confirmation of the restart
-                if app_obj.ytdl_output_stdout_flag:
-                    app_obj.main_win_obj.output_tab_write_stdout(
-                        self.download_worker_obj.worker_id,
-                        _('Tartube is restarting a stalled download'),
-                    )
-
-                if app_obj.ytdl_write_stdout_flag:
-                    print(_('Tartube is restarting a stalled download'))
-
-                # Tell the parent worker to replace this VideoDownloader with a
-                #   new one
+                # Stop the child process
                 self.stop()
-                return self.RESTART
+
+                # Pass a dictionary of values to downloads.DownloadWorker,
+                #   confirming the result of the job. The values are passed on
+                #   to the main window
+                self.last_data_callback()
+
+                return self.STALLED
 
             # Stop this video downloader, if required to do so, having just
             #   finished checking/downloading a video
@@ -2897,6 +2907,15 @@ class VideoDownloader(object):
             else:
                 stderr = stderr.decode('utf-8', errors="replace")
 
+            # A network error is treated the same way as a stalled download
+            if app_obj.operation_auto_restart_network_flag \
+            and self.is_network_error(stderr):
+
+                self.stop()
+                self.last_data_callback()
+                return self.STALLED
+
+            # Check for recognised errors/warnings
             if not self.is_ignorable(stderr):
 
                 if self.is_warning(stderr):
@@ -4196,7 +4215,18 @@ class VideoDownloader(object):
                 dl_stat_dict['path'] = path
                 dl_stat_dict['filename'] = filename
                 dl_stat_dict['extension'] = extension
-                self.set_temp_destination(path, filename, extension)
+
+                # v2.3.013 - the path to the subtitles file is being mistaken
+                #   for the path to the video file here. Only use the
+                #   destination if the path is a recognised video/audio format
+                #   (and if we don't already have it)
+                short_ext = extension[1:]
+                if self.temp_path is None \
+                and (
+                    short_ext in formats.VIDEO_FORMAT_LIST \
+                    or short_ext in formats.AUDIO_FORMAT_LIST
+                ):
+                    self.set_temp_destination(path, filename, extension)
 
             # Get progress information
             if '%' in stdout_list[1]:
@@ -4252,18 +4282,24 @@ class VideoDownloader(object):
 
             # Get file already downloaded status
             if stdout_list[-1] == 'downloaded':
-                dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
+
                 path, filename, extension = self.extract_filename(
                     ' '.join(stdout_with_spaces_list[1:-4]),
                 )
 
-                dl_stat_dict['path'] = path
-                dl_stat_dict['filename'] = filename
-                dl_stat_dict['extension'] = extension
-                self.reset_temp_destination()
+                # v2.3.013 - same problem as above
+                short_ext = extension[1:]
+                if short_ext in formats.VIDEO_FORMAT_LIST \
+                or short_ext in formats.AUDIO_FORMAT_LIST:
 
-                self.confirm_old_video(path, filename, extension)
-                confirm_flag = True
+                    dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
+                    dl_stat_dict['path'] = path
+                    dl_stat_dict['filename'] = filename
+                    dl_stat_dict['extension'] = extension
+                    self.reset_temp_destination()
+
+                    self.confirm_old_video(path, filename, extension)
+                    confirm_flag = True
 
             # Get filesize abort status
             if stdout_list[-1] == 'Aborting.':
@@ -4552,7 +4588,7 @@ class VideoDownloader(object):
         Returns:
 
             True if the STDERR message is ignorable, False if it should be
-                tested further.
+                tested further
 
         """
 
@@ -4661,6 +4697,44 @@ class VideoDownloader(object):
         return False
 
 
+    def is_network_error(self, stderr):
+
+        """Called by self.do_download().
+
+        Try to detect network errors, indicating a stalled download.
+
+        youtube-dl's output is system-dependent, so this function may not
+        detect every type of network error.
+
+        Args:
+
+            stderr (str): A message from the child process STDERR
+
+        Returns:
+
+            True if the STDERR message seems to be a network error, False if it
+                should be tested further
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4561 is_network_error')
+
+        # v2.3.012, this error is seen on MS Windows:
+        #   unable to download video data: <urlopen error [WinError 10060] A
+        #   connection attempt failed because the connected party did not
+        #   properly respond after a period of time, or established connection
+        #   failed because connected host has failed to respond>
+        # Don't know yet what the equivalent on other operating systems is, so
+        #   we'll detect the first part, which is a string generated by
+        #   youtube-dl itself
+
+        if re.search(r'unable to download video data'):
+            return True
+        else:
+            return False
+
+
     def is_warning(self, stderr):
 
         """Called by self.do_download().
@@ -4723,6 +4797,8 @@ class VideoDownloader(object):
             dl_stat_dict['speed'] = ''
         elif self.return_code == self.ALREADY:
             dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
+        elif self.return_code == self.STALLED:
+            dl_stat_dict['status'] = formats.MAIN_STAGE_STALLED
         else:
             dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
 

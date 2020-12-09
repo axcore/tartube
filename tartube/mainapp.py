@@ -1499,6 +1499,12 @@ class TartubeApp(Gtk.Application):
         # How many minutes of inactivity before restarting the job (minimum
         #   value is 1, ignored if self.operation_sim_shortcut_flag is not set)
         self.operation_auto_restart_time = 10
+        # Flag set to True if a job that experiences a network error should be
+        #   treated as a stalled download, and restarted; False if a network
+        #   error should terminate the job, as usual
+        # Note that network errors are not easy to detect from youtube-dl's
+        #   output, so as of v2.3.012, detection may not work for every error
+        self.operation_auto_restart_network_flag = False
         # The maximum number of times to restart a stalled job. If 0, no
         #   maximum applies. Ignored ignored if
         #   self.operation_sim_shortcut_flag is not set)
@@ -3639,6 +3645,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['operation_auto_restart_flag']
             self.operation_auto_restart_time \
             = json_dict['operation_auto_restart_time']
+        if version >= 2003012:  # v2.3.012
+            self.operation_auto_restart_network_flag \
+            = json_dict['operation_auto_restart_network_flag']
         if version >= 2002169:  # v2.2.169
             self.operation_auto_restart_max \
             = json_dict['operation_auto_restart_max']
@@ -4093,7 +4102,7 @@ class TartubeApp(Gtk.Application):
             return
 
         # Prepare values
-        utc = datetime.datetime.utcfromtimestamp(time.time())
+        local = utils.get_local_time()
 
         # Remember the size of the main window, if required. The minimum
         #   size for the 'Videos Tab' paned is the standard paned position;
@@ -4134,8 +4143,8 @@ class TartubeApp(Gtk.Application):
             # Metadata
             'script_name': __main__.__packagename__,
             'script_version': __main__.__version__,
-            'save_date': str(utc.strftime('%d %b %Y')),
-            'save_time': str(utc.strftime('%H:%M:%S')),
+            'save_date': str(local.strftime('%d %b %Y')),
+            'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'config',
             # Data
             'custom_locale': self.custom_locale,
@@ -4301,6 +4310,8 @@ class TartubeApp(Gtk.Application):
             'operation_sim_shortcut_flag': self.operation_sim_shortcut_flag,
             'operation_auto_restart_flag': self.operation_auto_restart_flag,
             'operation_auto_restart_time': self.operation_auto_restart_time,
+            'operation_auto_restart_network_flag': \
+            self.operation_auto_restart_network_flag,
             'operation_auto_restart_max': self.operation_auto_restart_max,
             'operation_dialogue_mode': self.operation_dialogue_mode,
             'operation_convert_mode': self.operation_convert_mode,
@@ -5632,7 +5643,7 @@ class TartubeApp(Gtk.Application):
             return False
 
         # Prepare values
-        utc = datetime.datetime.utcfromtimestamp(time.time())
+        local = utils.get_local_time()
         path = os.path.abspath(os.path.join(self.data_dir, self.db_file_name))
         bu_path = os.path.abspath(
             os.path.join(
@@ -5652,8 +5663,8 @@ class TartubeApp(Gtk.Application):
             # Metadata
             'script_name': __main__.__packagename__,
             'script_version': __main__.__version__,
-            'save_date': str(utc.strftime('%d %b %Y')),
-            'save_time': str(utc.strftime('%H:%M:%S')),
+            'save_date': str(local.strftime('%d %b %Y')),
+            'save_time': str(local.strftime('%H:%M:%S')),
             # Media data objects
             'media_reg_count': self.media_reg_count,
             'media_reg_dict': self.media_reg_dict,
@@ -5790,7 +5801,7 @@ class TartubeApp(Gtk.Application):
                     os.path.join(
                         self.backup_dir,
                         __main__.__packagename__ + '_BU_' \
-                        + str(utc.strftime('%Y_%m_%d')) + '.db',
+                        + str(local.strftime('%Y_%m_%d')) + '.db',
                     ),
                 )
 
@@ -5809,7 +5820,7 @@ class TartubeApp(Gtk.Application):
                     os.path.join(
                         self.backup_dir,
                         __main__.__packagename__ + '_BU_' \
-                        + str(utc.strftime('%Y_%m_%d_%H_%M_%S')) + '.db',
+                        + str(local.strftime('%Y_%m_%d_%H_%M_%S')) + '.db',
                     ),
                 )
 
@@ -14222,15 +14233,15 @@ class TartubeApp(Gtk.Application):
             #   with only the 'file_type' being different
 
             # Prepare values
-            utc = datetime.datetime.utcfromtimestamp(time.time())
+            local = utils.get_local_time()
 
             # Prepare a dictionary of data to save as a JSON file
             json_dict = {
                 # Metadata
                 'script_name': __main__.__packagename__,
                 'script_version': __main__.__version__,
-                'save_date': str(utc.strftime('%d %b %Y')),
-                'save_time': str(utc.strftime('%H:%M:%S')),
+                'save_date': str(local.strftime('%d %b %Y')),
+                'save_time': str(local.strftime('%H:%M:%S')),
                 'file_type': 'db_export',
                 # Data
                 'db_dict': db_dict,
@@ -15347,15 +15358,15 @@ class TartubeApp(Gtk.Application):
         #   only the 'file_type' being different
 
         # Prepare values
-        utc = datetime.datetime.utcfromtimestamp(time.time())
+        local = utils.get_local_time()
 
         # Prepare a dictionary of data to save as a JSON file
         json_dict = {
             # Metadata
             'script_name': __main__.__packagename__,
             'script_version': __main__.__version__,
-            'save_date': str(utc.strftime('%d %b %Y')),
-            'save_time': str(utc.strftime('%H:%M:%S')),
+            'save_date': str(local.strftime('%d %b %Y')),
+            'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'options_export',
                # Data
             'export_dict': export_dict,
@@ -15667,15 +15678,15 @@ class TartubeApp(Gtk.Application):
         #   only the 'file_type' being different
 
         # Prepare values
-        utc = datetime.datetime.utcfromtimestamp(time.time())
+        local = utils.get_local_time()
 
         # Prepare a dictionary of data to save as a JSON file
         json_dict = {
             # Metadata
             'script_name': __main__.__packagename__,
             'script_version': __main__.__version__,
-            'save_date': str(utc.strftime('%d %b %Y')),
-            'save_time': str(utc.strftime('%H:%M:%S')),
+            'save_date': str(local.strftime('%d %b %Y')),
+            'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'ffmpeg_export',
                # Data
             'export_dict': export_dict,
@@ -20102,6 +20113,19 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 20081 set_operation_auto_restart_max')
 
         self.operation_auto_restart_max = value
+
+
+    def set_operation_auto_restart_network_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'app 20082 set_operation_auto_restart_network_flag',
+            )
+
+        if not flag:
+            self.operation_auto_restart_network_flag = False
+        else:
+            self.operation_auto_restart_network_flag = True
 
 
     def set_operation_auto_restart_time(self, value):

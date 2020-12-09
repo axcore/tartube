@@ -42,8 +42,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.3.008'
-__date__ = '4 Dec 2020'
+__version__ = '2.3.015'
+__date__ = '9 Dec 2020'
 __copyright__ = 'Copyright \xa9 2019-2020 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2020 A S Lewis.

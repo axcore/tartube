@@ -7388,9 +7388,24 @@ class VideoEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _('File'),
-            0, 5, 2, 1,
+            0, 5, 1, 1,
         )
         label.set_hexpand(False)
+
+        if not self.app_obj.show_custom_icons_flag:
+            button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_FILE,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            button = Gtk.Button.new()
+            button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_file']),
+            )
+
+        grid.attach(button, 1, 5, 1, 1)
+        button.set_tooltip_text(_('Set the file (if this is the wrong one)'))
+        # (Signal connect appears below)
 
         entry = self.add_entry(grid,
             None,
@@ -7399,6 +7414,9 @@ class VideoEditWin(GenericEditWin):
         entry.set_editable(False)
         if self.edit_obj.file_name:
             entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
+
+        # (Signal connect from above)
+        button.connect('clicked', self.on_file_button_clicked, entry)
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
@@ -7716,12 +7734,62 @@ class VideoEditWin(GenericEditWin):
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
-    def never_called_func(self):
+    def on_file_button_clicked(self, button, entry):
 
-        """Function that is never called, but which makes this class object
-        collapse neatly in my IDE."""
+        """Called from a callback in self.setup_general_tab().
 
-        pass
+        Prompts the user to choose a new video/audio file. If a valid one is
+        selected, update the media.Video object to use it
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        # Prompt the user for a new file
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Select the correct video/audio file'),
+            self,
+            Gtk.FileChooserAction.OPEN,
+        )
+
+        # Get the user's response
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+        if response == Gtk.ResponseType.OK:
+
+            file_name, file_ext = os.path.splitext(new_path)
+            short_ext = file_ext[1:]
+            if short_ext in formats.VIDEO_FORMAT_LIST \
+            or short_ext in formats.AUDIO_FORMAT_LIST:
+
+                # Set the new file path
+                self.edit_obj.set_file_from_path(new_path)
+                entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
+
+                # If the video exists, then we can mark it as downloaded
+                if not self.edit_obj.dl_flag:
+                    self.app_obj.mark_video_downloaded(self.edit_obj, True)
+
+                # Redraw the video in the Video Catalogue straight away
+                self.app_obj.main_win_obj.video_catalogue_update_video(
+                    self.edit_obj,
+                )
+
+            else:
+
+                dialogue_manager_obj.show_msg_dialogue(
+                    _('You must select a valid video/audio file'),
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                 )
 
 
 class ChannelPlaylistEditWin(GenericEditWin):
@@ -11758,10 +11826,21 @@ class SystemPrefWin(GenericPrefWin):
         if not self.app_obj.operation_auto_restart_flag:
             spinbutton.set_sensitive(False)
 
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'If a download stalls due to a network problem, restart it' \
+            + ' immediately',
+            ),
+            self.app_obj.operation_auto_restart_network_flag,
+            True,                   # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        # (Signal connect appears below)
+
         self.add_label(grid,
             '     ' \
             + _('Maximum restarts after a stalled download (0 for no maximum'),
-            0, 5, 1, 1,
+            0, 6, 1, 1,
         )
 
         spinbutton2 = self.add_spinbutton(grid,
@@ -11769,7 +11848,7 @@ class SystemPrefWin(GenericPrefWin):
             None,
             1,                     # Step
             self.app_obj.operation_auto_restart_max,
-            1, 5, 1, 1,
+            1, 6, 1, 1,
         )
         # (Signal connect appears below)
         if not self.app_obj.operation_auto_restart_flag:
@@ -11779,7 +11858,14 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4.connect(
             'toggled',
             self.on_auto_restart_button_toggled,
+            checkbutton5,
             spinbutton,
+            spinbutton2,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_auto_restart_network_button_toggled,
+            checkbutton4,
             spinbutton2,
         )
         spinbutton.connect(
@@ -11791,48 +11877,48 @@ class SystemPrefWin(GenericPrefWin):
             self.on_auto_restart_max_spinbutton_changed,
         )
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _(
             'Allow downloader to create its own archive file (so deleted' \
             + ' videos are not re-downloaded)',
             ),
             self.app_obj.allow_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_archive_button_toggled)
+        checkbutton6.connect('toggled', self.on_archive_button_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Also create an archive file when downloading from the Classic' \
             + ' Mode tab (not recommended)',
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton6.connect('toggled', self.on_archive_classic_button_toggled)
+        checkbutton7.connect('toggled', self.on_archive_classic_button_toggled)
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _(
             'When checking videos, apply a 60-second timeout',
             ),
             self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton7.connect('toggled', self.on_json_button_toggled)
+        checkbutton8.connect('toggled', self.on_json_button_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _(
             'Convert .webp thumbnails into .jpg thumbnails (using FFmpeg)' \
             + ' after downloading them',
             ),
             self.app_obj.ffmpeg_convert_webp_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton8.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
+        checkbutton9.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
 
     def setup_operations_custom_tab(self, inner_notebook):
@@ -13818,7 +13904,7 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
 
 
-    def on_auto_restart_button_toggled(self, checkbutton, spinbutton,
+    def OLDon_auto_restart_button_toggled(self, checkbutton, spinbutton,
     spinbutton2):
 
         """Called from callback in self.setup_operations_downloads_tab().
@@ -13844,6 +13930,68 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_auto_restart_flag(False)
             spinbutton.set_sensitive(False)
             spinbutton2.set_sensitive(False)
+
+    def on_auto_restart_button_toggled(self, checkbutton, checkbutton2,
+    spinbutton, spinbutton2):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Enables/disables restarting a stalled download operation.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to check
+
+            spinbutton, spinbutton2 (Gtk.SpinButton): Other widgets to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.operation_auto_restart_flag:
+            self.app_obj.set_operation_auto_restart_flag(True)
+            spinbutton.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.operation_auto_restart_flag:
+            self.app_obj.set_operation_auto_restart_flag(False)
+            spinbutton.set_sensitive(False)
+
+        if checkbutton.get_active() or checkbutton2.get_active():
+            spinbutton2.set_sensitive(False)
+        else:
+            spinbutton2.set_sensitive(True)
+
+
+    def on_auto_restart_network_button_toggled(self, checkbutton, checkbutton2,
+    spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Enables/disables restarting a stalled download operation.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to check
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.operation_auto_restart_network_flag:
+            self.app_obj.set_operation_auto_restart_network_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.operation_auto_restart_network_flag:
+            self.app_obj.set_operation_auto_restart_network_flag(False)
+
+        if checkbutton.get_active() or checkbutton2.get_active():
+            spinbutton.set_sensitive(True)
+        else:
+            spinbutton.set_sensitive(False)
 
 
     def on_auto_restart_max_spinbutton_changed(self, spinbutton):

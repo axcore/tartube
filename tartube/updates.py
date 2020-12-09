@@ -322,7 +322,13 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            self.wiz_win_obj.ffmpeg_page_write(msg)
+            # Gtk does not like updating the textview from within a Python 
+            #   thread. Avoid a crash by using a timer
+            GObject.timeout_add(
+                0,
+                self.wiz_win_obj.ffmpeg_page_write,
+                msg,
+            )
 
 
     def install_ytdl(self):
@@ -516,7 +522,13 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            self.wiz_win_obj.downloader_page_write(msg)
+            # Gtk does not like updating the textview from within a Python 
+            #   thread. Avoid a crash by using a timer
+            GObject.timeout_add(
+                0,
+                self.wiz_win_obj.downloader_page_write,
+                msg,
+            )
 
 
     def intercept_version_from_stdout(self, stdout):

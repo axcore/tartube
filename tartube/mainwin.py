@@ -11436,8 +11436,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Create a new row for every error and warning message
         # Use the same time on each
-        utc = datetime.datetime.utcfromtimestamp(time.time())
-        time_string = str(utc.strftime('%H:%M:%S'))
+        local = utils.get_local_time()
+        time_string = str(local.strftime('%H:%M:%S'))
 
         if self.app_obj.operation_error_show_flag:
 
@@ -11559,8 +11559,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Prepare the new row in the treeview
         row_list = []
-        utc = datetime.datetime.utcfromtimestamp(time.time())
-        time_string = str(utc.strftime('%H:%M:%S'))
+        local = utils.get_local_time()
+        time_string = str(local.strftime('%H:%M:%S'))
 
         for i in range(3):
             row_list.append('')     # Hidden columns
@@ -11615,8 +11615,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Prepare the new row in the treeview
         row_list = []
-        utc = datetime.datetime.utcfromtimestamp(time.time())
-        time_string = str(utc.strftime('%H:%M:%S'))
+        local = utils.get_local_time()
+        time_string = str(local.strftime('%H:%M:%S'))
 
         for i in range(3):
             row_list.append('')     # Hidden columns
