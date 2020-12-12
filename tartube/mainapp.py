@@ -277,7 +277,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_height = 750
         self.config_win_width = 650
         self.config_win_height = 450
-        self.paned_min_size = 250
+        # Default slider position. This value applies to the sliders in the
+        #   Videos, Progress and Classic Mode tabs
+        self.paned_default_size = 250
         # Default size (in pixels) of space between various widgets
         self.default_spacing_size = 5
         # Default thumbnail sizes, assuming an original size of 1280x720. All
@@ -309,13 +311,19 @@ class TartubeApp(Gtk.Application):
         #   when saving the config file, and then use that size when
         #   re-starting tartube
         self.main_win_save_size_flag = False
+        # Flag set to True if Tartube should remember the positions of the
+        #   sliders in the Video, Progress and Classic Mode tabs. If False,
+        #   the sliders have default positions. Ignored if
+        #   self.main_win_save_size_flag is not True
+        self.main_win_save_slider_flag = False
         # The size of the main window, when the config file was last saved...
         self.main_win_save_width = self.main_win_width
         self.main_win_save_height = self.main_win_height
-        # ...and the position of the divider separating the Video Index and
-        #   Video Catalogue in the Videos tab (the default value is also the
-        #   minimum value saved)
-        self.main_win_save_posn = self.paned_min_size
+        # ...and the position of the sliders in the Videos, Progress and
+        #   Classic Mode tabs, when the config file was last saved
+        self.main_win_videos_slider_posn = self.paned_default_size
+        self.main_win_progress_slider_posn = self.paned_default_size
+        self.main_win_classic_slider_posn = self.paned_default_size
 
         # The current Gtk version
         self.gtk_version_major = Gtk.get_major_version()
@@ -2646,6 +2654,18 @@ class TartubeApp(Gtk.Application):
         # Part 5 - Finish setting up the main window
         # ------------------------------------------
 
+        # Resize the main window to match the previous size, if required (but
+        #   don't bother if the previous size is the same as the standard one)
+        if self.main_win_save_size_flag \
+        and (
+            self.main_win_save_width != self.main_win_width
+            or self.main_win_save_height != self.main_win_height
+        ):
+            self.main_win_obj.resize(
+                self.main_win_save_width,
+                self.main_win_save_height,
+            )
+
         # Create the main window
         self.main_win_obj.setup_win()
 
@@ -2671,23 +2691,6 @@ class TartubeApp(Gtk.Application):
         # Disable the 'Download all' button and related widgets, if necessary
         if self.disable_dl_all_flag:
             self.main_win_obj.disable_dl_all_buttons()
-
-        # Resize the main window to match the previous size, if required (but
-        #   don't bother if the previous size is the same as the standard one)
-        if self.main_win_save_size_flag \
-        and (
-            self.main_win_save_width != self.main_win_width
-            or self.main_win_save_height != self.main_win_height
-            or self.main_win_save_posn != self.paned_min_size
-        ):
-            self.main_win_obj.resize(
-                self.main_win_save_width,
-                self.main_win_save_height,
-            )
-
-            self.main_win_obj.videos_paned.set_position(
-                self.main_win_save_posn,
-            )
 
         # If the debugging flag is set, move the window to the top-left corner
         #   of the desktop
@@ -3304,9 +3307,24 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1004040:  # v1.4.040
             self.main_win_save_size_flag = json_dict['main_win_save_size_flag']
+        if version >= 2003018:  # v2.3.018
+            self.main_win_save_slider_flag \
+            = json_dict['main_win_save_slider_flag']
+        if version >= 1004040:  # v1.4.040
             self.main_win_save_width = json_dict['main_win_save_width']
             self.main_win_save_height = json_dict['main_win_save_height']
-            self.main_win_save_posn = json_dict['main_win_save_posn']
+
+        if version >= 2003018: # v2.3.018
+            self.main_win_videos_slider_posn \
+            = json_dict['main_win_videos_slider_posn']
+            self.main_win_progress_slider_posn \
+            = json_dict['main_win_progress_slider_posn']
+            self.main_win_classic_slider_posn \
+            = json_dict['main_win_classic_slider_posn']
+        elif version >= 1004040:  # v1.4.040
+            # Renamed in v2.3.018
+            self.main_win_videos_slider_posn \
+            = json_dict['main_win_save_posn']
 
         if version >= 1003122:  # v1.3.122
             self.gtk_emulate_broken_flag = json_dict['gtk_emulate_broken_flag']
@@ -4104,13 +4122,13 @@ class TartubeApp(Gtk.Application):
         # Prepare values
         local = utils.get_local_time()
 
-        # Remember the size of the main window, if required. The minimum
-        #   size for the 'Videos Tab' paned is the standard paned position;
-        #   the minimum size for the main window itself is half the standard
-        #   size
+        # Remember the size of the main window, and the positions of sliders in
+        #   the Videos, Progress and Classic Mode tabs, if required
+        # The minimum saveable size for the main window is half the standard
+        #   size. There is no minimum saveable size for the paneds (but the
+        #   sliders cannot be reduce to nothing anyway)
         if self.main_win_obj and self.main_win_save_size_flag:
             (width, height) = self.main_win_obj.get_size()
-            posn = self.main_win_obj.videos_paned.get_position()
 
             if width >= int(self.main_win_width / 2):
                 self.main_win_save_width = width
@@ -4122,10 +4140,16 @@ class TartubeApp(Gtk.Application):
             else:
                 self.main_win_save_height = self.main_win_height
 
-            if posn >= self.paned_min_size:
-                self.main_win_save_posn = posn
-            else:
-                self.main_win_save_posn = self.paned_min_size
+            if self.main_win_save_slider_flag:
+
+                self.main_win_videos_slider_posn \
+                = self.main_win_obj.videos_paned.get_position()
+
+                self.main_win_progress_slider_posn  \
+                = self.main_win_obj.progress_paned.get_position()
+
+                self.main_win_classic_slider_posn  \
+                = self.main_win_obj.classic_paned.get_position()
 
         # If the user wants to recover undownloaded URLs from the Classic Mode
         #   Tab when Tartube restarts, then compile that list of URLs now
@@ -4152,9 +4176,13 @@ class TartubeApp(Gtk.Application):
             'thumb_size_custom': self.thumb_size_custom,
 
             'main_win_save_size_flag': self.main_win_save_size_flag,
+            'main_win_save_slider_flag': self.main_win_save_slider_flag,
             'main_win_save_width': self.main_win_save_width,
             'main_win_save_height': self.main_win_save_height,
-            'main_win_save_posn': self.main_win_save_posn,
+            'main_win_videos_slider_posn': self.main_win_videos_slider_posn,
+            'main_win_progress_slider_posn': \
+            self.main_win_progress_slider_posn,
+            'main_win_classic_slider_posn': self.main_win_classic_slider_posn,
 
             'gtk_emulate_broken_flag': self.gtk_emulate_broken_flag,
 
@@ -10322,11 +10350,14 @@ class TartubeApp(Gtk.Application):
                 )
 
 
-    def update_video_from_filesystem(self, video_obj, video_path):
+    def update_video_from_filesystem(self, video_obj, video_path,
+    override_flag=False):
 
         """Called by self.update_video_when_file_found(),
         .announce_video_clone() and
         refresh.RefreshManager.refresh_from_default_destination().
+
+        Also called by config.VideoEditWin.on_file_button_clicked().
 
         If a video's JSON file does not exist, or did not contain the
         statistics we were looking for, we can set some of them directly from
@@ -10338,15 +10369,19 @@ class TartubeApp(Gtk.Application):
 
             video_path (str): The full path to the video's file
 
+            override_flag (bool): If True, the video's existing statistics are
+                overwritten, if already set. If False, the video's statistics
+                are only set if not already defined
+
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 10312 update_video_from_filesystem')
 
-        if video_obj.upload_time is None:
+        if override_flag or video_obj.upload_time is None:
             video_obj.set_upload_time(os.path.getmtime(video_path))
 
-        if video_obj.duration is None \
+        if (override_flag or video_obj.duration is None) \
         and HAVE_MOVIEPY_FLAG \
         and self.use_module_moviepy_flag:
 
@@ -10377,13 +10412,14 @@ class TartubeApp(Gtk.Application):
                         + ' of video \'' + video_obj.name + '\'',
                     )
 
-        # (Can't set the video source directly)
-
-        if video_obj.descrip is None:
+        if override_flag or video_obj.descrip is None:
             video_obj.read_video_descrip(
                 self,
                 self.main_win_obj.descrip_line_max_len,
             )
+
+        if override_flag or video_obj.file_size is None:
+            video_obj.set_file_size(os.path.getsize(video_path))
 
 
     def set_duration_from_moviepy(self, video_obj, video_path):
@@ -11409,41 +11445,7 @@ class TartubeApp(Gtk.Application):
         if delete_files_flag \
         and video_obj.file_name \
         and video_obj.parent_obj.dbid == video_obj.parent_obj.master_dbid:
-
-            # There might be thousands of files in the directory, so using
-            #   os.walk() or something like that might be too expensive
-            # Also, post-processing might create various artefacts, all of
-            #   which must be deleted
-            ext_list = [
-                'description',
-                'info.json',
-                'annotations.xml',
-            ]
-            ext_list.extend(formats.VIDEO_FORMAT_LIST)
-            ext_list.extend(formats.AUDIO_FORMAT_LIST)
-
-            for ext in ext_list:
-
-                main_path = video_obj.get_default_path_by_ext(self, ext)
-                if os.path.isfile(main_path):
-                    os.remove(main_path)
-
-                else:
-
-                    subdir_path \
-                    = video_obj.get_default_path_in_subdirectory_by_ext(
-                        self,
-                        ext,
-                    )
-
-                    if os.path.isfile(subdir_path):
-                        os.remove(subdir_path)
-
-            # (Thumbnails might be in one of two locations, so are handled
-            #   separately)
-            thumb_path = utils.find_thumbnail(self, video_obj)
-            if thumb_path and os.path.isfile(thumb_path):
-                os.remove(thumb_path)
+            self.delete_video_files(video_obj)
 
         # Remove the video from the catalogue, if present
         if not no_update_catalogue_flag:
@@ -11463,6 +11465,57 @@ class TartubeApp(Gtk.Application):
 
         # Update a row in the Results List, if the video is visible there
         self.main_win_obj.results_list_update_row_on_delete(video_obj.dbid)
+
+
+    def delete_video_files(self, video_obj):
+
+        """Called by self.delete_video(), .on_button_classic_redownload() and
+        mainwin.MainWin.on_video_catalogue_re_download().
+
+        Deletes the files associated with a media.Video object, including not
+        just the original vidoe/audio file, but its metadata files too.
+
+        Args:
+
+            video_obj (media.Video): The media.Video object whose files should
+                be deleted
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11305 delete_video_files')
+
+        # There might be thousands of files in the directory, so using
+        #   os.walk() or something like that might be too expensive
+        # Also, post-processing might create various artefacts, all of which
+        #   must be deleted
+        ext_list = [
+            'description',
+            'info.json',
+            'annotations.xml',
+        ]
+        ext_list.extend(formats.VIDEO_FORMAT_LIST)
+        ext_list.extend(formats.AUDIO_FORMAT_LIST)
+
+        for ext in ext_list:
+
+            main_path = video_obj.get_default_path_by_ext(self, ext)
+            if os.path.isfile(main_path):
+                os.remove(main_path)
+
+            else:
+
+                subdir_path \
+                = video_obj.get_default_path_in_subdirectory_by_ext(self, ext)
+
+                if os.path.isfile(subdir_path):
+                    os.remove(subdir_path)
+
+        # (Thumbnails might be in one of two locations, so are handled
+        #   separately)
+        thumb_path = utils.find_thumbnail(self, video_obj)
+        if thumb_path and os.path.isfile(thumb_path):
+            os.remove(thumb_path)
 
 
     def delete_container(self, media_data_obj, empty_flag=False):
@@ -17007,6 +17060,9 @@ class TartubeApp(Gtk.Application):
             video_obj = self.main_win_obj.classic_media_dict[dbid]
             video_list.append(video_obj)
 
+            # Delete the files associated with the video
+            self.app_obj.delete_video_files(media_data_obj)
+
             # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl
             #   will have created a ytdl_archive.txt, recording every video
             #   ever downloaded in the parent directory
@@ -17017,7 +17073,10 @@ class TartubeApp(Gtk.Application):
             self.set_backup_archive(video_obj.dummy_dir)
 
         # Start the download operation
-        self.download_manager_start('classic', False, video_list)
+        if not self.classic_custom_dl_flag:
+            self.download_manager_start('classic_real', False, video_list)
+        else:
+            self.download_manager_start('classic_custom', False, video_list)
 
 
     def on_button_classic_remove(self, action, par):
@@ -19967,10 +20026,26 @@ class TartubeApp(Gtk.Application):
             self.main_win_save_size_flag = False
             self.main_win_save_width = self.main_win_width
             self.main_win_save_height = self.main_win_height
-            self.main_win_save_posn = self.paned_min_size
+            self.main_win_videos_slider_posn = self.paned_default_size
+            self.main_win_progress_slider_posn = self.paned_default_size
+            self.main_win_classic_slider_posn = self.paned_default_size
 
         else:
             self.main_win_save_size_flag = True
+
+
+    def set_main_win_save_slider_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19933 set_main_win_save_slider_flag')
+
+        if not flag:
+            self.main_win_save_slider_flag = False
+            self.main_win_videos_slider_posn = self.paned_default_size
+            self.main_win_progress_slider_posn = self.paned_default_size
+            self.main_win_classic_slider_posn = self.paned_default_size
+        else:
+            self.main_win_save_slider_flag = True
 
 
     def set_match_first_chars(self, num_chars):

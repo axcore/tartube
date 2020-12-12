@@ -7415,9 +7415,6 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.file_name:
             entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
 
-        # (Signal connect from above)
-        button.connect('clicked', self.on_file_button_clicked, entry)
-
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
         grid2 = Gtk.Grid()
@@ -7532,6 +7529,15 @@ class VideoEditWin(GenericEditWin):
             1, 4, 1, 1,
         )
         checkbutton7.set_sensitive(False)
+
+        # (Signal connect from above)
+        button.connect(
+            'clicked',
+            self.on_file_button_clicked,
+            entry,
+            entry2,
+            entry3,
+        )
 
 
 #   def setup_download_options_tab():   # Inherited from GenericConfigWin
@@ -7734,7 +7740,7 @@ class VideoEditWin(GenericEditWin):
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
-    def on_file_button_clicked(self, button, entry):
+    def on_file_button_clicked(self, button, entry, entry2, entry3):
 
         """Called from a callback in self.setup_general_tab().
 
@@ -7745,7 +7751,7 @@ class VideoEditWin(GenericEditWin):
 
             button (Gtk.Button): The widget clicked
 
-            entry (Gtk.Entry): Another widget to update
+            entry, entry2, entry3 (Gtk.Entry): Other widgets to update
 
         """
 
@@ -7756,6 +7762,11 @@ class VideoEditWin(GenericEditWin):
             Gtk.FileChooserAction.OPEN,
         )
 
+        if self.edit_obj.file_name is not None:
+            old_path = self.edit_obj.get_actual_path(self.app_obj)
+            old_dir, old_name = os.path.split(old_path)
+            dialogue_win.set_current_folder(old_dir)
+
         # Get the user's response
         response = dialogue_win.run()
         if response == Gtk.ResponseType.OK:
@@ -7764,32 +7775,76 @@ class VideoEditWin(GenericEditWin):
         dialogue_win.destroy()
         if response == Gtk.ResponseType.OK:
 
-            file_name, file_ext = os.path.splitext(new_path)
-            short_ext = file_ext[1:]
-            if short_ext in formats.VIDEO_FORMAT_LIST \
-            or short_ext in formats.AUDIO_FORMAT_LIST:
+            # The user must not set a video that's in a different directory
+            file_dir, file_name = os.path.split(new_path)
+            parent_obj = self.edit_obj.parent_obj
+            if file_dir != parent_obj.get_actual_dir(self.app_obj) \
+            and file_dir != parent_obj.get_default_dir(self.app_obj):
 
-                # Set the new file path
-                self.edit_obj.set_file_from_path(new_path)
-                entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
-
-                # If the video exists, then we can mark it as downloaded
-                if not self.edit_obj.dl_flag:
-                    self.app_obj.mark_video_downloaded(self.edit_obj, True)
-
-                # Redraw the video in the Video Catalogue straight away
-                self.app_obj.main_win_obj.video_catalogue_update_video(
-                    self.edit_obj,
-                )
-
-            else:
-
-                dialogue_manager_obj.show_msg_dialogue(
-                    _('You must select a valid video/audio file'),
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _(
+                    'The replacement video/audio file must be in the same' \
+                    + ' channel, playlist or folder',
+                    ),
                     'error',
                     'ok',
                     self,           # Parent window is this window
                  )
+
+                return
+
+            # The new file must be in a recognised video/audio format
+            file_name, file_ext = os.path.splitext(new_path)
+            short_ext = file_ext[1:]
+
+            if not short_ext in formats.VIDEO_FORMAT_LIST \
+            and not short_ext in formats.AUDIO_FORMAT_LIST:
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('You must select a valid video/audio file'),
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+                return
+
+            # Set the new file path
+            self.edit_obj.set_file_from_path(new_path)
+
+            # Set the new file's size, duration, and so on. The True argument
+            #   instructs the function to override existing values
+            self.app_obj.update_video_from_filesystem(
+                self.edit_obj,
+                new_path,
+                True,
+            )
+
+            # Update the entry boxes
+            entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
+            if self.edit_obj.duration is not None:
+
+                entry2.set_text(
+                    utils.convert_seconds_to_string(self.edit_obj.duration),
+                )
+
+            else:
+
+                entry2.set_text('')
+
+            if self.edit_obj.file_size is not None:
+                entry3.set_text(self.edit_obj.get_file_size_string())
+            else:
+                entry3.set_text('')
+
+            # If the video exists, then we can mark it as downloaded
+            if not self.edit_obj.dl_flag:
+                self.app_obj.mark_video_downloaded(self.edit_obj, True)
+
+            # Redraw the video in the Video Catalogue straight away
+            self.app_obj.main_win_obj.video_catalogue_update_video(
+                self.edit_obj,
+            )
 
 
 class ChannelPlaylistEditWin(GenericEditWin):
@@ -10431,104 +10486,121 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
-        checkbutton.connect('toggled', self.on_remember_size_button_toggled)
+        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Don\'t show the main window toolbar'),
-            self.app_obj.toolbar_hide_flag,
+            _('Also remember the position of main window sliders'),
+            self.app_obj.main_win_save_slider_flag,
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        # (Signal connect appears below)
+        checkbutton2.connect('toggled', self.on_remember_slider_button_toggled)
+        if not self.app_obj.main_win_save_size_flag:
+            checkbutton2.set_sensitive(False)
+
+        # (Signal connect from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_remember_size_button_toggled,
+            checkbutton2,
+        )
 
         checkbutton3 = self.add_checkbutton(grid,
-            _('Don\'t show labels in the main window toolbar'),
-            self.app_obj.toolbar_squeeze_flag,
+            _('Don\'t show the main window toolbar'),
+            self.app_obj.toolbar_hide_flag,
             True,                   # Can be toggled by user
             0, 3, 1, 1,
         )
-        checkbutton3.connect('toggled', self.on_squeeze_button_toggled)
-        if self.app_obj.toolbar_hide_flag:
-            checkbutton3.set_sensitive(False)
-
-        # (Signal connect from above)
-        checkbutton2.connect(
-            'toggled',
-            self.on_hide_toolbar_button_toggled,
-            checkbutton3,
-        )
+        # (Signal connect appears below)
 
         checkbutton4 = self.add_checkbutton(grid,
+            _('Don\'t show labels in the main window toolbar'),
+            self.app_obj.toolbar_squeeze_flag,
+            True,                   # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton4.connect('toggled', self.on_squeeze_button_toggled)
+        if self.app_obj.toolbar_hide_flag:
+            checkbutton4.set_sensitive(False)
+
+        # (Signal connect from above)
+        checkbutton3.connect(
+            'toggled',
+            self.on_hide_toolbar_button_toggled,
+            checkbutton4,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'Replace stock icons with custom icons (in case stock icons' \
             + ' are not visible)',
             ),
             self.app_obj.show_custom_icons_flag,
             True,                   # Can be toggled by user
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_show_custom_icons_toggled)
+        checkbutton5.connect('toggled', self.on_show_custom_icons_toggled)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _('Show tooltips for videos, channels, playlists and folders'),
             self.app_obj.show_tooltips_flag,
             True,                   # Can be toggled by user
-            0, 5, 1, 1,
+            0, 6, 1, 1,
         )
-        checkbutton5.connect('toggled', self.on_show_tooltips_toggled)
+        checkbutton6.connect('toggled', self.on_show_tooltips_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Disable the \'Download all\' buttons in the toolbar and the' \
             + ' Videos Tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 6, 1, 1,
+            0, 7, 1, 1,
         )
-        checkbutton6.connect('toggled', self.on_disable_dl_all_toggled)
+        checkbutton7.connect('toggled', self.on_disable_dl_all_toggled)
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _(
             'In the Progress Tab, hide finished videos / channels / playlists',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
-        checkbutton7.connect('toggled', self.on_hide_button_toggled)
+        checkbutton8.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _('In the Progress Tab, show results in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 9, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton9.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 9, 1, 1,
+            0, 10, 1, 1,
         )
-        checkbutton9.connect(
+        checkbutton10.connect(
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
         if __main__.__pkg_no_download_flag__:
-            checkbutton9.set_sensitive(False)
+            checkbutton10.set_sensitive(False)
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings Tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 10, 1, 1,
+            0, 11, 1, 1,
         )
-        checkbutton10.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton11.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_videos_tab(self, inner_notebook):
@@ -11828,7 +11900,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton5 = self.add_checkbutton(grid,
             _(
-            'If a download stalls due to a network problem, restart it' \
+            'If a network problem is detected, restart the download' \
             + ' immediately',
             ),
             self.app_obj.operation_auto_restart_network_flag,
@@ -11839,7 +11911,9 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             '     ' \
-            + _('Maximum restarts after a stalled download (0 for no maximum'),
+            + _(
+            'Maximum restarts after a stalled download (0 for no maximum)',
+            ),
             0, 6, 1, 1,
         )
 
@@ -13903,33 +13977,6 @@ class SystemPrefWin(GenericPrefWin):
 
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
 
-
-    def OLDon_auto_restart_button_toggled(self, checkbutton, spinbutton,
-    spinbutton2):
-
-        """Called from callback in self.setup_operations_downloads_tab().
-
-        Enables/disables restarting a stalled download operation.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            spinbutton, spinbutton2 (Gtk.SpinButton): Ohter widgets to modify
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.operation_auto_restart_flag:
-            self.app_obj.set_operation_auto_restart_flag(True)
-            spinbutton.set_sensitive(True)
-            spinbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.operation_auto_restart_flag:
-            self.app_obj.set_operation_auto_restart_flag(False)
-            spinbutton.set_sensitive(False)
-            spinbutton2.set_sensitive(False)
 
     def on_auto_restart_button_toggled(self, checkbutton, checkbutton2,
     spinbutton, spinbutton2):
@@ -17021,7 +17068,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_custom_regex_flag(flag)
 
 
-    def on_remember_size_button_toggled(self, checkbutton):
+    def on_remember_size_button_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_windows_main_window_tab().
 
@@ -17031,14 +17078,41 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            checkbutton2 (Gtk.CheckButton): Another widget to be modified
+
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.main_win_save_size_flag:
             self.app_obj.set_main_win_save_size_flag(True)
+            checkbutton2.set_sensitive(True)
+
         elif not checkbutton.get_active() \
         and self.app_obj.main_win_save_size_flag:
             self.app_obj.set_main_win_save_size_flag(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
+
+
+    def on_remember_slider_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables remembering the position of sliders in the main
+        window.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.main_win_save_slider_flag:
+            self.app_obj.set_main_win_save_slider_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.main_win_save_slider_flag:
+            self.app_obj.set_main_win_save_slider_flag(False)
 
 
     def on_reset_avconv_button_clicked(self, button, entry):

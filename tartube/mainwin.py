@@ -1564,7 +1564,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.videos_paned = Gtk.HPaned()
         self.videos_tab.pack_start(self.videos_paned, True, True, 0)
-        self.videos_paned.set_position(self.app_obj.paned_min_size)
+        self.videos_paned.set_position(
+            self.app_obj.main_win_videos_slider_posn,
+        )
         self.videos_paned.set_wide_handle(True)
 
         # Left-hand side
@@ -2069,7 +2071,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.progress_paned = Gtk.VPaned()
         vbox.pack_start(self.progress_paned, True, True, 0)
-        self.progress_paned.set_position(self.app_obj.paned_min_size)
+        self.progress_paned.set_position(
+            self.app_obj.main_win_progress_slider_posn,
+        )
         self.progress_paned.set_wide_handle(True)
 
         # Upper half
@@ -2373,7 +2377,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.classic_paned = Gtk.VPaned()
         vbox.pack_start(self.classic_paned, True, True, 0)
-        self.classic_paned.set_position(self.app_obj.paned_min_size)
+        self.classic_paned.set_position(
+            self.app_obj.main_win_classic_slider_posn,
+        )
         self.classic_paned.set_wide_handle(True)
 
         # Upper half
@@ -14302,16 +14308,8 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # If the file exists, delete it (otherwise youtube-dl won't download
-        #   anything)
-        # Don't even check media.Video.dl_flag: the file might exist, even if
-        #   the flag has not been set
-        if media_data_obj.file_name:
-
-            path = media_data_obj.get_actual_path(self.app_obj)
-
-            if os.path.isfile(path):
-                os.remove(path)
+        # Delete the files associated with the video
+        self.app_obj.delete_video_files(media_data_obj)
 
         # No download operation will start, if the media.Video object is marked
         #   as downloaded
