@@ -7932,6 +7932,9 @@ class TartubeApp(Gtk.Application):
                     _(
                     'You only have {0} / {1} Mb remaining on your device',
                     ).format(str(disk_space), str(total_space)),
+                    'error',
+                    'ok',
+                    None,                   # Parent window is main window                    
                 )
 
             return
