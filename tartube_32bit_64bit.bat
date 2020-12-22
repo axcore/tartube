@@ -5,5 +5,8 @@ title Tartube
 echo ============================
 echo welcome to Tartube
 echo ============================
-timeout 5 > NUL
-echo %time%
+timeout 4 > nul
+echo ============================
+echo Tartube Start
+echo ============================
+timeout 3 > nul
