@@ -1039,6 +1039,15 @@ class TartubeApp(Gtk.Application):
         #   False
         self.custom_dl_delay_min = 0
 
+        # List of proxies. If set, a download operation cycles between them.
+        #   Does not apply to YTSC downloads
+        self.dl_proxy_list = []
+        # At the start of a download operation, the contents of
+        #   self.dl_proxy_list are copied into this list. Whenever a proxy is
+        #   required, the first item in the list is used, and moved to the
+        #   bottom of the list
+        self.dl_proxy_cycle_list = []
+
         # During an update operation, a separate GObject timer runs, so that
         #   the Output Tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
@@ -1802,6 +1811,10 @@ class TartubeApp(Gtk.Application):
         change_db_menu_action = Gio.SimpleAction.new('change_db_menu', None)
         change_db_menu_action.connect('activate', self.on_menu_change_db)
         self.add_action(change_db_menu_action)
+
+        check_db_menu_action = Gio.SimpleAction.new('check_db_menu', None)
+        check_db_menu_action.connect('activate', self.on_menu_check_db)
+        self.add_action(check_db_menu_action)
 
         save_db_menu_action = Gio.SimpleAction.new('save_db_menu', None)
         save_db_menu_action.connect('activate', self.on_menu_save_db)
@@ -3509,6 +3522,9 @@ class TartubeApp(Gtk.Application):
             self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
             self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
 
+        if version >= 2003029:  # v2.3.029
+            self.dl_proxy_list = json_dict['dl_proxy_list']
+
         if version >= 1001054:  # v1.1.054
             self.ffmpeg_path = json_dict['ffmpeg_path']
         if version >= 2001095:  # v2.1.095
@@ -4286,6 +4302,8 @@ class TartubeApp(Gtk.Application):
             'custom_dl_delay_flag': self.custom_dl_delay_flag,
             'custom_dl_delay_max': self.custom_dl_delay_max,
             'custom_dl_delay_min': self.custom_dl_delay_min,
+
+            'dl_proxy_list': self.dl_proxy_list,
 
             'ffmpeg_path': self.ffmpeg_path,
             'avconv_path': self.avconv_path,
@@ -5642,6 +5660,23 @@ class TartubeApp(Gtk.Application):
                 and not options_obj.dbid in self.options_reg_dict:
                     options_obj.dbid = None
 
+        if version < 2003026:      # v2.3.026
+
+            # Fix an error, in which a media data object's .options_obj IV is
+            #   not updated, when the options object is reset (i.e. replaced
+            #   with a new one)
+            for options_obj in self.options_reg_dict.values():
+                if options_obj.dbid is not None:
+
+                    if not options_obj.dbid in self.media_reg_dict:
+                        # Git #228, don't have an explanation for this error
+                        #   yet (may have been fixed in v2.3.026-027)
+                        options_obj.reset_dbid()
+
+                    else:
+                        media_data_obj = self.media_reg_dict[options_obj.dbid]
+                        media_data_obj.set_options_obj(options_obj)
+
 
     def save_db(self):
 
@@ -6386,7 +6421,7 @@ class TartubeApp(Gtk.Application):
 
             return
 
-        # Check the database, looking for: media.Video, media.Channel,
+        # Check the database, looking for media.Video, media.Channel,
         #   media.Playlist and media.Folder objects (or their .dbids) that,
         #   due to some problem or other, appear in one IV but not another
         # If inconsistencies are found, add them to this dictionary, and
@@ -6398,6 +6433,10 @@ class TartubeApp(Gtk.Application):
         error_slave_dict = {}
         # (The number of channel/playlist/folders whose flag counts are wrong)
         flag_error_count = 0
+        # (Two further dictionaries for recording inconsistencies in
+        #   options.OptionsManager objects)
+        error_options_dict = {}
+        error_options_media_dict = {}
 
         # Check that entries in self.media_name_dict appear in
         #   self.media_reg_dict
@@ -6580,11 +6619,30 @@ class TartubeApp(Gtk.Application):
             or not self.check_fixed_folder(media_data_obj):
                 mod_error_reg_dict[dbid] = media_data_obj
 
+        # Final check on options.OptionsManager objects
+        for options_obj in self.options_reg_dict.values():
+
+            if options_obj.dbid is not None:
+
+                if not options_obj.dbid in self.media_reg_dict:
+                    error_options_dict[options_obj.uid] = options_obj
+
+                else:
+
+                    media_data_obj = self.media_reg_dict[options_obj.dbid]
+                    if media_data_obj.options_obj is None \
+                    or media_data_obj.options_obj != options_obj:
+                        error_options_dict[options_obj.uid] = options_obj
+                        error_options_media_dict[media_data_obj.dbid] \
+                        = media_data_obj
+
         # Check complete
         if not mod_error_reg_dict \
         and not error_master_dict \
         and not error_slave_dict \
-        and not flag_error_count:
+        and not flag_error_count \
+        and not error_options_dict \
+        and not error_options_media_dict:
 
             if not no_prompt_flag:
 
@@ -6605,6 +6663,8 @@ class TartubeApp(Gtk.Application):
                     mod_error_reg_dict,
                     error_master_dict,
                     error_slave_dict,
+                    error_options_dict,
+                    error_options_media_dict,
                 ],
                 no_prompt_flag,
             )
@@ -6612,7 +6672,8 @@ class TartubeApp(Gtk.Application):
         else:
 
             total = len(error_reg_dict) + len(error_master_dict) \
-            + len(error_slave_dict) + flag_error_count
+            + len(error_slave_dict) + flag_error_count \
+            + len(error_options_dict) + len(error_options_media_dict)
 
             # Prompt the user before deleting stuff
             self.dialogue_manager_obj.show_msg_dialogue(
@@ -6632,6 +6693,8 @@ class TartubeApp(Gtk.Application):
                         mod_error_reg_dict,
                         error_master_dict,
                         error_slave_dict,
+                        error_options_dict,
+                        error_options_media_dict,
                     ],
                 },
             )
@@ -6669,6 +6732,13 @@ class TartubeApp(Gtk.Application):
                     (A dictionary of errors in a channel/playlist/folder's
                         .slave_dbid_list IV, which are fixed separately)
 
+                error_options_dict[uid] = options_obj
+                error_options_media_dict[dbid] = media_data_obj
+
+                    (Dictionaries of inconsistencies between media data objects
+                        and options.OptionsManager objects. These
+                        errors are fixed separately)
+
             no_prompt_flag (bool): If True, don't show a dialogue window at
                 the end of the procedure
 
@@ -6681,6 +6751,8 @@ class TartubeApp(Gtk.Application):
         error_reg_dict = data_list.pop(0)
         error_master_dict = data_list.pop(0)
         error_slave_dict = data_list.pop(0)
+        error_options_dict = data_list.pop(0)
+        error_options_media_dict = data_list.pop(0)
 
         # Update mainapp.TartubeApp IVs
         for dbid in error_reg_dict.keys():
@@ -6751,6 +6823,14 @@ class TartubeApp(Gtk.Application):
 
             for slave_dbid in del_list:
                 media_data_obj.del_slave_dbid(slave_dbid)
+
+        # Deal with inconsistencies between the media data registry and
+        #   options.OptionsManager objects
+        for options_obj in error_options_dict.values():
+            options_obj.reset_dbid()
+
+        for media_data_obj in error_options_media_dict.values():
+            media_data_obj.reset_options_obj()
 
         # Save the database file (unless load/save has been disabled very
         #   recently)
@@ -7814,6 +7894,36 @@ class TartubeApp(Gtk.Application):
         return return_list
 
 
+    def get_proxy(self):
+
+        """Called by options.OptionsParser.build_proxy().
+
+        self.dl_proxy_cycle_list() specifies a list of proxies which can be
+        passed to youtube-dl(c) as the --proxy option.
+
+        So that the user can cycle through the list of proxies, return the
+        item at the top of the list (if any), having moved it to the bottom of
+        the list.
+
+        Return values;
+
+            The URL to a proxy, or None
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7710 get_proxy')
+
+        if not self.dl_proxy_list:
+            return None
+
+        else:
+            proxy = self.dl_proxy_list.pop(0)
+            self.dl_proxy_list.append(proxy)
+
+            return proxy
+
+
     # (Operations)
 
 
@@ -7934,7 +8044,7 @@ class TartubeApp(Gtk.Application):
                     ).format(str(disk_space), str(total_space)),
                     'error',
                     'ok',
-                    None,                   # Parent window is main window                    
+                    None,                   # Parent window is main window
                 )
 
             return
@@ -8052,6 +8162,11 @@ class TartubeApp(Gtk.Application):
                 self.dialogue_manager_obj.show_msg_dialogue(msg, 'error', 'ok')
 
             return
+
+        # Set a list of proxies. When one is required, a call to
+        #   self.get_proxy() returns the item at the top of the list, and moves
+        #   it to the bottom of the list
+        self.dl_proxy_cycle_list = self.dl_proxy_list.copy()
 
         # If the flag is set, do an update operation before starting the
         #   download operation
@@ -9431,29 +9546,30 @@ class TartubeApp(Gtk.Application):
         # Any code can check whether livestream operation is in progress, or
         #   not, by checking this IV
         self.livestream_manager_obj = None
-        # If the automatic sort function in
-        #   mainwin.MainWin.video_catalogue_update_video() was suppressed,
-        #   perform it now
-        if not self.download_manager_obj and self.gtk_emulate_broken_flag:
 
-            if self.catalogue_mode_type != 'grid':
-
-                GObject.timeout_add(
-                    0,
-                    self.main_win_obj.catalogue_listbox.invalidate_sort,
-                )
-
-            else:
-
-                GObject.timeout_add(
-                    0,
-                    self.main_win_obj.video_catalogue_grid_rearrange,
-                )
+#        # If the automatic sort function in
+#        #   mainwin.MainWin.video_catalogue_update_video() was suppressed,
+#        #   perform it now
+#        if not self.download_manager_obj and self.gtk_emulate_broken_flag:
+#
+#            if self.catalogue_mode_type != 'grid':
+#
+#                GObject.timeout_add(
+#                    0,
+#                    self.main_win_obj.catalogue_listbox.invalidate_sort,
+#                )
+#
+#            else:
+#
+#                GObject.timeout_add(
+#                    0,
+#                    self.main_win_obj.video_catalogue_grid_rearrange,
+#                )
 
         # Any videos whose livestream status has changed must be redrawn in
         #   the Video catalogue
         # (This function is called from the downloads.StreamManager object, so
-        #   to prevent a crash, its calls must be wrapper in a timer)
+        #   to prevent a crash, its calls must be wrapped in a timer)
         if self.main_win_obj.video_index_current \
         == self.fixed_live_folder.name:
 
@@ -11382,12 +11498,23 @@ class TartubeApp(Gtk.Application):
 
         # Destroy the options.OptionsManager object attached to this video
         #   (if any), unless it's also the one used in the Classic Mode tab
-        if video_obj.options_obj \
-        and (
-            not self.classic_options_obj \
-            or self.classic_options_obj != video_obj.options_obj
-        ):
-            del self.options_reg_dict[video_obj.options_obj.uid]
+        if video_obj.options_obj:
+
+            if (
+                not self.classic_options_obj \
+                or self.classic_options_obj != video_obj.options_obj
+            ):
+                del self.options_reg_dict[video_obj.options_obj.uid]
+
+            else:
+
+                # This is the options.OptionsManager used in the Classic Mode
+                #   Tab (an unlikely situation, but possible)
+                self.classic_options_obj.reset_dbid()
+                # Update the list in any preference windows that are open
+                for win_obj in self.main_win_obj.config_win_list:
+                    if isinstance(win_obj, config.SystemPrefWin):
+                        win_obj.setup_options_dl_list_tab_update_treeview()
 
         # Remove the video from its parent object
         video_obj.parent_obj.del_child(video_obj)
@@ -11703,14 +11830,25 @@ class TartubeApp(Gtk.Application):
         # Confirmation has been obtained, and any files have been deleted (if
         #   required), so now deal with the media data registry
 
-        # Destroy the options.OptionsManager object attached to this video
+        # Destroy the options.OptionsManager object attached to this container
         #   (if any), unless it's also the one used in the Classic Mode tab
-        if media_data_obj.options_obj \
-        and (
-            not self.classic_options_obj \
-            or self.classic_options_obj != media_data_obj.options_obj
-        ):
-            del self.options_reg_dict[media_data_obj.options_obj.uid]
+        if media_data_obj.options_obj:
+
+            if (
+                not self.classic_options_obj \
+                or self.classic_options_obj != media_data_obj.options_obj
+            ):
+                del self.options_reg_dict[media_data_obj.options_obj.uid]
+
+            else:
+
+                # This is the options.OptionsManager used in the Classic Mode
+                #   Tab (an unlikely situation, but possible)
+                self.classic_options_obj.reset_dbid()
+                # Update the list in any preference windows that are open
+                for win_obj in self.main_win_obj.config_win_list:
+                    if isinstance(win_obj, config.SystemPrefWin):
+                        win_obj.setup_options_dl_list_tab_update_treeview()
 
         # Recursively remove all of the container object's children. The code
         #   doesn't work as intended, unless we make a copy of the list of
@@ -12586,6 +12724,10 @@ class TartubeApp(Gtk.Application):
         # Update rows in the Video Index
         for container_obj in update_list:
             self.main_win_obj.video_index_update_row_text(container_obj)
+
+        # Changing a video's live mode almost always changes its position in
+        #   the parent container's child list, so perform a resort
+        video_obj.parent_obj.sort_children(self)
 
 
     def mark_video_missing(self, video_obj, missing_flag, \
@@ -15096,6 +15238,10 @@ class TartubeApp(Gtk.Application):
         data object, an action which also affects its descendants (unless they
         too have an applied download options object).
 
+        Note that when a media data object is deleted, self.delete_video() or
+        self.delete_container_complete() updates the options object without
+        calling this function.
+
         Args:
 
             media_data_obj (media.Video, media.Channel, media.Playlist or
@@ -15126,7 +15272,7 @@ class TartubeApp(Gtk.Application):
             del self.options_reg_dict[media_data_obj.options_obj.uid]
 
         # Remove download options from the media data object
-        media_data_obj.set_options_obj(None)
+        media_data_obj.reset_options_obj()
 
         # Update the row in the Video Index or Video Catalogue
         if isinstance(media_data_obj, media.Video):
@@ -15159,7 +15305,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 15074 remove_download_options')
+            utils.debug_time('app 15074 delete_download_options')
 
         # Sanity check
         if self.current_manager_obj \
@@ -15183,7 +15329,7 @@ class TartubeApp(Gtk.Application):
         if media_data_obj:
 
             # Remove download options from the media data object
-            media_data_obj.set_options_obj(None)
+            media_data_obj.reset_options_obj()
 
             # Update the row in the Video Index or Video Catalogue
             if isinstance(media_data_obj, media.Video):
@@ -15199,9 +15345,8 @@ class TartubeApp(Gtk.Application):
 
     def apply_classic_download_options(self, options_obj):
 
-        """Called by mainwin.MainWin.on_classic_menu_set_options().
-
-        Also called by self.start().
+        """Called by
+        config.SystemPrefWin.on_options_use_classic_button_clicked().
 
         A modified version of self.apply_download_options.
 
@@ -15295,7 +15440,7 @@ class TartubeApp(Gtk.Application):
         return options_obj
 
 
-    def clone_general_download_options(self, data_list):
+    def clone_download_options_from_window(self, data_list):
 
         """Called by config.OptionsEditWin.on_clone_options_clicked().
 
@@ -15304,6 +15449,9 @@ class TartubeApp(Gtk.Application):
 
         Clones youtube-dl download options from the General Options manager
         into the specified download options manager.
+
+        This function is designed to be called from one particular place. For
+        general cloning, call self.clone_download_options() instead.
 
         Args:
 
@@ -15315,7 +15463,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 15230 clone_general_download_options')
+            utils.debug_time('app 15230 clone_download_options_from_window')
 
         edit_win_obj = data_list.pop(0)
         options_obj = data_list.pop(0)
@@ -15324,6 +15472,71 @@ class TartubeApp(Gtk.Application):
         options_obj.clone_options(self.general_options_obj)
         # Reset the edit window to display the new (cloned) values
         edit_win_obj.reset_with_new_edit_obj(options_obj)
+
+
+    def clone_download_options(self, old_options_obj):
+
+        """Can be called by anything.
+
+        Clones an options manager object, and returns the clone, which has the
+        same name as the original, but a different .uid.
+
+        Args:
+
+            old_options_obj (options.OptionsManager): The object to clone. Any
+                options manager object (including the General Options manager)
+                can be cloned
+
+        Return values:
+
+            The new cloned object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15231 clone_download_options')
+
+        # Work out a name for the clone that's not already in use (either by
+        #   an existing options manager, or by a channel/playlist/folder)
+        # (Options manager objects don't have unique names, but in this case
+        #   we'll give it a unique name, so that the user can clearly see what
+        #   has happened)
+        match = re.search('^(.*)\s+(\d+)$', old_options_obj.name)
+        if match:
+            base_name = match.group(1)
+            index = int(match.group(2))
+        else:
+            base_name = old_options_obj.name
+            index = 1
+
+        match_flag = True
+        while match_flag:
+
+            match_flag = False
+            index += 1
+
+            test_name = base_name + ' ' + str(index)
+            if not test_name in self.media_name_dict:
+
+                for this_obj in self.options_reg_dict.values():
+
+                    if this_obj.name == test_name:
+                        match_flag = True
+                        break
+
+        new_name = base_name + ' ' + str(index)
+
+        # Create a new options object, with the same name as the original
+        new_options_obj = self.create_download_options(new_name)
+        # Copy the original's values into the new object
+        new_options_obj.clone_options(old_options_obj)
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_options_dl_list_tab_update_treeview()
+
+        return new_options_obj
 
 
     def reset_download_options(self, data_list):
@@ -15360,6 +15573,10 @@ class TartubeApp(Gtk.Application):
             self.general_options_obj = new_options_obj
         elif self.classic_options_obj == old_options_obj:
             self.classic_options_obj = new_options_obj
+
+        if old_options_obj.dbid is not None:
+            media_data_obj = self.media_reg_dict[old_options_obj.dbid]
+            media_data_obj.set_options_obj(new_options_obj)
 
         # Reset the edit window to display the new (default) values
         edit_win_obj.reset_with_new_edit_obj(new_options_obj)
@@ -15589,7 +15806,7 @@ class TartubeApp(Gtk.Application):
         return options_obj
 
 
-    def clone_ffmpeg_options(self, data_list):
+    def clone_ffmpeg_options_from_window(self, data_list):
 
         """Called by config.FFmpegOptionsEditWin.on_clone_options_clicked().
 
@@ -15606,7 +15823,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 15521 clone_ffmpeg_options')
+            utils.debug_time('app 15521 clone_ffmpeg_options_from_window')
 
         edit_win_obj = data_list.pop(0)
         options_obj = data_list.pop(0)
@@ -15615,6 +15832,68 @@ class TartubeApp(Gtk.Application):
         options_obj.clone_options(self.ffmpeg_options_obj)
         # Reset the edit window to display the new (cloned) values
         edit_win_obj.reset_with_new_edit_obj(options_obj)
+
+
+    def clone_ffmpeg_options(self, old_options_obj):
+
+        """Can be called by anything.
+
+        Clones an FFmpeg manager object, and returns the clone, which has the
+        same name as the original, but a different .uid.
+
+        Args:
+
+            old_options_obj (ffmpeg_tartube.FFmpegOptionsManager): The object
+                to clone. Any options manager object (including the current
+                one) can be cloned
+
+        Return values:
+
+            The new cloned object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15522 clone_ffmpeg_options')
+
+        # Work out a name for the clone that's not already in use
+        # (FFmpeg Options manager objects don't have unique names, but in this
+        #   case we'll give it a unique name, so that the user can clearly see
+        #   what has happened)
+        match = re.search('^(.*)\s+(\d+)$', old_options_obj.name)
+        if match:
+            base_name = match.group(1)
+            index = int(match.group(2))
+        else:
+            base_name = old_options_obj.name
+            index = 1
+
+        match_flag = True
+        while match_flag:
+
+            match_flag = False
+            index += 1
+
+            test_name = base_name + ' ' + str(index)
+            for this_obj in self.ffmpeg_reg_dict.values():
+
+                if this_obj.name == test_name:
+                    match_flag = True
+                    break
+
+        new_name = base_name + ' ' + str(index)
+
+        # Create a new options object, with the same name as the original
+        new_options_obj = self.create_ffmpeg_options(new_name)
+        # Copy the original's values into the new object
+        new_options_obj.clone_options(old_options_obj)
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_options_ffmpeg_list_tab_update_treeview()
+
+        return new_options_obj
 
 
     def reset_ffmpeg_options(self, data_list):
@@ -18283,6 +18562,27 @@ class TartubeApp(Gtk.Application):
         config.SystemPrefWin(self, 'db')
 
 
+    def on_menu_check_db(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Runs a database integrity check, without the need to open the
+        preference window first.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18188 on_menu_check_db')
+
+        self.check_integrity_db()
+
+
     def on_menu_check_all(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -19667,6 +19967,14 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 19573 set_disk_space_warn_limit')
 
         self.disk_space_warn_limit = value
+
+
+    def set_dl_proxy_list(self, proxy_list):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19578 set_dl_proxy_list')
+
+        self.dl_proxy_list = proxy_list.copy()
 
 
     def set_drag_thumb_path_flag(self, flag):

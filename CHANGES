@@ -1,3 +1,93 @@
+v2.3.??? (24 Dec 2020)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- youtube-dl(c) allows you to specify a proxy for downloading videos. This
+    version allows you to specify a list of proxies (in Edit > System
+    preferences... > Operations > Proxies). When downloading videos, Tartube
+    will cycle through these proxies, one by one. A new proxy is used for
+    each channel, each playlist, or each video in a folder (it is not possible
+    to switch proxies during the download of a single channel or playlist). If
+    you have specified a proxy in download options (for example, in Edit >
+    General download options > Advanced > Network), then that proxy overrides
+    the new list (Git #226)
+
+MINOR NEW FEATURES
+- You can now change the path to the video file. This might be useful in
+    several scenarios: for example, if you've converted a video file to an
+    audio file, or if you've changed the file name format, and have re-
+    downloaded a video. To change the path, right-click a video and select
+    'Show video > Properties...'. In the edit window, find the line marked
+    'File'. There is a new button there that can be clicked in order to
+    change the file path. For the sake of consistency, only video/audio files
+    in the same directory/folder can be set (Git #211)
+- In case the preference window cannot be opened (because of some python
+    error or other), a database integrity check can now be launched directly
+    from the main window's menu (File > Check database integrity)
+- Sets of download options and FFmpeg options can now be cloned. When applying
+    download options to a video/channel/playlist/folder, you can now select an
+    existing set of download options, or clone an existing set, or create a new
+    set (Git #224)
+- The copy of Youtube Stream Capture bundled along with Tartube has been
+    updated to the latest release
+
+MAJOR FIXES
+- Found a fix for (uncommon) crashes on MS Windows, in the setup window for new
+    installations, and a fix for (common) problems in keeping the textview
+    updated when youtube-dl(c) and/or FFmpeg are being downloaded from the
+    seutp window (Git #212)
+- More fixes for stalled video downloads. Tartube is now sensitive to some
+    new network problems, and in that situation can restart the download
+    immediately, rather than waiting some minutes. The new behaviour is
+    disabled by default. To enable it, click Edit > System preferences...
+    > Operations > Downloads, and select 'If a network problem is detected,
+    restart the download immediately'. I still have not been able to reproduce
+    a stalled download, but the restart process should work more smoothly now
+    (Git #174)
+- If downloading subtitles was enabled, Tartube mistook the path to the
+    subtitles file for the path to the video file. This should be fixed now
+    (Git #211)
+- In the Classic Mode tab, the button to re-download a video was broken. Fixed
+    it (Git #218)
+- Fixed a broken dialogue window, when Tartube runs out of disk space for
+    downloading videos, which caused a crash (Git #217)
+- A refresh operation failed to notice audio files, as well as video files. It
+    now recognised both (Git #225)
+- Some users have reported problems associated with download options (Git #228,
+    among others). I am not sure about the cause of these issues yet, but I
+    have been able to fix a couple of errors in the code (one major, one
+    minor). These errors may be responsible for the reported issues, or not
+    
+MINOR FIXES
+- After a period of continuous operation, without checking/download videos,
+    live/debut videos could change their status, but the order of videos in the
+    Videos Tab was not updated. Live/debut videos are supposed to be listed
+    first, before all other videos; this should now be working better???
+- Times in the Errors/Warnings tab were shown in UTC, instead of the user's
+    local time zone. The same problem applied to metadata in Tartube's saved
+    data files. Fixed both (Git #213)
+- The size of the main window, and the position of the slider in the Videos
+    tab, can be remembered between sessions (see the options in 'Edit > System
+    preference... > Windows > Main winndow'). However, the position of the
+    slider was not set correctly on MS Windows. Fixed that, and also added a
+    separate setting so that the window size, but not the slider position,
+    can be remembered (if that's what you want). If remembering the slider
+    position is enabled, Tartube will now remember the position of all three
+    sliders (Git #215)
+- You can download a video, then apply download options directly to the video,
+    then modify the options to change the download video's filename, then
+    re-download the video. The original video is deleted, but not its metadata
+    files. The redownload button in the Classic Mode tab did not delete the
+    original video or its metadata files in this situation. Fixed both
+    (Git #219)
+- Fixed a few annoying dialogue windows which, when closed, pushed the main
+    window to the fore, instead of the preference window
+- When video catalogues are listed without thumbnails at all, but sorted by
+    download (receive) time, the upload time was displayed instead. Fixed
+- At the bottom of the videos tab is a toolbar which can be partially hidden.
+    On startup, when not fully hidden, the toolbar can now be partially hidden
+    before any videos are displayed
+
 v2.3.008 (4 Dec 2020)
 -------------------------------------------------------------------------------
 

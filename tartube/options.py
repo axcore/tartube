@@ -64,7 +64,9 @@ class OptionsManager(object):
 
     NETWORK OPTIONS
 
-        proxy (str): Use the specified HTTP/HTTPS proxy
+        proxy (str): Use the specified HTTP/HTTPS proxy. If none is specified,
+            then Tartube will cycle through the list of proxies specified in
+            mainapp.TartubeApp.dl_proxy_list (if any)
 
         socket_timeout (str): Time to wait before giving up, in seconds
 
@@ -456,8 +458,8 @@ class OptionsManager(object):
 
     def clone_options(self, other_options_manager_obj):
 
-        """Called by mainapp.TartubeApp.apply_download_options() and
-        .clone_general_download_options().
+        """Called by mainapp.TartubeApp.apply_download_options(),
+        .clone_download_options() and .clone_download_options_from_window().
 
         Clones download options from the specified object into this object,
         completely replacing this object's download options.
@@ -676,6 +678,11 @@ class OptionsManager(object):
     def set_dbid(self, dbid):
 
         self.dbid = dbid
+
+
+    def reset_dbid(self):
+
+        self.dbid = None
 
 
 class OptionsParser(object):
@@ -969,6 +976,8 @@ class OptionsParser(object):
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
         self.build_limit_rate(copy_dict)
+        # Set the 'proxy' option
+        self.build_proxy(copy_dict)
 
         # Parse basic youtube-dl command line options
         for option_holder_obj in self.option_holder_list:
@@ -1107,6 +1116,29 @@ class OptionsParser(object):
             )
 
             copy_dict['limit_rate'] = str(limit) + 'K'
+
+
+    def build_proxy(self, copy_dict):
+
+        """Called by self.parse().
+
+        Build the value of the 'proxy' option and store it in the options
+        dictionary.
+
+        Args:
+
+            copy_dict (dict): Copy of the original options dictionary.
+
+        """
+
+        # If the option is already specified, we use it. Otherwise, cycle
+        #   through the proxies in the main appliation's list
+        if not copy_dict['proxy']:
+
+            proxy = self.app_obj.get_proxy()
+            if proxy is not None:
+
+                copy_dict['proxy'] = proxy
 
 
     def build_save_path(self, media_data_obj, copy_dict, operation_type):

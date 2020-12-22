@@ -3756,45 +3756,48 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_label(grid,
-            _('Use this HTTP/HTTPS proxy'),
-            0, 1, 1, 1,
+            _(
+            'Use this HTTP/HTTPS proxy (if set, overrides the proxies in' \
+            + ' Tartube\'s preferences window',
+            ),
+            0, 1, grid_width, 1,
         )
 
         self.add_entry(grid,
             'proxy',
-            1, 1, 1, 1,
+            0, 2, grid_width, 1,
         )
 
         self.add_label(grid,
             _('Time to wait for socket connection, before giving up'),
-            0, 2, 1, 1,
-        )
-
-        self.add_entry(grid,
-            'socket_timeout',
-            1, 2, 1, 1,
-        )
-
-        self.add_label(grid,
-            _('Bind with this Client-side IP address'),
             0, 3, 1, 1,
         )
 
         self.add_entry(grid,
-            'source_address',
+            'socket_timeout',
             1, 3, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Bind with this Client-side IP address'),
+            0, 4, 1, 1,
+        )
+
+        self.add_entry(grid,
+            'source_address',
+            1, 4, 1, 1,
         )
 
         self.add_checkbutton(grid,
             _('Connect using IPv4 only'),
             'force_ipv4',
-            0, 4, 1, 1,
+            0, 5, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             _('Connect using IPv6 only'),
             'force_ipv6',
-            1, 4, 1, 1,
+            0, 6, grid_width, 1,
         )
 
 
@@ -4478,7 +4481,7 @@ class OptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'clone_general_download_options',
+                'yes': 'clone_download_options_from_window',
                 'data': [self, self.edit_obj],
             },
         )
@@ -6602,7 +6605,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             'yes-no',
             self,           # Parent window is this window
             {
-                'yes': 'clone_ffmpeg_options',
+                'yes': 'clone_ffmpeg_options_from_window',
                 'data': [self, self.edit_obj],
             },
         )
@@ -8918,9 +8921,6 @@ class ScheduledEditWin(GenericEditWin):
                 liststore.append([name])
 
 
-#   def setup_download_options_tab():   # Inherited from GenericConfigWin
-
-
     # Callback class methods
 
 
@@ -10006,7 +10006,6 @@ class SystemPrefWin(GenericPrefWin):
         treeview.set_vexpand(False)
         for item in self.app_obj.data_dir_alt_list:
             liststore.append([item])
-        # (Signal connect appears below)
 
         button2 = Gtk.Button(_('Switch'))
         grid.attach(button2, 2, 3, 1, 1)
@@ -11118,6 +11117,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.ignore_custom_msg_list,
             0, 6, grid_width, 1
         )
+        # (Signal connect appears below)
 
         radiobutton = self.add_radiobutton(grid,
             None,
@@ -11506,8 +11506,8 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_tab(self.operations_inner_notebook)
         self.setup_operations_livestreams_tab(self.operations_inner_notebook)
+        self.setup_operations_proxies_tab(self.operations_inner_notebook)
         self.setup_operations_actions_tab(self.operations_inner_notebook)
-        self.setup_operations_notify_tab(self.operations_inner_notebook)
 
 
     def setup_operations_performance_tab(self, inner_notebook):
@@ -12370,6 +12370,40 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def setup_operations_proxies_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Proxies' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Proxies'),
+            inner_notebook,
+        )
+
+        # Proxies
+        self.add_label(grid,
+            '<u>' + _('Proxies') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' \
+            + _(
+            'During a download operation, Tartube will cycle betwween the' \
+            + ' proxies in this list',
+            ) + '</i>',
+            0, 1, 1, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            self.app_obj.dl_proxy_list,
+            0, 2, 1, 1
+        )
+        textbuffer.connect('changed', self.on_proxy_textview_changed)
+
+
     def setup_operations_actions_tab(self, inner_notebook):
 
         """Called by self.setup_scheduling_tab().
@@ -12479,23 +12513,10 @@ class SystemPrefWin(GenericPrefWin):
             self.on_livestream_auto_dl_stop_button_toggled,
         )
 
-
-    def setup_operations_notify_tab(self, inner_notebook):
-
-        """Called by self.setup_operations_tab().
-
-        Sets up the 'Notifications' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Notify'),
-            inner_notebook,
-        )
-
         # Desktop notification preferences
         self.add_label(grid,
             '<u>' + _('Desktop notification preferences') + '</u>',
-            0, 0, 1, 1,
+            0, 6, 1, 1,
         )
 
         radiobutton = self.add_radiobutton(grid,
@@ -12503,7 +12524,7 @@ class SystemPrefWin(GenericPrefWin):
             _(
             'Show a dialogue window at the end of an operation',
             ),
-            0, 1, 1, 1,
+            0, 7, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -12515,7 +12536,7 @@ class SystemPrefWin(GenericPrefWin):
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
             _(text),
-            0, 2, 1, 1,
+            0, 8, 1, 1,
         )
         if self.app_obj.operation_dialogue_mode == 'desktop':
             radiobutton2.set_active(True)
@@ -12528,7 +12549,7 @@ class SystemPrefWin(GenericPrefWin):
             _(
             'Don\'t notify the user at the end of an operation',
             ),
-            0, 3, 1, 1,
+            0, 9, 1, 1,
         )
         if self.app_obj.operation_dialogue_mode == 'default':
             radiobutton3.set_active(True)
@@ -13148,17 +13169,26 @@ class SystemPrefWin(GenericPrefWin):
 
         button5 = Gtk.Button()
         grid2.attach(button5, 2, 0, 1, 1)
-        button5.set_label(_('Use in Classic Mode tab'))
+        button5.set_label(_('Clone'))
         button5.connect(
             'clicked',
-            self.on_options_use_classic_button_clicked,
+            self.on_options_clone_button_clicked,
             treeview,
         )
 
         button6 = Gtk.Button()
         grid2.attach(button6, 3, 0, 1, 1)
-        button6.set_label(_('Delete'))
+        button6.set_label(_('Use in Classic Mode tab'))
         button6.connect(
+            'clicked',
+            self.on_options_use_classic_button_clicked,
+            treeview,
+        )
+
+        button7 = Gtk.Button()
+        grid2.attach(button7, 4, 0, 1, 1)
+        button7.set_label(_('Delete'))
+        button7.connect(
             'clicked',
             self.on_options_delete_button_clicked,
             treeview,
@@ -13167,14 +13197,14 @@ class SystemPrefWin(GenericPrefWin):
         # (Use an empty label for spacing)
         label = self.add_label(grid2,
             '',
-            4, 0, 1, 1,
+            5, 0, 1, 1,
         )
         label.set_hexpand(True)
 
-        button7 = Gtk.Button()
-        grid2.attach(button7, 5, 0, 1, 1)
-        button7.set_label(_('Refresh list'))
-        button7.connect(
+        button8 = Gtk.Button()
+        grid2.attach(button8, 6, 0, 1, 1)
+        button8.set_label(_('Refresh list'))
+        button8.connect(
             'clicked',
             self.setup_options_dl_list_tab_update_treeview,
         )
@@ -13278,7 +13308,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'After downloading a video, remove its download options',
+            'After downloading a video, destroy its download options',
             ),
             self.app_obj.auto_delete_options_flag,
             True,                   # Can be toggled by user
@@ -13404,17 +13434,26 @@ class SystemPrefWin(GenericPrefWin):
 
         button5 = Gtk.Button()
         grid2.attach(button5, 2, 0, 1, 1)
-        button5.set_label(_('Use these options'))
+        button5.set_label(_('Clone'))
         button5.connect(
             'clicked',
-            self.on_ffmpeg_use_button_clicked,
+            self.on_ffmpeg_clone_button_clicked,
             treeview,
         )
 
         button6 = Gtk.Button()
         grid2.attach(button6, 3, 0, 1, 1)
-        button6.set_label(_('Delete'))
+        button6.set_label(_('Use these options'))
         button6.connect(
+            'clicked',
+            self.on_ffmpeg_use_button_clicked,
+            treeview,
+        )
+
+        button7 = Gtk.Button()
+        grid2.attach(button7, 4, 0, 1, 1)
+        button7.set_label(_('Delete'))
+        button7.connect(
             'clicked',
             self.on_ffmpeg_delete_button_clicked,
             treeview,
@@ -13423,14 +13462,14 @@ class SystemPrefWin(GenericPrefWin):
         # (Use an empty label for spacing)
         label = self.add_label(grid2,
             '',
-            4, 0, 1, 1,
+            5, 0, 1, 1,
         )
         label.set_hexpand(True)
 
-        button7 = Gtk.Button()
-        grid2.attach(button7, 5, 0, 1, 1)
-        button7.set_label(_('Refresh list'))
-        button7.connect(
+        button8 = Gtk.Button()
+        grid2.attach(button8, 6, 0, 1, 1)
+        button8.set_label(_('Refresh list'))
+        button8.connect(
             'clicked',
             self.setup_options_ffmpeg_list_tab_update_treeview,
         )
@@ -15202,7 +15241,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_dialogue_button_toggled(self, radiobutton, mode):
 
-        """Called from callback in self.setup_operations_notify_tab().
+        """Called from callback in self.setup_operations_actions_tab().
 
         Sets whether a desktop notification, dialogue window or neither should
         be shown to the user at the end of a download/update/refresh/info/tidy
@@ -15596,6 +15635,38 @@ class SystemPrefWin(GenericPrefWin):
         FFmpegOptionsEditWin(self.app_obj, new_obj)
 
 
+    def on_ffmpeg_clone_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_ffmpeg_list_tab().
+
+        Clones the selected offmpeg_tartube.FFmpegOptionsManager object .
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.ffmpeg_reg_dict:
+
+                    new_obj = self.app_obj.clone_ffmpeg_options(
+                        self.app_obj.ffmpeg_reg_dict[uid],
+                    )
+
+                    # Open an edit window, so the user can set the cloned
+                    #   object's name
+                    FFmpegOptionsEditWin(self.app_obj, new_obj)
+
+
     def on_ffmpeg_convert_flag_toggled(self, checkbutton):
 
         """Called from callback in self.setup_operations_downloads_tab().
@@ -15661,7 +15732,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Are you sure you want to delete this options manager?'),
             'question',
             'yes-no',
-            None,                   # Parent window is main window
+            self,           # Parent window is this window
             {
                 'yes': 'delete_ffmpeg_options',
                 # Specified options
@@ -16585,6 +16656,38 @@ class SystemPrefWin(GenericPrefWin):
         OptionsEditWin(self.app_obj, new_obj)
 
 
+    def on_options_clone_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_options_dl_list_tab().
+
+        Clones the selected options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.options_reg_dict:
+
+                    new_obj = self.app_obj.clone_download_options(
+                        self.app_obj.options_reg_dict[uid],
+                    )
+
+                    # Open an edit window, so the user can set the cloned
+                    #   object's name
+                    OptionsEditWin(self.app_obj, new_obj)
+
+
     def on_options_delete_button_clicked(self, button, treeview):
 
         """Called from callback in self.setup_options_dl_list_tab().
@@ -16629,7 +16732,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Are you sure you want to delete this options manager?'),
             'question',
             'yes-no',
-            None,                   # Parent window is main window
+            self,           # Parent window is this window
             {
                 'yes': 'delete_download_options',
                 # Specified options
@@ -16999,6 +17102,37 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.show_pretty_dates_flag:
             self.app_obj.set_show_pretty_dates_flag(False)
+
+
+    def on_proxy_textview_changed(self, textbuffer):
+
+        """Called from callback in self.setup_operations_proxies_tab().
+
+        Sets the list of proxies.
+
+        Args:
+
+            textbuffer (Gtk.TextBuffer): The buffer belonging to the textview
+                whose contents has been modified
+
+        """
+
+        text = textbuffer.get_text(
+            textbuffer.get_start_iter(),
+            textbuffer.get_end_iter(),
+            # Don't include hidden characters
+            False,
+        )
+
+        # Filter out empty lines
+        line_list = text.split("\n")
+        mod_list = []
+        for line in line_list:
+            if re.search(r'\S', line):
+                mod_list.append(line)
+
+        # Apply the changes
+        self.app_obj.set_dl_proxy_list(mod_list)
 
 
     def on_refresh_verbose_button_toggled(self, checkbutton):

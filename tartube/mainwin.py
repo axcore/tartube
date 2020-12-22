@@ -951,6 +951,12 @@ class MainWin(Gtk.ApplicationWindow):
         file_sub_menu.append(self.change_db_menu_item)
         self.change_db_menu_item.set_action_name('app.change_db_menu')
 
+        self.check_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Check database integrity'),
+        )
+        file_sub_menu.append(self.check_db_menu_item)
+        self.check_db_menu_item.set_action_name('app.check_db_menu')
+
         # Separator
         file_sub_menu.append(Gtk.SeparatorMenuItem())
 
@@ -1831,9 +1837,10 @@ class MainWin(Gtk.ApplicationWindow):
                 ),
             )
         self.catalogue_toolbar.insert(self.catalogue_show_filter_button, -1)
-        self.catalogue_show_filter_button.set_sensitive(False)
+        if not self.app_obj.catalogue_show_filter_flag:
+            self.catalogue_show_filter_button.set_sensitive(False)
         self.catalogue_show_filter_button.set_tooltip_text(
-            _('Show filter options'),
+            _('Show more settings'),
         )
         self.catalogue_show_filter_button.set_action_name(
             'app.show_filter_toolbutton',
@@ -3951,7 +3958,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
 
             self.catalogue_show_filter_button.set_tooltip_text(
-                _('Show filter options'),
+                _('Show more settings'),
             )
 
             if self.catalogue_toolbar2 \
@@ -3959,6 +3966,11 @@ class MainWin(Gtk.ApplicationWindow):
                 self.catalogue_toolbar_vbox.remove(self.catalogue_toolbar2)
                 self.catalogue_toolbar_vbox.remove(self.catalogue_toolbar3)
                 self.catalogue_toolbar_vbox.show_all()
+
+            # If nothing has been selected in the Video Index, then we can
+            #   hide rows, but not reveal them again
+            if self.video_index_current is None:
+                self.catalogue_show_filter_button.set_sensitive(False)
 
         else:
 
@@ -3975,7 +3987,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
 
             self.catalogue_show_filter_button.set_tooltip_text(
-                _('Hide filter options'),
+                _('Show fewer settings'),
             )
 
             if not self.catalogue_toolbar2 \
@@ -11835,9 +11847,16 @@ class MainWin(Gtk.ApplicationWindow):
             # Get the specified options.OptionsManager object, before
             #   destroying the window
             options_obj = dialogue_win.options_obj
+            clone_flag = dialogue_win.clone_flag
             dialogue_win.destroy()
 
             if response == Gtk.ResponseType.OK:
+
+                if clone_flag:
+
+                    options_obj = self.app_obj.clone_download_options(
+                        options_obj,
+                    )
 
                 # Apply the specified (or new) download options to the media
                 #   data object
@@ -13390,9 +13409,16 @@ class MainWin(Gtk.ApplicationWindow):
             # Get the specified options.OptionsManager object, before
             #   destroying the window
             options_obj = dialogue_win.options_obj
+            clone_flag = dialogue_win.clone_flag
             dialogue_win.destroy()
 
             if response == Gtk.ResponseType.OK:
+
+                if clone_flag:
+
+                    options_obj = self.app_obj.clone_download_options(
+                        options_obj,
+                    )
 
                 # Apply the specified (or new) download options to the media
                 #   data object
@@ -17881,9 +17907,11 @@ class SimpleCatalogueItem(object):
             else:
                 msg += '  -  ' + _('Size:') + ' <i>' + _('unknown') + '</i>'
 
-            date = self.video_obj.get_upload_date_string(
-                self.main_win_obj.app_obj.show_pretty_dates_flag,
-            )
+            pretty_flag = self.main_win_obj.app_obj.show_pretty_dates_flag
+            if self.main_win_obj.app_obj.catalogue_sort_mode == 'receive':
+                date = self.video_obj.get_receive_date_string(pretty_flag)
+            else:
+                date = self.video_obj.get_upload_date_string(pretty_flag)
 
             if date is not None:
                 msg += '  -  ' + _('Date:') + ' ' + date
@@ -23914,9 +23942,8 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         # ---------------
         # Store the user's choices as IVs, so the calling function can retrieve
         #   them
-        # (If the user chooses to create new download options, then this IV
-        #   remains set to None)
         self.options_obj = None
+        self.clone_flag = False
 
 
         # Code
@@ -23956,7 +23983,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         radiobutton2 = Gtk.RadioButton.new_with_label_from_widget(
             radiobutton,
-            _('Use these download options:'),
+            _('Use these download options'),
         )
         grid.attach(radiobutton2, 0, 2, 1, 1)
         # (Signal connect appears below)
@@ -23988,18 +24015,59 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         combo.add_attribute(cell, 'text', 0)
         combo.set_active(0)
 
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 4, 1, 1)
+
+        radiobutton3 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton2,
+            _('Clone these download options'),
+        )
+        grid.attach(radiobutton3, 0, 5, 1, 1)
+        # (Signal connect appears below)
+
+        # Add a combo, containing all options.OptionsManager objects
+        store2 = Gtk.ListStore(str, int)
+
+        for uid in sorted(app_obj.options_reg_dict):
+
+            options_obj = app_obj.options_reg_dict[uid]
+            store2.append([
+                '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                options_obj.uid,
+            ])
+
+        combo2 = Gtk.ComboBox.new_with_model(store2)
+        grid.attach(combo2, 0, 6, 1, 1)
+        combo2.set_hexpand(True)
+        combo2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        cell = Gtk.CellRendererText()
+        combo2.pack_start(cell, False)
+        combo2.add_attribute(cell, 'text', 0)
+        combo2.set_active(0)
+
         # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_radiobutton_toggled,
             combo,
+            combo2,
         )
         radiobutton2.connect(
             'toggled',
             self.on_radiobutton2_toggled,
             combo,
+            combo2,
         )
         combo.connect('changed', self.on_combo_changed)
+        radiobutton3.connect(
+            'toggled',
+            self.on_radiobutton3_toggled,
+            combo,
+            combo2,
+        )
+        combo2.connect('changed', self.on_combo2_changed)
 
         # Display the dialogue window
         self.show_all()
@@ -24027,10 +24095,36 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         uid = model[tree_iter][1]
+
         self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+        self.clone_flag = False
 
 
-    def on_radiobutton_toggled(self, button, combo):
+    def on_combo2_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24028 on_combo2_changed')
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        uid = model[tree_iter][1]
+
+        self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+        self.clone_flag = True
+
+
+    def on_radiobutton_toggled(self, button, combo, combo2):
 
         """Called from a callback in self.__init__().
 
@@ -24040,7 +24134,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
             button (Gtk.Button): The widget clicked
 
-            combo (Gtk.ComboBox): Another widget to update
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
 
         """
 
@@ -24048,12 +24142,15 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             utils.debug_time('mwn 24050 on_radiobutton_toggled')
 
         if button.get_active():
+
             self.options_obj = None
+            self.clone_flag = False
 
             combo.set_sensitive(False)
+            combo2.set_sensitive(False)
 
 
-    def on_radiobutton2_toggled(self, button, combo):
+    def on_radiobutton2_toggled(self, button, combo, combo2):
 
         """Called from a callback in self.__init__().
 
@@ -24064,8 +24161,6 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             button (Gtk.Button): The widget clicked
 
             combo, combo2 (Gtk.ComboBox): Other widgets to update
-
-            entry (Gtk.Entry): Another widget to update
 
         """
 
@@ -24079,8 +24174,40 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             uid = model[tree_iter][1]
 
             self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.clone_flag = False
 
             combo.set_sensitive(True)
+            combo2.set_sensitive(False)
+
+
+    def on_radiobutton3_toggled(self, button, combo, combo2):
+
+        """Called from a callback in self.__init__().
+
+        User wants to clone an existing options manager.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24076 on_radiobutton3_toggled')
+
+        if button.get_active():
+
+            tree_iter = combo2.get_active_iter()
+            model = combo2.get_model()
+            uid = model[tree_iter][1]
+
+            self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.clone_flag = True
+
+            combo.set_sensitive(False)
+            combo2.set_sensitive(True)
 
 
 class CalendarDialogue(Gtk.Dialog):

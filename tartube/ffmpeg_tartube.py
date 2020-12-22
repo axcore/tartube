@@ -603,7 +603,8 @@ class FFmpegOptionsManager(object):
 
     def clone_options(self, other_options_manager_obj):
 
-        """Called by mainapp.TartubeApp.clone_ffmpeg_options().
+        """Called by mainapp.TartubeApp.clone_ffmpeg_options() and
+        .clone_ffmpeg_options_from_window().
 
         Clones FFmpeg options from the specified object into this object,
         completely replacing this object's FFmpeg options.

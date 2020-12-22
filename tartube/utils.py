@@ -1292,7 +1292,7 @@ def get_encoding():
 def get_local_time():
 
     """Can be called by anything.
-    
+
     Returns a datetime object that has been converted from UTC to the local
     time zone.
 
@@ -1304,7 +1304,7 @@ def get_local_time():
 
     utc = datetime.datetime.utcfromtimestamp(time.time())
     return utc.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
-    
+
 
 def get_options_manager(app_obj, media_data_obj):
 

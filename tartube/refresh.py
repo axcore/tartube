@@ -277,8 +277,8 @@ class RefreshManager(threading.Thread):
             # Can't read the directory
             return
 
-        # From this list, filter out files without a recognised file extension
-        #   (.mp4, .webm, etc)
+        # From this list, filter out files without a recognised video/audio
+        #   file extension (.mp4, .webm, etc)
         mod_list = []
         for relative_path in init_list:
 
@@ -290,7 +290,8 @@ class RefreshManager(threading.Thread):
             filename, ext = os.path.splitext(relative_path)
             # (Remove the initial .)
             ext = ext[1:]
-            if ext in formats.VIDEO_FORMAT_DICT:
+            if ext in formats.VIDEO_FORMAT_DICT \
+            or ext in formats.AUDIO_FORMAT_DICT:
 
                 mod_list.append(relative_path)
 

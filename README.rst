@@ -1317,16 +1317,18 @@ If a youtube-dl fork is still compatible with the original, then **Tartube** can
 * `7.18 Toolbar is too big`_
 * `7.19 YouTube name/password not accepted`_
 * `7.20 Georestriction workarounds don't work`_
-* `7.21 MS Windows installer is too big`_
-* `7.22 Tartube can't detect livestreams`_
-* `7.23 Livestream is already finished`_
-* `7.24 Can't hear livestream alarms`_
-* `7.25 Some icons not visible`_
-* `7.26 Video thumbnails not visible`_
-* `7.27 Tartube is not visible in the system tray`_
-* `7.28 Tartube is not portable`_
-* `7.29 British spelling`_
-* `7.30 No puedo hablar inglés`_
+* `7.21 Video website blocks me
+* `7.22 MS Windows installer is too big`_
+* `7.23 Tartube can't detect livestreams`_
+* `7.24 Livestream is already finished`_
+* `7.25 Can't hear livestream alarms`_
+* `7.26 Some icons not visible`_
+* `7.27 Video thumbnails not visible`_
+* `7.28 Tartube is not visible in the system tray`_
+* `7.29 Tartube is not portable`_
+* `7.30 Run out of disk space`_
+* `7.31 British spelling`_
+* `7.32 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1412,7 +1414,7 @@ A: This generally indicates an error in the Python, Gtk and/or **Tartube** code.
 There are two things you can try in the meantime:
 
 - Click **Edit > System preferences... > General > Modules**, and select the **Disable some cosmetic features to prevent crashes and other issues** button
-- Click **Edit > System preferences... > Files > DB Errors**, and then click the **Check DB** button
+- Click **File > Check database integrity**
 
 7.6 Videos are missing after a crash
 ------------------------------------
@@ -1440,7 +1442,7 @@ Note that **Tartube** does not create backup copies of the videos you've downloa
 
 *Q: The Tartube database is totally broken! How do I rebuild it? I don't want to download everything again!*
 
-A: There is a built-in database repair tool. Click **Edit > System preferences... > Files > DB Errors** and then click the **Check DB** button
+A: There is a built-in database repair tool. Click **File > Check database integrity**
 
 A: Try using one of the database backups - see `7.6 Videos are missing after a crash`_
 
@@ -1621,7 +1623,20 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to buy a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
 
-7.21 MS Windows installer is too big
+7.21 Video website blocks me
+----------------------------
+
+*Q: I downloaded some videos from a channel, but then YouTube blocked me, and I can't download the rest of them!*
+
+A: Change your IP address and try again.
+
+A: Subscribe to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
+
+A: You can specify a list of proxies (Edit > System preferences... > Operations > Proxies). During a download operation, **Tartube** will cycle between these proxies. 
+
+Unfortunately, it is not possible to switch between proxies while downloading a channel (youtube-dl(c) does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
+
+7.22 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -1642,7 +1657,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, which can be compared with the official one.
 
-7.22 Tartube can't detect livestreams
+7.23 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -1655,14 +1670,14 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again. At the time of writing, **Tartube** cannot detect livestreams on 32-bit MS Windows.
 
-7.23 Livestream is already finished
+7.24 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.24 Can't hear livestream alarms
+7.25 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1675,7 +1690,7 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again. At the time of writing, **playsound** cannot ne installed on 32-bit MS Windows.
 
-7.25 Some icons not visible
+7.26 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -1686,7 +1701,7 @@ A: **Tartube** uses a set of stock icons wherever possible. If those icons are n
 
 **Tartube** provides a set of custom icons to replace the stock ones (in an emergency). To enable them, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to select it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.26 Video thumbnails not visible
+7.27 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
@@ -1700,7 +1715,7 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.27 Tartube is not visible in the system tray
+7.28 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -1709,7 +1724,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.28 Tartube is not portable
+7.29 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -1720,14 +1735,25 @@ On other operating systems, just download the source code and run it. Installati
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather than in the system's default location.
 
-7.29 British spelling
+7.30 Run out of disk space
+--------------------------
+
+*Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
+
+A: Some users have reported that, when using a virtual machine (e.g. `VirtualBox <https://www.virtualbox.org/>`__), and when downloading videos to a separate filesystem (e.g. an external hard drive), Tartube checks the size of the virtual filesystem instead of the external drive.
+
+This seems to be an issue with the virtualisation software itself (we have confirmed that everything works as expected on a non-virtual system). 
+
+The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
+
+7.31 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences... > General > Language**, then click the drop-down box to select American English, and then restart **Tartube**
 
-7.30 No puedo hablar inglés
+7.32 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

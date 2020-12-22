@@ -322,7 +322,7 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            # Gtk does not like updating the textview from within a Python 
+            # Gtk does not like updating the textview from within a Python
             #   thread. Avoid a crash by using a timer
             GObject.timeout_add(
                 0,
@@ -522,7 +522,7 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            # Gtk does not like updating the textview from within a Python 
+            # Gtk does not like updating the textview from within a Python
             #   thread. Avoid a crash by using a timer
             GObject.timeout_add(
                 0,

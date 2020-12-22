@@ -137,6 +137,11 @@ class GenericMedia(object):
         self.options_obj = options_obj
 
 
+    def reset_options_obj(self):
+
+        self.options_obj = None
+
+
     def set_parent_obj(self, parent_obj):
 
         self.parent_obj = parent_obj
