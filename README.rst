@@ -59,14 +59,14 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.008 (4 Dec 2020)**
+Latest version: **v2.3.042 (24 Dec 2020)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.008/install-tartube-2.3.008-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.008/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.008/install-tartube-2.3.008-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.008/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.008/python3-tartube_2.3.008.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.008/tartube-2.3.008.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.042/install-tartube-2.3.042-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.042/install-tartube-2.3.042-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.042/python3-tartube_2.3.042.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-2.3.042.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl(c)** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 

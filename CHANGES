@@ -1,4 +1,4 @@
-v2.3.??? (24 Dec 2020)
+v2.3.042 (24 Dec 2020)
 -------------------------------------------------------------------------------
 
 MAJOR NEW FEATURES
@@ -57,12 +57,14 @@ MAJOR FIXES
     among others). I am not sure about the cause of these issues yet, but I
     have been able to fix a couple of errors in the code (one major, one
     minor). These errors may be responsible for the reported issues, or not
+- Fixed folders that vanish when being dragged and dropped into other folders
+    (MS Windows only), and fixed associated broken dialogue windows (Git #232)
     
 MINOR FIXES
 - After a period of continuous operation, without checking/download videos,
     live/debut videos could change their status, but the order of videos in the
     Videos Tab was not updated. Live/debut videos are supposed to be listed
-    first, before all other videos; this should now be working better???
+    first, before all other videos; this should now be working better
 - Times in the Errors/Warnings tab were shown in UTC, instead of the user's
     local time zone. The same problem applied to metadata in Tartube's saved
     data files. Fixed both (Git #213)

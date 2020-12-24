@@ -11093,7 +11093,7 @@ class TartubeApp(Gtk.Application):
                     + ' exists (although Tartube\'s database doesn\'t know' \
                     + ' anything about it)',
                 ) + '\n\n' + _(
-                    + 'You probably created that file/folder accidentally,' \
+                    'You probably created that file/folder accidentally,' \
                     + ' in which case you should delete it manually before' \
                     + ' trying again',
                 ),
@@ -11269,7 +11269,7 @@ class TartubeApp(Gtk.Application):
                 + ' about it)',
                 ) + '\n\n' \
                 + _(
-                + 'You probably created that file/folder accidentally, in' \
+                'You probably created that file/folder accidentally, in' \
                 + ' which case, you should delete it manually before trying' \
                 + ' again',
                 ),

@@ -12082,6 +12082,17 @@ class MainWin(Gtk.ApplicationWindow):
 
             if drag_name and dest_name:
 
+                # On MS Windows, the system helpfully deletes the dragged row
+                #   before we've had a chance to show the confirmation dialogue
+                # Could redraw the dragged row, but then MS Windows helpfully
+                #   selects the row beneath it, again before we've had a chance
+                #   to intervene
+                # Only way around it is to completely reset the Video Index
+                #   (and Video Catalogue)
+                if os.name == 'nt':
+                    self.video_index_catalogue_reset(True)
+
+                # Now proceed with the drag
                 drag_id = self.app_obj.media_name_dict[drag_name]
                 dest_id = self.app_obj.media_name_dict[dest_name]
 

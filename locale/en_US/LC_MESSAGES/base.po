@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-22 17:07+0000\n"
+"POT-Creation-Date: 2020-12-24 08:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
@@ -220,7 +220,7 @@ msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr ""
 
 #: .././mainapp.py:8071 .././mainapp.py:13578 .././mainapp.py:13694
-#: .././mainapp.py:13868 .././mainwin.py:17246
+#: .././mainapp.py:13868 .././mainwin.py:17257
 msgid "Are you sure you want to continue?"
 msgstr ""
 
@@ -373,7 +373,7 @@ msgstr ""
 msgid "Tidy operation halted"
 msgstr ""
 
-#: .././mainapp.py:9616 .././mainwin.py:17878
+#: .././mainapp.py:9616 .././mainwin.py:17889
 msgid "Livestream has started"
 msgstr ""
 
@@ -601,7 +601,7 @@ msgstr ""
 msgid "Are you sure you want to clear this list?"
 msgstr ""
 
-#: .././mainapp.py:17184 .././mainwin.py:14297
+#: .././mainapp.py:17184 .././mainwin.py:14308
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr ""
 
@@ -655,7 +655,7 @@ msgstr ""
 msgid "Database saved"
 msgstr ""
 
-#: .././mainapp.py:19168 .././mainwin.py:13277
+#: .././mainapp.py:19168 .././mainwin.py:13288
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -730,7 +730,7 @@ msgid "_Close to tray"
 msgstr ""
 
 #. Quit
-#: .././mainwin.py:984 .././mainwin.py:22559
+#: .././mainwin.py:984 .././mainwin.py:22570
 msgid "_Quit"
 msgstr ""
 
@@ -811,12 +811,12 @@ msgid "_Operations"
 msgstr ""
 
 #. Check all
-#: .././mainwin.py:1121 .././mainwin.py:22530
+#: .././mainwin.py:1121 .././mainwin.py:22541
 msgid "_Check all"
 msgstr ""
 
 #. Download all
-#: .././mainwin.py:1127 .././mainwin.py:22537
+#: .././mainwin.py:1127 .././mainwin.py:22548
 msgid "_Download all"
 msgstr ""
 
@@ -844,7 +844,7 @@ msgstr ""
 msgid "Tidy up _files..."
 msgstr ""
 
-#: .././mainwin.py:1187 .././mainwin.py:22548
+#: .././mainwin.py:1187 .././mainwin.py:22559
 msgid "_Stop current operation"
 msgstr ""
 
@@ -925,9 +925,9 @@ msgstr ""
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. Link not clickable
-#: .././mainwin.py:1380 .././mainwin.py:19080 .././mainwin.py:19085
-#: .././mainwin.py:19093 .././mainwin.py:19342 .././mainwin.py:19354
-#: .././mainwin.py:20089 .././mainwin.py:21436 .././mainwin.py:21462
+#: .././mainwin.py:1380 .././mainwin.py:19091 .././mainwin.py:19096
+#: .././mainwin.py:19104 .././mainwin.py:19353 .././mainwin.py:19365
+#: .././mainwin.py:20100 .././mainwin.py:21447 .././mainwin.py:21473
 #: .././config.py:11203
 msgid "Download"
 msgstr ""
@@ -1059,7 +1059,7 @@ msgstr ""
 msgid "Upload time"
 msgstr ""
 
-#: .././mainwin.py:1863 .././mainwin.py:24829 .././config.py:6384
+#: .././mainwin.py:1863 .././mainwin.py:24840 .././config.py:6384
 #: .././config.py:11203 .././config.py:13088 .././config.py:13355
 msgid "Name"
 msgstr ""
@@ -1238,11 +1238,11 @@ msgstr ""
 msgid "Default"
 msgstr ""
 
-#: .././mainwin.py:2578 .././mainwin.py:15907
+#: .././mainwin.py:2578 .././mainwin.py:15918
 msgid "Video:"
 msgstr ""
 
-#: .././mainwin.py:2582 .././mainwin.py:15907
+#: .././mainwin.py:2582 .././mainwin.py:15918
 msgid "Audio:"
 msgstr ""
 
@@ -2031,9 +2031,9 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:9649 .././mainwin.py:10385 .././mainwin.py:19448
-#: .././mainwin.py:19452 .././mainwin.py:20032 .././mainwin.py:21590
-#: .././mainwin.py:21594 .././mainwin.py:21836
+#: .././mainwin.py:9649 .././mainwin.py:10385 .././mainwin.py:19459
+#: .././mainwin.py:19463 .././mainwin.py:20043 .././mainwin.py:21601
+#: .././mainwin.py:21605 .././mainwin.py:21847
 msgid "Waiting"
 msgstr ""
 
@@ -2073,124 +2073,124 @@ msgid ""
 "playlist/folder"
 msgstr ""
 
-#: .././mainwin.py:13077
+#: .././mainwin.py:13088
 msgid "The URL is not valid"
 msgstr ""
 
-#: .././mainwin.py:17064
+#: .././mainwin.py:17075
 msgid "The following items are duplicates:"
 msgstr ""
 
-#: .././mainwin.py:17228
+#: .././mainwin.py:17239
 #, python-brace-format
 msgid "The channel contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:17235
+#: .././mainwin.py:17246
 #, python-brace-format
 msgid "The playlist contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:17242
+#: .././mainwin.py:17253
 #, python-brace-format
 msgid "The folder contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:17832 .././mainwin.py:18837
+#: .././mainwin.py:17843 .././mainwin.py:18848
 msgid "Originally from:"
 msgstr ""
 
-#: .././mainwin.py:17845 .././mainwin.py:18851
+#: .././mainwin.py:17856 .././mainwin.py:18862
 msgid "From channel"
 msgstr ""
 
-#: .././mainwin.py:17847 .././mainwin.py:18853
+#: .././mainwin.py:17858 .././mainwin.py:18864
 msgid "From playlist"
 msgstr ""
 
-#: .././mainwin.py:17849 .././mainwin.py:18855
+#: .././mainwin.py:17860 .././mainwin.py:18866
 msgid "From folder"
 msgstr ""
 
-#: .././mainwin.py:17880
+#: .././mainwin.py:17891
 msgid "Livestream has not started yet"
 msgstr ""
 
-#: .././mainwin.py:17887
+#: .././mainwin.py:17898
 msgid "Debut has started"
 msgstr ""
 
-#: .././mainwin.py:17889
+#: .././mainwin.py:17900
 msgid "Debut has not started yet"
 msgstr ""
 
-#: .././mainwin.py:17896 .././mainwin.py:17902 .././mainwin.py:18905
-#: .././mainwin.py:18912
+#: .././mainwin.py:17907 .././mainwin.py:17913 .././mainwin.py:18916
+#: .././mainwin.py:18923
 msgid "Duration:"
 msgstr ""
 
-#: .././mainwin.py:17902 .././mainwin.py:17908 .././mainwin.py:17919
-#: .././mainwin.py:18912 .././mainwin.py:18919 .././mainwin.py:18935
-#: .././mainwin.py:21299 .././mainwin.py:21305 .././mainwin.py:21316
+#: .././mainwin.py:17913 .././mainwin.py:17919 .././mainwin.py:17930
+#: .././mainwin.py:18923 .././mainwin.py:18930 .././mainwin.py:18946
+#: .././mainwin.py:21310 .././mainwin.py:21316 .././mainwin.py:21327
 #: .././media.py:369 .././media.py:379 .././media.py:1614 .././media.py:1620
 #: .././media.py:1630
 msgid "unknown"
 msgstr ""
 
-#: .././mainwin.py:17906 .././mainwin.py:17908 .././mainwin.py:18916
-#: .././mainwin.py:18918
+#: .././mainwin.py:17917 .././mainwin.py:17919 .././mainwin.py:18927
+#: .././mainwin.py:18929
 msgid "Size:"
 msgstr ""
 
-#: .././mainwin.py:17917 .././mainwin.py:17919 .././mainwin.py:18930
+#: .././mainwin.py:17928 .././mainwin.py:17930 .././mainwin.py:18941
 msgid "Date:"
 msgstr ""
 
-#: .././mainwin.py:18251
+#: .././mainwin.py:18262
 msgid "Watch:"
 msgstr ""
 
-#: .././mainwin.py:18320
+#: .././mainwin.py:18331
 msgid "Temporary:"
 msgstr ""
 
-#: .././mainwin.py:18363
+#: .././mainwin.py:18374
 msgid "Marked:"
 msgstr ""
 
-#: .././mainwin.py:18809 .././mainwin.py:18872
+#: .././mainwin.py:18820 .././mainwin.py:18883
 msgid "Show the full description"
 msgstr ""
 
-#: .././mainwin.py:18810 .././mainwin.py:18873
+#: .././mainwin.py:18821 .././mainwin.py:18884
 msgid "More"
 msgstr ""
 
-#: .././mainwin.py:18822 .././mainwin.py:18881
+#: .././mainwin.py:18833 .././mainwin.py:18892
 msgid "Show the short description"
 msgstr ""
 
-#: .././mainwin.py:18823 .././mainwin.py:18882
+#: .././mainwin.py:18834 .././mainwin.py:18893
 msgid "Less"
 msgstr ""
 
-#: .././mainwin.py:18925
+#: .././mainwin.py:18936
 msgid "Received:"
 msgstr ""
 
-#: .././mainwin.py:18954
+#: .././mainwin.py:18965
 msgid "Live now:"
 msgstr ""
 
-#: .././mainwin.py:18956 .././mainwin.py:21444
+#: .././mainwin.py:18967 .././mainwin.py:21455
 msgid "Live soon:"
 msgstr ""
 
-#: .././mainwin.py:18965
+#: .././mainwin.py:18976
 msgid "Debut now:"
 msgstr ""
 
-#: .././mainwin.py:18967 .././mainwin.py:21446
+#: .././mainwin.py:18978 .././mainwin.py:21457
 msgid "Debut soon:"
 msgstr ""
 
@@ -2198,14 +2198,14 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:18974 .././mainwin.py:18976 .././mainwin.py:18980
-#: .././mainwin.py:19248 .././mainwin.py:19250 .././mainwin.py:19254
-#: .././mainwin.py:19736 .././mainwin.py:21330 .././mainwin.py:21332
-#: .././mainwin.py:21336
+#: .././mainwin.py:18985 .././mainwin.py:18987 .././mainwin.py:18991
+#: .././mainwin.py:19259 .././mainwin.py:19261 .././mainwin.py:19265
+#: .././mainwin.py:19747 .././mainwin.py:21341 .././mainwin.py:21343
+#: .././mainwin.py:21347
 msgid "Notify"
 msgstr ""
 
-#: .././mainwin.py:18984 .././mainwin.py:19258 .././mainwin.py:21340
+#: .././mainwin.py:18995 .././mainwin.py:19269 .././mainwin.py:21351
 msgid "When the livestream starts, notify the user"
 msgstr ""
 
@@ -2213,13 +2213,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:18995 .././mainwin.py:18997 .././mainwin.py:19264
-#: .././mainwin.py:19266 .././mainwin.py:19618 .././mainwin.py:21351
-#: .././mainwin.py:21353
+#: .././mainwin.py:19006 .././mainwin.py:19008 .././mainwin.py:19275
+#: .././mainwin.py:19277 .././mainwin.py:19629 .././mainwin.py:21362
+#: .././mainwin.py:21364
 msgid "Alarm"
 msgstr ""
 
-#: .././mainwin.py:19001 .././mainwin.py:19270 .././mainwin.py:21357
+#: .././mainwin.py:19012 .././mainwin.py:19281 .././mainwin.py:21368
 msgid "When the livestream starts, sound an alarm"
 msgstr ""
 
@@ -2227,13 +2227,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19006 .././mainwin.py:19008 .././mainwin.py:19276
-#: .././mainwin.py:19278 .././mainwin.py:19776 .././mainwin.py:21362
-#: .././mainwin.py:21364
+#: .././mainwin.py:19017 .././mainwin.py:19019 .././mainwin.py:19287
+#: .././mainwin.py:19289 .././mainwin.py:19787 .././mainwin.py:21373
+#: .././mainwin.py:21375
 msgid "Open"
 msgstr ""
 
-#: .././mainwin.py:19012 .././mainwin.py:19282 .././mainwin.py:21368
+#: .././mainwin.py:19023 .././mainwin.py:19293 .././mainwin.py:21379
 msgid "When the livestream starts, open it"
 msgstr ""
 
@@ -2243,13 +2243,13 @@ msgstr ""
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. (Livestream already broadcasting)
-#: .././mainwin.py:19020 .././mainwin.py:19025 .././mainwin.py:19027
-#: .././mainwin.py:19288 .././mainwin.py:19290 .././mainwin.py:19657
-#: .././mainwin.py:21376 .././mainwin.py:21381 .././mainwin.py:21383
+#: .././mainwin.py:19031 .././mainwin.py:19036 .././mainwin.py:19038
+#: .././mainwin.py:19299 .././mainwin.py:19301 .././mainwin.py:19668
+#: .././mainwin.py:21387 .././mainwin.py:21392 .././mainwin.py:21394
 msgid "D/L on start"
 msgstr ""
 
-#: .././mainwin.py:19031 .././mainwin.py:19294 .././mainwin.py:21387
+#: .././mainwin.py:19042 .././mainwin.py:19305 .././mainwin.py:21398
 msgid "When the livestream starts, download it"
 msgstr ""
 
@@ -2257,17 +2257,17 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19037 .././mainwin.py:19042 .././mainwin.py:19044
-#: .././mainwin.py:19300 .././mainwin.py:19302 .././mainwin.py:19697
-#: .././mainwin.py:21393 .././mainwin.py:21398 .././mainwin.py:21400
+#: .././mainwin.py:19048 .././mainwin.py:19053 .././mainwin.py:19055
+#: .././mainwin.py:19311 .././mainwin.py:19313 .././mainwin.py:19708
+#: .././mainwin.py:21404 .././mainwin.py:21409 .././mainwin.py:21411
 msgid "D/L on stop"
 msgstr ""
 
-#: .././mainwin.py:19048 .././mainwin.py:19306 .././mainwin.py:21404
+#: .././mainwin.py:19059 .././mainwin.py:19317 .././mainwin.py:21415
 msgid "When the livestream stops, download it"
 msgstr ""
 
-#: .././mainwin.py:19067 .././mainwin.py:21423
+#: .././mainwin.py:19078 .././mainwin.py:21434
 msgid "Watch in your media player"
 msgstr ""
 
@@ -2275,41 +2275,41 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19068 .././mainwin.py:20424 .././mainwin.py:21424
+#: .././mainwin.py:19079 .././mainwin.py:20435 .././mainwin.py:21435
 msgid "Player"
 msgstr ""
 
-#: .././mainwin.py:19092 .././mainwin.py:21461
+#: .././mainwin.py:19103 .././mainwin.py:21472
 msgid "Download this video"
 msgstr ""
 
-#: .././mainwin.py:19107 .././mainwin.py:21476
+#: .././mainwin.py:19118 .././mainwin.py:21487
 msgid ""
 "TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
 "different word (e.g. French et), then just use that word"
 msgstr ""
 
-#: .././mainwin.py:19115 .././mainwin.py:21484
+#: .././mainwin.py:19126 .././mainwin.py:21495
 msgid "Download and watch in your media player"
 msgstr ""
 
-#: .././mainwin.py:19116
+#: .././mainwin.py:19127
 msgid "Download &amp; watch"
 msgstr ""
 
-#: .././mainwin.py:19123
+#: .././mainwin.py:19134
 msgid "Not downloaded"
 msgstr ""
 
-#: .././mainwin.py:19149
+#: .././mainwin.py:19160
 msgid "Watch on YouTube"
 msgstr ""
 
-#: .././mainwin.py:19150 .././mainwin.py:20469
+#: .././mainwin.py:19161 .././mainwin.py:20480
 msgid "YouTube"
 msgstr ""
 
-#: .././mainwin.py:19162
+#: .././mainwin.py:19173
 msgid "Watch on HookTube"
 msgstr ""
 
@@ -2317,11 +2317,11 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19163 .././mainwin.py:20232
+#: .././mainwin.py:19174 .././mainwin.py:20243
 msgid "HookTube"
 msgstr ""
 
-#: .././mainwin.py:19175
+#: .././mainwin.py:19186
 msgid "Watch on Invidious"
 msgstr ""
 
@@ -2329,7 +2329,7 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19176 .././mainwin.py:20276
+#: .././mainwin.py:19187 .././mainwin.py:20287
 msgid "Invidious"
 msgstr ""
 
@@ -2337,24 +2337,24 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19194 .././mainwin.py:20321
+#: .././mainwin.py:19205 .././mainwin.py:20332
 msgid "Other"
 msgstr ""
 
-#: .././mainwin.py:19214
+#: .././mainwin.py:19225
 msgid "Watch on website"
 msgstr ""
 
-#: .././mainwin.py:19215 .././mainwin.py:20471
+#: .././mainwin.py:19226 .././mainwin.py:20482
 msgid "Website"
 msgstr ""
 
 #. Links not clickable
-#: .././mainwin.py:19226
+#: .././mainwin.py:19237
 msgid "No link"
 msgstr ""
 
-#: .././mainwin.py:19335
+#: .././mainwin.py:19346
 msgid "Download to a temporary folder later"
 msgstr ""
 
@@ -2362,19 +2362,19 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19336 .././mainwin.py:19353 .././mainwin.py:20188
+#: .././mainwin.py:19347 .././mainwin.py:19364 .././mainwin.py:20199
 msgid "Mark for download"
 msgstr ""
 
-#: .././mainwin.py:19341
+#: .././mainwin.py:19352
 msgid "Download to a temporary folder"
 msgstr ""
 
-#: .././mainwin.py:19347
+#: .././mainwin.py:19358
 msgid "Download to a temporary folder, then watch"
 msgstr ""
 
-#: .././mainwin.py:19348 .././mainwin.py:21485
+#: .././mainwin.py:19359 .././mainwin.py:21496
 msgid "D/L &amp; watch"
 msgstr ""
 
@@ -2382,12 +2382,12 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19355 .././mainwin.py:20144
+#: .././mainwin.py:19366 .././mainwin.py:20155
 msgid "D/L and watch"
 msgstr ""
 
 #. Archived/not archived
-#: .././mainwin.py:19379 .././mainwin.py:21523
+#: .././mainwin.py:19390 .././mainwin.py:21534
 msgid "Prevent automatic deletion of the video"
 msgstr ""
 
@@ -2395,13 +2395,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19383 .././mainwin.py:19387 .././mainwin.py:19814
-#: .././mainwin.py:21527 .././mainwin.py:21531 .././mainwin.py:21746
+#: .././mainwin.py:19394 .././mainwin.py:19398 .././mainwin.py:19825
+#: .././mainwin.py:21538 .././mainwin.py:21542 .././mainwin.py:21757
 msgid "Archived"
 msgstr ""
 
 #. Bookmarked/not bookmarked
-#: .././mainwin.py:19392 .././mainwin.py:21536
+#: .././mainwin.py:19403 .././mainwin.py:21547
 msgid "Show video in Bookmarks folder"
 msgstr ""
 
@@ -2411,13 +2411,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19397 .././mainwin.py:19402 .././mainwin.py:21540
-#: .././mainwin.py:21544 .././mainwin.py:21791
+#: .././mainwin.py:19408 .././mainwin.py:19413 .././mainwin.py:21551
+#: .././mainwin.py:21555 .././mainwin.py:21802
 msgid "B/mark"
 msgstr ""
 
 #. Favourite/not favourite
-#: .././mainwin.py:19407 .././mainwin.py:21549
+#: .././mainwin.py:19418 .././mainwin.py:21560
 msgid "Show in Favourite Videos folder"
 msgstr "Show in Favorite Videos folder"
 
@@ -2425,13 +2425,13 @@ msgstr "Show in Favorite Videos folder"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19411 .././mainwin.py:19415 .././mainwin.py:19904
-#: .././mainwin.py:21553 .././mainwin.py:21557
+#: .././mainwin.py:19422 .././mainwin.py:19426 .././mainwin.py:19915
+#: .././mainwin.py:21564 .././mainwin.py:21568
 msgid "Favourite"
 msgstr "Favorite"
 
 #. Missing/not missing
-#: .././mainwin.py:19419 .././mainwin.py:21561
+#: .././mainwin.py:19430 .././mainwin.py:21572
 msgid "Mark video as removed by creator"
 msgstr ""
 
@@ -2439,13 +2439,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19423 .././mainwin.py:19427 .././mainwin.py:19949
-#: .././mainwin.py:21565 .././mainwin.py:21569
+#: .././mainwin.py:19434 .././mainwin.py:19438 .././mainwin.py:19960
+#: .././mainwin.py:21576 .././mainwin.py:21580
 msgid "Missing"
 msgstr ""
 
 #. New/not new
-#: .././mainwin.py:19432 .././mainwin.py:21574
+#: .././mainwin.py:19443 .././mainwin.py:21585
 msgid "Mark video as never watched"
 msgstr ""
 
@@ -2453,13 +2453,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19436 .././mainwin.py:19440 .././mainwin.py:19987
-#: .././mainwin.py:21578 .././mainwin.py:21582
+#: .././mainwin.py:19447 .././mainwin.py:19451 .././mainwin.py:19998
+#: .././mainwin.py:21589 .././mainwin.py:21593
 msgid "New"
 msgstr ""
 
 #. In waiting list/not in waiting list
-#: .././mainwin.py:19445 .././mainwin.py:21587
+#: .././mainwin.py:19456 .././mainwin.py:21598
 msgid "Show in Waiting Videos folder"
 msgstr ""
 
@@ -2467,700 +2467,700 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19859
+#: .././mainwin.py:19870
 msgid "Bookmarked"
 msgstr ""
 
-#: .././mainwin.py:21254 .././media.py:1600 .././refresh.py:259
+#: .././mainwin.py:21265 .././media.py:1600 .././refresh.py:259
 #: .././refresh.py:529
 msgid "Channel:"
 msgstr ""
 
-#: .././mainwin.py:21256 .././media.py:1602 .././refresh.py:261
+#: .././mainwin.py:21267 .././media.py:1602 .././refresh.py:261
 #: .././refresh.py:531
 msgid "Playlist:"
 msgstr ""
 
-#: .././mainwin.py:21258 .././media.py:1604 .././refresh.py:263
+#: .././mainwin.py:21269 .././media.py:1604 .././refresh.py:263
 #: .././refresh.py:533
 msgid "Folder:"
 msgstr ""
 
-#: .././mainwin.py:21456
+#: .././mainwin.py:21467
 msgid "TRANSLATOR'S NOTE: D/L means download"
 msgstr ""
 
-#: .././mainwin.py:21492
+#: .././mainwin.py:21503
 msgid "Can't D/L"
 msgstr ""
 
-#: .././mainwin.py:21516
+#: .././mainwin.py:21527
 msgid ""
 "TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
 "Archived, B/Mark = Bookmarked, Waiting: In waiting list"
 msgstr ""
 
-#: .././mainwin.py:22820
+#: .././mainwin.py:22831
 msgid "Add channel"
 msgstr ""
 
-#: .././mainwin.py:22839
+#: .././mainwin.py:22850
 msgid "Enter the channel name"
 msgstr ""
 
-#: .././mainwin.py:22844
+#: .././mainwin.py:22855
 msgid "(Use the channel's real name or a customised name)"
 msgstr "(Use the channel's real name or a customized name)"
 
-#: .././mainwin.py:22852
+#: .././mainwin.py:22863
 msgid "Copy and paste a link to the channel"
 msgstr ""
 
-#: .././mainwin.py:22899
+#: .././mainwin.py:22910
 msgid "(Optional) Add this channel inside a folder"
 msgstr ""
 
-#: .././mainwin.py:22929
+#: .././mainwin.py:22940
 msgid "I want to download videos from this channel automatically"
 msgstr ""
 
-#: .././mainwin.py:22936 .././mainwin.py:23223 .././mainwin.py:23431
+#: .././mainwin.py:22947 .././mainwin.py:23234 .././mainwin.py:23442
 msgid "Don't download anything, just check for new videos"
 msgstr ""
 
-#: .././mainwin.py:22943 .././mainwin.py:23438 .././mainwin.py:23791
+#: .././mainwin.py:22954 .././mainwin.py:23449 .././mainwin.py:23802
 msgid "Enable automatic copy/paste"
 msgstr ""
 
-#: .././mainwin.py:23124
+#: .././mainwin.py:23135
 msgid "Add folder"
 msgstr ""
 
-#: .././mainwin.py:23143
+#: .././mainwin.py:23154
 msgid "Enter the folder name"
 msgstr ""
 
-#: .././mainwin.py:23186
+#: .././mainwin.py:23197
 msgid "(Optional) Add this folder inside another folder"
 msgstr ""
 
-#: .././mainwin.py:23217
+#: .././mainwin.py:23228
 msgid "I want to download videos from this folder automatically"
 msgstr ""
 
-#: .././mainwin.py:23315
+#: .././mainwin.py:23326
 msgid "Add playlist"
 msgstr ""
 
-#: .././mainwin.py:23334
+#: .././mainwin.py:23345
 msgid "Enter the playlist name"
 msgstr ""
 
-#: .././mainwin.py:23339
+#: .././mainwin.py:23350
 msgid "(Use the playlist's real name or a customised name)"
 msgstr "(Use the playlist's real name or a customized name)"
 
-#: .././mainwin.py:23347
+#: .././mainwin.py:23358
 msgid "Copy and paste a link to the playlist"
 msgstr ""
 
-#: .././mainwin.py:23394
+#: .././mainwin.py:23405
 msgid "(Optional) Add this playlist inside a folder"
 msgstr ""
 
-#: .././mainwin.py:23424
+#: .././mainwin.py:23435
 msgid "I want to download videos from this playlist automatically"
 msgstr ""
 
-#: .././mainwin.py:23621
+#: .././mainwin.py:23632
 msgid "Add videos"
 msgstr ""
 
-#: .././mainwin.py:23640
+#: .././mainwin.py:23651
 msgid "Copy and paste the links to one or more videos"
 msgstr ""
 
-#: .././mainwin.py:23646
+#: .././mainwin.py:23657
 msgid "Links containing multiple videos will be converted to a channel"
 msgstr ""
 
-#: .././mainwin.py:23653
+#: .././mainwin.py:23664
 msgid "Links containing multiple videos will be converted to a playlist"
 msgstr ""
 
-#: .././mainwin.py:23660
+#: .././mainwin.py:23671
 msgid "Links containing multiple videos will be downloaded separately"
 msgstr ""
 
-#: .././mainwin.py:23667
+#: .././mainwin.py:23678
 msgid "Links containing multiple videos will not be downloaded at all"
 msgstr ""
 
-#: .././mainwin.py:23749
+#: .././mainwin.py:23760
 msgid "Add the videos to this folder"
 msgstr ""
 
-#: .././mainwin.py:23779
+#: .././mainwin.py:23790
 msgid "I want to download these videos automatically"
 msgstr ""
 
-#: .././mainwin.py:23785
+#: .././mainwin.py:23796
 msgid "Don't download anything, just check the videos"
 msgstr ""
 
-#: .././mainwin.py:23954 .././config.py:1492
+#: .././mainwin.py:23965 .././config.py:1492
 msgid "Apply download options"
 msgstr ""
 
-#: .././mainwin.py:23976
+#: .././mainwin.py:23987
 msgid "Create new download options"
 msgstr ""
 
-#: .././mainwin.py:23986
+#: .././mainwin.py:23997
 msgid "Use these download options"
 msgstr ""
 
-#: .././mainwin.py:24023
+#: .././mainwin.py:24034
 msgid "Clone these download options"
 msgstr ""
 
-#: .././mainwin.py:24256
+#: .././mainwin.py:24267
 msgid "Select a date"
 msgstr ""
 
-#: .././mainwin.py:24363
+#: .././mainwin.py:24374
 msgid "Delete channel"
 msgstr ""
 
-#: .././mainwin.py:24365
+#: .././mainwin.py:24376
 msgid "Delete playlist"
 msgstr ""
 
-#: .././mainwin.py:24367
+#: .././mainwin.py:24378
 msgid "Delete folder"
 msgstr ""
 
-#: .././mainwin.py:24370
+#: .././mainwin.py:24381
 msgid "Empty channel"
 msgstr ""
 
-#: .././mainwin.py:24372
+#: .././mainwin.py:24383
 msgid "Empty playlist"
 msgstr ""
 
-#: .././mainwin.py:24374
+#: .././mainwin.py:24385
 msgid "Empty folder"
 msgstr ""
 
-#: .././mainwin.py:24408
+#: .././mainwin.py:24419
 msgid "This channel does not contain any videos"
 msgstr ""
 
-#: .././mainwin.py:24410
+#: .././mainwin.py:24421
 msgid "This playlist does not contain any videos"
 msgstr ""
 
-#: .././mainwin.py:24412
+#: .././mainwin.py:24423
 msgid "This folder doesn't contain anything"
 msgstr ""
 
-#: .././mainwin.py:24418
+#: .././mainwin.py:24429
 msgid "(but there might be some files in Tartube's data folder)"
 msgstr ""
 
-#: .././mainwin.py:24431
+#: .././mainwin.py:24442
 msgid "This channel contains:"
 msgstr ""
 
-#: .././mainwin.py:24433
+#: .././mainwin.py:24444
 msgid "This playlist contains:"
 msgstr ""
 
-#: .././mainwin.py:24435
+#: .././mainwin.py:24446
 msgid "This folder contains:"
 msgstr ""
 
-#: .././mainwin.py:24442
+#: .././mainwin.py:24453
 msgid "1 folder"
 msgstr ""
 
-#: .././mainwin.py:24444
+#: .././mainwin.py:24455
 #, python-brace-format
 msgid "{0} folders"
 msgstr ""
 
-#: .././mainwin.py:24451
+#: .././mainwin.py:24462
 msgid "1 channel"
 msgstr ""
 
-#: .././mainwin.py:24453
+#: .././mainwin.py:24464
 #, python-brace-format
 msgid "{0} channels"
 msgstr ""
 
-#: .././mainwin.py:24460
+#: .././mainwin.py:24471
 msgid "1 playlist"
 msgstr ""
 
-#: .././mainwin.py:24462
+#: .././mainwin.py:24473
 #, python-brace-format
 msgid "{0} playlists"
 msgstr ""
 
-#: .././mainwin.py:24469 .././mainwin.py:24894
+#: .././mainwin.py:24480 .././mainwin.py:24905
 msgid "1 video"
 msgstr ""
 
-#: .././mainwin.py:24471 .././mainwin.py:24897
+#: .././mainwin.py:24482 .././mainwin.py:24908
 #, python-brace-format
 msgid "{0} videos"
 msgstr ""
 
-#: .././mainwin.py:24484
+#: .././mainwin.py:24495
 msgid ""
 "Do you want to delete the channel from Tartube's data folder, or do you just "
 "want to remove the channel from this list?"
 msgstr ""
 
-#: .././mainwin.py:24490
+#: .././mainwin.py:24501
 msgid ""
 "Do you want to delete the playlist from Tartube's data folder, or do you "
 "just want to remove the playlist from this list?"
 msgstr ""
 
-#: .././mainwin.py:24496
+#: .././mainwin.py:24507
 msgid ""
 "Do you want to delete the folder from Tartube's data folder, or do you just "
 "want to remove the folder from this list?"
 msgstr ""
 
-#: .././mainwin.py:24505
+#: .././mainwin.py:24516
 msgid ""
 "Do you want to empty the channel in Tartube's data folder, or do you just "
 "want to empty the channel in this list?"
 msgstr ""
 
-#: .././mainwin.py:24511
+#: .././mainwin.py:24522
 msgid ""
 "Do you want to empty the playlist in Tartube's data folder, or do you just "
 "want to empty the playlist in this list?"
 msgstr ""
 
-#: .././mainwin.py:24517
+#: .././mainwin.py:24528
 msgid ""
 "Do you want to empty the folder in Tartube's data folder, or do you just "
 "want to empty the folder in this list?"
 msgstr ""
 
-#: .././mainwin.py:24534
+#: .././mainwin.py:24545
 msgid "Just remove the channel from this list"
 msgstr ""
 
-#: .././mainwin.py:24536
+#: .././mainwin.py:24547
 msgid "Just remove the playlist from this list"
 msgstr ""
 
-#: .././mainwin.py:24538
+#: .././mainwin.py:24549
 msgid "Just remove the folder from this list"
 msgstr ""
 
-#: .././mainwin.py:24543
+#: .././mainwin.py:24554
 msgid "Just empty the channel in this list"
 msgstr ""
 
-#: .././mainwin.py:24545
+#: .././mainwin.py:24556
 msgid "Just empty the playlist in this list"
 msgstr ""
 
-#: .././mainwin.py:24547
+#: .././mainwin.py:24558
 msgid "Just empty the folder in this list"
 msgstr ""
 
-#: .././mainwin.py:24553
+#: .././mainwin.py:24564
 msgid "Delete all files"
 msgstr ""
 
-#: .././mainwin.py:24605
+#: .././mainwin.py:24616
 msgid "Export from database"
 msgstr ""
 
-#: .././mainwin.py:24629
+#: .././mainwin.py:24640
 msgid ""
 "Tartube is ready to export a partial summary of its database, containing a "
 "list of videos, channels, playlists and/or folders (but not including the "
 "videos themselves)"
 msgstr ""
 
-#: .././mainwin.py:24636
+#: .././mainwin.py:24647
 msgid ""
 "Tartube is ready to export a summary of its database, containing a list of "
 "videos, channels, playlists and/or folders (but not including the videos "
 "themselves)"
 msgstr ""
 
-#: .././mainwin.py:24652
+#: .././mainwin.py:24663
 msgid "Choose what should be included:"
 msgstr ""
 
-#: .././mainwin.py:24660
+#: .././mainwin.py:24671
 msgid "Include lists of videos"
 msgstr ""
 
-#: .././mainwin.py:24665
+#: .././mainwin.py:24676
 msgid "Include channels"
 msgstr ""
 
-#: .././mainwin.py:24670
+#: .././mainwin.py:24681
 msgid "Include playlists"
 msgstr ""
 
-#: .././mainwin.py:24675
+#: .././mainwin.py:24686
 msgid "Preserve folder structure"
 msgstr ""
 
-#: .././mainwin.py:24683
+#: .././mainwin.py:24694
 msgid "Export as plain text"
 msgstr ""
 
-#: .././mainwin.py:24769
+#: .././mainwin.py:24780
 msgid "Import into database"
 msgstr ""
 
-#: .././mainwin.py:24792
+#: .././mainwin.py:24803
 msgid "Choose which items to import"
 msgstr ""
 
-#: .././mainwin.py:24813 .././config.py:13140 .././config.py:13405
+#: .././mainwin.py:24824 .././config.py:13140 .././config.py:13405
 msgid "Import"
 msgstr ""
 
-#: .././mainwin.py:24849
+#: .././mainwin.py:24860
 msgid "Import videos"
 msgstr ""
 
-#: .././mainwin.py:24854
+#: .././mainwin.py:24865
 msgid "Merge channels/playlists/folders"
 msgstr ""
 
 #. Bottom strip
-#: .././mainwin.py:24857 .././mainwin.py:26789
+#: .././mainwin.py:24868 .././mainwin.py:26800
 msgid "Select all"
 msgstr ""
 
-#: .././mainwin.py:24862
+#: .././mainwin.py:24873
 msgid "Unselect all"
 msgstr ""
 
-#: .././mainwin.py:25124
+#: .././mainwin.py:25135
 msgid "Mount drive"
 msgstr ""
 
-#: .././mainwin.py:25148
+#: .././mainwin.py:25159
 msgid "The Tartube data folder is set to:"
 msgstr ""
 
-#: .././mainwin.py:25161
+#: .././mainwin.py:25172
 msgid "...but this folder doesn't exist"
 msgstr ""
 
-#: .././mainwin.py:25164
+#: .././mainwin.py:25175
 msgid "...but Tartube cannot write to this folder"
 msgstr ""
 
-#: .././mainwin.py:25174
+#: .././mainwin.py:25185
 msgid "I have mounted the drive, please try again"
 msgstr ""
 
-#: .././mainwin.py:25180
+#: .././mainwin.py:25191
 msgid "Use this data folder:"
 msgstr ""
 
-#: .././mainwin.py:25207
+#: .././mainwin.py:25218
 msgid "Select a different data folder"
 msgstr ""
 
-#: .././mainwin.py:25213
+#: .././mainwin.py:25224
 msgid "Use the default data folder"
 msgstr ""
 
-#: .././mainwin.py:25219
+#: .././mainwin.py:25230
 msgid "Shut down Tartube"
 msgstr ""
 
 #. 'Cancel' button
-#: .././mainwin.py:25226 .././config.py:475
+#: .././mainwin.py:25237 .././config.py:475
 msgid "Cancel"
 msgstr ""
 
 #. 'OK' button
-#: .././mainwin.py:25230 .././config.py:466 .././config.py:1670
+#: .././mainwin.py:25241 .././config.py:466 .././config.py:1670
 #: .././config.py:6940 .././config.py:7074
 msgid "OK"
 msgstr ""
 
-#: .././mainwin.py:25352
+#: .././mainwin.py:25363
 msgid "The folder still doesn't exist. Please try a different option"
 msgstr ""
 
-#: .././mainwin.py:25423
+#: .././mainwin.py:25434
 msgid "Stale lockfile"
 msgstr ""
 
-#: .././mainwin.py:25460
+#: .././mainwin.py:25471
 msgid ""
 "Failed to load the Tartube database file, because another copy of Tartube "
 "seems to be using it"
 msgstr ""
 
-#: .././mainwin.py:25467
+#: .././mainwin.py:25478
 msgid "Do you want to load it anyway?"
 msgstr ""
 
-#: .././mainwin.py:25473
+#: .././mainwin.py:25484
 msgid ""
 "(Only click 'Yes' if you are sure that other copies of Tartube are not using "
 "the database right now)"
 msgstr ""
 
-#: .././mainwin.py:25485
+#: .././mainwin.py:25496
 msgid "Yes, load the file"
 msgstr ""
 
-#: .././mainwin.py:25492
+#: .././mainwin.py:25503
 msgid "No, just shut down Tartube"
 msgstr ""
 
-#: .././mainwin.py:25494
+#: .././mainwin.py:25505
 msgid "No, don't load the file"
 msgstr ""
 
-#: .././mainwin.py:25589
+#: .././mainwin.py:25600
 msgid "Rename channel"
 msgstr ""
 
-#: .././mainwin.py:25591
+#: .././mainwin.py:25602
 msgid "Rename playlist"
 msgstr ""
 
-#: .././mainwin.py:25593
+#: .././mainwin.py:25604
 msgid "Rename folder"
 msgstr ""
 
-#: .././mainwin.py:25617
+#: .././mainwin.py:25628
 msgid "Set the new name for the channel:"
 msgstr ""
 
-#: .././mainwin.py:25619
+#: .././mainwin.py:25630
 msgid "Set the new name for the playlist:"
 msgstr ""
 
-#: .././mainwin.py:25621
+#: .././mainwin.py:25632
 msgid "Set the new name for the folder:"
 msgstr ""
 
-#: .././mainwin.py:25627
+#: .././mainwin.py:25638
 msgid "N.B. This procedure will modify your filesystem!\n"
 msgstr ""
 
-#: .././mainwin.py:25688
+#: .././mainwin.py:25699
 msgid "Add to scheduled download"
 msgstr ""
 
-#: .././mainwin.py:25711
+#: .././mainwin.py:25722
 msgid "Add the channel to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:25713
+#: .././mainwin.py:25724
 msgid "Add the playlist to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:25715
+#: .././mainwin.py:25726
 msgid "Add the folder to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:25812
+#: .././mainwin.py:25823
 msgid "Set download destination"
 msgstr ""
 
-#: .././mainwin.py:25837
+#: .././mainwin.py:25848
 msgid ""
 "This channel can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:25842
+#: .././mainwin.py:25853
 msgid ""
 "This playlist can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:25847
+#: .././mainwin.py:25858
 msgid ""
 "This folder can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:25855
+#: .././mainwin.py:25866
 msgid "Choose a different system folder if:"
 msgstr ""
 
-#: .././mainwin.py:25858
+#: .././mainwin.py:25869
 msgid ""
 "1. You want to add a channel and its playlists, without downloading the same "
 "video twice"
 msgstr ""
 
-#: .././mainwin.py:25865
+#: .././mainwin.py:25876
 msgid ""
 "2. A video creator has channels on both YouTube and BitChute, and you want "
 "to add both without downloading the same video twice"
 msgstr ""
 
-#: .././mainwin.py:25878
+#: .././mainwin.py:25889
 msgid "Use this channel's own folder"
 msgstr ""
 
-#: .././mainwin.py:25880
+#: .././mainwin.py:25891
 msgid "Use this playlist's own folder"
 msgstr ""
 
-#: .././mainwin.py:25882
+#: .././mainwin.py:25893
 msgid "Use this folder's own system folder"
 msgstr ""
 
-#: .././mainwin.py:26137
+#: .././mainwin.py:26148
 msgid "Set nickname"
 msgstr ""
 
-#: .././mainwin.py:26162
+#: .././mainwin.py:26173
 #, python-brace-format
 msgid ""
 "Set a nickname for the channel '{0}' (or leave it blank to reset the "
 "nickname)"
 msgstr ""
 
-#: .././mainwin.py:26167
+#: .././mainwin.py:26178
 #, python-brace-format
 msgid ""
 "Set a nickname for the playlist '{0}' (or leave it blank to reset the "
 "nickname)"
 msgstr ""
 
-#: .././mainwin.py:26172
+#: .././mainwin.py:26183
 #, python-brace-format
 msgid ""
 "Set a nickname for the folder '{0}' (or leave it blank to reset the nickname)"
 msgstr ""
 
-#: .././mainwin.py:26235
+#: .././mainwin.py:26246
 msgid "Set URL"
 msgstr ""
 
-#: .././mainwin.py:26260
+#: .././mainwin.py:26271
 #, python-brace-format
 msgid "Update the URL for the channel '{0}'"
 msgstr ""
 
-#: .././mainwin.py:26264
+#: .././mainwin.py:26275
 #, python-brace-format
 msgid "Update the URL for the playlist '{0}'"
 msgstr ""
 
-#: .././mainwin.py:26328
+#: .././mainwin.py:26339
 msgid "Show system command"
 msgstr ""
 
-#: .././mainwin.py:26372
+#: .././mainwin.py:26383
 msgid "Update"
 msgstr ""
 
-#: .././mainwin.py:26381
+#: .././mainwin.py:26392
 msgid "Copy to clipboard"
 msgstr ""
 
-#: .././mainwin.py:26555 .././config.py:12471
+#: .././mainwin.py:26566 .././config.py:12471
 msgid "Test"
 msgstr ""
 
-#: .././mainwin.py:26575
+#: .././mainwin.py:26586
 msgid "URL of the video to download (optional)"
 msgstr ""
 
-#: .././mainwin.py:26586
+#: .././mainwin.py:26597
 msgid "Command line options (optional)"
 msgstr ""
 
-#: .././mainwin.py:26667
+#: .././mainwin.py:26678
 msgid "Tidy up files"
 msgstr ""
 
-#: .././mainwin.py:26669
+#: .././mainwin.py:26680
 msgid "Tidy up channel"
 msgstr ""
 
-#: .././mainwin.py:26671
+#: .././mainwin.py:26682
 msgid "Tidy up playlist"
 msgstr ""
 
-#: .././mainwin.py:26673
+#: .././mainwin.py:26684
 msgid "Tidy up folder"
 msgstr ""
 
-#: .././mainwin.py:26702
+#: .././mainwin.py:26713
 msgid "Check that videos are not corrupted"
 msgstr ""
 
-#: .././mainwin.py:26707
+#: .././mainwin.py:26718
 msgid "Delete corrupted video files"
 msgstr ""
 
-#: .././mainwin.py:26717
+#: .././mainwin.py:26728
 msgid "Check that videos do/don't exist"
 msgstr ""
 
-#: .././mainwin.py:26724
+#: .././mainwin.py:26735
 msgid ""
 "Delete downloaded video files (doesn't remove videos from Tartube's database)"
 msgstr ""
 
-#: .././mainwin.py:26736
+#: .././mainwin.py:26747
 msgid "Also delete all video/audio files with the same name"
 msgstr ""
 
-#: .././mainwin.py:26744
+#: .././mainwin.py:26755
 msgid "Delete all archive files"
 msgstr ""
 
-#: .././mainwin.py:26749
+#: .././mainwin.py:26760
 msgid "Move thumbnails into own folder"
 msgstr ""
 
-#: .././mainwin.py:26754
+#: .././mainwin.py:26765
 msgid "Delete all thumbnail files"
 msgstr ""
 
-#: .././mainwin.py:26760
+#: .././mainwin.py:26771
 msgid "Convert .webp thumbnails to .jpg using FFmpeg"
 msgstr ""
 
-#: .././mainwin.py:26769
+#: .././mainwin.py:26780
 msgid "Move other metadata files into own folder"
 msgstr ""
 
-#: .././mainwin.py:26777
+#: .././mainwin.py:26788
 msgid "Delete all description files"
 msgstr ""
 
-#: .././mainwin.py:26781
+#: .././mainwin.py:26792
 msgid "Delete all metadata (JSON) files"
 msgstr ""
 
-#: .././mainwin.py:26785
+#: .././mainwin.py:26796
 msgid "Delete all annotation files"
 msgstr ""
 
 #. (Signal connect appears below)
-#: .././mainwin.py:26794
+#: .././mainwin.py:26805
 msgid "Select none"
 msgstr ""
 
