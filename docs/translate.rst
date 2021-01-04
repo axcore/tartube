@@ -41,7 +41,7 @@ The lines at the top must be changed from this::
 ...to this::
 
     # Tartube
-    # Copyright (C) 2019-2020 A S Lewis
+    # Copyright (C) 2019-2021 A S Lewis
     # This file is distributed under the same license as the Tartube package.
 
 The Project-Id-Version must be changed from this::

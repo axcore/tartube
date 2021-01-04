@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -278,6 +278,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_stop_button = None         # Gtk.Button
         self.classic_ffmpeg_button = None       # Gtk.Button
         self.classic_download_button = None     # Gtk.Button
+        self.classic_clear_button = None        # Gtk.Button
+        self.classic_clear_dl_button = None     # Gtk.Button
 
 
         # IV list - other
@@ -2702,7 +2704,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   please
         for column in [2, 5]:
             column_obj = self.classic_progress_treeview.get_column(column)
-            column_obj.set_fixed_width(150)
+            column_obj.set_fixed_width(200)
 
         # Fifth row - a strip of buttons that apply to rows in the Classic
         #   Progress List. We use another new hbox to avoid messing up the
@@ -2859,11 +2861,27 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_clear_button = Gtk.Button(
             '     ' + _('Clear all') + '     ',
         )
-        hbox3.pack_end(self.classic_clear_button, False, False, 0)
+        hbox3.pack_end(
+            self.classic_clear_button,
+            False,
+            False,
+            self.spacing_size,
+        )
         self.classic_clear_button.set_action_name(
             'app.classic_clear_button',
         )
         self.classic_clear_button.set_tooltip_text(
+            _('Clear the URLs above'),
+        )
+
+        self.classic_clear_dl_button = Gtk.Button(
+            '     ' + _('Clear downloaded') + '     ',
+        )
+        hbox3.pack_end(self.classic_clear_dl_button, False, False, 0)
+        self.classic_clear_dl_button.set_action_name(
+            'app.classic_clear_dl_button',
+        )
+        self.classic_clear_dl_button.set_tooltip_text(
             _('Clear the URLs above'),
         )
 
@@ -3326,6 +3344,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_stop_button.set_sensitive(False)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.disable_dl_all_flag:
             self.classic_redownload_button.set_sensitive(False)
@@ -3454,6 +3473,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_stop_button.set_sensitive(not sens_flag)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.disable_dl_all_flag:
             self.classic_redownload_button.set_sensitive(False)
@@ -3639,6 +3659,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.check_media_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
 
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.disable_dl_all_flag:
@@ -4342,6 +4363,9 @@ class MainWin(Gtk.ApplicationWindow):
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.priv_flag
+        ) or (
+            not isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.source is None
         ):
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
@@ -4364,6 +4388,9 @@ class MainWin(Gtk.ApplicationWindow):
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.priv_flag
+        ) or (
+            not isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.source is None
         ):
             download_menu_item.set_sensitive(False)
         popup_menu.append(download_menu_item)
@@ -4386,6 +4413,9 @@ class MainWin(Gtk.ApplicationWindow):
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.priv_flag
+        ) or (
+            not isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.source is None
         ):
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
@@ -4979,7 +5009,7 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             self.app_obj.download_manager_obj \
             and self.app_obj.download_manager_obj.operation_classic_flag
-        ):
+        ) or video_obj.source is None:
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
 
@@ -5000,7 +5030,8 @@ class MainWin(Gtk.ApplicationWindow):
             ) or (
                 self.app_obj.download_manager_obj \
                 and self.app_obj.download_manager_obj.operation_classic_flag
-            ) or video_obj.live_mode == 1:
+            ) or video_obj.source is None \
+            or video_obj.live_mode == 1:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
 
@@ -5016,6 +5047,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
             if __main__.__pkg_no_download_flag__ \
             or self.app_obj.current_manager_obj \
+            or video_obj.source is None \
             or video_obj.live_mode == 1:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
@@ -5030,6 +5062,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.current_manager_obj \
+        or video_obj.source is None \
         or video_obj.live_mode != 0:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
@@ -5050,7 +5083,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
             popup_menu.append(dl_watch_menu_item)
             if __main__.__pkg_no_download_flag__ \
-            or not video_obj.source \
+            or video_obj.source is None \
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
@@ -5072,12 +5105,12 @@ class MainWin(Gtk.ApplicationWindow):
                 watch_player_menu_item.set_sensitive(False)
 
         # Watch video online. For YouTube URLs, offer alternative websites
-        if not video_obj.source or video_obj.live_mode != 0:
+        if video_obj.source is None or video_obj.live_mode != 0:
 
             watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('Watch on _website'),
             )
-            if not video_obj.source:
+            if video_obj.source is None:
                 watch_website_menu_item.set_sensitive(False)
             popup_menu.append(watch_website_menu_item)
 
@@ -5153,7 +5186,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         popup_menu.append(classic_dl_menu_item)
         if __main__.__pkg_no_download_flag__ \
-        or not video_obj.source:
+        or video_obj.source is None:
             classic_dl_menu_item.set_sensitive(False)
 
         # Separator
@@ -5298,7 +5331,7 @@ class MainWin(Gtk.ApplicationWindow):
             temp_menu_item.set_submenu(temp_submenu)
             popup_menu.append(temp_menu_item)
             if __main__.__pkg_no_download_flag__ \
-            or not video_obj.source \
+            or video_obj.source is None \
             or self.app_obj.current_manager_obj \
             or (
                 isinstance(video_obj.parent_obj, media.Folder)
@@ -5574,7 +5607,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         fetch_menu_item.set_submenu(fetch_submenu)
         popup_menu.append(fetch_menu_item)
-        if not video_obj.source or self.app_obj.current_manager_obj:
+        if video_obj.source is None or self.app_obj.current_manager_obj:
             fetch_menu_item.set_sensitive(False)
 
         # Separator
@@ -9633,13 +9666,14 @@ class MainWin(Gtk.ApplicationWindow):
         # Prepare the new row in the treeview
         row_list = []
 
-        row_list.append(item_id)                                # Hidden
-        row_list.append(media_data_obj.dbid)                    # Hidden
-        row_list.append(                                        # Hidden
+        row_list.append(item_id)                        # Hidden
+        row_list.append(media_data_obj.dbid)            # Hidden
+        row_list.append(                                # Hidden
             html.escape(
                 media_data_obj.fetch_tooltip_text(
                     self.app_obj,
                     self.tooltip_max_len,
+                    True,                               # Show errors/warnings
                 ),
             ),
         )
@@ -9754,7 +9788,8 @@ class MainWin(Gtk.ApplicationWindow):
         # For each media data object displayed in the Progress List...
         for item_id in temp_dict:
 
-            # Get a dictionary of download statistics for this media object
+            # Get a dictionary of download statistics for this media data
+            #   object
             # The dictionary is in the standard format described in the
             #   comments to downloads.VideoDownloader.extract_stdout_data()
             dl_stat_dict = temp_dict[item_id]
@@ -9762,9 +9797,48 @@ class MainWin(Gtk.ApplicationWindow):
             # Get the corresponding treeview row
             tree_path = Gtk.TreePath(self.progress_list_row_dict[item_id])
 
-            # Update statistics displayed in that row
-            # (Columns 0-4 are not modified, once the row has been added to the
-            #   treeview)
+            # Get the media data object
+            # Git 34 reports that the .get_iter() call causes a crash, when
+            #   finished rows are being hidden. This may be a Gtk issue, so
+            #   intercept the error directly
+            try:
+                tree_iter = self.progress_list_liststore.get_iter(tree_path)
+                dbid = self.progress_list_liststore[tree_iter][1]
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+
+            except:
+                # Don't try to update hidden rows
+                return
+
+            # Instead of overwriting the filename, when the download concludes,
+            #   show the video's name
+            if 'filename' in dl_stat_dict \
+            and dl_stat_dict['filename'] == '' \
+            and isinstance(media_data_obj, media.Video) \
+            and media_data_obj.file_name is not None:
+                dl_stat_dict['filename'] = media_data_obj.file_name
+
+            # Update the tooltip
+            try:
+                tree_iter = self.progress_list_liststore.get_iter(tree_path)
+                self.progress_list_liststore.set(
+                    tree_iter,
+                    self.progress_list_tooltip_column,
+                    html.escape(
+                        media_data_obj.fetch_tooltip_text(
+                            self.app_obj,
+                            self.tooltip_max_len,
+                            True,           # Show errors/warnings
+                        ),
+                    ),
+                )
+
+            except:
+                return
+
+            # Update statistics displayed in this row
+            # (Columns 0, 1 and 3 are not modified, once the row has been added
+            #   to the treeview)
             column = 4
 
             for key in (
@@ -9801,9 +9875,6 @@ class MainWin(Gtk.ApplicationWindow):
                     else:
                         string = dl_stat_dict[key]
 
-                    # GIt 34 reports that the .get_iter() call causes a crash,
-                    #   when finished rows are being hidden. This may be a Gtk
-                    #   issue, so intercept the error directly
                     try:
                         tree_iter = self.progress_list_liststore.get_iter(
                             tree_path
@@ -9816,8 +9887,7 @@ class MainWin(Gtk.ApplicationWindow):
                         )
 
                     except:
-                        # (Don't display stats for this hidden line)
-                        break
+                        return
 
 
     def progress_list_check_hide_rows(self, force_flag=False):
@@ -10047,12 +10117,13 @@ class MainWin(Gtk.ApplicationWindow):
         row_list = []
 
         # Set the row's initial contents
-        row_list.append(video_obj.dbid)                         # Hidden
-        row_list.append(                                        # Hidden
+        row_list.append(video_obj.dbid)             # Hidden
+        row_list.append(                            # Hidden
             html.escape(
                 video_obj.fetch_tooltip_text(
                     self.app_obj,
                     self.tooltip_max_len,
+                    True,                           # Show errors/warnings
                 ),
             ),
         )
@@ -10220,6 +10291,18 @@ class MainWin(Gtk.ApplicationWindow):
 
                 self.results_list_liststore.set(
                     row_iter,
+                    self.results_list_tooltip_column,
+                    html.escape(
+                        video_obj.fetch_tooltip_text(
+                            self.app_obj,
+                            self.tooltip_max_len,
+                            True,           # Show errors/warnings
+                        ),
+                    ),
+                )
+
+                self.results_list_liststore.set(
+                    row_iter,
                     3,
                     video_obj.nickname,
                 )
@@ -10320,6 +10403,50 @@ class MainWin(Gtk.ApplicationWindow):
                 self.results_list_liststore.set(row_iter, 9, '')
 
 
+    def results_list_update_tooltip(self, video_obj):
+
+        """Called by downloads.DownloadWorker.data_callback().
+
+        When downloading a video individually, the tooltips in the Results
+        List are only updated when the video file is actually downloaded. This
+        function is called to update the tooltips at the end of every download,
+        ensuring that any errors/warnings are visible in it.
+
+        Args:
+
+            video_obj (media.Video): The video which has just been downloaded
+                individually
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 10275 results_list_update_tooltip')
+
+        if video_obj.dbid in self.results_list_row_dict:
+
+            # Update the corresponding row in the Results List
+            row_num = self.results_list_row_dict[video_obj.dbid]
+            # New rows are being added to the top, so the real row number
+            #   changes on every call to self.results_list_add_row()
+            if self.app_obj.results_list_reverse_flag:
+                row_num = self.results_list_row_count - 1 - row_num
+
+            tree_path = Gtk.TreePath(row_num)
+            row_iter = self.results_list_liststore.get_iter(tree_path)
+
+            self.results_list_liststore.set(
+                row_iter,
+                1,
+                html.escape(
+                    video_obj.fetch_tooltip_text(
+                        self.app_obj,
+                        self.tooltip_max_len,
+                        True,           # Show errors/warnings
+                    ),
+                ),
+            )
+
+
     # (Classic Mode tab)
 
 
@@ -10364,12 +10491,13 @@ class MainWin(Gtk.ApplicationWindow):
         # Prepare the new row in the treeview
         row_list = []
 
-        row_list.append(dummy_obj.dbid)                         # Hidden
-        row_list.append(                                        # Hidden
+        row_list.append(dummy_obj.dbid)             # Hidden
+        row_list.append(                            # Hidden
             html.escape(
                 dummy_obj.fetch_tooltip_text(
                     self.app_obj,
                     self.tooltip_max_len,
+                    True,                           # Show errors/warnings
                 ),
             ),
         )
@@ -10586,9 +10714,12 @@ class MainWin(Gtk.ApplicationWindow):
                 format_str,
             )
 
-        # Any invalid links remain in the textview (but all valid links are
-        #   removed from it)
-        self.classic_textbuffer.set_text(invalid_url_string)
+        # Unless the flag is set, any invalid links remain in the textview (but
+        #   in all cases, all valid links are removed from it)
+        if not self.app_obj.classic_duplicate_remove_flag:
+            self.classic_textbuffer.set_text(invalid_url_string)
+        else:
+            self.classic_textbuffer.set_text('')
 
 
     def classic_mode_tab_create_dummy_video(self, url, dest_dir, format_str):
@@ -10809,6 +10940,15 @@ class MainWin(Gtk.ApplicationWindow):
             #   comments to downloads.VideoDownloader.extract_stdout_data()
             dl_stat_dict = temp_dict[dbid]
 
+            # During pre-processing, make sure a filename from a previous call
+            #   is not visible
+            if 'status' in dl_stat_dict \
+            and dl_stat_dict['status'] == formats.ACTIVE_STAGE_PRE_PROCESS:
+                dl_stat_dict['filename'] = ''
+                pre_process_flag = True
+            else:
+                pre_process_flag = False
+
             # Get the dummy media.Video object itself
             if not dbid in self.classic_media_dict:
                 # Row has already been deleted by the user
@@ -10824,8 +10964,21 @@ class MainWin(Gtk.ApplicationWindow):
             else:
                 row_path = self.classic_progress_liststore.get_path(row_iter)
 
-            # Update statistics displayed in that row
-            # (Columns 0-2 are not modified, once the row has been added to the
+            # Update the tooltip
+            self.classic_progress_liststore.set(
+                row_iter,
+                self.classic_progress_tooltip_column,
+                html.escape(
+                    media_data_obj.fetch_tooltip_text(
+                        self.app_obj,
+                        self.tooltip_max_len,
+                        True,           # Show errors/warnings
+                    ),
+                ),
+            )
+
+            # Update statistics displayed in this row
+            # (Column 0 is not modified, once the row has been added to the
             #   treeview)
             column = 2
 
@@ -10859,6 +11012,17 @@ class MainWin(Gtk.ApplicationWindow):
                                 + str(dl_stat_dict['playlist_size'])
                             else:
                                 string = string + '/1'
+
+                    elif key == 'filename':
+
+                        # Don't overwrite the filename, so that users can more
+                        #   easily identify failed downloads
+                        if dl_stat_dict[key] == '' and not pre_process_flag:
+                            continue
+                        elif media_data_obj.file_name is not None:
+                            string = media_data_obj.file_name
+                        else:
+                            string = dl_stat_dict[key]
 
                     else:
                         string = dl_stat_dict[key]
@@ -17530,6 +17694,9 @@ class SimpleCatalogueItem(object):
         self.name_label = None              # Gtk.Label
         self.parent_label = None            # Gtk.Label
         self.stats_label = None             # Gtk.Label
+        self.warning_image = None           # Gtk.Image
+        self.error_image = None             # Gtk.Image
+        self.options_image = None           # Gtk.Image
 
 
         # IV list - other
@@ -17587,6 +17754,7 @@ class SimpleCatalogueItem(object):
         # Highlight livestreams by specifying a background colour
         self.update_background()
 
+        # Status icon
         self.status_image = Gtk.Image()
         self.hbox.pack_start(
             self.status_image,
@@ -17595,6 +17763,7 @@ class SimpleCatalogueItem(object):
             self.spacing_size,
         )
 
+        # Box with two lines of text
         vbox = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=0,
@@ -17614,6 +17783,16 @@ class SimpleCatalogueItem(object):
         self.stats_label = Gtk.Label('', xalign=0)
         vbox.pack_start(self.stats_label, True, True, 0)
 
+        # Error/warning/options icons
+        self.warning_image = Gtk.Image()
+        self.hbox.pack_end(self.warning_image, False, False, self.spacing_size)
+
+        self.error_image = Gtk.Image()
+        self.hbox.pack_end(self.error_image, False, False, self.spacing_size)
+
+        self.options_image = Gtk.Image()
+        self.hbox.pack_end(self.options_image, False, False, self.spacing_size)
+
 
     def update_widgets(self):
 
@@ -17628,7 +17807,7 @@ class SimpleCatalogueItem(object):
 
         self.update_background()
         self.update_tooltips()
-        self.update_status_image()
+        self.update_status_images()
         self.update_video_name()
         self.update_container_name()
         self.update_video_stats()
@@ -17711,7 +17890,7 @@ class SimpleCatalogueItem(object):
             )
 
 
-    def update_status_image(self):
+    def update_status_images(self):
 
         """Called by anything, but mainly called by self.update_widgets().
 
@@ -17719,7 +17898,7 @@ class SimpleCatalogueItem(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 17687 update_status_image')
+            utils.debug_time('mwn 17687 update_status_images')
 
         # Set the download status
         if self.video_obj.live_mode == 1:
@@ -17769,6 +17948,44 @@ class SimpleCatalogueItem(object):
             self.status_image.set_from_pixbuf(
                 self.main_win_obj.pixbuf_dict['no_file_small'],
             )
+
+        # The remaining three icons are not displayed at all, if the flag is
+        #   not set
+        if not self.main_win_obj.app_obj.catalogue_draw_icons_flag:
+            self.status_image.clear()
+            self.warning_image.clear()
+            self.error_image.clear()
+
+        else:
+
+            # To prevent an unsightly gap between these images, use the first
+            #   available Gtk.Image
+            image_list = [
+                self.warning_image,
+                self.error_image,
+                self.options_image,
+            ]
+
+            if self.video_obj.warning_list:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['warning_small'],
+                )
+
+            if self.video_obj.error_list:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['error_small'],
+                )
+
+            if self.video_obj.options_obj:
+                image = image_list.pop(0)
+                image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['dl_options_small'],
+                )
+
+            for image in image_list:
+                image.clear()
 
 
     def update_video_name(self):
@@ -18151,7 +18368,7 @@ class ComplexCatalogueItem(object):
         self.name_label = Gtk.Label('', xalign = 0)
         hbox2.pack_start(self.name_label, True, True, 0)
 
-        # Status/error/warning icons
+        # Status/error/warning/options icons
         self.status_image = Gtk.Image()
         hbox2.pack_end(self.status_image, False, False, 0)
 

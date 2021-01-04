@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -2383,6 +2383,7 @@ class OptionsEditWin(GenericEditWin):
         # ...with its own tabs
         self.setup_files_names_tab(inner_notebook)
         self.setup_files_filesystem_tab(inner_notebook)
+        self.setup_files_cookies_tab(inner_notebook)
         self.setup_files_write_files_tab(inner_notebook)
         self.setup_files_keep_files_tab(inner_notebook)
 
@@ -2649,6 +2650,74 @@ class OptionsEditWin(GenericEditWin):
         # (Signal connects from above)
         checkbutton.connect('toggled', self.on_fixed_folder_toggled, combo)
         combo.connect('changed', self.on_fixed_folder_changed)
+
+
+    def setup_files_cookies_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Cookies' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Cookies'),
+            inner_notebook,
+        )
+
+        grid_width = 3
+
+        # Cookies options
+        self.add_label(grid,
+            '<u>' + _('Cookies options') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _('Path to the downloader\'s cookie jar file') + '</i>',
+            0, 1, 1, 1,
+        )
+
+        set_button = Gtk.Button(_('Set'))
+        grid.attach(set_button, 1, 1, 1, 1)
+        # (Signal connect appears below)
+
+        reset_button = Gtk.Button(_('Reset'))
+        grid.attach(reset_button, 2, 1, 1, 1)
+        # (Signal connect appears below)
+
+        entry = self.add_entry(grid,
+            None,
+            0, 2, grid_width, 1,
+        )
+        entry.set_editable(False)
+
+        init_path = self.retrieve_val('cookies_path')
+        if init_path == '':
+
+            entry.set_text(
+                os.path.abspath(
+                    os.path.join(
+                        self.app_obj.data_dir,
+                        self.app_obj.cookie_file_name,
+                    ),
+                ),
+            )
+
+        else:
+
+            entry.set_text(init_path)
+
+        # (Signal connects from above)
+        set_button.connect(
+            'clicked',
+            self.on_cookies_set_button_clicked,
+            entry,
+        )
+        reset_button.connect(
+            'clicked',
+            self.on_cookies_reset_button_clicked,
+            entry,
+        )
 
 
     def setup_files_write_files_tab(self, inner_notebook):
@@ -4484,6 +4553,69 @@ class OptionsEditWin(GenericEditWin):
                 'yes': 'clone_download_options_from_window',
                 'data': [self, self.edit_obj],
             },
+        )
+
+
+    def on_cookies_set_button_clicked(self, button, entry):
+
+        """Called by callback in self.setup_files_cookies_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        # Prompt the user for a new file
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Select the cookie jar file'),
+            self,
+            Gtk.FileChooserAction.OPEN,
+        )
+
+        cookie_path = self.retrieve_val('cookies_path')
+
+        if cookie_path == '':
+            cookie_dir = self.app_obj.data_dir
+        else:
+            cookie_dir, cookie_file = os.path.split(cookie_path)
+
+        dialogue_win.set_current_folder(cookie_dir)
+
+        # Get the user's response
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+        if response == Gtk.ResponseType.OK:
+
+            self.edit_dict['cookies_path'] = new_path
+            entry.set_text(new_path)
+
+
+    def on_cookies_reset_button_clicked(self, button, entry):
+
+        """Called by callback in self.setup_files_cookies_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.edit_dict['cookies_path'] = ''
+        entry.set_text(
+            os.path.abspath(
+                os.path.join(
+                    self.app_obj.data_dir,
+                    self.app_obj.cookie_file_name,
+                ),
+            ),
         )
 
 
@@ -10546,60 +10678,91 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 6, 1, 1,
         )
-        checkbutton6.connect('toggled', self.on_show_tooltips_toggled)
+        # (Signal connect appears below)
 
         checkbutton7 = self.add_checkbutton(grid,
+            _('Show errors/warnings in tooltips (but not in the Videos tab)'),
+            self.app_obj.show_tooltips_extra_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton7.connect('toggled', self.on_show_tooltips_extra_toggled)
+        if not self.app_obj.show_tooltips_flag:
+            checkbutton7.set_sensitive(False)
+
+        # (Signal connect from above)
+        checkbutton6.connect(
+            'toggled',
+            self.on_show_tooltips_toggled,
+            checkbutton7,
+        )
+
+        checkbutton8 = self.add_checkbutton(grid,
             _(
             'Disable the \'Download all\' buttons in the toolbar and the' \
             + ' Videos Tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
-        checkbutton7.connect('toggled', self.on_disable_dl_all_toggled)
+        checkbutton8.connect('toggled', self.on_disable_dl_all_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _(
             'In the Progress Tab, hide finished videos / channels / playlists',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 9, 1, 1,
         )
-        checkbutton8.connect('toggled', self.on_hide_button_toggled)
+        checkbutton9.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _('In the Progress Tab, show results in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 9, 1, 1,
+            0, 10, 1, 1,
         )
-        checkbutton9.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton10.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 10, 1, 1,
+            0, 11, 1, 1,
         )
-        checkbutton10.connect(
+        checkbutton11.connect(
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
         if __main__.__pkg_no_download_flag__:
-            checkbutton10.set_sensitive(False)
+            checkbutton11.set_sensitive(False)
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton12 = self.add_checkbutton(grid,
+            _(
+            'In the Classic Mode Tab, when adding URLs, remove duplicates' \
+            + ' rather than retaining them',
+            ),
+            self.app_obj.classic_duplicate_remove_flag,
+            True,                   # Can be toggled by user
+            0, 12, 1, 1,
+        )
+        checkbutton12.connect(
+            'toggled',
+            self.on_remove_duplicate_button_toggled,
+        )
+
+        checkbutton13 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings Tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 11, 1, 1,
+            0, 13, 1, 1,
         )
-        checkbutton11.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton13.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_videos_tab(self, inner_notebook):
@@ -17249,6 +17412,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_main_win_save_slider_flag(False)
 
 
+    def on_remove_duplicate_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables removeing duplicate URLs from the Classic Mode Tab,
+        after the 'Add URLs' button is clicked.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.classic_duplicate_remove_flag:
+            self.app_obj.set_classic_duplicate_remove_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.classic_duplicate_remove_flag:
+            self.app_obj.set_classic_duplicate_remove_flag(False)
+
+
     def on_reset_avconv_button_clicked(self, button, entry):
 
         """Called from callback in self.setup_ytdl_avconv_tab().
@@ -17759,7 +17943,7 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(False)
 
 
-    def on_show_tooltips_toggled(self, checkbutton):
+    def on_show_tooltips_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_windows_main_window_tab().
 
@@ -17769,14 +17953,40 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            checkbutton2 (Gtk.CheckButton): Another widget to be modified
+
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.show_tooltips_flag:
             self.app_obj.set_show_tooltips_flag(True)
+            checkbutton2.set_sensitive(True)
+
         elif not checkbutton.get_active() \
         and self.app_obj.show_tooltips_flag:
             self.app_obj.set_show_tooltips_flag(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
+
+
+    def on_show_tooltips_extra_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_videos_tab().
+
+        Enables/disables errors/warnings in tooltips.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_tooltips_extra_flag:
+            self.app_obj.set_show_tooltips_extra_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_tooltips_extra_flag:
+            self.app_obj.set_show_tooltips_extra_flag(False)
 
 
     def on_sound_custom_changed(self, combo):

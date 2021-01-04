@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -381,9 +381,14 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if the 'Show' button on the main toolbar (which
         #   hides most system folders) is selected
         self.toolbar_system_hide_flag = False
-        # Flag set to True if tooltips should be visible in the Video Index
-        #   and the Video Catalogue
+        # Flag set to True if tooltips should be visible in the Video Index,
+        #   Video Catalogue, Progress List, Results List and Classic Progress
+        #   List
         self.show_tooltips_flag = True
+        # Flag set to True if tooltips should include errors/warnings in the
+        #   Progress List, Results List and Classic Progress List (only).
+        #   Ignored if self.show_tooltips_flag is False
+        self.show_tooltips_extra_flag = True
         # Flag set to True if stock icons in the Videos/Classic Mode tabs
         #   should be replaced by a custom set of icons (in case the stock
         #   icons are not visible, for some reason)
@@ -613,6 +618,13 @@ class TartubeApp(Gtk.Application):
         self.thumbs_sub_dir = '.thumbs'
         self.metadata_sub_dir = '.data'
 
+        # By default, Tartube passes a path to a cookie jar to youtube-dl(c),
+        #   to prevent it writing one to ../tartube/tartube. The name of the
+        #   default file, which is stored in the data directory
+        # If the options manager specifies a different path, then that path is
+        #   passed to youtube-dl(c) instead
+        self.cookie_file_name = 'cookies.txt'
+
         # The directory in which sound files are found, set in the call to
         #   self.find_sound_effects()
         self.sound_dir = None
@@ -719,6 +731,11 @@ class TartubeApp(Gtk.Application):
         # List of pending URLs. Set just before the config file is saved, and
         #   used just after it is loaded
         self.classic_pending_list = []
+        # In the Classic Mode Tab, when the user clicks the 'Add URLs' button,
+        #   flag set to True if a duplicate URL (one which has already been
+        #   added to the Classic Progress List), should be deleted from the
+        #   textview at the top, rather than being retained
+        self.classic_duplicate_remove_flag = False
 
         # The youtube-dl binary to use (platform-dependent) - 'youtube-dl' or
         #   'youtube-dl.exe', depending on the platform. The default value is
@@ -2396,6 +2413,16 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(classic_ffmpeg_button_action)
 
+        classic_clear_dl_button_action = Gio.SimpleAction.new(
+            'classic_clear_dl_button',
+            None,
+        )
+        classic_clear_dl_button_action.connect(
+            'activate',
+            self.on_button_classic_clear_dl,
+        )
+        self.add_action(classic_clear_dl_button_action)
+
         classic_clear_button_action = Gio.SimpleAction.new(
             'classic_clear_button',
             None,
@@ -3352,6 +3379,9 @@ class TartubeApp(Gtk.Application):
 #            = json_dict['toolbar_system_hide_flag']
         if version >= 1001064:  # v1.1.064
             self.show_tooltips_flag = json_dict['show_tooltips_flag']
+        if version >= 2003047:  # v2.3.047
+            self.show_tooltips_extra_flag \
+            = json_dict['show_tooltips_extra_flag']
         if version >= 2001036:  # v2.1.036
             self.show_custom_icons_flag \
             = json_dict['show_custom_icons_flag']
@@ -3438,6 +3468,9 @@ class TartubeApp(Gtk.Application):
         if version >= 2002129:  # v2.2.129
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
+        if version >= 2003046:  # v2.3.046
+            self.classic_duplicate_remove_flag \
+            = json_dict['classic_duplicate_remove_flag']
 
         # (In various versions between v0.5.027 and v2.0.097, the youtube
         #   update IVs were overhauled several times)
@@ -4205,6 +4238,7 @@ class TartubeApp(Gtk.Application):
             'toolbar_hide_flag': self.toolbar_hide_flag,
             'toolbar_squeeze_flag': self.toolbar_squeeze_flag,
             'show_tooltips_flag': self.show_tooltips_flag,
+            'show_tooltips_extra_flag': self.show_tooltips_extra_flag,
             'show_custom_icons_flag': self.show_custom_icons_flag,
             'show_small_icons_in_index_flag': \
             self.show_small_icons_in_index_flag,
@@ -4250,6 +4284,8 @@ class TartubeApp(Gtk.Application):
             'classic_dir_previous': self.classic_dir_previous,
             'classic_pending_flag': self.classic_pending_flag,
             'classic_pending_list': self.classic_pending_list,
+            'classic_duplicate_remove_flag': \
+            self.classic_duplicate_remove_flag,
 
             'ytdl_bin': self.ytdl_bin,
             'ytdl_path_default': self.ytdl_path_default,
@@ -5676,6 +5712,12 @@ class TartubeApp(Gtk.Application):
                     else:
                         media_data_obj = self.media_reg_dict[options_obj.dbid]
                         media_data_obj.set_options_obj(options_obj)
+
+        if version < 2003049:  # v2.3.049
+
+            # This version adds a new option to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['cookies_path'] = ''
 
 
     def save_db(self):
@@ -10451,10 +10493,15 @@ class TartubeApp(Gtk.Application):
                 video_obj.set_nickname(json_dict['title'])
 
             if 'upload_date' in json_dict:
-                # date_string in form YYYYMMDD
-                date_string = json_dict['upload_date']
-                dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-                video_obj.set_upload_time(dt_obj.timestamp())
+
+                try:
+                    # date_string in form YYYYMMDD
+                    date_string = json_dict['upload_date']
+                    dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
+                    video_obj.set_upload_time(dt_obj.timestamp())
+
+                except:
+                    video_obj.set_upload_time()
 
             if 'duration' in json_dict:
                 video_obj.set_duration(json_dict['duration'])
@@ -11629,17 +11676,37 @@ class TartubeApp(Gtk.Application):
 
         for ext in ext_list:
 
-            main_path = video_obj.get_default_path_by_ext(self, ext)
-            if os.path.isfile(main_path):
-                os.remove(main_path)
+            if video_obj.dummy_flag:
+
+                if video_obj.dummy_path is None:
+
+                    # Nothing to delete
+                    continue
+
+                else:
+
+                    dummy_file, dummy_ext \
+                    = os.path.splitext(video_obj.dummy_path)
+                    main_path = dummy_file + '.' + ext
+                    if os.path.isfile(main_path):
+                        os.remove(main_path)
 
             else:
 
-                subdir_path \
-                = video_obj.get_default_path_in_subdirectory_by_ext(self, ext)
+                main_path = video_obj.get_default_path_by_ext(self, ext)
+                if os.path.isfile(main_path):
+                    os.remove(main_path)
 
-                if os.path.isfile(subdir_path):
-                    os.remove(subdir_path)
+                else:
+
+                    subdir_path \
+                    = video_obj.get_default_path_in_subdirectory_by_ext(
+                        self,
+                        ext,
+                    )
+
+                    if os.path.isfile(subdir_path):
+                        os.remove(subdir_path)
 
         # (Thumbnails might be in one of two locations, so are handled
         #   separately)
@@ -17103,6 +17170,53 @@ class TartubeApp(Gtk.Application):
         )
 
 
+    def on_button_classic_clear_dl(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Removes all downloaded lines from the Classic Progress List, leaving
+        any downloads that have not yet started (or which failed). Modified
+        version of self.on_button_classic_remove(), which removes only the
+        selected videos.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16717 on_button_classic_clear')
+
+        video_list = list(self.main_win_obj.classic_media_dict.values())
+
+        # Filter out un-downloaded videos
+        dbid_list = []
+        for dummy_obj in video_list:
+            if dummy_obj.dummy_path is not None:
+                dbid_list.append(dummy_obj.dbid)
+
+        if not dbid_list:
+            return
+
+        # Prompt for confirmation
+        msg = _('Are you sure you want to clear downloaded videos?')
+
+        self.dialogue_manager_obj.show_msg_dialogue(
+            msg,
+            'question',
+           'yes-no',
+            None,                   # Parent window is main window
+            {
+                'yes': 'main_win_classic_mode_tab_remove_rows',
+                # Specified options
+                'data': dbid_list,
+            },
+        )
+
+
     def on_button_classic_download(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -17343,7 +17457,7 @@ class TartubeApp(Gtk.Application):
             video_list.append(video_obj)
 
             # Delete the files associated with the video
-            self.app_obj.delete_video_files(media_data_obj)
+            self.delete_video_files(video_obj)
 
             # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl
             #   will have created a ytdl_archive.txt, recording every video
@@ -19651,10 +19765,21 @@ class TartubeApp(Gtk.Application):
         self.classic_dir_previous = directory
 
 
+    def set_classic_duplicate_remove_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19263 set_classic_duplicate_remove_flag')
+
+        if not flag:
+            self.classic_duplicate_remove_flag = False
+        else:
+            self.classic_duplicate_remove_flag = True
+
+
     def toggle_classic_pending_flag(self):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19263 toggle_classic_pending_flag')
+            utils.debug_time('app 19264 toggle_classic_pending_flag')
 
         if not self.classic_pending_flag:
             self.classic_pending_flag = True
@@ -20877,6 +21002,17 @@ class TartubeApp(Gtk.Application):
         else:
             self.show_tooltips_flag = True
             self.main_win_obj.enable_tooltips(True)
+
+
+    def set_show_tooltips_extra_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20440 set_show_tooltips_extra_flag')
+
+        if not flag:
+            self.show_tooltips_extra_flag = False
+        else:
+            self.show_tooltips_extra_flag = True
 
 
     def set_sound_custom(self, value):

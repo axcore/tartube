@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1508,6 +1508,18 @@ class DownloadWorker(threading.Thread):
                 last_flag,
             )
 
+            # If download a video individually, need to update the tooltips in
+            #   the Results List to show any errors/warnings (which won't show
+            #   up if the video was not downloaded)
+            if last_flag \
+            and isinstance(self.download_item_obj.media_data_obj, media.Video):
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.results_list_update_tooltip,
+                    self.download_item_obj.media_data_obj,
+                )
+
         else:
 
             GObject.timeout_add(
@@ -1835,6 +1847,8 @@ class DownloadList(object):
         media data registry.
 
         Doesn't create a download item object for:
+            - media.Video, media.Channel and media.Playlist objects whose
+                .source is None
             - media.Video objects whose parent is not a media.Folder (i.e.
                 whose parent is a media.Channel or a media.Playlist)
             - media.Video objects in any restricted folder
@@ -1892,6 +1906,12 @@ class DownloadList(object):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1873 create_item')
+
+        # Sanity check - if no URL is specified, then there is nothing to
+        #   download
+        if not isinstance(media_data_obj, media.Folder) \
+        and media_data_obj.source is None:
+            return None
 
         # Apply the operation_type override, if specified
         if override_operation_type is not None:
@@ -3474,10 +3494,15 @@ class VideoDownloader(object):
             return
 
         if 'upload_date' in json_dict:
-            # date_string in form YYYYMMDD
-            date_string = json_dict['upload_date']
-            dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-            upload_time = dt_obj.timestamp()
+
+            try:
+                # date_string in form YYYYMMDD
+                date_string = json_dict['upload_date']
+                dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
+                upload_time = dt_obj.timestamp()
+            except:
+                upload_time = None
+
         else:
             upload_time = None
 
@@ -6027,13 +6052,18 @@ class JSONFetcher(object):
             self.video_thumb_source = entry_dict['media_thumbnail'][0]['url']
 
         if 'published_parsed' in entry_dict:
-            # A time.struct_time object; convert to Unix time, to match
-            #   media.Video.upload_time
-            dt_obj = datetime.datetime.fromtimestamp(
-                time.mktime(entry_dict['published_parsed']),
-            )
 
-            self.video_upload_time = int(dt_obj.timestamp())
+            try:
+                # A time.struct_time object; convert to Unix time, to match
+                #   media.Video.upload_time
+                dt_obj = datetime.datetime.fromtimestamp(
+                    time.mktime(entry_dict['published_parsed']),
+                )
+
+                self.video_upload_time = int(dt_obj.timestamp())
+
+            except:
+                self.video_upload_time = None
 
 
     # Public class methods

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1223,13 +1223,6 @@ divert_mode=None):
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:
         options_list.append('--verbose')
-
-    # Specify a standard location for the cookie jar (otherwise youtube-dl
-    #   will write it to ../tartube/tartube)
-    options_list.append('--cookies')
-    options_list.append(
-        os.path.abspath(os.path.join(app_obj.data_dir, 'cookies.txt')),
-    )
 
     # Supply youtube-dl with the path to the ffmpeg/avconv binary, if the
     #   user has provided one

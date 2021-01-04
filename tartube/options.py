@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2020 A S Lewis
+# Copyright (C) 2019-2021 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -184,6 +184,10 @@ class OptionsManager(object):
 
         write_annotations (bool): If True, youtube-dl will write video
             annotations to an .annotations.xml file
+
+        cookies_path (str): Path to the cookie jar. If not specified, then
+            Tartube will use the cookie jar 'cookies.txt' in the main
+            data directory
 
     THUMBNAIL IMAGES
 
@@ -570,6 +574,7 @@ class OptionsManager(object):
             'write_description': True,
             'write_info': True,
             'write_annotations': True,
+            'cookies_path': '',
             # THUMBNAIL IMAGES
             'write_thumbnail': True,
             # VERBOSITY / SIMULATION OPTIONS
@@ -801,6 +806,8 @@ class OptionsParser(object):
             OptionHolder('write_info', '--write-info-json', False),
             # --write-annotations
             OptionHolder('write_annotations', '--write-annotations', False),
+            # --cookies
+            OptionHolder('cookies_path', '--cookies', ''),
             # THUMBNAIL IMAGES
             # --write-thumbnail
             OptionHolder('write_thumbnail', '--write-thumbnail', False),
@@ -1038,6 +1045,24 @@ class OptionsParser(object):
                     comma = ','
                     options_list.append('--sub-lang')
                     options_list.append(comma.join(lang_list))
+
+            elif option_holder_obj.name == 'cookies_path':
+                cookies_path = copy_dict[option_holder_obj.name]
+                options_list.append('--cookies')
+                # If no path is specified, use a standard location for the
+                #   cookie jar (otherwise youtube-dl(c) will write it to
+                #   ../tartube/tartube)
+                if cookies_path == '':
+                    options_list.append(
+                        os.path.abspath(
+                            os.path.join(
+                                self.app_obj.data_dir,
+                                self.app_obj.cookie_file_name,
+                            ),
+                        ),
+                    )
+                else:
+                    options_list.append(cookies_path)
 
             # For all other options, just check the value is valid
             elif option_holder_obj.check_requirements(copy_dict):
