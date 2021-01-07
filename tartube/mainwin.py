@@ -27,7 +27,6 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 
 # Import other modules
-import datetime
 import functools
 from gi.repository import Gio
 import os
@@ -1229,11 +1228,23 @@ class MainWin(Gtk.ApplicationWindow):
         help_sub_menu.append(about_menu_item)
         about_menu_item.set_action_name('app.about_menu')
 
+        # Separator
+        help_sub_menu.append(Gtk.SeparatorMenuItem())
+
+        check_version_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Check for _updates'),
+        )
+        help_sub_menu.append(check_version_menu_item)
+        check_version_menu_item.set_action_name('app.check_version_menu')
+
         go_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Go to _website'),
         )
         help_sub_menu.append(go_website_menu_item)
         go_website_menu_item.set_action_name('app.go_website_menu')
+
+        # Separator
+        help_sub_menu.append(Gtk.SeparatorMenuItem())
 
         send_feedback_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Send _feedback'),
@@ -3734,7 +3745,8 @@ class MainWin(Gtk.ApplicationWindow):
                 youtube-dl, 'formats' for an info operation to fetch available
                 video formats, 'subs' for an info operation to fetch
                 available subtitles, 'test_ytdl' for an info operation in which
-                youtube-dl is tested, or None when finish_flag is True
+                youtube-dl is tested, 'version' for an info operation to check
+                for new Tartube releases, or None when finish_flag is True
 
         """
 
@@ -3744,7 +3756,7 @@ class MainWin(Gtk.ApplicationWindow):
         if operation_type is not None \
         and operation_type != 'ffmpeg' and operation_type != 'ytdl' \
         and operation_type != 'formats' and operation_type != 'subs' \
-        and operation_type != 'test_ytdl':
+        and operation_type != 'test_ytdl' and operation_type != 'version':
             return self.app_obj.system_error(
                 205,
                 'Invalid update/info operation argument',
@@ -3785,8 +3797,11 @@ class MainWin(Gtk.ApplicationWindow):
             elif operation_type == 'subs':
                 self.check_media_button.set_label(_('Fetching'))
                 self.download_media_button.set_label('subtitle list')
-            else:
+            elif operation_type == 'test_ytdl':
                 self.check_media_button.set_label(_('Testing'))
+                self.download_media_button.set_label(downloader)
+            else:
+                self.check_media_button.set_label(_('Contacting website'))
                 self.download_media_button.set_label(downloader)
 
             self.check_media_button.set_sensitive(False)
@@ -6823,6 +6838,17 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
+        # Mark as not livestreams
+        not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _not livestreams'),
+        )
+        not_live_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_not_livestream_multi,
+            video_list,
+        )
+        popup_menu.append(not_live_menu_item)
+
         # Download to Temporary Videos
         temp_submenu = Gtk.Menu()
 
@@ -8122,6 +8148,9 @@ class MainWin(Gtk.ApplicationWindow):
                 self.video_index_current == app_obj.fixed_new_folder.name
                 and video_obj.new_flag
             ) or (
+                self.video_index_current == app_obj.fixed_recent_folder.name
+                and video_obj in app_obj.fixed_recent_folder.child_list
+            ) or (
                 self.video_index_current == app_obj.fixed_waiting_folder.name \
                 and video_obj.waiting_flag
             )
@@ -8438,6 +8467,9 @@ class MainWin(Gtk.ApplicationWindow):
         ) and (
             self.video_index_current != app_obj.fixed_new_folder.name \
             or video_obj.new_flag
+        ) and (
+            self.video_index_current != app_obj.fixed_recent_folder.name \
+            or video_obj in app_obj.fixed_recent_folder.child_list
         ) and (
             self.video_index_current != app_obj.fixed_waiting_folder.name \
             or video_obj.waiting_flag
@@ -10263,6 +10295,11 @@ class MainWin(Gtk.ApplicationWindow):
                 if video_obj.new_flag:
                     self.app_obj.fixed_new_folder.sort_children(self.app_obj)
 
+                if video_obj in self.app_obj.fixed_recent_folder.child_list:
+                    self.app_obj.fixed_recent_folder.sort_children(
+                        self.app_obj,
+                    )
+
                 if video_obj.waiting_flag:
                     self.app_obj.fixed_waiting_folder.sort_children(
                         self.app_obj,
@@ -10685,10 +10722,16 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Check for duplicates
             invalid_flag = False
-            for other_obj in self.classic_media_dict.values():
-                if other_obj.source == url:
-                    invalid_flag = True
-                    break
+
+            if url in mod_list:
+                invalid_flag = True
+
+            else:
+
+                for other_obj in self.classic_media_dict.values():
+                    if other_obj.source == url:
+                        invalid_flag = True
+                        break
 
             if not invalid_flag and not utils.check_url(mod_url):
                 invalid_flag = True
@@ -14360,6 +14403,34 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Update the catalogue item
         self.video_catalogue_update_video(media_data_obj)
+
+
+    def on_video_catalogue_not_livestream_multi(self, menu_item,
+    media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Marks the specified videos as not livestreams after all.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_list (list): List of one or more media.Video objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 14147 on_video_catalogue_not_livestream_multi',
+            )
+
+        for media_data_obj in media_data_list:
+            if media_data_obj.live_mode:
+                self.app_obj.mark_video_live(
+                    media_data_obj,
+                    0,                  # Not a livestream
+                )
 
 
     def on_video_catalogue_page_entry_activated(self, entry):

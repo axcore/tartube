@@ -1,4 +1,4 @@
-# Tartube v2.3.054 installer script for MS Windows
+# Tartube v2.3.072 installer script for MS Windows
 #
 # Copyright (C) 2019-2021 A S Lewis
 #
@@ -207,6 +207,11 @@
 #       pip3 install feedparser
 #       pip3 install playsound
 #
+#   - In the terminal window, you could add the following optional packages:
+#
+#       pacman -S mingw-w64-x86_64-aria2
+#       pacman -S mingw-w64-x86_64-python-matplotlib
+#
 #   - AtomicParsley, if you want it, can be copied to this location:
 #
 #       C:\testme\msys64\usr\bin
@@ -244,7 +249,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.3.054-64bit.exe"
+    OutFile "install-tartube-2.3.072-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -347,7 +352,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.3.054"
+#        "DisplayVersion" "2.3.072"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

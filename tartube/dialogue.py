@@ -220,11 +220,13 @@ class DialogueManager(threading.Thread):
                 The parent window for the dialogue window. If None, the main
                 window is used as the parent window
 
-            action (Gtk.FileChooserAction or None): The type of fille chooser
-                to create. If None, Gtk.FileChooserAction.SAVE is used
+            action (str or None): The type of fille chooser
+                to create: 'open' to set a file for opening, 'save' to save a
+                file, or 'folder' to select a folder
 
-            file_path (str or None): If not None, the file path to suggest to
-                the user
+            file_path (str or None): The file path to suggest to the user. If
+                not specified, then the file chooser is opened in Tartube's
+                data directory
 
         Returns:
 
@@ -236,6 +238,12 @@ class DialogueManager(threading.Thread):
             parent_win_obj = self.main_win_obj
 
         if action is None:
+            action = Gtk.FileChooserAction.SAVE
+        elif action == 'open':
+            action = Gtk.FileChooserAction.OPEN
+        elif action == 'folder':
+            action = Gtk.FileChooserAction.SELECT_FOLDER
+        else:
             action = Gtk.FileChooserAction.SAVE
 
         # Create the file chooser dialogue
@@ -250,7 +258,16 @@ class DialogueManager(threading.Thread):
         )
 
         if file_path is not None:
+
             dialogue_win.set_current_name(file_path)
+
+        elif self.app_obj.data_dir:
+
+            # Yes, Gtk discourages this, but they aren't the ones who have to
+            #   click through a million folders to find a suitable one
+            # The calling code can override this call with its own one, if
+            #   necessary
+            dialogue_win.set_current_folder(self.app_obj.data_dir)
 
         # Save the universe
         dialogue_win.set_default_size(

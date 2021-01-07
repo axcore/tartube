@@ -42,8 +42,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.3.054'
-__date__ = '4 Jan 2021'
+__version__ = '2.3.072'
+__date__ = '7 Jan 2021'
 __copyright__ = 'Copyright \xa9 2019-2021 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2021 A S Lewis.
@@ -83,6 +83,7 @@ __description__ = 'A front-end GUI for youtube-dl,\n' \
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
 __website_bugs__ = 'https://github.com/axcore/tartube'
+__website_dev__ = 'http://raw.githubusercontent.com/axcore/tartube/master'
 # Flag set to True if multiple instances of Tartube are allowed; False if
 #   only a single instance is allowed
 __multiple_instance_flag__ = True

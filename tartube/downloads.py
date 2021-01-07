@@ -3655,6 +3655,8 @@ class VideoDownloader(object):
                 app_obj.fixed_missing_folder.sort_children(app_obj)
             if video_obj.new_flag:
                 app_obj.fixed_new_folder.sort_children(app_obj)
+            if video_obj in app_obj.fixed_recent_folder.child_list:
+                app_obj.fixed_recent_folder.sort_children(app_obj)
             if video_obj.waiting_flag:
                 app_obj.fixed_waiting_folder.sort_children(app_obj)
 
@@ -3853,7 +3855,11 @@ class VideoDownloader(object):
                 #   by thumb_path doesn't exist
                 # Use 'try' so that neither problem is fatal
                 try:
-                    request_obj = requests.get(thumbnail)
+                    request_obj = requests.get(
+                        thumbnail,
+                        timeout = app_obj.request_get_timeout,
+                    )
+
                     with open(thumb_path, 'wb') as outfile:
                         outfile.write(request_obj.content)
 
@@ -6212,7 +6218,11 @@ class JSONFetcher(object):
 
                 if local_thumb_path:
                     try:
-                        request_obj = requests.get(self.video_thumb_source)
+                        request_obj = requests.get(
+                            self.video_thumb_source,
+                            timeout = app_obj.request_get_timeout,
+                        )
+
                         with open(local_thumb_path, 'wb') as outfile:
                             outfile.write(request_obj.content)
 

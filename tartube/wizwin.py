@@ -1556,7 +1556,7 @@ class SetupWizWin(GenericWizWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             title,
             self,
-            Gtk.FileChooserAction.SELECT_FOLDER,
+            'folder',
         )
 
         # Get the user's response

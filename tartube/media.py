@@ -222,6 +222,196 @@ class GenericContainer(GenericMedia):
         return video_list
 
 
+    def compile_all_videos_by_frequency(self, data_type, period,
+    frequency_dict):
+
+        """Can be called by anything, but mostly called by
+        config.GenericConfigWin.on_button_draw_graph_clicked().
+
+        Compile a dictionary of download times for each video in the container
+        (including those in sub-folders, channels and playlists).
+
+        The dictionary shows the frequency of downloads for each specified
+        time period (for example, a day, a month, etc).
+
+        Args:
+
+            data_type (str): 'receive' to compile vidoe frequencies by
+                receive (download) time, 'download' to compile by download time
+
+            period (int): A time period, in seconds (e.g. 86400 for a day)
+
+            frequency_dict (dict): The dictionary compiled so far (empty
+                unless multiple containers are being combined into a single
+                dictionary)
+
+        Return values:
+
+            Dictionary in the form
+                frequency_dict[time_period_number] = number_of_videos
+
+            ...for example, if 10 videos were downloaded today, and 20 were
+            downloaded yesterday, and the period is 86400 (representing one
+            day), then
+                frequency_dict[0] = 10
+                frequency_dict[1] = 20
+
+        """
+
+        now = time.time()
+        video_list = self.compile_all_videos( [] )
+
+        if data_type == 'receive':
+
+            for video_obj in video_list:
+
+                if video_obj.receive_time:
+
+                    time_units = int((now - video_obj.receive_time) / period)
+
+                    if time_units in frequency_dict:
+                        frequency_dict[time_units] += 1
+                    else:
+                        frequency_dict[time_units] = 1
+
+        else:
+
+            for video_obj in video_list:
+
+                if video_obj.upload_time:
+
+                    time_units = int((now - video_obj.upload_time) / period)
+
+                    if time_units in frequency_dict:
+                        frequency_dict[time_units] += 1
+                    else:
+                        frequency_dict[time_units] = 1
+
+        return frequency_dict
+
+
+    def compile_all_videos_by_size(self, frequency_dict):
+
+        """Can be called by anything, but mostly called by
+        config.GenericConfigWin.on_button_draw_graph_clicked().
+
+        This functions specifies a limited set of file sizes. The set has been
+        chosen to produce aesthetic graphs.
+
+        Compile a dictionary containing the number of videos for each size
+        range. Videos whose file size is not known are ignored.
+
+        Args:
+
+            frequency_dict (dict): The dictionary compiled so far (empty
+                unless multiple containers are being combined into a single
+                dictionary)
+
+        Return values:
+
+            Dictionary in the form
+                frequency_dict[range_label] = number_of_videos
+
+        """
+
+        for video_obj in self.compile_all_videos( [] ):
+
+            if video_obj.file_size is not None:
+
+                # NB If these labels are changed, when the corresponding
+                #   literal values in
+                #   config.GenericConfigWin.on_button_draw_graph_clicked() must
+                #   be changed too
+                if video_obj.file_size < 10_000_000:
+                    label = '10MB'
+                elif video_obj.file_size < 25_000_000:
+                    label = '25MB'
+                elif video_obj.file_size < 50_000_000:
+                    label = '50MB'
+                elif video_obj.file_size < 100_000_000:
+                    label = '100MB'
+                elif video_obj.file_size < 250_000_000:
+                    label = '250MB'
+                elif video_obj.file_size < 500_000_000:
+                    label = '500MB'
+                elif video_obj.file_size < 1000_000_000:
+                    label = '1GB'
+                elif video_obj.file_size < 2000_000_000:
+                    label = '2GB'
+                elif video_obj.file_size < 5000_000_000:
+                    label = '5GB'
+                else:
+                    label = '5GB+'
+
+                if label in frequency_dict:
+                    frequency_dict[label] += 1
+                else:
+                    frequency_dict[label] = 1
+
+        return frequency_dict
+
+
+    def compile_all_videos_by_duration(self, frequency_dict):
+
+        """Can be called by anything, but mostly called by
+        config.GenericConfigWin.on_button_draw_graph_clicked().
+
+        This functions specifies a limited set of video durations (in seconds).
+        The set has been chosen to produce aesthetic graphs.
+
+        Compile a dictionary containing the number of videos for each duration
+        range. Videos whose duration is not known are ignored.
+
+        Args:
+
+            frequency_dict (dict): The dictionary compiled so far (empty
+                unless multiple containers are being combined into a single
+                dictionary)
+
+        Return values:
+
+            Dictionary in the form
+                frequency_dict[range_label] = number_of_videos
+
+        """
+
+        for video_obj in self.compile_all_videos( [] ):
+
+            if video_obj.duration is not None:
+
+                # NB If these labels are changed, when the corresponding
+                #   literal values in
+                #   config.GenericConfigWin.on_button_draw_graph_clicked() must
+                #   be changed too
+                if video_obj.duration < 10:
+                    label = '10s'
+                elif video_obj.duration < 60:
+                    label = '1m'
+                elif video_obj.duration < 300:
+                    label = '5m'
+                elif video_obj.duration < 600:
+                    label = '10m'
+                elif video_obj.duration < 1200:
+                    label = '20m'
+                elif video_obj.duration < 1800:
+                    label = '30m'
+                elif video_obj.duration < 3600:
+                    label = '1h'
+                elif video_obj.duration < 7200:
+                    label = '2h'
+                elif video_obj.duration < 18000:
+                    label = '5h'
+                else:
+                    label = '5h+'
+
+                if label in frequency_dict:
+                    frequency_dict[label] += 1
+                else:
+                    frequency_dict[label] = 1
+
+        return frequency_dict
+
+
     def count_descendants(self, count_list):
 
         """Can be called by anything. Subsequently called by this function

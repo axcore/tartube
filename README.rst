@@ -155,6 +155,10 @@ If you want to perform a manual installation, you can follow this procedure, whi
         
         **pip3 install playsound**
         
+        **pacman -S mingw-w64-i686-aria2**
+        
+        **pacman -S mingw-w64-i686-python-matplotlib**
+        
 - Download the **Tartube** source code from Sourceforge, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
 - Now, to run **Tartube**, type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
@@ -329,6 +333,7 @@ These dependencies are optional, but recommended:
 -  `Ffmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 -  `aria2 <https://aria2.github.io/>`__ - required for Youtube Stream Capture
+-  `matplotlib <https://matplotlib.org/>`__ - required for drawing graphs
 
 5.3.9 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -525,6 +530,7 @@ When you start **Tartube** for the first time, there are several folders already
 - The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
 - The **Missing videos** folder (see `6.23 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
+- The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl(c)**
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
 - The **Unsorted Videos** folder is a useful place to put videos that don't belong to a particular channel or playlist

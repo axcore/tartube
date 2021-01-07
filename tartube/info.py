@@ -30,12 +30,14 @@ from gi.repository import GObject
 import os
 import queue
 import re
+import requests
 import signal
 import subprocess
 import threading
 
 
 # Import our modules
+import __main__
 import downloads
 import utils
 # Use same gettext translations
@@ -57,7 +59,10 @@ class InfoManager(threading.Thread):
         youtube-dl
 
     3. Test youtube-dl with specified download options; everything is
-        downloaded into a temporary folder
+        downloaded into a temporary directory
+
+    4. Check the Tartube website, and inform the user if a new release is
+        available
 
     Reads from the child process STDOUT and STDERR, having set up a
     downloads.PipeReader object to do so in an asynchronous way.
@@ -68,7 +73,8 @@ class InfoManager(threading.Thread):
 
         info_type (str): The type of information to fetch: 'formats' for a list
             of video formats, 'subs' for a list of subtitles, or 'test_ytdl'
-            to test youtube-dl with specified options
+            to test youtube-dl with specified options, 'version' to check for a
+            new release of Tartube
 
         media_data_obj (media.Video): For 'formats' and 'subs', the media.Video
             object for which formats/subtitles should be fetched. For
@@ -121,8 +127,9 @@ class InfoManager(threading.Thread):
         # IV list - other
         # ---------------
         # The type of information to fetch: 'formats' for a list of video
-        #   formats, 'subs' for a list of subtitles, or 'test_ytdl' to test
-        #   youtube-dl with specified options
+        #   formats, 'subs' for a list of subtitles, 'test_ytdl' to test
+        #   youtube-dl with specified options, or 'version' to check for a new
+        #   release of Tartube
         self.info_type = info_type
         # For 'test_ytdl', the video URL to download (can be None or an empty
         #   string, if no download is required, for example
@@ -135,6 +142,11 @@ class InfoManager(threading.Thread):
         #   string, if no download options are required. For 'formats' and
         #   'subs', set to None
         self.options_string = options_string
+        # For 'version', the version numbers (e.g. 1.2.003) retrieved from the
+        #   main website (representing a stable release), and from github
+        #   (representing a development release)
+        self.stable_version = None
+        self.dev_version = None
 
         # Flag set to True if the info operation succeeds, False if it fails
         self.success_flag = False
@@ -168,6 +180,13 @@ class InfoManager(threading.Thread):
         Reads from the child process STDOUT and STDERR, and calls the main
         application with the result of the process (success or failure).
         """
+
+        # Checking for a new release of Tartube doesn't involve any system
+        #   commands or child processes, so it is handled by a separate
+        #   function
+        if self.info_type == 'version':
+
+            return self.run_check_version()
 
         # Show information about the info operation in the Output Tab
         if self.info_type == 'test_ytdl':
@@ -348,9 +367,128 @@ class InfoManager(threading.Thread):
             )
 
         # Operation complete. self.success_flag is checked by
-        #   mainapp.TartubeApp.info_manager_finished
+        #   mainapp.TartubeApp.info_manager_finished()
         if not self.stderr_list:
             self.success_flag = True
+
+        # Show a confirmation in the the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            _('Info operation finished'),
+        )
+
+        # Let the timer run for a few more seconds to prevent Gtk errors (for
+        #   systems with Gtk < 3.24)
+        GObject.timeout_add(
+            0,
+            self.app_obj.info_manager_halt_timer,
+        )
+
+
+    def run_check_version(self):
+
+        """Called by self.run().
+
+        Checking for a new release of Tartube doesn't involve any system
+        commands or child processes, so it is handled separately by this
+        function.
+
+        There is a stable release at Sourceforge, and a development release at
+        Github. Fetch the VERSION file from each, and store the stable/
+        development versions, so that mainapp.TartubeApp.info_manager_finished
+        can display them.
+        """
+
+        # Show information about the info operation in the Output Tab
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            _('Starting info operation, checking for new releases of Tartube'),
+        )
+
+        # Check the stable version, http://tartube.sourceforge.io/VERSION
+        stable_path = __main__.__website__ + '/VERSION'
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            _('Checking stable release...'),
+        )
+
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(1, stable_path)
+
+        try:
+            request_obj = requests.get(
+                stable_path,
+                timeout = self.app_obj.request_get_timeout,
+            )
+
+            response = utils.strip_whitespace(request_obj.text)
+            if not re.search('^\d+\.\d+\.\d+\s*$', response):
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Ignoring invalid version'),
+                )
+
+            else:
+
+                self.stable_version = response
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Retrieved version:') + ' ' + str(response),
+                )
+
+        except:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                _('Connection failed'),
+            )
+
+        # Check the development version,
+        #   http://raw.githubusercontent.com/axcore/tartube/master/VERSION
+        dev_path = __main__.__website_dev__ + '/VERSION'
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            _('Checking development release...'),
+        )
+
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(1, dev_path)
+
+        try:
+            request_obj = requests.get(
+                dev_path,
+                timeout = self.app_obj.request_get_timeout,
+            )
+
+            response = utils.strip_whitespace(request_obj.text)
+            if not re.search('^\d+\.\d+\.\d+\s*$', response):
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Ignoring invalid version'),
+                )
+
+            else:
+
+                self.dev_version = response
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Retrieved version:') + ' ' + str(response),
+                )
+
+        except:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                _('Connection failed'),
+            )
+
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.info_manager_finished()
+        self.success_flag = True
 
         # Show a confirmation in the the Output Tab
         self.app_obj.main_win_obj.output_tab_write_stdout(

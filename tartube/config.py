@@ -46,6 +46,12 @@ import utils
 from mainapp import _
 
 
+# Import matplotlib stuff
+if mainapp.HAVE_MATPLOTLIB_FLAG:
+    from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+    from matplotlib.figure import Figure
+    from matplotlib.ticker import MaxNLocator
+
 # Classes
 
 
@@ -361,6 +367,569 @@ class GenericConfigWin(Gtk.Window):
         return treeview, liststore
 
 
+    # (Shared support functions)
+
+
+    def add_combos_for_graphs(self, grid, row):
+
+        """Called by tabs in ChannelPlaylistEditWin, FolderEditWin and
+        SystemPrefWin.
+
+        The tabs that draw graphs share a standard set of comboboxes, with
+        which the graph is customised.
+
+        This function is called to create the comboboxes, and to set up
+        callbacks so that changes to the settings are remembered between
+        windows.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+
+            row (int): The grid row on which these combos appear
+
+        """
+
+        if isinstance(self, GenericPrefWin):
+            pref_win_flag = True
+        else:
+            pref_win_flag = False
+
+        # Add combos to customise the graph
+        combo_list = [
+            [_('Downloads'), 'receive'],
+            [_('Uploads'), 'upload'],
+            [_('File size'), 'size'],
+            [_('Duration'), 'duration'],
+        ]
+
+        if pref_win_flag:
+
+            combo = self.add_combo_with_data(grid,
+                combo_list,
+                self.app_obj.graph_data_type,
+                0, row, 1, 1,
+            )
+
+        else:
+
+            combo = self.add_combo_with_data(grid,
+                combo_list,
+                None,
+                0, row, 1, 1,
+            )
+
+            count = -1
+            for mini_list in combo_list:
+                count += 1
+                if mini_list[1] == self.app_obj.graph_data_type:
+                    combo.set_active(count)
+                    break
+
+        combo.set_hexpand(True)
+
+        combo_list2 = [
+            [_('Graph'), 'graph'],
+            [_('Bar chart'), 'chart'],
+        ]
+
+        if pref_win_flag:
+
+            combo2 = self.add_combo_with_data(grid,
+                combo_list2,
+                self.app_obj.graph_plot_type,
+                1, row, 1, 1,
+            )
+
+        else:
+
+            combo2 = self.add_combo_with_data(grid,
+                combo_list2,
+                None,
+                1, row, 1, 1,
+            )
+
+            count = -1
+            for mini_list in combo_list2:
+                count += 1
+                if mini_list[1] == self.app_obj.graph_plot_type:
+                    combo2.set_active(count)
+                    break
+
+        combo2.set_hexpand(True)
+
+        combo_list3 = [
+            [_('Show decade'), 60*60*24*365*10],
+            [_('Show year'), 60*60*24*365],
+            [_('Show quarters'), 60*60*24*90],
+            [_('Show month'), 60*60*24*30],
+            [_('Show week'), 60*60*24*7],
+            [_('Show day'), 60*60*24],
+        ]
+
+        if pref_win_flag:
+
+            combo3 = self.add_combo_with_data(grid,
+                combo_list3,
+                self.app_obj.graph_time_period_secs,
+                2, row, 1, 1,
+            )
+
+        else:
+
+            combo3 = self.add_combo_with_data(grid,
+                combo_list3,
+                None,
+                2, row, 1, 1,
+            )
+
+            count = -1
+            for mini_list in combo_list3:
+                count += 1
+                if mini_list[1] == self.app_obj.graph_time_period_secs:
+                    combo3.set_active(count)
+                    break
+
+        combo3.set_hexpand(True)
+        if self.app_obj.graph_data_type != 'receive' \
+        and self.app_obj.graph_data_type != 'upload':
+            combo3.set_sensitive(False)
+
+        combo_list4 = [
+            [_('Quarters'), 60*60*24*90],
+            [_('Months'), 60*60*24*30],
+            [_('Weeks'), 60*60*24*7],
+            [_('Days'), 60*60*24],
+            [_('Hours'), 60*60],
+        ]
+
+        if pref_win_flag:
+
+            combo4 = self.add_combo_with_data(grid,
+                combo_list4,
+                self.app_obj.graph_time_unit_secs,
+                3, row, 1, 1,
+            )
+
+        else:
+
+            combo4 = self.add_combo_with_data(grid,
+                combo_list4,
+                None,
+                3, row, 1, 1,
+            )
+
+            count = -1
+            for mini_list in combo_list4:
+                count += 1
+                if mini_list[1] == self.app_obj.graph_time_unit_secs:
+                    combo4.set_active(count)
+                    break
+
+        combo4.set_hexpand(True)
+        if self.app_obj.graph_data_type != 'receive' \
+        and self.app_obj.graph_data_type != 'upload':
+            combo4.set_sensitive(False)
+
+        combo_list5 = [
+            [_('Red'), 'red'],
+            [_('Green'), 'green'],
+            [_('Blue'), 'blue'],
+            [_('Black'), 'black'],
+            [_('White'), 'white'],
+        ]
+
+        if pref_win_flag:
+
+            combo5 = self.add_combo_with_data(grid,
+                combo_list5,
+                self.app_obj.graph_ink_colour,
+                4, row, 1, 1,
+            )
+
+        else:
+
+            combo5 = self.add_combo_with_data(grid,
+                combo_list5,
+                None,
+                4, row, 1, 1,
+            )
+
+            count = -1
+            for mini_list in combo_list5:
+                count += 1
+                if mini_list[1] == self.app_obj.graph_ink_colour:
+                    combo5.set_active(count)
+                    break
+
+        combo5.set_hexpand(True)
+
+        # (Signal connects from above)
+        combo.connect(
+            'changed',
+            self.on_combo_graph_changed,
+            'data_type',
+            combo3,
+            combo4,
+        )
+        combo2.connect(
+            'changed',
+            self.on_combo_graph_changed,
+            'plot_type',
+            combo3,
+            combo4,
+        )
+        combo3.connect(
+            'changed',
+            self.on_combo_graph_changed,
+            'time_period',
+            combo3,
+            combo4,
+        )
+        combo4.connect(
+            'changed',
+            self.on_combo_graph_changed,
+            'time_unit',
+            combo3,
+            combo4,
+        )
+        combo5.connect(
+            'changed',
+            self.on_combo_graph_changed,
+            'ink_colour',
+            combo3,
+            combo4,
+        )
+
+        return combo, combo2, combo3, combo4, combo5
+
+
+    def plot_graph(self, hbox, plot_type, data_type, ink_colour, x_label,
+    y_label, x_list, y_list):
+
+        """Called by self.on_button_draw_graph_clicked().
+
+        Plots a graph, using the specified settings and data points.
+
+        Args:
+
+            hbox (Gtk.HBox): The container widget
+
+            plot_type (str): 'graph' or 'chart'
+
+            data_type (str): 'receive', 'upload', 'size' or 'duration'
+
+            ink_colour (str): 'red', 'green', 'blue', 'black' or white'
+
+            x_label, y_label (str): Text for each axis on the graph
+
+            x_list (list): List of data points along the x axis
+
+            y_list (list): List of data points along the y axis (both lists
+                should contain the same number of items)
+
+        """
+
+        # Sanity check: when the video counts (values in y_list) are all 0,
+        #   matplotlib will try to draw a y-axis with fractional values
+        # Check for that, so we can prevent it
+        simplify_y_axis_flag = True
+        for num in y_list:
+            if num:
+                simplify_y_axis_flag = False
+                break
+
+        # Remove the old figure
+        for child in hbox.get_children():
+            hbox.remove(child)
+
+        # Plot a new figure
+        fig = Figure(dpi = 100)
+
+        ax = fig.add_subplot(1, 1, 1)
+
+        if plot_type == 'graph':
+            ax.plot(x_list, y_list, color = ink_colour)
+        else:
+            ax.bar(x_list, y_list, color = ink_colour)
+
+        # Set up the axes
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        # (Negative values are meaningless, so don't allow them to appear on
+        #   the x/y axes)
+        if simplify_y_axis_flag:
+            ax.set_ylim([0, 1])
+        else:
+            ax.set_ylim(ymin=0)
+        if data_type == 'receive' or data_type == 'upload':
+            ax.set_xlim(xmin=0)
+        # (Fractional values are also meaningless)
+        ax.xaxis.set_major_locator(MaxNLocator(integer = True))
+        ax.yaxis.set_major_locator(MaxNLocator(integer = True))
+        # (For time graphs, reverse the X axis, to show days ago, etc)
+        if data_type == 'receive' or data_type == 'upload':
+            ax.set_xlim(ax.get_xlim()[::-1])
+        # (For some reason, the x-axis label is drawn below the visible area.
+        #   Not sure how to fix that, so move it to the top, in which there is
+        #   empty space)
+        ax.xaxis.set_label_position('top')
+        # (Reduce wasted space around the edges)
+        fig.tight_layout()
+
+        canvas = FigureCanvasGTK3Agg(fig)  # a Gtk.DrawingArea
+        hbox.add(canvas)
+
+        self.show_all()
+
+
+    # (Shared callbacks)
+
+
+    def on_button_draw_graph_clicked(self, button, hbox, combo, combo2,
+    combo3, combo4, combo5):
+
+        """Called from callbacks in ChannelPlaylistEditWin,
+        FolderEditWin and SystemPrefWin.
+
+        Prepares data for a graph using the specified settings, then calls
+        self.plot_graph() to actually draw it.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            hbox (Gtk.HBox): The container widget for the graph
+
+            combo, combo2, combo3, combo4, combo5 (Gtk.ComboBox): Five combos
+                specifying the data to view:
+
+                The data type ('receive' for download times, 'upload' for
+                upload times, 'size' for file size, 'duration' for video
+                duration)
+
+                The type of graph to plot ('graph' for a line plot graph, or
+                'chart' for a bar chart)
+
+                The period of time used as the span of the x-axis (in seconds,
+                e.g. 31536000 is the equivalent of a year)
+
+                The time unit to use (in seconds, e.g. 604800 is the equivalent
+                of a week). We count the number of videos for the time unit
+                and use it as a single point on the x-axis
+
+                The colour to use ('red', 'green', 'blue', 'black', white')
+
+        """
+
+        # Extract data from the combos
+
+        # Get the data type ('receive', 'upload', 'size' or 'duration')
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        data_name = model[tree_iter][0]
+        data_type = model[tree_iter][1]
+
+        # Get type of graph to plot ('graph' or 'chart')
+        tree_iter2 = combo2.get_active_iter()
+        model2 = combo2.get_model()
+        plot_type = model2[tree_iter2][1]
+
+        # Get the period of time used as the span of the x-axis, in seconds
+        tree_iter3 = combo3.get_active_iter()
+        model3 = combo3.get_model()
+        time_period_secs = int(model3[tree_iter3][1])
+
+        # Get the time unit to use, in seconds
+        tree_iter4 = combo4.get_active_iter()
+        model4 = combo4.get_model()
+        time_unit = model4[tree_iter4][0]
+        time_unit_secs = int(model4[tree_iter4][1])
+        # The time unit must not be larger than the total period of time
+        if time_unit_secs > time_period_secs:
+            time_unit_secs = time_period_secs
+
+        # Get the colour to use ('red', 'green', 'blue', 'black', white')
+        tree_iter5 = combo5.get_active_iter()
+        model5 = combo5.get_model()
+        ink_colour = model5[tree_iter5][1]
+
+        # Compile a dictionary of video counts
+        # For 'receive' and 'upload', dictonary in the form
+        #   frequency_dict[time_unit_increment] = number_of_videos
+        # For 'size', dictionary in the form
+        #   frequency_dict[size_category] = number_of_videos
+        # For 'duration', dictionary in the form
+        #   frequency_dict[duration_category] = number_of_videos
+        # When called by SystemPrefWin, use the entire database
+        # When called by ChannelPlaylistEditWin or FolderEditWin, use only the
+        #   children of that container
+        # 'size_category' and 'duration_category' are arbitrary ranges of
+        #   values, chosen for aesthetic reasons
+        if isinstance(self, GenericEditWin):
+
+            if data_type == 'receive' or data_type == 'upload':
+
+                frequency_dict = self.edit_obj.compile_all_videos_by_frequency(
+                    data_type,
+                    time_unit_secs,
+                    {},
+                )
+
+            elif data_type == 'size':
+
+                frequency_dict = self.edit_obj.compile_all_videos_by_size(
+                    {},
+                )
+
+            elif data_type == 'duration':
+
+                frequency_dict = self.edit_obj.compile_all_videos_by_duration(
+                    {},
+                )
+
+        else:
+
+            frequency_dict = {}
+
+            for dbid in self.app_obj.media_name_dict.values():
+
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+                # Ignore private (system) folders, because they contain
+                #   media.Video objects also stored in public folders
+                if not isinstance(media_data_obj, media.Folder) \
+                or not media_data_obj.priv_flag:
+
+                    if data_type == 'receive' or data_type == 'upload':
+
+                        frequency_dict \
+                        = media_data_obj.compile_all_videos_by_frequency(
+                            data_type,
+                            time_unit_secs,
+                            frequency_dict,
+                        )
+
+                    elif data_type == 'size':
+
+                        frequency_dict \
+                        = media_data_obj.compile_all_videos_by_size(
+                            frequency_dict,
+                        )
+
+                    elif data_type == 'duration':
+
+                        frequency_dict \
+                        = media_data_obj.compile_all_videos_by_duration(
+                            frequency_dict,
+                        )
+
+        # Compile two lists, with each index giving the x and y coordinates
+        #   for the graph to be plotted
+        if data_type == 'receive' or data_type == 'upload':
+
+            period_list = []
+            frequency_list = []
+
+            for i in range(0, int((time_period_secs / time_unit_secs) + 1)):
+
+                period_list.append(i)
+                if i in frequency_dict:
+                    frequency_list.append(frequency_dict[i])
+                else:
+                    frequency_list.append(0)
+
+            # Draw the graph
+            self.plot_graph(
+                hbox,
+                plot_type,
+                data_type,
+                ink_colour,
+                time_unit,
+                data_name,
+                period_list,
+                frequency_list,
+            )
+
+        else:
+
+            # NB If these labels are changed, when the corresponding literal
+            #   values in media.GenericContainer.compile_all_videos_by_size()
+            #   and .compile_all_videos_by_duration() must be changed too
+            if data_type == 'size':
+
+                label_list = [
+                    '10MB', '25MB', '50MB', '100MB', '250MB',
+                    '500MB', '1GB', '2GB', '5GB', '5GB+',
+                ]
+
+            else:
+
+                label_list = [
+                    '10s', '1m', '5m', '10m', '20m',
+                    '30m', '1h', '2h', '5h', '5h+',
+                ]
+
+            frequency_list = []
+            for label in label_list:
+
+                if label in frequency_dict:
+                    frequency_list.append(frequency_dict[label])
+                else:
+                    frequency_list.append(0)
+
+            # Draw the graph
+            self.plot_graph(
+                hbox,
+                plot_type,
+                data_type,
+                ink_colour,
+                data_name,
+                _('Videos'),
+                label_list,
+                frequency_list,
+            )
+
+
+    def on_combo_graph_changed(self, combo, combo_type, combo2, combo3):
+
+        """Called from callback in self.add_combos_for_graphs().
+
+        Graphs are drawn with five standard combos for customising the graph.
+        When the user selects a new setting in a combo, store the value.
+
+        In some cases, one or more of the combos must be (de)sensitised.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            combo_type (str): A string describing which IV to update:
+                'data_type', 'plot_type', 'time_period', 'time_unit',
+                'ink_colour'
+
+            combo2, combo3 (Gtk.ComboBox): Other combos to be (de)sensitised
+
+        """
+
+        # Extract data from the combo
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        value = model[tree_iter][1]
+        # Update IVs
+        self.app_obj.set_graph_values(combo_type, value)
+
+        # (De)sensitise other combos, as appropriate
+        if combo_type == 'data_type':
+
+            if (value == 'receive' or value == 'upload'):
+                combo2.set_sensitive(True)
+                combo3.set_sensitive(True)
+            else:
+                combo2.set_sensitive(False)
+                combo3.set_sensitive(False)
+
+
 class GenericEditWin(GenericConfigWin):
 
     """Generic Python class for windows in which the user can modify various
@@ -652,7 +1221,7 @@ class GenericEditWin(GenericConfigWin):
 
         store = Gtk.ListStore(str)
         for string in combo_list:
-            store.append( [string] )
+            store.append( [str(string)] )
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, x, y, wid, hei)
@@ -709,7 +1278,7 @@ class GenericEditWin(GenericConfigWin):
 
         index_list = []
         for mini_list in combo_list:
-            store.append( [ mini_list[0], mini_list[1] ] )
+            store.append( [ str(mini_list[0]), str(mini_list[1]) ] )
             index_list.append(mini_list[1])
 
         combo = Gtk.ComboBox.new_with_model(store)
@@ -1254,7 +1823,7 @@ class GenericEditWin(GenericConfigWin):
              self.edit_dict[prop] = text
 
 
-    # (Inherited by VideoEditWin, ChannelPlaylistEditWin and FolderEditWin)
+    # (Shared support functions)
 
 
     def add_container_properties(self, grid):
@@ -1371,41 +1940,6 @@ class GenericEditWin(GenericConfigWin):
             entry4.set_text(parent_obj.name)
 
 
-    def add_source_properties(self, grid):
-
-        """Called by VideoEditWin.setup_general_tab() and
-        ChannelPlaylistEditWin.setup_general_tab().
-
-        Adds widgets common to those edit windows.
-
-        Args:
-
-            grid (Gtk.Grid): The grid on which widgets are arranged in their
-                tab
-
-        """
-
-        media_type = self.edit_obj.get_type()
-        if media_type == 'channel':
-            string = _('Channel URL')
-        elif media_type == 'playlist':
-            string = _('Playlist URL')
-        else:
-            string = _('Video URL')
-
-        label = self.add_label(grid,
-            string,
-            0, 4, 1, 1,
-        )
-        label.set_hexpand(False)
-
-        entry = self.add_entry(grid,
-            'source',
-            2, 4, 1, 1,
-        )
-        entry.set_editable(False)
-
-
     def add_destination_properties(self, grid):
 
         """Called by ChannelPlaylistEditWin.setup_general_tab() and
@@ -1473,6 +2007,41 @@ class GenericEditWin(GenericConfigWin):
         entry2.set_text(self.edit_obj.get_default_dir(self.app_obj))
 
 
+    def add_source_properties(self, grid):
+
+        """Called by VideoEditWin.setup_general_tab() and
+        ChannelPlaylistEditWin.setup_general_tab().
+
+        Adds widgets common to those edit windows.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+
+        """
+
+        media_type = self.edit_obj.get_type()
+        if media_type == 'channel':
+            string = _('Channel URL')
+        elif media_type == 'playlist':
+            string = _('Playlist URL')
+        else:
+            string = _('Video URL')
+
+        label = self.add_label(grid,
+            string,
+            0, 4, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry = self.add_entry(grid,
+            'source',
+            2, 4, 1, 1,
+        )
+        entry.set_editable(False)
+
+
     def setup_download_options_tab(self):
 
         """Called by VideoEditWin.setup_tabs(),
@@ -1515,6 +2084,9 @@ class GenericEditWin(GenericConfigWin):
         else:
             self.edit_button.set_sensitive(False)
             self.remove_button.set_sensitive(False)
+
+
+    # (Shared callbacks)
 
 
     def on_button_apply_options_clicked(self, button):
@@ -1756,9 +2328,7 @@ class GenericPrefWin(GenericConfigWin):
             grid (Gtk.Grid): The grid on which this widget will be placed
 
             combo_list (list): A list of values to display in the combobox.
-                This function expects a simple, one-dimensional list. There is
-                not generic self.add_combo_with_data() function for preference
-                windows.
+                This function expects a simple, one-dimensional list
 
             active_val (string or None): If not None, a value matching one of
                 the items in combo_list, that should be the active row in the
@@ -1782,6 +2352,58 @@ class GenericPrefWin(GenericConfigWin):
 
             count += 1
             if active_val is not None and active_val == string:
+                active_index = count
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, x, y, wid, hei)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+        combo.set_entry_text_column(0)
+        combo.set_active(active_index)
+
+        return combo
+
+
+    def add_combo_with_data(self, grid, combo_list, active_val, x, y, wid,
+    hei):
+
+        """Called by various functions in the child preference window.
+
+        Adds a more complex Gtk.ComboBox to the tab's Gtk.Grid. This function
+        expects a list of values in the form
+
+            [ [val1, val2], [val1, val2], ... ]
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which this widget will be placed
+
+            combo_list (list): The list described above. For something more
+                simple, see self.add_combo()
+
+            active_val (string or None): If not None, a value matching a
+                the second item ('val2') in one of the combo_list pairs; the
+                specified pair is the active row in the combobox
+
+            x, y, wid, hei (int): Position on the grid at which the widget is
+                placed
+
+        Returns:
+
+            The combobox widget created
+
+        """
+
+        store = Gtk.ListStore(str, str)
+
+        count = -1
+        active_index = 0
+        for mini_list in combo_list:
+            store.append( [ str(mini_list[0]), str(mini_list[1]) ] )
+
+            count += 1
+            if active_val is not None and active_val == mini_list[1]:
                 active_index = count
 
         combo = Gtk.ComboBox.new_with_model(store)
@@ -4572,7 +5194,7 @@ class OptionsEditWin(GenericEditWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Select the cookie jar file'),
             self,
-            Gtk.FileChooserAction.OPEN,
+            'open',
         )
 
         cookie_path = self.retrieve_val('cookies_path')
@@ -7869,7 +8491,7 @@ class VideoEditWin(GenericEditWin):
 #   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_options_clicked():   # Inherited from GenericConfigWin
 
 
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
@@ -7894,7 +8516,7 @@ class VideoEditWin(GenericEditWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Select the correct video/audio file'),
             self,
-            Gtk.FileChooserAction.OPEN,
+            'open',
         )
 
         if self.edit_obj.file_name is not None:
@@ -8114,6 +8736,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         self.setup_general_tab()
         self.setup_download_options_tab()
+        if mainapp.HAVE_MATPLOTLIB_FLAG:
+            self.setup_history_tab()
         self.setup_rss_feed_tab()
         self.setup_errors_warnings_tab()
 
@@ -8233,6 +8857,53 @@ class ChannelPlaylistEditWin(GenericEditWin):
 #   def setup_download_options_tab():   # Inherited from GenericConfigWin
 
 
+    def setup_history_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'History' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_History'))
+
+        grid_width = 6
+
+        self.add_label(grid,
+            '<u>' + _('Download history') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # Add combos to customise the graph
+        combo, combo2, combo3, combo4, combo5 = self.add_combos_for_graphs(
+            grid,
+            1,
+        )
+
+        # Add a button which, when clicked, draws the graph using the
+        #   customisation options specified by the combos
+        button = Gtk.Button()
+        grid.attach(button, 5, 1, 1, 1)
+        button.set_label(_('Draw'))
+        # (Signal connect appears below)
+
+        # Add a box, inside which we draw graphs
+        hbox = Gtk.HBox()
+        grid.attach(hbox, 0, 2, grid_width, 1)
+        hbox.set_hexpand(True)
+        hbox.set_vexpand(True)
+
+        # (Signal connects from above)
+        button.connect(
+            'clicked', self.on_button_draw_graph_clicked,
+            hbox,
+            combo,
+            combo2,
+            combo3,
+            combo4,
+            combo5,
+        )
+
+
     def setup_rss_feed_tab(self):
 
         """Called by self.setup_tabs().
@@ -8336,13 +9007,22 @@ class ChannelPlaylistEditWin(GenericEditWin):
         textview2.set_wrap_mode(Gtk.WrapMode.WORD)
 
 
+    # (Support functions)
+
+
+#   def add_combos_for_graphs():            # Inherited from GenericConfigWin
+
+
+#   def plot_graph():                       # Inherited from GenericConfigWin
+
+
     # Callback class methods
 
 
 #   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_options_clicked():   # Inherited from GenericConfigWin
 
 
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
@@ -8480,6 +9160,9 @@ class FolderEditWin(GenericEditWin):
         """
 
         self.setup_general_tab()
+        self.setup_statistics_tab()
+        if mainapp.HAVE_MATPLOTLIB_FLAG:
+            self.setup_history_tab()
         self.setup_download_options_tab()
 
 
@@ -8566,7 +9249,212 @@ class FolderEditWin(GenericEditWin):
         checkbutton8.set_sensitive(False)
 
 
-#   def setup_download_options_tab():   # Inherited from GenericConfigWin
+    def setup_statistics_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Statistics' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Statistics'))
+
+        grid_width = 4
+
+        self.add_label(grid,
+            '<u>' + _('Statistics') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('This folder contains:'),
+            0, 1, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('Videos'),
+            0, 2, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            1, 2, 1, 1,
+        )
+        entry.set_editable(False)
+
+        self.add_label(grid,
+            _('Downloaded'),
+            0, 3, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            None,
+            1, 3, 1, 1,
+        )
+        entry2.set_editable(False)
+
+        self.add_label(grid,
+            _('Other'),
+            0, 4, 1, 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            None,
+            1, 4, 1, 1,
+        )
+        entry3.set_editable(False)
+
+        self.add_label(grid,
+            _('Channels'),
+            2, 2, 1, 1,
+        )
+
+        entry4 = self.add_entry(grid,
+            None,
+            3, 2, 1, 1,
+        )
+        entry4.set_editable(False)
+
+        self.add_label(grid,
+            _('Playlists'),
+            2, 3, 1, 1,
+        )
+
+        entry5 = self.add_entry(grid,
+            None,
+            3, 3, 1, 1,
+        )
+        entry5.set_editable(False)
+
+        self.add_label(grid,
+            _('Sub-folders'),
+            2, 4, 1, 1,
+        )
+
+        entry6 = self.add_entry(grid,
+            None,
+            3, 4, 1, 1,
+        )
+        entry6.set_editable(False)
+
+        # Initialise the entries
+        self.setup_statistics_tab_recalculate(
+            entry,
+            entry2,
+            entry3,
+            entry4,
+            entry5,
+            entry6,
+        )
+
+        button = Gtk.Button()
+        grid.attach(button, 3, 5, 1, 1)
+        button.set_label(_('Recalculate'))
+        button.connect(
+            'clicked',
+            self.on_button_recalculate_clicked,
+            entry,
+            entry2,
+            entry3,
+            entry4,
+            entry5,
+            entry6,
+        )
+
+
+    def setup_statistics_tab_recalculate(self, entry, entry2, entry3, entry4,
+    entry5, entry6):
+
+        """Called by self.setup_statistics_tab and
+        .on_recalculate_button_clicked().
+
+        Args:
+
+            entry, entry2, entry3, entry4, entry5, entry6 (Gtk.Entry): The
+                entry boxes to update
+
+        """
+
+        # Get number of videos, channels, playlists and sub-folders
+        total_count, video_count, channel_count, playlist_count, \
+        folder_count = self.edit_obj.count_descendants( [0, 0, 0, 0, 0] )
+
+        # Calculate downloaded/not downloaded videos
+        dl_count = 0
+        not_dl_count = 0
+        child_list = self.edit_obj.compile_all_videos( [] )
+
+        for video_obj in child_list:
+
+            if video_obj.dl_flag:
+                dl_count += 1
+            else:
+                not_dl_count += 1
+
+        entry.set_text(str(video_count))
+        entry2.set_text(str(dl_count))
+        entry3.set_text(str(not_dl_count))
+        entry4.set_text(str(channel_count))
+        entry5.set_text(str(playlist_count))
+        entry6.set_text(str(folder_count))
+
+
+    def setup_history_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'History' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_History'))
+
+        grid_width = 6
+
+        self.add_label(grid,
+            '<u>' + _('Download history') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # Add combos to customise the graph
+        combo, combo2, combo3, combo4, combo5 = self.add_combos_for_graphs(
+            grid,
+            1,
+        )
+
+        # Add a button which, when clicked, draws the graph using the
+        #   customisation options specified by the combos
+        button = Gtk.Button()
+        grid.attach(button, 5, 1, 1, 1)
+        button.set_label(_('Draw'))
+        # (Signal connect appears below)
+
+        # Add a box, inside which we draw graphs
+        hbox = Gtk.HBox()
+        grid.attach(hbox, 0, 2, grid_width, 1)
+        hbox.set_hexpand(True)
+        hbox.set_vexpand(True)
+
+        # (Signal connects from above)
+        button.connect(
+            'clicked', self.on_button_draw_graph_clicked,
+            hbox,
+            combo,
+            combo2,
+            combo3,
+            combo4,
+            combo5,
+        )
+
+
+#   def setup_download_options_tab():       # Inherited from GenericConfigWin
+
+
+    # (Support functions)
+
+
+#   def add_combos_for_graphs():            # Inherited from GenericConfigWin
+
+
+#   def plot_graph():                       # Inherited from GenericConfigWin
 
 
     # Callback class methods
@@ -8575,18 +9463,40 @@ class FolderEditWin(GenericEditWin):
 #   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_options_clicked():   # Inherited from GenericConfigWin
 
 
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
-    def never_called_func(self):
+#   def on_button_draw_graph_clicked():     # Inherited from GenericConfigWin
 
-        """Function that is never called, but which makes this class object
-        collapse neatly in my IDE."""
 
-        pass
+    def on_button_recalculate_clicked(self, button, entry, entry2, entry3,
+    entry4, entry5, entry6):
+
+        """Called from callback in self.setup_statistics_tab().
+
+        Recalculates the number of child media data objects, and updates the
+        entry boxes.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, entry3, entry4, entry5, entry6 (Gtk.Entry): The
+                entry boxes to update
+
+        """
+
+        self.setup_statistics_tab_recalculate(
+            entry,
+            entry2,
+            entry3,
+            entry4,
+            entry5,
+            entry6,
+        )
 
 
 class ScheduledEditWin(GenericEditWin):
@@ -9059,7 +9969,7 @@ class ScheduledEditWin(GenericEditWin):
 #   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
-#   def on_button_edit_optiosn_clicked():   # Inherited from GenericConfigWin
+#   def on_button_edit_options_clicked():   # Inherited from GenericConfigWin
 
 
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
@@ -9748,13 +10658,20 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         self.add_checkbutton(grid,
+            _('matplotlib module is available (draws graphs)'),
+            mainapp.HAVE_MATPLOTLIB_FLAG,
+            False,                      # Can't be toggled by user
+            0, 2, grid_width, 1,
+        )
+
+        self.add_checkbutton(grid,
             _(
             'moviepy module is available (finds the length of videos, if' \
             + ' unknown)',
             ),
             mainapp.HAVE_MOVIEPY_FLAG,
             False,                      # Can't be toggled by user
-            0, 2, grid_width, 1,
+            0, 3, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -9764,7 +10681,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_PLAYSOUND_FLAG,
             False,                      # Can't be toggled by user
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -9774,7 +10691,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_XDG_FLAG,
             False,                      # Can't be toggled by user
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -9784,13 +10701,13 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_NOTIFY_FLAG,
             False,                      # Can't be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
         # Module preferences
         self.add_label(grid,
             '<u>' + _('Module preferences') + '</u>',
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -9800,7 +10717,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
@@ -9808,7 +10725,7 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Timeout applied when moviepy checks a video file'),
-            0, 8, 1, 1,
+            0, 9, 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
@@ -9816,7 +10733,7 @@ class SystemPrefWin(GenericPrefWin):
             60,
             1,                  # Step
             self.app_obj.refresh_moviepy_timeout,
-            1, 8, 1, 1,
+            1, 9, 1, 1,
         )
         spinbutton.connect(
             'value-changed',
@@ -9966,10 +10883,12 @@ class SystemPrefWin(GenericPrefWin):
         # ...with its own tabs
         self.setup_files_device_tab(self.files_inner_notebook)
         self.setup_files_database_tab(self.files_inner_notebook)
-        self.setup_files_db_errors_tab(self.files_inner_notebook)
         self.setup_files_backups_tab(self.files_inner_notebook)
         self.setup_files_videos_tab(self.files_inner_notebook)
         self.setup_files_temp_folders_tab(self.files_inner_notebook)
+        self.setup_files_statistics_tab(self.files_inner_notebook)
+        if mainapp.HAVE_MATPLOTLIB_FLAG:
+            self.setup_files_history_tab(self.files_inner_notebook)
 
 
     def setup_files_device_tab(self, inner_notebook):
@@ -10096,7 +11015,7 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab(_('D_atabase'), inner_notebook)
 
-        grid_width = 3
+        grid_width = 6
 
         # Database preferences
         self.add_label(grid,
@@ -10106,25 +11025,32 @@ class SystemPrefWin(GenericPrefWin):
 
         label = self.add_label(grid,
             _('Tartube data folder'),
-            0, 2, 1, 1,
+            0, 1, 1, 1,
         )
         label.set_hexpand(False)
 
         entry = self.add_entry(grid,
             self.app_obj.data_dir,
             False,
-            1, 2, 1, 1,
+            1, 1, (grid_width - 1), 1,
         )
         entry.set_sensitive(False)
 
-        button = Gtk.Button(_('Change'))
-        grid.attach(button, 2, 2, 1, 1)
+        button = Gtk.Button(_('Add new database'))
+        grid.attach(button, 1, 2, 2, 1)
         button.set_tooltip_text(_('Change to a different data folder'))
         button.connect(
             'clicked',
             self.on_data_dir_change_button_clicked,
             entry,
         )
+
+        button2 = Gtk.Button(_('Check and repair database'))
+        grid.attach(button2, 3, 2, 3, 1)
+        button2.set_tooltip_text(
+            _('Check for inconsistencies, and repair them'),
+        )
+        button2.connect('clicked', self.on_data_check_button_clicked)
 
         label = self.add_label(grid,
             _('Recent data folders'),
@@ -10133,17 +11059,17 @@ class SystemPrefWin(GenericPrefWin):
         label.set_hexpand(False)
 
         treeview, liststore = self.add_treeview(grid,
-            1, 3, 1, 5,
+            1, 3, (grid_width - 1), 1,
         )
         treeview.set_vexpand(False)
         for item in self.app_obj.data_dir_alt_list:
             liststore.append([item])
 
-        button2 = Gtk.Button(_('Switch'))
-        grid.attach(button2, 2, 3, 1, 1)
-        button2.set_tooltip_text(_('Switch to the selected data folder'))
-        button2.set_sensitive(False)
-        button2.connect(
+        button3 = Gtk.Button(_('Switch'))
+        grid.attach(button3, 1, 4, 1, 1)
+        button3.set_tooltip_text(_('Switch to the selected data folder'))
+        button3.set_sensitive(False)
+        button3.connect(
             'clicked',
             self.on_data_dir_switch_button_clicked,
             button,
@@ -10151,67 +11077,67 @@ class SystemPrefWin(GenericPrefWin):
             entry,
         )
 
-        button3 = Gtk.Button(_('Forget'))
-        grid.attach(button3, 2, 4, 1, 1)
-        button3.set_tooltip_text(
+        button4 = Gtk.Button(_('Forget'))
+        grid.attach(button4, 2, 4, 1, 1)
+        button4.set_tooltip_text(
             _('Remove the selected data folder from the list'),
         )
-        button3.set_sensitive(False)
-        button3.connect(
+        button4.set_sensitive(False)
+        button4.connect(
             'clicked',
             self.on_data_dir_forget_button_clicked,
             treeview,
         )
 
-        button4 = Gtk.Button(_('Forget all'))
-        grid.attach(button4, 2, 5, 1, 1)
-        button4.set_tooltip_text(
+        button5 = Gtk.Button(_('Forget all'))
+        grid.attach(button5, 3, 4, 1, 1)
+        button5.set_tooltip_text(
             _('Forget every folder in this list (except the current one)'),
         )
         if len(self.app_obj.data_dir_alt_list) <= 1:
-            button4.set_sensitive(False)
-        button4.connect(
+            button5.set_sensitive(False)
+        button5.connect(
             'clicked',
             self.on_data_dir_forget_all_button_clicked,
             treeview,
         )
 
-        button5 = Gtk.Button(_('Move up'))
-        grid.attach(button5, 2, 6, 1, 1)
-        button5.set_tooltip_text(
-            _('Move the selected folder up the list'),
-        )
-        button5.set_sensitive(False)
-        # (Signal connect appears below)
-
-        button6 = Gtk.Button(_('Move down'))
-        grid.attach(button6, 2, 7, 1, 1)
+        button6 = Gtk.Button(_('Move up'))
+        grid.attach(button6, 4, 4, 1, 1)
         button6.set_tooltip_text(
-            _('Move the selected folder down the list'),
+            _('Move the selected folder up the list'),
         )
         button6.set_sensitive(False)
         # (Signal connect appears below)
 
+        button7 = Gtk.Button(_('Move down'))
+        grid.attach(button7, 5, 4, 1, 1)
+        button7.set_tooltip_text(
+            _('Move the selected folder down the list'),
+        )
+        button7.set_sensitive(False)
+        # (Signal connect appears below)
+
         # (Signal connects from above)
-        button5.connect(
+        button6.connect(
             'clicked',
             self.on_data_dir_move_up_button_clicked,
             treeview,
             liststore,
-            button6,
+            button7,
         )
-        button6.connect(
+        button7.connect(
             'clicked',
             self.on_data_dir_move_down_button_clicked,
             treeview,
             liststore,
-            button5,
+            button6,
         )
 
         # (Add a second grid, so widget positioning on the first one isn't
         #   messed up)
         grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 8, grid_width, 1)
+        grid.attach(grid2, 0, 5, grid_width, 1)
 
         checkbutton = self.add_checkbutton(grid2,
             _(
@@ -10248,6 +11174,7 @@ class SystemPrefWin(GenericPrefWin):
             button4.set_sensitive(False)
             button5.set_sensitive(False)
             button6.set_sensitive(False)
+            button7.set_sensitive(False)
             checkbutton.set_sensitive(False)
             checkbutton2.set_sensitive(False)
             checkbutton3.set_sensitive(False)
@@ -10256,45 +11183,12 @@ class SystemPrefWin(GenericPrefWin):
         treeview.connect(
             'cursor-changed',
             self.on_data_dir_cursor_changed,
-            button2,    # Switch
-            button3,    # Forget
-            button4,    # Forget all
-            button5,    # Move up
-            button6,    # Move down
+            button3,    # Switch
+            button4,    # Forget
+            button5,    # Forget all
+            button6,    # Move up
+            button7,    # Move down
         )
-
-
-    def setup_files_db_errors_tab(self, inner_notebook):
-
-        """Called by self.setup_files_tab().
-
-        Sets up the 'DB Errors' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('DB _Errors'),
-            inner_notebook,
-        )
-
-        grid_width = 2
-
-        # Database error preferences
-        self.add_label(grid,
-            '<u>' + _('Database error preferences') + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            _('Check Tartube\'s database for inconsistencies, and fix them'),
-            0, 1, 1, 1,
-        )
-
-        button = Gtk.Button(_('Check DB'))
-        grid.attach(button, 1, 1, 1, 1)
-        if self.app_obj.disable_load_save_flag:
-            button.set_sensitive(False)
-        button.set_hexpand(True)
-        button.connect('clicked', self.on_data_check_button_clicked)
 
 
     def setup_files_backups_tab(self, inner_notebook):
@@ -10567,6 +11461,227 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_delete_shutdown_button_toggled,
             checkbutton2,
+        )
+
+
+    def setup_files_statistics_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Statistics' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Statistics'),
+            inner_notebook,
+        )
+
+        grid_width = 4
+
+        self.add_label(grid,
+            '<u>' + _('Statistics') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('The Tartube database contains:'),
+            0, 1, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('Videos'),
+            0, 2, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            False,
+            1, 2, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Downloaded'),
+            0, 3, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            None,
+            False,
+            1, 3, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Other'),
+            0, 4, 1, 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            None,
+            False,
+            1, 4, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Channels'),
+            2, 2, 1, 1,
+        )
+
+        entry4 = self.add_entry(grid,
+            None,
+            False,
+            3, 2, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Playlists'),
+            2, 3, 1, 1,
+        )
+
+        entry5 = self.add_entry(grid,
+            None,
+            False,
+            3, 3, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Custom folders'),
+            2, 4, 1, 1,
+        )
+
+        entry6 = self.add_entry(grid,
+            None,
+            False,
+            3, 4, 1, 1,
+        )
+
+        # Initialise the entries. Commented out so that the preference window
+        #   will still appear quickly for enormous databases
+#        self.setup_files_statistics_tab_recalculate(
+#            entry,
+#            entry2,
+#            entry3,
+#            entry4,
+#            entry5,
+#            entry6,
+#        )
+
+        button = Gtk.Button()
+        grid.attach(button, 3, 5, 1, 1)
+        button.set_label(_('Calculate'))
+        button.connect(
+            'clicked',
+            self.on_recalculate_stats_button_clicked,
+            entry,
+            entry2,
+            entry3,
+            entry4,
+            entry5,
+            entry6,
+        )
+
+
+    def setup_files_statistics_tab_recalculate(self, entry, entry2, entry3,
+    entry4, entry5, entry6):
+
+        """Called by self.setup_files_statistics_tab and
+        .on_recalculate_stats_button_clicked().
+
+        Args:
+
+            entry, entry2, entry3, entry4, entry5, entry6 (Gtk.Entry): The
+                entry boxes to update
+
+        """
+
+        video_count = 0
+        dl_count = 0
+        not_dl_count = 0
+        channel_count = 0
+        playlist_count = 0
+        folder_count = 0
+
+        # Get number of videos, channels, playlists and sub-folders, and also
+        #   downloaded/not downloaded videos
+        # Ignore fixed (system) folders
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+
+                if media_data_obj.dl_flag:
+                    dl_count += 1
+                else:
+                    not_dl_count += 1
+
+            elif isinstance(media_data_obj, media.Channel):
+
+                channel_count += 1
+
+            elif isinstance(media_data_obj, media.Playlist):
+
+                playlist_count += 1
+
+            elif isinstance(media_data_obj, media.Folder) \
+            and not media_data_obj.fixed_flag:
+
+                folder_count += 1
+
+        entry.set_text(str(video_count))
+        entry2.set_text(str(dl_count))
+        entry3.set_text(str(not_dl_count))
+        entry4.set_text(str(channel_count))
+        entry5.set_text(str(playlist_count))
+        entry6.set_text(str(folder_count))
+
+
+    def setup_files_history_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'History' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_History'),
+            inner_notebook,
+        )
+
+        grid_width = 6
+
+        self.add_label(grid,
+            '<u>' + _('Download history') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # Add combos to customise the graph
+        combo, combo2, combo3, combo4, combo5 = self.add_combos_for_graphs(
+            grid,
+            1,
+        )
+
+        # Add a button which, when clicked, draws the graph using the
+        #   customisation options specified by the combos
+        button = Gtk.Button()
+        grid.attach(button, 5, 1, 1, 1)
+        button.set_label(_('Draw'))
+        # (Signal connect appears below)
+
+        # Add a box, inside which we draw graphs
+        hbox = Gtk.HBox()
+        grid.attach(hbox, 0, 2, grid_width, 1)
+        hbox.set_hexpand(True)
+        hbox.set_vexpand(True)
+
+        # (Signal connects from above)
+        button.connect(
+            'clicked', self.on_button_draw_graph_clicked,
+            hbox,
+            combo,
+            combo2,
+            combo3,
+            combo4,
+            combo5,
         )
 
 
@@ -14838,7 +15953,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_data_check_button_clicked(self, button):
 
-        """Called from callback in self.setup_files_db_errors_tab().
+        """Called from callback in self.setup_files_database_tab().
 
         Checks the Tartube database for inconsistencies, and fixes them.
 
@@ -14848,7 +15963,10 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.check_integrity_db()
+        self.app_obj.check_integrity_db(
+            False,      # Don't run silently; prompt the user before repairing
+            self,       # This window, not the main window, is the parent
+        )
 
 
     def on_data_dir_change_button_clicked(self, button, entry):
@@ -14871,7 +15989,7 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select Tartube\'s data folder'),
             self,
-            Gtk.FileChooserAction.SELECT_FOLDER,
+            'folder',
         )
 
         response = dialogue_win.run()
@@ -17298,6 +18416,33 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_dl_proxy_list(mod_list)
 
 
+    def on_recalculate_stats_button_clicked(self, button, entry, entry2,
+    entry3, entry4, entry5, entry6):
+
+        """Called from callback in self.setup_files_statistics_tab().
+
+        Recalculates the number of media data objects in the Tartube database,
+        and updates the entry boxes.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, entry3, entry4, entry5, entry6 (Gtk.Entry): The
+                entry boxes to update
+
+        """
+
+        self.setup_files_statistics_tab_recalculate(
+            entry,
+            entry2,
+            entry3,
+            entry4,
+            entry5,
+            entry6,
+        )
+
+
     def on_refresh_verbose_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_output_outputtab_tab().
@@ -17769,7 +18914,7 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select the AVConv executable'),
             self,
-            Gtk.FileChooserAction.OPEN,
+            'open',
         )
 
         response = dialogue_win.run()
@@ -17802,7 +18947,7 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select the FFmpeg executable'),
             self,
-            Gtk.FileChooserAction.OPEN,
+            'open',
         )
 
         response = dialogue_win.run()
@@ -17835,7 +18980,7 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Please select the Youtube Stream Capture executable'),
             self,
-            Gtk.FileChooserAction.OPEN,
+            'open',
         )
 
         response = dialogue_win.run()
