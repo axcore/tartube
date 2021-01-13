@@ -59,14 +59,14 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.042 (24 Dec 2020)**
+Latest version: **v2.3.085 (13 Jan 2020)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.042/install-tartube-2.3.042-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.042/install-tartube-2.3.042-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.042/python3-tartube_2.3.042.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.042/tartube-2.3.042.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.085/install-tartube-2.3.085-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.085/install-tartube-2.3.085-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-portable-32bit.zip/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.085/python3-tartube_2.3.085.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-2.3.085.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl(c)** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -155,9 +155,9 @@ If you want to perform a manual installation, you can follow this procedure, whi
         
         **pip3 install playsound**
         
-        **pacman -S mingw-w64-i686-aria2**
+        **pacman -S mingw-w64-x86_64-aria2**
         
-        **pacman -S mingw-w64-i686-python-matplotlib**
+        **pacman -S mingw-w64-x86_64-python-matplotlib**
         
 - Download the **Tartube** source code from Sourceforge, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
@@ -1323,18 +1323,19 @@ If a youtube-dl fork is still compatible with the original, then **Tartube** can
 * `7.18 Toolbar is too big`_
 * `7.19 YouTube name/password not accepted`_
 * `7.20 Georestriction workarounds don't work`_
-* `7.21 Video website blocks me
+* `7.21 Video website blocks me`_
 * `7.22 MS Windows installer is too big`_
 * `7.23 Tartube can't detect livestreams`_
 * `7.24 Livestream is already finished`_
 * `7.25 Can't hear livestream alarms`_
 * `7.26 Some icons not visible`_
 * `7.27 Video thumbnails not visible`_
-* `7.28 Tartube is not visible in the system tray`_
-* `7.29 Tartube is not portable`_
-* `7.30 Run out of disk space`_
-* `7.31 British spelling`_
-* `7.32 No puedo hablar inglés`_
+* `7.28 Graphs not visible`_
+* `7.29 Tartube is not visible in the system tray`_
+* `7.30 Tartube is not portable`_
+* `7.31 Run out of disk space`_
+* `7.32 British spelling`_
+* `7.33 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1721,7 +1722,18 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.28 Tartube is not visible in the system tray
+7.28 Graphs not visible
+-----------------------
+
+*Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
+
+A: Tartube shows download statistics in a number of places, for example **Edit > System preferences... > Files > History**.
+
+The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of the Tartube installers use it. If you want graphs, you have to install matplotlib yourself.
+
+On Linux/BSD, use your system's software manager. On MS Windows, run the application **C:\Users\YOURNAME\AppData\Local\Tartube\msys64\mingw64.exe**, and in the new window type **pacman -S mingw-w64-x86_64-python-matplotlib**.
+
+7.29 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -1730,7 +1742,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.29 Tartube is not portable
+7.30 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -1741,7 +1753,7 @@ On other operating systems, just download the source code and run it. Installati
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather than in the system's default location.
 
-7.30 Run out of disk space
+7.31 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -1752,14 +1764,14 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.31 British spelling
+7.32 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences... > General > Language**, then click the drop-down box to select American English, and then restart **Tartube**
 
-7.32 No puedo hablar inglés
+7.33 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

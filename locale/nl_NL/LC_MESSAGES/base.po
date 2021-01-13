@@ -1,13 +1,12 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# Tartube
+# Copyright (C) 2019-2021 A S Lewis
+# This file is distributed under the same license as the Tartube package.
+# FIRST AUTHOR A S Lewis <aslewis@cpan.org>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 14:00+0000\n"
+"POT-Creation-Date: 2021-01-13 15:08+0000\n"
 "PO-Revision-Date: 2021-01-08 20:41+0100\n"
 "Last-Translator: Heimen Stoffels <vistausss@outlook.com>\n"
 "Language-Team: \n"
@@ -38,7 +37,7 @@ msgstr "Groot"
 msgid "Enormous"
 msgstr "Enorm"
 
-#: .././mainapp.py:940
+#: .././mainapp.py:943
 msgid ""
 "Failed to convert a thumbnail from .webp to .jpg. No more conversions will "
 "be attempted until you install FFmpeg on your system, or (if FFmpeg is "
@@ -51,88 +50,88 @@ msgstr ""
 "Herstart Tartube om het converteren opnieuw te proberen. Schakel "
 "miniatuurconversie uit om dit bericht niet meer te tonen."
 
-#: .././mainapp.py:2660
+#: .././mainapp.py:2663
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
 msgstr "Tartube kan de configuratiemap niet aanmaken"
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
-#: .././mainapp.py:2698
+#: .././mainapp.py:2710
 msgid "Tartube failed to start because:"
 msgstr "Tartube kan niet worden gestart. Reden:"
 
-#: .././mainapp.py:2706
+#: .././mainapp.py:2718
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr ""
 "Als je niet weet hoe je dit moet oplossen, neem dan contact op met de makers"
 
-#: .././mainapp.py:2934
+#: .././mainapp.py:2946
 msgid "Because of an error, file load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld omdat er een fout is opgetreden"
 
-#: .././mainapp.py:2943
+#: .././mainapp.py:2955
 msgid "Because of the error, file load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld omdat er een fout is opgetreden"
 
-#: .././mainapp.py:3027
+#: .././mainapp.py:3039
 msgid "There is a download operation in progress."
 msgstr "Er worden items gedownload."
 
-#: .././mainapp.py:3029
+#: .././mainapp.py:3041
 msgid "There is an update operation in progress."
 msgstr "Er worden items bijgewerkt."
 
-#: .././mainapp.py:3031
+#: .././mainapp.py:3043
 msgid "There is a refresh operation in progress."
 msgstr "Er worden items ververst."
 
-#: .././mainapp.py:3033
+#: .././mainapp.py:3045
 msgid "There is an info operation in progress."
 msgstr "Er wordt een informatiehandeling uitgevoerd."
 
-#: .././mainapp.py:3035
+#: .././mainapp.py:3047
 msgid "There is a tidy operation in progress."
 msgstr "Er wordt een opruimactie uitgevoerd."
 
-#: .././mainapp.py:3037
+#: .././mainapp.py:3049
 msgid "There is a process operation in progress."
 msgstr "Er wordt een voortgangsactie uitgevoerd."
 
-#: .././mainapp.py:3042
+#: .././mainapp.py:3054
 msgid "Are you sure you want to quit Tartube?"
 msgstr "Weet je zeker dat je Tartube wilt afsluiten?"
 
-#: .././mainapp.py:3247
+#: .././mainapp.py:3259
 msgid "Failed to load the Tartube config file (failed sanity check)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (mislukte controle)"
 
-#: .././mainapp.py:3270
+#: .././mainapp.py:3282
 msgid "Failed to load the Tartube config file (file is locked)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "vergrendeld)"
 
-#: .././mainapp.py:3300
+#: .././mainapp.py:3312
 msgid "Failed to load the Tartube config file (JSON load failure)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (json-laadfout)"
 
-#: .././mainapp.py:3318
+#: .././mainapp.py:3330
 msgid "Failed to load the Tartube config file (file is invalid)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "beschadigd)"
 
-#: .././mainapp.py:3336
+#: .././mainapp.py:3348
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "verouderd)"
 
-#: .././mainapp.py:3351
+#: .././mainapp.py:3363
 msgid "Failed to load the Tartube config file (missing file type)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (ontbrekende "
@@ -144,84 +143,84 @@ msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (mislukte "
 "controle)"
 
-#: .././mainapp.py:4539
+#: .././mainapp.py:4540
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (bestand is "
 "vergrendeld)"
 
-#: .././mainapp.py:4541 .././mainapp.py:4581 .././mainapp.py:5917
-#: .././mainapp.py:5973 .././mainapp.py:5979
+#: .././mainapp.py:4542 .././mainapp.py:4582 .././mainapp.py:5918
+#: .././mainapp.py:5974 .././mainapp.py:5980
 msgid "File load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld"
 
-#: .././mainapp.py:4560
+#: .././mainapp.py:4561
 msgid "Failed to save the Tartube config file (file already in use)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (bestand is in "
 "gebruik)"
 
-#: .././mainapp.py:4580
+#: .././mainapp.py:4581
 msgid "Failed to save the Tartube config file"
 msgstr "Het Tartube-configuratiebestand kan niet worden opgeslagen"
 
-#: .././mainapp.py:4692 .././mainapp.py:4708 .././mainapp.py:4738
+#: .././mainapp.py:4693 .././mainapp.py:4709 .././mainapp.py:4739
 msgid "Failed to load the Tartube database file"
 msgstr "Het Tartube-databankbestand kan niet worden geladen"
 
-#: .././mainapp.py:4753
+#: .././mainapp.py:4754
 msgid "The Tartube database file is invalid"
 msgstr "Het Tartube-databankbestand is beschadigd"
 
-#: .././mainapp.py:4769
+#: .././mainapp.py:4770
 msgid "Database file can't be read by this version of Tartube"
 msgstr "Het Tartube-databankbestand is verouderd"
 
-#: .././mainapp.py:5114
+#: .././mainapp.py:5115
 msgid "Tartube is applying an essential database update"
 msgstr "Tartube is bezig met het uitvoeren van een essentiële databankupdate"
 
-#: .././mainapp.py:5116
+#: .././mainapp.py:5117
 msgid "This might take a few minutes, so please be patient"
 msgstr "Dit kan een paar minuten duren"
 
-#: .././mainapp.py:5911 .././mainapp.py:5969 .././mainapp.py:5978
+#: .././mainapp.py:5912 .././mainapp.py:5970 .././mainapp.py:5979
 msgid "Failed to save the Tartube database file"
 msgstr "Het Tartube-databankbestand kan niet worden opgeslagen"
 
-#: .././mainapp.py:5914
+#: .././mainapp.py:5915
 msgid "(Could not make a backup copy of the existing file)"
 msgstr "(het bestaande bestand kan niet worden geback-upt)"
 
-#: .././mainapp.py:5950
+#: .././mainapp.py:5951
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
 "Het Tartube-databankbestand kan niet worden opgeslagen (bestand is in "
 "gebruik)"
 
-#: .././mainapp.py:5971
+#: .././mainapp.py:5972
 msgid "A backup of the previous file can be found at:"
 msgstr "Er is een back-up gemaakt van het vorige bestand in:"
 
-#: .././mainapp.py:6152 .././mainapp.py:6162
+#: .././mainapp.py:6153 .././mainapp.py:6163
 msgid "Database file created"
 msgstr "Databankbestand aangemaakt"
 
-#: .././mainapp.py:6556
+#: .././mainapp.py:6557
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr ""
 "Tartube's databank kan niet worden gecontroleerd tijdens uitvoeren van een "
 "handeling"
 
-#: .././mainapp.py:6792
+#: .././mainapp.py:6793
 msgid "Database check complete, no inconsistencies found"
 msgstr "Databankcontrole voltooid - geen fouten aangetroffen"
 
-#: .././mainapp.py:6824
+#: .././mainapp.py:6825
 msgid "Database check complete, problems found:"
 msgstr "Databankcontrole voltooid - fouten aangetroffen:"
 
-#: .././mainapp.py:6827
+#: .././mainapp.py:6828
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
@@ -229,15 +228,15 @@ msgstr ""
 "Wil je deze fouten herstellen? (de databank wordt gerepareerd zonder "
 "bestanden te verwijderen)"
 
-#: .././mainapp.py:7000
+#: .././mainapp.py:7001
 msgid "Database inconsistencies repaired"
 msgstr "Databankfouten hersteld"
 
-#: .././mainapp.py:7884 .././config.py:15990
+#: .././mainapp.py:7893 .././config.py:16026
 msgid "Please select Tartube's data folder"
 msgstr "Kies Tartube's gegevensmap"
 
-#: .././mainapp.py:8188
+#: .././mainapp.py:8254
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
@@ -245,46 +244,46 @@ msgstr ""
 "Er kan geen download worden gestart zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:8212 .././mainapp.py:8237
+#: .././mainapp.py:8278 .././mainapp.py:8303
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr "Je hebt slechts {0}/{1} MB resterende schijfruimte"
 
-#: .././mainapp.py:8240 .././mainapp.py:13900 .././mainapp.py:14016
-#: .././mainapp.py:14198 .././mainwin.py:17492
+#: .././mainapp.py:8306 .././mainapp.py:13966 .././mainapp.py:14082
+#: .././mainapp.py:14264 .././mainwin.py:17487
 msgid "Are you sure you want to continue?"
 msgstr "Weet je zeker dat je wilt doorgaan?"
 
-#: .././mainapp.py:8327
+#: .././mainapp.py:8393
 msgid "There is nothing to check!"
 msgstr "Er valt niks te controleren!"
 
-#: .././mainapp.py:8329
+#: .././mainapp.py:8395
 msgid "There is nothing to download!"
 msgstr "Er valt niks te downloaden!"
 
-#: .././mainapp.py:8572
+#: .././mainapp.py:8638
 msgid "Download operation complete"
 msgstr "Downloaden voltooid"
 
-#: .././mainapp.py:8574
+#: .././mainapp.py:8640
 msgid "Download operation halted"
 msgstr "Downloaden onderbroken"
 
-#: .././mainapp.py:8578
+#: .././mainapp.py:8644
 msgid "Videos downloaded:"
 msgstr "Gedownloade video's:"
 
-#: .././mainapp.py:8579
+#: .././mainapp.py:8645
 msgid "Videos checked:"
 msgstr "Gecontroleerde video's:"
 
-#: .././mainapp.py:8582 .././mainapp.py:9183 .././mainapp.py:9677
-#: .././mainapp.py:10077
+#: .././mainapp.py:8648 .././mainapp.py:9249 .././mainapp.py:9743
+#: .././mainapp.py:10143
 msgid "Time taken:"
 msgstr "Verstreken tijd:"
 
-#: .././mainapp.py:8687
+#: .././mainapp.py:8753
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
@@ -292,35 +291,35 @@ msgstr ""
 "Er kan geen update plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:8873
+#: .././mainapp.py:8939
 msgid "Installation failed"
 msgstr "Installatie mislukt"
 
-#: .././mainapp.py:8875
+#: .././mainapp.py:8941
 msgid "Installation complete"
 msgstr "Installatie voltooid"
 
-#: .././mainapp.py:8879
+#: .././mainapp.py:8945
 msgid "Update operation failed"
 msgstr "Bijwerken mislukt"
 
-#: .././mainapp.py:8881
+#: .././mainapp.py:8947
 msgid "Update operation halted"
 msgstr "Bijwerken onderbroken"
 
-#: .././mainapp.py:8883
+#: .././mainapp.py:8949
 msgid "Update operation complete"
 msgstr "Bijwerken voltooid"
 
-#: .././mainapp.py:8885
+#: .././mainapp.py:8951
 msgid "version:"
 msgstr "versie:"
 
-#: .././mainapp.py:8889
+#: .././mainapp.py:8955
 msgid "(unknown)"
 msgstr "(onbekend)"
 
-#: .././mainapp.py:8976
+#: .././mainapp.py:9042
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
@@ -328,7 +327,7 @@ msgstr ""
 "Er kan geen verversactie plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:8989
+#: .././mainapp.py:9055
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
@@ -336,7 +335,7 @@ msgstr ""
 "Tijdens het verversen wordt Tartube's gegevensmap doorzocht op video's die "
 "nog niet zijn toegevoegd aan de databank"
 
-#: .././mainapp.py:8993
+#: .././mainapp.py:9059
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
@@ -344,7 +343,7 @@ msgstr ""
 "Je hoeft alleen te verversen als je video's handmatig hebt gekopieerd naar "
 "Tartube's gegevensmap"
 
-#: .././mainapp.py:9000
+#: .././mainapp.py:9066
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
@@ -352,7 +351,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Alles controleren' in het "
 "hoofdvenster klikken"
 
-#: .././mainapp.py:9007
+#: .././mainapp.py:9073
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
@@ -360,7 +359,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Kanaal controleren' in het "
 "rechtermuisknopmenu van een kanaal klikken"
 
-#: .././mainapp.py:9014
+#: .././mainapp.py:9080
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
@@ -368,7 +367,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Afspeellijst controleren' in het "
 "rechtermuisknopmenu van een afspeellijst klikken"
 
-#: .././mainapp.py:9021
+#: .././mainapp.py:9087
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
@@ -376,19 +375,19 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Map controleren' in het "
 "rechtermuisknopmenu van een map klikken"
 
-#: .././mainapp.py:9026
+#: .././mainapp.py:9092
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr "Weet je zeker dat je wilt doorgaan?"
 
-#: .././mainapp.py:9178
+#: .././mainapp.py:9244
 msgid "Refresh operation complete"
 msgstr "Verversen voltooid"
 
-#: .././mainapp.py:9180
+#: .././mainapp.py:9246
 msgid "Refresh operation halted"
 msgstr "Verversen onderbroken"
 
-#: .././mainapp.py:9285
+#: .././mainapp.py:9351
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
@@ -396,47 +395,47 @@ msgstr ""
 "Er kan geen informatiehandeling plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:9401
+#: .././mainapp.py:9467
 msgid "Operation failed"
 msgstr "Handeling mislukt"
 
-#: .././mainapp.py:9403 .././downloads.py:400
+#: .././mainapp.py:9469 .././downloads.py:400
 msgid "Operation complete"
 msgstr "Handeling voltooid"
 
-#: .././mainapp.py:9405
+#: .././mainapp.py:9471
 msgid "Click the Output Tab to see the results"
 msgstr "Klik op het tabblad 'Uitvoer' om de resultaten te bekijken"
 
-#: .././mainapp.py:9418
+#: .././mainapp.py:9484
 msgid "A new release is available!"
 msgstr "Er is een nieuwe versie beschikbaar!"
 
-#: .././mainapp.py:9420
+#: .././mainapp.py:9486
 msgid "Your installation is up to date!"
 msgstr "Je installatie is actueel!"
 
-#: .././mainapp.py:9422
+#: .././mainapp.py:9488
 msgid "Installed version:"
 msgstr "Geïnstalleerde versie:"
 
-#: .././mainapp.py:9427
+#: .././mainapp.py:9493
 msgid "Stable release:"
 msgstr "Stabiele uitgave:"
 
-#: .././mainapp.py:9432
+#: .././mainapp.py:9498
 msgid "Stable release: not found"
 msgstr "Stabiele uitgave: niet gevonden"
 
-#: .././mainapp.py:9435
+#: .././mainapp.py:9501
 msgid "Development release:"
 msgstr "Ontwikkelingsuitgave:"
 
-#: .././mainapp.py:9437
+#: .././mainapp.py:9503
 msgid "Development release: not found"
 msgstr "Ontwikkelingsuitgave: niet gevonden"
 
-#: .././mainapp.py:9544
+#: .././mainapp.py:9610
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
@@ -444,39 +443,39 @@ msgstr ""
 "Er kan geen opruimactie plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:9672
+#: .././mainapp.py:9738
 msgid "Tidy operation complete"
 msgstr "Opruimen voltooid"
 
-#: .././mainapp.py:9674
+#: .././mainapp.py:9740
 msgid "Tidy operation halted"
 msgstr "Opruimen onderbroken"
 
-#: .././mainapp.py:9841 .././mainwin.py:18177
+#: .././mainapp.py:9907 .././mainwin.py:18172
 msgid "Livestream has started"
 msgstr "De livestream is begonnen"
 
-#: .././mainapp.py:10066
+#: .././mainapp.py:10132
 msgid "Process operation complete"
 msgstr "Voortgangsactie voltooid"
 
-#: .././mainapp.py:10068
+#: .././mainapp.py:10134
 msgid "Process operation halted"
 msgstr "Voortgangsactie onderbroken"
 
-#: .././mainapp.py:10072
+#: .././mainapp.py:10138
 msgid "Files processed:"
 msgstr "Verwerkte bestanden:"
 
-#: .././mainapp.py:10073
+#: .././mainapp.py:10139
 msgid "Errors:"
 msgstr "Fouten:"
 
-#: .././mainapp.py:11333 .././mainapp.py:11508
+#: .././mainapp.py:11399 .././mainapp.py:11574
 msgid "Cannot move anything to:"
 msgstr "Kan niks verplaatsen naar:"
 
-#: .././mainapp.py:11335 .././mainapp.py:11510
+#: .././mainapp.py:11401 .././mainapp.py:11576
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
@@ -484,7 +483,7 @@ msgstr ""
 "omdat er al een bestand of map met dezelfde naam is (hoewel Tartube's "
 "databank daar niks van afweet)"
 
-#: .././mainapp.py:11339
+#: .././mainapp.py:11405
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
@@ -492,19 +491,19 @@ msgstr ""
 "Waarschijnlijk heb je het bestand/de map per ongeluk aangemaakt. Als dat zo "
 "is, verwijder deze dan voordat je het opnieuw probeert."
 
-#: .././mainapp.py:11353 .././mainapp.py:11528
+#: .././mainapp.py:11419 .././mainapp.py:11594
 msgid "Are you sure you want to move this channel:"
 msgstr "Weet je zeker dat je het volgende kanaal wilt verplaatsen:"
 
-#: .././mainapp.py:11355 .././mainapp.py:11530
+#: .././mainapp.py:11421 .././mainapp.py:11596
 msgid "Are you sure you want to move this playlist:"
 msgstr "Weet je zeker dat je de volgende afspeellijst wilt verplaatsen:"
 
-#: .././mainapp.py:11357 .././mainapp.py:11532
+#: .././mainapp.py:11423 .././mainapp.py:11598
 msgid "Are you sure you want to move this folder:"
 msgstr "Weet je zeker dat je de volgende map wilt verplaatsen:"
 
-#: .././mainapp.py:11362
+#: .././mainapp.py:11428
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
@@ -512,24 +511,24 @@ msgstr ""
 "Deze handeling verplaatst alle gedownloade bestanden naar het bovenste "
 "niveau van Tartube's gegevensmap"
 
-#: .././mainapp.py:11462
+#: .././mainapp.py:11528
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr ""
 "Kanalen, afspeellijsten en mappen kunnen alleen worden versleept naar een map"
 
-#: .././mainapp.py:11475
+#: .././mainapp.py:11541
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr ""
 "De vastgezette map '{0}' kan niet worden verplaatst (maar kan wél worden "
 "verborgen)"
 
-#: .././mainapp.py:11488
+#: .././mainapp.py:11554
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr "De map '{0}' mag alleen video's bevatten"
 
-#: .././mainapp.py:11515
+#: .././mainapp.py:11581
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
@@ -537,16 +536,16 @@ msgstr ""
 "Waarschijnlijk heb je het bestand/de map per ongeluk aangemaakt. Als dat zo "
 "is, verwijder deze dan voordat je het opnieuw probeert."
 
-#: .././mainapp.py:11534
+#: .././mainapp.py:11600
 msgid "into this folder:"
 msgstr "naar deze map:"
 
-#: .././mainapp.py:11538
+#: .././mainapp.py:11604
 msgid "This procedure will move all downloaded files to the new location"
 msgstr ""
 "Deze handeling verplaatst alle gedownloade bestanden naar de nieuwe locatie"
 
-#: .././mainapp.py:11544
+#: .././mainapp.py:11610
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
@@ -554,103 +553,103 @@ msgstr ""
 "WAARSCHUWING: de bestemming is aangemerkt als 'tijdelijk', dus alle inhoud "
 "wordt VERWIJDERD als je Tartube herstart!"
 
-#: .././mainapp.py:12008
+#: .././mainapp.py:12074
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr ""
 "Weet je ZEKER dat je deze bestanden wilt verwijderen? Dit kan niet ongedaan "
 "worden gemaakt!"
 
-#: .././mainapp.py:13884 .././mainapp.py:14000 .././mainapp.py:14182
+#: .././mainapp.py:13950 .././mainapp.py:14066 .././mainapp.py:14248
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr "Het kanaal bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:13890 .././mainapp.py:14006 .././mainapp.py:14188
+#: .././mainapp.py:13956 .././mainapp.py:14072 .././mainapp.py:14254
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr "De afspeellijst bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:13896 .././mainapp.py:14012 .././mainapp.py:14194
+#: .././mainapp.py:13962 .././mainapp.py:14078 .././mainapp.py:14260
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr "De map bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:14262 .././mainapp.py:18432 .././mainapp.py:18564
-#: .././mainapp.py:18695
+#: .././mainapp.py:14328 .././mainapp.py:18500 .././mainapp.py:18632
+#: .././mainapp.py:18763
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr "De naam '{0}' is niet toegestaan"
 
-#: .././mainapp.py:14271
+#: .././mainapp.py:14337
 #, python-brace-format
 msgid "The name '{0}' is already in use"
 msgstr "De naam '{0}' is al in gebruik"
 
-#: .././mainapp.py:14284
+#: .././mainapp.py:14350
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr "De naam van '{0}' kan niet worden gewijzigd"
 
-#: .././mainapp.py:14631
+#: .././mainapp.py:14697
 msgid "Select where to save the database export"
 msgstr "Kies de map waarnaar de databank moet worden geëxporteerd"
 
-#: .././mainapp.py:14752
+#: .././mainapp.py:14818
 msgid "There is nothing to export!"
 msgstr "Er valt niks te exporteren!"
 
-#: .././mainapp.py:14792 .././mainapp.py:14858
+#: .././mainapp.py:14858 .././mainapp.py:14924
 msgid "Failed to save the database export file:"
 msgstr "Het databank-exportbestand kan niet worden opgeslagen:"
 
-#: .././mainapp.py:14866
+#: .././mainapp.py:14932
 msgid "Database export file saved to:"
 msgstr "Het databank-exportbestand is opgeslagen in:"
 
-#: .././mainapp.py:14903
+#: .././mainapp.py:14969
 msgid "Select the database export"
 msgstr "Kies de databankexport"
 
-#: .././mainapp.py:14924 .././mainapp.py:14938
+#: .././mainapp.py:14990 .././mainapp.py:15004
 msgid "Failed to load the database export file"
 msgstr "Het databank-exportbestand kan niet worden geladen"
 
-#: .././mainapp.py:14955
+#: .././mainapp.py:15021
 msgid "The database export file is invalid"
 msgstr "Het databank-exportbestand is beschadigd"
 
-#: .././mainapp.py:14966
+#: .././mainapp.py:15032
 msgid "The database export file is invalid (or empty)"
 msgstr "Het databank-exportbestand is beschadigd (of blanco)"
 
-#: .././mainapp.py:15010
+#: .././mainapp.py:15076
 msgid "Nothing was imported from the database export file"
 msgstr "Er is niks geïmporteerd uit het databank-exportbestand"
 
 #. Show a confirmation
-#: .././mainapp.py:15024
+#: .././mainapp.py:15090
 msgid "Imported"
 msgstr "Geïmporteerd"
 
-#: .././mainapp.py:15025 .././mainwin.py:1287 .././config.py:888
+#: .././mainapp.py:15091 .././mainwin.py:1287 .././config.py:888
 #: .././config.py:9274 .././config.py:11492
 msgid "Videos"
 msgstr "Video's"
 
-#: .././mainapp.py:15026 .././config.py:9307 .././config.py:11525
+#: .././mainapp.py:15092 .././config.py:9307 .././config.py:11525
 msgid "Channels"
 msgstr "Kanalen"
 
-#: .././mainapp.py:15027 .././config.py:9318 .././config.py:11536
+#: .././mainapp.py:15093 .././config.py:9318 .././config.py:11536
 msgid "Playlists"
 msgstr "Afspeellijsten"
 
-#: .././mainapp.py:15028
+#: .././mainapp.py:15094
 msgid "Folders"
 msgstr "Mappen"
 
-#: .././mainapp.py:15412
+#: .././mainapp.py:15478
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
@@ -658,107 +657,107 @@ msgstr ""
 "De video is niet aanwezig in Tartube's gegevensmap. Probeer de video opnieuw "
 "te downloaden."
 
-#: .././mainapp.py:15937 .././mainapp.py:16319
+#: .././mainapp.py:16003 .././mainapp.py:16385
 msgid "Select where to save the options export"
 msgstr "Kies de map waarnaar de opties moeten worden geëxporteerd"
 
-#: .././mainapp.py:15985 .././mainapp.py:16367
+#: .././mainapp.py:16051 .././mainapp.py:16433
 msgid "Failed to save the options export file:"
 msgstr "Het opties-exportbestand kan niet worden opgeslagen:"
 
-#: .././mainapp.py:15993
+#: .././mainapp.py:16059
 msgid "Download options exported to to:"
 msgstr "De downloadopties zijn geëxporteerd naar:"
 
-#: .././mainapp.py:16024 .././mainapp.py:16406
+#: .././mainapp.py:16090 .././mainapp.py:16472
 msgid "Select the options export file"
 msgstr "Kies het opties-exportbestand"
 
-#: .././mainapp.py:16043 .././mainapp.py:16425
+#: .././mainapp.py:16109 .././mainapp.py:16491
 msgid "Failed to load the options export file"
 msgstr "Het opties-exportbestand kan niet worden geladen"
 
-#: .././mainapp.py:16060 .././mainapp.py:16442
+#: .././mainapp.py:16126 .././mainapp.py:16508
 msgid "The options export file is invalid"
 msgstr "Het opties-exportbestand is beschadigd"
 
-#: .././mainapp.py:16071 .././mainapp.py:16453
+#: .././mainapp.py:16137 .././mainapp.py:16519
 msgid "The options export file is invalid (or empty)"
 msgstr "Het opties-exportbestand is beschadigd (of blanco)"
 
-#: .././mainapp.py:16375
+#: .././mainapp.py:16441
 msgid "FFmpeg options exported to to:"
 msgstr "De FFmpeg-opties zijn geëxporteerd naar:"
 
-#: .././mainapp.py:17349
+#: .././mainapp.py:17415
 msgid "Please select a destination folder"
 msgstr "Kies een bestemming"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17421
+#: .././mainapp.py:17487
 msgid "Are you sure you want to clear this list?"
 msgstr "Weet je zeker dat je deze lijst wilt wissen?"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17468
+#: .././mainapp.py:17534
 msgid "Are you sure you want to clear downloaded videos?"
 msgstr "Weet je zeker dat je de gedownloade video's wilt verwijderen?"
 
-#: .././mainapp.py:17561 .././mainwin.py:14543
+#: .././mainapp.py:17627 .././mainwin.py:14538
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr "FFmpeg kan alleen aangekruiste/gedownloade video's verwerken"
 
-#: .././mainapp.py:17678
+#: .././mainapp.py:17744
 msgid "No video(s) have been downloaded"
 msgstr "Je hebt nog geen video's gedownload"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17774
+#: .././mainapp.py:17842
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr "Weet je zeker dat je de geselecteerde items wilt verwijderen?"
 
-#: .././mainapp.py:18423
+#: .././mainapp.py:18491
 msgid "You must give the channel a name"
 msgstr "Geef het kanaal een naam"
 
-#: .././mainapp.py:18441 .././mainapp.py:18704
+#: .././mainapp.py:18509 .././mainapp.py:18772
 msgid "You must enter a valid URL"
 msgstr "Voer een geldige url in"
 
-#: .././mainapp.py:18556
+#: .././mainapp.py:18624
 msgid "You must give the folder a name"
 msgstr "Geef de map een naam"
 
-#: .././mainapp.py:18686
+#: .././mainapp.py:18754
 msgid "You must give the playlist a name"
 msgstr "Geef de afspeellijst een naam"
 
-#: .././mainapp.py:18841
+#: .././mainapp.py:18909
 msgid "The following videos are duplicates:"
 msgstr "De volgende video's zijn dubbel:"
 
-#: .././mainapp.py:18905
+#: .././mainapp.py:18973
 msgid "There were no livestream alerts to cancel"
 msgstr "Er zijn nog geen livestream-meldingen op dit kanaal"
 
-#: .././mainapp.py:18907
+#: .././mainapp.py:18975
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr "De livestream-melding van 1 video is gedempt"
 
-#: .././mainapp.py:18910
+#: .././mainapp.py:18978
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr "De livestream-melding van {0} video's is afgebroken"
 
-#: .././mainapp.py:19280
+#: .././mainapp.py:19348
 msgid "All Tartube data has been saved"
 msgstr "Alle Tartube-gegevens zijn opgeslagen"
 
-#: .././mainapp.py:19310
+#: .././mainapp.py:19378
 msgid "Database saved"
 msgstr "De databank is opgeslagen"
 
-#: .././mainapp.py:19565 .././mainwin.py:13495
+#: .././mainapp.py:19633 .././mainwin.py:13490
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -768,39 +767,39 @@ msgstr ""
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:19605
+#: .././mainapp.py:19673
 msgid "Cannot update existing livestreams because"
 msgstr "De livestreams kunnen niet worden bijgewerkt omdat"
 
-#: .././mainapp.py:19607
+#: .././mainapp.py:19675
 msgid "there is another operation running"
 msgstr "er een andere handeling wordt uitgevoerd"
 
-#: .././mainapp.py:19609
+#: .././mainapp.py:19677
 msgid "they are currently being updated"
 msgstr "ze al worden bijgewerkt"
 
-#: .././mainapp.py:19611
+#: .././mainapp.py:19679
 msgid "one or more configuration windows are open"
 msgstr "er één of meerdere instellingenvensters geopend zijn"
 
-#: .././mainapp.py:19613
+#: .././mainapp.py:19681
 msgid "there are no livestreams to update"
 msgstr "er geen bij te werken livestreams zijn"
 
-#: .././mainapp.py:19687
+#: .././mainapp.py:19755
 msgid "There is already a channel with that name"
 msgstr "Er is al een kanaal met deze naam"
 
-#: .././mainapp.py:19689
+#: .././mainapp.py:19757
 msgid "There is already a playlist with that name"
 msgstr "Er is al een afspeellijst met deze naam"
 
-#: .././mainapp.py:19691
+#: .././mainapp.py:19759
 msgid "There is already a folder with that name"
 msgstr "Er is al een map met deze naam"
 
-#: .././mainapp.py:19694
+#: .././mainapp.py:19762
 msgid "(so please choose a different name)"
 msgstr "(geef een andere naam op)"
 
@@ -835,7 +834,7 @@ msgid "_Close to tray"
 msgstr "Minimaliseren naar s_ysteemvak"
 
 #. Quit
-#: .././mainwin.py:985 .././mainwin.py:22858
+#: .././mainwin.py:985 .././mainwin.py:22853
 msgid "_Quit"
 msgstr "_Afsluiten"
 
@@ -916,12 +915,12 @@ msgid "_Operations"
 msgstr "_Handelingen"
 
 #. Check all
-#: .././mainwin.py:1122 .././mainwin.py:22829
+#: .././mainwin.py:1122 .././mainwin.py:22824
 msgid "_Check all"
 msgstr "Alles _controleren"
 
 #. Download all
-#: .././mainwin.py:1128 .././mainwin.py:22836
+#: .././mainwin.py:1128 .././mainwin.py:22831
 msgid "_Download all"
 msgstr "Alles _downloaden"
 
@@ -949,7 +948,7 @@ msgstr "FFmpeg _installeren..."
 msgid "Tidy up _files..."
 msgstr "Bestanden _opruimen..."
 
-#: .././mainwin.py:1188 .././mainwin.py:22847
+#: .././mainwin.py:1188 .././mainwin.py:22842
 msgid "_Stop current operation"
 msgstr "Huidige handeling af_breken"
 
@@ -1024,7 +1023,7 @@ msgid "Check"
 msgstr "Controleren"
 
 #: .././mainwin.py:1383 .././mainwin.py:1632 .././mainwin.py:3629
-#: .././mainwin.py:3816
+#: .././mainwin.py:3811
 msgid "Check all videos, channels, playlists and folders"
 msgstr "Controleer alle video's, kanalen, afspeellijsten en mappen"
 
@@ -1034,15 +1033,15 @@ msgstr "Controleer alle video's, kanalen, afspeellijsten en mappen"
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. Link not clickable
-#: .././mainwin.py:1393 .././mainwin.py:19379 .././mainwin.py:19384
-#: .././mainwin.py:19392 .././mainwin.py:19641 .././mainwin.py:19653
-#: .././mainwin.py:20388 .././mainwin.py:21735 .././mainwin.py:21761
+#: .././mainwin.py:1393 .././mainwin.py:19374 .././mainwin.py:19379
+#: .././mainwin.py:19387 .././mainwin.py:19636 .././mainwin.py:19648
+#: .././mainwin.py:20383 .././mainwin.py:21730 .././mainwin.py:21756
 #: .././config.py:12481
 msgid "Download"
 msgstr "Downloaden"
 
 #: .././mainwin.py:1404 .././mainwin.py:1640 .././mainwin.py:3637
-#: .././mainwin.py:3822
+#: .././mainwin.py:3817
 msgid "Download all videos, channels, playlists and folders"
 msgstr "Download alle video's, kanalen, afspeellijsten en mappen"
 
@@ -1107,7 +1106,7 @@ msgstr "Uitv_oer"
 msgid "_Errors / Warnings"
 msgstr "Fout_en/Waarschuwingen"
 
-#: .././mainwin.py:1630 .././mainwin.py:3627 .././mainwin.py:3813
+#: .././mainwin.py:1630 .././mainwin.py:3627 .././mainwin.py:3808
 msgid "Check all"
 msgstr "Alles controleren"
 
@@ -1156,7 +1155,7 @@ msgstr "Omhoog scrollen"
 msgid "Scroll down"
 msgstr "Omlaag scrollen"
 
-#: .././mainwin.py:1856 .././mainwin.py:3997
+#: .././mainwin.py:1856 .././mainwin.py:3992
 msgid "Show more settings"
 msgstr "Meer instellingen tonen"
 
@@ -1168,8 +1167,8 @@ msgstr "Sorteren"
 msgid "Upload time"
 msgstr "Uploadtijd"
 
-#: .././mainwin.py:1876 .././mainwin.py:25128 .././config.py:7138
-#: .././config.py:12481 .././config.py:14366 .././config.py:14633
+#: .././mainwin.py:1876 .././mainwin.py:25123 .././config.py:7138
+#: .././config.py:12481 .././config.py:14402 .././config.py:14669
 msgid "Name"
 msgstr "Naam"
 
@@ -1345,15 +1344,15 @@ msgstr "Bestemming openen"
 msgid "Format:"
 msgstr "Formaat:"
 
-#: .././mainwin.py:2591 .././config.py:14366
+#: .././mainwin.py:2591 .././config.py:14402
 msgid "Default"
 msgstr "Standaard"
 
-#: .././mainwin.py:2591 .././mainwin.py:16153
+#: .././mainwin.py:2591 .././mainwin.py:16148
 msgid "Video:"
 msgstr "Video:"
 
-#: .././mainwin.py:2595 .././mainwin.py:16153
+#: .././mainwin.py:2595 .././mainwin.py:16148
 msgid "Audio:"
 msgstr "Audio:"
 
@@ -1473,641 +1472,645 @@ msgstr "Bezig met FFmpeg-verwerking..."
 msgid "FFmpeg Processing..."
 msgstr "Bezig met FFmpeg-verwerking..."
 
-#: .././mainwin.py:3789
-msgid "Installing"
-msgstr "Bezig met installeren..."
+#: .././mainwin.py:3790
+msgid "Installing FFmpeg"
+msgstr ""
 
 #: .././mainwin.py:3792
-msgid "Updating"
-msgstr "Bezig met bijwerken..."
+msgid "Updating downloader"
+msgstr ""
 
-#: .././mainwin.py:3795 .././mainwin.py:3798
-msgid "Fetching"
-msgstr "Bezig met ophalen..."
+#: .././mainwin.py:3794
+msgid "Fetching formats"
+msgstr ""
 
-#: .././mainwin.py:3801
-msgid "Testing"
-msgstr "Bezig met testen..."
+#: .././mainwin.py:3796
+msgid "Fetching subtitles"
+msgstr ""
 
-#: .././mainwin.py:3804
+#: .././mainwin.py:3798
+msgid "Testing downloader"
+msgstr ""
+
+#: .././mainwin.py:3800
 msgid "Contacting website"
 msgstr "Bezig met openen van website"
 
-#: .././mainwin.py:4026
+#: .././mainwin.py:4021
 msgid "Show fewer settings"
 msgstr "Minder instellingen tonen"
 
-#: .././mainwin.py:4365
+#: .././mainwin.py:4360
 msgid "_Check channel"
 msgstr "Kanaal _controleren"
 
-#: .././mainwin.py:4367
+#: .././mainwin.py:4362
 msgid "_Check playlist"
 msgstr "Afspeellijst _controleren"
 
-#: .././mainwin.py:4369
+#: .././mainwin.py:4364
 msgid "_Check folder"
 msgstr "Map _controleren"
 
-#: .././mainwin.py:4389
+#: .././mainwin.py:4384
 msgid "_Download channel"
 msgstr "Kanaal _downloaden"
 
-#: .././mainwin.py:4391
+#: .././mainwin.py:4386
 msgid "_Download playlist"
 msgstr "Afspeellijst _downloaden"
 
-#: .././mainwin.py:4393
+#: .././mainwin.py:4388
 msgid "_Download folder"
 msgstr "Map downloaden"
 
-#: .././mainwin.py:4414
+#: .././mainwin.py:4409
 msgid "C_ustom download channel"
 msgstr "Kanaal aangepast do_wnloaden"
 
-#: .././mainwin.py:4416
+#: .././mainwin.py:4411
 msgid "C_ustom download playlist"
 msgstr "Afspeellijst aangepast do_wnloaden"
 
-#: .././mainwin.py:4418
+#: .././mainwin.py:4413
 msgid "C_ustom download folder"
 msgstr "Map aangepast do_wnloaden"
 
-#: .././mainwin.py:4467
+#: .././mainwin.py:4462
 msgid "_Empty folder"
 msgstr "L_ege map"
 
-#: .././mainwin.py:4479
+#: .././mainwin.py:4474
 msgid "_All contents"
 msgstr "_Alle inhoud"
 
-#: .././mainwin.py:4497
+#: .././mainwin.py:4492
 msgid "_Remove videos"
 msgstr "Video's ve_rwijderen"
 
-#: .././mainwin.py:4509
+#: .././mainwin.py:4504
 msgid "_Just folder videos"
 msgstr "Alleen mapv_ideo's"
 
-#: .././mainwin.py:4515
+#: .././mainwin.py:4510
 msgid "Channel co_ntents"
 msgstr "Kanaali_nhoud"
 
-#: .././mainwin.py:4517
+#: .././mainwin.py:4512
 msgid "Playlist co_ntents"
 msgstr "Afspeellijsti_nhoud"
 
-#: .././mainwin.py:4519
+#: .././mainwin.py:4514
 msgid "Folder co_ntents"
 msgstr "Mapi_nhoud"
 
-#: .././mainwin.py:4531
+#: .././mainwin.py:4526
 msgid "_Move to top level"
 msgstr "Verplaatsen naar bovenste _niveau"
 
-#: .././mainwin.py:4548
+#: .././mainwin.py:4543
 msgid "_Convert to playlist"
 msgstr "_Omzetten naar afspeellijst"
 
-#: .././mainwin.py:4550
+#: .././mainwin.py:4545
 msgid "_Convert to channel"
 msgstr "_Omzetten naar kanaal"
 
-#: .././mainwin.py:4572
+#: .././mainwin.py:4567
 msgid "_Hide folder"
 msgstr "Map ver_bergen"
 
-#: .././mainwin.py:4582
+#: .././mainwin.py:4577
 msgid "_Rename channel..."
 msgstr "Kanaalnaam wijzi_gen..."
 
-#: .././mainwin.py:4584
+#: .././mainwin.py:4579
 msgid "_Rename playlist..."
 msgstr "Afspee_llijstnaam wijzigen..."
 
-#: .././mainwin.py:4586
+#: .././mainwin.py:4581
 msgid "_Rename folder..."
 msgstr "Mapnaam _wijzigen..."
 
-#: .././mainwin.py:4603
+#: .././mainwin.py:4598
 msgid "Set _nickname..."
 msgstr "Bij_naam instellen..."
 
-#: .././mainwin.py:4618
+#: .././mainwin.py:4613
 msgid "Set _URL..."
 msgstr "_URL instellen..."
 
-#: .././mainwin.py:4630
+#: .././mainwin.py:4625
 msgid "Set _download destination..."
 msgstr "_Downloadbestemming instellen..."
 
-#: .././mainwin.py:4646
+#: .././mainwin.py:4641
 msgid "_Export channel..."
 msgstr "Kanaal _exporteren..."
 
-#: .././mainwin.py:4648
+#: .././mainwin.py:4643
 msgid "_Export playlist..."
 msgstr "Afspeellijst _exporteren..."
 
-#: .././mainwin.py:4650
+#: .././mainwin.py:4645
 msgid "_Export folder..."
 msgstr "Map _exporteren..."
 
-#: .././mainwin.py:4663
+#: .././mainwin.py:4658
 msgid "Re_fresh channel"
 msgstr "Kanaal ver_versen"
 
-#: .././mainwin.py:4665
+#: .././mainwin.py:4660
 msgid "Re_fresh playlist"
 msgstr "Afspeellijst ver_versen"
 
-#: .././mainwin.py:4667
+#: .././mainwin.py:4662
 msgid "Re_fresh folder"
 msgstr "Map ver_versen"
 
-#: .././mainwin.py:4684
+#: .././mainwin.py:4679
 msgid "_Tidy up channel"
 msgstr "Kanaal op_ruimen"
 
-#: .././mainwin.py:4686
+#: .././mainwin.py:4681
 msgid "_Tidy up playlist"
 msgstr "Afspeellijs_t opruimen"
 
-#: .././mainwin.py:4688
+#: .././mainwin.py:4683
 msgid "_Tidy up folder"
 msgstr "Map op_ruimen"
 
-#: .././mainwin.py:4705 .././mainwin.py:5195 .././mainwin.py:6827
+#: .././mainwin.py:4700 .././mainwin.py:5190 .././mainwin.py:6822
 msgid "Add to _Classic Mode tab"
 msgstr "Toevoegen aan _klassieke modus"
 
-#: .././mainwin.py:4719
+#: .././mainwin.py:4714
 msgid "Channel _actions"
 msgstr "Kanaal_acties"
 
-#: .././mainwin.py:4721
+#: .././mainwin.py:4716
 msgid "Playlist _actions"
 msgstr "Afspeellijst_acties"
 
-#: .././mainwin.py:4723
+#: .././mainwin.py:4718
 msgid "Folder _actions"
 msgstr "Map_acties"
 
-#: .././mainwin.py:4743 .././mainwin.py:5372
+#: .././mainwin.py:4738 .././mainwin.py:5367
 msgid "_Apply download options..."
 msgstr "Downloadopties toep_assen..."
 
-#: .././mainwin.py:4761 .././mainwin.py:5386
+#: .././mainwin.py:4756 .././mainwin.py:5381
 msgid "_Remove download options"
 msgstr "Downloadopties wissen"
 
-#: .././mainwin.py:4777 .././mainwin.py:5398
+#: .././mainwin.py:4772 .././mainwin.py:5393
 msgid "_Edit download options..."
 msgstr "Downloadopties aanpass_en..."
 
-#: .././mainwin.py:4793
+#: .././mainwin.py:4788
 msgid "Add to s_cheduled download..."
 msgstr "Toevoegen aan in_geplande downloads..."
 
-#: .././mainwin.py:4803
+#: .././mainwin.py:4798
 msgid "_Show system command..."
 msgstr "_Systeemopdracht tonen..."
 
-#: .././mainwin.py:4816
+#: .././mainwin.py:4811
 msgid "_Disable checking/downloading"
 msgstr "Controleren/_Downloaden uitschakelen"
 
-#: .././mainwin.py:4828
+#: .././mainwin.py:4823
 msgid "_Just disable downloading"
 msgstr "Alleen downloaden u_itschakelen"
 
-#: .././mainwin.py:4853 .././mainwin.py:5457
+#: .././mainwin.py:4848 .././mainwin.py:5452
 msgid "D_ownloads"
 msgstr "D_ownloads"
 
-#: .././mainwin.py:4863
+#: .././mainwin.py:4858
 msgid "Channel _properties..."
 msgstr "Kanaalin_formatie..."
 
-#: .././mainwin.py:4865
+#: .././mainwin.py:4860
 msgid "Playlist _properties..."
 msgstr "Afs_peellijstinformatie..."
 
-#: .././mainwin.py:4867
+#: .././mainwin.py:4862
 msgid "Folder _properties..."
 msgstr "Ma_pinformatie..."
 
-#: .././mainwin.py:4883
+#: .././mainwin.py:4878
 msgid "_Default location"
 msgstr "Stan_daardlocatie"
 
-#: .././mainwin.py:4896
+#: .././mainwin.py:4891
 msgid "_Actual location"
 msgstr "D_aadwerkelijke locatie"
 
-#: .././mainwin.py:4908
+#: .././mainwin.py:4903
 msgid "_Show"
 msgstr "_Tonen"
 
-#: .././mainwin.py:4917
+#: .././mainwin.py:4912
 msgid "D_elete channel"
 msgstr "Kanaal v_erwijderen"
 
-#: .././mainwin.py:4919
+#: .././mainwin.py:4914
 msgid "D_elete playlist"
 msgstr "Afspeellijst v_erwijderen"
 
-#: .././mainwin.py:4921
+#: .././mainwin.py:4916
 msgid "D_elete folder"
 msgstr "Map v_erwijderen"
 
-#: .././mainwin.py:5012
+#: .././mainwin.py:5007
 msgid "_Check video"
 msgstr "Video _controleren"
 
-#: .././mainwin.py:5034
+#: .././mainwin.py:5029
 msgid "_Download video"
 msgstr "Video _downloaden"
 
-#: .././mainwin.py:5056
+#: .././mainwin.py:5051
 msgid "Re-_download this video"
 msgstr "Video opnieuw _downloaden"
 
-#: .././mainwin.py:5071
+#: .././mainwin.py:5066
 msgid "C_ustom download video"
 msgstr "Video aangepast do_wnloaden"
 
-#: .././mainwin.py:5092 .././mainwin.py:5335
+#: .././mainwin.py:5087 .././mainwin.py:5330
 msgid "Download and _watch"
 msgstr "Do_wnloaden en bekijken"
 
-#: .././mainwin.py:5111 .././mainwin.py:6739
+#: .././mainwin.py:5106 .././mainwin.py:6734
 msgid "Watch in _player"
 msgstr "Bekijken in s_peler"
 
-#: .././mainwin.py:5126 .././mainwin.py:5137 .././mainwin.py:6751
-#: .././mainwin.py:6769
+#: .././mainwin.py:5121 .././mainwin.py:5132 .././mainwin.py:6746
+#: .././mainwin.py:6764
 msgid "Watch on _website"
 msgstr "Bekijken op _website"
 
-#: .././mainwin.py:5151 .././mainwin.py:6783
+#: .././mainwin.py:5146 .././mainwin.py:6778
 msgid "_YouTube"
 msgstr "_YouTube"
 
-#: .././mainwin.py:5161 .././mainwin.py:6793
+#: .././mainwin.py:5156 .././mainwin.py:6788
 msgid "_HookTube"
 msgstr "_HookTube"
 
-#: .././mainwin.py:5171 .././mainwin.py:6803
+#: .././mainwin.py:5166 .././mainwin.py:6798
 msgid "_Invidious"
 msgstr "_Invidious"
 
-#: .././mainwin.py:5181 .././mainwin.py:6813
+#: .././mainwin.py:5176 .././mainwin.py:6808
 msgid "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
 msgstr "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
 
-#: .././mainwin.py:5186 .././mainwin.py:6818
+#: .././mainwin.py:5181 .././mainwin.py:6813
 msgid "W_atch on"
 msgstr "Bekijken _op"
 
-#: .././mainwin.py:5216
+#: .././mainwin.py:5211
 msgid "Auto _notify"
 msgstr "Automatisch melde_n"
 
-#: .././mainwin.py:5232
+#: .././mainwin.py:5227
 msgid "Auto _sound alarm"
 msgstr "Automati_sch geluid"
 
-#: .././mainwin.py:5247
+#: .././mainwin.py:5242
 msgid "Auto _open"
 msgstr "Automatisch _openen"
 
-#: .././mainwin.py:5260
+#: .././mainwin.py:5255
 msgid "_Download on start"
 msgstr "_Downloaden na starten"
 
-#: .././mainwin.py:5275
+#: .././mainwin.py:5270
 msgid "Download on _stop"
 msgstr "Downloaden na _stoppen"
 
-#: .././mainwin.py:5293
+#: .././mainwin.py:5288
 msgid "Not a _livestream"
 msgstr "Geen _livestream"
 
-#: .././mainwin.py:5303 .././config.py:8310
+#: .././mainwin.py:5298 .././config.py:8310
 msgid "_Livestream"
 msgstr "_Livestream"
 
-#: .././mainwin.py:5314 .././mainwin.py:6856
+#: .././mainwin.py:5309 .././mainwin.py:6851
 msgid "_Mark for download"
 msgstr "_Markeren als download"
 
-#: .././mainwin.py:5325 .././mainwin.py:6868
+#: .././mainwin.py:5320 .././mainwin.py:6863
 msgid "_Download"
 msgstr "_Downloaden"
 
-#: .././mainwin.py:5345 .././mainwin.py:6889
+#: .././mainwin.py:5340 .././mainwin.py:6884
 msgid "_Temporary"
 msgstr "_Tijdelijk"
 
-#: .././mainwin.py:5414
+#: .././mainwin.py:5409
 msgid "Show system _command"
 msgstr "Systeemopdra_cht tonen"
 
-#: .././mainwin.py:5424
+#: .././mainwin.py:5419
 msgid "_Test system command"
 msgstr "Systeemopdracht _testen"
 
-#: .././mainwin.py:5439
+#: .././mainwin.py:5434
 msgid "_Disable downloads"
 msgstr "_Downloads uitschakelen"
 
-#: .././mainwin.py:5465 .././mainwin.py:6904
+#: .././mainwin.py:5460 .././mainwin.py:6899
 msgid "_Process with FFmpeg..."
 msgstr "Verwerken met FFm_peg..."
 
-#: .././mainwin.py:5484
+#: .././mainwin.py:5479
 msgid "Video is _archived"
 msgstr "De video is ge_archiveerd"
 
-#: .././mainwin.py:5497
+#: .././mainwin.py:5492
 msgid "Video is _bookmarked"
 msgstr "De video is toegevoegd aan de _bladwijzers"
 
-#: .././mainwin.py:5508
+#: .././mainwin.py:5503
 msgid "Video is _favourite"
 msgstr "De video is toegevoegd aan de _favorieten"
 
-#: .././mainwin.py:5519
+#: .././mainwin.py:5514
 msgid "Video is _missing"
 msgstr "De video o_ntbreekt"
 
-#: .././mainwin.py:5535
+#: .././mainwin.py:5530
 msgid "Video is _new"
 msgstr "De video is _nieuw"
 
-#: .././mainwin.py:5548
+#: .././mainwin.py:5543
 msgid "Video is in _waiting list"
 msgstr "De video staat op de _wachtlijst"
 
-#: .././mainwin.py:5559
+#: .././mainwin.py:5554
 msgid "_Mark video"
 msgstr "Video _markeren"
 
-#: .././mainwin.py:5570
+#: .././mainwin.py:5565
 msgid "_Location"
 msgstr "_Locatie"
 
-#: .././mainwin.py:5580
+#: .././mainwin.py:5575
 msgid "_Properties..."
 msgstr "Eigenscha_ppen..."
 
-#: .././mainwin.py:5592
+#: .././mainwin.py:5587
 msgid "_Show video"
 msgstr "Video _tonen"
 
-#: .././mainwin.py:5601
+#: .././mainwin.py:5596
 msgid "Available _formats"
 msgstr "Beschikbare _formaten"
 
-#: .././mainwin.py:5611
+#: .././mainwin.py:5606
 msgid "Available _subtitles"
 msgstr "Be_schikbare ondertiteling"
 
-#: .././mainwin.py:5621
+#: .././mainwin.py:5616
 msgid "_Fetch"
 msgstr "_Ophalen"
 
 #. Delete video
-#: .././mainwin.py:5632
+#: .././mainwin.py:5627
 msgid "D_elete video"
 msgstr "Video v_erwijderen"
 
 #. Check/download videos
-#: .././mainwin.py:5721
+#: .././mainwin.py:5716
 msgid "_Check videos"
 msgstr "Video's _controleren"
 
-#: .././mainwin.py:5740
+#: .././mainwin.py:5735
 msgid "_Download videos"
 msgstr "Video's _downloaden"
 
-#: .././mainwin.py:5760
+#: .././mainwin.py:5755
 msgid "C_ustom download videos"
 msgstr "Video's aan_gepast downloaden"
 
-#: .././mainwin.py:5794
+#: .././mainwin.py:5789
 msgid "_Archived"
 msgstr "Ge_archiveerd"
 
-#: .././mainwin.py:5807
+#: .././mainwin.py:5802
 msgid "Not a_rchived"
 msgstr "Niet gea_rchiveerd"
 
-#: .././mainwin.py:5823
+#: .././mainwin.py:5818
 msgid "_Bookmarked"
 msgstr "In _bladwijzers"
 
-#: .././mainwin.py:5836
+#: .././mainwin.py:5831
 msgid "Not b_ookmarked"
 msgstr "Niet in b_ladwijzers"
 
-#: .././mainwin.py:5852
+#: .././mainwin.py:5847
 msgid "_Favourite"
 msgstr "_Favoriet"
 
-#: .././mainwin.py:5865
+#: .././mainwin.py:5860
 msgid "Not fa_vourite"
 msgstr "Geen fa_voriet"
 
-#: .././mainwin.py:5881
+#: .././mainwin.py:5876
 msgid "_Missing"
 msgstr "O_ntbreekt"
 
-#: .././mainwin.py:5894
+#: .././mainwin.py:5889
 msgid "Not m_issing"
 msgstr "Ontbreekt n_iet"
 
-#: .././mainwin.py:5910
+#: .././mainwin.py:5905
 msgid "_New"
 msgstr "_Nieuw"
 
-#: .././mainwin.py:5923
+#: .././mainwin.py:5918
 msgid "Not n_ew"
 msgstr "Niet ni_euw"
 
-#: .././mainwin.py:5939
+#: .././mainwin.py:5934
 msgid "In _waiting list"
 msgstr "Op _wachtlijst"
 
-#: .././mainwin.py:5952
+#: .././mainwin.py:5947
 msgid "Not in w_aiting list"
 msgstr "Niet op w_achtlijst"
 
-#: .././mainwin.py:5965
+#: .././mainwin.py:5960
 msgid "_Mark videos"
 msgstr "Video's _markeren"
 
-#: .././mainwin.py:5974
+#: .././mainwin.py:5969
 msgid "Show p_roperties..."
 msgstr "Eigensc_happen tonen..."
 
 #. Delete videos
-#: .././mainwin.py:5989
+#: .././mainwin.py:5984
 msgid "D_elete videos"
 msgstr "Video's verwijd_eren"
 
 #. Stop check/download
-#: .././mainwin.py:6054
+#: .././mainwin.py:6049
 msgid "_Stop now"
 msgstr "Nu _afbreken"
 
-#: .././mainwin.py:6068
+#: .././mainwin.py:6063
 msgid "Stop after this _video"
 msgstr "Afbreken na deze _video"
 
-#: .././mainwin.py:6083
+#: .././mainwin.py:6078
 msgid "Stop after these v_ideos"
 msgstr "Afbreken na deze v_ideo's"
 
-#: .././mainwin.py:6098
+#: .././mainwin.py:6093
 msgid "Download _next"
 msgstr "Volge_nde downloaden"
 
-#: .././mainwin.py:6110
+#: .././mainwin.py:6105
 msgid "Download _last"
 msgstr "_Laatste downloaden"
 
-#: .././mainwin.py:6133
+#: .././mainwin.py:6128
 msgid "Watch on _YouTube"
 msgstr "Bekijken op _YouTube"
 
-#: .././mainwin.py:6143
+#: .././mainwin.py:6138
 msgid "Watch on _HookTube"
 msgstr "Bekijken op _HookTube"
 
-#: .././mainwin.py:6153
+#: .././mainwin.py:6148
 msgid "Watch on _Invidious"
 msgstr "Bekijken op _Invidious"
 
-#: .././mainwin.py:6165
+#: .././mainwin.py:6160
 msgid "Watch on _Website"
 msgstr "Bekijken op _website"
 
-#: .././mainwin.py:6264
+#: .././mainwin.py:6259
 msgid "_Delete video(s)"
 msgstr "Video('s) verwij_deren"
 
-#: .././mainwin.py:6296
+#: .././mainwin.py:6291
 msgid "_Enable automatic copy/paste"
 msgstr "Automatisch kopiëren/plakken inschak_elen"
 
-#: .././mainwin.py:6308
+#: .././mainwin.py:6303
 msgid "_Remember URLs"
 msgstr "U_RL's onthouden"
 
-#: .././mainwin.py:6323
+#: .././mainwin.py:6318
 msgid "_Set download options"
 msgstr "Downloadopties in_stellen"
 
-#: .././mainwin.py:6334
+#: .././mainwin.py:6329
 msgid "Use _default download options"
 msgstr "Stan_daard downloadopties gebruiken"
 
-#: .././mainwin.py:6349
+#: .././mainwin.py:6344
 msgid "_Edit download options"
 msgstr "Downloadopties aanpass_en"
 
-#: .././mainwin.py:6363
+#: .././mainwin.py:6358
 msgid "Enable _custom downloads"
 msgstr "Aangepast downloaden ins_chakelen"
 
-#: .././mainwin.py:6376
+#: .././mainwin.py:6371
 msgid "Custom downloads _preferences..."
 msgstr "Aange_paste downloadinstellingen..."
 
-#: .././mainwin.py:6391
+#: .././mainwin.py:6386
 msgid "_Update"
 msgstr "Bij_werken"
 
-#: .././mainwin.py:6444
+#: .././mainwin.py:6439
 msgid "Copy file _path"
 msgstr "Bestands_pad kopiëren"
 
 #. Copy URL
-#: .././mainwin.py:6456
+#: .././mainwin.py:6451
 msgid "Copy _URL"
 msgstr "_URL kopiëren"
 
-#: .././mainwin.py:6468
+#: .././mainwin.py:6463
 msgid "Copy system _command"
 msgstr "Systeemopdra_cht kopiëren"
 
-#: .././mainwin.py:6484
+#: .././mainwin.py:6479
 msgid "_Open destination(s)"
 msgstr "Bestemming(en) _openen"
 
-#: .././mainwin.py:6525
+#: .././mainwin.py:6520
 msgid "Mark as _archived"
 msgstr "Markeren als ge_archiveerd"
 
-#: .././mainwin.py:6536
+#: .././mainwin.py:6531
 msgid "Mark as not a_rchived"
 msgstr "Markeren als niet-gea_rchiveerd"
 
-#: .././mainwin.py:6550
+#: .././mainwin.py:6545
 msgid "Mark as _bookmarked"
 msgstr "Toevoegen aan _bladwijzers"
 
-#: .././mainwin.py:6562
+#: .././mainwin.py:6557
 msgid "Mark as not b_ookmarked"
 msgstr "Verwijderen uit b_ladwijzers"
 
-#: .././mainwin.py:6575
+#: .././mainwin.py:6570
 msgid "Mark as _favourite"
 msgstr "Toevoegen aan _favorieten"
 
-#: .././mainwin.py:6588
+#: .././mainwin.py:6583
 msgid "Mark as not fa_vourite"
 msgstr "Verwijderen uit fa_vorieten"
 
-#: .././mainwin.py:6602
+#: .././mainwin.py:6597
 msgid "Mark as _missing"
 msgstr "_Markeren als ontbrekend"
 
-#: .././mainwin.py:6615
+#: .././mainwin.py:6610
 msgid "Mark as not m_issing"
 msgstr "Markeren als n_iet-ontbrekend"
 
-#: .././mainwin.py:6632
+#: .././mainwin.py:6627
 msgid "Mark as _new"
 msgstr "Markeren als _nieuw"
 
-#: .././mainwin.py:6644
+#: .././mainwin.py:6639
 msgid "Mark as not n_ew"
 msgstr "Markeren als niet-ni_euw"
 
-#: .././mainwin.py:6658
+#: .././mainwin.py:6653
 msgid "Mark as in _waiting list"
 msgstr "Toevoegen aan _wachtlijst"
 
-#: .././mainwin.py:6670
+#: .././mainwin.py:6665
 msgid "Mark as not in wai_ting list"
 msgstr "Verwijderen uit wachtl_ijst"
 
-#: .././mainwin.py:6720
+#: .././mainwin.py:6715
 msgid "D_ownload and watch"
 msgstr "D_ownloaden en bekijken"
 
-#: .././mainwin.py:6843
+#: .././mainwin.py:6838
 msgid "Mark as _not livestreams"
 msgstr "Markeren als gee_n livestream"
 
-#: .././mainwin.py:6878
+#: .././mainwin.py:6873
 msgid "_Download and watch"
 msgstr "_Downloaden en bekijken"
 
-#: .././mainwin.py:7705
+#: .././mainwin.py:7700
 msgid ""
 "TRANSLATOR'S NOTE: V = number of videos B = (number of videos) bookmarked D "
 "= downloaded F = favourite L = live/livestream M = missing N = new W = in "
@@ -2117,39 +2120,39 @@ msgstr ""
 "= downloaded F = favourite L = live/livestream M = missing N = new W = in "
 "waiting list E = (number of) errors W = warnings"
 
-#: .././mainwin.py:7712
+#: .././mainwin.py:7707
 msgid "V:"
 msgstr "V:"
 
-#: .././mainwin.py:7713
+#: .././mainwin.py:7708
 msgid "B:"
 msgstr "B:"
 
-#: .././mainwin.py:7714
+#: .././mainwin.py:7709
 msgid "D:"
 msgstr "D:"
 
-#: .././mainwin.py:7715
+#: .././mainwin.py:7710
 msgid "F:"
 msgstr "F:"
 
-#: .././mainwin.py:7716
+#: .././mainwin.py:7711
 msgid "L:"
 msgstr "L:"
 
-#: .././mainwin.py:7717
+#: .././mainwin.py:7712
 msgid "M:"
 msgstr "O:"
 
-#: .././mainwin.py:7718
+#: .././mainwin.py:7713
 msgid "N:"
 msgstr "N:"
 
-#: .././mainwin.py:7719 .././mainwin.py:7730
+#: .././mainwin.py:7714 .././mainwin.py:7725
 msgid "W:"
 msgstr "W:"
 
-#: .././mainwin.py:7729
+#: .././mainwin.py:7724
 msgid "E:"
 msgstr "F:"
 
@@ -2157,13 +2160,13 @@ msgstr "F:"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:9715 .././mainwin.py:10550 .././mainwin.py:19747
-#: .././mainwin.py:19751 .././mainwin.py:20331 .././mainwin.py:21889
-#: .././mainwin.py:21893 .././mainwin.py:22135
+#: .././mainwin.py:9710 .././mainwin.py:10545 .././mainwin.py:19742
+#: .././mainwin.py:19746 .././mainwin.py:20326 .././mainwin.py:21884
+#: .././mainwin.py:21888 .././mainwin.py:22130
 msgid "Waiting"
 msgstr "Bezig met wachten"
 
-#: .././mainwin.py:11193
+#: .././mainwin.py:11188
 msgid ""
 "TRANSLATOR'S NOTE: Thread means a computer processor thread. If you're not "
 "sure how to translate it, just use 'Page #', as in Page #1, Page #2, etc"
@@ -2171,31 +2174,31 @@ msgstr ""
 "TRANSLATOR'S NOTE: Thread means a computer processor thread. If you're not "
 "sure how to translate it, just use 'Page #', as in Page #1, Page #2, etc"
 
-#: .././mainwin.py:11200
+#: .././mainwin.py:11195
 msgid "Thread"
 msgstr "Proces"
 
-#: .././mainwin.py:11203
+#: .././mainwin.py:11198
 msgid "_Summary"
 msgstr "_Samenvatting"
 
-#: .././mainwin.py:11796
+#: .././mainwin.py:11791
 msgid "Tartube error"
 msgstr "Tartube-fout"
 
-#: .././mainwin.py:11852
+#: .././mainwin.py:11847
 msgid "Tartube warning"
 msgstr "Tartube-waarschuwing"
 
-#: .././mainwin.py:11885
+#: .././mainwin.py:11880
 msgid "_Errors"
 msgstr "_Fouten"
 
-#: .././mainwin.py:11889
+#: .././mainwin.py:11884
 msgid "Warnings"
 msgstr "Waarschuwingen"
 
-#: .././mainwin.py:11961
+#: .././mainwin.py:11956
 msgid ""
 "There are not scheduled downloads that don't already contain the channel/"
 "playlist/folder"
@@ -2203,124 +2206,124 @@ msgstr ""
 "Er zijn niet-ingeplande downloads die niet al de map/afspeellijst/het kanaal "
 "bevatten"
 
-#: .././mainwin.py:13295
+#: .././mainwin.py:13290
 msgid "The URL is not valid"
 msgstr "De url is ongeldig"
 
-#: .././mainwin.py:17310
+#: .././mainwin.py:17305
 msgid "The following items are duplicates:"
 msgstr "De volgende items zijn dubbel:"
 
-#: .././mainwin.py:17474
+#: .././mainwin.py:17469
 #, python-brace-format
 msgid "The channel contains {0} items, so this action may take a while"
 msgstr "Het kanaal bevat {0} items, dus het kan even duren"
 
-#: .././mainwin.py:17481
+#: .././mainwin.py:17476
 #, python-brace-format
 msgid "The playlist contains {0} items, so this action may take a while"
 msgstr "De afspeellijst bevat {0} items, dus het kan even duren"
 
-#: .././mainwin.py:17488
+#: .././mainwin.py:17483
 #, python-brace-format
 msgid "The folder contains {0} items, so this action may take a while"
 msgstr "De map bevat {0} items, dus het kan even duren"
 
-#: .././mainwin.py:18131 .././mainwin.py:19136
+#: .././mainwin.py:18126 .././mainwin.py:19131
 msgid "Originally from:"
 msgstr "Oorspronkelijke locatie:"
 
-#: .././mainwin.py:18144 .././mainwin.py:19150
+#: .././mainwin.py:18139 .././mainwin.py:19145
 msgid "From channel"
 msgstr "Kanaal"
 
-#: .././mainwin.py:18146 .././mainwin.py:19152
+#: .././mainwin.py:18141 .././mainwin.py:19147
 msgid "From playlist"
 msgstr "Afspeellijst"
 
-#: .././mainwin.py:18148 .././mainwin.py:19154
+#: .././mainwin.py:18143 .././mainwin.py:19149
 msgid "From folder"
 msgstr "Map"
 
-#: .././mainwin.py:18179
+#: .././mainwin.py:18174
 msgid "Livestream has not started yet"
 msgstr "De livestream is nog niet begonnen"
 
-#: .././mainwin.py:18186
+#: .././mainwin.py:18181
 msgid "Debut has started"
 msgstr "De aanvang is begonnen"
 
-#: .././mainwin.py:18188
+#: .././mainwin.py:18183
 msgid "Debut has not started yet"
 msgstr "De aanvang is nog niet begonnen"
 
-#: .././mainwin.py:18195 .././mainwin.py:18201 .././mainwin.py:19204
-#: .././mainwin.py:19211
+#: .././mainwin.py:18190 .././mainwin.py:18196 .././mainwin.py:19199
+#: .././mainwin.py:19206
 msgid "Duration:"
 msgstr "Duur:"
 
-#: .././mainwin.py:18201 .././mainwin.py:18207 .././mainwin.py:18218
-#: .././mainwin.py:19211 .././mainwin.py:19218 .././mainwin.py:19234
-#: .././mainwin.py:21598 .././mainwin.py:21604 .././mainwin.py:21615
+#: .././mainwin.py:18196 .././mainwin.py:18202 .././mainwin.py:18213
+#: .././mainwin.py:19206 .././mainwin.py:19213 .././mainwin.py:19229
+#: .././mainwin.py:21593 .././mainwin.py:21599 .././mainwin.py:21610
 #: .././media.py:563 .././media.py:573 .././media.py:1827 .././media.py:1833
 #: .././media.py:1843
 msgid "unknown"
 msgstr "onbekend"
 
-#: .././mainwin.py:18205 .././mainwin.py:18207 .././mainwin.py:19215
-#: .././mainwin.py:19217
+#: .././mainwin.py:18200 .././mainwin.py:18202 .././mainwin.py:19210
+#: .././mainwin.py:19212
 msgid "Size:"
 msgstr "Grootte:"
 
-#: .././mainwin.py:18216 .././mainwin.py:18218 .././mainwin.py:19229
+#: .././mainwin.py:18211 .././mainwin.py:18213 .././mainwin.py:19224
 msgid "Date:"
 msgstr "Datum:"
 
-#: .././mainwin.py:18550
+#: .././mainwin.py:18545
 msgid "Watch:"
 msgstr "Bekijken:"
 
-#: .././mainwin.py:18619
+#: .././mainwin.py:18614
 msgid "Temporary:"
 msgstr "Tijdelijk:"
 
-#: .././mainwin.py:18662
+#: .././mainwin.py:18657
 msgid "Marked:"
 msgstr "Gemarkeerd:"
 
-#: .././mainwin.py:19108 .././mainwin.py:19171
+#: .././mainwin.py:19103 .././mainwin.py:19166
 msgid "Show the full description"
 msgstr "Volledige omschrijving tonen"
 
-#: .././mainwin.py:19109 .././mainwin.py:19172
+#: .././mainwin.py:19104 .././mainwin.py:19167
 msgid "More"
 msgstr "Meer"
 
-#: .././mainwin.py:19121 .././mainwin.py:19180
+#: .././mainwin.py:19116 .././mainwin.py:19175
 msgid "Show the short description"
 msgstr "Beknopte omschrijving tonen"
 
-#: .././mainwin.py:19122 .././mainwin.py:19181
+#: .././mainwin.py:19117 .././mainwin.py:19176
 msgid "Less"
 msgstr "Minder"
 
-#: .././mainwin.py:19224
+#: .././mainwin.py:19219
 msgid "Received:"
 msgstr "Ontvangen:"
 
-#: .././mainwin.py:19253
+#: .././mainwin.py:19248
 msgid "Live now:"
 msgstr "Nu live:"
 
-#: .././mainwin.py:19255 .././mainwin.py:21743
+#: .././mainwin.py:19250 .././mainwin.py:21738
 msgid "Live soon:"
 msgstr "Binnenkort live:"
 
-#: .././mainwin.py:19264
+#: .././mainwin.py:19259
 msgid "Debut now:"
 msgstr "Aanvang:"
 
-#: .././mainwin.py:19266 .././mainwin.py:21745
+#: .././mainwin.py:19261 .././mainwin.py:21740
 msgid "Debut soon:"
 msgstr "Aanvang binnenkort:"
 
@@ -2328,14 +2331,14 @@ msgstr "Aanvang binnenkort:"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19273 .././mainwin.py:19275 .././mainwin.py:19279
-#: .././mainwin.py:19547 .././mainwin.py:19549 .././mainwin.py:19553
-#: .././mainwin.py:20035 .././mainwin.py:21629 .././mainwin.py:21631
-#: .././mainwin.py:21635
+#: .././mainwin.py:19268 .././mainwin.py:19270 .././mainwin.py:19274
+#: .././mainwin.py:19542 .././mainwin.py:19544 .././mainwin.py:19548
+#: .././mainwin.py:20030 .././mainwin.py:21624 .././mainwin.py:21626
+#: .././mainwin.py:21630
 msgid "Notify"
 msgstr "Melden"
 
-#: .././mainwin.py:19283 .././mainwin.py:19557 .././mainwin.py:21639
+#: .././mainwin.py:19278 .././mainwin.py:19552 .././mainwin.py:21634
 msgid "When the livestream starts, notify the user"
 msgstr "Toon een melding als de livestream begint"
 
@@ -2343,13 +2346,13 @@ msgstr "Toon een melding als de livestream begint"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19294 .././mainwin.py:19296 .././mainwin.py:19563
-#: .././mainwin.py:19565 .././mainwin.py:19917 .././mainwin.py:21650
-#: .././mainwin.py:21652
+#: .././mainwin.py:19289 .././mainwin.py:19291 .././mainwin.py:19558
+#: .././mainwin.py:19560 .././mainwin.py:19912 .././mainwin.py:21645
+#: .././mainwin.py:21647
 msgid "Alarm"
 msgstr "Alarm"
 
-#: .././mainwin.py:19300 .././mainwin.py:19569 .././mainwin.py:21656
+#: .././mainwin.py:19295 .././mainwin.py:19564 .././mainwin.py:21651
 msgid "When the livestream starts, sound an alarm"
 msgstr "Speel een geluid af als de livestream begint"
 
@@ -2357,13 +2360,13 @@ msgstr "Speel een geluid af als de livestream begint"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19305 .././mainwin.py:19307 .././mainwin.py:19575
-#: .././mainwin.py:19577 .././mainwin.py:20075 .././mainwin.py:21661
-#: .././mainwin.py:21663
+#: .././mainwin.py:19300 .././mainwin.py:19302 .././mainwin.py:19570
+#: .././mainwin.py:19572 .././mainwin.py:20070 .././mainwin.py:21656
+#: .././mainwin.py:21658
 msgid "Open"
 msgstr "Openen"
 
-#: .././mainwin.py:19311 .././mainwin.py:19581 .././mainwin.py:21667
+#: .././mainwin.py:19306 .././mainwin.py:19576 .././mainwin.py:21662
 msgid "When the livestream starts, open it"
 msgstr "Open de livestream zodra deze begint"
 
@@ -2373,13 +2376,13 @@ msgstr "Open de livestream zodra deze begint"
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. (Livestream already broadcasting)
-#: .././mainwin.py:19319 .././mainwin.py:19324 .././mainwin.py:19326
-#: .././mainwin.py:19587 .././mainwin.py:19589 .././mainwin.py:19956
-#: .././mainwin.py:21675 .././mainwin.py:21680 .././mainwin.py:21682
+#: .././mainwin.py:19314 .././mainwin.py:19319 .././mainwin.py:19321
+#: .././mainwin.py:19582 .././mainwin.py:19584 .././mainwin.py:19951
+#: .././mainwin.py:21670 .././mainwin.py:21675 .././mainwin.py:21677
 msgid "D/L on start"
 msgstr "D/L bij begin"
 
-#: .././mainwin.py:19330 .././mainwin.py:19593 .././mainwin.py:21686
+#: .././mainwin.py:19325 .././mainwin.py:19588 .././mainwin.py:21681
 msgid "When the livestream starts, download it"
 msgstr "Download de livestream zodra deze begint"
 
@@ -2387,17 +2390,17 @@ msgstr "Download de livestream zodra deze begint"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19336 .././mainwin.py:19341 .././mainwin.py:19343
-#: .././mainwin.py:19599 .././mainwin.py:19601 .././mainwin.py:19996
-#: .././mainwin.py:21692 .././mainwin.py:21697 .././mainwin.py:21699
+#: .././mainwin.py:19331 .././mainwin.py:19336 .././mainwin.py:19338
+#: .././mainwin.py:19594 .././mainwin.py:19596 .././mainwin.py:19991
+#: .././mainwin.py:21687 .././mainwin.py:21692 .././mainwin.py:21694
 msgid "D/L on stop"
 msgstr "D/L na afloop"
 
-#: .././mainwin.py:19347 .././mainwin.py:19605 .././mainwin.py:21703
+#: .././mainwin.py:19342 .././mainwin.py:19600 .././mainwin.py:21698
 msgid "When the livestream stops, download it"
 msgstr "Download de livestream zodra deze is afgelopen"
 
-#: .././mainwin.py:19366 .././mainwin.py:21722
+#: .././mainwin.py:19361 .././mainwin.py:21717
 msgid "Watch in your media player"
 msgstr "Bekijken in andere mediaspeler"
 
@@ -2405,15 +2408,15 @@ msgstr "Bekijken in andere mediaspeler"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19367 .././mainwin.py:20723 .././mainwin.py:21723
+#: .././mainwin.py:19362 .././mainwin.py:20718 .././mainwin.py:21718
 msgid "Player"
 msgstr "Speler"
 
-#: .././mainwin.py:19391 .././mainwin.py:21760
+#: .././mainwin.py:19386 .././mainwin.py:21755
 msgid "Download this video"
 msgstr "Video downloaden"
 
-#: .././mainwin.py:19406 .././mainwin.py:21775
+#: .././mainwin.py:19401 .././mainwin.py:21770
 msgid ""
 "TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
 "different word (e.g. French et), then just use that word"
@@ -2421,27 +2424,27 @@ msgstr ""
 "TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
 "different word (e.g. French et), then just use that word"
 
-#: .././mainwin.py:19414 .././mainwin.py:21783
+#: .././mainwin.py:19409 .././mainwin.py:21778
 msgid "Download and watch in your media player"
 msgstr "Download en bekijk in een andere mediaspeler"
 
-#: .././mainwin.py:19415
+#: .././mainwin.py:19410
 msgid "Download &amp; watch"
 msgstr "Downloaden en bekijken"
 
-#: .././mainwin.py:19422
+#: .././mainwin.py:19417
 msgid "Not downloaded"
 msgstr "Niet gedownload"
 
-#: .././mainwin.py:19448
+#: .././mainwin.py:19443
 msgid "Watch on YouTube"
 msgstr "Bekijken op YouTube"
 
-#: .././mainwin.py:19449 .././mainwin.py:20768
+#: .././mainwin.py:19444 .././mainwin.py:20763
 msgid "YouTube"
 msgstr "YouTube"
 
-#: .././mainwin.py:19461
+#: .././mainwin.py:19456
 msgid "Watch on HookTube"
 msgstr "Bekijken op HookTube"
 
@@ -2449,11 +2452,11 @@ msgstr "Bekijken op HookTube"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19462 .././mainwin.py:20531
+#: .././mainwin.py:19457 .././mainwin.py:20526
 msgid "HookTube"
 msgstr "HookTube"
 
-#: .././mainwin.py:19474
+#: .././mainwin.py:19469
 msgid "Watch on Invidious"
 msgstr "Bekijken op Invidious"
 
@@ -2461,7 +2464,7 @@ msgstr "Bekijken op Invidious"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19475 .././mainwin.py:20575
+#: .././mainwin.py:19470 .././mainwin.py:20570
 msgid "Invidious"
 msgstr "Invidious"
 
@@ -2469,25 +2472,25 @@ msgstr "Invidious"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19493 .././mainwin.py:20620 .././config.py:9296
+#: .././mainwin.py:19488 .././mainwin.py:20615 .././config.py:9296
 #: .././config.py:11514
 msgid "Other"
 msgstr "Overig"
 
-#: .././mainwin.py:19513
+#: .././mainwin.py:19508
 msgid "Watch on website"
 msgstr "Bekijken op website"
 
-#: .././mainwin.py:19514 .././mainwin.py:20770
+#: .././mainwin.py:19509 .././mainwin.py:20765
 msgid "Website"
 msgstr "Website"
 
 #. Links not clickable
-#: .././mainwin.py:19525
+#: .././mainwin.py:19520
 msgid "No link"
 msgstr "Geen link"
 
-#: .././mainwin.py:19634
+#: .././mainwin.py:19629
 msgid "Download to a temporary folder later"
 msgstr "Later downloaden naar een tijdelijke map"
 
@@ -2495,19 +2498,19 @@ msgstr "Later downloaden naar een tijdelijke map"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19635 .././mainwin.py:19652 .././mainwin.py:20487
+#: .././mainwin.py:19630 .././mainwin.py:19647 .././mainwin.py:20482
 msgid "Mark for download"
 msgstr "Markeren als download"
 
-#: .././mainwin.py:19640
+#: .././mainwin.py:19635
 msgid "Download to a temporary folder"
 msgstr "Downloaden naar een tijdelijke map"
 
-#: .././mainwin.py:19646
+#: .././mainwin.py:19641
 msgid "Download to a temporary folder, then watch"
 msgstr "Downloaden naar een tijdelijke map, daarna bekijken"
 
-#: .././mainwin.py:19647 .././mainwin.py:21784
+#: .././mainwin.py:19642 .././mainwin.py:21779
 msgid "D/L &amp; watch"
 msgstr "D/L en bekijken"
 
@@ -2515,12 +2518,12 @@ msgstr "D/L en bekijken"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19654 .././mainwin.py:20443
+#: .././mainwin.py:19649 .././mainwin.py:20438
 msgid "D/L and watch"
 msgstr "D/L en bekijken"
 
 #. Archived/not archived
-#: .././mainwin.py:19678 .././mainwin.py:21822
+#: .././mainwin.py:19673 .././mainwin.py:21817
 msgid "Prevent automatic deletion of the video"
 msgstr "Automatische verwijdering van video voorkomen"
 
@@ -2528,13 +2531,13 @@ msgstr "Automatische verwijdering van video voorkomen"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19682 .././mainwin.py:19686 .././mainwin.py:20113
-#: .././mainwin.py:21826 .././mainwin.py:21830 .././mainwin.py:22045
+#: .././mainwin.py:19677 .././mainwin.py:19681 .././mainwin.py:20108
+#: .././mainwin.py:21821 .././mainwin.py:21825 .././mainwin.py:22040
 msgid "Archived"
 msgstr "Gearchiveerd"
 
 #. Bookmarked/not bookmarked
-#: .././mainwin.py:19691 .././mainwin.py:21835
+#: .././mainwin.py:19686 .././mainwin.py:21830
 msgid "Show video in Bookmarks folder"
 msgstr "Tonen in bladwijzermap"
 
@@ -2544,13 +2547,13 @@ msgstr "Tonen in bladwijzermap"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19696 .././mainwin.py:19701 .././mainwin.py:21839
-#: .././mainwin.py:21843 .././mainwin.py:22090
+#: .././mainwin.py:19691 .././mainwin.py:19696 .././mainwin.py:21834
+#: .././mainwin.py:21838 .././mainwin.py:22085
 msgid "B/mark"
 msgstr "Bladwijzer"
 
 #. Favourite/not favourite
-#: .././mainwin.py:19706 .././mainwin.py:21848
+#: .././mainwin.py:19701 .././mainwin.py:21843
 msgid "Show in Favourite Videos folder"
 msgstr "Tonen in favorietenmap"
 
@@ -2558,13 +2561,13 @@ msgstr "Tonen in favorietenmap"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19710 .././mainwin.py:19714 .././mainwin.py:20203
-#: .././mainwin.py:21852 .././mainwin.py:21856
+#: .././mainwin.py:19705 .././mainwin.py:19709 .././mainwin.py:20198
+#: .././mainwin.py:21847 .././mainwin.py:21851
 msgid "Favourite"
 msgstr "Favoriet"
 
 #. Missing/not missing
-#: .././mainwin.py:19718 .././mainwin.py:21860
+#: .././mainwin.py:19713 .././mainwin.py:21855
 msgid "Mark video as removed by creator"
 msgstr "Markeren als verwijderd door maker"
 
@@ -2572,13 +2575,13 @@ msgstr "Markeren als verwijderd door maker"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19722 .././mainwin.py:19726 .././mainwin.py:20248
-#: .././mainwin.py:21864 .././mainwin.py:21868
+#: .././mainwin.py:19717 .././mainwin.py:19721 .././mainwin.py:20243
+#: .././mainwin.py:21859 .././mainwin.py:21863
 msgid "Missing"
 msgstr "Ontbreekt"
 
 #. New/not new
-#: .././mainwin.py:19731 .././mainwin.py:21873
+#: .././mainwin.py:19726 .././mainwin.py:21868
 msgid "Mark video as never watched"
 msgstr "Markeren als nooit bekeken"
 
@@ -2586,13 +2589,13 @@ msgstr "Markeren als nooit bekeken"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19735 .././mainwin.py:19739 .././mainwin.py:20286
-#: .././mainwin.py:21877 .././mainwin.py:21881
+#: .././mainwin.py:19730 .././mainwin.py:19734 .././mainwin.py:20281
+#: .././mainwin.py:21872 .././mainwin.py:21876
 msgid "New"
 msgstr "Nieuw"
 
 #. In waiting list/not in waiting list
-#: .././mainwin.py:19744 .././mainwin.py:21886
+#: .././mainwin.py:19739 .././mainwin.py:21881
 msgid "Show in Waiting Videos folder"
 msgstr "Tonen in wachtrijmap"
 
@@ -2600,34 +2603,34 @@ msgstr "Tonen in wachtrijmap"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:20158
+#: .././mainwin.py:20153
 msgid "Bookmarked"
 msgstr "In bladwijzers"
 
-#: .././mainwin.py:21553 .././media.py:1813 .././refresh.py:259
+#: .././mainwin.py:21548 .././media.py:1813 .././refresh.py:259
 #: .././refresh.py:529
 msgid "Channel:"
 msgstr "Kanaal:"
 
-#: .././mainwin.py:21555 .././media.py:1815 .././refresh.py:261
+#: .././mainwin.py:21550 .././media.py:1815 .././refresh.py:261
 #: .././refresh.py:531
 msgid "Playlist:"
 msgstr "Afspeellijst:"
 
-#: .././mainwin.py:21557 .././media.py:1817 .././refresh.py:263
+#: .././mainwin.py:21552 .././media.py:1817 .././refresh.py:263
 #: .././refresh.py:533
 msgid "Folder:"
 msgstr "Map:"
 
-#: .././mainwin.py:21755
+#: .././mainwin.py:21750
 msgid "TRANSLATOR'S NOTE: D/L means download"
 msgstr "TRANSLATOR'S NOTE: D/L means download"
 
-#: .././mainwin.py:21791
+#: .././mainwin.py:21786
 msgid "Can't D/L"
 msgstr "Downloaden mislukt"
 
-#: .././mainwin.py:21815
+#: .././mainwin.py:21810
 msgid ""
 "TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
 "Archived, B/Mark = Bookmarked, Waiting: In waiting list"
@@ -2635,223 +2638,223 @@ msgstr ""
 "TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
 "Archived, B/Mark = Bookmarked, Waiting: In waiting list"
 
-#: .././mainwin.py:23119
+#: .././mainwin.py:23114
 msgid "Add channel"
 msgstr "Kanaal toevoegen"
 
-#: .././mainwin.py:23138
+#: .././mainwin.py:23133
 msgid "Enter the channel name"
 msgstr "Voer de kanaalnaam in"
 
-#: .././mainwin.py:23143
+#: .././mainwin.py:23138
 msgid "(Use the channel's real name or a customised name)"
 msgstr "(gebruik de echte naam of een zelfgekozen)"
 
-#: .././mainwin.py:23151
+#: .././mainwin.py:23146
 msgid "Copy and paste a link to the channel"
 msgstr "Kopieer en plak een link naar het kanaal"
 
-#: .././mainwin.py:23198
+#: .././mainwin.py:23193
 msgid "(Optional) Add this channel inside a folder"
 msgstr "(optioneel) Kanaal toevoegen aan map"
 
-#: .././mainwin.py:23228
+#: .././mainwin.py:23223
 msgid "I want to download videos from this channel automatically"
 msgstr "Ik wil automatisch video's downloaden van dit kanaal"
 
-#: .././mainwin.py:23235 .././mainwin.py:23522 .././mainwin.py:23730
+#: .././mainwin.py:23230 .././mainwin.py:23517 .././mainwin.py:23725
 msgid "Don't download anything, just check for new videos"
 msgstr "Ik wil niks downloaden; ik wil alleen zien of er nieuwe video's zijn"
 
-#: .././mainwin.py:23242 .././mainwin.py:23737 .././mainwin.py:24090
+#: .././mainwin.py:23237 .././mainwin.py:23732 .././mainwin.py:24085
 msgid "Enable automatic copy/paste"
 msgstr "Automatisch kopiëren/plakken inschakelen"
 
-#: .././mainwin.py:23423
+#: .././mainwin.py:23418
 msgid "Add folder"
 msgstr "Map toevoegen"
 
-#: .././mainwin.py:23442
+#: .././mainwin.py:23437
 msgid "Enter the folder name"
 msgstr "Geef de map een naam"
 
-#: .././mainwin.py:23485
+#: .././mainwin.py:23480
 msgid "(Optional) Add this folder inside another folder"
 msgstr "(optioneel) Map toevoegen aan andere map"
 
-#: .././mainwin.py:23516
+#: .././mainwin.py:23511
 msgid "I want to download videos from this folder automatically"
 msgstr "Ik wil automatisch video's downloaden uit deze map"
 
-#: .././mainwin.py:23614
+#: .././mainwin.py:23609
 msgid "Add playlist"
 msgstr "Afspeellijst toevoegen"
 
-#: .././mainwin.py:23633
+#: .././mainwin.py:23628
 msgid "Enter the playlist name"
 msgstr "Geef de afspeellijst een naam"
 
-#: .././mainwin.py:23638
+#: .././mainwin.py:23633
 msgid "(Use the playlist's real name or a customised name)"
 msgstr "(gebruik de echte naam of een zelfgekozen)"
 
-#: .././mainwin.py:23646
+#: .././mainwin.py:23641
 msgid "Copy and paste a link to the playlist"
 msgstr "Kopieer en plak een link naar de afspeellijst"
 
-#: .././mainwin.py:23693
+#: .././mainwin.py:23688
 msgid "(Optional) Add this playlist inside a folder"
 msgstr "(optioneel) Afspeellijst toevoegen aan map"
 
-#: .././mainwin.py:23723
+#: .././mainwin.py:23718
 msgid "I want to download videos from this playlist automatically"
 msgstr "Ik wil automatisch video's downloaden van deze afspeellijst"
 
-#: .././mainwin.py:23920
+#: .././mainwin.py:23915
 msgid "Add videos"
 msgstr "Video's toevoegen"
 
-#: .././mainwin.py:23939
+#: .././mainwin.py:23934
 msgid "Copy and paste the links to one or more videos"
 msgstr "Kopieer en plak links naar één of meerdere video's"
 
-#: .././mainwin.py:23945
+#: .././mainwin.py:23940
 msgid "Links containing multiple videos will be converted to a channel"
 msgstr "Links met meerdere video's worden omgezet naar een kanaal"
 
-#: .././mainwin.py:23952
+#: .././mainwin.py:23947
 msgid "Links containing multiple videos will be converted to a playlist"
 msgstr "Links met meerdere video's worden omgezet naar een afspeellijst"
 
-#: .././mainwin.py:23959
+#: .././mainwin.py:23954
 msgid "Links containing multiple videos will be downloaded separately"
 msgstr "Links met meerdere video's worden los van elkaar gedownload"
 
-#: .././mainwin.py:23966
+#: .././mainwin.py:23961
 msgid "Links containing multiple videos will not be downloaded at all"
 msgstr "Links met meerdere video's worden niet gedownload"
 
-#: .././mainwin.py:24048
+#: .././mainwin.py:24043
 msgid "Add the videos to this folder"
 msgstr "Voeg video's toe aan deze map"
 
-#: .././mainwin.py:24078
+#: .././mainwin.py:24073
 msgid "I want to download these videos automatically"
 msgstr "Ik wil deze video's automatisch downloaden"
 
-#: .././mainwin.py:24084
+#: .././mainwin.py:24079
 msgid "Don't download anything, just check the videos"
 msgstr "Ik wil niks downloaden; ik wil alleen zien of er nieuwe video's zijn"
 
-#: .././mainwin.py:24253 .././config.py:2061
+#: .././mainwin.py:24248 .././config.py:2061
 msgid "Apply download options"
 msgstr "Downloadopties toepassen"
 
-#: .././mainwin.py:24275
+#: .././mainwin.py:24270
 msgid "Create new download options"
 msgstr "Downloadopties instellen"
 
-#: .././mainwin.py:24285
+#: .././mainwin.py:24280
 msgid "Use these download options"
 msgstr "Deze downloadopties gebruiken"
 
-#: .././mainwin.py:24322
+#: .././mainwin.py:24317
 msgid "Clone these download options"
 msgstr "Deze downloadopties klonen"
 
-#: .././mainwin.py:24555
+#: .././mainwin.py:24550
 msgid "Select a date"
 msgstr "Kies een datum"
 
-#: .././mainwin.py:24662
+#: .././mainwin.py:24657
 msgid "Delete channel"
 msgstr "Kanaal verwijderen"
 
-#: .././mainwin.py:24664
+#: .././mainwin.py:24659
 msgid "Delete playlist"
 msgstr "Afspeellijst verwijderen"
 
-#: .././mainwin.py:24666
+#: .././mainwin.py:24661
 msgid "Delete folder"
 msgstr "Map verwijderen"
 
-#: .././mainwin.py:24669
+#: .././mainwin.py:24664
 msgid "Empty channel"
 msgstr "Leeg kanaal"
 
-#: .././mainwin.py:24671
+#: .././mainwin.py:24666
 msgid "Empty playlist"
 msgstr "Lege afspeellijst"
 
-#: .././mainwin.py:24673
+#: .././mainwin.py:24668
 msgid "Empty folder"
 msgstr "Lege map"
 
-#: .././mainwin.py:24707
+#: .././mainwin.py:24702
 msgid "This channel does not contain any videos"
 msgstr "Dit kanaal bevat geen video's"
 
-#: .././mainwin.py:24709
+#: .././mainwin.py:24704
 msgid "This playlist does not contain any videos"
 msgstr "Deze afspeellijst bevat geen video's"
 
-#: .././mainwin.py:24711
+#: .././mainwin.py:24706
 msgid "This folder doesn't contain anything"
 msgstr "Deze map bevat geen video's"
 
-#: .././mainwin.py:24717
+#: .././mainwin.py:24712
 msgid "(but there might be some files in Tartube's data folder)"
 msgstr "(wellicht staan er bestanden in Tartube's gegevensmap)"
 
-#: .././mainwin.py:24730
+#: .././mainwin.py:24725
 msgid "This channel contains:"
 msgstr "Dit kanaal bevat:"
 
-#: .././mainwin.py:24732
+#: .././mainwin.py:24727
 msgid "This playlist contains:"
 msgstr "Deze afspeellijst bevat:"
 
-#: .././mainwin.py:24734 .././config.py:9269
+#: .././mainwin.py:24729 .././config.py:9269
 msgid "This folder contains:"
 msgstr "Deze map bevat:"
 
-#: .././mainwin.py:24741
+#: .././mainwin.py:24736
 msgid "1 folder"
 msgstr "1 map"
 
-#: .././mainwin.py:24743
+#: .././mainwin.py:24738
 #, python-brace-format
 msgid "{0} folders"
 msgstr "{0} mappen"
 
-#: .././mainwin.py:24750
+#: .././mainwin.py:24745
 msgid "1 channel"
 msgstr "1 kanaal"
 
-#: .././mainwin.py:24752
+#: .././mainwin.py:24747
 #, python-brace-format
 msgid "{0} channels"
 msgstr "{0} kanalen"
 
-#: .././mainwin.py:24759
+#: .././mainwin.py:24754
 msgid "1 playlist"
 msgstr "1 afspeellijst"
 
-#: .././mainwin.py:24761
+#: .././mainwin.py:24756
 #, python-brace-format
 msgid "{0} playlists"
 msgstr "{0} afspeellijsten"
 
-#: .././mainwin.py:24768 .././mainwin.py:25193
+#: .././mainwin.py:24763 .././mainwin.py:25188
 msgid "1 video"
 msgstr "1 video"
 
-#: .././mainwin.py:24770 .././mainwin.py:25196
+#: .././mainwin.py:24765 .././mainwin.py:25191
 #, python-brace-format
 msgid "{0} videos"
 msgstr "{0} video's"
 
-#: .././mainwin.py:24783
+#: .././mainwin.py:24778
 msgid ""
 "Do you want to delete the channel from Tartube's data folder, or do you just "
 "want to remove the channel from this list?"
@@ -2859,7 +2862,7 @@ msgstr ""
 "Weet je zeker dat je het kanaal wilt verwijderen uit Tartube's gegevensmap "
 "of wil je het slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24789
+#: .././mainwin.py:24784
 msgid ""
 "Do you want to delete the playlist from Tartube's data folder, or do you "
 "just want to remove the playlist from this list?"
@@ -2867,7 +2870,7 @@ msgstr ""
 "Weet je zeker dat je de afspeellijst wilt verwijderen uit Tartube's "
 "gegevensmap of wil je hem slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24795
+#: .././mainwin.py:24790
 msgid ""
 "Do you want to delete the folder from Tartube's data folder, or do you just "
 "want to remove the folder from this list?"
@@ -2875,7 +2878,7 @@ msgstr ""
 "Weet je zeker dat je de map wilt verwijderen uit Tartube's gegevensmap of "
 "wil je hem slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24804
+#: .././mainwin.py:24799
 msgid ""
 "Do you want to empty the channel in Tartube's data folder, or do you just "
 "want to empty the channel in this list?"
@@ -2883,7 +2886,7 @@ msgstr ""
 "Weet je zeker dat je het kanaal in Tartube's gegevensmap wilt opschonen of "
 "wil je het slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24810
+#: .././mainwin.py:24805
 msgid ""
 "Do you want to empty the playlist in Tartube's data folder, or do you just "
 "want to empty the playlist in this list?"
@@ -2891,7 +2894,7 @@ msgstr ""
 "Weet je zeker dat je de afspeellijst in Tartube's gegevensmap wilt opschonen "
 "of wil je hem slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24816
+#: .././mainwin.py:24811
 msgid ""
 "Do you want to empty the folder in Tartube's data folder, or do you just "
 "want to empty the folder in this list?"
@@ -2899,39 +2902,39 @@ msgstr ""
 "Weet je zeker dat je de map in Tartube's gegevensmap wilt opschonen of wil "
 "je hem slechts verwijderen van de lijst?"
 
-#: .././mainwin.py:24833
+#: .././mainwin.py:24828
 msgid "Just remove the channel from this list"
 msgstr "Kanaal verwijderen van de lijst"
 
-#: .././mainwin.py:24835
+#: .././mainwin.py:24830
 msgid "Just remove the playlist from this list"
 msgstr "Afspeellijst verwijderen van de lijst"
 
-#: .././mainwin.py:24837
+#: .././mainwin.py:24832
 msgid "Just remove the folder from this list"
 msgstr "Map verwijderen van de lijst"
 
-#: .././mainwin.py:24842
+#: .././mainwin.py:24837
 msgid "Just empty the channel in this list"
 msgstr "Kanaal verwijderen van de lijst"
 
-#: .././mainwin.py:24844
+#: .././mainwin.py:24839
 msgid "Just empty the playlist in this list"
 msgstr "Afspeellijst verwijderen van de lijst"
 
-#: .././mainwin.py:24846
+#: .././mainwin.py:24841
 msgid "Just empty the folder in this list"
 msgstr "Map verwijderen van de lijst"
 
-#: .././mainwin.py:24852
+#: .././mainwin.py:24847
 msgid "Delete all files"
 msgstr "Alle bestanden verwijderen"
 
-#: .././mainwin.py:24904
+#: .././mainwin.py:24899
 msgid "Export from database"
 msgstr "Exporteren uit databank"
 
-#: .././mainwin.py:24928
+#: .././mainwin.py:24923
 msgid ""
 "Tartube is ready to export a partial summary of its database, containing a "
 "list of videos, channels, playlists and/or folders (but not including the "
@@ -2941,7 +2944,7 @@ msgstr ""
 "Deze bevat een lijst met video's, kanalen, afspeellijsten en/of mappen (maar "
 "niet de video's zelf)."
 
-#: .././mainwin.py:24935
+#: .././mainwin.py:24930
 msgid ""
 "Tartube is ready to export a summary of its database, containing a list of "
 "videos, channels, playlists and/or folders (but not including the videos "
@@ -2951,115 +2954,115 @@ msgstr ""
 "lijst met video's, kanalen, afspeellijsten en/of mappen (maar niet de "
 "video's zelf)."
 
-#: .././mainwin.py:24951
+#: .././mainwin.py:24946
 msgid "Choose what should be included:"
 msgstr "Geef aan wat er moet worden opgenomen:"
 
-#: .././mainwin.py:24959
+#: .././mainwin.py:24954
 msgid "Include lists of videos"
 msgstr "Videolijsten"
 
-#: .././mainwin.py:24964
+#: .././mainwin.py:24959
 msgid "Include channels"
 msgstr "Kanalen"
 
-#: .././mainwin.py:24969
+#: .././mainwin.py:24964
 msgid "Include playlists"
 msgstr "Afspeellijsten"
 
-#: .././mainwin.py:24974
+#: .././mainwin.py:24969
 msgid "Preserve folder structure"
 msgstr "Mappenstructuur behouden"
 
-#: .././mainwin.py:24982
+#: .././mainwin.py:24977
 msgid "Export as plain text"
 msgstr "Exporteren naar plattetekstbestand"
 
-#: .././mainwin.py:25068
+#: .././mainwin.py:25063
 msgid "Import into database"
 msgstr "Importeren naar databank"
 
-#: .././mainwin.py:25091
+#: .././mainwin.py:25086
 msgid "Choose which items to import"
 msgstr "Geef aan welke items moeten worden geïmporteerd"
 
-#: .././mainwin.py:25112 .././config.py:14418 .././config.py:14683
+#: .././mainwin.py:25107 .././config.py:14454 .././config.py:14719
 msgid "Import"
 msgstr "Importeren"
 
-#: .././mainwin.py:25148
+#: .././mainwin.py:25143
 msgid "Import videos"
 msgstr "Video's importeren"
 
-#: .././mainwin.py:25153
+#: .././mainwin.py:25148
 msgid "Merge channels/playlists/folders"
 msgstr "Kanalen/Afspeellijsten/Mappen samenvoegen"
 
 #. Bottom strip
-#: .././mainwin.py:25156 .././mainwin.py:27088
+#: .././mainwin.py:25151 .././mainwin.py:27083
 msgid "Select all"
 msgstr "Alles selecteren"
 
-#: .././mainwin.py:25161
+#: .././mainwin.py:25156
 msgid "Unselect all"
 msgstr "Niets selecteren"
 
-#: .././mainwin.py:25423
+#: .././mainwin.py:25418
 msgid "Mount drive"
 msgstr "Schijf aankoppelen"
 
-#: .././mainwin.py:25447
+#: .././mainwin.py:25442
 msgid "The Tartube data folder is set to:"
 msgstr "De Tartube-gegevensmap is ingesteld op:"
 
-#: .././mainwin.py:25460
+#: .././mainwin.py:25455
 msgid "...but this folder doesn't exist"
 msgstr "...maar deze map bestaat niet"
 
-#: .././mainwin.py:25463
+#: .././mainwin.py:25458
 msgid "...but Tartube cannot write to this folder"
 msgstr "...maar Tartube kan niks wegschrijven naar deze map"
 
-#: .././mainwin.py:25473
+#: .././mainwin.py:25468
 msgid "I have mounted the drive, please try again"
 msgstr "Ik heb de schijf aangekoppeld; probeer het opnieuw"
 
-#: .././mainwin.py:25479
+#: .././mainwin.py:25474
 msgid "Use this data folder:"
 msgstr "Deze gegevensmap gebruiken:"
 
-#: .././mainwin.py:25506
+#: .././mainwin.py:25501
 msgid "Select a different data folder"
 msgstr "Kies een andere gegevensmap"
 
-#: .././mainwin.py:25512
+#: .././mainwin.py:25507
 msgid "Use the default data folder"
 msgstr "Standaard gegevensmap gebruiken"
 
-#: .././mainwin.py:25518
+#: .././mainwin.py:25513
 msgid "Shut down Tartube"
 msgstr "Tartube afsluiten"
 
 #. 'Cancel' button
-#: .././mainwin.py:25525 .././config.py:1044
+#: .././mainwin.py:25520 .././config.py:1044
 msgid "Cancel"
 msgstr "Annuleren"
 
 #. 'OK' button
-#: .././mainwin.py:25529 .././config.py:1035 .././config.py:2242
+#: .././mainwin.py:25524 .././config.py:1035 .././config.py:2242
 #: .././config.py:7694 .././config.py:7828
 msgid "OK"
 msgstr "Oké"
 
-#: .././mainwin.py:25651
+#: .././mainwin.py:25646
 msgid "The folder still doesn't exist. Please try a different option"
 msgstr "De map bestaat nog steeds niet - kies een andere optie."
 
-#: .././mainwin.py:25722
+#: .././mainwin.py:25717
 msgid "Stale lockfile"
 msgstr "Verouderd vergrendelbestand"
 
-#: .././mainwin.py:25759
+#: .././mainwin.py:25754
 msgid ""
 "Failed to load the Tartube database file, because another copy of Tartube "
 "seems to be using it"
@@ -3067,11 +3070,11 @@ msgstr ""
 "Het Tartube-databankbestand kan niet worden geladen omdat het in gebruik is "
 "door een ander Tartube-venster"
 
-#: .././mainwin.py:25766
+#: .././mainwin.py:25761
 msgid "Do you want to load it anyway?"
 msgstr "Wil je het bestand tóch laden?"
 
-#: .././mainwin.py:25772
+#: .././mainwin.py:25767
 msgid ""
 "(Only click 'Yes' if you are sure that other copies of Tartube are not using "
 "the database right now)"
@@ -3079,67 +3082,67 @@ msgstr ""
 "(klik alleen op 'Ja' als je zeker weet dat er geen andere Tartube-vensters "
 "geopend zijn)"
 
-#: .././mainwin.py:25784
+#: .././mainwin.py:25779
 msgid "Yes, load the file"
 msgstr "Ja, bestand laden"
 
-#: .././mainwin.py:25791
+#: .././mainwin.py:25786
 msgid "No, just shut down Tartube"
 msgstr "Nee, Tartube afsluiten"
 
-#: .././mainwin.py:25793
+#: .././mainwin.py:25788
 msgid "No, don't load the file"
 msgstr "Nee, bestand niet laden"
 
-#: .././mainwin.py:25888
+#: .././mainwin.py:25883
 msgid "Rename channel"
 msgstr "Kanaalnaam wijzigen"
 
-#: .././mainwin.py:25890
+#: .././mainwin.py:25885
 msgid "Rename playlist"
 msgstr "Afspeellijstnaam wijzigen"
 
-#: .././mainwin.py:25892
+#: .././mainwin.py:25887
 msgid "Rename folder"
 msgstr "Mapnaam wijzigen"
 
-#: .././mainwin.py:25916
+#: .././mainwin.py:25911
 msgid "Set the new name for the channel:"
 msgstr "Geef het kanaal een nieuwe naam:"
 
-#: .././mainwin.py:25918
+#: .././mainwin.py:25913
 msgid "Set the new name for the playlist:"
 msgstr "Geef de afspeellijst een nieuwe naam:"
 
-#: .././mainwin.py:25920
+#: .././mainwin.py:25915
 msgid "Set the new name for the folder:"
 msgstr "Geef de map een nieuwe naam:"
 
-#: .././mainwin.py:25926
+#: .././mainwin.py:25921
 msgid "N.B. This procedure will modify your filesystem!\n"
 msgstr "Let op: deze app past je bestandssysteem aan!\n"
 
-#: .././mainwin.py:25987
+#: .././mainwin.py:25982
 msgid "Add to scheduled download"
 msgstr "Toevoegen aan ingeplande downloads"
 
-#: .././mainwin.py:26010
+#: .././mainwin.py:26005
 msgid "Add the channel to this scheduled download:"
 msgstr "Kanaal toevoegen aan ingeplande downloads:"
 
-#: .././mainwin.py:26012
+#: .././mainwin.py:26007
 msgid "Add the playlist to this scheduled download:"
 msgstr "Afspeellijst toevoegen aan ingeplande downloads:"
 
-#: .././mainwin.py:26014
+#: .././mainwin.py:26009
 msgid "Add the folder to this scheduled download:"
 msgstr "Map toevoegen aan ingeplande downloads:"
 
-#: .././mainwin.py:26111
+#: .././mainwin.py:26106
 msgid "Set download destination"
 msgstr "Downloadbestemming instellen"
 
-#: .././mainwin.py:26136
+#: .././mainwin.py:26131
 msgid ""
 "This channel can store its videos in its own system folder, or it can store "
 "them in a different system folder"
@@ -3147,7 +3150,7 @@ msgstr ""
 "Dit kanaal kan video's opslaan in de eigen systeemmap of in een andere "
 "systeemmap"
 
-#: .././mainwin.py:26141
+#: .././mainwin.py:26136
 msgid ""
 "This playlist can store its videos in its own system folder, or it can store "
 "them in a different system folder"
@@ -3155,7 +3158,7 @@ msgstr ""
 "Deze afspeellijst kan video's opslaan in de eigen systeemmap of in een "
 "andere systeemmap"
 
-#: .././mainwin.py:26146
+#: .././mainwin.py:26141
 msgid ""
 "This folder can store its videos in its own system folder, or it can store "
 "them in a different system folder"
@@ -3163,11 +3166,11 @@ msgstr ""
 "Deze map kan video's opslaan in de eigen systeemmap of in een andere "
 "systeemmap"
 
-#: .././mainwin.py:26154
+#: .././mainwin.py:26149
 msgid "Choose a different system folder if:"
 msgstr "Kies een andere systeemmap als:"
 
-#: .././mainwin.py:26157
+#: .././mainwin.py:26152
 msgid ""
 "1. You want to add a channel and its playlists, without downloading the same "
 "video twice"
@@ -3175,7 +3178,7 @@ msgstr ""
 "1. Je een kanaal met afspeellijsten wilt toevoegen zonder dezelfde video "
 "twee keer te downloaden"
 
-#: .././mainwin.py:26164
+#: .././mainwin.py:26159
 msgid ""
 "2. A video creator has channels on both YouTube and BitChute, and you want "
 "to add both without downloading the same video twice"
@@ -3183,23 +3186,23 @@ msgstr ""
 "2. Een videomaker kanalen heeft op zowel YouTube als BitChute en je beide "
 "wilt toevoegen zonder dezelfde video twee keer te downloaden"
 
-#: .././mainwin.py:26177
+#: .././mainwin.py:26172
 msgid "Use this channel's own folder"
 msgstr "Eigen kanaalmap gebruiken"
 
-#: .././mainwin.py:26179
+#: .././mainwin.py:26174
 msgid "Use this playlist's own folder"
 msgstr "Eigen afspeellijstmap gebruiken"
 
-#: .././mainwin.py:26181
+#: .././mainwin.py:26176
 msgid "Use this folder's own system folder"
 msgstr "Eigen systeemmap gebruiken"
 
-#: .././mainwin.py:26436
+#: .././mainwin.py:26431
 msgid "Set nickname"
 msgstr "Bijnaam instellen"
 
-#: .././mainwin.py:26461
+#: .././mainwin.py:26456
 #, python-brace-format
 msgid ""
 "Set a nickname for the channel '{0}' (or leave it blank to reset the "
@@ -3208,7 +3211,7 @@ msgstr ""
 "Stel een bijnaam in voor het kanaal '{0}' (of laat leeg om de standaardnaam "
 "te gebruiken)"
 
-#: .././mainwin.py:26466
+#: .././mainwin.py:26461
 #, python-brace-format
 msgid ""
 "Set a nickname for the playlist '{0}' (or leave it blank to reset the "
@@ -3217,7 +3220,7 @@ msgstr ""
 "Stel een bijnaam in voor de afspeellijst '{0}' (of laat leeg om de "
 "standaardnaam te gebruiken)"
 
-#: .././mainwin.py:26471
+#: .././mainwin.py:26466
 #, python-brace-format
 msgid ""
 "Set a nickname for the folder '{0}' (or leave it blank to reset the nickname)"
@@ -3225,116 +3228,116 @@ msgstr ""
 "Stel een bijnaam in voor de map '{0}' (of laat leeg om de standaardnaam te "
 "gebruiken)"
 
-#: .././mainwin.py:26534
+#: .././mainwin.py:26529
 msgid "Set URL"
 msgstr "URL instellen"
 
-#: .././mainwin.py:26559
+#: .././mainwin.py:26554
 #, python-brace-format
 msgid "Update the URL for the channel '{0}'"
 msgstr "Werk de url bij van het kanaal '{0}'"
 
-#: .././mainwin.py:26563
+#: .././mainwin.py:26558
 #, python-brace-format
 msgid "Update the URL for the playlist '{0}'"
 msgstr "Werk de url bij van de afspeellijst '{0}'"
 
-#: .././mainwin.py:26627
+#: .././mainwin.py:26622
 msgid "Show system command"
 msgstr "Systeemopdracht tonen"
 
-#: .././mainwin.py:26671
+#: .././mainwin.py:26666
 msgid "Update"
 msgstr "Bijwerken"
 
-#: .././mainwin.py:26680
+#: .././mainwin.py:26675
 msgid "Copy to clipboard"
 msgstr "Kopiëren naar klembord"
 
-#: .././mainwin.py:26854 .././config.py:13749
+#: .././mainwin.py:26849 .././config.py:13749
 msgid "Test"
 msgstr "Testen"
 
-#: .././mainwin.py:26874
+#: .././mainwin.py:26869
 msgid "URL of the video to download (optional)"
 msgstr "URL van de te downloaden video (optioneel)"
 
-#: .././mainwin.py:26885
+#: .././mainwin.py:26880
 msgid "Command line options (optional)"
 msgstr "Opdrachtregelopties (optioneel)"
 
-#: .././mainwin.py:26966
+#: .././mainwin.py:26961
 msgid "Tidy up files"
 msgstr "Bestanden opruimen"
 
-#: .././mainwin.py:26968
+#: .././mainwin.py:26963
 msgid "Tidy up channel"
 msgstr "Kanaal opruimen"
 
-#: .././mainwin.py:26970
+#: .././mainwin.py:26965
 msgid "Tidy up playlist"
 msgstr "Afspeellijst opruimen"
 
-#: .././mainwin.py:26972
+#: .././mainwin.py:26967
 msgid "Tidy up folder"
 msgstr "Map opruimen"
 
-#: .././mainwin.py:27001
+#: .././mainwin.py:26996
 msgid "Check that videos are not corrupted"
 msgstr "Controleren of video's niet beschadigd zijn"
 
-#: .././mainwin.py:27006
+#: .././mainwin.py:27001
 msgid "Delete corrupted video files"
 msgstr "Beschadigde video's verwijderen"
 
-#: .././mainwin.py:27016
+#: .././mainwin.py:27011
 msgid "Check that videos do/don't exist"
 msgstr "Controleren of video's wel of niet bestaan"
 
-#: .././mainwin.py:27023
+#: .././mainwin.py:27018
 msgid ""
 "Delete downloaded video files (doesn't remove videos from Tartube's database)"
 msgstr ""
 "Gedownloade videobestanden verwijderen (maar niet uit Tartube's databank)"
 
-#: .././mainwin.py:27035
+#: .././mainwin.py:27030
 msgid "Also delete all video/audio files with the same name"
 msgstr "Tevens audio-/videobestanden met dezelfde naam verwijderen"
 
-#: .././mainwin.py:27043
+#: .././mainwin.py:27038
 msgid "Delete all archive files"
 msgstr "Alle gearchiveerde bestanden verwijderen"
 
-#: .././mainwin.py:27048
+#: .././mainwin.py:27043
 msgid "Move thumbnails into own folder"
 msgstr "Miniaturen verplaatsen naar eigen map"
 
-#: .././mainwin.py:27053
+#: .././mainwin.py:27048
 msgid "Delete all thumbnail files"
 msgstr "Alle miniatuurbestanden verwijderen"
 
-#: .././mainwin.py:27059
+#: .././mainwin.py:27054
 msgid "Convert .webp thumbnails to .jpg using FFmpeg"
 msgstr ".webp-miniaturen converteren naar .jpg met FFmpeg"
 
-#: .././mainwin.py:27068
+#: .././mainwin.py:27063
 msgid "Move other metadata files into own folder"
 msgstr "Overige metagegevensbestanden verplaatsen naar eigen map"
 
-#: .././mainwin.py:27076
+#: .././mainwin.py:27071
 msgid "Delete all description files"
 msgstr "Alle omschrijvingsbestanden verwijderen"
 
-#: .././mainwin.py:27080
+#: .././mainwin.py:27075
 msgid "Delete all metadata (JSON) files"
 msgstr "Alle metagegevensbestanden (json) verwijderen"
 
-#: .././mainwin.py:27084
+#: .././mainwin.py:27079
 msgid "Delete all annotation files"
 msgstr "Alle aantekeningsbestanden verwijderen"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:27093
+#: .././mainwin.py:27088
 msgid "Select none"
 msgstr "Niets selecteren"
 
@@ -3424,8 +3427,8 @@ msgstr "Wit"
 
 #. 'Reset' button
 #. (Signal connect appears below)
-#: .././config.py:1017 .././config.py:3306 .././config.py:14178
-#: .././config.py:14219 .././config.py:14289
+#: .././config.py:1017 .././config.py:3306 .././config.py:14214
+#: .././config.py:14255 .././config.py:14325
 msgid "Reset"
 msgstr "Standaardwaarden"
 
@@ -3727,7 +3730,7 @@ msgid "Number of comments"
 msgstr "Aantal reacties"
 
 #: .././config.py:3170 .././config.py:9916 .././config.py:12528
-#: .././config.py:14409 .././config.py:14674
+#: .././config.py:14445 .././config.py:14710
 msgid "Add"
 msgstr "Toevoegen"
 
@@ -3768,8 +3771,8 @@ msgid "Path to the downloader's cookie jar file"
 msgstr "Pad naar downloader's cookie-jarbestand:"
 
 #: .././config.py:3302 .././config.py:4927 .././config.py:4947
-#: .././config.py:4967 .././config.py:14174 .././config.py:14215
-#: .././config.py:14285
+#: .././config.py:4967 .././config.py:14111 .././config.py:14210
+#: .././config.py:14251 .././config.py:14321
 msgid "Set"
 msgstr "Instellen"
 
@@ -5900,11 +5903,11 @@ msgstr "Alles downloaden"
 msgid "Join mode"
 msgstr "Samenvoegmodus"
 
-#: .././config.py:12537 .././config.py:14432 .././config.py:14697
+#: .././config.py:12537 .././config.py:14468 .././config.py:14733
 msgid "Edit"
 msgstr "Bewerken"
 
-#: .././config.py:12564 .././config.py:14468 .././config.py:14733
+#: .././config.py:12564 .././config.py:14504 .././config.py:14769
 msgid "Delete"
 msgstr "Verwijderen"
 
@@ -6278,32 +6281,36 @@ msgid "Path to the executable"
 msgstr "Pad naar uitvoerbaar bestand"
 
 #. (Signal connect appears below)
-#: .././config.py:14070 .././config.py:14182 .././config.py:14223
-#: .././config.py:14293 .././config.py:19966
+#: .././config.py:14070 .././config.py:14218 .././config.py:14259
+#: .././config.py:14329 .././config.py:20068
 msgid "Use default path"
 msgstr "Standaardpad gebruiken"
 
-#: .././config.py:14075 .././config.py:19978
+#: .././config.py:14075 .././config.py:20080
 msgid "Use local path"
 msgstr "Lokaal pad gebruiken"
 
-#: .././config.py:14083 .././config.py:19992
+#: .././config.py:14079
+msgid "Use custom path"
+msgstr ""
+
+#: .././config.py:14087 .././config.py:20094
 msgid "Use PyPI path"
 msgstr "PyPI-pad gebruiken"
 
-#: .././config.py:14108
+#: .././config.py:14138
 msgid "Command for update operations"
 msgstr "Opdracht voor bijwerkacties"
 
-#: .././config.py:14150
+#: .././config.py:14186
 msgid "_FFmpeg / AVConv"
 msgstr "_FFmpeg/AVConv"
 
-#: .././config.py:14158
+#: .././config.py:14194
 msgid "Post-processing file paths"
 msgstr "Naverwerkingsbestandspaden"
 
-#: .././config.py:14163
+#: .././config.py:14199
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
@@ -6311,31 +6318,31 @@ msgstr ""
 "Je hoeft deze paden alleen in te stellen als Tartube FFmpeg of AVConv niet "
 "automatisch heeft aangetroffen"
 
-#: .././config.py:14170
+#: .././config.py:14206
 msgid "Path to the FFmpeg executable"
 msgstr "Pad naar uitvoerbaar FFmpeg-bestand"
 
-#: .././config.py:14197
+#: .././config.py:14233
 msgid "Install from main menu"
 msgstr "Installeren vanuit hoofdmenu"
 
-#: .././config.py:14211
+#: .././config.py:14247
 msgid "Path to the AVConv executable"
 msgstr "Pad naar uitvoerbaar AVConv-bestand"
 
-#: .././config.py:14238
+#: .././config.py:14274
 msgid "Not supported on MS Windows"
 msgstr "Wordt niet ondersteund op Windows"
 
-#: .././config.py:14261
+#: .././config.py:14297
 msgid "_Stream Capture"
 msgstr "_Streamopname"
 
-#: .././config.py:14269
+#: .././config.py:14305
 msgid "Youtube Stream Capture file path"
 msgstr "Bestandspad naar YouTube-streamopname"
 
-#: .././config.py:14274
+#: .././config.py:14310
 msgid ""
 "Tartube includes a copy of this script, but you can use a different copy, if "
 "you want"
@@ -6343,242 +6350,246 @@ msgstr ""
 "Tartube levert een kopie van dit script mee, maar als je wilt kun je een "
 "andere kopie gebruiken"
 
-#: .././config.py:14281
+#: .././config.py:14317
 msgid "Path to the YT Stream Capture executable"
 msgstr "Pad naar uitvoerbaar bestand van YouTube-streamopname"
 
-#: .././config.py:14339
+#: .././config.py:14375
 msgid "_Download options"
 msgstr "Download_opties"
 
-#: .././config.py:14346
+#: .././config.py:14382
 msgid "List of download options managers"
 msgstr "Lijst met downloadoptiebeheerders"
 
-#: .././config.py:14366
+#: .././config.py:14402
 msgid "Classic Mode"
 msgstr "Klassieke modus"
 
-#: .././config.py:14367
+#: .././config.py:14403
 msgid "Applied to media"
 msgstr "Toegepast op media"
 
-#: .././config.py:14441 .././config.py:14706
+#: .././config.py:14477 .././config.py:14742
 msgid "Export"
 msgstr "Exporteren"
 
-#: .././config.py:14450 .././config.py:14715
+#: .././config.py:14486 .././config.py:14751
 msgid "Clone"
 msgstr "Klonen"
 
-#: .././config.py:14459
+#: .././config.py:14495
 msgid "Use in Classic Mode tab"
 msgstr "Toevoegen aan klassieke modus"
 
-#: .././config.py:14484 .././config.py:14749
+#: .././config.py:14520 .././config.py:14785
 msgid "Refresh list"
 msgstr "Lijst verversen"
 
-#: .././config.py:14565
+#: .././config.py:14601
 msgid "_Preferences"
 msgstr "_Instellingen"
 
-#: .././config.py:14572
+#: .././config.py:14608
 msgid "Download options preferences"
 msgstr "Downloadoptie-instellingen"
 
-#: .././config.py:14578
+#: .././config.py:14614
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
 msgstr "Algemene downloadopties klonen bij toepassing van downloadopties"
 
-#: .././config.py:14589
+#: .././config.py:14625
 msgid "After downloading a video, destroy its download options"
 msgstr "Downloadopties vergeten na downloaden van video's"
 
-#: .././config.py:14606
+#: .././config.py:14642
 msgid "_FFmpeg options"
 msgstr "_FFmpeg-opties"
 
-#: .././config.py:14613
+#: .././config.py:14649
 msgid "List of FFmpeg options managers"
 msgstr "Lijst met FFmpeg-optiebeheerders"
 
-#: .././config.py:14633
+#: .././config.py:14669
 msgid "Current"
 msgstr "Huidige"
 
-#: .././config.py:14724
+#: .././config.py:14760
 msgid "Use these options"
 msgstr "Deze opties gebruiken"
 
 #. Add this tab...
-#: .././config.py:14815
+#: .././config.py:14851
 msgid "O_utput"
 msgstr "_Uitvoer"
 
-#: .././config.py:14834
+#: .././config.py:14870
 msgid "_Output Tab"
 msgstr "_Uitvoertabblad"
 
-#: .././config.py:14842
+#: .././config.py:14878
 msgid "Output Tab preferences"
 msgstr "Instellingen omtrent uitvoertabblad"
 
-#: .././config.py:14847
+#: .././config.py:14883
 msgid "Display downloader system commands in the Output Tab"
 msgstr "Systeemopdrachten van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14856
+#: .././config.py:14892
 msgid "Display output from downloader's STDOUT in the Output Tab"
 msgstr "STDOUT-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14865 .././config.py:15027
+#: .././config.py:14901 .././config.py:15063
 msgid "...but don't write each video's JSON data"
 msgstr "...maar schrijf geen json-gegevens van elke video weg"
 
-#: .././config.py:14876 .././config.py:15038
+#: .././config.py:14912 .././config.py:15074
 msgid "...but don't write each video's download progress"
 msgstr "...maar schrijf geen downloadvoortgang van elke video weg"
 
-#: .././config.py:14895
+#: .././config.py:14931
 msgid "Display output from downloader's STDERR in the Output Tab"
 msgstr "STDERR-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14904
+#: .././config.py:14940
 msgid "Limit the size of Output Tab pages to"
 msgstr "Aantal pagina's op tabblad 'Uitvoer' beperken tot"
 
-#: .././config.py:14925
+#: .././config.py:14961
 msgid "Empty pages in the Output Tab at the start of every operation"
 msgstr "Pagina's op tabblad 'Uitvoer' legen na elke actie"
 
-#: .././config.py:14935
+#: .././config.py:14971
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
 msgstr ""
 "Samenvatting van actieve processen tonen (herstart om deze wijziging toe te "
 "passen)"
 
-#: .././config.py:14947
+#: .././config.py:14983
 msgid "During an update operation, automatically switch to the Output tab"
 msgstr "Automatisch overschakelen naar tabblad 'Uitvoer' tijdens bijwerken"
 
-#: .././config.py:14958
+#: .././config.py:14994
 msgid "During a refresh operation, show all matching videos in the Output Tab"
 msgstr ""
 "Alle overeenkomende video's tonen op tabblad 'Uitvoer' tijdens bijwerken"
 
-#: .././config.py:14969
+#: .././config.py:15005
 msgid "...also show all non-matching videos"
 msgstr "...en ook niet-overeenkomende video's tonen"
 
-#: .././config.py:14998
+#: .././config.py:15034
 msgid "_Terminal window"
 msgstr "_Terminalvenster"
 
-#: .././config.py:15004
+#: .././config.py:15040
 msgid "Terminal window preferences"
 msgstr "Terminalvensterinstellingen"
 
-#: .././config.py:15009
+#: .././config.py:15045
 msgid "Write downloader system commands to the terminal window"
 msgstr "Systeemopdrachten van downloader tonen in terminalvenster"
 
-#: .././config.py:15018
+#: .././config.py:15054
 msgid "Write output from downloader's STDOUT to the terminal window"
 msgstr "STDOUT-uitvoer van downloader tonen in terminalvenster"
 
-#: .././config.py:15060
+#: .././config.py:15096
 msgid "Write output from downloader's STDERR to the terminal window"
 msgstr "STDERR-uitvoer van downloader tonen in terminalvenster"
 
-#: .././config.py:15079
+#: .././config.py:15115
 msgid "_Both"
 msgstr "_Beide"
 
-#: .././config.py:15084
+#: .././config.py:15120
 msgid ""
 "Special preferences (applies to both the Output Tab and the terminal window)"
 msgstr ""
 "Speciale instellingen (van toepassing op het tabblad 'Uitvoer' en het "
 "terminalvenster)"
 
-#: .././config.py:15091
+#: .././config.py:15127
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
 msgstr "Uitgebreide uitvoer van downloader (youtube-dl-foutopsporingsmodus)"
 
-#: .././config.py:15100
+#: .././config.py:15136
 msgid "Youtube Stream Capture writes verbose output"
 msgstr "Uitgebreide uitvoer van streamopname"
 
-#: .././config.py:16017
+#: .././config.py:16053
 msgid "Are you sure you want to create a new database at this location?"
 msgstr ""
 "Weet je zeker dat je een nieuwe databank wilt aanmaken op deze locatie?"
 
-#: .././config.py:16124
+#: .././config.py:16160
 msgid "Are you sure you want to forget this database?"
 msgstr "Weet je zeker dat je deze databank wilt wissen?"
 
-#: .././config.py:16159
+#: .././config.py:16195
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr "Weet je zeker dat je alle databanken, behalve de huidige, wilt wissen?"
 
-#: .././config.py:16363
+#: .././config.py:16399
 msgid "No database exists at this location:"
 msgstr "Er is geen databank op deze locatie:"
 
-#: .././config.py:16365
+#: .././config.py:16401
 msgid "Do you want to create a new one?"
 msgstr "Wil je een nieuwe aanmaken?"
 
-#: .././config.py:17005
+#: .././config.py:17041
 msgid "The current options manager cannot be deleted"
 msgstr "De huidige optiebeheerder kan niet worden verwijderd"
 
-#: .././config.py:17013 .././config.py:18013
+#: .././config.py:17049 .././config.py:18049
 msgid "Are you sure you want to delete this options manager?"
 msgstr "Weet je zeker dat je deze optiebeheerder wilt verwijderen?"
 
-#: .././config.py:17207 .././config.py:17554 .././config.py:19038
+#: .././config.py:17243 .././config.py:17590 .././config.py:19074
 msgid "The new setting will be applied when Tartube restarts"
 msgstr "Herstart Tartube om de instellingen toe te passen"
 
-#: .././config.py:18005
+#: .././config.py:18041
 msgid "The default options manager cannot be deleted"
 msgstr "De standaard optiebeheerder kan niet worden verwijderd"
 
-#: .././config.py:18700
+#: .././config.py:18736
 msgid "There is already a scheduled download with that name"
 msgstr "Er is al een ingeplande download met die naam"
 
-#: .././config.py:18747
+#: .././config.py:18783
 msgid "Are you sure you want to delete this scheduled download?"
 msgstr "Weet je zeker dat je deze ingeplande download wilt verwijderen?"
 
-#: .././config.py:18915
+#: .././config.py:18951
 msgid "Please select the AVConv executable"
 msgstr "Kies het uitvoerbare AVConv-bestand"
 
-#: .././config.py:18948
+#: .././config.py:18984
 msgid "Please select the FFmpeg executable"
 msgstr "Kies het uitvoerbare FFmpeg-bestand"
 
-#: .././config.py:18981
+#: .././config.py:19017
 msgid "Please select the Youtube Stream Capture executable"
 msgstr "Kies het uitvoerbare YouTube-streamopnamebestand"
 
-#: .././config.py:19889
+#: .././config.py:19807
+msgid "Select the youtube-dl-compatible executable"
+msgstr ""
+
+#: .././config.py:19991
 msgid "Database file not loaded"
 msgstr "Geen databank geladen"
 
-#: .././config.py:19909
+#: .././config.py:20011
 msgid "Did not try to load the database file"
 msgstr "Niet geprobeerd om de databank te laden"
 
-#: .././config.py:19934
+#: .././config.py:20036
 msgid "Database file loaded"
 msgstr "Databank geladen"
 
@@ -6643,58 +6654,58 @@ msgstr "Bezig met herstarten van een onderbroken download..."
 msgid "Checking RSS feed"
 msgstr "Bezig met controleren van rss-feed"
 
-#: .././downloads.py:1741
+#: .././downloads.py:1744
 msgid "Cannot download videos in a private folder"
 msgstr "Video's kunnen niet worden gedownload naar privémappen"
 
-#: .././downloads.py:2976 .././downloads.py:5227
+#: .././downloads.py:2986 .././downloads.py:5243
 msgid "Download did not start"
 msgstr "Downloaden is niet begonnen"
 
-#: .././downloads.py:2984 .././downloads.py:5239 .././info.py:361
+#: .././downloads.py:2994 .././downloads.py:5255 .././info.py:364
 #: .././updates.py:278 .././updates.py:476
 msgid "Child process exited with non-zero code: {}"
 msgstr "Onderliggend proces is gestopt met niet-nulcode: {}"
 
-#: .././downloads.py:3098 .././downloads.py:4047
+#: .././downloads.py:3108 .././downloads.py:4060
 msgid ""
 "This video has a URL that points to a channel or a playlist, not a video"
 msgstr ""
 "Deze video bevat een url die leidt naar een kanaal of afspeellijst in plaats "
 "van een video"
 
-#: .././downloads.py:3924 .././downloads.py:3938
+#: .././downloads.py:3937 .././downloads.py:3951
 msgid "Simulated download of:"
 msgstr "Gesimuleerde download van:"
 
-#: .././downloads.py:3946
+#: .././downloads.py:3959
 msgid "Simulated download of video with unprintable characters"
 msgstr "Gesimuleerde videodownload met onleesbare tekens"
 
 #. This object creates more messages for the Output Tab and/or terminal,
 #. than downloads.VideoDownloader would do, as the output generated by
 #. Youtube Stream Capture is not easy for the user to interpret
-#: .././downloads.py:5118
+#: .././downloads.py:5134
 msgid "Tartube is starting the stream capture..."
 msgstr "Bezig met starten van streamopname..."
 
-#: .././downloads.py:5136
+#: .././downloads.py:5152
 msgid "Could not create a destination directory, capture halted"
 msgstr "De bestemming kan niet worden aangemaakt - de opname is onderbroken"
 
-#: .././downloads.py:5157 .././downloads.py:5182
+#: .././downloads.py:5173 .././downloads.py:5198
 msgid "Youtube Stream Capture script not found:"
 msgstr "Geen YouTube-streamopnamesscript aangetroffen:"
 
-#: .././downloads.py:5231
+#: .././downloads.py:5247
 msgid "Failed to capture the livestream"
 msgstr "De livestream kan niet worden opgenomen"
 
-#: .././downloads.py:5235
+#: .././downloads.py:5251
 msgid "Stream capture terminated"
 msgstr "Streamopname afgebroken"
 
-#: .././downloads.py:5245
+#: .././downloads.py:5261
 msgid ""
 "Stream captured terminated without downloading any video segments "
 "(indicating an error with the stream)"
@@ -6703,237 +6714,241 @@ msgstr ""
 "(dit duidt op een fout met de stream)"
 
 #. Capture successful
-#: .././downloads.py:5261
+#: .././downloads.py:5277
 msgid "Stream capture successful"
 msgstr "De stream is opgenomen"
 
 #. Show a confirmation message
-#: .././downloads.py:5291
+#: .././downloads.py:5307
 msgid "Merging file segments..."
 msgstr "Bezig met samenvoegen..."
 
-#: .././downloads.py:5311
+#: .././downloads.py:5327
 msgid "Segment merge did not start"
 msgstr "Het samenvoegen is niet begonnen"
 
-#: .././downloads.py:5322
+#: .././downloads.py:5338
 msgid "Segment merge completed, but path not detected"
 msgstr "Het samenvoegen is voltooid, maar het pad is niet aangetroffen"
 
-#: .././downloads.py:5332
+#: .././downloads.py:5348
 msgid "Segment merge completed, but output file not found"
 msgstr ""
 "Het samenvoegen is voltooid, maar het uitvoerbestand is niet aangetroffen"
 
-#: .././downloads.py:5353
+#: .././downloads.py:5369
 msgid "File moved to:"
 msgstr "Het bestand is verplaatst naar:"
 
-#: .././downloads.py:5358
+#: .././downloads.py:5374
 msgid "Livestream download is complete"
 msgstr "De livestream is gedownload"
 
-#: .././downloads.py:5363
+#: .././downloads.py:5379
 msgid "Failed to move output file"
 msgstr "Het uitvoerbestand kan niet worden verplaatst"
 
-#: .././downloads.py:5532
+#: .././downloads.py:5548
 #, python-brace-format
 msgid "Stream capture is frozen, trying again (restart #{0})"
 msgstr ""
 "De streamopname is vastgelopen - er wordt opnieuw begonnen (#{0} herstarten)"
 
-#: .././downloads.py:5539
+#: .././downloads.py:5555
 msgid "Stream capture is frozen, giving up"
 msgstr "De streamopname is vastgelopen - de opname wordt afgebroken"
 
-#: .././formats.py:66
+#: .././formats.py:67
 msgid "seconds"
 msgstr "seconden"
 
-#: .././formats.py:67
+#: .././formats.py:68
 msgid "minutes"
 msgstr "minuten"
 
-#: .././formats.py:68
+#: .././formats.py:69
 msgid "hours"
 msgstr "uur"
 
-#: .././formats.py:69
+#: .././formats.py:70
 msgid "days"
 msgstr "dagen"
 
-#: .././formats.py:70
+#: .././formats.py:71
 msgid "weeks"
 msgstr "weken"
 
-#: .././formats.py:71
+#: .././formats.py:72
 msgid "years"
 msgstr "jaar"
 
 #. System folder names
-#: .././formats.py:821
+#: .././formats.py:822
 msgid "All Videos"
 msgstr "Alle video's"
 
-#: .././formats.py:822
+#: .././formats.py:823
 msgid "Bookmarks"
 msgstr "Bladwijzers"
 
-#: .././formats.py:823
+#: .././formats.py:824
 msgid "Favourite Videos"
 msgstr "Favoriete video's"
 
-#: .././formats.py:824
+#: .././formats.py:825
 msgid "Livestreams"
 msgstr "Livestreams"
 
-#: .././formats.py:825
+#: .././formats.py:826
 msgid "Missing Videos"
 msgstr "Ontbrekende video's"
 
-#: .././formats.py:826
+#: .././formats.py:827
 msgid "New Videos"
 msgstr "Nieuwe video's"
 
-#: .././formats.py:827
+#: .././formats.py:828
 msgid "Recent Videos"
 msgstr "Recente video's"
 
-#: .././formats.py:828
+#: .././formats.py:829
 msgid "Waiting Videos"
 msgstr "Video's in wachtrij"
 
-#: .././formats.py:829
+#: .././formats.py:830
 msgid "Temporary Videos"
 msgstr "Tijdelijke video's"
 
-#: .././formats.py:830
+#: .././formats.py:831
 msgid "Unsorted Videos"
 msgstr "Ongesorteerde video's"
 
-#: .././formats.py:835
+#: .././formats.py:836
 msgid "Update using default youtube-dl path"
 msgstr "Bijwerken middels standaard youtube-dl-pad"
 
-#: .././formats.py:837
+#: .././formats.py:838
 msgid "Update using local youtube-dl path"
 msgstr "Bijwerken middels lokaal youtube-dl-pad"
 
-#: .././formats.py:839
+#: .././formats.py:840
+msgid "Update using custom youtube-dl path"
+msgstr ""
+
+#: .././formats.py:842
 msgid "Update using pip"
 msgstr "Bijwerken met pip"
 
-#: .././formats.py:841
+#: .././formats.py:844
 msgid "Update using pip (omit --user option)"
 msgstr "Bijwerken met pip (zonder --user)"
 
-#: .././formats.py:843
+#: .././formats.py:846
 msgid "Update using pip3"
 msgstr "Bijwerken met pip3"
 
-#: .././formats.py:845
+#: .././formats.py:848
 msgid "Update using pip3 (omit --user option)"
 msgstr "Bijwerken met pip3 (zonder --user)"
 
-#: .././formats.py:847
+#: .././formats.py:850
 msgid "Update using pip3 (recommended)"
 msgstr "Bijwerken met pip3 (aanbevolen)"
 
-#: .././formats.py:849
+#: .././formats.py:852
 msgid "Update using PyPI youtube-dl path"
 msgstr "Bijwerken middels PyPI-youtube-dl-pad"
 
-#: .././formats.py:851
+#: .././formats.py:854
 msgid "Windows 32-bit update (recommended)"
 msgstr "Windows 32-bit-update (aanbevolen)"
 
-#: .././formats.py:853
+#: .././formats.py:856
 msgid "Windows 64-bit update (recommended)"
 msgstr "Windows 64-bit-update (aanbevolen)"
 
-#: .././formats.py:855
+#: .././formats.py:858
 msgid "youtube-dl updates are disabled"
 msgstr "youtube-dl-updates zijn uitgeschakeld"
 
 #. Download operation stages
-#: .././formats.py:859
+#: .././formats.py:862
 msgid "Queued"
 msgstr "In wachtrij"
 
-#: .././formats.py:860
+#: .././formats.py:863
 msgid "Active"
 msgstr "Actief"
 
-#: .././formats.py:861
+#: .././formats.py:864
 msgid "Paused"
 msgstr "Gepauzeerd"
 
 #. (not actually used)
-#: .././formats.py:862
+#: .././formats.py:865
 msgid "Completed"
 msgstr "Afgerond"
 
 #. (not actually used)
 #. Sub-stages of the 'Error' stage
-#: .././formats.py:863 .././formats.py:877
+#: .././formats.py:866 .././formats.py:880
 msgid "Error"
 msgstr "Fout"
 
-#: .././formats.py:864
+#: .././formats.py:867
 msgid "Stalled"
 msgstr "Onderbroken"
 
 #. Sub-stages of the 'Active' stage
-#: .././formats.py:866
+#: .././formats.py:869
 msgid "Pre-processing"
 msgstr "Aan het voorverwerken"
 
-#: .././formats.py:867
+#: .././formats.py:870
 msgid "Downloading"
 msgstr "Aan het downloaden"
 
-#: .././formats.py:868
+#: .././formats.py:871
 msgid "Post-processing"
 msgstr "Aan het naverwerken"
 
-#: .././formats.py:869
+#: .././formats.py:872
 msgid "Capturing"
 msgstr "Aan het opnemen"
 
 #. Used by YTSC
-#: .././formats.py:870
+#: .././formats.py:873
 msgid "Merging"
 msgstr "Aan het samenvoegen"
 
 #. Used by YTSC
-#: .././formats.py:871
+#: .././formats.py:874
 msgid "Checking"
 msgstr "Aan het controleren"
 
 #. Sub-stages of the 'Completed' stage
-#: .././formats.py:873
+#: .././formats.py:876
 msgid "Finished"
 msgstr "Afgerond"
 
-#: .././formats.py:874
+#: .././formats.py:877
 msgid "Warning"
 msgstr "Waarschuwing"
 
-#: .././formats.py:875
+#: .././formats.py:878
 msgid "Already downloaded"
 msgstr "Reeds gedownload"
 
 #. (not actually used)
-#: .././formats.py:878
+#: .././formats.py:881
 msgid "Stopped"
 msgstr "Afgebroken"
 
-#: .././formats.py:879
+#: .././formats.py:882
 msgid "Filesize abort"
 msgstr "Bestandsgrootte na afbreken"
 
-#: .././formats.py:889
+#: .././formats.py:892
 msgid ""
 "TRANSLATOR'S NOTE: ID refers to a video's unique ID on the website, e.g. on "
 "YouTube \"CS9OO0S5w2k\""
@@ -6941,27 +6956,27 @@ msgstr ""
 "TRANSLATOR'S NOTE: ID refers to a video's unique ID on the website, e.g. on "
 "YouTube \"CS9OO0S5w2k\""
 
-#: .././formats.py:897
+#: .././formats.py:900
 msgid "Custom"
 msgstr "Aangepast"
 
-#: .././formats.py:898
+#: .././formats.py:901
 msgid "ID"
 msgstr "ID"
 
-#: .././formats.py:899
+#: .././formats.py:902
 msgid "Title"
 msgstr "Titel"
 
-#: .././formats.py:900
+#: .././formats.py:903
 msgid "Quality"
 msgstr "Kwaliteit"
 
-#: .././formats.py:901
+#: .././formats.py:904
 msgid "Autonumber"
 msgstr "Automatisch nummeren"
 
-#: .././formats.py:913
+#: .././formats.py:916
 msgid "Any format"
 msgstr "Ieder formaat"
 
@@ -6984,42 +6999,42 @@ msgstr ""
 "Bezig met starten van informatie-actie en ophalen van lijst met "
 "ondertiteling bij '{0}'"
 
-#: .././info.py:352
+#: .././info.py:355
 msgid "System process did not start"
 msgstr "Het systeemproces is niet gestart"
 
-#: .././info.py:377 .././info.py:496
+#: .././info.py:380 .././info.py:499
 msgid "Info operation finished"
 msgstr "De informatie-actie is uitgevoerd"
 
-#: .././info.py:405
+#: .././info.py:408
 msgid "Starting info operation, checking for new releases of Tartube"
 msgstr ""
 "Bezig met starten van informatie-actie en ophalen van nieuwe Tartube-uitgaven"
 
-#: .././info.py:413
+#: .././info.py:416
 msgid "Checking stable release..."
 msgstr "Bezig met controleren op stabiele uitgave..."
 
-#: .././info.py:429 .././info.py:470
+#: .././info.py:432 .././info.py:473
 msgid "Ignoring invalid version"
 msgstr "Ongeldige versie genegeerd"
 
-#: .././info.py:438 .././info.py:479
+#: .././info.py:441 .././info.py:482
 msgid "Retrieved version:"
 msgstr "Verkregen versie:"
 
-#: .././info.py:445 .././info.py:486
+#: .././info.py:448 .././info.py:489
 msgid "Connection failed"
 msgstr "Verbinding mislukt"
 
-#: .././info.py:454
+#: .././info.py:457
 msgid "Checking development release..."
 msgstr "Bezig met controleren op ontwikkelingsuitgave..."
 
 #. (The code in self.run() will spot that the child process did not
 #. start)
-#: .././info.py:546 .././updates.py:187
+#: .././info.py:549 .././updates.py:187
 msgid "Child process did not start"
 msgstr "Het onderliggende proces is niet gestart"
 
@@ -7324,6 +7339,18 @@ msgstr "Bezig met starten van bijwerkactie om te installeren/bij te werken "
 #: .././updates.py:469
 msgid "Update did not start"
 msgstr "Het bijwerken is niet gestart"
+
+#~ msgid "Installing"
+#~ msgstr "Bezig met installeren..."
+
+#~ msgid "Updating"
+#~ msgstr "Bezig met bijwerken..."
+
+#~ msgid "Fetching"
+#~ msgstr "Bezig met ophalen..."
+
+#~ msgid "Testing"
+#~ msgstr "Bezig met testen..."
 
 #~ msgid "Change"
 #~ msgstr "Wijzigen"

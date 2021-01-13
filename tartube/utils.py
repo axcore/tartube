@@ -610,7 +610,7 @@ def disk_get_free_space(path, bytes_flag=False):
         return 0
 
 
-def disk_get_total_space(path, bytes_flag=False):
+def disk_get_total_space(path=None, bytes_flag=False):
 
     """Can be called by anything.
 
@@ -626,21 +626,30 @@ def disk_get_total_space(path, bytes_flag=False):
 
     Returns:
 
-        The total size in MB (or in bytes, if the flag is specified)
+        The total size in MB (or in bytes, if the flag is specified). If no
+        path or an invalid path is specified, returns 0
 
     """
 
-    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
-        os.path.realpath(path),
-    )
+    if path is None \
+    or (
+        not os.path.isdir(path) and not os.path.isfile(path)
+    ):
+        return 0
 
-    if not bytes_flag:
-        return int(total_bytes / 1000000)
     else:
-        return total_bytes
+
+        total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+            os.path.realpath(path),
+        )
+
+        if not bytes_flag:
+            return int(total_bytes / 1000000)
+        else:
+            return total_bytes
 
 
-def disk_get_used_space(path, bytes_flag=False):
+def disk_get_used_space(path=None, bytes_flag=False):
 
     """Can be called by anything.
 
@@ -657,18 +666,27 @@ def disk_get_used_space(path, bytes_flag=False):
 
     Returns:
 
-        The used space in MB (or in bytes, if the flag is specified)
+        The used space in MB (or in bytes, if the flag is specified). If no
+        path or an invalid path is specified, returns 0
 
     """
 
-    total_bytes, used_bytes, free_bytes = shutil.disk_usage(
-        os.path.realpath(path),
-    )
+    if path is None \
+    or (
+        not os.path.isdir(path) and not os.path.isfile(path)
+    ):
+        return 0
 
-    if not bytes_flag:
-        return int(used_bytes / 1000000)
     else:
-        return used_bytes
+
+        total_bytes, used_bytes, free_bytes = shutil.disk_usage(
+            os.path.realpath(path),
+        )
+
+        if not bytes_flag:
+            return int(used_bytes / 1000000)
+        else:
+            return used_bytes
 
 
 def extract_livestream_data(stderr):
@@ -1255,8 +1273,12 @@ divert_mode=None):
     if os.name != 'nt':
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list
-    cmd_list = [ytdl_path] + options_list + [source]
+    # Set the list. At the moment, a custom path must be preceeded by 'python3'
+    #   (Git #243)
+    if app_obj.ytdl_path_custom_flag:
+        cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
+    else:
+        cmd_list = [ytdl_path] + options_list + [source]
 
     return cmd_list
 

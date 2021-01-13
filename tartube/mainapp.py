@@ -29,6 +29,7 @@ from gi.repository import Gtk, GObject, GdkPixbuf
 # Import Python standard modules
 from gi.repository import Gio
 import datetime
+import locale
 import json
 import math
 import os
@@ -279,8 +280,8 @@ class TartubeApp(Gtk.Application):
 
         # Instance variable (IV) list - other
         # -----------------------------------
-        # Custom locale (matches one of the values in formats.LOCALE_LIST)
-        self.custom_locale = 'en_GB'
+        # Custom locale (can match one of the values in formats.LOCALE_LIST)
+        self.custom_locale = locale.getdefaultlocale()[0]
 
         # Default window sizes (in pixels)
         self.main_win_width = 1000
@@ -765,11 +766,14 @@ class TartubeApp(Gtk.Application):
         self.ytdl_path_pypi = '~/.local/bin/youtube-dl'
         # The actual path to use in the shell command during a download or
         #   update operation. Initially given the same value as
-        #   self.ytdl_path_default
-        # On MSWin, this value doesn't change. On Linux, depending on how
-        #   youtube-dl was installed, it might be '/usr/bin/youtube-dl',
-        #   '~/.local/bin/youtube-dl' or just 'youtube-dl'
+        #   self.ytdl_path_default. After configurations, its value might be
+        #   '/usr/bin/youtube-dl', '~/.local/bin/youtube-dl', just 'youtube-dl'
+        #   or a custom path specified by the user
         self.ytdl_path = None
+        # When the user has selected a custom path, this flag is set to True
+        #   (even when that path is '/usr/bin/youtube-dl' or one of the other
+        #   values listed above)
+        self.ytdl_path_custom_flag = False
         # The shell command to use during an update operation depends on how
         #   youtube-dl was installed
         # Depending on the operating system, Tartube provides some of these
@@ -2674,14 +2678,23 @@ class TartubeApp(Gtk.Application):
         ) or os.path.isfile(self.config_file_path):
             new_config_flag = self.load_config()
 
-        elif self.debug_no_dialogue_flag:
-            self.save_config()
-            new_config_flag = True
+        else:
 
-        elif not self.disable_load_save_flag:
+            # The system locale is applied in the call to self.load_config().
+            #   Since we aren't calling that now, we must apply the locale
+            #   directly
+            if self.custom_locale != formats.LOCALE_DEFAULT:
+                self.apply_locale()
 
-            # New Tartube installation
-            new_config_flag = True
+            # Now respond to the missing config file
+            if self.debug_no_dialogue_flag:
+                self.save_config()
+                new_config_flag = True
+
+            elif not self.disable_load_save_flag:
+
+                # New Tartube installation
+                new_config_flag = True
 
         if new_config_flag and not self.debug_no_dialogue_flag:
 
@@ -3158,7 +3171,7 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-169)
+            100-199: mainapp.py     (in use: 101-170)
             200-299: mainwin.py     (in use: 201-264)
             300-399: downloads.py   (in use: 301-308)
             400-499: config.py      (in use: 401-405)
@@ -3359,35 +3372,7 @@ class TartubeApp(Gtk.Application):
             self.custom_locale = json_dict['custom_locale']
 
         if self.custom_locale != formats.LOCALE_DEFAULT:
-
-            if not self.custom_locale in formats.LOCALE_LIST:
-                # Invalid; use the default value
-                self.custom_locale = formats.LOCALE_DEFAULT
-
-            else:
-
-                LOCALE = gettext.translation(
-                    'base',
-                    localedir='locale',
-                    languages=[self.custom_locale],
-                )
-                LOCALE.install()
-
-                # (Apply to this file)
-                _ = LOCALE.gettext
-                # (Apply to other files)
-                mainwin._ = _
-                config._ = _
-                downloads._ = _
-                formats._ = _
-                info._ = _
-                media._ = _
-                refresh._ = _
-                tidy._ = _
-                updates._ = _
-                # (Update download operation stages, e.g.
-                #   formats.MAIN_STAGE_QUEUED
-                formats.do_translate(True)
+            self.apply_locale()
 
         # Set IVs to their new values
         if version >= 2002075:  # v2.2.075
@@ -4052,6 +4037,22 @@ class TartubeApp(Gtk.Application):
 
             self.ytdl_fork = json_dict['ytdl_fork']
 
+        # (In version v2.3.082, these IVs were modified a little on all
+        #   systems)
+        if version < 2003082:   # v2.3.082
+
+            self.ytdl_update_dict['ytdl_update_custom_path'] \
+            = ['python3', self.ytdl_path, '-U']
+
+            self.ytdl_update_list.insert(
+                (len(self.ytdl_update_list) - 1),
+                'ytdl_update_custom_path',
+            )
+
+        else:
+
+            self.ytdl_path_custom_flag = json_dict['ytdl_path_custom_flag']
+
 
     def load_config_import_scheduled(self, version, json_dict):
 
@@ -4345,6 +4346,7 @@ class TartubeApp(Gtk.Application):
             'ytdl_bin': self.ytdl_bin,
             'ytdl_path_default': self.ytdl_path_default,
             'ytdl_path': self.ytdl_path,
+            'ytdl_path_custom_flag': self.ytdl_path_custom_flag,
             'ytdl_update_dict': self.ytdl_update_dict,
             'ytdl_update_list': self.ytdl_update_list,
             'ytdl_update_current': self.ytdl_update_current,
@@ -7083,7 +7085,10 @@ class TartubeApp(Gtk.Application):
                     self.ytdl_path_default, '-U',
                 ],
                 'ytdl_update_local_path': [
-                    'youtube-dl', '-U',
+                    self.ytdl_bin, '-U',
+                ],
+                'ytdl_update_custom_path': [
+                    'python3', self.ytdl_path, '-U',
                 ],
             }
             self.ytdl_update_list = [
@@ -7092,6 +7097,7 @@ class TartubeApp(Gtk.Application):
                 'ytdl_update_pip',
                 'ytdl_update_default_path',
                 'ytdl_update_local_path',
+                'ytdl_update_custom_path',
             ]
             self.ytdl_update_current = recommended
 
@@ -7132,7 +7138,10 @@ class TartubeApp(Gtk.Application):
                         self.ytdl_path_default, '-U',
                     ],
                     'ytdl_update_local_path': [
-                        'youtube-dl', '-U',
+                        self.ytdl_bin, '-U',
+                    ],
+                    'ytdl_update_custom_path': [
+                        'python3', self.ytdl_path, '-U',
                     ],
                     'ytdl_update_pypi_path': [
                         self.ytdl_path_pypi, '-U',
@@ -7145,6 +7154,7 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pip_omit_user',
                     'ytdl_update_default_path',
                     'ytdl_update_local_path',
+                    'ytdl_update_custom_path',
                     'ytdl_update_pypi_path',
                 ]
 
@@ -8090,6 +8100,63 @@ class TartubeApp(Gtk.Application):
             self.dl_proxy_list.append(proxy)
 
             return proxy
+
+
+    def apply_locale(self):
+
+        """Called by self.start() and .load_config().
+
+        Calls the python gettext module to apply the locale specified by
+        self.custom_locale (which may have been selected by the user, but it
+        otherwise determined by the system).
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7711 apply_locale')
+
+        # Git #245. #247, crash when the gettext.translation() call fails
+        success_flag = False
+
+        if self.custom_locale in formats.LOCALE_LIST:
+
+            try:
+
+                LOCALE = gettext.translation(
+                    'base',
+                    localedir='locale',
+                    languages=[self.custom_locale],
+                )
+                LOCALE.install()
+
+                # (Apply to this file)
+                _ = LOCALE.gettext
+                # (Apply to other files)
+                config._ = _
+                downloads._ = _
+                formats._ = _
+                info._ = _
+                mainwin._ = _
+                media._ = _
+                process._ = _
+                refresh._ = _
+                tidy._ = _
+                updates._ = _
+                utils._ = _
+                wizwin._ = _
+                # (Update download operation stages, e.g.
+                #   formats.MAIN_STAGE_QUEUED
+                formats.do_translate(True)
+
+                success_flag = True
+
+            except:
+                pass
+
+        if not success_flag:
+
+            # Locale is invalid, or Tartube does not provide translations for
+            #   it; so use the default locale instead
+            self.custom_locale = formats.LOCALE_DEFAULT
 
 
     # (Operations)
@@ -17718,6 +17785,8 @@ class TartubeApp(Gtk.Application):
             video_obj = self.main_win_obj.classic_media_dict[dbid]
             video_list.append(video_obj)
 
+            # Mark the video as not downloaded
+            video_obj.set_dl_flag(False)
             # Delete the files associated with the video
             self.delete_video_files(video_obj)
 
@@ -21568,6 +21637,17 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 20702 set_ytdl_path')
 
         self.ytdl_path = path
+
+
+    def set_ytdl_path_custom_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20703 set_ytdl_path_custom_flag')
+
+        if not flag:
+            self.ytdl_path_custom_flag = False
+        else:
+            self.ytdl_path_custom_flag = True
 
 
     def set_ytdl_update_current(self, string):

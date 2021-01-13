@@ -1,3 +1,75 @@
+v2.3.085 (13 Jan 2021)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added the Dutch translation compiled by Heimen Stoffels (thanks, Heimen!)
+    (Git #244)
+- Tartube can now display statistics about the channels and playlists in your
+    database, and about the database as a whole. These are visible in the
+    preferences window, and in the channel/playlist properties windows. If
+    matplotlib is installed on your system, Tartube can draw graphs showing
+    your download history. For help with installing matplotlib on MS Windows,
+    see the README (Git #235)
+- Added a new system folder called 'Recent videos'. It shows all videos
+    checked/downloaded during the most recent download operation. Browsing this
+    folder is perhaps more convenient than using the lists in the Progress and
+    Classic Mode tabs
+- You can specify a custom path to the youtube-dl(c) executable. This is not
+    recommended in general, but it might be useful for testing purposes
+    (Git #243)
+
+MINOR NEW FEATURES
+- Added a menu item to check for new releases of Tartube (click Help > Check
+    for updates). This function downloads simple text files from Tartube's
+    websites, and should not collect any information about you. If you're still
+    worried about privacy, don't use the feature. You can see exactly what is
+    being downloaded in the Output tab (Git #216, 234 and others)
+- The path to youtube-dl(c)'s cookie jar file can now be customised, for
+    example in Edit > General download options... > Files Cookies. If not
+    customised, Tartube creates a cookie jar file in Tartube's main data folder
+    (directory), as before (Git #240)
+- Several improvements to the Classic Mode tab. After clicking the 'Add URLs'
+    button, any duplicate URLs (which are not copied from the top half to the
+    bottom half) can optionally be deleted now. Click Edit > System
+    preferences... > Windows > Main window, and select 'In the Classic Mode
+    Tab, when adding URLs, remove duplicates rather than retaining them' (Git
+    #233)
+- The first error generated when downloading a video/channel/playlist is now
+    visible in the tooltip (in both the Progress and Classic Mode tabs). The
+    behaviour can be disabled: click Edit > System preferences... > Windows
+    > Main Window, and deselect 'Show errors/warnings in tooltips'. This is a
+    compromise for showing the full error message in the tabs, which is
+    not practical due to youtube-dl(c) limitations (Git #233)
+- In the Classic Mode Tab, after a download has finished, the name of the
+    video file is no longer cleared, in order to assist with identifying
+    failed downloads (Git #233)
+- In the Videos Tab, all status icons are now visible for all videos, even when
+    thumbnails are not drawn (Git #233)
+- In the Classic Mode Tab, added a new 'Clear downloaded' button (Git #233)
+
+MAJOR FIXES
+- Fixed the 'No translation file found for domain: base' crashes (Git #245,
+    #247)
+- Apparent fix for crashes while downloading videos from LinkedIn Video. The
+    fix has not been fully tested yet (Git #240)
+- Fixed the re-download button in the Classic Mode Tab, which was completely
+    broken
+- Fixed several problems with translations, which only became apparent after
+    someone submitted a translation file
+
+MINOR FIXES
+- In the Videos tab, when a video is marked as 'Can't D/L', right-clicking the
+    video to download it caused a crash. Fixed
+- In the Classic Mode tab, if duplicate URLs are added in the top half, then
+    both are added to the bottom half after clicking the 'Add URLs' button.
+    Fixed (Git #233)
+- In the Classic Mode tab, the 'Download all' button re-downloaded a video that
+    had already been downloaded. Fixed (Git #233)
+- It was not possible to mark multiple videos as not livestreams in a single
+    action. Fixed
+- After switching the system language in the preferences window, Tartube
+    displayed the wrong icon. Fixed
+
 v2.3.042 (24 Dec 2020)
 -------------------------------------------------------------------------------
 
@@ -59,7 +131,7 @@ MAJOR FIXES
     minor). These errors may be responsible for the reported issues, or not
 - Fixed folders that vanish when being dragged and dropped into other folders
     (MS Windows only), and fixed associated broken dialogue windows (Git #232)
-    
+
 MINOR FIXES
 - After a period of continuous operation, without checking/download videos,
     live/debut videos could change their status, but the order of videos in the
@@ -99,16 +171,16 @@ MAJOR FIXES
     (Git #209)
 - When right-clicking a channel (etc), fixed broken 'Folder Contents > All
     contents > Mark as not new', and several other similar actions (Git #206)
-- Update imported XDG code (Tartube's xdg_tartube.py file) to match the most 
+- Update imported XDG code (Tartube's xdg_tartube.py file) to match the most
     recent release of the Python XDG module; hoping to fix an installation
     error with the Debian package. The new Debian package has not been tested
     yet, so the error may not be resolved (Git #205)
-    
+
 MINOR FIXES
 - Updated imported Youtube Stream Capture code to the new release; the authors
     states that it contains some bug fixes. The new version still does not work
-    on MS Windows 
-    
+    on MS Windows
+
 v2.3.0 (1 Dec 2020)
 -------------------------------------------------------------------------------
 

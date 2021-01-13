@@ -1656,6 +1656,8 @@ class DownloadList(object):
             self.operation_classic_flag = True
 
         # Compile the list
+
+        # Scheduled downloads
         if media_data_list and isinstance(media_data_list[0], media.Scheduled):
 
             # media_data_list is a list of scheduled downloads
@@ -1708,6 +1710,7 @@ class DownloadList(object):
 
                             check_dict[name] = None
 
+        # Normal downloads
         elif not self.operation_classic_flag:
 
             # For each media data object to be downloaded, create a
@@ -1760,6 +1763,7 @@ class DownloadList(object):
             #   media data object can't be both a master and a slave)
             self.reorder_master_slave()
 
+        # Downloads from the Classic Mode tab
         else:
 
             # The download operation was launched from the Classic Mode Tab.
@@ -1796,8 +1800,14 @@ class DownloadList(object):
 
             # For each dummy media.Video object, create a
             #   downloads.DownloadItem object, and update the IVs above
+            # Don't re-download a video already marked as downloaded (if the
+            #   user actually wants to re-download a video, then
+            #   mainapp.TartubeApp.on_button_classic_redownload() has reset the
+            #   flag)
             for dummy_obj in obj_list:
-                self.create_dummy_item(dummy_obj)
+
+                if not dummy_obj.dl_flag:
+                    self.create_dummy_item(dummy_obj)
 
         # We can now merge the two DownloadItem lists
         if self.temp_item_list:
@@ -3246,6 +3256,8 @@ class VideoDownloader(object):
         if self.dl_classic_flag:
 
             media_data_obj = self.download_item_obj.media_data_obj
+
+            media_data_obj.set_dl_flag(True)
             media_data_obj.set_dummy_path(
                 os.path.abspath(os.path.join(dir_path, filename + extension)),
             )
@@ -3342,6 +3354,7 @@ class VideoDownloader(object):
         #   media.Video object
         if self.dl_classic_flag:
 
+            media_data_obj.set_dl_flag(True)
             media_data_obj.set_dummy_path(
                 os.path.abspath(os.path.join(dir_path, filename + extension)),
             )
@@ -4835,8 +4848,11 @@ class VideoDownloader(object):
 
         # Use some empty values in dl_stat_dict so that the Progress Tab
         #   doesn't show arbitrary data from the last file downloaded
-        dl_stat_dict['filename'] = ''
-        dl_stat_dict['extension'] = ''
+        # Exception: in Classic Mode, don't do that for self.ALREADY, otherwise
+        #   the filename will never be visible
+        if not self.dl_classic_flag or self.return_code != self.ALREADY:
+            dl_stat_dict['filename'] = ''
+            dl_stat_dict['extension'] = ''
         dl_stat_dict['percent'] = ''
         dl_stat_dict['eta'] = ''
         dl_stat_dict['speed'] = ''
@@ -6100,7 +6116,11 @@ class JSONFetcher(object):
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
         # Generate the system command...
-        cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_source]
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + ['--dump-json'] \
+            + [self.video_source]
+        else:
+            cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_source]
         # ...and create a new child process using that command
         self.create_child_process(cmd_list)
 
@@ -6667,7 +6687,11 @@ class MiniJSONFetcher(object):
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
         # Generate the system command...
-        cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_obj.source]
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + ['--dump-json'] \
+            + [self.video_obj.source]
+        else:
+            cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_obj.source]
         # ...and create a new child process using that command
         self.create_child_process(cmd_list)
 

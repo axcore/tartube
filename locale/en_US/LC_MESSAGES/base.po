@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 14:00+0000\n"
+"POT-Creation-Date: 2021-01-13 15:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
@@ -36,7 +36,7 @@ msgstr ""
 msgid "Enormous"
 msgstr ""
 
-#: .././mainapp.py:940
+#: .././mainapp.py:943
 msgid ""
 "Failed to convert a thumbnail from .webp to .jpg. No more conversions will "
 "be attempted until you install FFmpeg on your system, or (if FFmpeg is "
@@ -45,79 +45,79 @@ msgid ""
 "conversions"
 msgstr ""
 
-#: .././mainapp.py:2660
+#: .././mainapp.py:2663
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
 msgstr ""
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
-#: .././mainapp.py:2698
+#: .././mainapp.py:2710
 msgid "Tartube failed to start because:"
 msgstr ""
 
-#: .././mainapp.py:2706
+#: .././mainapp.py:2718
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr ""
 
-#: .././mainapp.py:2934
+#: .././mainapp.py:2946
 msgid "Because of an error, file load/save has been disabled"
 msgstr ""
 
-#: .././mainapp.py:2943
+#: .././mainapp.py:2955
 msgid "Because of the error, file load/save has been disabled"
 msgstr ""
 
-#: .././mainapp.py:3027
+#: .././mainapp.py:3039
 msgid "There is a download operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3029
+#: .././mainapp.py:3041
 msgid "There is an update operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3031
+#: .././mainapp.py:3043
 msgid "There is a refresh operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3033
+#: .././mainapp.py:3045
 msgid "There is an info operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3035
+#: .././mainapp.py:3047
 msgid "There is a tidy operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3037
+#: .././mainapp.py:3049
 msgid "There is a process operation in progress."
 msgstr ""
 
-#: .././mainapp.py:3042
+#: .././mainapp.py:3054
 msgid "Are you sure you want to quit Tartube?"
 msgstr ""
 
-#: .././mainapp.py:3247
+#: .././mainapp.py:3259
 msgid "Failed to load the Tartube config file (failed sanity check)"
 msgstr ""
 
-#: .././mainapp.py:3270
+#: .././mainapp.py:3282
 msgid "Failed to load the Tartube config file (file is locked)"
 msgstr ""
 
-#: .././mainapp.py:3300
+#: .././mainapp.py:3312
 msgid "Failed to load the Tartube config file (JSON load failure)"
 msgstr ""
 
-#: .././mainapp.py:3318
+#: .././mainapp.py:3330
 msgid "Failed to load the Tartube config file (file is invalid)"
 msgstr ""
 
-#: .././mainapp.py:3336
+#: .././mainapp.py:3348
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version)"
 msgstr ""
 
-#: .././mainapp.py:3351
+#: .././mainapp.py:3363
 msgid "Failed to load the Tartube config file (missing file type)"
 msgstr ""
 
@@ -125,571 +125,571 @@ msgstr ""
 msgid "Failed to save the Tartube config file (failed sanity check)"
 msgstr ""
 
-#: .././mainapp.py:4539
+#: .././mainapp.py:4540
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr ""
 
-#: .././mainapp.py:4541 .././mainapp.py:4581 .././mainapp.py:5917
-#: .././mainapp.py:5973 .././mainapp.py:5979
+#: .././mainapp.py:4542 .././mainapp.py:4582 .././mainapp.py:5918
+#: .././mainapp.py:5974 .././mainapp.py:5980
 msgid "File load/save has been disabled"
 msgstr ""
 
-#: .././mainapp.py:4560
+#: .././mainapp.py:4561
 msgid "Failed to save the Tartube config file (file already in use)"
 msgstr ""
 
-#: .././mainapp.py:4580
+#: .././mainapp.py:4581
 msgid "Failed to save the Tartube config file"
 msgstr ""
 
-#: .././mainapp.py:4692 .././mainapp.py:4708 .././mainapp.py:4738
+#: .././mainapp.py:4693 .././mainapp.py:4709 .././mainapp.py:4739
 msgid "Failed to load the Tartube database file"
 msgstr ""
 
-#: .././mainapp.py:4753
+#: .././mainapp.py:4754
 msgid "The Tartube database file is invalid"
 msgstr ""
 
-#: .././mainapp.py:4769
+#: .././mainapp.py:4770
 msgid "Database file can't be read by this version of Tartube"
 msgstr ""
 
-#: .././mainapp.py:5114
+#: .././mainapp.py:5115
 msgid "Tartube is applying an essential database update"
 msgstr ""
 
-#: .././mainapp.py:5116
+#: .././mainapp.py:5117
 msgid "This might take a few minutes, so please be patient"
 msgstr ""
 
-#: .././mainapp.py:5911 .././mainapp.py:5969 .././mainapp.py:5978
+#: .././mainapp.py:5912 .././mainapp.py:5970 .././mainapp.py:5979
 msgid "Failed to save the Tartube database file"
 msgstr ""
 
-#: .././mainapp.py:5914
+#: .././mainapp.py:5915
 msgid "(Could not make a backup copy of the existing file)"
 msgstr ""
 
-#: .././mainapp.py:5950
+#: .././mainapp.py:5951
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
 
-#: .././mainapp.py:5971
+#: .././mainapp.py:5972
 msgid "A backup of the previous file can be found at:"
 msgstr ""
 
-#: .././mainapp.py:6152 .././mainapp.py:6162
+#: .././mainapp.py:6153 .././mainapp.py:6163
 msgid "Database file created"
 msgstr ""
 
-#: .././mainapp.py:6556
+#: .././mainapp.py:6557
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr ""
 
-#: .././mainapp.py:6792
+#: .././mainapp.py:6793
 msgid "Database check complete, no inconsistencies found"
 msgstr ""
 
-#: .././mainapp.py:6824
+#: .././mainapp.py:6825
 msgid "Database check complete, problems found:"
 msgstr ""
 
-#: .././mainapp.py:6827
+#: .././mainapp.py:6828
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
 msgstr ""
 
-#: .././mainapp.py:7000
+#: .././mainapp.py:7001
 msgid "Database inconsistencies repaired"
 msgstr ""
 
-#: .././mainapp.py:7884 .././config.py:15990
+#: .././mainapp.py:7893 .././config.py:16026
 msgid "Please select Tartube's data folder"
 msgstr ""
 
-#: .././mainapp.py:8188
+#: .././mainapp.py:8254
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:8212 .././mainapp.py:8237
+#: .././mainapp.py:8278 .././mainapp.py:8303
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr ""
 
-#: .././mainapp.py:8240 .././mainapp.py:13900 .././mainapp.py:14016
-#: .././mainapp.py:14198 .././mainwin.py:17492
+#: .././mainapp.py:8306 .././mainapp.py:13966 .././mainapp.py:14082
+#: .././mainapp.py:14264 .././mainwin.py:17487
 msgid "Are you sure you want to continue?"
 msgstr ""
 
-#: .././mainapp.py:8327
+#: .././mainapp.py:8393
 msgid "There is nothing to check!"
 msgstr ""
 
-#: .././mainapp.py:8329
+#: .././mainapp.py:8395
 msgid "There is nothing to download!"
 msgstr ""
 
-#: .././mainapp.py:8572
+#: .././mainapp.py:8638
 msgid "Download operation complete"
 msgstr ""
 
-#: .././mainapp.py:8574
+#: .././mainapp.py:8640
 msgid "Download operation halted"
 msgstr ""
 
-#: .././mainapp.py:8578
+#: .././mainapp.py:8644
 msgid "Videos downloaded:"
 msgstr ""
 
-#: .././mainapp.py:8579
+#: .././mainapp.py:8645
 msgid "Videos checked:"
 msgstr ""
 
-#: .././mainapp.py:8582 .././mainapp.py:9183 .././mainapp.py:9677
-#: .././mainapp.py:10077
+#: .././mainapp.py:8648 .././mainapp.py:9249 .././mainapp.py:9743
+#: .././mainapp.py:10143
 msgid "Time taken:"
 msgstr ""
 
-#: .././mainapp.py:8687
+#: .././mainapp.py:8753
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:8873
+#: .././mainapp.py:8939
 msgid "Installation failed"
 msgstr ""
 
-#: .././mainapp.py:8875
+#: .././mainapp.py:8941
 msgid "Installation complete"
 msgstr ""
 
-#: .././mainapp.py:8879
+#: .././mainapp.py:8945
 msgid "Update operation failed"
 msgstr ""
 
-#: .././mainapp.py:8881
+#: .././mainapp.py:8947
 msgid "Update operation halted"
 msgstr ""
 
-#: .././mainapp.py:8883
+#: .././mainapp.py:8949
 msgid "Update operation complete"
 msgstr ""
 
-#: .././mainapp.py:8885
+#: .././mainapp.py:8951
 msgid "version:"
 msgstr ""
 
-#: .././mainapp.py:8889
+#: .././mainapp.py:8955
 msgid "(unknown)"
 msgstr ""
 
-#: .././mainapp.py:8976
+#: .././mainapp.py:9042
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:8989
+#: .././mainapp.py:9055
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
 msgstr ""
 
-#: .././mainapp.py:8993
+#: .././mainapp.py:9059
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
 msgstr ""
 
-#: .././mainapp.py:9000
+#: .././mainapp.py:9066
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr ""
 
-#: .././mainapp.py:9007
+#: .././mainapp.py:9073
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr ""
 
-#: .././mainapp.py:9014
+#: .././mainapp.py:9080
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
 msgstr ""
 
-#: .././mainapp.py:9021
+#: .././mainapp.py:9087
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr ""
 
-#: .././mainapp.py:9026
+#: .././mainapp.py:9092
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr ""
 
-#: .././mainapp.py:9178
+#: .././mainapp.py:9244
 msgid "Refresh operation complete"
 msgstr ""
 
-#: .././mainapp.py:9180
+#: .././mainapp.py:9246
 msgid "Refresh operation halted"
 msgstr ""
 
-#: .././mainapp.py:9285
+#: .././mainapp.py:9351
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
 
-#: .././mainapp.py:9401
+#: .././mainapp.py:9467
 msgid "Operation failed"
 msgstr ""
 
-#: .././mainapp.py:9403 .././downloads.py:400
+#: .././mainapp.py:9469 .././downloads.py:400
 msgid "Operation complete"
 msgstr ""
 
-#: .././mainapp.py:9405
+#: .././mainapp.py:9471
 msgid "Click the Output Tab to see the results"
 msgstr ""
 
-#: .././mainapp.py:9418
+#: .././mainapp.py:9484
 msgid "A new release is available!"
 msgstr ""
 
-#: .././mainapp.py:9420
+#: .././mainapp.py:9486
 msgid "Your installation is up to date!"
 msgstr ""
 
-#: .././mainapp.py:9422
+#: .././mainapp.py:9488
 msgid "Installed version:"
 msgstr ""
 
-#: .././mainapp.py:9427
+#: .././mainapp.py:9493
 msgid "Stable release:"
 msgstr ""
 
-#: .././mainapp.py:9432
+#: .././mainapp.py:9498
 msgid "Stable release: not found"
 msgstr ""
 
-#: .././mainapp.py:9435
+#: .././mainapp.py:9501
 msgid "Development release:"
 msgstr ""
 
-#: .././mainapp.py:9437
+#: .././mainapp.py:9503
 msgid "Development release: not found"
 msgstr ""
 
-#: .././mainapp.py:9544
+#: .././mainapp.py:9610
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
 msgstr ""
 
-#: .././mainapp.py:9672
+#: .././mainapp.py:9738
 msgid "Tidy operation complete"
 msgstr ""
 
-#: .././mainapp.py:9674
+#: .././mainapp.py:9740
 msgid "Tidy operation halted"
 msgstr ""
 
-#: .././mainapp.py:9841 .././mainwin.py:18177
+#: .././mainapp.py:9907 .././mainwin.py:18172
 msgid "Livestream has started"
 msgstr ""
 
-#: .././mainapp.py:10066
+#: .././mainapp.py:10132
 msgid "Process operation complete"
 msgstr ""
 
-#: .././mainapp.py:10068
+#: .././mainapp.py:10134
 msgid "Process operation halted"
 msgstr ""
 
-#: .././mainapp.py:10072
+#: .././mainapp.py:10138
 msgid "Files processed:"
 msgstr ""
 
-#: .././mainapp.py:10073
+#: .././mainapp.py:10139
 msgid "Errors:"
 msgstr ""
 
-#: .././mainapp.py:11333 .././mainapp.py:11508
+#: .././mainapp.py:11399 .././mainapp.py:11574
 msgid "Cannot move anything to:"
 msgstr ""
 
-#: .././mainapp.py:11335 .././mainapp.py:11510
+#: .././mainapp.py:11401 .././mainapp.py:11576
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
 msgstr ""
 
-#: .././mainapp.py:11339
+#: .././mainapp.py:11405
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
 msgstr ""
 
-#: .././mainapp.py:11353 .././mainapp.py:11528
+#: .././mainapp.py:11419 .././mainapp.py:11594
 msgid "Are you sure you want to move this channel:"
 msgstr ""
 
-#: .././mainapp.py:11355 .././mainapp.py:11530
+#: .././mainapp.py:11421 .././mainapp.py:11596
 msgid "Are you sure you want to move this playlist:"
 msgstr ""
 
-#: .././mainapp.py:11357 .././mainapp.py:11532
+#: .././mainapp.py:11423 .././mainapp.py:11598
 msgid "Are you sure you want to move this folder:"
 msgstr ""
 
-#: .././mainapp.py:11362
+#: .././mainapp.py:11428
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
 msgstr ""
 
-#: .././mainapp.py:11462
+#: .././mainapp.py:11528
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr ""
 
-#: .././mainapp.py:11475
+#: .././mainapp.py:11541
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr ""
 
-#: .././mainapp.py:11488
+#: .././mainapp.py:11554
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr ""
 
-#: .././mainapp.py:11515
+#: .././mainapp.py:11581
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
 msgstr ""
 
-#: .././mainapp.py:11534
+#: .././mainapp.py:11600
 msgid "into this folder:"
 msgstr ""
 
-#: .././mainapp.py:11538
+#: .././mainapp.py:11604
 msgid "This procedure will move all downloaded files to the new location"
 msgstr ""
 
-#: .././mainapp.py:11544
+#: .././mainapp.py:11610
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
 msgstr ""
 
-#: .././mainapp.py:12008
+#: .././mainapp.py:12074
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr ""
 
-#: .././mainapp.py:13884 .././mainapp.py:14000 .././mainapp.py:14182
+#: .././mainapp.py:13950 .././mainapp.py:14066 .././mainapp.py:14248
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:13890 .././mainapp.py:14006 .././mainapp.py:14188
+#: .././mainapp.py:13956 .././mainapp.py:14072 .././mainapp.py:14254
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:13896 .././mainapp.py:14012 .././mainapp.py:14194
+#: .././mainapp.py:13962 .././mainapp.py:14078 .././mainapp.py:14260
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr ""
 
-#: .././mainapp.py:14262 .././mainapp.py:18432 .././mainapp.py:18564
-#: .././mainapp.py:18695
+#: .././mainapp.py:14328 .././mainapp.py:18500 .././mainapp.py:18632
+#: .././mainapp.py:18763
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr ""
 
-#: .././mainapp.py:14271
+#: .././mainapp.py:14337
 #, python-brace-format
 msgid "The name '{0}' is already in use"
 msgstr ""
 
-#: .././mainapp.py:14284
+#: .././mainapp.py:14350
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr ""
 
-#: .././mainapp.py:14631
+#: .././mainapp.py:14697
 msgid "Select where to save the database export"
 msgstr ""
 
-#: .././mainapp.py:14752
+#: .././mainapp.py:14818
 msgid "There is nothing to export!"
 msgstr ""
 
-#: .././mainapp.py:14792 .././mainapp.py:14858
+#: .././mainapp.py:14858 .././mainapp.py:14924
 msgid "Failed to save the database export file:"
 msgstr ""
 
-#: .././mainapp.py:14866
+#: .././mainapp.py:14932
 msgid "Database export file saved to:"
 msgstr ""
 
-#: .././mainapp.py:14903
+#: .././mainapp.py:14969
 msgid "Select the database export"
 msgstr ""
 
-#: .././mainapp.py:14924 .././mainapp.py:14938
+#: .././mainapp.py:14990 .././mainapp.py:15004
 msgid "Failed to load the database export file"
 msgstr ""
 
-#: .././mainapp.py:14955
+#: .././mainapp.py:15021
 msgid "The database export file is invalid"
 msgstr ""
 
-#: .././mainapp.py:14966
+#: .././mainapp.py:15032
 msgid "The database export file is invalid (or empty)"
 msgstr ""
 
-#: .././mainapp.py:15010
+#: .././mainapp.py:15076
 msgid "Nothing was imported from the database export file"
 msgstr ""
 
 #. Show a confirmation
-#: .././mainapp.py:15024
+#: .././mainapp.py:15090
 msgid "Imported"
 msgstr ""
 
-#: .././mainapp.py:15025 .././mainwin.py:1287 .././config.py:888
+#: .././mainapp.py:15091 .././mainwin.py:1287 .././config.py:888
 #: .././config.py:9274 .././config.py:11492
 msgid "Videos"
 msgstr ""
 
-#: .././mainapp.py:15026 .././config.py:9307 .././config.py:11525
+#: .././mainapp.py:15092 .././config.py:9307 .././config.py:11525
 msgid "Channels"
 msgstr ""
 
-#: .././mainapp.py:15027 .././config.py:9318 .././config.py:11536
+#: .././mainapp.py:15093 .././config.py:9318 .././config.py:11536
 msgid "Playlists"
 msgstr ""
 
-#: .././mainapp.py:15028
+#: .././mainapp.py:15094
 msgid "Folders"
 msgstr ""
 
-#: .././mainapp.py:15412
+#: .././mainapp.py:15478
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
 msgstr ""
 
-#: .././mainapp.py:15937 .././mainapp.py:16319
+#: .././mainapp.py:16003 .././mainapp.py:16385
 msgid "Select where to save the options export"
 msgstr ""
 
-#: .././mainapp.py:15985 .././mainapp.py:16367
+#: .././mainapp.py:16051 .././mainapp.py:16433
 msgid "Failed to save the options export file:"
 msgstr ""
 
-#: .././mainapp.py:15993
+#: .././mainapp.py:16059
 msgid "Download options exported to to:"
 msgstr ""
 
-#: .././mainapp.py:16024 .././mainapp.py:16406
+#: .././mainapp.py:16090 .././mainapp.py:16472
 msgid "Select the options export file"
 msgstr ""
 
-#: .././mainapp.py:16043 .././mainapp.py:16425
+#: .././mainapp.py:16109 .././mainapp.py:16491
 msgid "Failed to load the options export file"
 msgstr ""
 
-#: .././mainapp.py:16060 .././mainapp.py:16442
+#: .././mainapp.py:16126 .././mainapp.py:16508
 msgid "The options export file is invalid"
 msgstr ""
 
-#: .././mainapp.py:16071 .././mainapp.py:16453
+#: .././mainapp.py:16137 .././mainapp.py:16519
 msgid "The options export file is invalid (or empty)"
 msgstr ""
 
-#: .././mainapp.py:16375
+#: .././mainapp.py:16441
 msgid "FFmpeg options exported to to:"
 msgstr ""
 
-#: .././mainapp.py:17349
+#: .././mainapp.py:17415
 msgid "Please select a destination folder"
 msgstr ""
 
 #. Prompt for confirmation
-#: .././mainapp.py:17421
+#: .././mainapp.py:17487
 msgid "Are you sure you want to clear this list?"
 msgstr ""
 
 #. Prompt for confirmation
-#: .././mainapp.py:17468
+#: .././mainapp.py:17534
 msgid "Are you sure you want to clear downloaded videos?"
 msgstr ""
 
-#: .././mainapp.py:17561 .././mainwin.py:14543
+#: .././mainapp.py:17627 .././mainwin.py:14538
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr ""
 
-#: .././mainapp.py:17678
+#: .././mainapp.py:17744
 msgid "No video(s) have been downloaded"
 msgstr ""
 
 #. Prompt for confirmation
-#: .././mainapp.py:17774
+#: .././mainapp.py:17842
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr ""
 
-#: .././mainapp.py:18423
+#: .././mainapp.py:18491
 msgid "You must give the channel a name"
 msgstr ""
 
-#: .././mainapp.py:18441 .././mainapp.py:18704
+#: .././mainapp.py:18509 .././mainapp.py:18772
 msgid "You must enter a valid URL"
 msgstr ""
 
-#: .././mainapp.py:18556
+#: .././mainapp.py:18624
 msgid "You must give the folder a name"
 msgstr ""
 
-#: .././mainapp.py:18686
+#: .././mainapp.py:18754
 msgid "You must give the playlist a name"
 msgstr ""
 
-#: .././mainapp.py:18841
+#: .././mainapp.py:18909
 msgid "The following videos are duplicates:"
 msgstr ""
 
-#: .././mainapp.py:18905
+#: .././mainapp.py:18973
 msgid "There were no livestream alerts to cancel"
 msgstr ""
 
-#: .././mainapp.py:18907
+#: .././mainapp.py:18975
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr "Livestream alerts for 1 video were canceled"
 
-#: .././mainapp.py:18910
+#: .././mainapp.py:18978
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr "Livestream alerts for {0} videos were canceled"
 
-#: .././mainapp.py:19280
+#: .././mainapp.py:19348
 msgid "All Tartube data has been saved"
 msgstr ""
 
-#: .././mainapp.py:19310
+#: .././mainapp.py:19378
 msgid "Database saved"
 msgstr ""
 
-#: .././mainapp.py:19565 .././mainwin.py:13495
+#: .././mainapp.py:19633 .././mainwin.py:13490
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -698,39 +698,39 @@ msgstr ""
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:19605
+#: .././mainapp.py:19673
 msgid "Cannot update existing livestreams because"
 msgstr ""
 
-#: .././mainapp.py:19607
+#: .././mainapp.py:19675
 msgid "there is another operation running"
 msgstr ""
 
-#: .././mainapp.py:19609
+#: .././mainapp.py:19677
 msgid "they are currently being updated"
 msgstr ""
 
-#: .././mainapp.py:19611
+#: .././mainapp.py:19679
 msgid "one or more configuration windows are open"
 msgstr ""
 
-#: .././mainapp.py:19613
+#: .././mainapp.py:19681
 msgid "there are no livestreams to update"
 msgstr ""
 
-#: .././mainapp.py:19687
+#: .././mainapp.py:19755
 msgid "There is already a channel with that name"
 msgstr ""
 
-#: .././mainapp.py:19689
+#: .././mainapp.py:19757
 msgid "There is already a playlist with that name"
 msgstr ""
 
-#: .././mainapp.py:19691
+#: .././mainapp.py:19759
 msgid "There is already a folder with that name"
 msgstr ""
 
-#: .././mainapp.py:19694
+#: .././mainapp.py:19762
 msgid "(so please choose a different name)"
 msgstr ""
 
@@ -764,7 +764,7 @@ msgid "_Close to tray"
 msgstr ""
 
 #. Quit
-#: .././mainwin.py:985 .././mainwin.py:22858
+#: .././mainwin.py:985 .././mainwin.py:22853
 msgid "_Quit"
 msgstr ""
 
@@ -845,12 +845,12 @@ msgid "_Operations"
 msgstr ""
 
 #. Check all
-#: .././mainwin.py:1122 .././mainwin.py:22829
+#: .././mainwin.py:1122 .././mainwin.py:22824
 msgid "_Check all"
 msgstr ""
 
 #. Download all
-#: .././mainwin.py:1128 .././mainwin.py:22836
+#: .././mainwin.py:1128 .././mainwin.py:22831
 msgid "_Download all"
 msgstr ""
 
@@ -878,7 +878,7 @@ msgstr ""
 msgid "Tidy up _files..."
 msgstr ""
 
-#: .././mainwin.py:1188 .././mainwin.py:22847
+#: .././mainwin.py:1188 .././mainwin.py:22842
 msgid "_Stop current operation"
 msgstr ""
 
@@ -953,7 +953,7 @@ msgid "Check"
 msgstr ""
 
 #: .././mainwin.py:1383 .././mainwin.py:1632 .././mainwin.py:3629
-#: .././mainwin.py:3816
+#: .././mainwin.py:3811
 msgid "Check all videos, channels, playlists and folders"
 msgstr ""
 
@@ -963,15 +963,15 @@ msgstr ""
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. Link not clickable
-#: .././mainwin.py:1393 .././mainwin.py:19379 .././mainwin.py:19384
-#: .././mainwin.py:19392 .././mainwin.py:19641 .././mainwin.py:19653
-#: .././mainwin.py:20388 .././mainwin.py:21735 .././mainwin.py:21761
+#: .././mainwin.py:1393 .././mainwin.py:19374 .././mainwin.py:19379
+#: .././mainwin.py:19387 .././mainwin.py:19636 .././mainwin.py:19648
+#: .././mainwin.py:20383 .././mainwin.py:21730 .././mainwin.py:21756
 #: .././config.py:12481
 msgid "Download"
 msgstr ""
 
 #: .././mainwin.py:1404 .././mainwin.py:1640 .././mainwin.py:3637
-#: .././mainwin.py:3822
+#: .././mainwin.py:3817
 msgid "Download all videos, channels, playlists and folders"
 msgstr ""
 
@@ -1036,7 +1036,7 @@ msgstr ""
 msgid "_Errors / Warnings"
 msgstr ""
 
-#: .././mainwin.py:1630 .././mainwin.py:3627 .././mainwin.py:3813
+#: .././mainwin.py:1630 .././mainwin.py:3627 .././mainwin.py:3808
 msgid "Check all"
 msgstr ""
 
@@ -1085,7 +1085,7 @@ msgstr ""
 msgid "Scroll down"
 msgstr ""
 
-#: .././mainwin.py:1856 .././mainwin.py:3997
+#: .././mainwin.py:1856 .././mainwin.py:3992
 msgid "Show more settings"
 msgstr ""
 
@@ -1097,8 +1097,8 @@ msgstr ""
 msgid "Upload time"
 msgstr ""
 
-#: .././mainwin.py:1876 .././mainwin.py:25128 .././config.py:7138
-#: .././config.py:12481 .././config.py:14366 .././config.py:14633
+#: .././mainwin.py:1876 .././mainwin.py:25123 .././config.py:7138
+#: .././config.py:12481 .././config.py:14402 .././config.py:14669
 msgid "Name"
 msgstr ""
 
@@ -1272,15 +1272,15 @@ msgstr ""
 msgid "Format:"
 msgstr ""
 
-#: .././mainwin.py:2591 .././config.py:14366
+#: .././mainwin.py:2591 .././config.py:14402
 msgid "Default"
 msgstr ""
 
-#: .././mainwin.py:2591 .././mainwin.py:16153
+#: .././mainwin.py:2591 .././mainwin.py:16148
 msgid "Video:"
 msgstr ""
 
-#: .././mainwin.py:2595 .././mainwin.py:16153
+#: .././mainwin.py:2595 .././mainwin.py:16148
 msgid "Audio:"
 msgstr ""
 
@@ -1400,680 +1400,684 @@ msgstr ""
 msgid "FFmpeg Processing..."
 msgstr ""
 
-#: .././mainwin.py:3789
-msgid "Installing"
+#: .././mainwin.py:3790
+msgid "Installing FFmpeg"
 msgstr ""
 
 #: .././mainwin.py:3792
-msgid "Updating"
+msgid "Updating downloader"
 msgstr ""
 
-#: .././mainwin.py:3795 .././mainwin.py:3798
-msgid "Fetching"
+#: .././mainwin.py:3794
+msgid "Fetching formats"
 msgstr ""
 
-#: .././mainwin.py:3801
-msgid "Testing"
+#: .././mainwin.py:3796
+msgid "Fetching subtitles"
 msgstr ""
 
-#: .././mainwin.py:3804
+#: .././mainwin.py:3798
+msgid "Testing downloader"
+msgstr ""
+
+#: .././mainwin.py:3800
 msgid "Contacting website"
 msgstr ""
 
-#: .././mainwin.py:4026
+#: .././mainwin.py:4021
 msgid "Show fewer settings"
 msgstr ""
 
-#: .././mainwin.py:4365
+#: .././mainwin.py:4360
 msgid "_Check channel"
 msgstr ""
 
-#: .././mainwin.py:4367
+#: .././mainwin.py:4362
 msgid "_Check playlist"
 msgstr ""
 
-#: .././mainwin.py:4369
+#: .././mainwin.py:4364
 msgid "_Check folder"
 msgstr ""
 
-#: .././mainwin.py:4389
+#: .././mainwin.py:4384
 msgid "_Download channel"
 msgstr ""
 
-#: .././mainwin.py:4391
+#: .././mainwin.py:4386
 msgid "_Download playlist"
 msgstr ""
 
-#: .././mainwin.py:4393
+#: .././mainwin.py:4388
 msgid "_Download folder"
 msgstr ""
 
-#: .././mainwin.py:4414
+#: .././mainwin.py:4409
 msgid "C_ustom download channel"
 msgstr ""
 
-#: .././mainwin.py:4416
+#: .././mainwin.py:4411
 msgid "C_ustom download playlist"
 msgstr ""
 
-#: .././mainwin.py:4418
+#: .././mainwin.py:4413
 msgid "C_ustom download folder"
 msgstr ""
 
-#: .././mainwin.py:4467
+#: .././mainwin.py:4462
 msgid "_Empty folder"
 msgstr ""
 
-#: .././mainwin.py:4479
+#: .././mainwin.py:4474
 msgid "_All contents"
 msgstr ""
 
-#: .././mainwin.py:4497
+#: .././mainwin.py:4492
 msgid "_Remove videos"
 msgstr ""
 
-#: .././mainwin.py:4509
+#: .././mainwin.py:4504
 msgid "_Just folder videos"
 msgstr ""
 
-#: .././mainwin.py:4515
+#: .././mainwin.py:4510
 msgid "Channel co_ntents"
 msgstr ""
 
-#: .././mainwin.py:4517
+#: .././mainwin.py:4512
 msgid "Playlist co_ntents"
 msgstr ""
 
-#: .././mainwin.py:4519
+#: .././mainwin.py:4514
 msgid "Folder co_ntents"
 msgstr ""
 
-#: .././mainwin.py:4531
+#: .././mainwin.py:4526
 msgid "_Move to top level"
 msgstr ""
 
-#: .././mainwin.py:4548
+#: .././mainwin.py:4543
 msgid "_Convert to playlist"
 msgstr ""
 
-#: .././mainwin.py:4550
+#: .././mainwin.py:4545
 msgid "_Convert to channel"
 msgstr ""
 
-#: .././mainwin.py:4572
+#: .././mainwin.py:4567
 msgid "_Hide folder"
 msgstr ""
 
-#: .././mainwin.py:4582
+#: .././mainwin.py:4577
 msgid "_Rename channel..."
 msgstr ""
 
-#: .././mainwin.py:4584
+#: .././mainwin.py:4579
 msgid "_Rename playlist..."
 msgstr ""
 
-#: .././mainwin.py:4586
+#: .././mainwin.py:4581
 msgid "_Rename folder..."
 msgstr ""
 
-#: .././mainwin.py:4603
+#: .././mainwin.py:4598
 msgid "Set _nickname..."
 msgstr ""
 
-#: .././mainwin.py:4618
+#: .././mainwin.py:4613
 msgid "Set _URL..."
 msgstr ""
 
-#: .././mainwin.py:4630
+#: .././mainwin.py:4625
 msgid "Set _download destination..."
 msgstr ""
 
-#: .././mainwin.py:4646
+#: .././mainwin.py:4641
 msgid "_Export channel..."
 msgstr ""
 
-#: .././mainwin.py:4648
+#: .././mainwin.py:4643
 msgid "_Export playlist..."
 msgstr ""
 
-#: .././mainwin.py:4650
+#: .././mainwin.py:4645
 msgid "_Export folder..."
 msgstr ""
 
-#: .././mainwin.py:4663
+#: .././mainwin.py:4658
 msgid "Re_fresh channel"
 msgstr ""
 
-#: .././mainwin.py:4665
+#: .././mainwin.py:4660
 msgid "Re_fresh playlist"
 msgstr ""
 
-#: .././mainwin.py:4667
+#: .././mainwin.py:4662
 msgid "Re_fresh folder"
 msgstr ""
 
-#: .././mainwin.py:4684
+#: .././mainwin.py:4679
 msgid "_Tidy up channel"
 msgstr ""
 
-#: .././mainwin.py:4686
+#: .././mainwin.py:4681
 msgid "_Tidy up playlist"
 msgstr ""
 
-#: .././mainwin.py:4688
+#: .././mainwin.py:4683
 msgid "_Tidy up folder"
 msgstr ""
 
-#: .././mainwin.py:4705 .././mainwin.py:5195 .././mainwin.py:6827
+#: .././mainwin.py:4700 .././mainwin.py:5190 .././mainwin.py:6822
 msgid "Add to _Classic Mode tab"
 msgstr ""
 
-#: .././mainwin.py:4719
+#: .././mainwin.py:4714
 msgid "Channel _actions"
 msgstr ""
 
-#: .././mainwin.py:4721
+#: .././mainwin.py:4716
 msgid "Playlist _actions"
 msgstr ""
 
-#: .././mainwin.py:4723
+#: .././mainwin.py:4718
 msgid "Folder _actions"
 msgstr ""
 
-#: .././mainwin.py:4743 .././mainwin.py:5372
+#: .././mainwin.py:4738 .././mainwin.py:5367
 msgid "_Apply download options..."
 msgstr ""
 
-#: .././mainwin.py:4761 .././mainwin.py:5386
+#: .././mainwin.py:4756 .././mainwin.py:5381
 msgid "_Remove download options"
 msgstr ""
 
-#: .././mainwin.py:4777 .././mainwin.py:5398
+#: .././mainwin.py:4772 .././mainwin.py:5393
 msgid "_Edit download options..."
 msgstr ""
 
-#: .././mainwin.py:4793
+#: .././mainwin.py:4788
 msgid "Add to s_cheduled download..."
 msgstr ""
 
-#: .././mainwin.py:4803
+#: .././mainwin.py:4798
 msgid "_Show system command..."
 msgstr ""
 
-#: .././mainwin.py:4816
+#: .././mainwin.py:4811
 msgid "_Disable checking/downloading"
 msgstr ""
 
-#: .././mainwin.py:4828
+#: .././mainwin.py:4823
 msgid "_Just disable downloading"
 msgstr ""
 
-#: .././mainwin.py:4853 .././mainwin.py:5457
+#: .././mainwin.py:4848 .././mainwin.py:5452
 msgid "D_ownloads"
 msgstr ""
 
-#: .././mainwin.py:4863
+#: .././mainwin.py:4858
 msgid "Channel _properties..."
 msgstr ""
 
-#: .././mainwin.py:4865
+#: .././mainwin.py:4860
 msgid "Playlist _properties..."
 msgstr ""
 
-#: .././mainwin.py:4867
+#: .././mainwin.py:4862
 msgid "Folder _properties..."
 msgstr ""
 
-#: .././mainwin.py:4883
+#: .././mainwin.py:4878
 msgid "_Default location"
 msgstr ""
 
-#: .././mainwin.py:4896
+#: .././mainwin.py:4891
 msgid "_Actual location"
 msgstr ""
 
-#: .././mainwin.py:4908
+#: .././mainwin.py:4903
 msgid "_Show"
 msgstr ""
 
-#: .././mainwin.py:4917
+#: .././mainwin.py:4912
 msgid "D_elete channel"
 msgstr ""
 
-#: .././mainwin.py:4919
+#: .././mainwin.py:4914
 msgid "D_elete playlist"
 msgstr ""
 
-#: .././mainwin.py:4921
+#: .././mainwin.py:4916
 msgid "D_elete folder"
 msgstr ""
 
-#: .././mainwin.py:5012
+#: .././mainwin.py:5007
 msgid "_Check video"
 msgstr ""
 
-#: .././mainwin.py:5034
+#: .././mainwin.py:5029
 msgid "_Download video"
 msgstr ""
 
-#: .././mainwin.py:5056
+#: .././mainwin.py:5051
 msgid "Re-_download this video"
 msgstr ""
 
-#: .././mainwin.py:5071
+#: .././mainwin.py:5066
 msgid "C_ustom download video"
 msgstr ""
 
-#: .././mainwin.py:5092 .././mainwin.py:5335
+#: .././mainwin.py:5087 .././mainwin.py:5330
 msgid "Download and _watch"
 msgstr ""
 
-#: .././mainwin.py:5111 .././mainwin.py:6739
+#: .././mainwin.py:5106 .././mainwin.py:6734
 msgid "Watch in _player"
 msgstr ""
 
-#: .././mainwin.py:5126 .././mainwin.py:5137 .././mainwin.py:6751
-#: .././mainwin.py:6769
+#: .././mainwin.py:5121 .././mainwin.py:5132 .././mainwin.py:6746
+#: .././mainwin.py:6764
 msgid "Watch on _website"
 msgstr ""
 
-#: .././mainwin.py:5151 .././mainwin.py:6783
+#: .././mainwin.py:5146 .././mainwin.py:6778
 msgid "_YouTube"
 msgstr ""
 
-#: .././mainwin.py:5161 .././mainwin.py:6793
+#: .././mainwin.py:5156 .././mainwin.py:6788
 msgid "_HookTube"
 msgstr ""
 
-#: .././mainwin.py:5171 .././mainwin.py:6803
+#: .././mainwin.py:5166 .././mainwin.py:6798
 msgid "_Invidious"
 msgstr ""
 
-#: .././mainwin.py:5181 .././mainwin.py:6813
+#: .././mainwin.py:5176 .././mainwin.py:6808
 msgid "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
 msgstr ""
 
-#: .././mainwin.py:5186 .././mainwin.py:6818
+#: .././mainwin.py:5181 .././mainwin.py:6813
 msgid "W_atch on"
 msgstr ""
 
-#: .././mainwin.py:5216
+#: .././mainwin.py:5211
 msgid "Auto _notify"
 msgstr ""
 
-#: .././mainwin.py:5232
+#: .././mainwin.py:5227
 msgid "Auto _sound alarm"
 msgstr ""
 
-#: .././mainwin.py:5247
+#: .././mainwin.py:5242
 msgid "Auto _open"
 msgstr ""
 
-#: .././mainwin.py:5260
+#: .././mainwin.py:5255
 msgid "_Download on start"
 msgstr ""
 
-#: .././mainwin.py:5275
+#: .././mainwin.py:5270
 msgid "Download on _stop"
 msgstr ""
 
-#: .././mainwin.py:5293
+#: .././mainwin.py:5288
 msgid "Not a _livestream"
 msgstr ""
 
-#: .././mainwin.py:5303 .././config.py:8310
+#: .././mainwin.py:5298 .././config.py:8310
 msgid "_Livestream"
 msgstr ""
 
-#: .././mainwin.py:5314 .././mainwin.py:6856
+#: .././mainwin.py:5309 .././mainwin.py:6851
 msgid "_Mark for download"
 msgstr ""
 
-#: .././mainwin.py:5325 .././mainwin.py:6868
+#: .././mainwin.py:5320 .././mainwin.py:6863
 msgid "_Download"
 msgstr ""
 
-#: .././mainwin.py:5345 .././mainwin.py:6889
+#: .././mainwin.py:5340 .././mainwin.py:6884
 msgid "_Temporary"
 msgstr ""
 
-#: .././mainwin.py:5414
+#: .././mainwin.py:5409
 msgid "Show system _command"
 msgstr ""
 
-#: .././mainwin.py:5424
+#: .././mainwin.py:5419
 msgid "_Test system command"
 msgstr ""
 
-#: .././mainwin.py:5439
+#: .././mainwin.py:5434
 msgid "_Disable downloads"
 msgstr ""
 
-#: .././mainwin.py:5465 .././mainwin.py:6904
+#: .././mainwin.py:5460 .././mainwin.py:6899
 msgid "_Process with FFmpeg..."
 msgstr ""
 
-#: .././mainwin.py:5484
+#: .././mainwin.py:5479
 msgid "Video is _archived"
 msgstr ""
 
-#: .././mainwin.py:5497
+#: .././mainwin.py:5492
 msgid "Video is _bookmarked"
 msgstr ""
 
-#: .././mainwin.py:5508
+#: .././mainwin.py:5503
 msgid "Video is _favourite"
 msgstr ""
 
-#: .././mainwin.py:5519
+#: .././mainwin.py:5514
 msgid "Video is _missing"
 msgstr ""
 
-#: .././mainwin.py:5535
+#: .././mainwin.py:5530
 msgid "Video is _new"
 msgstr ""
 
-#: .././mainwin.py:5548
+#: .././mainwin.py:5543
 msgid "Video is in _waiting list"
 msgstr ""
 
-#: .././mainwin.py:5559
+#: .././mainwin.py:5554
 msgid "_Mark video"
 msgstr ""
 
-#: .././mainwin.py:5570
+#: .././mainwin.py:5565
 msgid "_Location"
 msgstr ""
 
-#: .././mainwin.py:5580
+#: .././mainwin.py:5575
 msgid "_Properties..."
 msgstr ""
 
-#: .././mainwin.py:5592
+#: .././mainwin.py:5587
 msgid "_Show video"
 msgstr ""
 
-#: .././mainwin.py:5601
+#: .././mainwin.py:5596
 msgid "Available _formats"
 msgstr ""
 
-#: .././mainwin.py:5611
+#: .././mainwin.py:5606
 msgid "Available _subtitles"
 msgstr ""
 
-#: .././mainwin.py:5621
+#: .././mainwin.py:5616
 msgid "_Fetch"
 msgstr ""
 
 #. Delete video
-#: .././mainwin.py:5632
+#: .././mainwin.py:5627
 msgid "D_elete video"
 msgstr ""
 
 #. Check/download videos
-#: .././mainwin.py:5721
+#: .././mainwin.py:5716
 msgid "_Check videos"
 msgstr ""
 
-#: .././mainwin.py:5740
+#: .././mainwin.py:5735
 msgid "_Download videos"
 msgstr ""
 
-#: .././mainwin.py:5760
+#: .././mainwin.py:5755
 msgid "C_ustom download videos"
 msgstr ""
 
-#: .././mainwin.py:5794
+#: .././mainwin.py:5789
 msgid "_Archived"
 msgstr ""
 
-#: .././mainwin.py:5807
+#: .././mainwin.py:5802
 msgid "Not a_rchived"
 msgstr ""
 
-#: .././mainwin.py:5823
+#: .././mainwin.py:5818
 msgid "_Bookmarked"
 msgstr ""
 
-#: .././mainwin.py:5836
+#: .././mainwin.py:5831
 msgid "Not b_ookmarked"
 msgstr ""
 
-#: .././mainwin.py:5852
+#: .././mainwin.py:5847
 msgid "_Favourite"
 msgstr "_Favorite"
 
-#: .././mainwin.py:5865
+#: .././mainwin.py:5860
 msgid "Not fa_vourite"
 msgstr "Not fa_vorite"
 
-#: .././mainwin.py:5881
+#: .././mainwin.py:5876
 msgid "_Missing"
 msgstr ""
 
-#: .././mainwin.py:5894
+#: .././mainwin.py:5889
 msgid "Not m_issing"
 msgstr ""
 
-#: .././mainwin.py:5910
+#: .././mainwin.py:5905
 msgid "_New"
 msgstr ""
 
-#: .././mainwin.py:5923
+#: .././mainwin.py:5918
 msgid "Not n_ew"
 msgstr ""
 
-#: .././mainwin.py:5939
+#: .././mainwin.py:5934
 msgid "In _waiting list"
 msgstr ""
 
-#: .././mainwin.py:5952
+#: .././mainwin.py:5947
 msgid "Not in w_aiting list"
 msgstr ""
 
-#: .././mainwin.py:5965
+#: .././mainwin.py:5960
 msgid "_Mark videos"
 msgstr ""
 
-#: .././mainwin.py:5974
+#: .././mainwin.py:5969
 msgid "Show p_roperties..."
 msgstr ""
 
 #. Delete videos
-#: .././mainwin.py:5989
+#: .././mainwin.py:5984
 msgid "D_elete videos"
 msgstr ""
 
 #. Stop check/download
-#: .././mainwin.py:6054
+#: .././mainwin.py:6049
 msgid "_Stop now"
 msgstr ""
 
-#: .././mainwin.py:6068
+#: .././mainwin.py:6063
 msgid "Stop after this _video"
 msgstr ""
 
-#: .././mainwin.py:6083
+#: .././mainwin.py:6078
 msgid "Stop after these v_ideos"
 msgstr ""
 
-#: .././mainwin.py:6098
+#: .././mainwin.py:6093
 msgid "Download _next"
 msgstr ""
 
-#: .././mainwin.py:6110
+#: .././mainwin.py:6105
 msgid "Download _last"
 msgstr ""
 
-#: .././mainwin.py:6133
+#: .././mainwin.py:6128
 msgid "Watch on _YouTube"
 msgstr ""
 
-#: .././mainwin.py:6143
+#: .././mainwin.py:6138
 msgid "Watch on _HookTube"
 msgstr ""
 
-#: .././mainwin.py:6153
+#: .././mainwin.py:6148
 msgid "Watch on _Invidious"
 msgstr ""
 
-#: .././mainwin.py:6165
+#: .././mainwin.py:6160
 msgid "Watch on _Website"
 msgstr ""
 
-#: .././mainwin.py:6264
+#: .././mainwin.py:6259
 msgid "_Delete video(s)"
 msgstr ""
 
-#: .././mainwin.py:6296
+#: .././mainwin.py:6291
 msgid "_Enable automatic copy/paste"
 msgstr ""
 
-#: .././mainwin.py:6308
+#: .././mainwin.py:6303
 msgid "_Remember URLs"
 msgstr ""
 
-#: .././mainwin.py:6323
+#: .././mainwin.py:6318
 msgid "_Set download options"
 msgstr ""
 
-#: .././mainwin.py:6334
+#: .././mainwin.py:6329
 msgid "Use _default download options"
 msgstr ""
 
-#: .././mainwin.py:6349
+#: .././mainwin.py:6344
 msgid "_Edit download options"
 msgstr ""
 
-#: .././mainwin.py:6363
+#: .././mainwin.py:6358
 msgid "Enable _custom downloads"
 msgstr ""
 
-#: .././mainwin.py:6376
+#: .././mainwin.py:6371
 msgid "Custom downloads _preferences..."
 msgstr ""
 
-#: .././mainwin.py:6391
+#: .././mainwin.py:6386
 msgid "_Update"
 msgstr ""
 
-#: .././mainwin.py:6444
+#: .././mainwin.py:6439
 msgid "Copy file _path"
 msgstr ""
 
 #. Copy URL
-#: .././mainwin.py:6456
+#: .././mainwin.py:6451
 msgid "Copy _URL"
 msgstr ""
 
-#: .././mainwin.py:6468
+#: .././mainwin.py:6463
 msgid "Copy system _command"
 msgstr ""
 
-#: .././mainwin.py:6484
+#: .././mainwin.py:6479
 msgid "_Open destination(s)"
 msgstr ""
 
-#: .././mainwin.py:6525
+#: .././mainwin.py:6520
 msgid "Mark as _archived"
 msgstr ""
 
-#: .././mainwin.py:6536
+#: .././mainwin.py:6531
 msgid "Mark as not a_rchived"
 msgstr ""
 
-#: .././mainwin.py:6550
+#: .././mainwin.py:6545
 msgid "Mark as _bookmarked"
 msgstr ""
 
-#: .././mainwin.py:6562
+#: .././mainwin.py:6557
 msgid "Mark as not b_ookmarked"
 msgstr ""
 
-#: .././mainwin.py:6575
+#: .././mainwin.py:6570
 msgid "Mark as _favourite"
 msgstr "Mark as _favorite"
 
-#: .././mainwin.py:6588
+#: .././mainwin.py:6583
 msgid "Mark as not fa_vourite"
 msgstr "Mark as not fa_vorite"
 
-#: .././mainwin.py:6602
+#: .././mainwin.py:6597
 msgid "Mark as _missing"
 msgstr ""
 
-#: .././mainwin.py:6615
+#: .././mainwin.py:6610
 msgid "Mark as not m_issing"
 msgstr ""
 
-#: .././mainwin.py:6632
+#: .././mainwin.py:6627
 msgid "Mark as _new"
 msgstr ""
 
-#: .././mainwin.py:6644
+#: .././mainwin.py:6639
 msgid "Mark as not n_ew"
 msgstr ""
 
-#: .././mainwin.py:6658
+#: .././mainwin.py:6653
 msgid "Mark as in _waiting list"
 msgstr ""
 
-#: .././mainwin.py:6670
+#: .././mainwin.py:6665
 msgid "Mark as not in wai_ting list"
 msgstr ""
 
-#: .././mainwin.py:6720
+#: .././mainwin.py:6715
 msgid "D_ownload and watch"
 msgstr ""
 
-#: .././mainwin.py:6843
+#: .././mainwin.py:6838
 msgid "Mark as _not livestreams"
 msgstr ""
 
-#: .././mainwin.py:6878
+#: .././mainwin.py:6873
 msgid "_Download and watch"
 msgstr ""
 
-#: .././mainwin.py:7705
+#: .././mainwin.py:7700
 msgid ""
 "TRANSLATOR'S NOTE: V = number of videos B = (number of videos) bookmarked D "
 "= downloaded F = favourite L = live/livestream M = missing N = new W = in "
 "waiting list E = (number of) errors W = warnings"
 msgstr ""
 
-#: .././mainwin.py:7712
+#: .././mainwin.py:7707
 msgid "V:"
 msgstr ""
 
-#: .././mainwin.py:7713
+#: .././mainwin.py:7708
 msgid "B:"
 msgstr ""
 
-#: .././mainwin.py:7714
+#: .././mainwin.py:7709
 msgid "D:"
 msgstr ""
 
-#: .././mainwin.py:7715
+#: .././mainwin.py:7710
 msgid "F:"
 msgstr ""
 
-#: .././mainwin.py:7716
+#: .././mainwin.py:7711
 msgid "L:"
 msgstr ""
 
-#: .././mainwin.py:7717
+#: .././mainwin.py:7712
 msgid "M:"
 msgstr ""
 
-#: .././mainwin.py:7718
+#: .././mainwin.py:7713
 msgid "N:"
 msgstr ""
 
-#: .././mainwin.py:7719 .././mainwin.py:7730
+#: .././mainwin.py:7714 .././mainwin.py:7725
 msgid "W:"
 msgstr ""
 
-#: .././mainwin.py:7729
+#: .././mainwin.py:7724
 msgid "E:"
 msgstr ""
 
@@ -2081,166 +2085,166 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:9715 .././mainwin.py:10550 .././mainwin.py:19747
-#: .././mainwin.py:19751 .././mainwin.py:20331 .././mainwin.py:21889
-#: .././mainwin.py:21893 .././mainwin.py:22135
+#: .././mainwin.py:9710 .././mainwin.py:10545 .././mainwin.py:19742
+#: .././mainwin.py:19746 .././mainwin.py:20326 .././mainwin.py:21884
+#: .././mainwin.py:21888 .././mainwin.py:22130
 msgid "Waiting"
 msgstr ""
 
-#: .././mainwin.py:11193
+#: .././mainwin.py:11188
 msgid ""
 "TRANSLATOR'S NOTE: Thread means a computer processor thread. If you're not "
 "sure how to translate it, just use 'Page #', as in Page #1, Page #2, etc"
 msgstr ""
 
-#: .././mainwin.py:11200
+#: .././mainwin.py:11195
 msgid "Thread"
 msgstr ""
 
-#: .././mainwin.py:11203
+#: .././mainwin.py:11198
 msgid "_Summary"
 msgstr ""
 
-#: .././mainwin.py:11796
+#: .././mainwin.py:11791
 msgid "Tartube error"
 msgstr ""
 
-#: .././mainwin.py:11852
+#: .././mainwin.py:11847
 msgid "Tartube warning"
 msgstr ""
 
-#: .././mainwin.py:11885
+#: .././mainwin.py:11880
 msgid "_Errors"
 msgstr ""
 
-#: .././mainwin.py:11889
+#: .././mainwin.py:11884
 msgid "Warnings"
 msgstr ""
 
-#: .././mainwin.py:11961
+#: .././mainwin.py:11956
 msgid ""
 "There are not scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
 
-#: .././mainwin.py:13295
+#: .././mainwin.py:13290
 msgid "The URL is not valid"
 msgstr ""
 
-#: .././mainwin.py:17310
+#: .././mainwin.py:17305
 msgid "The following items are duplicates:"
 msgstr ""
 
-#: .././mainwin.py:17474
+#: .././mainwin.py:17469
 #, python-brace-format
 msgid "The channel contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:17481
+#: .././mainwin.py:17476
 #, python-brace-format
 msgid "The playlist contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:17488
+#: .././mainwin.py:17483
 #, python-brace-format
 msgid "The folder contains {0} items, so this action may take a while"
 msgstr ""
 
-#: .././mainwin.py:18131 .././mainwin.py:19136
+#: .././mainwin.py:18126 .././mainwin.py:19131
 msgid "Originally from:"
 msgstr ""
 
-#: .././mainwin.py:18144 .././mainwin.py:19150
+#: .././mainwin.py:18139 .././mainwin.py:19145
 msgid "From channel"
 msgstr ""
 
-#: .././mainwin.py:18146 .././mainwin.py:19152
+#: .././mainwin.py:18141 .././mainwin.py:19147
 msgid "From playlist"
 msgstr ""
 
-#: .././mainwin.py:18148 .././mainwin.py:19154
+#: .././mainwin.py:18143 .././mainwin.py:19149
 msgid "From folder"
 msgstr ""
 
-#: .././mainwin.py:18179
+#: .././mainwin.py:18174
 msgid "Livestream has not started yet"
 msgstr ""
 
-#: .././mainwin.py:18186
+#: .././mainwin.py:18181
 msgid "Debut has started"
 msgstr ""
 
-#: .././mainwin.py:18188
+#: .././mainwin.py:18183
 msgid "Debut has not started yet"
 msgstr ""
 
-#: .././mainwin.py:18195 .././mainwin.py:18201 .././mainwin.py:19204
-#: .././mainwin.py:19211
+#: .././mainwin.py:18190 .././mainwin.py:18196 .././mainwin.py:19199
+#: .././mainwin.py:19206
 msgid "Duration:"
 msgstr ""
 
-#: .././mainwin.py:18201 .././mainwin.py:18207 .././mainwin.py:18218
-#: .././mainwin.py:19211 .././mainwin.py:19218 .././mainwin.py:19234
-#: .././mainwin.py:21598 .././mainwin.py:21604 .././mainwin.py:21615
+#: .././mainwin.py:18196 .././mainwin.py:18202 .././mainwin.py:18213
+#: .././mainwin.py:19206 .././mainwin.py:19213 .././mainwin.py:19229
+#: .././mainwin.py:21593 .././mainwin.py:21599 .././mainwin.py:21610
 #: .././media.py:563 .././media.py:573 .././media.py:1827 .././media.py:1833
 #: .././media.py:1843
 msgid "unknown"
 msgstr ""
 
-#: .././mainwin.py:18205 .././mainwin.py:18207 .././mainwin.py:19215
-#: .././mainwin.py:19217
+#: .././mainwin.py:18200 .././mainwin.py:18202 .././mainwin.py:19210
+#: .././mainwin.py:19212
 msgid "Size:"
 msgstr ""
 
-#: .././mainwin.py:18216 .././mainwin.py:18218 .././mainwin.py:19229
+#: .././mainwin.py:18211 .././mainwin.py:18213 .././mainwin.py:19224
 msgid "Date:"
 msgstr ""
 
-#: .././mainwin.py:18550
+#: .././mainwin.py:18545
 msgid "Watch:"
 msgstr ""
 
-#: .././mainwin.py:18619
+#: .././mainwin.py:18614
 msgid "Temporary:"
 msgstr ""
 
-#: .././mainwin.py:18662
+#: .././mainwin.py:18657
 msgid "Marked:"
 msgstr ""
 
-#: .././mainwin.py:19108 .././mainwin.py:19171
+#: .././mainwin.py:19103 .././mainwin.py:19166
 msgid "Show the full description"
 msgstr ""
 
-#: .././mainwin.py:19109 .././mainwin.py:19172
+#: .././mainwin.py:19104 .././mainwin.py:19167
 msgid "More"
 msgstr ""
 
-#: .././mainwin.py:19121 .././mainwin.py:19180
+#: .././mainwin.py:19116 .././mainwin.py:19175
 msgid "Show the short description"
 msgstr ""
 
-#: .././mainwin.py:19122 .././mainwin.py:19181
+#: .././mainwin.py:19117 .././mainwin.py:19176
 msgid "Less"
 msgstr ""
 
-#: .././mainwin.py:19224
+#: .././mainwin.py:19219
 msgid "Received:"
 msgstr ""
 
-#: .././mainwin.py:19253
+#: .././mainwin.py:19248
 msgid "Live now:"
 msgstr ""
 
-#: .././mainwin.py:19255 .././mainwin.py:21743
+#: .././mainwin.py:19250 .././mainwin.py:21738
 msgid "Live soon:"
 msgstr ""
 
-#: .././mainwin.py:19264
+#: .././mainwin.py:19259
 msgid "Debut now:"
 msgstr ""
 
-#: .././mainwin.py:19266 .././mainwin.py:21745
+#: .././mainwin.py:19261 .././mainwin.py:21740
 msgid "Debut soon:"
 msgstr ""
 
@@ -2248,14 +2252,14 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19273 .././mainwin.py:19275 .././mainwin.py:19279
-#: .././mainwin.py:19547 .././mainwin.py:19549 .././mainwin.py:19553
-#: .././mainwin.py:20035 .././mainwin.py:21629 .././mainwin.py:21631
-#: .././mainwin.py:21635
+#: .././mainwin.py:19268 .././mainwin.py:19270 .././mainwin.py:19274
+#: .././mainwin.py:19542 .././mainwin.py:19544 .././mainwin.py:19548
+#: .././mainwin.py:20030 .././mainwin.py:21624 .././mainwin.py:21626
+#: .././mainwin.py:21630
 msgid "Notify"
 msgstr ""
 
-#: .././mainwin.py:19283 .././mainwin.py:19557 .././mainwin.py:21639
+#: .././mainwin.py:19278 .././mainwin.py:19552 .././mainwin.py:21634
 msgid "When the livestream starts, notify the user"
 msgstr ""
 
@@ -2263,13 +2267,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19294 .././mainwin.py:19296 .././mainwin.py:19563
-#: .././mainwin.py:19565 .././mainwin.py:19917 .././mainwin.py:21650
-#: .././mainwin.py:21652
+#: .././mainwin.py:19289 .././mainwin.py:19291 .././mainwin.py:19558
+#: .././mainwin.py:19560 .././mainwin.py:19912 .././mainwin.py:21645
+#: .././mainwin.py:21647
 msgid "Alarm"
 msgstr ""
 
-#: .././mainwin.py:19300 .././mainwin.py:19569 .././mainwin.py:21656
+#: .././mainwin.py:19295 .././mainwin.py:19564 .././mainwin.py:21651
 msgid "When the livestream starts, sound an alarm"
 msgstr ""
 
@@ -2277,13 +2281,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19305 .././mainwin.py:19307 .././mainwin.py:19575
-#: .././mainwin.py:19577 .././mainwin.py:20075 .././mainwin.py:21661
-#: .././mainwin.py:21663
+#: .././mainwin.py:19300 .././mainwin.py:19302 .././mainwin.py:19570
+#: .././mainwin.py:19572 .././mainwin.py:20070 .././mainwin.py:21656
+#: .././mainwin.py:21658
 msgid "Open"
 msgstr ""
 
-#: .././mainwin.py:19311 .././mainwin.py:19581 .././mainwin.py:21667
+#: .././mainwin.py:19306 .././mainwin.py:19576 .././mainwin.py:21662
 msgid "When the livestream starts, open it"
 msgstr ""
 
@@ -2293,13 +2297,13 @@ msgstr ""
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #. (Livestream already broadcasting)
-#: .././mainwin.py:19319 .././mainwin.py:19324 .././mainwin.py:19326
-#: .././mainwin.py:19587 .././mainwin.py:19589 .././mainwin.py:19956
-#: .././mainwin.py:21675 .././mainwin.py:21680 .././mainwin.py:21682
+#: .././mainwin.py:19314 .././mainwin.py:19319 .././mainwin.py:19321
+#: .././mainwin.py:19582 .././mainwin.py:19584 .././mainwin.py:19951
+#: .././mainwin.py:21670 .././mainwin.py:21675 .././mainwin.py:21677
 msgid "D/L on start"
 msgstr ""
 
-#: .././mainwin.py:19330 .././mainwin.py:19593 .././mainwin.py:21686
+#: .././mainwin.py:19325 .././mainwin.py:19588 .././mainwin.py:21681
 msgid "When the livestream starts, download it"
 msgstr ""
 
@@ -2307,17 +2311,17 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19336 .././mainwin.py:19341 .././mainwin.py:19343
-#: .././mainwin.py:19599 .././mainwin.py:19601 .././mainwin.py:19996
-#: .././mainwin.py:21692 .././mainwin.py:21697 .././mainwin.py:21699
+#: .././mainwin.py:19331 .././mainwin.py:19336 .././mainwin.py:19338
+#: .././mainwin.py:19594 .././mainwin.py:19596 .././mainwin.py:19991
+#: .././mainwin.py:21687 .././mainwin.py:21692 .././mainwin.py:21694
 msgid "D/L on stop"
 msgstr ""
 
-#: .././mainwin.py:19347 .././mainwin.py:19605 .././mainwin.py:21703
+#: .././mainwin.py:19342 .././mainwin.py:19600 .././mainwin.py:21698
 msgid "When the livestream stops, download it"
 msgstr ""
 
-#: .././mainwin.py:19366 .././mainwin.py:21722
+#: .././mainwin.py:19361 .././mainwin.py:21717
 msgid "Watch in your media player"
 msgstr ""
 
@@ -2325,41 +2329,41 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19367 .././mainwin.py:20723 .././mainwin.py:21723
+#: .././mainwin.py:19362 .././mainwin.py:20718 .././mainwin.py:21718
 msgid "Player"
 msgstr ""
 
-#: .././mainwin.py:19391 .././mainwin.py:21760
+#: .././mainwin.py:19386 .././mainwin.py:21755
 msgid "Download this video"
 msgstr ""
 
-#: .././mainwin.py:19406 .././mainwin.py:21775
+#: .././mainwin.py:19401 .././mainwin.py:21770
 msgid ""
 "TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
 "different word (e.g. French et), then just use that word"
 msgstr ""
 
-#: .././mainwin.py:19414 .././mainwin.py:21783
+#: .././mainwin.py:19409 .././mainwin.py:21778
 msgid "Download and watch in your media player"
 msgstr ""
 
-#: .././mainwin.py:19415
+#: .././mainwin.py:19410
 msgid "Download &amp; watch"
 msgstr ""
 
-#: .././mainwin.py:19422
+#: .././mainwin.py:19417
 msgid "Not downloaded"
 msgstr ""
 
-#: .././mainwin.py:19448
+#: .././mainwin.py:19443
 msgid "Watch on YouTube"
 msgstr ""
 
-#: .././mainwin.py:19449 .././mainwin.py:20768
+#: .././mainwin.py:19444 .././mainwin.py:20763
 msgid "YouTube"
 msgstr ""
 
-#: .././mainwin.py:19461
+#: .././mainwin.py:19456
 msgid "Watch on HookTube"
 msgstr ""
 
@@ -2367,11 +2371,11 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19462 .././mainwin.py:20531
+#: .././mainwin.py:19457 .././mainwin.py:20526
 msgid "HookTube"
 msgstr ""
 
-#: .././mainwin.py:19474
+#: .././mainwin.py:19469
 msgid "Watch on Invidious"
 msgstr ""
 
@@ -2379,7 +2383,7 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19475 .././mainwin.py:20575
+#: .././mainwin.py:19470 .././mainwin.py:20570
 msgid "Invidious"
 msgstr ""
 
@@ -2387,25 +2391,25 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19493 .././mainwin.py:20620 .././config.py:9296
+#: .././mainwin.py:19488 .././mainwin.py:20615 .././config.py:9296
 #: .././config.py:11514
 msgid "Other"
 msgstr ""
 
-#: .././mainwin.py:19513
+#: .././mainwin.py:19508
 msgid "Watch on website"
 msgstr ""
 
-#: .././mainwin.py:19514 .././mainwin.py:20770
+#: .././mainwin.py:19509 .././mainwin.py:20765
 msgid "Website"
 msgstr ""
 
 #. Links not clickable
-#: .././mainwin.py:19525
+#: .././mainwin.py:19520
 msgid "No link"
 msgstr ""
 
-#: .././mainwin.py:19634
+#: .././mainwin.py:19629
 msgid "Download to a temporary folder later"
 msgstr ""
 
@@ -2413,19 +2417,19 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19635 .././mainwin.py:19652 .././mainwin.py:20487
+#: .././mainwin.py:19630 .././mainwin.py:19647 .././mainwin.py:20482
 msgid "Mark for download"
 msgstr ""
 
-#: .././mainwin.py:19640
+#: .././mainwin.py:19635
 msgid "Download to a temporary folder"
 msgstr ""
 
-#: .././mainwin.py:19646
+#: .././mainwin.py:19641
 msgid "Download to a temporary folder, then watch"
 msgstr ""
 
-#: .././mainwin.py:19647 .././mainwin.py:21784
+#: .././mainwin.py:19642 .././mainwin.py:21779
 msgid "D/L &amp; watch"
 msgstr ""
 
@@ -2433,12 +2437,12 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19654 .././mainwin.py:20443
+#: .././mainwin.py:19649 .././mainwin.py:20438
 msgid "D/L and watch"
 msgstr ""
 
 #. Archived/not archived
-#: .././mainwin.py:19678 .././mainwin.py:21822
+#: .././mainwin.py:19673 .././mainwin.py:21817
 msgid "Prevent automatic deletion of the video"
 msgstr ""
 
@@ -2446,13 +2450,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19682 .././mainwin.py:19686 .././mainwin.py:20113
-#: .././mainwin.py:21826 .././mainwin.py:21830 .././mainwin.py:22045
+#: .././mainwin.py:19677 .././mainwin.py:19681 .././mainwin.py:20108
+#: .././mainwin.py:21821 .././mainwin.py:21825 .././mainwin.py:22040
 msgid "Archived"
 msgstr ""
 
 #. Bookmarked/not bookmarked
-#: .././mainwin.py:19691 .././mainwin.py:21835
+#: .././mainwin.py:19686 .././mainwin.py:21830
 msgid "Show video in Bookmarks folder"
 msgstr ""
 
@@ -2462,13 +2466,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19696 .././mainwin.py:19701 .././mainwin.py:21839
-#: .././mainwin.py:21843 .././mainwin.py:22090
+#: .././mainwin.py:19691 .././mainwin.py:19696 .././mainwin.py:21834
+#: .././mainwin.py:21838 .././mainwin.py:22085
 msgid "B/mark"
 msgstr ""
 
 #. Favourite/not favourite
-#: .././mainwin.py:19706 .././mainwin.py:21848
+#: .././mainwin.py:19701 .././mainwin.py:21843
 msgid "Show in Favourite Videos folder"
 msgstr "Show in Favorite Videos folder"
 
@@ -2476,13 +2480,13 @@ msgstr "Show in Favorite Videos folder"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19710 .././mainwin.py:19714 .././mainwin.py:20203
-#: .././mainwin.py:21852 .././mainwin.py:21856
+#: .././mainwin.py:19705 .././mainwin.py:19709 .././mainwin.py:20198
+#: .././mainwin.py:21847 .././mainwin.py:21851
 msgid "Favourite"
 msgstr "Favorite"
 
 #. Missing/not missing
-#: .././mainwin.py:19718 .././mainwin.py:21860
+#: .././mainwin.py:19713 .././mainwin.py:21855
 msgid "Mark video as removed by creator"
 msgstr ""
 
@@ -2490,13 +2494,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19722 .././mainwin.py:19726 .././mainwin.py:20248
-#: .././mainwin.py:21864 .././mainwin.py:21868
+#: .././mainwin.py:19717 .././mainwin.py:19721 .././mainwin.py:20243
+#: .././mainwin.py:21859 .././mainwin.py:21863
 msgid "Missing"
 msgstr ""
 
 #. New/not new
-#: .././mainwin.py:19731 .././mainwin.py:21873
+#: .././mainwin.py:19726 .././mainwin.py:21868
 msgid "Mark video as never watched"
 msgstr ""
 
@@ -2504,13 +2508,13 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19735 .././mainwin.py:19739 .././mainwin.py:20286
-#: .././mainwin.py:21877 .././mainwin.py:21881
+#: .././mainwin.py:19730 .././mainwin.py:19734 .././mainwin.py:20281
+#: .././mainwin.py:21872 .././mainwin.py:21876
 msgid "New"
 msgstr ""
 
 #. In waiting list/not in waiting list
-#: .././mainwin.py:19744 .././mainwin.py:21886
+#: .././mainwin.py:19739 .././mainwin.py:21881
 msgid "Show in Waiting Videos folder"
 msgstr ""
 
@@ -2518,700 +2522,700 @@ msgstr ""
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:20158
+#: .././mainwin.py:20153
 msgid "Bookmarked"
 msgstr ""
 
-#: .././mainwin.py:21553 .././media.py:1813 .././refresh.py:259
+#: .././mainwin.py:21548 .././media.py:1813 .././refresh.py:259
 #: .././refresh.py:529
 msgid "Channel:"
 msgstr ""
 
-#: .././mainwin.py:21555 .././media.py:1815 .././refresh.py:261
+#: .././mainwin.py:21550 .././media.py:1815 .././refresh.py:261
 #: .././refresh.py:531
 msgid "Playlist:"
 msgstr ""
 
-#: .././mainwin.py:21557 .././media.py:1817 .././refresh.py:263
+#: .././mainwin.py:21552 .././media.py:1817 .././refresh.py:263
 #: .././refresh.py:533
 msgid "Folder:"
 msgstr ""
 
-#: .././mainwin.py:21755
+#: .././mainwin.py:21750
 msgid "TRANSLATOR'S NOTE: D/L means download"
 msgstr ""
 
-#: .././mainwin.py:21791
+#: .././mainwin.py:21786
 msgid "Can't D/L"
 msgstr ""
 
-#: .././mainwin.py:21815
+#: .././mainwin.py:21810
 msgid ""
 "TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
 "Archived, B/Mark = Bookmarked, Waiting: In waiting list"
 msgstr ""
 
-#: .././mainwin.py:23119
+#: .././mainwin.py:23114
 msgid "Add channel"
 msgstr ""
 
-#: .././mainwin.py:23138
+#: .././mainwin.py:23133
 msgid "Enter the channel name"
 msgstr ""
 
-#: .././mainwin.py:23143
+#: .././mainwin.py:23138
 msgid "(Use the channel's real name or a customised name)"
 msgstr "(Use the channel's real name or a customized name)"
 
-#: .././mainwin.py:23151
+#: .././mainwin.py:23146
 msgid "Copy and paste a link to the channel"
 msgstr ""
 
-#: .././mainwin.py:23198
+#: .././mainwin.py:23193
 msgid "(Optional) Add this channel inside a folder"
 msgstr ""
 
-#: .././mainwin.py:23228
+#: .././mainwin.py:23223
 msgid "I want to download videos from this channel automatically"
 msgstr ""
 
-#: .././mainwin.py:23235 .././mainwin.py:23522 .././mainwin.py:23730
+#: .././mainwin.py:23230 .././mainwin.py:23517 .././mainwin.py:23725
 msgid "Don't download anything, just check for new videos"
 msgstr ""
 
-#: .././mainwin.py:23242 .././mainwin.py:23737 .././mainwin.py:24090
+#: .././mainwin.py:23237 .././mainwin.py:23732 .././mainwin.py:24085
 msgid "Enable automatic copy/paste"
 msgstr ""
 
-#: .././mainwin.py:23423
+#: .././mainwin.py:23418
 msgid "Add folder"
 msgstr ""
 
-#: .././mainwin.py:23442
+#: .././mainwin.py:23437
 msgid "Enter the folder name"
 msgstr ""
 
-#: .././mainwin.py:23485
+#: .././mainwin.py:23480
 msgid "(Optional) Add this folder inside another folder"
 msgstr ""
 
-#: .././mainwin.py:23516
+#: .././mainwin.py:23511
 msgid "I want to download videos from this folder automatically"
 msgstr ""
 
-#: .././mainwin.py:23614
+#: .././mainwin.py:23609
 msgid "Add playlist"
 msgstr ""
 
-#: .././mainwin.py:23633
+#: .././mainwin.py:23628
 msgid "Enter the playlist name"
 msgstr ""
 
-#: .././mainwin.py:23638
+#: .././mainwin.py:23633
 msgid "(Use the playlist's real name or a customised name)"
 msgstr "(Use the playlist's real name or a customized name)"
 
-#: .././mainwin.py:23646
+#: .././mainwin.py:23641
 msgid "Copy and paste a link to the playlist"
 msgstr ""
 
-#: .././mainwin.py:23693
+#: .././mainwin.py:23688
 msgid "(Optional) Add this playlist inside a folder"
 msgstr ""
 
-#: .././mainwin.py:23723
+#: .././mainwin.py:23718
 msgid "I want to download videos from this playlist automatically"
 msgstr ""
 
-#: .././mainwin.py:23920
+#: .././mainwin.py:23915
 msgid "Add videos"
 msgstr ""
 
-#: .././mainwin.py:23939
+#: .././mainwin.py:23934
 msgid "Copy and paste the links to one or more videos"
 msgstr ""
 
-#: .././mainwin.py:23945
+#: .././mainwin.py:23940
 msgid "Links containing multiple videos will be converted to a channel"
 msgstr ""
 
-#: .././mainwin.py:23952
+#: .././mainwin.py:23947
 msgid "Links containing multiple videos will be converted to a playlist"
 msgstr ""
 
-#: .././mainwin.py:23959
+#: .././mainwin.py:23954
 msgid "Links containing multiple videos will be downloaded separately"
 msgstr ""
 
-#: .././mainwin.py:23966
+#: .././mainwin.py:23961
 msgid "Links containing multiple videos will not be downloaded at all"
 msgstr ""
 
-#: .././mainwin.py:24048
+#: .././mainwin.py:24043
 msgid "Add the videos to this folder"
 msgstr ""
 
-#: .././mainwin.py:24078
+#: .././mainwin.py:24073
 msgid "I want to download these videos automatically"
 msgstr ""
 
-#: .././mainwin.py:24084
+#: .././mainwin.py:24079
 msgid "Don't download anything, just check the videos"
 msgstr ""
 
-#: .././mainwin.py:24253 .././config.py:2061
+#: .././mainwin.py:24248 .././config.py:2061
 msgid "Apply download options"
 msgstr ""
 
-#: .././mainwin.py:24275
+#: .././mainwin.py:24270
 msgid "Create new download options"
 msgstr ""
 
-#: .././mainwin.py:24285
+#: .././mainwin.py:24280
 msgid "Use these download options"
 msgstr ""
 
-#: .././mainwin.py:24322
+#: .././mainwin.py:24317
 msgid "Clone these download options"
 msgstr ""
 
-#: .././mainwin.py:24555
+#: .././mainwin.py:24550
 msgid "Select a date"
 msgstr ""
 
-#: .././mainwin.py:24662
+#: .././mainwin.py:24657
 msgid "Delete channel"
 msgstr ""
 
-#: .././mainwin.py:24664
+#: .././mainwin.py:24659
 msgid "Delete playlist"
 msgstr ""
 
-#: .././mainwin.py:24666
+#: .././mainwin.py:24661
 msgid "Delete folder"
 msgstr ""
 
-#: .././mainwin.py:24669
+#: .././mainwin.py:24664
 msgid "Empty channel"
 msgstr ""
 
-#: .././mainwin.py:24671
+#: .././mainwin.py:24666
 msgid "Empty playlist"
 msgstr ""
 
-#: .././mainwin.py:24673
+#: .././mainwin.py:24668
 msgid "Empty folder"
 msgstr ""
 
-#: .././mainwin.py:24707
+#: .././mainwin.py:24702
 msgid "This channel does not contain any videos"
 msgstr ""
 
-#: .././mainwin.py:24709
+#: .././mainwin.py:24704
 msgid "This playlist does not contain any videos"
 msgstr ""
 
-#: .././mainwin.py:24711
+#: .././mainwin.py:24706
 msgid "This folder doesn't contain anything"
 msgstr ""
 
-#: .././mainwin.py:24717
+#: .././mainwin.py:24712
 msgid "(but there might be some files in Tartube's data folder)"
 msgstr ""
 
-#: .././mainwin.py:24730
+#: .././mainwin.py:24725
 msgid "This channel contains:"
 msgstr ""
 
-#: .././mainwin.py:24732
+#: .././mainwin.py:24727
 msgid "This playlist contains:"
 msgstr ""
 
-#: .././mainwin.py:24734 .././config.py:9269
+#: .././mainwin.py:24729 .././config.py:9269
 msgid "This folder contains:"
 msgstr ""
 
-#: .././mainwin.py:24741
+#: .././mainwin.py:24736
 msgid "1 folder"
 msgstr ""
 
-#: .././mainwin.py:24743
+#: .././mainwin.py:24738
 #, python-brace-format
 msgid "{0} folders"
 msgstr ""
 
-#: .././mainwin.py:24750
+#: .././mainwin.py:24745
 msgid "1 channel"
 msgstr ""
 
-#: .././mainwin.py:24752
+#: .././mainwin.py:24747
 #, python-brace-format
 msgid "{0} channels"
 msgstr ""
 
-#: .././mainwin.py:24759
+#: .././mainwin.py:24754
 msgid "1 playlist"
 msgstr ""
 
-#: .././mainwin.py:24761
+#: .././mainwin.py:24756
 #, python-brace-format
 msgid "{0} playlists"
 msgstr ""
 
-#: .././mainwin.py:24768 .././mainwin.py:25193
+#: .././mainwin.py:24763 .././mainwin.py:25188
 msgid "1 video"
 msgstr ""
 
-#: .././mainwin.py:24770 .././mainwin.py:25196
+#: .././mainwin.py:24765 .././mainwin.py:25191
 #, python-brace-format
 msgid "{0} videos"
 msgstr ""
 
-#: .././mainwin.py:24783
+#: .././mainwin.py:24778
 msgid ""
 "Do you want to delete the channel from Tartube's data folder, or do you just "
 "want to remove the channel from this list?"
 msgstr ""
 
-#: .././mainwin.py:24789
+#: .././mainwin.py:24784
 msgid ""
 "Do you want to delete the playlist from Tartube's data folder, or do you "
 "just want to remove the playlist from this list?"
 msgstr ""
 
-#: .././mainwin.py:24795
+#: .././mainwin.py:24790
 msgid ""
 "Do you want to delete the folder from Tartube's data folder, or do you just "
 "want to remove the folder from this list?"
 msgstr ""
 
-#: .././mainwin.py:24804
+#: .././mainwin.py:24799
 msgid ""
 "Do you want to empty the channel in Tartube's data folder, or do you just "
 "want to empty the channel in this list?"
 msgstr ""
 
-#: .././mainwin.py:24810
+#: .././mainwin.py:24805
 msgid ""
 "Do you want to empty the playlist in Tartube's data folder, or do you just "
 "want to empty the playlist in this list?"
 msgstr ""
 
-#: .././mainwin.py:24816
+#: .././mainwin.py:24811
 msgid ""
 "Do you want to empty the folder in Tartube's data folder, or do you just "
 "want to empty the folder in this list?"
 msgstr ""
 
-#: .././mainwin.py:24833
+#: .././mainwin.py:24828
 msgid "Just remove the channel from this list"
 msgstr ""
 
-#: .././mainwin.py:24835
+#: .././mainwin.py:24830
 msgid "Just remove the playlist from this list"
 msgstr ""
 
-#: .././mainwin.py:24837
+#: .././mainwin.py:24832
 msgid "Just remove the folder from this list"
 msgstr ""
 
-#: .././mainwin.py:24842
+#: .././mainwin.py:24837
 msgid "Just empty the channel in this list"
 msgstr ""
 
-#: .././mainwin.py:24844
+#: .././mainwin.py:24839
 msgid "Just empty the playlist in this list"
 msgstr ""
 
-#: .././mainwin.py:24846
+#: .././mainwin.py:24841
 msgid "Just empty the folder in this list"
 msgstr ""
 
-#: .././mainwin.py:24852
+#: .././mainwin.py:24847
 msgid "Delete all files"
 msgstr ""
 
-#: .././mainwin.py:24904
+#: .././mainwin.py:24899
 msgid "Export from database"
 msgstr ""
 
-#: .././mainwin.py:24928
+#: .././mainwin.py:24923
 msgid ""
 "Tartube is ready to export a partial summary of its database, containing a "
 "list of videos, channels, playlists and/or folders (but not including the "
 "videos themselves)"
 msgstr ""
 
-#: .././mainwin.py:24935
+#: .././mainwin.py:24930
 msgid ""
 "Tartube is ready to export a summary of its database, containing a list of "
 "videos, channels, playlists and/or folders (but not including the videos "
 "themselves)"
 msgstr ""
 
-#: .././mainwin.py:24951
+#: .././mainwin.py:24946
 msgid "Choose what should be included:"
 msgstr ""
 
-#: .././mainwin.py:24959
+#: .././mainwin.py:24954
 msgid "Include lists of videos"
 msgstr ""
 
-#: .././mainwin.py:24964
+#: .././mainwin.py:24959
 msgid "Include channels"
 msgstr ""
 
-#: .././mainwin.py:24969
+#: .././mainwin.py:24964
 msgid "Include playlists"
 msgstr ""
 
-#: .././mainwin.py:24974
+#: .././mainwin.py:24969
 msgid "Preserve folder structure"
 msgstr ""
 
-#: .././mainwin.py:24982
+#: .././mainwin.py:24977
 msgid "Export as plain text"
 msgstr ""
 
-#: .././mainwin.py:25068
+#: .././mainwin.py:25063
 msgid "Import into database"
 msgstr ""
 
-#: .././mainwin.py:25091
+#: .././mainwin.py:25086
 msgid "Choose which items to import"
 msgstr ""
 
-#: .././mainwin.py:25112 .././config.py:14418 .././config.py:14683
+#: .././mainwin.py:25107 .././config.py:14454 .././config.py:14719
 msgid "Import"
 msgstr ""
 
-#: .././mainwin.py:25148
+#: .././mainwin.py:25143
 msgid "Import videos"
 msgstr ""
 
-#: .././mainwin.py:25153
+#: .././mainwin.py:25148
 msgid "Merge channels/playlists/folders"
 msgstr ""
 
 #. Bottom strip
-#: .././mainwin.py:25156 .././mainwin.py:27088
+#: .././mainwin.py:25151 .././mainwin.py:27083
 msgid "Select all"
 msgstr ""
 
-#: .././mainwin.py:25161
+#: .././mainwin.py:25156
 msgid "Unselect all"
 msgstr ""
 
-#: .././mainwin.py:25423
+#: .././mainwin.py:25418
 msgid "Mount drive"
 msgstr ""
 
-#: .././mainwin.py:25447
+#: .././mainwin.py:25442
 msgid "The Tartube data folder is set to:"
 msgstr ""
 
-#: .././mainwin.py:25460
+#: .././mainwin.py:25455
 msgid "...but this folder doesn't exist"
 msgstr ""
 
-#: .././mainwin.py:25463
+#: .././mainwin.py:25458
 msgid "...but Tartube cannot write to this folder"
 msgstr ""
 
-#: .././mainwin.py:25473
+#: .././mainwin.py:25468
 msgid "I have mounted the drive, please try again"
 msgstr ""
 
-#: .././mainwin.py:25479
+#: .././mainwin.py:25474
 msgid "Use this data folder:"
 msgstr ""
 
-#: .././mainwin.py:25506
+#: .././mainwin.py:25501
 msgid "Select a different data folder"
 msgstr ""
 
-#: .././mainwin.py:25512
+#: .././mainwin.py:25507
 msgid "Use the default data folder"
 msgstr ""
 
-#: .././mainwin.py:25518
+#: .././mainwin.py:25513
 msgid "Shut down Tartube"
 msgstr ""
 
 #. 'Cancel' button
-#: .././mainwin.py:25525 .././config.py:1044
+#: .././mainwin.py:25520 .././config.py:1044
 msgid "Cancel"
 msgstr ""
 
 #. 'OK' button
-#: .././mainwin.py:25529 .././config.py:1035 .././config.py:2242
+#: .././mainwin.py:25524 .././config.py:1035 .././config.py:2242
 #: .././config.py:7694 .././config.py:7828
 msgid "OK"
 msgstr ""
 
-#: .././mainwin.py:25651
+#: .././mainwin.py:25646
 msgid "The folder still doesn't exist. Please try a different option"
 msgstr ""
 
-#: .././mainwin.py:25722
+#: .././mainwin.py:25717
 msgid "Stale lockfile"
 msgstr ""
 
-#: .././mainwin.py:25759
+#: .././mainwin.py:25754
 msgid ""
 "Failed to load the Tartube database file, because another copy of Tartube "
 "seems to be using it"
 msgstr ""
 
-#: .././mainwin.py:25766
+#: .././mainwin.py:25761
 msgid "Do you want to load it anyway?"
 msgstr ""
 
-#: .././mainwin.py:25772
+#: .././mainwin.py:25767
 msgid ""
 "(Only click 'Yes' if you are sure that other copies of Tartube are not using "
 "the database right now)"
 msgstr ""
 
-#: .././mainwin.py:25784
+#: .././mainwin.py:25779
 msgid "Yes, load the file"
 msgstr ""
 
-#: .././mainwin.py:25791
+#: .././mainwin.py:25786
 msgid "No, just shut down Tartube"
 msgstr ""
 
-#: .././mainwin.py:25793
+#: .././mainwin.py:25788
 msgid "No, don't load the file"
 msgstr ""
 
-#: .././mainwin.py:25888
+#: .././mainwin.py:25883
 msgid "Rename channel"
 msgstr ""
 
-#: .././mainwin.py:25890
+#: .././mainwin.py:25885
 msgid "Rename playlist"
 msgstr ""
 
-#: .././mainwin.py:25892
+#: .././mainwin.py:25887
 msgid "Rename folder"
 msgstr ""
 
-#: .././mainwin.py:25916
+#: .././mainwin.py:25911
 msgid "Set the new name for the channel:"
 msgstr ""
 
-#: .././mainwin.py:25918
+#: .././mainwin.py:25913
 msgid "Set the new name for the playlist:"
 msgstr ""
 
-#: .././mainwin.py:25920
+#: .././mainwin.py:25915
 msgid "Set the new name for the folder:"
 msgstr ""
 
-#: .././mainwin.py:25926
+#: .././mainwin.py:25921
 msgid "N.B. This procedure will modify your filesystem!\n"
 msgstr ""
 
-#: .././mainwin.py:25987
+#: .././mainwin.py:25982
 msgid "Add to scheduled download"
 msgstr ""
 
-#: .././mainwin.py:26010
+#: .././mainwin.py:26005
 msgid "Add the channel to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:26012
+#: .././mainwin.py:26007
 msgid "Add the playlist to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:26014
+#: .././mainwin.py:26009
 msgid "Add the folder to this scheduled download:"
 msgstr ""
 
-#: .././mainwin.py:26111
+#: .././mainwin.py:26106
 msgid "Set download destination"
 msgstr ""
 
-#: .././mainwin.py:26136
+#: .././mainwin.py:26131
 msgid ""
 "This channel can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:26141
+#: .././mainwin.py:26136
 msgid ""
 "This playlist can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:26146
+#: .././mainwin.py:26141
 msgid ""
 "This folder can store its videos in its own system folder, or it can store "
 "them in a different system folder"
 msgstr ""
 
-#: .././mainwin.py:26154
+#: .././mainwin.py:26149
 msgid "Choose a different system folder if:"
 msgstr ""
 
-#: .././mainwin.py:26157
+#: .././mainwin.py:26152
 msgid ""
 "1. You want to add a channel and its playlists, without downloading the same "
 "video twice"
 msgstr ""
 
-#: .././mainwin.py:26164
+#: .././mainwin.py:26159
 msgid ""
 "2. A video creator has channels on both YouTube and BitChute, and you want "
 "to add both without downloading the same video twice"
 msgstr ""
 
-#: .././mainwin.py:26177
+#: .././mainwin.py:26172
 msgid "Use this channel's own folder"
 msgstr ""
 
-#: .././mainwin.py:26179
+#: .././mainwin.py:26174
 msgid "Use this playlist's own folder"
 msgstr ""
 
-#: .././mainwin.py:26181
+#: .././mainwin.py:26176
 msgid "Use this folder's own system folder"
 msgstr ""
 
-#: .././mainwin.py:26436
+#: .././mainwin.py:26431
 msgid "Set nickname"
 msgstr ""
 
-#: .././mainwin.py:26461
+#: .././mainwin.py:26456
 #, python-brace-format
 msgid ""
 "Set a nickname for the channel '{0}' (or leave it blank to reset the "
 "nickname)"
 msgstr ""
 
-#: .././mainwin.py:26466
+#: .././mainwin.py:26461
 #, python-brace-format
 msgid ""
 "Set a nickname for the playlist '{0}' (or leave it blank to reset the "
 "nickname)"
 msgstr ""
 
-#: .././mainwin.py:26471
+#: .././mainwin.py:26466
 #, python-brace-format
 msgid ""
 "Set a nickname for the folder '{0}' (or leave it blank to reset the nickname)"
 msgstr ""
 
-#: .././mainwin.py:26534
+#: .././mainwin.py:26529
 msgid "Set URL"
 msgstr ""
 
-#: .././mainwin.py:26559
+#: .././mainwin.py:26554
 #, python-brace-format
 msgid "Update the URL for the channel '{0}'"
 msgstr ""
 
-#: .././mainwin.py:26563
+#: .././mainwin.py:26558
 #, python-brace-format
 msgid "Update the URL for the playlist '{0}'"
 msgstr ""
 
-#: .././mainwin.py:26627
+#: .././mainwin.py:26622
 msgid "Show system command"
 msgstr ""
 
-#: .././mainwin.py:26671
+#: .././mainwin.py:26666
 msgid "Update"
 msgstr ""
 
-#: .././mainwin.py:26680
+#: .././mainwin.py:26675
 msgid "Copy to clipboard"
 msgstr ""
 
-#: .././mainwin.py:26854 .././config.py:13749
+#: .././mainwin.py:26849 .././config.py:13749
 msgid "Test"
 msgstr ""
 
-#: .././mainwin.py:26874
+#: .././mainwin.py:26869
 msgid "URL of the video to download (optional)"
 msgstr ""
 
-#: .././mainwin.py:26885
+#: .././mainwin.py:26880
 msgid "Command line options (optional)"
 msgstr ""
 
-#: .././mainwin.py:26966
+#: .././mainwin.py:26961
 msgid "Tidy up files"
 msgstr ""
 
-#: .././mainwin.py:26968
+#: .././mainwin.py:26963
 msgid "Tidy up channel"
 msgstr ""
 
-#: .././mainwin.py:26970
+#: .././mainwin.py:26965
 msgid "Tidy up playlist"
 msgstr ""
 
-#: .././mainwin.py:26972
+#: .././mainwin.py:26967
 msgid "Tidy up folder"
 msgstr ""
 
-#: .././mainwin.py:27001
+#: .././mainwin.py:26996
 msgid "Check that videos are not corrupted"
 msgstr ""
 
-#: .././mainwin.py:27006
+#: .././mainwin.py:27001
 msgid "Delete corrupted video files"
 msgstr ""
 
-#: .././mainwin.py:27016
+#: .././mainwin.py:27011
 msgid "Check that videos do/don't exist"
 msgstr ""
 
-#: .././mainwin.py:27023
+#: .././mainwin.py:27018
 msgid ""
 "Delete downloaded video files (doesn't remove videos from Tartube's database)"
 msgstr ""
 
-#: .././mainwin.py:27035
+#: .././mainwin.py:27030
 msgid "Also delete all video/audio files with the same name"
 msgstr ""
 
-#: .././mainwin.py:27043
+#: .././mainwin.py:27038
 msgid "Delete all archive files"
 msgstr ""
 
-#: .././mainwin.py:27048
+#: .././mainwin.py:27043
 msgid "Move thumbnails into own folder"
 msgstr ""
 
-#: .././mainwin.py:27053
+#: .././mainwin.py:27048
 msgid "Delete all thumbnail files"
 msgstr ""
 
-#: .././mainwin.py:27059
+#: .././mainwin.py:27054
 msgid "Convert .webp thumbnails to .jpg using FFmpeg"
 msgstr ""
 
-#: .././mainwin.py:27068
+#: .././mainwin.py:27063
 msgid "Move other metadata files into own folder"
 msgstr ""
 
-#: .././mainwin.py:27076
+#: .././mainwin.py:27071
 msgid "Delete all description files"
 msgstr ""
 
-#: .././mainwin.py:27080
+#: .././mainwin.py:27075
 msgid "Delete all metadata (JSON) files"
 msgstr ""
 
-#: .././mainwin.py:27084
+#: .././mainwin.py:27079
 msgid "Delete all annotation files"
 msgstr ""
 
 #. (Signal connect appears below)
-#: .././mainwin.py:27093
+#: .././mainwin.py:27088
 msgid "Select none"
 msgstr ""
 
@@ -3301,8 +3305,8 @@ msgstr ""
 
 #. 'Reset' button
 #. (Signal connect appears below)
-#: .././config.py:1017 .././config.py:3306 .././config.py:14178
-#: .././config.py:14219 .././config.py:14289
+#: .././config.py:1017 .././config.py:3306 .././config.py:14214
+#: .././config.py:14255 .././config.py:14325
 msgid "Reset"
 msgstr ""
 
@@ -3602,7 +3606,7 @@ msgid "Number of comments"
 msgstr ""
 
 #: .././config.py:3170 .././config.py:9916 .././config.py:12528
-#: .././config.py:14409 .././config.py:14674
+#: .././config.py:14445 .././config.py:14710
 msgid "Add"
 msgstr ""
 
@@ -3643,8 +3647,8 @@ msgid "Path to the downloader's cookie jar file"
 msgstr ""
 
 #: .././config.py:3302 .././config.py:4927 .././config.py:4947
-#: .././config.py:4967 .././config.py:14174 .././config.py:14215
-#: .././config.py:14285
+#: .././config.py:4967 .././config.py:14111 .././config.py:14210
+#: .././config.py:14251 .././config.py:14321
 msgid "Set"
 msgstr ""
 
@@ -5662,11 +5666,11 @@ msgstr ""
 msgid "Join mode"
 msgstr ""
 
-#: .././config.py:12537 .././config.py:14432 .././config.py:14697
+#: .././config.py:12537 .././config.py:14468 .././config.py:14733
 msgid "Edit"
 msgstr ""
 
-#: .././config.py:12564 .././config.py:14468 .././config.py:14733
+#: .././config.py:12564 .././config.py:14504 .././config.py:14769
 msgid "Delete"
 msgstr ""
 
@@ -6014,297 +6018,305 @@ msgid "Path to the executable"
 msgstr ""
 
 #. (Signal connect appears below)
-#: .././config.py:14070 .././config.py:14182 .././config.py:14223
-#: .././config.py:14293 .././config.py:19966
+#: .././config.py:14070 .././config.py:14218 .././config.py:14259
+#: .././config.py:14329 .././config.py:20068
 msgid "Use default path"
 msgstr ""
 
-#: .././config.py:14075 .././config.py:19978
+#: .././config.py:14075 .././config.py:20080
 msgid "Use local path"
 msgstr ""
 
-#: .././config.py:14083 .././config.py:19992
+#: .././config.py:14079
+msgid "Use custom path"
+msgstr ""
+
+#: .././config.py:14087 .././config.py:20094
 msgid "Use PyPI path"
 msgstr ""
 
-#: .././config.py:14108
+#: .././config.py:14138
 msgid "Command for update operations"
 msgstr ""
 
-#: .././config.py:14150
+#: .././config.py:14186
 msgid "_FFmpeg / AVConv"
 msgstr ""
 
-#: .././config.py:14158
+#: .././config.py:14194
 msgid "Post-processing file paths"
 msgstr ""
 
-#: .././config.py:14163
+#: .././config.py:14199
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
 msgstr ""
 
-#: .././config.py:14170
+#: .././config.py:14206
 msgid "Path to the FFmpeg executable"
 msgstr ""
 
-#: .././config.py:14197
+#: .././config.py:14233
 msgid "Install from main menu"
 msgstr ""
 
-#: .././config.py:14211
+#: .././config.py:14247
 msgid "Path to the AVConv executable"
 msgstr ""
 
-#: .././config.py:14238
+#: .././config.py:14274
 msgid "Not supported on MS Windows"
 msgstr ""
 
-#: .././config.py:14261
+#: .././config.py:14297
 msgid "_Stream Capture"
 msgstr ""
 
-#: .././config.py:14269
+#: .././config.py:14305
 msgid "Youtube Stream Capture file path"
 msgstr ""
 
-#: .././config.py:14274
+#: .././config.py:14310
 msgid ""
 "Tartube includes a copy of this script, but you can use a different copy, if "
 "you want"
 msgstr ""
 
-#: .././config.py:14281
+#: .././config.py:14317
 msgid "Path to the YT Stream Capture executable"
 msgstr ""
 
-#: .././config.py:14339
+#: .././config.py:14375
 msgid "_Download options"
 msgstr ""
 
-#: .././config.py:14346
+#: .././config.py:14382
 msgid "List of download options managers"
 msgstr ""
 
-#: .././config.py:14366
+#: .././config.py:14402
 msgid "Classic Mode"
 msgstr ""
 
-#: .././config.py:14367
+#: .././config.py:14403
 msgid "Applied to media"
 msgstr ""
 
-#: .././config.py:14441 .././config.py:14706
+#: .././config.py:14477 .././config.py:14742
 msgid "Export"
 msgstr ""
 
-#: .././config.py:14450 .././config.py:14715
+#: .././config.py:14486 .././config.py:14751
 msgid "Clone"
 msgstr ""
 
-#: .././config.py:14459
+#: .././config.py:14495
 msgid "Use in Classic Mode tab"
 msgstr ""
 
-#: .././config.py:14484 .././config.py:14749
+#: .././config.py:14520 .././config.py:14785
 msgid "Refresh list"
 msgstr ""
 
-#: .././config.py:14565
+#: .././config.py:14601
 msgid "_Preferences"
 msgstr ""
 
-#: .././config.py:14572
+#: .././config.py:14608
 msgid "Download options preferences"
 msgstr ""
 
-#: .././config.py:14578
+#: .././config.py:14614
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
 msgstr ""
 
-#: .././config.py:14589
+#: .././config.py:14625
 msgid "After downloading a video, destroy its download options"
 msgstr ""
 
-#: .././config.py:14606
+#: .././config.py:14642
 msgid "_FFmpeg options"
 msgstr ""
 
-#: .././config.py:14613
+#: .././config.py:14649
 msgid "List of FFmpeg options managers"
 msgstr ""
 
-#: .././config.py:14633
+#: .././config.py:14669
 msgid "Current"
 msgstr ""
 
-#: .././config.py:14724
+#: .././config.py:14760
 msgid "Use these options"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:14815
+#: .././config.py:14851
 msgid "O_utput"
 msgstr ""
 
-#: .././config.py:14834
+#: .././config.py:14870
 msgid "_Output Tab"
 msgstr ""
 
-#: .././config.py:14842
+#: .././config.py:14878
 msgid "Output Tab preferences"
 msgstr ""
 
-#: .././config.py:14847
+#: .././config.py:14883
 msgid "Display downloader system commands in the Output Tab"
 msgstr ""
 
-#: .././config.py:14856
+#: .././config.py:14892
 msgid "Display output from downloader's STDOUT in the Output Tab"
 msgstr ""
 
-#: .././config.py:14865 .././config.py:15027
+#: .././config.py:14901 .././config.py:15063
 msgid "...but don't write each video's JSON data"
 msgstr ""
 
-#: .././config.py:14876 .././config.py:15038
+#: .././config.py:14912 .././config.py:15074
 msgid "...but don't write each video's download progress"
 msgstr ""
 
-#: .././config.py:14895
+#: .././config.py:14931
 msgid "Display output from downloader's STDERR in the Output Tab"
 msgstr ""
 
-#: .././config.py:14904
+#: .././config.py:14940
 msgid "Limit the size of Output Tab pages to"
 msgstr ""
 
-#: .././config.py:14925
+#: .././config.py:14961
 msgid "Empty pages in the Output Tab at the start of every operation"
 msgstr ""
 
-#: .././config.py:14935
+#: .././config.py:14971
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
 msgstr ""
 
-#: .././config.py:14947
+#: .././config.py:14983
 msgid "During an update operation, automatically switch to the Output tab"
 msgstr ""
 
-#: .././config.py:14958
+#: .././config.py:14994
 msgid "During a refresh operation, show all matching videos in the Output Tab"
 msgstr ""
 
-#: .././config.py:14969
+#: .././config.py:15005
 msgid "...also show all non-matching videos"
 msgstr ""
 
-#: .././config.py:14998
+#: .././config.py:15034
 msgid "_Terminal window"
 msgstr ""
 
-#: .././config.py:15004
+#: .././config.py:15040
 msgid "Terminal window preferences"
 msgstr ""
 
-#: .././config.py:15009
+#: .././config.py:15045
 msgid "Write downloader system commands to the terminal window"
 msgstr ""
 
-#: .././config.py:15018
+#: .././config.py:15054
 msgid "Write output from downloader's STDOUT to the terminal window"
 msgstr ""
 
-#: .././config.py:15060
+#: .././config.py:15096
 msgid "Write output from downloader's STDERR to the terminal window"
 msgstr ""
 
-#: .././config.py:15079
+#: .././config.py:15115
 msgid "_Both"
 msgstr ""
 
-#: .././config.py:15084
+#: .././config.py:15120
 msgid ""
 "Special preferences (applies to both the Output Tab and the terminal window)"
 msgstr ""
 
-#: .././config.py:15091
+#: .././config.py:15127
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
 msgstr ""
 
-#: .././config.py:15100
+#: .././config.py:15136
 msgid "Youtube Stream Capture writes verbose output"
 msgstr ""
 
-#: .././config.py:16017
+#: .././config.py:16053
 msgid "Are you sure you want to create a new database at this location?"
 msgstr ""
 
-#: .././config.py:16124
+#: .././config.py:16160
 msgid "Are you sure you want to forget this database?"
 msgstr ""
 
-#: .././config.py:16159
+#: .././config.py:16195
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr ""
 
-#: .././config.py:16363
+#: .././config.py:16399
 msgid "No database exists at this location:"
 msgstr ""
 
-#: .././config.py:16365
+#: .././config.py:16401
 msgid "Do you want to create a new one?"
 msgstr ""
 
-#: .././config.py:17005
+#: .././config.py:17041
 msgid "The current options manager cannot be deleted"
 msgstr ""
 
-#: .././config.py:17013 .././config.py:18013
+#: .././config.py:17049 .././config.py:18049
 msgid "Are you sure you want to delete this options manager?"
 msgstr ""
 
-#: .././config.py:17207 .././config.py:17554 .././config.py:19038
+#: .././config.py:17243 .././config.py:17590 .././config.py:19074
 msgid "The new setting will be applied when Tartube restarts"
 msgstr ""
 
-#: .././config.py:18005
+#: .././config.py:18041
 msgid "The default options manager cannot be deleted"
 msgstr ""
 
-#: .././config.py:18700
+#: .././config.py:18736
 msgid "There is already a scheduled download with that name"
 msgstr ""
 
-#: .././config.py:18747
+#: .././config.py:18783
 msgid "Are you sure you want to delete this scheduled download?"
 msgstr ""
 
-#: .././config.py:18915
+#: .././config.py:18951
 msgid "Please select the AVConv executable"
 msgstr ""
 
-#: .././config.py:18948
+#: .././config.py:18984
 msgid "Please select the FFmpeg executable"
 msgstr ""
 
-#: .././config.py:18981
+#: .././config.py:19017
 msgid "Please select the Youtube Stream Capture executable"
 msgstr ""
 
-#: .././config.py:19889
+#: .././config.py:19807
+msgid "Select the youtube-dl-compatible executable"
+msgstr ""
+
+#: .././config.py:19991
 msgid "Database file not loaded"
 msgstr ""
 
-#: .././config.py:19909
+#: .././config.py:20011
 msgid "Did not try to load the database file"
 msgstr ""
 
-#: .././config.py:19934
+#: .././config.py:20036
 msgid "Database file loaded"
 msgstr ""
 
@@ -6369,317 +6381,321 @@ msgstr ""
 msgid "Checking RSS feed"
 msgstr ""
 
-#: .././downloads.py:1741
+#: .././downloads.py:1744
 msgid "Cannot download videos in a private folder"
 msgstr ""
 
-#: .././downloads.py:2976 .././downloads.py:5227
+#: .././downloads.py:2986 .././downloads.py:5243
 msgid "Download did not start"
 msgstr ""
 
-#: .././downloads.py:2984 .././downloads.py:5239 .././info.py:361
+#: .././downloads.py:2994 .././downloads.py:5255 .././info.py:364
 #: .././updates.py:278 .././updates.py:476
 msgid "Child process exited with non-zero code: {}"
 msgstr ""
 
-#: .././downloads.py:3098 .././downloads.py:4047
+#: .././downloads.py:3108 .././downloads.py:4060
 msgid ""
 "This video has a URL that points to a channel or a playlist, not a video"
 msgstr ""
 
-#: .././downloads.py:3924 .././downloads.py:3938
+#: .././downloads.py:3937 .././downloads.py:3951
 msgid "Simulated download of:"
 msgstr ""
 
-#: .././downloads.py:3946
+#: .././downloads.py:3959
 msgid "Simulated download of video with unprintable characters"
 msgstr ""
 
 #. This object creates more messages for the Output Tab and/or terminal,
 #. than downloads.VideoDownloader would do, as the output generated by
 #. Youtube Stream Capture is not easy for the user to interpret
-#: .././downloads.py:5118
+#: .././downloads.py:5134
 msgid "Tartube is starting the stream capture..."
 msgstr ""
 
-#: .././downloads.py:5136
+#: .././downloads.py:5152
 msgid "Could not create a destination directory, capture halted"
 msgstr ""
 
-#: .././downloads.py:5157 .././downloads.py:5182
+#: .././downloads.py:5173 .././downloads.py:5198
 msgid "Youtube Stream Capture script not found:"
 msgstr ""
 
-#: .././downloads.py:5231
+#: .././downloads.py:5247
 msgid "Failed to capture the livestream"
 msgstr ""
 
-#: .././downloads.py:5235
+#: .././downloads.py:5251
 msgid "Stream capture terminated"
 msgstr ""
 
-#: .././downloads.py:5245
+#: .././downloads.py:5261
 msgid ""
 "Stream captured terminated without downloading any video segments "
 "(indicating an error with the stream)"
 msgstr ""
 
 #. Capture successful
-#: .././downloads.py:5261
+#: .././downloads.py:5277
 msgid "Stream capture successful"
 msgstr ""
 
 #. Show a confirmation message
-#: .././downloads.py:5291
+#: .././downloads.py:5307
 msgid "Merging file segments..."
 msgstr ""
 
-#: .././downloads.py:5311
+#: .././downloads.py:5327
 msgid "Segment merge did not start"
 msgstr ""
 
-#: .././downloads.py:5322
+#: .././downloads.py:5338
 msgid "Segment merge completed, but path not detected"
 msgstr ""
 
-#: .././downloads.py:5332
+#: .././downloads.py:5348
 msgid "Segment merge completed, but output file not found"
 msgstr ""
 
-#: .././downloads.py:5353
+#: .././downloads.py:5369
 msgid "File moved to:"
 msgstr ""
 
-#: .././downloads.py:5358
+#: .././downloads.py:5374
 msgid "Livestream download is complete"
 msgstr ""
 
-#: .././downloads.py:5363
+#: .././downloads.py:5379
 msgid "Failed to move output file"
 msgstr ""
 
-#: .././downloads.py:5532
+#: .././downloads.py:5548
 #, python-brace-format
 msgid "Stream capture is frozen, trying again (restart #{0})"
 msgstr ""
 
-#: .././downloads.py:5539
+#: .././downloads.py:5555
 msgid "Stream capture is frozen, giving up"
 msgstr ""
 
-#: .././formats.py:66
+#: .././formats.py:67
 msgid "seconds"
 msgstr ""
 
-#: .././formats.py:67
+#: .././formats.py:68
 msgid "minutes"
 msgstr ""
 
-#: .././formats.py:68
+#: .././formats.py:69
 msgid "hours"
 msgstr ""
 
-#: .././formats.py:69
+#: .././formats.py:70
 msgid "days"
 msgstr ""
 
-#: .././formats.py:70
+#: .././formats.py:71
 msgid "weeks"
 msgstr ""
 
-#: .././formats.py:71
+#: .././formats.py:72
 msgid "years"
 msgstr ""
 
 #. System folder names
-#: .././formats.py:821
+#: .././formats.py:822
 msgid "All Videos"
 msgstr ""
 
-#: .././formats.py:822
+#: .././formats.py:823
 msgid "Bookmarks"
 msgstr ""
 
-#: .././formats.py:823
+#: .././formats.py:824
 msgid "Favourite Videos"
 msgstr "Favorite Videos"
 
-#: .././formats.py:824
+#: .././formats.py:825
 msgid "Livestreams"
 msgstr ""
 
-#: .././formats.py:825
+#: .././formats.py:826
 msgid "Missing Videos"
 msgstr ""
 
-#: .././formats.py:826
+#: .././formats.py:827
 msgid "New Videos"
 msgstr ""
 
-#: .././formats.py:827
+#: .././formats.py:828
 msgid "Recent Videos"
 msgstr ""
 
-#: .././formats.py:828
+#: .././formats.py:829
 msgid "Waiting Videos"
 msgstr ""
 
-#: .././formats.py:829
+#: .././formats.py:830
 msgid "Temporary Videos"
 msgstr ""
 
-#: .././formats.py:830
+#: .././formats.py:831
 msgid "Unsorted Videos"
 msgstr ""
 
-#: .././formats.py:835
+#: .././formats.py:836
 msgid "Update using default youtube-dl path"
 msgstr ""
 
-#: .././formats.py:837
+#: .././formats.py:838
 msgid "Update using local youtube-dl path"
 msgstr ""
 
-#: .././formats.py:839
+#: .././formats.py:840
+msgid "Update using custom youtube-dl path"
+msgstr ""
+
+#: .././formats.py:842
 msgid "Update using pip"
 msgstr ""
 
-#: .././formats.py:841
+#: .././formats.py:844
 msgid "Update using pip (omit --user option)"
 msgstr ""
 
-#: .././formats.py:843
+#: .././formats.py:846
 msgid "Update using pip3"
 msgstr ""
 
-#: .././formats.py:845
+#: .././formats.py:848
 msgid "Update using pip3 (omit --user option)"
 msgstr ""
 
-#: .././formats.py:847
+#: .././formats.py:850
 msgid "Update using pip3 (recommended)"
 msgstr ""
 
-#: .././formats.py:849
+#: .././formats.py:852
 msgid "Update using PyPI youtube-dl path"
 msgstr ""
 
-#: .././formats.py:851
+#: .././formats.py:854
 msgid "Windows 32-bit update (recommended)"
 msgstr ""
 
-#: .././formats.py:853
+#: .././formats.py:856
 msgid "Windows 64-bit update (recommended)"
 msgstr ""
 
-#: .././formats.py:855
+#: .././formats.py:858
 msgid "youtube-dl updates are disabled"
 msgstr ""
 
 #. Download operation stages
-#: .././formats.py:859
+#: .././formats.py:862
 msgid "Queued"
 msgstr ""
 
-#: .././formats.py:860
+#: .././formats.py:863
 msgid "Active"
 msgstr ""
 
-#: .././formats.py:861
+#: .././formats.py:864
 msgid "Paused"
 msgstr ""
 
 #. (not actually used)
-#: .././formats.py:862
+#: .././formats.py:865
 msgid "Completed"
 msgstr ""
 
 #. (not actually used)
 #. Sub-stages of the 'Error' stage
-#: .././formats.py:863 .././formats.py:877
+#: .././formats.py:866 .././formats.py:880
 msgid "Error"
 msgstr ""
 
-#: .././formats.py:864
+#: .././formats.py:867
 msgid "Stalled"
 msgstr ""
 
 #. Sub-stages of the 'Active' stage
-#: .././formats.py:866
+#: .././formats.py:869
 msgid "Pre-processing"
 msgstr ""
 
-#: .././formats.py:867
+#: .././formats.py:870
 msgid "Downloading"
 msgstr ""
 
-#: .././formats.py:868
+#: .././formats.py:871
 msgid "Post-processing"
 msgstr ""
 
-#: .././formats.py:869
+#: .././formats.py:872
 msgid "Capturing"
 msgstr ""
 
 #. Used by YTSC
-#: .././formats.py:870
+#: .././formats.py:873
 msgid "Merging"
 msgstr ""
 
 #. Used by YTSC
-#: .././formats.py:871
+#: .././formats.py:874
 msgid "Checking"
 msgstr ""
 
 #. Sub-stages of the 'Completed' stage
-#: .././formats.py:873
+#: .././formats.py:876
 msgid "Finished"
 msgstr ""
 
-#: .././formats.py:874
+#: .././formats.py:877
 msgid "Warning"
 msgstr ""
 
-#: .././formats.py:875
+#: .././formats.py:878
 msgid "Already downloaded"
 msgstr ""
 
 #. (not actually used)
-#: .././formats.py:878
+#: .././formats.py:881
 msgid "Stopped"
 msgstr ""
 
-#: .././formats.py:879
+#: .././formats.py:882
 msgid "Filesize abort"
 msgstr ""
 
-#: .././formats.py:889
+#: .././formats.py:892
 msgid ""
 "TRANSLATOR'S NOTE: ID refers to a video's unique ID on the website, e.g. on "
 "YouTube \"CS9OO0S5w2k\""
 msgstr ""
 
-#: .././formats.py:897
+#: .././formats.py:900
 msgid "Custom"
 msgstr ""
 
-#: .././formats.py:898
+#: .././formats.py:901
 msgid "ID"
 msgstr ""
 
-#: .././formats.py:899
+#: .././formats.py:902
 msgid "Title"
 msgstr ""
 
-#: .././formats.py:900
+#: .././formats.py:903
 msgid "Quality"
 msgstr ""
 
-#: .././formats.py:901
+#: .././formats.py:904
 msgid "Autonumber"
 msgstr ""
 
-#: .././formats.py:913
+#: .././formats.py:916
 msgid "Any format"
 msgstr ""
 
@@ -6697,41 +6713,41 @@ msgstr ""
 msgid "Starting info operation, fetching list of subtitles for '{0}'"
 msgstr ""
 
-#: .././info.py:352
+#: .././info.py:355
 msgid "System process did not start"
 msgstr ""
 
-#: .././info.py:377 .././info.py:496
+#: .././info.py:380 .././info.py:499
 msgid "Info operation finished"
 msgstr ""
 
-#: .././info.py:405
+#: .././info.py:408
 msgid "Starting info operation, checking for new releases of Tartube"
 msgstr ""
 
-#: .././info.py:413
+#: .././info.py:416
 msgid "Checking stable release..."
 msgstr ""
 
-#: .././info.py:429 .././info.py:470
+#: .././info.py:432 .././info.py:473
 msgid "Ignoring invalid version"
 msgstr ""
 
-#: .././info.py:438 .././info.py:479
+#: .././info.py:441 .././info.py:482
 msgid "Retrieved version:"
 msgstr ""
 
-#: .././info.py:445 .././info.py:486
+#: .././info.py:448 .././info.py:489
 msgid "Connection failed"
 msgstr ""
 
-#: .././info.py:454
+#: .././info.py:457
 msgid "Checking development release..."
 msgstr ""
 
 #. (The code in self.run() will spot that the child process did not
 #. start)
-#: .././info.py:546 .././updates.py:187
+#: .././info.py:549 .././updates.py:187
 msgid "Child process did not start"
 msgstr ""
 

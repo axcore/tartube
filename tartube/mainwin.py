@@ -3785,24 +3785,19 @@ class MainWin(Gtk.ApplicationWindow):
 
             downloader = self.app_obj.get_downloader();
 
+            self.download_media_button.set_label('...')
             if operation_type == 'ffmpeg':
-                self.check_media_button.set_label(_('Installing'))
-                self.download_media_button.set_label('FFmpeg')
+                self.check_media_button.set_label(_('Installing FFmpeg'))
             elif operation_type == 'ytdl':
-                self.check_media_button.set_label(_('Updating'))
-                self.download_media_button.set_label(downloader)
+                self.check_media_button.set_label(_('Updating downloader'))
             elif operation_type == 'formats':
-                self.check_media_button.set_label(_('Fetching'))
-                self.download_media_button.set_label('format list')
+                self.check_media_button.set_label(_('Fetching formats'))
             elif operation_type == 'subs':
-                self.check_media_button.set_label(_('Fetching'))
-                self.download_media_button.set_label('subtitle list')
+                self.check_media_button.set_label(_('Fetching subtitles'))
             elif operation_type == 'test_ytdl':
-                self.check_media_button.set_label(_('Testing'))
-                self.download_media_button.set_label(downloader)
+                self.check_media_button.set_label(_('Testing downloader'))
             else:
                 self.check_media_button.set_label(_('Contacting website'))
-                self.download_media_button.set_label(downloader)
 
             self.check_media_button.set_sensitive(False)
             self.download_media_button.set_sensitive(False)

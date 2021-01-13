@@ -594,9 +594,9 @@ class SetupWizWin(GenericWizWin):
         #   self.apply_changes() is called)
         # Path to Tartube's data directory
         self.data_dir = None
-        # The name of the youtube-dl fork to use ('None' when youtube-dl itself
-        #   should be used)
-        self.ytdl_fork = 'youtube-dlc'
+        # The name of the youtube-dl fork to use, by default ('None' when
+        #   youtube-dl itself should be used)
+        self.ytdl_fork = None
         # The new value of mainapp.TartubeApp.ytdl_update_current(), if any.
         self.ytdl_update_current = None
 
@@ -907,7 +907,7 @@ class SetupWizWin(GenericWizWin):
 
         # youtube-dlc
         radiobutton = self.setup_set_downloader_page_add_button(
-            1,                  # Row number
+            2,                  # Row number
             '<b>youtube-dlc</b>: <i>' \
             + self.app_obj.ytdl_fork_descrip_dict['youtube-dlc'] \
             + '</i>',
@@ -916,7 +916,7 @@ class SetupWizWin(GenericWizWin):
 
         # youtube-dl
         radiobutton2 = self.setup_set_downloader_page_add_button(
-            2,                  # Row number
+            1,                  # Row number
             '<b>youtube-dl</b>: <i>' \
             + self.app_obj.ytdl_fork_descrip_dict['youtube-dl'] \
             + '</i>',

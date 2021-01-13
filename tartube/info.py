@@ -238,7 +238,10 @@ class InfoManager(threading.Thread):
 
         else:
 
-            cmd_list = [ytdl_path]
+            if app_obj.ytdl_path_custom_flag:
+                cmd_list = ['python3'] + [ytdl_path]
+            else:
+                cmd_list = [ytdl_path]
 
             if self.options_string is not None \
             and self.options_string != '':

@@ -38,6 +38,7 @@ from mainapp import _
 locale_setup_list = [
     'en_GB',    'English',
     'en_US',    'English (American)',
+    'nl_NL',    'Nederlands',
 ]
 
 LOCALE_DEFAULT = locale_setup_list[0]
@@ -835,6 +836,8 @@ def do_translate(config_flag=False):
             _('Update using default youtube-dl path'),
         'ytdl_update_local_path':
             _('Update using local youtube-dl path'),
+        'ytdl_update_custom_path':
+            _('Update using custom youtube-dl path'),
         'ytdl_update_pip':
             _('Update using pip'),
         'ytdl_update_pip_omit_user':

@@ -13892,7 +13892,7 @@ class SystemPrefWin(GenericPrefWin):
         # youtube-dlc. Use an event box so the downloader can be selected by
         #   clicking anywhere in the frame
         event_box = Gtk.EventBox()
-        grid.attach(event_box, 0, 1, 1, 1)
+        grid.attach(event_box, 0, 2, 1, 1)
         # (Signal connect appears below)
 
         frame = Gtk.Frame()
@@ -13921,7 +13921,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # youtube-dl
         event_box2 = Gtk.EventBox()
-        grid.attach(event_box2, 0, 2, 1, 1)
+        grid.attach(event_box2, 0, 1, 1, 1)
         # (Signal connect appears below)
 
         frame2 = Gtk.Frame()
@@ -14051,7 +14051,7 @@ class SystemPrefWin(GenericPrefWin):
             _('_File paths'),
             inner_notebook,
         )
-        grid_width = 2
+        grid_width = 3
 
         # Downloader file paths
         self.add_label(grid,
@@ -14075,6 +14075,10 @@ class SystemPrefWin(GenericPrefWin):
                 _('Use local path') + ' (' + self.app_obj.ytdl_bin + ')',
                 self.app_obj.ytdl_bin,
             ],
+            [
+                _('Use custom path'),
+                None,       # Set by the callback
+            ],
         ]
         if os.name != 'nt':
 
@@ -14096,17 +14100,43 @@ class SystemPrefWin(GenericPrefWin):
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 0)
         combo.set_entry_text_column(0)
-        if self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
-            combo.set_active(0)
-        elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_pypi:
-            combo.set_active(2)
-        else:
-            combo.set_active(1)
         # (Signal connect appears below)
 
+        entry = self.add_entry(grid,
+            None,
+            False,
+            1, 2, 1, 1,
+        )
+
+        button = Gtk.Button(_('Set'))
+        grid.attach(button, 2, 2, 1, 1)
+        # (Signal connect appears below)
+
+        # Set up those widgets
+        if self.app_obj.ytdl_path_custom_flag:
+            combo.set_active(2)
+        elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
+            combo.set_active(0)
+        elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_pypi:
+            combo.set_active(3)
+        else:
+            combo.set_active(1)
+
+        if self.app_obj.ytdl_path_custom_flag:
+
+            # (If this window is loaded due to
+            #   mainapp.TartubeApp.debug_open_pref_win_flag, this value will be
+            #   None)
+            if self.app_obj.ytdl_path:
+                entry.set_text(self.app_obj.ytdl_path)
+
+        else:
+            button.set_sensitive(False)
+
+        # Now set up the next combo
         self.add_label(grid,
             _('Command for update operations'),
-            0, 2, 1, 1,
+            0, 3, 1, 1,
         )
 
         self.cmd_liststore = Gtk.ListStore(str, str)
@@ -14114,7 +14144,7 @@ class SystemPrefWin(GenericPrefWin):
             self.cmd_liststore.append( [item, formats.YTDL_UPDATE_DICT[item]] )
 
         combo2 = Gtk.ComboBox.new_with_model(self.cmd_liststore)
-        grid.attach(combo2, 1, 2, (grid_width - 1), 1)
+        grid.attach(combo2, 1, 3, (grid_width - 1), 1)
 
         renderer_text = Gtk.CellRendererText()
         combo2.pack_start(renderer_text, True)
@@ -14135,7 +14165,13 @@ class SystemPrefWin(GenericPrefWin):
         self.update_ytdl_combos()
 
         # (Signal connects from above)
-        combo.connect('changed', self.on_ytdl_path_combo_changed)
+        combo.connect(
+            'changed',
+            self.on_ytdl_path_combo_changed,
+            entry,
+            button,
+        )
+        button.connect('clicked', self.on_ytdl_path_button_clicked, entry)
         combo2.connect('changed', self.on_update_combo_changed)
 
 
@@ -17539,7 +17575,7 @@ class SystemPrefWin(GenericPrefWin):
                 grid2.set_row_spacing(self.spacing_size)
 
                 frame = self.add_image(grid2,
-                    self.app_obj.main_win_obj.icon_dict['tool_quit_large'],
+                    self.app_obj.main_win_obj.icon_dict['warning_large'],
                     0, 2, 1, 1,
                 )
                 # (The frame looks cramped without this. The icon itself is
@@ -19752,7 +19788,49 @@ class SystemPrefWin(GenericPrefWin):
             self.update_ytdl_combos()
 
 
-    def on_ytdl_path_combo_changed(self, combo):
+    def on_ytdl_path_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_paths_tab().
+
+        Sets a custom path to the youtube-dl(c) executable.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        # Prompt the user for the new youtube-dl(c) executable
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Select the youtube-dl-compatible executable'),
+            self,
+            'open',
+        )
+
+        # (When the user first selects a custom path, using the combobox, the
+        #   default youtube-dl(c) path is used until they have selected a new
+        #   path)
+        if self.app_obj.ytdl_path != self.app_obj.ytdl_path_default:
+            dialogue_win.set_current_folder(self.app_obj.ytdl_path)
+
+        # Get the user's response
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+        if response == Gtk.ResponseType.OK:
+
+            self.app_obj.set_ytdl_path(new_path)
+            self.app_obj.ytdl_update_dict['ytdl_update_custom_path'] \
+            = ['python3', self.app_obj.ytdl_path, '-U']
+
+            entry.set_text(new_path)
+
+
+    def on_ytdl_path_combo_changed(self, combo, entry, button):
 
         """Called from a callback in self.setup_downloader_paths_tab().
 
@@ -19763,11 +19841,35 @@ class SystemPrefWin(GenericPrefWin):
 
             combo (Gtk.ComboBox): The widget clicked
 
+            entry (Gtk.Entry): Another entry to check
+
+            button (Gtk.Button): Another widget to modify
+
         """
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
-        self.app_obj.set_ytdl_path(model[tree_iter][1])
+        ytdl_path = model[tree_iter][1]
+
+        if ytdl_path is not None:
+
+            self.app_obj.set_ytdl_path(ytdl_path)
+            self.app_obj.set_ytdl_path_custom_flag(False)
+            entry.set_text('')
+            button.set_sensitive(False)
+
+        else:
+
+            # Custom youtube-dl(c) path, set by the entry/button
+            # Until the user has selected their own executable, use the default
+            #   one
+            self.app_obj.set_ytdl_path(self.app_obj.ytdl_path_default)
+            self.app_obj.ytdl_update_dict['ytdl_update_custom_path'] \
+            = ['python3', self.app_obj.ytdl_path, '-U']
+            self.app_obj.set_ytdl_path_custom_flag(True)
+
+            entry.set_text(self.app_obj.ytdl_path)
+            button.set_sensitive(True)
 
 
     def on_ytsc_priority_button_toggled(self, checkbutton, spinbutton,
@@ -19987,7 +20089,7 @@ class SystemPrefWin(GenericPrefWin):
             )
 
             self.path_liststore.set(
-                self.path_liststore.get_iter(Gtk.TreePath(2)),
+                self.path_liststore.get_iter(Gtk.TreePath(3)),
                 0,
                 _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
             )
