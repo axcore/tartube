@@ -7928,8 +7928,9 @@ class TartubeApp(Gtk.Application):
         If self.ytdl_fork is specified, substitutes the fork for the original,
         and returns the modified value.
 
-        If the specified value doesn't actually contain 'youtube-dl', then it
-        is returned unmodified.
+        If the specified value doesn't actually contain 'youtube-dl', or if the
+        user has specified a custom path to the youtube-dl(c) executable, then
+        'arg' is returned unmodified.
 
         Args:
 
@@ -7950,7 +7951,8 @@ class TartubeApp(Gtk.Application):
 
         if not wiz_win_obj:
 
-            if self.ytdl_fork is not None:
+            if self.ytdl_fork is not None \
+            and not self.ytdl_path_custom_flag:
                 return re.sub('youtube-dl', self.ytdl_fork, arg)
             else:
                 return arg
