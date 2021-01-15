@@ -353,6 +353,7 @@ After installing dependencies (see above):
 1. Download & extract the source code (see the links above)
 2. Change directory into the **Tartube** directory
 3. Type: ``python3 tartube/tartube``
+4. Download `youtube-dlc <https://github.com/blackjack4494/yt-dlc/releases/>`__ or `youtube-dl <https://youtube-dl.org/>`__
 
 5.4 Packaging Tartube
 ---------------------
