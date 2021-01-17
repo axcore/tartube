@@ -238,7 +238,7 @@ class InfoManager(threading.Thread):
 
         else:
 
-            if app_obj.ytdl_path_custom_flag:
+            if self.app_obj.ytdl_path_custom_flag:
                 cmd_list = ['python3'] + [ytdl_path]
             else:
                 cmd_list = [ytdl_path]
