@@ -1,5 +1,3 @@
 #!/bin/bash
-# Shell script to start Tartube on MS Windows, using the MSYS2 environment
-#   provided by the Tartube installer
-cd /home/user/tartube
+# Shell script to start Tartube Portable on Linux
 python3 tartube/tartube
