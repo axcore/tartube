@@ -184,7 +184,7 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
         **brew install gobject-introspection**
 
-        **pip install PyGObject**
+        **python3 -m pip install PyGObject**
 
         **brew install gtk+3**
 
