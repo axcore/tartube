@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-13 15:08+0000\n"
-"PO-Revision-Date: 2021-02-11 17:15+0900\n"
+"PO-Revision-Date: 2021-02-11 17:44+0900\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
 "Language: ko_KR\n"
@@ -174,116 +174,119 @@ msgstr "Tartube 데이터베이스 파일을 저장하지 못했습니다"
 
 #: .././mainapp.py:5915
 msgid "(Could not make a backup copy of the existing file)"
-msgstr ""
+msgstr "(존재하는 파일의 백업 복사본을 만들지 못했습니다)"
 
 #: .././mainapp.py:5951
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
+"Tartube 데이터베이스 파일을 저장하는 데 실패했습니다 (파일이 이미 사용중)"
 
 #: .././mainapp.py:5972
 msgid "A backup of the previous file can be found at:"
-msgstr ""
+msgstr "이전 파일의 백업본을 발견했습니다:"
 
 #: .././mainapp.py:6153 .././mainapp.py:6163
 msgid "Database file created"
-msgstr ""
+msgstr "데이터베이스 파일이 생성됨"
 
 #: .././mainapp.py:6557
 msgid "Tartube's database can't be checked while an operation is in progress"
-msgstr ""
+msgstr "Tartube의 데이터베이스는 작업이 진행중일 때 확인할 수 없습니다"
 
 #: .././mainapp.py:6793
 msgid "Database check complete, no inconsistencies found"
-msgstr ""
+msgstr "데이터베이스 확인이 완료되었습니다. 불일치 사항이 없습니다."
 
 #: .././mainapp.py:6825
 msgid "Database check complete, problems found:"
-msgstr ""
+msgstr "데이터베이스 확인이 완료되었습니다. 문제가 있습니다:"
 
 #: .././mainapp.py:6828
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
 msgstr ""
+"이 문제사항들을 복구하겠습니까? (데이터베이스가 수정되지만, 파일이 삭제되진 "
+"않습니다)"
 
 #: .././mainapp.py:7001
 msgid "Database inconsistencies repaired"
-msgstr ""
+msgstr "데이터베이스 불일치 사항 복구됨"
 
 #: .././mainapp.py:7893 .././config.py:16026
 msgid "Please select Tartube's data folder"
-msgstr ""
+msgstr "Tartube의 데이터 폴더를 선택해 주세요"
 
 #: .././mainapp.py:8254
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려 있으면 다운로드 작업이 시작되지 않습니다"
 
 #: .././mainapp.py:8278 .././mainapp.py:8303
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
-msgstr ""
+msgstr "디바이스 장치에 남은 용량이 {0} / {1} Mb 밖에 없습니다"
 
 #: .././mainapp.py:8306 .././mainapp.py:13966 .././mainapp.py:14082
 #: .././mainapp.py:14264 .././mainwin.py:17487
 msgid "Are you sure you want to continue?"
-msgstr ""
+msgstr "계속 진행하시겠습니까?"
 
 #: .././mainapp.py:8393
 msgid "There is nothing to check!"
-msgstr ""
+msgstr "확인할 항목이 없습니다!"
 
 #: .././mainapp.py:8395
 msgid "There is nothing to download!"
-msgstr ""
+msgstr "다운로드 할 항 목이 없습니다!"
 
 #: .././mainapp.py:8638
 msgid "Download operation complete"
-msgstr ""
+msgstr "다운로드 작업 완료"
 
 #: .././mainapp.py:8640
 msgid "Download operation halted"
-msgstr ""
+msgstr "다운로드 작업 중지됨"
 
 #: .././mainapp.py:8644
 msgid "Videos downloaded:"
-msgstr ""
+msgstr "다운로드한 비디오:"
 
 #: .././mainapp.py:8645
 msgid "Videos checked:"
-msgstr ""
+msgstr "확인한 비디오:"
 
 #: .././mainapp.py:8648 .././mainapp.py:9249 .././mainapp.py:9743
 #: .././mainapp.py:10143
 msgid "Time taken:"
-msgstr ""
+msgstr "소요된 시간:"
 
 #: .././mainapp.py:8753
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려 있으면 업데이트 작업이 시작되지 않습니다"
 
 #: .././mainapp.py:8939
 msgid "Installation failed"
-msgstr ""
+msgstr "설치 실패"
 
 #: .././mainapp.py:8941
 msgid "Installation complete"
-msgstr ""
+msgstr "설치 완료"
 
 #: .././mainapp.py:8945
 msgid "Update operation failed"
-msgstr ""
+msgstr "업데이트 작업 실패"
 
 #: .././mainapp.py:8947
 msgid "Update operation halted"
-msgstr ""
+msgstr "업데이트 작업 중지"
 
 #: .././mainapp.py:8949
 msgid "Update operation complete"
-msgstr ""
+msgstr "업데이트 작업 성공"
 
 #: .././mainapp.py:8951
 msgid "version:"
@@ -297,25 +300,30 @@ msgstr "(알수없음)"
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려 있으면 새로고침 작업이 시작되지 않습니다"
 
 #: .././mainapp.py:9055
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
 msgstr ""
+"새로고침 작업을 하는 동안, Tartube는 데이터 폴더를 분석하고, 데이터베이스에 "
+"추가되지 않은 비디오를 탐색합니다"
 
 #: .././mainapp.py:9059
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
 msgstr ""
+"Tartube의 데이터 폴더에 수동으로 비디오를 복사했다면 새로고침 작업을 해야 합"
+"니다"
 
 #: .././mainapp.py:9066
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr ""
+"새로고침 작업을 시작하기 전에, 메인 화면의 '모두 선택' 버튼을 클릭해야 합니다"
 
 #: .././mainapp.py:9073
 msgid ""
@@ -853,7 +861,7 @@ msgstr ""
 #. Check all
 #: .././mainwin.py:1122 .././mainwin.py:22824
 msgid "_Check all"
-msgstr ""
+msgstr "_모두 선택"
 
 #. Download all
 #: .././mainwin.py:1128 .././mainwin.py:22831
@@ -908,60 +916,60 @@ msgstr ""
 #. Help column
 #: .././mainwin.py:1221
 msgid "_Help"
-msgstr ""
+msgstr "_도움말"
 
 #: .././mainwin.py:1227
 msgid "_About..."
-msgstr ""
+msgstr "_About..."
 
 #: .././mainwin.py:1235
 msgid "Check for _updates"
-msgstr ""
+msgstr "_업데이트 확인하기"
 
 #: .././mainwin.py:1241
 msgid "Go to _website"
-msgstr ""
+msgstr "_웹사이트 방문하기"
 
 #: .././mainwin.py:1250
 msgid "Send _feedback"
-msgstr ""
+msgstr "_피드백 보내기"
 
 #: .././mainwin.py:1297
 msgid "Add new video(s)"
-msgstr ""
+msgstr "새 비디오(들) 만들기"
 
 #: .././mainwin.py:1306 .././media.py:82
 msgid "Channel"
-msgstr ""
+msgstr "채널"
 
 #: .././mainwin.py:1316
 msgid "Add a new channel"
-msgstr ""
+msgstr "새 채널 만들기"
 
 #: .././mainwin.py:1327 .././media.py:84
 msgid "Playlist"
-msgstr ""
+msgstr "플레이리스트"
 
 #: .././mainwin.py:1337
 msgid "Add a new playlist"
-msgstr ""
+msgstr "새 플레이리스트 만들기"
 
 #: .././mainwin.py:1348 .././media.py:86
 msgid "Folder"
-msgstr ""
+msgstr "폴더"
 
 #: .././mainwin.py:1358
 msgid "Add a new folder"
-msgstr ""
+msgstr "새 폴더 만들기"
 
 #: .././mainwin.py:1372
 msgid "Check"
-msgstr ""
+msgstr "선택"
 
 #: .././mainwin.py:1383 .././mainwin.py:1632 .././mainwin.py:3629
 #: .././mainwin.py:3811
 msgid "Check all videos, channels, playlists and folders"
-msgstr ""
+msgstr "모든 비디오, 채널, 플레이리스트, 폴더 선택"
 
 #. Link not clickable
 #. Because of an unexplained Gtk problem, there is usually a crash after
@@ -974,20 +982,20 @@ msgstr ""
 #: .././mainwin.py:20383 .././mainwin.py:21730 .././mainwin.py:21756
 #: .././config.py:12481
 msgid "Download"
-msgstr ""
+msgstr "다운로드"
 
 #: .././mainwin.py:1404 .././mainwin.py:1640 .././mainwin.py:3637
 #: .././mainwin.py:3817
 msgid "Download all videos, channels, playlists and folders"
-msgstr ""
+msgstr "모든 비디오, 채널, 플레이리스트, 폴더 다운로드"
 
 #: .././mainwin.py:1419
 msgid "Stop"
-msgstr ""
+msgstr "정지"
 
 #: .././mainwin.py:1431
 msgid "Stop the current operation"
-msgstr ""
+msgstr "현재 작업 정지"
 
 #: .././mainwin.py:1443 .././config.py:11068
 msgid "Switch"
@@ -999,11 +1007,11 @@ msgstr ""
 
 #: .././mainwin.py:1467 .././mainwin.py:3208
 msgid "Hide"
-msgstr ""
+msgstr "숨기기"
 
 #: .././mainwin.py:1469 .././mainwin.py:3215
 msgid "Show"
-msgstr ""
+msgstr "보이기"
 
 #: .././mainwin.py:1481 .././mainwin.py:3210
 msgid "Hide (most) system folders"
@@ -1011,7 +1019,7 @@ msgstr ""
 
 #: .././mainwin.py:1485 .././mainwin.py:3217
 msgid "Show all system folders"
-msgstr ""
+msgstr "모든 폴더 시스템 보이기"
 
 #: .././mainwin.py:1500
 msgid "Quit"
@@ -1044,7 +1052,7 @@ msgstr "_에러 / 경고"
 
 #: .././mainwin.py:1630 .././mainwin.py:3627 .././mainwin.py:3808
 msgid "Check all"
-msgstr "모두 체크"
+msgstr "모두 선택"
 
 #: .././mainwin.py:1638 .././mainwin.py:2862 .././mainwin.py:3635
 msgid "Download all"
@@ -1267,11 +1275,11 @@ msgstr "대상:"
 
 #: .././mainwin.py:2564
 msgid "Add a new destination folder"
-msgstr "새 대상 폴더 만들기"
+msgstr "새 목적지 폴더 만들기"
 
 #: .././mainwin.py:2583
 msgid "Open the destination folder"
-msgstr "대상 폴더 열기"
+msgstr "목적지 폴더 열기"
 
 #. Video/audio format
 #: .././mainwin.py:2588
@@ -1516,27 +1524,27 @@ msgstr "_폴더 숨기기"
 
 #: .././mainwin.py:4577
 msgid "_Rename channel..."
-msgstr ""
+msgstr "_채널 이름 변경..."
 
 #: .././mainwin.py:4579
 msgid "_Rename playlist..."
-msgstr ""
+msgstr "_플레이리스트 이름 변경..."
 
 #: .././mainwin.py:4581
 msgid "_Rename folder..."
-msgstr ""
+msgstr "_폴더 이름 변경..."
 
 #: .././mainwin.py:4598
 msgid "Set _nickname..."
-msgstr ""
+msgstr "_닉네임 설정..."
 
 #: .././mainwin.py:4613
 msgid "Set _URL..."
-msgstr ""
+msgstr "_URL 설정..."
 
 #: .././mainwin.py:4625
 msgid "Set _download destination..."
-msgstr ""
+msgstr "_다운로드 목적지 설정"
 
 #: .././mainwin.py:4641
 msgid "_Export channel..."
@@ -2691,91 +2699,91 @@ msgstr ""
 
 #: .././mainwin.py:24657
 msgid "Delete channel"
-msgstr ""
+msgstr "채널 지우기"
 
 #: .././mainwin.py:24659
 msgid "Delete playlist"
-msgstr ""
+msgstr "플레이리스트 지우기"
 
 #: .././mainwin.py:24661
 msgid "Delete folder"
-msgstr ""
+msgstr "폴더 지우기"
 
 #: .././mainwin.py:24664
 msgid "Empty channel"
-msgstr ""
+msgstr "빈 채널"
 
 #: .././mainwin.py:24666
 msgid "Empty playlist"
-msgstr ""
+msgstr "빈 플레이리스트"
 
 #: .././mainwin.py:24668
 msgid "Empty folder"
-msgstr ""
+msgstr "빈 폴더"
 
 #: .././mainwin.py:24702
 msgid "This channel does not contain any videos"
-msgstr ""
+msgstr "이 채널엔 아무 비디오도 없습니다"
 
 #: .././mainwin.py:24704
 msgid "This playlist does not contain any videos"
-msgstr ""
+msgstr "이 플레이리스트에 아무 비디오도 없습니다"
 
 #: .././mainwin.py:24706
 msgid "This folder doesn't contain anything"
-msgstr ""
+msgstr "이 폴더에 아무것도 없습니다"
 
 #: .././mainwin.py:24712
 msgid "(but there might be some files in Tartube's data folder)"
-msgstr ""
+msgstr "(하지만 Tartube의 데이터 폴더에 파일이 좀 있을수도 있습니다)"
 
 #: .././mainwin.py:24725
 msgid "This channel contains:"
-msgstr ""
+msgstr "채널에 포함된 항목:"
 
 #: .././mainwin.py:24727
 msgid "This playlist contains:"
-msgstr ""
+msgstr "플레이리스트에 포함된 항목:"
 
 #: .././mainwin.py:24729 .././config.py:9269
 msgid "This folder contains:"
-msgstr ""
+msgstr "폴더에 포함된 항목:"
 
 #: .././mainwin.py:24736
 msgid "1 folder"
-msgstr ""
+msgstr "1 폴더"
 
 #: .././mainwin.py:24738
 #, python-brace-format
 msgid "{0} folders"
-msgstr ""
+msgstr "{0} 폴더"
 
 #: .././mainwin.py:24745
 msgid "1 channel"
-msgstr ""
+msgstr "1 채널"
 
 #: .././mainwin.py:24747
 #, python-brace-format
 msgid "{0} channels"
-msgstr ""
+msgstr "{0} 채널"
 
 #: .././mainwin.py:24754
 msgid "1 playlist"
-msgstr ""
+msgstr "1 플레이리스트"
 
 #: .././mainwin.py:24756
 #, python-brace-format
 msgid "{0} playlists"
-msgstr ""
+msgstr "{0} 플레이리스트"
 
 #: .././mainwin.py:24763 .././mainwin.py:25188
 msgid "1 video"
-msgstr ""
+msgstr "1 비디오"
 
 #: .././mainwin.py:24765 .././mainwin.py:25191
 #, python-brace-format
 msgid "{0} videos"
-msgstr ""
+msgstr "{0} 비디오"
 
 #: .././mainwin.py:24778
 msgid ""
@@ -2881,87 +2889,87 @@ msgstr ""
 
 #: .././mainwin.py:24977
 msgid "Export as plain text"
-msgstr ""
+msgstr "일반 텍스트로 내보내기"
 
 #: .././mainwin.py:25063
 msgid "Import into database"
-msgstr ""
+msgstr "데이터베이스로 가져오기"
 
 #: .././mainwin.py:25086
 msgid "Choose which items to import"
-msgstr ""
+msgstr "가져올 항목 선택하기"
 
 #: .././mainwin.py:25107 .././config.py:14454 .././config.py:14719
 msgid "Import"
-msgstr ""
+msgstr "가져오기"
 
 #: .././mainwin.py:25143
 msgid "Import videos"
-msgstr ""
+msgstr "비디오 가져오기"
 
 #: .././mainwin.py:25148
 msgid "Merge channels/playlists/folders"
-msgstr ""
+msgstr "채널/플레이리스트/폴더 병합하기"
 
 #. Bottom strip
 #: .././mainwin.py:25151 .././mainwin.py:27083
 msgid "Select all"
-msgstr ""
+msgstr "모두 선택하기"
 
 #: .././mainwin.py:25156
 msgid "Unselect all"
-msgstr ""
+msgstr "모두 선택 취소하기"
 
 #: .././mainwin.py:25418
 msgid "Mount drive"
-msgstr ""
+msgstr "드라이브 마운트"
 
 #: .././mainwin.py:25442
 msgid "The Tartube data folder is set to:"
-msgstr ""
+msgstr "Tartube 데이터 폴더가 설정됨:"
 
 #: .././mainwin.py:25455
 msgid "...but this folder doesn't exist"
-msgstr ""
+msgstr "...하지만 이 폴더가 존재하지 않음"
 
 #: .././mainwin.py:25458
 msgid "...but Tartube cannot write to this folder"
-msgstr ""
+msgstr "...하지만 Tartube가 폴더에 쓸 수 없음"
 
 #: .././mainwin.py:25468
 msgid "I have mounted the drive, please try again"
-msgstr ""
+msgstr "드라이브를 마운트했습니다. 다시 시도하세요"
 
 #: .././mainwin.py:25474
 msgid "Use this data folder:"
-msgstr ""
+msgstr "이 데이터 폴더 사용:"
 
 #: .././mainwin.py:25501
 msgid "Select a different data folder"
-msgstr ""
+msgstr "다른 데이터 폴더 선택"
 
 #: .././mainwin.py:25507
 msgid "Use the default data folder"
-msgstr ""
+msgstr "기본 데이터 폴더 사용"
 
 #: .././mainwin.py:25513
 msgid "Shut down Tartube"
-msgstr ""
+msgstr "Tartube 종료"
 
 #. 'Cancel' button
 #: .././mainwin.py:25520 .././config.py:1044
 msgid "Cancel"
-msgstr ""
+msgstr "취소"
 
 #. 'OK' button
 #: .././mainwin.py:25524 .././config.py:1035 .././config.py:2242
 #: .././config.py:7694 .././config.py:7828
 msgid "OK"
-msgstr ""
+msgstr "확인"
 
 #: .././mainwin.py:25646
 msgid "The folder still doesn't exist. Please try a different option"
-msgstr ""
+msgstr "폴더가 존재하지 않습니다. 다른 설정을 시도하세요"
 
 #: .././mainwin.py:25717
 msgid "Stale lockfile"
@@ -3388,11 +3396,11 @@ msgstr ""
 
 #: .././config.py:2869 .././config.py:6260
 msgid "_Name"
-msgstr ""
+msgstr "_이름"
 
 #: .././config.py:2877
 msgid "Name for these download options"
-msgstr ""
+msgstr "다운로드 설정의 이름"
 
 #: .././config.py:2887
 msgid "Download options applied to"
@@ -3509,47 +3517,47 @@ msgstr ""
 
 #: .././config.py:3101
 msgid "Channel name"
-msgstr ""
+msgstr "채널 이름"
 
 #: .././config.py:3102
 msgid "Channel ID"
-msgstr ""
+msgstr "채널 ID"
 
 #: .././config.py:3103
 msgid "Playlist name"
-msgstr ""
+msgstr "플레이리스트 이름"
 
 #: .././config.py:3104
 msgid "Playlist ID"
-msgstr ""
+msgstr "플레이리스트 ID"
 
 #: .././config.py:3105
 msgid "Video index in playlist"
-msgstr ""
+msgstr "플레이리스트에서 비디오 위치"
 
 #: .././config.py:3107
 msgid "Date/time/location"
-msgstr ""
+msgstr "날짜/시간/위치"
 
 #: .././config.py:3109
 msgid "Release date (YYYYMMDD)"
-msgstr ""
+msgstr "릴리즈 날짜 (YYYYMMDD)"
 
 #: .././config.py:3110
 msgid "Release time (UNIX timestamp)"
-msgstr ""
+msgstr "릴리즈 날짜 (UNIX 타임스탬프)"
 
 #: .././config.py:3111
 msgid "Upload data (YYYYMMDD)"
-msgstr ""
+msgstr "업로드 날짜 (YYYYMMDD)"
 
 #: .././config.py:3112
 msgid "Video length (seconds)"
-msgstr ""
+msgstr "비디오 길이 (초)"
 
 #: .././config.py:3113
 msgid "Filming location"
-msgstr ""
+msgstr "촬영 위치"
 
 #: .././config.py:3115 .././config.py:3117
 msgid "Video format"
