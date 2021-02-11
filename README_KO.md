@@ -31,6 +31,10 @@ Works with YouTube, BitChute, and hundreds of other websites
 |playlists|플레이리스트||
 |channels|채널||
 |annotation|어노테이션||
+|destionation|목적지|src, dst 할때 그 dst||
+|import|가져오기||
+|export|내보내기||
+
 ------------------------------------------------------------
 1 Introduction
 ==============
