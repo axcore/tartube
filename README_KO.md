@@ -23,10 +23,14 @@ Works with YouTube, BitChute, and hundreds of other websites
 * 한국어 - 17%
 
 ## 고유명사
+* 가능한 복수 표현은 자제 ex) 비디오들 -> 비디오
+
 |영어|한글|주석|
 |---|---|---|
 |tidy|마무리||
-|opton|설명||
+|option|설정||
+|info|설정||
+|process|처리||
 |videos|비디오||
 |playlists|플레이리스트||
 |channels|채널||
@@ -34,6 +38,15 @@ Works with YouTube, BitChute, and hundreds of other websites
 |destionation|목적지|src, dst 할때 그 dst||
 |import|가져오기||
 |export|내보내기||
+|refresh|새로고침||
+|check|검사,확인||
+|plain text|일반 텍스트||
+|livesteram|생방송||
+|preference|환경설정||
+|switch|변경||
+|classic|클래식||
+|thumbnail|섬네일||
+|corrupt|손상, 손상된||
 
 ------------------------------------------------------------
 1 Introduction
