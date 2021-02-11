@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-13 15:08+0000\n"
-"PO-Revision-Date: 2021-02-11 17:44+0900\n"
+"PO-Revision-Date: 2021-02-12 08:45+0900\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
 "Language: ko_KR\n"
@@ -195,7 +195,7 @@ msgstr "Tartube의 데이터베이스는 작업이 진행중일 때 확인할 �
 
 #: .././mainapp.py:6793
 msgid "Database check complete, no inconsistencies found"
-msgstr "데이터베이스 확인이 완료되었습니다. 불일치 사항이 없습니다."
+msgstr "데이터베이스 확인이 완료되었습니다. 불일치 사항이 없습니다"
 
 #: .././mainapp.py:6825
 msgid "Database check complete, problems found:"
@@ -330,22 +330,26 @@ msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr ""
+"새로고침 작업을 시작하기 전에, 채널을 우클릭하고 '채널 검사'를 선택해주세요"
 
 #: .././mainapp.py:9080
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
 msgstr ""
+"새로고침 작업을 시작하기 전에, 플레이르스트를 우클릭하고 '플레이리스트 검"
+"사'를 선택해주세요"
 
 #: .././mainapp.py:9087
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr ""
+"새로고침 작업을 시작하기 전에, 폴더를 우클릭하고 '폴더 검사'를 선택해주세요"
 
 #: .././mainapp.py:9092
 msgid "Are you sure you want to proceed with the refresh operation?"
-msgstr ""
+msgstr "새로고침 작업을 계속하시겠습니까?"
 
 #: .././mainapp.py:9244
 msgid "Refresh operation complete"
@@ -359,7 +363,7 @@ msgstr "새로고침 작업 중지됨"
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려있으면 설정 작업이 시작되지 않습니다"
 
 #: .././mainapp.py:9467
 msgid "Operation failed"
@@ -371,7 +375,7 @@ msgstr "작업 성공"
 
 #: .././mainapp.py:9471
 msgid "Click the Output Tab to see the results"
-msgstr ""
+msgstr "결과를 보려면 출력 탭을 클릭하세요"
 
 #: .././mainapp.py:9484
 msgid "A new release is available!"
@@ -405,7 +409,7 @@ msgstr "개발 버전 존재하지 않음"
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려있으면 마무리 작업이 시작되지 않습니다"
 
 #: .././mainapp.py:9738
 msgid "Tidy operation complete"
@@ -421,15 +425,15 @@ msgstr "생방송이 시작됨"
 
 #: .././mainapp.py:10132
 msgid "Process operation complete"
-msgstr ""
+msgstr "처리 작업 완료됨"
 
 #: .././mainapp.py:10134
 msgid "Process operation halted"
-msgstr ""
+msgstr "처리 작업이 중지됨"
 
 #: .././mainapp.py:10138
 msgid "Files processed:"
-msgstr ""
+msgstr "처리된 파일:"
 
 #: .././mainapp.py:10139
 msgid "Errors:"
@@ -437,31 +441,35 @@ msgstr "에러:"
 
 #: .././mainapp.py:11399 .././mainapp.py:11574
 msgid "Cannot move anything to:"
-msgstr ""
+msgstr "옮길 수 없습니다:"
 
 #: .././mainapp.py:11401 .././mainapp.py:11576
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
 msgstr ""
+"(Tartube의 데이터베이스에선 확인할 수 없지만) 같은 이름의 파일이나 폴더가 존"
+"재하기 때문입니다"
 
 #: .././mainapp.py:11405
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
 msgstr ""
+"해당 파일이나 폴더를 실수로 만들었을 수 있으므로, 이 경우 재시도 전에 수동으"
+"로 삭제해야 합니다"
 
 #: .././mainapp.py:11419 .././mainapp.py:11594
 msgid "Are you sure you want to move this channel:"
-msgstr ""
+msgstr "이 채널을 이동하시겠습니까?:"
 
 #: .././mainapp.py:11421 .././mainapp.py:11596
 msgid "Are you sure you want to move this playlist:"
-msgstr ""
+msgstr "이 플레이리스트를 이동하시겠습니까?:"
 
 #: .././mainapp.py:11423 .././mainapp.py:11598
 msgid "Are you sure you want to move this folder:"
-msgstr ""
+msgstr "이 폴더를 이동하시겠습니까?:"
 
 #: .././mainapp.py:11428
 msgid ""
@@ -491,7 +499,7 @@ msgstr ""
 
 #: .././mainapp.py:11600
 msgid "into this folder:"
-msgstr ""
+msgstr "이 폴더로:"
 
 #: .././mainapp.py:11604
 msgid "This procedure will move all downloaded files to the new location"
@@ -527,29 +535,29 @@ msgstr ""
 #: .././mainapp.py:18763
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
-msgstr ""
+msgstr "파일 이름 '{0}'은(는) 허용되지 않았습니다."
 
 #: .././mainapp.py:14337
 #, python-brace-format
 msgid "The name '{0}' is already in use"
-msgstr ""
+msgstr "파일 이름 '{0}'은(는) 이미 사용중입니다."
 
 #: .././mainapp.py:14350
 #, python-brace-format
 msgid "Failed to rename '{0}'"
-msgstr ""
+msgstr "'{0}'로 이름변경에 실패했습니다."
 
 #: .././mainapp.py:14697
 msgid "Select where to save the database export"
-msgstr ""
+msgstr "내보낸 데이터베이스를 저장할 위치를 선택하세요"
 
 #: .././mainapp.py:14818
 msgid "There is nothing to export!"
-msgstr ""
+msgstr "내보낼 항목이 없습니다!"
 
 #: .././mainapp.py:14858 .././mainapp.py:14924
 msgid "Failed to save the database export file:"
-msgstr ""
+msgstr "내보낸 데이터베이스 파일을 저장하는데 실패했습니다:"
 
 #: .././mainapp.py:14932
 msgid "Database export file saved to:"
@@ -557,7 +565,7 @@ msgstr ""
 
 #: .././mainapp.py:14969
 msgid "Select the database export"
-msgstr ""
+msgstr "내보낼 데이터베이스 파일을 선택하세요"
 
 #: .././mainapp.py:14990 .././mainapp.py:15004
 msgid "Failed to load the database export file"
@@ -578,50 +586,52 @@ msgstr ""
 #. Show a confirmation
 #: .././mainapp.py:15090
 msgid "Imported"
-msgstr ""
+msgstr "가져온것"
 
 #: .././mainapp.py:15091 .././mainwin.py:1287 .././config.py:888
 #: .././config.py:9274 .././config.py:11492
 msgid "Videos"
-msgstr "비디오들"
+msgstr "비디오"
 
 #: .././mainapp.py:15092 .././config.py:9307 .././config.py:11525
 msgid "Channels"
-msgstr "채널들"
+msgstr "채널"
 
 #: .././mainapp.py:15093 .././config.py:9318 .././config.py:11536
 msgid "Playlists"
-msgstr "플레이리스트들"
+msgstr "플레이리스트"
 
 #: .././mainapp.py:15094
 msgid "Folders"
-msgstr "폴더들"
+msgstr "폴더"
 
 #: .././mainapp.py:15478
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
 msgstr ""
+"비디오 파일이 Tartube의 데이터 폴더에 존재하지 않습니다 (다시 다운로드 시도"
+"해 보세요!)"
 
 #: .././mainapp.py:16003 .././mainapp.py:16385
 msgid "Select where to save the options export"
-msgstr ""
+msgstr "내보낸 설정을 저장할 위치를 선택하세요"
 
 #: .././mainapp.py:16051 .././mainapp.py:16433
 msgid "Failed to save the options export file:"
-msgstr ""
+msgstr "내보낸 설정을 저장하는데 실패했습니다:"
 
 #: .././mainapp.py:16059
 msgid "Download options exported to to:"
-msgstr ""
+msgstr "다운로드 옵션이 내보내졌습니다:"
 
 #: .././mainapp.py:16090 .././mainapp.py:16472
 msgid "Select the options export file"
-msgstr ""
+msgstr "내보낼 설정 파일을 선택하세요"
 
 #: .././mainapp.py:16109 .././mainapp.py:16491
 msgid "Failed to load the options export file"
-msgstr ""
+msgstr "내보내기 파일 옵션을 로드하지 못했습니다"
 
 #: .././mainapp.py:16126 .././mainapp.py:16508
 msgid "The options export file is invalid"
@@ -759,104 +769,104 @@ msgstr "_파일"
 
 #: .././mainwin.py:950
 msgid "_Database preferences..."
-msgstr ""
+msgstr "_데이터베이스 환경설정..."
 
 #: .././mainwin.py:956
 msgid "_Check database integrity"
-msgstr ""
+msgstr "_데이터베이스 무결성 확인"
 
 #: .././mainwin.py:965
 msgid "_Save database"
-msgstr ""
+msgstr "_데이터베이스 저장"
 
 #: .././mainwin.py:971
 msgid "Save _all"
-msgstr ""
+msgstr "_모두 저장"
 
 #: .././mainwin.py:980
 msgid "_Close to tray"
-msgstr ""
+msgstr "_트레이 아이콘으로 숨기기"
 
 #. Quit
 #: .././mainwin.py:985 .././mainwin.py:22853
 msgid "_Quit"
-msgstr ""
+msgstr "_나가기"
 
 #. Edit column
 #: .././mainwin.py:990
 msgid "_Edit"
-msgstr ""
+msgstr "_수정"
 
 #: .././mainwin.py:997
 msgid "_System preferences..."
-msgstr ""
+msgstr "_시스템 환경설정..."
 
 #: .././mainwin.py:1003
 msgid "_General download options..."
-msgstr ""
+msgstr "_일반 다운로드 설정..."
 
 #. Media column
 #: .././mainwin.py:1009 .././config.py:9834
 msgid "_Media"
-msgstr ""
+msgstr "_미디어"
 
 #: .././mainwin.py:1016
 msgid "Add _videos..."
-msgstr ""
+msgstr "_비디오 추가하기..."
 
 #: .././mainwin.py:1022
 msgid "Add _channel..."
-msgstr ""
+msgstr "_채널 추가하기..."
 
 #: .././mainwin.py:1028
 msgid "Add _playlist..."
-msgstr ""
+msgstr "_플레이리스트 추가하기..."
 
 #: .././mainwin.py:1034
 msgid "Add _folder..."
-msgstr ""
+msgstr "_폴더 추가하기..."
 
 #: .././mainwin.py:1043
 msgid "_Export from database..."
-msgstr ""
+msgstr "_데이터베이스에서 내보내기..."
 
 #: .././mainwin.py:1051
 msgid "_JSON export file..."
-msgstr ""
+msgstr "_JSON 내보내기 파일..."
 
 #: .././mainwin.py:1057
 msgid "Plain _text export file..."
-msgstr ""
+msgstr "_일반 텍스트 내보내기 파일..."
 
 #: .././mainwin.py:1063
 msgid "_Import into database"
-msgstr ""
+msgstr "_데이터베이스로 가져오기"
 
 #: .././mainwin.py:1072
 msgid "_Switch between views"
-msgstr ""
+msgstr "_보기 간 전환하기"
 
 #: .././mainwin.py:1080
 msgid "_Hide (most) system folders"
-msgstr ""
+msgstr "_(대부분의) 시스템 폴더 숨기기"
 
 #: .././mainwin.py:1088
 msgid "Sh_ow hidden folders"
-msgstr ""
+msgstr "_숨긴 폴더 보이기"
 
 #: .././mainwin.py:1101
 msgid "_Add test media"
-msgstr ""
+msgstr "_테스트 미디어 추가하기"
 
 #: .././mainwin.py:1109
 msgid "_Run test code"
-msgstr ""
+msgstr "_테스트 코드 실행하기"
 
 #. Operations column
 #. Add this tab...
 #: .././mainwin.py:1115 .././config.py:12776
 msgid "_Operations"
-msgstr ""
+msgstr "_작업"
 
 #. Check all
 #: .././mainwin.py:1122 .././mainwin.py:22824
@@ -866,52 +876,52 @@ msgstr "_모두 선택"
 #. Download all
 #: .././mainwin.py:1128 .././mainwin.py:22831
 msgid "_Download all"
-msgstr ""
+msgstr "_모두 다운로드"
 
 #: .././mainwin.py:1133
 msgid "C_ustom download all"
-msgstr ""
+msgstr "_모두 커스텀 다운로드"
 
 #: .././mainwin.py:1141
 msgid "_Refresh database..."
-msgstr ""
+msgstr "_데이터베이스 새로고침..."
 
 #: .././mainwin.py:1151
 msgid "U_pdate"
-msgstr ""
+msgstr "_업데이트"
 
 #: .././mainwin.py:1157 .././mainwin.py:3161
 msgid "_Test"
-msgstr ""
+msgstr "_테스트"
 
 #: .././mainwin.py:1166
 msgid "_Install FFmpeg..."
-msgstr ""
+msgstr "_FFmpeg 설치..."
 
 #: .././mainwin.py:1177
 msgid "Tidy up _files..."
-msgstr ""
+msgstr "_파일 정리하기..."
 
 #: .././mainwin.py:1188 .././mainwin.py:22842
 msgid "_Stop current operation"
-msgstr ""
+msgstr "_현재 작업 멈추기"
 
 #. Livestreams column
 #: .././mainwin.py:1195 .././config.py:13480
 msgid "_Livestreams"
-msgstr ""
+msgstr "_생방송"
 
 #: .././mainwin.py:1202
 msgid "_Livestream preferences..."
-msgstr ""
+msgstr "_생방송 환경설정..."
 
 #: .././mainwin.py:1211
 msgid "_Update existing livestreams"
-msgstr ""
+msgstr "_존재하는 생방송 업데이트"
 
 #: .././mainwin.py:1216
 msgid "_Cancel all livestream alerts"
-msgstr ""
+msgstr "_생방송 알람 모두 취소하기"
 
 #. Help column
 #: .././mainwin.py:1221
@@ -999,11 +1009,11 @@ msgstr "현재 작업 정지"
 
 #: .././mainwin.py:1443 .././config.py:11068
 msgid "Switch"
-msgstr ""
+msgstr "변경"
 
 #: .././mainwin.py:1454
 msgid "Switch between simple and complex views"
-msgstr ""
+msgstr "단순 뷰와 복잡한 뷰 변경"
 
 #: .././mainwin.py:1467 .././mainwin.py:3208
 msgid "Hide"
@@ -1015,7 +1025,7 @@ msgstr "보이기"
 
 #: .././mainwin.py:1481 .././mainwin.py:3210
 msgid "Hide (most) system folders"
-msgstr ""
+msgstr "(대부분의) 시스템 폴더 숨기기"
 
 #: .././mainwin.py:1485 .././mainwin.py:3217
 msgid "Show all system folders"
@@ -1178,7 +1188,7 @@ msgstr "날짜로 비디오 찾기 취소"
 
 #: .././mainwin.py:2126
 msgid "TRANSLATOR'S NOTE: Ext is short for a file extension, e.g. .EXE"
-msgstr ""
+msgstr "번역가 노트: Ext는 파일 확장자의 줄임말임, 예) EXE"
 
 #: .././mainwin.py:2131 .././mainwin.py:2689
 msgid "Source"
@@ -1246,7 +1256,7 @@ msgstr "리스트 최상단에 새 비디오 추가하기"
 
 #: .././mainwin.py:2446
 msgid "This tab emulates the classic youtube-dl-gui interface"
-msgstr ""
+msgstr "이 탭은 클래식 youtube-dl-gui 인터페이스를 에뮬레이트합니다"
 
 #: .././mainwin.py:2454
 msgid "Videos downloaded here are not added to Tartube's database"
@@ -1544,83 +1554,83 @@ msgstr "_URL 설정..."
 
 #: .././mainwin.py:4625
 msgid "Set _download destination..."
-msgstr "_다운로드 목적지 설정"
+msgstr "_다운로드 목적지 설정..."
 
 #: .././mainwin.py:4641
 msgid "_Export channel..."
-msgstr ""
+msgstr "_채널 내보내기..."
 
 #: .././mainwin.py:4643
 msgid "_Export playlist..."
-msgstr ""
+msgstr "_플레이리스트 내보내기..."
 
 #: .././mainwin.py:4645
 msgid "_Export folder..."
-msgstr ""
+msgstr "_폴더 내보내기..."
 
 #: .././mainwin.py:4658
 msgid "Re_fresh channel"
-msgstr ""
+msgstr "_채널 새로고침"
 
 #: .././mainwin.py:4660
 msgid "Re_fresh playlist"
-msgstr ""
+msgstr "_플레이리스트 새로고침"
 
 #: .././mainwin.py:4662
 msgid "Re_fresh folder"
-msgstr ""
+msgstr "_폴더 새로고침"
 
 #: .././mainwin.py:4679
 msgid "_Tidy up channel"
-msgstr ""
+msgstr "_채널 정리"
 
 #: .././mainwin.py:4681
 msgid "_Tidy up playlist"
-msgstr ""
+msgstr "_플레이리스트 정리"
 
 #: .././mainwin.py:4683
 msgid "_Tidy up folder"
-msgstr ""
+msgstr "_폴더 정리"
 
 #: .././mainwin.py:4700 .././mainwin.py:5190 .././mainwin.py:6822
 msgid "Add to _Classic Mode tab"
-msgstr ""
+msgstr "_클래식 모드 탭에 추가하기"
 
 #: .././mainwin.py:4714
 msgid "Channel _actions"
-msgstr ""
+msgstr "_채널 액션"
 
 #: .././mainwin.py:4716
 msgid "Playlist _actions"
-msgstr ""
+msgstr "_플레이리스트 액션"
 
 #: .././mainwin.py:4718
 msgid "Folder _actions"
-msgstr ""
+msgstr "_폴더 액션"
 
 #: .././mainwin.py:4738 .././mainwin.py:5367
 msgid "_Apply download options..."
-msgstr ""
+msgstr "_다운로드 설정 적용하기..."
 
 #: .././mainwin.py:4756 .././mainwin.py:5381
 msgid "_Remove download options"
-msgstr ""
+msgstr "_다운로드 설정 제거하기"
 
 #: .././mainwin.py:4772 .././mainwin.py:5393
 msgid "_Edit download options..."
-msgstr ""
+msgstr "_다운로드 설정 수정하기..."
 
 #: .././mainwin.py:4788
 msgid "Add to s_cheduled download..."
-msgstr ""
+msgstr "_예약 다운로드에 추가하기..."
 
 #: .././mainwin.py:4798
 msgid "_Show system command..."
-msgstr ""
+msgstr "_시스템 명령 표시하기..."
 
 #: .././mainwin.py:4811
 msgid "_Disable checking/downloading"
-msgstr ""
+msgstr "_확인/다운로드 비활성화"
 
 #: .././mainwin.py:4823
 msgid "_Just disable downloading"
@@ -3181,218 +3191,219 @@ msgstr ""
 
 #: .././mainwin.py:27001
 msgid "Delete corrupted video files"
-msgstr ""
+msgstr "잘못된 비디오 파일 삭제"
 
 #: .././mainwin.py:27011
 msgid "Check that videos do/don't exist"
-msgstr ""
+msgstr "동영상이 존재하는지 확인"
 
 #: .././mainwin.py:27018
 msgid ""
 "Delete downloaded video files (doesn't remove videos from Tartube's database)"
 msgstr ""
+"다운로드 받은 비디오 파일 삭제하기 (Tartube의 데이터베이스에선 삭제하지 않음)"
 
 #: .././mainwin.py:27030
 msgid "Also delete all video/audio files with the same name"
-msgstr ""
+msgstr "같은 이름을 가진 모든 비디오/오디오 파일 삭제하기"
 
 #: .././mainwin.py:27038
 msgid "Delete all archive files"
-msgstr ""
+msgstr "모든 아카이브 파일 삭제하기"
 
 #: .././mainwin.py:27043
 msgid "Move thumbnails into own folder"
-msgstr ""
+msgstr "섬네일들을 지정 폴더로 옮기기"
 
 #: .././mainwin.py:27048
 msgid "Delete all thumbnail files"
-msgstr ""
+msgstr "모든 섬네일 파일 삭제하기"
 
 #: .././mainwin.py:27054
 msgid "Convert .webp thumbnails to .jpg using FFmpeg"
-msgstr ""
+msgstr ".FFmpeg를 이용해 webp 섬네일을 파일을 .jpg로 변환하기"
 
 #: .././mainwin.py:27063
 msgid "Move other metadata files into own folder"
-msgstr ""
+msgstr "다른 메타데이터 파일들을 지정 폴더로 옮기기"
 
 #: .././mainwin.py:27071
 msgid "Delete all description files"
-msgstr ""
+msgstr "모든 설명 파일 지우기"
 
 #: .././mainwin.py:27075
 msgid "Delete all metadata (JSON) files"
-msgstr ""
+msgstr "모든 메타데이터 (JSON) 파일 지우기"
 
 #: .././mainwin.py:27079
 msgid "Delete all annotation files"
-msgstr ""
+msgstr "모든 어노테이션 파일 지우기"
 
 #. (Signal connect appears below)
 #: .././mainwin.py:27088
 msgid "Select none"
-msgstr ""
+msgstr "없음 선택"
 
 #: .././config.py:401
 msgid "Downloads"
-msgstr ""
+msgstr "다운로드"
 
 #: .././config.py:402
 msgid "Uploads"
-msgstr ""
+msgstr "업로드"
 
 #: .././config.py:403 .././config.py:8214
 msgid "File size"
-msgstr ""
+msgstr "파일 크기"
 
 #: .././config.py:433
 msgid "Graph"
-msgstr ""
+msgstr "그래프"
 
 #: .././config.py:434
 msgid "Bar chart"
-msgstr ""
+msgstr "바 차트"
 
 #: .././config.py:463
 msgid "Show decade"
-msgstr ""
+msgstr "세기 표기하기"
 
 #: .././config.py:464
 msgid "Show year"
-msgstr ""
+msgstr "년 표기하기"
 
 #: .././config.py:465
 msgid "Show quarters"
-msgstr ""
+msgstr "분기 표시하기"
 
 #: .././config.py:466
 msgid "Show month"
-msgstr ""
+msgstr "달 표시하기"
 
 #: .././config.py:467
 msgid "Show week"
-msgstr ""
+msgstr "주 표시하기"
 
 #: .././config.py:468
 msgid "Show day"
-msgstr ""
+msgstr "일 표시하기"
 
 #: .././config.py:500
 msgid "Quarters"
-msgstr ""
+msgstr "분기"
 
 #: .././config.py:501
 msgid "Months"
-msgstr ""
+msgstr "달"
 
 #: .././config.py:502
 msgid "Weeks"
-msgstr ""
+msgstr "주"
 
 #: .././config.py:503
 msgid "Days"
-msgstr ""
+msgstr "일"
 
 #: .././config.py:504
 msgid "Hours"
-msgstr ""
+msgstr "시간"
 
 #: .././config.py:536
 msgid "Red"
-msgstr ""
+msgstr "빨간색"
 
 #: .././config.py:537
 msgid "Green"
-msgstr ""
+msgstr "초록색"
 
 #: .././config.py:538
 msgid "Blue"
-msgstr ""
+msgstr "파란색"
 
 #: .././config.py:539
 msgid "Black"
-msgstr ""
+msgstr "검은색"
 
 #: .././config.py:540
 msgid "White"
-msgstr ""
+msgstr "흰색"
 
 #. 'Reset' button
 #. (Signal connect appears below)
 #: .././config.py:1017 .././config.py:3306 .././config.py:14214
 #: .././config.py:14255 .././config.py:14325
 msgid "Reset"
-msgstr ""
+msgstr "초기화"
 
 #: .././config.py:1021
 msgid "Reset changes without closing the window"
-msgstr ""
+msgstr "창을 닫지않고 변경사항 초기화"
 
 #. 'Apply' button
 #: .././config.py:1026
 msgid "Apply"
-msgstr ""
+msgstr "적용"
 
 #: .././config.py:1030
 msgid "Apply changes without closing the window"
-msgstr ""
+msgstr "창을 닫지않고 변경사항 적용"
 
 #: .././config.py:1038 .././config.py:7697 .././config.py:7831
 msgid "Apply changes"
-msgstr ""
+msgstr "변경사항 적용"
 
 #: .././config.py:1047
 msgid "Cancel changes"
-msgstr ""
+msgstr "변경사항 취소"
 
 #: .././config.py:1888
 msgid "Listed as"
-msgstr ""
+msgstr "나열된"
 
 #: .././config.py:1900
 msgid "Contained in"
-msgstr ""
+msgstr "포함된"
 
 #: .././config.py:1958
 msgid "Download to"
-msgstr ""
+msgstr "다운로드 위치"
 
 #: .././config.py:1997
 msgid "Location"
-msgstr ""
+msgstr "위치"
 
 #: .././config.py:2026
 msgid "Channel URL"
-msgstr ""
+msgstr "채널 URL"
 
 #: .././config.py:2028
 msgid "Playlist URL"
-msgstr ""
+msgstr "플레이리스트 URL"
 
 #: .././config.py:2030 .././config.py:3089
 msgid "Video URL"
-msgstr ""
+msgstr "비디오 URL"
 
 #: .././config.py:2053
 msgid "Download _options"
-msgstr ""
+msgstr "다운로드 _설렁"
 
 #: .././config.py:2057 .././config.py:2653 .././config.py:3796
 #: .././config.py:3835
 msgid "Download options"
-msgstr ""
+msgstr "다운로드 설정"
 
 #: .././config.py:2068
 msgid "Edit download options"
-msgstr ""
+msgstr "다운로드 설정 편집하기"
 
 #: .././config.py:2075
 msgid "Remove download options"
-msgstr ""
+msgstr "다운로드 설정 지우기"
 
 #: .././config.py:2245
 msgid "Close this window"
-msgstr ""
+msgstr "이 창 닫기"
 
 #: .././config.py:2869 .././config.py:6260
 msgid "_Name"
@@ -3404,19 +3415,19 @@ msgstr "다운로드 설정의 이름"
 
 #: .././config.py:2887
 msgid "Download options applied to"
-msgstr ""
+msgstr "다운로드 설정 적용하기"
 
 #: .././config.py:2923
 msgid "All channels, playlists and folders"
-msgstr ""
+msgstr "모든 채널, 플레이리스트, 폴더"
 
 #: .././config.py:2925
 msgid "Downloads in the Classic Mode Tab"
-msgstr ""
+msgstr "클래식 모드 탭의 다운로드"
 
 #: .././config.py:2927
 msgid "These options are not applied to anything"
-msgstr ""
+msgstr "이 섲렁은 아무것도 적용되지 않습니다"
 
 #: .././config.py:2931
 msgid "Extra command line options (e.g. --help; do not use -o or --output)"
