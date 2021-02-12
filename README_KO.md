@@ -39,7 +39,7 @@ Works with YouTube, BitChute, and hundreds of other websites
 |import|가져오기||
 |export|내보내기||
 |refresh|새로고침||
-|check|검사,확인||
+|check|검사,확인,체크||
 |plain text|일반 텍스트||
 |livesteram|생방송||
 |preference|환경설정||
@@ -47,6 +47,20 @@ Works with YouTube, BitChute, and hundreds of other websites
 |classic|클래식||
 |thumbnail|섬네일||
 |corrupt|손상, 손상된||
+|move|이동||
+|copy|복사||
+|property|속성||
+|archive|아카이브||
+|bookmark|북마크||
+|favorite|즐겨찾기||
+|fetch|동기화||
+|error|에러||
+|warning|경고||
+|notify|알림||
+|alarm|알람|알람은 소리가 나옴||
+|HookTube|HookTube||
+|Invidious|Invidious|위 두개는 국내에서 알려지지 않았으므로 영어 그대로 사용||
+||(은)는||
 
 ------------------------------------------------------------
 1 Introduction
