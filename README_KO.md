@@ -54,12 +54,17 @@ Works with YouTube, BitChute, and hundreds of other websites
 |bookmark|북마크||
 |favorite|즐겨찾기||
 |fetch|동기화||
-|error|에러||
+|error|오류||
 |warning|경고||
 |notify|알림||
 |alarm|알람|알람은 소리가 나옴||
 |HookTube|HookTube||
 |Invidious|Invidious|위 두개는 국내에서 알려지지 않았으므로 영어 그대로 사용||
+|post-processing|후처리||
+|pre-processing|전처리||
+|schedule|예약||
+|stable|안정||
+|develop|개발||
 ||(은)는||
 
 ------------------------------------------------------------
