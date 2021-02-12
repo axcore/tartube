@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-13 15:08+0000\n"
-"PO-Revision-Date: 2021-02-12 14:44+0900\n"
+"PO-Revision-Date: 2021-02-12 15:18+0900\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
 "Language: ko_KR\n"
@@ -4801,7 +4801,7 @@ msgstr "생방송 액션"
 
 #: .././config.py:8370
 msgid "When the livestream starts, show a desktop notification"
-msgstr "생방송이 시작되면, 바탕화면 알림으로 알림"
+msgstr "생방송이 시작되면, 데스크탑 알림으로 알림"
 
 #: .././config.py:8379
 msgid "When the livestream starts, play an alarm"
@@ -5521,7 +5521,7 @@ msgstr "작업 탭에서 완료한 비디오 / 채널 / 플레이리스트 숨�
 
 #: .././config.py:11837
 msgid "In the Progress Tab, show results in reverse order"
-msgstr "작업 탭에서 "
+msgstr "작업 탭에서, 결과를 반대로 보여주기"
 
 #: .././config.py:11845
 msgid "When Tartube starts, automatically open the Classic Mode tab"
@@ -5807,338 +5807,347 @@ msgstr "예약 중지 속성"
 
 #: .././config.py:12643
 msgid "Stop all download operations after this much time"
-msgstr ""
+msgstr "이 시간 이후 모든 다운로드 작업 중지"
 
 #: .././config.py:12691
 msgid "Stop all download operations after this many videos"
-msgstr ""
+msgstr "비디오 개수 이후 모든 다운로드 작업 중지"
 
 #: .././config.py:12718
 msgid "Stop all download operations after this much disk space"
-msgstr ""
+msgstr "다운로드 용량 차지시 모든 다운로드 작업 중지"
 
 #: .././config.py:12761
 msgid ""
 "N.B. Disk space is estimated. This setting does not apply to simulated "
 "downloads"
 msgstr ""
+"주의. 디스크 용량은 추정치입니다. 이 설정은 시뮬레이션 다운로드 시 적용되지 "
+"않습니다"
 
 #: .././config.py:12799
 msgid "_Performance"
-msgstr ""
+msgstr "_퍼포먼스"
 
 #: .././config.py:12807
 msgid "Performance limits"
-msgstr ""
+msgstr "퍼포먼스 제한"
 
 #: .././config.py:12812
 msgid "Limit simultaneous downloads to"
-msgstr ""
+msgstr "동시 다운로드 개수 제한"
 
 #: .././config.py:12830
 msgid "Limit download speed to"
-msgstr ""
+msgstr "다운로드 속도 제한"
 
 #: .././config.py:12856
 msgid "Overriding video format options, limit video resolution to"
-msgstr ""
+msgstr "비디오 포맷 옵션 무시, 비디오 해상도 제한"
 
 #: .././config.py:12878
 msgid "Time-saving settings"
-msgstr ""
+msgstr "시간절약 설정"
 
 #: .././config.py:12884
 msgid ""
 "Stop checking/downloading a channel/playlist when it starts sending videos "
 "you already have"
 msgstr ""
+"이미 가지고 있는 비디오 전송을 시작할 때 채널/플레이리스트 확인/다운로드 중지"
 
 #: .././config.py:12895
 msgid "Stop after this many videos (when checking)"
-msgstr ""
+msgstr "비디오 개수 이후 작업 중지 (확인 중에)"
 
 #: .././config.py:12910
 msgid "Stop after this many videos (when downloading)"
-msgstr ""
+msgstr "비디오 개수 이후 작업 중지 (다운로드 중에)"
 
 #: .././config.py:12941
 msgid "P_references"
-msgstr ""
+msgstr "_환경 설정"
 
 #: .././config.py:12949
 msgid "URL flexibility preferences"
-msgstr ""
+msgstr "URL 유연성 기본 설정"
 
 #: .././config.py:12956
 msgid ""
 "If a video's URL represents a channel/playlist, not a video, don't download "
 "it"
-msgstr ""
+msgstr "비디오 URL이 채널이나 플레이리스트라면 다운로드받지 않기"
 
 #: .././config.py:12965
 msgid "...or, download multiple videos into the containing folder"
-msgstr ""
+msgstr "...혹은, 포함된 폴더로 여러 동영상을 다운로드 받기"
 
 #: .././config.py:12975
 msgid "...or, create a new channel, and download the videos into that"
-msgstr ""
+msgstr "...혹은, 새로운 채널을 만들어서, 거기에 비디오 받기"
 
 #: .././config.py:12986
 msgid "...or, create a new playlist, and download the videos into that"
-msgstr ""
+msgstr "...혹은, 새로운 플레이리스트를 만들어서, 거기에 비디오 받기"
 
 #: .././config.py:13018
 msgid "Missing video preferences"
-msgstr ""
+msgstr "사라진 비디오 환경 설정"
 
 #: .././config.py:13024
 msgid ""
 "Add videos which have been removed from a channel/playlist to the Missing "
 "Videos folder"
-msgstr ""
+msgstr "채널/플레이리스트에서 사라진 비디오를 '사라진 비디오' 폴더에 추가하기"
 
 #: .././config.py:13035
 msgid "Only add videos that were uploaded within this many days"
-msgstr ""
+msgstr "이 기간 내에 업로드 된 동영상만 추가(일)"
 
 #: .././config.py:13076
 msgid "Invidious mirror"
-msgstr ""
+msgstr "Invidious 미러"
 
 #: .././config.py:13082
 msgid "To find an updated list of Invidious mirrors, use any search engine!"
-msgstr ""
+msgstr "Invidious 미러 최신 버전 링크를 확인할려면 검색 엔진을 사용하세요!"
 
 #: .././config.py:13095 .././config.py:13407
 msgid "Type the exact text that replaces youtube.com e.g."
-msgstr ""
+msgstr "youtube.com을 대체하는 정확한 텍스트를 입력하세요."
 
 #: .././config.py:13121
 msgid "Download operation preferences"
-msgstr ""
+msgstr "다운로드 작업 환경 설정"
 
 #: .././config.py:13127
 msgid "Automatically update downloader before every download operation"
-msgstr ""
+msgstr "매일 다운로드 작업 전에 자동으로 다운로더 업데이트"
 
 #: .././config.py:13139
 msgid "Automatically save files at the end of all operations"
-msgstr ""
+msgstr "모든 작업 이후 자동으로 저장"
 
 #: .././config.py:13149
 msgid "For simulated downloads, don't check a video in a folder more than once"
-msgstr ""
+msgstr "시뮬레이션 다운로드에서, 비디오를 두번 이상 확인하지 않기"
 
 #: .././config.py:13160
 msgid "If a download stalls, restart it after this many minutes"
-msgstr ""
+msgstr "만약 다운로드가 지연된 경우 이 시간 이후 재시작하기 (분)"
 
 #: .././config.py:13181
 msgid "If a network problem is detected, restart the download immediately"
-msgstr ""
+msgstr "네트워크 문제가 감지된 경우, 즉시 재시작하기"
 
 #: .././config.py:13193
 msgid "Maximum restarts after a stalled download (0 for no maximum)"
-msgstr ""
+msgstr "지연된 다운로드 최대 재시작 횟수 (0인 경우 무제한)"
 
 #: .././config.py:13234
 msgid ""
 "Allow downloader to create its own archive file (so deleted videos are not "
 "re-downloaded)"
 msgstr ""
+"다운로더가 아카이브 파일 생성하도록 허용 (삭제된 비디오 재 다운로드 방지)"
 
 #: .././config.py:13245
 msgid ""
 "Also create an archive file when downloading from the Classic Mode tab (not "
 "recommended)"
-msgstr ""
+msgstr "클래식 모드 탭에서 다운로드 시에도 아카이브 파일 생성 (권장하지 않음)"
 
 #: .././config.py:13256
 msgid "When checking videos, apply a 60-second timeout"
-msgstr ""
+msgstr "비디오를 확인할 때, 60초 타임아웃 적용"
 
 #: .././config.py:13266
 msgid ""
 "Convert .webp thumbnails into .jpg thumbnails (using FFmpeg) after "
 "downloading them"
-msgstr ""
+msgstr "다운로드 후 .webp 섬네일을 FFmpeg를 이용해 .jpg로 변환"
 
 #: .././config.py:13283
 msgid "_Custom"
-msgstr ""
+msgstr "_커스텀"
 
 #: .././config.py:13288
 msgid "Custom download preferences"
-msgstr ""
+msgstr "커스텀 다운로드 환경 설정"
 
 #: .././config.py:13294
 msgid ""
 "In custom downloads, download each video independently of its channel or "
 "playlist"
-msgstr ""
+msgstr "커스텀 다운로드에서 채널이나 플레이리스트를 독립적으로 다운로드 받기"
 
 #: .././config.py:13305
 msgid ""
 "In custom downloads, apply a delay after each video/channel/playlist is "
 "download"
 msgstr ""
+"커스텀 다운로드에서 각각의 비디오/채널/플레이리스트가 다운로드 될 때 딜레이 "
+"적용하기"
 
 #: .././config.py:13315
 msgid "Maximum delay to apply (in minutes)"
-msgstr ""
+msgstr "적용할 최대 딜레이 (분)"
 
 #: .././config.py:13332
 msgid "Minimum delay to apply (in minutes; randomises the actual delay)"
-msgstr "Minimum delay to apply (in minutes; randomizes the actual delay)"
+msgstr "적용할 최소 딜레이 (분; 실제 딜레이는 랜덤화됨)"
 
 #: .././config.py:13355
 msgid "In custom downloads, obtain a YouTube video from the original website"
-msgstr ""
+msgstr "커스텀 다운로드 시 원본 웹 사이트에서 유튜브 비디오를 가져오기"
 
 #: .././config.py:13365
 msgid "In custom downloads, obtain the video from HookTube rather than YouTube"
-msgstr ""
+msgstr "커스텀 다운로드 시 유튜브 대신 HookTube 가져오기"
 
 #: .././config.py:13377
 msgid ""
 "In custom downloads, obtain the video from Invidious rather than YouTube"
-msgstr ""
+msgstr "커스텀 다운로드 시 유튜브 대신 Invidious 가져오기"
 
 #: .././config.py:13389
 msgid ""
 "In custom downloads, obtain the video from the YouTube front-end specified "
 "below"
-msgstr ""
+msgstr "커스텀 다운로드 시 유튜브 대신 아래 유튜브 프론트엔드 링크로 가져오기"
 
 #: .././config.py:13489
 msgid "Livestream preferences (compatible websites only)"
-msgstr ""
+msgstr "생방송 환경 설정 (호환 가능한 사이트만 가능)"
 
 #: .././config.py:13495
 msgid "Detect livestreams announced within this many days"
-msgstr ""
+msgstr "이 기간 내 예약된 생방송 탐지 (일)"
 
 #: .././config.py:13510
 msgid "How often to check the status of livestreams (in minutes)"
-msgstr ""
+msgstr "생방송을 탐지할 주기 (분)"
 
 #: .././config.py:13529
 msgid "Check more frequently when a livestream is due to start"
-msgstr ""
+msgstr "생방송이 시작해야될 때 더 자주 확인"
 
 #: .././config.py:13572
 msgid "Broadcast preferences (compatible websites only)"
-msgstr ""
+msgstr "브로드캐스트 환경 설정 (호환 가능한 사이트만 가능)"
 
 #: .././config.py:13579
 msgid ""
 "Use Youtube Stream Capture to download broadcasting livestreams (requires "
 "aria2)"
 msgstr ""
+"브로드캐스트 생방송을 다운로드 할때 유튜브 스트림 캡처 사용하기 (aria2 필요)"
 
 #: .././config.py:13589
 msgid "Timeout after this many minutes of inactivity"
-msgstr ""
+msgstr "비활성 시 타임아웃 시간 설정 (분)"
 
 #: .././config.py:13603
 msgid "Number of restarts after a timeout"
-msgstr ""
+msgstr "타임아웃 시 재시도 횟수"
 
 #: .././config.py:13618
 msgid ""
 "Bypass usual limits on simultaneous downloads, so that all broadcasts can be "
 "downloaded"
 msgstr ""
+"모든 브로드캐스트를 다운로드 할 수 있도록 동시 다운로드에 대한 일반적인 제한"
+"사항 우회"
 
 #: .././config.py:13659
 msgid "_Proxies"
-msgstr ""
+msgstr "_프록시"
 
 #: .././config.py:13665
 msgid "Proxies"
-msgstr ""
+msgstr "프록시"
 
 #: .././config.py:13672
 msgid ""
 "During a download operation, Tartube will cycle betwween the proxies in this "
 "list"
-msgstr ""
+msgstr "다운로드 작업 중, Tartube가 리스트에 있는 프록시를 경유합니다"
 
 #: .././config.py:13693
 msgid "_Actions"
-msgstr ""
+msgstr "_행동"
 
 #: .././config.py:13702
 msgid "Livestream actions (can be toggled for individual videos)"
-msgstr ""
+msgstr "생방송 행동 (개별 비디오에 대해 토글 가능)"
 
 #: .././config.py:13709
 msgid "(currently disabled on MS Windows)"
-msgstr ""
+msgstr "(현재 MS Windows에서는 비활성화됨)"
 
 #: .././config.py:13714
 msgid "When a livestream starts, show a desktop notification"
-msgstr ""
+msgstr "생방송이 시작되면, 데스크탑 알림으로 알림"
 
 #: .././config.py:13728
 msgid "When a livestream starts, sound an alarm"
-msgstr ""
+msgstr "생방송이 시작되면, 알람을 소리로 울림"
 
 #: .././config.py:13751
 msgid "Plays the selected sound effect"
-msgstr ""
+msgstr "선택한 사운드 효과 재생"
 
 #: .././config.py:13758
 msgid "When a livestream starts, open it in the system's web browser"
-msgstr ""
+msgstr "생방송이 시작되면, 시스템의 웹브라우저로 실행"
 
 #: .././config.py:13770
 msgid "When a livestream starts, begin downloading it immediately"
-msgstr ""
+msgstr "생방송이 시작되면, 즉시 다운로드 시작"
 
 #: .././config.py:13796
 msgid "Desktop notification preferences"
-msgstr ""
+msgstr "데스크탑 알림 환경 설정"
 
 #: .././config.py:13803
 msgid "Show a dialogue window at the end of an operation"
-msgstr ""
+msgstr "작업 종료 후에 다이얼로그 윈도우 표시"
 
 #: .././config.py:13828
 msgid "Don't notify the user at the end of an operation"
-msgstr ""
+msgstr "작업이 끝나도 유저에게 알리지 않기"
 
 #: .././config.py:13882
 msgid "_Forks"
-msgstr ""
+msgstr "_포크"
 
 #: .././config.py:13888
 msgid "Forks of youtube-dl"
-msgstr ""
+msgstr "youtube-dl의 포크"
 
 #: .././config.py:13917
 msgid "Use youtube-dlc"
-msgstr ""
+msgstr "youtube-dlc 사용"
 
 #: .././config.py:13946
 msgid "Use youtube-dl"
-msgstr ""
+msgstr "youtube-dl 사용"
 
 #: .././config.py:13974
 msgid "Use a different fork of youtube-dl:"
-msgstr ""
+msgstr "yotube-dl의 다른 포크 사용"
 
 #: .././config.py:14051
 msgid "_File paths"
-msgstr ""
+msgstr "_파일 경로"
 
 #: .././config.py:14058
 msgid "Downloader file paths"
-msgstr ""
+msgstr "다운로더 파일 경로"
 
 #: .././config.py:14064
 msgid "Path to the executable"
-msgstr ""
+msgstr "실행 파일 경로"
 
 #. (Signal connect appears below)
 #: .././config.py:14070 .././config.py:14218 .././config.py:14259
@@ -6160,345 +6169,350 @@ msgstr "PyPI 경로 사용"
 
 #: .././config.py:14138
 msgid "Command for update operations"
-msgstr ""
+msgstr "업데이트 작업 명령"
 
 #: .././config.py:14186
 msgid "_FFmpeg / AVConv"
-msgstr ""
+msgstr "_FFmpeg / AVConv"
 
 #: .././config.py:14194
 msgid "Post-processing file paths"
-msgstr "후처리 파일 경ㄹ"
+msgstr "후처리 파일 경로"
 
 #: .././config.py:14199
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
 msgstr ""
+"Tartube가 FFmpeg / AVConv 경로를 자동으로 찾을 수 없는 경우에만 경로 설정을 "
+"진행하면 됩니다"
 
 #: .././config.py:14206
 msgid "Path to the FFmpeg executable"
-msgstr ""
+msgstr "FFmpeg 실행 파일 경로"
 
 #: .././config.py:14233
 msgid "Install from main menu"
-msgstr ""
+msgstr "메인 메뉴에서 설치"
 
 #: .././config.py:14247
 msgid "Path to the AVConv executable"
-msgstr ""
+msgstr "AVConv 실행 파일 경로"
 
 #: .././config.py:14274
 msgid "Not supported on MS Windows"
-msgstr ""
+msgstr "MS Windows에서는 지원하지 않음"
 
 #: .././config.py:14297
 msgid "_Stream Capture"
-msgstr ""
+msgstr "_스트림 캡처"
 
 #: .././config.py:14305
 msgid "Youtube Stream Capture file path"
-msgstr ""
+msgstr "유튜브 스트림 캡처 파일 경로"
 
 #: .././config.py:14310
 msgid ""
 "Tartube includes a copy of this script, but you can use a different copy, if "
 "you want"
 msgstr ""
+"Tartube는 기본적으로 이 스크립트의 복사본을 포함하지만, 다른 복사본을 사용할 "
+"수도 있습니다"
 
 #: .././config.py:14317
 msgid "Path to the YT Stream Capture executable"
-msgstr ""
+msgstr "YT 스트림 캡처 실행파일 경로"
 
 #: .././config.py:14375
 msgid "_Download options"
-msgstr ""
+msgstr "_다운로드 설정"
 
 #: .././config.py:14382
 msgid "List of download options managers"
-msgstr ""
+msgstr "다운로드 설정 매니저 리스트"
 
 #: .././config.py:14402
 msgid "Classic Mode"
-msgstr ""
+msgstr "클래식 모드"
 
 #: .././config.py:14403
 msgid "Applied to media"
-msgstr ""
+msgstr "적용된 미디어"
 
 #: .././config.py:14477 .././config.py:14742
 msgid "Export"
-msgstr ""
+msgstr "내보내기"
 
 #: .././config.py:14486 .././config.py:14751
 msgid "Clone"
-msgstr ""
+msgstr "복제"
 
 #: .././config.py:14495
 msgid "Use in Classic Mode tab"
-msgstr ""
+msgstr "클래식 모드 탭에서 사용"
 
 #: .././config.py:14520 .././config.py:14785
 msgid "Refresh list"
-msgstr ""
+msgstr "리스트 새로고침"
 
 #: .././config.py:14601
 msgid "_Preferences"
-msgstr ""
+msgstr "_환경 설정"
 
 #: .././config.py:14608
 msgid "Download options preferences"
-msgstr ""
+msgstr "다운로드 환경 설정"
 
 #: .././config.py:14614
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
-msgstr ""
+msgstr "다운로드 설정을 적용할 때, 일반 다운로드 설정 복제"
 
 #: .././config.py:14625
 msgid "After downloading a video, destroy its download options"
-msgstr ""
+msgstr "비디오 다운로드 후, 그것의 다운로드 설정 삭제"
 
 #: .././config.py:14642
 msgid "_FFmpeg options"
-msgstr ""
+msgstr "_FFmpeg 설정"
 
 #: .././config.py:14649
 msgid "List of FFmpeg options managers"
-msgstr ""
+msgstr "FFmpeg 설정 매니저 리스트"
 
 #: .././config.py:14669
 msgid "Current"
-msgstr ""
+msgstr "사용"
 
 #: .././config.py:14760
 msgid "Use these options"
-msgstr ""
+msgstr "이 옵션 사용"
 
 #. Add this tab...
 #: .././config.py:14851
 msgid "O_utput"
-msgstr ""
+msgstr "_출력"
 
 #: .././config.py:14870
 msgid "_Output Tab"
-msgstr ""
+msgstr "_출력 탭"
 
 #: .././config.py:14878
 msgid "Output Tab preferences"
-msgstr ""
+msgstr "출력 탭 환경 설정"
 
 #: .././config.py:14883
 msgid "Display downloader system commands in the Output Tab"
-msgstr ""
+msgstr "출력 탭에 다운로드 시스템 커맨드 표시"
 
 #: .././config.py:14892
 msgid "Display output from downloader's STDOUT in the Output Tab"
-msgstr ""
+msgstr "출력 탭에 다운로더의 STDOUT 출력 표시"
 
 #: .././config.py:14901 .././config.py:15063
 msgid "...but don't write each video's JSON data"
-msgstr ""
+msgstr "...하지만 각각의 JSON 데이터는 쓰지 않기"
 
 #: .././config.py:14912 .././config.py:15074
 msgid "...but don't write each video's download progress"
-msgstr ""
+msgstr "...하지만 각각의 비디오 다운로드 진행 상황은 쓰지 않기"
 
 #: .././config.py:14931
 msgid "Display output from downloader's STDERR in the Output Tab"
-msgstr ""
+msgstr "출력 탭에 다운로더의 STDERR 출력 표시"
 
 #: .././config.py:14940
 msgid "Limit the size of Output Tab pages to"
-msgstr ""
+msgstr "출력 탭의 페이지 사이즈 제한하기"
 
 #: .././config.py:14961
 msgid "Empty pages in the Output Tab at the start of every operation"
-msgstr ""
+msgstr "모든 작업을 시작 할 때 출력 탭 비우기"
 
 #: .././config.py:14971
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
-msgstr ""
+msgstr "활성 스레드 요약 표시 (Tartube를 재시작 시 변경 사항 적용)"
 
 #: .././config.py:14983
 msgid "During an update operation, automatically switch to the Output tab"
-msgstr ""
+msgstr "업데이트 작업 중, 자동으로 출력 탭으로 전환"
 
 #: .././config.py:14994
 msgid "During a refresh operation, show all matching videos in the Output Tab"
-msgstr ""
+msgstr "새로고침 작업 중, 자동으로 출력 탭으로 전환"
 
 #: .././config.py:15005
 msgid "...also show all non-matching videos"
-msgstr ""
+msgstr "...또한 모든 비 매칭 비디오도 표시"
 
 #: .././config.py:15034
 msgid "_Terminal window"
-msgstr ""
+msgstr "_터미널 윈도우"
 
 #: .././config.py:15040
 msgid "Terminal window preferences"
-msgstr ""
+msgstr "터미널 윈도우 환경 설정"
 
 #: .././config.py:15045
 msgid "Write downloader system commands to the terminal window"
-msgstr ""
+msgstr "다운로더 시스템 커맨드를 터미널 윈도우에 쓰기"
 
 #: .././config.py:15054
 msgid "Write output from downloader's STDOUT to the terminal window"
-msgstr ""
+msgstr "다운로더의 STDOUT 출력을 터미널 윈도우에 쓰기"
 
 #: .././config.py:15096
 msgid "Write output from downloader's STDERR to the terminal window"
-msgstr ""
+msgstr "다운로더의 STDERR 출력을 터미널 윈도우에 쓰기"
 
 #: .././config.py:15115
 msgid "_Both"
-msgstr ""
+msgstr "_둘 다"
 
 #: .././config.py:15120
 msgid ""
 "Special preferences (applies to both the Output Tab and the terminal window)"
-msgstr ""
+msgstr "특별한 환경 설정 (출력 탭과 터미널 윈도우에 둘다 적용됨)"
 
 #: .././config.py:15127
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
-msgstr ""
+msgstr "다운로더가 상세한 출력 쓰도록 하기 (youtube-dl 디버깅 모드)"
 
 #: .././config.py:15136
 msgid "Youtube Stream Capture writes verbose output"
-msgstr ""
+msgstr "유튜브 스트림 캡처가 상세한 출력 쓰도록 하기"
 
 #: .././config.py:16053
 msgid "Are you sure you want to create a new database at this location?"
-msgstr ""
+msgstr "정말로 이 위치에 새로운 데이터베이스를 만드시겠습니까?"
 
 #: .././config.py:16160
 msgid "Are you sure you want to forget this database?"
-msgstr ""
+msgstr "정말로 이 데이터베이스를 잊어버리시겠습니까?"
 
 #: .././config.py:16195
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr ""
+"정말로 이 데이터베이스를 제외한 모든 데이터베이스를 잊어버리시겠습니까?"
 
 #: .././config.py:16399
 msgid "No database exists at this location:"
-msgstr ""
+msgstr "이 위치에 아무 데이터베이스도 없습니다:"
 
 #: .././config.py:16401
 msgid "Do you want to create a new one?"
-msgstr ""
+msgstr "정말로 새것을 만듭니까?"
 
 #: .././config.py:17041
 msgid "The current options manager cannot be deleted"
-msgstr ""
+msgstr "현재 설정 관리자를 삭제할 수 없습니다"
 
 #: .././config.py:17049 .././config.py:18049
 msgid "Are you sure you want to delete this options manager?"
-msgstr ""
+msgstr "정말로 이 설정 관리자를 삭제하시겠습니까?"
 
 #: .././config.py:17243 .././config.py:17590 .././config.py:19074
 msgid "The new setting will be applied when Tartube restarts"
-msgstr ""
+msgstr "새 설정은 Tartube가 재시작 시 적용됩니다"
 
 #: .././config.py:18041
 msgid "The default options manager cannot be deleted"
-msgstr ""
+msgstr "기본 설정 매니저를 삭제할 수 없습니다"
 
 #: .././config.py:18736
 msgid "There is already a scheduled download with that name"
-msgstr ""
+msgstr "이미 동일한 이름의 예약 다운로드가 존재합니다"
 
 #: .././config.py:18783
 msgid "Are you sure you want to delete this scheduled download?"
-msgstr ""
+msgstr "정말로 이 예약 다운로드를 삭제하시겠습니까?"
 
 #: .././config.py:18951
 msgid "Please select the AVConv executable"
-msgstr ""
+msgstr "AVConv 실행 파일을 선택해주세요"
 
 #: .././config.py:18984
 msgid "Please select the FFmpeg executable"
-msgstr ""
+msgstr "FFmpeg 실행 파일을 선택해주세요"
 
 #: .././config.py:19017
 msgid "Please select the Youtube Stream Capture executable"
-msgstr ""
+msgstr "Youtube Stream Capture 실행 파일을 선택해주세요"
 
 #: .././config.py:19807
 msgid "Select the youtube-dl-compatible executable"
-msgstr ""
+msgstr "youtube-dl-compatible 실행 파일을 선택해주세요"
 
 #: .././config.py:19991
 msgid "Database file not loaded"
-msgstr ""
+msgstr "데이터베이스 파일이 로드되지 않음"
 
 #: .././config.py:20011
 msgid "Did not try to load the database file"
-msgstr ""
+msgstr "데이터베이스 파일을 로드하지 않았습니다"
 
 #: .././config.py:20036
 msgid "Database file loaded"
-msgstr ""
+msgstr "데이터베이스 파일 불러옴"
 
 #: .././downloads.py:256
 msgid "D/L Manager:"
-msgstr ""
+msgstr "다운로드 매니저:"
 
 #: .././downloads.py:260
 msgid "Starting download operation"
-msgstr ""
+msgstr "다운로드 작업 시작중"
 
 #: .././downloads.py:291
 msgid "Workers: available:"
-msgstr ""
+msgstr "작업자: 존재:"
 
 #: .././downloads.py:292
 msgid "total:"
-msgstr ""
+msgstr "전체:"
 
 #: .././downloads.py:322
 msgid "All threads finished"
-msgstr ""
+msgstr "모든 스레드 완료"
 
 #: .././downloads.py:346 .././downloads.py:1047 .././downloads.py:1058
 #: .././downloads.py:1132 .././downloads.py:1203 .././downloads.py:1246
 msgid "Thread #"
-msgstr ""
+msgstr "스레드 #"
 
 #: .././downloads.py:347
 msgid "Downloading:"
-msgstr ""
+msgstr "다운로드 중:"
 
 #: .././downloads.py:377
 msgid "Downloads complete (or stopped)"
-msgstr ""
+msgstr "다운로드 완료 (혹은 정지)"
 
 #: .././downloads.py:383
 msgid "Halting all workers"
-msgstr ""
+msgstr "모든 작업 중지"
 
 #: .././downloads.py:392
 msgid "Join and collect threads"
-msgstr ""
+msgstr "스레드 조인 및 수집"
 
 #: .././downloads.py:1048
 msgid "Job complete"
-msgstr ""
+msgstr "작업 완료"
 
 #: .././downloads.py:1059
 msgid "Worker now available again"
-msgstr ""
+msgstr "작업자 재사용 가능"
 
 #: .././downloads.py:1133 .././downloads.py:1247
 msgid "Assigned job:"
-msgstr ""
+msgstr "할당된 작업:"
 
 #: .././downloads.py:1157 .././downloads.py:1161
 msgid "Tartube is restarting a stalled download"
-msgstr ""
+msgstr "Tartube가 지연된 작업을 재시작 중"
 
 #: .././downloads.py:1204
 msgid "Checking RSS feed"
