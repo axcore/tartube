@@ -65,6 +65,9 @@ Works with YouTube, BitChute, and hundreds of other websites
 |schedule|예약||
 |stable|안정||
 |develop|개발||
+|progress tab|작업 탭||
+|tooltip|툴팁||
+|stall|지연||
 ||(은)는||
 
 ------------------------------------------------------------
