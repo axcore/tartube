@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-13 15:08+0000\n"
-"PO-Revision-Date: 2021-02-12 08:45+0900\n"
+"PO-Revision-Date: 2021-02-12 10:20+0900\n"
 "Last-Translator: A S Lewis <aslewis@cpan.org>\n"
 "Language-Team: en_US\n"
 "Language: ko_KR\n"
@@ -383,7 +383,7 @@ msgstr "새 버전이 업데이트 되었습니다!"
 
 #: .././mainapp.py:9486
 msgid "Your installation is up to date!"
-msgstr ""
+msgstr "설치된 버전이 최신 버전입니다!"
 
 #: .././mainapp.py:9488
 msgid "Installed version:"
@@ -476,26 +476,30 @@ msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
 msgstr ""
+"이 작업은 모든 다운로드 받은 파일을 Tartube 데이터 폴더의 최상위 위치로 이동"
+"합니다"
 
 #: .././mainapp.py:11528
 msgid "Channels, playlists and folders can only be dragged into a folder"
-msgstr ""
+msgstr "채널, 플레이리스트, 폴더만 폴더 안으로 드래그 할 수 있습ㄴ디ㅏ"
 
 #: .././mainapp.py:11541
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
-msgstr ""
+msgstr "고정된 폴더 '{0}'(은)는 이동할 수 없습니다 (하지만 숨길 순 있습니다)"
 
 #: .././mainapp.py:11554
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
-msgstr ""
+msgstr "폴더 '{0}'은(는) 비디오만 넣을 수 있습니다"
 
 #: .././mainapp.py:11581
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
 msgstr ""
+"해당 파일이나 폴더를 실수로 만들었을 수 있으므로, 이 경우 재시도 전에 수동으"
+"로 삭제해야 합니다"
 
 #: .././mainapp.py:11600
 msgid "into this folder:"
@@ -503,44 +507,46 @@ msgstr "이 폴더로:"
 
 #: .././mainapp.py:11604
 msgid "This procedure will move all downloaded files to the new location"
-msgstr ""
+msgstr "이 작업은 모든 다운로드 받은 파일을 새 위치로 이동합니다"
 
 #: .././mainapp.py:11610
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
 msgstr ""
+"경고: 이 목적지 폴더는 임시 폴더이므로, Tartube가 재시작되면 해당 폴더 안의 "
+"모든게 삭제됩니다!!!"
 
 #: .././mainapp.py:12074
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
-msgstr ""
+msgstr "정말로 파일을 삭제하겠습니까? 이 작업은 되돌릴 수 없습니다!"
 
 #: .././mainapp.py:13950 .././mainapp.py:14066 .././mainapp.py:14248
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
-msgstr ""
+msgstr "이 채널은 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainapp.py:13956 .././mainapp.py:14072 .././mainapp.py:14254
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
-msgstr ""
+msgstr "이 플레이리스트는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainapp.py:13962 .././mainapp.py:14078 .././mainapp.py:14260
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
-msgstr ""
+msgstr "이 폴더는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainapp.py:14328 .././mainapp.py:18500 .././mainapp.py:18632
 #: .././mainapp.py:18763
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
-msgstr "파일 이름 '{0}'은(는) 허용되지 않았습니다."
+msgstr "파일 이름 '{0}'은(는) 허용되지 않았습니다"
 
 #: .././mainapp.py:14337
 #, python-brace-format
 msgid "The name '{0}' is already in use"
-msgstr "파일 이름 '{0}'은(는) 이미 사용중입니다."
+msgstr "파일 이름 '{0}'은(는) 이미 사용중입니다"
 
 #: .././mainapp.py:14350
 #, python-brace-format
@@ -561,7 +567,7 @@ msgstr "내보낸 데이터베이스 파일을 저장하는데 실패했습니�
 
 #: .././mainapp.py:14932
 msgid "Database export file saved to:"
-msgstr ""
+msgstr "내보낸 데이터베이스 파일이 저장되었습니다:"
 
 #: .././mainapp.py:14969
 msgid "Select the database export"
@@ -569,19 +575,19 @@ msgstr "내보낼 데이터베이스 파일을 선택하세요"
 
 #: .././mainapp.py:14990 .././mainapp.py:15004
 msgid "Failed to load the database export file"
-msgstr ""
+msgstr "내보낸 데이터에피스 파일을 로드하는데 실패했습니다"
 
 #: .././mainapp.py:15021
 msgid "The database export file is invalid"
-msgstr ""
+msgstr "내보낸 데이터베이스 파일이 잘못되었습니다"
 
 #: .././mainapp.py:15032
 msgid "The database export file is invalid (or empty)"
-msgstr ""
+msgstr "내보낸 데이터베이스 파일이 잘못되었습니다 (혹은 비어있습니다)"
 
 #: .././mainapp.py:15076
 msgid "Nothing was imported from the database export file"
-msgstr ""
+msgstr "내보낸 데이터베이스 파일에서 가져올 것이 없습니다"
 
 #. Show a confirmation
 #: .././mainapp.py:15090
@@ -631,136 +637,136 @@ msgstr "내보낼 설정 파일을 선택하세요"
 
 #: .././mainapp.py:16109 .././mainapp.py:16491
 msgid "Failed to load the options export file"
-msgstr "내보내기 파일 옵션을 로드하지 못했습니다"
+msgstr "내보낸 설정 파일을 불러오지 못했습니다"
 
 #: .././mainapp.py:16126 .././mainapp.py:16508
 msgid "The options export file is invalid"
-msgstr ""
+msgstr "내보낸 설정 파일이 잘못되었습니다"
 
 #: .././mainapp.py:16137 .././mainapp.py:16519
 msgid "The options export file is invalid (or empty)"
-msgstr ""
+msgstr "내보낸 설정 파일이 잘못되었습니다 (혹은 비어있습니다)"
 
 #: .././mainapp.py:16441
 msgid "FFmpeg options exported to to:"
-msgstr ""
+msgstr "FFmpeg 설정이 내보내졌습니다:"
 
 #: .././mainapp.py:17415
 msgid "Please select a destination folder"
-msgstr ""
+msgstr "목적지 폴더를 선택해주세요"
 
 #. Prompt for confirmation
 #: .././mainapp.py:17487
 msgid "Are you sure you want to clear this list?"
-msgstr ""
+msgstr "정말로 이 리스트를 비우시겠습니까?"
 
 #. Prompt for confirmation
 #: .././mainapp.py:17534
 msgid "Are you sure you want to clear downloaded videos?"
-msgstr ""
+msgstr "정말로 다운로드 받은 비디오들을 지우시겠습니까?"
 
 #: .././mainapp.py:17627 .././mainwin.py:14538
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
-msgstr ""
+msgstr "체크하거나 다운로드 받은 비디오들만 FFmpeg에 의해 처리됩니다"
 
 #: .././mainapp.py:17744
 msgid "No video(s) have been downloaded"
-msgstr ""
+msgstr "아무 비디오도 다운로드 되지 않았습니다"
 
 #. Prompt for confirmation
 #: .././mainapp.py:17842
 msgid "Are you sure you want to remove the selected item(s)?"
-msgstr ""
+msgstr "정말로 선택한 항목들을 삭제하시겠습니까?"
 
 #: .././mainapp.py:18491
 msgid "You must give the channel a name"
-msgstr ""
+msgstr "채널에 이름을 입력해야 합니다"
 
 #: .././mainapp.py:18509 .././mainapp.py:18772
 msgid "You must enter a valid URL"
-msgstr ""
+msgstr "올바른 URL을 입력해야 합니다"
 
 #: .././mainapp.py:18624
 msgid "You must give the folder a name"
-msgstr ""
+msgstr "폴더에 이름을 입력해야 합니다"
 
 #: .././mainapp.py:18754
 msgid "You must give the playlist a name"
-msgstr ""
+msgstr "플레이리스트에 이름을 입력해야 합니다"
 
 #: .././mainapp.py:18909
 msgid "The following videos are duplicates:"
-msgstr ""
+msgstr "해당하는 비디오들이 복제되었습니다:"
 
 #: .././mainapp.py:18973
 msgid "There were no livestream alerts to cancel"
-msgstr ""
+msgstr "취소할 생방송 알림이 없습니다"
 
 #: .././mainapp.py:18975
 msgid "Livestream alerts for 1 video were cancelled"
-msgstr "Livestream alerts for 1 video were canceled"
+msgstr "비디오 1개에 대한 생방송 알림이 취소되었습니다"
 
 #: .././mainapp.py:18978
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
-msgstr "Livestream alerts for {0} videos were canceled"
+msgstr "비디오 {0}개에 대한 생방송 알림이 취소되었습니다"
 
 #: .././mainapp.py:19348
 msgid "All Tartube data has been saved"
-msgstr ""
+msgstr "모든 Tartube 데이터가 저장되었습니다"
 
 #: .././mainapp.py:19378
 msgid "Database saved"
-msgstr ""
+msgstr "데이터베이스 저장됨"
 
 #: .././mainapp.py:19633 .././mainwin.py:13490
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
-msgstr ""
+msgstr "파일은 삭제된 뒤 복구가 불가능합니다. 계속하시겠습니까?"
 
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
 #: .././mainapp.py:19673
 msgid "Cannot update existing livestreams because"
-msgstr ""
+msgstr "존재하는 생방송을 업데이트 하지 못했습니다"
 
 #: .././mainapp.py:19675
 msgid "there is another operation running"
-msgstr ""
+msgstr "다른 작업이 진행중입니다"
 
 #: .././mainapp.py:19677
 msgid "they are currently being updated"
-msgstr ""
+msgstr "이미 업데이트를 진행중입니다"
 
 #: .././mainapp.py:19679
 msgid "one or more configuration windows are open"
-msgstr ""
+msgstr "하나 이상의 설정 창이 열려있습니다"
 
 #: .././mainapp.py:19681
 msgid "there are no livestreams to update"
-msgstr ""
+msgstr "업데이트 할 생방송이 없습ㄴ디ㅏ"
 
 #: .././mainapp.py:19755
 msgid "There is already a channel with that name"
-msgstr ""
+msgstr "동일한 이름을 가진 채널이 이미 존재합니다"
 
 #: .././mainapp.py:19757
 msgid "There is already a playlist with that name"
-msgstr ""
+msgstr "동일한 이름을 가진 플레이리스트가 이미 존재합니다"
 
 #: .././mainapp.py:19759
 msgid "There is already a folder with that name"
-msgstr ""
+msgstr "동일한 이름을 가진 폴더가 이미 존재합니다"
 
 #: .././mainapp.py:19762
 msgid "(so please choose a different name)"
-msgstr ""
+msgstr "(다른 이름을 설정해 주세요)"
 
 #: .././mainwin.py:849
 msgid "Tartube cannot start because it cannot find its icons folder"
-msgstr ""
+msgstr "아이콘 폴더를 찾지 못해 Tartube를 켜지 못했습니다"
 
 #. File column
 #: .././mainwin.py:943 .././config.py:6357
@@ -1261,6 +1267,7 @@ msgstr "이 탭은 클래식 youtube-dl-gui 인터페이스를 에뮬레이트�
 #: .././mainwin.py:2454
 msgid "Videos downloaded here are not added to Tartube's database"
 msgstr ""
+"여기에 다운로드 받은 비디오들은 Tartube의 데이터베이스에 추가되지 않습니다"
 
 #: .././mainwin.py:2476
 msgid "Open the Classic Mode menu"
@@ -1434,23 +1441,23 @@ msgstr "다운로더 업데이트중"
 
 #: .././mainwin.py:3794
 msgid "Fetching formats"
-msgstr ""
+msgstr "포맷 동기화하기"
 
 #: .././mainwin.py:3796
 msgid "Fetching subtitles"
-msgstr ""
+msgstr "자막 동기화하기"
 
 #: .././mainwin.py:3798
 msgid "Testing downloader"
-msgstr ""
+msgstr "다운로더 테스팅"
 
 #: .././mainwin.py:3800
 msgid "Contacting website"
-msgstr ""
+msgstr "웹사이트 방문"
 
 #: .././mainwin.py:4021
 msgid "Show fewer settings"
-msgstr ""
+msgstr "적은 설정 보여주기"
 
 #: .././mainwin.py:4360
 msgid "_Check channel"
@@ -1634,433 +1641,433 @@ msgstr "_확인/다운로드 비활성화"
 
 #: .././mainwin.py:4823
 msgid "_Just disable downloading"
-msgstr ""
+msgstr "_다운로드만 비활성화"
 
 #: .././mainwin.py:4848 .././mainwin.py:5452
 msgid "D_ownloads"
-msgstr ""
+msgstr "_다운로드"
 
 #: .././mainwin.py:4858
 msgid "Channel _properties..."
-msgstr ""
+msgstr "_채널 속성..."
 
 #: .././mainwin.py:4860
 msgid "Playlist _properties..."
-msgstr ""
+msgstr "_플레이리스트 속성..."
 
 #: .././mainwin.py:4862
 msgid "Folder _properties..."
-msgstr ""
+msgstr "_폴더 속성..."
 
 #: .././mainwin.py:4878
 msgid "_Default location"
-msgstr ""
+msgstr "_기본 경로"
 
 #: .././mainwin.py:4891
 msgid "_Actual location"
-msgstr ""
+msgstr "_실제 경로"
 
 #: .././mainwin.py:4903
 msgid "_Show"
-msgstr ""
+msgstr "_보이기"
 
 #: .././mainwin.py:4912
 msgid "D_elete channel"
-msgstr ""
+msgstr "_채널 삭제하기"
 
 #: .././mainwin.py:4914
 msgid "D_elete playlist"
-msgstr ""
+msgstr "_플레이리스트 삭제하기"
 
 #: .././mainwin.py:4916
 msgid "D_elete folder"
-msgstr ""
+msgstr "_폴더 삭제하기"
 
 #: .././mainwin.py:5007
 msgid "_Check video"
-msgstr ""
+msgstr "_비디오 체크"
 
 #: .././mainwin.py:5029
 msgid "_Download video"
-msgstr ""
+msgstr "_비디오 다운로드"
 
 #: .././mainwin.py:5051
 msgid "Re-_download this video"
-msgstr ""
+msgstr "_이 비디오 다시 다운받기"
 
 #: .././mainwin.py:5066
 msgid "C_ustom download video"
-msgstr ""
+msgstr "_커스텀 비디오 다운로드"
 
 #: .././mainwin.py:5087 .././mainwin.py:5330
 msgid "Download and _watch"
-msgstr ""
+msgstr "_다운로드 받고 보기"
 
 #: .././mainwin.py:5106 .././mainwin.py:6734
 msgid "Watch in _player"
-msgstr ""
+msgstr "_플레이어에서 보기"
 
 #: .././mainwin.py:5121 .././mainwin.py:5132 .././mainwin.py:6746
 #: .././mainwin.py:6764
 msgid "Watch on _website"
-msgstr ""
+msgstr "_웹사이트에서 보기"
 
 #: .././mainwin.py:5146 .././mainwin.py:6778
 msgid "_YouTube"
-msgstr ""
+msgstr "_유튜브"
 
 #: .././mainwin.py:5156 .././mainwin.py:6788
 msgid "_HookTube"
-msgstr ""
+msgstr "_HookTube"
 
 #: .././mainwin.py:5166 .././mainwin.py:6798
 msgid "_Invidious"
-msgstr ""
+msgstr "_Invidious"
 
 #: .././mainwin.py:5176 .././mainwin.py:6808
 msgid "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
-msgstr ""
+msgstr "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
 
 #: .././mainwin.py:5181 .././mainwin.py:6813
 msgid "W_atch on"
-msgstr ""
+msgstr "_보기"
 
 #: .././mainwin.py:5211
 msgid "Auto _notify"
-msgstr ""
+msgstr "_자동 알림"
 
 #: .././mainwin.py:5227
 msgid "Auto _sound alarm"
-msgstr ""
+msgstr "_자동 사운드 알람"
 
 #: .././mainwin.py:5242
 msgid "Auto _open"
-msgstr ""
+msgstr "_자동 열기"
 
 #: .././mainwin.py:5255
 msgid "_Download on start"
-msgstr ""
+msgstr "_시작 시 다운로드"
 
 #: .././mainwin.py:5270
 msgid "Download on _stop"
-msgstr ""
+msgstr "_중지 시 다운로드"
 
 #: .././mainwin.py:5288
 msgid "Not a _livestream"
-msgstr ""
+msgstr "_생방송이 아님"
 
 #: .././mainwin.py:5298 .././config.py:8310
 msgid "_Livestream"
-msgstr ""
+msgstr "_생방송"
 
 #: .././mainwin.py:5309 .././mainwin.py:6851
 msgid "_Mark for download"
-msgstr ""
+msgstr "_다운로드 마크하기"
 
 #: .././mainwin.py:5320 .././mainwin.py:6863
 msgid "_Download"
-msgstr ""
+msgstr "_다운로드"
 
 #: .././mainwin.py:5340 .././mainwin.py:6884
 msgid "_Temporary"
-msgstr ""
+msgstr "_임시"
 
 #: .././mainwin.py:5409
 msgid "Show system _command"
-msgstr ""
+msgstr "_시스템 커맨드 보이기"
 
 #: .././mainwin.py:5419
 msgid "_Test system command"
-msgstr ""
+msgstr "+시스템 커맨드 테스트"
 
 #: .././mainwin.py:5434
 msgid "_Disable downloads"
-msgstr ""
+msgstr "_다운로드 비활성화"
 
 #: .././mainwin.py:5460 .././mainwin.py:6899
 msgid "_Process with FFmpeg..."
-msgstr ""
+msgstr "_FFmpeg로 처리하기..."
 
 #: .././mainwin.py:5479
 msgid "Video is _archived"
-msgstr ""
+msgstr "_비디오가 아카이브됨"
 
 #: .././mainwin.py:5492
 msgid "Video is _bookmarked"
-msgstr ""
+msgstr "_비디오가 북마크됨"
 
 #: .././mainwin.py:5503
 msgid "Video is _favourite"
-msgstr ""
+msgstr "_비디오가 즐겨찾기됨"
 
 #: .././mainwin.py:5514
 msgid "Video is _missing"
-msgstr ""
+msgstr "_비디오가 사라짐"
 
 #: .././mainwin.py:5530
 msgid "Video is _new"
-msgstr ""
+msgstr "_새 비디오"
 
 #: .././mainwin.py:5543
 msgid "Video is in _waiting list"
-msgstr ""
+msgstr "_비디오가 대기 리스트에 있음"
 
 #: .././mainwin.py:5554
 msgid "_Mark video"
-msgstr ""
+msgstr "_비디오 마크"
 
 #: .././mainwin.py:5565
 msgid "_Location"
-msgstr ""
+msgstr "_위치"
 
 #: .././mainwin.py:5575
 msgid "_Properties..."
-msgstr ""
+msgstr "_속성..."
 
 #: .././mainwin.py:5587
 msgid "_Show video"
-msgstr ""
+msgstr "_비디오 보이기"
 
 #: .././mainwin.py:5596
 msgid "Available _formats"
-msgstr ""
+msgstr "_가능한 포맷들"
 
 #: .././mainwin.py:5606
 msgid "Available _subtitles"
-msgstr ""
+msgstr "_가능한 자막들"
 
 #: .././mainwin.py:5616
 msgid "_Fetch"
-msgstr ""
+msgstr "_동기화"
 
 #. Delete video
 #: .././mainwin.py:5627
 msgid "D_elete video"
-msgstr ""
+msgstr "_비디오 삭제하기"
 
 #. Check/download videos
 #: .././mainwin.py:5716
 msgid "_Check videos"
-msgstr ""
+msgstr "_비디오 체크"
 
 #: .././mainwin.py:5735
 msgid "_Download videos"
-msgstr ""
+msgstr "_비디오 다운로드"
 
 #: .././mainwin.py:5755
 msgid "C_ustom download videos"
-msgstr ""
+msgstr "_커스텀 비디오 다운로드"
 
 #: .././mainwin.py:5789
 msgid "_Archived"
-msgstr ""
+msgstr "_아카이브됨"
 
 #: .././mainwin.py:5802
 msgid "Not a_rchived"
-msgstr ""
+msgstr "_아카이브 되지 않음"
 
 #: .././mainwin.py:5818
 msgid "_Bookmarked"
-msgstr ""
+msgstr "_북마크됨"
 
 #: .././mainwin.py:5831
 msgid "Not b_ookmarked"
-msgstr ""
+msgstr "_북마크 되지 않음"
 
 #: .././mainwin.py:5847
 msgid "_Favourite"
-msgstr "_Favorite"
+msgstr "_즐겨찾기됨"
 
 #: .././mainwin.py:5860
 msgid "Not fa_vourite"
-msgstr "Not fa_vorite"
+msgstr "_즐겨찾기 되지 않음"
 
 #: .././mainwin.py:5876
 msgid "_Missing"
-msgstr ""
+msgstr "_사라짐"
 
 #: .././mainwin.py:5889
 msgid "Not m_issing"
-msgstr ""
+msgstr "_사라지지 않음"
 
 #: .././mainwin.py:5905
 msgid "_New"
-msgstr ""
+msgstr "_새 비디오"
 
 #: .././mainwin.py:5918
 msgid "Not n_ew"
-msgstr ""
+msgstr "_새 비디오가 아님"
 
 #: .././mainwin.py:5934
 msgid "In _waiting list"
-msgstr ""
+msgstr "_대기 리스트에 있음"
 
 #: .././mainwin.py:5947
 msgid "Not in w_aiting list"
-msgstr ""
+msgstr "_대기 리스트에 없음"
 
 #: .././mainwin.py:5960
 msgid "_Mark videos"
-msgstr ""
+msgstr "_마크한 비디오"
 
 #: .././mainwin.py:5969
 msgid "Show p_roperties..."
-msgstr ""
+msgstr "_속성 보이기..."
 
 #. Delete videos
 #: .././mainwin.py:5984
 msgid "D_elete videos"
-msgstr ""
+msgstr "_비디오 삭제하기"
 
 #. Stop check/download
 #: .././mainwin.py:6049
 msgid "_Stop now"
-msgstr ""
+msgstr "_지금 멈추기"
 
 #: .././mainwin.py:6063
 msgid "Stop after this _video"
-msgstr ""
+msgstr "_이 비디오 이후에 멈추기"
 
 #: .././mainwin.py:6078
 msgid "Stop after these v_ideos"
-msgstr ""
+msgstr "_이 비디오들 이후에 멈추기"
 
 #: .././mainwin.py:6093
 msgid "Download _next"
-msgstr ""
+msgstr "_다음 다운받기"
 
 #: .././mainwin.py:6105
 msgid "Download _last"
-msgstr ""
+msgstr "_마지막 다운받기"
 
 #: .././mainwin.py:6128
 msgid "Watch on _YouTube"
-msgstr ""
+msgstr "_유튜브에서 보기"
 
 #: .././mainwin.py:6138
 msgid "Watch on _HookTube"
-msgstr ""
+msgstr "_HookTube에서 보기"
 
 #: .././mainwin.py:6148
 msgid "Watch on _Invidious"
-msgstr ""
+msgstr "_Invidious에서 보기"
 
 #: .././mainwin.py:6160
 msgid "Watch on _Website"
-msgstr ""
+msgstr "_웹사이트에서 보기"
 
 #: .././mainwin.py:6259
 msgid "_Delete video(s)"
-msgstr ""
+msgstr "_비디오(들) 삭제하기"
 
 #: .././mainwin.py:6291
 msgid "_Enable automatic copy/paste"
-msgstr ""
+msgstr "_자동 복사/붙여넣기 활성화"
 
 #: .././mainwin.py:6303
 msgid "_Remember URLs"
-msgstr ""
+msgstr "_URL 기억하기"
 
 #: .././mainwin.py:6318
 msgid "_Set download options"
-msgstr ""
+msgstr "_다운로드 설정 설정하기"
 
 #: .././mainwin.py:6329
 msgid "Use _default download options"
-msgstr ""
+msgstr "_기본 다운로드 설정 사용"
 
 #: .././mainwin.py:6344
 msgid "_Edit download options"
-msgstr ""
+msgstr "_다운로드 설정 편집"
 
 #: .././mainwin.py:6358
 msgid "Enable _custom downloads"
-msgstr ""
+msgstr "_커스텀 다운로드 활성화"
 
 #: .././mainwin.py:6371
 msgid "Custom downloads _preferences..."
-msgstr ""
+msgstr "_커스텀 다운로드 속성..."
 
 #: .././mainwin.py:6386
 msgid "_Update"
-msgstr ""
+msgstr "_업데이트"
 
 #: .././mainwin.py:6439
 msgid "Copy file _path"
-msgstr ""
+msgstr "_파일 경로 복사하기"
 
 #. Copy URL
 #: .././mainwin.py:6451
 msgid "Copy _URL"
-msgstr ""
+msgstr "_URL 복사하기"
 
 #: .././mainwin.py:6463
 msgid "Copy system _command"
-msgstr ""
+msgstr "_시스템 커맨드 복사하기"
 
 #: .././mainwin.py:6479
 msgid "_Open destination(s)"
-msgstr ""
+msgstr "_목적지 열기"
 
 #: .././mainwin.py:6520
 msgid "Mark as _archived"
-msgstr ""
+msgstr "_아카이브로 표시하기"
 
 #: .././mainwin.py:6531
 msgid "Mark as not a_rchived"
-msgstr ""
+msgstr "_아카이브 표시 없애기"
 
 #: .././mainwin.py:6545
 msgid "Mark as _bookmarked"
-msgstr ""
+msgstr "_북마크로 표시하기"
 
 #: .././mainwin.py:6557
 msgid "Mark as not b_ookmarked"
-msgstr ""
+msgstr "_북마크 표시 없애기"
 
 #: .././mainwin.py:6570
 msgid "Mark as _favourite"
-msgstr "Mark as _favorite"
+msgstr "_즐겨찾기로 표시하기"
 
 #: .././mainwin.py:6583
 msgid "Mark as not fa_vourite"
-msgstr "Mark as not fa_vorite"
+msgstr "_즐겨찾기 표시 없애기"
 
 #: .././mainwin.py:6597
 msgid "Mark as _missing"
-msgstr ""
+msgstr "_사라진것으로 표시하기"
 
 #: .././mainwin.py:6610
 msgid "Mark as not m_issing"
-msgstr ""
+msgstr "_사라진것으로 표시 없애기"
 
 #: .././mainwin.py:6627
 msgid "Mark as _new"
-msgstr ""
+msgstr "_새 비디오로 표시하기"
 
 #: .././mainwin.py:6639
 msgid "Mark as not n_ew"
-msgstr ""
+msgstr "_새 비디오 표시 없애기"
 
 #: .././mainwin.py:6653
 msgid "Mark as in _waiting list"
-msgstr ""
+msgstr "_대기 리스트로 표시하기"
 
 #: .././mainwin.py:6665
 msgid "Mark as not in wai_ting list"
-msgstr ""
+msgstr "_대기 리스트로 표시 없애기"
 
 #: .././mainwin.py:6715
 msgid "D_ownload and watch"
-msgstr ""
+msgstr "_다운로드 하고 보기"
 
 #: .././mainwin.py:6838
 msgid "Mark as _not livestreams"
-msgstr ""
+msgstr "_생방송으로 표시하지 않기"
 
 #: .././mainwin.py:6873
 msgid "_Download and watch"
-msgstr ""
+msgstr "_다운로드 하고 보기"
 
 #: .././mainwin.py:7700
 msgid ""
@@ -2068,42 +2075,45 @@ msgid ""
 "= downloaded F = favourite L = live/livestream M = missing N = new W = in "
 "waiting list E = (number of) errors W = warnings"
 msgstr ""
+"TRANSLATOR'S NOTE: V = number of videos B = (number of videos) bookmarked D "
+"= downloaded F = favourite L = live/livestream M = missing N = new W = in "
+"waiting list E = (number of) errors W = warnings"
 
 #: .././mainwin.py:7707
 msgid "V:"
-msgstr ""
+msgstr "비디오:"
 
 #: .././mainwin.py:7708
 msgid "B:"
-msgstr ""
+msgstr "북마크:"
 
 #: .././mainwin.py:7709
 msgid "D:"
-msgstr ""
+msgstr "다운로드:"
 
 #: .././mainwin.py:7710
 msgid "F:"
-msgstr ""
+msgstr "즐겨찾기:"
 
 #: .././mainwin.py:7711
 msgid "L:"
-msgstr ""
+msgstr "생방송:"
 
 #: .././mainwin.py:7712
 msgid "M:"
-msgstr ""
+msgstr "사라짐:"
 
 #: .././mainwin.py:7713
 msgid "N:"
-msgstr ""
+msgstr "새비디오:"
 
 #: .././mainwin.py:7714 .././mainwin.py:7725
 msgid "W:"
-msgstr ""
+msgstr "경고:"
 
 #: .././mainwin.py:7724
 msgid "E:"
-msgstr ""
+msgstr "에러:"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2113,99 +2123,101 @@ msgstr ""
 #: .././mainwin.py:19746 .././mainwin.py:20326 .././mainwin.py:21884
 #: .././mainwin.py:21888 .././mainwin.py:22130
 msgid "Waiting"
-msgstr ""
+msgstr "대기:"
 
 #: .././mainwin.py:11188
 msgid ""
 "TRANSLATOR'S NOTE: Thread means a computer processor thread. If you're not "
 "sure how to translate it, just use 'Page #', as in Page #1, Page #2, etc"
 msgstr ""
+"TRANSLATOR'S NOTE: Thread means a computer processor thread. If you're not "
+"sure how to translate it, just use 'Page #', as in Page #1, Page #2, etc"
 
 #: .././mainwin.py:11195
 msgid "Thread"
-msgstr ""
+msgstr "스레드"
 
 #: .././mainwin.py:11198
 msgid "_Summary"
-msgstr ""
+msgstr "_요약"
 
 #: .././mainwin.py:11791
 msgid "Tartube error"
-msgstr ""
+msgstr "Tartube 에러"
 
 #: .././mainwin.py:11847
 msgid "Tartube warning"
-msgstr ""
+msgstr "Tartube 경고"
 
 #: .././mainwin.py:11880
 msgid "_Errors"
-msgstr ""
+msgstr "_에러"
 
 #: .././mainwin.py:11884
 msgid "Warnings"
-msgstr ""
+msgstr "_경고"
 
 #: .././mainwin.py:11956
 msgid ""
 "There are not scheduled downloads that don't already contain the channel/"
 "playlist/folder"
-msgstr ""
+msgstr "채널/플레이리스트/폴더가 포함하지 않은 예약된 다운로드가 없습니다"
 
 #: .././mainwin.py:13290
 msgid "The URL is not valid"
-msgstr ""
+msgstr "URL이 올바르지 않습니다"
 
 #: .././mainwin.py:17305
 msgid "The following items are duplicates:"
-msgstr ""
+msgstr "다음 항목이 중복되었습니다:"
 
 #: .././mainwin.py:17469
 #, python-brace-format
 msgid "The channel contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "이 채널은 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainwin.py:17476
 #, python-brace-format
 msgid "The playlist contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "이 플레이리스트는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainwin.py:17483
 #, python-brace-format
 msgid "The folder contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "이 폴더는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
 #: .././mainwin.py:18126 .././mainwin.py:19131
 msgid "Originally from:"
-msgstr ""
+msgstr "원본:"
 
 #: .././mainwin.py:18139 .././mainwin.py:19145
 msgid "From channel"
-msgstr ""
+msgstr "채널"
 
 #: .././mainwin.py:18141 .././mainwin.py:19147
 msgid "From playlist"
-msgstr ""
+msgstr "플레이리스트"
 
 #: .././mainwin.py:18143 .././mainwin.py:19149
 msgid "From folder"
-msgstr ""
+msgstr "폴더"
 
 #: .././mainwin.py:18174
 msgid "Livestream has not started yet"
-msgstr ""
+msgstr "생방송이 아직 시작되지 않았습니다"
 
 #: .././mainwin.py:18181
 msgid "Debut has started"
-msgstr ""
+msgstr "데뷔가 시작되었습니다"
 
 #: .././mainwin.py:18183
 msgid "Debut has not started yet"
-msgstr ""
+msgstr "데뷔가 아직 시작되지 않았습니다"
 
 #: .././mainwin.py:18190 .././mainwin.py:18196 .././mainwin.py:19199
 #: .././mainwin.py:19206
 msgid "Duration:"
-msgstr ""
+msgstr "기간:"
 
 #: .././mainwin.py:18196 .././mainwin.py:18202 .././mainwin.py:18213
 #: .././mainwin.py:19206 .././mainwin.py:19213 .././mainwin.py:19229
@@ -2213,64 +2225,64 @@ msgstr ""
 #: .././media.py:563 .././media.py:573 .././media.py:1827 .././media.py:1833
 #: .././media.py:1843
 msgid "unknown"
-msgstr ""
+msgstr "알수 없음"
 
 #: .././mainwin.py:18200 .././mainwin.py:18202 .././mainwin.py:19210
 #: .././mainwin.py:19212
 msgid "Size:"
-msgstr ""
+msgstr "크기:"
 
 #: .././mainwin.py:18211 .././mainwin.py:18213 .././mainwin.py:19224
 msgid "Date:"
-msgstr ""
+msgstr "날짜:"
 
 #: .././mainwin.py:18545
 msgid "Watch:"
-msgstr ""
+msgstr "시청:"
 
 #: .././mainwin.py:18614
 msgid "Temporary:"
-msgstr ""
+msgstr "임시:"
 
 #: .././mainwin.py:18657
 msgid "Marked:"
-msgstr ""
+msgstr "마크:"
 
 #: .././mainwin.py:19103 .././mainwin.py:19166
 msgid "Show the full description"
-msgstr ""
+msgstr "전체 설명 보이기"
 
 #: .././mainwin.py:19104 .././mainwin.py:19167
 msgid "More"
-msgstr ""
+msgstr "더 보기"
 
 #: .././mainwin.py:19116 .././mainwin.py:19175
 msgid "Show the short description"
-msgstr ""
+msgstr "간단한 설명 보이기"
 
 #: .././mainwin.py:19117 .././mainwin.py:19176
 msgid "Less"
-msgstr ""
+msgstr "적은"
 
 #: .././mainwin.py:19219
 msgid "Received:"
-msgstr ""
+msgstr "받아옴:"
 
 #: .././mainwin.py:19248
 msgid "Live now:"
-msgstr ""
+msgstr "생방송 중:"
 
 #: .././mainwin.py:19250 .././mainwin.py:21738
 msgid "Live soon:"
-msgstr ""
+msgstr "곧 생방송:"
 
 #: .././mainwin.py:19259
 msgid "Debut now:"
-msgstr ""
+msgstr "데뷔 중:"
 
 #: .././mainwin.py:19261 .././mainwin.py:21740
 msgid "Debut soon:"
-msgstr ""
+msgstr "곧 데뷔:"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2281,11 +2293,11 @@ msgstr ""
 #: .././mainwin.py:20030 .././mainwin.py:21624 .././mainwin.py:21626
 #: .././mainwin.py:21630
 msgid "Notify"
-msgstr ""
+msgstr "알림"
 
 #: .././mainwin.py:19278 .././mainwin.py:19552 .././mainwin.py:21634
 msgid "When the livestream starts, notify the user"
-msgstr ""
+msgstr "생방송이 시작되면, 유저에게 알림"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2295,11 +2307,11 @@ msgstr ""
 #: .././mainwin.py:19560 .././mainwin.py:19912 .././mainwin.py:21645
 #: .././mainwin.py:21647
 msgid "Alarm"
-msgstr ""
+msgstr "알람"
 
 #: .././mainwin.py:19295 .././mainwin.py:19564 .././mainwin.py:21651
 msgid "When the livestream starts, sound an alarm"
-msgstr ""
+msgstr "생방송이 시작되면, 알람을 소리로 울림"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2309,11 +2321,11 @@ msgstr ""
 #: .././mainwin.py:19572 .././mainwin.py:20070 .././mainwin.py:21656
 #: .././mainwin.py:21658
 msgid "Open"
-msgstr ""
+msgstr "열기"
 
 #: .././mainwin.py:19306 .././mainwin.py:19576 .././mainwin.py:21662
 msgid "When the livestream starts, open it"
-msgstr ""
+msgstr "생방송이 시작되면, 열기"
 
 #. (Livestream already broadcasting)
 #. Because of an unexplained Gtk problem, there is usually a crash after
@@ -2325,11 +2337,11 @@ msgstr ""
 #: .././mainwin.py:19582 .././mainwin.py:19584 .././mainwin.py:19951
 #: .././mainwin.py:21670 .././mainwin.py:21675 .././mainwin.py:21677
 msgid "D/L on start"
-msgstr ""
+msgstr "시작 시 다운로드"
 
 #: .././mainwin.py:19325 .././mainwin.py:19588 .././mainwin.py:21681
 msgid "When the livestream starts, download it"
-msgstr ""
+msgstr "생방송이 시작되면, 다운로드 하기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2339,15 +2351,15 @@ msgstr ""
 #: .././mainwin.py:19594 .././mainwin.py:19596 .././mainwin.py:19991
 #: .././mainwin.py:21687 .././mainwin.py:21692 .././mainwin.py:21694
 msgid "D/L on stop"
-msgstr ""
+msgstr "정지 시 다운로드"
 
 #: .././mainwin.py:19342 .././mainwin.py:19600 .././mainwin.py:21698
 msgid "When the livestream stops, download it"
-msgstr ""
+msgstr "생방송이 끝나면, 다운로드 하기"
 
 #: .././mainwin.py:19361 .././mainwin.py:21717
 msgid "Watch in your media player"
-msgstr ""
+msgstr "미디어 플레이어에서 보기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2355,41 +2367,43 @@ msgstr ""
 #. second)
 #: .././mainwin.py:19362 .././mainwin.py:20718 .././mainwin.py:21718
 msgid "Player"
-msgstr ""
+msgstr "플레이어"
 
 #: .././mainwin.py:19386 .././mainwin.py:21755
 msgid "Download this video"
-msgstr ""
+msgstr "이 비디오 다운로드받기"
 
 #: .././mainwin.py:19401 .././mainwin.py:21770
 msgid ""
 "TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
 "different word (e.g. French et), then just use that word"
 msgstr ""
+"TRANSLATOR'S NOTE: If you want to use &, use &amp; - if you want to use a "
+"different word (e.g. French et), then just use that word"
 
 #: .././mainwin.py:19409 .././mainwin.py:21778
 msgid "Download and watch in your media player"
-msgstr ""
+msgstr "다운로드 하고 미디어 플레이어에서 보기"
 
 #: .././mainwin.py:19410
 msgid "Download &amp; watch"
-msgstr ""
+msgstr "다운로드 하고 보기"
 
 #: .././mainwin.py:19417
 msgid "Not downloaded"
-msgstr ""
+msgstr "다운로드되지 않음"
 
 #: .././mainwin.py:19443
 msgid "Watch on YouTube"
-msgstr ""
+msgstr "유튜브에서 보기"
 
 #: .././mainwin.py:19444 .././mainwin.py:20763
 msgid "YouTube"
-msgstr ""
+msgstr "유튜브"
 
 #: .././mainwin.py:19456
 msgid "Watch on HookTube"
-msgstr ""
+msgstr "HookTube에서 보기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2397,11 +2411,11 @@ msgstr ""
 #. second)
 #: .././mainwin.py:19457 .././mainwin.py:20526
 msgid "HookTube"
-msgstr ""
+msgstr "HookTube"
 
 #: .././mainwin.py:19469
 msgid "Watch on Invidious"
-msgstr ""
+msgstr "Invidious에서 보기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2409,7 +2423,7 @@ msgstr ""
 #. second)
 #: .././mainwin.py:19470 .././mainwin.py:20570
 msgid "Invidious"
-msgstr ""
+msgstr "Invidious"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2418,24 +2432,24 @@ msgstr ""
 #: .././mainwin.py:19488 .././mainwin.py:20615 .././config.py:9296
 #: .././config.py:11514
 msgid "Other"
-msgstr ""
+msgstr "기타"
 
 #: .././mainwin.py:19508
 msgid "Watch on website"
-msgstr ""
+msgstr "웹사이트에서 보기"
 
 #: .././mainwin.py:19509 .././mainwin.py:20765
 msgid "Website"
-msgstr ""
+msgstr "웹사이트"
 
 #. Links not clickable
 #: .././mainwin.py:19520
 msgid "No link"
-msgstr ""
+msgstr "링크 없음"
 
 #: .././mainwin.py:19629
 msgid "Download to a temporary folder later"
-msgstr ""
+msgstr "나중에 임시 폴더에 다운로드 받기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2443,19 +2457,19 @@ msgstr ""
 #. second)
 #: .././mainwin.py:19630 .././mainwin.py:19647 .././mainwin.py:20482
 msgid "Mark for download"
-msgstr ""
+msgstr "다운로드를 위해 마크하기"
 
 #: .././mainwin.py:19635
 msgid "Download to a temporary folder"
-msgstr ""
+msgstr "임시 폴더에 다운로드 받기"
 
 #: .././mainwin.py:19641
 msgid "Download to a temporary folder, then watch"
-msgstr ""
+msgstr "임시 폴더에 다운로드 받고 보기"
 
 #: .././mainwin.py:19642 .././mainwin.py:21779
 msgid "D/L &amp; watch"
-msgstr ""
+msgstr "다운로드 하고 보기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2463,12 +2477,12 @@ msgstr ""
 #. second)
 #: .././mainwin.py:19649 .././mainwin.py:20438
 msgid "D/L and watch"
-msgstr ""
+msgstr "다운로드 하고 보기"
 
 #. Archived/not archived
 #: .././mainwin.py:19673 .././mainwin.py:21817
 msgid "Prevent automatic deletion of the video"
-msgstr ""
+msgstr "비디오 자동 삭제 방지"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2477,12 +2491,12 @@ msgstr ""
 #: .././mainwin.py:19677 .././mainwin.py:19681 .././mainwin.py:20108
 #: .././mainwin.py:21821 .././mainwin.py:21825 .././mainwin.py:22040
 msgid "Archived"
-msgstr ""
+msgstr "아카이브 됨"
 
 #. Bookmarked/not bookmarked
 #: .././mainwin.py:19686 .././mainwin.py:21830
 msgid "Show video in Bookmarks folder"
-msgstr ""
+msgstr "북마크 폴더 안의 비디오 보이기"
 
 #. text + _('Bookmarked') + '</a>',
 #. text + '<s>' + _('Bookmarked') + '</s></a>',
@@ -2493,12 +2507,12 @@ msgstr ""
 #: .././mainwin.py:19691 .././mainwin.py:19696 .././mainwin.py:21834
 #: .././mainwin.py:21838 .././mainwin.py:22085
 msgid "B/mark"
-msgstr ""
+msgstr "북마크"
 
 #. Favourite/not favourite
 #: .././mainwin.py:19701 .././mainwin.py:21843
 msgid "Show in Favourite Videos folder"
-msgstr ""
+msgstr "즐겨찾기 폴더 안의 비디오 보이기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2512,7 +2526,7 @@ msgstr "즐겨찾기"
 #. Missing/not missing
 #: .././mainwin.py:19713 .././mainwin.py:21855
 msgid "Mark video as removed by creator"
-msgstr ""
+msgstr "제작자가 비디오를 삭제한 것(사라진 것)으로 표기하기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2521,12 +2535,12 @@ msgstr ""
 #: .././mainwin.py:19717 .././mainwin.py:19721 .././mainwin.py:20243
 #: .././mainwin.py:21859 .././mainwin.py:21863
 msgid "Missing"
-msgstr ""
+msgstr "사라짐"
 
 #. New/not new
 #: .././mainwin.py:19726 .././mainwin.py:21868
 msgid "Mark video as never watched"
-msgstr ""
+msgstr "새 비디오로 표기하기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2535,12 +2549,12 @@ msgstr ""
 #: .././mainwin.py:19730 .././mainwin.py:19734 .././mainwin.py:20281
 #: .././mainwin.py:21872 .././mainwin.py:21876
 msgid "New"
-msgstr ""
+msgstr "새 비디오"
 
 #. In waiting list/not in waiting list
 #: .././mainwin.py:19739 .././mainwin.py:21881
 msgid "Show in Waiting Videos folder"
-msgstr ""
+msgstr "대기 리스트로 표기하기"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2548,116 +2562,118 @@ msgstr ""
 #. second)
 #: .././mainwin.py:20153
 msgid "Bookmarked"
-msgstr ""
+msgstr "북마크됨"
 
 #: .././mainwin.py:21548 .././media.py:1813 .././refresh.py:259
 #: .././refresh.py:529
 msgid "Channel:"
-msgstr ""
+msgstr "채널:"
 
 #: .././mainwin.py:21550 .././media.py:1815 .././refresh.py:261
 #: .././refresh.py:531
 msgid "Playlist:"
-msgstr ""
+msgstr "플레이리스트:"
 
 #: .././mainwin.py:21552 .././media.py:1817 .././refresh.py:263
 #: .././refresh.py:533
 msgid "Folder:"
-msgstr ""
+msgstr "폴더:"
 
 #: .././mainwin.py:21750
 msgid "TRANSLATOR'S NOTE: D/L means download"
-msgstr ""
+msgstr "TRANSLATOR'S NOTE: D/L means download"
 
 #: .././mainwin.py:21786
 msgid "Can't D/L"
-msgstr ""
+msgstr "다운로드 할 수 없음"
 
 #: .././mainwin.py:21810
 msgid ""
 "TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
 "Archived, B/Mark = Bookmarked, Waiting: In waiting list"
 msgstr ""
+"TRANSLATOR'S NOTE: This section contains shortened labels: Archive = "
+"Archived, B/Mark = Bookmarked, Waiting: In waiting list"
 
 #: .././mainwin.py:23114
 msgid "Add channel"
-msgstr ""
+msgstr "채널 추가"
 
 #: .././mainwin.py:23133
 msgid "Enter the channel name"
-msgstr ""
+msgstr "채널 이름을 입력해 주세요"
 
 #: .././mainwin.py:23138
 msgid "(Use the channel's real name or a customised name)"
-msgstr "(Use the channel's real name or a customized name)"
+msgstr "(채널의 실제 이름이나 커스텀 이름을 사용하세요)"
 
 #: .././mainwin.py:23146
 msgid "Copy and paste a link to the channel"
-msgstr ""
+msgstr "링크를 복사해 채널에 붙여넣기"
 
 #: .././mainwin.py:23193
 msgid "(Optional) Add this channel inside a folder"
-msgstr ""
+msgstr "(선택사항) 이 채널을 폴더 안에 추가하기"
 
 #: .././mainwin.py:23223
 msgid "I want to download videos from this channel automatically"
-msgstr ""
+msgstr "이 채널의 비디오를 자동으로 다운받고 싶음"
 
 #: .././mainwin.py:23230 .././mainwin.py:23517 .././mainwin.py:23725
 msgid "Don't download anything, just check for new videos"
-msgstr ""
+msgstr "다운로드 받지 않고 새 비디오만 확인하기"
 
 #: .././mainwin.py:23237 .././mainwin.py:23732 .././mainwin.py:24085
 msgid "Enable automatic copy/paste"
-msgstr ""
+msgstr "자동 복사/붙여넣기 활성화"
 
 #: .././mainwin.py:23418
 msgid "Add folder"
-msgstr ""
+msgstr "폴더 추가"
 
 #: .././mainwin.py:23437
 msgid "Enter the folder name"
-msgstr ""
+msgstr "폴더 이름을 입력해 주세요"
 
 #: .././mainwin.py:23480
 msgid "(Optional) Add this folder inside another folder"
-msgstr ""
+msgstr "(선택사항) 이 폴더를 다른 폴더 안에 추가하기"
 
 #: .././mainwin.py:23511
 msgid "I want to download videos from this folder automatically"
-msgstr ""
+msgstr "이 폴ㄷ의 비디오를 자동으로 다운받고 싶음"
 
 #: .././mainwin.py:23609
 msgid "Add playlist"
-msgstr ""
+msgstr "플레이리스트 추가"
 
 #: .././mainwin.py:23628
 msgid "Enter the playlist name"
-msgstr ""
+msgstr "플레이리스트 이름을 입력해 주세요"
 
 #: .././mainwin.py:23633
 msgid "(Use the playlist's real name or a customised name)"
-msgstr "(Use the playlist's real name or a customized name)"
+msgstr "(플레이리스트의 실제 이름이나 커스텀 이름을 사용하세요)"
 
 #: .././mainwin.py:23641
 msgid "Copy and paste a link to the playlist"
-msgstr ""
+msgstr "링크를 복사해 플레이리스트에 붙여넣기"
 
 #: .././mainwin.py:23688
 msgid "(Optional) Add this playlist inside a folder"
-msgstr ""
+msgstr "(선택사항) 이 플레이리스트를 폴더 안에 추가하기"
 
 #: .././mainwin.py:23718
 msgid "I want to download videos from this playlist automatically"
-msgstr ""
+msgstr "이 플레이리스트의 비디오를 자동으로 다운받고 싶음"
 
 #: .././mainwin.py:23915
 msgid "Add videos"
-msgstr ""
+msgstr "비디오 추가하기"
 
 #: .././mainwin.py:23934
 msgid "Copy and paste the links to one or more videos"
-msgstr ""
+msgstr "링크를 복사해 하나 이상의 비디오에 붙여넣기"
 
 #: .././mainwin.py:23940
 msgid "Links containing multiple videos will be converted to a channel"
@@ -3431,36 +3447,36 @@ msgstr "이 섲렁은 아무것도 적용되지 않습니다"
 
 #: .././config.py:2931
 msgid "Extra command line options (e.g. --help; do not use -o or --output)"
-msgstr ""
+msgstr "추가 커맨드 라인 설정 (예. --help; do not use -o or --output)"
 
 #: .././config.py:2959
 msgid "Hide advanced download options"
-msgstr ""
+msgstr "고급 다운로드 설정 숨기기"
 
 #: .././config.py:2961
 msgid "Show advanced download options"
-msgstr ""
+msgstr "고급 다운로드 설정 보이기"
 
 #: .././config.py:2971
 msgid "Import general download options into this window"
-msgstr ""
+msgstr "이 창에 일반 다운로드 설정 가져오기"
 
 #: .././config.py:2986
 msgid "Completely reset all download options to their default values"
-msgstr ""
+msgstr "모든 다운로드 설정을 완전히 기본값으로 초기화하기"
 
 #. Add this tab...
 #: .././config.py:3000 .././config.py:10878
 msgid "_Files"
-msgstr ""
+msgstr "_파일"
 
 #: .././config.py:3021
 msgid "File _names"
-msgstr ""
+msgstr "_파일 이름"
 
 #: .././config.py:3029
 msgid "File name options"
-msgstr ""
+msgstr "파일 이름 설정"
 
 #: .././config.py:3034
 msgid "Format for video file names"
@@ -3476,55 +3492,55 @@ msgstr ""
 
 #: .././config.py:3083 .././config.py:8018
 msgid "Video properties"
-msgstr ""
+msgstr "비디오 속성"
 
 #: .././config.py:3085
 msgid "Video ID"
-msgstr ""
+msgstr "비디오 ID"
 
 #: .././config.py:3086
 msgid "Video title"
-msgstr ""
+msgstr "비디오 제목"
 
 #: .././config.py:3087
 msgid "Alternative video ID"
-msgstr ""
+msgstr "대체 비디오 ID"
 
 #: .././config.py:3088
 msgid "Secondary video title"
-msgstr ""
+msgstr "비디오 보조 제목"
 
 #: .././config.py:3090
 msgid "Video filename extension"
-msgstr ""
+msgstr "비디오 파일 확장자"
 
 #: .././config.py:3091
 msgid "Video licence"
-msgstr "Video license"
+msgstr "비디오 라이센스"
 
 #: .././config.py:3092
 msgid "Age restriction (years)"
-msgstr ""
+msgstr "나이 제한 (연도)"
 
 #: .././config.py:3093
 msgid "Is a livestream"
-msgstr ""
+msgstr "생방송 여부"
 
 #: .././config.py:3094
 msgid "Autonumber videos, starting at 0"
-msgstr ""
+msgstr "자동 번호 비디오 (0부터 시작함)"
 
 #: .././config.py:3096
 msgid "Creator/uploader"
-msgstr ""
+msgstr "제작자/업로더"
 
 #: .././config.py:3098 .././config.py:3099
 msgid "Full name of video uploader"
-msgstr ""
+msgstr "비디오 업로더의 실제 이름"
 
 #: .././config.py:3100
 msgid "Nickname/ID of video uploader"
-msgstr ""
+msgstr "비디오 업로더의 닉네임/ID"
 
 #: .././config.py:3101
 msgid "Channel name"
@@ -3734,7 +3750,7 @@ msgstr "_파일 유지"
 
 #: .././config.py:3444
 msgid "Options during real (not simulated) downloads"
-msgstr ""
+msgstr "(시뮬레이션이 아닌) 실제 다운로드 설정"
 
 #: .././config.py:3450 .././config.py:3481
 msgid "Keep the description file after Tartube shuts down"
@@ -3754,7 +3770,7 @@ msgstr "섬네일 파일을 Tartube가 꺼져도 유지하기"
 
 #: .././config.py:3475
 msgid "Options during simulated (not real) downloads"
-msgstr ""
+msgstr "(실제가 아닌) 시뮬레이션 다운로드 설정"
 
 #. Add this tab...
 #: .././config.py:3513
@@ -3935,52 +3951,52 @@ msgstr "필요한 경우 다른 포맷으로 비디오 인코딩"
 
 #: .././config.py:4076
 msgid "Arguments to pass to post-processor"
-msgstr ""
+msgstr "사전처리기에 전달할 인자"
 
 #: .././config.py:4086
 msgid "Keep original file after processing it"
-msgstr ""
+msgstr "처리 후 원본 파일 갖고 있기"
 
 #: .././config.py:4093
 msgid "Merge subtitles file with video (.mp4 only)"
-msgstr ""
+msgstr "자막을 비디오와 합치기 (.mp4만 가능)"
 
 #: .././config.py:4104
 msgid "Embed thumbnail in audio file as cover art"
-msgstr ""
+msgstr "섬네일을 오디오 파일의 표지 아트로 설정"
 
 #: .././config.py:4110
 msgid "Write metadata to the video file"
-msgstr ""
+msgstr "비디오 파일에 메타데이터 작성하기"
 
 #: .././config.py:4116
 msgid "Automatically correct known faults of the file"
-msgstr ""
+msgstr "자동으로 파일의 결함 수정"
 
 #: .././config.py:4122
 msgid "Do nothing"
-msgstr ""
+msgstr "아무것도 하지 않음"
 
 #: .././config.py:4123
 msgid "Warn, but do nothing"
-msgstr ""
+msgstr "경고, 하지만 아무것도 하지 않음"
 
 #: .././config.py:4124
 msgid "Fix if possible, otherwise warn"
-msgstr ""
+msgstr "가능하면 수리, 아닌 경우 경고"
 
 #. Add this tab...
 #: .././config.py:4141
 msgid "S_ubtitles"
-msgstr ""
+msgstr "_자막"
 
 #: .././config.py:4158
 msgid "_Options"
-msgstr ""
+msgstr "_설정"
 
 #: .././config.py:4162
 msgid "Subtitles options"
-msgstr ""
+msgstr "자막 설정"
 
 #: .././config.py:4168
 msgid "Don't download the subtitles file"
@@ -6847,11 +6863,11 @@ msgstr ""
 
 #: .././refresh.py:139
 msgid "Starting refresh operation, analysing whole database"
-msgstr "Starting refresh operation, analyzing whole database"
+msgstr ""
 
 #: .././refresh.py:148
 msgid "Starting refresh operation, analysing '{}'"
-msgstr "Starting refresh operation, analyzing '{}'"
+msgstr ""
 
 #: .././refresh.py:192
 msgid "Refresh operation finished"
@@ -6859,7 +6875,7 @@ msgstr ""
 
 #: .././refresh.py:197
 msgid "Number of video files analysed:"
-msgstr "Number of video files analyzed:"
+msgstr ""
 
 #: .././refresh.py:203
 msgid "Video files already in the database:"
@@ -7042,7 +7058,7 @@ msgstr "설명 파일들이 삭제됨:"
 
 #: .././tidy.py:647
 msgid "Deleted (possibly) corrupted video file:"
-msgstr ""
+msgstr "(아마도) 삭제된 손상된 비디오 파일:"
 
 #: .././tidy.py:662 .././tidy.py:1273
 msgid "Video file might be corrupt:"
