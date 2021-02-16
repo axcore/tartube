@@ -420,8 +420,9 @@ class TartubeApp(Gtk.Application):
         #   (ignored if self.auto_expand_video_index_flag is False)
         self.full_expand_video_index_flag = False
         # Flag set to True if the 'Download all' buttons in the main window
-        #   toolbar and in the Videos tab should be disabled (in case the u
-        #   user is sure they only want to do simulated downloads)
+        #   toolbar and in the Videos tab should be disabled (in case the user
+        #   is sure they only want to do simulated downloads)
+        # Does not apply to the download buttons in the Classic Mode tab
         self.disable_dl_all_flag = False
         # Flag set to True if we should use 'Today' and 'Yesterday' in the
         #   Video Index, rather than a date
@@ -830,7 +831,8 @@ class TartubeApp(Gtk.Application):
         # If specified the name of a youtube-dl fork to use, instead of the
         #   original youtube-dl. When specified, all system commands replace
         #   youtube-dl with this value
-        # If not specified, the value should be None (not an empty string)
+        # If not specified, the value should be None (not an empty string).
+        #   Ignored when self.ytdl_path_custom_flag is True
         # (Tartube assumes that the fork is largely compatible with the
         #   original)
         self.ytdl_fork = None

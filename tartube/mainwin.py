@@ -3356,8 +3356,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
         self.classic_clear_dl_button.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
+        if __main__.__pkg_no_download_flag__:
             self.classic_redownload_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
         else:
@@ -3485,8 +3484,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
         self.classic_clear_dl_button.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
+        if __main__.__pkg_no_download_flag__:
             self.classic_redownload_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
         else:
@@ -3672,11 +3670,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_clear_button.set_sensitive(sens_flag)
         self.classic_clear_dl_button.set_sensitive(sens_flag)
 
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
+        if __main__.__pkg_no_download_flag__:
             self.download_media_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
             self.classic_redownload_button.set_sensitive(False)
+        elif self.app_obj.disable_dl_all_flag:
+            self.download_media_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+            self.classic_redownload_button.set_sensitive(sens_flag)
         else:
             self.download_media_button.set_sensitive(sens_flag)
             self.classic_download_button.set_sensitive(sens_flag)
@@ -3934,8 +3935,6 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
             self.download_media_button.set_sensitive(True)
-            self.classic_download_button.set_sensitive(True)
-            self.classic_redownload_button.set_sensitive(True)
 
 
     def disable_dl_all_buttons(self):
@@ -3958,8 +3957,6 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
-            self.classic_download_button.set_sensitive(False)
-            self.classic_redownload_button.set_sensitive(False)
 
 
     def update_catalogue_filter_widgets(self):

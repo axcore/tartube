@@ -426,7 +426,7 @@ class UpdateManager(threading.Thread):
 
                         # Try to intercept the new version number for
                         #   youtube-dl
-                        self.intercept_version_from_stdout(stdout)
+                        self.intercept_version_from_stdout(stdout, downloader)
                         self.stdout_list.append(stdout)
 
                     # Show command line output in the Output Tab (or wizard
@@ -531,7 +531,7 @@ class UpdateManager(threading.Thread):
             )
 
 
-    def intercept_version_from_stdout(self, stdout):
+    def intercept_version_from_stdout(self, stdout, downloader):
 
         """Called by self.install_yt_dl() only.
 
@@ -541,6 +541,8 @@ class UpdateManager(threading.Thread):
         Args:
 
             stdout (str): The STDOUT message
+
+            downloader (str): The name of the downloader, e.g. 'youtube-dlc'
 
         """
 
@@ -554,7 +556,7 @@ class UpdateManager(threading.Thread):
 
         else:
             substring = re.search(
-                'Successfully installed youtube\-dl\-([^\(\)]+)\s*$',
+                'Successfully installed ' + downloader + '\-([^\(\)]+)\s*$',
                 stdout,
             )
 

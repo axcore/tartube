@@ -38,6 +38,7 @@ from mainapp import _
 locale_setup_list = [
     'en_GB',    'English',
     'en_US',    'English (American)',
+    'ko_KR',    '한국어',
     'nl_NL',    'Nederlands',
 ]
 
