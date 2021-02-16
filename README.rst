@@ -141,7 +141,7 @@ If you want to perform a manual installation, you can follow this procedure, whi
         
         **pacman -S mingw-w64-x86_64-python3**
         
-        **pacman -S mingw-w64-x86_64-python3-pip**
+        **pacman -S mingw-w64-x86_64-python-pip**
         
         **pacman -S mingw-w64-x86_64-python3-gobject**
         
