@@ -150,22 +150,16 @@ If you want to perform a manual installation, you can follow this procedure, whi
         **pacman -S mingw-w64-x86_64-gtk3**
         
         **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**   
-
-        **pip3 install feedparser**
-        
-        **pip3 install playsound**
         
         **pacman -S mingw-w64-x86_64-aria2**
         
         **pacman -S mingw-w64-x86_64-python-matplotlib**
         
-- Download the **Tartube** source code from Sourceforge, using the links above
-- Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
-- Now, to run **Tartube**, type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
-
-        **cd /home/YOURNAME/tartube**
+        **pip3 install tartube**
         
-        **python3 tartube/tartube**
+- Now, to run **Tartube**, type these commands in the MINGW64 terminal
+
+        **tartube**
 
 5.2 Installation - MacOS
 ------------------------
