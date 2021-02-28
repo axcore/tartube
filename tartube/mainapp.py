@@ -839,10 +839,9 @@ class TartubeApp(Gtk.Application):
         # Descriptions of various forks, used in the preference window and also
         #   in the wizard window
         self.ytdl_fork_descrip_dict = {
-            'youtube-dlc': \
+            'yt-dlp': \
                 'A popular fork of the original youtube-dl, created by' \
-                + ' Tom-Oliver Heidel in 2020. Officially supported by' \
-                + ' Tartube.',
+                + ' pukkandan in 2020. Officially supported by Tartube.',
             'youtube-dl': \
                 'This is the original downloader, created by Ricardo Garcia' \
                 + ' Gonzalez in 2006. Officially supported by Tartube.',
@@ -5814,6 +5813,28 @@ class TartubeApp(Gtk.Application):
                 False,          # Not temporary
             )
 
+        if version < 2003107:      # v2.3.107
+
+            # This version adds new settings to
+            #   ffmpeg_tartube.FFmpegOptionsManager
+            for options_obj in self.ffmpeg_reg_dict.values():
+                options_obj.options_dict['gpu_encoding'] = 'libx264'
+                options_obj.options_dict['hw_accel'] = 'none'
+
+        if version < 2003108:      # v2.3.108
+
+            # Apply fix to youtube-dl update IVs, caused by an issue in
+            #   self.auto_detect_paths(), now fixed (Git #256)
+            if os.name != 'nt' and __main__.__pkg_strict_install_flag__:
+
+                self.ytdl_update_dict = {
+                    'ytdl_update_disabled': [],
+                }
+                self.ytdl_update_list = [
+                    'ytdl_update_disabled',
+                ]
+                self.ytdl_update_current = 'ytdl_update_disabled'
+
 
     def save_db(self):
 
@@ -7192,12 +7213,14 @@ class TartubeApp(Gtk.Application):
             else:
                 self.ytdl_path = self.ytdl_bin
 
-            if self.ytdl_path == self.ytdl_path_default:
-                self.ytdl_update_current = 'ytdl_update_default_path'
-            elif self.ytdl_path == self.ytdl_path_pypi:
-                self.ytdl_update_current = 'ytdl_update_pip3_recommend'
-            else:
-                self.ytdl_update_current = 'ytdl_update_local_path'
+            if not __main__.__pkg_strict_install_flag__:
+
+                if self.ytdl_path == self.ytdl_path_default:
+                    self.ytdl_update_current = 'ytdl_update_default_path'
+                elif self.ytdl_path == self.ytdl_path_pypi:
+                    self.ytdl_update_current = 'ytdl_update_pip3_recommend'
+                else:
+                    self.ytdl_update_current = 'ytdl_update_local_path'
 
 
     def auto_delete_old_videos(self):
@@ -10773,7 +10796,16 @@ class TartubeApp(Gtk.Application):
                 video_obj.set_duration(json_dict['duration'])
 
             if 'webpage_url' in json_dict:
-                video_obj.set_source(json_dict['webpage_url'])
+                # !!! DEBUG: yt-dlp Git #119: filter out the extraneous
+                #   characters at the end of the URL, if present
+#                video_obj.set_source(json_dict['webpage_url'])
+                video_obj.set_source(
+                    re.sub(
+                        r'\&has_verified\=.*\&bpctr\=.*',
+                        '',
+                        json_dict['webpage_url'],
+                    )
+                )
 
             if 'description' in json_dict:
                 video_obj.set_video_descrip(
@@ -11930,6 +11962,10 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 11305 delete_video_files')
+
+        # Sanity check
+        if video_obj.file_name is None:
+            return
 
         # There might be thousands of files in the directory, so using
         #   os.walk() or something like that might be too expensive

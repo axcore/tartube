@@ -1,3 +1,38 @@
+v2.3.110 (28 Feb 2021)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added the Korean translation compiled by mirusu400 (thanks!) (Git #258)
+- Tartube now officially supports the downloader yt-dlp, replacing its support
+    for youtube-dlc (which has been abandoned) (Git #254)
+
+MINOR NEW FEATURES
+- The FFmpeg options window now provides comboboxes for the user to specify
+    GPU encoding and hardware acceleration (Git #264)
+- In the download options edit window, under the 'Files > Keep files' tab, the
+    text has been improved to more accurately describe the handling of
+    description, metadata, annotation and thumbnail files (Git #263)
+- In Tartube's setup.py, replaced the obsolete dependency pgi with pygobject
+    (Git #242)
+
+MAJOR FIXES
+- In the download options edit window, in the Subtitles > Options tab, the
+    button marked 'Download subtitles file for these languages' was completely
+    broken. Fixed (Git #263)
+- Users who installed Tartube using one of the 'strict' packages reported that
+    the preferences window could not be opened. The problem has probably been
+    fixed (Git #256)
+
+MINOR FIXES
+- In the Videos tab, the 'Download all' button can be disabled. Other buttons/
+    menu items are disabled at the same time. Download buttons in the Classic
+    Mode tab were disabled, but should not have been. Fixed
+- When installing yt-dlp via pip, the version number was not recognised. Fixed
+- In the download options edit window, in the 'Files > File names' tab, there
+    was a duplicate label in the 'Video properties' combobox. Fixed (Git #263)
+- Fixed a rare crash caused by an incorrectly detected videos
+- Various fixes for Git #243, Git #249
+
 v2.3.085 (13 Jan 2021)
 -------------------------------------------------------------------------------
 

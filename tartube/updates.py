@@ -542,7 +542,7 @@ class UpdateManager(threading.Thread):
 
             stdout (str): The STDOUT message
 
-            downloader (str): The name of the downloader, e.g. 'youtube-dlc'
+            downloader (str): The name of the downloader, e.g. 'yt-dlp'
 
         """
 

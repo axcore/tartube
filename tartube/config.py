@@ -3096,7 +3096,7 @@ class OptionsEditWin(GenericEditWin):
             _('Creator/uploader'),
             [
                 'uploader',         _('Full name of video uploader'),
-                'uploader_id',      _('Full name of video uploader'),
+                'uploader_id',      _('Uploader ID'),
                 'creator',          _('Nickname/ID of video uploader'),
                 'channel',          _('Channel name'),
                 'channel_id',       _('Channel ID'),
@@ -3447,25 +3447,25 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_checkbutton(grid,
-            _('Keep the description file after Tartube shuts down'),
+            _('Keep the description file after the download has finished'),
             'keep_description',
             0, 1, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the metadata file after Tartube shuts down'),
+            _('Keep the metadata file after the download has finished'),
             'keep_info',
             0, 2, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the annotations file after Tartube shuts down'),
+            _('Keep the annotations file after the download has finished'),
             'keep_annotations',
             0, 3, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the thumbnail file after Tartube shuts down'),
+            _('Keep the thumbnail file after the download has finished'),
             'keep_thumbnail',
             0, 4, 1, 1,
         )
@@ -3478,25 +3478,25 @@ class OptionsEditWin(GenericEditWin):
         )
 
         self.add_checkbutton(grid,
-            _('Keep the description file after Tartube shuts down'),
+            _('Keep the description file after the download has finished'),
             'sim_keep_description',
             0, 6, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the metadata file after Tartube shuts down'),
+            _('Keep the metadata file after the download has finished'),
             'sim_keep_info',
             0, 7, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the annotations file after Tartube shuts down'),
+            _('Keep the annotations file after the download has finished'),
             'sim_keep_annotations',
             0, 8, 1, 1,
         )
 
         self.add_checkbutton(grid,
-            _('Keep the thumbnail file after Tartube shuts down'),
+            _('Keep the thumbnail file after the download has finished'),
             'sim_keep_thumbnail',
             0, 9, 1, 1,
         )
@@ -6019,6 +6019,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.rate_factor_scale = None           # Gtk.Scale
         self.dummy_file_combo = None            # Gtk.ComboBox
         self.patience_preset_combo = None       # Gtk.ComboBox
+        self.gpu_encoding_combo = None          # Gtk.ComboBox
+        self.hw_accel_combo = None              # Gtk.ComboBox
         # (Settings tab, GIF grid)
         self.palette_mode_radiobutton = None    # Gtk.RadioButton
         self.palette_mode_radiobutton2 = None   # Gtk.RadioButton
@@ -6774,6 +6776,35 @@ class FFmpegOptionsEditWin(GenericEditWin):
             1, 5, (inner_width - 1), 1,
         )
         self.patience_preset_combo.set_hexpand(False)
+
+        self.add_label(grid,
+            _('GPU encoding'),
+            0, 6, 1, 1,
+        )
+
+        combo_list3 = [
+            'libx264', 'libx265', 'h264_amf', 'hevc_amf', 'h264_nvenc',
+            'hevc_nvenc',
+        ]
+
+        self.gpu_encoding_combo = self.add_combo(grid,
+            combo_list3,
+            'gpu_encoding',
+            1, 6, (inner_width - 1), 1,
+        )
+
+        self.add_label(grid,
+            _('Hardware acceleration'),
+            0, 7, 1, 1,
+        )
+
+        combo_list4 = ['none', 'auto', 'vdpau', 'dxva2', 'vaapi', 'qsv']
+
+        self.hw_accel_combo = self.add_combo(grid,
+            combo_list4,
+            'hw_accel',
+            1, 7, (inner_width - 1), 1,
+        )
 
         # (Signal connects from above)
         self.quality_mode_radiobutton.connect(
@@ -13889,10 +13920,10 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 1, 1,
         )
 
-        # youtube-dlc. Use an event box so the downloader can be selected by
+        # yt-dlp. Use an event box so the downloader can be selected by
         #   clicking anywhere in the frame
         event_box = Gtk.EventBox()
-        grid.attach(event_box, 0, 2, 1, 1)
+        grid.attach(event_box, 0, 1, 1, 1)
         # (Signal connect appears below)
 
         frame = Gtk.Frame()
@@ -13905,8 +13936,8 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid2,
             utils.tidy_up_long_string(
-                '<b>youtube-dlc</b>: <i>' \
-                + self.app_obj.ytdl_fork_descrip_dict['youtube-dlc'] \
+                '<b>yt-dlp</b>: <i>' \
+                + self.app_obj.ytdl_fork_descrip_dict['yt-dlp'] \
                 + '</i>',
             ),
             0, 0, 1, 1,
@@ -13914,14 +13945,14 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton = self.add_radiobutton(grid2,
             None,
-            '   ' + _('Use youtube-dlc'),
+            '   ' + _('Use yt-dlp'),
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
 
         # youtube-dl
         event_box2 = Gtk.EventBox()
-        grid.attach(event_box2, 0, 1, 1, 1)
+        grid.attach(event_box2, 0, 2, 1, 1)
         # (Signal connect appears below)
 
         frame2 = Gtk.Frame()
@@ -13989,7 +14020,7 @@ class SystemPrefWin(GenericPrefWin):
         or self.app_obj.ytdl_fork == 'youtube-dl':
             radiobutton2.set_active(True)
             entry.set_sensitive(False)
-        elif self.app_obj.ytdl_fork == 'youtube-dlc':
+        elif self.app_obj.ytdl_fork == 'yt-dlp':
             radiobutton.set_active(True)
             entry.set_sensitive(False)
         else:
@@ -14020,7 +14051,7 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_ytdl_fork_button_toggled,
             entry,
-            'youtube-dlc',
+            'yt-dlp',
         )
         radiobutton2.connect(
             'toggled',
@@ -19730,8 +19761,7 @@ class SystemPrefWin(GenericPrefWin):
 
             entry (Gtk.Entry): Another widget to be updated
 
-            fork_type (str): 'youtube-dlc', 'youtube-dl', or None for any other
-                fork
+            fork_type (str): 'yt-dlp', 'youtube-dl', or None for any other fork
 
         """
 
@@ -19755,7 +19785,7 @@ class SystemPrefWin(GenericPrefWin):
                 entry.set_text('')
                 entry.set_sensitive(False)
 
-            elif fork_type == 'youtube-dlc':
+            elif fork_type == 'yt-dlp':
 
                 self.app_obj.set_ytdl_fork(fork_type)
                 entry.set_text('')

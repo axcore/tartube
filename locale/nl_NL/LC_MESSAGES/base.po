@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 16:51+0000\n"
+"POT-Creation-Date: 2021-02-28 10:41+0000\n"
 "PO-Revision-Date: 2021-01-08 20:41+0100\n"
 "Last-Translator: Heimen Stoffels <vistausss@outlook.com>\n"
 "Language-Team: \n"
@@ -37,7 +37,7 @@ msgstr "Groot"
 msgid "Enormous"
 msgstr "Enorm"
 
-#: .././mainapp.py:945
+#: .././mainapp.py:944
 msgid ""
 "Failed to convert a thumbnail from .webp to .jpg. No more conversions will "
 "be attempted until you install FFmpeg on your system, or (if FFmpeg is "
@@ -50,177 +50,177 @@ msgstr ""
 "Herstart Tartube om het converteren opnieuw te proberen. Schakel "
 "miniatuurconversie uit om dit bericht niet meer te tonen."
 
-#: .././mainapp.py:2665
+#: .././mainapp.py:2664
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
 msgstr "Tartube kan de configuratiemap niet aanmaken"
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
-#: .././mainapp.py:2712
+#: .././mainapp.py:2711
 msgid "Tartube failed to start because:"
 msgstr "Tartube kan niet worden gestart. Reden:"
 
-#: .././mainapp.py:2720
+#: .././mainapp.py:2719
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr ""
 "Als je niet weet hoe je dit moet oplossen, neem dan contact op met de makers"
 
-#: .././mainapp.py:2948
+#: .././mainapp.py:2947
 msgid "Because of an error, file load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld omdat er een fout is opgetreden"
 
-#: .././mainapp.py:2957
+#: .././mainapp.py:2956
 msgid "Because of the error, file load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld omdat er een fout is opgetreden"
 
-#: .././mainapp.py:3041
+#: .././mainapp.py:3040
 msgid "There is a download operation in progress."
 msgstr "Er worden items gedownload."
 
-#: .././mainapp.py:3043
+#: .././mainapp.py:3042
 msgid "There is an update operation in progress."
 msgstr "Er worden items bijgewerkt."
 
-#: .././mainapp.py:3045
+#: .././mainapp.py:3044
 msgid "There is a refresh operation in progress."
 msgstr "Er worden items ververst."
 
-#: .././mainapp.py:3047
+#: .././mainapp.py:3046
 msgid "There is an info operation in progress."
 msgstr "Er wordt een informatiehandeling uitgevoerd."
 
-#: .././mainapp.py:3049
+#: .././mainapp.py:3048
 msgid "There is a tidy operation in progress."
 msgstr "Er wordt een opruimactie uitgevoerd."
 
-#: .././mainapp.py:3051
+#: .././mainapp.py:3050
 msgid "There is a process operation in progress."
 msgstr "Er wordt een voortgangsactie uitgevoerd."
 
-#: .././mainapp.py:3056
+#: .././mainapp.py:3055
 msgid "Are you sure you want to quit Tartube?"
 msgstr "Weet je zeker dat je Tartube wilt afsluiten?"
 
-#: .././mainapp.py:3261
+#: .././mainapp.py:3260
 msgid "Failed to load the Tartube config file (failed sanity check)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (mislukte controle)"
 
-#: .././mainapp.py:3284
+#: .././mainapp.py:3283
 msgid "Failed to load the Tartube config file (file is locked)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "vergrendeld)"
 
-#: .././mainapp.py:3314
+#: .././mainapp.py:3313
 msgid "Failed to load the Tartube config file (JSON load failure)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (json-laadfout)"
 
-#: .././mainapp.py:3332
+#: .././mainapp.py:3331
 msgid "Failed to load the Tartube config file (file is invalid)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "beschadigd)"
 
-#: .././mainapp.py:3350
+#: .././mainapp.py:3349
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (bestand is "
 "verouderd)"
 
-#: .././mainapp.py:3365
+#: .././mainapp.py:3364
 msgid "Failed to load the Tartube config file (missing file type)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden geladen (ontbrekende "
 "bestandsextensie)"
 
-#: .././mainapp.py:4222
+#: .././mainapp.py:4221
 msgid "Failed to save the Tartube config file (failed sanity check)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (mislukte "
 "controle)"
 
-#: .././mainapp.py:4542
+#: .././mainapp.py:4541
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (bestand is "
 "vergrendeld)"
 
-#: .././mainapp.py:4544 .././mainapp.py:4584 .././mainapp.py:5920
-#: .././mainapp.py:5976 .././mainapp.py:5982
+#: .././mainapp.py:4543 .././mainapp.py:4583 .././mainapp.py:5941
+#: .././mainapp.py:5997 .././mainapp.py:6003
 msgid "File load/save has been disabled"
 msgstr "Laden/Opslaan is uitgeschakeld"
 
-#: .././mainapp.py:4563
+#: .././mainapp.py:4562
 msgid "Failed to save the Tartube config file (file already in use)"
 msgstr ""
 "Het Tartube-configuratiebestand kan niet worden opgeslagen (bestand is in "
 "gebruik)"
 
-#: .././mainapp.py:4583
+#: .././mainapp.py:4582
 msgid "Failed to save the Tartube config file"
 msgstr "Het Tartube-configuratiebestand kan niet worden opgeslagen"
 
-#: .././mainapp.py:4695 .././mainapp.py:4711 .././mainapp.py:4741
+#: .././mainapp.py:4694 .././mainapp.py:4710 .././mainapp.py:4740
 msgid "Failed to load the Tartube database file"
 msgstr "Het Tartube-databankbestand kan niet worden geladen"
 
-#: .././mainapp.py:4756
+#: .././mainapp.py:4755
 msgid "The Tartube database file is invalid"
 msgstr "Het Tartube-databankbestand is beschadigd"
 
-#: .././mainapp.py:4772
+#: .././mainapp.py:4771
 msgid "Database file can't be read by this version of Tartube"
 msgstr "Het Tartube-databankbestand is verouderd"
 
-#: .././mainapp.py:5117
+#: .././mainapp.py:5116
 msgid "Tartube is applying an essential database update"
 msgstr "Tartube is bezig met het uitvoeren van een essentiële databankupdate"
 
-#: .././mainapp.py:5119
+#: .././mainapp.py:5118
 msgid "This might take a few minutes, so please be patient"
 msgstr "Dit kan een paar minuten duren"
 
-#: .././mainapp.py:5914 .././mainapp.py:5972 .././mainapp.py:5981
+#: .././mainapp.py:5935 .././mainapp.py:5993 .././mainapp.py:6002
 msgid "Failed to save the Tartube database file"
 msgstr "Het Tartube-databankbestand kan niet worden opgeslagen"
 
-#: .././mainapp.py:5917
+#: .././mainapp.py:5938
 msgid "(Could not make a backup copy of the existing file)"
 msgstr "(het bestaande bestand kan niet worden geback-upt)"
 
-#: .././mainapp.py:5953
+#: .././mainapp.py:5974
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
 "Het Tartube-databankbestand kan niet worden opgeslagen (bestand is in "
 "gebruik)"
 
-#: .././mainapp.py:5974
+#: .././mainapp.py:5995
 msgid "A backup of the previous file can be found at:"
 msgstr "Er is een back-up gemaakt van het vorige bestand in:"
 
-#: .././mainapp.py:6155 .././mainapp.py:6165
+#: .././mainapp.py:6176 .././mainapp.py:6186
 msgid "Database file created"
 msgstr "Databankbestand aangemaakt"
 
-#: .././mainapp.py:6559
+#: .././mainapp.py:6580
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr ""
 "Tartube's databank kan niet worden gecontroleerd tijdens uitvoeren van een "
 "handeling"
 
-#: .././mainapp.py:6795
+#: .././mainapp.py:6816
 msgid "Database check complete, no inconsistencies found"
 msgstr "Databankcontrole voltooid - geen fouten aangetroffen"
 
-#: .././mainapp.py:6827
+#: .././mainapp.py:6848
 msgid "Database check complete, problems found:"
 msgstr "Databankcontrole voltooid - fouten aangetroffen:"
 
-#: .././mainapp.py:6830
+#: .././mainapp.py:6851
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
@@ -228,15 +228,15 @@ msgstr ""
 "Wil je deze fouten herstellen? (de databank wordt gerepareerd zonder "
 "bestanden te verwijderen)"
 
-#: .././mainapp.py:7003
+#: .././mainapp.py:7024
 msgid "Database inconsistencies repaired"
 msgstr "Databankfouten hersteld"
 
-#: .././mainapp.py:7895 .././config.py:16026
+#: .././mainapp.py:7918 .././config.py:16057
 msgid "Please select Tartube's data folder"
 msgstr "Kies Tartube's gegevensmap"
 
-#: .././mainapp.py:8258
+#: .././mainapp.py:8281
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
@@ -244,46 +244,46 @@ msgstr ""
 "Er kan geen download worden gestart zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:8282 .././mainapp.py:8307
+#: .././mainapp.py:8305 .././mainapp.py:8330
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr "Je hebt slechts {0}/{1} MB resterende schijfruimte"
 
-#: .././mainapp.py:8310 .././mainapp.py:13970 .././mainapp.py:14086
-#: .././mainapp.py:14268 .././mainwin.py:17484
+#: .././mainapp.py:8333 .././mainapp.py:14006 .././mainapp.py:14122
+#: .././mainapp.py:14304 .././mainwin.py:17484
 msgid "Are you sure you want to continue?"
 msgstr "Weet je zeker dat je wilt doorgaan?"
 
-#: .././mainapp.py:8397
+#: .././mainapp.py:8420
 msgid "There is nothing to check!"
 msgstr "Er valt niks te controleren!"
 
-#: .././mainapp.py:8399
+#: .././mainapp.py:8422
 msgid "There is nothing to download!"
 msgstr "Er valt niks te downloaden!"
 
-#: .././mainapp.py:8642
+#: .././mainapp.py:8665
 msgid "Download operation complete"
 msgstr "Downloaden voltooid"
 
-#: .././mainapp.py:8644
+#: .././mainapp.py:8667
 msgid "Download operation halted"
 msgstr "Downloaden onderbroken"
 
-#: .././mainapp.py:8648
+#: .././mainapp.py:8671
 msgid "Videos downloaded:"
 msgstr "Gedownloade video's:"
 
-#: .././mainapp.py:8649
+#: .././mainapp.py:8672
 msgid "Videos checked:"
 msgstr "Gecontroleerde video's:"
 
-#: .././mainapp.py:8652 .././mainapp.py:9253 .././mainapp.py:9747
-#: .././mainapp.py:10147
+#: .././mainapp.py:8675 .././mainapp.py:9276 .././mainapp.py:9770
+#: .././mainapp.py:10170
 msgid "Time taken:"
 msgstr "Verstreken tijd:"
 
-#: .././mainapp.py:8757
+#: .././mainapp.py:8780
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
@@ -291,35 +291,35 @@ msgstr ""
 "Er kan geen update plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:8943
+#: .././mainapp.py:8966
 msgid "Installation failed"
 msgstr "Installatie mislukt"
 
-#: .././mainapp.py:8945
+#: .././mainapp.py:8968
 msgid "Installation complete"
 msgstr "Installatie voltooid"
 
-#: .././mainapp.py:8949
+#: .././mainapp.py:8972
 msgid "Update operation failed"
 msgstr "Bijwerken mislukt"
 
-#: .././mainapp.py:8951
+#: .././mainapp.py:8974
 msgid "Update operation halted"
 msgstr "Bijwerken onderbroken"
 
-#: .././mainapp.py:8953
+#: .././mainapp.py:8976
 msgid "Update operation complete"
 msgstr "Bijwerken voltooid"
 
-#: .././mainapp.py:8955
+#: .././mainapp.py:8978
 msgid "version:"
 msgstr "versie:"
 
-#: .././mainapp.py:8959
+#: .././mainapp.py:8982
 msgid "(unknown)"
 msgstr "(onbekend)"
 
-#: .././mainapp.py:9046
+#: .././mainapp.py:9069
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
@@ -327,7 +327,7 @@ msgstr ""
 "Er kan geen verversactie plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:9059
+#: .././mainapp.py:9082
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
@@ -335,7 +335,7 @@ msgstr ""
 "Tijdens het verversen wordt Tartube's gegevensmap doorzocht op video's die "
 "nog niet zijn toegevoegd aan de databank"
 
-#: .././mainapp.py:9063
+#: .././mainapp.py:9086
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
@@ -343,7 +343,7 @@ msgstr ""
 "Je hoeft alleen te verversen als je video's handmatig hebt gekopieerd naar "
 "Tartube's gegevensmap"
 
-#: .././mainapp.py:9070
+#: .././mainapp.py:9093
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
@@ -351,7 +351,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Alles controleren' in het "
 "hoofdvenster klikken"
 
-#: .././mainapp.py:9077
+#: .././mainapp.py:9100
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
@@ -359,7 +359,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Kanaal controleren' in het "
 "rechtermuisknopmenu van een kanaal klikken"
 
-#: .././mainapp.py:9084
+#: .././mainapp.py:9107
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
@@ -367,7 +367,7 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Afspeellijst controleren' in het "
 "rechtermuisknopmenu van een afspeellijst klikken"
 
-#: .././mainapp.py:9091
+#: .././mainapp.py:9114
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
@@ -375,19 +375,19 @@ msgstr ""
 "Voordat je het verversen start, moet je op 'Map controleren' in het "
 "rechtermuisknopmenu van een map klikken"
 
-#: .././mainapp.py:9096
+#: .././mainapp.py:9119
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr "Weet je zeker dat je wilt doorgaan?"
 
-#: .././mainapp.py:9248
+#: .././mainapp.py:9271
 msgid "Refresh operation complete"
 msgstr "Verversen voltooid"
 
-#: .././mainapp.py:9250
+#: .././mainapp.py:9273
 msgid "Refresh operation halted"
 msgstr "Verversen onderbroken"
 
-#: .././mainapp.py:9355
+#: .././mainapp.py:9378
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
@@ -395,47 +395,47 @@ msgstr ""
 "Er kan geen informatiehandeling plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:9471
+#: .././mainapp.py:9494
 msgid "Operation failed"
 msgstr "Handeling mislukt"
 
-#: .././mainapp.py:9473 .././downloads.py:400
+#: .././mainapp.py:9496 .././downloads.py:400
 msgid "Operation complete"
 msgstr "Handeling voltooid"
 
-#: .././mainapp.py:9475
+#: .././mainapp.py:9498
 msgid "Click the Output Tab to see the results"
 msgstr "Klik op het tabblad 'Uitvoer' om de resultaten te bekijken"
 
-#: .././mainapp.py:9488
+#: .././mainapp.py:9511
 msgid "A new release is available!"
 msgstr "Er is een nieuwe versie beschikbaar!"
 
-#: .././mainapp.py:9490
+#: .././mainapp.py:9513
 msgid "Your installation is up to date!"
 msgstr "Je installatie is actueel!"
 
-#: .././mainapp.py:9492
+#: .././mainapp.py:9515
 msgid "Installed version:"
 msgstr "Geïnstalleerde versie:"
 
-#: .././mainapp.py:9497
+#: .././mainapp.py:9520
 msgid "Stable release:"
 msgstr "Stabiele uitgave:"
 
-#: .././mainapp.py:9502
+#: .././mainapp.py:9525
 msgid "Stable release: not found"
 msgstr "Stabiele uitgave: niet gevonden"
 
-#: .././mainapp.py:9505
+#: .././mainapp.py:9528
 msgid "Development release:"
 msgstr "Ontwikkelingsuitgave:"
 
-#: .././mainapp.py:9507
+#: .././mainapp.py:9530
 msgid "Development release: not found"
 msgstr "Ontwikkelingsuitgave: niet gevonden"
 
-#: .././mainapp.py:9614
+#: .././mainapp.py:9637
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
@@ -443,39 +443,39 @@ msgstr ""
 "Er kan geen opruimactie plaatsvinden zolang er één of meerdere "
 "instellingenvensters geopend zijn"
 
-#: .././mainapp.py:9742
+#: .././mainapp.py:9765
 msgid "Tidy operation complete"
 msgstr "Opruimen voltooid"
 
-#: .././mainapp.py:9744
+#: .././mainapp.py:9767
 msgid "Tidy operation halted"
 msgstr "Opruimen onderbroken"
 
-#: .././mainapp.py:9911 .././mainwin.py:18169
+#: .././mainapp.py:9934 .././mainwin.py:18169
 msgid "Livestream has started"
 msgstr "De livestream is begonnen"
 
-#: .././mainapp.py:10136
+#: .././mainapp.py:10159
 msgid "Process operation complete"
 msgstr "Voortgangsactie voltooid"
 
-#: .././mainapp.py:10138
+#: .././mainapp.py:10161
 msgid "Process operation halted"
 msgstr "Voortgangsactie onderbroken"
 
-#: .././mainapp.py:10142
+#: .././mainapp.py:10165
 msgid "Files processed:"
 msgstr "Verwerkte bestanden:"
 
-#: .././mainapp.py:10143
+#: .././mainapp.py:10166
 msgid "Errors:"
 msgstr "Fouten:"
 
-#: .././mainapp.py:11403 .././mainapp.py:11578
+#: .././mainapp.py:11435 .././mainapp.py:11610
 msgid "Cannot move anything to:"
 msgstr "Kan niks verplaatsen naar:"
 
-#: .././mainapp.py:11405 .././mainapp.py:11580
+#: .././mainapp.py:11437 .././mainapp.py:11612
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
@@ -483,7 +483,7 @@ msgstr ""
 "omdat er al een bestand of map met dezelfde naam is (hoewel Tartube's "
 "databank daar niks van afweet)"
 
-#: .././mainapp.py:11409
+#: .././mainapp.py:11441
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
@@ -491,19 +491,19 @@ msgstr ""
 "Waarschijnlijk heb je het bestand/de map per ongeluk aangemaakt. Als dat zo "
 "is, verwijder deze dan voordat je het opnieuw probeert."
 
-#: .././mainapp.py:11423 .././mainapp.py:11598
+#: .././mainapp.py:11455 .././mainapp.py:11630
 msgid "Are you sure you want to move this channel:"
 msgstr "Weet je zeker dat je het volgende kanaal wilt verplaatsen:"
 
-#: .././mainapp.py:11425 .././mainapp.py:11600
+#: .././mainapp.py:11457 .././mainapp.py:11632
 msgid "Are you sure you want to move this playlist:"
 msgstr "Weet je zeker dat je de volgende afspeellijst wilt verplaatsen:"
 
-#: .././mainapp.py:11427 .././mainapp.py:11602
+#: .././mainapp.py:11459 .././mainapp.py:11634
 msgid "Are you sure you want to move this folder:"
 msgstr "Weet je zeker dat je de volgende map wilt verplaatsen:"
 
-#: .././mainapp.py:11432
+#: .././mainapp.py:11464
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
@@ -511,24 +511,24 @@ msgstr ""
 "Deze handeling verplaatst alle gedownloade bestanden naar het bovenste "
 "niveau van Tartube's gegevensmap"
 
-#: .././mainapp.py:11532
+#: .././mainapp.py:11564
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr ""
 "Kanalen, afspeellijsten en mappen kunnen alleen worden versleept naar een map"
 
-#: .././mainapp.py:11545
+#: .././mainapp.py:11577
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr ""
 "De vastgezette map '{0}' kan niet worden verplaatst (maar kan wél worden "
 "verborgen)"
 
-#: .././mainapp.py:11558
+#: .././mainapp.py:11590
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr "De map '{0}' mag alleen video's bevatten"
 
-#: .././mainapp.py:11585
+#: .././mainapp.py:11617
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
@@ -536,16 +536,16 @@ msgstr ""
 "Waarschijnlijk heb je het bestand/de map per ongeluk aangemaakt. Als dat zo "
 "is, verwijder deze dan voordat je het opnieuw probeert."
 
-#: .././mainapp.py:11604
+#: .././mainapp.py:11636
 msgid "into this folder:"
 msgstr "naar deze map:"
 
-#: .././mainapp.py:11608
+#: .././mainapp.py:11640
 msgid "This procedure will move all downloaded files to the new location"
 msgstr ""
 "Deze handeling verplaatst alle gedownloade bestanden naar de nieuwe locatie"
 
-#: .././mainapp.py:11614
+#: .././mainapp.py:11646
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
@@ -553,103 +553,103 @@ msgstr ""
 "WAARSCHUWING: de bestemming is aangemerkt als 'tijdelijk', dus alle inhoud "
 "wordt VERWIJDERD als je Tartube herstart!"
 
-#: .././mainapp.py:12078
+#: .././mainapp.py:12114
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr ""
 "Weet je ZEKER dat je deze bestanden wilt verwijderen? Dit kan niet ongedaan "
 "worden gemaakt!"
 
-#: .././mainapp.py:13954 .././mainapp.py:14070 .././mainapp.py:14252
+#: .././mainapp.py:13990 .././mainapp.py:14106 .././mainapp.py:14288
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr "Het kanaal bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:13960 .././mainapp.py:14076 .././mainapp.py:14258
+#: .././mainapp.py:13996 .././mainapp.py:14112 .././mainapp.py:14294
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr "De afspeellijst bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:13966 .././mainapp.py:14082 .././mainapp.py:14264
+#: .././mainapp.py:14002 .././mainapp.py:14118 .././mainapp.py:14300
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr "De map bevat {0} item(s), dus het kan even duren"
 
-#: .././mainapp.py:14332 .././mainapp.py:18504 .././mainapp.py:18636
-#: .././mainapp.py:18767
+#: .././mainapp.py:14368 .././mainapp.py:18540 .././mainapp.py:18672
+#: .././mainapp.py:18803
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr "De naam '{0}' is niet toegestaan"
 
-#: .././mainapp.py:14341
+#: .././mainapp.py:14377
 #, python-brace-format
 msgid "The name '{0}' is already in use"
 msgstr "De naam '{0}' is al in gebruik"
 
-#: .././mainapp.py:14354
+#: .././mainapp.py:14390
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr "De naam van '{0}' kan niet worden gewijzigd"
 
-#: .././mainapp.py:14701
+#: .././mainapp.py:14737
 msgid "Select where to save the database export"
 msgstr "Kies de map waarnaar de databank moet worden geëxporteerd"
 
-#: .././mainapp.py:14822
+#: .././mainapp.py:14858
 msgid "There is nothing to export!"
 msgstr "Er valt niks te exporteren!"
 
-#: .././mainapp.py:14862 .././mainapp.py:14928
+#: .././mainapp.py:14898 .././mainapp.py:14964
 msgid "Failed to save the database export file:"
 msgstr "Het databank-exportbestand kan niet worden opgeslagen:"
 
-#: .././mainapp.py:14936
+#: .././mainapp.py:14972
 msgid "Database export file saved to:"
 msgstr "Het databank-exportbestand is opgeslagen in:"
 
-#: .././mainapp.py:14973
+#: .././mainapp.py:15009
 msgid "Select the database export"
 msgstr "Kies de databankexport"
 
-#: .././mainapp.py:14994 .././mainapp.py:15008
+#: .././mainapp.py:15030 .././mainapp.py:15044
 msgid "Failed to load the database export file"
 msgstr "Het databank-exportbestand kan niet worden geladen"
 
-#: .././mainapp.py:15025
+#: .././mainapp.py:15061
 msgid "The database export file is invalid"
 msgstr "Het databank-exportbestand is beschadigd"
 
-#: .././mainapp.py:15036
+#: .././mainapp.py:15072
 msgid "The database export file is invalid (or empty)"
 msgstr "Het databank-exportbestand is beschadigd (of blanco)"
 
-#: .././mainapp.py:15080
+#: .././mainapp.py:15116
 msgid "Nothing was imported from the database export file"
 msgstr "Er is niks geïmporteerd uit het databank-exportbestand"
 
 #. Show a confirmation
-#: .././mainapp.py:15094
+#: .././mainapp.py:15130
 msgid "Imported"
 msgstr "Geïmporteerd"
 
-#: .././mainapp.py:15095 .././mainwin.py:1287 .././config.py:888
-#: .././config.py:9274 .././config.py:11492
+#: .././mainapp.py:15131 .././mainwin.py:1287 .././config.py:888
+#: .././config.py:9305 .././config.py:11523
 msgid "Videos"
 msgstr "Video's"
 
-#: .././mainapp.py:15096 .././config.py:9307 .././config.py:11525
+#: .././mainapp.py:15132 .././config.py:9338 .././config.py:11556
 msgid "Channels"
 msgstr "Kanalen"
 
-#: .././mainapp.py:15097 .././config.py:9318 .././config.py:11536
+#: .././mainapp.py:15133 .././config.py:9349 .././config.py:11567
 msgid "Playlists"
 msgstr "Afspeellijsten"
 
-#: .././mainapp.py:15098
+#: .././mainapp.py:15134
 msgid "Folders"
 msgstr "Mappen"
 
-#: .././mainapp.py:15482
+#: .././mainapp.py:15518
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
@@ -657,107 +657,107 @@ msgstr ""
 "De video is niet aanwezig in Tartube's gegevensmap. Probeer de video opnieuw "
 "te downloaden."
 
-#: .././mainapp.py:16007 .././mainapp.py:16389
+#: .././mainapp.py:16043 .././mainapp.py:16425
 msgid "Select where to save the options export"
 msgstr "Kies de map waarnaar de opties moeten worden geëxporteerd"
 
-#: .././mainapp.py:16055 .././mainapp.py:16437
+#: .././mainapp.py:16091 .././mainapp.py:16473
 msgid "Failed to save the options export file:"
 msgstr "Het opties-exportbestand kan niet worden opgeslagen:"
 
-#: .././mainapp.py:16063
+#: .././mainapp.py:16099
 msgid "Download options exported to to:"
 msgstr "De downloadopties zijn geëxporteerd naar:"
 
-#: .././mainapp.py:16094 .././mainapp.py:16476
+#: .././mainapp.py:16130 .././mainapp.py:16512
 msgid "Select the options export file"
 msgstr "Kies het opties-exportbestand"
 
-#: .././mainapp.py:16113 .././mainapp.py:16495
+#: .././mainapp.py:16149 .././mainapp.py:16531
 msgid "Failed to load the options export file"
 msgstr "Het opties-exportbestand kan niet worden geladen"
 
-#: .././mainapp.py:16130 .././mainapp.py:16512
+#: .././mainapp.py:16166 .././mainapp.py:16548
 msgid "The options export file is invalid"
 msgstr "Het opties-exportbestand is beschadigd"
 
-#: .././mainapp.py:16141 .././mainapp.py:16523
+#: .././mainapp.py:16177 .././mainapp.py:16559
 msgid "The options export file is invalid (or empty)"
 msgstr "Het opties-exportbestand is beschadigd (of blanco)"
 
-#: .././mainapp.py:16445
+#: .././mainapp.py:16481
 msgid "FFmpeg options exported to to:"
 msgstr "De FFmpeg-opties zijn geëxporteerd naar:"
 
-#: .././mainapp.py:17419
+#: .././mainapp.py:17455
 msgid "Please select a destination folder"
 msgstr "Kies een bestemming"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17491
+#: .././mainapp.py:17527
 msgid "Are you sure you want to clear this list?"
 msgstr "Weet je zeker dat je deze lijst wilt wissen?"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17538
+#: .././mainapp.py:17574
 msgid "Are you sure you want to clear downloaded videos?"
 msgstr "Weet je zeker dat je de gedownloade video's wilt verwijderen?"
 
-#: .././mainapp.py:17631 .././mainwin.py:14535
+#: .././mainapp.py:17667 .././mainwin.py:14535
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr "FFmpeg kan alleen aangekruiste/gedownloade video's verwerken"
 
-#: .././mainapp.py:17748
+#: .././mainapp.py:17784
 msgid "No video(s) have been downloaded"
 msgstr "Je hebt nog geen video's gedownload"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17846
+#: .././mainapp.py:17882
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr "Weet je zeker dat je de geselecteerde items wilt verwijderen?"
 
-#: .././mainapp.py:18495
+#: .././mainapp.py:18531
 msgid "You must give the channel a name"
 msgstr "Geef het kanaal een naam"
 
-#: .././mainapp.py:18513 .././mainapp.py:18776
+#: .././mainapp.py:18549 .././mainapp.py:18812
 msgid "You must enter a valid URL"
 msgstr "Voer een geldige url in"
 
-#: .././mainapp.py:18628
+#: .././mainapp.py:18664
 msgid "You must give the folder a name"
 msgstr "Geef de map een naam"
 
-#: .././mainapp.py:18758
+#: .././mainapp.py:18794
 msgid "You must give the playlist a name"
 msgstr "Geef de afspeellijst een naam"
 
-#: .././mainapp.py:18913
+#: .././mainapp.py:18949
 msgid "The following videos are duplicates:"
 msgstr "De volgende video's zijn dubbel:"
 
-#: .././mainapp.py:18977
+#: .././mainapp.py:19013
 msgid "There were no livestream alerts to cancel"
 msgstr "Er zijn nog geen livestream-meldingen op dit kanaal"
 
-#: .././mainapp.py:18979
+#: .././mainapp.py:19015
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr "De livestream-melding van 1 video is gedempt"
 
-#: .././mainapp.py:18982
+#: .././mainapp.py:19018
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr "De livestream-melding van {0} video's is afgebroken"
 
-#: .././mainapp.py:19352
+#: .././mainapp.py:19388
 msgid "All Tartube data has been saved"
 msgstr "Alle Tartube-gegevens zijn opgeslagen"
 
-#: .././mainapp.py:19382
+#: .././mainapp.py:19418
 msgid "Database saved"
 msgstr "De databank is opgeslagen"
 
-#: .././mainapp.py:19637 .././mainwin.py:13487
+#: .././mainapp.py:19673 .././mainwin.py:13487
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -767,39 +767,39 @@ msgstr ""
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:19677
+#: .././mainapp.py:19713
 msgid "Cannot update existing livestreams because"
 msgstr "De livestreams kunnen niet worden bijgewerkt omdat"
 
-#: .././mainapp.py:19679
+#: .././mainapp.py:19715
 msgid "there is another operation running"
 msgstr "er een andere handeling wordt uitgevoerd"
 
-#: .././mainapp.py:19681
+#: .././mainapp.py:19717
 msgid "they are currently being updated"
 msgstr "ze al worden bijgewerkt"
 
-#: .././mainapp.py:19683
+#: .././mainapp.py:19719
 msgid "one or more configuration windows are open"
 msgstr "er één of meerdere instellingenvensters geopend zijn"
 
-#: .././mainapp.py:19685
+#: .././mainapp.py:19721
 msgid "there are no livestreams to update"
 msgstr "er geen bij te werken livestreams zijn"
 
-#: .././mainapp.py:19759
+#: .././mainapp.py:19795
 msgid "There is already a channel with that name"
 msgstr "Er is al een kanaal met deze naam"
 
-#: .././mainapp.py:19761
+#: .././mainapp.py:19797
 msgid "There is already a playlist with that name"
 msgstr "Er is al een afspeellijst met deze naam"
 
-#: .././mainapp.py:19763
+#: .././mainapp.py:19799
 msgid "There is already a folder with that name"
 msgstr "Er is al een map met deze naam"
 
-#: .././mainapp.py:19766
+#: .././mainapp.py:19802
 msgid "(so please choose a different name)"
 msgstr "(geef een andere naam op)"
 
@@ -809,7 +809,7 @@ msgstr ""
 "Tartube kan niet worden gestart omdat de pictogrammenmap niet is aangetroffen"
 
 #. File column
-#: .././mainwin.py:943 .././config.py:6357
+#: .././mainwin.py:943 .././config.py:6359
 msgid "_File"
 msgstr "_Bestand"
 
@@ -852,7 +852,7 @@ msgid "_General download options..."
 msgstr "Al_gemene downloadopties..."
 
 #. Media column
-#: .././mainwin.py:1009 .././config.py:9834
+#: .././mainwin.py:1009 .././config.py:9865
 msgid "_Media"
 msgstr "_Media"
 
@@ -910,7 +910,7 @@ msgstr "Testcode uitvoe_ren"
 
 #. Operations column
 #. Add this tab...
-#: .././mainwin.py:1115 .././config.py:12776
+#: .././mainwin.py:1115 .././config.py:12807
 msgid "_Operations"
 msgstr "_Handelingen"
 
@@ -953,7 +953,7 @@ msgid "_Stop current operation"
 msgstr "Huidige handeling af_breken"
 
 #. Livestreams column
-#: .././mainwin.py:1195 .././config.py:13480
+#: .././mainwin.py:1195 .././config.py:13511
 msgid "_Livestreams"
 msgstr "_Livestreams"
 
@@ -1036,7 +1036,7 @@ msgstr "Controleer alle video's, kanalen, afspeellijsten en mappen"
 #: .././mainwin.py:1393 .././mainwin.py:19371 .././mainwin.py:19376
 #: .././mainwin.py:19384 .././mainwin.py:19633 .././mainwin.py:19645
 #: .././mainwin.py:20380 .././mainwin.py:21727 .././mainwin.py:21753
-#: .././config.py:12481
+#: .././config.py:12512
 msgid "Download"
 msgstr "Downloaden"
 
@@ -1053,7 +1053,7 @@ msgstr "Afbreken"
 msgid "Stop the current operation"
 msgstr "Breek de huidige handeling af"
 
-#: .././mainwin.py:1443 .././config.py:11068
+#: .././mainwin.py:1443 .././config.py:11099
 msgid "Switch"
 msgstr "Andere weergave"
 
@@ -1085,8 +1085,8 @@ msgstr "Afsluiten"
 msgid "Close Tartube"
 msgstr "Tartube sluiten"
 
-#: .././mainwin.py:1532 .././config.py:7115 .././config.py:11292
-#: .././config.py:11890
+#: .././mainwin.py:1532 .././config.py:7146 .././config.py:11323
+#: .././config.py:11921
 msgid "_Videos"
 msgstr "_Video's"
 
@@ -1102,7 +1102,7 @@ msgstr "_Klassieke modus"
 msgid "_Output"
 msgstr "Uitv_oer"
 
-#: .././mainwin.py:1566 .././config.py:8450 .././config.py:8956
+#: .././mainwin.py:1566 .././config.py:8481 .././config.py:8987
 msgid "_Errors / Warnings"
 msgstr "Fout_en/Waarschuwingen"
 
@@ -1163,12 +1163,12 @@ msgstr "Meer instellingen tonen"
 msgid "Sort"
 msgstr "Sorteren"
 
-#: .././mainwin.py:1875 .././config.py:8235
+#: .././mainwin.py:1875 .././config.py:8266
 msgid "Upload time"
 msgstr "Uploadtijd"
 
-#: .././mainwin.py:1876 .././mainwin.py:25120 .././config.py:7138
-#: .././config.py:12481 .././config.py:14402 .././config.py:14669
+#: .././mainwin.py:1876 .././mainwin.py:25120 .././config.py:7169
+#: .././config.py:12512 .././config.py:14433 .././config.py:14700
 msgid "Name"
 msgstr "Naam"
 
@@ -1260,11 +1260,11 @@ msgstr "Snelheid"
 msgid "ETA"
 msgstr "Verwacht"
 
-#: .././mainwin.py:2219 .././config.py:8821
+#: .././mainwin.py:2219 .././config.py:8852
 msgid "New videos"
 msgstr "Nieuwe video's"
 
-#: .././mainwin.py:2219 .././config.py:404 .././config.py:8191
+#: .././mainwin.py:2219 .././config.py:404 .././config.py:8222
 msgid "Duration"
 msgstr "Duur"
 
@@ -1272,7 +1272,7 @@ msgstr "Duur"
 msgid "Date"
 msgstr "Datum"
 
-#: .././mainwin.py:2220 .././config.py:8147
+#: .././mainwin.py:2220 .././config.py:8178
 msgid "File"
 msgstr "Bestand"
 
@@ -1344,7 +1344,7 @@ msgstr "Bestemming openen"
 msgid "Format:"
 msgstr "Formaat:"
 
-#: .././mainwin.py:2591 .././config.py:14402
+#: .././mainwin.py:2591 .././config.py:14433
 msgid "Default"
 msgstr "Standaard"
 
@@ -1373,14 +1373,14 @@ msgid "Play video"
 msgstr "Video afspelen"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:2781 .././config.py:3584 .././config.py:11105
-#: .././config.py:12546
+#: .././mainwin.py:2781 .././config.py:3584 .././config.py:11136
+#: .././config.py:12577
 msgid "Move up"
 msgstr "Omhoog verplaatsen"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:2802 .././config.py:3588 .././config.py:11113
-#: .././config.py:12555
+#: .././mainwin.py:2802 .././config.py:3588 .././config.py:11144
+#: .././config.py:12586
 msgid "Move down"
 msgstr "Omlaag verplaatsen"
 
@@ -1416,7 +1416,7 @@ msgstr "Gedownloade bestanden wissen"
 msgid "Maximum page size"
 msgstr "Maximale paginagrootte"
 
-#: .././mainwin.py:3017 .././config.py:12481
+#: .././mainwin.py:3017 .././config.py:12512
 msgid "Time"
 msgstr "Tijd"
 
@@ -1444,7 +1444,7 @@ msgstr "Serverfouten tonen"
 msgid "Show server warnings"
 msgstr "Serverwaarschuwingen tonen"
 
-#: .././mainwin.py:3113 .././config.py:9936
+#: .././mainwin.py:3113 .././config.py:9967
 msgid "Clear list"
 msgstr "Lijst wissen"
 
@@ -1797,7 +1797,7 @@ msgstr "Downloaden na _stoppen"
 msgid "Not a _livestream"
 msgstr "Geen _livestream"
 
-#: .././mainwin.py:5295 .././config.py:8310
+#: .././mainwin.py:5295 .././config.py:8341
 msgid "_Livestream"
 msgstr "_Livestream"
 
@@ -2472,8 +2472,8 @@ msgstr "Invidious"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19485 .././mainwin.py:20612 .././config.py:9296
-#: .././config.py:11514
+#: .././mainwin.py:19485 .././mainwin.py:20612 .././config.py:9327
+#: .././config.py:11545
 msgid "Other"
 msgstr "Overig"
 
@@ -2814,7 +2814,7 @@ msgstr "Dit kanaal bevat:"
 msgid "This playlist contains:"
 msgstr "Deze afspeellijst bevat:"
 
-#: .././mainwin.py:24726 .././config.py:9269
+#: .././mainwin.py:24726 .././config.py:9300
 msgid "This folder contains:"
 msgstr "Deze map bevat:"
 
@@ -2986,7 +2986,7 @@ msgstr "Importeren naar databank"
 msgid "Choose which items to import"
 msgstr "Geef aan welke items moeten worden geïmporteerd"
 
-#: .././mainwin.py:25104 .././config.py:14454 .././config.py:14719
+#: .././mainwin.py:25104 .././config.py:14485 .././config.py:14750
 msgid "Import"
 msgstr "Importeren"
 
@@ -3050,7 +3050,7 @@ msgstr "Annuleren"
 
 #. 'OK' button
 #: .././mainwin.py:25521 .././config.py:1035 .././config.py:2242
-#: .././config.py:7694 .././config.py:7828
+#: .././config.py:7725 .././config.py:7859
 msgid "OK"
 msgstr "Oké"
 
@@ -3254,7 +3254,7 @@ msgstr "Bijwerken"
 msgid "Copy to clipboard"
 msgstr "Kopiëren naar klembord"
 
-#: .././mainwin.py:26846 .././config.py:13749
+#: .././mainwin.py:26846 .././config.py:13780
 msgid "Test"
 msgstr "Testen"
 
@@ -3349,7 +3349,7 @@ msgstr "Downloads"
 msgid "Uploads"
 msgstr "Uploads"
 
-#: .././config.py:403 .././config.py:8214
+#: .././config.py:403 .././config.py:8245
 msgid "File size"
 msgstr "Bestandsgrootte"
 
@@ -3427,8 +3427,8 @@ msgstr "Wit"
 
 #. 'Reset' button
 #. (Signal connect appears below)
-#: .././config.py:1017 .././config.py:3306 .././config.py:14214
-#: .././config.py:14255 .././config.py:14325
+#: .././config.py:1017 .././config.py:3306 .././config.py:14245
+#: .././config.py:14286 .././config.py:14356
 msgid "Reset"
 msgstr "Standaardwaarden"
 
@@ -3445,7 +3445,7 @@ msgstr "Toepassen"
 msgid "Apply changes without closing the window"
 msgstr "Pas toe zonder het venster te sluiten"
 
-#: .././config.py:1038 .././config.py:7697 .././config.py:7831
+#: .././config.py:1038 .././config.py:7728 .././config.py:7862
 msgid "Apply changes"
 msgstr "Wijzigingen toepassen"
 
@@ -3502,7 +3502,7 @@ msgstr "Downloadopties wissen"
 msgid "Close this window"
 msgstr "Huidig venster sluiten"
 
-#: .././config.py:2869 .././config.py:6260
+#: .././config.py:2869 .././config.py:6262
 msgid "_Name"
 msgstr "_Naam"
 
@@ -3549,7 +3549,7 @@ msgid "Completely reset all download options to their default values"
 msgstr "Zet alle downloadopties terug op hun standaardwaarden"
 
 #. Add this tab...
-#: .././config.py:3000 .././config.py:10878
+#: .././config.py:3000 .././config.py:10909
 msgid "_Files"
 msgstr "_Bestanden"
 
@@ -3573,7 +3573,7 @@ msgstr "Bestandsuitvoersjabloon"
 msgid "Add to template:"
 msgstr "Toevoegen aan sjabloon:"
 
-#: .././config.py:3083 .././config.py:8018
+#: .././config.py:3083 .././config.py:8049
 msgid "Video properties"
 msgstr "Video-informatie"
 
@@ -3617,9 +3617,13 @@ msgstr "Video's automatisch nummeren, beginnend bij 0"
 msgid "Creator/uploader"
 msgstr "Maker/Uploader"
 
-#: .././config.py:3098 .././config.py:3099
+#: .././config.py:3098
 msgid "Full name of video uploader"
 msgstr "Volledige naam van uploader"
+
+#: .././config.py:3099
+msgid "Uploader ID"
+msgstr ""
 
 #: .././config.py:3100
 msgid "Nickname/ID of video uploader"
@@ -3729,8 +3733,8 @@ msgstr "Aantal keer gedeeld"
 msgid "Number of comments"
 msgstr "Aantal reacties"
 
-#: .././config.py:3170 .././config.py:9916 .././config.py:12528
-#: .././config.py:14445 .././config.py:14710
+#: .././config.py:3170 .././config.py:9947 .././config.py:12559
+#: .././config.py:14476 .././config.py:14741
 msgid "Add"
 msgstr "Toevoegen"
 
@@ -3771,8 +3775,8 @@ msgid "Path to the downloader's cookie jar file"
 msgstr "Pad naar downloader's cookie-jarbestand:"
 
 #: .././config.py:3302 .././config.py:4927 .././config.py:4947
-#: .././config.py:4967 .././config.py:14111 .././config.py:14210
-#: .././config.py:14251 .././config.py:14321
+#: .././config.py:4967 .././config.py:14142 .././config.py:14241
+#: .././config.py:14282 .././config.py:14352
 msgid "Set"
 msgstr "Instellen"
 
@@ -3837,20 +3841,20 @@ msgid "Options during real (not simulated) downloads"
 msgstr "Opties tijdens echte (niet-gesimuleerde) downloads"
 
 #: .././config.py:3450 .././config.py:3481
-msgid "Keep the description file after Tartube shuts down"
-msgstr "Omschrijvingsbestand behouden na afsluiten"
+msgid "Keep the description file after the download has finished"
+msgstr ""
 
 #: .././config.py:3456 .././config.py:3487
-msgid "Keep the metadata file after Tartube shuts down"
-msgstr "Metagegevensbestand behouden na afsluiten"
+msgid "Keep the metadata file after the download has finished"
+msgstr ""
 
 #: .././config.py:3462 .././config.py:3493
-msgid "Keep the annotations file after Tartube shuts down"
-msgstr "Aantekeningenbestand behouden na afsluiten"
+msgid "Keep the annotations file after the download has finished"
+msgstr ""
 
 #: .././config.py:3468 .././config.py:3499
-msgid "Keep the thumbnail file after Tartube shuts down"
-msgstr "Miniatuurbestand behouden na afsluiten"
+msgid "Keep the thumbnail file after the download has finished"
+msgstr ""
 
 #: .././config.py:3475
 msgid "Options during simulated (not real) downloads"
@@ -3946,7 +3950,7 @@ msgid "Do not download DASH-related data for YouTube videos"
 msgstr "Download geen DASH-gerelateerde gegevens bij YouTube-video's"
 
 #. Add this tab...
-#: .././config.py:3790 .././config.py:3809 .././config.py:13113
+#: .././config.py:3790 .././config.py:3809 .././config.py:13144
 msgid "_Downloads"
 msgstr "_Downloads"
 
@@ -4387,8 +4391,8 @@ msgstr "Extern downloadprogramma gebruiken"
 msgid "Arguments to pass to external downloader"
 msgstr "Aanvullende opties voor extern downloadprogramma"
 
-#: .././config.py:5168 .././config.py:5658 .././config.py:7355
-#: .././config.py:7603
+#: .././config.py:5168 .././config.py:5658 .././config.py:7386
+#: .././config.py:7634
 msgid "This procedure cannot be reversed. Are you sure you want to continue?"
 msgstr ""
 "Dit kan niet ongedaan worden gemaakt. Weet je zeker dat je wilt doorgaan?"
@@ -4436,55 +4440,55 @@ msgid "FFmpeg options"
 msgstr "FFmpeg-opties"
 
 #. Replace the 'OK' button with a 'Process files' button
-#: .././config.py:6246 .././config.py:7776
+#: .././config.py:6248 .././config.py:7807
 msgid "Process files"
 msgstr "Bestanden verwerken"
 
-#: .././config.py:6248 .././config.py:7778
+#: .././config.py:6250 .././config.py:7809
 msgid "Process the files with FFmpeg"
 msgstr "Verwerk de bestanden met FFmpeg"
 
-#: .././config.py:6265
+#: .././config.py:6267
 msgid "Name for these FFmpeg options"
 msgstr "Naam van FFmpeg-opties"
 
-#: .././config.py:6275
+#: .././config.py:6277
 msgid "Extra command line options (e.g. --help)"
 msgstr "Aanvullende opdrachtregelopties (bijv. --help)"
 
-#: .././config.py:6286
+#: .././config.py:6288
 msgid "System command, based on all FFmpeg options in this window:"
 msgstr "Systeemopdracht, op basis van alle FFmpeg-opties binnen dit venster:"
 
-#: .././config.py:6317
+#: .././config.py:6319
 msgid "Show fewer FFmpeg options"
 msgstr "Minder FFmpeg-opties tonen"
 
-#: .././config.py:6319
+#: .././config.py:6321
 msgid "Show more FFmpeg options"
 msgstr "Meer FFmpeg-opties tonen"
 
-#: .././config.py:6329
+#: .././config.py:6331
 msgid "Import current FFmpeg options into this window"
 msgstr "Importeer huidige FFmpeg-opties naar dit venster"
 
-#: .././config.py:6344
+#: .././config.py:6346
 msgid "Completely reset all FFmpeg options to their default values"
 msgstr "Zet alle FFmpeg-opties terug op hun standaardwaarden"
 
-#: .././config.py:6360
+#: .././config.py:6362
 msgid "Add to end of filename:"
 msgstr "Toevoegen achter bestandsnaam:"
 
-#: .././config.py:6370
+#: .././config.py:6372
 msgid "If regex matches filename:"
 msgstr "Als regex overeenkomt met bestandsnaam:"
 
-#: .././config.py:6384
+#: .././config.py:6386
 msgid "...then apply substitution:"
 msgstr "...pas dan vervanging toe:"
 
-#: .././config.py:6397
+#: .././config.py:6399
 msgid ""
 "If the video/audio file is renamed, also rename the thumbnail (but not vice-"
 "versa)"
@@ -4492,47 +4496,47 @@ msgstr ""
 "Als het audio- of videobestand van naam wijzigt, wijzig dan ook de naam van "
 "de miniatuur (maar niet vice-versa)"
 
-#: .././config.py:6408
+#: .././config.py:6410
 msgid "Change file extension:"
 msgstr "Bestandsextensie aanpassen:"
 
-#: .././config.py:6422
+#: .././config.py:6424
 msgid "After changing the file extension, delete the original file"
 msgstr "Oorspronkelijk bestand verwijderen na aanpassen van extensie"
 
-#: .././config.py:6448
+#: .././config.py:6450
 msgid "_Settings"
 msgstr "In_stellingen"
 
-#: .././config.py:6455
+#: .././config.py:6457
 msgid "Source file"
 msgstr "Bronbestand"
 
-#: .././config.py:6462
+#: .././config.py:6464
 msgid "Downloaded video/audio"
 msgstr "Gedownloade audio/video"
 
-#: .././config.py:6471
+#: .././config.py:6473
 msgid "with audio"
 msgstr "met audio"
 
-#: .././config.py:6484
+#: .././config.py:6486
 msgid "Video thumbnail"
 msgstr "Videominiatuur"
 
-#: .././config.py:6503
+#: .././config.py:6505
 msgid "Output file"
 msgstr "Uitvoerbestand"
 
-#: .././config.py:6630
+#: .././config.py:6632
 msgid "Audio bitrate"
 msgstr "Audiobitsnelheid"
 
-#: .././config.py:6644
+#: .././config.py:6646
 msgid "How to set the quality"
 msgstr "Kwaliteit instellen"
 
-#: .././config.py:6649
+#: .././config.py:6651
 msgid ""
 "FFmpeg always encodes according to a Rate Factor that specifies the quality "
 "of the result."
@@ -4540,7 +4544,7 @@ msgstr ""
 "FFmpeg gebruikt altijd op basis van de snelheidsfactor die de kwaliteit "
 "aangeeft."
 
-#: .././config.py:6652
+#: .././config.py:6654
 msgid ""
 "Instead of directly specifying the Rate Factor, an average bit rate can be "
 "specified. FFmpeg will then determine the optimal Rate Factor in a first "
@@ -4549,7 +4553,7 @@ msgstr ""
 "In plaats daarvan kan een gemiddelde bitsnelheid worden ingesteld. FFmpeg "
 "bepaalt dan de optimale snelheidsfactor bij de eerste overdracht."
 
-#: .././config.py:6656
+#: .././config.py:6658
 msgid ""
 "In fact the first pass is only used for determining the Rate Factor, no "
 "other data is carried over into the second pass."
@@ -4557,7 +4561,7 @@ msgstr ""
 "De eerste overdracht wordt alleen gebruikt om de factor te bepalen en niet "
 "om andere gegevens over te dragen."
 
-#: .././config.py:6659
+#: .././config.py:6661
 msgid ""
 "Specifying an average bitrate but running only one pass is possible, but not "
 "recommended. FFmpeg would then encode the beginning of the video with a "
@@ -4568,126 +4572,134 @@ msgstr ""
 "aanbevolen. FFmpeg werkt dan alleen het begin van de video af met een "
 "willekeurige snelheidsfactor en past het einde aan om het doel te bereiken."
 
-#: .././config.py:6672
+#: .././config.py:6674
 msgid "Manual rate factor"
 msgstr "Aangepaste snelheidsfactor"
 
-#: .././config.py:6681
+#: .././config.py:6683
 msgid "Determine from target bitrate (2-Pass)"
 msgstr "Bepalen op basis van doelbitsnelheid (2-pass)"
 
-#: .././config.py:6691
+#: .././config.py:6693
 msgid "Rate factor"
 msgstr "Snelheidsfactor"
 
-#: .././config.py:6703
+#: .././config.py:6705
 msgid "Lossless"
 msgstr "Lossless"
 
-#: .././config.py:6703
+#: .././config.py:6705
 msgid "Large file"
 msgstr "Groot bestand"
 
-#: .././config.py:6725
+#: .././config.py:6727
 msgid "Bad quality"
 msgstr "Slechte kwaliteit"
 
-#: .././config.py:6725
+#: .././config.py:6727
 msgid "Small file"
 msgstr "Klein bestand"
 
-#: .././config.py:6732
+#: .././config.py:6734
 msgid "Name of dummy file"
 msgstr "Naam van rekwisietbestand"
 
-#: .././config.py:6736
+#: .././config.py:6738
 msgid "A dummy file is created during the first pass."
 msgstr "Er wordt tijdens de eerste overdracht een rekwisietbestand aangemaakt."
 
-#: .././config.py:6740
+#: .././config.py:6742
 msgid "Use the output file"
 msgstr "Uitvoerbestand gebruiken"
 
-#: .././config.py:6741
+#: .././config.py:6743
 msgid "Dummy"
 msgstr "Rekwisiet"
 
-#: .././config.py:6742
+#: .././config.py:6744
 msgid "/dev/null (Linux)"
 msgstr "/dev/null (Linux)"
 
-#: .././config.py:6743
+#: .././config.py:6745
 msgid "NUL (MS Windows)"
 msgstr "NUL (MS Windows)"
 
-#: .././config.py:6755
+#: .././config.py:6757
 msgid "Patience preset"
 msgstr "Geduldsinstelling"
 
-#: .././config.py:6760
+#: .././config.py:6762
 msgid "Ultra fast"
 msgstr "Ontzettend snel"
 
-#: .././config.py:6761
+#: .././config.py:6763
 msgid "Super fast"
 msgstr "Heel erg snel"
 
-#: .././config.py:6762
+#: .././config.py:6764
 msgid "Very fast"
 msgstr "Erg snel"
 
-#: .././config.py:6763 .././config.py:6832
+#: .././config.py:6765 .././config.py:6863
 msgid "Faster"
 msgstr "Sneller"
 
-#: .././config.py:6764
+#: .././config.py:6766
 msgid "Fast"
 msgstr "Snel"
 
-#: .././config.py:6765
+#: .././config.py:6767
 msgid "Medium (default)"
 msgstr "Gemiddeld (standaard)"
 
-#: .././config.py:6766
+#: .././config.py:6768
 #, python-format
 msgid "Slow (file about 5-10% smaller than medium)"
 msgstr "Langzaam (ongeveer 5-10% kleiner bestand dan gemiddeld)"
 
-#: .././config.py:6767
+#: .././config.py:6769
 #, python-format
 msgid "Slower (file about 15% smaller than medium)"
 msgstr "Langzamer (ongeveer 15% kleiner bestand dan gemiddeld)"
 
-#: .././config.py:6768
+#: .././config.py:6770
 #, python-format
 msgid "Very slow (file about 17% smaller than medium)"
 msgstr "Erg langzaam (ongeveer 17% kleiner bestand dan gemiddeld)"
 
-#: .././config.py:6826
+#: .././config.py:6781
+msgid "GPU encoding"
+msgstr ""
+
+#: .././config.py:6797
+msgid "Hardware acceleration"
+msgstr ""
+
+#: .././config.py:6857
 msgid "Palette:"
 msgstr "Palet:"
 
-#: .././config.py:6833
+#: .././config.py:6864
 msgid "Uses dithering to a standard palette provided by FFmpeg"
 msgstr "Gebruikt ruisonderdrukking op basis van een standaardpalet van FFmpeg"
 
-#: .././config.py:6834
+#: .././config.py:6865
 msgid "Can cause dithering artefacts and slight banding"
 msgstr "Kan vervormingen en lichte verkleuringen veroorzaken"
 
-#: .././config.py:6843
+#: .././config.py:6874
 msgid "Better"
 msgstr "Beter"
 
-#: .././config.py:6844
+#: .././config.py:6875
 msgid "Determines an optimized palette for the video"
 msgstr "Stelt een geoptimaliseerd palet vast voor de video"
 
-#: .././config.py:6845
+#: .././config.py:6876
 msgid "Uses two passes and a temporary file for the palette"
 msgstr "Gebruikt twee overdrachten en een tijdelijk bestand voor het palet"
 
-#: .././config.py:6898
+#: .././config.py:6929
 msgid ""
 "This merges a video and audio file with the same name into a single video "
 "file,\n"
@@ -4696,82 +4708,82 @@ msgstr ""
 "Hiermee voeg je een audio- en videobestand samen onder dezelfde naam,\n"
 "met toevoeging van de op het tabblad 'Bestand' opgegeven extensie"
 
-#: .././config.py:6939
+#: .././config.py:6970
 msgid "The thumbnail's format can be changed in the File tab"
 msgstr "Het miniatuurformaat kan worden aangepast op het tabblad 'Bestand'"
 
-#: .././config.py:6954
+#: .././config.py:6985
 msgid "_Optimisations"
 msgstr "_Optimalisaties"
 
-#: .././config.py:6960
+#: .././config.py:6991
 msgid ""
 "Optimise for fast seeking (shorter keyframe interval, about 10% larger file)"
 msgstr ""
 "Optimaliseren voor snel doorspoelen (kortere frames, ongeveer 10% groter "
 "bestand)"
 
-#: .././config.py:6968
+#: .././config.py:6999
 msgid "Input video is a high-quality movie"
 msgstr "Invoervideo is van hoge kwaliteit"
 
-#: .././config.py:6974
+#: .././config.py:7005
 msgid "Input video is an animated movie"
 msgstr "Invoervideo is een tekenfilm"
 
-#: .././config.py:6980
+#: .././config.py:7011
 msgid "Input video contains film grain"
 msgstr "Invoervideo bevat spikkels"
 
-#: .././config.py:6986
+#: .././config.py:7017
 msgid "Input video is an image slideshow"
 msgstr "Invoervideo is een diavoorstelling"
 
-#: .././config.py:6992
+#: .././config.py:7023
 msgid "Optimise for really weak CPU playback devices"
 msgstr "Optimaliseren voor zwakke processoren (cpu's)"
 
-#: .././config.py:6999
+#: .././config.py:7030
 msgid "Optimise for really old devices (requires rate factor above 0)"
 msgstr ""
 "Optimaliseren voor zeer oude apparaten (vereist een factor hoger dan 0)"
 
-#: .././config.py:7010
+#: .././config.py:7041
 msgid ""
 "Move headers to beginning of file (so it can play while still downloading)"
 msgstr ""
 "Koppen verplaatsen naar begin van bestand (om te kijken tijdens het "
 "downloaden)"
 
-#: .././config.py:7018
+#: .././config.py:7049
 msgid "Fast encoding and low latency streaming"
 msgstr "Snel encoderen en streamen op lage snelheid"
 
-#: .././config.py:7024
+#: .././config.py:7055
 msgid "Limit bitrate (Mbit/s)"
 msgstr "Bitsnelheid beperken (Mbit/s)"
 
-#: .././config.py:7041
+#: .././config.py:7072
 msgid "Assuming a receiving buffer (seconds)"
 msgstr "Ontvangbuffer (in seconden)"
 
-#: .././config.py:7119
+#: .././config.py:7150
 msgid "List of videos to be processed"
 msgstr "Lijst met te verwerken video's"
 
-#: .././config.py:7138 .././media.py:88
+#: .././config.py:7169 .././media.py:88
 msgid "Video"
 msgstr "Video"
 
-#: .././config.py:7138
+#: .././config.py:7169
 msgid "Thumbnail"
 msgstr "Miniatuurvoorbeeld"
 
-#: .././config.py:7181
+#: .././config.py:7212
 msgid "Remove video from list"
 msgstr "Video verwijderen van lijst"
 
-#: .././config.py:7647
+#: .././config.py:7678
 msgid ""
 "Fewer FFmpeg options will be visible when you click the 'Apply' or 'Reset' "
 "buttons (or when you close and then re-open the window)"
@@ -4779,12 +4791,12 @@ msgstr ""
 "Als je op 'Toepassen' of 'Standaardwaarden' klikt (of het venster opnieuw "
 "opent), worden er minder FFmpeg-opties getoond"
 
-#: .././config.py:7657
+#: .././config.py:7688
 msgid "Show more FFmpeg options (when window re-opens)"
 msgstr ""
 "Uitgebreide FFmpeg-opties tonen (als het venster opnieuw wordt geopend)"
 
-#: .././config.py:7674
+#: .././config.py:7705
 msgid ""
 "More FFmpeg options will be visible when you click the 'Apply' or 'Reset' "
 "buttons (or when you close and then re-open the window)"
@@ -4792,141 +4804,141 @@ msgstr ""
 "Als je op 'Toepassen' of 'Standaardwaarden' klikt (of het venster opnieuw "
 "opent), worden er meer FFmpeg-opties getoond"
 
-#: .././config.py:7684
+#: .././config.py:7715
 msgid "Show fewer FFmpeg options (when window re-opens)"
 msgstr "Minder FFmpeg-opties tonen (als het venster opnieuw wordt geopend)"
 
 #. Add this tab...
-#: .././config.py:8135 .././config.py:8752 .././config.py:9176
-#: .././config.py:9663 .././config.py:10464
+#: .././config.py:8166 .././config.py:8783 .././config.py:9207
+#: .././config.py:9694 .././config.py:10495
 msgid "_General"
 msgstr "Al_gemeen"
 
-#: .././config.py:8138 .././config.py:8755 .././config.py:9179
-#: .././config.py:9668
+#: .././config.py:8169 .././config.py:8786 .././config.py:9210
+#: .././config.py:9699
 msgid "General properties"
 msgstr "Algemene informatie"
 
-#: .././config.py:8164
+#: .././config.py:8195
 msgid "Set the file (if this is the wrong one)"
 msgstr "Bestand instellen (als dit het verkeerde is)"
 
-#: .././config.py:8184
+#: .././config.py:8215
 msgid "Always simulate download of this video"
 msgstr "Downloaden altijd simuleren"
 
-#: .././config.py:8207
+#: .././config.py:8238
 msgid "Video has been downloaded"
 msgstr "De video is gedownload"
 
-#: .././config.py:8228
+#: .././config.py:8259
 msgid "Video is marked as unwatched"
 msgstr "De video is gemarkeerd als niet-bekeken"
 
-#: .././config.py:8249
+#: .././config.py:8280
 msgid "Video is archived"
 msgstr "De video is gearchiveerd"
 
-#: .././config.py:8256
+#: .././config.py:8287
 msgid "Video is bookmarked"
 msgstr "De video is toegevoegd aan de bladwijzers"
 
-#: .././config.py:8263
+#: .././config.py:8294
 msgid "Receive time"
 msgstr "Ontvangen om"
 
-#: .././config.py:8277
+#: .././config.py:8308
 msgid "Video is favourite"
 msgstr "De video is toegevoegd aan de favorieten"
 
-#: .././config.py:8284
+#: .././config.py:8315
 msgid "Video is in waiting list"
 msgstr "De video staat op de wachtlijst"
 
-#: .././config.py:8316
+#: .././config.py:8347
 msgid "Livestream properties"
 msgstr "Livestreaminformatie"
 
-#: .././config.py:8321
+#: .././config.py:8352
 msgid "Livestream status"
 msgstr "Livestreamstatus"
 
-#: .././config.py:8332
+#: .././config.py:8363
 msgid "Waiting to start"
 msgstr "Bezig met wachten op begin"
 
-#: .././config.py:8334
+#: .././config.py:8365
 msgid "Stream has started"
 msgstr "De stream is begonnen"
 
-#: .././config.py:8336
+#: .././config.py:8367
 msgid "Not a livestream"
 msgstr "Is geen livestream"
 
-#: .././config.py:8339
+#: .././config.py:8370
 msgid "Livestream message"
 msgstr "Livestreambericht"
 
-#: .././config.py:8354
+#: .././config.py:8385
 msgid "Video is pre-recorded"
 msgstr "De video is van tevoren opgenomen"
 
-#: .././config.py:8361
+#: .././config.py:8392
 msgid "Livestream actions"
 msgstr "Livestreamacties"
 
-#: .././config.py:8370
+#: .././config.py:8401
 msgid "When the livestream starts, show a desktop notification"
 msgstr "Melding tonen als de livestream begint"
 
-#: .././config.py:8379
+#: .././config.py:8410
 msgid "When the livestream starts, play an alarm"
 msgstr "Geluid afspelen als de livestream begint"
 
-#: .././config.py:8389
+#: .././config.py:8420
 msgid "When the livestream starts, open it in the system's web browser"
 msgstr "Livestream openen in webbrowser zodra deze begint"
 
-#: .././config.py:8401
+#: .././config.py:8432
 msgid "When the livestream starts, begin downloading it immediately"
 msgstr "Downloaden starten als de livestream begint"
 
-#: .././config.py:8412 .././config.py:13782
+#: .././config.py:8443 .././config.py:13813
 msgid "When a livestream stops, download it (overwriting any earlier file)"
 msgstr ""
 "Downloaden stoppen als de livestream begint (eerdere bestanden worden "
 "overschreven)"
 
-#: .././config.py:8428
+#: .././config.py:8459
 msgid "_Description"
 msgstr "_Omschrijving"
 
-#: .././config.py:8432
+#: .././config.py:8463
 msgid "Video description"
 msgstr "Video-omschrijving"
 
-#: .././config.py:8453 .././config.py:8959
+#: .././config.py:8484 .././config.py:8990
 msgid "Errors / Warnings"
 msgstr "Fouten/Waarschuwingen"
 
-#: .././config.py:8459
+#: .././config.py:8490
 msgid "Error messages produced the last time this video was checked/downloaded"
 msgstr ""
 "Foutmeldingen tijdens de laatste keer dat de video is gecontroleerd/"
 "gedownload"
 
-#: .././config.py:8474
+#: .././config.py:8505
 msgid ""
 "Warning messages produced the last time this video was checked/downloaded"
 msgstr ""
 "Waarschuwingen tijdens de laatste keer dat de video is gecontroleerd/"
 "gedownload"
 
-#: .././config.py:8517
+#: .././config.py:8548
 msgid "Select the correct video/audio file"
 msgstr "Kies het juiste audio- of videobestand"
 
-#: .././config.py:8543
+#: .././config.py:8574
 msgid ""
 "The replacement video/audio file must be in the same channel, playlist or "
 "folder"
@@ -4934,244 +4946,244 @@ msgstr ""
 "Het vervangende bestand moet op hetzelfde kanaal of dezelfde afspeellijst of "
 "map staan"
 
-#: .././config.py:8561
+#: .././config.py:8592
 msgid "You must select a valid video/audio file"
 msgstr "Kies het juiste audio- of videobestand"
 
-#: .././config.py:8629
+#: .././config.py:8660
 msgid "Channel properties"
 msgstr "Kanaalinformatie"
 
-#: .././config.py:8632
+#: .././config.py:8663
 msgid "Playlist properties"
 msgstr "Afspeellijstinformatie"
 
-#: .././config.py:8773
+#: .././config.py:8804
 msgid "Always simulate download of videos in this channel"
 msgstr "Downloaden op dit kanaal altijd simuleren"
 
-#: .././config.py:8775
+#: .././config.py:8806
 msgid "Always simulate download of videos in this playlist"
 msgstr "Downloaden op deze afspeellijst altijd simuleren"
 
-#: .././config.py:8785
+#: .././config.py:8816
 msgid "Disable checking/downloading for this channel"
 msgstr "Controleren/Downloaden op dit kanaal uitschakelen"
 
-#: .././config.py:8787
+#: .././config.py:8818
 msgid "Disable checking/downloading for this playlist"
 msgstr "Controleren/Downloaden op deze afspeellijst uitschakelen"
 
-#: .././config.py:8797
+#: .././config.py:8828
 msgid "This channel is marked as a favourite"
 msgstr "Dit kanaal staat in je favorieten"
 
-#: .././config.py:8799
+#: .././config.py:8830
 msgid "This playlist is marked as a favourite"
 msgstr "Deze afspeellijst staat in je favorieten"
 
-#: .././config.py:8809
+#: .././config.py:8840
 msgid "Total videos"
 msgstr "Totaal aantal video's"
 
-#: .././config.py:8833
+#: .././config.py:8864
 msgid "Favourite videos"
 msgstr "Favoriete video's"
 
-#: .././config.py:8845
+#: .././config.py:8876
 msgid "Downloaded videos"
 msgstr "Gedownloade video's"
 
-#: .././config.py:8867 .././config.py:9408 .././config.py:11646
+#: .././config.py:8898 .././config.py:9439 .././config.py:11677
 msgid "_History"
 msgstr "Gesc_hiedenis"
 
-#: .././config.py:8872 .././config.py:9413 .././config.py:11653
+#: .././config.py:8903 .././config.py:9444 .././config.py:11684
 msgid "Download history"
 msgstr "Downloadgeschiedenis"
 
-#: .././config.py:8886 .././config.py:9427 .././config.py:11667
+#: .././config.py:8917 .././config.py:9458 .././config.py:11698
 msgid "Draw"
 msgstr "Tekenen"
 
-#: .././config.py:8914
+#: .././config.py:8945
 msgid "_RSS feed"
 msgstr "_RSS-feed"
 
-#: .././config.py:8917
+#: .././config.py:8948
 msgid "RSS feed"
 msgstr "RSS-feed"
 
-#: .././config.py:8923
+#: .././config.py:8954
 msgid ""
 "If Tartube cannot detect the channel's RSS feed, you can enter the URL here"
 msgstr ""
 "Als Tartube geen rss-feed kan achterhalen, kun je hier de feedurl opgeven"
 
-#: .././config.py:8928
+#: .././config.py:8959
 msgid ""
 "If Tartube cannot detect the playlist's RSS feed, you can enter the URL here"
 msgstr ""
 "Als Tartube geen rss-feed kan achterhalen, kun je hier de feedurl opgeven"
 
-#: .././config.py:8933
+#: .././config.py:8964
 msgid "(The feed is used to detect livestreams on compatible websites)"
 msgstr ""
 "(de feed wordt gebruikt om livestreams van compatibele sites te achterhalen)"
 
-#: .././config.py:8965
+#: .././config.py:8996
 msgid ""
 "Error messages produced the last time this channel was checked/downloaded"
 msgstr ""
 "Foutmeldingen tijdens de laatste keer dat dit kanaal is gecontroleerd/"
 "gedownload"
 
-#: .././config.py:8970
+#: .././config.py:9001
 msgid ""
 "Error messages produced the last time this playlist was checked/downloaded"
 msgstr ""
 "Foutmeldingen tijdens de laatste keer dat deze afspeellijst is gecontroleerd/"
 "gedownload"
 
-#: .././config.py:8988
+#: .././config.py:9019
 msgid ""
 "Warning messages produced the last time this channel was checked/downloaded"
 msgstr ""
 "Waarschuwingen tijdens de laatste keer dat dit kanaal is gecontroleerd/"
 "gedownload"
 
-#: .././config.py:8993
+#: .././config.py:9024
 msgid ""
 "Warning messages produced the last time this playlist was checked/downloaded"
 msgstr ""
 "Waarschuwingen tijdens de laatste keer dat deze afspeellijst is "
 "gecontroleerd/gedownload"
 
-#: .././config.py:9059
+#: .././config.py:9090
 msgid "Folder properties"
 msgstr "Mapinformatie"
 
-#: .././config.py:9196
+#: .././config.py:9227
 msgid "Always simulate download of videos"
 msgstr "Downloaden altijd simuleren"
 
-#: .././config.py:9203
+#: .././config.py:9234
 msgid "Disable checking/downloading for this folder"
 msgstr "Controleren/Downloaden in deze map uitschakelen"
 
-#: .././config.py:9210
+#: .././config.py:9241
 msgid "This folder is marked as a favourite"
 msgstr "Deze map staat in je favorieten"
 
-#: .././config.py:9217
+#: .././config.py:9248
 msgid "This folder is hidden"
 msgstr "Deze map is verborgen"
 
-#: .././config.py:9224
+#: .././config.py:9255
 msgid "This folder can't be deleted by the user"
 msgstr "Deze map kan niet worden verwijderd door de gebruiker"
 
-#: .././config.py:9231
+#: .././config.py:9262
 msgid "This is a system-controlled folder"
 msgstr "Dit is een systeemmap"
 
-#: .././config.py:9238
+#: .././config.py:9269
 msgid "Only videos can be added to this folder"
 msgstr "Je kunt alleen video's toevoegen aan deze map"
 
-#: .././config.py:9245
+#: .././config.py:9276
 msgid "All contents deleted when Tartube shuts down"
 msgstr "Na het afsluiten wordt alle inhoud verwijderd"
 
-#: .././config.py:9259 .././config.py:11475
+#: .././config.py:9290 .././config.py:11506
 msgid "_Statistics"
 msgstr "_Statistieken"
 
-#: .././config.py:9264 .././config.py:11482
+#: .././config.py:9295 .././config.py:11513
 msgid "Statistics"
 msgstr "Statistieken"
 
-#: .././config.py:9285 .././config.py:11503
+#: .././config.py:9316 .././config.py:11534
 msgid "Downloaded"
 msgstr "Gedownload"
 
-#: .././config.py:9329
+#: .././config.py:9360
 msgid "Sub-folders"
 msgstr "Onderliggende mappen"
 
-#: .././config.py:9351
+#: .././config.py:9382
 msgid "Recalculate"
 msgstr "Herberekenen"
 
-#: .././config.py:9522
+#: .././config.py:9553
 msgid "Scheduled download"
 msgstr "Ingeplande download"
 
-#: .././config.py:9673 .././config.py:12515
+#: .././config.py:9704 .././config.py:12546
 msgid "Scheduled download name"
 msgstr "Naam van ingeplande download"
 
-#: .././config.py:9685
+#: .././config.py:9716
 msgid "Download mode"
 msgstr "Downloadmodus"
 
-#: .././config.py:9690
+#: .././config.py:9721
 msgid "Check channels, playlist and folders"
 msgstr "Kanalen, afspeellijsten en mappen controleren"
 
-#: .././config.py:9691
+#: .././config.py:9722
 msgid "Download channels, playlists and folders"
 msgstr "Kanalen, afspeellijsten, mappen downloaden"
 
-#: .././config.py:9692
+#: .././config.py:9723
 msgid "Perform a custom download"
 msgstr "Aangepast downloaden"
 
-#: .././config.py:9703 .././config.py:12481
+#: .././config.py:9734 .././config.py:12512
 msgid "Start mode"
 msgstr "Beginmodus"
 
-#: .././config.py:9708
+#: .././config.py:9739
 msgid "Perform this download at regular intervals"
 msgstr "Download uitvoeren op bepaalde tijdstippen"
 
-#: .././config.py:9709
+#: .././config.py:9740
 msgid "Perform this download when Tartube starts"
 msgstr "Download uitvoeren na het openen van Tartube"
 
-#: .././config.py:9710
+#: .././config.py:9741
 msgid "Disable this scheduled download"
 msgstr "Planning uitschakelen"
 
-#: .././config.py:9722
+#: .././config.py:9753
 msgid "Time between scheduled downloads"
 msgstr "Tijd tussen ingeplande downloads"
 
-#: .././config.py:9766
+#: .././config.py:9797
 msgid "If another scheduled download is running:"
 msgstr "Als er al een ingeplande download actief is:"
 
-#: .././config.py:9773
+#: .././config.py:9804
 msgid "Add channels, playlists and folders to the end of the queue"
 msgstr "Kanalen, afspeellijsten en mappen toevoegen aan einde van wachtrij"
 
-#: .././config.py:9779
+#: .././config.py:9810
 msgid "Add channels, playlists and folders to the beginning of the queue"
 msgstr "Kanalen, afspeellijsten en mappen toevoegen aan begin van wachtrij"
 
-#: .././config.py:9786
+#: .././config.py:9817
 msgid "Do nothing, just wait until the next scheduled download time"
 msgstr "Niks doen tot aan het volgende tijdstip"
 
-#: .././config.py:9801
+#: .././config.py:9832
 msgid "This scheduled download takes priority over others"
 msgstr "Deze ingeplande download heeft hoge prioriteit"
 
-#: .././config.py:9804
+#: .././config.py:9835
 msgid "Other scheduled downloads won't start until this one is finished"
 msgstr "Andere ingeplande downloads beginnen pas als deze is afgerond"
 
-#: .././config.py:9813
+#: .././config.py:9844
 msgid ""
 "Ignore time-saving preferences, and check/download the whole channel/"
 "playlist/folder"
@@ -5179,64 +5191,64 @@ msgstr ""
 "Tijdbesparende maatregelen negeren en kanaal/afspeellijst/map volledig "
 "controleren/downloaden"
 
-#: .././config.py:9821
+#: .././config.py:9852
 msgid "Shut down Tartube when this scheduled download has finished"
 msgstr "Tartube afsluiten nadat deze download is afgerond"
 
-#: .././config.py:9839
+#: .././config.py:9870
 msgid "Media to download"
 msgstr "De te downloaden media"
 
-#: .././config.py:9845
+#: .././config.py:9876
 msgid "Check/download everything"
 msgstr "Alles controleren/downloaden"
 
-#: .././config.py:9853
+#: .././config.py:9884
 msgid "Only check/download the media below"
 msgstr "Alleen onderstaande media controleren/downloaden"
 
-#: .././config.py:9867
+#: .././config.py:9898
 msgid ""
 "Hint: you can drag and drop channels, playlists and your own folders here"
 msgstr "Tip: je kunt kanalen, afspeellijsten en mappen hierheen slepen"
 
-#: .././config.py:9926
+#: .././config.py:9957
 msgid "Remove"
 msgstr "Verwijderen"
 
-#: .././config.py:10230
+#: .././config.py:10261
 msgid "System preferences"
 msgstr "Algemene instellingen"
 
-#: .././config.py:10483
+#: .././config.py:10514
 msgid "_Language"
 msgstr "Taa_l"
 
-#: .././config.py:10488
+#: .././config.py:10519
 msgid "Language preferences"
 msgstr "Taalinstellingen"
 
-#: .././config.py:10493
+#: .././config.py:10524
 msgid "Language"
 msgstr "Taal"
 
-#: .././config.py:10529
+#: .././config.py:10560
 msgid "_Stability"
 msgstr "_Stabiliteit"
 
-#: .././config.py:10539
+#: .././config.py:10570
 msgid "Gtk library"
 msgstr "GTK-bibliotheek"
 
-#: .././config.py:10544
+#: .././config.py:10575
 msgid "Current version of the system's Gtk library"
 msgstr "De huidige versie van de GTK-bibliotheek op dit systeem"
 
-#: .././config.py:10559
+#: .././config.py:10590
 msgid "Gtk stability"
 msgstr "GTK-stabiliteit"
 
-#: .././config.py:10598
+#: .././config.py:10629
 msgid ""
 "Tartube uses the Gtk graphics library. This library is notoriously "
 "unreliable and may even causes crashes."
@@ -5244,7 +5256,7 @@ msgstr ""
 "Tartube maakt gebruik van de grafische bibliotheek van GTK. Deze staat "
 "bekend om zijn onbetrouwbaarheid en sporadische crashes."
 
-#: .././config.py:10605
+#: .././config.py:10636
 msgid ""
 "By default, some cosmetic features are disabled (for example, in the Videos "
 "tab, the list of videos is not updated until the end of a download "
@@ -5254,7 +5266,7 @@ msgstr ""
 "bijwerken van de videolijst totdat het downloaden is afgerond (zie tabblad "
 "'Video's')"
 
-#: .././config.py:10613
+#: .././config.py:10644
 msgid ""
 "If you think that your system Gtk has been fixed (or if you want to test Gtk "
 "stability), you can re-enable the cosmetic features."
@@ -5262,79 +5274,79 @@ msgstr ""
 "Als je zeker weet dat je systeem een betrouwbare versie van GTK heeft (of "
 "als je de stabiliteit wilt testen), kun je enkele functies weer inschakelen."
 
-#: .././config.py:10623
+#: .././config.py:10654
 msgid "Disable some cosmetic features to prevent crashes and other issues"
 msgstr ""
 "Enkele cosmetische functies uitschakelen om crashes en problemen te voorkomen"
 
-#: .././config.py:10641
+#: .././config.py:10672
 msgid "_Modules"
 msgstr "_Modules"
 
-#: .././config.py:10646
+#: .././config.py:10677
 msgid "Module availability"
 msgstr "Aanwezigheid van modules"
 
-#: .././config.py:10652
+#: .././config.py:10683
 msgid "feedparser module is available (required for detecting livestreams)"
 msgstr ""
 "De feedparser-module is aanwezig (vereist voor het detecteren van "
 "livestreams)"
 
-#: .././config.py:10661
+#: .././config.py:10692
 msgid "matplotlib module is available (draws graphs)"
 msgstr "De matplotlib-module is beschikbaar (om grafieken te tonen)"
 
-#: .././config.py:10669
+#: .././config.py:10700
 msgid "moviepy module is available (finds the length of videos, if unknown)"
 msgstr ""
 "De moviepy-module is aanwezig (vereist voor het achterhalen van de duur van "
 "video's)"
 
-#: .././config.py:10679
+#: .././config.py:10710
 msgid "playsound module is available (sound an alarm when a livestream starts)"
 msgstr ""
 "De playsound-module is aanwezig (vereist voor het afspelen van een geluid "
 "aan het begin van een livestream)"
 
-#: .././config.py:10689
+#: .././config.py:10720
 msgid ""
 "XDG module is available (saves the config file in the standard location)"
 msgstr ""
 "De xdg-module is aanwezig (vereist voor het opslaan van het "
 "configuratiebestand op de standaardlocatie)"
 
-#: .././config.py:10699
+#: .././config.py:10730
 msgid ""
 "Notify module is available (shows desktop notifications; Linux/*BSD only)"
 msgstr ""
 "De notify-module is aanwezig (vereist voor het tonen van meldingen op Linux "
 "en *BSD)"
 
-#: .././config.py:10709
+#: .././config.py:10740
 msgid "Module preferences"
 msgstr "Module-instellingen"
 
-#: .././config.py:10715
+#: .././config.py:10746
 msgid ""
 "Use 'moviepy' module to get a video's duration, if not known (may be slow)"
 msgstr ""
 "'moviepy'-module gebruiken om de duur van video's te achterhalen (kan "
 "langzaam zijn)"
 
-#: .././config.py:10727
+#: .././config.py:10758
 msgid "Timeout applied when moviepy checks a video file"
 msgstr "De time-out die wordt gebruikt bij het achterhalen met moviepy"
 
-#: .././config.py:10752
+#: .././config.py:10783
 msgid "_Debugging"
 msgstr "_Foutopsporing"
 
-#: .././config.py:10760
+#: .././config.py:10791
 msgid "Debugging preferences"
 msgstr "Foutopsporingsinstellingen"
 
-#: .././config.py:10766
+#: .././config.py:10797
 msgid ""
 "Debug messages are only visible in the terminal window (these settings are "
 "not saved)"
@@ -5342,24 +5354,24 @@ msgstr ""
 "Foutopsporingsberichten worden alleen getoond in het terminalvenster (deze "
 "instellingen worden niet bewaard)"
 
-#: .././config.py:10773
+#: .././config.py:10804
 msgid "Enable application debug messages (code in mainapp.py)"
 msgstr ""
 "Foutopsporingsberichten van gehele programma tonen (code in mainapp.py)"
 
-#: .././config.py:10782 .././config.py:10802
+#: .././config.py:10813 .././config.py:10833
 msgid "...but don't show timer debug messages"
 msgstr "...maar geen foutopsporingsberichten van de tijdklok tonen"
 
-#: .././config.py:10793
+#: .././config.py:10824
 msgid "Enable main winddow debug messages (code in mainwin.py)"
 msgstr "Foutopsporingsberichten van hoofdvenster tonen (code in mainwin.py)"
 
-#: .././config.py:10813
+#: .././config.py:10844
 msgid "Enabled downloader debug messages (code in downloads.py)"
 msgstr "Foutopsporingsberichten van downloader tonen (code in downloads.py)"
 
-#: .././config.py:10856
+#: .././config.py:10887
 msgid ""
 "Debugging messages are also visible if an empty file called debug.txt exists "
 "here:"
@@ -5367,122 +5379,122 @@ msgstr ""
 "Foutopsporingsberichten zijn tevens zichtbaar als er een leeg bestand "
 "genaamd debug.txt aanwezig is in:"
 
-#: .././config.py:10901
+#: .././config.py:10932
 msgid "_Device"
 msgstr "_Apparaat"
 
-#: .././config.py:10906
+#: .././config.py:10937
 msgid "Device preferences"
 msgstr "Apparaatinstellingen"
 
-#: .././config.py:10911
+#: .././config.py:10942
 msgid "Size of device (in Mb)"
 msgstr "Totale ruimte op apparaat (in mb)"
 
-#: .././config.py:10923
+#: .././config.py:10954
 msgid "Free space on device (in Mb)"
 msgstr "Vrije ruimte op apparaat (in mb)"
 
-#: .././config.py:10935
+#: .././config.py:10966
 msgid "Warn user if disk space is less than"
 msgstr "Waarschuwen als schijfruimte minder is dan"
 
-#: .././config.py:10953
+#: .././config.py:10984
 msgid "Halt downloads if disk space is less than"
 msgstr "Downloads onderbreken als schijfruimte minder is dan"
 
-#: .././config.py:10992
+#: .././config.py:11023
 msgid "Configuration preferences"
 msgstr "Configuratie-instellingen"
 
-#: .././config.py:10997
+#: .././config.py:11028
 msgid "Tartube configuration file loaded from:"
 msgstr "Het Tartube-configuratiebestand wordt geladen uit:"
 
-#: .././config.py:11016
+#: .././config.py:11047
 msgid "D_atabase"
 msgstr "D_atabank"
 
-#: .././config.py:11022
+#: .././config.py:11053
 msgid "Database preferences"
 msgstr "Databankinstellingen"
 
-#: .././config.py:11027
+#: .././config.py:11058
 msgid "Tartube data folder"
 msgstr "Tartube-gegevensmap"
 
-#: .././config.py:11039
+#: .././config.py:11070
 msgid "Add new database"
 msgstr "Nieuwe databank toevoegen"
 
-#: .././config.py:11041
+#: .././config.py:11072
 msgid "Change to a different data folder"
 msgstr "Kies een andere gegevensmap"
 
-#: .././config.py:11048
+#: .././config.py:11079
 msgid "Check and repair database"
 msgstr "Databank controleren en repareren"
 
-#: .././config.py:11051
+#: .././config.py:11082
 msgid "Check for inconsistencies, and repair them"
 msgstr "Controleer op fouten en herstel ze"
 
-#: .././config.py:11056
+#: .././config.py:11087
 msgid "Recent data folders"
 msgstr "Recente gegevensmappen"
 
-#: .././config.py:11070
+#: .././config.py:11101
 msgid "Switch to the selected data folder"
 msgstr "Gekozen gegevensmap gebruiken"
 
-#: .././config.py:11080
+#: .././config.py:11111
 msgid "Forget"
 msgstr "Wissen"
 
-#: .././config.py:11083
+#: .././config.py:11114
 msgid "Remove the selected data folder from the list"
 msgstr "Verwijder de geselecteerde map van de lijst"
 
-#: .././config.py:11092
+#: .././config.py:11123
 msgid "Forget all"
 msgstr "Alle mappen wissen"
 
-#: .././config.py:11095
+#: .././config.py:11126
 msgid "Forget every folder in this list (except the current one)"
 msgstr "Verwijder alle mappen van de lijst (behalve de huidige)"
 
-#: .././config.py:11108
+#: .././config.py:11139
 msgid "Move the selected folder up the list"
 msgstr "Geselecteerde map omhoog verplaatsen"
 
-#: .././config.py:11116
+#: .././config.py:11147
 msgid "Move the selected folder down the list"
 msgstr "Geselecteerde map omlaag verplaatsen"
 
-#: .././config.py:11144
+#: .././config.py:11175
 msgid ""
 "On startup, load the first database on the list (not the most recently-use "
 "one)"
 msgstr ""
 "Laad bij het opstarten de eerste databank op de lijst (niet de meest recente)"
 
-#: .././config.py:11154
+#: .././config.py:11185
 msgid "If one database is in use, try to load others"
 msgstr "Andere databank laden als huidige in gebruik is"
 
-#: .././config.py:11162
+#: .././config.py:11193
 msgid "Add new data directories to this list"
 msgstr "Gegevensmappen toevoegen aan lijst"
 
-#: .././config.py:11201
+#: .././config.py:11232
 msgid "_Backups"
 msgstr "_Back-ups"
 
-#: .././config.py:11205
+#: .././config.py:11236
 msgid "Backup preferences"
 msgstr "Back-upinstellingen"
 
-#: .././config.py:11210
+#: .././config.py:11241
 msgid ""
 "When saving a database file, Tartube makes a backup copy of it (in case "
 "something goes wrong)"
@@ -5490,173 +5502,173 @@ msgstr ""
 "Tijdens het opslaan van een databankbestand, maakt Tartube er een "
 "reservekopie van voor als er iets misgaat"
 
-#: .././config.py:11219
+#: .././config.py:11250
 msgid "Delete the backup file as soon as the save procedure is finished"
 msgstr "Back-upbestand verwijderen als opslaan voltooid is"
 
-#: .././config.py:11229
+#: .././config.py:11260
 msgid "Keep the backup file, replacing any previous backup file"
 msgstr "Back-upbestand behouden en vorige overschrijven"
 
-#: .././config.py:11240
+#: .././config.py:11271
 msgid ""
 "Make a new backup file once per day, after the day's first save procedure"
 msgstr ""
 "Eenmaal per dag een back-upbestand maken, één dag na de eerste keer opslaan"
 
-#: .././config.py:11251
+#: .././config.py:11282
 msgid "Make a new backup file for every save procedure"
 msgstr "Back-upbestand maken, elke keer na het opslaan"
 
-#: .././config.py:11300
+#: .././config.py:11331
 msgid "Automatic video deletion preferences"
 msgstr "Instellingen omtrent automatische videoverwijdering"
 
-#: .././config.py:11305
+#: .././config.py:11336
 msgid "Automatically delete downloaded videos after this many days"
 msgstr "Gedownloade video's automatisch verwijderen na x aantal dagen"
 
-#: .././config.py:11319
+#: .././config.py:11350
 msgid "...but only delete videos which have been watched"
 msgstr "...maar alleen bekeken video's"
 
-#: .././config.py:11343
+#: .././config.py:11374
 msgid "Video matching preferences"
 msgstr "Instellingen omtrent video-overeenkomsten"
 
-#: .././config.py:11348
+#: .././config.py:11379
 msgid "When matching videos on the filesystem:"
 msgstr "Bij het overeenkomen van video's op het bestandssysteem:"
 
-#: .././config.py:11354
+#: .././config.py:11385
 msgid "The video names must match exactly"
 msgstr "Alleen de videonamen overeen laten komen"
 
-#: .././config.py:11361
+#: .././config.py:11392
 msgid "The first # characters must match exactly"
 msgstr "Alleen eerste x aantal tekens overeen laten komen"
 
-#: .././config.py:11375
+#: .././config.py:11406
 msgid "Ignore the last # characters; the remaining name must match exactly"
 msgstr "Laatste x aantal tekens negeren en de rest overeen laten komen"
 
-#: .././config.py:11421
+#: .././config.py:11452
 msgid "_Temporary folders"
 msgstr "_Tijdelijke mappen"
 
-#: .././config.py:11427
+#: .././config.py:11458
 msgid "Temporary folder preferences"
 msgstr "Instellingen omtrent tijdelijke mappen"
 
-#: .././config.py:11432
+#: .././config.py:11463
 msgid "Empty temporary folders when Tartube shuts down"
 msgstr "Tijdelijke mappen legen na het afsluiten"
 
-#: .././config.py:11441
+#: .././config.py:11472
 msgid "(N.B. Temporary folders are always emptied when Tartube starts up)"
 msgstr "(let op: tijdelijke mappen worden sowieso geleegd bij het openen)"
 
-#: .././config.py:11449
+#: .././config.py:11480
 msgid "Open temporary folders (on the desktop) when Tartube shuts down"
 msgstr "Tijdelijke mappen openen na het afsluiten"
 
-#: .././config.py:11487
+#: .././config.py:11518
 msgid "The Tartube database contains:"
 msgstr "De Tartube-databank bevat:"
 
-#: .././config.py:11547
+#: .././config.py:11578
 msgid "Custom folders"
 msgstr "Aangepaste mappen"
 
-#: .././config.py:11570
+#: .././config.py:11601
 msgid "Calculate"
 msgstr "Berekenen"
 
 #. Add this tab...
-#: .././config.py:11696
+#: .././config.py:11727
 msgid "_Windows"
 msgstr "_Vensters"
 
-#: .././config.py:11719
+#: .././config.py:11750
 msgid "_Main window"
 msgstr "_Hoofdvenster"
 
-#: .././config.py:11725
+#: .././config.py:11756
 msgid "Main window preferences"
 msgstr "Hoofdvensterinstellingen"
 
-#: .././config.py:11730
+#: .././config.py:11761
 msgid "Remember the size of the main window when shutting down"
 msgstr "Afmetingen van hoofdvenster onthouden bij afsluiten"
 
-#: .././config.py:11738
+#: .././config.py:11769
 msgid "Also remember the position of main window sliders"
 msgstr "Ook positie van schuifknoppen op hoofdvenster onthouden"
 
-#: .././config.py:11755
+#: .././config.py:11786
 msgid "Don't show the main window toolbar"
 msgstr "Geen werkbalk tonen op hoofdvenster"
 
-#: .././config.py:11763
+#: .././config.py:11794
 msgid "Don't show labels in the main window toolbar"
 msgstr "Geen werkbalklabels tonen op hoofdvenster"
 
-#: .././config.py:11781
+#: .././config.py:11812
 msgid ""
 "Replace stock icons with custom icons (in case stock icons are not visible)"
 msgstr ""
 "Standaardpictogrammen vervangen door aangepaste (als de "
 "standaardpictogrammen niet worden getoond)"
 
-#: .././config.py:11791
+#: .././config.py:11822
 msgid "Show tooltips for videos, channels, playlists and folders"
 msgstr "Hulpballonnen tonen bij video's, kanalen, afspeellijsten en mappen"
 
-#: .././config.py:11799
+#: .././config.py:11830
 msgid "Show errors/warnings in tooltips (but not in the Videos tab)"
 msgstr ""
 "Fouten/Waarschuwingen tonen in hulpballonnen (maar niet op het tabblad "
 "'Video's')"
 
-#: .././config.py:11817
+#: .././config.py:11848
 msgid "Disable the 'Download all' buttons in the toolbar and the Videos Tab"
 msgstr ""
 "'Alles downloaden'-knoppen op werkbalk en tabblad 'Video's' uitschakelen"
 
-#: .././config.py:11828
+#: .././config.py:11859
 msgid "In the Progress Tab, hide finished videos / channels / playlists"
 msgstr ""
 "Afgeronde video's, kanalen en afspeellijsten verbergen op voortgangstabblad"
 
-#: .././config.py:11837
+#: .././config.py:11868
 msgid "In the Progress Tab, show results in reverse order"
 msgstr "Resultaten in omgekeerde volgorde tonen op voortgangstabblad"
 
-#: .././config.py:11845
+#: .././config.py:11876
 msgid "When Tartube starts, automatically open the Classic Mode tab"
 msgstr "Automatisch opstarten in klassieke modus"
 
-#: .././config.py:11859
+#: .././config.py:11890
 msgid ""
 "In the Classic Mode Tab, when adding URLs, remove duplicates rather than "
 "retaining them"
 msgstr "Duplicaten verwijderen tijdens toevoegen van url's in klassieke modus"
 
-#: .././config.py:11873
+#: .././config.py:11904
 msgid "In the Errors/Warnings Tab, don't reset the tab text when it is clicked"
 msgstr ""
 "Herstel de tabbladtekst niet na aanklikken op het tabblad 'Fouten/"
 "Waarschuwingen'"
 
-#: .././config.py:11896
+#: .././config.py:11927
 msgid "Video Index (left side of the Videos Tab)"
 msgstr "Video-index (links van het tabblad 'Video's')"
 
-#: .././config.py:11902
+#: .././config.py:11933
 msgid "Show smaller icons in the Video Index"
 msgstr "Kleinere pictogrammen tonen in video-index"
 
-#: .././config.py:11912
+#: .././config.py:11943
 msgid ""
 "In the Video Index, show detailed statistics about the videos in each "
 "channel / playlist / folder"
@@ -5664,141 +5676,141 @@ msgstr ""
 "Uitgebreide statistieken tonen in de video-index, met informatie over elk "
 "kanaal, elke afspeellijst en elke map"
 
-#: .././config.py:11923
+#: .././config.py:11954
 msgid ""
 "After clicking on a folder, automatically expand/collapse the tree around it"
 msgstr "Boomstructuur van map automatisch in-/uitklappen na aanklikken"
 
-#: .././config.py:11934
+#: .././config.py:11965
 msgid "Expand the whole tree, not just the level beneath the clicked folder"
 msgstr "Boomstructuur volledig uitklappen na aanklikken"
 
-#: .././config.py:11955
+#: .././config.py:11986
 msgid "Video Catalogue (right side of the Videos Tab)"
 msgstr "Videocatalogus (rechts van het tabblad 'Video's')"
 
-#: .././config.py:11962
+#: .././config.py:11993
 msgid "Show 'today' and 'yesterday' as the date, when possible"
 msgstr "'Vandaag' en 'Gisteren' tonen als datum (indien mogelijk)"
 
-#: .././config.py:11972
+#: .././config.py:12003
 msgid "Draw a frame around each video"
 msgstr "Frame tekenen om elke video"
 
-#: .././config.py:11982
+#: .././config.py:12013
 msgid "Draw status icons for each video"
 msgstr "Statuspictogrammen tonen bij elke video"
 
-#: .././config.py:11991
+#: .././config.py:12022
 msgid "Thumbnail size (when videos are displayed on a grid)"
 msgstr "Miniatuurgrootte (als video's op een rooster worden getoond)"
 
-#: .././config.py:12019
+#: .././config.py:12050
 msgid "Show livestreams with a different background colour"
 msgstr "Andere achtergrondkleur gebruiken bij livestreams"
 
-#: .././config.py:12027
+#: .././config.py:12058
 msgid "Use same background colours for livestream and debut videos"
 msgstr ""
 "Dezelfde achtergrondkleur gebruiken voor livestream- en aanvangsvideo's"
 
-#: .././config.py:12055
+#: .././config.py:12086
 msgid "_Drag"
 msgstr "Ver_slepen"
 
-#: .././config.py:12059
+#: .././config.py:12090
 msgid "Drag and drop preferences"
 msgstr "Instellingen omtrent slepen-en-neerzetten"
 
-#: .././config.py:12065
+#: .././config.py:12096
 msgid "When dragging and dropping videos to an external application..."
 msgstr "Bij het verslepen van video's naar een extern programma..."
 
-#: .././config.py:12071
+#: .././config.py:12102
 msgid "Transfer the video's full file path"
 msgstr "Volledige videopad delen"
 
-#: .././config.py:12079
+#: .././config.py:12110
 msgid "Transfer the video's source URL"
 msgstr "Video-bronurl delen"
 
-#: .././config.py:12087
+#: .././config.py:12118
 msgid "Transfer the video's name"
 msgstr "Videonaam delen"
 
-#: .././config.py:12095
+#: .././config.py:12126
 msgid "Transfer the thumbnail's full file path"
 msgstr "Volledige videominiatuurpad delen"
 
-#: .././config.py:12111
+#: .././config.py:12142
 msgid "_System tray"
 msgstr "_Systeemvak"
 
-#: .././config.py:12117
+#: .././config.py:12148
 msgid "System tray preferences"
 msgstr "Systeemvakinstellingen"
 
-#: .././config.py:12122
+#: .././config.py:12153
 msgid "Show icon in system tray"
 msgstr "Systeemvakpictogram tonen"
 
-#: .././config.py:12131
+#: .././config.py:12162
 msgid "Close to the tray, rather than closing the application"
 msgstr "Minimaliseren naar systeemvak in plaats van afsluiten"
 
-#: .././config.py:12157
+#: .././config.py:12188
 msgid "D_ialogues"
 msgstr "D_ialoogvensters"
 
-#: .././config.py:12163
+#: .././config.py:12194
 msgid "Dialogue window preferences"
 msgstr "Dialoogvensterinstellingen"
 
-#: .././config.py:12168
+#: .././config.py:12199
 msgid "When adding channels/playlists, keep the dialogue window open"
 msgstr "Dialoogvenster openhouden na toevoegen van kanalen en afspeellijsten"
 
-#: .././config.py:12178
+#: .././config.py:12209
 msgid "When the dialogue window opens, add URLs from the system clipboard"
 msgstr "URL's van klembord toevoegen aan geopend dialoogvenster"
 
-#: .././config.py:12206
+#: .././config.py:12237
 msgid "_Errors/Warnings"
 msgstr "Fout_en/Waarschuwingen"
 
-#: .././config.py:12214
+#: .././config.py:12245
 msgid "Errors/Warnings tab preferences"
 msgstr "Instellingen omtrent fouten en waarschuwingen"
 
-#: .././config.py:12219
+#: .././config.py:12250
 msgid "Show Tartube error messages"
 msgstr "Tartube-foutmeldingen tonen"
 
-#: .././config.py:12227
+#: .././config.py:12258
 msgid "Show Tartube warning messages"
 msgstr "Tartube-waarschuwingen tonen"
 
-#: .././config.py:12235
+#: .././config.py:12266
 msgid "Show server error messages"
 msgstr "Serverfoutmeldingen tonen"
 
-#: .././config.py:12246
+#: .././config.py:12277
 msgid "Show server warning messages"
 msgstr "Serverwaarschuwingen tonen"
 
-#: .././config.py:12258
+#: .././config.py:12289
 msgid "Downloader error/warning preferences"
 msgstr "Instellingen omtrent downloadfouten/-waarschuwingen"
 
-#: .././config.py:12263
+#: .././config.py:12294
 msgid "TRANSLATOR'S NOTE: These error messages are always in English"
 msgstr "TRANSLATOR'S NOTE: These error messages are always in English"
 
-#: .././config.py:12267
+#: .././config.py:12298
 msgid "Ignore 'Child process exited with non-zero code' errors"
 msgstr "'Onderliggend proces is gestopt met niet-nulcode'-fouten negeren"
 
-#: .././config.py:12276
+#: .././config.py:12307
 msgid ""
 "Ignore 'Unable to download video data' and 'Unable to extract video data' "
 "errors"
@@ -5806,55 +5818,55 @@ msgstr ""
 "'Kan videogegevens niet ophalen' en 'Kan videogegevens niet extraheren' "
 "negeren"
 
-#: .././config.py:12286
+#: .././config.py:12317
 msgid "Ignore 'Did not get any data blocks' errors"
 msgstr "'Geen gegevensblokken verkregen' negeren"
 
-#: .././config.py:12295
+#: .././config.py:12326
 msgid "Ignore 'Requested formats are incompatible for merge' warnings"
 msgstr "'De opgevraagde formaten kunnen niet worden samengevoegd' negeren"
 
-#: .././config.py:12304
+#: .././config.py:12335
 msgid "Ignore 'No video formats found' errors"
 msgstr "'Geen videoformaten aangetroffen' negeren"
 
-#: .././config.py:12312
+#: .././config.py:12343
 msgid "Ignore 'There are no annotations to write' warnings"
 msgstr "'Geen weg te schrijven aantekeningen' negeren"
 
-#: .././config.py:12320
+#: .././config.py:12351
 msgid "Ignore 'Video doesn't have subtitles' warnings"
 msgstr "'De video bevat geen ondertiteling' negeren"
 
-#: .././config.py:12336
+#: .././config.py:12367
 msgid "_Websites"
 msgstr "_Websites"
 
-#: .././config.py:12344
+#: .././config.py:12375
 msgid "YouTube error/warning preferences"
 msgstr "Instellingen omtrent YouTube-fouten/-waarschuwingen van"
 
-#: .././config.py:12349
+#: .././config.py:12380
 msgid "Ignore YouTube copyright errors"
 msgstr "Copyrightfouten negeren"
 
-#: .././config.py:12357
+#: .././config.py:12388
 msgid "Ignore YouTube age-restriction errors"
 msgstr "Leeftijdsbeperkingen negeren"
 
-#: .././config.py:12365
+#: .././config.py:12396
 msgid "Ignore YouTube deletion by uploader errors"
 msgstr "'Verwijderd door uploader' negeren"
 
-#: .././config.py:12373
+#: .././config.py:12404
 msgid "Ignore YouTube payment errors"
 msgstr "Betaalfouten negeren"
 
-#: .././config.py:12382
+#: .././config.py:12413
 msgid "General preferences"
 msgstr "Algemene instellingen"
 
-#: .././config.py:12388
+#: .././config.py:12419
 msgid ""
 "Ignore any errors/warnings which match lines in this list (applies to all "
 "websites)"
@@ -5862,77 +5874,77 @@ msgstr ""
 "Alle fouten/waarschuwingen op deze lijst negeren (van toepassing op alle "
 "websites)"
 
-#: .././config.py:12402
+#: .././config.py:12433
 msgid "These are ordinary strings"
 msgstr "Dit zijn normale tekenreeksen"
 
-#: .././config.py:12409
+#: .././config.py:12440
 msgid "These are regular expressions (regexes)"
 msgstr "Dit zijn reguliere uitdrukkingen (regexes)"
 
 #. Add this tab...
-#: .././config.py:12438
+#: .././config.py:12469
 msgid "_Scheduling"
 msgstr "_Inplannen"
 
-#: .././config.py:12455
+#: .././config.py:12486
 msgid "_Start"
 msgstr "_Beginnen"
 
-#: .././config.py:12461
+#: .././config.py:12492
 msgid "Scheduled download preferences"
 msgstr "Planinstellingen omtrent downloads"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Priority"
 msgstr "Prioriteit"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Whole"
 msgstr "Geheel"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Shutdown"
 msgstr "Afsluiten"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "D/L All"
 msgstr "Alles downloaden"
 
-#: .././config.py:12483
+#: .././config.py:12514
 msgid "Join mode"
 msgstr "Samenvoegmodus"
 
-#: .././config.py:12537 .././config.py:14468 .././config.py:14733
+#: .././config.py:12568 .././config.py:14499 .././config.py:14764
 msgid "Edit"
 msgstr "Bewerken"
 
-#: .././config.py:12564 .././config.py:14504 .././config.py:14769
+#: .././config.py:12595 .././config.py:14535 .././config.py:14800
 msgid "Delete"
 msgstr "Verwijderen"
 
-#: .././config.py:12632
+#: .././config.py:12663
 msgid "S_top"
 msgstr "A_fbreken"
 
-#: .././config.py:12638
+#: .././config.py:12669
 msgid "Scheduled stop preferences"
 msgstr "Planinstellingen omtrent afbreken"
 
-#: .././config.py:12643
+#: .././config.py:12674
 msgid "Stop all download operations after this much time"
 msgstr "Alle downloads afbreken na opgegeven verstreken tijd"
 
-#: .././config.py:12691
+#: .././config.py:12722
 msgid "Stop all download operations after this many videos"
 msgstr "Alle downloads afbreken na opgegeven aantal video's"
 
-#: .././config.py:12718
+#: .././config.py:12749
 msgid "Stop all download operations after this much disk space"
 msgstr ""
 "Alle downloads afbreken na opgegeven hoeveelheid gebruikte schijfruimte"
 
-#: .././config.py:12761
+#: .././config.py:12792
 msgid ""
 "N.B. Disk space is estimated. This setting does not apply to simulated "
 "downloads"
@@ -5940,31 +5952,31 @@ msgstr ""
 "Let op: de gebruikte schijfruimte is een schatting en is niet van toepassing "
 "op simulaties."
 
-#: .././config.py:12799
+#: .././config.py:12830
 msgid "_Performance"
 msgstr "_Prestaties"
 
-#: .././config.py:12807
+#: .././config.py:12838
 msgid "Performance limits"
 msgstr "Prestatiebeperkingen"
 
-#: .././config.py:12812
+#: .././config.py:12843
 msgid "Limit simultaneous downloads to"
 msgstr "Aantal gelijktijdige downloads beperken tot"
 
-#: .././config.py:12830
+#: .././config.py:12861
 msgid "Limit download speed to"
 msgstr "Downloadsnelheid beperken tot"
 
-#: .././config.py:12856
+#: .././config.py:12887
 msgid "Overriding video format options, limit video resolution to"
 msgstr "Videoresolutie gedwongen beperken tot"
 
-#: .././config.py:12878
+#: .././config.py:12909
 msgid "Time-saving settings"
 msgstr "Tijdbesparende instellingen"
 
-#: .././config.py:12884
+#: .././config.py:12915
 msgid ""
 "Stop checking/downloading a channel/playlist when it starts sending videos "
 "you already have"
@@ -5972,45 +5984,45 @@ msgstr ""
 "Kanalen/Afspeellijsten niet meer controleren na toevoegen van reeds "
 "aanwezige video's"
 
-#: .././config.py:12895
+#: .././config.py:12926
 msgid "Stop after this many videos (when checking)"
 msgstr "Afbreken na opgegeven aantal video's (bij controles)"
 
-#: .././config.py:12910
+#: .././config.py:12941
 msgid "Stop after this many videos (when downloading)"
 msgstr "Afbreken na opgegeven aantal video's (tijdens downloaden)"
 
-#: .././config.py:12941
+#: .././config.py:12972
 msgid "P_references"
 msgstr "I_nstellingen"
 
-#: .././config.py:12949
+#: .././config.py:12980
 msgid "URL flexibility preferences"
 msgstr "URL-flexibiliteitsinstellingen"
 
-#: .././config.py:12956
+#: .././config.py:12987
 msgid ""
 "If a video's URL represents a channel/playlist, not a video, don't download "
 "it"
 msgstr "Video niet ophalen als url naar een kanaal/afspeellijst leidt"
 
-#: .././config.py:12965
+#: .././config.py:12996
 msgid "...or, download multiple videos into the containing folder"
 msgstr "...of meerdere video's downloaden naar bijbehorende map"
 
-#: .././config.py:12975
+#: .././config.py:13006
 msgid "...or, create a new channel, and download the videos into that"
 msgstr "...of nieuw kanaal toevoegen en video's daarnaartoe downloaden"
 
-#: .././config.py:12986
+#: .././config.py:13017
 msgid "...or, create a new playlist, and download the videos into that"
 msgstr "...of nieuwe afspeellijst toevoegen en video's daarnaartoe downloaden"
 
-#: .././config.py:13018
+#: .././config.py:13049
 msgid "Missing video preferences"
 msgstr "Instellingen omtrent ontbrekende video's"
 
-#: .././config.py:13024
+#: .././config.py:13055
 msgid ""
 "Add videos which have been removed from a channel/playlist to the Missing "
 "Videos folder"
@@ -6018,55 +6030,55 @@ msgstr ""
 "Van kanaal/afspeellijst verwijderde video's toevoegen aan map 'Ontbrekende "
 "video's'"
 
-#: .././config.py:13035
+#: .././config.py:13066
 msgid "Only add videos that were uploaded within this many days"
 msgstr ""
 "Alleen video's toevoegen die zijn geüpload binnen het opgegeven aantal dagen"
 
-#: .././config.py:13076
+#: .././config.py:13107
 msgid "Invidious mirror"
 msgstr "Invidious-spiegelserver"
 
-#: .././config.py:13082
+#: .././config.py:13113
 msgid "To find an updated list of Invidious mirrors, use any search engine!"
 msgstr ""
 "Gebruik je favoriete zoekmachine om een lijst met Invidious-spiegelservers "
 "te vinden."
 
-#: .././config.py:13095 .././config.py:13407
+#: .././config.py:13126 .././config.py:13438
 msgid "Type the exact text that replaces youtube.com e.g."
 msgstr ""
 "Voer de letterlijke tekst in die youtube.com moet vervangen. Voorbeeld:"
 
-#: .././config.py:13121
+#: .././config.py:13152
 msgid "Download operation preferences"
 msgstr "Downloadactie-instellingen"
 
-#: .././config.py:13127
+#: .././config.py:13158
 msgid "Automatically update downloader before every download operation"
 msgstr "Downloader automatisch bijwerken vóór elke downloadactie"
 
-#: .././config.py:13139
+#: .././config.py:13170
 msgid "Automatically save files at the end of all operations"
 msgstr "Bestanden automatisch opslaan na afronden"
 
-#: .././config.py:13149
+#: .././config.py:13180
 msgid "For simulated downloads, don't check a video in a folder more than once"
 msgstr "Video's eenmalig controleren tijdens simulaties"
 
-#: .././config.py:13160
+#: .././config.py:13191
 msgid "If a download stalls, restart it after this many minutes"
 msgstr "Onderbroken downloads herstarten na opgegeven aantal minuten"
 
-#: .././config.py:13181
+#: .././config.py:13212
 msgid "If a network problem is detected, restart the download immediately"
 msgstr "Downloads direct herstarten na netwerkprobleem"
 
-#: .././config.py:13193
+#: .././config.py:13224
 msgid "Maximum restarts after a stalled download (0 for no maximum)"
 msgstr "Maximaal aantal herstartingen na onderbroken download (0 = onbeperkt)"
 
-#: .././config.py:13234
+#: .././config.py:13265
 msgid ""
 "Allow downloader to create its own archive file (so deleted videos are not "
 "re-downloaded)"
@@ -6074,17 +6086,17 @@ msgstr ""
 "Downloader toestaan eigen archiefbestand te maken (zodat verwijderde video's "
 "niet nogmaals worden gedownload)"
 
-#: .././config.py:13245
+#: .././config.py:13276
 msgid ""
 "Also create an archive file when downloading from the Classic Mode tab (not "
 "recommended)"
 msgstr "Archiefbestand maken bij gebruik van klassieke modus (niet aanbevolen)"
 
-#: .././config.py:13256
+#: .././config.py:13287
 msgid "When checking videos, apply a 60-second timeout"
 msgstr "Time-out van 60 seconden hanteren bij controles"
 
-#: .././config.py:13266
+#: .././config.py:13297
 msgid ""
 "Convert .webp thumbnails into .jpg thumbnails (using FFmpeg) after "
 "downloading them"
@@ -6092,22 +6104,22 @@ msgstr ""
 ".webp-miniaturen converteren naar .jpg-miniaturen (middels FFmpeg) na het "
 "downloaden"
 
-#: .././config.py:13283
+#: .././config.py:13314
 msgid "_Custom"
 msgstr "_Aangepast"
 
-#: .././config.py:13288
+#: .././config.py:13319
 msgid "Custom download preferences"
 msgstr "Aangepaste downloadinstellingen"
 
-#: .././config.py:13294
+#: .././config.py:13325
 msgid ""
 "In custom downloads, download each video independently of its channel or "
 "playlist"
 msgstr ""
 "Elke video los van kanaal of afspeellijst downloaden in aangepaste downloads"
 
-#: .././config.py:13305
+#: .././config.py:13336
 msgid ""
 "In custom downloads, apply a delay after each video/channel/playlist is "
 "download"
@@ -6115,74 +6127,74 @@ msgstr ""
 "Vertraging toepassing na downloaden elk kanaal, elke video of afspeellijst "
 "in aangepaste downloads"
 
-#: .././config.py:13315
+#: .././config.py:13346
 msgid "Maximum delay to apply (in minutes)"
 msgstr "Maximale vertraging (in minuten)"
 
-#: .././config.py:13332
+#: .././config.py:13363
 msgid "Minimum delay to apply (in minutes; randomises the actual delay)"
 msgstr ""
 "Minimale vertraging (in minuten - dit leidt tot een willekeurige vertraging)"
 
-#: .././config.py:13355
+#: .././config.py:13386
 msgid "In custom downloads, obtain a YouTube video from the original website"
 msgstr ""
 "YouTube-video van oorspronkelijke website ophalen in aangepaste downloads"
 
-#: .././config.py:13365
+#: .././config.py:13396
 msgid "In custom downloads, obtain the video from HookTube rather than YouTube"
 msgstr ""
 "Video van HookTube ophalen in plaats van YouTube in aangepaste downloads"
 
-#: .././config.py:13377
+#: .././config.py:13408
 msgid ""
 "In custom downloads, obtain the video from Invidious rather than YouTube"
 msgstr ""
 "Video van Invidious ophalen in plaats van YouTube in aangepaste downloads"
 
-#: .././config.py:13389
+#: .././config.py:13420
 msgid ""
 "In custom downloads, obtain the video from the YouTube front-end specified "
 "below"
 msgstr "Video middels ander YouTube-frontend ophalen in aangepaste downloads"
 
-#: .././config.py:13489
+#: .././config.py:13520
 msgid "Livestream preferences (compatible websites only)"
 msgstr "Livestreaminstellingen (alleen compatibele websites)"
 
-#: .././config.py:13495
+#: .././config.py:13526
 msgid "Detect livestreams announced within this many days"
 msgstr "Livestreams binnen opgegeven aantal dagen detecteren"
 
-#: .././config.py:13510
+#: .././config.py:13541
 msgid "How often to check the status of livestreams (in minutes)"
 msgstr ""
 "Hoe vaak de livestreamstatussen moeten worden gecontroleerd (in minuten)"
 
-#: .././config.py:13529
+#: .././config.py:13560
 msgid "Check more frequently when a livestream is due to start"
 msgstr "Vaker controleren als livestream op het punt staat te beginnen"
 
-#: .././config.py:13572
+#: .././config.py:13603
 msgid "Broadcast preferences (compatible websites only)"
 msgstr "Uitzendinstellingen (alleen compatibele websites)"
 
-#: .././config.py:13579
+#: .././config.py:13610
 msgid ""
 "Use Youtube Stream Capture to download broadcasting livestreams (requires "
 "aria2)"
 msgstr ""
 "YouTube-streamopname gebruiken om livestreams te downloaden (vereist aria2)"
 
-#: .././config.py:13589
+#: .././config.py:13620
 msgid "Timeout after this many minutes of inactivity"
 msgstr "Time-out na opgegeven aantal minuten inactiviteit"
 
-#: .././config.py:13603
+#: .././config.py:13634
 msgid "Number of restarts after a timeout"
 msgstr "Aantal herstartingen na time-out"
 
-#: .././config.py:13618
+#: .././config.py:13649
 msgid ""
 "Bypass usual limits on simultaneous downloads, so that all broadcasts can be "
 "downloaded"
@@ -6190,127 +6202,127 @@ msgstr ""
 "Gebruikelijke beperkingen omzeilen tijdens gelijktijdige downloads om alle "
 "livestreams te downloaden"
 
-#: .././config.py:13659
+#: .././config.py:13690
 msgid "_Proxies"
 msgstr "_Proxy's"
 
-#: .././config.py:13665
+#: .././config.py:13696
 msgid "Proxies"
 msgstr "Proxy's"
 
-#: .././config.py:13672
+#: .././config.py:13703
 msgid ""
 "During a download operation, Tartube will cycle betwween the proxies in this "
 "list"
 msgstr "Tijdens het downloaden schakelt Tartube tussen proxy's op deze lijst"
 
-#: .././config.py:13693
+#: .././config.py:13724
 msgid "_Actions"
 msgstr "_Acties"
 
-#: .././config.py:13702
+#: .././config.py:13733
 msgid "Livestream actions (can be toggled for individual videos)"
 msgstr "Livestreamacties (deze kunnen per video worden ingesteld)"
 
-#: .././config.py:13709
+#: .././config.py:13740
 msgid "(currently disabled on MS Windows)"
 msgstr "(momenteel uitgeschakeld op Windows)"
 
-#: .././config.py:13714
+#: .././config.py:13745
 msgid "When a livestream starts, show a desktop notification"
 msgstr "Melding tonen als een livestream begint"
 
-#: .././config.py:13728
+#: .././config.py:13759
 msgid "When a livestream starts, sound an alarm"
 msgstr "Geluid afspelen als een livestream begint"
 
-#: .././config.py:13751
+#: .././config.py:13782
 msgid "Plays the selected sound effect"
 msgstr "Gekozen geluidseffect afspelen"
 
-#: .././config.py:13758
+#: .././config.py:13789
 msgid "When a livestream starts, open it in the system's web browser"
 msgstr "Livestream openen in webbrowser zodra deze begint"
 
-#: .././config.py:13770
+#: .././config.py:13801
 msgid "When a livestream starts, begin downloading it immediately"
 msgstr "Downloaden starten als de livestream begint"
 
-#: .././config.py:13796
+#: .././config.py:13827
 msgid "Desktop notification preferences"
 msgstr "Meldingsinstellingen"
 
-#: .././config.py:13803
+#: .././config.py:13834
 msgid "Show a dialogue window at the end of an operation"
 msgstr "Dialoogvenster tonen na afronden van acties"
 
-#: .././config.py:13828
+#: .././config.py:13859
 msgid "Don't notify the user at the end of an operation"
 msgstr "Geen melding tonen na afronden van acties"
 
-#: .././config.py:13882
+#: .././config.py:13913
 msgid "_Forks"
 msgstr "A_fsplitsingen"
 
-#: .././config.py:13888
+#: .././config.py:13919
 msgid "Forks of youtube-dl"
 msgstr "Afsplitsingen van youtube-dl"
 
-#: .././config.py:13917
-msgid "Use youtube-dlc"
-msgstr "youtube-dlc gebruiken"
+#: .././config.py:13948
+msgid "Use yt-dlp"
+msgstr ""
 
-#: .././config.py:13946
+#: .././config.py:13977
 msgid "Use youtube-dl"
 msgstr "youtube-dl gebruiken"
 
-#: .././config.py:13974
+#: .././config.py:14005
 msgid "Use a different fork of youtube-dl:"
 msgstr "Andere afsplitsing van youtube-dl gebruiken:"
 
-#: .././config.py:14051
+#: .././config.py:14082
 msgid "_File paths"
 msgstr "_Bestandspaden"
 
-#: .././config.py:14058
+#: .././config.py:14089
 msgid "Downloader file paths"
 msgstr "Bestandspaden van downloader"
 
-#: .././config.py:14064
+#: .././config.py:14095
 msgid "Path to the executable"
 msgstr "Pad naar uitvoerbaar bestand"
 
 #. (Signal connect appears below)
-#: .././config.py:14070 .././config.py:14218 .././config.py:14259
-#: .././config.py:14329 .././config.py:20068
+#: .././config.py:14101 .././config.py:14249 .././config.py:14290
+#: .././config.py:14360 .././config.py:20098
 msgid "Use default path"
 msgstr "Standaardpad gebruiken"
 
-#: .././config.py:14075 .././config.py:20080
+#: .././config.py:14106 .././config.py:20110
 msgid "Use local path"
 msgstr "Lokaal pad gebruiken"
 
-#: .././config.py:14079
+#: .././config.py:14110
 msgid "Use custom path"
 msgstr ""
 
-#: .././config.py:14087 .././config.py:20094
+#: .././config.py:14118 .././config.py:20124
 msgid "Use PyPI path"
 msgstr "PyPI-pad gebruiken"
 
-#: .././config.py:14138
+#: .././config.py:14169
 msgid "Command for update operations"
 msgstr "Opdracht voor bijwerkacties"
 
-#: .././config.py:14186
+#: .././config.py:14217
 msgid "_FFmpeg / AVConv"
 msgstr "_FFmpeg/AVConv"
 
-#: .././config.py:14194
+#: .././config.py:14225
 msgid "Post-processing file paths"
 msgstr "Naverwerkingsbestandspaden"
 
-#: .././config.py:14199
+#: .././config.py:14230
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
@@ -6318,31 +6330,31 @@ msgstr ""
 "Je hoeft deze paden alleen in te stellen als Tartube FFmpeg of AVConv niet "
 "automatisch heeft aangetroffen"
 
-#: .././config.py:14206
+#: .././config.py:14237
 msgid "Path to the FFmpeg executable"
 msgstr "Pad naar uitvoerbaar FFmpeg-bestand"
 
-#: .././config.py:14233
+#: .././config.py:14264
 msgid "Install from main menu"
 msgstr "Installeren vanuit hoofdmenu"
 
-#: .././config.py:14247
+#: .././config.py:14278
 msgid "Path to the AVConv executable"
 msgstr "Pad naar uitvoerbaar AVConv-bestand"
 
-#: .././config.py:14274
+#: .././config.py:14305
 msgid "Not supported on MS Windows"
 msgstr "Wordt niet ondersteund op Windows"
 
-#: .././config.py:14297
+#: .././config.py:14328
 msgid "_Stream Capture"
 msgstr "_Streamopname"
 
-#: .././config.py:14305
+#: .././config.py:14336
 msgid "Youtube Stream Capture file path"
 msgstr "Bestandspad naar YouTube-streamopname"
 
-#: .././config.py:14310
+#: .././config.py:14341
 msgid ""
 "Tartube includes a copy of this script, but you can use a different copy, if "
 "you want"
@@ -6350,246 +6362,246 @@ msgstr ""
 "Tartube levert een kopie van dit script mee, maar als je wilt kun je een "
 "andere kopie gebruiken"
 
-#: .././config.py:14317
+#: .././config.py:14348
 msgid "Path to the YT Stream Capture executable"
 msgstr "Pad naar uitvoerbaar bestand van YouTube-streamopname"
 
-#: .././config.py:14375
+#: .././config.py:14406
 msgid "_Download options"
 msgstr "Download_opties"
 
-#: .././config.py:14382
+#: .././config.py:14413
 msgid "List of download options managers"
 msgstr "Lijst met downloadoptiebeheerders"
 
-#: .././config.py:14402
+#: .././config.py:14433
 msgid "Classic Mode"
 msgstr "Klassieke modus"
 
-#: .././config.py:14403
+#: .././config.py:14434
 msgid "Applied to media"
 msgstr "Toegepast op media"
 
-#: .././config.py:14477 .././config.py:14742
+#: .././config.py:14508 .././config.py:14773
 msgid "Export"
 msgstr "Exporteren"
 
-#: .././config.py:14486 .././config.py:14751
+#: .././config.py:14517 .././config.py:14782
 msgid "Clone"
 msgstr "Klonen"
 
-#: .././config.py:14495
+#: .././config.py:14526
 msgid "Use in Classic Mode tab"
 msgstr "Toevoegen aan klassieke modus"
 
-#: .././config.py:14520 .././config.py:14785
+#: .././config.py:14551 .././config.py:14816
 msgid "Refresh list"
 msgstr "Lijst verversen"
 
-#: .././config.py:14601
+#: .././config.py:14632
 msgid "_Preferences"
 msgstr "_Instellingen"
 
-#: .././config.py:14608
+#: .././config.py:14639
 msgid "Download options preferences"
 msgstr "Downloadoptie-instellingen"
 
-#: .././config.py:14614
+#: .././config.py:14645
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
 msgstr "Algemene downloadopties klonen bij toepassing van downloadopties"
 
-#: .././config.py:14625
+#: .././config.py:14656
 msgid "After downloading a video, destroy its download options"
 msgstr "Downloadopties vergeten na downloaden van video's"
 
-#: .././config.py:14642
+#: .././config.py:14673
 msgid "_FFmpeg options"
 msgstr "_FFmpeg-opties"
 
-#: .././config.py:14649
+#: .././config.py:14680
 msgid "List of FFmpeg options managers"
 msgstr "Lijst met FFmpeg-optiebeheerders"
 
-#: .././config.py:14669
+#: .././config.py:14700
 msgid "Current"
 msgstr "Huidige"
 
-#: .././config.py:14760
+#: .././config.py:14791
 msgid "Use these options"
 msgstr "Deze opties gebruiken"
 
 #. Add this tab...
-#: .././config.py:14851
+#: .././config.py:14882
 msgid "O_utput"
 msgstr "_Uitvoer"
 
-#: .././config.py:14870
+#: .././config.py:14901
 msgid "_Output Tab"
 msgstr "_Uitvoertabblad"
 
-#: .././config.py:14878
+#: .././config.py:14909
 msgid "Output Tab preferences"
 msgstr "Instellingen omtrent uitvoertabblad"
 
-#: .././config.py:14883
+#: .././config.py:14914
 msgid "Display downloader system commands in the Output Tab"
 msgstr "Systeemopdrachten van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14892
+#: .././config.py:14923
 msgid "Display output from downloader's STDOUT in the Output Tab"
 msgstr "STDOUT-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14901 .././config.py:15063
+#: .././config.py:14932 .././config.py:15094
 msgid "...but don't write each video's JSON data"
 msgstr "...maar schrijf geen json-gegevens van elke video weg"
 
-#: .././config.py:14912 .././config.py:15074
+#: .././config.py:14943 .././config.py:15105
 msgid "...but don't write each video's download progress"
 msgstr "...maar schrijf geen downloadvoortgang van elke video weg"
 
-#: .././config.py:14931
+#: .././config.py:14962
 msgid "Display output from downloader's STDERR in the Output Tab"
 msgstr "STDERR-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
-#: .././config.py:14940
+#: .././config.py:14971
 msgid "Limit the size of Output Tab pages to"
 msgstr "Aantal pagina's op tabblad 'Uitvoer' beperken tot"
 
-#: .././config.py:14961
+#: .././config.py:14992
 msgid "Empty pages in the Output Tab at the start of every operation"
 msgstr "Pagina's op tabblad 'Uitvoer' legen na elke actie"
 
-#: .././config.py:14971
+#: .././config.py:15002
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
 msgstr ""
 "Samenvatting van actieve processen tonen (herstart om deze wijziging toe te "
 "passen)"
 
-#: .././config.py:14983
+#: .././config.py:15014
 msgid "During an update operation, automatically switch to the Output tab"
 msgstr "Automatisch overschakelen naar tabblad 'Uitvoer' tijdens bijwerken"
 
-#: .././config.py:14994
+#: .././config.py:15025
 msgid "During a refresh operation, show all matching videos in the Output Tab"
 msgstr ""
 "Alle overeenkomende video's tonen op tabblad 'Uitvoer' tijdens bijwerken"
 
-#: .././config.py:15005
+#: .././config.py:15036
 msgid "...also show all non-matching videos"
 msgstr "...en ook niet-overeenkomende video's tonen"
 
-#: .././config.py:15034
+#: .././config.py:15065
 msgid "_Terminal window"
 msgstr "_Terminalvenster"
 
-#: .././config.py:15040
+#: .././config.py:15071
 msgid "Terminal window preferences"
 msgstr "Terminalvensterinstellingen"
 
-#: .././config.py:15045
+#: .././config.py:15076
 msgid "Write downloader system commands to the terminal window"
 msgstr "Systeemopdrachten van downloader tonen in terminalvenster"
 
-#: .././config.py:15054
+#: .././config.py:15085
 msgid "Write output from downloader's STDOUT to the terminal window"
 msgstr "STDOUT-uitvoer van downloader tonen in terminalvenster"
 
-#: .././config.py:15096
+#: .././config.py:15127
 msgid "Write output from downloader's STDERR to the terminal window"
 msgstr "STDERR-uitvoer van downloader tonen in terminalvenster"
 
-#: .././config.py:15115
+#: .././config.py:15146
 msgid "_Both"
 msgstr "_Beide"
 
-#: .././config.py:15120
+#: .././config.py:15151
 msgid ""
 "Special preferences (applies to both the Output Tab and the terminal window)"
 msgstr ""
 "Speciale instellingen (van toepassing op het tabblad 'Uitvoer' en het "
 "terminalvenster)"
 
-#: .././config.py:15127
+#: .././config.py:15158
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
 msgstr "Uitgebreide uitvoer van downloader (youtube-dl-foutopsporingsmodus)"
 
-#: .././config.py:15136
+#: .././config.py:15167
 msgid "Youtube Stream Capture writes verbose output"
 msgstr "Uitgebreide uitvoer van streamopname"
 
-#: .././config.py:16053
+#: .././config.py:16084
 msgid "Are you sure you want to create a new database at this location?"
 msgstr ""
 "Weet je zeker dat je een nieuwe databank wilt aanmaken op deze locatie?"
 
-#: .././config.py:16160
+#: .././config.py:16191
 msgid "Are you sure you want to forget this database?"
 msgstr "Weet je zeker dat je deze databank wilt wissen?"
 
-#: .././config.py:16195
+#: .././config.py:16226
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr "Weet je zeker dat je alle databanken, behalve de huidige, wilt wissen?"
 
-#: .././config.py:16399
+#: .././config.py:16430
 msgid "No database exists at this location:"
 msgstr "Er is geen databank op deze locatie:"
 
-#: .././config.py:16401
+#: .././config.py:16432
 msgid "Do you want to create a new one?"
 msgstr "Wil je een nieuwe aanmaken?"
 
-#: .././config.py:17041
+#: .././config.py:17072
 msgid "The current options manager cannot be deleted"
 msgstr "De huidige optiebeheerder kan niet worden verwijderd"
 
-#: .././config.py:17049 .././config.py:18049
+#: .././config.py:17080 .././config.py:18080
 msgid "Are you sure you want to delete this options manager?"
 msgstr "Weet je zeker dat je deze optiebeheerder wilt verwijderen?"
 
-#: .././config.py:17243 .././config.py:17590 .././config.py:19074
+#: .././config.py:17274 .././config.py:17621 .././config.py:19105
 msgid "The new setting will be applied when Tartube restarts"
 msgstr "Herstart Tartube om de instellingen toe te passen"
 
-#: .././config.py:18041
+#: .././config.py:18072
 msgid "The default options manager cannot be deleted"
 msgstr "De standaard optiebeheerder kan niet worden verwijderd"
 
-#: .././config.py:18736
+#: .././config.py:18767
 msgid "There is already a scheduled download with that name"
 msgstr "Er is al een ingeplande download met die naam"
 
-#: .././config.py:18783
+#: .././config.py:18814
 msgid "Are you sure you want to delete this scheduled download?"
 msgstr "Weet je zeker dat je deze ingeplande download wilt verwijderen?"
 
-#: .././config.py:18951
+#: .././config.py:18982
 msgid "Please select the AVConv executable"
 msgstr "Kies het uitvoerbare AVConv-bestand"
 
-#: .././config.py:18984
+#: .././config.py:19015
 msgid "Please select the FFmpeg executable"
 msgstr "Kies het uitvoerbare FFmpeg-bestand"
 
-#: .././config.py:19017
+#: .././config.py:19048
 msgid "Please select the Youtube Stream Capture executable"
 msgstr "Kies het uitvoerbare YouTube-streamopnamebestand"
 
-#: .././config.py:19807
+#: .././config.py:19837
 msgid "Select the youtube-dl-compatible executable"
 msgstr ""
 
-#: .././config.py:19991
+#: .././config.py:20021
 msgid "Database file not loaded"
 msgstr "Geen databank geladen"
 
-#: .././config.py:20011
+#: .././config.py:20041
 msgid "Did not try to load the database file"
 msgstr "Niet geprobeerd om de databank te laden"
 
-#: .././config.py:20036
+#: .././config.py:20066
 msgid "Database file loaded"
 msgstr "Databank geladen"
 
@@ -6658,54 +6670,54 @@ msgstr "Bezig met controleren van rss-feed"
 msgid "Cannot download videos in a private folder"
 msgstr "Video's kunnen niet worden gedownload naar privémappen"
 
-#: .././downloads.py:2986 .././downloads.py:5243
+#: .././downloads.py:2986 .././downloads.py:5256
 msgid "Download did not start"
 msgstr "Downloaden is niet begonnen"
 
-#: .././downloads.py:2994 .././downloads.py:5255 .././info.py:364
+#: .././downloads.py:2994 .././downloads.py:5268 .././info.py:364
 #: .././updates.py:278 .././updates.py:476
 msgid "Child process exited with non-zero code: {}"
 msgstr "Onderliggend proces is gestopt met niet-nulcode: {}"
 
-#: .././downloads.py:3108 .././downloads.py:4060
+#: .././downloads.py:3108 .././downloads.py:4072
 msgid ""
 "This video has a URL that points to a channel or a playlist, not a video"
 msgstr ""
 "Deze video bevat een url die leidt naar een kanaal of afspeellijst in plaats "
 "van een video"
 
-#: .././downloads.py:3937 .././downloads.py:3951
+#: .././downloads.py:3949 .././downloads.py:3963
 msgid "Simulated download of:"
 msgstr "Gesimuleerde download van:"
 
-#: .././downloads.py:3959
+#: .././downloads.py:3971
 msgid "Simulated download of video with unprintable characters"
 msgstr "Gesimuleerde videodownload met onleesbare tekens"
 
 #. This object creates more messages for the Output Tab and/or terminal,
 #. than downloads.VideoDownloader would do, as the output generated by
 #. Youtube Stream Capture is not easy for the user to interpret
-#: .././downloads.py:5134
+#: .././downloads.py:5147
 msgid "Tartube is starting the stream capture..."
 msgstr "Bezig met starten van streamopname..."
 
-#: .././downloads.py:5152
+#: .././downloads.py:5165
 msgid "Could not create a destination directory, capture halted"
 msgstr "De bestemming kan niet worden aangemaakt - de opname is onderbroken"
 
-#: .././downloads.py:5173 .././downloads.py:5198
+#: .././downloads.py:5186 .././downloads.py:5211
 msgid "Youtube Stream Capture script not found:"
 msgstr "Geen YouTube-streamopnamesscript aangetroffen:"
 
-#: .././downloads.py:5247
+#: .././downloads.py:5260
 msgid "Failed to capture the livestream"
 msgstr "De livestream kan niet worden opgenomen"
 
-#: .././downloads.py:5251
+#: .././downloads.py:5264
 msgid "Stream capture terminated"
 msgstr "Streamopname afgebroken"
 
-#: .././downloads.py:5261
+#: .././downloads.py:5274
 msgid ""
 "Stream captured terminated without downloading any video segments "
 "(indicating an error with the stream)"
@@ -6714,47 +6726,47 @@ msgstr ""
 "(dit duidt op een fout met de stream)"
 
 #. Capture successful
-#: .././downloads.py:5277
+#: .././downloads.py:5290
 msgid "Stream capture successful"
 msgstr "De stream is opgenomen"
 
 #. Show a confirmation message
-#: .././downloads.py:5307
+#: .././downloads.py:5320
 msgid "Merging file segments..."
 msgstr "Bezig met samenvoegen..."
 
-#: .././downloads.py:5327
+#: .././downloads.py:5340
 msgid "Segment merge did not start"
 msgstr "Het samenvoegen is niet begonnen"
 
-#: .././downloads.py:5338
+#: .././downloads.py:5351
 msgid "Segment merge completed, but path not detected"
 msgstr "Het samenvoegen is voltooid, maar het pad is niet aangetroffen"
 
-#: .././downloads.py:5348
+#: .././downloads.py:5361
 msgid "Segment merge completed, but output file not found"
 msgstr ""
 "Het samenvoegen is voltooid, maar het uitvoerbestand is niet aangetroffen"
 
-#: .././downloads.py:5369
+#: .././downloads.py:5382
 msgid "File moved to:"
 msgstr "Het bestand is verplaatst naar:"
 
-#: .././downloads.py:5374
+#: .././downloads.py:5387
 msgid "Livestream download is complete"
 msgstr "De livestream is gedownload"
 
-#: .././downloads.py:5379
+#: .././downloads.py:5392
 msgid "Failed to move output file"
 msgstr "Het uitvoerbestand kan niet worden verplaatst"
 
-#: .././downloads.py:5548
+#: .././downloads.py:5561
 #, python-brace-format
 msgid "Stream capture is frozen, trying again (restart #{0})"
 msgstr ""
 "De streamopname is vastgelopen - er wordt opnieuw begonnen (#{0} herstarten)"
 
-#: .././downloads.py:5555
+#: .././downloads.py:5568
 msgid "Stream capture is frozen, giving up"
 msgstr "De streamopname is vastgelopen - de opname wordt afgebroken"
 
@@ -7339,6 +7351,21 @@ msgstr "Bezig met starten van bijwerkactie om te installeren/bij te werken "
 #: .././updates.py:469
 msgid "Update did not start"
 msgstr "Het bijwerken is niet gestart"
+
+#~ msgid "Keep the description file after Tartube shuts down"
+#~ msgstr "Omschrijvingsbestand behouden na afsluiten"
+
+#~ msgid "Keep the metadata file after Tartube shuts down"
+#~ msgstr "Metagegevensbestand behouden na afsluiten"
+
+#~ msgid "Keep the annotations file after Tartube shuts down"
+#~ msgstr "Aantekeningenbestand behouden na afsluiten"
+
+#~ msgid "Keep the thumbnail file after Tartube shuts down"
+#~ msgstr "Miniatuurbestand behouden na afsluiten"
+
+#~ msgid "Use youtube-dlc"
+#~ msgstr "youtube-dlc gebruiken"
 
 #~ msgid "Installing"
 #~ msgstr "Bezig met installeren..."

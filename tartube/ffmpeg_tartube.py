@@ -531,6 +531,13 @@ class FFmpegOptionsManager(object):
             itself: 'ultrafast', 'superfast', 'veryfast', 'faster', 'fast',
             'medium', 'slow', 'slower', 'veryslow'
 
+        gpu_encoding (str): Optimisations for various GPUs. One of the values
+            'libx264', 'libx265', 'h264_amf', 'hevc_amf', 'h264_nvenc',
+            'hevc_nvenc'
+
+        hw_accel (str): Hardware acceleration mode: 'none', 'auto', 'vdpau',
+            'dxva2', 'vaapi', 'qsv'
+
         palette_mode (str): Ignored unless 'output_mode' is 'gif'. Values are
             'faster' or 'better'
 
@@ -654,6 +661,11 @@ class FFmpegOptionsManager(object):
             # 'ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium',
             #   'slow', 'slower', 'veryslow'
             'patience_preset': 'medium',
+            # 'libx264', 'libx265', 'h264_amf', 'hevc_amf', 'h264_nvenc',
+            #   'hevc_nvenc'
+            'gpu_encoding': 'libx264',
+            # 'none', 'auto', 'vdpau', 'dxva2', 'vaapi', 'qsv'
+            'hw_accel': 'none',
             # SETTINGS TAB ('output_mode' = gif)
             'palette_mode': 'faster',       # 'faster', 'better'
             # OPTIMISATIONS TAB ('output_mode' = h264)
@@ -904,10 +916,14 @@ class FFmpegOptionsManager(object):
             # In the original code, this was marked:
             #   Only necessary if the output filename does not end with .mp4
             opt_list.append('-c:v')
-            opt_list.append('libx264')
+            opt_list.append(options_dict['gpu_encoding'])
 
             opt_list.append('-preset')
             opt_list.append(options_dict['patience_preset'])
+
+            if options_dict['hw_accel'] != 'none':
+                opt_list.append('-hwaccel')
+                opt_list.append(options_dict['hw_accel'])
 
             if options_dict['tuning_film_flag']:
                 tuning_list.append('film')

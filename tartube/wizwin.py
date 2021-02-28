@@ -905,18 +905,18 @@ class SetupWizWin(GenericWizWin):
             0, 0, grid_width, 1,
         )
 
-        # youtube-dlc
+        # yt-dlp
         radiobutton = self.setup_set_downloader_page_add_button(
-            2,                  # Row number
-            '<b>youtube-dlc</b>: <i>' \
-            + self.app_obj.ytdl_fork_descrip_dict['youtube-dlc'] \
+            1,                  # Row number
+            '<b>yt-dlp</b>: <i>' \
+            + self.app_obj.ytdl_fork_descrip_dict['yt-dlp'] \
             + '</i>',
-            _('Use youtube-dlc'),
+            _('Use yt-dlp'),
         )
 
         # youtube-dl
         radiobutton2 = self.setup_set_downloader_page_add_button(
-            1,                  # Row number
+            2,                  # Row number
             '<b>youtube-dl</b>: <i>' \
             + self.app_obj.ytdl_fork_descrip_dict['youtube-dl'] \
             + '</i>',
@@ -937,7 +937,7 @@ class SetupWizWin(GenericWizWin):
         if self.ytdl_fork is None or self.ytdl_fork == 'youtube-dl':
             radiobutton2.set_active(True)
             entry.set_sensitive(False)
-        elif self.ytdl_fork == 'youtube-dlc':
+        elif self.ytdl_fork == 'yt-dlp':
             radiobutton.set_active(True)
             entry.set_sensitive(False)
         else:
@@ -954,7 +954,7 @@ class SetupWizWin(GenericWizWin):
             'toggled',
             self.on_button_ytdl_fork_toggled,
             entry,
-            'youtube-dlc',
+            'yt-dlp',
         )
         radiobutton2.connect(
             'toggled',
@@ -1688,8 +1688,7 @@ class SetupWizWin(GenericWizWin):
 
             entry (Gtk.Entry): Another widget to be updated
 
-            fork_type (str): 'youtube-dlc', 'youtube-dl', or None for any other
-                fork
+            fork_type (str): 'yt-dlp', 'youtube-dl', or None for any other fork
 
         """
 
@@ -1714,7 +1713,7 @@ class SetupWizWin(GenericWizWin):
                 entry.set_text('')
                 entry.set_sensitive(False)
 
-            elif fork_type == 'youtube-dlc':
+            elif fork_type == 'yt-dlp':
 
                 self.ytdl_fork = fork_type
                 entry.set_text('')

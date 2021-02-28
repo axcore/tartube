@@ -3539,8 +3539,20 @@ class VideoDownloader(object):
         else:
             thumbnail = None
 
+#        if 'webpage_url' in json_dict:
+#            source = json_dict['webpage_url']
+#        else:
+#            source = None
+        # !!! DEBUG: yt-dlp Git #119: filter out the extraneous characters at
+        #   the end of the URL, if present
         if 'webpage_url' in json_dict:
-            source = json_dict['webpage_url']
+
+            source = re.sub(
+                r'\&has_verified\=.*\&bpctr\=.*',
+                '',
+                json_dict['webpage_url'],
+            )
+
         else:
             source = None
 
@@ -4378,7 +4390,8 @@ class VideoDownloader(object):
                 percent = '{0:.1f}%'.format(current_segment / segment_no * 100)
                 dl_stat_dict['percent'] = percent
 
-        elif stdout_list[0] == '[ffmpeg]':
+        # youtube-dl uses [ffmpeg], yt-dlp uses [Merger]
+        elif stdout_list[0] == '[ffmpeg]' or stdout_list[0] == '[Merger]':
 
             # Using FFmpeg, not the the native HLS extractor
             # A successful video download is announced in one of several ways.

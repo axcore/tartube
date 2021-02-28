@@ -22,7 +22,7 @@ Works with YouTube, BitChute, and hundreds of other websites
 1 Introduction
 ==============
 
-**Tartube** is a GUI front-end for `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__, `youtube-dl <https://youtube-dl.org/>`__ and other compatible video downloaders.
+**Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ and other compatible video downloaders.
 
 It is partly based on `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ and is written in Python 3 / Gtk 3. Tartube runs on MS Windows, Linux, BSD and MacOS.
 
@@ -59,16 +59,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.085 (13 Jan 2020)**
+Latest version: **v2.3.110 (21 Feb 2021)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.085/install-tartube-2.3.085-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-portable-64bit.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.085/install-tartube-2.3.085-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-portable-32bit.zip/download>`__ from Sourceforge
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.085/python3-tartube_2.3.085.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.085/tartube-2.3.085.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.110/install-tartube-2.3.110-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.110/tartube-portable-64bit.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.110/install-tartube-2.3.110-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.110/tartube-portable-32bit.zip/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.110/python3-tartube_2.3.110.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.110/tartube-2.3.110.rpm/download>`__ from Sourceforge
 
-There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl(c)** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
+There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
 Semi-official packages:
 
@@ -192,11 +192,11 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
         **pip install requests**
 
-- Install either `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__ or `youtube-dl <https://youtube-dl.org/>`__
-
-        **pip install youtube-dlc**
+- Install either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ 
 
         **pip install youtube-dl**
+
+        **pip install yt-dlp**
 
 - Install the Adwaita theme for icons used by Tartube (optional)
 
@@ -222,7 +222,7 @@ Linux/BSD users can use any of the following installation methods.
 
 Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install **Tartube** using the DEB package (see the links above). 
 
-**Tartube** requires either `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__ or `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately. Otherwise, do this:
+**Tartube** requires either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__. If it's already installed on your system, then you can start **Tartube** immediately. Otherwise, do this:
 
 1. Run **Tartube**
 2. **Tartube** asks you to choose a data directory, so do that
@@ -237,7 +237,7 @@ It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, to
 
 Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above). 
 
-**Tartube** requires either `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__ or `youtube-dl <https://youtube-dl.org/>`__. If it's already installed on your system, then you can start **Tartube** immediately.
+**Tartube** requires either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__. If it's already installed on your system, then you can start **Tartube** immediately. Otherwise, do this:
 
 Otherwise, if **pip** is already installed on your system, do this:
 
@@ -245,13 +245,13 @@ Otherwise, if **pip** is already installed on your system, do this:
 2. **Tartube** asks you to choose a data directory, so do that
 3. Click **Operations > Update youtube-dl**
 
-If neither **youtube-dl(c)** nor **pip** are installed on your system, then the recommended way to install **youtube-dl(c)** is from the command line, using **pip**. (Software managers usually don't offer the most recent version of **youtube-dl**.) 
+If neither **youtube-dl** nor **pip** are installed on your system, then the recommended way to install **youtube-dl** is from the command line, using **pip**. (Software managers usually don't offer the most recent version of **youtube-dl**.) 
 
 On Fedora, the procedure is:
 
 1. Open a terminal window
 2. Type: ``dnf -y install python3-pip``
-3. Type: ``pip3 install youtube-dlc`` or ``pip3 install youtube-dl``
+3. Type: ``pip3 install youtube-dl`` or ``pip3 install yt-dlp``
 4. You can now run **Tartube**.
 
 It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most RHEL-based systems (for example, Fedora 29-32), you can open a terminal window and run these commands:
@@ -296,9 +296,9 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 5.3.6 Install using PyPI (with root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Make sure **youtube-dl(c)** has been completely removed from your system
+1. Make sure **youtube-dl** has been completely removed from your system
 2. Type: ``sudo apt install python3-pip``
-3. Type: ``sudo pip3 install youtube-dlc tartube`` or ``sudo pip3 install youtube-dl tartube``
+3. Type: ``sudo pip3 install youtube-dl tartube`` or ``sudo pip3 install yt-dlp tartube``
 4. Type: ``tartube``
 
 5.3.7 Install using PyPI (without root privileges)
@@ -322,11 +322,11 @@ For any other method of installation on Linux/BSD, the following dependencies ar
 -  `Python 3 <https://www.python.org/downloads>`__
 -  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 -  `Python Requests module <https://3.python-requests.org/>`__
--  Either `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__ or `youtube-dl <https://youtube-dl.org/>`__
+-  Either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
 
 These dependencies are optional, but recommended:
 
--  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl(c) up to date is much simpler when pip is installed
+-  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 -  `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
 -  `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
@@ -360,8 +360,8 @@ After installing dependencies (see above):
 Tartube packages are usually created using one of the available environment variables:
 
 - **TARTUBE_PKG** for packages without restrictions
-- **TARTUBE_PKG_STRICT** for a package which should not download or update **youtube-dl(c)** or **FFmpeg**; the user is required to install those packages separately
-- **TARTUBE_PKG_NO_DOWNLOAD** for a package which should not download any videos (and also will not download/update **youtube-dl(c)** or **FFmpeg**)
+- **TARTUBE_PKG_STRICT** for a package which should not download or update **youtube-dl** or **FFmpeg**; the user is required to install those packages separately
+- **TARTUBE_PKG_NO_DOWNLOAD** for a package which should not download any videos (and also will not download/update **youtube-dl** or **FFmpeg**)
 
 Some packaging systems might forbid installing other packages. If that's the case, you can disable that functionality.
 
@@ -426,7 +426,7 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.22.4 Compatible websites`_
 * `6.23 Detecting missing videos`_
 * `6.24 More information about FFmpeg and AVConv`_
-* `6.24.1 Using FFmpeg / AVConv with youtube-dl(c)`_
+* `6.24.1 Using FFmpeg / AVConv with youtube-dl`_
 * `6.24.2 Using FFmpeg directly`_
 * `6.24.3 Using FFmpeg options`_
 * `6.24.4 Advanced FFmpeg options`_
@@ -447,9 +447,10 @@ All of these settings can be changed later, if you want. For example, to change 
 6.2 Updating the downloader
 ---------------------------
 
-*If you installed Tartube via a repository such as the official Debian repository, then Tartube may not be allowed to update youtube-dl(c). In that case, this section does not apply; update youtube-dl(c) using your system's package manager.*
+*If you installed Tartube via a repository such as the official Debian repository, then Tartube may not be allowed to update youtube-dl. In that case, this section does not apply; update youtube-dl using your system's package manager.*
 
-**Tartube** uses a downloader to interact with websites like **YouTube**. **Tartube** officially supports two downloaders, `youtube-dlc <https://pypi.org/project/youtube-dlc/>`__ and `youtube-dl <https://youtube-dl.org/>`__. (Other forks of **youtube-dl** will probably work as well.)
+**Tartube** uses a downloader to interact with websites like **YouTube**. **Tartube** officially supports two downloaders,
+`youtube-dl <https://youtube-dl.org/>`__ and `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__. (Other forks of **youtube-dl** will probably work as well.)
 
 Websites changes their code frequently, and therefore the downloaders must be updated frequently.
 
@@ -464,10 +465,10 @@ Websites changes their code frequently, and therefore the downloaders must be up
 
 If the update operation fails on MS Windows, you should `ask the authors for help <https://github.com/axcore/tartube/>`__.
 
-On other systems, users can modify **Tartube**'s settings. There are several locations on your filesystem where **youtube-dl(c)** might have been installed. 
+On other systems, users can modify **Tartube**'s settings. There are several locations on your filesystem where **youtube-dl** might have been installed. 
 
 .. image:: screenshots/example3.png
-  :alt: Updating youtube-dl(c)
+  :alt: Updating youtube-dl
 
 - Click **Edit > System preferences... > Downloaders > File paths**
 - Try changing the setting **Path to executable**
@@ -486,7 +487,7 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
 - Download certain other video formats
 - Convert video files to audio
 
-**youtube-dl(c)** uses FFmpeg by default, but it can use AVConv for certain tasks.
+**youtube-dl** uses FFmpeg by default, but it can use AVConv for certain tasks.
 
 For more information about **Tartube**'s use of Ffmpeg and AVConv, see `6.24 More information about FFmpeg and AVConv`_.
 
@@ -500,7 +501,7 @@ There is no known method of installing a compatible version of AVConv.
 6.4.2 On Linux/BSD/MacOS
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-On all other operating systems, **Tartube** and **youtube-dl(c)** should be able to use **FFmpeg** (and **AVConv**, if it is also installed) without any help from you. 
+On all other operating systems, **Tartube** and **youtube-dl** should be able to use **FFmpeg** (and **AVConv**, if it is also installed) without any help from you. 
 
 If the **FFmpeg** / **AVConv** executables have been installed to an unusual location, you can tell **Tartube** where to find them. 
 
@@ -530,7 +531,7 @@ When you start **Tartube** for the first time, there are several folders already
 - The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
 - The **Missing videos** folder (see `6.23 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
-- The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl(c)**
+- The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl**
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
 - The **Unsorted Videos** folder is a useful place to put videos that don't belong to a particular channel or playlist
@@ -625,7 +626,7 @@ Refreshing the filesystem:
 
 Updating packages:
 
-- **Update** - Installs or updates **youtube-dl(c)**, as described in `6.2 Updating the downloader`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
+- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
 - *Protip*: Do an **'Update'** operation before you do a **'Check'** or **'Download'** operation
  
 Fetching information:
@@ -652,7 +653,7 @@ Processing videos with **FFmpeg**:
 6.11 Download options
 ---------------------
 
-**youtube-dl(c)** offers a large number of download options. This is how to set them.
+**youtube-dl** offers a large number of download options. This is how to set them.
 
 .. image:: screenshots/example12.png
   :alt: Opening the download options window
@@ -768,7 +769,7 @@ A **Custom download** enables you to modify this behaviour, if desired. It's imp
 6.13.1 Independent downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default, **Tartube** instructs **youtube-dl(c)** to download a channel or a playlist. **youtube-dl(c)** only needs a link to the channel or playlist, so **Tartube** doesn't send it a link to every single video.
+By default, **Tartube** instructs **youtube-dl** to download a channel or a playlist. **youtube-dl** only needs a link to the channel or playlist, so **Tartube** doesn't send it a link to every single video.
 
 If you need to download each individual video directly, for any reason, you can do this:
 
@@ -981,7 +982,7 @@ It's fine to add new videos to the database, or to remove them. Just be careful 
 6.19.1 Importing videos from other applications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tartube** is a GUI front-end for **youtube-dl(c)**, but it is not the only one. If you've downloaded videos using another application, this is how to add them to **Tartube**'s database.
+**Tartube** is a GUI front-end for **youtube-dl**, but it is not the only one. If you've downloaded videos using another application, this is how to add them to **Tartube**'s database.
 
 - In **Tartube**'s main window, add each channel and playlist in the normal way
 - When you're ready, click the **Check all** button. This adds a list of videos to **Tartube**'s database, without actually downloading the videos themselves
@@ -1172,7 +1173,7 @@ Most users will prefer to leave all of these checkboxes unselected, and instead 
 
 To disable any of these actions, simply click the same label again.
 
-**NOTE:** At the time of writing (December 2020), **youtube-dl(c)** often fails to download **YouTube** livestreams while they are broadcasting. For an alternative download method, see `6.22.5 Youtube Stream Capture`_. **youtube-dl(c)** will often download livestreams from other websites successfully.
+**NOTE:** At the time of writing (December 2020), **youtube-dl** often fails to download **YouTube** livestreams while they are broadcasting. For an alternative download method, see `6.22.5 Youtube Stream Capture`_. **youtube-dl** will often download livestreams from other websites successfully.
 
 6.22.4 Compatible websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1188,7 +1189,7 @@ Now click the **RSS feed** tab. Enter the link (URL) to the RSS feed in the box.
 6.22.5 Youtube Stream Capture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tartube** v2.3.0 adds support for `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ (YTSC), a script that can download livestreams from **YouTube** independently of **youtube-dl(c)**.
+**Tartube** v2.3.0 adds support for `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ (YTSC), a script that can download livestreams from **YouTube** independently of **youtube-dl**.
 
 Support for YTSC is EXPERIMENTAL. It does not work at all on MS Windows (under MSYS2), or on any website besides **YouTube**. It does not work at all for livestreams that broadcast continuously, 24/7. It is not guaranteed to work with every livestream.
 Before using YTSC, you must install both `FFmpeg <https://ffmpeg.org/>`__ and `aria2 <https://aria2.github.io/>`__ on your system.
@@ -1218,10 +1219,10 @@ Having enabled detection, removed videos will appear in the **Missing Videos** f
 6.24 More information about FFmpeg and AVConv
 ---------------------------------------------
 
-6.24.1 Using FFmpeg / AVConv with youtube-dl(c)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.24.1 Using FFmpeg / AVConv with youtube-dl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you explicitly set the location of the **FFmpeg** and/or **AVConv** executables, then those locations are passed on to **youtube-dl(c)** when you check or download videos.
+If you explicitly set the location of the **FFmpeg** and/or **AVConv** executables, then those locations are passed on to **youtube-dl** when you check or download videos.
 
 If *both* locations are set, only one of them is passed on. Usually, that's the location of **FFmpeg**. However, if you specify the **prefer_avconv** download option, then **AVConv** is passed on, instead.
 
@@ -1284,21 +1285,21 @@ The *source file* can be a video, or a thumbnail. If you select **Video thumbnai
 
 The *output file* setting defines whatever you're trying to achieve. If you want **FFmpeg** to produce a video, then **H.264** is the most useful setting (but you could also choose **GIF**).
 
-When youtube-dl(c) downloads a video, it often downloads the video and audio components seperately. The two pieces are then merged by FFmpeg. Usually, all of this happens automatically, but if the merge didn't succeed (or wasn't attempted), you can try again by selecting **Merge video/audio**. This settings expects to find a video file and an audio file with the same name (but with different file extensions).
+When youtube-dl downloads a video, it often downloads the video and audio components seperately. The two pieces are then merged by FFmpeg. Usually, all of this happens automatically, but if the merge didn't succeed (or wasn't attempted), you can try again by selecting **Merge video/audio**. This settings expects to find a video file and an audio file with the same name (but with different file extensions).
 
 If the *source file* is a thumbnail, then the *output file* must also be a thumbnail.
 
 6.25 Using youtube-dl forks
 ---------------------------
 
-`youtube-dl <https://youtube-dl.org/>`__ is open-source software, and there are a number of forks available. Tartube officially supports both the original version and `youtube-dlc <https://github.com/blackjack4494/youtube-dlc>`__. 
+`youtube-dl <https://youtube-dl.org/>`__ is open-source software, and there are a number of forks available. Tartube officially supports both the original version and `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__. 
 
 If a youtube-dl fork is still compatible with the original, then **Tartube** can use it instead of the original.
 
 - Click **Edit > System preferences... > Downloader > Forks**
 - In the box **Use a different fork of youtube-dl**, enter the name of the fork
 - Click **OK** to close the preferences window
-- Now click **Operations > Update youtube-dl(c)**, which will download (or update) the fork on your system
+- Now click **Operations > Update youtube-dl**, which will download (or update) the fork on your system
 
 7 Frequently-Asked Questions
 ============================
@@ -1325,17 +1326,18 @@ If a youtube-dl fork is still compatible with the original, then **Tartube** can
 * `7.20 Georestriction workarounds don't work`_
 * `7.21 Video website blocks me`_
 * `7.22 MS Windows installer is too big`_
-* `7.23 Tartube can't detect livestreams`_
-* `7.24 Livestream is already finished`_
-* `7.25 Can't hear livestream alarms`_
-* `7.26 Some icons not visible`_
-* `7.27 Video thumbnails not visible`_
-* `7.28 Graphs not visible`_
-* `7.29 Tartube is not visible in the system tray`_
-* `7.30 Tartube is not portable`_
-* `7.31 Run out of disk space`_
-* `7.32 British spelling`_
-* `7.33 No puedo hablar inglés`_
+* `7.23 Doesn't work on 32-bit Windows`_
+* `7.24 Tartube can't detect livestreams`_
+* `7.25 Livestream is already finished`_
+* `7.26 Can't hear livestream alarms`_
+* `7.27 Some icons not visible`_
+* `7.28 Video thumbnails not visible`_
+* `7.29 Graphs not visible`_
+* `7.30 Tartube is not visible in the system tray`_
+* `7.31 Tartube is not portable`_
+* `7.32 Run out of disk space`_
+* `7.33 British spelling`_
+* `7.34 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1394,7 +1396,7 @@ A: See `6.3 Setting the downloader's location`_
 
 *Q: I can't download my favourite video!*
 
-A: Make sure **youtube-dl(c)** is updated; see `6.2 Updating the downloader`_
+A: Make sure **youtube-dl** is updated; see `6.2 Updating the downloader`_
 
 Before submitting a `bug report <https://github.com/axcore/tartube/issues>`__, find out whether **Tartube** is responsible for the problem, or not. You can do this by opening a terminal window, and typing something like this:
 
@@ -1406,10 +1408,10 @@ Because most people don't like typing, **Tartube** offers a shortcut.
 
 - Click **Operations > Test youtube-dl**, or right-click a video, and select **Downloads > Test system command**
 - In the dialogue window, enter the link (URL) to the video
-- You can add more **youtube-dl(c)** download options, if you want. See `here <https://github.com/ytdl-org/youtube-dl/>`__ for a complete list of them
+- You can add more **youtube-dl** download options, if you want. See `here <https://github.com/ytdl-org/youtube-dl/>`__ for a complete list of them
 - Click the **OK** button to close the window and begin the test
 - Click the **Output** Tab to watch the test as it progresses
-- When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl(c)** was able to download
+- When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl** was able to download
 
 7.5 Downloads never finish
 --------------------------
@@ -1474,7 +1476,7 @@ Your new database now contains information about all the videos, but it doesn't 
 
 *Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!*
 
-A: By default, the underlying **youtube-dl(c)** software checks an entire channel, even if it contains thousands of videos. 
+A: By default, the underlying **youtube-dl** software checks an entire channel, even if it contains thousands of videos. 
 
 You can drastically reduce the time this takes by telling **Tartube** to stop checking/downloading videos, if it receives (for example) details about three videos it has already checked/downloaded.
 
@@ -1491,7 +1493,7 @@ This works well on sites like YouTube, which send information about videos in th
 
 *Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!*
 
-A: **youtube-dl(c)** can create an archive file especially for this purpose (namely that some channels have no new videos to download, but others have many new videos).
+A: **youtube-dl** can create an archive file especially for this purpose (namely that some channels have no new videos to download, but others have many new videos).
 
 To enable this functionality, click **Edit > System preferences... > Operations > Downloads** and click **Allow downloader to create its own archive file...** to select it. 
 
@@ -1557,7 +1559,7 @@ Firstly, make sure FFmpeg is installed on your system - see `6.4 Installing FFmp
 
 Secondly, set your desired output format. Open the Download options window (for example, click **Edit > General download options... > Formats > Preferred**). Add a format like **mp4** to the **List of preferred formats**, then add the same format to **If a merge is required after post-processing, output to this format**.
 
-For some reason, youtube-dl(c) ignores the download option unless the format is specified in both places. (You will see a warning if you forget.)
+For some reason, youtube-dl ignores the download option unless the format is specified in both places. (You will see a warning if you forget.)
 
 .. image:: screenshots/example32.png
   :alt: The Download options window
@@ -1609,7 +1611,7 @@ A: Click **Edit > System preferences... > Windows > Main window**, and then clic
 
 A: The questioner is talking about the settings in **Edit > General download options... > Advanced**.
 
-This is a **youtube-dl(c)** issue. A general solution is described in `this post <https://github.com/ytdl-org/youtube-dl/issues/21313#issuecomment-499496235>`__.
+This is a **youtube-dl** issue. A general solution is described in `this post <https://github.com/ytdl-org/youtube-dl/issues/21313#issuecomment-499496235>`__.
 
 The solution describes how to create a cookies.txt file, which can be specified as a download option. 
 
@@ -1624,7 +1626,7 @@ See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
 
-A: **youtube-dl(c)** provides some options for bypassing region-blocking. To show them, click **Edit > General download options...**, then click the **Show advanced download options** button if it's visible, then click the tabs **Advanced > Geo-restriction**. 
+A: **youtube-dl** provides some options for bypassing region-blocking. To show them, click **Edit > General download options...**, then click the **Show advanced download options** button if it's visible, then click the tabs **Advanced > Geo-restriction**. 
 
 Unfortunately, although these options exist, websites are not compelled to respect them. **YouTube**, in particular, may completely ignore them.
 
@@ -1641,7 +1643,7 @@ A: Subscribe to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`_
 
 A: You can specify a list of proxies (Edit > System preferences... > Operations > Proxies). During a download operation, **Tartube** will cycle between these proxies. 
 
-Unfortunately, it is not possible to switch between proxies while downloading a channel (youtube-dl(c) does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
+Unfortunately, it is not possible to switch between proxies while downloading a channel (youtube-dl does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
 
 7.22 MS Windows installer is too big
 ------------------------------------
@@ -1664,7 +1666,14 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer, which can be compared with the official one.
 
-7.23 Tartube can't detect livestreams
+7.23 Doesn't work on 32-bit Windows
+-----------------------------------
+
+*Q: Tartube does not install/work on 32-bit Windows*
+
+A: Cygwin and MSYS2 have `dropped support for 32-bit Windows <https://www.msys2.org/news/#2020-05-17-32-bit-msys2-no-longer-actively-supported>`__. This means that some Tartube features do not work on 32-bit systems and, at some point, Tartube will no longer be supported on 32-bit systems as well.
+
+7.24 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -1677,14 +1686,14 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again. At the time of writing, **Tartube** cannot detect livestreams on 32-bit MS Windows.
 
-7.24 Livestream is already finished
+7.25 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.25 Can't hear livestream alarms
+7.26 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -1697,7 +1706,7 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again. At the time of writing, **playsound** cannot ne installed on 32-bit MS Windows.
 
-7.26 Some icons not visible
+7.27 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -1708,21 +1717,21 @@ A: **Tartube** uses a set of stock icons wherever possible. If those icons are n
 
 **Tartube** provides a set of custom icons to replace the stock ones (in an emergency). To enable them, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to select it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.27 Video thumbnails not visible
+7.28 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
 
 A: In June 2020, **YouTube** changed its image format from **.jpg** to **.webp**. Unfortunately, most software (including the graphics libraries used by **Tartube**) don't support **.webp** images yet. Worse still, **YouTube** begain sending **.webp** thumbnails mislabelled as **.jpg**.
 
-In September 2020, **Tartube** and **youtube-dl(c)** added separate fixes for this problem. These fixes both depend on `FFmpeg <https://ffmpeg.org/>`__, so they won't work if FFmpeg is not installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
+In September 2020, **Tartube** and **youtube-dl** added separate fixes for this problem. These fixes both depend on `FFmpeg <https://ffmpeg.org/>`__, so they won't work if FFmpeg is not installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
 
 If you have already downloaded a lot of **.webp** images, you can ask **Tartube** to convert them back to **.jpg**. Once converted, they will be visible in the main window.
 
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.28 Graphs not visible
+7.29 Graphs not visible
 -----------------------
 
 *Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
@@ -1733,7 +1742,7 @@ The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of 
 
 On Linux/BSD, use your system's software manager. On MS Windows, run the application **C:\Users\YOURNAME\AppData\Local\Tartube\msys64\mingw64.exe**, and in the new window type **pacman -S mingw-w64-x86_64-python-matplotlib**.
 
-7.29 Tartube is not visible in the system tray
+7.30 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -1742,7 +1751,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.30 Tartube is not portable
+7.31 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -1753,7 +1762,7 @@ On other operating systems, just download the source code and run it. Installati
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather than in the system's default location.
 
-7.31 Run out of disk space
+7.32 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -1764,14 +1773,14 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.32 British spelling
+7.33 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences... > General > Language**, then click the drop-down box to select American English, and then restart **Tartube**
 
-7.33 No puedo hablar inglés
+7.34 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

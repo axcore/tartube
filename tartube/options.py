@@ -1036,16 +1036,6 @@ class OptionsParser(object):
                     options_list.append(option_holder_obj.switch)
                     options_list.append('"' + utils.to_string(value) + '"')
 
-            elif option_holder_obj.name == 'subs_lang_list':
-                # Convert the list to a comma-separated string, that the
-                #   'subs_lang' option can use
-                lang_list = copy_dict[option_holder_obj.name]
-                if lang_list:
-
-                    comma = ','
-                    options_list.append('--sub-lang')
-                    options_list.append(comma.join(lang_list))
-
             elif option_holder_obj.name == 'cookies_path':
                 cookies_path = copy_dict[option_holder_obj.name]
                 options_list.append('--cookies')
@@ -1089,6 +1079,15 @@ class OptionsParser(object):
         for item in copy_dict['reject_title_list']:
             options_list.append('--reject-title')
             options_list.append(item)
+
+        # Parse the 'subs_lang_list' option
+        if copy_dict['write_subs'] \
+        and not copy_dict['write_auto_subs'] \
+        and not copy_dict['write_all_subs'] \
+        and copy_dict['subs_lang_list']:
+
+            options_list.append('--sub-lang')
+            options_list.append(','.join(copy_dict['subs_lang_list']))
 
         # Parsing complete
         return options_list

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-16 16:51+0000\n"
+"POT-Creation-Date: 2021-02-28 10:41+0000\n"
 "PO-Revision-Date: 2021-02-12 15:23+0900\n"
 "Last-Translator: mirusu400<mirusu400@naver.com>\n"
 "Language-Team: mirusu400\n"
@@ -37,7 +37,7 @@ msgstr "크게"
 msgid "Enormous"
 msgstr "엄청 크게"
 
-#: .././mainapp.py:945
+#: .././mainapp.py:944
 msgid ""
 "Failed to convert a thumbnail from .webp to .jpg. No more conversions will "
 "be attempted until you install FFmpeg on your system, or (if FFmpeg is "
@@ -50,158 +50,158 @@ msgstr ""
 "이 시도되지 않습니다. 경로 설정을 진행했다면 Tartube를 다시 시작해 주세요. 이"
 "러한 메시지를 표시하지 않을려면, 썸네일 변환 기능을 꺼주세요"
 
-#: .././mainapp.py:2665
+#: .././mainapp.py:2664
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
 msgstr "Tartube는 구성 파일이 저장되는 폴더를 만들 수 없습니다"
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
-#: .././mainapp.py:2712
+#: .././mainapp.py:2711
 msgid "Tartube failed to start because:"
 msgstr "Tartube는 다음과 같은 이유로 시작하지 못했습니다:"
 
-#: .././mainapp.py:2720
+#: .././mainapp.py:2719
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr "이 문제를 해결할 방법을 모르겠으면, 개발자에게 문의해주세요"
 
-#: .././mainapp.py:2948
+#: .././mainapp.py:2947
 msgid "Because of an error, file load/save has been disabled"
 msgstr "오류에 의해, 파일 저장/불러오기 기능이 비활성화 되었습니다"
 
-#: .././mainapp.py:2957
+#: .././mainapp.py:2956
 msgid "Because of the error, file load/save has been disabled"
 msgstr "오류에 의해, 파일 저장/불러오기 기능이 비활성화 되었습니다"
 
-#: .././mainapp.py:3041
+#: .././mainapp.py:3040
 msgid "There is a download operation in progress."
 msgstr "진행중인 다운로드 작업이 있습니다."
 
-#: .././mainapp.py:3043
+#: .././mainapp.py:3042
 msgid "There is an update operation in progress."
 msgstr "진행중인 업데이트 작업이 있습니다."
 
-#: .././mainapp.py:3045
+#: .././mainapp.py:3044
 msgid "There is a refresh operation in progress."
 msgstr "진행중인 새로고침 작업이 있습니다."
 
-#: .././mainapp.py:3047
+#: .././mainapp.py:3046
 msgid "There is an info operation in progress."
 msgstr "진행중인 설정 작업이 있습니다."
 
-#: .././mainapp.py:3049
+#: .././mainapp.py:3048
 msgid "There is a tidy operation in progress."
 msgstr "진행중인 깔끔한 작업이 있습니다."
 
-#: .././mainapp.py:3051
+#: .././mainapp.py:3050
 msgid "There is a process operation in progress."
 msgstr "진행중인 처리 작업이 있습니다."
 
-#: .././mainapp.py:3056
+#: .././mainapp.py:3055
 msgid "Are you sure you want to quit Tartube?"
 msgstr "정말로 Tartube를 종료하시겠습니까?"
 
-#: .././mainapp.py:3261
+#: .././mainapp.py:3260
 msgid "Failed to load the Tartube config file (failed sanity check)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (완전성 검사 실패)"
 
-#: .././mainapp.py:3284
+#: .././mainapp.py:3283
 msgid "Failed to load the Tartube config file (file is locked)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (파일이 잠겨있음)"
 
-#: .././mainapp.py:3314
+#: .././mainapp.py:3313
 msgid "Failed to load the Tartube config file (JSON load failure)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (JSON 로드 실패)"
 
-#: .././mainapp.py:3332
+#: .././mainapp.py:3331
 msgid "Failed to load the Tartube config file (file is invalid)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (파일이 잘못됨)"
 
-#: .././mainapp.py:3350
+#: .././mainapp.py:3349
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version)"
 msgstr ""
 "Tartube 구성 파일을 로드하지 못했습니다 (파일이 이 버전에선 읽을수 없음)"
 
-#: .././mainapp.py:3365
+#: .././mainapp.py:3364
 msgid "Failed to load the Tartube config file (missing file type)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (파일 유형 누락)"
 
-#: .././mainapp.py:4222
+#: .././mainapp.py:4221
 msgid "Failed to save the Tartube config file (failed sanity check)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (완전성 검사 실패)"
 
-#: .././mainapp.py:4542
+#: .././mainapp.py:4541
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (파일이 잠겨있음)"
 
-#: .././mainapp.py:4544 .././mainapp.py:4584 .././mainapp.py:5920
-#: .././mainapp.py:5976 .././mainapp.py:5982
+#: .././mainapp.py:4543 .././mainapp.py:4583 .././mainapp.py:5941
+#: .././mainapp.py:5997 .././mainapp.py:6003
 msgid "File load/save has been disabled"
 msgstr "파일 저장/불러오기 기능이 비활성화 되었습니다"
 
-#: .././mainapp.py:4563
+#: .././mainapp.py:4562
 msgid "Failed to save the Tartube config file (file already in use)"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다 (파일이 사용중임)"
 
-#: .././mainapp.py:4583
+#: .././mainapp.py:4582
 msgid "Failed to save the Tartube config file"
 msgstr "Tartube 구성 파일을 로드하지 못했습니다"
 
-#: .././mainapp.py:4695 .././mainapp.py:4711 .././mainapp.py:4741
+#: .././mainapp.py:4694 .././mainapp.py:4710 .././mainapp.py:4740
 msgid "Failed to load the Tartube database file"
 msgstr "Tartube 데이터베이스 파일을 로드하지 못했습니다"
 
-#: .././mainapp.py:4756
+#: .././mainapp.py:4755
 msgid "The Tartube database file is invalid"
 msgstr "Tartube 데이터베이스 파일이 잘못되었습니다"
 
-#: .././mainapp.py:4772
+#: .././mainapp.py:4771
 msgid "Database file can't be read by this version of Tartube"
 msgstr "데이터베이스 파일을 이 Tartube 버전에서 읽을 수 없습니다"
 
-#: .././mainapp.py:5117
+#: .././mainapp.py:5116
 msgid "Tartube is applying an essential database update"
 msgstr "Tartube가 중요한 데이터베이스 업데이트를 적용중입니다"
 
-#: .././mainapp.py:5119
+#: .././mainapp.py:5118
 msgid "This might take a few minutes, so please be patient"
 msgstr "이 작업은 몇 분 정도 시간이 걸릴 수 있으므로, 잠시 기다려 주십시오"
 
-#: .././mainapp.py:5914 .././mainapp.py:5972 .././mainapp.py:5981
+#: .././mainapp.py:5935 .././mainapp.py:5993 .././mainapp.py:6002
 msgid "Failed to save the Tartube database file"
 msgstr "Tartube 데이터베이스 파일을 저장하지 못했습니다"
 
-#: .././mainapp.py:5917
+#: .././mainapp.py:5938
 msgid "(Could not make a backup copy of the existing file)"
 msgstr "(존재하는 파일의 백업 복사본을 만들지 못했습니다)"
 
-#: .././mainapp.py:5953
+#: .././mainapp.py:5974
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr ""
 "Tartube 데이터베이스 파일을 저장하는 데 실패했습니다 (파일이 이미 사용중)"
 
-#: .././mainapp.py:5974
+#: .././mainapp.py:5995
 msgid "A backup of the previous file can be found at:"
 msgstr "이전 파일의 백업본을 발견했습니다:"
 
-#: .././mainapp.py:6155 .././mainapp.py:6165
+#: .././mainapp.py:6176 .././mainapp.py:6186
 msgid "Database file created"
 msgstr "데이터베이스 파일이 생성됨"
 
-#: .././mainapp.py:6559
+#: .././mainapp.py:6580
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr "Tartube의 데이터베이스는 작업이 진행중일 때 확인할 수 없습니다"
 
-#: .././mainapp.py:6795
+#: .././mainapp.py:6816
 msgid "Database check complete, no inconsistencies found"
 msgstr "데이터베이스 확인이 완료되었습니다. 불일치 사항이 없습니다"
 
-#: .././mainapp.py:6827
+#: .././mainapp.py:6848
 msgid "Database check complete, problems found:"
 msgstr "데이터베이스 확인이 완료되었습니다. 문제가 있습니다:"
 
-#: .././mainapp.py:6830
+#: .././mainapp.py:6851
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
@@ -209,100 +209,100 @@ msgstr ""
 "이 문제사항들을 복구하겠습니까? (데이터베이스가 수정되지만, 파일이 삭제되진 "
 "않습니다)"
 
-#: .././mainapp.py:7003
+#: .././mainapp.py:7024
 msgid "Database inconsistencies repaired"
 msgstr "데이터베이스 불일치 사항 복구됨"
 
-#: .././mainapp.py:7895 .././config.py:16026
+#: .././mainapp.py:7918 .././config.py:16057
 msgid "Please select Tartube's data folder"
 msgstr "Tartube의 데이터 폴더를 선택해 주세요"
 
-#: .././mainapp.py:8258
+#: .././mainapp.py:8281
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "하나 이상의 설정 창이 열려 있으면 다운로드 작업이 시작되지 않습니다"
 
-#: .././mainapp.py:8282 .././mainapp.py:8307
+#: .././mainapp.py:8305 .././mainapp.py:8330
 #, python-brace-format
 msgid "You only have {0} / {1} Mb remaining on your device"
 msgstr "디바이스 장치에 남은 용량이 {0} / {1} Mb 밖에 없습니다"
 
-#: .././mainapp.py:8310 .././mainapp.py:13970 .././mainapp.py:14086
-#: .././mainapp.py:14268 .././mainwin.py:17484
+#: .././mainapp.py:8333 .././mainapp.py:14006 .././mainapp.py:14122
+#: .././mainapp.py:14304 .././mainwin.py:17484
 msgid "Are you sure you want to continue?"
 msgstr "계속 진행하시겠습니까?"
 
-#: .././mainapp.py:8397
+#: .././mainapp.py:8420
 msgid "There is nothing to check!"
 msgstr "확인할 항목이 없습니다!"
 
-#: .././mainapp.py:8399
+#: .././mainapp.py:8422
 msgid "There is nothing to download!"
 msgstr "다운로드 할 항 목이 없습니다!"
 
-#: .././mainapp.py:8642
+#: .././mainapp.py:8665
 msgid "Download operation complete"
 msgstr "다운로드 작업 완료"
 
-#: .././mainapp.py:8644
+#: .././mainapp.py:8667
 msgid "Download operation halted"
 msgstr "다운로드 작업 중지됨"
 
-#: .././mainapp.py:8648
+#: .././mainapp.py:8671
 msgid "Videos downloaded:"
 msgstr "다운로드한 비디오:"
 
-#: .././mainapp.py:8649
+#: .././mainapp.py:8672
 msgid "Videos checked:"
 msgstr "확인한 비디오:"
 
-#: .././mainapp.py:8652 .././mainapp.py:9253 .././mainapp.py:9747
-#: .././mainapp.py:10147
+#: .././mainapp.py:8675 .././mainapp.py:9276 .././mainapp.py:9770
+#: .././mainapp.py:10170
 msgid "Time taken:"
 msgstr "소요된 시간:"
 
-#: .././mainapp.py:8757
+#: .././mainapp.py:8780
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "하나 이상의 설정 창이 열려 있으면 업데이트 작업이 시작되지 않습니다"
 
-#: .././mainapp.py:8943
+#: .././mainapp.py:8966
 msgid "Installation failed"
 msgstr "설치 실패"
 
-#: .././mainapp.py:8945
+#: .././mainapp.py:8968
 msgid "Installation complete"
 msgstr "설치 완료"
 
-#: .././mainapp.py:8949
+#: .././mainapp.py:8972
 msgid "Update operation failed"
 msgstr "업데이트 작업 실패"
 
-#: .././mainapp.py:8951
+#: .././mainapp.py:8974
 msgid "Update operation halted"
 msgstr "업데이트 작업 중지"
 
-#: .././mainapp.py:8953
+#: .././mainapp.py:8976
 msgid "Update operation complete"
 msgstr "업데이트 작업 성공"
 
-#: .././mainapp.py:8955
+#: .././mainapp.py:8978
 msgid "version:"
 msgstr "버전:"
 
-#: .././mainapp.py:8959
+#: .././mainapp.py:8982
 msgid "(unknown)"
 msgstr "(알수없음)"
 
-#: .././mainapp.py:9046
+#: .././mainapp.py:9069
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "하나 이상의 설정 창이 열려 있으면 새로고침 작업이 시작되지 않습니다"
 
-#: .././mainapp.py:9059
+#: .././mainapp.py:9082
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
@@ -310,7 +310,7 @@ msgstr ""
 "새로고침 작업을 하는 동안, Tartube는 데이터 폴더를 분석하고, 데이터베이스에 "
 "추가되지 않은 비디오를 탐색합니다"
 
-#: .././mainapp.py:9063
+#: .././mainapp.py:9086
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
@@ -318,21 +318,21 @@ msgstr ""
 "Tartube의 데이터 폴더에 수동으로 비디오를 복사했다면 새로고침 작업을 해야 합"
 "니다"
 
-#: .././mainapp.py:9070
+#: .././mainapp.py:9093
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr ""
 "새로고침 작업을 시작하기 전에, 메인 화면의 '모두 선택' 버튼을 클릭해야 합니다"
 
-#: .././mainapp.py:9077
+#: .././mainapp.py:9100
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr ""
 "새로고침 작업을 시작하기 전에, 채널을 우클릭하고 '채널 검사'를 선택해주세요"
 
-#: .././mainapp.py:9084
+#: .././mainapp.py:9107
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
@@ -340,110 +340,110 @@ msgstr ""
 "새로고침 작업을 시작하기 전에, 플레이르스트를 우클릭하고 '플레이리스트 검"
 "사'를 선택해주세요"
 
-#: .././mainapp.py:9091
+#: .././mainapp.py:9114
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr ""
 "새로고침 작업을 시작하기 전에, 폴더를 우클릭하고 '폴더 검사'를 선택해주세요"
 
-#: .././mainapp.py:9096
+#: .././mainapp.py:9119
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr "새로고침 작업을 계속하시겠습니까?"
 
-#: .././mainapp.py:9248
+#: .././mainapp.py:9271
 msgid "Refresh operation complete"
 msgstr "새로고침 작업 완료됨"
 
-#: .././mainapp.py:9250
+#: .././mainapp.py:9273
 msgid "Refresh operation halted"
 msgstr "새로고침 작업 중지됨"
 
-#: .././mainapp.py:9355
+#: .././mainapp.py:9378
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "하나 이상의 설정 창이 열려있으면 설정 작업이 시작되지 않습니다"
 
-#: .././mainapp.py:9471
+#: .././mainapp.py:9494
 msgid "Operation failed"
 msgstr "작업 실패"
 
-#: .././mainapp.py:9473 .././downloads.py:400
+#: .././mainapp.py:9496 .././downloads.py:400
 msgid "Operation complete"
 msgstr "작업 성공"
 
-#: .././mainapp.py:9475
+#: .././mainapp.py:9498
 msgid "Click the Output Tab to see the results"
 msgstr "결과를 보려면 출력 탭을 클릭하세요"
 
-#: .././mainapp.py:9488
+#: .././mainapp.py:9511
 msgid "A new release is available!"
 msgstr "새 버전이 업데이트 되었습니다!"
 
-#: .././mainapp.py:9490
+#: .././mainapp.py:9513
 msgid "Your installation is up to date!"
 msgstr "설치된 버전이 최신 버전입니다!"
 
-#: .././mainapp.py:9492
+#: .././mainapp.py:9515
 msgid "Installed version:"
 msgstr "설치된 버전:"
 
-#: .././mainapp.py:9497
+#: .././mainapp.py:9520
 msgid "Stable release:"
 msgstr "안정 버전:"
 
-#: .././mainapp.py:9502
+#: .././mainapp.py:9525
 msgid "Stable release: not found"
 msgstr "안정 버전: 존재하지 않음"
 
-#: .././mainapp.py:9505
+#: .././mainapp.py:9528
 msgid "Development release:"
 msgstr "개발 버전:"
 
-#: .././mainapp.py:9507
+#: .././mainapp.py:9530
 msgid "Development release: not found"
 msgstr "개발 버전 존재하지 않음"
 
-#: .././mainapp.py:9614
+#: .././mainapp.py:9637
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
 msgstr "하나 이상의 설정 창이 열려있으면 마무리 작업이 시작되지 않습니다"
 
-#: .././mainapp.py:9742
+#: .././mainapp.py:9765
 msgid "Tidy operation complete"
 msgstr "마무리 작업 완료"
 
-#: .././mainapp.py:9744
+#: .././mainapp.py:9767
 msgid "Tidy operation halted"
 msgstr "마무리 작업 중지됨"
 
-#: .././mainapp.py:9911 .././mainwin.py:18169
+#: .././mainapp.py:9934 .././mainwin.py:18169
 msgid "Livestream has started"
 msgstr "생방송이 시작됨"
 
-#: .././mainapp.py:10136
+#: .././mainapp.py:10159
 msgid "Process operation complete"
 msgstr "처리 작업 완료됨"
 
-#: .././mainapp.py:10138
+#: .././mainapp.py:10161
 msgid "Process operation halted"
 msgstr "처리 작업이 중지됨"
 
-#: .././mainapp.py:10142
+#: .././mainapp.py:10165
 msgid "Files processed:"
 msgstr "처리된 파일:"
 
-#: .././mainapp.py:10143
+#: .././mainapp.py:10166
 msgid "Errors:"
 msgstr "오류:"
 
-#: .././mainapp.py:11403 .././mainapp.py:11578
+#: .././mainapp.py:11435 .././mainapp.py:11610
 msgid "Cannot move anything to:"
 msgstr "옮길 수 없습니다:"
 
-#: .././mainapp.py:11405 .././mainapp.py:11580
+#: .././mainapp.py:11437 .././mainapp.py:11612
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
@@ -451,7 +451,7 @@ msgstr ""
 "(Tartube의 데이터베이스에선 확인할 수 없지만) 같은 이름의 파일이나 폴더가 존"
 "재하기 때문입니다"
 
-#: .././mainapp.py:11409
+#: .././mainapp.py:11441
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
@@ -459,19 +459,19 @@ msgstr ""
 "해당 파일이나 폴더를 실수로 만들었을 수 있으므로, 이 경우 재시도 전에 수동으"
 "로 삭제해야 합니다"
 
-#: .././mainapp.py:11423 .././mainapp.py:11598
+#: .././mainapp.py:11455 .././mainapp.py:11630
 msgid "Are you sure you want to move this channel:"
 msgstr "이 채널을 이동하시겠습니까?:"
 
-#: .././mainapp.py:11425 .././mainapp.py:11600
+#: .././mainapp.py:11457 .././mainapp.py:11632
 msgid "Are you sure you want to move this playlist:"
 msgstr "이 플레이리스트를 이동하시겠습니까?:"
 
-#: .././mainapp.py:11427 .././mainapp.py:11602
+#: .././mainapp.py:11459 .././mainapp.py:11634
 msgid "Are you sure you want to move this folder:"
 msgstr "이 폴더를 이동하시겠습니까?:"
 
-#: .././mainapp.py:11432
+#: .././mainapp.py:11464
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
@@ -479,21 +479,21 @@ msgstr ""
 "이 작업은 모든 다운로드 받은 파일을 Tartube 데이터 폴더의 최상위 위치로 이동"
 "합니다"
 
-#: .././mainapp.py:11532
+#: .././mainapp.py:11564
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr "채널, 플레이리스트, 폴더만 폴더 안으로 드래그 할 수 있습ㄴ디ㅏ"
 
-#: .././mainapp.py:11545
+#: .././mainapp.py:11577
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr "고정된 폴더 '{0}'(은)는 이동할 수 없습니다 (하지만 숨길 순 있습니다)"
 
-#: .././mainapp.py:11558
+#: .././mainapp.py:11590
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr "폴더 '{0}'은(는) 비디오만 넣을 수 있습니다"
 
-#: .././mainapp.py:11585
+#: .././mainapp.py:11617
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
@@ -501,15 +501,15 @@ msgstr ""
 "해당 파일이나 폴더를 실수로 만들었을 수 있으므로, 이 경우 재시도 전에 수동으"
 "로 삭제해야 합니다"
 
-#: .././mainapp.py:11604
+#: .././mainapp.py:11636
 msgid "into this folder:"
 msgstr "이 폴더로:"
 
-#: .././mainapp.py:11608
+#: .././mainapp.py:11640
 msgid "This procedure will move all downloaded files to the new location"
 msgstr "이 작업은 모든 다운로드 받은 파일을 새 위치로 이동합니다"
 
-#: .././mainapp.py:11614
+#: .././mainapp.py:11646
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
@@ -517,101 +517,101 @@ msgstr ""
 "경고: 이 목적지 폴더는 임시 폴더이므로, Tartube가 재시작되면 해당 폴더 안의 "
 "모든게 삭제됩니다!!!"
 
-#: .././mainapp.py:12078
+#: .././mainapp.py:12114
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr "정말로 파일을 삭제하겠습니까? 이 작업은 되돌릴 수 없습니다!"
 
-#: .././mainapp.py:13954 .././mainapp.py:14070 .././mainapp.py:14252
+#: .././mainapp.py:13990 .././mainapp.py:14106 .././mainapp.py:14288
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr "이 채널은 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
-#: .././mainapp.py:13960 .././mainapp.py:14076 .././mainapp.py:14258
+#: .././mainapp.py:13996 .././mainapp.py:14112 .././mainapp.py:14294
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr "이 플레이리스트는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
-#: .././mainapp.py:13966 .././mainapp.py:14082 .././mainapp.py:14264
+#: .././mainapp.py:14002 .././mainapp.py:14118 .././mainapp.py:14300
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr "이 폴더는 {0}개의 항목이 있으므로, 시간이 걸릴 수 있습니다"
 
-#: .././mainapp.py:14332 .././mainapp.py:18504 .././mainapp.py:18636
-#: .././mainapp.py:18767
+#: .././mainapp.py:14368 .././mainapp.py:18540 .././mainapp.py:18672
+#: .././mainapp.py:18803
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr "파일 이름 '{0}'은(는) 허용되지 않았습니다"
 
-#: .././mainapp.py:14341
+#: .././mainapp.py:14377
 #, python-brace-format
 msgid "The name '{0}' is already in use"
 msgstr "파일 이름 '{0}'은(는) 이미 사용중입니다"
 
-#: .././mainapp.py:14354
+#: .././mainapp.py:14390
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr "'{0}'로 이름변경에 실패했습니다."
 
-#: .././mainapp.py:14701
+#: .././mainapp.py:14737
 msgid "Select where to save the database export"
 msgstr "내보낸 데이터베이스를 저장할 위치를 선택하세요"
 
-#: .././mainapp.py:14822
+#: .././mainapp.py:14858
 msgid "There is nothing to export!"
 msgstr "내보낼 항목이 없습니다!"
 
-#: .././mainapp.py:14862 .././mainapp.py:14928
+#: .././mainapp.py:14898 .././mainapp.py:14964
 msgid "Failed to save the database export file:"
 msgstr "내보낸 데이터베이스 파일을 저장하는데 실패했습니다:"
 
-#: .././mainapp.py:14936
+#: .././mainapp.py:14972
 msgid "Database export file saved to:"
 msgstr "내보낸 데이터베이스 파일이 저장되었습니다:"
 
-#: .././mainapp.py:14973
+#: .././mainapp.py:15009
 msgid "Select the database export"
 msgstr "내보낼 데이터베이스 파일을 선택하세요"
 
-#: .././mainapp.py:14994 .././mainapp.py:15008
+#: .././mainapp.py:15030 .././mainapp.py:15044
 msgid "Failed to load the database export file"
 msgstr "내보낸 데이터에피스 파일을 로드하는데 실패했습니다"
 
-#: .././mainapp.py:15025
+#: .././mainapp.py:15061
 msgid "The database export file is invalid"
 msgstr "내보낸 데이터베이스 파일이 잘못되었습니다"
 
-#: .././mainapp.py:15036
+#: .././mainapp.py:15072
 msgid "The database export file is invalid (or empty)"
 msgstr "내보낸 데이터베이스 파일이 잘못되었습니다 (혹은 비어있습니다)"
 
-#: .././mainapp.py:15080
+#: .././mainapp.py:15116
 msgid "Nothing was imported from the database export file"
 msgstr "내보낸 데이터베이스 파일에서 가져올 것이 없습니다"
 
 #. Show a confirmation
-#: .././mainapp.py:15094
+#: .././mainapp.py:15130
 msgid "Imported"
 msgstr "가져온것"
 
-#: .././mainapp.py:15095 .././mainwin.py:1287 .././config.py:888
-#: .././config.py:9274 .././config.py:11492
+#: .././mainapp.py:15131 .././mainwin.py:1287 .././config.py:888
+#: .././config.py:9305 .././config.py:11523
 msgid "Videos"
 msgstr "비디오"
 
-#: .././mainapp.py:15096 .././config.py:9307 .././config.py:11525
+#: .././mainapp.py:15132 .././config.py:9338 .././config.py:11556
 msgid "Channels"
 msgstr "채널"
 
-#: .././mainapp.py:15097 .././config.py:9318 .././config.py:11536
+#: .././mainapp.py:15133 .././config.py:9349 .././config.py:11567
 msgid "Playlists"
 msgstr "플레이리스트"
 
-#: .././mainapp.py:15098
+#: .././mainapp.py:15134
 msgid "Folders"
 msgstr "폴더"
 
-#: .././mainapp.py:15482
+#: .././mainapp.py:15518
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
@@ -619,107 +619,107 @@ msgstr ""
 "비디오 파일이 Tartube의 데이터 폴더에 존재하지 않습니다 (다시 다운로드 시도"
 "해 보세요!)"
 
-#: .././mainapp.py:16007 .././mainapp.py:16389
+#: .././mainapp.py:16043 .././mainapp.py:16425
 msgid "Select where to save the options export"
 msgstr "내보낸 설정을 저장할 위치를 선택하세요"
 
-#: .././mainapp.py:16055 .././mainapp.py:16437
+#: .././mainapp.py:16091 .././mainapp.py:16473
 msgid "Failed to save the options export file:"
 msgstr "내보낸 설정을 저장하는데 실패했습니다:"
 
-#: .././mainapp.py:16063
+#: .././mainapp.py:16099
 msgid "Download options exported to to:"
 msgstr "다운로드 옵션이 내보내졌습니다:"
 
-#: .././mainapp.py:16094 .././mainapp.py:16476
+#: .././mainapp.py:16130 .././mainapp.py:16512
 msgid "Select the options export file"
 msgstr "내보낼 설정 파일을 선택하세요"
 
-#: .././mainapp.py:16113 .././mainapp.py:16495
+#: .././mainapp.py:16149 .././mainapp.py:16531
 msgid "Failed to load the options export file"
 msgstr "내보낸 설정 파일을 불러오지 못했습니다"
 
-#: .././mainapp.py:16130 .././mainapp.py:16512
+#: .././mainapp.py:16166 .././mainapp.py:16548
 msgid "The options export file is invalid"
 msgstr "내보낸 설정 파일이 잘못되었습니다"
 
-#: .././mainapp.py:16141 .././mainapp.py:16523
+#: .././mainapp.py:16177 .././mainapp.py:16559
 msgid "The options export file is invalid (or empty)"
 msgstr "내보낸 설정 파일이 잘못되었습니다 (혹은 비어있습니다)"
 
-#: .././mainapp.py:16445
+#: .././mainapp.py:16481
 msgid "FFmpeg options exported to to:"
 msgstr "FFmpeg 설정이 내보내졌습니다:"
 
-#: .././mainapp.py:17419
+#: .././mainapp.py:17455
 msgid "Please select a destination folder"
 msgstr "목적지 폴더를 선택해주세요"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17491
+#: .././mainapp.py:17527
 msgid "Are you sure you want to clear this list?"
 msgstr "정말로 이 리스트를 비우시겠습니까?"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17538
+#: .././mainapp.py:17574
 msgid "Are you sure you want to clear downloaded videos?"
 msgstr "정말로 다운로드 받은 비디오들을 지우시겠습니까?"
 
-#: .././mainapp.py:17631 .././mainwin.py:14535
+#: .././mainapp.py:17667 .././mainwin.py:14535
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr "체크하거나 다운로드 받은 비디오들만 FFmpeg에 의해 처리됩니다"
 
-#: .././mainapp.py:17748
+#: .././mainapp.py:17784
 msgid "No video(s) have been downloaded"
 msgstr "아무 비디오도 다운로드 되지 않았습니다"
 
 #. Prompt for confirmation
-#: .././mainapp.py:17846
+#: .././mainapp.py:17882
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr "정말로 선택한 항목들을 삭제하시겠습니까?"
 
-#: .././mainapp.py:18495
+#: .././mainapp.py:18531
 msgid "You must give the channel a name"
 msgstr "채널에 이름을 입력해야 합니다"
 
-#: .././mainapp.py:18513 .././mainapp.py:18776
+#: .././mainapp.py:18549 .././mainapp.py:18812
 msgid "You must enter a valid URL"
 msgstr "올바른 URL을 입력해야 합니다"
 
-#: .././mainapp.py:18628
+#: .././mainapp.py:18664
 msgid "You must give the folder a name"
 msgstr "폴더에 이름을 입력해야 합니다"
 
-#: .././mainapp.py:18758
+#: .././mainapp.py:18794
 msgid "You must give the playlist a name"
 msgstr "플레이리스트에 이름을 입력해야 합니다"
 
-#: .././mainapp.py:18913
+#: .././mainapp.py:18949
 msgid "The following videos are duplicates:"
 msgstr "해당하는 비디오들이 복제되었습니다:"
 
-#: .././mainapp.py:18977
+#: .././mainapp.py:19013
 msgid "There were no livestream alerts to cancel"
 msgstr "취소할 생방송 알림이 없습니다"
 
-#: .././mainapp.py:18979
+#: .././mainapp.py:19015
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr "비디오 1개에 대한 생방송 알림이 취소되었습니다"
 
-#: .././mainapp.py:18982
+#: .././mainapp.py:19018
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr "비디오 {0}개에 대한 생방송 알림이 취소되었습니다"
 
-#: .././mainapp.py:19352
+#: .././mainapp.py:19388
 msgid "All Tartube data has been saved"
 msgstr "모든 Tartube 데이터가 저장되었습니다"
 
-#: .././mainapp.py:19382
+#: .././mainapp.py:19418
 msgid "Database saved"
 msgstr "데이터베이스 저장됨"
 
-#: .././mainapp.py:19637 .././mainwin.py:13487
+#: .././mainapp.py:19673 .././mainwin.py:13487
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -728,39 +728,39 @@ msgstr "파일은 삭제된 뒤 복구가 불가능합니다. 계속하시겠습
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:19677
+#: .././mainapp.py:19713
 msgid "Cannot update existing livestreams because"
 msgstr "존재하는 생방송을 업데이트 하지 못했습니다"
 
-#: .././mainapp.py:19679
+#: .././mainapp.py:19715
 msgid "there is another operation running"
 msgstr "다른 작업이 진행중입니다"
 
-#: .././mainapp.py:19681
+#: .././mainapp.py:19717
 msgid "they are currently being updated"
 msgstr "이미 업데이트를 진행중입니다"
 
-#: .././mainapp.py:19683
+#: .././mainapp.py:19719
 msgid "one or more configuration windows are open"
 msgstr "하나 이상의 설정 창이 열려있습니다"
 
-#: .././mainapp.py:19685
+#: .././mainapp.py:19721
 msgid "there are no livestreams to update"
 msgstr "업데이트 할 생방송이 없습니다"
 
-#: .././mainapp.py:19759
+#: .././mainapp.py:19795
 msgid "There is already a channel with that name"
 msgstr "동일한 이름을 가진 채널이 이미 존재합니다"
 
-#: .././mainapp.py:19761
+#: .././mainapp.py:19797
 msgid "There is already a playlist with that name"
 msgstr "동일한 이름을 가진 플레이리스트가 이미 존재합니다"
 
-#: .././mainapp.py:19763
+#: .././mainapp.py:19799
 msgid "There is already a folder with that name"
 msgstr "동일한 이름을 가진 폴더가 이미 존재합니다"
 
-#: .././mainapp.py:19766
+#: .././mainapp.py:19802
 msgid "(so please choose a different name)"
 msgstr "(다른 이름을 설정해 주세요)"
 
@@ -769,7 +769,7 @@ msgid "Tartube cannot start because it cannot find its icons folder"
 msgstr "아이콘 폴더를 찾지 못해 Tartube를 켜지 못했습니다"
 
 #. File column
-#: .././mainwin.py:943 .././config.py:6357
+#: .././mainwin.py:943 .././config.py:6359
 msgid "_File"
 msgstr "_파일"
 
@@ -812,7 +812,7 @@ msgid "_General download options..."
 msgstr "_일반 다운로드 설정..."
 
 #. Media column
-#: .././mainwin.py:1009 .././config.py:9834
+#: .././mainwin.py:1009 .././config.py:9865
 msgid "_Media"
 msgstr "_미디어"
 
@@ -870,7 +870,7 @@ msgstr "_테스트 코드 실행하기"
 
 #. Operations column
 #. Add this tab...
-#: .././mainwin.py:1115 .././config.py:12776
+#: .././mainwin.py:1115 .././config.py:12807
 msgid "_Operations"
 msgstr "_작업"
 
@@ -913,7 +913,7 @@ msgid "_Stop current operation"
 msgstr "_현재 작업 멈추기"
 
 #. Livestreams column
-#: .././mainwin.py:1195 .././config.py:13480
+#: .././mainwin.py:1195 .././config.py:13511
 msgid "_Livestreams"
 msgstr "_생방송"
 
@@ -996,7 +996,7 @@ msgstr "모든 비디오, 채널, 플레이리스트, 폴더 선택"
 #: .././mainwin.py:1393 .././mainwin.py:19371 .././mainwin.py:19376
 #: .././mainwin.py:19384 .././mainwin.py:19633 .././mainwin.py:19645
 #: .././mainwin.py:20380 .././mainwin.py:21727 .././mainwin.py:21753
-#: .././config.py:12481
+#: .././config.py:12512
 msgid "Download"
 msgstr "다운로드"
 
@@ -1013,7 +1013,7 @@ msgstr "정지"
 msgid "Stop the current operation"
 msgstr "현재 작업 정지"
 
-#: .././mainwin.py:1443 .././config.py:11068
+#: .././mainwin.py:1443 .././config.py:11099
 msgid "Switch"
 msgstr "변경"
 
@@ -1045,8 +1045,8 @@ msgstr "종료"
 msgid "Close Tartube"
 msgstr "Tartube 닫기"
 
-#: .././mainwin.py:1532 .././config.py:7115 .././config.py:11292
-#: .././config.py:11890
+#: .././mainwin.py:1532 .././config.py:7146 .././config.py:11323
+#: .././config.py:11921
 msgid "_Videos"
 msgstr "_비디오들"
 
@@ -1062,7 +1062,7 @@ msgstr "_클래식 모드"
 msgid "_Output"
 msgstr "_출력"
 
-#: .././mainwin.py:1566 .././config.py:8450 .././config.py:8956
+#: .././mainwin.py:1566 .././config.py:8481 .././config.py:8987
 msgid "_Errors / Warnings"
 msgstr "_오류 / 경고"
 
@@ -1123,12 +1123,12 @@ msgstr "더 많은 설정"
 msgid "Sort"
 msgstr "정렬"
 
-#: .././mainwin.py:1875 .././config.py:8235
+#: .././mainwin.py:1875 .././config.py:8266
 msgid "Upload time"
 msgstr "업로드 시간"
 
-#: .././mainwin.py:1876 .././mainwin.py:25120 .././config.py:7138
-#: .././config.py:12481 .././config.py:14402 .././config.py:14669
+#: .././mainwin.py:1876 .././mainwin.py:25120 .././config.py:7169
+#: .././config.py:12512 .././config.py:14433 .././config.py:14700
 msgid "Name"
 msgstr "이름"
 
@@ -1220,11 +1220,11 @@ msgstr "속도"
 msgid "ETA"
 msgstr "예상 시간"
 
-#: .././mainwin.py:2219 .././config.py:8821
+#: .././mainwin.py:2219 .././config.py:8852
 msgid "New videos"
 msgstr "새 비디오"
 
-#: .././mainwin.py:2219 .././config.py:404 .././config.py:8191
+#: .././mainwin.py:2219 .././config.py:404 .././config.py:8222
 msgid "Duration"
 msgstr "기간"
 
@@ -1232,7 +1232,7 @@ msgstr "기간"
 msgid "Date"
 msgstr "날짜"
 
-#: .././mainwin.py:2220 .././config.py:8147
+#: .././mainwin.py:2220 .././config.py:8178
 msgid "File"
 msgstr "파일"
 
@@ -1303,7 +1303,7 @@ msgstr "목적지 폴더 열기"
 msgid "Format:"
 msgstr "포맷:"
 
-#: .././mainwin.py:2591 .././config.py:14402
+#: .././mainwin.py:2591 .././config.py:14433
 msgid "Default"
 msgstr "기본"
 
@@ -1332,14 +1332,14 @@ msgid "Play video"
 msgstr "비디오 재생"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:2781 .././config.py:3584 .././config.py:11105
-#: .././config.py:12546
+#: .././mainwin.py:2781 .././config.py:3584 .././config.py:11136
+#: .././config.py:12577
 msgid "Move up"
 msgstr "위로 올리기"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:2802 .././config.py:3588 .././config.py:11113
-#: .././config.py:12555
+#: .././mainwin.py:2802 .././config.py:3588 .././config.py:11144
+#: .././config.py:12586
 msgid "Move down"
 msgstr "아래로 내리기"
 
@@ -1375,7 +1375,7 @@ msgstr "다운로드된 항목 비우기"
 msgid "Maximum page size"
 msgstr "최대 페이지 크기"
 
-#: .././mainwin.py:3017 .././config.py:12481
+#: .././mainwin.py:3017 .././config.py:12512
 msgid "Time"
 msgstr "시간"
 
@@ -1403,7 +1403,7 @@ msgstr "서버 오류 표시하기"
 msgid "Show server warnings"
 msgstr "서버 경고 표시하기"
 
-#: .././mainwin.py:3113 .././config.py:9936
+#: .././mainwin.py:3113 .././config.py:9967
 msgid "Clear list"
 msgstr "리스트 초기화"
 
@@ -1756,7 +1756,7 @@ msgstr "_중지 시 다운로드"
 msgid "Not a _livestream"
 msgstr "_생방송이 아님"
 
-#: .././mainwin.py:5295 .././config.py:8310
+#: .././mainwin.py:5295 .././config.py:8341
 msgid "_Livestream"
 msgstr "_생방송"
 
@@ -2429,8 +2429,8 @@ msgstr "Invidious"
 #. this function returns. Workaround is to make the label unclickable,
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
-#: .././mainwin.py:19485 .././mainwin.py:20612 .././config.py:9296
-#: .././config.py:11514
+#: .././mainwin.py:19485 .././mainwin.py:20612 .././config.py:9327
+#: .././config.py:11545
 msgid "Other"
 msgstr "기타"
 
@@ -2771,7 +2771,7 @@ msgstr "채널에 포함된 항목:"
 msgid "This playlist contains:"
 msgstr "플레이리스트에 포함된 항목:"
 
-#: .././mainwin.py:24726 .././config.py:9269
+#: .././mainwin.py:24726 .././config.py:9300
 msgid "This folder contains:"
 msgstr "폴더에 포함된 항목:"
 
@@ -2941,7 +2941,7 @@ msgstr "데이터베이스로 가져오기"
 msgid "Choose which items to import"
 msgstr "가져올 항목 선택하기"
 
-#: .././mainwin.py:25104 .././config.py:14454 .././config.py:14719
+#: .././mainwin.py:25104 .././config.py:14485 .././config.py:14750
 msgid "Import"
 msgstr "가져오기"
 
@@ -3005,7 +3005,7 @@ msgstr "취소"
 
 #. 'OK' button
 #: .././mainwin.py:25521 .././config.py:1035 .././config.py:2242
-#: .././config.py:7694 .././config.py:7828
+#: .././config.py:7725 .././config.py:7859
 msgid "OK"
 msgstr "확인"
 
@@ -3203,7 +3203,7 @@ msgstr "업데이트"
 msgid "Copy to clipboard"
 msgstr "클립보드에 복사"
 
-#: .././mainwin.py:26846 .././config.py:13749
+#: .././mainwin.py:26846 .././config.py:13780
 msgid "Test"
 msgstr "테스트"
 
@@ -3298,7 +3298,7 @@ msgstr "다운로드"
 msgid "Uploads"
 msgstr "업로드"
 
-#: .././config.py:403 .././config.py:8214
+#: .././config.py:403 .././config.py:8245
 msgid "File size"
 msgstr "파일 크기"
 
@@ -3376,8 +3376,8 @@ msgstr "흰색"
 
 #. 'Reset' button
 #. (Signal connect appears below)
-#: .././config.py:1017 .././config.py:3306 .././config.py:14214
-#: .././config.py:14255 .././config.py:14325
+#: .././config.py:1017 .././config.py:3306 .././config.py:14245
+#: .././config.py:14286 .././config.py:14356
 msgid "Reset"
 msgstr "초기화"
 
@@ -3394,7 +3394,7 @@ msgstr "적용"
 msgid "Apply changes without closing the window"
 msgstr "창을 닫지않고 변경사항 적용"
 
-#: .././config.py:1038 .././config.py:7697 .././config.py:7831
+#: .././config.py:1038 .././config.py:7728 .././config.py:7862
 msgid "Apply changes"
 msgstr "변경사항 적용"
 
@@ -3451,7 +3451,7 @@ msgstr "다운로드 설정 지우기"
 msgid "Close this window"
 msgstr "이 창 닫기"
 
-#: .././config.py:2869 .././config.py:6260
+#: .././config.py:2869 .././config.py:6262
 msgid "_Name"
 msgstr "_이름"
 
@@ -3496,7 +3496,7 @@ msgid "Completely reset all download options to their default values"
 msgstr "모든 다운로드 설정을 완전히 기본값으로 초기화하기"
 
 #. Add this tab...
-#: .././config.py:3000 .././config.py:10878
+#: .././config.py:3000 .././config.py:10909
 msgid "_Files"
 msgstr "_파일"
 
@@ -3520,7 +3520,7 @@ msgstr "파일 출력 템플릿"
 msgid "Add to template:"
 msgstr "템플릿 추가:"
 
-#: .././config.py:3083 .././config.py:8018
+#: .././config.py:3083 .././config.py:8049
 msgid "Video properties"
 msgstr "비디오 속성"
 
@@ -3564,9 +3564,13 @@ msgstr "자동 번호 비디오 (0부터 시작함)"
 msgid "Creator/uploader"
 msgstr "제작자/업로더"
 
-#: .././config.py:3098 .././config.py:3099
+#: .././config.py:3098
 msgid "Full name of video uploader"
 msgstr "비디오 업로더의 실제 이름"
+
+#: .././config.py:3099
+msgid "Uploader ID"
+msgstr ""
 
 #: .././config.py:3100
 msgid "Nickname/ID of video uploader"
@@ -3676,8 +3680,8 @@ msgstr "신고 개수"
 msgid "Number of comments"
 msgstr "댓글 개수"
 
-#: .././config.py:3170 .././config.py:9916 .././config.py:12528
-#: .././config.py:14445 .././config.py:14710
+#: .././config.py:3170 .././config.py:9947 .././config.py:12559
+#: .././config.py:14476 .././config.py:14741
 msgid "Add"
 msgstr "추가"
 
@@ -3718,8 +3722,8 @@ msgid "Path to the downloader's cookie jar file"
 msgstr "다운로더의 Cookie jar 파일 경로"
 
 #: .././config.py:3302 .././config.py:4927 .././config.py:4947
-#: .././config.py:4967 .././config.py:14111 .././config.py:14210
-#: .././config.py:14251 .././config.py:14321
+#: .././config.py:4967 .././config.py:14142 .././config.py:14241
+#: .././config.py:14282 .././config.py:14352
 msgid "Set"
 msgstr "설정"
 
@@ -3783,20 +3787,20 @@ msgid "Options during real (not simulated) downloads"
 msgstr "(시뮬레이션이 아닌) 실제 다운로드 설정"
 
 #: .././config.py:3450 .././config.py:3481
-msgid "Keep the description file after Tartube shuts down"
-msgstr "설명 파일을 Tartube가 꺼져도 유지하기"
+msgid "Keep the description file after the download has finished"
+msgstr ""
 
 #: .././config.py:3456 .././config.py:3487
-msgid "Keep the metadata file after Tartube shuts down"
-msgstr "메타데이터 파일을 Tartube가 꺼져도 유지하기"
+msgid "Keep the metadata file after the download has finished"
+msgstr ""
 
 #: .././config.py:3462 .././config.py:3493
-msgid "Keep the annotations file after Tartube shuts down"
-msgstr "어노테이션 파일을 Tartube가 꺼져도 유지하기"
+msgid "Keep the annotations file after the download has finished"
+msgstr ""
 
 #: .././config.py:3468 .././config.py:3499
-msgid "Keep the thumbnail file after Tartube shuts down"
-msgstr "섬네일 파일을 Tartube가 꺼져도 유지하기"
+msgid "Keep the thumbnail file after the download has finished"
+msgstr ""
 
 #: .././config.py:3475
 msgid "Options during simulated (not real) downloads"
@@ -3888,7 +3892,7 @@ msgid "Do not download DASH-related data for YouTube videos"
 msgstr "유튜브 비디오의 DASH 관련 데이터 다운로드 안함"
 
 #. Add this tab...
-#: .././config.py:3790 .././config.py:3809 .././config.py:13113
+#: .././config.py:3790 .././config.py:3809 .././config.py:13144
 msgid "_Downloads"
 msgstr "_다운로드"
 
@@ -4322,8 +4326,8 @@ msgstr "이 외부 다운로더 사용"
 msgid "Arguments to pass to external downloader"
 msgstr "외부 다운로더에 전달할 인자"
 
-#: .././config.py:5168 .././config.py:5658 .././config.py:7355
-#: .././config.py:7603
+#: .././config.py:5168 .././config.py:5658 .././config.py:7386
+#: .././config.py:7634
 msgid "This procedure cannot be reversed. Are you sure you want to continue?"
 msgstr "이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?"
 
@@ -4367,55 +4371,55 @@ msgid "FFmpeg options"
 msgstr "FFmpeg 설정"
 
 #. Replace the 'OK' button with a 'Process files' button
-#: .././config.py:6246 .././config.py:7776
+#: .././config.py:6248 .././config.py:7807
 msgid "Process files"
 msgstr "파일 처리"
 
-#: .././config.py:6248 .././config.py:7778
+#: .././config.py:6250 .././config.py:7809
 msgid "Process the files with FFmpeg"
 msgstr "FFmpeg로 파일 처리"
 
-#: .././config.py:6265
+#: .././config.py:6267
 msgid "Name for these FFmpeg options"
 msgstr "FFmpeg 설정 이름"
 
-#: .././config.py:6275
+#: .././config.py:6277
 msgid "Extra command line options (e.g. --help)"
 msgstr "추가 커맨드 라인 설정 (예. --help)"
 
-#: .././config.py:6286
+#: .././config.py:6288
 msgid "System command, based on all FFmpeg options in this window:"
 msgstr "이 창에 있는 FFmpeg 설정에 기반한 시스템 커맨드:"
 
-#: .././config.py:6317
+#: .././config.py:6319
 msgid "Show fewer FFmpeg options"
 msgstr "더 적은 FFmpeg 설정"
 
-#: .././config.py:6319
+#: .././config.py:6321
 msgid "Show more FFmpeg options"
 msgstr "더 많은 FFmpeg 설정"
 
-#: .././config.py:6329
+#: .././config.py:6331
 msgid "Import current FFmpeg options into this window"
 msgstr "현재 FFmpeg 설정을 이 창에 가져오기"
 
-#: .././config.py:6344
+#: .././config.py:6346
 msgid "Completely reset all FFmpeg options to their default values"
 msgstr "모든 FFmpeg 설정을 완전히 기본값으로 초기화하기"
 
-#: .././config.py:6360
+#: .././config.py:6362
 msgid "Add to end of filename:"
 msgstr "파일명의 맨 마지막에 추가하기:"
 
-#: .././config.py:6370
+#: .././config.py:6372
 msgid "If regex matches filename:"
 msgstr "정규식과 일치하는 파일명:"
 
-#: .././config.py:6384
+#: .././config.py:6386
 msgid "...then apply substitution:"
 msgstr "...그리고 대체 적용하기:"
 
-#: .././config.py:6397
+#: .././config.py:6399
 msgid ""
 "If the video/audio file is renamed, also rename the thumbnail (but not vice-"
 "versa)"
@@ -4423,53 +4427,53 @@ msgstr ""
 "만약 비디오/오디오 파일 이름이 변경되었다면, 섬네일 이름도 변경해 주십시오 "
 "(반대로는 아님)"
 
-#: .././config.py:6408
+#: .././config.py:6410
 msgid "Change file extension:"
 msgstr "변경 파일 확장자:"
 
-#: .././config.py:6422
+#: .././config.py:6424
 msgid "After changing the file extension, delete the original file"
 msgstr "파일 확장자를 변경한 이후엔, 원본 파일을 삭제해 주세요"
 
-#: .././config.py:6448
+#: .././config.py:6450
 msgid "_Settings"
 msgstr "_설정"
 
-#: .././config.py:6455
+#: .././config.py:6457
 msgid "Source file"
 msgstr "소스 파일"
 
-#: .././config.py:6462
+#: .././config.py:6464
 msgid "Downloaded video/audio"
 msgstr "다운받은 비디오/오디오"
 
-#: .././config.py:6471
+#: .././config.py:6473
 msgid "with audio"
 msgstr "오디오와 함께"
 
-#: .././config.py:6484
+#: .././config.py:6486
 msgid "Video thumbnail"
 msgstr "비디오 섬네일"
 
-#: .././config.py:6503
+#: .././config.py:6505
 msgid "Output file"
 msgstr "출력 파일"
 
-#: .././config.py:6630
+#: .././config.py:6632
 msgid "Audio bitrate"
 msgstr "오디오 진동"
 
-#: .././config.py:6644
+#: .././config.py:6646
 msgid "How to set the quality"
 msgstr "품질 설정 방법"
 
-#: .././config.py:6649
+#: .././config.py:6651
 msgid ""
 "FFmpeg always encodes according to a Rate Factor that specifies the quality "
 "of the result."
 msgstr "FFmpeg는 항상 결과의 화질을 지정하는 속도 계수에 따라 인코딩됩니다."
 
-#: .././config.py:6652
+#: .././config.py:6654
 msgid ""
 "Instead of directly specifying the Rate Factor, an average bit rate can be "
 "specified. FFmpeg will then determine the optimal Rate Factor in a first "
@@ -4478,7 +4482,7 @@ msgstr ""
 "속도 계수를 직접 지정하는 대신 평균 비트레이트를 지정할 수 있습니다. 그런 다"
 "음 FFmpeg가 첫 번째 패스 도중 최적의 속도 계수를 결정합니다."
 
-#: .././config.py:6656
+#: .././config.py:6658
 msgid ""
 "In fact the first pass is only used for determining the Rate Factor, no "
 "other data is carried over into the second pass."
@@ -4486,7 +4490,7 @@ msgstr ""
 "실제로 첫 번째 패스는 속도 계수를 결정하는 데만 사용되며, 다른 데이터는 두번"
 "째 패스로 전달되지 않습니다."
 
-#: .././config.py:6659
+#: .././config.py:6661
 msgid ""
 "Specifying an average bitrate but running only one pass is possible, but not "
 "recommended. FFmpeg would then encode the beginning of the video with a "
@@ -4498,126 +4502,134 @@ msgstr ""
 "비디오 끝부분에 와서 목표 비트레이트를 도달하기 위해 속도계수를 변경할 것입니"
 "다."
 
-#: .././config.py:6672
+#: .././config.py:6674
 msgid "Manual rate factor"
 msgstr "속도 계수 수동 지정"
 
-#: .././config.py:6681
+#: .././config.py:6683
 msgid "Determine from target bitrate (2-Pass)"
 msgstr "목표 비트레이트 결정하기 (2-패스)"
 
-#: .././config.py:6691
+#: .././config.py:6693
 msgid "Rate factor"
 msgstr "속도 계수"
 
-#: .././config.py:6703
+#: .././config.py:6705
 msgid "Lossless"
 msgstr "무손실"
 
-#: .././config.py:6703
+#: .././config.py:6705
 msgid "Large file"
 msgstr "큰 파일"
 
-#: .././config.py:6725
+#: .././config.py:6727
 msgid "Bad quality"
 msgstr "저 화질"
 
-#: .././config.py:6725
+#: .././config.py:6727
 msgid "Small file"
 msgstr "작은 파일"
 
-#: .././config.py:6732
+#: .././config.py:6734
 msgid "Name of dummy file"
 msgstr "더미 파일 이름"
 
-#: .././config.py:6736
+#: .././config.py:6738
 msgid "A dummy file is created during the first pass."
 msgstr "더미 파일은 첫번째 패스 중 만들어지는 파일입니다."
 
-#: .././config.py:6740
+#: .././config.py:6742
 msgid "Use the output file"
 msgstr "출력 파일 사용"
 
-#: .././config.py:6741
+#: .././config.py:6743
 msgid "Dummy"
 msgstr "더미"
 
-#: .././config.py:6742
+#: .././config.py:6744
 msgid "/dev/null (Linux)"
 msgstr "/dev/null (Linux)"
 
-#: .././config.py:6743
+#: .././config.py:6745
 msgid "NUL (MS Windows)"
 msgstr "NUL (MS Windows)"
 
-#: .././config.py:6755
+#: .././config.py:6757
 msgid "Patience preset"
 msgstr "인내 프리셋"
 
-#: .././config.py:6760
+#: .././config.py:6762
 msgid "Ultra fast"
 msgstr "울트라 빠름"
 
-#: .././config.py:6761
+#: .././config.py:6763
 msgid "Super fast"
 msgstr "슈퍼 빠름"
 
-#: .././config.py:6762
+#: .././config.py:6764
 msgid "Very fast"
 msgstr "매우 빠름"
 
-#: .././config.py:6763 .././config.py:6832
+#: .././config.py:6765 .././config.py:6863
 msgid "Faster"
 msgstr "빠르게"
 
-#: .././config.py:6764
+#: .././config.py:6766
 msgid "Fast"
 msgstr "빠름"
 
-#: .././config.py:6765
+#: .././config.py:6767
 msgid "Medium (default)"
 msgstr "중간 (기본값)"
 
-#: .././config.py:6766
+#: .././config.py:6768
 #, python-format
 msgid "Slow (file about 5-10% smaller than medium)"
 msgstr "느리게 (파일 크기가 중간보다 5-10% 더 작음)"
 
-#: .././config.py:6767
+#: .././config.py:6769
 #, python-format
 msgid "Slower (file about 15% smaller than medium)"
 msgstr "더 느리게 (파일 크기가 중간보다 15% 더 작음)"
 
-#: .././config.py:6768
+#: .././config.py:6770
 #, python-format
 msgid "Very slow (file about 17% smaller than medium)"
 msgstr "엄청 느리게 (파일 크기가 중간보다 17% 더 작음)"
 
-#: .././config.py:6826
+#: .././config.py:6781
+msgid "GPU encoding"
+msgstr ""
+
+#: .././config.py:6797
+msgid "Hardware acceleration"
+msgstr ""
+
+#: .././config.py:6857
 msgid "Palette:"
 msgstr "팔레트:"
 
-#: .././config.py:6833
+#: .././config.py:6864
 msgid "Uses dithering to a standard palette provided by FFmpeg"
 msgstr "FFmpeg에서 제공하는 표준 팔레트로 디더링 사용"
 
-#: .././config.py:6834
+#: .././config.py:6865
 msgid "Can cause dithering artefacts and slight banding"
 msgstr "디더링 아티팩트와 약간의 밴딩이 생길 수 있습니다"
 
-#: .././config.py:6843
+#: .././config.py:6874
 msgid "Better"
 msgstr "최적화"
 
-#: .././config.py:6844
+#: .././config.py:6875
 msgid "Determines an optimized palette for the video"
 msgstr "비디오에 최적화된 팔레트를 결정합니다"
 
-#: .././config.py:6845
+#: .././config.py:6876
 msgid "Uses two passes and a temporary file for the palette"
 msgstr "팔레트를 위해 투 패스와 임시 파일을 사용합니다"
 
-#: .././config.py:6898
+#: .././config.py:6929
 msgid ""
 "This merges a video and audio file with the same name into a single video "
 "file,\n"
@@ -4626,77 +4638,77 @@ msgstr ""
 "파일 탭에서 지정된 확장자를 사용해\n"
 "동일한 이름의 비디오 및 오디오 파일을 단일 비디오 파일로 병합합니다"
 
-#: .././config.py:6939
+#: .././config.py:6970
 msgid "The thumbnail's format can be changed in the File tab"
 msgstr "파일 탭에서 섬네일 포맷을 변경할 수 있습니다"
 
-#: .././config.py:6954
+#: .././config.py:6985
 msgid "_Optimisations"
 msgstr "_최적화"
 
-#: .././config.py:6960
+#: .././config.py:6991
 msgid ""
 "Optimise for fast seeking (shorter keyframe interval, about 10% larger file)"
 msgstr "빠른 탐색을 위한 최적화 (키프레임 간격 단축, 파일 크기가 10% 더 커짐)"
 
-#: .././config.py:6968
+#: .././config.py:6999
 msgid "Input video is a high-quality movie"
 msgstr "입력 비디오가 고화질 영화임"
 
-#: .././config.py:6974
+#: .././config.py:7005
 msgid "Input video is an animated movie"
 msgstr "입력 비디오가 애니매이션 영화임"
 
-#: .././config.py:6980
+#: .././config.py:7011
 msgid "Input video contains film grain"
 msgstr "입력 비디오가 필름 그레인을 포함함"
 
-#: .././config.py:6986
+#: .././config.py:7017
 msgid "Input video is an image slideshow"
 msgstr "입력 비디오가 이미지 슬라이드쇼임"
 
-#: .././config.py:6992
+#: .././config.py:7023
 msgid "Optimise for really weak CPU playback devices"
 msgstr "낮은 CPU 성능을 가진 디바이스를 위한 최적화"
 
-#: .././config.py:6999
+#: .././config.py:7030
 msgid "Optimise for really old devices (requires rate factor above 0)"
 msgstr "정말 구형 디바이스를 위한 최적화 (0 이상의 속도 계수 필요)"
 
-#: .././config.py:7010
+#: .././config.py:7041
 msgid ""
 "Move headers to beginning of file (so it can play while still downloading)"
 msgstr "파일 시작 부분으로 헤더 이동 (다운로드 중 재생이 가능해짐)"
 
-#: .././config.py:7018
+#: .././config.py:7049
 msgid "Fast encoding and low latency streaming"
 msgstr "빠른 인코딩 및 짧은 레이턴시 스트리밍"
 
-#: .././config.py:7024
+#: .././config.py:7055
 msgid "Limit bitrate (Mbit/s)"
 msgstr "비트레이트 제한 (Mbit/s)"
 
-#: .././config.py:7041
+#: .././config.py:7072
 msgid "Assuming a receiving buffer (seconds)"
 msgstr "수신 버퍼 가정 (초)"
 
-#: .././config.py:7119
+#: .././config.py:7150
 msgid "List of videos to be processed"
 msgstr "처리될 비디오 목록"
 
-#: .././config.py:7138 .././media.py:88
+#: .././config.py:7169 .././media.py:88
 msgid "Video"
 msgstr "비디오"
 
-#: .././config.py:7138
+#: .././config.py:7169
 msgid "Thumbnail"
 msgstr "섬네일"
 
-#: .././config.py:7181
+#: .././config.py:7212
 msgid "Remove video from list"
 msgstr "리스트에서 비디오 제거"
 
-#: .././config.py:7647
+#: .././config.py:7678
 msgid ""
 "Fewer FFmpeg options will be visible when you click the 'Apply' or 'Reset' "
 "buttons (or when you close and then re-open the window)"
@@ -4704,11 +4716,11 @@ msgstr ""
 "'적용' 또는 '재설정' 버튼을 클리하면 (혹은 창을 닫았다 다시 열면) 더 적은 "
 "FFmpeg 설정이 표시됩니다."
 
-#: .././config.py:7657
+#: .././config.py:7688
 msgid "Show more FFmpeg options (when window re-opens)"
 msgstr "고급 FFmpeg 설정 표시하기 (윈도우를 다시 열면)"
 
-#: .././config.py:7674
+#: .././config.py:7705
 msgid ""
 "More FFmpeg options will be visible when you click the 'Apply' or 'Reset' "
 "buttons (or when you close and then re-open the window)"
@@ -4716,135 +4728,135 @@ msgstr ""
 "'적용' 또는 '재설정' 버튼을 클리하면 (혹은 창을 닫았다 다시 열면) 더 많은 "
 "FFmpeg 설정이 표시됩니다."
 
-#: .././config.py:7684
+#: .././config.py:7715
 msgid "Show fewer FFmpeg options (when window re-opens)"
 msgstr "고급 FFmpeg 설정 숨기기 (윈도우를 다시 열면)"
 
 #. Add this tab...
-#: .././config.py:8135 .././config.py:8752 .././config.py:9176
-#: .././config.py:9663 .././config.py:10464
+#: .././config.py:8166 .././config.py:8783 .././config.py:9207
+#: .././config.py:9694 .././config.py:10495
 msgid "_General"
 msgstr "_일반"
 
-#: .././config.py:8138 .././config.py:8755 .././config.py:9179
-#: .././config.py:9668
+#: .././config.py:8169 .././config.py:8786 .././config.py:9210
+#: .././config.py:9699
 msgid "General properties"
 msgstr "일반 환경설정"
 
-#: .././config.py:8164
+#: .././config.py:8195
 msgid "Set the file (if this is the wrong one)"
 msgstr "파일 설정하기 (잘못된 경우에)"
 
-#: .././config.py:8184
+#: .././config.py:8215
 msgid "Always simulate download of this video"
 msgstr "언제나 비디오 다운로드 시뮬레이트됨"
 
-#: .././config.py:8207
+#: .././config.py:8238
 msgid "Video has been downloaded"
 msgstr "비디오가 다운로드됨"
 
-#: .././config.py:8228
+#: .././config.py:8259
 msgid "Video is marked as unwatched"
 msgstr "비디오가 시청하지 않은것으로 표기됨"
 
-#: .././config.py:8249
+#: .././config.py:8280
 msgid "Video is archived"
 msgstr "비디오가 아카이브됨"
 
-#: .././config.py:8256
+#: .././config.py:8287
 msgid "Video is bookmarked"
 msgstr "비디오가 북마크됨"
 
-#: .././config.py:8263
+#: .././config.py:8294
 msgid "Receive time"
 msgstr "받은 시간"
 
-#: .././config.py:8277
+#: .././config.py:8308
 msgid "Video is favourite"
 msgstr "비디오가 즐겨찾기임"
 
-#: .././config.py:8284
+#: .././config.py:8315
 msgid "Video is in waiting list"
 msgstr "비디오가 대기 리스트에 있음"
 
-#: .././config.py:8316
+#: .././config.py:8347
 msgid "Livestream properties"
 msgstr "생방송 속성"
 
-#: .././config.py:8321
+#: .././config.py:8352
 msgid "Livestream status"
 msgstr "생방송 상태"
 
-#: .././config.py:8332
+#: .././config.py:8363
 msgid "Waiting to start"
 msgstr "시작 대기중"
 
-#: .././config.py:8334
+#: .././config.py:8365
 msgid "Stream has started"
 msgstr "방송이 시작됨"
 
-#: .././config.py:8336
+#: .././config.py:8367
 msgid "Not a livestream"
 msgstr "생방송이 아님"
 
-#: .././config.py:8339
+#: .././config.py:8370
 msgid "Livestream message"
 msgstr "생방송 메시지"
 
-#: .././config.py:8354
+#: .././config.py:8385
 msgid "Video is pre-recorded"
 msgstr "비디오가 미리 녹화됨"
 
-#: .././config.py:8361
+#: .././config.py:8392
 msgid "Livestream actions"
 msgstr "생방송 액션"
 
-#: .././config.py:8370
+#: .././config.py:8401
 msgid "When the livestream starts, show a desktop notification"
 msgstr "생방송이 시작되면, 데스크탑 알림으로 알림"
 
-#: .././config.py:8379
+#: .././config.py:8410
 msgid "When the livestream starts, play an alarm"
 msgstr "생방송이 시작되면, 알람 울림"
 
-#: .././config.py:8389
+#: .././config.py:8420
 msgid "When the livestream starts, open it in the system's web browser"
 msgstr "생방송이 시작되면, 시스템의 웹브라우저로 실행"
 
-#: .././config.py:8401
+#: .././config.py:8432
 msgid "When the livestream starts, begin downloading it immediately"
 msgstr "생방송이 시작되면, 즉시 다운로드"
 
-#: .././config.py:8412 .././config.py:13782
+#: .././config.py:8443 .././config.py:13813
 msgid "When a livestream stops, download it (overwriting any earlier file)"
 msgstr "생방송이 종료되면, 다운로드 시작 (이전의 파일을 덮어씀)"
 
-#: .././config.py:8428
+#: .././config.py:8459
 msgid "_Description"
 msgstr "_설명"
 
-#: .././config.py:8432
+#: .././config.py:8463
 msgid "Video description"
 msgstr "비디오 설명"
 
-#: .././config.py:8453 .././config.py:8959
+#: .././config.py:8484 .././config.py:8990
 msgid "Errors / Warnings"
 msgstr "오류 / 경고"
 
-#: .././config.py:8459
+#: .././config.py:8490
 msgid "Error messages produced the last time this video was checked/downloaded"
 msgstr "이 비디오를 마지막으로 확인/다운로드 했을 때 생성된 오류 메시지"
 
-#: .././config.py:8474
+#: .././config.py:8505
 msgid ""
 "Warning messages produced the last time this video was checked/downloaded"
 msgstr "이 비디오를 마지막으로 확인/다운로드 했을 때 생성된 경고 메시지"
 
-#: .././config.py:8517
+#: .././config.py:8548
 msgid "Select the correct video/audio file"
 msgstr "올바른 비디오/오디오 파일 선택"
 
-#: .././config.py:8543
+#: .././config.py:8574
 msgid ""
 "The replacement video/audio file must be in the same channel, playlist or "
 "folder"
@@ -4852,300 +4864,300 @@ msgstr ""
 "교체할 비디오/오디오 파일은 반드시 같은 채널, 플레이리스트, 폴더 안에 있어야 "
 "합니다"
 
-#: .././config.py:8561
+#: .././config.py:8592
 msgid "You must select a valid video/audio file"
 msgstr "반드시 적합한 비디오/오디오 파일을 선택해야 합니다"
 
-#: .././config.py:8629
+#: .././config.py:8660
 msgid "Channel properties"
 msgstr "채널 속성"
 
-#: .././config.py:8632
+#: .././config.py:8663
 msgid "Playlist properties"
 msgstr "플레이리스트 속성"
 
-#: .././config.py:8773
+#: .././config.py:8804
 msgid "Always simulate download of videos in this channel"
 msgstr "언제나 이 채널 안의 비디오들을 다운로드 시뮬레이트됨"
 
-#: .././config.py:8775
+#: .././config.py:8806
 msgid "Always simulate download of videos in this playlist"
 msgstr "언제나 이 플레이리스트 안의 비디오들을 다운로드 시뮬레이트됨"
 
-#: .././config.py:8785
+#: .././config.py:8816
 msgid "Disable checking/downloading for this channel"
 msgstr "이 채널에 대해서 확인/다운로드 사용 안 함"
 
-#: .././config.py:8787
+#: .././config.py:8818
 msgid "Disable checking/downloading for this playlist"
 msgstr "이 플레이리스트에 대해서 확인/다운로드 사용 안 함"
 
-#: .././config.py:8797
+#: .././config.py:8828
 msgid "This channel is marked as a favourite"
 msgstr "이 채널은 즐겨찾기로 표기됨"
 
-#: .././config.py:8799
+#: .././config.py:8830
 msgid "This playlist is marked as a favourite"
 msgstr "이 플레이리스트는 즐겨찾기로 표기됨"
 
-#: .././config.py:8809
+#: .././config.py:8840
 msgid "Total videos"
 msgstr "총 비디오들"
 
-#: .././config.py:8833
+#: .././config.py:8864
 msgid "Favourite videos"
 msgstr "즐겨찾기 된 비디오들"
 
-#: .././config.py:8845
+#: .././config.py:8876
 msgid "Downloaded videos"
 msgstr "다운로드 된 비디오들"
 
-#: .././config.py:8867 .././config.py:9408 .././config.py:11646
+#: .././config.py:8898 .././config.py:9439 .././config.py:11677
 msgid "_History"
 msgstr "_히스토리"
 
-#: .././config.py:8872 .././config.py:9413 .././config.py:11653
+#: .././config.py:8903 .././config.py:9444 .././config.py:11684
 msgid "Download history"
 msgstr "히스토리 다운로드"
 
-#: .././config.py:8886 .././config.py:9427 .././config.py:11667
+#: .././config.py:8917 .././config.py:9458 .././config.py:11698
 msgid "Draw"
 msgstr "드로우"
 
-#: .././config.py:8914
+#: .././config.py:8945
 msgid "_RSS feed"
 msgstr "_RSS 피드"
 
-#: .././config.py:8917
+#: .././config.py:8948
 msgid "RSS feed"
 msgstr "RSS 피드"
 
-#: .././config.py:8923
+#: .././config.py:8954
 msgid ""
 "If Tartube cannot detect the channel's RSS feed, you can enter the URL here"
 msgstr "Tartube가 채널의 RSS 피드를 인식하지 못한다면, URL을 여기에 입력하세요"
 
-#: .././config.py:8928
+#: .././config.py:8959
 msgid ""
 "If Tartube cannot detect the playlist's RSS feed, you can enter the URL here"
 msgstr ""
 "Tartube가 플레이리스트의 RSS 피드를 인식하지 못한다면, URL을 여기에 입력하세"
 "요"
 
-#: .././config.py:8933
+#: .././config.py:8964
 msgid "(The feed is used to detect livestreams on compatible websites)"
 msgstr "(피드는 호환되는 웹 사이트 안에서 생방송을 감지할 때 사용됩니다)"
 
-#: .././config.py:8965
+#: .././config.py:8996
 msgid ""
 "Error messages produced the last time this channel was checked/downloaded"
 msgstr "이 채널을 마지막으로 확인/다운로드 했을 때 생성된 오류 메시지"
 
-#: .././config.py:8970
+#: .././config.py:9001
 msgid ""
 "Error messages produced the last time this playlist was checked/downloaded"
 msgstr "이 플레이리스트를 마지막으로 확인/다운로드 했을 때 생성된 오류 메시지"
 
-#: .././config.py:8988
+#: .././config.py:9019
 msgid ""
 "Warning messages produced the last time this channel was checked/downloaded"
 msgstr "이 채널을 마지막으로 확인/다운로드 했을 때 생성된 경고 메시지"
 
-#: .././config.py:8993
+#: .././config.py:9024
 msgid ""
 "Warning messages produced the last time this playlist was checked/downloaded"
 msgstr "이 플레이리스트를 마지막으로 확인/다운로드 했을 때 생성된 경고 메시지"
 
-#: .././config.py:9059
+#: .././config.py:9090
 msgid "Folder properties"
 msgstr "폴더 속성"
 
-#: .././config.py:9196
+#: .././config.py:9227
 msgid "Always simulate download of videos"
 msgstr "언제나 비디오 다운로드 시뮬레이트됨"
 
-#: .././config.py:9203
+#: .././config.py:9234
 msgid "Disable checking/downloading for this folder"
 msgstr "이 폴더에 대해서 확인/다운로드 사용 안 함"
 
-#: .././config.py:9210
+#: .././config.py:9241
 msgid "This folder is marked as a favourite"
 msgstr "이 폴더는 즐겨찾기로 마크되어 있음"
 
-#: .././config.py:9217
+#: .././config.py:9248
 msgid "This folder is hidden"
 msgstr "이 폴더는 숨겨짐"
 
-#: .././config.py:9224
+#: .././config.py:9255
 msgid "This folder can't be deleted by the user"
 msgstr "이 폴더는 유저에 의해 삭제할 수 없음"
 
-#: .././config.py:9231
+#: .././config.py:9262
 msgid "This is a system-controlled folder"
 msgstr "이 폴더는 시스템 제어 폴더임"
 
-#: .././config.py:9238
+#: .././config.py:9269
 msgid "Only videos can be added to this folder"
 msgstr "이 폴더엔 비디오만 추가할 수 있음"
 
-#: .././config.py:9245
+#: .././config.py:9276
 msgid "All contents deleted when Tartube shuts down"
 msgstr "Tartube가 종료되면 모든 컨텐츠가 삭제됨"
 
-#: .././config.py:9259 .././config.py:11475
+#: .././config.py:9290 .././config.py:11506
 msgid "_Statistics"
 msgstr "_통계"
 
-#: .././config.py:9264 .././config.py:11482
+#: .././config.py:9295 .././config.py:11513
 msgid "Statistics"
 msgstr "통계"
 
-#: .././config.py:9285 .././config.py:11503
+#: .././config.py:9316 .././config.py:11534
 msgid "Downloaded"
 msgstr "다운로드"
 
-#: .././config.py:9329
+#: .././config.py:9360
 msgid "Sub-folders"
 msgstr "서브 폴더"
 
-#: .././config.py:9351
+#: .././config.py:9382
 msgid "Recalculate"
 msgstr "다시 계산"
 
-#: .././config.py:9522
+#: .././config.py:9553
 msgid "Scheduled download"
 msgstr "예약 다운로드"
 
-#: .././config.py:9673 .././config.py:12515
+#: .././config.py:9704 .././config.py:12546
 msgid "Scheduled download name"
 msgstr "예약 다운로드 이름"
 
-#: .././config.py:9685
+#: .././config.py:9716
 msgid "Download mode"
 msgstr "다운로드 모드"
 
-#: .././config.py:9690
+#: .././config.py:9721
 msgid "Check channels, playlist and folders"
 msgstr "채널, 플레이리스트, 폴더 선택"
 
-#: .././config.py:9691
+#: .././config.py:9722
 msgid "Download channels, playlists and folders"
 msgstr "채널, 플레이리스트, 폴더 다운로드"
 
-#: .././config.py:9692
+#: .././config.py:9723
 msgid "Perform a custom download"
 msgstr "커스텀 다운로드 수행"
 
-#: .././config.py:9703 .././config.py:12481
+#: .././config.py:9734 .././config.py:12512
 msgid "Start mode"
 msgstr "시작 모드"
 
-#: .././config.py:9708
+#: .././config.py:9739
 msgid "Perform this download at regular intervals"
 msgstr "정기적으로 이 다운로드 수행"
 
-#: .././config.py:9709
+#: .././config.py:9740
 msgid "Perform this download when Tartube starts"
 msgstr "Tartube가 시작되면 이 다운로드 수행"
 
-#: .././config.py:9710
+#: .././config.py:9741
 msgid "Disable this scheduled download"
 msgstr "이 예약 다운로드 비활성화"
 
-#: .././config.py:9722
+#: .././config.py:9753
 msgid "Time between scheduled downloads"
 msgstr "예약 다운로드 시간"
 
-#: .././config.py:9766
+#: .././config.py:9797
 msgid "If another scheduled download is running:"
 msgstr "만약 다른 예약 다운로드가 수행중이면:"
 
-#: .././config.py:9773
+#: .././config.py:9804
 msgid "Add channels, playlists and folders to the end of the queue"
 msgstr "대기열 끝에 채널, 플레이리스트, 폴더 추가"
 
-#: .././config.py:9779
+#: .././config.py:9810
 msgid "Add channels, playlists and folders to the beginning of the queue"
 msgstr "대기열 맨 앞에 채널, 플레이리스트, 폴더 추가"
 
-#: .././config.py:9786
+#: .././config.py:9817
 msgid "Do nothing, just wait until the next scheduled download time"
 msgstr "아무것도 하지 않고 다음 예약 다운로드 시간까지 기다리기"
 
-#: .././config.py:9801
+#: .././config.py:9832
 msgid "This scheduled download takes priority over others"
 msgstr "이 예약된 다운로드가 다른것보다 우선시됩니다"
 
-#: .././config.py:9804
+#: .././config.py:9835
 msgid "Other scheduled downloads won't start until this one is finished"
 msgstr ""
 "다른 예약 다운로드는 이 예약 다운로드가 종료되기 전까지 시작하지 않습니다"
 
-#: .././config.py:9813
+#: .././config.py:9844
 msgid ""
 "Ignore time-saving preferences, and check/download the whole channel/"
 "playlist/folder"
 msgstr ""
 "시간 절약 환경 설정을 무시하고, 전체 채널/플레이리스트/폴더 확인/다운로드"
 
-#: .././config.py:9821
+#: .././config.py:9852
 msgid "Shut down Tartube when this scheduled download has finished"
 msgstr "예약 작업이 종료되면 Tartube 종료"
 
-#: .././config.py:9839
+#: .././config.py:9870
 msgid "Media to download"
 msgstr "다운로드 할 미디어"
 
-#: .././config.py:9845
+#: .././config.py:9876
 msgid "Check/download everything"
 msgstr "모든걸 확인/다운로드"
 
-#: .././config.py:9853
+#: .././config.py:9884
 msgid "Only check/download the media below"
 msgstr "하단의 미디어만 확인/다운로드"
 
-#: .././config.py:9867
+#: .././config.py:9898
 msgid ""
 "Hint: you can drag and drop channels, playlists and your own folders here"
 msgstr "힌트: 여기에 채널, 플레이리스트, 폴더를 드래그 앤 드랍할 수 있습니다"
 
-#: .././config.py:9926
+#: .././config.py:9957
 msgid "Remove"
 msgstr "제거"
 
-#: .././config.py:10230
+#: .././config.py:10261
 msgid "System preferences"
 msgstr "시스템 환경 설정"
 
-#: .././config.py:10483
+#: .././config.py:10514
 msgid "_Language"
 msgstr "_언어"
 
-#: .././config.py:10488
+#: .././config.py:10519
 msgid "Language preferences"
 msgstr "언어 환경 설정"
 
-#: .././config.py:10493
+#: .././config.py:10524
 msgid "Language"
 msgstr "언어"
 
-#: .././config.py:10529
+#: .././config.py:10560
 msgid "_Stability"
 msgstr "_안정성"
 
-#: .././config.py:10539
+#: .././config.py:10570
 msgid "Gtk library"
 msgstr "Gtk 라이브러리"
 
-#: .././config.py:10544
+#: .././config.py:10575
 msgid "Current version of the system's Gtk library"
 msgstr "시스템의 현재 Gtk 라이브러리 버전"
 
-#: .././config.py:10559
+#: .././config.py:10590
 msgid "Gtk stability"
 msgstr "Gtk 안정성"
 
-#: .././config.py:10598
+#: .././config.py:10629
 msgid ""
 "Tartube uses the Gtk graphics library. This library is notoriously "
 "unreliable and may even causes crashes."
@@ -5153,7 +5165,7 @@ msgstr ""
 "Tartube는 Gtk 그래픽 라이브러리를 사용합니다. Gtk 라이브러리는 믿을수 없을 정"
 "도로 악명깊고 심지어 충돌이 일어날 수도 있습니다."
 
-#: .././config.py:10605
+#: .././config.py:10636
 msgid ""
 "By default, some cosmetic features are disabled (for example, in the Videos "
 "tab, the list of videos is not updated until the end of a download "
@@ -5162,7 +5174,7 @@ msgstr ""
 "기본적으로, 일부 그래픽 기능은 비활성화 되어있습니다 (예를 들어, 비디오 탭의 "
 "비디오 목록은 다운로드 작업이 끝날 때 까지 업데이트 되지 않습니다)."
 
-#: .././config.py:10613
+#: .././config.py:10644
 msgid ""
 "If you think that your system Gtk has been fixed (or if you want to test Gtk "
 "stability), you can re-enable the cosmetic features."
@@ -5170,192 +5182,192 @@ msgstr ""
 "만약 시스템의 Gtk 라이브러리가 수정되었다고 생각하는 경우 (혹은 Gtk 안정성을 "
 "테스트하고 싶은 경우) 그래픽 기능을 다시 활성화 할 수 있습니다."
 
-#: .././config.py:10623
+#: .././config.py:10654
 msgid "Disable some cosmetic features to prevent crashes and other issues"
 msgstr "몇몇 그래픽 기능을 비활성화 해서 충돌 및 기타 문제 방지하기"
 
-#: .././config.py:10641
+#: .././config.py:10672
 msgid "_Modules"
 msgstr "_모듈"
 
-#: .././config.py:10646
+#: .././config.py:10677
 msgid "Module availability"
 msgstr "모듈 가용성"
 
-#: .././config.py:10652
+#: .././config.py:10683
 msgid "feedparser module is available (required for detecting livestreams)"
 msgstr "feedparser 모듈을 사용할 수 있습니다 (생방송 감지 시 필요)"
 
-#: .././config.py:10661
+#: .././config.py:10692
 msgid "matplotlib module is available (draws graphs)"
 msgstr "matplotlib 모듈을 사용할 수 있습니다 (그래프를 그릴 때 사용)"
 
-#: .././config.py:10669
+#: .././config.py:10700
 msgid "moviepy module is available (finds the length of videos, if unknown)"
 msgstr ""
 "moviepy 모듈을 사용할 수 있습니다 (비디오의 길이를 모를 경우 이를 찾는데 사"
 "용)"
 
-#: .././config.py:10679
+#: .././config.py:10710
 msgid "playsound module is available (sound an alarm when a livestream starts)"
 msgstr "playsound 모듈을 사용할 수 있습니다 (생방송이 시작될 경우 알람을 재생)"
 
-#: .././config.py:10689
+#: .././config.py:10720
 msgid ""
 "XDG module is available (saves the config file in the standard location)"
 msgstr "XDG 모듈을 사용할 수 있습니다 (구성 파일을 표준 위치에 저장해줌)"
 
-#: .././config.py:10699
+#: .././config.py:10730
 msgid ""
 "Notify module is available (shows desktop notifications; Linux/*BSD only)"
 msgstr ""
 "Notify 모듈을 사용할 수 있습니다 (데스크탑 알림을 보여줌; Linux/*BSD만 사용가"
 "능)"
 
-#: .././config.py:10709
+#: .././config.py:10740
 msgid "Module preferences"
 msgstr "모듈 환경 설정"
 
-#: .././config.py:10715
+#: .././config.py:10746
 msgid ""
 "Use 'moviepy' module to get a video's duration, if not known (may be slow)"
 msgstr ""
 "알려지지 않은 비디오 길이를 'moviepy' 모듈을 사용해 측정합니다 (느릴 수 있음)"
 
-#: .././config.py:10727
+#: .././config.py:10758
 msgid "Timeout applied when moviepy checks a video file"
 msgstr "비디오 파일을 moviepy로 체크할 때 타임아웃 적용"
 
-#: .././config.py:10752
+#: .././config.py:10783
 msgid "_Debugging"
 msgstr "_디버깅"
 
-#: .././config.py:10760
+#: .././config.py:10791
 msgid "Debugging preferences"
 msgstr "디버깅 환경 설정"
 
-#: .././config.py:10766
+#: .././config.py:10797
 msgid ""
 "Debug messages are only visible in the terminal window (these settings are "
 "not saved)"
 msgstr ""
 "디버그 메시지는 터미널 윈도우에서만 보입니다 (이 설정들은 저장되지 않습니다)"
 
-#: .././config.py:10773
+#: .././config.py:10804
 msgid "Enable application debug messages (code in mainapp.py)"
 msgstr "애플리케이션 디버그 메시지 활성화 (code in mainapp.py)"
 
-#: .././config.py:10782 .././config.py:10802
+#: .././config.py:10813 .././config.py:10833
 msgid "...but don't show timer debug messages"
 msgstr "...하지만 디버그 메시지 타이머는 표시하지 않기"
 
-#: .././config.py:10793
+#: .././config.py:10824
 msgid "Enable main winddow debug messages (code in mainwin.py)"
 msgstr "메인 디버그 메시지 활성화 (code in mainapp.py)"
 
-#: .././config.py:10813
+#: .././config.py:10844
 msgid "Enabled downloader debug messages (code in downloads.py)"
 msgstr "다운로더 디버그 메시지 활성화 (code in mainapp.py)"
 
-#: .././config.py:10856
+#: .././config.py:10887
 msgid ""
 "Debugging messages are also visible if an empty file called debug.txt exists "
 "here:"
 msgstr "디버깅 메시지는 이 위치의 debug.txt 파일이 비어있는 경우에도 보입니다:"
 
-#: .././config.py:10901
+#: .././config.py:10932
 msgid "_Device"
 msgstr "_디바이스"
 
-#: .././config.py:10906
+#: .././config.py:10937
 msgid "Device preferences"
 msgstr "디바이스 환경 설정"
 
-#: .././config.py:10911
+#: .././config.py:10942
 msgid "Size of device (in Mb)"
 msgstr "디바이스 파일 크기 (Mb)"
 
-#: .././config.py:10923
+#: .././config.py:10954
 msgid "Free space on device (in Mb)"
 msgstr "디바이스 남은 공간 (Mb)"
 
-#: .././config.py:10935
+#: .././config.py:10966
 msgid "Warn user if disk space is less than"
 msgstr "디스크 공간이 적으면 경고해주기"
 
-#: .././config.py:10953
+#: .././config.py:10984
 msgid "Halt downloads if disk space is less than"
 msgstr "디스크 공간이 적으면 중지하기"
 
-#: .././config.py:10992
+#: .././config.py:11023
 msgid "Configuration preferences"
 msgstr "구성 환경 설정"
 
-#: .././config.py:10997
+#: .././config.py:11028
 msgid "Tartube configuration file loaded from:"
 msgstr "Tartube 환경 설정 파일은 여기서 불러옵니다:"
 
-#: .././config.py:11016
+#: .././config.py:11047
 msgid "D_atabase"
 msgstr "_데이터베이스"
 
-#: .././config.py:11022
+#: .././config.py:11053
 msgid "Database preferences"
 msgstr "데이터베이스 환경 설정"
 
-#: .././config.py:11027
+#: .././config.py:11058
 msgid "Tartube data folder"
 msgstr "Tartube 데이터 폴더"
 
-#: .././config.py:11039
+#: .././config.py:11070
 msgid "Add new database"
 msgstr "새 데이터베이스 추가"
 
-#: .././config.py:11041
+#: .././config.py:11072
 msgid "Change to a different data folder"
 msgstr "다른 데이터 폴더로 변경"
 
-#: .././config.py:11048
+#: .././config.py:11079
 msgid "Check and repair database"
 msgstr "데이터베이스 확인 후 수리"
 
-#: .././config.py:11051
+#: .././config.py:11082
 msgid "Check for inconsistencies, and repair them"
 msgstr "불일치 확인 후 수리"
 
-#: .././config.py:11056
+#: .././config.py:11087
 msgid "Recent data folders"
 msgstr "최근 데이터 폴더"
 
-#: .././config.py:11070
+#: .././config.py:11101
 msgid "Switch to the selected data folder"
 msgstr "선택한 데이터 폴더로 변경"
 
-#: .././config.py:11080
+#: .././config.py:11111
 msgid "Forget"
 msgstr "잊어버리기"
 
-#: .././config.py:11083
+#: .././config.py:11114
 msgid "Remove the selected data folder from the list"
 msgstr "리스트에서 선택한 데이터 폴더 지우기"
 
-#: .././config.py:11092
+#: .././config.py:11123
 msgid "Forget all"
 msgstr "모두 잊어버리기"
 
-#: .././config.py:11095
+#: .././config.py:11126
 msgid "Forget every folder in this list (except the current one)"
 msgstr "이 목록의 모든 폴더 잊어버리기 (현재 폴더 제외)"
 
-#: .././config.py:11108
+#: .././config.py:11139
 msgid "Move the selected folder up the list"
 msgstr "선택한 폴더를 위로 이동"
 
-#: .././config.py:11116
+#: .././config.py:11147
 msgid "Move the selected folder down the list"
 msgstr "선택한 폴더를 아래로 이동"
 
-#: .././config.py:11144
+#: .././config.py:11175
 msgid ""
 "On startup, load the first database on the list (not the most recently-use "
 "one)"
@@ -5363,23 +5375,23 @@ msgstr ""
 "시작시, 목록의 첫 번째 데이터베이스 로드 (가장 최근에 사용한 데이터베이스 아"
 "님)"
 
-#: .././config.py:11154
+#: .././config.py:11185
 msgid "If one database is in use, try to load others"
 msgstr "만약 한 데이터베이스가 사용중이면, 다른 것을 로드하기"
 
-#: .././config.py:11162
+#: .././config.py:11193
 msgid "Add new data directories to this list"
 msgstr "새 데이터 디렉토리를 리스트에 추가하기"
 
-#: .././config.py:11201
+#: .././config.py:11232
 msgid "_Backups"
 msgstr "_백업"
 
-#: .././config.py:11205
+#: .././config.py:11236
 msgid "Backup preferences"
 msgstr "백업 환경 설정"
 
-#: .././config.py:11210
+#: .././config.py:11241
 msgid ""
 "When saving a database file, Tartube makes a backup copy of it (in case "
 "something goes wrong)"
@@ -5387,165 +5399,165 @@ msgstr ""
 "데이터베이스 파일을 저장할 때 Tartube에서 백업 사본을 만들어 두기 (만약을 위"
 "해서)"
 
-#: .././config.py:11219
+#: .././config.py:11250
 msgid "Delete the backup file as soon as the save procedure is finished"
 msgstr "저장 절차가 완료되는 즉시 백업 파일 삭제"
 
-#: .././config.py:11229
+#: .././config.py:11260
 msgid "Keep the backup file, replacing any previous backup file"
 msgstr "백업 파일을 유지하고 이전 백업 파일만 대체"
 
-#: .././config.py:11240
+#: .././config.py:11271
 msgid ""
 "Make a new backup file once per day, after the day's first save procedure"
 msgstr "매일매일 첫번째 저장 시에 새로운 백업 파일 생성"
 
-#: .././config.py:11251
+#: .././config.py:11282
 msgid "Make a new backup file for every save procedure"
 msgstr "매 저장 시에 새로운 백업 파일 생성"
 
-#: .././config.py:11300
+#: .././config.py:11331
 msgid "Automatic video deletion preferences"
 msgstr "자동 비디오 삭제 환경 설정"
 
-#: .././config.py:11305
+#: .././config.py:11336
 msgid "Automatically delete downloaded videos after this many days"
 msgstr "이 기간이 지나면 다운로드한 비디오 자동 삭제"
 
-#: .././config.py:11319
+#: .././config.py:11350
 msgid "...but only delete videos which have been watched"
 msgstr "...하지만 시청한 비디오만 삭제"
 
-#: .././config.py:11343
+#: .././config.py:11374
 msgid "Video matching preferences"
 msgstr "비디오 매칭 환경 설정"
 
-#: .././config.py:11348
+#: .././config.py:11379
 msgid "When matching videos on the filesystem:"
 msgstr "파일 시스템에서 비디오를 매칭할 때:"
 
-#: .././config.py:11354
+#: .././config.py:11385
 msgid "The video names must match exactly"
 msgstr "비디오 이름이 완벽히 일치"
 
-#: .././config.py:11361
+#: .././config.py:11392
 msgid "The first # characters must match exactly"
 msgstr "첫번째 # 글자만 완벽히 일치"
 
-#: .././config.py:11375
+#: .././config.py:11406
 msgid "Ignore the last # characters; the remaining name must match exactly"
 msgstr "마지막 # 글자를 무시하고 나머지 글자만 완벽히 일치"
 
-#: .././config.py:11421
+#: .././config.py:11452
 msgid "_Temporary folders"
 msgstr "_임시 폴더"
 
-#: .././config.py:11427
+#: .././config.py:11458
 msgid "Temporary folder preferences"
 msgstr "임시 폴더 환경 설정"
 
-#: .././config.py:11432
+#: .././config.py:11463
 msgid "Empty temporary folders when Tartube shuts down"
 msgstr "Tartube가 종료되면 임시 폴더 비우기"
 
-#: .././config.py:11441
+#: .././config.py:11472
 msgid "(N.B. Temporary folders are always emptied when Tartube starts up)"
 msgstr "(주의. Tartube가 시작되면 임시 폴더가 항상 비워집니다)"
 
-#: .././config.py:11449
+#: .././config.py:11480
 msgid "Open temporary folders (on the desktop) when Tartube shuts down"
 msgstr "Tartube가 종료되면 임시 폴더를 열기 (바탕화면에)"
 
-#: .././config.py:11487
+#: .././config.py:11518
 msgid "The Tartube database contains:"
 msgstr "Tartube 데이터베이스가 갖고 있는 정보:"
 
-#: .././config.py:11547
+#: .././config.py:11578
 msgid "Custom folders"
 msgstr "커스텀 폴더"
 
-#: .././config.py:11570
+#: .././config.py:11601
 msgid "Calculate"
 msgstr "계산"
 
 #. Add this tab...
-#: .././config.py:11696
+#: .././config.py:11727
 msgid "_Windows"
 msgstr "_윈도우"
 
-#: .././config.py:11719
+#: .././config.py:11750
 msgid "_Main window"
 msgstr "_메인 윈도우"
 
-#: .././config.py:11725
+#: .././config.py:11756
 msgid "Main window preferences"
 msgstr "메인 윈도우 환경설정"
 
-#: .././config.py:11730
+#: .././config.py:11761
 msgid "Remember the size of the main window when shutting down"
 msgstr "메인 윈도우를 종료 시 창 크기 기억"
 
-#: .././config.py:11738
+#: .././config.py:11769
 msgid "Also remember the position of main window sliders"
 msgstr "메인 윈도우의 슬라이더 위치 또한 기억"
 
-#: .././config.py:11755
+#: .././config.py:11786
 msgid "Don't show the main window toolbar"
 msgstr "메인 메뉴 툴바 보이지 않기"
 
-#: .././config.py:11763
+#: .././config.py:11794
 msgid "Don't show labels in the main window toolbar"
 msgstr "메인 메뉴 툴바 레이블 보이지 않기"
 
-#: .././config.py:11781
+#: .././config.py:11812
 msgid ""
 "Replace stock icons with custom icons (in case stock icons are not visible)"
 msgstr ""
 "스톡 아이콘을 커스텀 아이콘으로 교체 (스톡 아이콘이 표시되지 않는 경우)"
 
-#: .././config.py:11791
+#: .././config.py:11822
 msgid "Show tooltips for videos, channels, playlists and folders"
 msgstr "비디오, 채널, 플레이리스트, 폴더에 대한 툴팁 표시"
 
-#: .././config.py:11799
+#: .././config.py:11830
 msgid "Show errors/warnings in tooltips (but not in the Videos tab)"
 msgstr "툴팁에 오류/경고 표시 (비디오 탭에선 아님)"
 
-#: .././config.py:11817
+#: .././config.py:11848
 msgid "Disable the 'Download all' buttons in the toolbar and the Videos Tab"
 msgstr "툴바와 비디오 탭에서 '모두 다운로드' 버튼 비활성화"
 
-#: .././config.py:11828
+#: .././config.py:11859
 msgid "In the Progress Tab, hide finished videos / channels / playlists"
 msgstr "작업 탭에서 완료한 비디오 / 채널 / 플레이리스트 숨기기"
 
-#: .././config.py:11837
+#: .././config.py:11868
 msgid "In the Progress Tab, show results in reverse order"
 msgstr "작업 탭에서, 결과를 반대로 보여주기"
 
-#: .././config.py:11845
+#: .././config.py:11876
 msgid "When Tartube starts, automatically open the Classic Mode tab"
 msgstr "Tartube가 시작하면, 자동으로 클래식 모드 탭으로 열기"
 
-#: .././config.py:11859
+#: .././config.py:11890
 msgid ""
 "In the Classic Mode Tab, when adding URLs, remove duplicates rather than "
 "retaining them"
 msgstr "클래식 모드 탭에서, URL을 추가할 때, 중복 항목을 유지하지 않고 제거"
 
-#: .././config.py:11873
+#: .././config.py:11904
 msgid "In the Errors/Warnings Tab, don't reset the tab text when it is clicked"
 msgstr "오류/경고 탭에서, 탭 텍스트를 클릭 시 재설정하지 않음"
 
-#: .././config.py:11896
+#: .././config.py:11927
 msgid "Video Index (left side of the Videos Tab)"
 msgstr "비디오 색인 (비디오 탭의 왼쪽)"
 
-#: .././config.py:11902
+#: .././config.py:11933
 msgid "Show smaller icons in the Video Index"
 msgstr "비디오 색인에서 작은 아이콘 표시하기"
 
-#: .././config.py:11912
+#: .././config.py:11943
 msgid ""
 "In the Video Index, show detailed statistics about the videos in each "
 "channel / playlist / folder"
@@ -5553,140 +5565,140 @@ msgstr ""
 "비디오 색인 내 각 채널 / 플레이리스트 / 폴더에서 비디오에 대한 자세한 통계 표"
 "시하기"
 
-#: .././config.py:11923
+#: .././config.py:11954
 msgid ""
 "After clicking on a folder, automatically expand/collapse the tree around it"
 msgstr "폴더를 클릭하면, 자동으로 관련 트리를 확장/축소하기"
 
-#: .././config.py:11934
+#: .././config.py:11965
 msgid "Expand the whole tree, not just the level beneath the clicked folder"
 msgstr "클릭한 폴더 아래뿐 아니라 전체 트리 확장하기"
 
-#: .././config.py:11955
+#: .././config.py:11986
 msgid "Video Catalogue (right side of the Videos Tab)"
 msgstr "비디오 카탈로그 (비디오 탭의 오른쪽)"
 
-#: .././config.py:11962
+#: .././config.py:11993
 msgid "Show 'today' and 'yesterday' as the date, when possible"
 msgstr "가능하면 '오늘'과 '어제' 사용하기"
 
-#: .././config.py:11972
+#: .././config.py:12003
 msgid "Draw a frame around each video"
 msgstr "각 비디오 주위에 프레임 그리기"
 
-#: .././config.py:11982
+#: .././config.py:12013
 msgid "Draw status icons for each video"
 msgstr "각 비디오에 상태 아이콘 그리기"
 
-#: .././config.py:11991
+#: .././config.py:12022
 msgid "Thumbnail size (when videos are displayed on a grid)"
 msgstr "섬네일 크기 (비디오가 그리드로 표시될 때)"
 
-#: .././config.py:12019
+#: .././config.py:12050
 msgid "Show livestreams with a different background colour"
 msgstr "생방송을 다른 배경 색으로 표시하기"
 
-#: .././config.py:12027
+#: .././config.py:12058
 msgid "Use same background colours for livestream and debut videos"
 msgstr "생방송과 데뷔 비디오를 동일한 배경 색으로 표시하기"
 
-#: .././config.py:12055
+#: .././config.py:12086
 msgid "_Drag"
 msgstr "_드래그"
 
-#: .././config.py:12059
+#: .././config.py:12090
 msgid "Drag and drop preferences"
 msgstr "드래그 앤 드랍 환경 설정"
 
-#: .././config.py:12065
+#: .././config.py:12096
 msgid "When dragging and dropping videos to an external application..."
 msgstr "비디오를 외부 프로그램으로 드래그 앤 드랍 할때..."
 
-#: .././config.py:12071
+#: .././config.py:12102
 msgid "Transfer the video's full file path"
 msgstr "비디오의 전체 경로 전송하기"
 
-#: .././config.py:12079
+#: .././config.py:12110
 msgid "Transfer the video's source URL"
 msgstr "비디오의 원본 URL 전송하기"
 
-#: .././config.py:12087
+#: .././config.py:12118
 msgid "Transfer the video's name"
 msgstr "비디오의 이름 전송하기"
 
-#: .././config.py:12095
+#: .././config.py:12126
 msgid "Transfer the thumbnail's full file path"
 msgstr "비디오 섬네일의 전체 경로 전송하기"
 
-#: .././config.py:12111
+#: .././config.py:12142
 msgid "_System tray"
 msgstr "_시스템 트레이"
 
-#: .././config.py:12117
+#: .././config.py:12148
 msgid "System tray preferences"
 msgstr "시스템 트레이 환경 설정"
 
-#: .././config.py:12122
+#: .././config.py:12153
 msgid "Show icon in system tray"
 msgstr "시스템 트레이에 아이콘 표시하기"
 
-#: .././config.py:12131
+#: .././config.py:12162
 msgid "Close to the tray, rather than closing the application"
 msgstr "프로그램을 닫는 대신 트레이에 닫기"
 
-#: .././config.py:12157
+#: .././config.py:12188
 msgid "D_ialogues"
 msgstr "_다이얼로그"
 
-#: .././config.py:12163
+#: .././config.py:12194
 msgid "Dialogue window preferences"
 msgstr "다이얼로그 윈도우 환경 설정"
 
-#: .././config.py:12168
+#: .././config.py:12199
 msgid "When adding channels/playlists, keep the dialogue window open"
 msgstr "채널/플레이리스트 추가 시 다이얼로그 윈도우 열기"
 
-#: .././config.py:12178
+#: .././config.py:12209
 msgid "When the dialogue window opens, add URLs from the system clipboard"
 msgstr "다이얼로그 윈도우가 열릴ㄸ 때, URL을 클립보드에 추가하기"
 
-#: .././config.py:12206
+#: .././config.py:12237
 msgid "_Errors/Warnings"
 msgstr "_오류/경고"
 
-#: .././config.py:12214
+#: .././config.py:12245
 msgid "Errors/Warnings tab preferences"
 msgstr "오류/경고 탭 환경 설정"
 
-#: .././config.py:12219
+#: .././config.py:12250
 msgid "Show Tartube error messages"
 msgstr "Tartube 오류 메시지 표시하기"
 
-#: .././config.py:12227
+#: .././config.py:12258
 msgid "Show Tartube warning messages"
 msgstr "Tartube 경고 메시지 표시하기"
 
-#: .././config.py:12235
+#: .././config.py:12266
 msgid "Show server error messages"
 msgstr "서버 에러 메시지 표시하기"
 
-#: .././config.py:12246
+#: .././config.py:12277
 msgid "Show server warning messages"
 msgstr "서버 경고 메시지 표시하기"
 
-#: .././config.py:12258
+#: .././config.py:12289
 msgid "Downloader error/warning preferences"
 msgstr "다운로드 오류/경고 환경설정"
 
-#: .././config.py:12263
+#: .././config.py:12294
 msgid "TRANSLATOR'S NOTE: These error messages are always in English"
 msgstr "TRANSLATOR'S NOTE: These error messages are always in English"
 
-#: .././config.py:12267
+#: .././config.py:12298
 msgid "Ignore 'Child process exited with non-zero code' errors"
 msgstr "Ignore 'Child process exited with non-zero code' errors"
 
-#: .././config.py:12276
+#: .././config.py:12307
 msgid ""
 "Ignore 'Unable to download video data' and 'Unable to extract video data' "
 "errors"
@@ -5694,130 +5706,130 @@ msgstr ""
 "Ignore 'Unable to download video data' and 'Unable to extract video data' "
 "errors"
 
-#: .././config.py:12286
+#: .././config.py:12317
 msgid "Ignore 'Did not get any data blocks' errors"
 msgstr "Ignore 'Did not get any data blocks' errors"
 
-#: .././config.py:12295
+#: .././config.py:12326
 msgid "Ignore 'Requested formats are incompatible for merge' warnings"
 msgstr "Ignore 'Requested formats are incompatible for merge' warnings"
 
-#: .././config.py:12304
+#: .././config.py:12335
 msgid "Ignore 'No video formats found' errors"
 msgstr "Ignore 'No video formats found' errors"
 
-#: .././config.py:12312
+#: .././config.py:12343
 msgid "Ignore 'There are no annotations to write' warnings"
 msgstr "Ignore 'There are no annotations to write' warnings"
 
-#: .././config.py:12320
+#: .././config.py:12351
 msgid "Ignore 'Video doesn't have subtitles' warnings"
 msgstr "Ignore 'Video doesn't have subtitles' warnings"
 
-#: .././config.py:12336
+#: .././config.py:12367
 msgid "_Websites"
 msgstr "_웹사이트"
 
-#: .././config.py:12344
+#: .././config.py:12375
 msgid "YouTube error/warning preferences"
 msgstr "유튜브 오류/경고 설정"
 
-#: .././config.py:12349
+#: .././config.py:12380
 msgid "Ignore YouTube copyright errors"
 msgstr "유튜브 저작권 오류 무시하기"
 
-#: .././config.py:12357
+#: .././config.py:12388
 msgid "Ignore YouTube age-restriction errors"
 msgstr "유튜브 나이제한 오류 무시하기"
 
-#: .././config.py:12365
+#: .././config.py:12396
 msgid "Ignore YouTube deletion by uploader errors"
 msgstr "유튜브 업로더 삭제 오류 무시하기"
 
-#: .././config.py:12373
+#: .././config.py:12404
 msgid "Ignore YouTube payment errors"
 msgstr "유튜브 결제 오류 무시하기"
 
-#: .././config.py:12382
+#: .././config.py:12413
 msgid "General preferences"
 msgstr "일반 속성"
 
-#: .././config.py:12388
+#: .././config.py:12419
 msgid ""
 "Ignore any errors/warnings which match lines in this list (applies to all "
 "websites)"
 msgstr "이 목록의 행과 일치하는 오류/경고 무시하기(모든 웹사이트에 적용)"
 
-#: .././config.py:12402
+#: .././config.py:12433
 msgid "These are ordinary strings"
 msgstr "이것들은 보통 문자열임"
 
-#: .././config.py:12409
+#: .././config.py:12440
 msgid "These are regular expressions (regexes)"
 msgstr "이것들은 정규식임 (regexes)"
 
 #. Add this tab...
-#: .././config.py:12438
+#: .././config.py:12469
 msgid "_Scheduling"
 msgstr "_예약"
 
-#: .././config.py:12455
+#: .././config.py:12486
 msgid "_Start"
 msgstr "_시작"
 
-#: .././config.py:12461
+#: .././config.py:12492
 msgid "Scheduled download preferences"
 msgstr "예약 다운로드 속성"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Priority"
 msgstr "우선순위"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Whole"
 msgstr "전체"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "Shutdown"
 msgstr "강제 종료"
 
-#: .././config.py:12482
+#: .././config.py:12513
 msgid "D/L All"
 msgstr "모두 다운로드"
 
-#: .././config.py:12483
+#: .././config.py:12514
 msgid "Join mode"
 msgstr "조인 모드"
 
-#: .././config.py:12537 .././config.py:14468 .././config.py:14733
+#: .././config.py:12568 .././config.py:14499 .././config.py:14764
 msgid "Edit"
 msgstr "편집"
 
-#: .././config.py:12564 .././config.py:14504 .././config.py:14769
+#: .././config.py:12595 .././config.py:14535 .././config.py:14800
 msgid "Delete"
 msgstr "삭제"
 
-#: .././config.py:12632
+#: .././config.py:12663
 msgid "S_top"
 msgstr "_중지"
 
-#: .././config.py:12638
+#: .././config.py:12669
 msgid "Scheduled stop preferences"
 msgstr "예약 중지 속성"
 
-#: .././config.py:12643
+#: .././config.py:12674
 msgid "Stop all download operations after this much time"
 msgstr "이 시간 이후 모든 다운로드 작업 중지"
 
-#: .././config.py:12691
+#: .././config.py:12722
 msgid "Stop all download operations after this many videos"
 msgstr "비디오 개수 이후 모든 다운로드 작업 중지"
 
-#: .././config.py:12718
+#: .././config.py:12749
 msgid "Stop all download operations after this much disk space"
 msgstr "다운로드 용량 차지시 모든 다운로드 작업 중지"
 
-#: .././config.py:12761
+#: .././config.py:12792
 msgid ""
 "N.B. Disk space is estimated. This setting does not apply to simulated "
 "downloads"
@@ -5825,163 +5837,163 @@ msgstr ""
 "주의. 디스크 용량은 추정치입니다. 이 설정은 시뮬레이션 다운로드 시 적용되지 "
 "않습니다"
 
-#: .././config.py:12799
+#: .././config.py:12830
 msgid "_Performance"
 msgstr "_퍼포먼스"
 
-#: .././config.py:12807
+#: .././config.py:12838
 msgid "Performance limits"
 msgstr "퍼포먼스 제한"
 
-#: .././config.py:12812
+#: .././config.py:12843
 msgid "Limit simultaneous downloads to"
 msgstr "동시 다운로드 개수 제한"
 
-#: .././config.py:12830
+#: .././config.py:12861
 msgid "Limit download speed to"
 msgstr "다운로드 속도 제한"
 
-#: .././config.py:12856
+#: .././config.py:12887
 msgid "Overriding video format options, limit video resolution to"
 msgstr "비디오 포맷 옵션 무시, 비디오 해상도 제한"
 
-#: .././config.py:12878
+#: .././config.py:12909
 msgid "Time-saving settings"
 msgstr "시간절약 설정"
 
-#: .././config.py:12884
+#: .././config.py:12915
 msgid ""
 "Stop checking/downloading a channel/playlist when it starts sending videos "
 "you already have"
 msgstr ""
 "이미 가지고 있는 비디오 전송을 시작할 때 채널/플레이리스트 확인/다운로드 중지"
 
-#: .././config.py:12895
+#: .././config.py:12926
 msgid "Stop after this many videos (when checking)"
 msgstr "비디오 개수 이후 작업 중지 (확인 중에)"
 
-#: .././config.py:12910
+#: .././config.py:12941
 msgid "Stop after this many videos (when downloading)"
 msgstr "비디오 개수 이후 작업 중지 (다운로드 중에)"
 
-#: .././config.py:12941
+#: .././config.py:12972
 msgid "P_references"
 msgstr "_환경 설정"
 
-#: .././config.py:12949
+#: .././config.py:12980
 msgid "URL flexibility preferences"
 msgstr "URL 유연성 기본 설정"
 
-#: .././config.py:12956
+#: .././config.py:12987
 msgid ""
 "If a video's URL represents a channel/playlist, not a video, don't download "
 "it"
 msgstr "비디오 URL이 채널이나 플레이리스트라면 다운로드받지 않기"
 
-#: .././config.py:12965
+#: .././config.py:12996
 msgid "...or, download multiple videos into the containing folder"
 msgstr "...혹은, 포함된 폴더로 여러 동영상을 다운로드 받기"
 
-#: .././config.py:12975
+#: .././config.py:13006
 msgid "...or, create a new channel, and download the videos into that"
 msgstr "...혹은, 새로운 채널을 만들어서, 거기에 비디오 받기"
 
-#: .././config.py:12986
+#: .././config.py:13017
 msgid "...or, create a new playlist, and download the videos into that"
 msgstr "...혹은, 새로운 플레이리스트를 만들어서, 거기에 비디오 받기"
 
-#: .././config.py:13018
+#: .././config.py:13049
 msgid "Missing video preferences"
 msgstr "사라진 비디오 환경 설정"
 
-#: .././config.py:13024
+#: .././config.py:13055
 msgid ""
 "Add videos which have been removed from a channel/playlist to the Missing "
 "Videos folder"
 msgstr "채널/플레이리스트에서 사라진 비디오를 '사라진 비디오' 폴더에 추가하기"
 
-#: .././config.py:13035
+#: .././config.py:13066
 msgid "Only add videos that were uploaded within this many days"
 msgstr "이 기간 내에 업로드 된 동영상만 추가(일)"
 
-#: .././config.py:13076
+#: .././config.py:13107
 msgid "Invidious mirror"
 msgstr "Invidious 미러"
 
-#: .././config.py:13082
+#: .././config.py:13113
 msgid "To find an updated list of Invidious mirrors, use any search engine!"
 msgstr "Invidious 미러 최신 버전 링크를 확인할려면 검색 엔진을 사용하세요!"
 
-#: .././config.py:13095 .././config.py:13407
+#: .././config.py:13126 .././config.py:13438
 msgid "Type the exact text that replaces youtube.com e.g."
 msgstr "youtube.com을 대체하는 정확한 텍스트를 입력하세요."
 
-#: .././config.py:13121
+#: .././config.py:13152
 msgid "Download operation preferences"
 msgstr "다운로드 작업 환경 설정"
 
-#: .././config.py:13127
+#: .././config.py:13158
 msgid "Automatically update downloader before every download operation"
 msgstr "매일 다운로드 작업 전에 자동으로 다운로더 업데이트"
 
-#: .././config.py:13139
+#: .././config.py:13170
 msgid "Automatically save files at the end of all operations"
 msgstr "모든 작업 이후 자동으로 저장"
 
-#: .././config.py:13149
+#: .././config.py:13180
 msgid "For simulated downloads, don't check a video in a folder more than once"
 msgstr "시뮬레이션 다운로드에서, 비디오를 두번 이상 확인하지 않기"
 
-#: .././config.py:13160
+#: .././config.py:13191
 msgid "If a download stalls, restart it after this many minutes"
 msgstr "만약 다운로드가 지연된 경우 이 시간 이후 재시작하기 (분)"
 
-#: .././config.py:13181
+#: .././config.py:13212
 msgid "If a network problem is detected, restart the download immediately"
 msgstr "네트워크 문제가 감지된 경우, 즉시 재시작하기"
 
-#: .././config.py:13193
+#: .././config.py:13224
 msgid "Maximum restarts after a stalled download (0 for no maximum)"
 msgstr "지연된 다운로드 최대 재시작 횟수 (0인 경우 무제한)"
 
-#: .././config.py:13234
+#: .././config.py:13265
 msgid ""
 "Allow downloader to create its own archive file (so deleted videos are not "
 "re-downloaded)"
 msgstr ""
 "다운로더가 아카이브 파일 생성하도록 허용 (삭제된 비디오 재 다운로드 방지)"
 
-#: .././config.py:13245
+#: .././config.py:13276
 msgid ""
 "Also create an archive file when downloading from the Classic Mode tab (not "
 "recommended)"
 msgstr "클래식 모드 탭에서 다운로드 시에도 아카이브 파일 생성 (권장하지 않음)"
 
-#: .././config.py:13256
+#: .././config.py:13287
 msgid "When checking videos, apply a 60-second timeout"
 msgstr "비디오를 확인할 때, 60초 타임아웃 적용"
 
-#: .././config.py:13266
+#: .././config.py:13297
 msgid ""
 "Convert .webp thumbnails into .jpg thumbnails (using FFmpeg) after "
 "downloading them"
 msgstr "다운로드 후 .webp 섬네일을 FFmpeg를 이용해 .jpg로 변환"
 
-#: .././config.py:13283
+#: .././config.py:13314
 msgid "_Custom"
 msgstr "_커스텀"
 
-#: .././config.py:13288
+#: .././config.py:13319
 msgid "Custom download preferences"
 msgstr "커스텀 다운로드 환경 설정"
 
-#: .././config.py:13294
+#: .././config.py:13325
 msgid ""
 "In custom downloads, download each video independently of its channel or "
 "playlist"
 msgstr "커스텀 다운로드에서 채널이나 플레이리스트를 독립적으로 다운로드 받기"
 
-#: .././config.py:13305
+#: .././config.py:13336
 msgid ""
 "In custom downloads, apply a delay after each video/channel/playlist is "
 "download"
@@ -5989,69 +6001,69 @@ msgstr ""
 "커스텀 다운로드에서 각각의 비디오/채널/플레이리스트가 다운로드 될 때 딜레이 "
 "적용하기"
 
-#: .././config.py:13315
+#: .././config.py:13346
 msgid "Maximum delay to apply (in minutes)"
 msgstr "적용할 최대 딜레이 (분)"
 
-#: .././config.py:13332
+#: .././config.py:13363
 msgid "Minimum delay to apply (in minutes; randomises the actual delay)"
 msgstr "적용할 최소 딜레이 (분; 실제 딜레이는 랜덤화됨)"
 
-#: .././config.py:13355
+#: .././config.py:13386
 msgid "In custom downloads, obtain a YouTube video from the original website"
 msgstr "커스텀 다운로드 시 원본 웹 사이트에서 유튜브 비디오를 가져오기"
 
-#: .././config.py:13365
+#: .././config.py:13396
 msgid "In custom downloads, obtain the video from HookTube rather than YouTube"
 msgstr "커스텀 다운로드 시 유튜브 대신 HookTube 가져오기"
 
-#: .././config.py:13377
+#: .././config.py:13408
 msgid ""
 "In custom downloads, obtain the video from Invidious rather than YouTube"
 msgstr "커스텀 다운로드 시 유튜브 대신 Invidious 가져오기"
 
-#: .././config.py:13389
+#: .././config.py:13420
 msgid ""
 "In custom downloads, obtain the video from the YouTube front-end specified "
 "below"
 msgstr "커스텀 다운로드 시 유튜브 대신 아래 유튜브 프론트엔드 링크로 가져오기"
 
-#: .././config.py:13489
+#: .././config.py:13520
 msgid "Livestream preferences (compatible websites only)"
 msgstr "생방송 환경 설정 (호환 가능한 사이트만 가능)"
 
-#: .././config.py:13495
+#: .././config.py:13526
 msgid "Detect livestreams announced within this many days"
 msgstr "이 기간 내 예약된 생방송 탐지 (일)"
 
-#: .././config.py:13510
+#: .././config.py:13541
 msgid "How often to check the status of livestreams (in minutes)"
 msgstr "생방송을 탐지할 주기 (분)"
 
-#: .././config.py:13529
+#: .././config.py:13560
 msgid "Check more frequently when a livestream is due to start"
 msgstr "생방송이 시작해야될 때 더 자주 확인"
 
-#: .././config.py:13572
+#: .././config.py:13603
 msgid "Broadcast preferences (compatible websites only)"
 msgstr "브로드캐스트 환경 설정 (호환 가능한 사이트만 가능)"
 
-#: .././config.py:13579
+#: .././config.py:13610
 msgid ""
 "Use Youtube Stream Capture to download broadcasting livestreams (requires "
 "aria2)"
 msgstr ""
 "브로드캐스트 생방송을 다운로드 할때 유튜브 스트림 캡처 사용하기 (aria2 필요)"
 
-#: .././config.py:13589
+#: .././config.py:13620
 msgid "Timeout after this many minutes of inactivity"
 msgstr "비활성 시 타임아웃 시간 설정 (분)"
 
-#: .././config.py:13603
+#: .././config.py:13634
 msgid "Number of restarts after a timeout"
 msgstr "타임아웃 시 재시도 횟수"
 
-#: .././config.py:13618
+#: .././config.py:13649
 msgid ""
 "Bypass usual limits on simultaneous downloads, so that all broadcasts can be "
 "downloaded"
@@ -6059,127 +6071,127 @@ msgstr ""
 "모든 브로드캐스트를 다운로드 할 수 있도록 동시 다운로드에 대한 일반적인 제한"
 "사항 우회"
 
-#: .././config.py:13659
+#: .././config.py:13690
 msgid "_Proxies"
 msgstr "_프록시"
 
-#: .././config.py:13665
+#: .././config.py:13696
 msgid "Proxies"
 msgstr "프록시"
 
-#: .././config.py:13672
+#: .././config.py:13703
 msgid ""
 "During a download operation, Tartube will cycle betwween the proxies in this "
 "list"
 msgstr "다운로드 작업 중, Tartube가 리스트에 있는 프록시를 경유합니다"
 
-#: .././config.py:13693
+#: .././config.py:13724
 msgid "_Actions"
 msgstr "_행동"
 
-#: .././config.py:13702
+#: .././config.py:13733
 msgid "Livestream actions (can be toggled for individual videos)"
 msgstr "생방송 행동 (개별 비디오에 대해 토글 가능)"
 
-#: .././config.py:13709
+#: .././config.py:13740
 msgid "(currently disabled on MS Windows)"
 msgstr "(현재 MS Windows에서는 비활성화됨)"
 
-#: .././config.py:13714
+#: .././config.py:13745
 msgid "When a livestream starts, show a desktop notification"
 msgstr "생방송이 시작되면, 데스크탑 알림으로 알림"
 
-#: .././config.py:13728
+#: .././config.py:13759
 msgid "When a livestream starts, sound an alarm"
 msgstr "생방송이 시작되면, 알람을 소리로 울림"
 
-#: .././config.py:13751
+#: .././config.py:13782
 msgid "Plays the selected sound effect"
 msgstr "선택한 사운드 효과 재생"
 
-#: .././config.py:13758
+#: .././config.py:13789
 msgid "When a livestream starts, open it in the system's web browser"
 msgstr "생방송이 시작되면, 시스템의 웹브라우저로 실행"
 
-#: .././config.py:13770
+#: .././config.py:13801
 msgid "When a livestream starts, begin downloading it immediately"
 msgstr "생방송이 시작되면, 즉시 다운로드 시작"
 
-#: .././config.py:13796
+#: .././config.py:13827
 msgid "Desktop notification preferences"
 msgstr "데스크탑 알림 환경 설정"
 
-#: .././config.py:13803
+#: .././config.py:13834
 msgid "Show a dialogue window at the end of an operation"
 msgstr "작업 종료 후에 다이얼로그 윈도우 표시"
 
-#: .././config.py:13828
+#: .././config.py:13859
 msgid "Don't notify the user at the end of an operation"
 msgstr "작업이 끝나도 유저에게 알리지 않기"
 
-#: .././config.py:13882
+#: .././config.py:13913
 msgid "_Forks"
 msgstr "_포크"
 
-#: .././config.py:13888
+#: .././config.py:13919
 msgid "Forks of youtube-dl"
 msgstr "youtube-dl의 포크"
 
-#: .././config.py:13917
-msgid "Use youtube-dlc"
-msgstr "youtube-dlc 사용"
+#: .././config.py:13948
+msgid "Use yt-dlp"
+msgstr ""
 
-#: .././config.py:13946
+#: .././config.py:13977
 msgid "Use youtube-dl"
 msgstr "youtube-dl 사용"
 
-#: .././config.py:13974
+#: .././config.py:14005
 msgid "Use a different fork of youtube-dl:"
 msgstr "yotube-dl의 다른 포크 사용"
 
-#: .././config.py:14051
+#: .././config.py:14082
 msgid "_File paths"
 msgstr "_파일 경로"
 
-#: .././config.py:14058
+#: .././config.py:14089
 msgid "Downloader file paths"
 msgstr "다운로더 파일 경로"
 
-#: .././config.py:14064
+#: .././config.py:14095
 msgid "Path to the executable"
 msgstr "실행 파일 경로"
 
 #. (Signal connect appears below)
-#: .././config.py:14070 .././config.py:14218 .././config.py:14259
-#: .././config.py:14329 .././config.py:20068
+#: .././config.py:14101 .././config.py:14249 .././config.py:14290
+#: .././config.py:14360 .././config.py:20098
 msgid "Use default path"
 msgstr "기본 경로 사용"
 
-#: .././config.py:14075 .././config.py:20080
+#: .././config.py:14106 .././config.py:20110
 msgid "Use local path"
 msgstr "로컬 경로 사용"
 
-#: .././config.py:14079
+#: .././config.py:14110
 msgid "Use custom path"
 msgstr "커스텀 경로 사용"
 
-#: .././config.py:14087 .././config.py:20094
+#: .././config.py:14118 .././config.py:20124
 msgid "Use PyPI path"
 msgstr "PyPI 경로 사용"
 
-#: .././config.py:14138
+#: .././config.py:14169
 msgid "Command for update operations"
 msgstr "업데이트 작업 명령"
 
-#: .././config.py:14186
+#: .././config.py:14217
 msgid "_FFmpeg / AVConv"
 msgstr "_FFmpeg / AVConv"
 
-#: .././config.py:14194
+#: .././config.py:14225
 msgid "Post-processing file paths"
 msgstr "후처리 파일 경로"
 
-#: .././config.py:14199
+#: .././config.py:14230
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
@@ -6187,31 +6199,31 @@ msgstr ""
 "Tartube가 FFmpeg / AVConv 경로를 자동으로 찾을 수 없는 경우에만 경로 설정을 "
 "진행하면 됩니다"
 
-#: .././config.py:14206
+#: .././config.py:14237
 msgid "Path to the FFmpeg executable"
 msgstr "FFmpeg 실행 파일 경로"
 
-#: .././config.py:14233
+#: .././config.py:14264
 msgid "Install from main menu"
 msgstr "메인 메뉴에서 설치"
 
-#: .././config.py:14247
+#: .././config.py:14278
 msgid "Path to the AVConv executable"
 msgstr "AVConv 실행 파일 경로"
 
-#: .././config.py:14274
+#: .././config.py:14305
 msgid "Not supported on MS Windows"
 msgstr "MS Windows에서는 지원하지 않음"
 
-#: .././config.py:14297
+#: .././config.py:14328
 msgid "_Stream Capture"
 msgstr "_스트림 캡처"
 
-#: .././config.py:14305
+#: .././config.py:14336
 msgid "Youtube Stream Capture file path"
 msgstr "유튜브 스트림 캡처 파일 경로"
 
-#: .././config.py:14310
+#: .././config.py:14341
 msgid ""
 "Tartube includes a copy of this script, but you can use a different copy, if "
 "you want"
@@ -6219,241 +6231,241 @@ msgstr ""
 "Tartube는 기본적으로 이 스크립트의 복사본을 포함하지만, 다른 복사본을 사용할 "
 "수도 있습니다"
 
-#: .././config.py:14317
+#: .././config.py:14348
 msgid "Path to the YT Stream Capture executable"
 msgstr "YT 스트림 캡처 실행파일 경로"
 
-#: .././config.py:14375
+#: .././config.py:14406
 msgid "_Download options"
 msgstr "_다운로드 설정"
 
-#: .././config.py:14382
+#: .././config.py:14413
 msgid "List of download options managers"
 msgstr "다운로드 설정 매니저 리스트"
 
-#: .././config.py:14402
+#: .././config.py:14433
 msgid "Classic Mode"
 msgstr "클래식 모드"
 
-#: .././config.py:14403
+#: .././config.py:14434
 msgid "Applied to media"
 msgstr "적용된 미디어"
 
-#: .././config.py:14477 .././config.py:14742
+#: .././config.py:14508 .././config.py:14773
 msgid "Export"
 msgstr "내보내기"
 
-#: .././config.py:14486 .././config.py:14751
+#: .././config.py:14517 .././config.py:14782
 msgid "Clone"
 msgstr "복제"
 
-#: .././config.py:14495
+#: .././config.py:14526
 msgid "Use in Classic Mode tab"
 msgstr "클래식 모드 탭에서 사용"
 
-#: .././config.py:14520 .././config.py:14785
+#: .././config.py:14551 .././config.py:14816
 msgid "Refresh list"
 msgstr "리스트 새로고침"
 
-#: .././config.py:14601
+#: .././config.py:14632
 msgid "_Preferences"
 msgstr "_환경 설정"
 
-#: .././config.py:14608
+#: .././config.py:14639
 msgid "Download options preferences"
 msgstr "다운로드 환경 설정"
 
-#: .././config.py:14614
+#: .././config.py:14645
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
 msgstr "다운로드 설정을 적용할 때, 일반 다운로드 설정 복제"
 
-#: .././config.py:14625
+#: .././config.py:14656
 msgid "After downloading a video, destroy its download options"
 msgstr "비디오 다운로드 후, 그것의 다운로드 설정 삭제"
 
-#: .././config.py:14642
+#: .././config.py:14673
 msgid "_FFmpeg options"
 msgstr "_FFmpeg 설정"
 
-#: .././config.py:14649
+#: .././config.py:14680
 msgid "List of FFmpeg options managers"
 msgstr "FFmpeg 설정 매니저 리스트"
 
-#: .././config.py:14669
+#: .././config.py:14700
 msgid "Current"
 msgstr "사용"
 
-#: .././config.py:14760
+#: .././config.py:14791
 msgid "Use these options"
 msgstr "이 옵션 사용"
 
 #. Add this tab...
-#: .././config.py:14851
+#: .././config.py:14882
 msgid "O_utput"
 msgstr "_출력"
 
-#: .././config.py:14870
+#: .././config.py:14901
 msgid "_Output Tab"
 msgstr "_출력 탭"
 
-#: .././config.py:14878
+#: .././config.py:14909
 msgid "Output Tab preferences"
 msgstr "출력 탭 환경 설정"
 
-#: .././config.py:14883
+#: .././config.py:14914
 msgid "Display downloader system commands in the Output Tab"
 msgstr "출력 탭에 다운로드 시스템 커맨드 표시"
 
-#: .././config.py:14892
+#: .././config.py:14923
 msgid "Display output from downloader's STDOUT in the Output Tab"
 msgstr "출력 탭에 다운로더의 STDOUT 출력 표시"
 
-#: .././config.py:14901 .././config.py:15063
+#: .././config.py:14932 .././config.py:15094
 msgid "...but don't write each video's JSON data"
 msgstr "...하지만 각각의 JSON 데이터는 쓰지 않기"
 
-#: .././config.py:14912 .././config.py:15074
+#: .././config.py:14943 .././config.py:15105
 msgid "...but don't write each video's download progress"
 msgstr "...하지만 각각의 비디오 다운로드 진행 상황은 쓰지 않기"
 
-#: .././config.py:14931
+#: .././config.py:14962
 msgid "Display output from downloader's STDERR in the Output Tab"
 msgstr "출력 탭에 다운로더의 STDERR 출력 표시"
 
-#: .././config.py:14940
+#: .././config.py:14971
 msgid "Limit the size of Output Tab pages to"
 msgstr "출력 탭의 페이지 사이즈 제한하기"
 
-#: .././config.py:14961
+#: .././config.py:14992
 msgid "Empty pages in the Output Tab at the start of every operation"
 msgstr "모든 작업을 시작 할 때 출력 탭 비우기"
 
-#: .././config.py:14971
+#: .././config.py:15002
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
 msgstr "활성 스레드 요약 표시 (Tartube를 재시작 시 변경 사항 적용)"
 
-#: .././config.py:14983
+#: .././config.py:15014
 msgid "During an update operation, automatically switch to the Output tab"
 msgstr "업데이트 작업 중, 자동으로 출력 탭으로 전환"
 
-#: .././config.py:14994
+#: .././config.py:15025
 msgid "During a refresh operation, show all matching videos in the Output Tab"
 msgstr "새로고침 작업 중, 자동으로 출력 탭으로 전환"
 
-#: .././config.py:15005
+#: .././config.py:15036
 msgid "...also show all non-matching videos"
 msgstr "...또한 모든 비 매칭 비디오도 표시"
 
-#: .././config.py:15034
+#: .././config.py:15065
 msgid "_Terminal window"
 msgstr "_터미널 윈도우"
 
-#: .././config.py:15040
+#: .././config.py:15071
 msgid "Terminal window preferences"
 msgstr "터미널 윈도우 환경 설정"
 
-#: .././config.py:15045
+#: .././config.py:15076
 msgid "Write downloader system commands to the terminal window"
 msgstr "다운로더 시스템 커맨드를 터미널 윈도우에 쓰기"
 
-#: .././config.py:15054
+#: .././config.py:15085
 msgid "Write output from downloader's STDOUT to the terminal window"
 msgstr "다운로더의 STDOUT 출력을 터미널 윈도우에 쓰기"
 
-#: .././config.py:15096
+#: .././config.py:15127
 msgid "Write output from downloader's STDERR to the terminal window"
 msgstr "다운로더의 STDERR 출력을 터미널 윈도우에 쓰기"
 
-#: .././config.py:15115
+#: .././config.py:15146
 msgid "_Both"
 msgstr "_둘 다"
 
-#: .././config.py:15120
+#: .././config.py:15151
 msgid ""
 "Special preferences (applies to both the Output Tab and the terminal window)"
 msgstr "특별한 환경 설정 (출력 탭과 터미널 윈도우에 둘다 적용됨)"
 
-#: .././config.py:15127
+#: .././config.py:15158
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
 msgstr "다운로더가 상세한 출력 쓰도록 하기 (youtube-dl 디버깅 모드)"
 
-#: .././config.py:15136
+#: .././config.py:15167
 msgid "Youtube Stream Capture writes verbose output"
 msgstr "유튜브 스트림 캡처가 상세한 출력 쓰도록 하기"
 
-#: .././config.py:16053
+#: .././config.py:16084
 msgid "Are you sure you want to create a new database at this location?"
 msgstr "정말로 이 위치에 새로운 데이터베이스를 만드시겠습니까?"
 
-#: .././config.py:16160
+#: .././config.py:16191
 msgid "Are you sure you want to forget this database?"
 msgstr "정말로 이 데이터베이스를 잊어버리시겠습니까?"
 
-#: .././config.py:16195
+#: .././config.py:16226
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr ""
 "정말로 이 데이터베이스를 제외한 모든 데이터베이스를 잊어버리시겠습니까?"
 
-#: .././config.py:16399
+#: .././config.py:16430
 msgid "No database exists at this location:"
 msgstr "이 위치에 아무 데이터베이스도 없습니다:"
 
-#: .././config.py:16401
+#: .././config.py:16432
 msgid "Do you want to create a new one?"
 msgstr "정말로 새것을 만듭니까?"
 
-#: .././config.py:17041
+#: .././config.py:17072
 msgid "The current options manager cannot be deleted"
 msgstr "현재 설정 관리자를 삭제할 수 없습니다"
 
-#: .././config.py:17049 .././config.py:18049
+#: .././config.py:17080 .././config.py:18080
 msgid "Are you sure you want to delete this options manager?"
 msgstr "정말로 이 설정 관리자를 삭제하시겠습니까?"
 
-#: .././config.py:17243 .././config.py:17590 .././config.py:19074
+#: .././config.py:17274 .././config.py:17621 .././config.py:19105
 msgid "The new setting will be applied when Tartube restarts"
 msgstr "새 설정은 Tartube가 재시작 시 적용됩니다"
 
-#: .././config.py:18041
+#: .././config.py:18072
 msgid "The default options manager cannot be deleted"
 msgstr "기본 설정 매니저를 삭제할 수 없습니다"
 
-#: .././config.py:18736
+#: .././config.py:18767
 msgid "There is already a scheduled download with that name"
 msgstr "이미 동일한 이름의 예약 다운로드가 존재합니다"
 
-#: .././config.py:18783
+#: .././config.py:18814
 msgid "Are you sure you want to delete this scheduled download?"
 msgstr "정말로 이 예약 다운로드를 삭제하시겠습니까?"
 
-#: .././config.py:18951
+#: .././config.py:18982
 msgid "Please select the AVConv executable"
 msgstr "AVConv 실행 파일을 선택해주세요"
 
-#: .././config.py:18984
+#: .././config.py:19015
 msgid "Please select the FFmpeg executable"
 msgstr "FFmpeg 실행 파일을 선택해주세요"
 
-#: .././config.py:19017
+#: .././config.py:19048
 msgid "Please select the Youtube Stream Capture executable"
 msgstr "Youtube Stream Capture 실행 파일을 선택해주세요"
 
-#: .././config.py:19807
+#: .././config.py:19837
 msgid "Select the youtube-dl-compatible executable"
 msgstr "youtube-dl-compatible 실행 파일을 선택해주세요"
 
-#: .././config.py:19991
+#: .././config.py:20021
 msgid "Database file not loaded"
 msgstr "데이터베이스 파일이 로드되지 않음"
 
-#: .././config.py:20011
+#: .././config.py:20041
 msgid "Did not try to load the database file"
 msgstr "데이터베이스 파일을 로드하지 않았습니다"
 
-#: .././config.py:20036
+#: .././config.py:20066
 msgid "Database file loaded"
 msgstr "데이터베이스 파일 불러옴"
 
@@ -6522,52 +6534,52 @@ msgstr "RSS 피드 확인중"
 msgid "Cannot download videos in a private folder"
 msgstr "개인 폴더에 있는 비디오를 다운받지 못했습니다"
 
-#: .././downloads.py:2986 .././downloads.py:5243
+#: .././downloads.py:2986 .././downloads.py:5256
 msgid "Download did not start"
 msgstr "다운로드 시작하지 않음"
 
-#: .././downloads.py:2994 .././downloads.py:5255 .././info.py:364
+#: .././downloads.py:2994 .././downloads.py:5268 .././info.py:364
 #: .././updates.py:278 .././updates.py:476
 msgid "Child process exited with non-zero code: {}"
 msgstr "하위 프로세스가 0이 아닌 코드로 종료됨: {}"
 
-#: .././downloads.py:3108 .././downloads.py:4060
+#: .././downloads.py:3108 .././downloads.py:4072
 msgid ""
 "This video has a URL that points to a channel or a playlist, not a video"
 msgstr "이 URL은 비디오가 아닌 채널이나 플레이리스트를 가르키고 있습니다"
 
-#: .././downloads.py:3937 .././downloads.py:3951
+#: .././downloads.py:3949 .././downloads.py:3963
 msgid "Simulated download of:"
 msgstr "다음 시뮬레이션 다운로드:"
 
-#: .././downloads.py:3959
+#: .././downloads.py:3971
 msgid "Simulated download of video with unprintable characters"
 msgstr "출력할 수 없는 문자가 포함된 비디오 시뮬레이션 다운로드"
 
 #. This object creates more messages for the Output Tab and/or terminal,
 #. than downloads.VideoDownloader would do, as the output generated by
 #. Youtube Stream Capture is not easy for the user to interpret
-#: .././downloads.py:5134
+#: .././downloads.py:5147
 msgid "Tartube is starting the stream capture..."
 msgstr "Tartube가 스트림 캡처를 시작합니다..."
 
-#: .././downloads.py:5152
+#: .././downloads.py:5165
 msgid "Could not create a destination directory, capture halted"
 msgstr "목적지 디렉토리를 생성하지 못해, 캡처 중지됨"
 
-#: .././downloads.py:5173 .././downloads.py:5198
+#: .././downloads.py:5186 .././downloads.py:5211
 msgid "Youtube Stream Capture script not found:"
 msgstr "유튜브 스트림 캡처 스크립트를 발견하지 못함:"
 
-#: .././downloads.py:5247
+#: .././downloads.py:5260
 msgid "Failed to capture the livestream"
 msgstr "생방송 캡처 실패"
 
-#: .././downloads.py:5251
+#: .././downloads.py:5264
 msgid "Stream capture terminated"
 msgstr "스트림 캡처 중지"
 
-#: .././downloads.py:5261
+#: .././downloads.py:5274
 msgid ""
 "Stream captured terminated without downloading any video segments "
 "(indicating an error with the stream)"
@@ -6576,45 +6588,45 @@ msgstr ""
 "오류가 있음을 나타냄)"
 
 #. Capture successful
-#: .././downloads.py:5277
+#: .././downloads.py:5290
 msgid "Stream capture successful"
 msgstr "스트림 캡처 성공"
 
 #. Show a confirmation message
-#: .././downloads.py:5307
+#: .././downloads.py:5320
 msgid "Merging file segments..."
 msgstr "파일 세그먼트 병합중..."
 
-#: .././downloads.py:5327
+#: .././downloads.py:5340
 msgid "Segment merge did not start"
 msgstr "세그먼트 병합이 시작되지 않았습니다"
 
-#: .././downloads.py:5338
+#: .././downloads.py:5351
 msgid "Segment merge completed, but path not detected"
 msgstr "세그먼트 병합이 완료되었지만, 경로가 인식되지 않았습니다"
 
-#: .././downloads.py:5348
+#: .././downloads.py:5361
 msgid "Segment merge completed, but output file not found"
 msgstr "세그먼트 병합이 완료되었지만, 출력 파일이 발견되지 않음"
 
-#: .././downloads.py:5369
+#: .././downloads.py:5382
 msgid "File moved to:"
 msgstr "파일 이동됨:"
 
-#: .././downloads.py:5374
+#: .././downloads.py:5387
 msgid "Livestream download is complete"
 msgstr "생방송 다운로드가 완료됨"
 
-#: .././downloads.py:5379
+#: .././downloads.py:5392
 msgid "Failed to move output file"
 msgstr "출력 파일을 이동하는 데 실패"
 
-#: .././downloads.py:5548
+#: .././downloads.py:5561
 #, python-brace-format
 msgid "Stream capture is frozen, trying again (restart #{0})"
 msgstr "스트림 캡처가 중지됨, 재시도 중 (재시작 #{0})"
 
-#: .././downloads.py:5555
+#: .././downloads.py:5568
 msgid "Stream capture is frozen, giving up"
 msgstr "스트림 캡처가 중지되어 포기함"
 
@@ -7193,6 +7205,21 @@ msgstr "업데이트 설치 작업이 시작됨 "
 #: .././updates.py:469
 msgid "Update did not start"
 msgstr "업데이트가 시작하지 않음"
+
+#~ msgid "Keep the description file after Tartube shuts down"
+#~ msgstr "설명 파일을 Tartube가 꺼져도 유지하기"
+
+#~ msgid "Keep the metadata file after Tartube shuts down"
+#~ msgstr "메타데이터 파일을 Tartube가 꺼져도 유지하기"
+
+#~ msgid "Keep the annotations file after Tartube shuts down"
+#~ msgstr "어노테이션 파일을 Tartube가 꺼져도 유지하기"
+
+#~ msgid "Keep the thumbnail file after Tartube shuts down"
+#~ msgstr "섬네일 파일을 Tartube가 꺼져도 유지하기"
+
+#~ msgid "Use youtube-dlc"
+#~ msgstr "youtube-dlc 사용"
 
 #~ msgid "Video Catalogue options"
 #~ msgstr "Video Catalog options"
