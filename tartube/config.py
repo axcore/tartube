@@ -9682,6 +9682,7 @@ class ScheduledEditWin(GenericEditWin):
 
         self.setup_general_tab()
         self.setup_media_tab()
+        self.setup_limits_tab()
 
 
     def setup_general_tab(self):
@@ -9994,6 +9995,70 @@ class ScheduledEditWin(GenericEditWin):
                 liststore.append([name])
 
 
+    def setup_limits_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Limits' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Limits'))
+
+        grid_width = 3
+
+        self.add_label(grid,
+            '<u>' + _('Performance limits') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _('Limits are applied when you start downloading a' \
+            + ' video/channel/playlist') + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _('These limits override the default and alternative' \
+            + ' limits specified elsewhere') + '</i>',
+            0, 2, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Limit simultaneous downloads to'),
+            'scheduled_num_worker_apply_flag',
+            0, 3, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+
+        spinbutton = self.add_spinbutton(grid,
+            self.app_obj.num_worker_min,
+            self.app_obj.num_worker_max,
+            1,                  # Step
+            'scheduled_num_worker',
+            1, 3, 1, 1,
+        )
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Limit download speed to'),
+            'scheduled_bandwidth_apply_flag',
+            0, 4, 1, 1,
+        )
+        checkbutton2.set_hexpand(False)
+
+        spinbutton2 = self.add_spinbutton(grid,
+            self.app_obj.bandwidth_min,
+            self.app_obj.bandwidth_max,
+            1,                  # Step
+            'scheduled_bandwidth',
+            1, 4, 1, 1,
+        )
+
+        self.add_label(grid,
+            'KiB/s',
+            2, 3, 1, 1,
+        )
+
+
     # Callback class methods
 
 
@@ -10244,11 +10309,11 @@ class SystemPrefWin(GenericPrefWin):
         app_obj (mainapp.TartubeApp): The main application object
 
         init_mode (str or None): 'db' to open the tab with options for
-            switching the Tartube database, 'paths' to open the tab with
-            youtube-dl paths, 'live' to open the tab with livestream options,
-            'options' to open the tab with the list of download options,
-            'custom_dl' to open the tab with custom download preferences. Any
-            other value is ignored
+            switching the Tartube database, 'forks' to open the tab with
+            youtube-dl forks, 'paths' to open the tab with youtube-dl paths,
+            'live' to open the tab with livestream options, 'options' to open
+            the tab with the list of download options, 'custom_dl' to open the
+            tab with custom download preferences. Any other value is ignored
 
     """
 
@@ -10273,6 +10338,9 @@ class SystemPrefWin(GenericPrefWin):
         # ---------------------
         self.grid = None                        # Gtk.Grid
         self.notebook = None                    # Gtk.Notebook
+        self.files_inner_notebook = None        # Gtk.Notebook
+        self.operations_inner_notebook = None   # Gtk.Notebook
+        self.downloader_inner_notebook = None   # Gtk.Notebook
         self.ok_button = None                   # Gtk.Button
         # (IVs used to handle widget changes in the 'General' tab)
         self.radiobutton = None                 # Gtk.RadioButton
@@ -10329,11 +10397,12 @@ class SystemPrefWin(GenericPrefWin):
             app_obj (mainapp.TartubeApp): The main application object
 
             init_mode (str or None): 'db' to open the tab with options for
-                switching the Tartube database, 'paths' to open the tab with
-                youtube-dl paths, 'live' to open the tab with livestream
-                options, 'options' to open the tab with the list of download
-                options, 'custom_dl' to open the tab with custom download
-                preferences. Any other value is ignored
+                switching the Tartube database, 'forks' to open the tab with
+                youtube-dl forks, 'paths' to open the tab with youtube-dl
+                paths, 'live' to open the tab with livestream options,
+                'options' to open the tab with the list of download options,
+                'custom_dl' to open the tab with custom download preferences.
+                Any other value is ignored
 
         Return values:
 
@@ -10383,11 +10452,11 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             init_mode (str): 'db' to open the tab with options for switching
-                the Tartube database, 'paths' to open the tab with youtube-dl
-                paths, 'live' to open the tab with livestream options,
-                'options' to open the tab with the list of download options,
-                'custom_dl' to open the tab with custom download preferences.
-                Any other value is ignored
+                the Tartube database, 'forks' to open the tab with youtube-dl
+                forks, 'paths' to open the tab with youtube-dl paths, 'live' to
+                open the tab with livestream options, 'options' to open the tab
+                with the list of download options, 'custom_dl' to open the tab
+                with custom download preferences. Any other value is ignored
 
         """
 
@@ -10395,6 +10464,8 @@ class SystemPrefWin(GenericPrefWin):
 
             if init_mode == 'db':
                 self.select_switch_db_tab()
+            elif init_mode == 'forks':
+                self.select_forks_tab()
             elif init_mode == 'paths':
                 self.select_paths_tab()
             elif init_mode == 'live':
@@ -10403,6 +10474,18 @@ class SystemPrefWin(GenericPrefWin):
                 self.select_options_tab()
             elif init_mode == 'custom_dl':
                 self.select_custom_dl_tab()
+
+
+    def select_forks_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set youtube-dl
+        forks.
+        """
+
+        self.notebook.set_current_page(5)
+        self.downloader_inner_notebook.set_current_page(0)
 
 
     def select_switch_db_tab(self):
@@ -10422,10 +10505,11 @@ class SystemPrefWin(GenericPrefWin):
         """Can be called by anything.
 
         Makes the visible tab the one on which the user can set youtube-dl
-        options.
+        paths.
         """
 
         self.notebook.set_current_page(5)
+        self.downloader_inner_notebook.set_current_page(1)
 
 
     def select_livestream_tab(self):
@@ -12284,76 +12368,87 @@ class SystemPrefWin(GenericPrefWin):
             self.on_operation_warning_button_toggled,
         )
 
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Show dates of all messages'),
+            self.app_obj.system_msg_show_date_flag,
+            True,                   # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_system_dates_button_toggled,
+        )
+
         # Downloader error/warning preferences
         self.add_label(grid,
             '<u>' + _('Downloader error/warning preferences') + '</u>',
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
 
         translate_note = _(
             'TRANSLATOR\'S NOTE: These error messages are always in English',
         )
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _('Ignore \'Child process exited with non-zero code\' errors'),
             self.app_obj.ignore_child_process_exit_flag,
             True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_child_process_button_toggled)
+        checkbutton6.connect('toggled', self.on_child_process_button_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Ignore \'Unable to download video data\' and \'Unable to' \
             + ' extract video data\' errors',
             ),
             self.app_obj.ignore_http_404_error_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
-        checkbutton6.connect('toggled', self.on_http_404_button_toggled)
+        checkbutton7.connect('toggled', self.on_http_404_button_toggled)
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _('Ignore \'Did not get any data blocks\' errors'),
             self.app_obj.ignore_data_block_error_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
-        checkbutton7.connect('toggled', self.on_data_block_button_toggled)
+        checkbutton8.connect('toggled', self.on_data_block_button_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _(
             'Ignore \'Requested formats are incompatible for merge\' warnings',
             ),
             self.app_obj.ignore_merge_warning_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton8.connect('toggled', self.on_merge_button_toggled)
+        checkbutton9.connect('toggled', self.on_merge_button_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _('Ignore \'No video formats found\' errors'),
             self.app_obj.ignore_missing_format_error_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton9.connect('toggled', self.on_missing_format_button_toggled)
+        checkbutton10.connect('toggled', self.on_missing_format_button_toggled)
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _('Ignore \'There are no annotations to write\' warnings'),
             self.app_obj.ignore_no_annotations_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton10.connect('toggled', self.on_no_annotations_button_toggled)
+        checkbutton11.connect('toggled', self.on_no_annotations_button_toggled)
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton12 = self.add_checkbutton(grid,
             _('Ignore \'Video doesn\'t have subtitles\' warnings'),
             self.app_obj.ignore_no_subtitles_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
-        checkbutton11.connect('toggled', self.on_no_subtitles_button_toggled)
+        checkbutton12.connect('toggled', self.on_no_subtitles_button_toggled)
 
 
     def setup_windows_websites_tab(self, inner_notebook):
@@ -12810,7 +12905,8 @@ class SystemPrefWin(GenericPrefWin):
         self.operations_inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_operations_performance_tab(self.operations_inner_notebook)
+        self.setup_operations_limits_tab(self.operations_inner_notebook)
+        self.setup_operations_stop_tab(self.operations_inner_notebook)
         self.setup_operations_prefs_tab(self.operations_inner_notebook)
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_tab(self.operations_inner_notebook)
@@ -12819,15 +12915,15 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_actions_tab(self.operations_inner_notebook)
 
 
-    def setup_operations_performance_tab(self, inner_notebook):
+    def setup_operations_limits_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
-        Sets up the 'Performance' inner notebook tab.
+        Sets up the 'Limits' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Performance'),
+            _('_Limits'),
             inner_notebook,
         )
 
@@ -12839,11 +12935,17 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, grid_width, 1,
         )
 
+        self.add_label(grid,
+            '<i>' + _('Limits are applied when you start downloading a' \
+            + ' video/channel/playlist') + '</i>',
+            0, 1, grid_width, 1,
+        )
+
         checkbutton = self.add_checkbutton(grid,
             _('Limit simultaneous downloads to'),
             self.app_obj.num_worker_apply_flag,
             True,               # Can be toggled by user
-            0, 1, 1, 1,
+            0, 2, 1, 1,
         )
         checkbutton.set_hexpand(False)
         checkbutton.connect('toggled', self.on_worker_button_toggled)
@@ -12853,7 +12955,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.num_worker_max,
             1,                  # Step
             self.app_obj.num_worker_default,
-            1, 1, 1, 1,
+            1, 2, 1, 1,
         )
         spinbutton.connect('value-changed', self.on_worker_spinbutton_changed)
 
@@ -12861,7 +12963,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Limit download speed to'),
             self.app_obj.bandwidth_apply_flag,
             True,               # Can be toggled by user
-            0, 2, 1, 1,
+            0, 3, 1, 1,
         )
         checkbutton2.set_hexpand(False)
         checkbutton2.connect('toggled', self.on_bandwidth_button_toggled)
@@ -12871,7 +12973,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.bandwidth_max,
             1,                  # Step
             self.app_obj.bandwidth_default,
-            1, 2, 1, 1,
+            1, 3, 1, 1,
         )
         spinbutton2.connect(
             'value-changed',
@@ -12880,14 +12982,14 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             'KiB/s',
-            2, 2, 1, 1,
+            2, 3, 1, 1,
         )
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Overriding video format options, limit video resolution to'),
             self.app_obj.video_res_apply_flag,
             True,               # Can be toggled by user
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
         checkbutton3.set_hexpand(False)
         checkbutton3.connect('toggled', self.on_video_res_button_toggled)
@@ -12895,7 +12997,7 @@ class SystemPrefWin(GenericPrefWin):
         combo = self.add_combo(grid,
             formats.VIDEO_RESOLUTION_LIST,
             None,
-            1, 3, 1, 1,
+            1, 4, 1, 1,
         )
         combo.set_active(
             formats.VIDEO_RESOLUTION_LIST.index(
@@ -12904,13 +13006,176 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo.connect('changed', self.on_video_res_combo_changed)
 
+        # Alternative performance limits
+        self.add_label(grid,
+            '<u>' + _('Alternative performance limits') + '</u>',
+            0, 5, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _('Limit simultaneous downloads to'),
+            self.app_obj.alt_num_worker_apply_flag,
+            True,               # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        checkbutton4.connect('toggled', self.on_worker_button_toggled, True)
+
+        spinbutton3 = self.add_spinbutton(grid,
+            self.app_obj.num_worker_min,
+            self.app_obj.num_worker_max,
+            1,                  # Step
+            self.app_obj.alt_num_worker,
+            1, 6, 1, 1,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_worker_spinbutton_changed,
+            True,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Limit download speed to'),
+            self.app_obj.alt_bandwidth_apply_flag,
+            True,               # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton5.set_hexpand(False)
+        checkbutton5.connect('toggled', self.on_bandwidth_button_toggled, True)
+
+        spinbutton4 = self.add_spinbutton(grid,
+            self.app_obj.bandwidth_min,
+            self.app_obj.bandwidth_max,
+            1,                  # Step
+            self.app_obj.alt_bandwidth,
+            1, 7, 1, 1,
+        )
+        spinbutton4.connect(
+            'value-changed',
+            self.on_bandwidth_spinbutton_changed,
+            True,
+        )
+
+        self.add_label(grid,
+            'KiB/s',
+            2, 7, 1, 1,
+        )
+
+        # (Add a second grid, so widget positioning on the first one isn't
+        #   messed up)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 8, (grid_width - 1), 1)
+
+        label = self.add_label(grid2,
+            _('Alternative limits apply between') + '   ',
+            0, 0, 1, 1,
+        )
+
+        # (Hours in format '00' to '23')
+        start_time = self.app_obj.alt_start_time
+        stop_time = self.app_obj.alt_stop_time
+
+        hour_list = []
+        for h in range(24):
+            hour_list.append('{:02d}'.format(h))
+
+        # (Minutes in format '00', '05', 10' .. '55')
+        minute_list = []
+        for n in range(12):
+            minute_list.append('{:02d}'.format(n*5))
+
+        combo2 = self.add_combo(grid2,
+            hour_list,
+            None,
+            1, 0, 1, 1,
+        )
+        combo2.set_active(hour_list.index(start_time[0:2]))
+        combo2.connect('changed', self.on_alt_time_combo_changed, 'start_hour')
+
+        label2 = self.add_label(grid2,
+            ' : ',
+            2, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        combo3 = self.add_combo(grid2,
+            minute_list,
+            None,
+            3, 0, 1, 1,
+        )
+        combo3.set_active(minute_list.index(start_time[3:5]))
+        combo3.connect('changed', self.on_alt_time_combo_changed, 'start_min')
+
+        label3 = self.add_label(grid2,
+            '   ' + _('and') + '   ',
+            4, 0, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        combo4 = self.add_combo(grid2,
+            hour_list,
+            None,
+            5, 0, 1, 1,
+        )
+        combo4.set_active(hour_list.index(stop_time[0:2]))
+        combo4.connect('changed', self.on_alt_time_combo_changed, 'stop_hour')
+
+        label4 = self.add_label(grid2,
+            ' : ',
+            6, 0, 1, 1,
+        )
+        label4.set_hexpand(False)
+
+        combo5 = self.add_combo(grid2,
+            minute_list,
+            None,
+            7, 0, 1, 1,
+        )
+        combo5.set_active(minute_list.index(stop_time[3:5]))
+        combo5.connect('changed', self.on_alt_time_combo_changed, 'stop_min')
+
+        label5 = self.add_label(grid2,
+            _('On days') + '   ',
+            0, 1, 1, 1,
+        )
+
+        combo6_list = []
+        for s in formats.SPECIFIED_DAYS_LIST:
+            combo6_list.append( [formats.SPECIFIED_DAYS_DICT[s], s] )
+
+        combo6 = self.add_combo_with_data(grid2,
+            combo6_list,
+            None,
+            1, 1, 7, 1,
+        )
+        combo6.set_hexpand(False)
+        combo6.set_active(
+            formats.SPECIFIED_DAYS_LIST.index(self.app_obj.alt_day_string),
+        )
+        combo6.connect('changed', self.on_alt_days_combo_changed)
+
+
+    def setup_operations_stop_tab(self, inner_notebook):
+
+        """Called by self.setup_operations_tab().
+
+        Sets up the 'Performance' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('S_top'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
         # Time-saving settings
         self.add_label(grid,
             '<u>' + _('Time-saving settings') + '</u>',
             0, 4, grid_width, 1,
         )
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton = self.add_checkbutton(grid,
             _(
             'Stop checking/downloading a channel/playlist when it starts' \
             + ' sending videos you already have',
@@ -12919,7 +13184,7 @@ class SystemPrefWin(GenericPrefWin):
             True,               # Can be toggled by user
             0, 5, grid_width, 1,
         )
-        checkbutton4.set_hexpand(False)
+        checkbutton.set_hexpand(False)
         # (Signal connect appears below)
 
         self.add_label(grid,
@@ -12953,7 +13218,7 @@ class SystemPrefWin(GenericPrefWin):
             entry2.set_sensitive(False)
 
         # (Signal connect from above)
-        checkbutton4.connect(
+        checkbutton.connect(
             'toggled',
             self.on_limit_button_toggled,
             entry,
@@ -13508,7 +13773,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Livestreams'),
+            _('L_ivestreams'),
             inner_notebook,
         )
 
@@ -13893,13 +14158,13 @@ class SystemPrefWin(GenericPrefWin):
         tab, grid = self.add_notebook_tab('_Downloaders')
 
         # ...and an inner notebook...
-        inner_notebook = self.add_inner_notebook(grid)
+        self.downloader_inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_downloader_forks_tab(inner_notebook)
-        self.setup_downloader_paths_tab(inner_notebook)
-        self.setup_downloader_ffmpeg_tab(inner_notebook)
-        self.setup_downloader_ytsc_tab(inner_notebook)
+        self.setup_downloader_forks_tab(self.downloader_inner_notebook)
+        self.setup_downloader_paths_tab(self.downloader_inner_notebook)
+        self.setup_downloader_ffmpeg_tab(self.downloader_inner_notebook)
+        self.setup_downloader_ytsc_tab(self.downloader_inner_notebook)
 
 
     def setup_downloader_forks_tab(self, inner_notebook):
@@ -15217,6 +15482,64 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_yt_age_restrict_flag(False)
 
 
+    def on_alt_time_combo_changed(self, combo, type_str):
+
+        """Called from a callback in self.setup_operations_limits_tab().
+
+        Sets the hours or minutes portion of the start or stop time for
+        alternative performance limits.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            type_str (str): 'start_hour', 'start_min', 'stop_hour', 'stop_min'
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        value = model[tree_iter][0]
+
+        if type_str == 'start_hour' or type_str == 'start_min':
+
+            if type_str == 'start_hour':
+                start_time = value + self.app_obj.alt_start_time[2:5]
+            else:
+                start_time = self.app_obj.alt_start_time[0:3] + value
+
+            self.app_obj.set_alt_start_time(start_time)
+
+        elif type_str == 'stop_hour' or type_str == 'stop_min':
+
+            if type_str == 'stop_hour':
+                stop_time = value + self.app_obj.alt_stop_time[2:5]
+            else:
+                stop_time = self.app_obj.alt_stop_time[0:3] + value
+
+            self.app_obj.set_alt_stop_time(stop_time)
+
+
+    def on_alt_days_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_operations_limits_tab().
+
+        Sets the day(s) on which alternative performance limits apply.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            type_str (str): One of the values in formats.SPECIFIED_DAYS_LIST,
+                e.g. 'every_day'
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_alt_day_string(model[tree_iter][1])
+
+
     def on_alt_website_changed(self, entry):
 
         """Called from callback in self.setup_operations_custom_tab().
@@ -15682,9 +16005,9 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_db_backup_mode(value)
 
 
-    def on_bandwidth_button_toggled(self, checkbutton):
+    def on_bandwidth_button_toggled(self, checkbutton, alt_flag=False):
 
-        """Called from callback in self.setup_operations_performance_tab().
+        """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the download speed limit. Toggling the corresponding
         Gtk.CheckButton in the Progress Tab sets the IV (and makes sure the two
@@ -15694,20 +16017,35 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            alt_flag (bool): If True, the alternative limit is toggled
+
         """
 
-        other_flag \
-        = self.app_obj.main_win_obj.bandwidth_checkbutton.get_active()
+        main_win_obj = self.app_obj.main_win_obj
 
-        if (checkbutton.get_active() and not other_flag):
-            self.app_obj.main_win_obj.bandwidth_checkbutton.set_active(True)
-        elif (not checkbutton.get_active() and other_flag):
-            self.app_obj.main_win_obj.bandwidth_checkbutton.set_active(False)
+        if not alt_flag:
+
+            other_flag = main_win_obj.bandwidth_checkbutton.get_active()
+
+            if (checkbutton.get_active() and not other_flag):
+                main_win_obj.bandwidth_checkbutton.set_active(True)
+            elif (not checkbutton.get_active() and other_flag):
+                main_win_obj.bandwidth_checkbutton.set_active(False)
+
+        else:
+
+            # Alternative limits. There is no second widget to toggle
+            if checkbutton.get_active() \
+            and not self.app_obj.alt_bandwidth_apply_flag:
+                self.app_obj.set_alt_bandwidth_apply_flag(True)
+            elif not checkbutton.get_active() \
+            and self.app_obj.alt_bandwidth_apply_flag:
+                self.app_obj.set_alt_bandwidth_apply_flag(False)
 
 
-    def on_bandwidth_spinbutton_changed(self, spinbutton):
+    def on_bandwidth_spinbutton_changed(self, spinbutton, alt_flag=False):
 
-        """Called from callback in self.setup_operations_performance_tab().
+        """Called from callback in self.setup_operations_limits_tab().
 
         Sets the simultaneous download limit. Setting the value of the
         corresponding Gtk.SpinButton in the Progress Tab sets the IV (and
@@ -15717,16 +16055,25 @@ class SystemPrefWin(GenericPrefWin):
 
             spinbutton (Gtk.SpinButton): The widget clicked
 
+            alt_flag (bool): If True, the alternative limit is set
+
         """
 
-        self.app_obj.main_win_obj.bandwidth_spinbutton.set_value(
-            spinbutton.get_value(),
-        )
+        if not alt_flag:
+
+            self.app_obj.main_win_obj.bandwidth_spinbutton.set_value(
+                spinbutton.get_value(),
+            )
+
+        else:
+
+            # Alternative limits. There is no second widget to toggle
+            self.app_obj.set_alt_bandwidth(int(spinbutton.get_value()))
 
 
     def on_check_limit_changed(self, entry):
 
-        """Called from callback in self.setup_operations_time_saving_tab().
+        """Called from callback in self.setup_operations_stop_tab().
 
         Sets the limit at which a download operation will stop checking a
         channel or playlist.
@@ -16712,7 +17059,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_dl_limit_changed(self, entry):
 
-        """Called from callback in self.setup_operations_time_saving_tab().
+        """Called from callback in self.setup_operations_stop_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
@@ -17363,7 +17710,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_limit_button_toggled(self, checkbutton, entry, entry2):
 
-        """Called from callback in self.setup_operations_time_saving_tab().
+        """Called from callback in self.setup_operations_stop_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
@@ -17903,7 +18250,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_windows_errors_warnings_tab().
 
-        Enables/disables opeartion errors in the 'Errors/Warnings' tab.
+        Enables/disables operation errors in the 'Errors/Warnings' tab.
         Toggling the corresponding Gtk.CheckButton in the Errors/Warnings tab
         sets the IV (and makes sure the two checkbuttons have the same status).
 
@@ -17948,7 +18295,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_windows_errors_warnings_tab().
 
-        Enables/disables opeartion warnings in the 'Errors/Warnings' tab.
+        Enables/disables operation warnings in the 'Errors/Warnings' tab.
         Toggling the corresponding Gtk.CheckButton in the Errors/Warnings tab
         sets the IV (and makes sure the two checkbuttons have the same status).
 
@@ -19238,6 +19585,31 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_toolbar_squeeze_flag(False)
 
 
+    def on_system_dates_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables showing dates (as well as times) in the Errors/
+        Warnings tab. Toggling the corresponding Gtk.CheckButton in the Errors/
+        Warnings tab sets the IV (and makes sure the two checkbuttons have the
+        same status).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag \
+        = main_win_obj.show_system_dates_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.show_system_dates_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.show_system_dates_checkbutton.set_active(False)
+
+
     def on_system_debug_toggled(self, checkbutton, debug_type, \
     checkbutton2=None):
 
@@ -19644,9 +20016,9 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ytsc_write_verbose_flag(False)
 
 
-    def on_worker_button_toggled(self, checkbutton):
+    def on_worker_button_toggled(self, checkbutton, alt_flag=False):
 
-        """Called from callback in self.setup_operations_performance_tab().
+        """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the simultaneous download limit. Toggling the
         corresponding Gtk.CheckButton in the Progress Tab sets the IV (and
@@ -19656,15 +20028,30 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
+            alt_flag (bool): If True, the alternative limit is toggled
+
         """
 
-        other_flag \
-        = self.app_obj.main_win_obj.num_worker_checkbutton.get_active()
+        main_win_obj = self.app_obj.main_win_obj
 
-        if (checkbutton.get_active() and not other_flag):
-            self.app_obj.main_win_obj.num_worker_checkbutton.set_active(True)
-        elif (not checkbutton.get_active() and other_flag):
-            self.app_obj.main_win_obj.num_worker_checkbutton.set_active(False)
+        if not alt_flag:
+
+            other_flag = main_win_obj.num_worker_checkbutton.get_active()
+
+            if (checkbutton.get_active() and not other_flag):
+                main_win_obj.num_worker_checkbutton.set_active(True)
+            elif (not checkbutton.get_active() and other_flag):
+                main_win_obj.num_worker_checkbutton.set_active(False)
+
+        else:
+
+            # Alternative limits. There is no second widget to toggle
+            if checkbutton.get_active() \
+            and not self.app_obj.alt_num_worker_apply_flag:
+                self.app_obj.set_alt_num_worker_apply_flag(True)
+            elif not checkbutton.get_active() \
+            and self.app_obj.alt_num_worker_apply_flag:
+                self.app_obj.set_alt_num_worker_apply_flag(False)
 
 
     def on_worker_bypass_button_toggled(self, checkbutton):
@@ -19682,15 +20069,15 @@ class SystemPrefWin(GenericPrefWin):
 
         if checkbutton.get_active() \
         and not self.app_obj.num_worker_bypass_flag:
-            self.app_obj.setnum_worker_bypass_flag(True)
+            self.app_obj.set_num_worker_bypass_flag(True)
         elif not checkbutton.get_active() \
         and self.app_obj.num_worker_bypass_flag:
             self.app_obj.set_num_worker_bypass_flag(False)
 
 
-    def on_worker_spinbutton_changed(self, spinbutton):
+    def on_worker_spinbutton_changed(self, spinbutton, alt_flag=False):
 
-        """Called from callback in self.setup_operations_performance_tab().
+        """Called from callback in self.setup_operations_limits_tab().
 
         Sets the simultaneous download limit. Setting the value of the
         corresponding Gtk.SpinButton in the Progress Tab sets the IV (and
@@ -19700,16 +20087,25 @@ class SystemPrefWin(GenericPrefWin):
 
             spinbutton (Gtk.SpinButton): The widget clicked
 
+            alt_flag (bool): If True, the alternative limit is set
+
         """
 
-        self.app_obj.main_win_obj.num_worker_spinbutton.set_value(
-            spinbutton.get_value(),
-        )
+        if not alt_flag:
+
+            self.app_obj.main_win_obj.num_worker_spinbutton.set_value(
+                spinbutton.get_value(),
+            )
+
+        else:
+
+            # Alternative limits. There is no second widget to toggle
+            self.app_obj.set_alt_num_worker(int(spinbutton.get_value()))
 
 
     def on_video_res_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_operations_performance_tab().
+        """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the video resolution limit. Toggling the corresponding
         Gtk.CheckButton in the Progress Tab sets the IV (and makes sure the two
@@ -19732,7 +20128,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_video_res_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_operations_performance_tab().
+        """Called from a callback in self.setup_operations_limits_tab().
 
         Extracts the value visible in the combobox, converts it into another
         value, and uses that value to update the main application's IV.

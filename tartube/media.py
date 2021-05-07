@@ -3350,6 +3350,16 @@ class Scheduled(object):
         #   mainapp.TartubeApp.operation_limit_flag, etc
         self.ignore_limits_flag = False
 
+        # Maximum simultaneous downloads. If the flag is True, the specified
+        #   value overrides the equivalent mainapp.TartubeApp IV
+
+        # Maximum download bandwidth. If the flag is True, the specified
+        #   value overrides the equivalent mainapp.TartubeApp IV
+        self.scheduled_num_worker = 2
+        self.scheduled_num_worker_apply_flag = False
+        self.scheduled_bandwidth = 500
+        self.scheduled_bandwidth_apply_flag = False
+
         # Flag set to True if the download operation should encompass all
         #   media data objects
         self.all_flag = True

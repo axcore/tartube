@@ -27,6 +27,7 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 
 # Import other modules
+import datetime
 import functools
 from gi.repository import Gio
 import os
@@ -230,6 +231,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.num_worker_spinbutton = None       # Gtk.SpinButton
         self.bandwidth_checkbutton = None       # Gtk.CheckButton
         self.bandwidth_spinbutton = None        # Gtk.SpinButton
+        self.alt_limits_frame = None            # Gtk.Frame
+        self.alt_limits_image = None            # Gtk.Image
         self.video_res_checkbutton = None       # Gtk.CheckButton
         self.video_res_combobox = None          # Gtk.ComboBox
         self.hide_finished_checkbutton = None   # Gtk.CheckButton
@@ -249,6 +252,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_operation_error_checkbutton = None
                                                 # Gtk.CheckButton
         self.show_operation_warning_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_dates_checkbutton = None
                                                 # Gtk.CheckButton
         self.error_list_button = None           # Gtk.Button
         # (from self.setup_classic_mode_tab)
@@ -2322,8 +2327,20 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_bandwidth_spinbutton_changed,
         )
 
+        self.alt_limits_frame = Gtk.Frame()
+        grid.attach(self.alt_limits_frame, 4, 0, 1, 1)
+        self.alt_limits_frame.set_tooltip_text(
+            _('Alternative limits do not currently apply'),
+        )
+
+        self.alt_limits_image = Gtk.Image()
+        self.alt_limits_frame.add(self.alt_limits_image)
+        self.alt_limits_image.set_from_pixbuf(
+            self.pixbuf_dict['limits_off_large'],
+        )
+
         self.video_res_checkbutton = Gtk.CheckButton()
-        grid.attach(self.video_res_checkbutton, 4, 0, 1, 1)
+        grid.attach(self.video_res_checkbutton, 5, 0, 1, 1)
         self.video_res_checkbutton.set_label(_('Video resolution'))
         self.video_res_checkbutton.set_active(
             self.app_obj.video_res_apply_flag,
@@ -2338,7 +2355,7 @@ class MainWin(Gtk.ApplicationWindow):
             store.append( [string] )
 
         self.video_res_combobox = Gtk.ComboBox.new_with_model(store)
-        grid.attach(self.video_res_combobox, 5, 0, 1, 1)
+        grid.attach(self.video_res_combobox, 6, 0, 1, 1)
         renderer_text = Gtk.CellRendererText()
         self.video_res_combobox.pack_start(renderer_text, True)
         self.video_res_combobox.add_attribute(renderer_text, 'text', 0)
@@ -3014,7 +3031,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   visible)
         for i, column_title in enumerate(
             [
-                'hide', 'hide', 'hide', '', '', _('Time'), _('Type'),
+                'hide', 'hide', 'hide', '', '', _('Time'), _('Name'),
                 _('Message')
 
             ],
@@ -3106,6 +3123,24 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_operation_warning_checkbutton.connect(
             'toggled',
             self.on_operation_warning_checkbutton_changed,
+        )
+
+        self.show_system_dates_checkbutton = Gtk.CheckButton()
+        hbox.pack_start(
+            self.show_system_dates_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.show_system_dates_checkbutton.set_label(
+            _('Show dates'),
+        )
+        self.show_system_dates_checkbutton.set_active(
+            self.app_obj.system_msg_show_date_flag,
+        )
+        self.show_system_dates_checkbutton.connect(
+            'toggled',
+            self.on_system_dates_checkbutton_changed,
         )
 
         self.error_list_button = Gtk.Button()
@@ -4159,6 +4194,41 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Notification is ready; show it
             notify_obj.show()
+
+
+    def toggle_alt_limits_image(self, on_flag):
+
+        """Can be called by anything.
+
+        Toggles the icon in the Progress Tab.
+
+        Args:
+
+            on_flag (bool): True for a normal image (signifying that
+                alternative performance limits currently apply), False for a
+                greyed-out image
+
+        """
+
+        if on_flag:
+
+            self.alt_limits_image.set_from_pixbuf(
+                self.pixbuf_dict['limits_on_large'],
+            )
+
+            self.alt_limits_frame.set_tooltip_text(
+                _('Alternative limits currently apply'),
+            )
+
+        else:
+
+            self.alt_limits_image.set_from_pixbuf(
+                self.pixbuf_dict['limits_off_large'],
+            )
+
+            self.alt_limits_frame.set_tooltip_text(
+                _('Alternative limits do not currently apply'),
+            )
 
 
     # (Auto-sort functions for main window widgets)
@@ -11653,8 +11723,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Create a new row for every error and warning message
         # Use the same time on each
-        local = utils.get_local_time()
-        time_string = str(local.strftime('%H:%M:%S'))
+        if self.app_obj.system_msg_show_date_flag:
+            time_string = datetime.datetime.today().strftime('%x %X')
+        else:
+            local = utils.get_local_time()
+            time_string = str(local.strftime('%H:%M:%S'))
 
         if self.app_obj.operation_error_show_flag:
 
@@ -11776,8 +11849,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Prepare the new row in the treeview
         row_list = []
-        local = utils.get_local_time()
-        time_string = str(local.strftime('%H:%M:%S'))
+        if self.app_obj.system_msg_show_date_flag:
+            time_string = datetime.datetime.today().strftime('%x %X')
+        else:
+            local = utils.get_local_time()
+            time_string = str(local.strftime('%H:%M:%S'))
 
         for i in range(3):
             row_list.append('')     # Hidden columns
@@ -11832,8 +11908,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Prepare the new row in the treeview
         row_list = []
-        local = utils.get_local_time()
-        time_string = str(local.strftime('%H:%M:%S'))
+        if self.app_obj.system_msg_show_date_flag:
+            time_string = datetime.datetime.today().strftime('%x %X')
+        else:
+            local = utils.get_local_time()
+            time_string = str(local.strftime('%H:%M:%S'))
 
         for i in range(3):
             row_list.append('')     # Hidden columns
@@ -13682,6 +13761,7 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
+                None,           # media.Scheduled object
                 'sim',              # override_operation_type
                 False,              # priority_flag
                 False,              # ignore_limits_flag
@@ -13747,6 +13827,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
+                    None,           # media.Scheduled object
                     'sim',          # override_operation_type
                     False,          # priority_flag
                     False,          # ignore_limits_flag
@@ -13994,6 +14075,7 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj \
             = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
+                None,           # media.Scheduled object
                 'real',         # override_operation_type
                 False,          # priority_flag
                 False,          # ignore_limits_flag
@@ -14063,6 +14145,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download_item_obj \
                 = download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
+                    None,               # media.Scheduled object
                     'real',             # override_operation_type
                     False,              # priority_flag
                     False,              # ignore_limits_flag
@@ -16606,9 +16689,10 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 16345 on_bandwidth_spinbutton_changed')
 
-        self.app_obj.set_bandwidth_default(
-            int(self.bandwidth_spinbutton.get_value())
-        )
+        if self.bandwidth_checkbutton.get_active():
+            self.app_obj.set_bandwidth_default(
+                int(self.bandwidth_spinbutton.get_value())
+            )
 
 
     def on_bandwidth_checkbutton_changed(self, checkbutton):
@@ -16628,9 +16712,16 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 16367 on_bandwidth_checkbutton_changed')
 
-        self.app_obj.set_bandwidth_apply_flag(
-            self.bandwidth_checkbutton.get_active(),
-        )
+        if self.bandwidth_checkbutton.get_active():
+
+            self.app_obj.set_bandwidth_apply_flag(True)
+            self.app_obj.set_bandwidth_default(
+                int(self.bandwidth_spinbutton.get_value())
+            )
+
+        else:
+
+            self.app_obj.set_bandwidth_apply_flag(False)
 
 
     def on_delete_event(self, widget, event):
@@ -17068,6 +17159,26 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         self.app_obj.set_results_list_reverse_flag(checkbutton.get_active())
+
+
+    def on_system_dates_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of dates (as well as times) in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton) - The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'mwn 16806 on_system_dates_checkbutton_changed',
+            )
+
+        self.app_obj.set_system_msg_show_date_flag(checkbutton.get_active())
 
 
     def on_system_error_checkbutton_changed(self, checkbutton):
@@ -20665,6 +20776,7 @@ class ComplexCatalogueItem(object):
                 download_item_obj \
                 = app_obj.download_manager_obj.download_list_obj.create_item(
                     self.video_obj,
+                    None,               # media.Scheduled object
                     'real',             # override_operation_type
                     False,              # priority_flag
                     False,              # ignore_limits_flag
@@ -25426,6 +25538,7 @@ class MountDriveDialogue(Gtk.Dialog):
         box.add(grid)
         grid.set_border_width(main_win_obj.spacing_size)
         grid.set_row_spacing(main_win_obj.spacing_size)
+        grid.set_column_spacing(main_win_obj.spacing_size)
         # (Actually, the grid width of the area to the right of the Tartube
         #   logo)
         grid_width = 2
@@ -25666,6 +25779,264 @@ class MountDriveDialogue(Gtk.Dialog):
             # New data directory selected
             self.available_flag = True
             self.destroy()
+
+
+class NewbieDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.download_manager_finished().
+
+    Python class handling a dialogue window that advises a newbie what to do if
+    the download operation failed to check/download any videos.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25247 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+
+
+        # IV list - other
+        # ---------------
+        # Flag set to True when various widgets are selected
+        self.update_flag = False
+        self.config_flag = False
+        self.change_flag = False
+        self.website_flag = False
+        self.issues_flag = False
+        self.show_flag = main_win_obj.app_obj.show_newbie_dialogue_flag
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Nothing happened?'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+        grid.set_column_spacing(main_win_obj.spacing_size)
+        # (Actually, the grid width of the area to the right of the Tartube
+        #   logo)
+        grid_width = 2
+
+        image = Gtk.Image.new_from_pixbuf(
+            main_win_obj.pixbuf_dict['newbie_icon'],
+        )
+        grid.attach(image, 0, 0, 1, 3)
+
+        label = Gtk.Label(
+            _('Make sure the downloader is installed and\nupdated'),
+        )
+        grid.attach(label, 1, 0, grid_width, 1)
+
+        button = Gtk.Button.new_with_label(
+            _('Update') + ' ' + self.main_win_obj.app_obj.get_downloader(),
+        )
+        grid.attach(button, 1, 1, grid_width, 1)
+        button.connect('clicked', self.on_update_button_clicked)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 2, grid_width, 1)
+
+        label2 = Gtk.Label(
+            _('Tell Tartube where to find the downloader'),
+        )
+        grid.attach(label2, 1, 3, grid_width, 1)
+
+        button2 = Gtk.Button.new_with_label(
+            _('Set the downloader\'s file path'),
+        )
+        grid.attach(button2, 1, 4, grid_width, 1)
+        button2.connect('clicked', self.on_config_button_clicked)
+
+        button3 = Gtk.Button.new_with_label(
+            _('Try a different downloader'),
+        )
+        grid.attach(button3, 1, 5, grid_width, 1)
+        button3.connect('clicked', self.on_change_button_clicked)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 6, grid_width, 1)
+
+        label3 = Gtk.Label(
+            _('Find more help'),
+        )
+        grid.attach(label3, 1, 7, grid_width, 1)
+
+        button4 = Gtk.Button.new_with_label(
+            _('Read the FAQ'),
+        )
+        grid.attach(button4, 1, 8, 1, 1)
+        button4.connect('clicked', self.on_website_button_clicked)
+
+        button5 = Gtk.Button.new_with_label(
+            _('Ask for help'),
+        )
+        grid.attach(button5, 2, 8, 1, 1)
+        button5.connect('clicked', self.on_issues_button_clicked)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 9, grid_width, 1)
+
+        checkbutton = Gtk.CheckButton()
+        grid.attach(checkbutton, 1, 10, grid_width, 1)
+        checkbutton.set_label(_('Always show this window'))
+        if self.show_flag:
+            checkbutton.set_active(True)
+        checkbutton.connect('toggled', self.on_checkbutton_toggled)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_change_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the preferences window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25248 on_change_button_clicked')
+
+        self.change_flag = True
+        self.destroy()
+
+
+    def on_checkbutton_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        Enables/disables showing this dialogue window.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25249 on_checkbutton_toggled')
+
+        if checkbutton.get_active():
+            self.show_flag = True
+        else:
+            self.show_flag = False
+
+
+    def on_config_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the preferences window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25250 on_config_button_clicked')
+
+        self.config_flag = True
+        self.destroy()
+
+
+    def on_issues_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the Tartube issues page.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25251 on_issues_button_clicked')
+
+        self.issues_flag = True
+        self.destroy()
+
+
+    def on_update_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, perform an update operation.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25252 on_update_button_clicked')
+
+        self.update_flag = True
+        self.destroy()
+
+
+    def on_website_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the Tartube website.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25253 on_update_button_clicked')
+
+        self.website_flag = True
+        self.destroy()
 
 
 class RemoveLockFileDialogue(Gtk.Dialog):

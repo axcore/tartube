@@ -86,6 +86,29 @@ while time_metric_setup_list:
     TIME_METRIC_DICT[key] = value
     TIME_METRIC_TRANS_DICT[key] = trans_key
 
+specified_days_setup_list = [
+    'every_day', _('Every day'),
+    'weekdays', _('Weekdays'),
+    'weekends', _('Weekends'),
+    'monday', _('Monday'),
+    'tuesday', _('Tuesday'),
+    'wednesday', _('Wednesday'),
+    'thursday', _('Thursday'),
+    'friday', _('Friday'),
+    'saturday', _('Saturday'),
+    'sunday', _('Sunday'),
+]
+
+SPECIFIED_DAYS_LIST = []
+SPECIFIED_DAYS_DICT = {}
+
+while specified_days_setup_list:
+    key = specified_days_setup_list.pop(0)
+    value = specified_days_setup_list.pop(0)
+
+    SPECIFIED_DAYS_LIST.append(key)
+    SPECIFIED_DAYS_DICT[key] = value
+
 KILO_SIZE = 1024.0
 filesize_metric_setup_list = [
     'B',    1,
@@ -567,13 +590,15 @@ while language_setup_list:
 
 if not xmas_flag:
     DIALOGUE_ICON_DICT = {
-        'system_icon': 'system_icon_64.png',
+        'newbie_icon': 'newbie_icon_64.png',
         'ready_icon': 'ready_icon_64.png',
+        'system_icon': 'system_icon_64.png',
     }
 else:
     DIALOGUE_ICON_DICT = {
-        'system_icon': 'system_icon_xmas_64.png',
+        'newbie_icon': 'newbie_icon_64.png',
         'ready_icon': 'ready_icon_64.png',
+        'system_icon': 'system_icon_xmas_64.png',
     }
 
 if not xmas_flag:
@@ -672,6 +697,8 @@ LARGE_ICON_DICT = {
     'copy_large': 'copy.png',
     'hand_left_large': 'hand_left.png',
     'hand_right_large': 'hand_right.png',
+    'limits_off_large': 'limits_off.png',
+    'limits_on_large': 'limits_on.png',
     'question_large': 'question.png',
     'warning_large': 'warning.png',
 }

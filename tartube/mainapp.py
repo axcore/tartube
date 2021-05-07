@@ -478,6 +478,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if operation warning messages should be shown in the
         #   Errors/Warnings tab
         self.operation_warning_show_flag = True
+        # Flag set to True if the date (as well as the time) should be shown in
+        #   the Errors/Warnings Tab
+        self.system_msg_show_date_flag = True
         # Flag set to True if the total number of system error/warning messages
         #   shown in the tab label is not reset until the 'Clear the list'
         #   button is explicitly clicked (normally, the total numbers are
@@ -1198,6 +1201,10 @@ class TartubeApp(Gtk.Application):
         #   self.operation_limit_flag is False
         self.operation_download_limit = 3
 
+        # Flag set to True if the newbie dialogue should appear after a failed
+        #   download operation, explaining what to do
+        self.show_newbie_dialogue_flag = True
+
         # Media data classes are those specified in media.py. Those class
         #   objects are media.Video (for individual videos), media.Channel,
         #   media.Playlist and media.Folder (reprenting a sub-directory inside
@@ -1753,6 +1760,26 @@ class TartubeApp(Gtk.Application):
         #   applied, it overrides the download option 'video_format_list' (see
         #   the comments in options.OptionsManager)
         self.video_res_apply_flag = False
+
+        # Alternative performance limits (applied at certain times of the
+        #   day/week)
+        # Note that these limits, if applied, apply to the whole video/
+        #   channel/playlist, at the moment the video/channel/playlist download
+        #   starts. Tartube cannot magically change youtube-dl's internal
+        #   settings once the download has started
+        self.alt_num_worker = 4
+        self.alt_num_worker_apply_flag = False
+        self.alt_bandwidth = 1000
+        self.alt_bandwidth_apply_flag = False
+        # Two 24 hour clock times, marking the start and stop of the period
+        #   during which alternative limits are applied. If the stop time is
+        #   earlier than the start time, then it is applied the next day
+        self.alt_start_time = '21:00'
+        self.alt_stop_time = '07:00'
+        # A string describing the days on which the limit is applied:
+        #   'every_day', 'weekdays', 'weekends', or 'monday', 'tuesday' etc.
+        #   The strings are translated by formats.SPECIFIED_DAYS_DICT
+        self.alt_day_string = 'every_day'
 
         # The method of matching downloaded videos against existing
         #   media.Video objects:
@@ -3469,7 +3496,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['operation_error_show_flag']
             self.operation_warning_show_flag \
             = json_dict['operation_warning_show_flag']
-
+        if version >= 2003116:  # v2.3.116
+            self.system_msg_show_date_flag \
+            = json_dict['system_msg_show_date_flag']
         if version >= 1000007:  # v1.0.007
             self.system_msg_keep_totals_flag \
             = json_dict['system_msg_keep_totals_flag']
@@ -3638,6 +3667,10 @@ class TartubeApp(Gtk.Application):
             self.operation_check_limit = json_dict['operation_check_limit']
             self.operation_download_limit \
             = json_dict['operation_download_limit']
+
+        if version >= 2003114:  # v2.3.114
+            self.show_newbie_dialogue_flag \
+            = json_dict['show_newbie_dialogue_flag']
 
         if version >= 1003032:  # v1.3.032
             self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
@@ -3848,6 +3881,17 @@ class TartubeApp(Gtk.Application):
         if version >= 1002011:  # v1.2.011
             self.video_res_default = json_dict['video_res_default']
             self.video_res_apply_flag = json_dict['video_res_apply_flag']
+
+        if version >= 2003117:  # v2.3.117
+            self.alt_num_worker = json_dict['alt_num_worker']
+            self.alt_num_worker_apply_flag \
+            = json_dict['alt_num_worker_apply_flag']
+            self.alt_bandwidth = json_dict['alt_bandwidth']
+            self.alt_bandwidth_apply_flag \
+            = json_dict['alt_bandwidth_apply_flag']
+            self.alt_start_time = json_dict['alt_start_time']
+            self.alt_stop_time = json_dict['alt_stop_time']
+            self.alt_day_string = json_dict['alt_day_string']
 
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
@@ -4322,6 +4366,7 @@ class TartubeApp(Gtk.Application):
             'system_warning_show_flag': self.system_warning_show_flag,
             'operation_error_show_flag': self.operation_error_show_flag,
             'operation_warning_show_flag': self.operation_warning_show_flag,
+            'system_msg_show_date_flag': self.system_msg_show_date_flag,
             'system_msg_keep_totals_flag': self.system_msg_keep_totals_flag,
 
             'data_dir': self.data_dir,
@@ -4418,6 +4463,8 @@ class TartubeApp(Gtk.Application):
             'operation_check_limit': self.operation_check_limit,
             'operation_download_limit': self.operation_download_limit,
 
+            'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
+
             'auto_clone_options_flag': self.auto_clone_options_flag,
             'auto_delete_options_flag': self.auto_delete_options_flag,
             'simple_options_flag': self.simple_options_flag,
@@ -4502,6 +4549,14 @@ class TartubeApp(Gtk.Application):
 
             'video_res_default': self.video_res_default,
             'video_res_apply_flag': self.video_res_apply_flag,
+
+            'alt_num_worker': self.alt_num_worker,
+            'alt_num_worker_apply_flag': self.alt_num_worker_apply_flag,
+            'alt_bandwidth': self.alt_bandwidth,
+            'alt_bandwidth_apply_flag': self.alt_bandwidth_apply_flag,
+            'alt_start_time': self.alt_start_time,
+            'alt_stop_time': self.alt_stop_time,
+            'alt_day_string': self.alt_day_string,
 
             'match_method': self.match_method,
             'match_first_chars': self.match_first_chars,
@@ -5835,6 +5890,16 @@ class TartubeApp(Gtk.Application):
                 ]
                 self.ytdl_update_current = 'ytdl_update_disabled'
 
+        if version < 2003119:      # v2.3.119
+
+            # This version adds IVs to media.Scheduled objects
+            for scheduled_obj in self.scheduled_list:
+
+                scheduled_obj.scheduled_num_worker = 2
+                scheduled_obj.scheduled_num_worker_apply_flag = False
+                scheduled_obj.scheduled_bandwidth = 500
+                scheduled_obj.scheduled_bandwidth_apply_flag = False
+
 
     def save_db(self):
 
@@ -6390,7 +6455,7 @@ class TartubeApp(Gtk.Application):
                     msg = 'Tartube database \'{0}\' can\'t be loaded' \
                         + '  - another instance of Tartube may be using it.' \
                         + '  If not, you can fix this problem by deleting' \
-                        + ' the lockfile \'{1}\'',
+                        + ' the lockfile \'{1}\''
 
                     self.system_warning(
                         103,
@@ -8654,6 +8719,8 @@ class TartubeApp(Gtk.Application):
         self.reset_backup_archive()
 
         # If Tartube is due to shut down, then shut it down
+        show_newbie_dialogue_flag = False
+
         if self.halt_after_operation_flag:
             self.stop_continue()
 
@@ -8661,30 +8728,41 @@ class TartubeApp(Gtk.Application):
         elif not self.no_dialogue_this_time_flag \
         and operation_type != 'classic_sim':
 
-            if not self.operation_halted_flag:
-                msg = _('Download operation complete')
+            # If videos were expected to be checked/downloaded, but nothing
+            #   happened, show a newbie dialogue explaining what to do next
+            if self.show_newbie_dialogue_flag \
+            and dl_count == 0 \
+            and sim_count == 0:
+
+                show_newbie_dialogue_flag = True
+
             else:
-                msg = _('Download operation halted')
 
-            if dl_count or sim_count:
+                if not self.operation_halted_flag:
+                    msg = _('Download operation complete')
+                else:
+                    msg = _('Download operation halted')
 
-                msg += '\n\n' + _('Videos downloaded:') + ' ' + str(dl_count) \
-                + '\n' + _('Videos checked:') + ' ' + str(sim_count)
+                if dl_count or sim_count:
 
-            if time_num >= 10:
-                msg += '\n\n' + _('Time taken:') + ' ' \
-                + utils.convert_seconds_to_string(time_num, True)
+                    msg += '\n\n' + _('Videos downloaded:') + ' ' \
+                    + str(dl_count) + '\n' + _('Videos checked:') \
+                    + ' ' + str(sim_count)
 
-            if self.operation_dialogue_mode == 'dialogue':
+                if time_num >= 10:
+                    msg += '\n\n' + _('Time taken:') + ' ' \
+                    + utils.convert_seconds_to_string(time_num, True)
 
-                self.dialogue_manager_obj.show_simple_msg_dialogue(
-                    msg,
-                    'info',
-                    'ok',
-                )
+                if self.operation_dialogue_mode == 'dialogue':
 
-            elif self.operation_dialogue_mode == 'desktop':
-                self.main_win_obj.notify_desktop(None, msg)
+                    self.dialogue_manager_obj.show_simple_msg_dialogue(
+                        msg,
+                        'info',
+                        'ok',
+                    )
+
+                elif self.operation_dialogue_mode == 'desktop':
+                    self.main_win_obj.notify_desktop(None, msg)
 
         # In any case, reset those IVs
         self.halt_after_operation_flag = False
@@ -8732,6 +8810,34 @@ class TartubeApp(Gtk.Application):
                 False,              # Not called from a timer
                 dummy_list,
             )
+
+        # Show the newbie dialogue, if required
+        elif show_newbie_dialogue_flag:
+
+            dialogue_win = mainwin.NewbieDialogue(self.main_win_obj)
+            dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window...
+            newbie_update_flag = dialogue_win.update_flag
+            newbie_config_flag = dialogue_win.config_flag
+            newbie_change_flag = dialogue_win.change_flag
+            newbie_website_flag = dialogue_win.website_flag
+            newbie_issues_flag = dialogue_win.issues_flag
+
+            self.show_newbie_dialogue_flag = dialogue_win.show_flag
+
+            dialogue_win.destroy()
+
+            if newbie_update_flag:
+                self.update_manager_start('ytdl')
+            elif newbie_config_flag:
+                config.SystemPrefWin(self.main_win_obj.app_obj, 'paths')
+            elif newbie_change_flag:
+                config.SystemPrefWin(self.main_win_obj.app_obj, 'forks')
+            elif newbie_website_flag:
+                utils.open_file(self, __main__.__website__)
+            elif newbie_issues_flag:
+                utils.open_file(self, __main__.__website_bugs__)
 
 
     def update_manager_start(self, update_type):
@@ -9986,6 +10092,7 @@ class TartubeApp(Gtk.Application):
                     download_item_obj \
                     = self.download_manager_obj.download_list_obj.create_item(
                         video_obj,
+                        None,           # media.Scheduled object
                         'real',         # override_operation_type
                         False,          # priority_flag
                         False,          # ignore_limits_flag
@@ -15565,6 +15672,7 @@ class TartubeApp(Gtk.Application):
                 download_item_obj \
                 = self.download_manager_obj.download_list_obj.create_item(
                     video_obj,
+                    None,           # media.Scheduled object
                     'real',         # override_operation_type
                     False,          # priority_flag
                     False,          # ignore_limits_flag
@@ -16666,7 +16774,7 @@ class TartubeApp(Gtk.Application):
         #   scheduled download that should start now
         first_list = []
         next_list = []
-        all_flag = False
+        all_obj = False
         shutdown_flag = False
         ignore_limits_flag = False
 
@@ -16693,9 +16801,12 @@ class TartubeApp(Gtk.Application):
                     # Only perform this scheduled download
                     first_list = [scheduled_obj]
                     next_list = []
-                    all_flag = scheduled_obj.all_flag
                     shutdown_flag = scheduled_obj.shutdown_flag
                     ignore_limits_flag = scheduled_obj.ignore_limits_flag
+
+                    if scheduled_obj.all_flag:
+                        all_obj = scheduled_obj
+
                     break
 
                 # 'start' should be done before 'scheduled'
@@ -16704,12 +16815,14 @@ class TartubeApp(Gtk.Application):
                 else:
                     next_list.append(scheduled_obj)
 
-                if scheduled_obj.all_flag:
-                    all_flag = True
                 if scheduled_obj.shutdown_flag:
                     shutdown_flag = True
                 if scheduled_obj.ignore_limits_flag:
                     ignore_limits_flag = True
+
+                if scheduled_obj.all_flag:
+                    all_obj = scheduled_obj
+                    break
 
         start_list = first_list + next_list
 
@@ -16732,7 +16845,7 @@ class TartubeApp(Gtk.Application):
         # If any scheduled downloads are due to start, and any of the
         #   media.Scheduled objects have their .all_flag IV set, then we simply
         #   download everything
-        if start_list and all_flag:
+        if start_list and all_obj:
 
             if dl_mode is not None:
 
@@ -16747,6 +16860,7 @@ class TartubeApp(Gtk.Application):
                     self.download_manager_start(
                         dl_mode,
                         True,       # This function is the calling function
+                        [all_obj],  # Make sure performance limits respected
                     )
 
                     # Ignore operation limits, if required
@@ -16776,6 +16890,7 @@ class TartubeApp(Gtk.Application):
 
                             self.script_slow_timer_insert_download(
                                 media_data_obj,
+                                all_obj,
                                 dl_mode,
                                 join_mode,
                                 ignore_limits_flag,
@@ -16815,6 +16930,7 @@ class TartubeApp(Gtk.Application):
                         media_data_obj = self.media_reg_dict[dbid]
                         self.script_slow_timer_insert_download(
                             media_data_obj,
+                            scheduled_obj,
                             scheduled_obj.dl_mode,
                             scheduled_obj.join_mode,
                             scheduled_obj.ignore_limits_flag,
@@ -16913,8 +17029,8 @@ class TartubeApp(Gtk.Application):
             return 1
 
 
-    def script_slow_timer_insert_download(self, media_data_obj, dl_mode,
-    join_mode, ignore_limits_flag):
+    def script_slow_timer_insert_download(self, media_data_obj, scheduled_obj,
+    dl_mode, join_mode, ignore_limits_flag):
 
         """Called by self.script_slow_timer_callback(), when a download
         operation is already in progress.
@@ -16926,6 +17042,10 @@ class TartubeApp(Gtk.Application):
             media_data_obj (media.Channel, media.Playlist, media.Folder): The
                 media data object to add. It, as well as all of its children,
                 are added to the download queue
+
+            scheduled_obj (media.Scheduled): The scheduled download object
+                which wants to download media_data_obj (None if no scheduled
+                download applies in this case)
 
             dl_mode (str): 'sim', 'real' or 'multi', matching the value of
                 downloads.DownloadManager.operation_type
@@ -16951,6 +17071,7 @@ class TartubeApp(Gtk.Application):
             download_item_obj \
             = self.download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
+                scheduled_obj,
                 dl_mode,
                 priority_flag,
                 ignore_limits_flag,
@@ -19819,6 +19940,68 @@ class TartubeApp(Gtk.Application):
             self.allow_ytdl_archive_flag = True
 
 
+    def set_alt_bandwidth(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18916 set_alt_bandwidth')
+
+        self.alt_bandwidth = value
+
+
+    def set_alt_bandwidth_apply_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18917 set_alt_bandwidth_apply_flag')
+
+        if not flag:
+            self.alt_bandwidth_apply_flag = False
+        else:
+            self.alt_bandwidth_apply_flag = True
+
+
+    def set_alt_day_string(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18917 set_alt_day_string')
+
+        self.alt_day_string = value
+
+
+    def set_alt_num_worker(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18918 set_alt_num_worker')
+
+        self.alt_num_worker = value
+
+
+    def set_alt_num_worker_apply_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18919 set_alt_num_worker_apply_flag')
+
+        if not flag:
+            self.alt_num_worker_apply_flag = False
+        else:
+            self.alt_num_worker_apply_flag = True
+
+
+    def set_alt_start_time(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18920 set_alt_start_time')
+
+        self.alt_start_time = value
+
+
+    def set_alt_stop_time(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18921 set_alt_stop_time')
+
+        self.alt_stop_time = value
+
+
     def set_apply_json_timeout_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -20957,7 +21140,9 @@ class TartubeApp(Gtk.Application):
         old_value = self.num_worker_default
         self.num_worker_default = value
 
-        if old_value != value and self.download_manager_obj:
+        if old_value != value \
+        and self.download_manager_obj \
+        and not self.download_manager_obj.alt_limits_flag:
             self.download_manager_obj.change_worker_count(value)
 
         if value > self.main_win_obj.output_page_count:
@@ -21338,6 +21523,17 @@ class TartubeApp(Gtk.Application):
             self.show_custom_icons_flag = True
 
 
+    def set_show_newbie_dialogue_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20370 set_show_newbie_dialogue_flag')
+
+        if not flag:
+            self.show_newbie_dialogue_flag = False
+        else:
+            self.show_newbie_dialogue_flag = True
+
+
     def set_show_pretty_dates_flag(self, flag):
 
         """Called by config.SystemPrefWin.on_pretty_date_button_toggled().
@@ -21451,6 +21647,17 @@ class TartubeApp(Gtk.Application):
             self.system_msg_keep_totals_flag = False
         else:
             self.system_msg_keep_totals_flag = True
+
+
+    def set_system_msg_show_date_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20474 set_system_msg_show_date_flag')
+
+        if not flag:
+            self.system_msg_show_date_flag = False
+        else:
+            self.system_msg_show_date_flag = True
 
 
     def set_system_warning_show_flag(self, flag):

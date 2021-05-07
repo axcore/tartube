@@ -108,7 +108,7 @@ class DownloadManager(threading.Thread):
             using 'classic_sim' is always followed by another one using
             'classic_custom'
 
-        download_list_obj(downloads.DownloadManager): An ordered list of
+        download_list_obj (downloads.DownloadManager): An ordered list of
             media data objects to download, each one represented by a
             downloads.DownloadItem object
 
@@ -215,6 +215,16 @@ class DownloadManager(threading.Thread):
         #   has been extracted
         self.classic_extract_list = []
 
+        # Flag set to True when alternative performance limits currently apply,
+        #   False when not. By checking the previous value (stored here)
+        #   against the new one, we can see whether the period of alternative
+        #   limits has started (or stopped)
+        self.alt_limits_flag = self.check_alt_limits()
+        # Alternative limits are checked every five minutes. The time (in
+        #   minutes past the hour) at which the next check should be performed
+        self.alt_limits_check_time = None
+
+
         # Code
         # ----
 
@@ -231,8 +241,33 @@ class DownloadManager(threading.Thread):
 
         # Create a list of downloads.DownloadWorker objects, each one handling
         #   one of several simultaneous downloads
-        for i in range(1, self.app_obj.num_worker_default + 1):
+        # Note that if a downloads.DownloadItem was created by a
+        #   media.Scheduled object that specifies more (or fewer) workers,
+        #   then self.change_worker_count() will be called
+        if self.alt_limits_flag \
+        and self.app_obj.alt_num_worker_apply_flag:
+            worker_count = self.app_obj.alt_num_worker
+
+        elif (not self.alt_limits_flag) \
+        and self.app_obj.num_worker_apply_flag:
+            worker_count = self.app_obj.num_worker_default
+
+        else:
+            # Failsafe
+            worker_count = 2
+
+        for i in range(1, worker_count + 1):
             self.worker_list.append(DownloadWorker(self))
+
+        # Set the time at which the first check for alternative limits is
+        #   performed
+        local = utils.get_local_time()
+        self.alt_limits_check_time \
+        = (int(int(local.strftime('%M')) / 5) * 5) + 5
+        if self.alt_limits_check_time > 55:
+            self.alt_limits_check_time = 0
+        # (Also update the icon in the Progress tab)
+        self.app_obj.main_win_obj.toggle_alt_limits_image(self.alt_limits_flag)
 
         # Let's get this party started!
         self.start()
@@ -302,6 +337,58 @@ class DownloadManager(threading.Thread):
 
                 if (time.time() - self.start_time) > time_limit:
                     break
+
+            # Every five minutes, check whether the period of alternative
+            #   performance limits has started (or stopped)
+            local = utils.get_local_time()
+            if int(local.strftime('%M')) >= self.alt_limits_check_time:
+
+                self.alt_limits_check_time += 5
+                if self.alt_limits_check_time > 55:
+                    self.alt_limits_check_time = 0
+
+                new_flag = self.check_alt_limits()
+                if new_flag != self.alt_limits_flag:
+
+                    self.alt_limits_flag = new_flag
+                    if not new_flag:
+
+                        self.app_obj.main_win_obj.output_tab_write_stdout(
+                            0,
+                            _(
+                            'Alternative performance limits no longer apply',
+                            ),
+                        )
+
+                    else:
+
+                        self.app_obj.main_win_obj.output_tab_write_stdout(
+                            0,
+                            _('Alternative performance limits now apply'),
+                        )
+
+                    # Change the number of workers. Bandwidth changes are
+                    #   applied by OptionsParser.build_limit_rate()
+                    if self.app_obj.num_worker_default \
+                    != self.app_obj.alt_num_worker \
+                    and self.alt_num_worker_apply_flag:
+
+                        if not new_flag:
+
+                            self.change_worker_count(
+                                self.app_obj.num_worker_default,
+                            )
+
+                        else:
+
+                            self.change_worker_count(
+                                self.app_obj.alt_num_worker,
+                            )
+
+                    # (Also update the icon in the Progress tab)
+                    self.app_obj.main_win_obj.toggle_alt_limits_image(
+                        self.alt_limits_flag,
+                    )
 
             # Fetch information about the next media data object to be
             #   downloaded (and store it in an IV, so the main window's
@@ -435,6 +522,9 @@ class DownloadManager(threading.Thread):
                 True,           # Don't update the Video Catalogue yet
             )
 
+        # (Also update the icon in the Progress tab)
+        self.app_obj.main_win_obj.toggle_alt_limits_image(False)
+
         # When youtube-dl reports it is finished, there is a short delay before
         #   the final downloaded video(s) actually exist in the filesystem
         # Therefore, mainwin.MainWin.progress_list_display_dl_stats() may not
@@ -481,9 +571,119 @@ class DownloadManager(threading.Thread):
             download_item_obj.set_ignore_limits_flag()
 
 
+    def check_alt_limits(self):
+
+        """Called by self.__init__() and .run().
+
+        Checks whether alternative performance limits apply right now, or not.
+
+        Returns:
+
+            True if alternative limits apply, False if not.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 475 check_alt_limits')
+
+        # Get the current time and day of the week
+        local = utils.get_local_time()
+        current_hours = int(local.strftime('%H'))
+        current_minutes = int(local.strftime('%M'))
+        # 0=Monday, 6=Sunday
+        current_day = local.today().weekday()
+
+        # The period of alternative performance limits have a start and stop
+        #   time, stored as strings in the form '21:00'
+        start_hours = int(self.app_obj.alt_start_time[0:2])
+        start_minutes = int(self.app_obj.alt_start_time[3:5])
+        stop_hours = int(self.app_obj.alt_stop_time[0:2])
+        stop_minutes = int(self.app_obj.alt_stop_time[3:5])
+
+        # Is the current time before or after the start/stop times?
+        if current_hours < start_hours \
+        or (current_hours == start_hours and current_minutes < start_minutes):
+            start_before_flag = True
+        else:
+            start_before_flag = False
+
+        if current_hours < stop_hours \
+        or (current_hours == stop_hours and current_minutes < stop_minutes):
+            stop_before_flag = True
+        else:
+            stop_before_flag = False
+
+        # If the start time is earlier than the stop time, we assume they're on
+        #   the same day
+        if start_hours < stop_hours \
+        or (start_hours == stop_hours and start_minutes < stop_minutes):
+
+            if not self.check_alt_limits_day(current_day) \
+            or start_before_flag \
+            or (not stop_before_flag):
+                return False
+            else:
+                return True
+
+        # Otherwise, we assume the stop time occurs the following day (e.g.
+        #   21:00 to 07:00)
+        else:
+
+            prev_day = current_day - 1
+            if prev_day < 0:
+                prev_day = 6
+
+            if (
+                self.check_alt_limits_day(current_day) \
+                and (not start_before_flag)
+            ) or (
+                self.check_alt_limits_day(prev_day) \
+                and stop_before_flag
+            ):
+                return True
+            else:
+                return False
+
+
+    def check_alt_limits_day(self, this_day):
+
+        """Called by self.check_alt_limits().
+
+        Test the day(s) of the week on which alternative limits apply. The
+        specified day(s) are stored as a string in the form 'every_day',
+        'weekdays', 'weekends', or 'monday', 'tuesday' etc.
+
+        Returns:
+
+            True if the alternative limits apply today, False if not.
+
+        """
+
+        # Test the day(s) of the week on which alterative limits apply. The
+        #   specified day(s) are stored as a string in the form 'every_day',
+        #   'weekdays', 'weekends', or 'monday', 'tuesday' etc.
+        day_str = self.app_obj.alt_day_string
+        if day_str != 'every_day':
+
+            if (day_str == 'weekdays' and this_day > 4) \
+            or (day_str == 'weekends' and this_day < 5) \
+            or (day_str == 'monday' and this_day != 0) \
+            or (day_str == 'tuesday' and this_day != 1) \
+            or (day_str == 'wednesday' and this_day != 2) \
+            or (day_str == 'thursday' and this_day != 3) \
+            or (day_str == 'friday' and this_day != 4) \
+            or (day_str == 'saturday' and this_day != 5) \
+            or (day_str == 'sunday' and this_day != 6):
+                return False
+
+        return True
+
+
     def change_worker_count(self, number):
 
-        """Called by mainapp.TartubeApp.set_num_worker_default().
+        """Called by mainapp.TartubeApp.set_num_worker_default(). Can also be
+        called by self.run() when the period of alternative performances limits
+        begins or ends.
 
         When the number of simultaneous downloads allowed is changed during a
         download operation, this function responds.
@@ -495,8 +695,7 @@ class DownloadManager(threading.Thread):
 
         Args:
 
-            number (int): The new value of
-                mainapp.TartubeApp.num_worker_default
+            number (int): The new number of simultaneous downloads allowed
 
         """
 
@@ -1027,6 +1226,20 @@ class DownloadWorker(threading.Thread):
                 # Import the media data object (for convenience)
                 media_data_obj = self.download_item_obj.media_data_obj
 
+                # If the downloads.DownloadItem was created by a scheduled
+                #   download (media.Scheduled), then change the number of
+                #   workers, if necessary
+                if self.download_item_obj.scheduled_obj:
+
+                    scheduled_obj = self.download_item_obj.scheduled_obj
+                    if scheduled_obj.scheduled_num_worker_apply_flag \
+                    and scheduled_obj.scheduled_num_worker \
+                    != len(self.download_manager_obj.worker_list):
+
+                        self.download_manager_obj.change_worker_count(
+                            scheduled_obj.scheduled_num_worker,
+                        )
+
                 # When downloading a livestream that's broadcasting now, we
                 #   can use Youtube Stream Capture. Otherwise, use youtube-dl
                 #   for all downloading tasks
@@ -1452,6 +1665,7 @@ class DownloadWorker(threading.Thread):
             self.download_item_obj.media_data_obj,
             self.options_manager_obj,
             self.download_item_obj.operation_type,
+            self.download_item_obj.scheduled_obj,
         )
 
         self.available_flag = False
@@ -1661,22 +1875,26 @@ class DownloadList(object):
         if media_data_list and isinstance(media_data_list[0], media.Scheduled):
 
             # media_data_list is a list of scheduled downloads
-            all_flag = False
+            all_obj = False
             ignore_limits_flag = False
 
             for scheduled_obj in media_data_list:
                 if scheduled_obj.all_flag:
-                    all_flag = True
+                    all_obj = scheduled_obj
                 if scheduled_obj.ignore_limits_flag:
                     ignore_limits_flag = True
+                if all_obj:
+                    break
 
-            if all_flag:
+
+            if all_obj:
 
                 # Use all media data objects
                 for dbid in self.app_obj.media_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
                     self.create_item(
                         obj,
+                        all_obj,    # media.Scheduled object
                         None,       # override_operation_type
                         False,      # priority_flag
                         ignore_limits_flag,
@@ -1703,6 +1921,7 @@ class DownloadList(object):
 
                             self.create_item(
                                 obj,
+                                scheduled_obj,
                                 scheduled_obj.dl_mode,
                                 priority_flag,
                                 scheduled_obj.ignore_limits_flag,
@@ -1722,6 +1941,7 @@ class DownloadList(object):
                     obj = self.app_obj.media_reg_dict[dbid]
                     self.create_item(
                         obj,
+                        None,       # media.Scheduled object
                         None,       # override_operation_type
                         False,      # priority_flag
                         False,      # ignore_limits_flag
@@ -1749,6 +1969,7 @@ class DownloadList(object):
                         # Use the specified media data object
                         self.create_item(
                             media_data_obj,
+                            None,       # media.Scheduled object
                             None,       # override_operation_type
                             False,      # priority_flag
                             False,      # ignore_limits_flag
@@ -1845,8 +2066,9 @@ class DownloadList(object):
         self.download_item_dict[item_id].stage = new_stage
 
 
-    def create_item(self, media_data_obj, override_operation_type=None,
-    priority_flag=False, ignore_limits_flag=False, recursion_flag=False):
+    def create_item(self, media_data_obj, scheduled_obj=None,
+    override_operation_type=None, priority_flag=False,
+    ignore_limits_flag=False, recursion_flag=False):
 
         """Called initially by self.__init__() (or by many other functions,
         for example in mainapp.TartubeApp).
@@ -1883,6 +2105,10 @@ class DownloadList(object):
 
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): A media data object
+
+            scheduled_obj (media.Scheduled): The scheduled download object
+                which wants to download media_data_obj (None if no scheduled
+                download applies in this case)
 
             override_operation_type (str): After the download operation has
                 started, any code can call this function to add new
@@ -2075,6 +2301,7 @@ class DownloadList(object):
             download_item_obj = DownloadItem(
                 self.download_item_count,
                 media_data_obj,
+                scheduled_obj,
                 options_manager_obj,
                 operation_type,
                 ignore_limits_flag,
@@ -2106,6 +2333,7 @@ class DownloadList(object):
             for child_obj in media_data_obj.child_list:
                 self.create_item(
                     child_obj,
+                    scheduled_obj,
                     operation_type,
                     priority_flag,
                     ignore_limits_flag,
@@ -2150,6 +2378,7 @@ class DownloadList(object):
         download_item_obj = DownloadItem(
             media_data_obj.dbid,
             media_data_obj,
+            None,                       # media.Scheduled object
             options_manager_obj,
             self.operation_type,        # 'classic_real'. 'classic_sim' or
                                         #   'classic_custom'
@@ -2339,6 +2568,10 @@ class DownloadItem(object):
             download operation was launched from the Classic Mode Tab, a dummy
             media.Video object
 
+        scheduled_obj (media.Scheduled): The scheduled download object which
+            wants to download media_data_obj (None if no scheduled download
+            applies in this case)
+
         options_manager_obj (options.OptionsManager): The object which
             specifies download options for the media data object
 
@@ -2367,8 +2600,8 @@ class DownloadItem(object):
     # Standard class methods
 
 
-    def __init__(self, item_id, media_data_obj, options_manager_obj,
-    operation_type, ignore_limits_flag):
+    def __init__(self, item_id, media_data_obj, scheduled_obj,
+    options_manager_obj, operation_type, ignore_limits_flag):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 2323 __init__')
@@ -2378,6 +2611,9 @@ class DownloadItem(object):
         # The media data object to be downloaded. When the download operation
         #   was launched from the Classic Mode Tab, a dummy media.Video object
         self.media_data_obj = media_data_obj
+        # The scheduled download object which wants to download media_data_obj
+        #   (None if no scheduled download applies in this case)
+        self.scheduled_obj = scheduled_obj
         # The object which specifies download options for the media data object
         self.options_manager_obj = options_manager_obj
 
@@ -4089,6 +4325,7 @@ class VideoDownloader(object):
             new_download_item_obj \
             = self.download_manager_obj.download_list_obj.create_item(
                 new_container_obj,
+                self.download_item_obj.scheduled_obj,
                 self.download_item_obj.operation_type,
                 False,                  # priority_flag
                 self.download_item_obj.ignore_limits_flag,

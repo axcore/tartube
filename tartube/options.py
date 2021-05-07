@@ -943,10 +943,10 @@ class OptionsParser(object):
 
 
     def parse(self, media_data_obj, options_manager_obj,
-    operation_type='real'):
+    operation_type='real', scheduled_obj=None):
 
         """Called by downloads.DownloadWorker.prepare_download() and
-        mainwin.MainWin.update_textbuffer().
+        mainwin.MainWin.update_textbuffer() and several other functions.
 
         Converts the download options stored in the specified
         options.OptionsManager object into a list of youtube-dl command line
@@ -963,6 +963,10 @@ class OptionsParser(object):
             operation_type (str): 'sim', 'real', 'custom', 'classic_sim',
                 'classic_real', 'classic_custom' (matching possible values of
                 downloads.DownloadManager.operation_type)
+
+            scheduled_obj (media.Scheduled): If a scheduled download is
+                involved, the corresponding object (so bandwidth limits can be
+                extracted)
 
         Returns:
 
@@ -982,7 +986,7 @@ class OptionsParser(object):
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
         # Set the 'limit_rate' option
-        self.build_limit_rate(copy_dict)
+        self.build_limit_rate(copy_dict, scheduled_obj)
         # Set the 'proxy' option
         self.build_proxy(copy_dict)
 
@@ -1117,7 +1121,7 @@ class OptionsParser(object):
             copy_dict['max_filesize_unit']
 
 
-    def build_limit_rate(self, copy_dict):
+    def build_limit_rate(self, copy_dict, scheduled_obj):
 
         """Called by self.parse().
 
@@ -1126,14 +1130,41 @@ class OptionsParser(object):
 
         Args:
 
-            copy_dict (dict): Copy of the original options dictionary.
+            copy_dict (dict): Copy of the original options dictionary
+
+            scheduled_obj (media.Scheduled): If a scheduled download is
+                involved, the corresponding object (so bandwidth limits can be
+                extracted)
 
         """
 
-        # Set the bandwidth limit (e.g. '50K')
-        if self.app_obj.bandwidth_apply_flag:
+        # Set the bandwidth limit (e.g. '50K'). If alternative performance
+        #   limits currently apply, use that limit instead
+        if self.app_obj.download_manager_obj \
+        and scheduled_obj \
+        and scheduled_obj.scheduled_bandwidth_apply_flag:
 
             # The bandwidth limit is divided equally between the workers
+            limit = int(
+                scheduled_obj.scheduled_bandwidth
+                / len(self.app_obj.download_manager_obj.worker_list)
+            )
+
+            copy_dict['limit_rate'] = str(limit) + 'K'
+
+        elif self.app_obj.download_manager_obj \
+        and self.app_obj.download_manager_obj.alt_limits_flag \
+        and self.app_obj.alt_bandwidth_apply_flag:
+
+            limit = int(
+                self.app_obj.alt_bandwidth
+                / self.app_obj.alt_num_worker
+            )
+
+            copy_dict['limit_rate'] = str(limit) + 'K'
+
+        elif self.app_obj.bandwidth_apply_flag:
+
             limit = int(
                 self.app_obj.bandwidth_default
                 / self.app_obj.num_worker_default
