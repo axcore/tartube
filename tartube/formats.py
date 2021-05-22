@@ -593,6 +593,9 @@ if not xmas_flag:
         'newbie_icon': 'newbie_icon_64.png',
         'ready_icon': 'ready_icon_64.png',
         'system_icon': 'system_icon_64.png',
+        'yt_remind_icon_en': 'yt_remind_icon_en.png',
+        'yt_remind_icon_kr': 'yt_remind_icon_kr.png',
+        'yt_remind_icon_nl': 'yt_remind_icon_nl.png',
     }
 else:
     DIALOGUE_ICON_DICT = {

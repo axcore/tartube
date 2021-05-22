@@ -253,8 +253,7 @@ class DownloadManager(threading.Thread):
             worker_count = self.app_obj.num_worker_default
 
         else:
-            # Failsafe
-            worker_count = 2
+            worker_count = self.app_obj.num_worker_max
 
         for i in range(1, worker_count + 1):
             self.worker_list.append(DownloadWorker(self))
@@ -3003,22 +3002,36 @@ class VideoDownloader(object):
                     time.sleep(self.long_sleep_time)
 
         # Prepare a system command...
-        divert_mode = None
-        if (
-            self.download_item_obj.operation_type == 'custom' \
-            or self.download_item_obj.operation_type == 'classic_custom'
-        ) and isinstance(self.download_item_obj.media_data_obj, media.Video):
-            divert_mode = app_obj.custom_dl_divert_mode
+        options_obj = self.download_worker_obj.options_manager_obj
+        if options_obj.options_dict['direct_cmd_flag']:
 
-        cmd_list = utils.generate_system_cmd(
-            app_obj,
-            self.download_item_obj.media_data_obj,
-            self.download_worker_obj.options_list,
-            self.dl_sim_flag,
-            self.dl_classic_flag,
-            self.missing_video_check_flag,
-            divert_mode,
-        )
+            cmd_list = utils.generate_direct_system_cmd(
+                app_obj,
+                self.download_item_obj.media_data_obj,
+                options_obj,
+            )
+
+        else:
+
+            divert_mode = None
+            if (
+                self.download_item_obj.operation_type == 'custom' \
+                or self.download_item_obj.operation_type == 'classic_custom'
+            ) and isinstance(
+                self.download_item_obj.media_data_obj,
+                media.Video,
+            ):
+                divert_mode = app_obj.custom_dl_divert_mode
+
+            cmd_list = utils.generate_system_cmd(
+                app_obj,
+                self.download_item_obj.media_data_obj,
+                self.download_worker_obj.options_list,
+                self.dl_sim_flag,
+                self.dl_classic_flag,
+                self.missing_video_check_flag,
+                divert_mode,
+            )
 
         # ...display it in the Output Tab (if required)...
         if app_obj.ytdl_output_system_cmd_flag:

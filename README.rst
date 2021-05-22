@@ -532,7 +532,7 @@ When you start **Tartube** for the first time, there are several folders already
 - The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
 - The **Missing videos** folder (see `6.24 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
-- The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl**
+- The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl** (to change this behaviour, right-click the folder and select **Downloads > Set removal time...**)
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
 - The **Unsorted Videos** folder is a useful place to put videos that don't belong to a particular channel or playlist

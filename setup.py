@@ -28,7 +28,7 @@ import sys
 
 # Set a standard long_description, modified only for Debian/RPM packages
 long_description="""
-Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video 
+Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
 downloaders.
 
 It is partly based on youtube-dl-gui and is written in Python 3 / Gtk 3.
@@ -182,7 +182,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.3.120',
+    version='2.3.134',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

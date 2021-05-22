@@ -345,6 +345,16 @@ class OptionsManager(object):
             separated by spaces. Components containing whitespace can be
             enclosed within double quotes "..."
 
+        direct_cmd_flag (str): If True, only those command options specified by
+            extra_cmd_string (including the source URL) are used; Tartube
+            merely adds the downloader (e.g. 'youtube-dl') and the output
+            directory switch (i.e. -o)
+
+        direct_url_flag (str): If True, Tartube assumes that
+            'extra_cmd_string' contains the URL to check/download. Otherwise,
+            the source URL of each affected media data object(s) is used, as
+            normal. Ignored if 'direct_cmd_flag' is False
+            
     TARTUBE OPTIONS (not passed to youtube-dl directly)
 
         move_description (bool):
@@ -626,6 +636,8 @@ class OptionsManager(object):
             'max_filesize_unit' : '',
             'min_filesize_unit' : '',
             'extra_cmd_string' : '',
+            'direct_cmd_flag' : False,
+            'direct_url_flag' : False,
             # TARTUBE OPTIONS
            'move_description': False,
            'move_info': False,
@@ -917,6 +929,8 @@ class OptionsParser(object):
 #           OptionHolder('max_filesize_unit', '', ''),
 #           OptionHolder('min_filesize_unit', '', ''),
 #           OptionHolder('extra_cmd_string', '', ''),
+#           OptionHolder('direct_cmd_flag', '', False),
+#           OptionHolder('direct_url_flag', '', False),
             # TARTUBE OPTIONS (not given an options.OptionHolder object)
 #           OptionHolder('move_description', '', False),
 #           OptionHolder('move_info', '', False),

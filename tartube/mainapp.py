@@ -194,6 +194,8 @@ class TartubeApp(Gtk.Application):
         # Hide all the system folders (this is not reversible by setting the
         #   flag back to False)
         self.debug_hide_folders_flag = False
+        # Disable showing mainwin.NewbieDialogue altogether
+        self.debug_disable_newbie_flag = False
 
 
         # Instance variable (IV) list - class objects
@@ -456,6 +458,10 @@ class TartubeApp(Gtk.Application):
         #   than halting the application altogether. Ignored if
         #   self.show_status_icon_flag is False
         self.close_to_tray_flag = False
+        # Flag set to True if Tartube should remember the position of the main
+        #   window, when it is closed to the tray. (Does not work at all on
+        #   Wayland, and does not apply when Tartube shuts down and restarts)
+        self.restore_posn_from_tray_flag = False
 
         # Flag set to True if rows in the Progress List should be hidden once
         #   the download operation has finished with the corresponding media
@@ -1349,10 +1355,15 @@ class TartubeApp(Gtk.Application):
         # Public folder that's used as the first one in the 'Add video'
         #   dialogue window, in which the user can store any individual videos
         self.fixed_misc_folder = None
+
         # The locale for which the fixed folders are named. When the database
         #   file is loaded, if this value no longer matches self.custom_locale,
         #   then the folder names are all updated for the new locale
         self.fixed_folder_locale = self.custom_locale
+        # For the Recent Videos folder (self.fixed_recent_folder), the time
+        #   (in days) after which videos should be removed. If 0, videos are
+        #   removed at the start of every download operation
+        self.fixed_recent_folder_days = 0
 
         # A list of media.Video objects the user wants to watch, as soon as
         #   they have been downloaded. Videos are added by a call to
@@ -1633,6 +1644,9 @@ class TartubeApp(Gtk.Application):
         #   playlists should continually re-open, whenever the use clicks the
         #   OK button (so multiple channels etc can be added quickly)
         self.dialogue_keep_open_flag = False
+        # Flag set to True is, when adding a YouTube channel and the URL
+        #   doesn't end with .../videos, the user should be prompted to add it
+        self.dialogue_yt_remind_flag = True
 
         # Flag set to True if, when downloading videos, youtube-dl should be
         #   passed, --download-archive, creating the file ytdl-archive.txt
@@ -1729,7 +1743,7 @@ class TartubeApp(Gtk.Application):
         #   applied until one of the download jobs has finished
         self.num_worker_default = 2
         # (Absolute minimum and maximum values)
-        self.num_worker_max = 10
+        self.num_worker_max = 32
         self.num_worker_min = 1
         # Flag set to True when the limit is actually applied, False when not
         self.num_worker_apply_flag = True
@@ -1879,6 +1893,15 @@ class TartubeApp(Gtk.Application):
         #   when the searching the catalogue, we match videos using a regex,
         #   rather than a simple string
         self.catologue_use_regex_flag = False
+
+        # Two flags used for bulk-editing URLS of media data objects (in the
+        #   config.SystemPrefWin window)
+        # Flag set to True if the user should be prompted for confirmation
+        #   every time an individual URL is changed (in the window)
+        self.url_change_confirm_flag = True
+        # Flag set to True if search/replace operations on multiple URLs
+        #   should use a regex, False if the pattern is an ordinary substring
+        self.url_change_regex_flag = True
 
 
     def do_startup(self):
@@ -2790,7 +2813,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_save_width != self.main_win_width
             or self.main_win_save_height != self.main_win_height
         ):
-            self.main_win_obj.resize(
+            self.main_win_obj.resize_self(
                 self.main_win_save_width,
                 self.main_win_save_height,
             )
@@ -3479,6 +3502,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1003024:  # v1.3.024
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
             self.close_to_tray_flag = json_dict['close_to_tray_flag']
+        if version >= 2003125:  # v2.3.125
+            self.restore_posn_from_tray_flag \
+            = json_dict['restore_posn_from_tray_flag']
 
         if version >= 1003129:  # v1.3.129
             self.progress_list_hide_flag = json_dict['progress_list_hide_flag']
@@ -3812,6 +3838,8 @@ class TartubeApp(Gtk.Application):
 #            # Removed v1.3.022
 #            self.dialogue_keep_container_flag \
 #            = json_dict['dialogue_keep_container_flag']
+        if version >= 2003130:  # v2.3.130
+            self.dialogue_yt_remind_flag = json_dict['dialogue_yt_remind_flag']
 
         if version >= 1003018:  # v1.3.018
             self.allow_ytdl_archive_flag \
@@ -3931,6 +3959,10 @@ class TartubeApp(Gtk.Application):
         if version >= 1004005:  # v1.4.005
             self.catologue_use_regex_flag \
             = json_dict['catologue_use_regex_flag']
+
+        if version >= 2003129:  # v2.3.129
+            self.url_change_confirm_flag = json_dict['url_change_confirm_flag']
+            self.url_change_regex_flag = json_dict['url_change_regex_flag']
 
         # Having loaded the config file, set various file paths...
         if self.data_dir_use_first_flag:
@@ -4358,6 +4390,7 @@ class TartubeApp(Gtk.Application):
 
             'show_status_icon_flag': self.show_status_icon_flag,
             'close_to_tray_flag': self.close_to_tray_flag,
+            'restore_posn_from_tray_flag': self.restore_posn_from_tray_flag,
 
             'progress_list_hide_flag': self.progress_list_hide_flag,
             'results_list_reverse_flag': self.results_list_reverse_flag,
@@ -4512,6 +4545,7 @@ class TartubeApp(Gtk.Application):
 
             'dialogue_copy_clipboard_flag': self.dialogue_copy_clipboard_flag,
             'dialogue_keep_open_flag': self.dialogue_keep_open_flag,
+            'dialogue_yt_remind_flag': self.dialogue_yt_remind_flag,
 
             'allow_ytdl_archive_flag': self.allow_ytdl_archive_flag,
             'classic_ytdl_archive_flag': \
@@ -4576,6 +4610,9 @@ class TartubeApp(Gtk.Application):
             'catalogue_show_filter_flag': self.catalogue_show_filter_flag,
             'catalogue_sort_mode': self.catalogue_sort_mode,
             'catologue_use_regex_flag': self.catologue_use_regex_flag,
+
+            'url_change_confirm_flag': self.url_change_confirm_flag,
+            'url_change_regex_flag': self.url_change_regex_flag,
         }
 
         # In case a competing instance of Tartube is saving the same config
@@ -4882,6 +4919,9 @@ class TartubeApp(Gtk.Application):
             self.fixed_recent_folder = load_dict['fixed_recent_folder']
         if version >= 2000098:  # v2.0.098
             self.fixed_folder_locale = load_dict['fixed_folder_locale']
+        if version >= 2003122:  # v2.3.122
+            self.fixed_recent_folder_days \
+            = load_dict['fixed_recent_folder_days']
         if version >= 2002015:  # v2.2.015
             self.scheduled_list = load_dict['scheduled_list']
         if version >= 2002034:  # v2.2.034
@@ -5900,6 +5940,13 @@ class TartubeApp(Gtk.Application):
                 scheduled_obj.scheduled_bandwidth = 500
                 scheduled_obj.scheduled_bandwidth_apply_flag = False
 
+        if version < 2003126:       # v2.3.126
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['direct_cmd_flag'] = False
+                options_obj.options_dict['direct_url_flag'] = False
+
 
     def save_db(self):
 
@@ -5973,6 +6020,7 @@ class TartubeApp(Gtk.Application):
             'fixed_temp_folder': self.fixed_temp_folder,
             'fixed_misc_folder': self.fixed_misc_folder,
             'fixed_folder_locale': self.fixed_folder_locale,
+            'fixed_recent_folder_days': self.fixed_recent_folder_days,
             # Scheduled downloads
             'scheduled_list': self.scheduled_list,
             # Download options
@@ -8507,11 +8555,17 @@ class TartubeApp(Gtk.Application):
         #   it to the bottom of the list
         self.dl_proxy_cycle_list = self.dl_proxy_list.copy()
 
-        # Empty the 'Recent Videos' folder, so it can be re-filled by any
-        #   videos checked/downloaded by this operation...
+        # Remove videos from the 'Recent Videos' folder, so it can be re-filled
+        #   by any videos checked/downloaded by this operation...
+        remove_time = int(time.time()) \
+        - (self.fixed_recent_folder_days * 24 * 60 * 60)
+
         child_list = self.fixed_recent_folder.child_list.copy()
         for child_obj in child_list:
-            self.fixed_recent_folder.del_child(child_obj)
+
+            if not self.fixed_recent_folder_days \
+            or child_obj.receive_time < remove_time:
+                self.fixed_recent_folder.del_child(child_obj)
 
         # ...and update the Video Index (and Video Catalogue, if appropriate)
         self.main_win_obj.video_index_update_row_icon(self.fixed_recent_folder)
@@ -8812,7 +8866,7 @@ class TartubeApp(Gtk.Application):
             )
 
         # Show the newbie dialogue, if required
-        elif show_newbie_dialogue_flag:
+        elif show_newbie_dialogue_flag and not self.debug_disable_newbie_flag:
 
             dialogue_win = mainwin.NewbieDialogue(self.main_win_obj)
             dialogue_win.run()
@@ -10558,7 +10612,6 @@ class TartubeApp(Gtk.Application):
             video_obj,
             mini_options_dict,
         )
-
 
 
     def create_livestream_from_download(self, container_obj, live_mode,
@@ -14613,6 +14666,97 @@ class TartubeApp(Gtk.Application):
         return True
 
 
+    def update_container_url(self, data_list):
+
+        """Called by config.SystemPrefWin.on_url_edited().
+
+        When the user has confirmed a change to a channel/playlist's source
+        URL, implement that change, and update the window's treeview.
+
+        Args:
+
+            data_list (list): A list containing four items: the treeview model,
+                an iter pointing to a cell in the model, the media data object
+                and the updated URL
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13832 update_container_url')
+
+        # Extract values from the argument list
+        model = data_list.pop(0)
+        iter = data_list.pop(0)
+        media_data_obj = data_list.pop(0)
+        url = data_list.pop(0)
+
+        # Update the media data object
+        media_data_obj.set_source(url)
+        model[iter][3] = url
+
+
+    def update_container_url_multiple(self, data_list):
+
+        """Called by config.SystemPrefWin.on_url_edited().
+
+        Modified version of self.update_container_url, used when performing a
+        substitution on the source URL of multiple channels/playlist.
+
+        Args:
+
+            data_list (list): A list containing six items: the parent
+                preference window, the treeview model, a list of liststore
+                paths, a corresponding list of media data objects to update,
+                the pattern and the substitution text
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13833 update_container_url_multiple')
+
+        # Extract values from the argument list
+        pref_win = data_list.pop(0)
+        model = data_list.pop(0)
+        mod_path_list = data_list.pop(0)
+        media_list = data_list.pop(0)
+        pattern = data_list.pop(0)
+        subst = data_list.pop(0)
+
+        # Search and replace the source URL for each media data object
+        success_count = 0
+        fail_count = 0
+        for path in mod_path_list:
+
+            media_data_obj = media_list.pop(0)
+
+            if not self.url_change_regex_flag:
+                mod_url = media_data_obj.source
+                mod_url.replace(pattern, subst)
+            else:
+                mod_url = re.sub(pattern, subst, media_data_obj.source)
+
+            if not utils.check_url(mod_url):
+                fail_count += 1
+            else:
+                # (Update the contents of the treeview cell immediately)
+                media_data_obj.set_source(mod_url)
+                iter = model.get_iter(path)
+                model[iter][3] = mod_url
+                success_count += 1
+
+        # Confirm the result
+        msg = _('Search/replace complete') + '\n\n' \
+        + _('Updated URLs: {0}').format(success_count) + '\n' \
+        + _('Errors: {0}').format(fail_count)
+
+        self.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            pref_win,       # The parent window is the preference window
+        )
+
+
     # (Sorting functions)
 
 
@@ -17937,34 +18081,78 @@ class TartubeApp(Gtk.Application):
             # Nothing selected
             return
 
-        # Get the dummy media.Video objects for each selected row
-        video_list = []
-        for path in path_list:
+        if not self.download_manager_obj:
 
-            this_iter = model.get_iter(path)
-            dbid = model[this_iter][0]
-            video_obj = self.main_win_obj.classic_media_dict[dbid]
-            video_list.append(video_obj)
+            # No download operation is currently in progress, so prepare a new
+            #   one
 
-            # Mark the video as not downloaded
-            video_obj.set_dl_flag(False)
-            # Delete the files associated with the video
-            self.delete_video_files(video_obj)
+            # Get the dummy media.Video objects for each selected row
+            video_list = []
+            for path in path_list:
 
-            # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl
-            #   will have created a ytdl_archive.txt, recording every video
-            #   ever downloaded in the parent directory
-            # This will prevent a successful re-downloading of the video(s).
-            #   Change the name of the archive file temporarily; after the
-            #   download operation is complete, the file is give its original
-            #   name
-            self.set_backup_archive(video_obj.dummy_dir)
+                this_iter = model.get_iter(path)
+                dbid = model[this_iter][0]
+                video_obj = self.main_win_obj.classic_media_dict[dbid]
+                video_list.append(video_obj)
 
-        # Start the download operation
-        if not self.classic_custom_dl_flag:
-            self.download_manager_start('classic_real', False, video_list)
+                # Mark the video as not downloaded
+                video_obj.set_dl_flag(False)
+                # Delete the files associated with the video
+                self.delete_video_files(video_obj)
+
+                # If mainapp.TartubeApp.allow_ytdl_archive_flag is set,
+                #   youtube-dl will have created a ytdl_archive.txt, recording
+                #   every video ever downloaded in the parent directory
+                # This will prevent a successful re-downloading of the
+                #   video(s). Change the name of the archive file temporarily;
+                #   after the download operation is complete, the file is give
+                #   its original name
+                self.set_backup_archive(video_obj.dummy_dir)
+
+            # Start the download operation
+            if not self.classic_custom_dl_flag:
+                self.download_manager_start('classic_real', False, video_list)
+            else:
+                self.download_manager_start(
+                    'classic_custom',
+                    False,
+                    video_list,
+                )
+
         else:
-            self.download_manager_start('classic_custom', False, video_list)
+
+            # A download operation is already in progress. If any of the
+            #   selected videos are being downloaded, halt that download. Then,
+            #   mark the videos to be downloaded again
+
+            # Get the .dbid of the dummy media.Video objects for each selected
+            #   row
+            dbid_dict = {}
+            for path in path_list:
+
+                this_iter = model.get_iter(path)
+                dbid_dict[model[this_iter][0]] = None
+
+            # Stop any downloads matching one of these dbids
+            for worker_obj in self.download_manager_obj.worker_list:
+
+                if worker_obj.running_flag \
+                and worker_obj.download_item_obj \
+                and worker_obj.download_item_obj.media_data_obj.dbid \
+                in dbid_dict:
+                    worker_obj.downloader_obj.stop()
+
+            # Re-add the videos to the download list. The existing row in the
+            #   Classic Progress List is automatically re-used
+            list_obj = self.download_manager_obj.download_list_obj
+            for dbid in dbid_dict.keys():
+
+                dummy_obj = self.main_win_obj.classic_media_dict[dbid]
+                download_item_obj = list_obj.create_dummy_item(dummy_obj)
+                if download_item_obj:
+
+                    # Update the main window's progress bar
+                    self.download_manager_obj.nudge_progress_bar()
 
 
     def on_button_classic_remove(self, action, par):
@@ -20616,6 +20804,17 @@ class TartubeApp(Gtk.Application):
             self.dialogue_keep_open_flag = True
 
 
+    def set_dialogue_yt_remind_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19519 set_dialogue_yt_remind_flag')
+
+        if not flag:
+            self.dialogue_yt_remind_flag = False
+        else:
+            self.dialogue_yt_remind_flag = True
+
+
     def set_disable_dl_all_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -20778,6 +20977,14 @@ class TartubeApp(Gtk.Application):
             self.ffmpeg_simple_options_flag = False
         else:
             self.ffmpeg_simple_options_flag = True
+
+
+    def set_fixed_recent_folder_days(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19675 set_fixed_recent_folder_days')
+
+        self.fixed_recent_folder_days = value
 
 
     def set_full_expand_video_index_flag(self, flag):
@@ -21112,9 +21319,9 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 19978 set_num_worker_apply_flag')
 
         if not flag:
-            self.bandwidth_apply_flag = False
+            self.num_worker_apply_flag = False
         else:
-            self.bandwidth_apply_flag = True
+            self.num_worker_apply_flag = True
 
 
     def set_num_worker_default(self, value):
@@ -21395,6 +21602,17 @@ class TartubeApp(Gtk.Application):
             self.refresh_output_videos_flag = False
         else:
             self.refresh_output_videos_flag = True
+
+
+    def set_restore_posn_from_tray_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20244 set_restore_posn_from_tray_flag')
+
+        if not flag:
+            self.restore_posn_from_tray_flag = False
+        else:
+            self.restore_posn_from_tray_flag = True
 
 
     def set_results_list_reverse_flag(self, flag):
@@ -21733,6 +21951,28 @@ class TartubeApp(Gtk.Application):
             self.track_missing_videos_flag = False
         else:
             self.track_missing_videos_flag = True
+
+
+    def set_url_change_confirm_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20549 set_url_change_confirm_flag')
+
+        if not flag:
+            self.url_change_confirm_flag = False
+        else:
+            self.url_change_confirm_flag = True
+
+
+    def set_url_change_regex_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20550 set_url_change_regex_flag')
+
+        if not flag:
+            self.url_change_regex_flag = False
+        else:
+            self.url_change_regex_flag = True
 
 
     def set_use_module_moviepy_flag(self, flag):

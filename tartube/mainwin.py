@@ -291,7 +291,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Size (in pixels) of gaps between main window widgets
         self.spacing_size = self.app_obj.default_spacing_size
 
-        # IVs used when vides in the Video Index are displayed in a grid. The
+        # IVs used when videos in the Video Index are displayed in a grid. The
         #   size of the grid changes as the window is resized. Each location in
         #   the grid can be occupied by a gridbox (mainwin.CatalogueGridBox),
         #   containing a single video
@@ -304,6 +304,14 @@ class MainWin(Gtk.ApplicationWindow):
         #   Gtk.HPaned, so that when the user actually drags the slider, we can
         #   adjust the size of the grid
         self.paned_last_width = None
+        # IVs used when the window is closed to the tray, recording its
+        #   position on the desktop (so that position can be restored when the
+        #   window is opened from the tray). The IVs are reset when the window
+        #   becomes visible again
+        # NB Detecting the window's position on the desktop does not work on
+        #   Wayland (according to the Gtk documentation)
+        self.win_last_xpos = None
+        self.win_last_ypos = None
 
         # Paths to Tartube standard icon files. Dictionary in the form
         #   key - a string like 'video_both_large'
@@ -2939,6 +2947,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.output_notebook = Gtk.Notebook()
         grid.attach(self.output_notebook, 0, 0, grid_width, 1)
         self.output_notebook.set_border_width(0)
+        self.output_notebook.set_scrollable(True)
 
         # When the user switches between notebook pages, scroll the visible
         #   page's textview to the bottom (otherwise it gets confusing)
@@ -3155,6 +3164,31 @@ class MainWin(Gtk.ApplicationWindow):
     # (Moodify main window widgets)
 
 
+    def resize_self(self, width, height):
+
+        """Can be called by anything.
+
+        Resizes the main window.
+
+        Args:
+
+            width, height (int): The new size in pixels of the main window.
+                If either (or both) values are lower than 100, then 100 is
+                used instead
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 3090 resize_self')
+
+        if width < 100:
+            width = 100
+        if height < 100:
+            height = 100
+
+        self.resize(width, height)
+
+
     def toggle_visibility(self):
 
         """Called by self.on_delete_event, StatusIcon.on_button_press_event and
@@ -3168,9 +3202,20 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 3091 toggle_visibility')
 
         if self.is_visible():
+
+            # Record the window's position, so its position can be restored
+            #   when the window is made visible again
+            posn = self.get_position()
+            self.win_last_xpos = posn.root_x
+            self.win_last_ypos = posn.root_y
+            # Close the window to the tray
             self.set_visible(False)
+
         else:
+
             self.set_visible(True)
+            if self.app_obj.restore_posn_from_tray_flag:
+                self.move(self.win_last_xpos, self.win_last_ypos)
 
 
     def update_menu(self):
@@ -3522,6 +3567,9 @@ class MainWin(Gtk.ApplicationWindow):
         if __main__.__pkg_no_download_flag__:
             self.classic_redownload_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
+        elif not not_dl_operation_flag:
+            self.classic_redownload_button.set_sensitive(True)
+            self.classic_download_button.set_sensitive(sens_flag)
         else:
             self.classic_redownload_button.set_sensitive(sens_flag)
             self.classic_download_button.set_sensitive(sens_flag)
@@ -4870,9 +4918,28 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         downloads_submenu.append(show_system_menu_item)
+        if isinstance(media_data_obj, media.Folder) \
+        or not media_data_obj.source:
+            show_system_menu_item.set_sensitive(False)
 
         # Separator
         downloads_submenu.append(Gtk.SeparatorMenuItem())
+
+        # Only for the "Recent Videos" folder
+        if media_data_obj == self.app_obj.fixed_recent_folder:
+
+            recent_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Set _removal time...'),
+            )
+            recent_videos_menu_item.connect(
+                'activate',
+                self.on_video_index_recent_videos_time,
+                media_data_obj,
+            )
+            downloads_submenu.append(recent_videos_menu_item)
+
+            # Separator
+            downloads_submenu.append(Gtk.SeparatorMenuItem())
 
         disable_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
             _('_Disable checking/downloading'),
@@ -13022,6 +13089,40 @@ class MainWin(Gtk.ApplicationWindow):
             utils.debug_time('mwn 12708 on_video_index_move_to_top')
 
         self.app_obj.move_container_to_top(media_data_obj)
+
+
+    def on_video_index_recent_videos_time(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Opens a dialogue window so the user can set the time after which
+        videos are removed from the 'Recent videos' folder.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12709 on_video_index_recent_videos_time')
+
+        # Show the dialogue window
+        dialogue_win = RecentVideosDialogue(self, media_data_obj)
+        dialogue_win.run()
+
+        if dialogue_win.radiobutton.get_active():
+            choice = 0
+        else:
+            choice = dialogue_win.spinbutton.get_value()
+
+        dialogue_win.destroy()
+
+        print(choice)
+
+        self.app_obj.set_fixed_recent_folder_days(int(choice))
 
 
     def on_video_index_refresh(self, menu_item, media_data_obj):
@@ -23200,6 +23301,7 @@ class AddChannelDialogue(Gtk.Dialog):
         # ---------------------
         self.entry = None                       # Gtk.Entry
         self.entry2 = None                      # Gtk.Entry
+        self.frame = None                       # Gtk.Frame
         self.radiobutton = None                 # Gtk.RadioButton
         self.radiobutton2 = None                # Gtk.RadioButton
         self.checkbutton = None                 # Gtk.CheckButton
@@ -23258,6 +23360,7 @@ class AddChannelDialogue(Gtk.Dialog):
         self.entry2 = Gtk.Entry()
         grid.attach(self.entry2, 0, 4, 2, 1)
         self.entry2.set_hexpand(True)
+        self.entry2.connect('changed', self.on_entry2_changed, grid)
 
         # Drag-and-drop onto the entry inevitably inserts a URL in the
         #   middle of another URL. No way to prevent that, but we can disable
@@ -23270,8 +23373,33 @@ class AddChannelDialogue(Gtk.Dialog):
         self.drag_dest_set_target_list(None)
         self.drag_dest_add_text_targets()
 
+        # (The frame and its image are invisible, unless self.entry2 contains
+        #   a YouTube URL that doesn't end with /videos)
+        self.frame = Gtk.Frame()
+        self.frame.set_tooltip_text(
+            _(
+            'Before adding the URL for a YouTube channel, first click the' \
+            + ' Videos tab in your browser!',
+            ),
+        )
+
+        image = Gtk.Image()
+        self.frame.add(image)
+        if main_win_obj.app_obj.custom_locale == 'ko_KR':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_kr'],
+            )
+        elif main_win_obj.app_obj.custom_locale == 'nl_NL':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_nl'],
+            )
+        else:
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_en'],
+            )
+
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 5, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 6, 2, 1)
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
@@ -23300,22 +23428,22 @@ class AddChannelDialogue(Gtk.Dialog):
             self.folder_list.insert(0, suggest_parent_name)
 
         label4 = Gtk.Label(_('(Optional) Add this channel inside a folder'))
-        grid.attach(label4, 0, 6, 2, 1)
+        grid.attach(label4, 0, 7, 2, 1)
 
-        box = Gtk.Box()
-        grid.attach(box, 0, 7, 1, 1)
-        box.set_border_width(main_win_obj.spacing_size)
+        box2 = Gtk.Box()
+        grid.attach(box2, 0, 8, 1, 1)
+        box2.set_border_width(main_win_obj.spacing_size)
 
-        image = Gtk.Image()
-        box.add(image)
-        image.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
+        image2 = Gtk.Image()
+        box2.add(image2)
+        image2.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
 
         listmodel = Gtk.ListStore(str)
         for item in self.folder_list:
             listmodel.append([item])
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 1, 7, 1, 1)
+        grid.attach(combo, 1, 8, 1, 1)
         combo.set_hexpand(True)
 
         cell = Gtk.CellRendererText()
@@ -23325,16 +23453,16 @@ class AddChannelDialogue(Gtk.Dialog):
         combo.connect('changed', self.on_combo_changed)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 8, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 9, 2, 1)
 
         self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
             None,
             _('I want to download videos from this channel automatically'),
         )
-        grid.attach(self.radiobutton, 0, 9, 2, 1)
+        grid.attach(self.radiobutton, 0, 10, 2, 1)
 
         self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
-        grid.attach(self.radiobutton2, 0, 10, 2, 1)
+        grid.attach(self.radiobutton2, 0, 11, 2, 1)
         self.radiobutton2.set_label(
             _('Don\'t download anything, just check for new videos'),
         )
@@ -23342,7 +23470,7 @@ class AddChannelDialogue(Gtk.Dialog):
             self.radiobutton2.set_active(True)
 
         self.checkbutton = Gtk.CheckButton()
-        grid.attach(self.checkbutton, 0, 11, 2, 1)
+        grid.attach(self.checkbutton, 0, 12, 2, 1)
         self.checkbutton.set_label(_('Enable automatic copy/paste'))
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
         if monitor_flag:
@@ -23425,6 +23553,39 @@ class AddChannelDialogue(Gtk.Dialog):
             utils.debug_time('mwn 22996 on_combo_changed')
 
         self.parent_name = self.folder_list[combo.get_active()]
+
+
+    def on_entry2_changed (self, entry, grid):
+
+        """Called from callback in self.__init__().
+
+        When the entry containing a URL is changed to one contianing a YouTube
+        URL that doesn't end inf /videos, make the reminder icon visible (and
+        vice-versa).
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+            grid (Gtk.Grid): The grid on which the dialogue window is arranged
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22997 on_entry2_changed')
+
+        url = entry.get_text()
+        if self.main_win_obj.app_obj.dialogue_yt_remind_flag \
+        and utils.is_youtube(url) \
+        and not re.search(r'\/videos\s*$', url):
+            grid.attach(self.frame, 0, 5, 2, 1)
+        else:
+            for widget in grid.get_children():
+                if widget == self.frame:
+                    grid.remove(self.frame)
+                    break
+
+        self.show_all()
 
 
     def on_window_drag_data_received(self, window, context, x, y, data, info,
@@ -25828,7 +25989,7 @@ class NewbieDialogue(Gtk.Dialog):
 
         Gtk.Dialog.__init__(
             self,
-            _('Nothing happened?'),
+            _('Downloads'),
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -25853,46 +26014,50 @@ class NewbieDialogue(Gtk.Dialog):
         image = Gtk.Image.new_from_pixbuf(
             main_win_obj.pixbuf_dict['newbie_icon'],
         )
-        grid.attach(image, 0, 0, 1, 3)
+        grid.attach(image, 0, 0, 1, 4)
 
-        label = Gtk.Label(
-            _('Make sure the downloader is installed and\nupdated'),
-        )
+        label = Gtk.Label()
         grid.attach(label, 1, 0, grid_width, 1)
+        label.set_markup(
+            '<b>' + _('Nothing happened?') + '</b>',
+        )
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 1, grid_width, 1)
+
+        label2 = Gtk.Label(
+            _('Make sure the downloader is installed and updated'),
+        )
+        grid.attach(label2, 1, 2, grid_width, 1)
 
         button = Gtk.Button.new_with_label(
             _('Update') + ' ' + self.main_win_obj.app_obj.get_downloader(),
         )
-        grid.attach(button, 1, 1, grid_width, 1)
+        grid.attach(button, 1, 3, grid_width, 1)
         button.connect('clicked', self.on_update_button_clicked)
 
-        # Separator
-        grid.attach(Gtk.HSeparator(), 1, 2, grid_width, 1)
 
-        label2 = Gtk.Label(
+        label3 = Gtk.Label(
             _('Tell Tartube where to find the downloader'),
         )
-        grid.attach(label2, 1, 3, grid_width, 1)
+        grid.attach(label3, 1, 4, grid_width, 1)
 
         button2 = Gtk.Button.new_with_label(
             _('Set the downloader\'s file path'),
         )
-        grid.attach(button2, 1, 4, grid_width, 1)
+        grid.attach(button2, 1, 5, grid_width, 1)
         button2.connect('clicked', self.on_config_button_clicked)
 
         button3 = Gtk.Button.new_with_label(
             _('Try a different downloader'),
         )
-        grid.attach(button3, 1, 5, grid_width, 1)
+        grid.attach(button3, 1, 6, grid_width, 1)
         button3.connect('clicked', self.on_change_button_clicked)
 
-        # Separator
-        grid.attach(Gtk.HSeparator(), 1, 6, grid_width, 1)
-
-        label3 = Gtk.Label(
+        label4 = Gtk.Label(
             _('Find more help'),
         )
-        grid.attach(label3, 1, 7, grid_width, 1)
+        grid.attach(label4, 1, 7, grid_width, 1)
 
         button4 = Gtk.Button.new_with_label(
             _('Read the FAQ'),
@@ -25906,11 +26071,8 @@ class NewbieDialogue(Gtk.Dialog):
         grid.attach(button5, 2, 8, 1, 1)
         button5.connect('clicked', self.on_issues_button_clicked)
 
-        # Separator
-        grid.attach(Gtk.HSeparator(), 1, 9, grid_width, 1)
-
         checkbutton = Gtk.CheckButton()
-        grid.attach(checkbutton, 1, 10, grid_width, 1)
+        grid.attach(checkbutton, 1, 9, grid_width, 1)
         checkbutton.set_label(_('Always show this window'))
         if self.show_flag:
             checkbutton.set_active(True)
@@ -26037,6 +26199,140 @@ class NewbieDialogue(Gtk.Dialog):
 
         self.website_flag = True
         self.destroy()
+
+
+class RecentVideosDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.on_video_index_recent_videos_time().
+
+    Python class handling a dialogue window that prompts the user to set the
+    time after which videos are removed from the fixed 'Recent Videos' folder.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        media_data_obj (media.Folder): The 'Recent Videos' folder
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, media_data_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25254 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.radiobutton = None                 # Gtk.RadioButton
+        self.radiobutton2 = None                # Gtk.RadioButton
+        self.spinbutton = None                  # Gtk.SpinButton
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Set removal time'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 2, 1)
+        label.set_markup(
+            _(
+            'When videos are checked/downloaded, older videos\nare removed' \
+            + ' from the Recent Videos folder.',
+            ),
+        )
+        label.set_alignment(0, 0.5)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 1, 2, 1)
+
+        self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Empty the whole folder'),
+        )
+        grid.attach(self.radiobutton, 0, 2, 2, 1)
+        # (Signal connect appears below)
+
+        self.radiobutton2 = Gtk.RadioButton.new_with_label_from_widget(
+            self.radiobutton,
+            _('Remove videos after days'),
+        )
+        grid.attach(self.radiobutton2, 0, 3, 1, 1)
+
+        self.spinbutton = Gtk.SpinButton.new_with_range(1, 14, 1)
+        grid.attach(self.spinbutton, 1, 3, 1, 1)
+        self.spinbutton.set_hexpand(False)
+
+        if not main_win_obj.app_obj.fixed_recent_folder_days:
+            self.spinbutton.set_sensitive(False)
+        else:
+            self.radiobutton2.set_active(True)
+            self.spinbutton.set_value(
+                main_win_obj.app_obj.fixed_recent_folder_days,
+            )
+
+        # (Signal connects from above)
+        self.radiobutton.connect(
+            'toggled',
+            self.on_radiobutton_toggled,
+        )
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_radiobutton_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        (De)sensitises the spinbutton, depending on which radiobutton is
+        selected.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25255 on_radiobutton_toggled')
+
+        if radiobutton.get_active():
+            self.spinbutton.set_sensitive(False)
+        else:
+            self.spinbutton.set_sensitive(True)
 
 
 class RemoveLockFileDialogue(Gtk.Dialog):
@@ -26946,7 +27242,7 @@ class SetURLDialogue(Gtk.Dialog):
 
 class SystemCmdDialogue(Gtk.Dialog):
 
-    """Called by MainWin.on_video_index_show_system_cmd() and
+    """Called by mainwin.MainWin.on_video_index_show_system_cmd() and
     .on_video_catalogue_show_system_cmd().
 
     Python class handling a dialogue window that shows the user the system

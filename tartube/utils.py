@@ -1268,7 +1268,7 @@ divert_mode=None):
         and len(app_obj.custom_dl_divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source)
 
-    # Convert a path beginning with ~ (not on MS Windows)
+    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
     if os.name != 'nt':
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
@@ -1282,6 +1282,61 @@ divert_mode=None):
 
     return cmd_list
 
+
+def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
+
+    """Called by downloads.VideoDownloader.do_download() (only).
+
+    A simplified version of utils.generate_system_cmd().
+    
+    Prepare the system command that instructs youtube-dl to download the
+    specified media data object, when the options.OptionsManager object wants
+    to set most command line options directly (i.e. when the 'direct_cmd_flag'
+    option is True).
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        media_data_obj (media.Video, media.Channel, media.Playlist,
+            media.Folder): The media data object to be downloaded. Note that
+            its source URL might be overriden by the command line options
+            specified by the options.OptionsManager object
+
+        options_obj (options.OptionsManager): The options manager object itself
+
+    Returns:
+
+        Python list that contains the system command to execute and its
+            arguments
+
+    """
+
+
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Parse the command line options specified by the 'extra_cmd_string' option
+    #   (converting a string into a list of elements separated by whitespace)
+    options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
+
+    # Set the list. At the moment, a custom path must be preceeded by 'python3'
+    #   (Git #243)
+    if app_obj.ytdl_path_custom_flag:
+        cmd_list = ['python3'] + [ytdl_path] + options_list
+    else:
+        cmd_list = [ytdl_path] + options_list
+
+    # Add the source URL, if allowed
+    if not options_obj.options_dict['direct_url_flag'] \
+    and media_data_obj.source is not None:
+        cmd_list.append( [media_data_obj.source] ) 
+
+    return cmd_list
+    
 
 def get_encoding():
 
