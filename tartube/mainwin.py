@@ -5320,8 +5320,44 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
+        if video_obj.dl_flag:
+
+            clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Create video cl_ip...'),
+            )
+
+        else:
+
+            clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Download video cl_ip...'),
+            )
+
+        clip_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_clip,
+            video_obj,
+        )
+        popup_menu.append(clip_menu_item)
+        if self.app_obj.current_manager_obj \
+        or (video_obj.dl_flag and video_obj.file_name is None) \
+        or video_obj.live_mode:
+            clip_menu_item.set_sensitive(False)
+
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg,
+            video_obj,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj \
+        or video_obj.file_name is None:
+            process_menu_item.set_sensitive(False)
+
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Add to _Classic Mode tab'),
+            _('Add to C_lassic Mode tab'),
         )
         classic_dl_menu_item.connect(
             'activate',
@@ -5589,19 +5625,6 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(downloads_menu_item)
         if __main__.__pkg_no_download_flag__:
             downloads_menu_item.set_sensitive(False)
-
-        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Process with FFmpeg...'),
-        )
-        process_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_process_ffmpeg,
-            video_obj,
-        )
-        popup_menu.append(process_menu_item)
-        if self.app_obj.current_manager_obj \
-        or video_obj.file_name is None:
-            process_menu_item.set_sensitive(False)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
@@ -6952,8 +6975,33 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
+        # Mark as not livestreams
+        not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _not livestreams'),
+        )
+        not_live_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_not_livestream_multi,
+            video_list,
+        )
+        popup_menu.append(not_live_menu_item)
+
+        # Process with FFmpeg
+        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Process with FFmpeg...'),
+        )
+        process_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_process_ffmpeg_multi,
+            video_list,
+        )
+        popup_menu.append(process_menu_item)
+        if self.app_obj.current_manager_obj:
+            process_menu_item.set_sensitive(False)
+
+        # Add to Classic Mode tab
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Add to _Classic Mode tab'),
+            _('Add to C_lassic Mode tab'),
         )
         classic_dl_menu_item.connect(
             'activate',
@@ -6967,16 +7015,6 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Mark as not livestreams
-        not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _not livestreams'),
-        )
-        not_live_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_not_livestream_multi,
-            video_list,
-        )
-        popup_menu.append(not_live_menu_item)
 
         # Download to Temporary Videos
         temp_submenu = Gtk.Menu()
@@ -7027,19 +7065,6 @@ class MainWin(Gtk.ApplicationWindow):
         or temp_folder_flag \
         or live_flag:
             temp_menu_item.set_sensitive(False)
-
-        # Process with FFmpeg
-        process_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Process with FFmpeg...'),
-        )
-        process_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_process_ffmpeg_multi,
-            video_list,
-        )
-        popup_menu.append(process_menu_item)
-        if self.app_obj.current_manager_obj:
-            process_menu_item.set_sensitive(False)
 
 
     # (Video Index)
@@ -7544,10 +7569,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   during a download/refresh/tidy/livestream operation if the flag is
         #   set
         if self.app_obj.gtk_emulate_broken_flag and (
-            self.app_obj.download_manager_obj \
-            or self.app_obj.refresh_manager_obj \
-            or self.app_obj.tidy_manager_obj \
+            self.app_obj.download_manager_obj
+            or self.app_obj.refresh_manager_obj
+            or self.app_obj.tidy_manager_obj
             or self.app_obj.livestream_manager_obj
+            or self.app_obj.process_manager_obj
         ):
             return
 
@@ -7598,10 +7624,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   during a download/refresh/tidy/livestream operation if the flag is
         #       set
         if self.app_obj.gtk_emulate_broken_flag and (
-            self.app_obj.download_manager_obj \
-            or self.app_obj.refresh_manager_obj \
-            or self.app_obj.tidy_manager_obj \
-            or self.app_obj.livestream_manager_obj \
+            self.app_obj.download_manager_obj
+            or self.app_obj.refresh_manager_obj
+            or self.app_obj.tidy_manager_obj
+            or self.app_obj.livestream_manager_obj
+            or self.app_obj.process_manager_obj
         ):
             return
 
@@ -7655,7 +7682,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.download_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.tidy_manager_obj \
-            or self.app_obj.livestream_manager_obj
+            or self.app_obj.livestream_manager_obj \
+            or self.app_obj.process_manager_obj
         ):
             return
 
@@ -7892,10 +7920,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   during a download/refresh/tidy/livestream operation if the flag is
         #   set
         if not self.app_obj.gtk_emulate_broken_flag or (
-            not self.app_obj.download_manager_obj \
-            and not self.app_obj.refresh_manager_obj \
-            and not self.app_obj.tidy_manager_obj \
+            not self.app_obj.download_manager_obj
+            and not self.app_obj.refresh_manager_obj
+            and not self.app_obj.tidy_manager_obj
             and not self.app_obj.livestream_manager_obj
+            and not self.app_obj.process_manager_obj
         ):
             dbid = model.get_value(tree_iter, 0)
             media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -8250,6 +8279,7 @@ class MainWin(Gtk.ApplicationWindow):
             or self.app_obj.refresh_manager_obj
             or self.app_obj.tidy_manager_obj
             or self.app_obj.livestream_manager_obj
+            or self.app_obj.process_manager_obj
         ):
             return
 
@@ -8407,10 +8437,11 @@ class MainWin(Gtk.ApplicationWindow):
             #   to Gtk issues. Disable it, if a download/refresh/tidy/
             #   livestream operation is in progress
             if not app_obj.gtk_emulate_broken_flag or (
-                not app_obj.download_manager_obj \
-                and not app_obj.refresh_manager_obj \
-                and not app_obj.tidy_manager_obj \
+                not app_obj.download_manager_obj
+                and not app_obj.refresh_manager_obj
+                and not app_obj.tidy_manager_obj
                 and not app_obj.livestream_manager_obj
+                and not self.app_obj.process_manager_obj
             ):
                 self.catalogue_listbox.invalidate_sort()
 
@@ -8539,10 +8570,11 @@ class MainWin(Gtk.ApplicationWindow):
             #   to Gtk issues. Disable it, if a download/refresh/tidy/
             #   livestream operation is in progress
             if not self.app_obj.gtk_emulate_broken_flag or (
-                not self.app_obj.download_manager_obj \
-                and not self.app_obj.refresh_manager_obj \
-                and not self.app_obj.tidy_manager_obj \
+                not self.app_obj.download_manager_obj
+                and not self.app_obj.refresh_manager_obj
+                and not self.app_obj.tidy_manager_obj
                 and not self.app_obj.livestream_manager_obj
+                and not self.app_obj.process_manager_obj
             ):
                 self.catalogue_listbox.invalidate_sort()
 
@@ -10256,6 +10288,8 @@ class MainWin(Gtk.ApplicationWindow):
                 pixbuf = self.pixbuf_dict['live_now_small']
             else:
                 pixbuf = self.pixbuf_dict['debut_now_small']
+        elif video_obj.split_flag:
+            pixbuf = self.pixbuf_dict['split_file_small']
         elif download_item_obj.operation_type == 'sim' \
         or download_item_obj.media_data_obj.dl_sim_flag:
             pixbuf = self.pixbuf_dict['check_small']
@@ -11189,9 +11223,12 @@ class MainWin(Gtk.ApplicationWindow):
 
                         # Don't overwrite the filename, so that users can more
                         #   easily identify failed downloads
+                        # (Exception: when splitting a video into clips,
+                        #   always show the clip name)
                         if dl_stat_dict[key] == '' and not pre_process_flag:
                             continue
-                        elif media_data_obj.file_name is not None:
+                        elif media_data_obj.file_name is not None \
+                        and not 'clip_flag' in dl_stat_dict:
                             string = media_data_obj.file_name
                         else:
                             string = dl_stat_dict[key]
@@ -14645,6 +14682,100 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_video_catalogue_process_clip(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu() (only).
+
+        Sends the right-clicked media.Video object to FFmpeg for
+        post-processing.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 14211 on_video_catalogue_process_clip')
+
+        # Prompt the user for start/stop timestamps and a clip title
+        dialogue_win = PrepareClipDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Get the specified timestamps/clip title, before destroying the window
+        start_stamp = utils.strip_whitespace(dialogue_win.start_stamp)
+        stop_stamp = utils.strip_whitespace(dialogue_win.stop_stamp)
+        clip_title = utils.strip_whitespace(dialogue_win.clip_title)
+        all_flag = dialogue_win.all_flag
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.CANCEL:
+
+            if not all_flag:
+
+                # Check timestamps are valid. 'stop_stamp' and 'clip_title' are
+                #   optional, and default to None
+                if stop_stamp == '':
+                    stop_stamp = None
+
+                if clip_title == '':
+                    clip_title = None
+
+                regex = r'^' + self.app_obj.timestamp_regex + r'$'
+                if not re.search(regex, start_stamp) \
+                or (
+                    stop_stamp is not None \
+                    and not re.search(regex, stop_stamp)
+                ) or not utils.timestamp_compare(
+                    self.app_obj,
+                    start_stamp,
+                    stop_stamp,
+                ):
+                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                        _('Invalid timestamp(s)'),
+                        'error',
+                        'ok',
+                    )
+
+                    return
+
+                # Store the values in a temporary buffer, so that download/
+                #   process operations can retrieve them
+                self.app_obj.set_temp_stamp_list([
+                    [ start_stamp, stop_stamp, clip_title ],
+                ])
+
+            else:
+
+                # Download clips for all timestamps in the media.Video's
+                #   .stamp_list, ignoring any timestamps/clip titles the user
+                #   just entered in the dialogue window
+                self.app_obj.set_temp_stamp_list(media_data_obj.stamp_list)
+
+            if not media_data_obj.dl_flag:
+
+                # Start a (custom) download operation to download the clip. The
+                #   calling code has already checked that
+                #   mainapp.TartubeApp.custom_dl_split_flag is enabled
+                self.app_obj.download_manager_start(
+                    'custom',
+                    # Not called from .script_slow_timer_callback()
+                    False,
+                    [ media_data_obj ],
+                )
+
+            else:
+
+                # Start a process operation to split the clip from the already-
+                #   downloaded video
+                self.app_obj.process_manager_start(
+                    self.app_obj.ffmpeg_options_obj,
+                    [ media_data_obj ],
+                )
+
+
     def on_video_catalogue_process_ffmpeg(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_catalogue_popup_menu() and
@@ -16635,7 +16766,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Obtain the system command used to download this media data object
-        cmd_list = utils.generate_system_cmd(
+        cmd_list = utils.generate_ytdl_system_cmd(
             self.app_obj,
             dummy_obj,
             options_list,
@@ -18212,6 +18343,12 @@ class SimpleCatalogueItem(object):
                     self.main_win_obj.pixbuf_dict['archived_small'],
                 )
 
+            elif self.video_obj.split_flag:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['split_file_small'],
+                )
+
             else:
 
                 self.status_image.set_from_pixbuf(
@@ -19227,6 +19364,12 @@ class ComplexCatalogueItem(object):
 
                     self.status_image.set_from_pixbuf(
                         self.main_win_obj.pixbuf_dict['archived_small'],
+                    )
+
+                elif self.video_obj.split_flag:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['split_file_small'],
                     )
 
                 else:
@@ -23411,7 +23554,7 @@ class AddChannelDialogue(Gtk.Dialog):
 
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
-            and not media_data_obj.restrict_flag \
+            and media_data_obj.restrict_mode == 'open' \
             and media_data_obj.get_depth() \
             < main_win_obj.app_obj.media_max_level \
             and (
@@ -23555,7 +23698,7 @@ class AddChannelDialogue(Gtk.Dialog):
         self.parent_name = self.folder_list[combo.get_active()]
 
 
-    def on_entry2_changed (self, entry, grid):
+    def on_entry2_changed(self, entry, grid):
 
         """Called from callback in self.__init__().
 
@@ -23726,7 +23869,7 @@ class AddFolderDialogue(Gtk.Dialog):
 
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
-            and not media_data_obj.restrict_flag \
+            and media_data_obj.restrict_mode != 'full' \
             and media_data_obj.get_depth() \
             < main_win_obj.app_obj.media_max_level \
             and (
@@ -23871,6 +24014,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         self.clipboard_timer_time = 250
         self.clipboard_ignore_url = None
 
+
         # Code
         # ----
 
@@ -23939,7 +24083,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
-            and not media_data_obj.restrict_flag \
+            and media_data_obj.restrict_mode == 'open' \
             and media_data_obj.get_depth() \
             < main_win_obj.app_obj.media_max_level \
             and (
@@ -24296,13 +24440,18 @@ class AddVideoDialogue(Gtk.Dialog):
 
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
-            and not media_data_obj.restrict_flag \
+            and media_data_obj.restrict_mode == 'open' \
             and (folder_obj is None or media_data_obj != folder_obj):
                 self.folder_list.append(media_data_obj.name)
 
         self.folder_list.sort()
         self.folder_list.insert(0, main_win_obj.app_obj.fixed_misc_folder.name)
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(
+            1,
+            main_win_obj.app_obj.fixed_clips_folder.name,
+        )
+
         if folder_obj:
             self.folder_list.insert(0, folder_obj.name)
 
@@ -24696,7 +24845,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         Args:
 
-            button (Gtk.Button): The widget clicked
+            button (Gtk.RadioButton): The widget clicked
 
             combo, combo2 (Gtk.ComboBox): Other widgets to update
 
@@ -24722,7 +24871,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         Args:
 
-            button (Gtk.Button): The widget clicked
+            button (Gtk.RadioButton): The widget clicked
 
             combo, combo2 (Gtk.ComboBox): Other widgets to update
 
@@ -24752,7 +24901,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         Args:
 
-            button (Gtk.Button): The widget clicked
+            button (Gtk.RadioButton): The widget clicked
 
             combo, combo2 (Gtk.ComboBox): Other widgets to update
 
@@ -24895,6 +25044,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         # ---------------------
         self.button = None                      # Gtk.Button
         self.button2 = None                     # Gtk.Button
+
 
         # IV list - other
         # ---------------
@@ -25318,6 +25468,7 @@ class ImportDialogue(Gtk.Dialog):
         self.liststore = None                   # Gtk.TreeView
         self.checkbutton = None                 # Gtk.TreeView
         self.checkbutton2 = None                # Gtk.TreeView
+
 
         # IV list - other
         # ---------------
@@ -25972,6 +26123,7 @@ class NewbieDialogue(Gtk.Dialog):
 
         # IV list - Gtk widgets
         # ---------------------
+        #   (none)
 
 
         # IV list - other
@@ -25983,6 +26135,7 @@ class NewbieDialogue(Gtk.Dialog):
         self.website_flag = False
         self.issues_flag = False
         self.show_flag = main_win_obj.app_obj.show_newbie_dialogue_flag
+
 
         # Code
         # ----
@@ -26199,6 +26352,263 @@ class NewbieDialogue(Gtk.Dialog):
 
         self.website_flag = True
         self.destroy()
+
+
+class PrepareClipDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.on_video_catalogue_process_clip().
+
+    Prompt the user for a start/stop timestamp, and a clip title.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        video_obj (media.Video): The video from which a clip will be downloaded
+            or extracted
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 23902 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+        # The media.Video to be extracted/downloaded
+        self.video_obj = video_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # Store the user's choice as an IV, so the calling function can
+        #   retrieve it
+        self.start_stamp = None
+        self.stop_stamp = None
+        self.clip_title = None
+        self.all_flag = False
+
+
+        # Code
+        # ----
+
+        if not video_obj.dl_flag:
+            local_title = _('Download video clip')
+        else:
+            local_title = _('Create video clip')
+
+        Gtk.Dialog.__init__(
+            self,
+            local_title,
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+            )
+        )
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 1, 1)
+        # (Artificially widen the window a little to make it look better)
+        label.set_markup(
+            _('Start timestamp (e.g. 15:29)') + (24 * ' '),
+        )
+        label.set_alignment(0, 0.5)
+
+        # (Store various widgets as IVs, so the calling function can retrieve
+        #   their contents)
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 1, 1, 1)
+        # (Signal connect appears below)
+
+        label2 = Gtk.Label()
+        grid.attach(label2, 0, 2, 1, 1)
+        label2.set_markup(_('Stop timestamp (optional)'))
+        label2.set_alignment(0, 0.5)
+
+        entry2 = Gtk.Entry()
+        grid.attach(entry2, 0, 3, 1, 1)
+        entry2.connect('changed', self.on_stop_entry_changed)
+
+        label3 = Gtk.Label()
+        grid.attach(label3, 0, 4, 1, 1)
+        label3.set_markup(_('Clip title (optional)'))
+        label3.set_alignment(0, 0.5)
+
+        entry3 = Gtk.Entry()
+        grid.attach(entry3, 0, 5, 1, 1)
+        entry3.connect('changed', self.on_title_entry_changed)
+
+        if not video_obj.dl_flag:
+            msg = _('Download this clip')
+        else:
+            msg = _('Create this clip')
+
+        button = Gtk.Button.new_with_label(msg)
+        grid.attach(button, 0, 6, 1, 1)
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_one_button_clicked)
+        button.set_sensitive(False)
+
+        if not video_obj.dl_flag:
+            msg = _('Download all clips')
+        else:
+            msg = _('Create all clips')
+
+        msg += ' (' + str(len(video_obj.stamp_list)) + ')'
+
+        button2 = Gtk.Button.new_with_label(msg)
+        grid.attach(button2, 0, 9, 1, 1)
+        button2.set_hexpand(False)
+        button2.connect('clicked', self.on_all_button_clicked)
+        if not video_obj.stamp_list:
+            button2.set_sensitive(False)
+
+        # (Signal connect from above)
+        entry.connect('changed', self.on_start_entry_changed, button)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_all_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Marks all clips to be created/downloaded, and closes the dialogue
+        window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24914 on_all_button_clicked')
+
+        self.all_flag = True
+        self.destroy()
+
+
+    def on_one_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Marks one clip to be created/downloaded, using the specified
+        timestamps and/or clip title.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24914 on_one_button_clicked')
+
+        self.all_flag = False
+        self.destroy()
+
+
+    def on_start_entry_changed (self, entry, button):
+
+        """Called from callback in self.__init__().
+
+        Sets the start timestamp.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+            button (Gtk.Button): Another widget to be modified
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22997 on_start_entry_changed')
+
+        value = entry.get_text()
+        # (Unspecified timestamps/titles are stored as None, not empty strings)
+        if value == '':
+
+            self.start_stamp = None
+            button.set_sensitive(False)
+
+        else:
+
+            self.start_stamp = value
+            button.set_sensitive(True)
+
+
+    def on_stop_entry_changed (self, entry):
+
+        """Called from callback in self.__init__().
+
+        Sets the stop timestamp.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22997 on_stop_entry_changed')
+
+        value = entry.get_text()
+        if value == '':
+            self.stop_stamp = None
+        else:
+            self.stop_stamp = value
+
+
+    def on_title_entry_changed (self, entry):
+
+        """Called from callback in self.__init__().
+
+        Sets the clip title.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 22997 on_title_entry_changed')
+
+        value = entry.get_text()
+        if value == '':
+            self.clip_title = None
+        else:
+            self.clip_title = value
 
 
 class RecentVideosDialogue(Gtk.Dialog):
@@ -27392,7 +27802,7 @@ class SystemCmdDialogue(Gtk.Dialog):
         options_list = options_parser_obj.parse(media_data_obj, options_obj)
 
         # Obtain the system command used to download this media data object
-        cmd_list = utils.generate_system_cmd(
+        cmd_list = utils.generate_ytdl_system_cmd(
             self.main_win_obj.app_obj,
             media_data_obj,
             options_list,

@@ -730,6 +730,7 @@ SMALL_ICON_DICT = {
     'live_now_small': 'live_now.png',
     'live_wait_small': 'live_wait.png',
     'no_file_small': 'no_file.png',
+    'split_file_small': 'split_file.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
     'warning_small': 'warning.png',
@@ -831,7 +832,7 @@ def do_translate(config_flag=False):
     global FOLDER_ALL_VIDEOS, FOLDER_BOOKMARKS, FOLDER_FAVOURITE_VIDEOS, \
     FOLDER_LIVESTREAMS, FOLDER_MISSING_VIDEOS, FOLDER_NEW_VIDEOS, \
     FOLDER_RECENT_VIDEOS, FOLDER_WAITING_VIDEOS, FOLDER_TEMPORARY_VIDEOS, \
-    FOLDER_UNSORTED_VIDEOS
+    FOLDER_UNSORTED_VIDEOS, FOLDER_VIDEO_CLIPS
 
     global YTDL_UPDATE_DICT
 
@@ -860,6 +861,7 @@ def do_translate(config_flag=False):
     FOLDER_WAITING_VIDEOS = _('Waiting Videos')
     FOLDER_TEMPORARY_VIDEOS = _('Temporary Videos')
     FOLDER_UNSORTED_VIDEOS = _('Unsorted Videos')
+    FOLDER_VIDEO_CLIPS = _('Video Clips')
 
     # youtube-dl update shell commands
     YTDL_UPDATE_DICT = {
@@ -871,10 +873,14 @@ def do_translate(config_flag=False):
             _('Update using custom youtube-dl path'),
         'ytdl_update_pip':
             _('Update using pip'),
+        'ytdl_update_pip_no_dependencies':
+            _('Update using pip (use --no-dependencies option)'),
         'ytdl_update_pip_omit_user':
             _('Update using pip (omit --user option)'),
         'ytdl_update_pip3':
             _('Update using pip3'),
+        'ytdl_update_pip3_no_dependencies':
+            _('Update using pip3 (use --no-dependencies option)'),
         'ytdl_update_pip3_omit_user':
             _('Update using pip3 (omit --user option)'),
         'ytdl_update_pip3_recommend':

@@ -1674,6 +1674,10 @@ class Video(GenericMedia):
         # Flag set to True once the file has been downloaded, and is confirmed
         #   to exist in Tartube's data directory
         self.dl_flag = False
+        # Flag set to True if a this video is a video clip has been split off
+        #   from another video in Tartube's database (which may or may not
+        #   still exist)
+        self.split_flag = False
         # The size of the video (in bytes)
         self.file_size = None
         # The video's upload time (in Unix time)
@@ -1706,6 +1710,24 @@ class Video(GenericMedia):
         #   a certain number of characters (specifically,
         #   mainwin.MainWin.very_long_string_max_len)
         self.short = None
+
+        # List of timestamps, extracted from the video's description and/or
+        #   metadata, or added manually by the user
+        # List in groups of three, in the form
+        #   [start_stamp, stop_stamp, clip_title]
+        # The timestamps are strings in the form n+:n+[:n+], e.g. '15:52',
+        #   '01:15:52'
+        # When the list of timestamps is extracted from a video's description/
+        #   metadata, 'stop_stamp' is None. It is usually set when extracted
+        #   from the metadata file
+        # When 'stop_stamp' is None, the clip is presumed to be the same as the
+        #   next 'start_stamp', or (if there are no more timestamps) the end of
+        #   the video
+        # The user can insert their own groups of timestamps, in which case
+        #   'start_stamp' is compulsory, and 'stop_stamp' is optional (None if
+        #   not specified)
+        # 'clip_title' is always optional, and is None if not specified
+        self.stamp_list = []
 
         # List of error/warning messages generated the last time the video was
         #   checked or downloaded. Both set to empty lists if the video has
@@ -1887,7 +1909,220 @@ class Video(GenericMedia):
 
             text = app_obj.file_manager_obj.load_text(descrip_path)
             if text is not None:
-                self.set_video_descrip(text, max_length)
+                self.set_video_descrip(app_obj, text, max_length)
+
+
+    def extract_timestamps_from_descrip(self, app_obj):
+
+        """Can be called by anything. Often called by
+        self.set_video_descrip().
+
+        From the video description stored as self.descrip, attempt to extract
+        the video's timestamps.
+
+        Compiles a list in groups of three, in the form
+            [start_stamp, stop_stamp, clip_title]
+        'start_stamp' is a string in the form h+:m+[:s+], e.g. '15:52',
+            '01:15:52'
+        'stop_stamp' is always None, so that if 'start_stamp' is used to split
+            a video clip, the clip ends at the next 'start_stamp' (or at the
+            end of the video). It's up to the user to specify their own
+            'stop_stamp' values explicitly, if they need them.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+        """
+
+        if self.descrip is None or self.descrip == '':
+            return
+
+        regex = r'^\s*(' + app_obj.timestamp_regex + r')(\s.*)'
+        rev_regex = r'^(.*\s)(' + app_obj.timestamp_regex + r')\s*$'
+        digit_count = 0
+
+        line_list = self.descrip.split('\n')
+        temp_list = []
+        stamp_list = []
+
+        for line in line_list:
+
+            # (To improve detection, remove initial/final non-alphanumeric
+            #   characters)
+            line = re.sub('^[\W\s]+', '', line)
+            line = re.sub('[\W\s]+$', '', line)
+
+            # We would like every timestamp to be in the same format, i.e.
+            #   either none of them have an h+ component, or all of them
+            #   have an h+ component, with exactly the same number of digits
+            #   (with any necessary leading zeroes)
+            # Extract the timestamps into a temporary list. For each timestamp,
+            #   count the number of digits for the h+ component, and store the
+            #   highest number of digits found
+
+            # 15:52 Title
+            result = re.match(regex, line)
+
+            if result:
+
+                title = result.groups()[5]
+                hours = result.groups()[2]
+                minutes = result.groups()[3]
+                seconds = result.groups()[4]
+
+            else:
+
+                # Title 15:52
+                result = re.match(rev_regex, line)
+                if result:
+
+                    title = result.groups()[0]
+                    hours = result.groups()[3]
+                    minutes = result.groups()[4]
+                    seconds = result.groups()[5]
+
+            if result:
+
+                # Remove punctuation in the title, such as the hyphen in a line
+                #   like 'Intro - 15.52', and strip leading/trailing whitespace
+                if title != '':
+                    # !!! DEBUG This is not yet tested on other alphabets
+                    title = re.sub(r'\s\W+\s', ' ', title)
+                    title = utils.strip_whitespace(title)
+
+                # Use None as the title, rather than an empty string
+                if title == '':
+                    title = None
+
+                # Count the number of digits in the h+ component, having
+                #   removed any leading zeroes
+                if hours is not None:
+                    this_len = len(str(int(hours)))
+                    if this_len > digit_count:
+                        digit_count = this_len
+
+                # Temporarily store the components
+                temp_list.append( [title, hours, minutes, seconds] )
+
+        # Now compile the a list of timestamps, formatted as strings in the
+        #   form h:mm:ss or mm:ss, and with the correct number of leading
+        #   zeroes applied
+        for mini_list in temp_list:
+
+            stamp_list.append(
+                [
+                    utils.timestamp_quick_format(   # 'start_stamp'
+                        app_obj,
+                        mini_list[1],               # Hours (optional)
+                        mini_list[2],               # Minutes
+                        mini_list[3],               # Seconds
+                        digit_count,                # Number of digits in h+
+                    ),
+                    None,                           # 'stop_stamp'
+                    mini_list[0],                   # 'clip_title'
+
+                ]
+            )
+
+        # Sort by timestamp (since we can't assume the description does that)
+        stamp_list.sort()
+        self.stamp_list = stamp_list.copy()
+
+
+    def extract_timestamps_from_chapters(self, app_obj, chapter_list):
+
+        """Called by downloads.VideoDownloader.confirm_sim_video() and
+        mainapp.TartubeApp.update_video_from_json().
+
+        When supplied with a list of chapters from the video's metadata,
+        convert that data and store it as a list of timestamps.
+
+        For the sake of simplicity, the calling function doesn't check whether
+        we're allowed to do that, so this function does the checking.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            chapter_list (list): An ordered list containing a series of python
+                dictionaries. Each dictionary corresponds to the start of a
+                single chapter, and is expected to contain the keys
+                'start_time', 'end_time' and 'title'. YouTube always supplies
+                all three, but in common with other parts of the code, we will
+                still accept the chapter if 'end_time' and/or 'title' are
+                missing
+
+        """
+
+        if not app_obj.video_timestamps_extract_json_flag \
+        or (self.stamp_list and not app_obj.video_timestamps_replace_flag):
+            return
+
+        # Extract each chapter in turn
+        stamp_list = []
+        while chapter_list:
+
+            chapter_dict = chapter_list.pop(0)
+
+            if not 'start_time' in chapter_dict:
+                # Ignore this chapter
+                continue
+            else:
+                # Tartube timestamps use whole seconds, so round up any
+                #   fractional values
+                start = int(chapter_dict['start_time'])
+
+            stop = None
+            if 'end_time' in chapter_dict:
+                stop = int(chapter_dict['end_time'])
+                # If a chapter stops at second #10, the next chapter starts at
+                #   second #10
+                # But FFmpeg expects the chapter to stop at second #9, so take
+                #   account of that
+                if chapter_list:
+                    stop -= 1
+
+            clip_title = None
+            if 'title' in chapter_dict and chapter_dict['title'] != '':
+                clip_title = chapter_dict['title']
+
+            # 'start' and 'stop' are in seconds. Convert them to a string in
+            #   the usual format, 'mm:ss' or 'h:mm:ss', where the 'h' component
+            #   can contain any number of digits
+            # The True flag tells the function not to include the 'h' component
+            #   if it's zero
+            start_stamp = utils.convert_seconds_to_string(start, True)
+            if stop is not None:
+                stop_stamp = utils.convert_seconds_to_string(stop, True)
+            else:
+                stop_stamp = None
+
+            stamp_list.append( [start_stamp, stop_stamp, clip_title] )
+
+        # All done
+        self.stamp_list = stamp_list
+
+
+    def set_timestamps(self, stamp_list):
+
+        """Can be called by anything.
+
+        Sets the video's timestamp list, first sorting it.
+        """
+
+        stamp_list.sort()
+        self.stamp_list = stamp_list.copy()
+
+
+    def reset_timestamps(self):
+
+        """Can be called by anything.
+
+        Empties the video's timestamp list.
+        """
+
+        self.stamp_list = []
 
 
     # Set accessors
@@ -1993,6 +2228,11 @@ class Video(GenericMedia):
         self.file_ext = extension
 
 
+    def set_file_ext(self, extension):
+
+        self.file_ext = extension
+
+
     def set_file_from_path(self, path):
 
         directory, this_file = os.path.split(path)
@@ -2083,9 +2323,25 @@ class Video(GenericMedia):
         self.orig_parent = parent_obj.name
 
 
-    def set_receive_time(self):
+    def set_receive_time(self, other_video_obj=None):
 
-        self.receive_time = int(time.time())
+        """Can be called by anything.
+
+        Usually, the video's receive time is set to the moment the media.Video
+        object is created; but in case we need to clone another video's
+        receive time, the other video can be specified as an argument.
+
+        Args:
+
+            other_vide_obj (media.Video): The video whose .receive_time should
+                be clone
+
+        """
+
+        if other_video_obj is None:
+            self.receive_time = int(time.time())
+        else:
+            self.receive_time = other_video_obj.receive_time
 
 
     def set_source(self, source):
@@ -2093,12 +2349,20 @@ class Video(GenericMedia):
         self.source = source
 
 
+    def set_split_flag(self, flag):
+
+        if flag:
+            self.split_flag = True
+        else:
+            self.split_flag = False
+
+
     def set_upload_time(self, unix_time=None):
 
         self.upload_time = int(unix_time)
 
 
-    def set_video_descrip(self, descrip, max_length):
+    def set_video_descrip(self, app_obj, descrip, max_length):
 
         """Can be caled by anything.
 
@@ -2110,16 +2374,26 @@ class Video(GenericMedia):
 
         Args:
 
+            app_obj (mainapp.TartubeApp): The main application
+
             descrip (str): The video description
 
             max_length (int): A maximum line size
 
         """
 
-        if descrip:
+        if descrip is not None and descrip != '':
 
             self.descrip = utils.tidy_up_long_descrip(descrip, max_length)
             self.short = utils.shorten_string(descrip, max_length)
+
+            # Extract timestamps from the description, if allowed
+            if app_obj.video_timestamps_extract_descrip_flag \
+            and (
+                app_obj.video_timestamps_replace_flag \
+                or not self.stamp_list
+            ):
+                self.extract_timestamps_from_descrip(app_obj)
 
         else:
             self.descrip = None
@@ -2476,7 +2750,7 @@ class Video(GenericMedia):
         if self.file_size:
             return utils.format_bytes(self.file_size)
         else:
-            return None
+            return ""
 
 
     def get_receive_date_string(self, pretty_flag=False):
@@ -2976,8 +3250,11 @@ class Folder(GenericContainer):
         priv_flag (bool) - If True, the user can't add anything to this folder,
             because Tartube uses it for special purposes
 
-        restrict_flag (bool) - If True, this folder cannot contain channels,
-            playlists and other folders (can only contain videos)
+        restrict_mode (str) - 'full' if this folder can contain videos, but not
+            channels/playlists/folders, 'partial' if this folder can contain
+            videos and folders, but not channels and playlists, 'open' if this
+            folder can contain any combination of videos, channels, playlists
+            and folders
 
         temp_flag (bool) - If True, the folder's contents should be deleted
             when Tartube shuts down (but the folder itself remains)
@@ -2988,9 +3265,8 @@ class Folder(GenericContainer):
     # Standard class methods
 
 
-    def __init__(self, app_obj, dbid, name, parent_obj=None, \
-    options_obj=None, fixed_flag=False, priv_flag=False, restrict_flag=False, \
-    temp_flag=False):
+    def __init__(self, app_obj, dbid, name, parent_obj=None, options_obj=None,
+    restrict_mode='open',  fixed_flag=False, priv_flag=False, temp_flag=False):
 
         # IV list - class objects
         # -----------------------
@@ -3041,6 +3317,12 @@ class Folder(GenericContainer):
         #   folder as its alternative destination
         self.slave_dbid_list = []
 
+        # Contents restriction mode: 'full' if this folder can contain
+        #   videos, but not channels/playlists/folders, 'partial' if this
+        #   folder can contain videos and folders, but not channels and
+        #   playlists, 'open' if this folder can contain any combination of
+        #   videos, channels, playlists and folders
+        self.restrict_mode = restrict_mode
         # Flag set to False if the folder can be deleted by the user, or True
         #   if it can't be deleted by the user
         self.fixed_flag = fixed_flag
@@ -3048,10 +3330,6 @@ class Folder(GenericContainer):
         #   user can't add anything to it (because Tartube uses it for special
         #   purposes)
         self.priv_flag = priv_flag
-        # Flag set to False if other channels, playlists and folders can be
-        #   added as children of this folder, or True if only videos can be
-        #   added as children of this folder
-        self.restrict_flag = restrict_flag
         # Flag set to True for any folder whose contents should be deleted when
         #   Tartube shuts down (but the folder itself remains)
         self.temp_flag = temp_flag

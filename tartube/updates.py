@@ -362,6 +362,18 @@ class UpdateManager(threading.Thread):
         else:
             ytdl_update_current = self.app_obj.ytdl_update_current
 
+        # Special case: install yt-dlp with no dependencies, if required
+        if self.app_obj.ytdl_fork == 'yt-dlp' \
+        and self.app_obj.ytdl_fork_no_dependency_flag:
+
+            if ytdl_update_current == 'ytdl_update_pip':
+                ytdl_update_current = 'ytdl_update_pip_no_dependencies'
+
+            elif ytdl_update_current == 'ytdl_update_pip3' \
+            or ytdl_update_current == 'ytdl_update_pip3_recommend':
+                ytdl_update_current = 'ytdl_update_pip3_no_dependencies'
+
+        # Set the system command
         cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
 
         mod_list = []

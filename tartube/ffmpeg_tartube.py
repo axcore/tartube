@@ -491,7 +491,7 @@ class FFmpegOptionsManager(object):
         change_file_ext (str): A new file extension. If not an empty string,
             then FFmpeg converts the video/audio/image file from one format to
             another. (If an empty string, the format is not changed. Ignored
-            if 'output_mode' is 'gif'
+            if 'output_mode' is 'gif')
 
         delete_original_flag (bool): If True and the source/output files have
             different names, then the source file is deleted
@@ -505,9 +505,10 @@ class FFmpegOptionsManager(object):
         output_mode (str): Always set to 'thumb' if 'input_mode' is set to
             'thumb'. Otherwise, the default value is 'h264'. The other possible
             values are 'gif' (in which case the video format is changed to
-            .GIF) and 'merge' (in which case the video is merged with au audio
-            file with the same file name); in both cases, the 'change_file_ext'
-            option is ignored)
+            .GIF), 'merge' (in which case the video is merged with au audio
+            file with the same file name) and 'split' (in which case the video
+            is split into pieces according to timestamps); in all three cases,
+            the 'change_file_ext' option is ignored)
 
         audio_flag (bool): If True, and if 'input_mode' is 'video', the video's
             audio is preserved when the file is converted. Ignored if
@@ -540,6 +541,18 @@ class FFmpegOptionsManager(object):
 
         palette_mode (str): Ignored unless 'output_mode' is 'gif'. Values are
             'faster' or 'better'
+
+        split_mode (str): Ignored unless 'output_mode' is 'split'. Values are
+            'video' to use the video's timestamps to split the file, or
+            'custom' to use a custom set of timestamps to split the file
+
+        split_list (list): Ignored unless 'split_mode' is 'custom'. A list
+            of timestamps and clip titles used to split the video into clips.
+            A list in groups of three, in the form
+                [start_stamp, stop_stamp, clip_title]
+            If 'stop_stamp' is None, then the end of the video (or the next
+                'start_stamp') is used. 'clip_title' is optional (None if not
+                specified)
 
     OPTIONS (OPTIMISATIONS TAB)
 
@@ -648,9 +661,9 @@ class FFmpegOptionsManager(object):
             # SETTINGS TAB
              # 'video', 'thumb'
             'input_mode': 'video',
-            # 'h264', 'gif', 'merge', 'thumb'
+            # 'h264', 'gif', 'merge', 'split', 'thumb'
             'output_mode': 'h264',
-            # SETTINGS TAB ('output_mode' = h264)
+            # SETTINGS TAB ('output_mode' = 'h264')
             'audio_flag': True,
             'audio_bitrate': 128,
             # 'cfg', 'abr'
@@ -666,9 +679,12 @@ class FFmpegOptionsManager(object):
             'gpu_encoding': 'libx264',
             # 'none', 'auto', 'vdpau', 'dxva2', 'vaapi', 'qsv'
             'hw_accel': 'none',
-            # SETTINGS TAB ('output_mode' = gif)
+            # SETTINGS TAB ('output_mode' = 'gif')
             'palette_mode': 'faster',       # 'faster', 'better'
-            # OPTIMISATIONS TAB ('output_mode' = h264)
+            # SETTINGS TAB ('output_mode' = 'split')
+            'split_mode': 'video',          # 'video', 'custom'
+            'split_list': [],               # list in groups of 3
+            # OPTIMISATIONS TAB ('output_mode' = 'h264')
             'seek_flag': True,
             'tuning_film_flag': False,
             'tuning_animation_flag': False,
@@ -686,7 +702,8 @@ class FFmpegOptionsManager(object):
         }
 
 
-    def get_system_cmd(self, app_obj, video_obj=None, edit_dict=[]):
+    def get_system_cmd(self, app_obj, video_obj=None, start_stamp=None,
+    stop_stamp=None, clip_title=None, clip_dir=None, edit_dict=[]):
 
         """Can be called by anything.
 
@@ -706,7 +723,16 @@ class FFmpegOptionsManager(object):
                 source file is used (so that a specimen system command can be
                 displayed in the edit window)
 
-            edit_dict (dict): When called from the ediw window, any changes
+            start_stamp, stop_stamp, clip_title, clip_dir (str):
+                When splitting a video, the timestamps at which to start/stop,
+                the clip title, and the destination directory for sections
+                (if not the same as the original file). Ignored if
+                'output_mode' is not 'split'. If 'output_mode' is 'split', then
+                these arguments are not specified when called from
+                config.FFmpegOptionsEditWin, in which case specimen
+                timestamps/titles are used
+
+            edit_dict (dict): When called from the edit window, any changes
                 that have been made to the FFmpeg options, but which have not
                 yet been saved to this object. We take those changes into
                 account when compiling the system command.
@@ -870,10 +896,11 @@ class FFmpegOptionsManager(object):
                 os.path.join(output_dir, output_file),
             )
 
-        # Special case: if the full GUI layout is not visible, then show the
-        #   system command that will eventually be generated by
+        # Special case: when called from config.FFmpegOptionsEditWin, and the
+        #   full GUI layout is not visible, then show the system command that
+        #   will eventually be generated by
         #   FFmpegManager.run_ffmpeg_multiple_files()
-        if app_obj.ffmpeg_simple_options_flag:
+        if app_obj.ffmpeg_simple_options_flag and video_obj is None:
 
             return_list.append(binary)
             return_list.append('-y')
@@ -1070,6 +1097,42 @@ class FFmpegOptionsManager(object):
 
             return_list.append(output_path)
 
+        # Split video by timestamps
+        elif output_mode == 'split':
+
+            return_list.append(binary)
+            return_list.extend(opt_list)
+
+            return_list.append('-ss')
+            if start_stamp is None:
+                # (A specimen timestamp)
+                return_list.append('0:00')
+            else:
+                return_list.append(start_stamp)
+
+            # (If no 'stop_stamp' is specified, the end of the video is used)
+            if stop_stamp is not None:
+                return_list.append('-to')
+                return_list.append(stop_stamp)
+
+            if clip_title is None or clip_title == "":
+                # (When called from config.FFmpegOptionsEditWin)
+                clip_title = app_obj.split_video_generic_title
+
+            if clip_dir is None:
+
+                output_path = os.path.abspath(
+                    os.path.join(output_dir, clip_title + output_ext),
+                )
+
+            else:
+
+                output_path = os.path.abspath(
+                    os.path.join(clip_dir, clip_title + output_ext),
+                )
+
+            return_list.append(output_path)
+
         # Video thumbnails
         else:
 
@@ -1078,8 +1141,8 @@ class FFmpegOptionsManager(object):
             return_list.append(output_path)
 
         # All done
-        if output_mode != 'thumb':
-            return source_video_path, output_path, return_list
-        else:
+        if output_mode == 'thumb':
             return source_thumb_path, output_path, return_list
+        else:
+            return source_video_path, output_path, return_list
 

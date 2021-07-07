@@ -285,6 +285,11 @@ class TartubeApp(Gtk.Application):
         # Custom locale (can match one of the values in formats.LOCALE_LIST)
         self.custom_locale = locale.getdefaultlocale()[0]
 
+        # Default regex for handling video timestamps (a string in the form
+        #   'mm:ss' or 'h:mm:ss'. Leading zeroes are optional for all
+        #   components, and the 'h' component can contain any number of digits)
+        self.timestamp_regex = r'((\d+)\:)?([0-5]?[0-9]):([0-5]?[0-9])'
+
         # Default window sizes (in pixels)
         self.main_win_width = 1000
         self.main_win_height = 750
@@ -795,10 +800,14 @@ class TartubeApp(Gtk.Application):
         #       Update using local youtube-dl path
         # 'ytdl_update_pip'
         #       Update using pip
+        # 'ytdl_update_pip_no_dependencies'
+        #       Update using pip (use --no-dependencies option)
         # 'ytdl_update_pip_omit_user'
         #       Update using pip (omit --user option)
         # 'ytdl_update_pip3'
         #       Update using pip3
+        # 'ytdl_update_pip3_no_dependencies'
+        #       Update using pip3 (use --no-dependencies option)
         # 'ytdl_update_pip3_omit_user'
         #       Update using pip3 (omit --user option)
         # 'ytdl_update_pip3_recommend'
@@ -849,16 +858,22 @@ class TartubeApp(Gtk.Application):
         #   in the wizard window
         self.ytdl_fork_descrip_dict = {
             'yt-dlp': \
-                'A popular fork of the original youtube-dl, created by' \
-                + ' pukkandan in 2020. Officially supported by Tartube.',
+                'A popular fork of the original youtube-dl, created in 2020' \
+                + ' by pukkandan. Officially supported by Tartube.',
             'youtube-dl': \
                 'This is the original downloader, created by Ricardo Garcia' \
                 + ' Gonzalez in 2006. Officially supported by Tartube.',
             'custom': \
-                'If you want to use a different fork, type its name here.' \
-                + ' If it is sufficiently similar to one of the downloaders' \
-                + ' above, then Tartube can probably use it.' \
+                'Tartube may be compatible with other forks of youtube-dl.',
         }
+        # v2.3.182: Currently, yt-dlp can't be installed on MS Windows under
+        #   MSYS2, because the pycryptodome dependency can't be installed
+        # Flag set to True if yt-dlp (only), when installed via pip, should be
+        #   installed without dependencies
+        if os.name == 'nt':
+            self.ytdl_fork_no_dependency_flag = True
+        else:
+            self.ytdl_fork_no_dependency_flag = False
 
         # Flag set to True if youtube-dl system commands should be displayed in
         #   the Output Tab
@@ -1054,6 +1069,12 @@ class TartubeApp(Gtk.Application):
         #   marked as not downloaded (often after clicking the 'Check all'
         #   button); don't download channels/playlists directly
         self.custom_dl_by_video_flag = False
+        # If True, during a custom download, split a video into video clips
+        #   using its timestamps. Ignored if self.custom_dl_by_video_flag is
+        #   False
+        # Note that IVs for splitting videos (e.g. self.split_video_name_mode)
+        #   apply in this situation as well
+        self.custom_dl_split_flag = False
         # During a custom download, any videos whose source URL is YouTube can
         #   be diverted to another website
         #       'default' - Use the original YouTube URL
@@ -1355,6 +1376,8 @@ class TartubeApp(Gtk.Application):
         # Public folder that's used as the first one in the 'Add video'
         #   dialogue window, in which the user can store any individual videos
         self.fixed_misc_folder = None
+        # Public folder that's used for storing video clips (optionally)
+        self.fixed_clips_folder = None
 
         # The locale for which the fixed folders are named. When the database
         #   file is loaded, if this value no longer matches self.custom_locale,
@@ -1622,10 +1645,10 @@ class TartubeApp(Gtk.Application):
         #   original is destroyed)
         # 'disable' to download nothing from the URL
         # There are some restrictions. If the original media.Video object is
-        #   contained in a folder whose .restrict_flag is False, and if the
-        #   mode is 'channel' or 'playlist', then the new channel/playlist is
-        #   not created in that folder. If the original media.Video object is
-        #   contained in a channel or playlist, all modes to default to
+        #   contained in a folder whose .restrict_mode is not 'open', and if
+        #   the mode is 'channel' or 'playlist', then the new channel/playlist
+        #   is not created in that folder. If the original media.Video object
+        #   is contained in a channel or playlist, all modes to default to
         #   'disable'
         # For downloads launched from the Classic Mode Tab, none of this
         #   applies. Tartube downloads all videos associated with the URLs,
@@ -1685,6 +1708,69 @@ class TartubeApp(Gtk.Application):
         #   are marked as missing. Ignored if self.track_missing_videos_flag or
         #   self.track_missing_time_flag is False
         self.track_missing_time_days = 14
+
+        # Flag set to True if a list of timestamps should be extracted from a
+        #   video's .info.json file, when it is received
+        self.video_timestamps_extract_json_flag = False
+        # Flag set to True if a list of timestamps should be extracted from a
+        #   video's description file, when it is received
+        self.video_timestamps_extract_descrip_flag = False
+        # Flag set to True if the previous set of timestamps should be
+        #   replaced, when a video is checked/downloaded
+        self.video_timestamps_replace_flag = False
+        # Flag set to True if, just before trying to split a video based on its
+        #   timestamps, process.ProcessManager should try to extract the
+        #   timestamps from the description (if none have been extracted so
+        #   far)
+        self.video_timestamps_re_extract_flag = False
+        # When splitting videos, the format for the name of the video clips:
+        #   num                 Number
+        #   clip                Clip Title
+        #   num_clip            Number + Clip Title
+        #   clip_num            Clip Title + Number
+        #   orig                Original Title
+        #   orig_num            Original Title + Number
+        #   orig_clip           Original Title + Clip Title
+        #   orig_num_clip       Original Title + Number + Clip Title
+        #   orig_clip_num       Original Title + Clip Title + Number
+        self.split_video_name_mode = 'orig_num_clip'
+        # Flag set to True if the video clips should be moved to the 'Video
+        #   Clips' system folder, False if they should be saved in the same
+        #   place as the original video
+        self.split_video_clips_dir_flag = True
+        # Flag set to True if the video clips should be moved into a
+        #   sub-directory, with the same name as the original video. The
+        #   subdirectory is either within the 'Video Clips' system folder, or
+        #   within the original video's parent folder, depending on the value
+        #   of self.split_video_clips_dir_flag
+        self.split_video_subdir_flag = False
+        # Flag set to True if the video clips should be added to Tartube's
+        #   database, if possible (for example, a media.Folder cannot be
+        #   created within a media.Channel. When self.split_video_subdir_flag
+        #   is True and it's not possible to create a media.Folder, then a new
+        #   sub-directory is created in the filesystem anyway, and the video
+        #   clips are moved there)
+        self.split_video_add_db_flag = True
+        # Flag set to True if the each video clip should be given its own
+        #   thumbnail, a copy of the original video's thumbnail
+        self.split_video_copy_thumb_flag = True
+        # Clip titles used if the user/video description does not specify one
+        # Generic title (cannot be changed by the user)
+        self.split_video_generic_title = 'Video'
+        # Custom title (can be changed by the user. If an empty string, the
+        #   generic title is used)
+        self.split_video_custom_title = 'Video'
+        # Flag set to True if the destination directory should be opened on
+        #   the desktop, after splitting files
+        self.split_video_auto_open_flag = False
+        # Flag set to True if the original video should be deleted after
+        #   splitting files. Does not apply to a video in a media.Channel or
+        #   media.Playlist
+        self.split_video_auto_delete_flag = False
+        # Temporary timestamp buffer, using the same format as
+        #   media.Video.stamp_List. Used when the user right-clicks a video and
+        #   selects 'Create video clip...' or 'Download video clip...'
+        self.temp_stamp_list = []
 
         # Flag set to True if 'Child process exited with non-zero code'
         #   messages, generated by Tartube, should be ignored (in the
@@ -1902,6 +1988,62 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if search/replace operations on multiple URLs
         #   should use a regex, False if the pattern is an ordinary substring
         self.url_change_regex_flag = True
+
+        # Dictionary of youtube-dl download options that are filtered out, when
+        #   splitting video clips (in a call to
+        #   utils.generate_split_system_cmd())
+        # The keys are youtube-dl download options; the corresponding values
+        #   are False for a boolean option, or True for an option that takes
+        #   an argument
+        self.split_ignore_option_dict = {
+            # DOWNLOAD OPTIONS
+            # native_hls
+            '--hls-prefer-native': False,
+            # external_downloader
+            '--external-downloader': True,
+            # external_arg_string
+            '--external-downloader-args': True,
+            # FILESYSTEM OPTIONS
+            # save_path
+            '-o': True,
+            '-output': True,
+            # write_description
+            '--write-description': False,
+            # write_info
+            '--write-info-json': False,
+            # write_annotations
+            '--write-annotations': False,
+            # THUMBNAIL IMAGES
+            # write_thumbnail
+            '--write-thumbnail': False,
+            # VIDEO FORMAT OPTIONS
+            # all_formats
+            '--all-formats': False,
+            # prefer_free_formats
+            '--prefer-free-formats': False,
+            # yt_skip_dash
+            '--youtube-skip-dash-manifest': False,
+            # SUBTITLE OPTIONS
+            # write_subs
+            '--write-sub': False,
+            # write_auto_subs
+            '--write-auto-sub': False,
+            # write_all_subs
+            '--all-subs': False,
+            # subs_format
+            '--sub-format': True,
+            # subs_lang
+            '--sub-lang': True,
+            # POST-PROCESSING OPTIONS
+            # embed_subs
+            '--embed-subs': False,
+            # prefer_avconv
+            '--prefer-avconv': False,
+            # prefer_ffmpeg
+            '--prefer-ffmpeg': False,
+            # (Added directly in options.OptionsManager)
+            '--newline': False,
+        }
 
 
     def do_startup(self):
@@ -3578,6 +3720,10 @@ class TartubeApp(Gtk.Application):
             #   first one (as the user won't be expecting that)
             self.ytdl_update_once_flag = True
 
+        if version >= 2003182:  # v2.3.182:
+            self.ytdl_fork_no_dependency_flag \
+            = json_dict['ytdl_fork_no_dependency_flag']
+
         if version >= 1003074:  # v1.3.074
             self.ytdl_output_system_cmd_flag \
             = json_dict['ytdl_output_system_cmd_flag']
@@ -3627,7 +3773,8 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1004024:  # v1.4.024
             self.custom_dl_by_video_flag = json_dict['custom_dl_by_video_flag']
-
+        if version >= 2003155:  # v2.3.155
+            self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
         if version >= 2001094:  # v2.1.094
             self.custom_invidious_mirror = json_dict['custom_invidious_mirror']
 
@@ -3858,6 +4005,29 @@ class TartubeApp(Gtk.Application):
             self.track_missing_time_days \
             = json_dict['track_missing_time_days']
 
+        if version >= 2003181:  # v2.3.181
+            self.video_timestamps_extract_json_flag \
+            = json_dict['video_timestamps_extract_json_flag']
+            self.video_timestamps_extract_descrip_flag \
+            = json_dict['video_timestamps_extract_descrip_flag']
+            self.video_timestamps_replace_flag \
+            = json_dict['video_timestamps_replace_flag']
+            self.video_timestamps_re_extract_flag \
+            = json_dict['video_timestamps_re_extract_flag']
+            self.split_video_name_mode = json_dict['split_video_name_mode']
+            self.split_video_clips_dir_flag \
+            = json_dict['split_video_clips_dir_flag']
+            self.split_video_subdir_flag = json_dict['split_video_subdir_flag']
+            self.split_video_add_db_flag = json_dict['split_video_add_db_flag']
+            self.split_video_copy_thumb_flag \
+            = json_dict['split_video_copy_thumb_flag']
+            self.split_video_custom_title \
+            = json_dict['split_video_custom_title']
+            self.split_video_auto_open_flag \
+            = json_dict['split_video_auto_open_flag']
+            self.split_video_auto_delete_flag \
+            = json_dict['split_video_auto_delete_flag']
+
         if version >= 5004:     # v0.5.004
             self.ignore_child_process_exit_flag \
             = json_dict['ignore_child_process_exit_flag']
@@ -3886,7 +4056,7 @@ class TartubeApp(Gtk.Application):
             self.ignore_yt_age_restrict_flag \
             = json_dict['ignore_yt_age_restrict_flag']
         if version >= 1003088:  # v1.3.088
-            self.ignore_yt_age_restrict_flag \
+            self.ignore_yt_uploader_deleted_flag \
             = json_dict['ignore_yt_uploader_deleted_flag']
         if version >= 2002025:  # v2.2.025
             self.ignore_yt_payment_flag \
@@ -4129,6 +4299,33 @@ class TartubeApp(Gtk.Application):
         else:
 
             self.ytdl_path_custom_flag = json_dict['ytdl_path_custom_flag']
+
+        # (In version v.2.3183, self.ytdl_update_dict was modified again)
+        if version < 2003183:  # v2.3.183
+
+            self.ytdl_update_dict['ytdl_update_pip_no_dependencies'] = [
+                'pip', 'install', '--upgrade', '--no-dependencies',
+                'youtube-dl',
+            ]
+
+            self.ytdl_update_dict['ytdl_update_pip3_no_dependencies'] = [
+                'pip3', 'install', '--upgrade', '--no-dependencies',
+                'youtube-dl',
+            ]
+
+            print(self.ytdl_update_dict)
+
+            ytdl_update_list = []
+            for item in self.ytdl_update_list:
+
+                if item == 'ytdl_update_pip':
+                    ytdl_update_list.append('ytdl_update_pip_no_dependencies')
+                elif item == 'ytdl_update_pip3':
+                    ytdl_update_list.append('ytdl_update_pip3_no_dependencies')
+
+                ytdl_update_list.append(item)
+
+            self.ytdl_update_list = ytdl_update_list
 
 
     def load_config_import_scheduled(self, version, json_dict):
@@ -4436,6 +4633,7 @@ class TartubeApp(Gtk.Application):
 
             'ytdl_update_once_flag': self.ytdl_update_once_flag,
             'ytdl_fork': self.ytdl_fork,
+            'ytdl_fork_no_dependency_flag': self.ytdl_fork_no_dependency_flag,
 
             'ytdl_output_system_cmd_flag': self.ytdl_output_system_cmd_flag,
             'ytdl_output_stdout_flag': self.ytdl_output_stdout_flag,
@@ -4469,6 +4667,7 @@ class TartubeApp(Gtk.Application):
             'custom_invidious_mirror': self.custom_invidious_mirror,
 
             'custom_dl_by_video_flag': self.custom_dl_by_video_flag,
+            'custom_dl_split_flag': self.custom_dl_split_flag,
             'custom_dl_divert_mode': self.custom_dl_divert_mode,
             'custom_dl_divert_website': self.custom_dl_divert_website,
             'custom_dl_delay_flag': self.custom_dl_delay_flag,
@@ -4554,6 +4753,23 @@ class TartubeApp(Gtk.Application):
             'track_missing_videos_flag': self.track_missing_videos_flag,
             'track_missing_time_flag': self.track_missing_time_flag,
             'track_missing_time_days': self.track_missing_time_days,
+
+            'video_timestamps_extract_json_flag': \
+            self.video_timestamps_extract_json_flag,
+            'video_timestamps_extract_descrip_flag': \
+            self.video_timestamps_extract_descrip_flag,
+            'video_timestamps_replace_flag': \
+            self.video_timestamps_replace_flag,
+            'video_timestamps_re_extract_flag': \
+            self.video_timestamps_re_extract_flag,
+            'split_video_name_mode': self.split_video_name_mode,
+            'split_video_clips_dir_flag': self.split_video_clips_dir_flag,
+            'split_video_subdir_flag': self.split_video_subdir_flag,
+            'split_video_add_db_flag': self.split_video_add_db_flag,
+            'split_video_copy_thumb_flag': self.split_video_copy_thumb_flag,
+            'split_video_custom_title': self.split_video_custom_title,
+            'split_video_auto_open_flag': self.split_video_auto_open_flag,
+            'split_video_auto_delete_flag': self.split_video_auto_delete_flag,
 
             'ignore_child_process_exit_flag': \
             self.ignore_child_process_exit_flag,
@@ -4942,6 +5158,8 @@ class TartubeApp(Gtk.Application):
         if version >= 2002219:  # v2.2.219
             self.toolbar_system_hide_flag \
             = load_dict['toolbar_system_hide_flag']
+        if version >= 2003149:  # v2.3.149
+            self.fixed_clips_folder = load_dict['fixed_clips_folder']
 
         # Update the loaded data for this version of Tartube
         self.update_db(version)
@@ -4986,6 +5204,7 @@ class TartubeApp(Gtk.Application):
             self.fixed_waiting_folder.set_hidden_flag(True)
             self.fixed_temp_folder.set_hidden_flag(True)
             self.fixed_misc_folder.set_hidden_flag(True)
+            self.fixed_clips_folder.set_hidden_flag(True)
 
         # Now that a database file has been loaded, most main window widgets
         #   can be sensitised...
@@ -5477,9 +5696,9 @@ class TartubeApp(Gtk.Application):
                 formats.FOLDER_BOOKMARKS,
                 None,           # No parent folder
                 False,          # Allow downloads
+                'full',         # Can only contain videos
                 True,           # Fixed (folder cannot be removed)
                 True,           # Private
-                True,           # Can only contain videos
                 False,          # Not temporary
             )
 
@@ -5487,9 +5706,9 @@ class TartubeApp(Gtk.Application):
                 formats.FOLDER_WAITING_VIDEOS,
                 None,           # No parent folder
                 False,          # Allow downloads
+                'full',         # Can only contain videos
                 True,           # Fixed (folder cannot be removed)
                 True,           # Private
-                True,           # Can only contain videos
                 False,          # Not temporary
             )
 
@@ -5600,9 +5819,9 @@ class TartubeApp(Gtk.Application):
                 formats.FOLDER_LIVESTREAMS,
                 None,           # No parent folder
                 False,          # Allow downloads
+                'full',         # Can only contain videos
                 True,           # Fixed (folder cannot be removed)
                 True,           # Private
-                True,           # Can only contain videos
                 False,          # Not temporary
             )
 
@@ -5685,9 +5904,9 @@ class TartubeApp(Gtk.Application):
                 formats.FOLDER_MISSING_VIDEOS,
                 None,           # No parent folder
                 False,          # Allow downloads
+                'full',         # Can only contain videos
                 True,           # Fixed (folder cannot be removed)
                 True,           # Private
-                True,           # Can only contain videos
                 False,          # Not temporary
             )
 
@@ -5902,9 +6121,9 @@ class TartubeApp(Gtk.Application):
                 formats.FOLDER_RECENT_VIDEOS,
                 None,           # No parent folder
                 False,          # Allow downloads
+                'full',         # Can only contain videos
                 True,           # Fixed (folder cannot be removed)
                 True,           # Private
-                True,           # Can only contain videos
                 False,          # Not temporary
             )
 
@@ -5946,6 +6165,56 @@ class TartubeApp(Gtk.Application):
             for options_obj in options_obj_list:
                 options_obj.options_dict['direct_cmd_flag'] = False
                 options_obj.options_dict['direct_url_flag'] = False
+
+        if version < 2003136:       # v2.3.136
+
+            # This version adds a list of timestamps extracted from the video
+            #   description
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.stamp_list = []
+
+        if version < 2003140:       # v2.3.140
+
+            # This version adds new settings to
+            #   ffmpeg_tartube.FFmpegOptionsManager
+            for options_obj in self.ffmpeg_reg_dict.values():
+                options_obj.options_dict['split_mode'] = 'video'
+                options_obj.options_dict['split_list'] = []
+
+        if version < 2003146:       # v2.3.146
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.split_flag = False
+
+        if version < 2003149:      # v2.3.149
+
+            # This version adds a new fixed folder. If there is an existing
+            #   folder with the same name, it must be renamed
+            if formats.FOLDER_VIDEO_CLIPS in self.media_name_dict:
+
+                dbid = self.media_name_dict[formats.FOLDER_VIDEO_CLIPS]
+                media_data_obj = self.media_reg_dict[dbid]
+
+                # Generate a new name. The -1 argument means to keep going
+                #   indefinitely, until an available name is found
+                self.rename_container_silently(
+                    media_data_obj,
+                    utils.find_available_name(self, 'downloads', 2, -1),
+                )
+
+            # Now create the new fixed folder
+            self.fixed_clips_folder = self.add_folder(
+                formats.FOLDER_VIDEO_CLIPS,
+                None,           # No parent folder
+                False,          # Allow downloads
+                'partial',      # Can contain videos and folders
+                True,           # Fixed (folder cannot be removed)
+                False,          # Public
+                False,          # Not temporary
+            )
 
 
     def save_db(self):
@@ -6019,6 +6288,7 @@ class TartubeApp(Gtk.Application):
             'fixed_waiting_folder': self.fixed_waiting_folder,
             'fixed_temp_folder': self.fixed_temp_folder,
             'fixed_misc_folder': self.fixed_misc_folder,
+            'fixed_clips_folder': self.fixed_clips_folder,
             'fixed_folder_locale': self.fixed_folder_locale,
             'fixed_recent_folder_days': self.fixed_recent_folder_days,
             # Scheduled downloads
@@ -6630,6 +6900,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_waiting_folder = None
         self.fixed_temp_folder = None
         self.fixed_misc_folder = None
+        self.fixed_clips_folder = None
         self.fixed_folder_locale = self.custom_locale
         self.scheduled_list = []
         self.options_reg_count = 0
@@ -7214,8 +7485,16 @@ class TartubeApp(Gtk.Application):
                 'ytdl_update_pip3': [
                     'pip3', 'install', '--upgrade', 'youtube-dl',
                 ],
+                'ytdl_update_pip3_no_dependencies': [
+                    'pip3', 'install', '--upgrade', '--no-dependencies',
+                    'youtube-dl',
+                ],
                 'ytdl_update_pip': [
                     'pip', 'install', '--upgrade', 'youtube-dl',
+                ],
+                'ytdl_update_pip_no_dependencies': [
+                    'pip', 'install', '--upgrade', '--no-dependencies',
+                    'youtube-dl',
                 ],
                 'ytdl_update_default_path': [
                     self.ytdl_path_default, '-U',
@@ -7230,7 +7509,9 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_list = [
                 recommended,
                 'ytdl_update_pip3',
+                'ytdl_update_pip3_no_dependencies',
                 'ytdl_update_pip',
+                'ytdl_update_pip_no_dependencies',
                 'ytdl_update_default_path',
                 'ytdl_update_local_path',
                 'ytdl_update_custom_path',
@@ -7264,11 +7545,19 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pip3_omit_user': [
                         'pip3', 'install', '--upgrade', 'youtube-dl',
                     ],
+                    'ytdl_update_pip3_no_dependencies': [
+                        'pip3', 'install', '--upgrade', '--no-dependencies',
+                        'youtube-dl',
+                    ],
                     'ytdl_update_pip': [
                         'pip', 'install', '--upgrade', '--user', 'youtube-dl',
                     ],
                     'ytdl_update_pip_omit_user': [
                         'pip', 'install', '--upgrade', 'youtube-dl',
+                    ],
+                    'ytdl_update_pip_no_dependencies': [
+                        'pip', 'install', '--upgrade', '--no-dependencies',
+                        'youtube-dl',
                     ],
                     'ytdl_update_default_path': [
                         self.ytdl_path_default, '-U',
@@ -7286,8 +7575,10 @@ class TartubeApp(Gtk.Application):
                 self.ytdl_update_list = [
                     'ytdl_update_pip3_recommend',
                     'ytdl_update_pip3_omit_user',
+                    'ytdl_update_pip3_no_dependencies',
                     'ytdl_update_pip',
                     'ytdl_update_pip_omit_user',
+                    'ytdl_update_pip_no_dependencies',
                     'ytdl_update_default_path',
                     'ytdl_update_local_path',
                     'ytdl_update_custom_path',
@@ -7475,9 +7766,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_ALL_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7485,9 +7776,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_BOOKMARKS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7495,9 +7786,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_FAVOURITE_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
         self.fixed_fav_folder.set_fav_flag(True)
@@ -7506,9 +7797,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_LIVESTREAMS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7516,9 +7807,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_MISSING_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7526,9 +7817,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_NEW_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7536,9 +7827,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_RECENT_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7546,9 +7837,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_WAITING_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             True,           # Private
-            True,           # Can only contain videos
             False,          # Not temporary
         )
 
@@ -7556,9 +7847,9 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_TEMPORARY_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'open',         # Can contain any media data object
             True,           # Fixed (folder cannot be removed)
             False,          # Public
-            False,          # Can contain any media data object
             True,           # Temporary
         )
 
@@ -7566,9 +7857,19 @@ class TartubeApp(Gtk.Application):
             formats.FOLDER_UNSORTED_VIDEOS,
             None,           # No parent folder
             False,          # Allow downloads
+            'full',         # Can only contain videos
             True,           # Fixed (folder cannot be removed)
             False,          # Public
-            True,           # Can only contain videos
+            False,          # Not temporary
+        )
+
+        self.fixed_clips_folder = self.add_folder(
+            formats.FOLDER_VIDEO_CLIPS,
+            None,           # No parent folder
+            False,          # Allow downloads
+            'partial',      # Can contain videos and folders
+            True,           # Fixed (folder cannot be removed)
+            False,          # Public
             False,          # Not temporary
         )
 
@@ -7637,6 +7938,11 @@ class TartubeApp(Gtk.Application):
         self.rename_fixed_folder(
             self.fixed_misc_folder,
             formats.FOLDER_UNSORTED_VIDEOS,
+        )
+
+        self.rename_fixed_folder(
+            self.fixed_clips_folder,
+            formats.FOLDER_VIDEO_CLIPS,
         )
 
 
@@ -7713,7 +8019,8 @@ class TartubeApp(Gtk.Application):
             or media_data_obj is self.fixed_recent_folder \
             or media_data_obj is self.fixed_waiting_folder \
             or media_data_obj is self.fixed_temp_folder \
-            or media_data_obj is self.fixed_misc_folder
+            or media_data_obj is self.fixed_misc_folder \
+            or media_data_obj is self.fixed_clips_folder
         ):
             return True
         else:
@@ -8692,13 +8999,14 @@ class TartubeApp(Gtk.Application):
         else:
             classic_mode_flag = True
 
-        # For Classic Mode Tab custom downloads, get the list of video URLs
-        #   which were extracted
+        # For Classic Mode Tab custom downloads, get the list of videos which
+        #   were extrascted, along with their metadata
         classic_extract_list = self.download_manager_obj.classic_extract_list
 
         # Get the number of videos downloaded (real and simulated)
         dl_count = self.download_manager_obj.total_dl_count
         sim_count = self.download_manager_obj.total_sim_count
+        clip_count = self.download_manager_obj.total_clip_count
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
@@ -8786,7 +9094,8 @@ class TartubeApp(Gtk.Application):
             #   happened, show a newbie dialogue explaining what to do next
             if self.show_newbie_dialogue_flag \
             and dl_count == 0 \
-            and sim_count == 0:
+            and sim_count == 0 \
+            and clip_count == 0:
 
                 show_newbie_dialogue_flag = True
 
@@ -8802,6 +9111,11 @@ class TartubeApp(Gtk.Application):
                     msg += '\n\n' + _('Videos downloaded:') + ' ' \
                     + str(dl_count) + '\n' + _('Videos checked:') \
                     + ' ' + str(sim_count)
+
+                if clip_count:
+
+                    msg += '\n\n' + _('Clips downloaded:') + ' ' \
+                    + str(clip_count)
 
                 if time_num >= 10:
                     msg += '\n\n' + _('Time taken:') + ' ' \
@@ -8826,30 +9140,58 @@ class TartubeApp(Gtk.Application):
 
         # A custom download launched from the Classic Mode tab may be performed
         #   with two consecutive download operations, one to extract a list of
-        #   URLs for individual videos, and one to download them (one at a
-        #   time)
-        # Launch the second one, if the first has just finished
+        #   individual videos (along with their metadata), and one to download
+        #   the videos, one at a time
+        # Launch the second operation, if the first has just finished
         if operation_type == 'classic_sim' and classic_extract_list:
 
             # The list is in groups of two, in the form
-            #   [ parent_obj, URL ]
+            #   [ parent_obj, json_dict ]
             # ...where 'parent_obj' is a 'dummy' media.Video object
-            #   representing a video, channel or playlist, from which a URL
-            #   representing a video has been extracted
-            # Create new dummy media.Video objects, one for each extracted URL
+            #   representing a video, channel or playlist, from which the
+            #   metedata for a single video, 'json_dict', has been extracted
+            # Create new dummy media.Video objects, one for each extracted
+            #   video
             dummy_list = []
             while classic_extract_list:
 
                 parent_obj = classic_extract_list.pop(0)
-                url = classic_extract_list.pop(0)
+                json_dict = classic_extract_list.pop(0)
 
-                dummy_list.append(
-                    self.main_win_obj.classic_mode_tab_create_dummy_video(
-                        url,
-                        parent_obj.dummy_dir,
-                        parent_obj.dummy_format,
-                    ),
+                dummy_video_obj \
+                = self.main_win_obj.classic_mode_tab_create_dummy_video(
+                    json_dict['webpage_url'],
+                    parent_obj.dummy_dir,
+                    parent_obj.dummy_format,
                 )
+
+                dummy_list.append(dummy_video_obj)
+
+                # Update the dummy video's filename/file extension, if
+                #   available, so that clip titles can be set correctly (when
+                #   required)
+                # Git #177 reports that this value might be 'None', so check
+                #   for that
+                if '_filename' in json_dict \
+                and json_dict['_filename'] is not None:
+                    dummy_video_obj.set_file_from_path(json_dict['_filename'])
+
+                # Update the dummy video object's metadata and/or description,
+                #   so that its timestamp list can be set
+                if 'chapters' in json_dict:
+
+                    dummy_video_obj.extract_timestamps_from_chapters(
+                        self,
+                        json_dict['chapters'],
+                    )
+
+                elif 'description' in json_dict:
+
+                    dummy_video_obj.set_video_descrip(
+                        self,
+                        json_dict['description'],
+                        self.main_win_obj.descrip_line_max_len,
+                    )
 
                 # In the Classic Progress List, remove the row for parent_obj
                 #   (if it still exists)
@@ -10271,6 +10613,7 @@ class TartubeApp(Gtk.Application):
         # Get the number of successes and failures
         success_count = self.process_manager_obj.success_count
         fail_count = self.process_manager_obj.fail_count
+        new_video_list = self.process_manager_obj.new_video_list
 
         # Get the time taken by the process operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
@@ -10294,6 +10637,19 @@ class TartubeApp(Gtk.Application):
         self.process_timer_id = None
         self.process_timer_check_time = None
 
+        # Set the video length and file size for any new media.Video objects
+        #   that have been created (by now, they should all exist on the
+        #   filesystem and be detectable there)
+        for new_video_obj in new_video_list:
+
+            new_video_path = new_video_obj.get_actual_path(self)
+            if new_video_path and os.path.isfile(new_video_path):
+
+                self.update_video_from_filesystem(
+                    new_video_obj,
+                    new_video_path,
+                )
+
         # After a process operation, save files, if allowed
         if self.operation_save_flag:
             self.save_config()
@@ -10312,6 +10668,14 @@ class TartubeApp(Gtk.Application):
         #   been closed to the system tray)
         if self.main_win_obj.is_visible():
             self.main_win_obj.show_all()
+
+        # If updates to the Video Index were disabled because of Gtk issues, we
+        #   must now redraw the Video Index and Video Catalogue from scratch
+        if self.gtk_emulate_broken_flag:
+
+            # Redraw the Video Index and Video Catalogue, re-selecting the
+            #   current selection, if any
+            self.main_win_obj.video_index_catalogue_reset(True)
 
         # Then show a dialogue window/desktop notification, if allowed
         if self.operation_dialogue_mode != 'default':
@@ -10680,6 +11044,7 @@ class TartubeApp(Gtk.Application):
         video_obj.set_name(video_name)
         video_obj.set_nickname(video_name)
         video_obj.set_video_descrip(
+            self,
             video_descrip,
             self.main_win_obj.descrip_line_max_len,
         )
@@ -10915,11 +11280,12 @@ class TartubeApp(Gtk.Application):
         self.mark_video_downloaded(video_obj, True)
 
 
-    def update_video_from_json(self, video_obj):
+    def update_video_from_json(self, video_obj, chapters_only_flag=False):
 
         """Called by self.update_video_when_file_found(),
-        .announce_video_clone() and
-        refresh.RefreshManager.refresh_from_default_destination().
+        .announce_video_clone(),
+        refresh.RefreshManager.refresh_from_default_destination() and
+        process.ProcessManager.run().
 
         If a video's JSON file exists, extract video statistics from it, and
         use them to update the video object.
@@ -10927,6 +11293,10 @@ class TartubeApp(Gtk.Application):
         Args:
 
             video_obj (media.Video): The video object to update
+
+            chapters_only_flag (bool): True when called by
+                process.ProcessManager, in which case only video timestamps are
+                updated
 
         """
 
@@ -10938,40 +11308,57 @@ class TartubeApp(Gtk.Application):
 
             json_dict = self.file_manager_obj.load_json(json_path)
 
-            if 'title' in json_dict:
-                video_obj.set_nickname(json_dict['title'])
+            if not chapters_only_flag:
 
-            if 'upload_date' in json_dict:
+                if 'title' in json_dict:
+                    video_obj.set_nickname(json_dict['title'])
 
-                try:
-                    # date_string in form YYYYMMDD
-                    date_string = json_dict['upload_date']
-                    dt_obj = datetime.datetime.strptime(date_string, '%Y%m%d')
-                    video_obj.set_upload_time(dt_obj.timestamp())
+                if 'upload_date' in json_dict:
 
-                except:
-                    video_obj.set_upload_time()
+                    try:
+                        # date_string in form YYYYMMDD
+                        date_string = json_dict['upload_date']
+                        dt_obj = datetime.datetime.strptime(
+                            date_string,
+                            '%Y%m%d',
+                        )
+                        video_obj.set_upload_time(dt_obj.timestamp())
 
-            if 'duration' in json_dict:
-                video_obj.set_duration(json_dict['duration'])
+                    except:
+                        video_obj.set_upload_time()
 
-            if 'webpage_url' in json_dict:
-                # !!! DEBUG: yt-dlp Git #119: filter out the extraneous
-                #   characters at the end of the URL, if present
-#                video_obj.set_source(json_dict['webpage_url'])
-                video_obj.set_source(
-                    re.sub(
-                        r'\&has_verified\=.*\&bpctr\=.*',
-                        '',
-                        json_dict['webpage_url'],
+                if 'duration' in json_dict:
+                    video_obj.set_duration(json_dict['duration'])
+
+                if 'webpage_url' in json_dict:
+                    # !!! DEBUG: yt-dlp Git #119: filter out the extraneous
+                    #   characters at the end of the URL, if present
+#                   video_obj.set_source(json_dict['webpage_url'])
+                    video_obj.set_source(
+                        re.sub(
+                            r'\&has_verified\=.*\&bpctr\=.*',
+                            '',
+                            json_dict['webpage_url'],
+                        )
                     )
+
+            if 'chapters' in json_dict \
+            and self.video_timestamps_extract_json_flag \
+            and (not self.stamp_list or self.video_timestamps_replace_flag):
+
+                video_obj.extract_timestamps_from_chapters(
+                    self,
+                    json_dict['chapters'],
                 )
 
-            if 'description' in json_dict:
-                video_obj.set_video_descrip(
-                    json_dict['description'],
-                    self.main_win_obj.descrip_line_max_len,
-                )
+            if not chapters_only_flag:
+
+                if 'description' in json_dict:
+                    video_obj.set_video_descrip(
+                        self,
+                        json_dict['description'],
+                        self.main_win_obj.descrip_line_max_len,
+                    )
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
@@ -11043,7 +11430,15 @@ class TartubeApp(Gtk.Application):
             )
 
         if override_flag or video_obj.file_size is None:
-            video_obj.set_file_size(os.path.getsize(video_path))
+            try:
+                video_obj.set_file_size(os.path.getsize(video_path))
+            except:
+                self.system_error(
+                    999,
+                    '\'' + video_obj.parent_obj.name \
+                    + '\': failed to set file size of video \'' \
+                    + video_obj.name + '\'',
+                )
 
 
     def set_duration_from_moviepy(self, video_obj, video_path):
@@ -11074,7 +11469,7 @@ class TartubeApp(Gtk.Application):
             self.system_error(
                 121,
                 '\'' + video_obj.parent_obj.name + '\': moviepy module' \
-                + 'failed to fetch duration of video \'' \
+                + ' failed to fetch duration of video \'' \
                 + video_obj.name + '\'',
             )
 
@@ -11310,7 +11705,7 @@ class TartubeApp(Gtk.Application):
         if parent_obj \
         and (
             not isinstance(parent_obj, media.Folder) \
-            or parent_obj.restrict_flag
+            or parent_obj.restrict_mode != 'open'
         ):
             return self.system_error(
                 124,
@@ -11399,7 +11794,7 @@ class TartubeApp(Gtk.Application):
         if parent_obj \
         and (
             not isinstance(parent_obj, media.Folder) \
-            or parent_obj.restrict_flag
+            or parent_obj.restrict_mode != 'open'
         ):
             return self.system_error(
                 127,
@@ -11456,7 +11851,7 @@ class TartubeApp(Gtk.Application):
 
 
     def add_folder(self, name, parent_obj=None, dl_sim_flag=False,
-    fixed_flag=False, priv_flag=False, restrict_flag=False, temp_flag=False):
+    restrict_mode='free', fixed_flag=False, priv_flag=False, temp_flag=False):
 
         """Can be called by anything.
 
@@ -11473,8 +11868,14 @@ class TartubeApp(Gtk.Application):
                 True, which forces simulated downloads for any videos,
                 channels or playlists contained in the folder
 
-            fixed_flag, priv_flag, restrict_flag, temp_flag (bool): Flags sent
-                to the object's .__init__() function
+            restrict_mode (str) - 'full' if this folder can contain videos, but
+                not channels/playlists/folders, 'partial' if this folder can
+                contain videos and folders, but not channels and playlists,
+                'open' if this folder can contain any combination of videos,
+                channels, playlists and folders
+
+            fixed_flag, priv_flag, temp_flag (bool): Flags sent to the object's
+                .__init__() function
 
         Returns:
 
@@ -11490,7 +11891,7 @@ class TartubeApp(Gtk.Application):
         if parent_obj \
         and (
             not isinstance(parent_obj, media.Folder) \
-            or parent_obj.restrict_flag
+            or parent_obj.restrict_mode == 'full'
         ):
             return self.system_error(
                 130,
@@ -11520,9 +11921,9 @@ class TartubeApp(Gtk.Application):
             name,
             parent_obj,
             None,                   # Use default download options
+            restrict_mode,
             fixed_flag,
             priv_flag,
-            restrict_flag,
             temp_flag,
         )
 
@@ -11743,11 +12144,23 @@ class TartubeApp(Gtk.Application):
 
             return
 
-        elif dest_obj.restrict_flag:
+        elif dest_obj.restrict_mode == 'full':
 
             self.dialogue_manager_obj.show_msg_dialogue(
                 _(
                 'The folder \'{0}\' can only contain videos',
+                ).format(dest_obj.name),
+                'error',
+                'ok',
+            )
+
+            return
+
+        elif dest_obj.restrict_mode == 'partial':
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'The folder \'{0}\' can only contain other folders and videos',
                 ).format(dest_obj.name),
                 'error',
                 'ok',
@@ -11802,7 +12215,7 @@ class TartubeApp(Gtk.Application):
         )
 
         if dest_obj.temp_flag:
-            msg = '\n\n' + _(
+            msg += '\n\n' + _(
                 'WARNING: The destination folder is marked as temporary, so' \
                 + ' everything inside it will be DELETED when Tartube' \
                 + ' restarts!',
@@ -18792,7 +19205,7 @@ class TartubeApp(Gtk.Application):
             container_obj = self.media_reg_dict[dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
-            and not container_obj.restrict_flag:
+            and container_obj.restrict_mode == 'open':
                 suggest_parent_name = container_obj.name
 
         while keep_open_flag:
@@ -18942,7 +19355,7 @@ class TartubeApp(Gtk.Application):
             container_obj = self.media_reg_dict[dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
-            and not container_obj.restrict_flag:
+            and container_obj.restrict_mode != 'full':
                 suggest_parent_name = container_obj.name
 
         dialogue_win = mainwin.AddFolderDialogue(
@@ -19055,7 +19468,7 @@ class TartubeApp(Gtk.Application):
             container_obj = self.media_reg_dict[dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
-            and not container_obj.restrict_flag:
+            and container_obj.restrict_mode == 'open':
                 suggest_parent_name = container_obj.name
 
         while keep_open_flag:
@@ -20664,6 +21077,17 @@ class TartubeApp(Gtk.Application):
             )
 
 
+    def set_custom_dl_split_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19372 set_custom_dl_split_flag')
+
+        if not flag:
+            self.custom_dl_split_flag = False
+        else:
+            self.custom_dl_split_flag = True
+
+
     def set_custom_invidious_mirror(self, value):
 
         if DEBUG_FUNC_FLAG:
@@ -21122,15 +21546,12 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_subtitles_flag = True
 
 
-    def set_ignore_yt_age_restrict_flag(self, flag):
+    def set_ignore_yt_age_restrict_mode(self, value):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19803 set_ignore_yt_age_restrict_flag')
+            utils.debug_time('app 19803 set_ignore_yt_age_restrict_mode')
 
-        if not flag:
-            self.ignore_yt_age_restrict_flag = False
-        else:
-            self.ignore_yt_age_restrict_flag = True
+        self.ignore_yt_age_restrict_mode = value
 
 
     def set_ignore_yt_copyright_flag(self, flag):
@@ -21845,6 +22266,88 @@ class TartubeApp(Gtk.Application):
         self.sound_custom = value
 
 
+    def set_split_video_add_db_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20454 set_split_video_add_db_flag')
+
+        if not flag:
+            self.split_video_add_db_flag = False
+        else:
+            self.split_video_add_db_flag = True
+
+
+    def set_split_video_auto_delete_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20455 set_split_video_auto_delete_flag')
+
+        if not flag:
+            self.split_video_auto_delete_flag = False
+        else:
+            self.split_video_auto_delete_flag = True
+
+
+    def set_split_video_auto_open_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20456 set_split_video_auto_open_flag')
+
+        if not flag:
+            self.split_video_auto_open_flag = False
+        else:
+            self.split_video_auto_open_flag = True
+
+
+    def set_split_video_clips_dir_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20457 set_split_video_clips_dir_flag')
+
+        if not flag:
+            self.split_video_clips_dir_flag = False
+        else:
+            self.split_video_clips_dir_flag = True
+
+
+    def set_split_video_copy_thumb_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20458 set_split_video_copy_thumb_flag')
+
+        if not flag:
+            self.split_video_copy_thumb_flag = False
+        else:
+            self.split_video_copy_thumb_flag = True
+
+
+    def set_split_video_custom_title(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20459 set_split_video_custom_title')
+
+        self.split_video_custom_title = value
+
+
+    def set_split_video_name_mode(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20460 set_split_video_name_mode')
+
+        self.split_video_name_mode = value
+
+
+    def set_split_video_subdir_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20461 set_split_video_subdir_flag')
+
+        if not flag:
+            self.split_video_subdir_flag = False
+        else:
+            self.split_video_subdir_flag = True
+
+
     def set_system_error_show_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -21889,10 +22392,26 @@ class TartubeApp(Gtk.Application):
             self.system_warning_show_flag = True
 
 
+    def set_temp_stamp_list(self, stamp_list):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20495 set_temp_stamp_list')
+
+        self.temp_stamp_list = stamp_list
+
+
+    def reset_temp_stamp_list(self):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20496 reset_temp_stamp_list')
+
+        self.temp_stamp_list = []
+
+
     def set_thumb_size_custom(self, value):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 20495 set_thumb_size_custom')
+            utils.debug_time('app 20497 set_thumb_size_custom')
 
         self.thumb_size_custom = value
 
@@ -22030,6 +22549,54 @@ class TartubeApp(Gtk.Application):
         self.video_res_default = value
 
 
+    def set_video_timestamps_extract_descrip_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'app 20601 set_video_timestamps_extract_descrip_flag',
+            )
+
+        if not flag:
+            self.video_timestamps_extract_descrip_flag = False
+        else:
+            self.video_timestamps_extract_descrip_flag = True
+
+
+    def set_video_timestamps_extract_json_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'app 20601 set_video_timestamps_extract_json_flag',
+            )
+
+        if not flag:
+            self.video_timestamps_extract_json_flag = False
+        else:
+            self.video_timestamps_extract_json_flag = True
+
+
+    def set_video_timestamps_re_extract_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20602 set_video_timestamps_re_extract_flag')
+
+        if not flag:
+            self.video_timestamps_re_extract_flag = False
+        else:
+            self.video_timestamps_re_extract_flag = True
+
+
+    def set_video_timestamps_replace_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20603 set_video_timestamps_replace_flag')
+
+        if not flag:
+            self.video_timestamps_replace_flag = False
+        else:
+            self.video_timestamps_replace_flag = True
+
+
     def set_ytdl_fork(self, value):
 
         if DEBUG_FUNC_FLAG:
@@ -22039,6 +22606,17 @@ class TartubeApp(Gtk.Application):
 
         # Update main window menu items
         self.main_win_obj.update_menu()
+
+
+    def set_ytdl_fork_no_dependency_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20615 set_ytdl_fork_no_dependency_flag')
+
+        if not flag:
+            self.ytdl_fork_no_dependency_flag = False
+        else:
+            self.ytdl_fork_no_dependency_flag = True
 
 
     def set_ytdl_output_ignore_json_flag(self, flag):

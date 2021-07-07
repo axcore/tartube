@@ -597,7 +597,13 @@ class SetupWizWin(GenericWizWin):
         # The name of the youtube-dl fork to use, by default ('None' when
         #   youtube-dl itself should be used)
         self.ytdl_fork = None
-        # The new value of mainapp.TartubeApp.ytdl_update_current(), if any.
+        # Flag set to True if yt-dlp (only), when installed via pip, should be
+        #   installed without dependencies
+        if os.name == 'nt':
+            self.ytdl_fork_no_dependency_flag = True
+        else:
+            self.ytdl_fork_no_dependency_flag = False
+        # The new value of mainapp.TartubeApp.ytdl_update_current(), if any
         self.ytdl_update_current = None
 
         # Flag set to True, once the 'More options' button has been clicked,
@@ -670,6 +676,10 @@ class SetupWizWin(GenericWizWin):
 
         # (None values are acceptable)
         self.app_obj.set_ytdl_fork(self.ytdl_fork)
+
+        self.app_obj.set_ytdl_fork_no_dependency_flag(
+            self.ytdl_fork_no_dependency_flag,
+        )
 
         # (A None value, only if it hasn't been changed)
         if self.ytdl_update_current is not None:
@@ -906,12 +916,14 @@ class SetupWizWin(GenericWizWin):
         )
 
         # yt-dlp
-        radiobutton = self.setup_set_downloader_page_add_button(
+        radiobutton, checkbutton = self.setup_set_downloader_page_add_button(
             1,                  # Row number
             '<b>yt-dlp</b>: <i>' \
             + self.app_obj.ytdl_fork_descrip_dict['yt-dlp'] \
             + '</i>',
             _('Use yt-dlp'),
+            None,               # No radiobutton group yet
+            'button'            # Show a checkbutton
         )
 
         # youtube-dl
@@ -927,18 +939,22 @@ class SetupWizWin(GenericWizWin):
         # Any other fork
         radiobutton3, entry = self.setup_set_downloader_page_add_button(
             3,                  # Row number
-            self.app_obj.ytdl_fork_descrip_dict['custom'],
-            _('Use a different fork of youtube-dl'),
+            '<b>' + _('Other forks') + ':</b> <i>' \
+            + self.app_obj.ytdl_fork_descrip_dict['custom'] \
+            + '</i>',
+            _('Use this fork:'),
             radiobutton2,
-            True,               # Show an entry
+            'entry',            # Show an entry
         )
 
-        # Set widgets to their initial state
+        # # Set widgets' initial states
         if self.ytdl_fork is None or self.ytdl_fork == 'youtube-dl':
             radiobutton2.set_active(True)
+            checkbutton.set_sensitive(False)
             entry.set_sensitive(False)
         elif self.ytdl_fork == 'yt-dlp':
             radiobutton.set_active(True)
+            checkbutton.set_sensitive(True)
             entry.set_sensitive(False)
         else:
             radiobutton3.set_active(True)
@@ -946,6 +962,7 @@ class SetupWizWin(GenericWizWin):
                 entry.set_text(self.ytdl_fork)
             else:
                 entry.set_text('')
+            checkbutton.set_sensitive(False)
             entry.set_sensitive(True)
 
         # (Signal connects from the call to
@@ -953,18 +970,22 @@ class SetupWizWin(GenericWizWin):
         radiobutton.connect(
             'toggled',
             self.on_button_ytdl_fork_toggled,
+            checkbutton,
             entry,
             'yt-dlp',
         )
+        checkbutton.connect('toggled', self.on_button_ytdlp_install_toggled)
         radiobutton2.connect(
             'toggled',
             self.on_button_ytdl_fork_toggled,
+            checkbutton,
             entry,
             'youtube-dl',
         )
         radiobutton3.connect(
             'toggled',
             self.on_button_ytdl_fork_toggled,
+            checkbutton,
             entry,
         )
         entry.connect(
@@ -975,7 +996,7 @@ class SetupWizWin(GenericWizWin):
 
 
     def setup_set_downloader_page_add_button(self, row, label_text, radio_text,
-    radiobutton=None, custom_flag=False):
+    radiobutton=None, extra_mode=None):
 
         """Called by self.setup_set_downloader_page().
 
@@ -992,17 +1013,19 @@ class SetupWizWin(GenericWizWin):
             radiobutton (Gtk.RadioButton): The previous radiobutton in the same
                 group
 
-            custom_flag (bool): True for the third option, in which case we
-                add an extra Gtk.Entry
+            extra_mode (str or None): 'entry' to show an extra Gtk.Entry,
+                'button' to show an extra Gtk.CheckButton, or None for no
+                extra widget
 
         Return values:
 
-            If custom_flag is False, returns the radiobutton. If custom_flag is
-                True, returns the radiobutton and entry box as a list
+            If 'extra_mode' is None, returns the radiobutton. If 'entry' or
+                'button', returns the radiobutton and the extra widget as a
+                list
 
         """
 
-        if not custom_flag:
+        if not extra_mode:
             grid_width = 1
         else:
             grid_width = 2
@@ -1042,20 +1065,34 @@ class SetupWizWin(GenericWizWin):
             radiobutton2,
         )
 
-        if not custom_flag:
+        if extra_mode == 'button':
 
-            return radiobutton2
+            # For yt-dlp, add a checkbutton, and return it with the radiobutton
+            checkbutton = Gtk.CheckButton.new_with_label(
+                _(
+                _('Install without dependencies') + '\n' \
+                + _('(recommended on MS Windows)'),
+                ),
+            )
+            grid.attach(checkbutton, 1, 1, 1, 1)
+            # (Signal connect appears in the calling function)
 
-        else:
+            return radiobutton2, checkbutton
+
+        elif extra_mode == 'entry':
 
             # For other forks, add an entry, and return it with the radiobutton
             entry = Gtk.Entry()
             grid.attach(entry, 1, 1, 1, 1)
-            entry.set_hexpand(False)
+            entry.set_hexpand(True)
             entry.set_editable(True)
             # (Signal connect appears in the calling function)
+            radiobutton2.set_hexpand(False)
 
             return radiobutton2, entry
+
+        else:
+            return radiobutton2
 
 
     def setup_fetch_downloader_page(self):
@@ -1675,7 +1712,8 @@ class SetupWizWin(GenericWizWin):
         self.more_options_flag = True
 
 
-    def on_button_ytdl_fork_toggled(self, radiobutton, entry, fork_type=None):
+    def on_button_ytdl_fork_toggled(self, radiobutton,  checkbutton, entry, \
+    fork_type=None):
 
         """Called from callback in self.setup_set_downloader_page().
 
@@ -1685,6 +1723,8 @@ class SetupWizWin(GenericWizWin):
         Args:
 
             radiobutton (Gtk.Radiobutton): The widget clicked
+
+            checkbutton (Gtk.CheckButton): Another widget to be updated
 
             entry (Gtk.Entry): Another widget to be updated
 
@@ -1705,19 +1745,40 @@ class SetupWizWin(GenericWizWin):
                 else:
                     self.ytdl_fork = fork_name
 
+                checkbutton.set_sensitive(False)
                 entry.set_sensitive(True)
 
             elif fork_type == 'youtube-dl':
 
                 self.ytdl_fork = None
+                checkbutton.set_sensitive(False)
                 entry.set_text('')
                 entry.set_sensitive(False)
 
             elif fork_type == 'yt-dlp':
 
                 self.ytdl_fork = fork_type
+                checkbutton.set_sensitive(True)
                 entry.set_text('')
                 entry.set_sensitive(False)
+
+
+    def on_button_ytdlp_install_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_set_downloader_page().
+
+        Sets the flag to install yt-dlp with or without dependencies.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+            self.ytdl_fork_no_dependency_flag = True
+        else:
+            self.ytdl_fork_no_dependency_flag = False
 
 
     def on_combo_update_changed(self, combo):

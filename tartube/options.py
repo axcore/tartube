@@ -234,7 +234,7 @@ class OptionsManager(object):
         prefer_free_formats (bool): If True, prefer free video formats unless
             one is specfied by video_format, etc
 
-        yt_skip_dash (bool): If True, do not download DASh-related data with
+        yt_skip_dash (bool): If True, do not download DASH-related data with
             YouTube videos
 
         merge_output_format (str): If a merge is required (e.g.
@@ -354,7 +354,7 @@ class OptionsManager(object):
             'extra_cmd_string' contains the URL to check/download. Otherwise,
             the source URL of each affected media data object(s) is used, as
             normal. Ignored if 'direct_cmd_flag' is False
-            
+
     TARTUBE OPTIONS (not passed to youtube-dl directly)
 
         move_description (bool):
@@ -1018,7 +1018,8 @@ class OptionsParser(object):
             elif option_holder_obj.name == 'audio_format':
                 value = copy_dict[option_holder_obj.name]
 
-                if value != option_holder_obj.default_value:
+                if copy_dict['extract_audio'] \
+                and value != option_holder_obj.default_value:
                     options_list.append('-x')
                     options_list.append(option_holder_obj.switch)
                     options_list.append(utils.to_string(value))

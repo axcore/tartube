@@ -283,6 +283,402 @@ def check_url(url):
         return False
 
 
+def clip_add_to_db(app_obj, dest_obj, orig_video_obj, clip_title, \
+clip_path=None):
+
+    """Called by downloads.ClipDownloader.extract_stdout_data() and
+    process.ProcessManager.run().
+
+    Add the video clip to the Tartube database.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        dest_obj (media.Folder): The folder object into which the new video
+            object is to be created
+
+        orig_video_obj (media.Video): The original video, from which the video
+            clip has been split
+
+        clip_title (str): The clip title for the new video, matching its
+            filename
+
+        clip_path (str): Full path to the clip, if known (if not known, we
+            guess the path)
+
+    Return values:
+
+        The new media.Video object on success, or None of failure
+
+    """
+
+    new_video_obj = app_obj.add_video(
+        dest_obj,
+        None,                   # No source
+        False,                  # Not a simulated download
+        True,                   # Don't sort the container's child list yet
+    )
+
+    if not new_video_obj:
+
+        return None
+
+    else:
+
+        source = orig_video_obj.source
+        if source is None or source == '':
+            source = _('No link')
+
+        new_video_obj.set_name(clip_title)
+        new_video_obj.set_nickname(clip_title)
+        new_video_obj.set_video_descrip(
+            app_obj,
+            _('Split from original video') + ' (' \
+            + str(orig_video_obj.dbid) + ')\n' + orig_video_obj.name \
+            + '\n' + orig_video_obj.source,
+            app_obj.main_win_obj.descrip_line_max_len,
+        )
+
+        if clip_path is not None:
+
+            # Use the supplied path (when called by downloads.ClipDownloader)
+            new_video_obj.set_file_from_path(clip_path)
+
+        else:
+
+            # Guess the path (when called by process.ProcessManager, it's safe
+            #   to do that)
+            new_video_obj.set_file(clip_title, orig_video_obj.file_ext)
+
+        # Specifying the original video clones its .receive_time
+        new_video_obj.set_receive_time(orig_video_obj)
+        new_video_obj.set_upload_time(orig_video_obj.upload_time)
+
+        # (The video length and file size is set elsewhere)
+
+        # The video exists, so mark it as downloaded (even if only the original
+        #   video was downloaded)
+        app_obj.mark_video_downloaded(new_video_obj, True)
+
+        # Copy the original video's thumbnail, if required
+        if app_obj.split_video_copy_thumb_flag:
+
+            thumb_path = find_thumbnail(app_obj, orig_video_obj)
+            if thumb_path:
+
+                new_video_path = new_video_obj.get_actual_path(app_obj)
+                thumb_name, thumb_ext = os.path.splitext(thumb_path)
+                video_name, video_ext = os.path.splitext(new_video_path)
+                new_thumb_path = video_name + thumb_ext
+
+                if not os.path.isfile(new_thumb_path):
+                    try:
+                        shutil.copyfile(thumb_path, new_thumb_path)
+                    except:
+                        pass
+
+        # Clips split off from an original use a different icon
+        new_video_obj.set_split_flag(True)
+
+        # Now the video's properties are fully updated, the parent containers
+        #   can be sorted
+        dest_obj.sort_children(app_obj)
+        app_obj.fixed_all_folder.sort_children(app_obj)
+
+        # If the clips' parent media data object (a channel, playlist or
+        #   folder) is selected in the Video Index, update the Video Catalogue
+        #   for the clip
+        app_obj.main_win_obj.video_catalogue_update_video(new_video_obj)
+
+        return new_video_obj
+
+
+def clip_prepare_title(app_obj, video_obj, clip_title_dict, clip_title,
+clip_num, clip_max):
+
+    """Called by downloads.ClipDownloader.do_download() and
+    process.ProcessManager.run().
+
+    Before creating a video clip, decide what its clip title should be.
+    The title depends on various settings.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video to be sent to FFmpeg
+
+        clip_title_dict (dict): Dictionary of clip tiles used when splitting a
+            video into clips), used to re-name duplicates
+
+        clip_title (str): When splitting a video, the title of this video clip
+            (if specified)
+
+        clip_num (int): When splitting a video, the number of video clips split
+            so far (including this one, so the first video clip is #1)
+
+        clip_max (int): The number of clips to be split from this video in
+            total
+
+    Return values:
+
+        The clip title
+
+    """
+
+    # If 'clip_title' is not specified, use a generic clip title
+    # (The value is None only when not splitting a video)
+    if clip_title is not None and clip_title == '':
+        clip_title = app_obj.split_video_custom_title
+
+    # All clips from the same video should be formatted with a fixed number of
+    #   digits (so any list of files will appear in the correct order)
+    if clip_max > 99:
+        clip_str = "{:03d}".format(clip_num)
+    elif clip_max > 9:
+        clip_str = "{:02d}".format(clip_num)
+    else:
+        clip_str = str(clip_num)
+
+    # Set the video clip's filename, using the specified format
+    # Note that dummy media.Video objects might not have a .file_name set
+    #   (especially in an operation started in Classic Mode), so we have to
+    #   take account of that
+    if app_obj.split_video_name_mode == 'num':
+        mod_title = clip_str
+    elif app_obj.split_video_name_mode == 'clip':
+        mod_title = clip_title
+    elif app_obj.split_video_name_mode == 'num_clip':
+        mod_title = clip_str + ' ' + clip_title
+    elif app_obj.split_video_name_mode == 'clip_num':
+        mod_title = clip_title + ' ' + clip_str
+
+    elif app_obj.split_video_name_mode == 'orig':
+
+        if video_obj.file_name is None:
+            mod_title = app_obj.split_video_custom_title
+        else:
+            mod_title = video_obj.file_name
+
+    elif app_obj.split_video_name_mode == 'orig_num':
+
+        if video_obj.file_name is None:
+            mod_title = clip_str
+        else:
+            mod_title = video_obj.file_name + ' ' + clip_str
+
+    elif app_obj.split_video_name_mode == 'orig_clip':
+
+        if video_obj.file_name is None:
+            mod_title = clip_title
+        else:
+            mod_title = video_obj.file_name + ' ' + clip_title
+
+    elif app_obj.split_video_name_mode == 'orig_num_clip':
+
+        if video_obj.file_name is None:
+            mod_title = clip_str + ' ' + clip_title
+        else:
+            mod_title = video_obj.file_name + ' ' + clip_str + ' ' + clip_title
+
+    elif app_obj.split_video_name_mode == 'orig_clip_num':
+
+        if video_obj.file_name is None:
+            mod_title = clip_title + ' ' + clip_str
+        else:
+            mod_title = video_obj.file_name + ' ' + clip_title + ' ' + clip_str
+
+    # Failsafe
+    if mod_title is None:
+        mod_title = clip_title
+
+    # Ensure that we don't write multiple video clips with the same clip
+    #   title (i.e. the same filename)
+    count = 0
+    this_title = mod_title
+
+    if video_obj.dummy_flag:
+        parent_dir = video_obj.dummy_dir
+    else:
+        parent_dir = video_obj.parent_obj.get_actual_dir(app_obj)
+
+    if video_obj.file_ext is None:
+
+        # (When launched from Classic Mode, we can't rely on the file name/
+        #   extension being available; see the comments in
+        #   mainapp.TartubeApp.download_manager_finished()
+        this_path = os.path.abspath(
+            os.path.join(
+                parent_dir,
+                this_title,
+            ),
+        )
+
+    elif not app_obj.split_video_subdir_flag:
+
+        this_path = os.path.abspath(
+            os.path.join(
+                parent_dir,
+                this_title + video_obj.file_ext,
+            ),
+        )
+
+    else:
+
+        this_path = os.path.abspath(
+            os.path.join(
+                parent_dir,
+                video_obj.file_name,
+                this_title + video_obj.file_ext,
+            ),
+        )
+
+    while 1:
+
+        if not this_title in clip_title_dict and not os.path.isfile(this_path):
+
+            return this_title
+
+        else:
+
+            # (Proceed to the next iteration of the loop, adding a number
+            #   to the end of the clip title until we get a file path that
+            #   hasn't already been written)
+            count += 1
+            this_title = mod_title + '_' + str(count)
+
+            if video_obj.file_ext is None:
+
+                this_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        this_title,
+                    ),
+                )
+
+            elif not app_obj.split_video_subdir_flag:
+
+                this_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        this_title + video_obj.file_ext,
+                    ),
+                )
+
+            else:
+
+                this_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        video_obj.file_name,
+                        this_title + video_obj.file_ext,
+                    ),
+                )
+
+
+def clip_set_destination(app_obj, video_obj):
+
+    """Called by downloads.ClipDownloader.do_download() and
+    process.ProcessManager.run().
+
+    Sets the media.Folder and/or the filestem folder in which the video clips
+    will be created/downloaded.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video object whose video files is to be
+            split into clips
+
+    Return values:
+
+        A list in the form
+            (
+                arent_folder_object, parent_directory,
+                destination_folder_object, destination_directory
+            )
+        ...with all values set to None if there was an error
+
+    """
+
+    # parent_obj is either the Video Clips folder, or the original video's
+    #   container (which might be a channel, playlist or folder)
+    if app_obj.split_video_clips_dir_flag:
+        parent_obj = app_obj.fixed_clips_folder
+    else:
+        parent_obj = video_obj.parent_obj
+
+    parent_dir = parent_obj.get_actual_dir(app_obj)
+
+    # Now set the actual directory into which the video clips are to be
+    #   created/downloaded
+    # Original and clip files in the same directory
+    if not app_obj.split_video_subdir_flag:
+
+        return parent_obj, parent_dir, parent_obj, parent_dir
+
+    # Otherwise, video clips are in a sub-directory of 'parent_dir'
+    if not isinstance(parent_obj, media.Folder) \
+    or not app_obj.split_video_add_db_flag:
+
+        # Cannot create a media.Folder inside a channel/playlist, so simply
+        #   create a sub-directory in the filesystem. The video clips can be
+        #   created there, but can't be added to the Tartube database
+        dest_dir = os.path.abspath(
+            os.path.join(
+                parent_obj.get_actual_dir(app_obj),
+                # Sub-directory is named after the video
+                video_obj.file_name,
+            ),
+        )
+
+        if not os.path.isdir(dest_dir):
+            os.makedirs(dest_dir)
+
+        return parent_obj, parent_dir, None, dest_dir
+
+    # Otherwise, we can create a media.Folder inside another media.Folder
+    if video_obj.name in app_obj.media_name_dict:
+
+        # A media.Folder with the right name already exists
+        dbid = app_obj.media_name_dict[video_obj.name]
+        dest_obj = app_obj.media_reg_dict[dbid]
+
+        if dest_obj.parent_obj != parent_obj:
+
+            # There is already a media.Folder with the same name, somewhere
+            #   else in the database. This is a fatal error
+            return None, None, None, None
+
+        else:
+
+            # Use the existing media.Folder
+            dest_dir = dest_obj.get_actual_dir(app_obj)
+
+            return parent_obj, parent_dir, dest_obj, dest_dir
+
+    # The media.Folder corresponding to the directory doesn't exist yet
+    dest_obj = app_obj.add_folder(
+        video_obj.name,             # The folder name
+        parent_obj,
+        False,                      # No simulated downloads
+        parent_obj.restrict_mode,
+    )
+
+    if not dest_obj:
+
+        # Some folders (e.g. Unsorted Videos) can't contain other folders
+        return None, None, None, None
+
+    else:
+
+        dest_dir = dest_obj.get_actual_dir(app_obj)
+
+        return parent_obj, parent_dir, dest_obj, dest_dir
+
+
 def convert_item(item, to_unicode=False):
 
     """Can be called by anything.
@@ -1147,7 +1543,7 @@ def format_bytes(num_bytes):
     return "%.2f%s" % (output_value, suffix)
 
 
-def generate_system_cmd(app_obj, media_data_obj, options_list,
+def generate_ytdl_system_cmd(app_obj, media_data_obj, options_list,
 dl_sim_flag=False, dl_classic_flag=False, missing_video_check_flag=None,
 divert_mode=None):
 
@@ -1273,7 +1669,7 @@ divert_mode=None):
     if os.name != 'nt':
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceeded by 'python3'
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
     #   (Git #243)
     if app_obj.ytdl_path_custom_flag:
         cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
@@ -1287,8 +1683,8 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
 
     """Called by downloads.VideoDownloader.do_download() (only).
 
-    A simplified version of utils.generate_system_cmd().
-    
+    A simplified version of utils.generate_ytdl_system_cmd().
+
     Prepare the system command that instructs youtube-dl to download the
     specified media data object, when the options.OptionsManager object wants
     to set most command line options directly (i.e. when the 'direct_cmd_flag'
@@ -1323,7 +1719,7 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     #   (converting a string into a list of elements separated by whitespace)
     options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
 
-    # Set the list. At the moment, a custom path must be preceeded by 'python3'
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
     #   (Git #243)
     if app_obj.ytdl_path_custom_flag:
         cmd_list = ['python3'] + [ytdl_path] + options_list
@@ -1333,10 +1729,157 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     # Add the source URL, if allowed
     if not options_obj.options_dict['direct_url_flag'] \
     and media_data_obj.source is not None:
-        cmd_list.append( [media_data_obj.source] ) 
+        cmd_list.append( [media_data_obj.source] )
 
     return cmd_list
-    
+
+
+def generate_split_system_cmd(app_obj, orig_video_obj, options_list, dest_dir,
+clip_title, start_stamp, stop_stamp, divert_mode, classic_flag):
+
+    """Called by downloads.ClipDownloader.do_download() (only).
+
+    A simplified version of utils.generate_ytdl_system_cmd().
+
+    Prepares the system command that instructs youtube-dl to download a video
+    clip (instead of downloading the whole video).
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        orig_video_obj (media.Video): The video object for the video from which
+            the clip is downloaded
+
+        options_list (list): A list of download options generated by a call to
+            options.OptionsParser.parse()
+
+        dest_dir (str): The directory into which the clip will be downloaded
+
+        clip_title (str): The title of the clip (used as the clip's filename,
+            so must not be None)
+
+        start_stamp (str): Timestamp at which the clip starts (in a format
+            recognised by FFmpeg)
+
+        stop_stamp (str or None): Timestamp at which the clip stops. If not
+            specified, then the stop point is the end of the video
+
+        divert_mode (str): If not None, should be one of the values of
+            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube',
+            'invidious' or 'other'. If not 'default', a media.Video object
+            whose source URL points to YouTube should be converted to the
+            specified alternative YouTube front-end (no conversion takes place
+            for channels/playlists/folders)
+
+        classic_flag (bool): Specifies the (standard) operation type. True for
+            'classic_custom', False for 'custom'
+
+    """
+
+    # Filter out download options that get in the way. A list of them is
+    #   specified in mainapp.TartubeApp.split_ignore_option_dict
+    mod_options_list = []
+    while options_list:
+
+        item = options_list.pop(0)
+        if item in app_obj.split_ignore_option_dict:
+
+            if app_obj.split_ignore_option_dict[item]:
+                # This option takes an argument
+                options_list.pop(0)
+
+        else:
+            mod_options_list.append(item)
+
+    # Set the file format. If none is specified by download options, then use
+    #   a default one
+    # FFmpeg cannot split media in DASH formats, so we need to check for that
+    # If --format is not specified but --extract_audio is specified, then don't
+    #   insert a --format option at all
+    format_match_flag = False
+    audio_match_flag = False
+    for i in range(0, len(mod_options_list)):
+
+        if mod_options_list[i] == '-f' or mod_options_list[i] == '--format':
+
+            mod_options_list[i+1] = '(' + mod_options_list[i + 1] \
+            + ')[protocol!*=dash]'
+
+            format_match_flag = True
+
+        if mod_options_list[i] == '-x' \
+        or mod_options_list[i] == '--extract-audio':
+
+            audio_match_flag = True
+
+    if not format_match_flag and not audio_match_flag:
+
+        mod_options_list.append('-f')
+        mod_options_list.append('(bestvideo+bestaudio/best)[protocol!*=dash]')
+
+    # Supply youtube-dl with the path to the ffmpeg binary, if the user has
+    #   provided one
+    if app_obj.ffmpeg_path is not None:
+        mod_options_list.append('--ffmpeg-location')
+        mod_options_list.append(app_obj.ffmpeg_path)
+
+    # Specify the external downloader, and the timestamps for the clip
+    stamp_arg = '-ss ' + start_stamp
+    if stop_stamp is not None:
+        stamp_arg += ' -to ' + stop_stamp
+
+    mod_options_list.append('--external-downloader')
+    mod_options_list.append('ffmpeg')
+    mod_options_list.append('--external-downloader-args')
+    mod_options_list.append(stamp_arg)
+
+    # Set the output template
+    if not classic_flag:
+
+        template = os.path.abspath(
+            os.path.join(dest_dir, clip_title + '.%(ext)s'),
+        )
+
+    else:
+
+        template = os.path.abspath(
+            os.path.join(orig_video_obj.dummy_dir, clip_title + '.%(ext)s'),
+        )
+
+    mod_options_list.append('-o')
+    mod_options_list.append(template)
+
+    # Convert a YouTube URL to an alternative YouTube front-end, if required
+    source = orig_video_obj.source
+    if divert_mode is not None:
+        if divert_mode == 'hooktube':
+            source = convert_youtube_to_hooktube(source)
+        elif divert_mode == 'invidious':
+            source = convert_youtube_to_invidious(app_obj, source)
+        elif divert_mode == 'custom' \
+        and app_obj.custom_dl_divert_website is not None \
+        and len(app_obj.custom_dl_divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source)
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
+    #   (Git #243)
+    if app_obj.ytdl_path_custom_flag:
+
+        cmd_list \
+        = ['python3'] + [ytdl_path] + mod_options_list + [source]
+
+    else:
+
+        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+    return cmd_list
+
 
 def get_encoding():
 
@@ -1651,6 +2194,63 @@ def parse_options(options_string):
     return return_list
 
 
+def prepare_video_clip(stamp_list, clip_num):
+
+    """Can be called by anything.
+
+    media.Video.stamp_list stores details for video clips in groups of three,
+    in the form
+        [start_stamp, stop_stamp, clip_title]
+
+    This function is called with a copy of media.Video.stamp_list (or some data
+    in the same format), and the index of one of those groups, corresponding to
+    a single video clip.
+
+    If 'stop_stamp' is not specified, then 'start_stamp' of the following
+    clip is used (unless that clip also starts at the same time, in which
+    case we use the next clip that does not start at the same time).
+
+    If there are no more clips, then this clip will end at the end of the
+    video.
+
+    Args:
+
+        clip_num (int): The index of a group in self.stamp_list, the first
+            clip is #0. It is the calling function's responsibility to
+            ensure that clip_num is not outside the bounds of
+            self.stamp_list
+
+    Return values:
+
+        Returns a list in the form
+
+            start_stamp, stop_stamp, clip_title
+
+        ...in which 'stop_stamp' might have been modified, as described
+            above
+
+    """
+
+    list_size = len(stamp_list)
+    mini_list = stamp_list[clip_num]
+
+    start_stamp = mini_list[0]
+    stop_stamp = mini_list[1]
+    clip_title = mini_list[2]
+
+    if stop_stamp is None and clip_num < (list_size - 1):
+
+        for i in range((clip_num + 1), list_size):
+
+            next_list = stamp_list[i]
+
+            if next_list[0] != start_stamp:
+                stop_stamp = next_list[0]
+                break
+
+    return start_stamp, stop_stamp, clip_title
+
+
 def rename_file(app_obj, old_path, new_path):
 
     """Can be called by anything.
@@ -1659,6 +2259,8 @@ def rename_file(app_obj, old_path, new_path):
     be.)
 
     Args:
+
+        app_obj (mainapp.TartubeApp): The main application
 
         old_path (str): Full path to the file to be renamed
 
@@ -2020,6 +2622,227 @@ split_words_flag=False):
 
         # Empty string
         return string
+
+
+def timestamp_add_second(app_obj, stamp=None):
+
+    """Can be called by anything.
+
+    Adds a second to a timestamp, converting a value like '1:59' to '2:00', or
+    a value like '1:59:59' to '2:00:00'.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        stamp (str): A timestamp in the form 'mm:ss' or 'h:mm:ss'. Leading
+            zeroes are optional for all components, and the 'h' component can
+            contain any number of digits
+
+    Returns:
+
+        The converted string. If the supplied timestamp is invalid or not
+            specified, its value is returned unmodified
+
+    """
+
+    if stamp is not None:
+
+        regex = r'^' + app_obj.timestamp_regex + r'$'
+        match = re.search(regex, stamp)
+        if match:
+
+            hours = match.groups()[1]
+            if hours is not None:
+                hours = int(hours)
+
+            minutes = int(match.groups()[2])
+            seconds = int(match.groups()[3])
+
+            seconds += 1
+            if seconds >= 60:
+                seconds = 0
+                minutes += 1
+
+                if minutes >= 60:
+                    minutes = 0
+                    if hours is not None:
+                        hours += 1
+                    else:
+                        hours = 1
+
+            stamp = '{:02d}'.format(minutes) + ':{:02d}'.format(seconds)
+            if hours:
+                stamp = str(hours) + ':' + stamp
+
+    return stamp
+
+
+def timestamp_compare(app_obj, start_stamp, stop_stamp):
+
+    """Can be called by anything, after the user has manually entered a start
+    and stop timestamp.
+
+    Checks that either of the following is true:
+
+        1. 'stop_stamp' is None
+        2. 'start_stamp' occurs earlier than 'stop_stamp'
+
+    Args:
+
+        start_stamp (str): A timestamp in the form 'mm:ss' or 'h:mm:ss'.
+            Leading zeroes are optional for all components, and the 'h'
+            component can contain any number of digits
+
+        stop_stamp (str or None): If specified, another timestamp in the same
+            format
+
+    Return values:
+
+        False if 'stop_stamp' is earlier than 'start_stamp', if 'start_stamp'
+            is invalid, or 'stop_stamp' is specified and invalid; True
+            otherwise
+
+    """
+
+    if stop_stamp is None:
+        return True
+
+    regex = r'^' + app_obj.timestamp_regex + r'$'
+    match = re.search(regex, start_stamp)
+    if not match:
+        return False
+
+    else:
+        if match.groups()[1] is not None:
+            start_hours = int(match.groups()[1])
+        else:
+            start_hours = 0
+
+        start_seconds = int(match.groups()[3]) \
+        + (int(match.groups()[2]) * 60) \
+        + (start_hours * 3600)
+
+    match = re.search(regex, stop_stamp)
+    if not match:
+        return False
+
+    else:
+        if match.groups()[1] is not None:
+            stop_hours = int(match.groups()[1])
+        else:
+            stop_hours = 0
+
+        stop_seconds = int(match.groups()[3]) \
+        + (int(match.groups()[2]) * 60) \
+        + (stop_hours * 3600)
+
+    if stop_seconds < start_seconds:
+        return False
+    else:
+        return True
+
+
+def timestamp_format(app_obj, stamp):
+
+    """Can be called by anything.
+
+    The user can specify timestamps without leading zeroes, for example '1:59'
+    for '01:59', or even '1:5' or '01:05'.
+
+    Add leading zeroes for the minutes and seconds components. Removes leading
+    zeroes for the hours component, if specified. This ensures that any list of
+    timestamps is sorted correctly.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        stamp (str): A timestamp in the form 'mm:ss' or 'h:mm:ss'. Leading
+            zeroes are optional for all components, and the 'h' component can
+            contain any number of digits
+
+    Returns:
+
+        The converted string. If the supplied timestamp is invalid, it is
+            returned unmodified
+
+    """
+
+    regex = r'^' + app_obj.timestamp_regex + r'$'
+    match = re.search(regex, stamp)
+    if match:
+
+        hours = match.groups()[1]
+        if hours is not None:
+            hours = int(hours)
+
+        minutes = int(match.groups()[2])
+        seconds = int(match.groups()[3])
+
+        stamp = '{:02d}'.format(minutes) + ':{:02d}'.format(seconds)
+        if hours:
+            stamp = str(int(hours)) + ':' + stamp
+
+    return stamp
+
+
+def timestamp_quick_format(app_obj, hours, minutes, seconds,
+    hour_digit_count=None):
+
+    """Can be called by anything.
+
+    A shorter version of utils.timestamp_format(), used when the hours, minutes
+    and seconds components have already been extracted. (It would be wasteful
+    to use the same regex to extract them again).
+
+    The original timestamp was in the form 'mm:ss' or 'h:mm:ss'. Leading zeroes
+    are optional for all components, and the 'h' component can contain any
+    number of digits
+
+    Add leading zeroes for the minutes and seconds components.
+
+    Removes leading zeroes for the hours component, if specified. However, if
+    'hour_digit_count' is specified, adds leading zeroes to make the correct
+    number of digits.
+
+    As a result of calling this function, any list of timestamps processed with
+    this function can be sorted in the correct order.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        hours (str or None): Optional string with the "h" component
+
+        minutes, seconds (str): Non-optional strings with the 'mm' and 'ss'
+            components
+
+        hour_digit_count (int): The number of digits to use in the hours
+            component, if specified
+
+    """
+
+    stamp = '{:02d}'.format(int(minutes)) + ':{:02d}'.format(int(seconds))
+
+    if hours is None and hour_digit_count is not None:
+        hours = 0
+
+    if hours is not None:
+
+        # Remove leading zeroes
+        hours = str(int(hours))
+
+        if hour_digit_count is None or len(hours) >= hour_digit_count:
+
+            stamp = hours + ':' + stamp
+
+        elif len(hours) < hour_digit_count:
+
+            # Add leading zeroes
+            stamp = hours.rjust(hour_digit_count, '0') + ':' + stamp
+
+    return stamp
 
 
 def to_string(data):

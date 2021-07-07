@@ -431,7 +431,13 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.25.2 Using FFmpeg directly`_
 * `6.25.3 Using FFmpeg options`_
 * `6.25.4 Advanced FFmpeg options`_
-* `6.26 Using youtube-dl forks`_
+* `6.26 Video clips`_
+* `6.26.1 Video clip preferences`_
+* `6.26.2 Quick video clips`_
+* `6.26.3 Downloading video clips`_
+* `6.26.4 Extracting video clips`_
+* `6.26.5 Video clip shortcuts`_
+* `6.27 Using youtube-dl forks`_
 
 6.1 Setting up Tartube
 ----------------------
@@ -1310,7 +1316,90 @@ When youtube-dl downloads a video, it often downloads the video and audio compon
 
 If the *source file* is a thumbnail, then the *output file* must also be a thumbnail.
 
-6.26 Using youtube-dl forks
+6.26 Video clips
+----------------
+
+Since v2.4, **Tartube** is able to download parts of a video, or to split up a video it has already downloaded. This functionality requires **FFmpeg**.
+
+**Tartube** can extract a list of timestamps from a video's description. It can also extract the chapter list from a video's metadata (**.info.json**) file. If you want to specify timestamps manually, or to create a video clips one at a time, you can do that too.
+
+6.26.1 Video clip preferences
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before you start, take a look at the video clip settings (click **Edit > System preferences... > Operations > Clips**).
+
+- It will save a lot of time if you let **Tartube** automatically extract timestamps, so most users should enable that
+- Video clips are stored in the **Video Clips** folder by default, but you can store them alongside the original video, if you prefer
+- Video clips can be added to **Tartube**'s database, either alongside or instead of the original video
+- If you're going to make a lot of video clips, you can store them in a sub-folder (one for each original video)
+
+If your database already contains a lot of videos, you can ask **Tartube** to extract timestamps from their descriptions.
+
+- Click **Edit > System preferences > Files > Videos**
+- Click the button **Extract timestamps for all videos**
+
+If you prefer to update videos one at a time, right-click the video and select **Show video > Properties... > Timestamps**. Then click the button **Reset list using video description**.
+
+6.26.2 Quick video clips
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the quickest way to create a video clip:
+
+- After checking a video, you can right-click it and then select **Download video clip...**
+- After downloading a video, you can right-click it and then select **Extract video clip...**
+
+In the new dialogue window, you must specify the start of the clip. If you don't specify the end of the clip, then the end of the video is used.
+
+Timestamps must include both minutes and seconds. Hours are optional. Leading zeroes are also optional. All of the following timestamps are valid:
+
+        **15:29**
+
+        **1:15:29**
+
+        **01:15:29**
+
+        **0:29**
+
+Click the **Download this clip** button to get started. Alternatively, if **Tartube** has already extracted a list of timestamps for this video, you can click the **Download all clips** button instead. 
+
+6.26.3 Downloading video clips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you frequently create video clips, then you should set up custom downloads (see `6.13 Custom downloads`_).
+
+- Click **Edit > System preferences... > Operations > Custom**
+- Select **In custom downloads, download each video independently of its channel or playlist**
+- Also select **...and split videos into video clips using timestamps**
+
+The next step is to check any videos, channels and playlists (for example by clicking the big **Check all** button in the Videos tab). 
+
+This will fetch information about the videos. In many cases, a video's description will include a list of timestamps, and in other cases the video's metadata will include a list of chapters. Assuming that you enabled the auto-extract settings (as described above), that information will have been extracted. If not, you can enter some timestamps manually: right-click a video, and select **Show video > Properties > Timestamps**.
+
+Each video clip is represented by two timestamps: a start and a stop timestamp. The start timestamp is compulsory. The stop timestamp is optional; if it isn't specified, then the video clip will end at the beginning of the *next* video clip (or at the end of the video, if there are no more.)
+
+When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Videos will be downloaded as a series of video clips. (If no timestamps have been extracted, then the video is downloaded whole.)
+
+6.26.4 Extracting video clips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have already downloaded a video, then you can split it into video clips.
+
+- Right click the video, and select **Process with FFmpeg...**
+- If the **Clips** tab is visible, click it
+- Otherwise, the **Settings** tab will be visible. Click it, then in the **Output file** line, select **Video clip**
+
+You can split a video using the timestamps already extracted, or you can select **Split videos using these timestamps** to specify your own timestamps. The second option is useful if FFmpeg is acting on multiple videos at the same time.
+
+When you're ready to go, click the **Process files** button.
+
+6.26.5 Video clip shortcuts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Video clips can be downloaded from the **Classic Mode** tab. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**. Don't forget that clips can be downloaded in other formats, such as **.mp3**.
+
+Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware that the download option **--split-chapters** exists, which may be more convenient in some situations.
+
+6.27 Using youtube-dl forks
 ---------------------------
 
 `youtube-dl <https://youtube-dl.org/>`__ is open-source software, and there are a number of forks available. Tartube officially supports both the original version and `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__. 

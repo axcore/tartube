@@ -325,8 +325,9 @@ class GenericConfigWin(Gtk.Window):
 
         """Called by various functions in the child preference/edit window.
 
-        Adds a Gtk.Treeview to the tab's Gtk.Grid. No callback function is
-        created by this function; it's up to the calling code to supply one.
+        Adds a single-column Gtk.Treeview to the tab's Gtk.Grid. No callback
+        function is created by this function; it's up to the calling code to
+        supply one.
 
         Args:
 
@@ -1754,7 +1755,7 @@ class GenericEditWin(GenericConfigWin):
         self.edit_dict[prop] = entry.get_text()
 
 
-    def on_radiobutton_toggled(self, checkbutton, prop, value):
+    def on_radiobutton_toggled(self, radiobutton, prop, value):
 
         """Called from a callback in self.add_radiobutton().
 
@@ -1763,7 +1764,7 @@ class GenericEditWin(GenericConfigWin):
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The widget clicked
+            radiobutton (Gtk.RadioButton): The widget clicked
 
             prop (str): The attribute in self.edit_obj to modify
 
@@ -2825,7 +2826,11 @@ class OptionsEditWin(GenericEditWin):
 
         elif name in self.edit_obj.options_dict:
 
-            return self.edit_obj.options_dict[name]
+            value = self.edit_obj.options_dict[name]
+            if type(value) is list or type(value) is dict:
+                return value.copy()
+            else:
+                return value
 
         else:
 
@@ -3278,11 +3283,13 @@ class OptionsEditWin(GenericEditWin):
         )
         # (Signal connect appears below)
 
-        # (Currently, only two fixed folders are elligible for this mode, so
+        # (Currently, only three fixed folders are elligible for this mode, so
         #   we'll just add them individually)
         store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_green_small']
         store.append( [pixbuf, self.app_obj.fixed_misc_folder.name] )
+        pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_green_small']
+        store.append( [pixbuf, self.app_obj.fixed_clips_folder.name] )
         pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_blue_small']
         store.append( [pixbuf, self.app_obj.fixed_temp_folder.name] )
 
@@ -6075,8 +6082,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.output_mode_radiobutton2 = None    # Gtk.RadioButton
         self.output_mode_radiobutton3 = None    # Gtk.RadioButton
         self.output_mode_radiobutton4 = None    # Gtk.RadioButton
+        self.output_mode_radiobutton5 = None    # Gtk.RadioButton
         self.h264_grid = None                   # Gtk.Grid
         self.gif_grid = None                    # Gtk.Grid
+        self.clip_grid = None                   # Gtk.Grid
         self.merge_grid = None                  # Gtk.Grid
         self.thumb_grid = None                  # Gtk.Grid
         # (Settings tab, H.264 grid)
@@ -6091,6 +6100,17 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # (Settings tab, GIF grid)
         self.palette_mode_radiobutton = None    # Gtk.RadioButton
         self.palette_mode_radiobutton2 = None   # Gtk.RadioButton
+        # (Settings tab, split grid)
+        self.split_mode_radiobutton = None      # Gtk.RadioButton
+        self.split_mode_radiobutton2 = None     # Gtk.RadioButton
+        self.split_mode_liststore = None        # Gtk.ListStore
+        self.start_stamp_entry = None           # Gtk.Entry
+        self.stop_stamp_entry = None            # Gtk.Entry
+        self.clip_title_entry = None            # Gtk.Entry
+        self.add_timestamp_button = None        # Gtk.Button
+        self.delete_timestamp_button = None     # Gtk.Button
+        self.show_prefs_button = None           # Gtk.Button
+        self.clear_list_button = None           # Gtk.Button
         # (Optimise tab)
         self.seek_flag_checkbutton = None       # Gtk.CheckButton
         self.tuning_film_flag_checkbutton = None
@@ -6110,8 +6130,25 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.limit_flag_checkbutton = None      # Gtk.CheckButton
         self.limit_mbps_spinbutton = None       # Gtk.SpinButton
         self.limit_buffer_spinbutton = None     # Gtk.SpinButton
+        # (Clips tab)
+        self.simple_split_mode_checkbutton = None
+                                                # Gtk.CheckButton
+        self.simple_split_mode_radiobutton = None
+                                                # Gtk.RadioButton
+        self.simple_split_mode_radiobutton2 = None
+                                                # Gtk.RadioButton
+        self.simple_split_mode_liststore = None # Gtk.ListStore
+        self.simple_start_stamp_entry = None
+                                                # Gtk.Entry
+        self.simple_stop_stamp_entry = None     # Gtk.Entry
+        self.simple_clip_title_entry = None     # Gtk.Entry
+        self.simple_add_timestamp_button = None # Gtk.Button
+        self.simple_delete_timestamp_button = None
+                                                # Gtk.Button
+        self.simple_show_prefs_button = None    # Gtk.Button
+        self.simple_clear_list_button = None    # Gtk.Button
         # (Videox tab)
-        self.video_liststore = None              # Gtk.ListStore
+        self.video_liststore = None             # Gtk.ListStore
 
         # IV list - other
         # ---------------
@@ -6278,7 +6315,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         elif name in self.edit_obj.options_dict:
 
-            return self.edit_obj.options_dict[name]
+            value = self.edit_obj.options_dict[name]
+            if type(value) is list or type(value) is dict:
+                return value.copy()
+            else:
+                return value
 
         else:
 
@@ -6305,6 +6346,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
         if not self.app_obj.ffmpeg_simple_options_flag:
             self.setup_settings_tab()
             self.setup_optimise_tab()
+        else:
+            self.setup_clips_tab()
 
         self.setup_videos_tab()
 
@@ -6506,6 +6549,51 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.on_change_file_ext_entry_changed,
         )
 
+        # (De)sensitise all of these widgets, depending on the value of the
+        #   'output_mode' setting
+        if self.retrieve_val('output_mode') == 'split':
+            self.setup_file_tab_set_sensitive(False)
+        else:
+            self.setup_file_tab_set_sensitive(True)
+
+
+    def setup_file_tab_set_sensitive(self, sens_flag):
+
+        """Called by self.setup_file_tab() and various callbacks.
+
+        (De)sensitises all widgets in the tab, as required.
+
+        Args:
+
+            sens_flag (bool): True to sensitise widgets, False to desensitise
+                them
+
+        """
+
+        self.add_end_filename_entry.set_sensitive(sens_flag)
+        self.regex_match_filename_entry.set_sensitive(sens_flag)
+
+        if self.retrieve_val('regex_match_filename') == '':
+            self.regex_apply_subst_entry.set_sensitive(False)
+        else:
+            self.regex_apply_subst_entry.set_sensitive(sens_flag)
+
+        if self.retrieve_val('add_end_filename') == '' \
+        and self.retrieve_val('regex_match_filename') == '':
+            self.rename_both_flag_checkbutton.set_sensitive(False)
+        else:
+            self.rename_both_flag_checkbutton.set_sensitive(sens_flag)
+
+        if self.retrieve_val('output_mode') == 'gif':
+            self.change_file_ext_entry.set_sensitive(False)
+        else:
+            self.change_file_ext_entry.set_sensitive(sens_flag)
+
+        if self.retrieve_val('change_file_ext') == '':
+            self.delete_original_flag_checkbutton.set_sensitive(False)
+        else:
+            self.delete_original_flag_checkbutton.set_sensitive(sens_flag)
+
 
     def setup_settings_tab(self):
 
@@ -6531,7 +6619,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             _('Downloaded video/audio'),
             None,
             None,
-            1, 0, 2, 1,
+            1, 0, 3, 1,
         )
         self.input_mode_radiobutton.set_hexpand(False)
         # (Signal connect appears below)
@@ -6539,7 +6627,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.audio_flag_checkbutton = self.add_checkbutton(grid,
             _('with audio'),
             None,
-            3, 0, 1, 1,
+            4, 0, 1, 1,
         )
         self.audio_flag_checkbutton.set_hexpand(False)
         if self.retrieve_val('audio_flag'):
@@ -6553,26 +6641,19 @@ class FFmpegOptionsEditWin(GenericEditWin):
             _('Video thumbnail'),
             None,
             None,
-            4, 0, 1, 1,
+            5, 0, 1, 1,
         )
         self.input_mode_radiobutton2.set_hexpand(False)
         if self.retrieve_val('input_mode') == 'thumb':
             self.input_mode_radiobutton2.set_active(True)
         # (Signal connect appears below)
 
-        # (Empty label for spacing)
-        label2 = self.add_label(grid,
-            '',
-            5, 0, 1, 1,
-        )
-        label2.set_hexpand(True)
-
         # Output mode
-        label3 = self.add_label(grid,
+        label2 = self.add_label(grid,
             '<u>' + _('Output file') + '</u>',
             0, 1, 1, 1,
         )
-        label3.set_hexpand(False)
+        label2.set_hexpand(False)
 
         self.output_mode_radiobutton = self.add_radiobutton(grid,
             None,
@@ -6598,26 +6679,38 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         self.output_mode_radiobutton3 = self.add_radiobutton(grid,
             self.output_mode_radiobutton2,
-            'Merge video/audio',
+            _('Video clip'),
             None,
             None,
             3, 1, 1, 1,
         )
         self.output_mode_radiobutton3.set_hexpand(False)
-        if self.retrieve_val('output_mode') == 'merge':
+        if self.retrieve_val('output_mode') == 'split':
             self.output_mode_radiobutton3.set_active(True)
         # (Signal connect appears below)
 
         self.output_mode_radiobutton4 = self.add_radiobutton(grid,
             self.output_mode_radiobutton3,
-            'Video thumbnail',
+            _('Merge video/audio'),
             None,
             None,
             4, 1, 1, 1,
         )
         self.output_mode_radiobutton4.set_hexpand(False)
-        if self.retrieve_val('output_mode') == 'thumb':
+        if self.retrieve_val('output_mode') == 'merge':
             self.output_mode_radiobutton4.set_active(True)
+        # (Signal connect appears below)
+
+        self.output_mode_radiobutton5 = self.add_radiobutton(grid,
+            self.output_mode_radiobutton4,
+            _('Video thumbnail'),
+            None,
+            None,
+            5, 1, 1, 1,
+        )
+        self.output_mode_radiobutton5.set_hexpand(False)
+        if self.retrieve_val('output_mode') == 'thumb':
+            self.output_mode_radiobutton5.set_active(True)
         # (Signal connect appears below)
 
         # Supplementary grids: one for each 'output_mode'
@@ -6625,6 +6718,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         #   (de)sensitising widgets
         self.h264_grid = self.setup_settings_tab_h264_grid(2, grid_width)
         self.gif_grid = self.setup_settings_tab_gif_grid(2, grid_width)
+        self.clip_grid = self.setup_settings_tab_clip_grid(2, grid_width)
         self.merge_grid = self.setup_settings_tab_merge_grid(2, grid_width)
         self.thumb_grid = self.setup_settings_tab_thumb_grid(2, grid_width)
 
@@ -6658,6 +6752,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
             grid_width,
         )
         self.output_mode_radiobutton4.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+        self.output_mode_radiobutton5.connect(
             'toggled',
             self.on_output_mode_radiobutton_toggled,
             grid_width,
@@ -6962,6 +7061,224 @@ class FFmpegOptionsEditWin(GenericEditWin):
         return grid
 
 
+    def setup_settings_tab_clip_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'split'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'split':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        grid_width = 4
+
+        self.split_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Split videos using their own timestamps'),
+            None,
+            None,
+            0, 0, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.split_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.split_mode_radiobutton,
+            _('Split videos using these timestamps'),
+            None,
+            None,
+            1, 0, 1, 1,
+        )
+        if self.retrieve_val('split_mode') == 'custom':
+            self.split_mode_radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        self.split_mode_radiobutton.connect(
+            'toggled',
+            self.on_split_mode_radiobutton_toggled,
+        )
+        self.split_mode_radiobutton.connect(
+            'toggled',
+            self.on_split_mode_radiobutton_toggled,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Start'), _('Stop'), _('Clip title') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.split_mode_liststore = Gtk.ListStore(str, str, str)
+        treeview.set_model(self.split_mode_liststore)
+
+        # Initialise the list
+        self.setup_settings_tab_update_treeview()
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 2, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        # Strip of widgets at the bottom
+        label = self.add_label(grid2,
+            _('Start timestamp (e.g. 15:29)'),
+            0, 0, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        if self.retrieve_val('split_mode') == 'video':
+            custom_flag = False
+        else:
+            custom_flag = True
+
+        self.start_stamp_entry = self.add_entry(grid2,
+            None,
+            1, 0, 1, 1,
+        )
+        self.start_stamp_entry.set_width_chars(12)
+        self.start_stamp_entry.set_hexpand(False)
+        if not custom_flag:
+            self.start_stamp_entry.set_sensitive(False)
+
+        label2 = self.add_label(grid2,
+            _('Stop timestamp (optional)'),
+            2, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        self.stop_stamp_entry = self.add_entry(grid2,
+            None,
+            3, 0, 1, 1,
+        )
+        self.stop_stamp_entry.set_width_chars(12)
+        self.stop_stamp_entry.set_hexpand(False)
+        if not custom_flag:
+            self.stop_stamp_entry.set_sensitive(False)
+
+        label3 = self.add_label(grid2,
+            _('Clip title (optional)'),
+            0, 1, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        self.clip_title_entry = self.add_entry(grid2,
+            None,
+            1, 1, (grid_width - 1), 1,
+        )
+        self.clip_title_entry.set_hexpand(True)
+        if not custom_flag:
+            self.clip_title_entry.set_sensitive(False)
+
+        self.add_timestamp_button = Gtk.Button(_('Add timestamp'))
+        grid2.attach(self.add_timestamp_button, 0, 2, 1, 1)
+        self.add_timestamp_button.connect(
+            'clicked',
+            self.on_add_timestamp_clicked,
+        )
+        if not custom_flag:
+            self.add_timestamp_button.set_sensitive(False)
+
+        self.delete_timestamp_button = Gtk.Button(_('Delete timestamp'))
+        grid2.attach(self.delete_timestamp_button, 1, 2, 1, 1)
+        self.delete_timestamp_button.connect(
+            'clicked',
+            self.on_delete_timestamp_clicked,
+            treeview,
+        )
+        if not custom_flag:
+            self.delete_timestamp_button.set_sensitive(False)
+
+        self.show_prefs_button = Gtk.Button(_('Clip preferences'))
+        grid2.attach(self.show_prefs_button, 2, 2, 1, 1)
+        self.show_prefs_button.connect(
+            'clicked',
+            self.on_clip_prefs_clicked,
+        )
+
+        self.clear_list_button = Gtk.Button(_('Clear list'))
+        grid2.attach(self.clear_list_button, 3, 2, 1, 1)
+        self.clear_list_button.connect(
+            'clicked',
+            self.on_clear_timestamp_clicked,
+        )
+        if not custom_flag:
+            self.clear_list_button.set_sensitive(False)
+
+        return grid
+
+
+    def setup_settings_tab_update_treeview(self):
+
+        """ Called by self.setup_settings_tab_clip_grid().
+
+        Fills or updates the treeview.
+        """
+
+        self.split_mode_liststore.clear()
+
+        # Add each timestamp/clip title to the treeview, one row at a time
+        for mini_list in self.retrieve_val('split_list'):
+
+            start_stamp = mini_list[0]
+
+            if mini_list[1] is None:
+                stop_stamp = ''
+            else:
+                stop_stamp = mini_list[1]
+
+            if mini_list[2] is None:
+                clip_title = ''
+            else:
+                clip_title = mini_list[1]
+
+            self.split_mode_liststore.append(
+                [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
     def setup_settings_tab_merge_grid(self, row, outer_width):
 
         """Called by self.setup_settings_tab().
@@ -7162,6 +7479,226 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
+    def setup_clips_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Clips' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Clips'))
+
+        grid_width = 2
+        output_mode = self.retrieve_val('output_mode')
+        split_mode = self.retrieve_val('split_mode')
+
+        # N.B. I tried moving the equivalent code from
+        #   self.setup_settings_tab_clip_grid() into a function, that could
+        #   also be called from here, but that created too many complications
+        # However, both calling functions will use the same set of callbacks
+
+        self.simple_split_mode_checkbutton = self.add_checkbutton(grid,
+            _('Split the video(s) to create video clips'),
+            None,
+            0, 0, 1, 1,
+        )
+        if output_mode == 'split':
+            self.simple_split_mode_checkbutton.set_active(True)
+        # (Signal connect appears below)
+
+        self.simple_split_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Split videos using their own timestamps'),
+            None,
+            None,
+            1, 0, 1, 1,
+        )
+        if output_mode != 'split':
+            self.simple_split_mode_radiobutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.simple_split_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.simple_split_mode_radiobutton,
+            _('Split videos using these timestamps'),
+            None,
+            None,
+            1, 1, 1, 1,
+        )
+        if output_mode != 'split':
+            self.simple_split_mode_radiobutton2.set_sensitive(False)
+        if split_mode == 'custom':
+            self.simple_split_mode_radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        self.simple_split_mode_checkbutton.connect(
+            'toggled',
+            self.on_simple_split_toggled,
+        )
+        self.simple_split_mode_radiobutton.connect(
+            'toggled',
+            self.on_split_mode_radiobutton_toggled,
+        )
+        self.simple_split_mode_radiobutton2.connect(
+            'toggled',
+            self.on_split_mode_radiobutton_toggled,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Start'), _('Stop'), _('Clip title') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.simple_split_mode_liststore = Gtk.ListStore(str, str, str)
+        treeview.set_model(self.simple_split_mode_liststore)
+
+        # Initialise the list
+        self.setup_clips_tab_update_treeview()
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 3, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        # Strip of widgets at the bottom
+        label = self.add_label(grid2,
+            _('Start timestamp (e.g. 15:29)'),
+            0, 0, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        if split_mode == 'video':
+            custom_flag = False
+        else:
+            custom_flag = True
+
+        self.simple_start_stamp_entry = self.add_entry(grid2,
+            None,
+            1, 0, 1, 1,
+        )
+        self.simple_start_stamp_entry.set_width_chars(12)
+        self.simple_start_stamp_entry.set_hexpand(False)
+        if not custom_flag:
+            self.simple_start_stamp_entry.set_sensitive(False)
+
+        label2 = self.add_label(grid2,
+            _('Stop timestamp (optional)'),
+            2, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        self.simple_stop_stamp_entry = self.add_entry(grid2,
+            None,
+            3, 0, 1, 1,
+        )
+        self.simple_stop_stamp_entry.set_width_chars(12)
+        self.simple_stop_stamp_entry.set_hexpand(False)
+        if not custom_flag:
+            self.simple_stop_stamp_entry.set_sensitive(False)
+
+        label3 = self.add_label(grid2,
+            _('Clip title (optional)'),
+            0, 1, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        self.simple_clip_title_entry = self.add_entry(grid2,
+            None,
+            1, 1, (grid_width - 1), 1,
+        )
+        self.simple_clip_title_entry.set_hexpand(True)
+        if not custom_flag:
+            self.simple_clip_title_entry.set_sensitive(False)
+
+        self.simple_add_timestamp_button = Gtk.Button(_('Add timestamp'))
+        grid2.attach(self.simple_add_timestamp_button, 0, 2, 1, 1)
+        self.simple_add_timestamp_button.connect(
+            'clicked',
+            self.on_add_timestamp_clicked,
+        )
+        if not custom_flag:
+            self.simple_add_timestamp_button.set_sensitive(False)
+
+        self.simple_delete_timestamp_button = Gtk.Button(_('Delete timestamp'))
+        grid2.attach(self.simple_delete_timestamp_button, 1, 2, 1, 1)
+        self.simple_delete_timestamp_button.connect(
+            'clicked',
+            self.on_delete_timestamp_clicked,
+            treeview,
+        )
+        if not custom_flag:
+            self.simple_delete_timestamp_button.set_sensitive(False)
+
+        self.simple_show_prefs_button = Gtk.Button(_('Clip preferences'))
+        grid2.attach(self.simple_show_prefs_button, 2, 2, 1, 1)
+        self.simple_show_prefs_button.connect(
+            'clicked',
+            self.on_clip_prefs_clicked,
+        )
+
+        self.simple_clear_list_button = Gtk.Button(_('Clear list'))
+        grid2.attach(self.simple_clear_list_button, 3, 2, 1, 1)
+        self.simple_clear_list_button.connect(
+            'clicked',
+            self.on_clear_timestamp_clicked,
+        )
+        if not custom_flag:
+            self.simple_clear_list_button.set_sensitive(False)
+
+
+    def setup_clips_tab_update_treeview(self):
+
+        """ Called by self.setup_clips_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.simple_split_mode_liststore.clear()
+
+        # Add each timestamp/title to the treeview, one row at a time
+        for mini_list in self.retrieve_val('split_list'):
+
+            start_stamp = mini_list[0]
+
+            if mini_list[1] is None:
+                stop_stamp = ''
+            else:
+                stop_stamp = mini_list[1]
+
+            if mini_list[2] is None:
+                clip_title = ''
+            else:
+                clip_title = mini_list[1]
+
+            self.simple_split_mode_liststore.append(
+                [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
     def setup_optimise_tab_set_sensitive(self, sens_flag):
 
         """Called by self.setup_optimise_tab() and various callbacks.
@@ -7212,16 +7749,18 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_Videos'))
 
+        grid_width = 2
+
         # List of videos to be processed
         self.add_label(grid,
             '<u>' + _('List of videos to be processed') + '</u>',
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
         #   we'll do everything ourselves)
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 1, 1, 1)
+        grid.attach(frame, 0, 1, grid_width, 1)
 
         scrolled = Gtk.ScrolledWindow()
         frame.add(scrolled)
@@ -7276,8 +7815,17 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Add editing buttons
         button = Gtk.Button()
         grid.attach(button, 0, 2, 1, 1)
-        button.set_label(_('Remove video from list'))
+        button.set_label(_('Show video properties and timestamps'))
         button.connect(
+            'clicked',
+            self.on_video_show_button_clicked,
+            treeview,
+        )
+
+        button2 = Gtk.Button()
+        grid.attach(button2, 1, 2, 1, 1)
+        button2.set_label(_('Remove video from list'))
+        button2.connect(
             'clicked',
             self.on_video_remove_button_clicked,
             treeview,
@@ -7371,6 +7919,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
         result_list = self.edit_obj.get_system_cmd(
             self.app_obj,
             None,           # Use a specimen source file
+            None,           # ...and specimen timestamps
+            None,
+            None,
+            None,
             self.edit_dict,
         ),
 
@@ -7381,6 +7933,115 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
 
     # Callback class methods
+
+
+    def on_add_timestamp_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_clip_grid().
+
+        In simple mode, called from a callback in self.setup_clips_tab().
+
+        Adds a new timestamp to video's timestamp list, optionally with a
+        clip title.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            start_stamp = utils.strip_whitespace(
+                self.start_stamp_entry.get_text(),
+            )
+            stop_stamp = utils.strip_whitespace(
+                self.stop_stamp_entry.get_text(),
+            )
+            clip_title = utils.strip_whitespace(
+                self.clip_title_entry.get_text(),
+            )
+
+        else:
+
+            start_stamp = utils.strip_whitespace(
+                self.simple_start_stamp_entry.get_text(),
+            )
+            stop_stamp = utils.strip_whitespace(
+                self.simple_stop_stamp_entry.get_text(),
+            )
+            clip_title = utils.strip_whitespace(
+                self.simple_clip_title_entry.get_text(),
+            )
+
+        # (Values are stored as None, rather than empty strings)
+        if stop_stamp == '':
+            stop_stamp = None
+
+        if clip_title == '':
+            clip_title = None
+
+        # Do nothing if specified timestamps aren't valid ('stop_stamp' is
+        #   optional)
+        regex = r'^' + self.app_obj.timestamp_regex + r'$'
+        if re.search(regex, start_stamp) \
+        and (stop_stamp is None or re.search(regex, stop_stamp)) \
+        and utils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
+
+            # Add leading zeroes to the minutes and seconds components, so
+            #   that .stamp_list gets sorted correctly (and doesn't look
+            #   weird)
+            start_stamp = utils.timestamp_format(self.app_obj, start_stamp)
+            if stop_stamp is not None:
+                stop_stamp = utils.timestamp_format(self.app_obj, stop_stamp)
+
+            # Timestamps stored in groups of three, in the form
+            #   (start_stamp, stop_stamp, clip_title)
+            # If a group with the same 'start_stamp' timestamp already exists,
+            #   don't replace it; allow duplicates (as the user may actually
+            #   want that)
+            split_list = self.retrieve_val('split_list')
+            split_list.append([ start_stamp, stop_stamp, clip_title ])
+            split_list.sort()
+            self.edit_dict['split_list'] = split_list
+
+            # (Show changes, and update entry boxes. 'stop_stamp', if
+            #   specified, becomes 'start_stamp' for the next group)
+            if not self.app_obj.ffmpeg_simple_options_flag:
+
+                self.setup_settings_tab_update_treeview()
+
+                if stop_stamp is not None:
+                    self.start_stamp_entry.set_text(
+                        utils.timestamp_add_second(self.app_obj, stop_stamp),
+                    )
+                else:
+                    self.start_stamp_entry.set_text('')
+
+                self.stop_stamp_entry.set_text('')
+                self.clip_title_entry.set_text('')
+
+            else:
+
+                self.setup_clips_tab_update_treeview()
+                if stop_stamp is not None:
+                    self.simple_start_stamp_entry.set_text(
+                        utils.timestamp_add_second(self.app_obj, stop_stamp),
+                    )
+                else:
+                    self.simple_start_stamp_entry.set_text('')
+
+                self.simple_stop_stamp_entry.set_text('')
+                self.simple_clip_title_entry.set_text('')
+
+        else:
+
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid timestamp(s)'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+                )
 
 
     def on_audio_flag_checkbutton_toggled(self, checkbutton):
@@ -7438,6 +8099,25 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.update_system_cmd()
 
 
+    def on_clear_timestamp_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_clip_grid().
+
+        Empties the timestamp list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_dict['split_list'] = []
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            self.setup_settings_tab_update_treeview()
+        else:
+            self.setup_clips_tab_update_treeview()
+
+
     def on_clone_options_clicked(self, button):
 
         """Called by callback in self.setup_name_tab().
@@ -7463,6 +8143,62 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
+    def on_delete_timestamp_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_settings_tab_clip_grid().
+
+        Deletes the selected timestamps from the timestamp list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview display the timestsamp list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        start_stamp = model[this_iter][0]
+        stop_stamp = model[this_iter][1]
+        clip_title = model[this_iter][2]
+
+        # Timestamps stored in groups of three, in the form
+        #   (start_stamp, stop_stamp, clip_title)
+        # Walk the list, and delete the first matchng group
+        split_list = self.retrieve_val('split_list')
+        mod_list = []
+        match_flag = False
+
+        for mini_list in split_list:
+
+            if not match_flag \
+            and mini_list[0] == start_stamp \
+            and mini_list[1] == stop_stamp \
+            and mini_list[2] == clip_title:
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_list)
+
+        self.edit_dict['split_list'] = mod_list
+
+        # (Show changes)
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            self.setup_settings_tab_update_treeview()
+        else:
+            self.setup_clips_tab_update_treeview()
+
+
     def on_input_mode_radiobutton_toggled(self, radiobutton):
 
         """Called by callback in self.setup_settings_tab().
@@ -7481,7 +8217,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.output_mode_radiobutton.set_sensitive(True)
             self.output_mode_radiobutton2.set_sensitive(True)
             self.output_mode_radiobutton3.set_sensitive(True)
-            self.output_mode_radiobutton4.set_sensitive(False)
+            self.output_mode_radiobutton4.set_sensitive(True)
+            self.output_mode_radiobutton5.set_sensitive(False)
 
             self.audio_flag_checkbutton.set_sensitive(True)
             if not self.retrieve_val('audio_flag'):
@@ -7497,7 +8234,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.output_mode_radiobutton.set_sensitive(False)
             self.output_mode_radiobutton2.set_sensitive(False)
             self.output_mode_radiobutton3.set_sensitive(False)
-            self.output_mode_radiobutton4.set_sensitive(True)
+            self.output_mode_radiobutton4.set_sensitive(False)
+            self.output_mode_radiobutton5.set_sensitive(True)
 
             self.audio_flag_checkbutton.set_sensitive(False)
             self.audio_bitrate_spinbutton.set_sensitive(False)
@@ -7551,6 +8289,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.settings_grid.remove(self.h264_grid)
         elif old_value == 'gif':
             self.settings_grid.remove(self.gif_grid)
+        elif old_value == 'split':
+            self.settings_grid.remove(self.clip_grid)
         elif old_value == 'merge':
             self.settings_grid.remove(self.merge_grid)
         else:
@@ -7561,6 +8301,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.edit_dict['output_mode'] = 'h264'
 
             self.settings_grid.attach(self.h264_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(True)
             self.setup_optimise_tab_set_sensitive(True)
 
         elif self.output_mode_radiobutton2.get_active():
@@ -7568,20 +8309,31 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.edit_dict['output_mode'] = 'gif'
 
             self.settings_grid.attach(self.gif_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(True)
             self.setup_optimise_tab_set_sensitive(False)
 
         elif self.output_mode_radiobutton3.get_active():
 
-            self.edit_dict['output_mode'] = 'merge'
+            self.edit_dict['output_mode'] = 'split'
 
-            self.settings_grid.attach(self.merge_grid, 0, 2, grid_width, 1)
+            self.settings_grid.attach(self.clip_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(False)
             self.setup_optimise_tab_set_sensitive(False)
 
         elif self.output_mode_radiobutton4.get_active():
 
+            self.edit_dict['output_mode'] = 'merge'
+
+            self.settings_grid.attach(self.merge_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(True)
+            self.setup_optimise_tab_set_sensitive(False)
+
+        elif self.output_mode_radiobutton5.get_active():
+
             self.edit_dict['output_mode'] = 'thumb'
 
             self.settings_grid.attach(self.thumb_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(True)
             self.setup_optimise_tab_set_sensitive(False)
 
         self.show_all()
@@ -7712,6 +8464,22 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
+    def on_clip_prefs_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_clip_grid() and
+        .setup_clips_tab().
+
+        Opens the preferences window to show clip settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'clips')
+
+
     def on_simple_options_clicked(self, button):
 
         """Called by callback in self.setup_name_tab().
@@ -7794,6 +8562,108 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.ok_button.set_tooltip_text(
                 _('Apply changes'),
             )
+
+
+    def on_simple_split_toggled(self, checkbutton):
+
+        """Called by callback in self.setup_clips_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if not checkbutton.get_active():
+
+            self.edit_dict['output_mode'] = 'h264'
+            radio_sens_flag = False
+            sens_flag = False
+
+        else:
+
+            self.edit_dict['output_mode'] = 'split'
+            radio_sens_flag = True
+
+            if self.retrieve_val('split_mode') == 'video':
+                sens_flag = False
+            else:
+                sens_flag = True
+
+        # (De)sensitise widgets
+        self.simple_split_mode_radiobutton.set_sensitive(radio_sens_flag)
+        self.simple_split_mode_radiobutton2.set_sensitive(radio_sens_flag)
+        self.simple_start_stamp_entry.set_sensitive(sens_flag)
+        self.simple_stop_stamp_entry.set_sensitive(sens_flag)
+        self.simple_clip_title_entry.set_sensitive(sens_flag)
+        self.simple_add_timestamp_button.set_sensitive(sens_flag)
+        self.simple_delete_timestamp_button.set_sensitive(sens_flag)
+        self.simple_show_prefs_button.set_sensitive(True)
+        self.simple_clear_list_button.set_sensitive(sens_flag)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_split_mode_radiobutton_toggled(self, radiobutton):
+
+        """Called by callback in self.setup_settings_tab_clip_grid().
+
+        In simple mode, called from a callback in self.setup_clips_tab().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            if self.split_mode_radiobutton.get_active():
+
+                self.edit_dict['split_mode'] = 'video'
+                sens_flag = False
+
+            else:
+
+                self.edit_dict['split_mode'] = 'custom'
+                sens_flag = True
+
+            # (De)sensitise widgets
+            self.start_stamp_entry.set_sensitive(sens_flag)
+            self.stop_stamp_entry.set_sensitive(sens_flag)
+            self.clip_title_entry.set_sensitive(sens_flag)
+            self.add_timestamp_button.set_sensitive(sens_flag)
+            self.delete_timestamp_button.set_sensitive(sens_flag)
+            self.show_prefs_button.set_sensitive(True)
+            self.clear_list_button.set_sensitive(sens_flag)
+
+        else:
+
+            if self.simple_split_mode_radiobutton.get_active():
+
+                self.edit_dict['split_mode'] = 'video'
+                sens_flag = False
+
+            else:
+
+                self.edit_dict['split_mode'] = 'custom'
+                if self.retrieve_val('output_mode') == 'split':
+                    sens_flag = True
+                else:
+                    sens_flag = False
+
+            # (De)sensitise widgets
+            self.simple_start_stamp_entry.set_sensitive(sens_flag)
+            self.simple_stop_stamp_entry.set_sensitive(sens_flag)
+            self.simple_clip_title_entry.set_sensitive(sens_flag)
+            self.simple_add_timestamp_button.set_sensitive(sens_flag)
+            self.simple_delete_timestamp_button.set_sensitive(sens_flag)
+            self.simple_show_prefs_button.set_sensitive(sens_flag)
+            self.simple_clear_list_button.set_sensitive(sens_flag)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
 
 
     def on_video_drag_data_received(self, widget, context, x, y, data, info,
@@ -7927,6 +8797,40 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.ok_button.get_child().set_width_chars(10)
             self.ok_button.set_tooltip_text(
                 _('Apply changes'),
+            )
+
+
+    def on_video_show_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_videos_tab().
+
+        Opens the video properties window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeView): The treeview to be updated
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        dbid = int(model[this_iter][0])
+        if dbid in self.app_obj.media_reg_dict:
+            VideoEditWin(
+                self.app_obj,
+                self.app_obj.media_reg_dict[dbid],
             )
 
 
@@ -8138,6 +9042,8 @@ class VideoEditWin(GenericEditWin):
         self.apply_options_button = None        # Gtk.Button
         self.edit_options_button = None         # Gtk.Button
         self.remove_options_button = None       # Gtk.Button
+        # (Widgets used in the Timestamps tab)
+        self.timestamp_liststore = None         # Gtk.ListStore
 
 
         # IV list - other
@@ -8220,6 +9126,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_download_options_tab()
         self.setup_livestream_tab()
         self.setup_descrip_tab()
+        self.setup_timestamps_tab()
         self.setup_errors_warnings_tab()
 
 
@@ -8279,8 +9186,8 @@ class VideoEditWin(GenericEditWin):
         grid2.set_row_spacing(self.spacing_size)
 
         checkbutton = self.add_checkbutton(grid2,
-            _('Always simulate download of this video'),
-            'dl_sim_flag',
+            _('Video has been downloaded'),
+            'dl_flag',
             0, 0, 2, 1,
         )
         checkbutton.set_sensitive(False)
@@ -8302,8 +9209,8 @@ class VideoEditWin(GenericEditWin):
             )
 
         checkbutton2 = self.add_checkbutton(grid2,
-            _('Video has been downloaded'),
-            'dl_flag',
+            _('Video is marked as unwatched'),
+            'new_flag',
             0, 1, 2, 1,
         )
         checkbutton2.set_sensitive(False)
@@ -8323,8 +9230,8 @@ class VideoEditWin(GenericEditWin):
             entry3.set_text(self.edit_obj.get_file_size_string())
 
         checkbutton3 = self.add_checkbutton(grid2,
-            _('Video is marked as unwatched'),
-            'new_flag',
+            _('Video has been split from an original'),
+            'split_flag',
             0, 2, 2, 1,
         )
         checkbutton3.set_sensitive(False)
@@ -8384,6 +9291,13 @@ class VideoEditWin(GenericEditWin):
             1, 4, 1, 1,
         )
         checkbutton7.set_sensitive(False)
+
+        checkbutton8 = self.add_checkbutton(grid2,
+            _('Always simulate download of this video'),
+            'dl_sim_flag',
+            2, 4, 2, 1,
+        )
+        checkbutton8.set_sensitive(False)
 
         # (Signal connect from above)
         button.connect(
@@ -8538,6 +9452,176 @@ class VideoEditWin(GenericEditWin):
         textview.set_editable(False)
 
 
+    def setup_timestamps_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Timestamps' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Timestamps'))
+
+        grid_width = 4
+
+        # Timestamps
+        self.add_label(grid,
+            '<u>' + _('Timestamps') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Start'), _('Stop'), _('Clip title') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.timestamp_liststore = Gtk.ListStore(str, str, str)
+        treeview.set_model(self.timestamp_liststore)
+
+        # Initialise the list
+        self.setup_timestamps_tab_update_treeview()
+
+        # Strip of widgets at the bottom
+        label = self.add_label(grid,
+            _('Start timestamp (e.g. 15:29)'),
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry = self.add_entry(grid,
+            None,
+            1, 2, 1, 1,
+        )
+        entry.set_width_chars(12)
+        entry.set_hexpand(False)
+
+        label2 = self.add_label(grid,
+            _('Stop timestamp (optional)'),
+            2, 2, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        entry2 = self.add_entry(grid,
+            None,
+            3, 2, 1, 1,
+        )
+        entry2.set_width_chars(12)
+        entry2.set_hexpand(False)
+
+        label3 = self.add_label(grid,
+            _('Clip title (optional)'),
+            0, 3, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        entry3 = self.add_entry(grid,
+            None,
+            1, 3, 3, 1,
+        )
+        entry3.set_hexpand(True)
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 4, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        button = Gtk.Button(_('Add timestamp'))
+        grid2.attach(button, 0, 1, 1, 1)
+        button.set_hexpand(True)
+        button.connect(
+            'clicked',
+            self.on_add_button_clicked,
+            entry,
+            entry2,
+            entry3,
+        )
+
+        button2 = Gtk.Button(_('Delete timestamp'))
+        grid2.attach(button2, 1, 1, 1, 1)
+        button2.set_hexpand(True)
+        button2.connect(
+            'clicked',
+            self.on_delete_button_clicked,
+            treeview,
+        )
+
+        button3 = Gtk.Button(_('Clip preferences'))
+        grid2.attach(button3, 2, 1, 1, 1)
+        button3.set_hexpand(True)
+        button3.connect(
+            'clicked',
+            self.on_clip_prefs_clicked,
+        )
+
+        button4 = Gtk.Button(_('Clear list'))
+        grid2.attach(button4, 3, 1, 1, 1)
+        button4.set_hexpand(True)
+        button4.connect(
+            'clicked',
+            self.on_clear_button_clicked,
+        )
+
+        button5 = Gtk.Button(_('Reset list using video description'))
+        grid2.attach(button5, 2, 2, 2, 1)
+        button5.set_hexpand(True)
+        button5.connect(
+            'clicked',
+            self.on_extract_button_clicked,
+        )
+
+
+    def setup_timestamps_tab_update_treeview(self):
+
+        """ Called by self.setup_files_urls_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.timestamp_liststore.clear()
+
+        # Add each timestamp/title to the treeview, one row at a time
+        for mini_list in self.edit_obj.stamp_list:
+
+            start_stamp = mini_list[0]
+
+            if mini_list[1] is None:
+                stop_stamp = ''
+            else:
+                stop_stamp = mini_list[1]
+
+            if mini_list[2] is None:
+                clip_title = ''
+            else:
+                clip_title = mini_list[1]
+
+            self.timestamp_liststore.append(
+                [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
     def setup_errors_warnings_tab(self):
 
         """Called by self.setup_tabs().
@@ -8593,6 +9677,178 @@ class VideoEditWin(GenericEditWin):
 
 
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
+
+
+    def on_add_button_clicked(self, button, entry, entry2, entry3):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Adds a new timestamp to video's timestamp list, optionally with a
+        clip title.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, entry3 (Gtk.Entry): Other widgets to modify
+
+        """
+
+        start_stamp = utils.strip_whitespace(entry.get_text())
+        stop_stamp = utils.strip_whitespace(entry2.get_text())
+        clip_title = utils.strip_whitespace(entry3.get_text())
+
+        # (Values are stored as None, rather than empty strings)
+        if stop_stamp == '':
+            stop_stamp = None
+
+        if clip_title == '':
+            clip_title = None
+
+        # Do nothing if specified timestamps aren't valid ('stop_stamp' is
+        #   optional)
+        regex = r'^' + self.app_obj.timestamp_regex + r'$'
+        if re.search(regex, start_stamp) \
+        and (stop_stamp is None or re.search(regex, stop_stamp)) \
+        and utils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
+
+            # Add leading zeroes to the minutes and seconds components, so
+            #   that .stamp_list gets sorted correctly (and doesn't look
+            #   weird)
+            start_stamp = utils.timestamp_format(self.app_obj, start_stamp)
+            if stop_stamp is not None:
+                stop_stamp = utils.timestamp_format(self.app_obj, stop_stamp)
+
+            # Timestamps stored in groups of three, in the form
+            #   (start_stamp, stop_stamp, clip_title)
+            # If a group with the same 'start_stamp' timestamp already exists,
+            #   don't replace it; allow duplicates (as the user may actually
+            #   want that)
+            stamp_list = self.retrieve_val('stamp_list')
+            stamp_list.append([ start_stamp, stop_stamp, clip_title ])
+
+            # (The called function will sort the list)
+            self.edit_obj.set_timestamps(stamp_list)
+
+            # (Show changes, and empty entry boxes. The 'stop' timestamp, if
+            #   specified, becomes the 'start' timestamp for the next group)
+            self.setup_timestamps_tab_update_treeview()
+            entry.set_text(
+                utils.timestamp_add_second(self.app_obj, stop_stamp),
+            )
+            entry2.set_text('')
+            entry3.set_text('')
+
+        else:
+
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid timestamp(s)'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+                )
+
+
+    def on_clear_button_clicked(self, button):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Empties the video's timestamp list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.reset_timestamps()
+        self.setup_timestamps_tab_update_treeview()
+
+
+    def on_clip_prefs_clicked(self, button):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Opens the preferences window to show clip settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'clips')
+
+
+    def on_delete_button_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Deletes the selected timestamp(s) from the video's timestamp list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview display the timestsamp list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        start_stamp = model[this_iter][0]
+        stop_stamp = model[this_iter][1]
+        clip_title = model[this_iter][2]
+
+        # Timestamps stored in groups of three, in the form
+        #   (start_stamp, stop_stamp, clip_title)
+        # Walk the list, and delete the first matchng group
+        stamp_list = self.retrieve_val('stamp_list')
+        mod_list = []
+        match_flag = False
+
+        for mini_list in stamp_list:
+
+            if not match_flag \
+            and mini_list[0] == start_stamp \
+            and (mini_list[1] is None or mini_list[1] == stop_stamp) \
+            and (mini_list[2] is None or mini_list[2] == clip_title):
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_list)
+
+        # (The called function will sort the list)
+        self.edit_obj.set_timestamps(mod_list)
+
+        # (Show changes)
+        self.setup_timestamps_tab_update_treeview()
+
+
+    def on_extract_button_clicked(self, button):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Updates the video's timestamp list from its description, then displays
+        that list in the treeview.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.extract_timestamps_from_descrip(self.app_obj)
+        self.setup_timestamps_tab_update_treeview()
 
 
     def on_file_button_clicked(self, button, entry, entry2, entry3):
@@ -9323,30 +10579,41 @@ class FolderEditWin(GenericEditWin):
         checkbutton5 = self.add_checkbutton(grid2,
             _('This folder can\'t be deleted by the user'),
             'fixed_flag',
-            1, 0, 1, 1,
+            1, 0, 2, 1,
         )
         checkbutton5.set_sensitive(False)
 
         checkbutton6 = self.add_checkbutton(grid2,
             _('This is a system-controlled folder'),
             'priv_flag',
-            1, 1, 1, 1,
+            1, 1, 2, 1,
         )
         checkbutton6.set_sensitive(False)
 
         checkbutton7 = self.add_checkbutton(grid2,
-            _('Only videos can be added to this folder'),
-            'restrict_flag',
-            1, 2, 1, 1,
+            _('All contents deleted when Tartube shuts down'),
+            'temp_flag',
+            1, 2, 2, 1,
         )
         checkbutton7.set_sensitive(False)
 
-        checkbutton8 = self.add_checkbutton(grid2,
-            _('All contents deleted when Tartube shuts down'),
-            'temp_flag',
+        label = self.add_label(grid2,
+            _('Restrictions:'),
             1, 3, 1, 1,
         )
-        checkbutton8.set_sensitive(False)
+        label.set_hexpand(False)
+
+        entry = self.add_entry(grid2,
+            None,
+            2, 3, 1, 1,
+        )
+        entry.set_editable(False)
+        if self.edit_obj.restrict_mode == 'full':
+            entry.set_text(_('Can only contain videos'))
+        elif self.edit_obj.restrict_mode == 'partial':
+            entry.set_text(_('Can contain folders and videos'))
+        else:
+            entry.set_text(_('Can contain anything'))
 
 
     def setup_statistics_tab(self):
@@ -10497,7 +11764,8 @@ class SystemPrefWin(GenericPrefWin):
             youtube-dl forks, 'paths' to open the tab with youtube-dl paths,
             'live' to open the tab with livestream options, 'options' to open
             the tab with the list of download options, 'custom_dl' to open the
-            tab with custom download preferences. Any other value is ignored
+            tab with custom download preferences, 'clips' to open the tab with
+            video clip preferences. Any other value is ignored
 
     """
 
@@ -10586,8 +11854,9 @@ class SystemPrefWin(GenericPrefWin):
                 youtube-dl forks, 'paths' to open the tab with youtube-dl
                 paths, 'live' to open the tab with livestream options,
                 'options' to open the tab with the list of download options,
-                'custom_dl' to open the tab with custom download preferences.
-                Any other value is ignored
+                'custom_dl' to open the tab with custom download preferences,
+                'clips' to open the tab with video clip preferences. Any other
+                value is ignored
 
         Return values:
 
@@ -10636,12 +11905,14 @@ class SystemPrefWin(GenericPrefWin):
 
         Args:
 
-            init_mode (str): 'db' to open the tab with options for switching
-                the Tartube database, 'forks' to open the tab with youtube-dl
-                forks, 'paths' to open the tab with youtube-dl paths, 'live' to
-                open the tab with livestream options, 'options' to open the tab
-                with the list of download options, 'custom_dl' to open the tab
-                with custom download preferences. Any other value is ignored
+            init_mode (str or None): 'db' to open the tab with options for
+                switching the Tartube database, 'forks' to open the tab with
+                youtube-dl forks, 'paths' to open the tab with youtube-dl
+                paths, 'live' to open the tab with livestream options,
+                'options' to open the tab with the list of download options,
+                'custom_dl' to open the tab with custom download preferences,
+                'clips' to open the tab with video clip preferences. Any other
+                value is ignored
 
         """
 
@@ -10659,6 +11930,8 @@ class SystemPrefWin(GenericPrefWin):
                 self.select_options_tab()
             elif init_mode == 'custom_dl':
                 self.select_custom_dl_tab()
+            elif init_mode == 'clips':
+                self.select_clips_tab()
 
 
     def select_forks_tab(self):
@@ -10713,8 +11986,8 @@ class SystemPrefWin(GenericPrefWin):
 
         """Can be called by anything.
 
-        Makes the visible tab the one on which the a list of download options
-        is displayed.
+        Makes the visible tab the one on which the list of download options is
+        displayed.
         """
 
         self.notebook.set_current_page(6)
@@ -10729,7 +12002,19 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(3)
+        self.operations_inner_notebook.set_current_page(4)
+
+
+    def select_clips_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the video clip preferences are
+        displayed.
+        """
+
+        self.notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(6)
 
 
     # (Setup tabs)
@@ -11594,7 +12879,7 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
-        grid_width = 3
+        grid_width = 4
 
         # Automatic video deletion preferences
         self.add_label(grid,
@@ -11606,13 +12891,13 @@ class SystemPrefWin(GenericPrefWin):
             _('Automatically delete downloaded videos after this many days'),
             self.app_obj.auto_delete_flag,
             True,               # Can be toggled by user
-            0, 1, (grid_width - 1), 1,
+            0, 1, 2, 1,
         )
         # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.auto_delete_days,
-            2, 1, 1, 1,
+            2, 1, 2, 1,
         )
         # (Signal connect appears below)
 
@@ -11660,13 +12945,13 @@ class SystemPrefWin(GenericPrefWin):
         self.radiobutton2 = self.add_radiobutton(grid,
             self.radiobutton,
             _('The first # characters must match exactly'),
-            0, 6, (grid_width - 1), 1,
+            0, 6, 2, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_first_chars,
-            2, 6, 1, 1,
+            2, 6, 2, 1,
         )
         # (Signal connect appears below)
 
@@ -11676,13 +12961,13 @@ class SystemPrefWin(GenericPrefWin):
             'Ignore the last # characters; the remaining name must match' \
             + ' exactly',
             ),
-            0, 7, (grid_width - 1), 1,
+            0, 7, 2, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton2 = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_ignore_chars,
-            2, 7, 1, 1,
+            2, 7, 2, 1,
         )
         # (Signal connect appears below)
 
@@ -11708,6 +12993,37 @@ class SystemPrefWin(GenericPrefWin):
         self.spinbutton2.connect(
             'value-changed',
             self.on_match_spinbutton_changed,
+        )
+
+        # Video timestamps
+        self.add_label(grid,
+            '<u>' + _('Video timestamps') + '</u>',
+            0, 8, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' \
+            + _(
+                'These procedures might take a long time on a large database',
+            ) \
+            + '</i>',
+            0, 9, grid_width, 1,
+        )
+
+        button = Gtk.Button(_('Extract timestamps for all videos'))
+        grid.attach(button, 0, 10, 1, 1)
+        button.set_hexpand(False)
+        button.connect(
+            'clicked',
+            self.on_extract_stamps_button_clicked,
+        )
+
+        button2 = Gtk.Button(_('Remove timestamps from all videos'))
+        grid.attach(button2, 1, 10, 3, 1)
+        button2.set_hexpand(False)
+        button2.connect(
+            'clicked',
+            self.on_remove_stamps_button_clicked,
         )
 
 
@@ -13356,6 +14672,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_tab(self.operations_inner_notebook)
         self.setup_operations_livestreams_tab(self.operations_inner_notebook)
+        self.setup_operations_clips_tab(self.operations_inner_notebook)
         self.setup_operations_proxies_tab(self.operations_inner_notebook)
         self.setup_operations_actions_tab(self.operations_inner_notebook)
 
@@ -13608,7 +14925,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('S_top'),
+            _('_Stop'),
             inner_notebook,
         )
 
@@ -14043,18 +15360,28 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
-            'In custom downloads, apply a delay after each video/channel/' \
-            + 'playlist is download',
+            '...and split videos into video clips using timestamps',
             ),
-            self.app_obj.custom_dl_delay_flag,
+            self.app_obj.custom_dl_split_flag,
             True,                   # Can be toggled by user
             0, 2, grid_width, 1,
         )
         # (Signal connect appears below)
 
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+            'In custom downloads, apply a delay after each video/channel/' \
+            + 'playlist is downloaded',
+            ),
+            self.app_obj.custom_dl_delay_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
         self.add_label(grid,
             _('Maximum delay to apply (in minutes)'),
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
@@ -14062,7 +15389,7 @@ class SystemPrefWin(GenericPrefWin):
             None,
             0.2,                    # Step
             self.app_obj.custom_dl_delay_max,
-            1, 3, 1, 1,
+            1, 4, 1, 1,
         )
         # (Signal connect appears below)
         if not self.app_obj.custom_dl_delay_flag:
@@ -14073,7 +15400,7 @@ class SystemPrefWin(GenericPrefWin):
             'Minimum delay to apply (in minutes; randomises the actual' \
             + ' delay)',
             ),
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
 
         spinbutton2 = self.add_spinbutton(grid,
@@ -14081,7 +15408,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.custom_dl_delay_max,
             0.2,                    # Step
             self.app_obj.custom_dl_delay_min,
-            1, 4, 1, 1,
+            1, 5, 1, 1,
         )
         spinbutton2.connect(
             'value-changed',
@@ -14096,7 +15423,7 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain a YouTube video from the original' \
             + ' website',
             ),
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         # (Signal connect appears below)
 
@@ -14106,7 +15433,7 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain the video from HookTube rather' \
             + ' than YouTube',
             ),
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         if self.app_obj.custom_dl_divert_mode == 'hooktube':
             radiobutton2.set_active(True)
@@ -14118,7 +15445,7 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain the video from Invidious rather' \
             + ' than YouTube',
             ),
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         if self.app_obj.custom_dl_divert_mode == 'invidious':
             radiobutton3.set_active(True)
@@ -14130,7 +15457,7 @@ class SystemPrefWin(GenericPrefWin):
             'In custom downloads, obtain the video from the YouTube' \
             + ' front-end specified below',
             ),
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         if self.app_obj.custom_dl_divert_mode == 'other':
             radiobutton4.set_active(True)
@@ -14139,7 +15466,7 @@ class SystemPrefWin(GenericPrefWin):
         entry = self.add_entry(grid,
             self.app_obj.custom_dl_divert_website,
             True,
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         entry.connect('changed', self.on_alt_website_changed)
         if not self.app_obj.custom_dl_divert_mode == 'other':
@@ -14150,10 +15477,11 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             '<i>' + msg + '   <b>hooktube.com</b></i>',
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
 
         if not self.app_obj.custom_dl_by_video_flag:
+            checkbutton2.set_sensitive(False)
             radiobutton.set_sensitive(False)
             radiobutton2.set_sensitive(False)
             radiobutton3.set_sensitive(False)
@@ -14164,11 +15492,17 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect(
             'toggled',
             self.on_custom_video_button_toggled,
+            checkbutton2,
             radiobutton, radiobutton2, radiobutton3, radiobutton4,
             entry,
         )
 
         checkbutton2.connect(
+            'toggled',
+            self.on_custom_split_button_toggled,
+        )
+
+        checkbutton3.connect(
             'toggled',
             self.on_custom_delay_button_toggled,
             spinbutton,
@@ -14389,6 +15723,205 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def setup_operations_clips_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Clips' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Clips'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # Video Clips
+        self.add_label(grid,
+            '<u>' + _('Video Clips (requires FFmpeg)') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'When a video is checked/downloaded, automatically extract' \
+            + ' timestamps from its metadata file',
+            ),
+            self.app_obj.video_timestamps_extract_json_flag,
+            True,                   # Can be toggled by user
+            0, 1, grid_width, 1,
+        )
+        checkbutton.connect('toggled', self.on_extract_json_flag_toggled)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'When a video is checked/downloaded, automatically extract' \
+            + ' timestamps from its description',
+            ),
+            self.app_obj.video_timestamps_extract_descrip_flag,
+            True,                   # Can be toggled by user
+            0, 2, grid_width, 1,
+        )
+        checkbutton2.connect('toggled', self.on_extract_descrip_flag_toggled)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('If timestamps have already been extracted, replace them'),
+            self.app_obj.video_timestamps_replace_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton3.connect(
+            'toggled',
+            self.on_replace_stamps_flag_toggled,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'If no timestamps have been extracted, try again before' \
+            + ' splitting a video',
+            ),
+            self.app_obj.video_timestamps_re_extract_flag,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton4.connect(
+            'toggled',
+            self.on_reextract_stamps_flag_toggled,
+        )
+
+        self.add_label(grid,
+            _('Format of video clip filenames'),
+            0, 5, 1, 1,
+        )
+
+        combo_list = [
+            _('Number'), 'num',
+            _('Clip Title'), 'clip',
+            _('Number + Clip Title'), 'num_clip',
+            _('Clip Title + Number'), 'clip_num',
+            _('Original Title'), 'orig',
+            _('Original Title + Number'), 'orig_num',
+            _('Original Title + Clip Title'), 'orig_clip',
+            _('Original Title + Number + Clip Title'), 'orig_num_clip',
+            _('Original Title + Clip Title + Number'), 'orig_clip_num',
+        ]
+
+        store = Gtk.ListStore(str, str)
+        count = -1
+        line_num = 0
+        while combo_list:
+
+            count += 1
+            descrip = combo_list.pop(0)
+            mode = combo_list.pop(0)
+            if mode == self.app_obj.split_video_name_mode:
+                line_num = count
+
+            store.append([ descrip, mode])
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 1, 5, 1, 1)
+        combo.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+        combo.set_active(line_num)
+        combo.connect('changed', self.on_split_mode_combo_changed)
+
+        self.add_label(grid,
+            _('Generic title for video clips'),
+            0, 6, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            True,
+            1, 6, 1, 1,
+        )
+        entry.set_text(self.app_obj.split_video_custom_title)
+        entry.connect(
+            'changed',
+            self.on_custom_title_changed,
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Move clips to the Video Clips folder'),
+            0, 7, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            _('Keep clips with their original video'),
+            1, 7, 1, 1,
+        )
+        if not self.app_obj.split_video_clips_dir_flag:
+            radiobutton2.set_active(True)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_clips_dir_button_toggled,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('...but place new files inside a sub-directory'),
+            self.app_obj.split_video_subdir_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_split_subdir_flag_toggled,
+        )
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _('Add new files to Tartube\'s database'),
+            self.app_obj.split_video_add_db_flag,
+            True,                   # Can be toggled by user
+            0, 9, grid_width, 1,
+        )
+        checkbutton6.connect(
+            'toggled',
+            self.on_add_db_flag_toggled,
+        )
+
+        checkbutton7 = self.add_checkbutton(grid,
+            _('Use the original video\'s thumbnail'),
+            self.app_obj.split_video_copy_thumb_flag,
+            True,                   # Can be toggled by user
+            1, 9, grid_width, 1,
+        )
+        checkbutton7.connect('toggled', self.on_copy_thumb_flag_toggled)
+
+        if os.name == 'nt':
+            msg = _('After splitting a video, open the destination folder')
+        else:
+            msg = _('After splitting a video, open the destination directory')
+
+        checkbutton8 = self.add_checkbutton(grid,
+            msg,
+            self.app_obj.split_video_auto_open_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
+        checkbutton8.connect('toggled', self.on_auto_open_flag_toggled)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            _(
+            'After splitting a video, delete the original (ignored for' \
+            + ' videos in channels/playlists)',
+            ),
+            self.app_obj.split_video_auto_delete_flag,
+            True,                   # Can be toggled by user
+            0, 11, grid_width, 1,
+        )
+        checkbutton9.connect('toggled', self.on_auto_delete_flag_toggled)
+
+
     def setup_operations_proxies_tab(self, inner_notebook):
 
         """Called by self.setup_scheduling_tab().
@@ -14540,9 +16073,7 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton = self.add_radiobutton(grid,
             None,
-            _(
-            'Show a dialogue window at the end of an operation',
-            ),
+            _('Show a dialogue window at the end of an operation'),
             0, 7, 1, 1,
         )
         # (Signal connect appears below)
@@ -14565,9 +16096,7 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
-            _(
-            'Don\'t notify the user at the end of an operation',
-            ),
+            _('Don\'t notify the user at the end of an operation'),
             0, 9, 1, 1,
         )
         if self.app_obj.operation_dialogue_mode == 'default':
@@ -14650,13 +16179,22 @@ class SystemPrefWin(GenericPrefWin):
                 + self.app_obj.ytdl_fork_descrip_dict['yt-dlp'] \
                 + '</i>',
             ),
-            0, 0, 1, 1,
+            0, 0, 2, 1,
         )
 
         radiobutton = self.add_radiobutton(grid2,
             None,
             '   ' + _('Use yt-dlp'),
             0, 1, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        checkbutton = self.add_checkbutton(grid2,
+            _('Install without dependencies') + '\n' \
+            + _('(recommended on MS Windows)'),
+            self.app_obj.ytdl_fork_no_dependency_flag,
+            True,                   # Can be toggled by user
+            1, 1, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -14705,17 +16243,19 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid4,
             '<i>' + utils.tidy_up_long_string(
-                self.app_obj.ytdl_fork_descrip_dict['custom'],
+                '<b>' + _('Other forks') + ':</b> ' \
+                + self.app_obj.ytdl_fork_descrip_dict['custom'],
             ) + '</i>',
             0, 0, 2, 1,
         )
 
         radiobutton3 = self.add_radiobutton(grid4,
             radiobutton2,
-            '   ' + _('Use a different fork of youtube-dl:'),
+            '   ' + _('Use this fork:'),
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
+        radiobutton3.set_hexpand(False)
 
         entry = self.add_entry(grid4,
             None,
@@ -14723,15 +16263,18 @@ class SystemPrefWin(GenericPrefWin):
             1, 1, 1, 1,
         )
         entry.set_sensitive(True)
+        entry.set_hexpand(True)
         # (Signal connect appears below)
 
-        # Set widgets initial state
+        # Set widgets' initial states
         if self.app_obj.ytdl_fork is None \
         or self.app_obj.ytdl_fork == 'youtube-dl':
             radiobutton2.set_active(True)
+            checkbutton.set_sensitive(False)
             entry.set_sensitive(False)
         elif self.app_obj.ytdl_fork == 'yt-dlp':
             radiobutton.set_active(True)
+            checkbutton.set_sensitive(True)
             entry.set_sensitive(False)
         else:
             radiobutton3.set_active(True)
@@ -14739,6 +16282,7 @@ class SystemPrefWin(GenericPrefWin):
                 entry.set_text(self.app_obj.ytdl_fork)
             else:
                 entry.set_text('')
+            checkbutton.set_sensitive(False)
             entry.set_sensitive(True)
 
         # (Signal connects from above)
@@ -14760,18 +16304,22 @@ class SystemPrefWin(GenericPrefWin):
         radiobutton.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
+            checkbutton,
             entry,
             'yt-dlp',
         )
+        checkbutton.connect('toggled', self.on_ytdlp_install_button_toggled)
         radiobutton2.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
+            checkbutton,
             entry,
             'youtube-dl',
         )
         radiobutton3.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
+            checkbutton,
             entry,
         )
         entry.connect(
@@ -15886,6 +17434,26 @@ class SystemPrefWin(GenericPrefWin):
     # Callback class methods
 
 
+    def on_add_db_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables adding split files to Tartube's database.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_add_db_flag:
+            self.app_obj.set_split_video_add_db_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_add_db_flag:
+            self.app_obj.set_split_video_add_db_flag(False)
+
+
     def on_add_from_list_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_files_database_tab().
@@ -16128,6 +17696,48 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
+
+
+    def on_auto_delete_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables auto-deleting the original video after splitting it
+        into smaller pieces.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_auto_delete_flag:
+            self.app_obj.set_split_video_auto_delete_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_auto_delete_flag:
+            self.app_obj.set_split_video_auto_delete_flag(False)
+
+
+    def on_auto_open_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables auto-opening the destination directory after splitting
+        a video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_auto_open_flag:
+            self.app_obj.set_split_video_auto_open_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_auto_open_flag:
+            self.app_obj.set_split_video_auto_open_flag(False)
 
 
     def on_auto_restart_button_toggled(self, checkbutton, checkbutton2,
@@ -16575,6 +18185,24 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_dialogue_copy_clipboard_flag(False)
 
 
+    def on_clips_dir_button_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Toggles between moving clips to the Video Clips folder.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_split_video_clips_dir_flag(True)
+        else:
+            self.app_obj.set_split_video_clips_dir_flag(False)
+
+
     def on_close_to_tray_toggled(self, checkbutton, checkbutton2):
 
         """Called from a callback in self.setup_windows_system_tray_tab().
@@ -16668,6 +18296,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_convert_mode(mode)
 
 
+    def on_copy_thumb_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables copying the original video's thumbnail after splitting
+        a video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_copy_thumb_flag:
+            self.app_obj.set_split_video_copy_thumb_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_copy_thumb_flag:
+            self.app_obj.set_split_video_copy_thumb_flag(False)
+
+
     def on_copyright_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_websites_tab().
@@ -16745,6 +18394,26 @@ class SystemPrefWin(GenericPrefWin):
             entry.set_sensitive(False)
 
 
+    def on_custom_split_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_custom_tab().
+
+        Enables/disables splitting a video into clips during a custom download.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.custom_dl_split_flag:
+            self.app_obj.set_custom_dl_split_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.custom_dl_split_flag:
+            self.app_obj.set_custom_dl_split_flag(False)
+
+
     def on_custom_textview_changed(self, textbuffer):
 
         """Called from callback in self.setup_windows_websites_tab().
@@ -16776,8 +18445,31 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_ignore_custom_msg_list(mod_list)
 
 
-    def on_custom_video_button_toggled(self, checkbutton, radiobutton,
-        radiobutton2, radiobutton3, radiobutton4, entry):
+    def on_custom_title_changed(self, entry):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Sets the custom title for split videos.
+
+        Args:
+
+            entry (Gtk.Entry): The widget clicked
+
+        """
+
+        text = entry.get_text()
+        if text == '':
+            self.app_obj.set_split_video_custom_title(
+                self.app_obj.split_video_generic_title,
+            )
+        else:
+            self.app_obj.set_split_video_custom_title(text)
+
+        entry.set_text(self.app_obj.split_video_custom_title)
+
+
+    def on_custom_video_button_toggled(self, checkbutton, checkbutton2,
+        radiobutton, radiobutton2, radiobutton3, radiobutton4, entry):
 
         """Called from callback in self.setup_operations_custom_tab().
 
@@ -16787,6 +18479,8 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to update
 
             radiobutton, radiobutton2, radiobutton3, radiobutton4
                 (Gtk.RadioButton): Other widgets to update
@@ -16799,6 +18493,8 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.custom_dl_by_video_flag:
 
             self.app_obj.set_custom_dl_by_video_flag(True)
+
+            checkbutton2.set_sensitive(True)
             radiobutton.set_sensitive(True)
             radiobutton2.set_sensitive(True)
             radiobutton3.set_sensitive(True)
@@ -16809,6 +18505,9 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.custom_dl_by_video_flag:
 
             self.app_obj.set_custom_dl_by_video_flag(False)
+
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
             radiobutton.set_sensitive(False)
             radiobutton2.set_sensitive(False)
             radiobutton3.set_sensitive(False)
@@ -17773,6 +19472,99 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.scheduled_livestream_extra_flag:
             self.app_obj.set_scheduled_livestream_extra_flag(False)
+
+
+    def on_extract_stamps_button_clicked(self, button):
+
+        """Called from callback in self.setup_files_videos_tab().
+
+        Extracts timestamps from the description of every video in the
+        database.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        video_count = 0
+        attempt_count = 0
+        success_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+
+                if not media_data_obj.stamp_list \
+                and media_data_obj.descrip is not None \
+                and media_data_obj.descrip != '':
+
+                    attempt_count += 1
+
+                    media_data_obj.extract_timestamps_from_descrip(
+                        self.app_obj,
+                    )
+
+                    if media_data_obj.stamp_list:
+
+                        success_count += 1
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos checked:') + ' ' + str(attempt_count) + '\n' \
+        + _('Videos updated:') + ' ' + str(success_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
+
+
+    def on_extract_descrip_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables automatically extracting timestamps from the video's
+        description file.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.video_timestamps_extract_descrip_flag:
+            self.app_obj.set_video_timestamps_extract_descrip_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.video_timestamps_extract_descrip_flag:
+            self.app_obj.set_video_timestamps_extract_descrip_flag(False)
+
+
+    def on_extract_json_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables automatically extracting timestamps from the video's
+        metadata file.
+
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.video_timestamps_extract_json_flag:
+            self.app_obj.set_video_timestamps_extract_json_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.video_timestamps_extract_json_flag:
+            self.app_obj.set_video_timestamps_extract_json_flag(False)
 
 
     def on_ffmpeg_add_button_clicked(self, button, entry):
@@ -19328,6 +21120,27 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def on_reextract_stamps_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables re-extracting timestamps just before splitting a
+        video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.video_timestamps_re_extract_flag:
+            self.app_obj.set_video_timestamps_re_extract_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.video_timestamps_re_extract_flag:
+            self.app_obj.set_video_timestamps_re_extract_flag(False)
+
+
     def on_refresh_verbose_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_output_outputtab_tab().
@@ -19461,6 +21274,63 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.classic_duplicate_remove_flag:
             self.app_obj.set_classic_duplicate_remove_flag(False)
+
+
+    def on_remove_stamps_button_clicked(self, button):
+
+        """Called from callback in self.setup_files_videos_tab().
+
+        Clears timestamps from every video in the database.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        video_count = 0
+        success_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+                if media_data_obj.stamp_list:
+
+                    success_count += 1
+                    media_data_obj.reset_timestamps()
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos updated:') + ' ' + str(success_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
+
+
+    def on_replace_stamps_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables replacing timestamps.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.video_timestamps_replace_flag:
+            self.app_obj.set_video_timestamps_replace_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.video_timestamps_replace_flag:
+            self.app_obj.set_video_timestamps_replace_flag(False)
 
 
     def on_reset_avconv_button_clicked(self, button, entry):
@@ -20080,6 +21950,43 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_sound_custom(model[tree_iter][0])
 
 
+    def on_split_mode_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_operations_clips_tab().
+
+        Sets the mode for naming split video files.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.app_obj.set_split_video_name_mode(model[tree_iter][1])
+
+
+    def on_split_subdir_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables moving split files into a sub-directory.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_subdir_flag:
+            self.app_obj.set_split_video_subdir_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_subdir_flag:
+            self.app_obj.set_split_video_subdir_flag(False)
+
+
     def on_squeeze_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_main_window_tab().
@@ -20586,7 +22493,6 @@ class SystemPrefWin(GenericPrefWin):
             )
 
 
-
     def on_url_regex_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_files_urls_tab().
@@ -20799,7 +22705,8 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_dialogue_yt_remind_flag(False)
 
 
-    def on_ytdl_fork_button_toggled(self, radiobutton, entry, fork_type=None):
+    def on_ytdl_fork_button_toggled(self, radiobutton, checkbutton, entry, \
+    fork_type=None):
 
         """Called from callback in self.setup_downloader_forks_tab().
 
@@ -20809,6 +22716,8 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             radiobutton (Gtk.Radiobutton): The widget clicked
+
+            checkbutton (Gtk.CheckButton): Another widget to be updated
 
             entry (Gtk.Entry): Another widget to be updated
 
@@ -20828,17 +22737,20 @@ class SystemPrefWin(GenericPrefWin):
                 else:
                     self.app_obj.set_ytdl_fork(fork_name)
 
+                checkbutton.set_sensitive(False)
                 entry.set_sensitive(True)
 
             elif fork_type == 'youtube-dl':
 
                 self.app_obj.set_ytdl_fork(None)
+                checkbutton.set_sensitive(False)
                 entry.set_text('')
                 entry.set_sensitive(False)
 
             elif fork_type == 'yt-dlp':
 
                 self.app_obj.set_ytdl_fork(fork_type)
+                checkbutton.set_sensitive(True)
                 entry.set_text('')
                 entry.set_sensitive(False)
 
@@ -20993,6 +22905,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_write_verbose_flag:
             self.app_obj.set_ytdl_write_verbose_flag(False)
+
+
+    def on_ytdlp_install_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloader_forks_tab().
+
+        Sets the flag to install yt-dlp with or without dependencies.
+
+        Args:
+
+            checkbutton (Gtk.Checkbutton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_fork_no_dependency_flag:
+            self.app_obj.set_ytdl_fork_no_dependency_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_fork_no_dependency_flag:
+            self.app_obj.set_ytdl_fork_no_dependency_flag(False)
 
 
     def on_ytsc_priority_button_toggled(self, checkbutton, spinbutton,
