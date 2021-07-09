@@ -390,6 +390,8 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.6 Adding videos`_
 * `6.7 Adding channels and playlists`_
 * `6.8 Adding videos, channels and playlists together`_
+* `6.8.1 Bulk-adding channels and playlists`_
+* `6.8.2 Updating adding channels and playlists`_
 * `6.9 Adding folders`_
 * `6.10 Things you can do`_
 * `6.11 Download options`_
@@ -401,6 +403,7 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.13.1 Independent downloads`_
 * `6.13.2 Diverting to HookTube / Invidious`_
 * `6.13.3 Delays between downloads`_
+* `6.13.4 Launching custom downloads`_
 * `6.14 Watching videos`_
 * `6.15 Filtering and finding videos`_
 * `6.16 Marking videos`_
@@ -593,6 +596,36 @@ If your list of URLs contains a mixture of channels and playlists, you can conve
 - In **Tartube**'s main window, right-click a channel, and select **Channel actions > Convert to playlist**
 - Alternatively, right-click a playlist, and select **Playlist actions > Convert to channel**
 - After converting, you can set a name for the new channel/playlist by right-clicking it, and selecting **Channel actions > Rename channel...** or **Playlist actions > Rename playlist...**
+
+6.8.1 Bulk-adding channels and playlists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+However, if you're confident that your long list of URLs contains only channels and playlists, there are a couple of other ways to add them.
+
+Firstly, you can click **Media > Add many channels/playlists...**.
+
+Secondly, you could import a text file contaiing a list of channels/playlists. You can write the text file yourself. Each channel/playlist is defined by three consecutive lines, in the following format:
+
+        @channel
+
+        Alice's Channel
+
+        <url>
+
+        @playlist
+
+        Bob's Playlist
+
+        <url>
+
+... where **<url>** is the web address of the channel/playlist. (Leave out the diamond brackets.)
+
+When you're ready, click **Media > Import into database > Plain text export file...**
+
+6.8.2 Updating adding channels and playlists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to update *existing* channels and playlists, you can do so by clicking **Edit > System preferences... > Files > URLs**.
 
 6.9 Adding folders
 ------------------
@@ -814,6 +847,21 @@ If the website is complaining that you're making too many requests (in other wor
 - You can now start the custom download
 
 The delay is applied after downloading a channel or a playlist. If you want to apply the delay after each video, you should enable independent downloads as well (as described above).
+
+6.13.4 Launching custom downloads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are several ways to start a custom download.
+
+- Right-click a video, and select **Custom download video**
+- Right-click a channel, playlist or folder, and select **Custom download channel**, and so on
+- In the Classic Mode tab, click the menu icon in the top-right corner, and select **Enable custom downloads**. Then click the **Custom download all** button in the bottom-right corner
+- From the main menu, click **Operations > Custom download all**
+
+If you want, you can also add a button to the **Videos** tab, right beneath the **Download all** button.
+
+- Click **Edit > System preferences... > Windows > Main window**
+- Select **Show a 'Custom download all' button in the Videos tab**
 
 6.14 Watching videos
 --------------------
@@ -1107,10 +1155,11 @@ If you want something simpler, then click the **Classic Mode** Tab, which has an
   :alt: The Classic Mode Tab
 
 - Copy and paste the links (URLs) of videos, channels and/or playlists into the box at the top
-- Click the **+** button to select a directory (folder). All the videos are downloaded to this location
+- Click the **+** button to select a destination. All the videos are downloaded to this location
 - Select a video or audio format, or leave the **Default** setting enabled
-- Click the **Add URLs** button
-- If you like, you can add more videos/channels/playlists, using a different directory and/or a different format
+- The video might not exist in your preferred format, but if FFmpeg or AVConv is installed on your system, the video can be converted
+- Next, click the **Add URLs** button
+- If you like, you can add more videos/channels/playlists, using a different destination and/or a different format
 - When you're ready, click the **Download all** button
 
 **Tartube** doesn't add any of these videos to its database. When you restart **Tartube**, all of the URLs will be gone. However, the videos themselves will still be on your hard drive. 
@@ -1442,12 +1491,13 @@ If a youtube-dl fork is still compatible with the original, then **Tartube** can
 * `7.26 Can't hear livestream alarms`_
 * `7.27 Some icons not visible`_
 * `7.28 Video thumbnails not visible`_
-* `7.29 Graphs not visible`_
-* `7.30 Tartube is not visible in the system tray`_
-* `7.31 Tartube is not portable`_
-* `7.32 Run out of disk space`_
-* `7.33 British spelling`_
-* `7.34 No puedo hablar inglés`_
+* `7.29 Video text not visible`_
+* `7.30 Graphs not visible`_
+* `7.31 Tartube is not visible in the system tray`_
+* `7.32 Tartube is not portable`_
+* `7.33 Run out of disk space`_
+* `7.34 British spelling`_
+* `7.35 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1823,9 +1873,9 @@ The Tartube installer for 64-bit MS Windows already contains a copy of **playsou
 
 *Q: Icons in the Classic Mode tab are broken! They all look the same!*
 
-A: **Tartube** uses a set of stock icons wherever possible. If those icons are not installed on your system, you should probably report the problem to the developers of that system (as many applications will be affected).
+A: Since v2.4, **Tartube** uses a set of custom icons, replacing system (stock) icons. This was because some users were complaining that their (broken) systems didn't provide the stock icons.
 
-**Tartube** provides a set of custom icons to replace the stock ones (in an emergency). To enable them, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to select it. Click the **OK** button to close the window, then restart **Tartube**.
+If you want to restore stock icons, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to deselect it. Click the **OK** button to close the window, then restart **Tartube**.
 
 7.28 Video thumbnails not visible
 ---------------------------------
@@ -1841,7 +1891,14 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.29 Graphs not visible
+7.29 Video text not visible
+---------------------------
+
+*Q: I can't see the text below each video!*
+
+A: If the background colours in the Video Catalogue are getting in the way, you can change them: click **Edit > Sysem preferences... > Windows > Colours**.
+
+7.30 Graphs not visible
 -----------------------
 
 *Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
@@ -1852,7 +1909,7 @@ The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of 
 
 On Linux/BSD, use your system's software manager. On MS Windows, run the application **C:\Users\YOURNAME\AppData\Local\Tartube\msys64\mingw64.exe**, and in the new window type **pacman -S mingw-w64-x86_64-python-matplotlib**.
 
-7.30 Tartube is not visible in the system tray
+7.31 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -1861,7 +1918,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.31 Tartube is not portable
+7.32 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -1872,7 +1929,7 @@ On other operating systems, just download the source code and run it. Installati
 
 On other operating systems, **Tartube** will attempt to create a config file in the default location for your system. You should create an empty **settings.json** file in the source code directory (i.e. the one containing a **setup.py** file). This will force Tartube to save its config file there, rather than in the system's default location.
 
-7.32 Run out of disk space
+7.33 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -1883,14 +1940,14 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.33 British spelling
+7.34 British spelling
 ---------------------
 
 *Q: These British spellings are getting on my nerves!*
 
 A: Click **Edit > System preferences... > General > Language**, then click the drop-down box to select American English, and then restart **Tartube**
 
-7.34 No puedo hablar inglés
+7.35 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

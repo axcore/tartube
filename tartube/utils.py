@@ -35,11 +35,11 @@ import requests
 import shutil
 import subprocess
 import sys
-import textwrap
 import time
 
 
 # Import our modules
+import classes
 import formats
 import mainapp
 import media
@@ -1354,7 +1354,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
             return None
 
         file_name, file_ext = os.path.splitext(video_obj.dummy_path)
-        for this_ext in formats.IMAGE_FORMAT_LIST:
+        for this_ext in formats.IMAGE_FORMAT_EXT_LIST:
 
             thumb_path = file_name + this_ext
             if os.path.isfile(thumb_path):
@@ -2526,7 +2526,7 @@ def tidy_up_long_descrip(string, max_length=80):
 
             else:
 
-                w = ModTextWrapper(
+                w = classes.ModTextWrapper(
                     width=max_length,
                     break_long_words=False,
                     # Split up URLs on the forward slash character, as well as
@@ -2603,7 +2603,7 @@ split_words_flag=False):
 
             else:
 
-                w = ModTextWrapper(
+                w = classes.ModTextWrapper(
                     width=max_length,
                     break_long_words=split_words_flag,
                     # Split up URLs on the forward slash character, as well as
@@ -2879,52 +2879,3 @@ def upper_case_first(string):
     """
 
     return string[0].upper() + string[1:]
-
-
-# Classes
-
-
-class ModTextWrapper(textwrap.TextWrapper):
-
-    """Python class to modify the behaviour of textwrap by Gregory P. Ward.
-
-    If 'break_on_hyphens' is specified, wrap the text on both hyphens and
-    forward slashes. In that way, we can break up long URLs in calls to
-    utils.tidy_up_long_descrip() and utils.tidy_up_long_string().
-
-    """
-
-    def _split(self, text):
-
-        _whitespace = '\t\n\x0b\x0c\r '
-
-        word_punct = r'[\w!"\'&.,?]'
-        letter = r'[^\d\W]'
-        whitespace = r'[%s]' % re.escape(_whitespace)
-        nowhitespace = '[^' + whitespace[1:]
-        mod_wordsep_re = re.compile(r'''
-            ( # any whitespace
-              %(ws)s+
-            | # em-dash between words
-              (?<=%(wp)s) -{2,} (?=\w)
-            | # word, possibly hyphenated
-              %(nws)s+? (?:
-                # hyphenated word, or word with forward slash
-                  [-\/](?: (?<=%(lt)s{2}[-\/]) | (?<=%(lt)s[-\/]%(lt)s[-\/]))
-                  (?= %(lt)s [-\/]? %(lt)s)
-                | # end of word
-                  (?=%(ws)s|\Z)
-                | # em-dash
-                  (?<=%(wp)s) (?=-{2,}\w)
-                )
-            )''' % {'wp': word_punct, 'lt': letter,
-                    'ws': whitespace, 'nws': nowhitespace},
-            re.VERBOSE)
-
-        if self.break_on_hyphens is True:
-            chunks = mod_wordsep_re.split(text)
-        else:
-            chunks = self.wordsep_simple_re.split(text)
-        chunks = [c for c in chunks if c]
-        return chunks
-

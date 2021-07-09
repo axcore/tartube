@@ -2945,8 +2945,8 @@ class OptionsEditWin(GenericEditWin):
 
                 checkbutton = self.add_checkbutton(grid,
                     _(
-                    'EXPERIMENTAL: Use ONLY these options (Tartube adds the' \
-                    + ' downloader and the output folder',
+                    'Use ONLY these options (Tartube adds the downloader' \
+                    + ' and the output folder',
                     ),
                     None,
                     0, 3, grid_width, 1,
@@ -2957,8 +2957,8 @@ class OptionsEditWin(GenericEditWin):
 
                 checkbutton = self.add_checkbutton(grid,
                     _(
-                    'EXPERIMENTAL: Use ONLY these options (Tartube adds the' \
-                    + ' downloader and the output directory)'
+                    'Use ONLY these options (Tartube adds the downloader' \
+                    + ' and the output directory)'
                     ),
                     None,
                     0, 3, grid_width, 1,
@@ -9154,6 +9154,32 @@ class VideoEditWin(GenericEditWin):
         )
         label.set_hexpand(False)
 
+        frame = self.add_image(grid,
+            self.app_obj.main_win_obj.icon_dict['stock_file'],
+            1, 5, 1, 1,
+        )
+        # (The frame looks cramped without this. The icon itself is 16x16)
+        frame.set_size_request(
+            16 + (self.spacing_size * 2),
+            -1,
+        )
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 2, 5, 1, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        entry = self.add_entry(grid2,
+            None,
+            0, 0, 1, 1,
+        )
+        entry.set_editable(False)
+        if self.edit_obj.file_name:
+            entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
+
         if not self.app_obj.show_custom_icons_flag:
             button = Gtk.Button.new_from_icon_name(
                 Gtk.STOCK_FILE,
@@ -9162,43 +9188,37 @@ class VideoEditWin(GenericEditWin):
         else:
             button = Gtk.Button.new()
             button.set_image(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_file']),
+                Gtk.Image.new_from_pixbuf(
+                    self.app_obj.main_win_obj.pixbuf_dict['stock_add'],
+                ),
             )
 
-        grid.attach(button, 1, 5, 1, 1)
+        grid2.attach(button, 1, 0, 1, 1)
         button.set_tooltip_text(_('Set the file (if this is the wrong one)'))
         # (Signal connect appears below)
 
-        entry = self.add_entry(grid,
-            None,
-            2, 5, 1, 1,
-        )
-        entry.set_editable(False)
-        if self.edit_obj.file_name:
-            entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
-
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 6, 3, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 6, 3, 1)
+        grid3.set_vexpand(False)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
 
-        checkbutton = self.add_checkbutton(grid2,
+        checkbutton = self.add_checkbutton(grid3,
             _('Video has been downloaded'),
             'dl_flag',
             0, 0, 2, 1,
         )
         checkbutton.set_sensitive(False)
 
-        label2 = self.add_label(grid2,
+        label2 = self.add_label(grid3,
             _('Duration'),
             2, 0, 1, 1,
         )
         label2.set_hexpand(False)
 
-        entry2 = self.add_entry(grid2,
+        entry2 = self.add_entry(grid3,
             None,
             3, 0, 1, 1,
         )
@@ -9208,20 +9228,20 @@ class VideoEditWin(GenericEditWin):
                 utils.convert_seconds_to_string(self.edit_obj.duration),
             )
 
-        checkbutton2 = self.add_checkbutton(grid2,
+        checkbutton2 = self.add_checkbutton(grid3,
             _('Video is marked as unwatched'),
             'new_flag',
             0, 1, 2, 1,
         )
         checkbutton2.set_sensitive(False)
 
-        label3 = self.add_label(grid2,
+        label3 = self.add_label(grid3,
             _('File size'),
             2, 1, 1, 1,
         )
         label3.set_hexpand(False)
 
-        entry3 = self.add_entry(grid2,
+        entry3 = self.add_entry(grid3,
             None,
             3, 1, 1, 1,
         )
@@ -9229,20 +9249,20 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.file_size is not None:
             entry3.set_text(self.edit_obj.get_file_size_string())
 
-        checkbutton3 = self.add_checkbutton(grid2,
+        checkbutton3 = self.add_checkbutton(grid3,
             _('Video has been split from an original'),
             'split_flag',
             0, 2, 2, 1,
         )
         checkbutton3.set_sensitive(False)
 
-        label4 = self.add_label(grid2,
+        label4 = self.add_label(grid3,
             _('Upload time'),
             2, 2, 1, 1,
         )
         label4.set_hexpand(False)
 
-        entry4 = self.add_entry(grid2,
+        entry4 = self.add_entry(grid3,
             None,
             3, 2, 1, 1,
         )
@@ -9250,27 +9270,27 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.upload_time is not None:
             entry4.set_text(self.edit_obj.get_upload_time_string())
 
-        checkbutton4 = self.add_checkbutton(grid2,
+        checkbutton4 = self.add_checkbutton(grid3,
             _('Video is archived'),
             'archive_flag',
             0, 3, 1, 1,
         )
         checkbutton4.set_sensitive(False)
 
-        checkbutton5 = self.add_checkbutton(grid2,
+        checkbutton5 = self.add_checkbutton(grid3,
             _('Video is bookmarked'),
             'bookmark_flag',
             1, 3, 1, 1,
         )
         checkbutton5.set_sensitive(False)
 
-        label5 = self.add_label(grid2,
+        label5 = self.add_label(grid3,
             _('Receive time'),
             2, 3, 1, 1,
         )
         label5.set_hexpand(False)
 
-        entry5 = self.add_entry(grid2,
+        entry5 = self.add_entry(grid3,
             None,
             3, 3, 1, 1,
         )
@@ -9278,21 +9298,21 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.receive_time is not None:
             entry5.set_text(self.edit_obj.get_receive_time_string())
 
-        checkbutton6 = self.add_checkbutton(grid2,
+        checkbutton6 = self.add_checkbutton(grid3,
             _('Video is favourite'),
             'fav_flag',
             0, 4, 1, 1,
         )
         checkbutton6.set_sensitive(False)
 
-        checkbutton7 = self.add_checkbutton(grid2,
+        checkbutton7 = self.add_checkbutton(grid3,
             _('Video is in waiting list'),
             'waiting_flag',
             1, 4, 1, 1,
         )
         checkbutton7.set_sensitive(False)
 
-        checkbutton8 = self.add_checkbutton(grid2,
+        checkbutton8 = self.add_checkbutton(grid3,
             _('Always simulate download of this video'),
             'dl_sim_flag',
             2, 4, 2, 1,
@@ -13537,6 +13557,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_windows_drag_tab(inner_notebook)
         self.setup_windows_system_tray_tab(inner_notebook)
         self.setup_windows_dialogues_tab(inner_notebook)
+        self.setup_windows_colours_tab(inner_notebook)
         self.setup_windows_errors_warnings_tab(inner_notebook)
         self.setup_windows_websites_tab(inner_notebook)
 
@@ -13668,59 +13689,69 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton9 = self.add_checkbutton(grid,
             _(
+            'Show a \'Custom download all\' button in the Videos Tab',
+            ),
+            self.app_obj.show_custom_dl_button_flag,
+            True,                   # Can be toggled by user
+            0, 9, grid_width, 1,
+        )
+        checkbutton9.connect('toggled', self.on_show_custom_dl_button_toggled)
+
+        checkbutton10 = self.add_checkbutton(grid,
+            _(
             'In the Progress Tab, hide finished videos / channels / playlists',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton9.connect('toggled', self.on_hide_button_toggled)
+        checkbutton10.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _('In the Progress Tab, show results in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
-        checkbutton10.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton11.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton12 = self.add_checkbutton(grid,
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 12, grid_width, 1,
         )
-        checkbutton11.connect(
+        checkbutton12.connect(
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
         if __main__.__pkg_no_download_flag__:
-            checkbutton11.set_sensitive(False)
+            checkbutton12.set_sensitive(False)
 
-        checkbutton12 = self.add_checkbutton(grid,
+        checkbutton13 = self.add_checkbutton(grid,
             _(
             'In the Classic Mode Tab, when adding URLs, remove duplicates' \
             + ' rather than retaining them',
             ),
             self.app_obj.classic_duplicate_remove_flag,
             True,                   # Can be toggled by user
-            0, 12, grid_width, 1,
+            0, 13, grid_width, 1,
         )
-        checkbutton12.connect(
+        checkbutton13.connect(
             'toggled',
             self.on_remove_duplicate_button_toggled,
         )
 
-        checkbutton13 = self.add_checkbutton(grid,
+        checkbutton14 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings Tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 13, grid_width, 1,
+            0, 14, grid_width, 1,
         )
-        checkbutton13.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton14.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_videos_tab(self, inner_notebook):
@@ -13951,7 +13982,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_System tray'),
+            _('_Tray'),
             inner_notebook,
         )
 
@@ -14070,6 +14101,144 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton3.set_hexpand(False)
         checkbutton3.connect('toggled', self.on_yt_remind_button_toggled)
+
+
+    def setup_windows_colours_tab(self, inner_notebook):
+
+        """Called by self.setup_windows_tab().
+
+        Sets up the 'Colours' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Colours'),
+            inner_notebook,
+        )
+
+        grid_width = 5
+
+        # Video Catalogue Colour preferences
+        self.add_label(grid,
+            '<u>' + _('Video Catalogue Colour preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            1,
+            # Key in mainapp.TartubeApp.custom_bg_table
+            'live_wait',
+            _('Waiting livestreams'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            2,
+            'live_now',
+            _('Broadcasting livestreams'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            3,
+            'debut_wait',
+            _('Waiting debut videos'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            4,
+            'debut_now',
+            _('Broadcasting debut videos'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            5,
+            'select',
+            _('Selected videos'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            6,
+            'select_wait',
+            _('Selected waiting videos'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            7,
+            'select_live',
+            _('Selected broadcasting videos'),
+        )
+
+
+    def setup_windows_colours_tab_add_row(self, grid, row_num, key, descrip):
+
+        """Called by self.setup_windows_colours_tab_add_row().
+
+        Sets up a single row of widgets corresponding to a single key in
+        mainapp.TartubeApp.custom_bg_table.
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are attached
+
+            row_num (int): Coordinates on the grid on which these widgets are
+                place
+
+            key (str): A key in mainapp.TartubeApp.custom_bg_table
+
+            descrip (str): The label to use for this row
+
+        """
+
+        label = self.add_label(grid,
+            descrip,
+            0, row_num, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        label2 = self.add_label(grid,
+            '<i>' + _('Custom colour:') + '</i>',
+            1, row_num, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        colorbutton = Gtk.ColorButton.new()
+        grid.attach(colorbutton, 2, row_num, 1, 1)
+        colorbutton.connect(
+            'color-set',
+            self.on_custom_colour_button_clicked,
+            key,
+        )
+
+        mini_list = self.app_obj.custom_bg_table[key]
+        custom_rgba_obj = Gdk.RGBA(
+            mini_list[0],
+            mini_list[1],
+            mini_list[2],
+            mini_list[3],
+        )
+        colorbutton.set_rgba(custom_rgba_obj)
+
+        label3 = self.add_label(grid,
+            '<i>' + _('Default colour:') + '</i>',
+            3, row_num, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        colorbutton2 = Gtk.ColorButton.new()
+        grid.attach(colorbutton2, 4, row_num, 1, 1)
+        colorbutton2.connect(
+            'button-press-event',
+            self.on_default_colour_button_clicked,
+            colorbutton,
+            key,
+        )
+
+        mini_list2 = self.app_obj.default_bg_table[key]
+        default_rgba_obj = Gdk.RGBA(
+            mini_list2[0],
+            mini_list2[1],
+            mini_list2[2],
+            mini_list[3],
+        )
+        colorbutton2.set_rgba(default_rgba_obj)
 
 
     def setup_windows_errors_warnings_tab(self, inner_notebook):
@@ -17269,8 +17438,8 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton9 = self.add_checkbutton(grid,
             _(
-            'During an update operation, automatically switch to the Output' \
-            + ' tab',
+            'During update/info operations, automatically switch to the' \
+            + ' Output tab',
             ),
             self.app_obj.auto_switch_output_flag,
             True,                   # Can be toggled by user
@@ -18337,6 +18506,51 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_yt_copyright_flag(False)
 
 
+    def on_custom_colour_button_clicked(self, colorbutton, key):
+
+        """Called by self.setup_windows_colours_tab_add_row()
+
+        After the colour selection dialogue has closed, update the custom
+        background colour used in the Video Catalogue.
+
+        Args:
+
+            colorbutton (Gtk.ColorButton): The widget clicked
+
+            key (str): One of the keys in mainapp.TartubeApp.custom_bg_table
+
+        """
+
+        rgba_obj = colorbutton.get_color()
+
+        # Update IVs. Insert a standard value for alpha, so the user doesn't
+        #   have to think about it
+        self.app_obj.set_custom_bg(
+            key,
+            (rgba_obj.red / 65536),
+            (rgba_obj.green / 65536),
+            (rgba_obj.blue / 65536),
+            0.20,
+        )
+
+        # Update the custom colour button to show the colour with its true
+        #   alpha value
+        mini_list = self.app_obj.custom_bg_table[key]
+        custom_rgba_obj = Gdk.RGBA(
+            mini_list[0],
+            mini_list[1],
+            mini_list[2],
+            mini_list[3],
+        )
+        colorbutton.set_rgba(custom_rgba_obj)
+
+        # Update the Video Catalogue to show the new colour
+        if self.app_obj.main_win_obj.video_index_current is not None:
+            self.app_obj.main_win_obj.video_catalogue_redraw_all(
+                self.app_obj.main_win_obj.video_index_current,
+            )
+
+
     def on_custom_delay_button_toggled(self, checkbutton, spinbutton,
     spinbutton2):
 
@@ -18979,6 +19193,50 @@ class SystemPrefWin(GenericPrefWin):
 
         self.app_obj.set_avconv_path(self.app_obj.default_avconv_path)
         entry.set_text(self.app_obj.avconv_path)
+
+
+    def on_default_colour_button_clicked(self, colorbutton, event_button, \
+    colorbutton2, key):
+
+        """Called by self.setup_windows_colours_tab_add_row()
+
+        After clicking the default colour button, don't allow the usual
+        colour selection dialogue to open. Instead, update the button showing
+        the custom colour.
+
+        Args:
+
+            colorbutton (Gtk.ColorButton): The widget clicked
+
+            event_button (Gdk.EventButton): Ignored
+
+            colorbutton2 (Gtk.ColorButton): Another widget to u pdate
+
+            key (str): One of the keys in mainapp.TartubeApp.custom_bg_table
+
+        """
+
+        # Update IVs
+        self.app_obj.reset_custom_bg(key)
+
+        # Update the custom colour button
+        mini_list = self.app_obj.custom_bg_table[key]
+        custom_rgba_obj = Gdk.RGBA(
+            mini_list[0],
+            mini_list[1],
+            mini_list[2],
+            mini_list[3],
+        )
+        colorbutton2.set_rgba(custom_rgba_obj)
+
+        # Update the Video Catalogue to show the new colour
+        if self.app_obj.main_win_obj.video_index_current is not None:
+            self.app_obj.main_win_obj.video_catalogue_redraw_all(
+                self.app_obj.main_win_obj.video_index_current,
+            )
+
+        # Return True so the colour selection dialogue is not opened
+        return True
 
 
     def on_default_ffmpeg_button_clicked(self, button, entry):
@@ -21807,6 +22065,30 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.show_classic_tab_on_startup_flag:
             self.app_obj.set_show_classic_tab_on_startup_flag(False)
+
+
+    def on_show_custom_dl_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables showing the 'Custom download all' button in the Videos
+        Tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_custom_dl_button_flag:
+            self.app_obj.set_show_custom_dl_button_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_custom_dl_button_flag:
+            self.app_obj.set_show_custom_dl_button_flag(False)
+
+        # Abuse the main window code to either show or hide the button
+        self.app_obj.main_win_obj.hide_progress_bar(True)
 
 
     def on_show_custom_icons_toggled(self, checkbutton):

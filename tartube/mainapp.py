@@ -92,6 +92,7 @@ else:
 
 # Import our modules
 import __main__
+import classes
 import config
 import dialogue
 import downloads
@@ -341,7 +342,7 @@ class TartubeApp(Gtk.Application):
         #   Classic Mode tabs, when the config file was last saved
         self.main_win_videos_slider_posn = self.paned_default_size
         self.main_win_progress_slider_posn = self.paned_default_size
-        self.main_win_classic_slider_posn = self.paned_default_size
+        self.main_win_classic_slider_posn = self.paned_default_size + 50
 
         # The current Gtk version
         self.gtk_version_major = Gtk.get_major_version()
@@ -431,6 +432,9 @@ class TartubeApp(Gtk.Application):
         #   is sure they only want to do simulated downloads)
         # Does not apply to the download buttons in the Classic Mode tab
         self.disable_dl_all_flag = False
+        # Flag set to True if a 'Custom download all' button should be visible
+        #   in the Videos tab
+        self.show_custom_dl_button_flag = False
         # Flag set to True if we should use 'Today' and 'Yesterday' in the
         #   Video Index, rather than a date
         self.show_pretty_dates_flag = True
@@ -753,6 +757,11 @@ class TartubeApp(Gtk.Application):
         #   top (and so it appears as the first item in the combobox). This IV
         #   is then reset
         self.classic_dir_previous = None
+        # The selected format. If 'Default' is selected, set to None
+        self.classic_format_selection = None
+        # Flag set to False, if videos should be downloaded in that format, or
+        #   True if they should be converted to the format using FFmpeg/AVConv
+        self.classic_format_convert_flag = False
         # Flag set to True, if pending URLs (still visible in the top half of
         #   the Classic Mode tab, or not yet downloaded in the bottom half)
         #   should be saved when Tartube shuts down, and restored (to the top
@@ -833,7 +842,7 @@ class TartubeApp(Gtk.Application):
         self.ytdl_update_current = None
 
         # Flag set to True if the Output tab should be revealed automatically
-        #   during an update operation
+        #   during an update operation, and during some info operations
         self.auto_switch_output_flag = True
         # Maximum size of textviews in the Output Tab
         self.output_size_default = 1000
@@ -1989,6 +1998,27 @@ class TartubeApp(Gtk.Application):
         #   should use a regex, False if the pattern is an ordinary substring
         self.url_change_regex_flag = True
 
+        # Default and customisable colours used as backgrounds in the Video
+        #   Catalogue to highlight livestream/debut videos. (The Video
+        #   Catalogue uses three different formats, and not every format uses
+        #   every colour)
+        # Colours are stored as lists in the form [R, G, B, A], matching the
+        #   arguments for a Gdk.RGBA object
+        # Dictionary of default background colours
+        self.default_bg_table = {
+            # Not selected
+            'live_wait': [1, 0, 0, 0.1],    # Red
+            'live_now': [0, 1, 0, 0.2],     # Green
+            'debut_wait': [1, 1, 0, 0.2],   # Yellow
+            'debut_now': [0, 1, 1, 0.2],    # Cyan
+            # Selected
+            'select': [0, 0, 1, 0.1],       # Blue
+            'select_wait': [1, 0, 1, 0.1],  # Purple
+            'select_live': [1, 0, 1, 0.1],  # Purple
+        }
+        # Dictionary of customisable colours
+        self.custom_bg_table = self.default_bg_table.copy()
+
         # Dictionary of youtube-dl download options that are filtered out, when
         #   splitting video clips (in a call to
         #   utils.generate_split_system_cmd())
@@ -2121,6 +2151,10 @@ class TartubeApp(Gtk.Application):
         add_folder_menu_action = Gio.SimpleAction.new('add_folder_menu', None)
         add_folder_menu_action.connect('activate', self.on_menu_add_folder)
         self.add_action(add_folder_menu_action)
+
+        add_bulk_menu_action = Gio.SimpleAction.new('add_bulk_menu', None)
+        add_bulk_menu_action.connect('activate', self.on_menu_add_bulk)
+        self.add_action(add_bulk_menu_action)
 
         export_db_menu_action = Gio.SimpleAction.new('export_db_menu', None)
         export_db_menu_action.connect('activate', self.on_menu_export_db)
@@ -2542,6 +2576,16 @@ class TartubeApp(Gtk.Application):
             self.on_menu_download_all,
         )
         self.add_action(download_all_button_action)
+
+        custom_dl_all_button_action = Gio.SimpleAction.new(
+            'custom_dl_all_button',
+            None,
+        )
+        custom_dl_all_button_action.connect(
+            'activate',
+            self.on_menu_custom_dl_all,
+        )
+        self.add_action(custom_dl_all_button_action)
 
         # Classic Mode Tab actions
         # ------------------------
@@ -3196,6 +3240,10 @@ class TartubeApp(Gtk.Application):
                 if scheduled_obj.start_mode == 'start':
                     scheduled_obj.set_only_time(time.time())
 
+        # Part 13 - Any debug stuff can go here
+        # -------------------------------------
+        pass
+
 
     def stop(self, dialogue_win=None):
 
@@ -3625,6 +3673,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['full_expand_video_index_flag']
         if version >= 1001064:  # v1.1.064
             self.disable_dl_all_flag = json_dict['disable_dl_all_flag']
+        if version >= 2003192:  # v2.3.192
+            self.show_custom_dl_button_flag \
+            = json_dict['show_custom_dl_button_flag']
         if version >= 1004011:  # v1.4.011
             self.show_pretty_dates_flag = json_dict['show_pretty_dates_flag']
 
@@ -3696,6 +3747,11 @@ class TartubeApp(Gtk.Application):
         if version >= 2000029:  # v2.0.029
             self.classic_dir_list = json_dict['classic_dir_list']
             self.classic_dir_previous = json_dict['classic_dir_previous']
+        if version >= 2003190:  # v2.3.190
+            self.classic_format_selection \
+            = json_dict['classic_format_selection']
+            self.classic_format_convert_flag \
+            = json_dict['classic_format_convert_flag']
         if version >= 2002129:  # v2.2.129
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
@@ -4134,11 +4190,18 @@ class TartubeApp(Gtk.Application):
             self.url_change_confirm_flag = json_dict['url_change_confirm_flag']
             self.url_change_regex_flag = json_dict['url_change_regex_flag']
 
+        if version >= 2003195:  # v2.3.195
+            self.custom_bg_table = json_dict['custom_bg_table']
+
         # Having loaded the config file, set various file paths...
         if self.data_dir_use_first_flag:
             self.data_dir = self.data_dir_alt_list[0]
 
         self.update_data_dirs()
+
+        # Set custom background colours for the Video Catalogue
+        for key in self.custom_bg_table:
+            self.main_win_obj.setup_bg_colour(key)
 
         # If the most-recently selected directory, self.classic_dir_previous,
         #   still exists in self.classic_dir_list, move it to the top, so it's
@@ -4575,6 +4638,7 @@ class TartubeApp(Gtk.Application):
             'auto_expand_video_index_flag': self.auto_expand_video_index_flag,
             'full_expand_video_index_flag': self.full_expand_video_index_flag,
             'disable_dl_all_flag': self.disable_dl_all_flag,
+            'show_custom_dl_button_flag': self.show_custom_dl_button_flag,
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
 
             'catalogue_draw_frame_flag': self.catalogue_draw_frame_flag,
@@ -4614,6 +4678,8 @@ class TartubeApp(Gtk.Application):
             'classic_custom_dl_flag': self.classic_custom_dl_flag,
             'classic_dir_list': self.classic_dir_list,
             'classic_dir_previous': self.classic_dir_previous,
+            'classic_format_selection': self.classic_format_selection,
+            'classic_format_convert_flag': self.classic_format_convert_flag,
             'classic_pending_flag': self.classic_pending_flag,
             'classic_pending_list': self.classic_pending_list,
             'classic_duplicate_remove_flag': \
@@ -4829,6 +4895,8 @@ class TartubeApp(Gtk.Application):
 
             'url_change_confirm_flag': self.url_change_confirm_flag,
             'url_change_regex_flag': self.url_change_regex_flag,
+
+            'custom_bg_table': self.custom_bg_table,
         }
 
         # In case a competing instance of Tartube is saving the same config
@@ -8737,7 +8805,7 @@ class TartubeApp(Gtk.Application):
 
             if automatic_flag:
 
-                # Don't perform a schedules download operation if disk space is
+                # Don't perform a scheduled download operation if disk space is
                 #   below the limit at which a warning would normally be issued
                 return
 
@@ -8833,15 +8901,30 @@ class TartubeApp(Gtk.Application):
 
             if not automatic_flag:
 
-                # (Don't check for the value 'classic_sim', because it will
-                #   automatically be followed by a 'classic_custom' download
-                #   operation anyway)
-                if operation_type == 'sim':
+                if operation_type == 'classic_real' \
+                or operation_type == 'classic_sim' \
+                or operation_type == 'classic_custom':
+
+                    msg = _(
+                        '1. Copy URLs into the box at the top' \
+                        + '\n2. Select a destination and a format' \
+                        + '\n3. Click \'Add URLs\'' \
+                        + '\n4. Click \'Download all\'',
+                    )
+
+                elif operation_type == 'sim':
+
                     msg = _('There is nothing to check!')
+
                 else:
+
                     msg = _('There is nothing to download!')
 
-                self.dialogue_manager_obj.show_msg_dialogue(msg, 'error', 'ok')
+                self.dialogue_manager_obj.show_simple_msg_dialogue(
+                    msg,
+                    'error',
+                    'ok',
+                )
 
             return
 
@@ -8864,24 +8947,34 @@ class TartubeApp(Gtk.Application):
 
         # Remove videos from the 'Recent Videos' folder, so it can be re-filled
         #   by any videos checked/downloaded by this operation...
-        remove_time = int(time.time()) \
-        - (self.fixed_recent_folder_days * 24 * 60 * 60)
+        if operation_type != 'classic_real' \
+        and operation_type != 'classic_sim' \
+        and operation_type != 'classic_custom':
 
-        child_list = self.fixed_recent_folder.child_list.copy()
-        for child_obj in child_list:
+            remove_time = int(time.time()) \
+            - (self.fixed_recent_folder_days * 24 * 60 * 60)
 
-            if not self.fixed_recent_folder_days \
-            or child_obj.receive_time < remove_time:
-                self.fixed_recent_folder.del_child(child_obj)
+            child_list = self.fixed_recent_folder.child_list.copy()
+            for child_obj in child_list:
 
-        # ...and update the Video Index (and Video Catalogue, if appropriate)
-        self.main_win_obj.video_index_update_row_icon(self.fixed_recent_folder)
-        self.main_win_obj.video_index_update_row_text(self.fixed_recent_folder)
-        if self.main_win_obj.video_index_current \
-        == self.fixed_recent_folder.name:
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                if not self.fixed_recent_folder_days \
+                or child_obj.receive_time < remove_time:
+                    self.fixed_recent_folder.del_child(child_obj)
+
+            # ...and update the Video Index (and Video Catalogue, if
+            #   appropriate)
+            self.main_win_obj.video_index_update_row_icon(
+                self.fixed_recent_folder,
             )
+            self.main_win_obj.video_index_update_row_text(
+                self.fixed_recent_folder,
+            )
+
+            if self.main_win_obj.video_index_current \
+            == self.fixed_recent_folder.name:
+                self.main_win_obj.video_catalogue_redraw_all(
+                    self.main_win_obj.video_index_current,
+                )
 
         # For the benefit of future scheduled download operations, set the
         #   time at which this operation began
@@ -19175,6 +19268,106 @@ class TartubeApp(Gtk.Application):
         action.destroy()
 
 
+    def on_menu_add_bulk(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Creates a dialogue window to allow the user to specify new channels/
+        playlists. If any are specifed, creates new media.Channel and/or
+        media.Playlist objects.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 17594 on_menu_add_bulk')
+
+        # If a folder is selected in the Video Index, the dialogue window
+        #   should suggest that as the new folder's parent folder
+        suggest_parent_name = None
+        if self.main_win_obj.video_index_current:
+            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
+            container_obj = self.media_reg_dict[dbid]
+            if isinstance(container_obj, media.Folder) \
+            and not container_obj.fixed_flag \
+            and container_obj.restrict_mode != 'full':
+                suggest_parent_name = container_obj.name
+
+        # Open the dialogue window
+        dialogue_win = mainwin.AddBulkDialogue(
+            self.main_win_obj,
+            suggest_parent_name,
+        )
+
+        response = dialogue_win.run()
+
+        # Halt its clipboard timer, if running
+        if dialogue_win.clipboard_timer_id:
+            GObject.source_remove(dialogue_win.clipboard_timer_id)
+
+        # Retrieve user choices from the dialogue window
+
+        # Find the name of the parent media data object (a media.Folder), if
+        #   one was specified...
+        parent_name = None
+        if hasattr(dialogue_win, 'parent_name'):
+            parent_name = dialogue_win.parent_name
+        elif suggest_parent_name is not None:
+            parent_name = suggest_parent_name
+
+        # Find the parent media data object (a media.Folder), if specified
+        parent_obj = None
+        if parent_name and parent_name in self.media_name_dict:
+            dbid = self.media_name_dict[parent_name]
+            parent_obj = self.media_reg_dict[dbid]
+
+        # Create each new channel/playlist
+        for row in dialogue_win.liststore:
+
+            container_type = row[0]
+            container_name = row[2]
+            container_url = row[3]
+
+            if container_type == 'channel':
+
+                container_obj = self.add_channel(
+                    container_name,
+                    parent_obj,
+                    container_url,
+                )
+
+            else:
+
+                container_obj = self.add_playlist(
+                    container_name,
+                    parent_obj,
+                    container_url,
+                )
+
+            # Add the channel/playlist to Video Index
+            if container_obj:
+
+                if suggest_parent_name is not None \
+                and suggest_parent_name \
+                == self.main_win_obj.video_index_current:
+                    # The container has been added to the currently selected
+                    #   folder; the True argument tells the function not to
+                    #   select the container
+                    self.main_win_obj.video_index_add_row(container_obj, True)
+
+                else:
+                    # Do select the new container
+                    self.main_win_obj.video_index_add_row(container_obj)
+
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+
     def on_menu_add_channel(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -20970,6 +21163,25 @@ class TartubeApp(Gtk.Application):
         self.catalogue_sort_mode = mode
 
 
+    def set_classic_format_convert_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19275 set_classic_format_convert_flag')
+
+        if not flag:
+            self.classic_format_convert_flag = False
+        else:
+            self.classic_format_convert_flag = True
+
+
+    def set_classic_format_selection(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19276 set_classic_format_selection')
+
+        self.classic_format_selection = value
+
+
     def set_classic_ytdl_archive_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -21001,6 +21213,28 @@ class TartubeApp(Gtk.Application):
             self.complex_index_flag = False
         else:
             self.complex_index_flag = True
+
+
+    def set_custom_bg(self, key, red, green, blue, alpha):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19305 set_custom_bg')
+
+        self.custom_bg_table[key] = [ red, green, blue, alpha ]
+
+        # Update the main window IV
+        self.main_win_obj.setup_bg_colour(key)
+
+
+    def reset_custom_bg(self, key):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19305 set_custom_bg')
+
+        self.custom_bg_table[key] = self.default_bg_table[key]
+
+        # Update the main window IV
+        self.main_win_obj.setup_bg_colour(key)
 
 
     def set_custom_dl_by_video_flag(self, flag):
@@ -22151,10 +22385,21 @@ class TartubeApp(Gtk.Application):
             self.show_classic_tab_on_startup_flag = True
 
 
+    def set_show_custom_dl_button_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20369 set_show_custom_dl_button_flag')
+
+        if not flag:
+            self.show_custom_dl_button_flag = False
+        else:
+            self.show_custom_dl_button_flag = True
+
+
     def set_show_custom_icons_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 20369 set_show_custom_icons_flag')
+            utils.debug_time('app 20370 set_show_custom_icons_flag')
 
         if not flag:
             self.show_custom_icons_flag = False

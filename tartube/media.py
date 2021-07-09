@@ -1747,9 +1747,15 @@ class Video(GenericMedia):
         self.dummy_dir = None
         # The full path to a downloaded file, if available
         self.dummy_path = None
-        # The video/audio format to use; must be one of the strings in
-        #   formats.VIDEO_FORMAT_LIST or formats.AUDIO_FORMAT_LIST (or None to
-        #   use the format(s) specified by the General Options Manager)
+        # The video/audio format to use
+        # Valid strings are the values in formats.VIDEO_FORMAT_LIST and
+        #   formats.AUDIO_FORMAT_LIST, which attemps to download the media in
+        #   that format
+        # Also valid are the same values preceded by 'convert_', which uses
+        #   FFmpeg/AVConv to convert the downloaded media into the specified
+        #   format
+        # Also valid is None, in which case the format(s) specified by the
+        #   General Options Manager are u sed
         self.dummy_format = None
 
         # Code

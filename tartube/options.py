@@ -26,6 +26,7 @@
 
 # Import other modules
 import os
+import re
 
 
 # Import our modules
@@ -1301,35 +1302,65 @@ class OptionsParser(object):
                 operation_type == 'classic_sim' \
                 or operation_type == 'classic_real' \
                 or operation_type == 'classic_custom'
-            ) and media_data_obj.dummy_format:
+            ) and media_data_obj.dummy_format is not None:
 
-                dummy_format = media_data_obj.dummy_format
+                format_str = media_data_obj.dummy_format
+                convert_flag = False
+                # If format_str is not None, then it is one of Tartube's
+                #   standard media formats, or one of those values preceded by
+                #   'convert_'. Remove the trailing text, if found
+                match = re.search('^convert_(.*)$', format_str)
+                if match:
+                    format_str = match.group(1)
+                    convert_flag = True
 
-                if dummy_format in formats.VIDEO_FORMAT_DICT:
+                if not convert_flag:
+
+                    # Download the video in the specified format, if available
 
                     # Ignore all video/audio formats except the one specified
                     #   by the user in the Classic Mode Tab
-                    copy_dict['video_format'] = dummy_format
+                    copy_dict['video_format'] = format_str
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []
                     copy_dict['video_format_mode'] = ''
+                    copy_dict['recode_video'] = ''
 
                     # v2.1.009: Since the user doesn't have the possibility of
                     #   setting the -f and --merge-output-format options to the
                     #   same value (e.g. 'mp4'), we must do so artificially
-                    copy_dict['merge_output_format'] = dummy_format
+                    copy_dict['merge_output_format'] = format_str
 
                     return
 
-                elif dummy_format in formats.AUDIO_FORMAT_DICT:
+                elif format_str in formats.VIDEO_FORMAT_DICT:
 
-                    # Downloading audio formats requires post-processing
+                    # Converting video formats requires post-processing
+                    # Ignore all video/audio formats except the one specified
+                    #   by the user in the Classic Mode Tab
+                    copy_dict['video_format'] = '0'
+                    copy_dict['all_formats'] = False
+                    copy_dict['video_format_list'] = []
+                    copy_dict['video_format_mode'] = ''
+                    copy_dict['recode_video'] = ''
+
+                    # v2.1.009: Since the user doesn't have the possibility of
+                    #   setting the -f and --merge-output-format options to the
+                    #   same value (e.g. 'mp4'), we must do so artificially
+                    copy_dict['merge_output_format'] = format_str
+
+                    return
+
+                elif format_str in formats.AUDIO_FORMAT_DICT:
+
+                    # Converting audio formats requires post-processing
                     copy_dict['video_format'] = '0'
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []
                     copy_dict['video_format_mode'] = ''
                     copy_dict['extract_audio'] = True
-                    copy_dict['audio_format'] = dummy_format
+                    copy_dict['audio_format'] = format_str
+                    copy_dict['recode_video'] = ''
 
                     return
 

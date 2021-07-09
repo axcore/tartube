@@ -53,15 +53,19 @@ while locale_setup_list:
     LOCALE_LIST.append(key)
     LOCALE_DICT[key] = value
 
-# Some icons are different at Christmas
+# Some icons are different at Christmas/on national holidays
 today = datetime.date.today()
 day = today.strftime("%d")
 month = today.strftime("%m")
+
+xmas_flag = False
+eesti_flag = False
 if (int(month) == 12 and int(day) >= 24) \
 or (int(month) == 1 and int(day) <= 5):
     xmas_flag = True
-else:
-    xmas_flag = False
+elif (int(month) == 2 and int(day) == 24) \
+or (int(month) == 8 and int(day) == 20):
+    eesti_flag = True
 
 # Standard list and dictionaries
 time_metric_setup_list = [
@@ -588,37 +592,21 @@ while language_setup_list:
     LANGUAGE_CODE_LIST.append(key)
     LANGUAGE_CODE_DICT[key] = value
 
-if not xmas_flag:
-    DIALOGUE_ICON_DICT = {
-        'newbie_icon': 'newbie_icon_64.png',
-        'ready_icon': 'ready_icon_64.png',
-        'system_icon': 'system_icon_64.png',
-        'yt_remind_icon_en': 'yt_remind_icon_en.png',
-        'yt_remind_icon_kr': 'yt_remind_icon_kr.png',
-        'yt_remind_icon_nl': 'yt_remind_icon_nl.png',
-    }
-else:
-    DIALOGUE_ICON_DICT = {
-        'newbie_icon': 'newbie_icon_64.png',
-        'ready_icon': 'ready_icon_64.png',
-        'system_icon': 'system_icon_xmas_64.png',
-    }
+DIALOGUE_ICON_DICT = {
+    'newbie_icon': 'newbie_icon_64.png',
+    'ready_icon': 'ready_icon_64.png',
+    'system_icon': 'system_icon_64.png',
+    'yt_remind_icon_en': 'yt_remind_icon_en.png',
+    'yt_remind_icon_kr': 'yt_remind_icon_kr.png',
+    'yt_remind_icon_nl': 'yt_remind_icon_nl.png',
+}
+if xmas_flag:
+    DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_xmas_64.png'
+elif eesti_flag:
+    DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_eesti_64.png'
 
-if not xmas_flag:
-    STATUS_ICON_DICT = {
-        'default_icon': 'status_default_icon_64.png',
-        'check_icon': 'status_check_icon_64.png',
-        'check_live_icon': 'status_check_live_icon_64.png',
-        'download_icon': 'status_download_icon_64.png',
-        'download_live_icon': 'status_download_live_icon_64.png',
-        'update_icon': 'status_update_icon_64.png',
-        'refresh_icon': 'status_refresh_icon_64.png',
-        'info_icon': 'status_info_icon_64.png',
-        'tidy_icon': 'status_tidy_icon_64.png',
-        'livestream_icon': 'status_livestream_icon_64.png',
-        'process_icon': 'status_process_icon_64.png',
-    }
-else:
+
+if xmas_flag:
     STATUS_ICON_DICT = {
         'default_icon': 'status_default_icon_xmas_64.png',
         'check_icon': 'status_check_icon_xmas_64.png',
@@ -631,6 +619,34 @@ else:
         'tidy_icon': 'status_tidy_icon_xmas_64.png',
         'livestream_icon': 'status_livestream_icon_xmas_64.png',
         'process_icon': 'status_process_icon_xmas_64.png',
+    }
+elif eesti_flag:
+    STATUS_ICON_DICT = {
+        'default_icon': 'status_default_icon_eesti_64.png',
+        'check_icon': 'status_check_icon_eesti_64.png',
+        'check_live_icon': 'status_check_live_icon_eesti_64.png',
+        'download_icon': 'status_download_icon_eesti_64.png',
+        'download_live_icon': 'status_download_live_icon_eesti_64.png',
+        'update_icon': 'status_update_icon_eesti_64.png',
+        'refresh_icon': 'status_refresh_icon_eesti_64.png',
+        'info_icon': 'status_info_icon_eesti_64.png',
+        'tidy_icon': 'status_tidy_icon_eesti_64.png',
+        'livestream_icon': 'status_livestream_icon_eesti_64.png',
+        'process_icon': 'status_process_icon_eesti_64.png',
+    }
+else:
+    STATUS_ICON_DICT = {
+        'default_icon': 'status_default_icon_64.png',
+        'check_icon': 'status_check_icon_64.png',
+        'check_live_icon': 'status_check_live_icon_64.png',
+        'download_icon': 'status_download_icon_64.png',
+        'download_live_icon': 'status_download_live_icon_64.png',
+        'update_icon': 'status_update_icon_64.png',
+        'refresh_icon': 'status_refresh_icon_64.png',
+        'info_icon': 'status_info_icon_64.png',
+        'tidy_icon': 'status_tidy_icon_64.png',
+        'livestream_icon': 'status_livestream_icon_64.png',
+        'process_icon': 'status_process_icon_64.png',
     }
 
 TOOLBAR_ICON_DICT = {
@@ -760,6 +776,12 @@ THUMB_ICON_DICT = {
     'thumb_both_medium': 'thumb_both_medium.png',
     'thumb_both_large': 'thumb_both_large.png',
     'thumb_both_enormous': 'thumb_both_enormous.png',
+
+    'thumb_default_tiny': 'thumb_default_tiny.png',
+    'thumb_default_small': 'thumb_default_small.png',
+    'thumb_default_medium': 'thumb_default_medium.png',
+    'thumb_default_large': 'thumb_default_large.png',
+    'thumb_default_enormous': 'thumb_default_enormous.png',
 }
 
 EXTERNAL_ICON_DICT = {
@@ -772,6 +794,7 @@ STOCK_ICON_DICT = {
     'stock_cancel': 'cancel_small.png',
     'stock_delete': 'delete_small.png',
     'stock_execute': 'ffmpeg_small.png',
+    'stock_file': 'file_small.png',
     'stock_find': 'find_small.png',
     'stock_go_back': 'go_back_small.png',
     'stock_go_down': 'go_down_small.png',
@@ -791,18 +814,7 @@ STOCK_ICON_DICT = {
     'stock_spell_check': 'spell_check_small.png',
 }
 
-if not xmas_flag:
-    WIN_ICON_LIST = [
-        'system_icon_16.png',
-        'system_icon_24.png',
-        'system_icon_32.png',
-        'system_icon_48.png',
-        'system_icon_64.png',
-        'system_icon_128.png',
-        'system_icon_256.png',
-        'system_icon_512.png',
-    ]
-else:
+if xmas_flag:
     WIN_ICON_LIST = [
         'system_icon_xmas_16.png',
         'system_icon_xmas_24.png',
@@ -813,7 +825,28 @@ else:
         'system_icon_xmas_256.png',
         'system_icon_xmas_512.png',
     ]
-
+elif eesti_flag:
+    WIN_ICON_LIST = [
+        'system_icon_eesti_16.png',
+        'system_icon_eesti_24.png',
+        'system_icon_eesti_32.png',
+        'system_icon_eesti_48.png',
+        'system_icon_eesti_64.png',
+        'system_icon_eesti_128.png',
+        'system_icon_eesti_256.png',
+        'system_icon_eesti_512.png',
+    ]
+else:
+    WIN_ICON_LIST = [
+        'system_icon_16.png',
+        'system_icon_24.png',
+        'system_icon_32.png',
+        'system_icon_48.png',
+        'system_icon_64.png',
+        'system_icon_128.png',
+        'system_icon_256.png',
+        'system_icon_512.png',
+    ]
 
 def do_translate(config_flag=False):
 

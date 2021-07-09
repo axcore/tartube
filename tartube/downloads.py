@@ -375,7 +375,7 @@ class DownloadManager(threading.Thread):
                     #   applied by OptionsParser.build_limit_rate()
                     if self.app_obj.num_worker_default \
                     != self.app_obj.alt_num_worker \
-                    and self.alt_num_worker_apply_flag:
+                    and self.app_obj.alt_num_worker_apply_flag:
 
                         if not new_flag:
 
@@ -3608,19 +3608,11 @@ class VideoDownloader(object):
 
         # Special case: if the download operation was launched from the
         #   Classic Mode Tab, then we only need to update the dummy
-        #   media.Video object
+        #   media.Video object, and to move/remove description/metadata/
+        #   thumbnail files, as appropriate
         if self.dl_classic_flag:
 
-            media_data_obj = self.download_item_obj.media_data_obj
-
-            media_data_obj.set_dl_flag(True)
-            media_data_obj.set_dummy_path(
-                os.path.abspath(os.path.join(dir_path, filename + extension)),
-            )
-
-            # Register the download with DownloadManager, so that download
-            #   limits can be applied, if required
-            self.download_manager_obj.register_video('new')
+            self.confirm_new_video_classic_mode(dir_path, filename, extension)
 
         # All other cases
         elif not self.video_num in self.video_check_dict:
@@ -3690,6 +3682,115 @@ class VideoDownloader(object):
         #   has been checked/downloaded
         if self.stop_soon_flag:
             self.stop_now_flag = True
+
+
+    def confirm_new_video_classic_mode(self, dir_path, filename, extension):
+
+        """Called by self.confirm_new_video() when a download operation was
+        launched from the Classic Mode tab.
+
+        Handles the download.
+
+        Args:
+
+            dir_path (str): The full path to the directory in which the video
+                is saved, e.g. '/home/yourname/tartube/downloads/Videos'
+
+            filename (str): The video's filename, e.g. 'My Video'
+
+            extension (str): The video's extension, e.g. '.mp4'
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 3203 confirm_new_video_classic_mode')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Update the dummy media.Video object
+        dummy_obj = self.download_item_obj.media_data_obj
+
+        dummy_obj.set_dl_flag(True)
+        dummy_obj.set_dummy_path(
+            os.path.abspath(os.path.join(dir_path, filename + extension)),
+        )
+
+        # Deal with the video description, JSON data and thumbnail, according
+        #   to the settings in options.OptionsManager
+        options_dict \
+        = self.download_worker_obj.options_manager_obj.options_dict
+
+        # Description file
+        descrip_path = os.path.abspath(
+            os.path.join(dir_path, filename + '.description'),
+        )
+
+        if descrip_path and not options_dict['keep_description']:
+
+            new_path = utils.convert_path_to_temp(
+                app_obj,
+                descrip_path,
+            )
+
+            if os.path.isfile(descrip_path):
+                if not os.path.isfile(new_path):
+                    shutil.move(descrip_path, new_path)
+                else:
+                    os.remove(descrip_path)
+
+        # (Don't replace a file that already exists)
+        elif descrip_path \
+        and not os.path.isfile(descrip_path) \
+        and options_dict['move_description']:
+
+            utils.move_metadata_to_subdir(app_obj, dummy_obj, '.description')
+
+        # JSON data file
+        json_path = os.path.abspath(
+            os.path.join(dir_path, filename + '.info.json'),
+        )
+
+        if json_path and not options_dict['keep_info']:
+
+            new_path = utils.convert_path_to_temp(app_obj, json_path)
+
+            if os.path.isfile(json_path):
+                if not os.path.isfile(new_path):
+                    shutil.move(json_path, new_path)
+                else:
+                    os.remove(json_path)
+
+        elif json_path \
+        and not os.path.isfile(json_path) \
+        and options_dict['move_info']:
+
+            utils.move_metadata_to_subdir(app_obj, video_obj, '.info.json')
+
+        # (Annotations removed by YouTube in 2019 - see comments elsewhere)
+
+        # Thumbnail file
+        thumb_path = utils.find_thumbnail(app_obj, dummy_obj)
+
+        if thumb_path and not options_dict['keep_thumbnail']:
+
+            new_path = utils.convert_path_to_temp(app_obj, thumb_path)
+
+            if os.path.isfile(thumb_path):
+                if not os.path.isfile(new_path):
+                    shutil.move(thumb_path, new_path)
+                else:
+                    os.remove(thumb_path)
+
+        elif thumb_path \
+        and not os.path.isfile(thumb_path) \
+        and options_dict['move_thumbnail']:
+
+            utils.move_thumbnail_to_subdir(app_obj, video_obj)
+
+        # Register the download with DownloadManager, so that download limits
+        #   can be applied, if required
+        self.download_manager_obj.register_video('new')
 
 
     def confirm_old_video(self, dir_path, filename, extension):
