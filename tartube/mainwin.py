@@ -4098,7 +4098,8 @@ class MainWin(Gtk.ApplicationWindow):
                 self.check_media_button.set_label(_('Contacting website'))
 
             self.download_media_button.set_label('...')
-            self.custom_dl_media_button.set_label('...')
+            if self.custom_dl_media_button:
+                self.custom_dl_media_button.set_label('...')
 
             self.check_media_button.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
@@ -4125,20 +4126,20 @@ class MainWin(Gtk.ApplicationWindow):
             else:
                 self.download_media_button.set_sensitive(True)
 
-            self.custom_dl_media_button.set_label('Custom download all')
+            if self.custom_dl_media_button:
+                self.custom_dl_media_button.set_label('Custom download all')
+                self.custom_dl_media_button.set_tooltip_text(
+                    _(
+                    'Perform a custom download of all videos, channels,' \
+                    + ' playlists and folders',
+                    ),
+                )
 
-            self.custom_dl_media_button.set_tooltip_text(
-                _(
-                'Perform a custom download of all videos, channels,' \
-                + ' playlists and folders',
-                ),
-            )
-
-            if __main__.__pkg_no_download_flag__ \
-            or self.app_obj.disable_dl_all_flag:
-                self.custom_dl_media_button.set_sensitive(False)
-            else:
-                self.custom_dl_media_button.set_sensitive(True)
+                if __main__.__pkg_no_download_flag__ \
+                or self.app_obj.disable_dl_all_flag:
+                    self.custom_dl_media_button.set_sensitive(False)
+                else:
+                    self.custom_dl_media_button.set_sensitive(True)
 
             self.sensitise_operation_widgets(True, True)
 
@@ -4251,7 +4252,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
             self.download_media_button.set_sensitive(True)
-            self.custom_dl_media_button.set_sensitive(True)
+            if self.custom_dl_media_button:
+                self.custom_dl_media_button.set_sensitive(True)
 
 
     def disable_dl_all_buttons(self):
@@ -4274,7 +4276,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
-            self.custom_dl_media_button.set_sensitive(False)
+            if self.custom_dl_media_button:
+                self.custom_dl_media_button.set_sensitive(False)
 
 
     def update_catalogue_filter_widgets(self):

@@ -4376,8 +4376,6 @@ class TartubeApp(Gtk.Application):
                 'youtube-dl',
             ]
 
-            print(self.ytdl_update_dict)
-
             ytdl_update_list = []
             for item in self.ytdl_update_list:
 
@@ -6283,6 +6281,22 @@ class TartubeApp(Gtk.Application):
                 False,          # Public
                 False,          # Not temporary
             )
+
+        if version < 2003205:      # v2.3.205
+
+            # Git #307. In v2.3.149, media.Folder.restrict_flag was changed to
+            #   media.Folder.restrict_mode, but this function was not updated
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Folder) \
+                and hasattr(media_data_obj, 'restrict_flag'):
+
+                    if media_data_obj.restrict_flag:
+                        media_data_obj.restrict_mode = 'full'
+                    else:
+                        media_data_obj.restrict_mode = 'open'
+
+                    del media_data_obj.restrict_flag
+
 
 
     def save_db(self):
