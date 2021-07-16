@@ -759,10 +759,31 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     """
 
-    data_dir_len = len(app_obj.downloads_dir)
+    if not re.search('^' + app_obj.data_dir, old_path):
 
-    new_path = app_obj.temp_dl_dir + old_path[data_dir_len:]
-    new_dir, new_filename = os.path.split(new_path.strip("\""))
+        # Special case: if 'old_path' is outside Tartube's data directory, then
+        #   there is no equivalent path in the temporary directory
+        # Instead. dump everything into ../tartube-data/.temp/.dump
+        # There is a small risk of duplicates, but that shouldn't be anything
+        #   more than an inconvenience
+        old_dir, old_file = os.path.split(old_path)
+        new_path = os.path.abspath(
+            os.path.join(
+                app_obj.temp_dir,
+                '.dump',
+                old_file,
+            ),
+        )
+
+        new_dir, new_filename = os.path.split(new_path)
+
+    else:
+
+        # Normal conversion within Tartube's data directory
+        data_dir_len = len(app_obj.downloads_dir)
+
+        new_path = app_obj.temp_dl_dir + old_path[data_dir_len:]
+        new_dir, new_filename = os.path.split(new_path.strip("\""))
 
     # The destination folder must exist, before moving files into it
     if not os.path.exists(new_dir):
@@ -1410,6 +1431,92 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
         return None
 
 
+def find_thumbnail_from_filename(app_obj, dir_path, filename):
+
+    """Can be called by anything.
+
+    A modified version of utils.find_thumbnail(), used when there is no
+    media.Video object, but instead the directory and filename for a video
+    (and its thumbnail).
+
+    No way to know which image format is used by all websites for their video
+    thumbnails, so look for the most common ones, and return the path to the
+    thumbnail file if one is found.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        dir_path (str): The full path to the directory in which the video is
+            saved, e.g. '/home/yourname/tartube/downloads/Videos'
+
+        filename (str): The video's filename, e.g. 'My Video'
+
+    Returns:
+
+        path (str): The full path to the thumbnail file, or None
+
+    """
+
+    for this_ext in formats.IMAGE_FORMAT_EXT_LIST:
+
+        thumb_path = os.path.abspath(
+            os.path.join(dir_path, filename + this_ext),
+        )
+
+        if os.path.isfile(thumb_path):
+            return thumb_path
+
+        # No matching thumbnail found
+        return None
+
+    else:
+
+        # All other media.Video objects
+        for ext in formats.IMAGE_FORMAT_LIST:
+
+            # Look in Tartube's permanent data directory
+            normal_path = video_obj.check_actual_path_by_ext(app_obj, ext)
+            if normal_path is not None:
+                return normal_path
+
+            elif temp_dir_flag:
+
+                # Look in temporary data directory
+                data_dir_len = len(app_obj.downloads_dir)
+
+                temp_path = video_obj.get_actual_path_by_ext(app_obj, ext)
+                temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+                if os.path.isfile(temp_path):
+                    return temp_path
+
+        # Catch YouTube .jpg thumbnails, in the form .jpg?...
+        # v2.2.005 The glob.glob() call crashes on certain videos. I'm not sure
+        #   why, but we can circumvent the crash with try...except
+        normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
+        try:
+            for glob_path in glob.glob(normal_path):
+                if os.path.isfile(glob_path):
+                    return glob_path
+        except:
+            pass
+
+        if temp_dir_flag:
+
+            temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
+            temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
+
+            try:
+                for glob_path in glob.glob(temp_path):
+                    if os.path.isfile(glob_path):
+                        return glob_path
+            except:
+                pass
+
+        # No matching thumbnail found
+        return None
+
+
 def find_thumbnail_restricted(app_obj, video_obj):
 
     """Called by mainapp.TartubeApp.update_video_when_file_found().
@@ -1919,6 +2026,49 @@ def get_local_time():
     return utc.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
 
 
+def get_dl_config_path(app_obj):
+
+    """Can be called by anything.
+
+    Returns the full path to the youtube-dl configuration file, in the location
+    Tartube assuems it to be.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+    Return values:
+
+        The full path
+
+    """
+
+    if app_obj.ytdl_fork is None:
+        ytdl_fork = 'youtube-dl'
+    else:
+        ytdl_fork = app_obj.ytdl_fork
+
+    if os.name != 'nt':
+
+        return os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                '.config',
+                ytdl_fork,
+                'config',
+            ),
+        )
+
+    else:
+
+        return os.path.abspath(
+            os.path.join(
+                self.app_obj.script_parent_dir,
+                ytdl_fork + '.conf',
+            ),
+        )
+
+
 def get_options_manager(app_obj, media_data_obj):
 
     """Can be called by anything. Subsequently called by this function
@@ -1938,7 +2088,7 @@ def get_options_manager(app_obj, media_data_obj):
         media_data_obj (media.Video, media.Channel, media.Playlist,
             media.Folder): A media data object
 
-    Returns:
+    Return values:
 
         The options.OptionsManager object that applies to the specified
             media data object
@@ -2007,6 +2157,106 @@ def is_youtube(url):
         return True
     else:
         return False
+
+
+def handle_files_after_download(app_obj, options_obj, dir_path, filename,
+dummy_obj=None):
+
+    """Called by various functions in downloads.py, after a video is checked/
+    downloaded but not added to Tartube's database.
+
+    Handles the removal of the description, JSON and thumbnail files, according
+    to the settings in the options.OptionsManager object.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        options_obj (options.OptionsManager object): Specifies the download
+            options for this download
+
+        dir_path (str): The full path to the directory in which the video is
+            saved, e.g. '/home/yourname/tartube/downloads/Videos'
+
+        filename (str): The video's filename, e.g. 'My Video'
+
+        dummy_obj (media.Video or None): If specified, a 'dummy' video used by
+            the Classic Mode tab (and not added to Tartube's database)
+
+    """
+
+    # Description file
+    descrip_path = os.path.abspath(
+        os.path.join(dir_path, filename + '.description'),
+    )
+
+    if descrip_path and not options_obj.options_dict['keep_description']:
+
+        new_path = convert_path_to_temp(
+            app_obj,
+            descrip_path,
+        )
+
+        if os.path.isfile(descrip_path):
+            if not os.path.isfile(new_path):
+                shutil.move(descrip_path, new_path)
+            else:
+                os.remove(descrip_path)
+
+    # (Don't replace a file that already exists)
+    elif descrip_path \
+    and not os.path.isfile(descrip_path) \
+    and options_obj.options_dict['move_description'] \
+    and dummy_obj:
+
+        move_metadata_to_subdir(app_obj, dummy_obj, '.description')
+
+    # JSON data file
+    json_path = os.path.abspath(
+        os.path.join(dir_path, filename + '.info.json'),
+    )
+
+    if json_path and not options_obj.options_dict['keep_info']:
+
+        new_path = convert_path_to_temp(app_obj, json_path)
+
+        if os.path.isfile(json_path):
+            if not os.path.isfile(new_path):
+                shutil.move(json_path, new_path)
+            else:
+                os.remove(json_path)
+
+    elif json_path \
+    and not os.path.isfile(json_path) \
+    and options_obj.options_dict['move_info'] \
+    and dummy_obj:
+
+        move_metadata_to_subdir(app_obj, dummy_obj, '.info.json')
+
+    # (Annotations removed by YouTube in 2019 - see comments elsewhere)
+
+    # Thumbnail file
+    if dummy_obj:
+        thumb_path = find_thumbnail(app_obj, dummy_obj)
+    else:
+        thumb_path = find_thumbnail_from_filename(app_obj, dir_path, filename)
+
+    if thumb_path and not options_obj.options_dict['keep_thumbnail']:
+
+        new_path = convert_path_to_temp(app_obj, thumb_path)
+
+        if os.path.isfile(thumb_path):
+            if not os.path.isfile(new_path):
+                shutil.move(thumb_path, new_path)
+            else:
+                os.remove(thumb_path)
+
+    elif thumb_path \
+    and not os.path.isfile(thumb_path) \
+    and options_obj.options_dict['move_thumbnail'] \
+    and dummy_obj:
+
+        move_thumbnail_to_subdir(app_obj, dummy_obj)
 
 
 def move_metadata_to_subdir(app_obj, video_obj, ext):

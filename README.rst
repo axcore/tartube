@@ -398,6 +398,7 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.11.1 Advanced download options`_
 * `6.11.2 Other download options`_
 * `6.11.3 Managing download options`_
+* `6.11.4 Download options for yt-dlp`_
 * `6.12 Scheduled downloads`_
 * `6.13 Custom downloads`_
 * `6.13.1 Independent downloads`_
@@ -413,6 +414,8 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.17.1 Combining one channel and many playlists`_
 * `6.17.2 Combining channels from different websites`_
 * `6.17.3 Download all videos to a single folder`_
+* `6.17.4 Download all videos to an external folder`_
+* `6.17.5 External folders and yt-dlp`_
 * `6.18 Archiving videos`_
 * `6.19 Performance limits`_
 * `6.20 Managing databases`_
@@ -757,6 +760,11 @@ The first item in the list, **general**, is the default set of download options.
 
 Download options are saved in the Tartube database, so if you switch databases (see `6.20.2 Multiple databases`_), a different selection of download options will apply. If you want to move a set of download options from one database to another, you can **Export** them, then switch databases, then **Import** them.
 
+6.11.4 Download options for yt-dlp
+----------------------------------
+
+The **yt-dlp** tab contains download options that only work with `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ (or any fork based on it). If you try to use them with `youtube-dl <https://youtube-dl.org/>`__ you'll get an error.
+
 6.12 Scheduled downloads
 ------------------------
 
@@ -957,11 +965,12 @@ If new videos are later added to the channel, playlist or folder, they will auto
 6.17 Combining channels, playlists and folders
 ----------------------------------------------
 
-**Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's filesystem. There are three situations in which this might be useful:
+**Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's filesystem. There are four situations in which this might be useful:
 
 - A channel has several playlists. You have added both the channel and its playlists to **Tartube**'s database, but you don't want to download duplicate videos
 - A creator releases their videos on **BitChute** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
 - You don't care about keeping videos in separate directories/folders on your filesystem. You just want to download all videos to one location
+- A separate application will process the videos, after Tartube has downloaded them
 
 6.17.1 Combining one channel and many playlists
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -975,7 +984,7 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 - Click **Media > Add channel**..., and then enter the channel's details
 - Click **Media > Add playlist**... for each playlist
 - Now, right-click on each playlist in turn, and then select **Playlist actions > Set download destination...**
-- In the dialogue window, click **Choose a different system folder**, select the name of the channel, then click the **OK** button.
+- In the dialogue window, click **Use a different location**, select the name of the channel, then click the **OK** button.
 
 6.17.2 Combining channels from different websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -989,7 +998,7 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 - Click **Media > Add channel**..., and then enter the **YouTube** channel's details
 - Click **Media > Add channel**..., and then enter the **BitChute** channel's details
 - Right-click the **BitChute** channel and select **Channel actions > Set download destination...**
-- In the dialogue window, click **Choose a different system folder**, select the name of the **YouTube** channel, then click the **OK** button
+- In the dialogue window, click **Use a different location**, select the name of the **YouTube** channel, then click the **OK** button
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
 
@@ -1003,6 +1012,39 @@ If you don't care about keeping videos in separate directories/folders on your f
 - In the combo next to it, select **Unsorted Videos**
 
 Alternatively, you could select **Temporary Videos**. If you do, videos will be deleted when you restart **Tartube** (and will not be re-downloaded in the future).
+
+6.17.4 Download all videos to an external folder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, all files are downloaded into Tartube's data folder. Users often request that **Tartube** should be able to download videos to other locations in the filesystem, *while retaining those videos in Tartube's database.*
+
+A whole bunch of things can go wrong when we start writing files to arbitrary locations on hard drives that may or may not be accessible in the future. Tartube is simply not designed to handle file input/output of that complexity.
+
+In addition, writing files outside Tartube's data folder breaks portability because it's no longer possible for the folder to copied or moved anywhere else.
+
+Nevertheless, since v2.4 it has been possible to download videos to any location in the filesystem for which you have read/write permissions. (It has always been possible to do so from the **Classic Mode** tab). *Don't do it without a good reason*. Good reasons include:
+
+- A separate application will process the videos, after Tartube has downloaded them
+- You want some videos (but not others) to be available on a drive shared between several devices
+- You are an advanced user and you're happy to deal with any filesystem problems yourself
+
+If one of these reasons applies, then you can do this:
+
+- Right-click a channel, playlist or folder, and select **Channel actions > Set download destination...** (etc)
+- Select **Use an external location**
+- Click the **Set** button, and choose an external folder
+- When you're ready, click the **OK** button to apply your changes
+
+6.17.5 External folders and yt-dlp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware of the download option **--paths**, which may be more convenient in some situations. See the **yt-dlp** documentation for more information about how it works. In Tartube, it can be configured like this:
+
+- Click **Edit > General download options...**
+- If the **Show advanced download options** button is visible, clicke it
+- Now click the **yt-dlp** tab
+- The option **--output** can be set in the **Output** tab
+- The option **--paths** can be set in the **Paths** tab
 
 6.18 Archiving videos
 ---------------------
@@ -1100,14 +1142,15 @@ It is important to note that *only a list of videos, channels, playlists and fol
 
 - Click **Media > Export from database...**
 - In the dialogue window, choose what you want to export
-- If you want a list of videos, channels and playlists that you can edit by hand, select the **Export as plain text** option
+- If you want a list that you can edit in an ordinary text editor, select the **Export as plain text** option
+- If you want a list that yuu can edit in a spreadsheet, select the **Export as CSV** option
 - Click the **OK** button, then select where to save the export file
 
 It is safe to share this export file with other people. It doesn't contain any personal information.
 
 This is how to import the data into a different **Tartube** database.
 
-- Click **Media > Import into database > JSON export file...** or **Media > Import into database > Plain text export file...**
+- Click **Media > Import into database...**
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
@@ -1621,7 +1664,7 @@ Firstly, click **Media > Export from database...**. In the dialogue window, it's
 
 Next, shut down **Tartube**.
 
-**Tartube'**s data folder contains the database file, **tartube.db**. Rename it (don't delete it).
+**Tartube's** data folder contains the database file, **tartube.db**. Rename it (don't delete it).
 
 Now you can restart **Tartube**. **Tartube** will create a brand new database file.
 

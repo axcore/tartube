@@ -1304,7 +1304,8 @@ class TidyManager(threading.Thread):
 
         """
 
-        if container_obj.dbid == container_obj.master_dbid:
+        if container_obj.external_dir is not None \
+        or container_obj.dbid == container_obj.master_dbid:
 
             # No alternative download destination to check
             return delete_path

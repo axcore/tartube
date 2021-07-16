@@ -174,10 +174,10 @@ class RefreshManager(threading.Thread):
 
             obj = obj_list.pop(0)
 
-            if obj.dbid == obj.master_dbid:
-                self.refresh_from_default_destination(obj)
-            else:
+            if obj.external_dir is not None or obj.dbid != obj.master_dbid:
                 self.refresh_from_actual_destination(obj)
+            else:
+                self.refresh_from_default_destination(obj)
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)

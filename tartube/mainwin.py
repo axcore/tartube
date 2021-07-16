@@ -691,12 +691,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Dialogue window IVs
         # The SetDestinationDialogue dialogue window displays a list of
-        #   channels/playlists/folders. When opening it repeatedly, it's handy
-        #   to display the previous selection at the top of the list
+        #   channels/playlists/folders, and an external directory. When opening
+        #   it repeatedly, it's handy to display the previous selections
         # The .dbid of the previous channel/playlist/folder selected (or None,
         #   if SetDestinationDialogue hasn't been used yet)
         # The value is set/reset by a call to self.set_previous_alt_dest_dbid()
         self.previous_alt_dest_dbid = None
+        # The most recent external directory specified (or None, if
+        #   SetDestinationDialogue hasn't been used yet)
+        self.previous_external_dir = None
 
         # Desktop notification IVs
         # The desktop notification has an optional button to click. When the
@@ -1122,25 +1125,11 @@ class MainWin(Gtk.ApplicationWindow):
         media_sub_menu.append(self.export_db_menu_item)
         self.export_db_menu_item.set_action_name('app.export_db_menu')
 
-        import_sub_menu = Gtk.Menu()
-
-        import_json_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_JSON export file...'),
-        )
-        import_sub_menu.append(import_json_menu_item)
-        import_json_menu_item.set_action_name('app.import_json_menu')
-
-        import_text_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Plain _text export file...'),
-        )
-        import_sub_menu.append(import_text_menu_item)
-        import_text_menu_item.set_action_name('app.import_text_menu')
-
         self.import_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Import into database')
+            _('_Import into database...'),
         )
-        self.import_db_menu_item.set_submenu(import_sub_menu)
         media_sub_menu.append(self.import_db_menu_item)
+        self.import_db_menu_item.set_action_name('app.import_db_menu')
 
         # Separator
         media_sub_menu.append(Gtk.SeparatorMenuItem())
@@ -4704,6 +4693,12 @@ class MainWin(Gtk.ApplicationWindow):
         dbid = self.app_obj.media_name_dict[name]
         media_data_obj = self.app_obj.media_reg_dict[dbid]
         media_type = media_data_obj.get_type()
+        # (If an external directory is set, but is not available, many items
+        #   must be desensitised)
+        if media_data_obj.name in self.app_obj.media_unavailable_dict:
+            unavailable_flag = True
+        else:
+            unavailable_flag = False
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
@@ -4729,7 +4724,8 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             not isinstance(media_data_obj, media.Folder) \
             and media_data_obj.source is None
-        ):
+        ) or unavailable_flag \
+        or media_data_obj.dl_no_db_flag:
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
 
@@ -4754,7 +4750,7 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             not isinstance(media_data_obj, media.Folder) \
             and media_data_obj.source is None
-        ):
+        ) or unavailable_flag:
             download_menu_item.set_sensitive(False)
         popup_menu.append(download_menu_item)
 
@@ -4779,7 +4775,7 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             not isinstance(media_data_obj, media.Folder) \
             and media_data_obj.source is None
-        ):
+        ) or unavailable_flag:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
 
@@ -4885,7 +4881,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         actions_submenu.append(move_top_menu_item)
         if not media_data_obj.parent_obj \
-        or self.app_obj.current_manager_obj:
+        or self.app_obj.current_manager_obj \
+        or unavailable_flag:
             move_top_menu_item.set_sensitive(False)
 
         # Separator
@@ -4908,7 +4905,8 @@ class MainWin(Gtk.ApplicationWindow):
                 media_data_obj,
             )
             actions_submenu.append(convert_menu_item)
-            if self.app_obj.current_manager_obj:
+            if self.app_obj.current_manager_obj \
+            or unavailable_flag:
                 convert_menu_item.set_sensitive(False)
 
             # Separator
@@ -4944,7 +4942,7 @@ class MainWin(Gtk.ApplicationWindow):
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.fixed_flag
-        ):
+        ) or unavailable_flag:
             rename_location_menu_item.set_sensitive(False)
 
         set_nickname_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -4983,8 +4981,10 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         actions_submenu.append(set_destination_menu_item)
-        if isinstance(media_data_obj, media.Folder) \
-        and media_data_obj.fixed_flag:
+        if (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.fixed_flag
+        ):
             set_destination_menu_item.set_sensitive(False)
 
         # Separator
@@ -5179,6 +5179,18 @@ class MainWin(Gtk.ApplicationWindow):
             # Separator
             downloads_submenu.append(Gtk.SeparatorMenuItem())
 
+        no_db_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+            _('_Don\'t add videos to Tartube\'s database'),
+        )
+        no_db_menu_item.set_active(media_data_obj.dl_no_db_flag)
+        no_db_menu_item.connect(
+            'activate',
+            self.on_video_index_dl_no_db,
+            media_data_obj,
+        )
+        downloads_submenu.append(no_db_menu_item)
+        # (Widget sensitivity set below)
+
         disable_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
             _('_Disable checking/downloading'),
         )
@@ -5197,16 +5209,11 @@ class MainWin(Gtk.ApplicationWindow):
         enforce_check_menu_item.set_active(media_data_obj.dl_sim_flag)
         enforce_check_menu_item.connect(
             'activate',
-            self.on_video_index_enforce_check,
+            self.on_video_index_dl_sim,
             media_data_obj,
         )
         downloads_submenu.append(enforce_check_menu_item)
-        if self.app_obj.current_manager_obj or media_data_obj.dl_disable_flag \
-        or (
-            isinstance(media_data_obj, media.Folder) \
-            and media_data_obj.fixed_flag
-        ):
-            enforce_check_menu_item.set_sensitive(False)
+        # (Widget sensitivity set below)
 
         # (Widget sensitivity from above)
         if self.app_obj.current_manager_obj \
@@ -5214,13 +5221,15 @@ class MainWin(Gtk.ApplicationWindow):
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.fixed_flag
         ):
+            no_db_menu_item.set_sensitive(False)
             disable_menu_item.set_sensitive(False)
             enforce_check_menu_item.set_sensitive(False)
 
         downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(_('D_ownloads'))
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
-        if __main__.__pkg_no_download_flag__:
+        if __main__.__pkg_no_download_flag__ \
+        or unavailable_flag:
             downloads_menu_item.set_sensitive(False)
 
         # Show
@@ -5268,8 +5277,10 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         show_submenu.append(show_destination_menu_item)
-        if isinstance(media_data_obj, media.Folder) \
-        and media_data_obj.priv_flag:
+        if (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.priv_flag
+        ) or unavailable_flag:
             show_destination_menu_item.set_sensitive(False)
 
         show_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Show'))
@@ -5371,6 +5382,13 @@ class MainWin(Gtk.ApplicationWindow):
                     'default',  # Like a left-click, with no SHIFT/CTRL key
                 )
 
+        # (If the parent channel/playlist/folder has external directory is set,
+        #   but which is not available, many items must be desensitised)
+        if video_obj.parent_obj.name in self.app_obj.media_unavailable_dict:
+            unavailable_flag = True
+        else:
+            unavailable_flag = False
+
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -5391,7 +5409,9 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             self.app_obj.download_manager_obj \
             and self.app_obj.download_manager_obj.operation_classic_flag
-        ) or video_obj.source is None:
+        ) or video_obj.source is None \
+        or unavailable_flag \
+        or video_obj.parent_obj.dl_no_db_flag:
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
 
@@ -5413,7 +5433,8 @@ class MainWin(Gtk.ApplicationWindow):
                 self.app_obj.download_manager_obj \
                 and self.app_obj.download_manager_obj.operation_classic_flag
             ) or video_obj.source is None \
-            or video_obj.live_mode == 1:
+            or video_obj.live_mode == 1 \
+            or unavailable_flag:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
 
@@ -5430,7 +5451,8 @@ class MainWin(Gtk.ApplicationWindow):
             if __main__.__pkg_no_download_flag__ \
             or self.app_obj.current_manager_obj \
             or video_obj.source is None \
-            or video_obj.live_mode == 1:
+            or video_obj.live_mode == 1 \
+            or unavailable_flag:
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
 
@@ -5445,7 +5467,8 @@ class MainWin(Gtk.ApplicationWindow):
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.current_manager_obj \
         or video_obj.source is None \
-        or video_obj.live_mode != 0:
+        or video_obj.live_mode != 0 \
+        or unavailable_flag:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
 
@@ -5469,7 +5492,8 @@ class MainWin(Gtk.ApplicationWindow):
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
-            or video_obj.live_mode != 0:
+            or video_obj.live_mode != 0 \
+            or unavailable_flag:
                 dl_watch_menu_item.set_sensitive(False)
 
         else:
@@ -5578,7 +5602,8 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(clip_menu_item)
         if self.app_obj.current_manager_obj \
         or (video_obj.dl_flag and video_obj.file_name is None) \
-        or video_obj.live_mode:
+        or video_obj.live_mode \
+        or unavailable_flag:
             clip_menu_item.set_sensitive(False)
 
         process_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -5591,7 +5616,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         popup_menu.append(process_menu_item)
         if self.app_obj.current_manager_obj \
-        or video_obj.file_name is None:
+        or video_obj.file_name is None \
+        or unavailable_flag:
             process_menu_item.set_sensitive(False)
 
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -5707,6 +5733,8 @@ class MainWin(Gtk.ApplicationWindow):
             )
             livestream_menu_item.set_submenu(livestream_submenu)
             popup_menu.append(livestream_menu_item)
+            if unavailable_flag:
+                livestream_menu_item.set_sensitive(False)
 
         else:
 
@@ -5754,7 +5782,8 @@ class MainWin(Gtk.ApplicationWindow):
             or (
                 isinstance(video_obj.parent_obj, media.Folder)
                 and video_obj.parent_obj.temp_flag
-            ) or video_obj.live_mode != 0:
+            ) or video_obj.live_mode != 0 \
+            or unavailable_flag:
                 temp_menu_item.set_sensitive(False)
 
         # Apply/remove/edit download options, show system command, disable
@@ -5861,7 +5890,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
-        if __main__.__pkg_no_download_flag__:
+        if __main__.__pkg_no_download_flag__ \
+        or unavailable_flag:
             downloads_menu_item.set_sensitive(False)
 
         # Separator
@@ -5965,6 +5995,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj,
         )
         show_submenu.append(show_location_menu_item)
+        if unavailable_flag:
+            show_location_menu_item.set_sensitive(False)
 
         show_properties_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Properties...'),
@@ -6067,6 +6099,12 @@ class MainWin(Gtk.ApplicationWindow):
                 not_dl_flag = True
                 break
 
+        not_check_flag = False
+        for video_obj in video_list:
+            if video_obj.parent_obj.dl_no_db_flag:
+                not_check_flag = True
+                break
+
         source_flag = False
         for video_obj in video_list:
             if video_obj.source is not None:
@@ -6104,6 +6142,18 @@ class MainWin(Gtk.ApplicationWindow):
                 live_broadcast_flag = True
                 break
 
+        # (If the parent channel/playlist/folder has external directory is set,
+        #   but which is not available, many items must be desensitised)
+        for video_obj in video_list:
+            if video_obj.parent_obj.name \
+            in self.app_obj.media_unavailable_dict:
+                unavailable_flag = True
+            else:
+                unavailable_flag = False
+
+            # (Only need to test one video)
+            break
+
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -6122,7 +6172,8 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             self.app_obj.download_manager_obj \
             and self.app_obj.download_manager_obj.operation_classic_flag
-        ):
+        ) or unavailable_flag \
+        or not_check_flag:
             check_menu_item.set_sensitive(False)
         popup_menu.append(check_menu_item)
 
@@ -6142,7 +6193,8 @@ class MainWin(Gtk.ApplicationWindow):
         ) or (
             self.app_obj.download_manager_obj \
             and self.app_obj.download_manager_obj.operation_classic_flag
-        ) or live_wait_flag:
+        ) or live_wait_flag \
+        or unavailable_flag:
             download_menu_item.set_sensitive(False)
         popup_menu.append(download_menu_item)
 
@@ -6156,7 +6208,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.current_manager_obj \
-        or live_flag:
+        or live_flag \
+        or unavailable_flag:
             custom_dl_menu_item.set_sensitive(False)
         popup_menu.append(custom_dl_menu_item)
 
@@ -6171,6 +6224,7 @@ class MainWin(Gtk.ApplicationWindow):
             source_flag,
             temp_folder_flag,
             live_flag,
+            unavailable_flag,
             video_list,
         )
 
@@ -6189,8 +6243,6 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
-        if not dl_flag:
-            archive_menu_item.set_sensitive(False)
         mark_videos_submenu.append(archive_menu_item)
 
         not_archive_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6202,8 +6254,6 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
-        if not dl_flag:
-            not_archive_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_archive_menu_item)
 
         # Separator
@@ -6218,8 +6268,6 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
-        if not dl_flag:
-            bookmark_menu_item.set_sensitive(False)
         mark_videos_submenu.append(bookmark_menu_item)
 
         not_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6231,8 +6279,6 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
-        if not dl_flag:
-            not_bookmark_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_bookmark_menu_item)
 
         # Separator
@@ -6247,8 +6293,6 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
-        if not dl_flag:
-            fav_menu_item.set_sensitive(False)
         mark_videos_submenu.append(fav_menu_item)
 
         not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6260,8 +6304,6 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
-        if not dl_flag:
-            not_fav_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_fav_menu_item)
 
         # Separator
@@ -6305,8 +6347,6 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
-        if not dl_flag:
-            new_menu_item.set_sensitive(False)
         mark_videos_submenu.append(new_menu_item)
 
         not_new_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6318,8 +6358,6 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
-        if not dl_flag:
-            not_new_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_new_menu_item)
 
         # Separator
@@ -6334,8 +6372,6 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
-        if not dl_flag:
-            playlist_menu_item.set_sensitive(False)
         mark_videos_submenu.append(playlist_menu_item)
 
         not_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6347,8 +6383,6 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
-        if not dl_flag:
-            not_playlist_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_playlist_menu_item)
 
         mark_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6356,7 +6390,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         mark_videos_menu_item.set_submenu(mark_videos_submenu)
         popup_menu.append(mark_videos_menu_item)
-        if live_flag:
+        if live_flag or not dl_flag:
             mark_videos_menu_item.set_sensitive(False)
 
         # Show properties
@@ -6643,6 +6677,7 @@ class MainWin(Gtk.ApplicationWindow):
             source_flag,
             temp_folder_flag,
             live_flag,
+            False,          # unavailable_flag does not apply here
             video_list,
         )
 
@@ -7067,8 +7102,9 @@ class MainWin(Gtk.ApplicationWindow):
         submenu.append(mark_not_playlist_menu_item)
 
 
-    def add_watch_video_menu_items(self, popup_menu, dl_flag,
-    not_dl_flag, source_flag, temp_folder_flag, live_flag, video_list):
+    def add_watch_video_menu_items(self, popup_menu, dl_flag, \
+    not_dl_flag, source_flag, temp_folder_flag, live_flag, unavailable_flag, \
+    video_list):
 
         """Called by self.video_catalogue_multi_popup_menu() and
         .results_list_popup_menu().
@@ -7095,6 +7131,10 @@ class MainWin(Gtk.ApplicationWindow):
             live_flag (bool): Flag set to True if any of the media.Video
                 objects have their .live_mode IV set to any value above 0
 
+            unavailable_flag (bool): Flag set to True if the videos' parent
+                channel/playlist/folder has an external directory that is
+                marked disabled
+
             video_list (list): List of one or more media.Video objects on
                 which this popup menu acts
 
@@ -7120,7 +7160,8 @@ class MainWin(Gtk.ApplicationWindow):
             or self.app_obj.update_manager_obj \
             or self.app_obj.refresh_manager_obj \
             or self.app_obj.process_manager_obj \
-            or live_flag:
+            or live_flag \
+            or unavailable_flag:
                 dl_watch_menu_item.set_sensitive(False)
 
         else:
@@ -7234,7 +7275,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
         popup_menu.append(process_menu_item)
-        if self.app_obj.current_manager_obj:
+        if self.app_obj.current_manager_obj \
+        or unavailable_flag:
             process_menu_item.set_sensitive(False)
 
         # Add to Classic Mode tab
@@ -7301,7 +7343,8 @@ class MainWin(Gtk.ApplicationWindow):
         or self.app_obj.refresh_manager_obj \
         or self.app_obj.process_manager_obj \
         or temp_folder_flag \
-        or live_flag:
+        or live_flag \
+        or unavailable_flag:
             temp_menu_item.set_sensitive(False)
 
 
@@ -8167,22 +8210,36 @@ class MainWin(Gtk.ApplicationWindow):
             dbid = model.get_value(tree_iter, 0)
             media_data_obj = self.app_obj.media_reg_dict[dbid]
 
-            # If marked new (unwatched), show as bold text
-            if media_data_obj.new_count:
-                renderer.set_property('weight', Pango.Weight.BOLD)
-            else:
-                renderer.set_property('weight', Pango.Weight.NORMAL)
+            # If an external directory is disable, show as strikethrough
+            if media_data_obj.name in self.app_obj.media_unavailable_dict:
+                renderer.set_property('strikethrough', True)
 
-            # If downloads disabled, show as italic text
-            if media_data_obj.dl_disable_flag:
-                renderer.set_property('style', Pango.Style.ITALIC)
-                renderer.set_property('underline', True)
-            elif media_data_obj.dl_sim_flag:
-                renderer.set_property('style', Pango.Style.ITALIC)
-                renderer.set_property('underline', False)
             else:
-                renderer.set_property('style', Pango.Style.NORMAL)
-                renderer.set_property('underline', False)
+
+                # (Without this line, everything is set to 'strikethrough'
+                renderer.set_property('strikethrough', False)
+
+                # If marked new (unwatched), show as bold text
+                if media_data_obj.new_count:
+                    renderer.set_property('weight', Pango.Weight.BOLD)
+                else:
+                    renderer.set_property('weight', Pango.Weight.NORMAL)
+
+                # If adding videos to the database or checking/downloading is
+                #   disabled, show as italic text (perhaps in addition to bold
+                #   text)
+                if media_data_obj.dl_no_db_flag:
+                    renderer.set_property('style', Pango.Style.ITALIC)
+                    renderer.set_property('underline', Pango.Underline.ERROR)
+                elif media_data_obj.dl_disable_flag:
+                    renderer.set_property('style', Pango.Style.ITALIC)
+                    renderer.set_property('underline', True)
+                elif media_data_obj.dl_sim_flag:
+                    renderer.set_property('style', Pango.Style.ITALIC)
+                    renderer.set_property('underline', False)
+                else:
+                    renderer.set_property('style', Pango.Style.NORMAL)
+                    renderer.set_property('underline', False)
 
         else:
 
@@ -12025,7 +12082,7 @@ class MainWin(Gtk.ApplicationWindow):
             textview.show_all()
 
 
-    # (Errors Tab)
+    # (Errors/Warnings Tab)
 
 
     def errors_list_reset(self):
@@ -12054,7 +12111,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def errors_list_add_row(self, media_data_obj):
 
-        """Called by downloads.DownloadWorker.run().
+        """Called by downloads.DownloadWorker.run_video_downloader().
 
         When a download job generates error and/or warning messages, this
         function is called to display them in the Errors List.
@@ -12603,6 +12660,39 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.delete_container(media_data_obj)
 
 
+    def on_video_index_dl_no_db(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Set the media data object's flag to disable adding videos to Tartube's
+        database.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 11970 on_video_index_dl_no_db')
+
+        if self.app_obj.current_manager_obj:
+            return self.app_obj.system_error(
+                999,
+                'Callback request denied due to current conditions',
+            )
+
+        if not media_data_obj.dl_no_db_flag:
+            media_data_obj.set_dl_no_db_flag(True)
+        else:
+            media_data_obj.set_dl_no_db_flag(False)
+
+        self.video_index_update_row_text(media_data_obj)
+
+
     def on_video_index_dl_disable(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_index_popup_menu().
@@ -12631,6 +12721,39 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj.set_dl_disable_flag(True)
         else:
             media_data_obj.set_dl_disable_flag(False)
+
+        self.video_index_update_row_text(media_data_obj)
+
+
+    def on_video_index_dl_sim(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Set the media data object's flag to force checking of the channel/
+        playlist/folder (disabling actual downloads).
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 12172 on_video_index_dl_sim')
+
+        if self.app_obj.current_manager_obj:
+            return self.app_obj.system_error(
+                232,
+                'Callback request denied due to current conditions',
+            )
+
+        if not media_data_obj.dl_sim_flag:
+            media_data_obj.set_dl_sim_flag(True)
+        else:
+            media_data_obj.set_dl_sim_flag(False)
 
         self.video_index_update_row_text(media_data_obj)
 
@@ -12813,39 +12936,6 @@ class MainWin(Gtk.ApplicationWindow):
         # The True flag tells the function to empty the container, rather than
         #   delete it
         self.app_obj.delete_container(media_data_obj, True)
-
-
-    def on_video_index_enforce_check(self, menu_item, media_data_obj):
-
-        """Called from a callback in self.video_index_popup_menu().
-
-        Set the media data object's flag to force checking of the channel/
-        playlist/folder (disabling actual downloads).
-
-        Args:
-
-            menu_item (Gtk.MenuItem): The clicked menu item
-
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
-                The clicked media data object
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 12172 on_video_index_enforce_check')
-
-        if self.app_obj.current_manager_obj:
-            return self.app_obj.system_error(
-                232,
-                'Callback request denied due to current conditions',
-            )
-
-        if not media_data_obj.dl_sim_flag:
-            media_data_obj.set_dl_sim_flag(True)
-        else:
-            media_data_obj.set_dl_sim_flag(False)
-
-        self.video_index_update_row_text(media_data_obj)
 
 
     def on_video_index_export(self, menu_item, media_data_obj):
@@ -13624,8 +13714,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called from a callback in self.video_index_popup_menu().
 
-        Sets (or resets) the alternative download destination for the selected
-        channel, playlist or folder.
+        Sets (or resets) the alternative download destination, or the external
+        directory, for the selected channel, playlist or folder.
 
         Args:
 
@@ -13649,13 +13739,54 @@ class MainWin(Gtk.ApplicationWindow):
         response = dialogue_win.run()
 
         # Retrieve user choices from the dialogue window, before destroying it
-        dbid = dialogue_win.choice
+        choice = dialogue_win.choice
         dialogue_win.destroy()
 
         if response == Gtk.ResponseType.OK:
 
-            if dbid != media_data_obj.master_dbid:
-                media_data_obj.set_master_dbid(self.app_obj, dbid)
+            if type(choice) == int:
+
+                # 'choice' is a .dbid
+                if choice != media_data_obj.master_dbid:
+                    media_data_obj.set_master_dbid(self.app_obj, choice)
+
+                media_data_obj.set_external_dir(self.app_obj, None)
+                if media_data_obj.name \
+                in self.app_obj.media_unavailable_dict:
+                    self.app_obj.del_media_unavailable_dict(
+                        media_data_obj.name,
+                    )
+
+            else:
+
+                # 'choice' is the full path to an external directory. If it
+                #   doesn't exist, create it (and add the semaphore file)
+                if media_data_obj.set_external_dir(self.app_obj, choice):
+
+                    media_data_obj.set_master_dbid(
+                        self.app_obj,
+                        media_data_obj.dbid,
+                    )
+
+                    if media_data_obj.name \
+                    in self.app_obj.media_unavailable_dict:
+                        self.app_obj.del_media_unavailable_dict(
+                            media_data_obj.name,
+                        )
+
+                else:
+
+                    if os.name == 'nt':
+                        msg = _('The external folder is not available')
+                    else:
+                        msg = _('The external directory is not available')
+
+                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                        msg,
+                        'error',
+                        'ok',
+                        None,                   # Parent window is main window
+                    )
 
             # Update tooltips for this row
             self.video_index_update_row_tooltip(media_data_obj)
@@ -13770,7 +13901,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             menu_item (Gtk.MenuItem): The clicked menu item
 
-            media_data_obj (media.Channel, media.Playlist or media.Channel):
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The clicked media data object
 
         """
@@ -13778,7 +13909,11 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 13082 on_video_index_show_destination')
 
-        other_obj = self.app_obj.media_reg_dict[media_data_obj.master_dbid]
+        if media_data_obj.external_dir is not None:
+            other_obj = media_data_obj
+        else:
+            other_obj = self.app_obj.media_reg_dict[media_data_obj.master_dbid]
+
         path = other_obj.get_actual_dir(self.app_obj)
         utils.open_file(self.app_obj, path)
 
@@ -18365,6 +18500,19 @@ class MainWin(Gtk.ApplicationWindow):
         self.previous_alt_dest_dbid = value
 
 
+    def set_previous_external_dir(self, value):
+
+        """Called by functions in SetDestinationDialogue.
+
+        The specified value may be a full path to a directory, or None.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 17446 set_previous_external_dir')
+
+        self.previous_external_dir = value
+
+
 class SimpleCatalogueItem(object):
 
     """Called by MainWin.video_catalogue_redraw_all() and
@@ -20025,7 +20173,15 @@ class ComplexCatalogueItem(object):
             ) + '" title="' + _('Watch in your media player') + '">' \
             + _('Player') + '</a>'
 
-        if __main__.__pkg_no_download_flag__:
+        # (Many labels are not clickable when a channel/playlist/folder's
+        #   external directory is marked disabled)
+        if self.video_obj.parent_obj.name \
+        in self.main_win_obj.app_obj.media_unavailable_dict:
+
+            # Link not clickable
+            self.watch_player_label.set_markup(_('Download'))
+
+        elif __main__.__pkg_no_download_flag__:
 
             if self.video_obj.file_name and self.video_obj.dl_flag:
 
@@ -20201,6 +20357,14 @@ class ComplexCatalogueItem(object):
         app_obj = self.main_win_obj.app_obj
         dbid = self.video_obj.dbid
 
+        # (Many labels are not clickable when a channel/playlist/folder's
+        #   external directory is marked disabled)
+        if self.video_obj.parent_obj.name \
+        in self.main_win_obj.app_obj.media_unavailable_dict:
+            unavailable_flag = True
+        else:
+            unavailable_flag = False
+
         # Notify/don't notify
         if not dbid in app_obj.media_reg_auto_notify_dict:
             label = _('Notify')
@@ -20208,7 +20372,7 @@ class ComplexCatalogueItem(object):
             label = '<s>' + _('Notify') + '</s>'
 
         # Currently disabled on MS Windows
-        if os.name == 'nt':
+        if os.name == 'nt' or unavailable_flag:
             self.live_auto_notify_label.set_markup(_('Notify'))
         else:
             self.live_auto_notify_label.set_markup(
@@ -20223,11 +20387,14 @@ class ComplexCatalogueItem(object):
         else:
             label = '<s>' + _('Alarm') + '</s>'
 
-        self.live_auto_alarm_label.set_markup(
-            '<a href="' + name + '" title="' \
-            + _('When the livestream starts, sound an alarm') \
-            + '">' + label + '</a>',
-        )
+        if unavailable_flag:
+            self.live_auto_alarm_label.set_markup(_('Alarm'))
+        else:
+            self.live_auto_alarm_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream starts, sound an alarm') \
+                + '">' + label + '</a>',
+            )
 
         # Open/don't open
         if not dbid in app_obj.media_reg_auto_open_dict:
@@ -20235,11 +20402,14 @@ class ComplexCatalogueItem(object):
         else:
             label = '<s>' + _('Open') + '</s>'
 
-        self.live_auto_open_label.set_markup(
-            '<a href="' + name + '" title="' \
-            + _('When the livestream starts, open it') \
-            + '">' + label + '</a>',
-        )
+        if unavailable_flag:
+            self.live_auto_open_label.set_markup(_('Open'))
+        else:
+            self.live_auto_open_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream starts, open it') \
+                + '">' + label + '</a>',
+            )
 
         # D/L on start/Don't download
         if not dbid in app_obj.media_reg_auto_dl_start_dict:
@@ -20247,11 +20417,14 @@ class ComplexCatalogueItem(object):
         else:
             label = '<s>' + _('D/L on start') + '</s>'
 
-        self.live_auto_dl_start_label.set_markup(
-            '<a href="' + name + '" title="' \
-            + _('When the livestream starts, download it') \
-            + '">' + label + '</a>',
-        )
+        if unavailable_flag:
+            self.live_auto_dl_start_label.set_markup(_('D/L on start'))
+        else:
+            self.live_auto_dl_start_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream starts, download it') \
+                + '">' + label + '</a>',
+            )
 
         # D/L on stop/Don't download
         if not dbid in app_obj.media_reg_auto_dl_stop_dict:
@@ -20259,11 +20432,14 @@ class ComplexCatalogueItem(object):
         else:
             label = '<s>' + _('D/L on stop') + '</s>'
 
-        self.live_auto_dl_stop_label.set_markup(
-            '<a href="' + name + '" title="' \
-            + _('When the livestream stops, download it') \
-            + '">' + label + '</a>',
-        )
+        if unavailable_flag:
+            self.live_auto_dl_stop_label.set_markup(_('D/L on stop'))
+        else:
+            self.live_auto_dl_stop_label.set_markup(
+                '<a href="' + name + '" title="' \
+                + _('When the livestream stops, download it') \
+                + '">' + label + '</a>',
+            )
 
 
     def update_temp_labels(self):
@@ -20276,6 +20452,14 @@ class ComplexCatalogueItem(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 19293 update_temp_labels')
 
+        # (Many labels are not clickable when a channel/playlist/folder's
+        #   external directory is marked disabled)
+        if self.video_obj.parent_obj.name \
+        in self.main_win_obj.app_obj.media_unavailable_dict:
+            unavailable_flag = True
+        else:
+            unavailable_flag = False
+
         if self.video_obj.file_name:
             link_text = self.video_obj.get_actual_path(
                 self.main_win_obj.app_obj,
@@ -20286,7 +20470,7 @@ class ComplexCatalogueItem(object):
             link_text = ''
 
         # (Video can't be temporarily downloaded if it has no source URL)
-        if self.video_obj.source is not None:
+        if self.video_obj.source is not None and not unavailable_flag:
 
             self.temp_mark_label.set_markup(
                 '<a href="' + html.escape(link_text) + '" title="' \
@@ -22176,37 +22360,39 @@ class GridCatalogueItem(ComplexCatalogueItem):
             utils.debug_time('mwn 21211 update_container_name')
 
         if self.video_obj.orig_parent is not None:
+            parent_obj = self.video_obj.orig_parent
+        else:
+            parent_obj = self.video_obj.parent_obj
+
+        if isinstance(parent_obj, media.Channel):
+            string = _('Channel') + ': '
+        elif isinstance(parent_obj, media.Playlist):
+            string = _('Playlist') + ': '
+        else:
+            string = _('Folder') + ': '
+
+        string2 = html.escape(
+            utils.shorten_string(
+                parent_obj.name,
+                self.main_win_obj.very_long_string_max_len,
+            ),
+            quote=True,
+        )
+
+        if isinstance(parent_obj, media.Folder) \
+        or parent_obj.source is None \
+        or not self.main_win_obj.app_obj.catalogue_clickable_container_flag:
 
             self.container_label.set_markup(
-                '<i>' + html.escape(
-                    utils.shorten_string(
-                        self.video_obj.orig_parent,
-                        self.main_win_obj.very_long_string_max_len,
-                    ),
-                    quote=True,
-                ) + '</i>',
+                '<i>' + string + '</i> ' + string2,
             )
 
         else:
 
-            if isinstance(self.video_obj.parent_obj, media.Channel):
-                string = _('Channel:') + ' '
-            elif isinstance(self.video_obj.parent_obj, media.Playlist):
-                string = _('Playlist:') + ' '
-            else:
-                string = _('Folder:') + ' '
-
-            string2 = html.escape(
-                utils.shorten_string(
-                    self.video_obj.parent_obj.name,
-                    self.main_win_obj.very_long_string_max_len,
-                ),
-                quote=True,
-            )
-
-
             self.container_label.set_markup(
-                '<i>' + string + '</i> ' + string2,
+                '<i>' + string + '</i> <a href="' \
+                + html.escape(parent_obj.source) + '" title="' \
+                + _('Click to open') + '">' + string2 + '</a>',
             )
 
 
@@ -22362,7 +22548,15 @@ class GridCatalogueItem(ComplexCatalogueItem):
             ) + '" title="' + _('Watch in your media player') + '">' \
             + _('Player') + '</a>'
 
-        if __main__.__pkg_no_download_flag__:
+        # (Many labels are not clickable when a channel/playlist/folder's
+        #   external directory is marked disabled)
+        if self.video_obj.parent_obj.name \
+        in self.main_win_obj.app_obj.media_unavailable_dict:
+
+            # Link not clickable
+            self.watch_player_label.set_markup(_('Download'))
+
+        elif __main__.__pkg_no_download_flag__:
 
             if self.video_obj.file_name and self.video_obj.dl_flag:
 
@@ -26164,7 +26358,15 @@ class ExportDialogue(Gtk.Dialog):
         self.checkbutton2 = None                # Gtk.CheckButton
         self.checkbutton3 = None                # Gtk.CheckButton
         self.checkbutton4 = None                # Gtk.CheckButton
-        self.checkbutton5 = None                # Gtk.CheckButton
+        self.radiobutton = None                 # Gtk.RadioButton
+        self.radiobutton2 = None                # Gtk.RadioButton
+        self.radiobutton3 = None                # Gtk.RadioButton
+
+
+        # IV list - other
+        # ---------------
+        # The selected CSV separator
+        self.separator = None
 
 
         # Code
@@ -26194,6 +26396,8 @@ class ExportDialogue(Gtk.Dialog):
         grid.set_border_width(spacing_size)
         grid.set_row_spacing(spacing_size)
 
+        grid_width = 2
+
         if not whole_flag:
             msg = _(
                 'Tartube is ready to export a partial summary of its' \
@@ -26214,77 +26418,132 @@ class ExportDialogue(Gtk.Dialog):
                 label_length,
             ),
         )
-        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(label, 0, 0, grid_width, 1)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
+        grid.attach(Gtk.HSeparator(), 0, 1, grid_width, 1)
 
         label = Gtk.Label(_('Choose what should be included:'))
-        grid.attach(label, 0, 2, 1, 1)
+        grid.attach(label, 0, 2, grid_width, 1)
         label.set_alignment(0, 0.5)
 
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.checkbutton = Gtk.CheckButton()
-        grid.attach(self.checkbutton, 0, 3, 1, 1)
+        grid.attach(self.checkbutton, 0, 3, grid_width, 1)
         self.checkbutton.set_label(_('Include lists of videos'))
         self.checkbutton.set_active(False)
 
         self.checkbutton2 = Gtk.CheckButton()
-        grid.attach(self.checkbutton2, 0, 4, 1, 1)
+        grid.attach(self.checkbutton2, 0, 4, grid_width, 1)
         self.checkbutton2.set_label(_('Include channels'))
         self.checkbutton2.set_active(True)
 
         self.checkbutton3 = Gtk.CheckButton()
-        grid.attach(self.checkbutton3, 0, 5, 1, 1)
+        grid.attach(self.checkbutton3, 0, 5, grid_width, 1)
         self.checkbutton3.set_label(_('Include playlists'))
         self.checkbutton3.set_active(True)
 
         self.checkbutton4 = Gtk.CheckButton()
-        grid.attach(self.checkbutton4, 0, 6, 1, 1)
+        grid.attach(self.checkbutton4, 0, 6, grid_width, 1)
         self.checkbutton4.set_label(_('Preserve folder structure'))
         self.checkbutton4.set_active(True)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 7, 1, 1)
+        grid.attach(Gtk.HSeparator(), 0, 7, grid_width, 1)
 
-        self.checkbutton5 = Gtk.CheckButton()
-        grid.attach(self.checkbutton5, 0, 8, 1, 1)
-        self.checkbutton5.set_label(_('Export as plain text'))
-        self.checkbutton5.set_active(False)
-        self.checkbutton5.connect('toggled', self.on_checkbutton_toggled)
+        self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Export as JSON'),
+        )
+        grid.attach(self.radiobutton, 0, 8, grid_width, 1)
+
+        self.radiobutton2 = Gtk.RadioButton.new_with_label_from_widget(
+            self.radiobutton,
+            _('Export as CSV using separator'),
+        )
+        grid.attach(self.radiobutton2, 0, 9, 1, 1)
+        # (Signal connect appears below)
+
+        # (At the moment, Tartube only offers two choices of CSV separator)
+        liststore = Gtk.ListStore(str)
+        liststore.append(['|'])
+        liststore.append([','])
+
+        combo = Gtk.ComboBox.new_with_model(liststore)
+        grid.attach(combo, 1, 9, 1, 1)
+        combo.set_hexpand(True)
+
+        cell = Gtk.CellRendererText()
+        combo.pack_start(cell, False)
+        combo.add_attribute(cell, 'text', 0)
+        combo.connect('changed', self.on_combo_changed)
+        combo.set_sensitive(False)
+
+        if main_win_obj.app_obj.export_csv_separator == ',':
+            combo.set_active(1)
+        else:
+            combo.set_active(0)
+
+        self.radiobutton3 = Gtk.RadioButton.new_with_label_from_widget(
+            self.radiobutton,
+            _('Export as plain text'),
+        )
+        grid.attach(self.radiobutton3, 0, 10, grid_width, 1)
+
+        # (Signal connects from above)
+        self.radiobutton2.connect(
+            'toggled',
+            self.on_radiobutton_toggled,
+            combo,
+        )
 
         # Display the dialogue window
         self.show_all()
 
 
-    # Public class methods
+    def on_combo_changed(self, combo):
 
+        """Called a from callback in self.__init__().
 
-    def on_checkbutton_toggled(self, checkbutton):
-
-        """Called from callback in self.__init__().
-
-        When the specified checkbutton is toggled, modify other widgets in the
-        dialogue window.
+        Updates the combobox's selected item, so the calling function can
+        retrieve it.
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The clicked widget
+            combo (Gtk.ComboBox): The clicked widget
 
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 24583 on_checkbutton_toggled')
+            utils.debug_time('mwn 23829 on_combo_changed')
 
-        if not checkbutton.get_active():
-            self.checkbutton.set_sensitive(True)
-            self.checkbutton4.set_sensitive(True)
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.separator = model[tree_iter][0]
+
+
+    def on_radiobutton_toggled(self, button, combo):
+
+        """Called from a callback in self.__init__().
+
+        (De)sensitises the combobox, as required.
+
+        Args:
+
+            button (Gtk.RadioButton): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24050 on_radiobutton_toggled')
+
+        if button.get_active():
+            combo.set_sensitive(True)
         else:
-            self.checkbutton.set_active(False)
-            self.checkbutton.set_sensitive(False)
-            self.checkbutton4.set_active(False)
-            self.checkbutton4.set_sensitive(False)
+            combo.set_sensitive(False)
 
 
 class ImportDialogue(Gtk.Dialog):
@@ -26418,7 +26677,7 @@ class ImportDialogue(Gtk.Dialog):
         self.checkbutton = Gtk.CheckButton()
         grid.attach(self.checkbutton, 0, 2, 1, 1)
         self.checkbutton.set_label(_('Import videos'))
-        self.checkbutton.set_active(False)
+        self.checkbutton.set_active(True)
 
         self.checkbutton2 = Gtk.CheckButton()
         grid.attach(self.checkbutton2, 1, 2, 1, 1)
@@ -27035,7 +27294,7 @@ class NewbieDialogue(Gtk.Dialog):
         grid.attach(Gtk.HSeparator(), 1, 1, grid_width, 1)
 
         label2 = Gtk.Label(
-            _('Make sure the downloader is installed and updated'),
+            '   ' + _('Check the downloader is installed and updated') + '   ',
         )
         grid.attach(label2, 1, 2, grid_width, 1)
 
@@ -27080,8 +27339,23 @@ class NewbieDialogue(Gtk.Dialog):
         grid.attach(button5, 2, 8, 1, 1)
         button5.connect('clicked', self.on_issues_button_clicked)
 
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 9, grid_width, 1)
+
+        label5 = Gtk.Label()
+        grid.attach(label5, 1, 10, grid_width, 1)
+        label5.set_markup(
+            _(
+                'Don\'t forget to check the <b>Output</b> tab and the\n' \
+                '<b>Errors/Warnings</b> tab for error messages!',
+            ),
+        )
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 1, 11, grid_width, 1)
+
         checkbutton = Gtk.CheckButton()
-        grid.attach(checkbutton, 1, 9, grid_width, 1)
+        grid.attach(checkbutton, 1, 12, grid_width, 1)
         checkbutton.set_label(_('Always show this window'))
         if self.show_flag:
             checkbutton.set_active(True)
@@ -28025,7 +28299,12 @@ class SetDestinationDialogue(Gtk.Dialog):
         self.media_data_obj = media_data_obj
         # Store the user's choice as an IV, so the calling function can
         #   retrieve it
-        self.choice = media_data_obj.master_dbid
+        # The two values can be distinguished, because .external_dir is always
+        #   a string, and .master_dbid is always an integer
+        if media_data_obj.external_dir:
+            self.choice = media_data_obj.external_dir
+        else:
+            self.choice = media_data_obj.master_dbid
 
 
         # Code
@@ -28046,7 +28325,7 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         # Set up the dialogue window
         spacing_size = self.main_win_obj.spacing_size
-        label_length = self.main_win_obj.long_string_max_len
+        label_length = self.main_win_obj.very_long_string_max_len
 
         box = self.get_content_area()
 
@@ -28055,76 +28334,100 @@ class SetDestinationDialogue(Gtk.Dialog):
         grid.set_border_width(spacing_size)
         grid.set_row_spacing(spacing_size)
 
-        media_type = media_data_obj.get_type()
-        if media_type == 'channel':
-            string = _(
-                'This channel can store its videos in its own system folder,' \
-                + ' or it can store them in a different system folder',
-            )
-        elif media_type == 'playlist':
-            string = _(
-                'This playlist can store its videos in its own system' \
-                + ' folder, or it can store them in a different system folder',
-            )
-        else:
-            string = _(
-                'This folder can store its videos in its own system folder,' \
-                + ' or it can store them in a different system folder',
-            )
-
-        label = Gtk.Label(
-            utils.tidy_up_long_string(
-                string,
-                label_length,
-            ) + '\n\n' + _('Choose a different system folder if:') + '\n\n' \
-            + utils.tidy_up_long_string(
-                _(
-                    '1. You want to add a channel and its playlists, without' \
-                    + ' downloading the same video twice',
-                ),
-                label_length,
-            ) + '\n\n' \
-            + utils.tidy_up_long_string(
-                _(
-                   '2. A video creator has channels on both YouTube and' \
-                    + ' BitChute, and you want to add both without' \
-                    + ' downloading the same video twice',
-                ),
-                label_length,
-            )
-        )
-        grid.attach(label, 0, 0, 1, 1)
-
-        # Separator
-        grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
-
-        if media_type == 'channel':
-            string = _('Use this channel\'s own folder')
-        elif media_type == 'playlist':
-            string = _('Use this playlist\'s own folder')
-        else:
-            string = _('Use this folder\'s own system folder')
-
-        radiobutton = Gtk.RadioButton.new_with_label_from_widget(None, string)
-        grid.attach(radiobutton, 0, 2, 1, 1)
-        # (Signal connect appears below)
-
-        radiobutton2 = Gtk.RadioButton.new_from_widget(radiobutton)
-        radiobutton2.set_label('Choose a different system folder:')
-        grid.attach(radiobutton2, 0, 3, 1, 1)
-        # (Signal connect appears below)
-
-        # Get a list of channels/playlists/folders
-        app_obj = main_win_obj.app_obj
-        dbid_list = list(app_obj.media_name_dict.values())
+        grid_width = 3
 
         # If the alternative download destination selected by this window, the
         #   last time it was opened, has since been deleted, then reset the IV
         #   that stores it
+        app_obj = main_win_obj.app_obj
         prev_dbid = main_win_obj.previous_alt_dest_dbid
         if prev_dbid is not None and not prev_dbid in app_obj.media_reg_dict:
             prev_dbid = None
             main_win_obj.set_previous_alt_dest_dbid(None)
+        # Likewise, if the previous external directory no longer exists, then
+        #   forget it
+        prev_external_dir = main_win_obj.previous_external_dir
+        if prev_external_dir is not None \
+        and not os.path.isdir(prev_external_dir):
+            prev_external_dir = None
+            main_win_obj.set_previous_external_dir(None)
+
+        # Add widgets
+        media_type = media_data_obj.get_type()
+        if os.name == 'nt':
+            if media_type == 'channel':
+                string = _(
+                    'This channel normally downloads videos into its own' \
+                    + ' folder',
+                )
+            elif media_type == 'playlist':
+                string = _(
+                    'This playlist normally downloads videos into its own' \
+                    + ' folder',
+                )
+            else:
+                string = _(
+                    'This folder normally downloads videos into itself',
+                )
+        else:
+            if media_type == 'channel':
+                string = _(
+                    'This channel normally downloads videos into its own' \
+                    + ' directory',
+                )
+            elif media_type == 'playlist':
+                string = _(
+                    'This playlist normally downloads videos into its own' \
+                    + ' directory',
+                )
+            else:
+                string = _(
+                    'This folder normally downloads videos into its own' \
+                    + ' directory',
+                )
+
+        label = Gtk.Label(utils.tidy_up_long_string(string, label_length))
+        grid.attach(label, 0, 0, grid_width, 1)
+        label.set_xalign(0)
+
+        radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Use this location'),
+        )
+        grid.attach(radiobutton, 0, 1, grid_width, 1)
+        # (Signal connect appears below)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 2, grid_width, 1)
+
+        string = _('Choose a different location if:') \
+        + '\n\n • ' + utils.tidy_up_long_string(
+            _(
+                'You want to add a channel and its playlists, without' \
+                + ' downloading the same video twice',
+            ),
+            label_length,
+        ) + '\n\n • ' + utils.tidy_up_long_string(
+            _(
+                'A video creator has channels on both YouTube and' \
+                + ' BitChute, and you want to add both without' \
+                + ' downloading the same video twice',
+            ),
+            label_length,
+        )
+
+        label2 = Gtk.Label(string)
+        grid.attach(label2, 0, 3, grid_width, 1)
+        label2.set_xalign(0)
+
+        radiobutton2 = Gtk.RadioButton.new_from_widget(radiobutton)
+        grid.attach(radiobutton2, 0, 4, 1, 1)
+        radiobutton2.set_label('Use a different location:')
+        radiobutton2.set_hexpand(False)
+        # (Signal connect appears below)
+
+        # Get a list of channels/playlists/folders
+        dbid_list = list(app_obj.media_name_dict.values())
 
         # From this list, filter out:
         #   - Any channel/playlist/folder which has an alternative download
@@ -28181,7 +28484,7 @@ class SetDestinationDialogue(Gtk.Dialog):
             count += 1
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 0, 4, 1, 1)
+        grid.attach(combo, 1, 4, 2, 1)
         combo.set_hexpand(True)
 
         renderer_pixbuf = Gtk.CellRendererPixbuf()
@@ -28191,36 +28494,181 @@ class SetDestinationDialogue(Gtk.Dialog):
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 1)
-
         combo.set_active(0)
         # (Signal connect appears below)
 
-        if media_data_obj.master_dbid == media_data_obj.dbid:
-            combo.set_sensitive(False)
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 5, grid_width, 1)
+
+        if os.name == 'nt':
+            string = _(
+                'Using an external folder is not recommended, in general.' \
+                + ' Choose an external folder if:',
+            )
         else:
+            string = _(
+                'Using an external directory is not recommended, in general.' \
+                + ' Choose an external directory if:',
+            )
+
+        if os.name == 'nt':
+            string2 = _(
+                'You want a different application to process the' \
+                + ' downloaded videos (other applications should not modify' \
+                + ' Tartube\'s main data folder)',
+            )
+        else:
+            string2 = _(
+                'You want a different application to process the' \
+                + ' downloaded videos (other applications should not modify' \
+                + ' Tartube\'s main data directory)',
+            )
+
+        label3 = Gtk.Label(
+            utils.tidy_up_long_string(string, label_length) \
+            + '\n\n • ' + utils.tidy_up_long_string(string2, label_length),
+        )
+        grid.attach(label3, 0, 6, grid_width, 1)
+        label3.set_xalign(0)
+
+        radiobutton3 = Gtk.RadioButton.new_from_widget(radiobutton2)
+        radiobutton3.set_label('Use an external location:')
+        grid.attach(radiobutton3, 0, 7, 2, 1)
+        # (Signal connect appears below)
+
+        button = Gtk.Button.new_with_label(_('Set'))
+        grid.attach(button, 2, 7, 1, 1)
+        button.set_hexpand(False)
+        # (Signal connect appears below)
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 8, grid_width, 1)
+        entry.set_editable(False)
+        if media_data_obj.external_dir is not None:
+            entry.set_text(media_data_obj.external_dir)
+        elif prev_external_dir is not None:
+            entry.set_text(prev_external_dir)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 9, grid_width, 1)
+
+        # Set widget initial states
+        if type(self.choice) == str:
+            radiobutton3.set_active(True)
+            combo.set_sensitive(False)
+        elif self.choice != media_data_obj.dbid:
             radiobutton2.set_active(True)
-            combo.set_sensitive(True)
+            button.set_sensitive(False)
+        else:
+            radiobutton.set_active(True)
+            combo.set_sensitive(False)
+            button.set_sensitive(False)
 
         # (Signal connects from above)
         radiobutton.connect(
             'toggled',
             self.on_radiobutton_toggled,
             combo,
+            button,
+            entry,
         )
-
         radiobutton2.connect(
             'toggled',
             self.on_radiobutton2_toggled,
             combo,
+            button,
+            entry,
         )
-
-        combo.connect('changed', self.on_combo_changed, radiobutton2)
+        radiobutton3.connect(
+            'toggled',
+            self.on_radiobutton3_toggled,
+            combo,
+            button,
+            entry,
+        )
+        combo.connect('changed', self.on_combo_changed)
+        button.connect('clicked', self.on_button_clicked, entry)
 
         # Display the dialogue window
         self.show_all()
 
 
-    def on_combo_changed(self, combo, radiobutton2):
+    # Public class methods
+
+
+    def on_button_clicked(self, button, entry):
+
+        """Called from a callback in self.__init__().
+
+        Prompts the user for a directory path, then stores it, so the calling
+        function can retriveve it.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24914 on_button_clicked')
+
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
+        # Show a file chooser
+        if os.name == 'nt':
+            msg = _('Select an external folder')
+        else:
+            msg = _('Select an external directory')
+
+        dialogue_win = app_obj.dialogue_manager_obj.show_file_chooser(
+            msg,
+            self.main_win_obj,
+            'folder',
+        )
+
+        response = dialogue_win.run()
+        dest_dir = dialogue_win.get_filename()
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            # An external directory is not allowed inside Tartube's data
+            #   directory
+            if re.match('^' + app_obj.data_dir, dest_dir):
+
+                if os.name == 'nt':
+                    msg = _(
+                        'An external folder must not be inside Tartube\'s' \
+                        + ' own data folder',
+                    )
+
+                else:
+                    msg = _(
+                        'An external directory must not be inside Tartube\'s' \
+                        + ' own data directory',
+                    )
+
+                # (Unfortunately, the new dialogue window is not closeable
+                #   unless this dialogue window is closed first)
+                self.destroy()
+
+                app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    msg,
+                    'error',
+                    'ok',
+                    None,                   # Parent window is main window
+                )
+
+            else:
+                self.choice = dest_dir
+                entry.set_text(dest_dir)
+                self.main_win_obj.set_previous_external_dir(dest_dir)
+
+
+    def on_combo_changed(self, combo):
 
         """Called from callback in self.__init__().
 
@@ -28249,13 +28697,10 @@ class SetDestinationDialogue(Gtk.Dialog):
             obj = self.main_win_obj.app_obj.media_reg_dict[dbid]
             self.choice = obj.dbid
 
-            if not radiobutton2.get_active():
-                self.main_win_obj.set_previous_alt_dest_dbid(None)
-            else:
-                self.main_win_obj.set_previous_alt_dest_dbid(obj.dbid)
+            self.main_win_obj.set_previous_alt_dest_dbid(obj.dbid)
 
 
-    def on_radiobutton_toggled(self, radiobutton, combo):
+    def on_radiobutton_toggled(self, radiobutton, combo, button, entry):
 
         """Called from callback in self.__init__().
 
@@ -28267,7 +28712,11 @@ class SetDestinationDialogue(Gtk.Dialog):
 
             radiobutton (Gtk.RadioButton): The clicked widget
 
-            combo (Gtk.ComboBox): The widget containing the user's choice
+            combo (Gtk.ComboBox): Another widget to modify
+
+            button (Gtk.Button): Another widget to modify
+
+            entry (Gtk.Entry): Another widget to modify
 
         """
 
@@ -28276,12 +28725,12 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         if radiobutton.get_active():
             combo.set_sensitive(False)
+            button.set_sensitive(False)
+            entry.set_sensitive(False)
             self.choice = self.media_data_obj.dbid
 
-            self.main_win_obj.set_previous_alt_dest_dbid(None)
 
-
-    def on_radiobutton2_toggled(self, radiobutton2, combo):
+    def on_radiobutton2_toggled(self, radiobutton2, combo, button, entry):
 
         """Called from callback in self.__init__().
 
@@ -28295,6 +28744,10 @@ class SetDestinationDialogue(Gtk.Dialog):
 
             combo (Gtk.ComboBox): The widget containing the user's choice
 
+            button (Gtk.Button): Another widget to modify
+
+            entry (Gtk.Entry): Another widget to modify
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -28302,6 +28755,8 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         if radiobutton2.get_active():
             combo.set_sensitive(True)
+            button.set_sensitive(False)
+            entry.set_sensitive(False)
 
             tree_iter = combo.get_active_iter()
             model = combo.get_model()
@@ -28315,6 +28770,45 @@ class SetDestinationDialogue(Gtk.Dialog):
                 self.choice = obj.dbid
 
                 self.main_win_obj.set_previous_alt_dest_dbid(dbid)
+
+
+    def on_radiobutton3_toggled(self, radiobutton2, combo, button, entry):
+
+        """Called from callback in self.__init__().
+
+        When the specified radiobutton is toggled, modify other widgets in the
+        dialogue window, and set self.choice (the value to be retrieved by the
+        calling function)
+
+        Args:
+
+            radiobutton2 (Gtk.RadioButton): The clicked widget
+
+            combo (Gtk.ComboBox): Another widget to modify
+
+            button (Gtk.Button): Another widget to modify
+
+            entry (Gtk.Entry): The widget containing the user's choice
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25952 on_radiobutton2_toggled')
+
+        if radiobutton2.get_active():
+            combo.set_sensitive(False)
+            button.set_sensitive(True)
+            entry.set_sensitive(True)
+
+            # self.choice set to its default value, until the user actually
+            #   specifies an external directory
+            dest_dir = entry.get_text()
+            if dest_dir == '':
+                self.choice = self.media_data_obj.dbid
+            else:
+                self.choice = dest_dir
+
+            self.main_win_obj.set_previous_external_dir(dest_dir)
 
 
 class SetNicknameDialogue(Gtk.Dialog):

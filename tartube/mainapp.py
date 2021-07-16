@@ -445,6 +445,9 @@ class TartubeApp(Gtk.Application):
         # In the Video Catalogue, flag set to True if status icons should be
         #   drawn, False if not
         self.catalogue_draw_icons_flag = True
+        # In the Video Catalogue, flag set to True if channel/playlist names
+        #   should be clickable (in grid mode only)
+        self.catalogue_clickable_container_flag = True
 
         # Flags specifying what data should be transferred to an external
         #   application, if videos are dragged there from the Video Catalogue
@@ -553,6 +556,7 @@ class TartubeApp(Gtk.Application):
         #       /pewdiepie          [example of a custom media.Channel]
         #       /Temporary Videos   [standard media.Folder]
         #       /Unsorted Videos    [standard media.Folder]
+        #       /Video Clips        [standard media.Folder]
         # Before v1.3.099, the data directory was structured like this:
         #   /tartube-data
         #       tartube.db
@@ -699,11 +703,16 @@ class TartubeApp(Gtk.Application):
         # Name of the Tartube database file (storing media data objects). The
         #   database file is always found in self.data_dir
         self.db_file_name = __main__.__packagename__ + '.db'
-        # Names of the database export files (one for JSON, for for plain text)
+        # Names of the database export files (for JSON, CSV and plain text)
         self.export_json_file_name \
         = __main__.__packagename__ + '_db_export.json'
+        self.export_csv_file_name \
+        = __main__.__packagename__ + '_db_export.csv'
         self.export_text_file_name \
         = __main__.__packagename__ + '_db_export.txt'
+        # The separator to use for CSV exports/imports. This will be escaped in
+        #   regexes, so only values such as '|' and ',' should be used
+        self.export_csv_separator = '|'
         # How Tartube should make backups of its database file:
         #   'default' - make a backup file during a save procedure, but delete
         #       it when the save procedure is complete
@@ -1276,6 +1285,22 @@ class TartubeApp(Gtk.Application):
         #   key = media data object's .name
         #   value = media data object's unique .dbid
         self.media_name_dict = {}
+        # media.Channel, media.Playlist and media.Folder objects can have an
+        #   external directory set (i.e. videos are downloaded outside of
+        #   Tartube's data directory)
+        # When the database is loaded, we check the semaphore file in each
+        #   external directory. Any from which we can't write or read
+        #   (indicating that the location is not available on the user's
+        #   filesystem) are added to this dictionary. Entries can be removed
+        #   from the dictionary when the channel/playlist/folder's external
+        #   directory is modified (or reset), or otherwise when a new database
+        #   is loaded
+        # Channels/playlists/folders added to this dictionary cannot be
+        #   checked/downloaded/custom downloaded
+        # Dictionary in the form
+        #   key = media data object's .name
+        #   value = media data object's unique .dbid
+        self.media_unavailable_dict = {}
         # An ordered list of media.Channel, media.Playlist and media.Folder
         #   objects which have no parents (in the order they're displayed)
         # This list, combined with each media data object's child list, is
@@ -2034,9 +2059,11 @@ class TartubeApp(Gtk.Application):
             # external_arg_string
             '--external-downloader-args': True,
             # FILESYSTEM OPTIONS
-            # save_path
+            # save_path_list
             '-o': True,
-            '-output': True,
+            '--output': True,
+            '-p': True,
+            '--paths': True,
             # write_description
             '--write-description': False,
             # write_info
@@ -2073,6 +2100,63 @@ class TartubeApp(Gtk.Application):
             '--prefer-ffmpeg': False,
             # (Added directly in options.OptionsManager)
             '--newline': False,
+            # YT-DLP OPTIONS
+            '--extractor-args': True,
+            '--split-chapters': False,
+        }
+
+        # Flag set to True if download options unique to yt-dlp should be
+        #   filtered out, when self.ytdl_fork is not set to 'yt-dlp'
+        self.ytdlp_filter_options_flag = True
+        # Dictionary of yt-dlp options to filter out, in that case
+        # The keys are youtube-dl download options; the corresponding values
+        #   are False for a boolean option, or True for an option that takes
+        #   an argument
+        self.ytdlp_exclusive_options_dict = {
+            # not passed to yt-dlp directly
+            '--paths': True,
+            '-P': True,
+            '--extractor-args': True,
+            # Video Selection Options
+            '--break-on-existing': False,
+            '--break-on-reject': False,
+            '--skip-playlist-after-errors': True,
+            # Download Options
+            '--concurrent-fragments': True,
+            '-N': True,
+            '--throttled-rate': True,
+            # Filesystem Options
+            '--windows-filenames': False,
+            '--trim-filenames': True,
+            '--force-overwrites': False,
+            '--write-playlist-metafiles': False,
+            '--no-clean-infojson': False,
+            '--write-comments': False,
+            # Internet Shortcut Options
+            '--write-link': False,
+            '--write-url-link': False,
+            '--write-webloc-link': False,
+            '--write-desktop-link': False,
+            # Verbosity and Simulation Options
+            '--ignore-no-formats-error': False,
+            '--force-write-archive': False,
+            # Workaround Options
+            '--sleep-requests': True,
+            '--sleep-subtitles': True,
+            # Video Format Options
+            '--video-multistreams': False,
+            '--audio-multistreams': False,
+            '--check-formats': False,
+            '--allow-unplayable-formats': False,
+            # Post-Processing Options
+            '--remux-video': True,
+            '--embed-metadata': False,
+            '--convert-thumbnails': True,
+            '--split-chapters': False,
+            # Extractor Options
+            '--extractor-retries': True,
+            '--allow-dynamic-mpd': False,
+            '--hls-split-discontinuity': False,
         }
 
 
@@ -2160,22 +2244,9 @@ class TartubeApp(Gtk.Application):
         export_db_menu_action.connect('activate', self.on_menu_export_db)
         self.add_action(export_db_menu_action)
 
-        import_json_menu_action = Gio.SimpleAction.new(
-            'import_json_menu',
-            None,
-        )
-        import_json_menu_action.connect('activate', self.on_menu_import_json)
-        self.add_action(import_json_menu_action)
-
-        import_text_menu_action = Gio.SimpleAction.new(
-            'import_text_menu',
-            None,
-        )
-        import_text_menu_action.connect(
-            'activate',
-            self.on_menu_import_plain_text,
-        )
-        self.add_action(import_text_menu_action)
+        import_db_menu_action = Gio.SimpleAction.new('import_db_menu', None)
+        import_db_menu_action.connect('activate', self.on_menu_import_db)
+        self.add_action(import_db_menu_action)
 
         switch_view_menu_action = Gio.SimpleAction.new(
             'switch_view_menu',
@@ -3684,6 +3755,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['catalogue_draw_frame_flag']
             self.catalogue_draw_icons_flag \
             = json_dict['catalogue_draw_icons_flag']
+        if version >= 2003232:  # v2.3.232
+            self.catalogue_clickable_container_flag \
+            = json_dict['catalogue_clickable_container_flag']
 
         if version >= 2002028:  # v2.2.128
             self.drag_video_path_flag = json_dict['drag_video_path_flag']
@@ -3736,6 +3810,8 @@ class TartubeApp(Gtk.Application):
         if version >= 2000069:  # v2.0.069:
             self.sound_custom = json_dict['sound_custom']
 
+        if version >= 2003214:  # v2.3.214
+            self.export_csv_separator = json_dict['export_csv_separator']
         if version >= 3014:     # v0.3.014
             self.db_backup_mode = json_dict['db_backup_mode']
 
@@ -4193,6 +4269,10 @@ class TartubeApp(Gtk.Application):
         if version >= 2003195:  # v2.3.195
             self.custom_bg_table = json_dict['custom_bg_table']
 
+        if version >= 2003230:  # v2.3.230
+            self.ytdlp_filter_options_flag \
+            = json_dict['ytdlp_filter_options_flag']
+
         # Having loaded the config file, set various file paths...
         if self.data_dir_use_first_flag:
             self.data_dir = self.data_dir_alt_list[0]
@@ -4641,6 +4721,8 @@ class TartubeApp(Gtk.Application):
 
             'catalogue_draw_frame_flag': self.catalogue_draw_frame_flag,
             'catalogue_draw_icons_flag': self.catalogue_draw_icons_flag,
+            'catalogue_clickable_container_flag': \
+            self.catalogue_clickable_container_flag,
 
             'drag_video_path_flag': self.drag_video_path_flag,
             'drag_video_source_flag': self.drag_video_source_flag,
@@ -4669,6 +4751,7 @@ class TartubeApp(Gtk.Application):
 
             'sound_custom': self.sound_custom,
 
+            'export_csv_separator': self.export_csv_separator,
             'db_backup_mode': self.db_backup_mode,
 
             'show_classic_tab_on_startup_flag': \
@@ -4895,6 +4978,8 @@ class TartubeApp(Gtk.Application):
             'url_change_regex_flag': self.url_change_regex_flag,
 
             'custom_bg_table': self.custom_bg_table,
+
+            'ytdlp_filter_options_flag': self.ytdlp_filter_options_flag,
         }
 
         # In case a competing instance of Tartube is saving the same config
@@ -5257,6 +5342,11 @@ class TartubeApp(Gtk.Application):
 
         # Auto-delete old downloaded videos
         self.auto_delete_old_videos()
+
+        # Test any channels/playlists/folders which have external directories
+        #   set. If we can't read/write to the external directory, then mark
+        #   the channels/playlists/folders as unavailable
+        self.check_external()
 
         # If the debugging flag is set, hide all fixed folders
         if self.debug_hide_folders_flag:
@@ -6297,6 +6387,121 @@ class TartubeApp(Gtk.Application):
 
                     del media_data_obj.restrict_flag
 
+        if version < 2003216:      # v2.3.216
+
+            # This version adds new IVs to media.Channel, media.Playlist and
+            #   media.Folder objects
+            for media_data_obj in self.media_reg_dict.values():
+                if not isinstance(media_data_obj, media.Video):
+                    media_data_obj.external_dir = None
+
+        if version < 2003224:      # v2.3.224
+
+            # This version adds new IVs to media.Channel, media.Playlist and
+            #   media.Folder objects
+            for media_data_obj in self.media_reg_dict.values():
+                if not isinstance(media_data_obj, media.Video):
+                    media_data_obj.dl_no_db_flag = False
+
+                    # Other flags in this group are now mutually exclusive;
+                    #   check that the older flags aren't both set to True
+                    if media_data_obj.dl_disable_flag \
+                    and media_data_obj.dl_sim_flag:
+                        media_data_obj.dl_sim_flag = False
+
+        if version < 2003225:      # v2.3.225
+
+            # In this version, the behaviour of .dl_disable_flag for
+            #   media.Channel, media.Playlist and media.Folder objects changes:
+            #   it no longer applies to any descendants
+            # In order to avoid any nasty surprises, update the IV for all
+            #   descendants of any channel/playlist/folder whose
+            #   .dl_disable_flag is True
+            check_list = self.media_top_level_list.copy()
+
+            while check_list:
+
+                dbid = check_list.pop()
+                media_data_obj = self.media_reg_dict[dbid]
+
+                if not isinstance(media_data_obj, media.Video) \
+                and media_data_obj.dl_disable_flag:
+
+                    for child_obj in media_data_obj.child_list:
+                        if not isinstance(media_data_obj, media.Video):
+
+                            child_obj.dl_disable_flag = True
+                            # By adding the child to check_list, we ensure that
+                            #   its grandchildren are checked as well
+                            check_list.append(child_obj.dbid)
+
+        if version < 2003227:  # v2.3.227
+
+            # This version adds a new option to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['downloader_config'] = False
+
+        if version < 2003228:  # v2.3.228
+
+            # This version adds new options to options.OptionsManager, and
+            #   replaces an existing option
+            for options_obj in options_obj_list:
+                options_obj.options_dict['output_format_list'] = []
+                options_obj.options_dict['output_path_list'] = []
+                options_obj.options_dict['save_path_list'] = []
+                del options_obj.options_dict['save_path']
+
+        if version < 2003229:  # v2.3.229
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+
+                # (All downloaders)
+                options_obj.options_dict['ap_mso'] = ''
+                options_obj.options_dict['ap_username'] = ''
+                options_obj.options_dict['ap_password'] = ''
+
+                # (yt-dlp only)
+                options_obj.options_dict['extractor_args_list'] = []
+
+                options_obj.options_dict['break_on_existing'] = False
+                options_obj.options_dict['break_on_reject'] = False
+                options_obj.options_dict['skip_playlist_after_errors'] = 0
+
+                options_obj.options_dict['concurrent_fragments'] = 1
+                options_obj.options_dict['throttled_rate'] = 0
+
+                options_obj.options_dict['windows_filenames'] = False
+                options_obj.options_dict['trim_filenames'] = 0
+                options_obj.options_dict['force_overwrites'] = False
+                options_obj.options_dict['write_playlist_metafiles'] = False
+                options_obj.options_dict['no_clean_info_json'] = False
+                options_obj.options_dict['write_comments'] = False
+
+                options_obj.options_dict['write_link'] = False
+                options_obj.options_dict['write_url_link'] = False
+                options_obj.options_dict['write_webloc_link'] = False
+                options_obj.options_dict['write_desktop_link'] = False
+
+                options_obj.options_dict['ignore_no_formats_error'] = False
+                options_obj.options_dict['force_write_archive'] = False
+
+                options_obj.options_dict['sleep_requests'] = 0
+                options_obj.options_dict['sleep_subtitles'] = 0
+
+                options_obj.options_dict['video_multistreams'] = False
+                options_obj.options_dict['audio_multistreams'] = False
+                options_obj.options_dict['check_formats'] = False
+                options_obj.options_dict['allow_unplayable_formats'] = False
+
+                options_obj.options_dict['remux_video'] = ''
+                options_obj.options_dict['embed_metadata'] = False
+                options_obj.options_dict['convert_thumbnails'] = ''
+                options_obj.options_dict['split_chapters'] = False
+
+                options_obj.options_dict['extractor_retries'] = '3'
+                options_obj.options_dict['no_allow_dynamic_mpd'] = False
+                options_obj.options_dict['hls_split_discontinuity'] = False
 
 
     def save_db(self):
@@ -7746,6 +7951,97 @@ class TartubeApp(Gtk.Application):
                 self.delete_video(media_data_obj, True, True, True)
 
 
+    def check_external(self):
+
+        """Called by self.load_db() (only).
+
+        Test any channels/playlists/folders which have external directories
+        set. If we can't read/write to the external directory, then mark them
+        as unavailable.
+
+        An unavailable channel/playlist/folder can't be checked/downloaded/
+        custom downloaded.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 6957 check_external')
+
+        # After loading a new database, clear any existing unavailable
+        #   containers
+        self.media_unavailable_dict = {}
+
+        # (If multiple channels/playlists/folders use a shared external
+        #   directory, we don't need to test the directory more than once)
+        check_dict = {}
+
+        # Now check every container which has an external directory set
+        for dbid in self.media_name_dict.values():
+
+            media_data_obj = self.media_reg_dict[dbid]
+            if media_data_obj.external_dir is not None:
+
+                if media_data_obj.external_dir in check_dict \
+                or not self.check_external_dir(media_data_obj.external_dir):
+
+                    self.media_unavailable_dict[media_data_obj.name] = dbid
+                    check_dict[media_data_obj.external_dir] = None
+
+
+    def check_external_dir(self, dir_path):
+
+        """Called by self.check_external (only).
+
+        The specified directory is the external directory for a channel,
+        playlist or folder.
+
+        If it contains a semaphore file, check that it can be read and written.
+
+        If it doesn't contain a semaphore file, try to create one there.
+
+        Args:
+
+            dir_path (str): Full path to the external directory to check
+
+        Return values:
+
+            True if the external directory is readable, False if it should be
+                marked as unavailable
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 6957 check_external_dir')
+
+        # Make the semaphore file, if it doesn't already exist
+        # (This function returns the file path on success, or if the file
+        #   alread exists. It returns None if the directory doesn't exist or if
+        #   the semaphore file can't be created)
+        file_path = self.make_semaphore_file(dir_path)
+        if file_path is None:
+            return False
+
+        # Check reading the file
+        try:
+            fh = open(file_path, 'r')
+            fh.read()
+            fh.close()
+
+        except:
+            return False
+
+        # Try writing the file
+        try:
+            fh = open(file_path, 'w')
+            fh.write('')
+            fh.close()
+
+        except:
+            return False
+
+        # All good
+        return True
+
+
     def convert_version(self, version):
 
         """Can be called by anything, but mostly called by self.load_config()
@@ -8292,7 +8588,7 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            dir_path (str): The path to the directory to be created with a
+            dir_path (str): The full path to the directory to be created with a
                 call to os.makedirs()
 
         Returns:
@@ -8317,6 +8613,60 @@ class TartubeApp(Gtk.Application):
             )
 
             return False
+
+
+    def make_semaphore_file(self, dir_path):
+
+        """Can be called by anything.
+
+        Currently called to create a semaphore file in an external directory
+        (i.e. one outside of Tartube's data directory). The semaphore file is
+        used to test that the directory is readable/writeable, before using it
+        to store videos.
+
+        The specified 'dir_path' must already exist.
+
+        Args:
+
+            dir_path (str): The full path to the directory in which the
+                semaphore file should be created
+
+        Returns:
+
+            Full path to the semaphore file if it was created or already
+                exists, None if the specified directory doesn't exist, or if
+                the semaphore file doesn't exist and can't be created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7460 make_semaphore_file')
+
+        # e.g. .tartube.sem
+        file_path = os.path.abspath(
+            os.path.join(dir_path, '.' + __main__.__packagename__ + '.sem'),
+        )
+
+        if not os.path.isdir(dir_path):
+            return None
+
+        elif os.path.isfile(file_path):
+            return file_path
+
+        try:
+            fh = open(file_path, 'w')
+            fh.close()
+            return file_path
+
+        except:
+
+            # Show a system error
+            self.system_error(
+                999,
+                'Failed to write files to directory \'' + dir_path + '\'',
+            )
+
+            return None
 
 
     def move_backup_files(self):
@@ -12925,6 +13275,7 @@ class TartubeApp(Gtk.Application):
             # Remove the media data object from our IVs
             del self.media_reg_dict[media_data_obj.dbid]
             del self.media_name_dict[media_data_obj.name]
+            del self.media_unavailable_dict[media_data_obj.name]
             if media_data_obj.dbid in self.media_top_level_list:
                 index = self.media_top_level_list.index(media_data_obj.dbid)
                 del self.media_top_level_list[index]
@@ -15076,9 +15427,13 @@ class TartubeApp(Gtk.Application):
             #   This call also updates the object's .nickname IV
             old_name = media_data_obj.name
             media_data_obj.set_name(new_name)
-            # Update the media data registry
+            # Update the media data registries
             del self.media_name_dict[old_name]
             self.media_name_dict[new_name] = media_data_obj.dbid
+
+            if old_name in self.media_unavailable_dict:
+                del self.media_unavailable_dict[old_name]
+                self.media_unavailable_dict[new_name] = media_data_obj.dbid
 
             # Reset the Video Index and the Video Catalogue (this prevents a
             #   lot of problems)
@@ -15102,7 +15457,6 @@ class TartubeApp(Gtk.Application):
         Renames a channel, playlist or folder. Also renames the corresponding
         directory in Tartube's data directory.
 
-
         Args:
 
             media_data_obj (media.Channel, media.Playlist, media.Folder): The
@@ -15121,7 +15475,8 @@ class TartubeApp(Gtk.Application):
 
         # Nothing in the Tartube code should be capable of calling this
         #   function with an illegal name, but we'll still check
-        if not self.check_container_name_is_legal(new_name):
+        if not self.check_container_name_is_legal(new_name) \
+        or new_name in self.media_name_dict:
             self.system_error(
                 151,
                 'Illegal container name',
@@ -15132,7 +15487,8 @@ class TartubeApp(Gtk.Application):
         # Attempt to rename the sub-directory itself
         # (Private folders don't have a sub-directory to rename, so check for
         #   that)
-        if not media_data_obj.priv_flag:
+        if not isinstance(media_data_obj, media.Folder) \
+        or not media_data_obj.priv_flag:
             old_dir = media_data_obj.get_default_dir(self)
             new_dir = media_data_obj.get_default_dir(self, new_name)
             try:
@@ -15148,6 +15504,10 @@ class TartubeApp(Gtk.Application):
         # Update the media data registry
         del self.media_name_dict[old_name]
         self.media_name_dict[new_name] = media_data_obj.dbid
+
+        if old_name in self.media_unavailable_dict:
+            del self.media_unavailable_dict[old_name]
+            self.media_unavailable_dict[new_name] = media_data_obj.dbid
 
         return True
 
@@ -15188,7 +15548,7 @@ class TartubeApp(Gtk.Application):
 
     def update_container_url(self, data_list):
 
-        """Called by config.SystemPrefWin.on_url_edited().
+        """Called by config.SystemPrefWin.on_container_url_edited().
 
         When the user has confirmed a change to a channel/playlist's source
         URL, implement that change, and update the window's treeview.
@@ -15217,7 +15577,7 @@ class TartubeApp(Gtk.Application):
 
     def update_container_url_multiple(self, data_list):
 
-        """Called by config.SystemPrefWin.on_url_edited().
+        """Called by config.SystemPrefWin.on_container_url_edited().
 
         Modified version of self.update_container_url, used when performing a
         substitution on the source URL of multiple channels/playlist.
@@ -15275,6 +15635,37 @@ class TartubeApp(Gtk.Application):
             'ok',
             pref_win,       # The parent window is the preference window
         )
+
+
+    def update_container_name(self, data_list):
+
+        """Called by config.SystemPrefWin.on_container_name_edited().
+
+        When the user has confirmed a change to a channel/playlist's name,
+        implement that change, and update the window's treeview.
+
+        Args:
+
+            data_list (list): A list containing four items: the treeview model,
+                an iter pointing to a cell in the model, the media data object
+                and the updated name
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 13832 update_container_name')
+
+        # Extract values from the argument list
+        model = data_list.pop(0)
+        tree_iter = data_list.pop(0)
+        media_data_obj = data_list.pop(0)
+        name = data_list.pop(0)
+
+        # Update the media data object and Video Index
+        if self.rename_container_silently(media_data_obj, name):
+            model[tree_iter][2] = name
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_index_populate()
 
 
     # (Sorting functions)
@@ -15451,7 +15842,8 @@ class TartubeApp(Gtk.Application):
         mainwin.MainWin.on_video_index_export().
 
         Exports a summary of the Tartube database to an export file - either a
-        structured JSON file, or a plain text file, at the user's option.
+        structured JSON file, or a CSV file, or a plain text file, at the
+        user's option.
 
         The export file typically contains a list of videos, channels,
         playlists and folders, but not any downloaded files (videos,
@@ -15491,7 +15883,10 @@ class TartubeApp(Gtk.Application):
         include_channel_flag = dialogue_win.checkbutton2.get_active()
         include_playlist_flag = dialogue_win.checkbutton3.get_active()
         preserve_folder_flag = dialogue_win.checkbutton4.get_active()
-        plain_text_flag = dialogue_win.checkbutton5.get_active()
+        json_flag = dialogue_win.radiobutton.get_active()
+        csv_flag = dialogue_win.radiobutton2.get_active()
+        plain_text_flag = dialogue_win.radiobutton3.get_active()
+        separator = dialogue_win.separator
         # ...before destroying the dialogue window
         dialogue_win.destroy()
 
@@ -15499,8 +15894,10 @@ class TartubeApp(Gtk.Application):
             return
 
         # Prompt the user for the file path to use
-        if not plain_text_flag:
+        if json_flag:
             suggestion = self.export_json_file_name
+        elif csv_flag:
+            suggestion = self.export_csv_file_name
         else:
             suggestion = self.export_text_file_name
 
@@ -15567,13 +15964,14 @@ class TartubeApp(Gtk.Application):
         # If the media_list argument is empty, use the whole database.
         #   Otherwise, use only the specified media data objects (and any media
         #   data objects they contain)
-        if preserve_folder_flag and not plain_text_flag:
+        if preserve_folder_flag:
 
             if media_list:
 
                 for media_data_obj in media_list:
 
                     mini_dict = media_data_obj.prepare_export(
+                        self,
                         include_video_flag,
                         include_channel_flag,
                         include_playlist_flag,
@@ -15589,6 +15987,7 @@ class TartubeApp(Gtk.Application):
                     media_data_obj = self.media_reg_dict[dbid]
 
                     mini_dict = media_data_obj.prepare_export(
+                        self,
                         include_video_flag,
                         include_channel_flag,
                         include_playlist_flag,
@@ -15604,6 +16003,7 @@ class TartubeApp(Gtk.Application):
                 for media_data_obj in media_list:
 
                     db_dict = media_data_obj.prepare_flat_export(
+                        self,
                         db_dict,
                         include_video_flag,
                         include_channel_flag,
@@ -15617,6 +16017,7 @@ class TartubeApp(Gtk.Application):
                     media_data_obj = self.media_reg_dict[dbid]
 
                     db_dict = media_data_obj.prepare_flat_export(
+                        self,
                         db_dict,
                         include_video_flag,
                         include_channel_flag,
@@ -15632,7 +16033,7 @@ class TartubeApp(Gtk.Application):
             )
 
         # Export a JSON file
-        if not plain_text_flag:
+        if json_flag:
 
             # The exported JSON file has the same metadata as a config file,
             #   with only the 'file_type' being different
@@ -15672,50 +16073,72 @@ class TartubeApp(Gtk.Application):
                     'ok',
                 )
 
+        # Export a CSV file
+        elif csv_flag:
+
+            # Update the CSV separator, before writing the file
+            self.export_csv_separator = separator
+
+            # Lines in the CSV file are in the following format:
+            #   type|name|url|container_name
+            #
+            # 'type' is one of 'video', 'channel', 'playlist' or 'folder'
+            # For folders, 'url' is unspecified
+            # If there is no parent container, 'container_name' is unspecified.
+            #   The parent container must be listed before its children
+            # The separator is specified by self.export_csv_separator; the
+            #   default value is '|'
+
+            # Prepare the list of lines
+            line_list = self.export_from_db_to_csv_insert(
+                db_dict,
+                [],
+                include_video_flag,
+            )
+
+            # Try to save the file
+            try:
+                with open(file_path, 'w') as outfile:
+                    for line in line_list:
+                        outfile.write(line + '\n')
+
+#           # DEBUG: Git 143: provide more information on the exception
+#            except:
+#                return self.dialogue_manager_obj.show_msg_dialogue(
+#                    _('Failed to save the database export file'),
+#                    'error',
+#                    'ok',
+#                )
+            except Exception as e:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    _('Failed to save the database export file:') \
+                    + '\n\n' + str(e),
+                    'error',
+                    'ok',
+                )
+
         # Export a plain text file
         else:
 
-            # The text file contains lines, in groups of three, in the
-            #   following format:
+            # v2.3.208: In a change from earlier versions, the text file now
+            #   contains lines in groups of four, in the following format:
             #
             #       @type
             #       <name>
             #       <url>
+            #       <container name>
             #
-            # ...where '@type' is one of '@video', '@channel' or '@playlist'
-            #   (the folder structure is never preserved in a plain text
-            #   export)
-            # A video belongs to the channel/playlist above it
+            # '@type' is one of '@video', '@channel', '@playlist' or '@folder'
+            # For folders, <url> is an empty line
+            # If there is no parent container, <container_name> is an empty
+            #   line. The parent container must be listed before its children
 
             # Prepare the list of lines
-            line_list = []
-
-            for dbid in db_dict.keys():
-
-                media_data_obj = self.media_reg_dict[dbid]
-
-                if isinstance(media_data_obj, media.Channel):
-                    line_list.append('@channel')
-                    line_list.append(media_data_obj.name)
-                    line_list.append(media_data_obj.source)
-
-                elif isinstance(media_data_obj, media.Playlist):
-                    line_list.append('@playlist')
-                    line_list.append(media_data_obj.name)
-                    line_list.append(media_data_obj.source)
-
-                else:
-                    continue
-
-                if include_video_flag:
-
-                    for child_obj in media_data_obj.child_list:
-                        # (Nothing but videos should be in this list, but we'll
-                        #   check anyway)
-                        if isinstance(child_obj, media.Video):
-                            line_list.append('@video')
-                            line_list.append(child_obj.name)
-                            line_list.append(child_obj.source)
+            line_list = self.export_from_db_to_text_insert(
+                db_dict,
+                [],
+                include_video_flag,
+            )
 
             # Try to save the file
             try:
@@ -15746,13 +16169,197 @@ class TartubeApp(Gtk.Application):
         )
 
 
-    def import_into_db(self, json_flag):
+    def export_from_db_to_text_insert(self, db_dict, line_list, \
+    include_video_flag):
 
-        """Called by self.on_menu_import_json() and
-        .on_menu_import_plain_text().
+        """Called by self.export_from_db(), and then by this function
+        recursively.
 
-        Imports the contents of a JSON export file or a plain text export file
-        generated by a call to self.export_from_db().
+        self.export_from_db() is trying to convert the dictionary 'db_dict' (in
+        the form described in the comments in self.export_from_db() ) into a
+        flat list of lines, in groups of four, to be saved as the plaint text
+        export file.
+
+        The 'db_dict' passed as an argument to this function is either the
+        overall dictionary, or a sub-dictionary inside the original, in the
+        same format. Again, this is described in self.export_from_db().
+
+        This file is called recursively to walk the overall dictionary, and to
+        insert four items into 'line_list' for every media data object.
+
+        Args:
+
+            db_dict (dict): Either the original 'db_dict', or one of its
+                sub-dictionaries in the same format
+
+            line_list (list): The list of lines to be saved as the text export
+                file; this call adds more lines to the list, before returning
+                it
+
+            include_video_flag (bool): If True, media.Video objects are to be
+                included in the export file; if False, they are ignored
+
+        Return values:
+
+            The updated 'line_list'
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14794 export_from_db_to_text_insert')
+
+        for dbid in db_dict.keys():
+
+            mini_dict = db_dict[dbid]
+            media_data_obj = self.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Video):
+                # (Child videos of this media data object have already been
+                #   handled, by the code below)
+                continue
+
+            else:
+
+                if isinstance(media_data_obj, media.Channel):
+                    line_list.append('@channel')
+                    line_list.append(media_data_obj.name)
+                    line_list.append(media_data_obj.source)
+
+                elif isinstance(media_data_obj, media.Playlist):
+                    line_list.append('@playlist')
+                    line_list.append(media_data_obj.name)
+                    line_list.append(media_data_obj.source)
+
+                else:
+                    line_list.append('@folder')
+                    line_list.append(media_data_obj.name)
+                    line_list.append('')            # Folders have no URL
+
+                if media_data_obj.parent_obj:
+                    line_list.append(media_data_obj.parent_obj.name)
+                else:
+                    line_list.append('')
+
+                if include_video_flag:
+
+                    for child_obj in media_data_obj.child_list:
+
+                        if isinstance(child_obj, media.Video):
+                            line_list.append('@video')
+                            line_list.append(child_obj.name)
+                            line_list.append(child_obj.source)
+                            line_list.append(media_data_obj.name)
+
+            if mini_dict['db_dict']:
+                line_list = self.export_from_db_to_text_insert(
+                    mini_dict['db_dict'],
+                    line_list,
+                    include_video_flag,
+                )
+
+        return line_list
+
+
+    def export_from_db_to_csv_insert(self, db_dict, line_list, \
+    include_video_flag):
+
+        """Called by self.export_from_db(), and then by this function
+        recursively.
+
+        self.export_from_db() is trying to convert the dictionary 'db_dict' (in
+        the form described in the comments in self.export_from_db() ) into a
+        flat list of lines, to be saved as the CSV export file.
+
+        The 'db_dict' passed as an argument to this function is either the
+        overall dictionary, or a sub-dictionary inside the original, in the
+        same format. Again, this is described in self.export_from_db().
+
+        This file is called recursively to walk the overall dictionary, and to
+        insert a line into 'line_list' for every media data object.
+
+        Args:
+
+            db_dict (dict): Either the original 'db_dict', or one of its
+                sub-dictionaries in the same format
+
+            line_list (list): The list of lines to be saved as the CSV export
+                file; this call adds more lines to the list, before returning
+                it
+
+            include_video_flag (bool): If True, media.Video objects are to be
+                included in the export file; if False, they are ignored
+
+        Return values:
+
+            The updated 'line_list'
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14794 export_from_db_to_csv_insert')
+
+        separator = self.export_csv_separator
+
+        for dbid in db_dict.keys():
+
+            mini_dict = db_dict[dbid]
+            media_data_obj = self.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Video):
+                # (Child videos of this media data object have already been
+                #   handled, by the code below)
+                continue
+
+            else:
+
+                if isinstance(media_data_obj, media.Channel):
+                    line = 'channel' + separator \
+                    + media_data_obj.name + separator \
+                    + media_data_obj.source + separator
+
+                elif isinstance(media_data_obj, media.Playlist):
+                    line = 'playlist' + separator \
+                    + media_data_obj.name + separator \
+                    + media_data_obj.source + separator
+
+                else:
+                    line = 'folder' + separator \
+                    + media_data_obj.name + separator \
+                    + separator                     # Folders have no URL
+
+                if media_data_obj.parent_obj:
+                    line += media_data_obj.parent_obj.name
+
+                line_list.append(line)
+
+                if include_video_flag:
+
+                    for child_obj in media_data_obj.child_list:
+
+                        if isinstance(child_obj, media.Video):
+                            line = 'video' + separator \
+                            + child_obj.name + separator \
+                            + child_obj.source + separator \
+                            + media_data_obj.name
+
+                            line_list.append(line)
+
+            if mini_dict['db_dict']:
+                line_list = self.export_from_db_to_csv_insert(
+                    mini_dict['db_dict'],
+                    line_list,
+                    include_video_flag,
+                )
+
+        return line_list
+
+
+    def import_into_db(self):
+
+        """Called by self.on_menu_import_db().
+
+        Imports the contents of a JSON/CSV/plain text export file generated by
+        a call to self.export_from_db().
 
         After prompting the user, creates new media.Video, media.Channel,
         media.Playlist and/or media.Folder objects. Checks for duplicates and
@@ -15762,14 +16369,12 @@ class TartubeApp(Gtk.Application):
         dictionaries, 'mini_dict', whose formats are described in the comments
         in self.export_from_db().
 
-        A plain text export file contains lines in groups of three, in the
+        A CSV export file contains lines in the format
+        'type|name|url|container_name', as described in the comments in
+        self.export_from_db().
+
+        A plain text export file contains lines in groups of four, in the
         format described in the comments in self.export_from_db().
-
-        Args:
-
-            json_flag (bool): True if a JSON export file should be imported,
-                False if a plain text export file should be imported
-
         """
 
         if DEBUG_FUNC_FLAG:
@@ -15792,22 +16397,16 @@ class TartubeApp(Gtk.Application):
         if not file_path:
             return
 
+        file_name, file_ext = os.path.splitext(file_path)
+        if file_ext != '.json' and file_ext != '.csv' and file_ext != '.txt':
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                _('Failed to load the database export file'),
+                'error',
+                'ok',
+            )
+
         # Try to load the export file
-        if not json_flag:
-
-            text = self.file_manager_obj.load_text(file_path)
-            if text is None:
-                return self.dialogue_manager_obj.show_msg_dialogue(
-                    _('Failed to load the database export file'),
-                    'error',
-                    'ok',
-                )
-
-            # Parse the text file, creating a db_dict in the form described in
-            #   the comments in self.export_from_db()
-            db_dict = self.parse_text_import(text)
-
-        else:
+        if file_ext == '.json':
 
             json_dict = self.file_manager_obj.load_json(file_path)
             if not json_dict:
@@ -15836,7 +16435,27 @@ class TartubeApp(Gtk.Application):
 
             # Retrieve the database data itself. db_dict is in the form
             #   described in the comments in self.export_from_db()
+            # However, json.dump() has converted integer keys to string keys.
+            #   Each key is a 'fake' dbid, so this doesn't affect the outcome
+            #   (and it's not worth converting them back to integers)
             db_dict = json_dict['db_dict']
+
+        else:
+
+            text = self.file_manager_obj.load_text(file_path)
+            if text is None:
+                return self.dialogue_manager_obj.show_msg_dialogue(
+                    _('Failed to load the database export file'),
+                    'error',
+                    'ok',
+                )
+
+            # Parse the text file, creating a db_dict in the form described in
+            #   the comments in self.export_from_db()
+            if file_ext == '.csv':
+                db_dict = self.parse_csv_import(text)
+            else:
+                db_dict = self.parse_text_import(text)
 
         if not db_dict:
             return self.dialogue_manager_obj.show_msg_dialogue(
@@ -15898,13 +16517,158 @@ class TartubeApp(Gtk.Application):
             )
 
             # Show a confirmation
-            msg = _('Imported') \
+            msg = _('Imported into database') \
                 + ':\n\n' + _('Videos') + ': ' + str(video_count) \
-                + '\n\n' + _('Channels') + ': ' + str(channel_count) \
-                + '\n\n' + _('Playlists') + ': ' + str(playlist_count) \
-                + '\n\n' + _('Folders') + ': ' + str(folder_count)
+                + '\n' + _('Channels') + ': ' + str(channel_count) \
+                + '\n' + _('Playlists') + ': ' + str(playlist_count) \
+                + '\n' + _('Folders') + ': ' + str(folder_count)
 
-            self.dialogue_manager_obj.show_msg_dialogue(msg, 'info', 'ok')
+            self.dialogue_manager_obj.show_simple_msg_dialogue(
+                msg,
+                'info',
+                'ok',
+            )
+
+
+    def parse_csv_import(self, text):
+
+        """Called by self.import_into_db().
+
+        Given the contents of a CSV database export, which has been loaded into
+        memory, convert the contents into the db_dict format described in the
+        comments in self.export_from_db(), as if a JSON database export had
+        been loaded.
+
+        A CSV export file contains lines in the format
+        'type|name|url|container_name', as described in the comments in
+        self.export_from_db().
+
+        'type' is one of 'video', 'channel', 'playlist' or 'folder'
+        For folders, <url> is not specified
+        If there is no parent container, <container_name> is not specified. The
+        parent container must be listed before its children
+
+        Args:
+
+            text (str): The contents of the loaded CSV file
+
+        Returns:
+
+            db_dict (dict): The converted data in the form described in the
+                comments in self.export_from_db()
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14794 parse_csv_import')
+
+        db_dict = {}
+        fake_dbid = 0
+        check_flag = False
+        separator = '\\' + self.export_csv_separator
+        regex = '^(.*)' + separator + '(.*)' + separator + '(.*)' + separator \
+        + '(.*)'
+
+        # Create entries corresponding to the fixed folders 'Unsorted Videos'
+        #   and 'Video Clips'
+        fake_dbid += 1
+        db_dict[fake_dbid] = {
+            'type': 'folder',
+            'dbid': fake_dbid,
+            'name': self.fixed_misc_folder.name,
+            'nickname': self.fixed_misc_folder.nickname,
+            'source': None,
+            'db_dict': {},
+        }
+
+        fake_dbid += 1
+        db_dict[fake_dbid] = {
+            'type': 'folder',
+            'dbid': fake_dbid,
+            'name': self.fixed_clips_folder.name,
+            'nickname': self.fixed_clips_folder.nickname,
+            'source': None,
+            'db_dict': {},
+        }
+
+        # Split text into separate lines
+        line_list = text.split('\n')
+
+        # Extract fields from each line, and check they are valid
+        # If any line is invalid, ignore that line and any subsequent lines,
+        #   and just use the data already extracted
+        for line in line_list:
+
+            match = re.search(regex, line)
+            if not match:
+                break
+
+            media_type = match.groups()[0]
+            name = match.groups()[1]
+            source = match.groups()[2]
+            container_name = match.groups()[3]
+
+            if (
+                media_type != 'video' and media_type != 'channel' \
+                and media_type != 'playlist' and media_type != 'folder'
+            ) \
+            or name == '' \
+            or (media_type != 'folder' and not utils.check_url(source)):
+                break
+
+            # (We have already created entries for 'Unsorted Videos' and
+            #   'Video Clips')
+            if name != self.fixed_misc_folder.name \
+            and name != self.fixed_clips_folder.name:
+
+                # A valid line; add an entry to db_dict using a fake dbid
+                fake_dbid += 1
+
+                mini_dict = {
+                    'type': media_type,
+                    'dbid': fake_dbid,
+                    'name': name,
+                    'nickname': name,
+                    'source': source,
+                    'db_dict': {},
+                }
+
+                # If the name for a parent container was specified, look for a
+                #   match in 'db_dict'. (The parent should have been specified
+                #   earlier in the file, so it will already exist in db_dict)
+                # If found, self.parse_import_insert() inserts mini_dict into
+                #   db_dict at the correct location
+                # If not found, a video is inserted into 'Unsorted Videos', and
+                #   everything else is not given a parent container
+                if not re.search('\S', container_name):
+
+                    # No parent container specified
+                    db_dict[fake_dbid] = mini_dict
+
+                elif not self.parse_import_insert(
+                    db_dict,
+                    container_name,
+                    fake_dbid,
+                    mini_dict,
+                ):
+                    # No parent container found
+                    if media_type == '@video':
+
+                        # As specified above, the 'Unsorted Videos' folder uses
+                        #   the 'fake_dbid' of 1
+                        db_dict[1]['db_dict'][fake_dbid] = mini_dict
+
+                    else:
+
+                        # This channel/playlist/folder goes into the top level
+                        #   of the media data registry
+                        db_dict[fake_dbid] = mini_dict
+
+        # Procedure complete
+        if fake_dbid == 2:
+            return {}       # Nothing was actually imported
+        else:
+            return db_dict
 
 
     def parse_text_import(self, text):
@@ -15916,17 +16680,22 @@ class TartubeApp(Gtk.Application):
         described in the comments in self.export_from_db(), as if a JSON
         database export had been loaded.
 
-        The text file contains lines, in groups of three, in the following
+        The text file contains lines, in groups of four, in the following
         format:
 
             @type
             <name>
             <url>
+            <container name>
 
-        ...where '@type' is one of '@video', '@channel' or '@playlist' (the
-        folder structure is never preserved in a plain text export).
+        '@type' is one of '@video', '@channel', '@playlist' or '@folder'
+        For folders, <url> is an empty line
+        If there is no parent container, <container_name> is an empty line. The
+        parent container must be listed before its children
 
-        A video belongs to the channel/playlist above it.
+        N.B. The export format changed in v2.3.208. This function will try to
+        recognise exports from earlier versions, but it's not guaranteed to
+        work.
 
         Args:
 
@@ -15943,69 +16712,194 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 14506 parse_text_import')
 
         db_dict = {}
-        dbid = 0
-        last_container_mini_dict = None
+        fake_dbid = 0
+        check_flag = False
+
+        # Create entries corresponding to the fixed folders 'Unsorted Videos'
+        #   and 'Video Clips'
+        fake_dbid += 1
+        db_dict[fake_dbid] = {
+            'type': 'folder',
+            'dbid': fake_dbid,
+            'name': self.fixed_misc_folder.name,
+            'nickname': self.fixed_misc_folder.nickname,
+            'source': None,
+            'db_dict': {},
+        }
+
+        fake_dbid += 1
+        db_dict[fake_dbid] = {
+            'type': 'folder',
+            'dbid': fake_dbid,
+            'name': self.fixed_clips_folder.name,
+            'nickname': self.fixed_clips_folder.nickname,
+            'source': None,
+            'db_dict': {},
+        }
 
         # Split text into separate lines
         line_list = text.split('\n')
 
-        # Remove all empty lines (including those containing only whitespace)
-        mod_list = []
-        for line in line_list:
-            if re.search('\S', line):
-                mod_list.append(line)
+        # Extract each group of four lines, and check they are valid
+        # If a group of four is invalid (or if we reach the end of the file in
+        #   the middle of a group of 4), ignore that group and any subsequent
+        #   groups, and just use the data already extracted
+        # Spltting by '\n' will create a group with just one empty line, so
+        #   we don't check that line_list is empty
+        while len(line_list) > 1:
 
-        # Extract each group of three lines, and check they are valid
-        # If a group of three is invalid (or if we reach the end of the file
-        #   in the middle of a group of 3), ignore that group and any
-        #   subsequent groups, and just use the data already extracted
-        while len(mod_list) > 2:
+            media_type = line_list[0]
+            name = line_list[1]
+            source = line_list[2]
+            container_name = line_list[3]
 
-            media_type = mod_list[0]
-            name = mod_list[1]
-            source = mod_list[2]
-
-            mod_list = mod_list[3:]
+            line_list = line_list[4:]
 
             if media_type is None \
             or (
                 media_type != '@video' and media_type != '@channel' \
-                and media_type != '@playlist'
+                and media_type != '@playlist' and media_type != '@folder'
             ) \
-            or name is None or name == '' \
-            or source is None or not utils.check_url(source):
+            or name is None \
+            or name == '' \
+            or source is None \
+            or (media_type != '@folder' and not utils.check_url(source)) \
+            or container_name is None:
                 break
 
-            # A valid group of three; add an entry to db_dict using a fake dbid
-            dbid += 1
+            # N.B. The export format changed in v2.3.208. Try to detect exports
+            #   from earlier versions (this is not guaranteed to work)
+            if not check_flag:
 
-            mini_dict = {
-                'type': None,
-                'dbid': dbid,
-                'name': name,
-                'nickname': name,
-                'source': source,
-                'db_dict': {},
-            }
+                check_flag = True
 
-            if media_type == '@video':
-                mini_dict['type'] = 'video'
-                # A video belongs to the previous channel or playlist (if any)
-                if last_container_mini_dict is not None:
-                    last_container_mini_dict['db_dict'][dbid] = mini_dict
+                if container_name == '@video' \
+                or container_name == '@channel' \
+                or container_name == '@playlist' \
+                or container_name == '@folder':
+                    break
 
-            elif media_type == '@channel':
-                mini_dict['type'] = 'channel'
-                last_container_mini_dict = mini_dict
+            # (We have already created entries for 'Unsorted Videos' and
+            #   'Video Clips')
+            if name != self.fixed_misc_folder.name \
+            and name != self.fixed_clips_folder.name:
 
-            else:
-                mini_dict['type'] = 'playlist'
-                last_container_mini_dict = mini_dict
+                # A valid group of four; add an entry to db_dict using a fake
+                #   dbid
+                fake_dbid += 1
 
-            db_dict[dbid] = mini_dict
+                mini_dict = {
+                    'type': media_type[1:],     # Remove initial @
+                    'dbid': fake_dbid,
+                    'name': name,
+                    'nickname': name,
+                    'source': source,
+                    'db_dict': {},
+                }
+
+                # If the name for a parent container was specified, look for a
+                #   match in 'db_dict'. (The parent should have been specified
+                #   earlier in the file, so it will already exist in db_dict)
+                # If found, self.parse_import_insert() inserts mini_dict into
+                #   db_dict at the correct location
+                # If not found, a video is inserted into 'Unsorted Videos', and
+                #   everything else is not given a parent container
+                if not re.search('\S', container_name):
+
+                    # No parent container specified
+                    db_dict[fake_dbid] = mini_dict
+
+                elif not self.parse_import_insert(
+                    db_dict,
+                    container_name,
+                    fake_dbid,
+                    mini_dict,
+                ):
+                    # No parent container found
+                    if media_type == '@video':
+
+                        # As specified above, the 'Unsorted Videos' folder uses
+                        #   the 'fake_dbid' of 1
+                        db_dict[1]['db_dict'][fake_dbid] = mini_dict
+
+                    else:
+
+                        # This channel/playlist/folder goes into the top level
+                        #   of the media data registry
+                        db_dict[fake_dbid] = mini_dict
 
         # Procedure complete
-        return db_dict
+        if fake_dbid == 2:
+            return {}       # Nothing was actually imported
+        else:
+            return db_dict
+
+
+    def parse_import_insert(self, db_dict, container_name,
+    insert_fake_dbid, insert_mini_dict):
+
+        """Called by self.parse_text_import(), and then by this function
+        recursively.
+
+        self.parse_text_import() is trying to convert a text export file into
+        a dictionary, 'db_dict', in the form described in the comments in
+        self.export_from_db().
+
+        The 'db_dict' passed as an argument to this function is either the
+        overall dictionary, or a sub-dictionary inside the original, in the
+        same format. Again, this is described in self.export_from_db().
+
+        This file is called to find the entry corresponding to a channel/
+        playlist/folder called 'container_name', so an entry for a new video/
+        channel/playlist/folder can be inserted into it as a child object.
+
+        Search the original 'db_dict' recursively until the correct entry is
+        found.
+
+        Args:
+
+            db_dict (dict): Either the original 'db_dict', or one of its
+                sub-dictionaries in the same format
+
+            container_name (str): The name of the parent container
+
+            insert_fake-dbid (int): A fake .dbid for the child object to be
+                inserted
+
+            insert_mini_dict (dict): The 'db_dict' for the child object to be
+                inserted, specifying its attributes
+
+        Return values:
+
+            True if the correct entry has been found (either by this function
+                call, or by one of its recursive function calls); False if the
+                correct entry hasn't been found yet
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14794 parse_import_insert')
+
+        for this_fake_dbid in db_dict:
+
+            this_mini_dict = db_dict[this_fake_dbid]
+            if this_mini_dict['type'] != 'video' \
+            and this_mini_dict['name'] == container_name:
+                this_mini_dict['db_dict'][insert_fake_dbid] = insert_mini_dict
+                return True
+
+            elif self.parse_import_insert(
+                this_mini_dict['db_dict'],
+                container_name,
+                insert_fake_dbid,
+                insert_mini_dict,
+            ):
+                # mini_dict has been inserted at its correct location, so now
+                #   we can stop checking
+                return True
+
+        # mini_dict not inserted at its correct location yet
+        return False
 
 
     def process_import(self, db_dict, flat_db_dict, parent_obj,
@@ -16073,24 +16967,25 @@ class TartubeApp(Gtk.Application):
 
         # Deal in turn with each video/channel/playlist/folder stored at the
         #   top level of 'db_dict'
-        # The dbid is the one used in the database from which the export file
-        #   was generated. Once imported into our database, the new media data
-        #   object will be given a different dbid
-        # (In other words, we can't compare this dbid with those used in
+        # The 'fake_dbid' is the one used in the database from which the export
+        #   file was generated. Once imported into our database, the new media
+        #   data object will be given a different (real) .dbid
+        # (In other words, we can't compare this 'fake_dbid' with those used in
         #   self.media_reg_dict)
-        for dbid in db_dict.keys():
+        for fake_dbid in db_dict.keys():
 
             media_data_obj = None
+            merge_flag = False
 
             # Each 'mini_dict' contains details for a single video/channel/
             #   playlist/folder
-            mini_dict = db_dict[dbid]
+            mini_dict = db_dict[fake_dbid]
 
             # Check whether the user has marked this item to be imported, or
             #   not
-            if int(dbid) in flat_db_dict:
+            if int(fake_dbid) in flat_db_dict:
 
-                check_dict = flat_db_dict[int(dbid)]
+                check_dict = flat_db_dict[int(fake_dbid)]
                 if not check_dict['import_flag']:
 
                     # Don't import this one
@@ -16115,21 +17010,30 @@ class TartubeApp(Gtk.Application):
                         if video_obj:
                             video_count += 1
                             video_obj.set_name(mini_dict['name'])
+                            video_obj.set_nickname(mini_dict['nickname'])
 
             else:
 
                 if mini_dict['name'] in self.media_name_dict:
 
+                    # ('old_dbid' is the real .dbid of an item in the media
+                    #   data registry)
                     old_dbid = self.media_name_dict[mini_dict['name']]
                     old_obj = self.media_reg_dict[old_dbid]
 
                     # A channel/playlist/folder with the same name already
                     #   exists in our database. Rename it if the user wants
                     #   that, or if the two have different source URLs
-                    if not merge_duplicates_flag \
-                    or (
-                        not isinstance(old_obj, media.Folder) \
-                        and old_obj.source != mini_dict['source']
+                    # Exception: 'Unsorted Videos' and 'Video Clips' is always
+                    #   merged with itself
+                    if old_obj != self.fixed_misc_folder \
+                    and old_obj != self.fixed_clips_folder \
+                    and (
+                        not merge_duplicates_flag \
+                        or (
+                            not isinstance(old_obj, media.Folder) \
+                            and old_obj.source != mini_dict['source']
+                        )
                     ):
                         # Rename the imported channel/playlist/folder
                         mini_dict['name'] = self.rename_imported_container(
@@ -16146,45 +17050,48 @@ class TartubeApp(Gtk.Application):
                         #   name, thereby merging the two
                         old_dbid = self.media_name_dict[mini_dict['name']]
                         media_data_obj = self.media_reg_dict[old_dbid]
+                        merge_flag = True
 
                 # Import the channel/playlist/folder
-                if mini_dict['type'] == 'channel':
-                    media_data_obj = self.add_channel(
-                        mini_dict['name'],
-                        parent_obj,
-                        mini_dict['source'],
-                    )
+                if not media_data_obj:
 
-                    if media_data_obj:
-                        channel_count += 1
+                    if mini_dict['type'] == 'channel':
+                        media_data_obj = self.add_channel(
+                            mini_dict['name'],
+                            parent_obj,
+                            mini_dict['source'],
+                        )
 
-                elif mini_dict['type'] == 'playlist':
-                    media_data_obj = self.add_playlist(
-                        mini_dict['name'],
-                        parent_obj,
-                        mini_dict['source'],
-                    )
+                        if media_data_obj:
+                            channel_count += 1
 
-                    if media_data_obj:
-                        playlist_count += 1
+                    elif mini_dict['type'] == 'playlist':
+                        media_data_obj = self.add_playlist(
+                            mini_dict['name'],
+                            parent_obj,
+                            mini_dict['source'],
+                        )
 
-                elif mini_dict['type'] == 'folder':
-                    media_data_obj = self.add_folder(
-                        mini_dict['name'],
-                        parent_obj,
-                    )
+                        if media_data_obj:
+                            playlist_count += 1
 
-                    if media_data_obj:
-                        folder_count += 1
+                    elif mini_dict['type'] == 'folder':
+                        media_data_obj = self.add_folder(
+                            mini_dict['name'],
+                            parent_obj,
+                        )
+
+                        if media_data_obj:
+                            folder_count += 1
 
                 # If the channel/playlist/folder was successfully imported,
                 #   set its nickname, update the Video Index, then deal with
                 #   any children by calling this function recursively
                 if media_data_obj is not None:
 
-                    media_data_obj.set_nickname(mini_dict['nickname'])
-
-                    self.main_win_obj.video_index_add_row(media_data_obj)
+                    if not merge_flag:
+                        media_data_obj.set_nickname(mini_dict['nickname'])
+                        self.main_win_obj.video_index_add_row(media_data_obj)
 
                     if mini_dict['db_dict']:
 
@@ -16920,7 +17827,7 @@ class TartubeApp(Gtk.Application):
             return self.dialogue_manager_obj.show_msg_dialogue(
                 _('Failed to load the options export file'),
                 'error',
-                   'ok',
+                'ok',
             )
 
         # Do some basic checks on the loaded data
@@ -17302,7 +18209,7 @@ class TartubeApp(Gtk.Application):
             return self.dialogue_manager_obj.show_msg_dialogue(
                 _('Failed to load the options export file'),
                 'error',
-                   'ok',
+                'ok',
             )
 
         # Do some basic checks on the loaded data
@@ -20186,11 +21093,11 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.update_window_after_show_hide()
 
 
-    def on_menu_import_json(self, action, par):
+    def on_menu_import_db(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Imports data into from a JSON export file into the Tartube database.
+        Imports data into the Tartube database.
 
         Args:
 
@@ -20201,30 +21108,9 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 18376 on_menu_import_json')
+            utils.debug_time('app 18376 on_menu_import_db')
 
-        self.import_into_db(True)
-
-
-    def on_menu_import_plain_text(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Imports data into from a plain text export file into the Tartube
-        database.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 18397 on_menu_import_plain_text')
-
-        self.import_into_db(False)
+        self.import_into_db()
 
 
     def on_menu_install_ffmpeg(self, action, par):
@@ -21199,12 +22085,31 @@ class TartubeApp(Gtk.Application):
     def set_classic_ytdl_archive_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19282 classic_ytdl_archive_flag')
+            utils.debug_time('app 19282 set_classic_ytdl_archive_flag')
 
         if not flag:
             self.classic_ytdl_archive_flag = False
         else:
             self.classic_ytdl_archive_flag = True
+
+
+    def set_catalogue_clickable_container_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'app 19282 set_catalogue_clickable_container_flag',
+            )
+
+        if not flag:
+            self.catalogue_clickable_container_flag = False
+        else:
+            self.catalogue_clickable_container_flag = True
+
+        # Re-draw the Video Catalogue to implement the new setting
+        if self.main_win_obj.video_index_current is not None:
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+            )
 
 
     def set_close_to_tray_flag(self, flag):
@@ -21602,6 +22507,14 @@ class TartubeApp(Gtk.Application):
             self.enable_livestreams_flag = True
 
 
+    def set_export_csv_separator(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19573 set_export_csv_separator')
+
+        self.export_csv_separator = value
+
+
     def set_ffmpeg_convert_webp_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -21973,6 +22886,14 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 19963 set_match_method')
 
         self.match_method = method
+
+
+    def del_media_unavailable_dict(self, name):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19964 del_media_unavailable_dict')
+
+        del self.media_unavailable_dict[name]
 
 
     def set_num_worker_apply_flag(self, flag):

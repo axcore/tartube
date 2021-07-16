@@ -166,10 +166,6 @@ class OptionsManager(object):
 
     FILESYSTEM OPTIONS
 
-        save_path (str): Path where youtube-dl should store the downloaded
-            file. The default is supplied by the media data object
-        NB: Can't be directly modified by user
-
         restrict_filenames (bool): If True, youtube-dl will restrict the
             downloaded file's filename to ASCII characters only
 
@@ -214,7 +210,7 @@ class OptionsManager(object):
         min_sleep_interval (int): Number of seconds to sleep before each
             download when used alone, or a lower bound of a range for
             randomised sleep before each download (minimum possible number of
-            seconds to sleep) when used along with max_sleep_interval
+            seconds to sleep) when used along with 'max_sleep_interval'
 
         max_sleep_interval (int): Upper bound of a range for randomized sleep
             before each download (maximum possible number of seconds to sleep).
@@ -277,7 +273,13 @@ class OptionsManager(object):
 
     ADOBE PASS OPTIONS
 
-        (none implemented)
+        ap_mso (str): Adobe Pass multiple-system operator (TV provider)
+            identifier
+
+        ap_username (str): Multiple-system operator account login
+
+        ap_password (str): Multiple-system operator account password. If this
+            option is left out, yt-dlp will ask interactively
 
     POST-PROCESSING OPTIONS
 
@@ -319,9 +321,152 @@ class OptionsManager(object):
         prefer_ffmpeg (bool): Prefer FFmpeg over AVConv for running the
             postprocessors
 
+    YT-DLP OPTIONS (will not work with other downloaders)
+
+        [not passed to yt-dlp directly]
+
+        output_format_list (list): List of arguments used with the '--output'
+            parameter, in the form TYPES:TEMPLATE. Each argument should have
+            a unique TYPES component. If this option is specified,
+            'output_format' and 'output_template' are ignored
+
+        output_path_list (list): List of arguments used with the '--paths'
+            paremeter, in the form TYPES:PATH. Each argument should have a
+            unique TYPES component. If 'output_path_list' contains any values,
+            then 'output_format_list' and/or 'output_format' are used without a
+            preceding absolute path
+
+        extractor_args_list (list): Pass these arguments to the extractor. You
+            can use this option multiple times to give different arguments to
+            different extractors. Each item in the list is in the form
+            KEY:ARGS
+
+        [Video Selection Options]
+
+        break_on_existing (bool): If True, stops the download process when
+            encountering a file that is in the archive
+
+        break_on_reject (bool): If True, stops the download process when
+            encountering a file that has been filtered out
+
+        skip_playlist_after_errors (int): Number of allowed failures until the
+            rest of the playlist is skipped
+
+        [Download Options]
+
+        concurrent_fragments (int): Number of fragments of a dash/hlsnative
+            video that should be download concurrently (default is 1)
+
+        throttled_rate (int): Minimum download rate in bytes per second below
+            which throttling is assumed and the video data is re-extracted
+            (e.g. 100K)
+
+        [Filesystem Options]
+
+        windows_filenames (bool): If True, forces filenames to be MS Windows
+            compatible
+
+        trim_filenames (int): Limit the filename length (excluding extension)
+            to the specified number of characters
+
+        force_overwrites (bool): If True, overwrites all video and metadata
+            files. This option includes '--no-continue' (for which there is no
+            Tartube download option)
+
+        write_playlist_metafiles (bool): If True, writes playlist metadata in
+            addition to the video metadata when using --write-info-json,
+            --write-description etc. (default)
+
+        no_clean_info_json (bool): If True, writes all fields to the infojson
+            (default is to remove some private fields)
+
+        write_comments (bool): If True, retrieves video comments to be placed
+            in the .info.json. The comments are fetched even without this
+            option if the extraction is known to be quick
+
+        [Internet Shortcut Options]
+
+        write_link (bool): If True, writes an internet shortcut file, depending
+            on the current platform (.url, .webloc or .desktop). The URL may be
+            cached by the OS
+
+        write_url_link (bool): If True, writes a .url Windows internet
+            shortcut. The OS caches the URL based on the file path
+
+        write_webloc_link (bool): If True, writes a .webloc macOS internet
+            shortcut
+
+        write_desktop_link (bool): If True, writes a .desktop Linux internet
+            shortcut
+
+        [Verbosity and Simulation Options]
+
+        ignore_no_formats_error (bool): If True, ignore "No video formats"
+            error. Useful for extracting metadata even if the video is not
+            actually available for download (experimental)
+
+        force_write_archive (bool): If True, forces download archive entries to
+            be written as far as no errors occur, even if -s or another
+            simulation option is used
+
+        [Workaround Options]
+
+        sleep_requests (int): Number of seconds to sleep between requests
+            during data extraction
+
+        sleep_subtitles (int): Number of seconds to sleep before each download.
+            This is the minimum time to sleep when used along with
+            'max_sleep_interval'
+
+        [Video Format Options]
+
+        video_multistreams (bool): If True, allows multiple video streams to be
+            merged into a single file
+
+        audio_multistreams (bool): If True, allows multiple audio streams to be
+            merged into a single file
+
+        check_formats (bool): If True, checks that the formats selected are
+            actually downloadable (Experimental)
+
+        allow_unplayable_formats (bool): If True, allows unplayable formats to
+            be listed and downloaded. All video post-processing will also be
+            turned off
+
+        [Post-Processing Options]
+
+        remux_video (str): Remux the video into another container if necessary
+            (currently supported: mp4|mkv|flv|webm|mov|avi|mp3|mka|m4a|ogg
+            |opus). If target container does not support the video/audio codec,
+            remuxing will fail. You can specify multiple rules; Eg.
+            "aac>m4a/mov>mp4/mkv" will remux aac to m4a, mov to mp4 and
+            anything else to mkv.
+
+        embed_metadata (bool): Embed metadata including chapter markers (if
+            supported by the format) to the video file
+
+        convert_thumbnails (str): Convert the thumbnails to another format
+            (currently supported: jpg|png)
+
+        split_chapters (bool): Split video into multiple files based on
+            internal chapters. The "chapter:" prefix can be used with
+            'output_path_list' and 'output_template_list' to set the output
+            filename for the split files
+
+        [Extractor Options]
+
+        extractor_retries (str): Number of retries for known extractor errors
+            (default is '3'), or 'infinite'
+
+        no_allow_dynamic_mpd (bool): If True, do not process dynamic DASH
+            manifests
+
+        hls_split_discontinuity (bool): If True, splits HLS playlists to
+            different formats at discontinuities such as ad breaks
+
     YOUTUBE-DL-GUI OPTIONS (not passed to youtube-dl directly)
 
-        [used to build the 'save_path' option]
+        [used to build the 'save_path_list' option]
 
         output_format (int): Option in the range 0-9, which is converted into
             a youtube-dl output template using
@@ -392,11 +537,11 @@ class OptionsManager(object):
             the 'Check all' button), the video's JSON file is always loaded
             into memory
 
-            If 'write_description' and 'sim_description' are both true, the
-            description file is written directly to the sub-directory in which
-            Tartube would store the video
+            If 'write_description' and 'sim_keep_description' are both true,
+            the description file is written directly to the sub-directory in
+            which Tartube would store the video
 
-            If 'write_description' is true but 'keep_description' not, the
+            If 'write_description' is true but 'sim_keep_description' not, the
             description file is written to the equivalent location in Tartube's
             temporary directories.
 
@@ -433,6 +578,19 @@ class OptionsManager(object):
 
         subs_lang_list (list): List of language tags which are used to set
             the 'subs_lang' option
+
+        downloader_config (bool): If true, a youtube-dl configuration is
+            specified with the '--config-location' option. On Linux/MacOS, the
+            user-wide configuration file is used
+            ('~/.config/youtube-dl/config'). On MS Windows, a file in the
+            Tartube directory is used (youtube-dl.conf)
+
+        save_path_list (list): List of arguments used with the '--output'
+            parameter. Contains the output template. If the 'output_path_list'
+            option is not specified, then the template is preceded by the
+            output directory. Arguments are constructed in a call to
+            OptionsParser.build_save_path(), and cannot be set directly by the
+            user
 
     """
 
@@ -579,7 +737,6 @@ class OptionsManager(object):
             'external_downloader': '',
             'external_arg_string': '',
             # FILESYSTEM OPTIONS
-            'save_path': None,             # Can't be directly modified by user
             'restrict_filenames': False,
             'nomtime': False,
             'write_description': True,
@@ -617,7 +774,9 @@ class OptionsManager(object):
             'net_rc': False,
             'video_password': '',
             # ADOBE PASS OPTIONS
-            #   (none implemented)
+            'ap_mso': '',
+            'ap_username': '',
+            'ap_password': '',
             # POST-PROCESSING OPTIONS
             'extract_audio': False,
             'audio_format': '',
@@ -631,33 +790,79 @@ class OptionsManager(object):
             'fixup_policy': '',
             'prefer_avconv': False,
             'prefer_ffmpeg': False,
+            # YT-DLP OPTIONS
+            # (not passed to yt-dlp directly)
+            'output_format_list': [],
+            'output_path_list': [],
+            'extractor_args_list': [],
+            # (Video Selection Options)
+            'break_on_existing': False,
+            'break_on_reject': False,
+            'skip_playlist_after_errors': 0,
+            # (Download Options)
+            'concurrent_fragments': 1,
+            'throttled_rate': 0,
+            # (Filesystem Options)
+            'windows_filenames': False,
+            'trim_filenames': 0,
+            'force_overwrites': False,
+            'write_playlist_metafiles': False,
+            'no_clean_info_json': False,
+            'write_comments': False,
+            # (Internet Shortcut Options)
+            'write_link': False,
+            'write_url_link': False,
+            'write_webloc_link': False,
+            'write_desktop_link': False,
+            # (Verbosity and Simulation Options)
+            'ignore_no_formats_error': False,
+            'force_write_archive': False,
+            # (Workaround Options)
+            'sleep_requests': 0,
+            'sleep_subtitles': 0,
+            # (Video Format Options)
+            'video_multistreams': False,
+            'audio_multistreams': False,
+            'check_formats': False,
+            'allow_unplayable_formats': False,
+            # (Post-Processing Options)
+            'remux_video': '',
+            'embed_metadata': False,
+            'convert_thumbnails': '',
+            'split_chapters': False,
+            # (Extractor Options)
+            'extractor_retries': '3',
+            'no_allow_dynamic_mpd': False,
+            'hls_split_discontinuity': False,
             # YOUTUBE-DL-GUI OPTIONS
             'output_format': 2,
             'output_template': '%(title)s.%(ext)s',
-            'max_filesize_unit' : '',
-            'min_filesize_unit' : '',
-            'extra_cmd_string' : '',
-            'direct_cmd_flag' : False,
-            'direct_url_flag' : False,
+            'max_filesize_unit': '',
+            'min_filesize_unit': '',
+            'extra_cmd_string': '',
+            'direct_cmd_flag': False,
+            'direct_url_flag': False,
             # TARTUBE OPTIONS
-           'move_description': False,
-           'move_info': False,
-           'move_annotations': False,
-           'move_thumbnail': False,
-           'keep_description': False,
-           'keep_info': False,
-           'keep_annotations': False,
-           'keep_thumbnail': True,
-           'sim_keep_description': False,
-           'sim_keep_info': False,
-           'sim_keep_annotations': False,
-           'sim_keep_thumbnail': True,
-           'use_fixed_folder': None,
-           'match_title_list': [],
-           'reject_title_list': [],
-           'video_format_list': [],
-           'video_format_mode': 'single',
-           'subs_lang_list': [ 'en' ],
+            'move_description': False,
+            'move_info': False,
+            'move_annotations': False,
+            'move_thumbnail': False,
+            'keep_description': False,
+            'keep_info': False,
+            'keep_annotations': False,
+            'keep_thumbnail': True,
+            'sim_keep_description': False,
+            'sim_keep_info': False,
+            'sim_keep_annotations': False,
+            'sim_keep_thumbnail': True,
+            'use_fixed_folder': None,
+            'match_title_list': [],
+            'reject_title_list': [],
+            'video_format_list': [],
+            'video_format_mode': 'single',
+            'subs_lang_list': [ 'en' ],
+            'downloader_config': False,
+            'save_path_list': [],
         }
 
 
@@ -744,19 +949,28 @@ class OptionsParser(object):
             # NETWORK OPTIONS
             # --proxy URL
             OptionHolder('proxy', '--proxy', ''),
+            # --socket-timeout SECONDS
             OptionHolder('socket_timeout', '--socket-timeout', ''),
+            # --source-address IP
             OptionHolder('source_address', '--source-address', ''),
+            # -4, --force-ipv4
             OptionHolder('force_ipv4', '--force-ipv4', False),
+            # -6, --force-ipv6
             OptionHolder('force_ipv6', '--force-ipv6', False),
             # GEO-RESTRICTION
+            # --geo-verification-proxy URL
             OptionHolder(
                 'geo_verification_proxy',
                 '--geo-verification-proxy',
                 '',
             ),
+            # --geo-bypass
             OptionHolder('geo_bypass', '--geo-bypass', False),
+            # --no-geo-bypass
             OptionHolder('no_geo_bypass', '--no-geo-bypass', False),
+            # --geo-bypass-country CODE
             OptionHolder('geo_bypass_country', '--geo-bypass-country', ''),
+            # --geo-bypass-ip-block IP_BLOCK
             OptionHolder('geo_bypass_ip_block', '--geo-bypass-ip-block', ''),
             # VIDEO SELECTION
             # --playlist-start NUMBER
@@ -783,7 +997,7 @@ class OptionsParser(object):
             OptionHolder('match_filter', '--match-filter', ''),
             # --age-limit YEARS
             OptionHolder('age_limit', '--age-limit', ''),
-            # --include-ads FILTER
+            # --include-ads
             OptionHolder('include_ads', '--include-ads', False),
             # DOWNLOAD OPTIONS
             # -r, --limit-rate RATE
@@ -807,8 +1021,6 @@ class OptionsParser(object):
                 '',
             ),
             # FILESYSTEM OPTIONS
-            # -o, --output TEMPLATE
-            OptionHolder('save_path', '-o', ''),
             # --restrict-filenames
             OptionHolder('restrict_filenames', '--restrict-filenames', False),
             # --no-mtime
@@ -819,7 +1031,7 @@ class OptionsParser(object):
             OptionHolder('write_info', '--write-info-json', False),
             # --write-annotations
             OptionHolder('write_annotations', '--write-annotations', False),
-            # --cookies
+            # --cookies FILE
             OptionHolder('cookies_path', '--cookies', ''),
             # THUMBNAIL IMAGES
             # --write-thumbnail
@@ -873,8 +1085,9 @@ class OptionsParser(object):
             OptionHolder('write_all_subs', '--all-subs', False),
             # --sub-format FORMAT
             OptionHolder('subs_format', '--sub-format', ''),
-            # --sub-lang LANGS. NB This '--sub-lang' string is not the one
-            #   used as a switch by self.parse()
+            # --sub-lang LANGS
+            # NB This '--sub-lang' string is not the one used as a switch by
+            #   self.parse()
             OptionHolder('subs_lang', '--sub-lang', '', ['write_subs']),
             # AUTHENTIFICATION OPTIONS
             # -u, --username USERNAME
@@ -888,7 +1101,12 @@ class OptionsParser(object):
             # --video-password PASSWORD
             OptionHolder('video_password', '--video-password', ''),
             # ADOBE PASS OPTIONS
-            #   (none implemented)
+            # --ap-mso MSO
+            OptionHolder('ap_mso', '--ap-mso', ''),
+            # --ap-username USERNAME
+            OptionHolder('ap_username', '--ap-username', ''),
+            # --ap-password PASSWORD
+            OptionHolder('ap_password', '--ap-password', ''),
             # POST-PROCESSING OPTIONS
             # -x, --extract-audio
             OptionHolder('extract_audio', '-x', False),
@@ -924,6 +1142,107 @@ class OptionsParser(object):
             OptionHolder('prefer_avconv', '--prefer-avconv', False),
             # --prefer-ffmpeg
             OptionHolder('prefer_ffmpeg', '--prefer-ffmpeg', False),
+            # YT-DLP OPTIONS
+            # (not given an options.OptionHolder object)
+#           OptionHolder('output_format_list', '', []),
+#           OptionHolder('output_path_list', '', []),
+            # (Video Selection Options)
+            # --break-on-existing
+            OptionHolder('break_on_existing', '--break-on-existing', False),
+            # --break-on-reject
+            OptionHolder('break_on_reject', '--break-on-reject', False),
+            # --skip-playlist-after-errors N
+            OptionHolder(
+                'skip_playlist_after_errors',
+                '--skip-playlist-after-errors',
+                0,
+            ),
+            # (Download Options)
+            # --concurrent-fragments N
+            OptionHolder('concurrent_fragments', '--concurrent-fragments', 1),
+            # --throttled-rate RATE
+            OptionHolder('throttled_rate', '--throttled-rate', 0),
+            # (Filesystem Options)
+            # --windows-filenames
+            OptionHolder('windows_filenames', '--windows-filenames', False),
+            # --trim-filenames LENGTH
+            OptionHolder('trim_filenames', '--trim-filenames', 0),
+            # --force-overwrites
+            OptionHolder('force_overwrites', '--force-overwrites', False),
+            # --write-playlist-metafiles
+            OptionHolder(
+                'write_playlist_metafiles',
+                '--write-playlist-metafiles',
+                False,
+            ),
+            # --no-clean-infojson
+            OptionHolder('no_clean_info_json', '--no-clean-infojson', False),
+            # --write-comments
+            OptionHolder('write_comments', '--write-comments', False),
+            # (Internet Shortcut Options)
+            # --write-link
+            OptionHolder('write_link', '--write-link', False),
+            # --write-url-link
+            OptionHolder('write_url_link', '--write-url-link', False),
+            # --write-webloc-link
+            OptionHolder('write_webloc_link', '--write-webloc-link', False),
+            # --write-desktop-link
+            OptionHolder('write_desktop_link', '--write-desktop-link', False),
+            # (Verbosity and Simulation Options)
+            # --ignore-no-formats-error
+            OptionHolder(
+                'ignore_no_formats_error',
+                '--ignore-no-formats-error',
+                False,
+            ),
+            # --force-write-archive
+            OptionHolder(
+                'force_write_archive',
+                '--force-write-archive',
+                False,
+            ),
+            # (Workaround Options)
+            # --sleep-requests SECONDS
+            OptionHolder('sleep_requests', '--sleep-requests', 0),
+            # --sleep-subtitles SECONDS
+            OptionHolder('sleep_subtitles', '--sleep-subtitles', 0),
+            # (Video Format Options)
+            # --video-multistreams
+            OptionHolder('video_multistreams', '--video-multistreams', False),
+            # --audio-multistreams
+            OptionHolder('audio_multistreams', '--audio-multistreams', False),
+            # --check-formats
+            OptionHolder('check_formats', '--check-formats', False),
+            # --allow-unplayable-formats
+            OptionHolder(
+                'allow_unplayable_formats',
+                '--allow-unplayable-formats',
+                False,
+            ),
+            # (Post-Processing Options)
+            # --remux-video FORMAT
+            OptionHolder('remux_video', '--remux-video', ''),
+            # --embed-metadata
+            OptionHolder('embed_metadata', '--embed-metadata', False),
+            # --convert-thumbnails FORMAT
+            OptionHolder('convert_thumbnails', '--convert-thumbnails', ''),
+            # --split-chapters
+            OptionHolder('split_chapters', '--split-chapters', False),
+            # (Extractor Options)
+            # --extractor-retries RETRIES
+            OptionHolder('extractor_retries', '--extractor-retries', '3'),
+            # --no-allow-dynamic-mpd
+            OptionHolder(
+                'no_allow_dynamic_mpd',
+                '--no-allow-dynamic-mpd',
+                False,
+            ),
+            # --hls-split-discontinuity
+            OptionHolder(
+                'hls_split_discontinuity',
+                '--hls-split-discontinuity',
+                False,
+            ),
             # YOUTUBE-DL-GUI OPTIONS (not given an options.OptionHolder object)
 #           OptionHolder('output_format', '', 2),
 #           OptionHolder('output_template', '', ''),
@@ -951,6 +1270,8 @@ class OptionsParser(object):
 #           OptionHolder('video_format_list', '', []),
 #           OptionHolder('video_format_mode', '', 'single'),
 #           OptionHolder('subs_lang_list', '', []),
+#           OptionHolder('downloader_config', '', False),
+#           OptionHolder('save_path_list', '', []),
         ]
 
 
@@ -994,9 +1315,8 @@ class OptionsParser(object):
 
         # Create a copy of the dictionary...
         copy_dict = options_manager_obj.options_dict.copy()
-        # ...then modify various values in the copy. Set the 'save_path' option
-        self.build_save_path(media_data_obj, copy_dict, operation_type)
-        # Set the 'video_format' option and 'all_formats' options
+        # ...then modify various values in the copy. Set the 'video_format' and
+        #   'all_formats' options
         self.build_video_format(media_data_obj, copy_dict, operation_type)
         # Set the 'min_filesize' and 'max_filesize' options
         self.build_file_sizes(copy_dict)
@@ -1084,13 +1404,6 @@ class OptionsParser(object):
                     if not option_holder_obj.is_boolean():
                         options_list.append(utils.to_string(value))
 
-        # Parse the 'extra_cmd_string' option, which can contain arguments
-        #   inside double quotes "..." (arguments that can therefore contain
-        #   whitespace)
-        parsed_list = utils.parse_options(copy_dict['extra_cmd_string'])
-        for item in parsed_list:
-            options_list.append(item)
-
         # Parse the 'match_title_list' and 'reject_title_list'
         for item in copy_dict['match_title_list']:
             options_list.append('--match-title')
@@ -1108,6 +1421,55 @@ class OptionsParser(object):
 
             options_list.append('--sub-lang')
             options_list.append(','.join(copy_dict['subs_lang_list']))
+
+        # Parse the 'extractor_args_list' option
+        for item in copy_dict['extractor_args_list']:
+            options_list.append('--extractor-args')
+            options_list.append(item)
+
+        # Parse the 'save_path_list' option
+        options_list = self.build_paths(
+            media_data_obj,
+            copy_dict,
+            operation_type,
+            options_list,
+        )
+
+        # Parse the 'extra_cmd_string' option, so it overrules everything else.
+        #   The option can contain arguments inside double quotes "..."
+        #   (arguments that can therefore contain whitespace)
+        parsed_list = utils.parse_options(copy_dict['extra_cmd_string'])
+        for item in parsed_list:
+            options_list.append(item)
+
+        # Parse the 'downloader_config' option, so it overrules everything
+        #   else
+        if copy_dict['downloader_config']:
+
+            options_list.append('--config-location')
+            options_list.append(utils.get_dl_config_path(self.app_obj))
+
+        # Filter out yt-dlp options, if required. A list of them is specified
+        #   in mainapp.TartubeApp.ytdlp_exclusive_options_dict
+        if self.app_obj.ytdlp_filter_options_flag \
+        and (
+            self.app_obj.ytdl_fork is None \
+            or self.app_obj.ytdl_fork != 'yt-dlp'
+        ):
+            filter_list = options_list.copy()
+            options_list = []
+
+            while filter_list:
+
+                item = filter_list.pop(0)
+                if item in self.app_obj.ytdlp_exclusive_options_dict:
+
+                    if self.app_obj.ytdlp_exclusive_options_dict[item]:
+                        # This option takes an argument
+                        filter_list.pop(0)
+
+                else:
+                    options_list.append(item)
 
         # Parsing complete
         return options_list
@@ -1212,12 +1574,13 @@ class OptionsParser(object):
                 copy_dict['proxy'] = proxy
 
 
-    def build_save_path(self, media_data_obj, copy_dict, operation_type):
+    def build_paths(self, media_data_obj, copy_dict, operation_type, \
+    options_list):
 
         """Called by self.parse().
 
-        Build the value of the 'save_path' option and store it in the options
-        dictionary.
+        Build the value of the 'save_path_list' option, and add it directly to
+        the options list.
 
         Args:
 
@@ -1230,49 +1593,86 @@ class OptionsParser(object):
                 'classic_real', 'classic_custom' (matching possible values of
                 downloads.DownloadManager.operation_type)
 
+            options_list (list): List of download options compiled so far; this
+                function adds options directly to the list
+
+        Return values:
+
+            The modified options_list
+
         """
 
-        # Special case: if a download operation was launched from the Classic
-        #   Mode Tab, the save path is specified in that tab
+        # First, set the download directory
+
+        override_name = copy_dict['use_fixed_folder']
+
         if operation_type == 'classic_sim' \
         or operation_type == 'classic_real' \
         or operation_type == 'classic_custom':
 
-            save_path = media_data_obj.dummy_dir
+            # Special case: if a download operation was launched from the
+            #   Classic Mode Tab, the directory is specified in that tab
+            dir_path = media_data_obj.dummy_dir
+
+        elif not isinstance(media_data_obj, media.Video) \
+        and override_name is not None \
+        and override_name in self.app_obj.media_name_dict:
+
+            # Because of the override, save all videos to a system folder
+            other_dbid = self.app_obj.media_name_dict[override_name]
+            other_obj = self.app_obj.media_reg_dict[other_dbid]
+            dir_path = other_obj.get_default_dir(self.app_obj)
+
+        elif isinstance(media_data_obj, media.Video):
+            dir_path = media_data_obj.parent_obj.get_actual_dir(self.app_obj)
+
+        else:
+            dir_path = media_data_obj.get_actual_dir(self.app_obj)
+
+        # Secondly, set the file output template, which may be preceded by the
+        #   download directory
+
+        # (When 'output_format_list' is specified, then 'output_format' and
+        #   'output_template' are ignored. However, 'output_format_list' is
+        #   normally only used with yt-dlp)
+        if not copy_dict['output_format_list'] \
+        and (
+            self.app_obj.ytdl_fork is None \
+            or self.app_obj.ytdl_fork != 'yt-dlp' \
+            or not self.app_obj.ytdlp_filter_options_flag
+        ):
+            # Set the youtube-dl output template for the video's file
+            template \
+            = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
+            # In the case of copy_dict['output_format'] = 0
+            if template is None:
+                template = copy_dict['output_template']
+
+            options_list.append('--output')
+
+            # (When 'output_path_list' is specified, the template is used
+            #   without a preceding directory path)
+            if copy_dict['output_path_list']:
+                options_list.append(template)
+            else:
+                options_list.append(
+                    os.path.abspath(os.path.join(dir_path, template)),
+                )
 
         else:
 
-            # Set the directory in which any downloaded videos will be saved
-            override_name = copy_dict['use_fixed_folder']
+            for item in copy_dict['output_format_list']:
+                options_list.append('--output')
+                options_list.append(item)
 
-            if not isinstance(media_data_obj, media.Video) \
-            and override_name is not None \
-            and override_name in self.app_obj.media_name_dict:
+        # Thirdly, set the yt-dlp option 'output_path_list'
+        if copy_dict['output_path_list']:
 
-                # Because of the override, save all videos to a fixed folder
-                other_dbid = self.app_obj.media_name_dict[override_name]
-                other_obj = self.app_obj.media_reg_dict[other_dbid]
-                save_path = other_obj.get_default_dir(self.app_obj)
+            for item in copy_dict['output_path_list']:
+                options_list.append('--paths')
+                options_list.append(item)
 
-            else:
-
-                if isinstance(media_data_obj, media.Video):
-                    save_path = media_data_obj.parent_obj.get_actual_dir(
-                        self.app_obj,
-                    )
-
-                else:
-                    save_path = media_data_obj.get_actual_dir(self.app_obj)
-
-        # Set the youtube-dl output template for the video's file
-        template = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]
-        # In the case of copy_dict['output_format'] = 0
-        if template is None:
-            template = copy_dict['output_template']
-
-        copy_dict['save_path'] = os.path.abspath(
-            os.path.join(save_path, template),
-        )
+        return options_list
 
 
     def build_video_format(self, media_data_obj, copy_dict, operation_type):

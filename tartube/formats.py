@@ -170,6 +170,18 @@ while file_output_setup_list:
     FILE_OUTPUT_NAME_DICT[key] = value
     FILE_OUTPUT_CONVERT_DICT[key] = value2
 
+YTDLP_OUTPUT_TYPE_LIST = [
+    'subtitle',
+    'thumbnail',
+    'description',
+    'annotation',
+    'infojson',
+    'pl_thumbnail',
+    'pl_description',
+    'pl_infojson',
+    'chapter',
+]
+
 video_option_setup_list = [
     # List of YouTube extractor (format) codes, based on the original list in
     #   youtube-dl-gui, and supplemented by this list:
@@ -738,6 +750,7 @@ SMALL_ICON_DICT = {
     'dl_options_small': 'dl_options.png',
     'download_small': 'download.png',
     'error_small': 'error.png',
+    'external_small': 'external.png',
     'folder_black_small': 'folder_black.png',
     'folder_blue_small': 'folder_blue.png',
     'folder_green_small': 'folder_green.png',
@@ -749,6 +762,7 @@ SMALL_ICON_DICT = {
     'split_file_small': 'split_file.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
+    'unavailable_small': 'unavailable.png',
     'warning_small': 'warning.png',
 }
 

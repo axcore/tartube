@@ -788,9 +788,20 @@ class DownloadManager(threading.Thread):
 
                 other_obj = worker_obj.download_item_obj.media_data_obj
 
-                if other_obj.dbid != media_data_obj.dbid \
-                and other_obj.dbid == media_data_obj.master_dbid:
-                    return True
+                if other_obj.dbid != media_data_obj.dbid:
+
+                    if (
+                        not isinstance(other_obj, media.Video)
+                        and other_obj.external_dir is not None
+                    ):
+                        if other_obj.external_dir \
+                        == media_data_obj.external_dir:
+                            return True
+
+                    # (Alternative download destinations only apply when no
+                    #   external directory is specified)
+                    elif other_obj.dbid == media_data_obj.master_dbid:
+                        return True
 
         return False
 
@@ -1451,7 +1462,8 @@ class DownloadWorker(threading.Thread):
         and (
             isinstance(media_data_obj, media.Channel) \
             or isinstance(media_data_obj, media.Playlist)
-        ) and media_data_obj.child_list \
+        ) and not media_data_obj.dl_no_db_flag \
+        and media_data_obj.child_list \
         and media_data_obj.rss:
 
             # Send a message to the Output Tab's summary page
@@ -2196,8 +2208,15 @@ class DownloadList(object):
             - media.Channel and media.Playlist objects for which checking/
                 downloading are disabled, or which have an ancestor (e.g. a
                 parent media.folder) for which checking/downloading is disabled
+            - media.Channel, media.Playlist and media.Folder objects whose
+                .dl_no_db_flag is set, during simulated downloads
             - media.Channel and media.Playlist objects during custom downloads
                 in which videos are to be downloaded independently
+            - media.Channel and media.Playlist objects which are disabled
+                because their external directory is not available
+            - media.Video objects whose parent channel/playlist/folder is
+                marked unavailable because its external directory is not
+                accessible
             - media.Folder objects
 
         Adds the resulting downloads.DownloadItem object to this object's IVs.
@@ -2338,20 +2357,36 @@ class DownloadList(object):
             and utils.find_thumbnail(self.app_obj, media_data_obj):
                 return None
 
-        # Don't create a download.DownloadItem object if the media data object
-        #   has an ancestor for which checking/downloading is disabled
+        # Don't download videos in channels/playlists/folders which have been
+        #   marked unavailable, because their external directory is not
+        #   accessible
         if isinstance(media_data_obj, media.Video):
-            dl_disable_flag = False
-        else:
-            dl_disable_flag = media_data_obj.dl_disable_flag
+            if media_data_obj.parent_obj.name \
+            in self.app_obj.media_unavailable_dict:
+                return None
 
-        parent_obj = media_data_obj.parent_obj
+        elif not isinstance(media_data_obj, media.Video) \
+        and media_data_obj.name in self.app_obj.media_unavailable_dict:
+            return None
 
-        while not dl_disable_flag and parent_obj is not None:
-            dl_disable_flag = parent_obj.dl_disable_flag
-            parent_obj = parent_obj.parent_obj
+        # Don't simulated downloads of video in channels/playlists/folders
+        #   whose whose .dl_no_db_flag is set
+        if operation_type == 'sim' \
+        and (
+            (
+                isinstance(media_data_obj, media.Video) \
+                and media_data_obj.parent_obj.dl_no_db_flag
+            ) or (
+                not isinstance(media_data_obj, media.Video) \
+                and media_data_obj.dl_no_db_flag
+            )
+        ):
+            return None
 
-        if dl_disable_flag:
+        # Don't create a download.DownloadItem object if checking/download is
+        #   disabled for the media data object
+        if not isinstance(media_data_obj, media.Video) \
+        and media_data_obj.dl_disable_flag:
             return None
 
         # Don't create a download.DownloadItem object for a media.Folder,
@@ -3312,14 +3347,14 @@ class VideoDownloader(object):
                     self.download_item_obj.media_data_obj.set_error(stderr)
 
             # Show output in the Output Tab (if required)
-            if (app_obj.ytdl_output_stderr_flag):
+            if app_obj.ytdl_output_stderr_flag:
                 app_obj.main_win_obj.output_tab_write_stderr(
                     self.download_worker_obj.worker_id,
                     stderr,
                 )
 
             # Show output in the terminal (if required)
-            if (app_obj.ytdl_write_stderr_flag):
+            if app_obj.ytdl_write_stderr_flag:
                 # Git #175, Japanese text may produce a codec error here,
                 #   despite the .decode() call above
                 try:
@@ -3335,21 +3370,32 @@ class VideoDownloader(object):
         #       using the code below
         #   NOTE: In Unix a negative return code (-N) indicates that the child
         #       was terminated by signal N (e.g. -9 = SIGKILL)
+        internal_msg = None
         if self.child_process is None:
             self.set_return_code(self.ERROR)
-            self.download_item_obj.media_data_obj.set_error(
-                _('Download did not start'),
-            )
+            internal_msg = _('Download did not start')
 
         elif self.child_process.returncode > 0:
             self.set_return_code(self.ERROR)
-
             if not app_obj.ignore_child_process_exit_flag:
-                self.download_item_obj.media_data_obj.set_error(
-                    _('Child process exited with non-zero code: {}').format(
-                        self.child_process.returncode,
-                    )
+                internal_msg = _(
+                    'Child process exited with non-zero code: {}',
+                ).format(self.child_process.returncode)
+
+        if internal_msg:
+
+            # (The message must be visible in the Errors/Warnings tab, the
+            #   Output tab and/or the terminal)
+            self.download_item_obj.media_data_obj.set_error(internal_msg)
+
+            if app_obj.ytdl_output_stderr_flag:
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    internal_msg,
                 )
+
+            if app_obj.ytdl_write_stderr_flag:
+                print(internal_msg)
 
         # For channels/playlists, detect missing videos (those downloaded by
         #   the user, but since deleted from the website by the creator)
@@ -3606,11 +3652,30 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 3202 confirm_new_video')
 
+        # Special case: don't add videos to the Tartube database at all
+        media_data_obj = self.download_item_obj.media_data_obj
+        if not isinstance(media_data_obj, media.Video) \
+        and media_data_obj.dl_no_db_flag:
+
+            # Deal with the video description, JSON data and thumbnail,
+            #   according to the settings in options.OptionsManager
+            utils.handle_files_after_download(
+                self.download_manager_obj.app_obj,
+                self.download_worker_obj.options_manager_obj,
+                dir_path,
+                filename,
+            )
+
+            # Register the download with DownloadManager, so that download
+            #   limits can be applied, if required
+            # The True argument specifies that this function is the caller
+            self.download_manager_obj.register_video('new')
+
         # Special case: if the download operation was launched from the
         #   Classic Mode Tab, then we only need to update the dummy
         #   media.Video object, and to move/remove description/metadata/
         #   thumbnail files, as appropriate
-        if self.dl_classic_flag:
+        elif self.dl_classic_flag:
 
             self.confirm_new_video_classic_mode(dir_path, filename, extension)
 
@@ -3718,75 +3783,12 @@ class VideoDownloader(object):
 
         # Deal with the video description, JSON data and thumbnail, according
         #   to the settings in options.OptionsManager
-        options_dict \
-        = self.download_worker_obj.options_manager_obj.options_dict
-
-        # Description file
-        descrip_path = os.path.abspath(
-            os.path.join(dir_path, filename + '.description'),
+        utils.handle_files_after_download(
+            app_obj,
+            self.download_worker_obj.options_manager_obj,
+            dir_path,
+            filename,
         )
-
-        if descrip_path and not options_dict['keep_description']:
-
-            new_path = utils.convert_path_to_temp(
-                app_obj,
-                descrip_path,
-            )
-
-            if os.path.isfile(descrip_path):
-                if not os.path.isfile(new_path):
-                    shutil.move(descrip_path, new_path)
-                else:
-                    os.remove(descrip_path)
-
-        # (Don't replace a file that already exists)
-        elif descrip_path \
-        and not os.path.isfile(descrip_path) \
-        and options_dict['move_description']:
-
-            utils.move_metadata_to_subdir(app_obj, dummy_obj, '.description')
-
-        # JSON data file
-        json_path = os.path.abspath(
-            os.path.join(dir_path, filename + '.info.json'),
-        )
-
-        if json_path and not options_dict['keep_info']:
-
-            new_path = utils.convert_path_to_temp(app_obj, json_path)
-
-            if os.path.isfile(json_path):
-                if not os.path.isfile(new_path):
-                    shutil.move(json_path, new_path)
-                else:
-                    os.remove(json_path)
-
-        elif json_path \
-        and not os.path.isfile(json_path) \
-        and options_dict['move_info']:
-
-            utils.move_metadata_to_subdir(app_obj, video_obj, '.info.json')
-
-        # (Annotations removed by YouTube in 2019 - see comments elsewhere)
-
-        # Thumbnail file
-        thumb_path = utils.find_thumbnail(app_obj, dummy_obj)
-
-        if thumb_path and not options_dict['keep_thumbnail']:
-
-            new_path = utils.convert_path_to_temp(app_obj, thumb_path)
-
-            if os.path.isfile(thumb_path):
-                if not os.path.isfile(new_path):
-                    shutil.move(thumb_path, new_path)
-                else:
-                    os.remove(thumb_path)
-
-        elif thumb_path \
-        and not os.path.isfile(thumb_path) \
-        and options_dict['move_thumbnail']:
-
-            utils.move_thumbnail_to_subdir(app_obj, video_obj)
 
         # Register the download with DownloadManager, so that download limits
         #   can be applied, if required
@@ -3819,10 +3821,18 @@ class VideoDownloader(object):
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
 
+        # Special case: don't add videos to the Tartube database at all
+        if not isinstance(media_data_obj, media.Video) \
+        and media_data_obj.dl_no_db_flag:
+
+            # Register the download with DownloadManager, so that download
+            #   limits can be applied, if required
+            self.download_manager_obj.register_video('old')
+
         # Special case: if the download operation was launched from the
         #   Classic Mode Tab, then we only need to update the dummy
         #   media.Video object
-        if self.dl_classic_flag:
+        elif self.dl_classic_flag:
 
             media_data_obj.set_dl_flag(True)
             media_data_obj.set_dummy_path(
@@ -3900,7 +3910,8 @@ class VideoDownloader(object):
                 self.video_check_dict[self.video_num] = video_obj
 
                 # Update the main window
-                if media_data_obj.master_dbid != media_data_obj.dbid:
+                if media_data_obj.external_dir is not None \
+                and media_data_obj.master_dbid != media_data_obj.dbid:
 
                     # The container is storing its videos in another
                     #   container's sub-directory, which (probably) explains

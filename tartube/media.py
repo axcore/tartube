@@ -91,14 +91,6 @@ class GenericMedia(object):
     # Set accessors
 
 
-    def set_dl_sim_flag(self, flag):
-
-        if flag:
-            self.dl_sim_flag = True
-        else:
-            self.dl_sim_flag = False
-
-
     def set_error(self, msg):
 
         # The media.Folder object has no error/warning IVs (and shouldn't
@@ -574,7 +566,15 @@ class GenericContainer(GenericMedia):
         else:
             text += location
 
-        if self.master_dbid != self.dbid:
+        if self.external_dir is not None:
+
+            text += '\n\n' + _('Download destination:') + ' '
+            if self.name in app_obj.media_unavailable_dict:
+                text += '(' + _('unavailable') + ')'
+            else:
+                text += self.external_dir
+
+        elif self.master_dbid != self.dbid:
 
             dest_obj = app_obj.media_reg_dict[self.master_dbid]
             text += '\n\n' + _('Download destination:') + ' ' + dest_obj.name
@@ -742,7 +742,7 @@ class GenericContainer(GenericMedia):
         return False
 
 
-    def prepare_export(self, include_video_flag, include_channel_flag,
+    def prepare_export(self, app_obj, include_video_flag, include_channel_flag,
     include_playlist_flag):
 
         """Called by mainapp.TartubeApp.export_from_db(). Subsequently called
@@ -753,6 +753,8 @@ class GenericContainer(GenericMedia):
         preserve the folder structure of the Tartube database.
 
         Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
             include_video_flag (bool): If True, include videos. If False, don't
                 include them
@@ -772,13 +774,20 @@ class GenericContainer(GenericMedia):
 
         # Ignore the types of media data object that we don't require (and all
         #   of their children)
+        # This function should not be called for media.Video objects
+        # This function can be called for fixed folders, but apart from the
+        #   'Unsorted Videos' and 'Video Clips' folders, we ignore them
         media_type = self.get_type()
 
-        # (This function should not be called for media.Video objects)
         if media_type == 'video' \
         or (media_type == 'channel' and not include_channel_flag) \
         or (media_type == 'playlist' and not include_playlist_flag) \
-        or (media_type == 'folder' and self.fixed_flag):
+        or (
+            media_type == 'folder'
+            and self.fixed_flag
+            and self != app_obj.fixed_misc_folder
+            and self != app_obj.fixed_clips_folder
+        ):
             return {}
 
         # This dictionary contains values for the children of this object
@@ -806,6 +815,7 @@ class GenericContainer(GenericMedia):
             else:
 
                 mini_dict = child_obj.prepare_export(
+                    app_obj,
                     include_video_flag,
                     include_channel_flag,
                     include_playlist_flag,
@@ -832,7 +842,7 @@ class GenericContainer(GenericMedia):
         return return_dict
 
 
-    def prepare_flat_export(self, db_dict, include_video_flag,
+    def prepare_flat_export(self, app_obj, db_dict, include_video_flag,
     include_channel_flag, include_playlist_flag):
 
         """Called by mainapp.TartubeApp.export_from_db(). Subsequently called
@@ -843,6 +853,8 @@ class GenericContainer(GenericMedia):
         to preserve the folder structure of the Tartube database.
 
         Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
             db_dict (dict): The dictionary described in the comments in the
                 calling function
@@ -864,14 +876,21 @@ class GenericContainer(GenericMedia):
 
         # Ignore the types of media data object that we don't require (and all
         #   of their children)
+        # This function should not be called for media.Video objects
+        # This function can be called for fixed folders, but apart from the
+        #   'Unsorted Videos' and 'Video Clips' folders, we ignore them
         media_type = self.get_type()
 
-        # (This function should not be called for media.Video objects)
         if media_type == 'video' \
         or (media_type == 'channel' and not include_channel_flag) \
         or (media_type == 'playlist' and not include_playlist_flag) \
-        or (media_type == 'folder' and self.fixed_flag):
-            return db_dict
+        or (
+            media_type == 'folder'
+            and self.fixed_flag
+            and self != app_obj.fixed_misc_folder
+            and self != app_obj.fixed_clips_folder
+        ):
+            return {}
 
         # Add values to the dictionary
         if media_type == 'channel' or media_type == 'playlist':
@@ -900,6 +919,7 @@ class GenericContainer(GenericMedia):
                 else:
 
                     db_dict = child_obj.prepare_flat_export(
+                        app_obj,
                         db_dict,
                         include_video_flag,
                         include_channel_flag,
@@ -924,6 +944,7 @@ class GenericContainer(GenericMedia):
                 if not isinstance(child_obj, Video):
 
                     db_dict = child_obj.prepare_flat_export(
+                        app_obj,
                         db_dict,
                         include_video_flag,
                         include_channel_flag,
@@ -1093,8 +1114,58 @@ class GenericContainer(GenericMedia):
 
         if flag:
             self.dl_disable_flag = True
+            # This group of flags are mutually exclusive
+            self.dl_no_db_flag = False
+            self.dl_sim_flag = False
+
         else:
             self.dl_disable_flag = False
+
+
+    def set_dl_no_db_flag(self, flag):
+
+        if flag:
+            self.dl_no_db_flag = True
+            # This group of flags are mutually exclusive
+            self.dl_disable_flag = False
+            self.dl_sim_flag = False
+
+        else:
+            self.dl_no_db_flag = False
+
+
+    def set_dl_sim_flag(self, flag):
+
+        if flag:
+            self.dl_sim_flag = True
+            # This group of flags are mutually exclusive
+            self.dl_no_db_flag = False
+            self.dl_disable_flag = False
+
+        else:
+            self.dl_sim_flag = False
+
+
+    def set_external_dir(self, app_obj, external_dir):
+
+        self.external_dir = external_dir
+        if external_dir is not None:
+
+            # If the directory does not exist, try to create it
+            if not os.path.isdir(external_dir) \
+            and not app_obj.make_directory(external_dir):
+
+                # Failed
+                return False
+
+            # If a semaphore file does not exist in the external directory,
+            #   create one
+            if not app_obj.make_semaphore_file(external_dir):
+
+                # Failed
+                return False
+
+        return True
 
 
     def inc_fav_count(self):
@@ -1238,10 +1309,12 @@ class GenericContainer(GenericMedia):
         Fetches the full path to the sub-directory actually used by this
         channel, playlist or folder.
 
-        If self.dbid and self.master_dbid are the same, then files are
-        downloaded to the default location; the sub-directory belonging to the
-        channel/playlist/folder. In that case, this function returns the same
-        value as self.get_default_dir().
+        If self.external_dir is set, returns it.
+
+        Otherwise, if self.dbid and self.master_dbid are the same, then files
+        are downloaded to the default location; the sub-directory belonging to
+        the channel/playlist/folder. In that case, this function returns the
+        same value as self.get_default_dir().
 
         If self.master_dbid is not the same as self.dbid, then files are
         actually downloaded into the sub-directory used by another channel,
@@ -1264,7 +1337,11 @@ class GenericContainer(GenericMedia):
 
         """
 
-        if self.master_dbid != self.dbid:
+        if self.external_dir is not None:
+
+            return self.external_dir
+
+        elif self.master_dbid != self.dbid:
 
             master_obj = app_obj.media_reg_dict[self.master_dbid]
             return master_obj.get_default_dir(app_obj, new_name)
@@ -1281,9 +1358,9 @@ class GenericContainer(GenericMedia):
         Fetches the full path to the sub-directory used by this channel,
         playlist or folder by default.
 
-        If self.master_dbid is not the same as self.dbid, then files are
-        actually downloaded into the sub-directory used by another channel,
-        playlist or folder. To get the actual download sub-directory, call
+        If self.external_dir is set, or if self.master_dbid is not the same as
+        self.dbid, then files are actually downloaded to a non-default
+        location. To get the actual download location, call
         self.get_actual_dir().
 
         Args:
@@ -1333,6 +1410,10 @@ class GenericContainer(GenericMedia):
         actually downloaded into the sub-directory used by another channel,
         playlist or folder. This function returns that sub-directory.
 
+        Exception: if an external directory is set, returns None (as the
+        external directory is always outside Tartube's data directory). THe
+        calling code must check for that
+
         Args:
 
             app_obj (mainapp.TartubeApp): The main application
@@ -1345,7 +1426,8 @@ class GenericContainer(GenericMedia):
         Returns:
 
             The path to the sub-directory relative to
-                mainapp.TartubeApp.downloads_dir
+                mainapp.TartubeApp.downloads_dir, or None if an external
+                directory has been set
 
         """
 
@@ -1366,9 +1448,9 @@ class GenericContainer(GenericMedia):
         Fetches the path to the sub-directory used by this channel, playlist or
         folder by default, relative to mainapp.TartubeApp.downloads_dir.
 
-        If self.master_dbid is not the same as self.dbid, then files are
-        actually downloaded into the sub-directory used by another channel,
-        playlist or folder. To get the actual download sub-directory, call
+        If self.external_dir is set, or if self.master_dbid is not the same as
+        self.dbid, then files are actually downloaded to a non-default
+        location. To get the actual relative location, call
         self.get_relative_actual_dir().
 
         Args:
@@ -1487,8 +1569,9 @@ class GenericRemoteContainer(GenericContainer):
         self.options_obj = other_obj.options_obj
         self.nickname = other_obj.nickname
         self.source = other_obj.source
-        self.dl_sim_flag = other_obj.dl_sim_flag
+        self.dl_no_db_flag = other_obj.dl_no_db_flag
         self.dl_disable_flag = other_obj.dl_disable_flag
+        self.dl_sim_flag = other_obj.dl_sim_flag
         self.fav_flag = other_obj.fav_flag
 
         self.bookmark_count = other_obj.bookmark_count
@@ -2178,7 +2261,12 @@ class Video(GenericMedia):
             self.receive_time = int(time.time())
 
 
-#   def set_dl_sim_flag():      # Inherited from GenericMedia
+    def set_dl_sim_flag(self, flag):
+
+        if flag:
+            self.dl_sim_flag = True
+        else:
+            self.dl_sim_flag = False
 
 
     def set_dummy(self, url, dir_str, format_str):
@@ -2943,6 +3031,12 @@ class Channel(GenericRemoteContainer):
         #   display it)
         self.last_sort_mode = 'default'
 
+        # External download destination - a directory at a fixed position in
+        #   the filesystem, outside Tartube's data directory. Use is not
+        #   recommended because of potential file read/write problems, but is
+        #   available to users who need it
+        # If specified, the full path to the external directory
+        self.external_dir = None
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this channel; but can be set to the
@@ -2955,18 +3049,26 @@ class Channel(GenericRemoteContainer):
         # NB A media data object can't have an alternative download destination
         #   and itself be the alternative download destination for another
         #   media data object; it must be one or the other (or neither)
+        # NB Ignored if self.external_dir is specified
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
         #   channel as its alternative destination
         self.slave_dbid_list = []
 
+        # The flags in this group are mutually exclusive; only one flag (or
+        #   none of them) should be True
+        # Flag set to True if videos in this channel should be downloaded, but
+        #   not added to the database. (If True, the channel and its videos
+        #   are never checked)
+        self.dl_no_db_flag = False
+        # Flag set to True if this channel should never be checked or
+        #   downloaded
+        self.dl_disable_flag = False
         # Flag set to True if Tartube should always simulate the download of
         #   videos in this channel, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
         self.dl_sim_flag = False
-        # Flag set to True if this channel should never be checked or
-        #   downloaded
-        self.dl_disable_flag = False
+
         # Flag set to True if this channel is marked as favourite, meaning
         #   that all child video objects are automatically marked as
         #   favourites
@@ -3118,6 +3220,12 @@ class Playlist(GenericRemoteContainer):
         #   display it)
         self.last_sort_mode = 'default'
 
+        # External download destination - a directory at a fixed position in
+        #   the filesystem, outside Tartube's data directory. Use is not
+        #   recommended because of potential file read/write problems, but is
+        #   available to users who need it
+        # If specified, the full path to the external directory
+        self.external_dir = None
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this playlist; but can be set to the
@@ -3130,18 +3238,26 @@ class Playlist(GenericRemoteContainer):
         # NB A media data object can't have an alternative download destination
         #   and itself be the alternative download destination for another
         #   media data object; it must be one or the other (or neither)
+        # NB Ignored if self.external_dir is specified
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
         #   playlist as its alternative destination
         self.slave_dbid_list = []
 
+        # The flags in this group are mutually exclusive; only one flag (or
+        #   none of them) should be True
+        # Flag set to True if videos in this playlist should be downloaded, but
+        #   not added to the database. (If True, the playlist and its videos
+        #   are never checked)
+        self.dl_no_db_flag = False
+        # Flag set to True if this playlist should never be checked or
+        #   downloaded
+        self.dl_disable_flag = False
         # Flag set to True if Tartube should always simulate the download of
         #   videos in this playlist, or False if the downloads.DownloadManager
         #   object should decide whether to simulate, or not
         self.dl_sim_flag = False
-        # Flag set to True if this playlist should never be checked or
-        #   downloaded
-        self.dl_disable_flag = False
+
         # Flag set to True if this playlist is marked as favourite, meaning
         #   that all child video objects are automatically marked as
         #   favourites
@@ -3305,6 +3421,13 @@ class Folder(GenericContainer):
         #   display it)
         self.last_sort_mode = 'default'
 
+        # External download destination - a directory at a fixed position in
+        #   the filesystem, outside Tartube's data directory. Use is not
+        #   recommended because of potential file read/write problems, but is
+        #   available to users who need it
+        # If specified, the full path to the external directory
+        # NB Fixed folders cannot have an external directory
+        self.external_dir = None
         # Alternative download destination - the dbid of a channel, playlist or
         #   folder in whose directory videos, thumbnails (etc) are downloaded.
         #   By default, set to the dbid of this folder; but can be set to the
@@ -3318,6 +3441,7 @@ class Folder(GenericContainer):
         #   and itself be the alternative download destination for another
         #   media data object; it must be one or the other (or neither)
         # NB Fixed folders cannot have an alternative download destination
+        # NB Ignored if self.external_dir is specified
         self.master_dbid = dbid
         # A list of dbids for any channel, playlist or folder that uses this
         #   folder as its alternative destination
@@ -3340,14 +3464,21 @@ class Folder(GenericContainer):
         #   Tartube shuts down (but the folder itself remains)
         self.temp_flag = temp_flag
 
-        # Flag set to True if Tartube should always simulate the download of
-        #   videos in this folder, or False if the downloads.DownloadManager
-        #   object should decide whether to simulate, or not
-        self.dl_sim_flag = False
+        # The flags in this group are mutually exclusive; only one flag (or
+        #   none of them) should be True
+        # Flag set to True if videos in this folder should be downloaded, but
+        #   not added to the database. (If True, the folder and its videos
+        #   are never checked)
+        self.dl_no_db_flag = False
         # Flag set to True if this folder should never be checked or
         #   downloaded. If True, the setting applies to any descendant
         #   channels, playlists and folders
         self.dl_disable_flag = False
+        # Flag set to True if Tartube should always simulate the download of
+        #   videos in this folder, or False if the downloads.DownloadManager
+        #   object should decide whether to simulate, or not
+        self.dl_sim_flag = False
+
         # Flag set to True if this folder is hidden (not visible in the Video
         #   Index). Note that only folders can be hidden; channels and
         #   playlists cannot
