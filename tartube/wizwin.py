@@ -1075,6 +1075,8 @@ class SetupWizWin(GenericWizWin):
                 ),
             )
             grid.attach(checkbutton, 1, 1, 1, 1)
+            if self.ytdl_fork_no_dependency_flag:
+                checkbutton.set_active(True)
             # (Signal connect appears in the calling function)
 
             return radiobutton2, checkbutton

@@ -182,6 +182,19 @@ YTDLP_OUTPUT_TYPE_LIST = [
     'chapter',
 ]
 
+SPONSORBLOCK_CATEGORY_LIST = [
+    'sponsor',
+    'selfpromo',
+    'interaction',
+    'intro',
+    'outro',
+    'preview',
+    'music_offtopic',
+]
+SPONSORBLOCK_ACTION_LIST = [
+    'skip',
+]
+
 video_option_setup_list = [
     # List of YouTube extractor (format) codes, based on the original list in
     #   youtube-dl-gui, and supplemented by this list:
@@ -760,8 +773,10 @@ SMALL_ICON_DICT = {
     'live_wait_small': 'live_wait.png',
     'no_file_small': 'no_file.png',
     'split_file_small': 'split_file.png',
+    'sponsorblock_small': 'sponsorblock.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
+    'timestamp_small': 'timestamp.png',
     'unavailable_small': 'unavailable.png',
     'warning_small': 'warning.png',
 }
@@ -886,8 +901,9 @@ def do_translate(config_flag=False):
     global MAIN_STAGE_QUEUED, MAIN_STAGE_ACTIVE, MAIN_STAGE_PAUSED, \
     MAIN_STAGE_COMPLETED, MAIN_STAGE_ERROR, MAIN_STAGET_STALLED, \
     ACTIVE_STAGE_PRE_PROCESS, ACTIVE_STAGE_DOWNLOAD, \
-    ACTIVE_STAGE_POST_PROCESS, ACTIVE_STAGE_CAPTURE, ACTIVE_STAGE_MERGE, \
-    ACTIVE_STAGE_CHECKING, COMPLETED_STAGE_FINISHED, COMPLETED_STAGE_WARNING, \
+    ACTIVE_STAGE_CONCATENATE, ACTIVE_STAGE_POST_PROCESS, \
+    ACTIVE_STAGE_CAPTURE, ACTIVE_STAGE_MERGE, ACTIVE_STAGE_CHECKING, \
+    COMPLETED_STAGE_FINISHED, COMPLETED_STAGE_WARNING, \
     COMPLETED_STAGE_ALREADY, ERROR_STAGE_ERROR, ERROR_STAGE_STOPPED, \
     ERROR_STAGE_ABORT
 
@@ -936,8 +952,12 @@ def do_translate(config_flag=False):
             _('Update using PyPI youtube-dl path'),
         'ytdl_update_win_32':
             _('Windows 32-bit update (recommended)'),
+        'ytdl_update_win_32_no_dependencies':
+            _('Windows 32-bit update (use --no-dependencies option)'),
         'ytdl_update_win_64':
             _('Windows 64-bit update (recommended)'),
+        'ytdl_update_win_64_no_dependencies':
+            _('Windows 64-bit update (use --no-dependencies option)'),
         'ytdl_update_disabled':
             _('youtube-dl updates are disabled'),
     }
@@ -952,6 +972,7 @@ def do_translate(config_flag=False):
     # Sub-stages of the 'Active' stage
     ACTIVE_STAGE_PRE_PROCESS = _('Pre-processing')
     ACTIVE_STAGE_DOWNLOAD = _('Downloading')
+    ACTIVE_STAGE_CONCATENATE = _('Concatenating')
     ACTIVE_STAGE_POST_PROCESS = _('Post-processing')
     ACTIVE_STAGE_CAPTURE = _('Capturing')               # Used by YTSC
     ACTIVE_STAGE_MERGE = _('Merging')                   # Used by YTSC

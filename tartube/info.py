@@ -299,9 +299,9 @@ class InfoManager(threading.Thread):
                 if stdout:
 
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252')
+                        stdout = stdout.decode('cp1252', errors='replace')
                     else:
-                        stdout = stdout.decode('utf-8')
+                        stdout = stdout.decode('utf-8', errors='replace')
 
                     self.output_list.append(stdout)
                     self.stdout_list.append(stdout)
@@ -320,9 +320,9 @@ class InfoManager(threading.Thread):
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
             if os.name == 'nt':
-                stderr = stderr.decode('cp1252')
+                stderr = stderr.decode('cp1252', errors='replace')
             else:
-                stderr = stderr.decode('utf-8')
+                stderr = stderr.decode('utf-8', errors='replace')
 
             if stderr:
 

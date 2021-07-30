@@ -241,7 +241,7 @@ class UpdateManager(threading.Thread):
             while not self.stdout_queue.empty():
 
                 stdout = self.stdout_queue.get_nowait().rstrip()
-                stdout = stdout.decode('cp1252')
+                stdout = stdout.decode('cp1252', errors='replace')
 
                 if stdout:
 
@@ -256,7 +256,7 @@ class UpdateManager(threading.Thread):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            stderr = stderr.decode('cp1252')
+            stderr = stderr.decode('cp1252', errors='replace')
 
             # Ignore pacman warning messages, e.g. 'warning: dependency cycle
             #   detected:'
@@ -363,15 +363,29 @@ class UpdateManager(threading.Thread):
             ytdl_update_current = self.app_obj.ytdl_update_current
 
         # Special case: install yt-dlp with no dependencies, if required
-        if self.app_obj.ytdl_fork == 'yt-dlp' \
-        and self.app_obj.ytdl_fork_no_dependency_flag:
-
+        if (
+            (
+                not self.wiz_win_obj \
+                and self.app_obj.ytdl_fork == 'yt-dlp' \
+                and self.app_obj.ytdl_fork_no_dependency_flag
+            ) or (
+                self.wiz_win_obj \
+                and self.wiz_win_obj.ytdl_fork == 'yt-dlp' \
+                and self.wiz_win_obj.ytdl_fork_no_dependency_flag
+            )
+        ):
             if ytdl_update_current == 'ytdl_update_pip':
                 ytdl_update_current = 'ytdl_update_pip_no_dependencies'
 
             elif ytdl_update_current == 'ytdl_update_pip3' \
             or ytdl_update_current == 'ytdl_update_pip3_recommend':
                 ytdl_update_current = 'ytdl_update_pip3_no_dependencies'
+
+            elif ytdl_update_current == 'ytdl_update_win_64':
+                ytdl_update_current = 'ytdl_update_win_64_no_dependencies'
+
+            elif ytdl_update_current == 'ytdl_update_win_32':
+                ytdl_update_current = 'ytdl_update_win_32_no_dependencies'
 
         # Set the system command
         cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
@@ -418,9 +432,9 @@ class UpdateManager(threading.Thread):
                 if stdout:
 
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252')
+                        stdout = stdout.decode('cp1252', errors='replace')
                     else:
-                        stdout = stdout.decode('utf-8')
+                        stdout = stdout.decode('utf-8', errors='replace')
 
                     # "It looks like you installed youtube-dl with a package
                     #   manager, pip, setup.py or a tarball. Please use that to
@@ -453,9 +467,9 @@ class UpdateManager(threading.Thread):
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
             if os.name == 'nt':
-                stderr = stderr.decode('cp1252')
+                stderr = stderr.decode('cp1252', errors='replace')
             else:
-                stderr = stderr.decode('utf-8')
+                stderr = stderr.decode('utf-8', errors='replace')
 
             if stderr:
 

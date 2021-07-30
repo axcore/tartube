@@ -2061,7 +2061,7 @@ class GenericEditWin(GenericConfigWin):
         Sets up the 'Download options' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('Download _options'))
+        tab, grid = self.add_notebook_tab(_('_Options'))
 
         # (Many buttons are not clickable when a channel/playlist/folder's
         #   external directory is marked unavailable)
@@ -2086,16 +2086,16 @@ class GenericEditWin(GenericConfigWin):
             self.on_button_apply_options_clicked,
         )
 
-        self.edit_button = Gtk.Button(_('Edit download options'))
-        grid.attach(self.edit_button, 1, 1, 1, 1)
-        self.edit_button.connect(
+        self.edit_options_button = Gtk.Button(_('Edit download options'))
+        grid.attach(self.edit_options_button, 1, 1, 1, 1)
+        self.edit_options_button.connect(
             'clicked',
             self.on_button_edit_options_clicked,
         )
 
-        self.remove_button = Gtk.Button(_('Remove download options'))
-        grid.attach(self.remove_button, 1, 2, 1, 1)
-        self.remove_button.connect(
+        self.remove_options_button = Gtk.Button(_('Remove download options'))
+        grid.attach(self.remove_options_button, 1, 2, 1, 1)
+        self.remove_options_button.connect(
             'clicked',
             self.on_button_remove_options_clicked,
         )
@@ -2104,8 +2104,8 @@ class GenericEditWin(GenericConfigWin):
             self.apply_options_button.set_sensitive(False)
 
         if not self.edit_obj.options_obj or unavailable_flag:
-            self.edit_button.set_sensitive(False)
-            self.remove_button.set_sensitive(False)
+            self.edit_options_button.set_sensitive(False)
+            self.remove_options_button.set_sensitive(False)
 
 
     # (Shared callbacks)
@@ -2652,6 +2652,926 @@ class GenericPrefWin(GenericConfigWin):
         self.destroy()
 
 
+class CustomDLEditWin(GenericEditWin):
+
+    """Python class for an 'edit window' to modify values in a
+    downloads.CustomDLManager object.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application object
+
+        edit_obj (downloads.CustomDLManager): The object whose attributes will
+            be edited in this window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, app_obj, edit_obj):
+
+        Gtk.Window.__init__(self, title=_('Custom download settings'))
+
+        if self.is_duplicate(app_obj, edit_obj):
+            return
+
+        # IV list - class objects
+        # -----------------------
+        # The mainapp.TartubeApp object
+        self.app_obj = app_obj
+        # The downloads.CustomDLManager object being edited
+        self.edit_obj = edit_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.grid = None                        # Gtk.Grid
+        self.notebook = None                    # Gtk.Notebook
+        self.reset_button = None                # Gtk.Button
+        self.apply_button = None                # Gtk.Button
+        self.ok_button = None                   # Gtk.Button
+        self.cancel_button = None               # Gtk.Button
+        self.checkbutton = None                 # Gtk.CheckButton
+        self.checkbutton2 = None                # Gtk.CheckButton
+        self.checkbutton3 = None                # Gtk.CheckButton
+        self.combo = None                       # Gtk.ComboBox
+        self.button = None                      # Gkt.Button
+        self.button2 = None                     # Gkt.Button
+        self.button3 = None                     # Gkt.Button
+        self.checkbutton4 = None                # Gtk.CheckButton
+        self.spinbutton = None                  # Gtk.SpinButton
+        self.spinbutton2 = None                 # Gtk.SpinButton
+        self.radiobutton = None                 # Gtk.RadioButton
+        self.radiobutton2 = None                # Gtk.RadioButton
+        self.radiobutton3 = None                # Gtk.RadioButton
+        self.radiobutton4 = None                # Gtk.RadioButton
+
+
+        # IV list - other
+        # ---------------
+        # Size (in pixels) of gaps between edit window widgets
+        self.spacing_size = self.app_obj.default_spacing_size
+        # Flag set to True if all four buttons ('Reset', 'Apply', 'Cancel' and
+        #   'OK') are required, or False if just the 'OK' button is required
+        self.multi_button_flag = True
+
+        # When the user changes a value, it is not applied to self.edit_obj
+        #   immediately; instead, it is stored temporarily in this dictionary
+        # If the user clicks the 'OK' or 'Apply' buttons at the bottom of the
+        #   window, the changes are applied to self.edit_obj
+        # If the user clicks the 'Reset' or 'Cancel' buttons, the dictionary
+        #   is emptied and the changes are lost
+        self.edit_dict = {}
+
+
+        # Code
+        # ----
+
+        # Set up the edit window
+        self.setup()
+
+
+    # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericConfigWin
+
+
+#   def setup():                # Inherited from GenericConfigWin
+
+
+#   def setup_grid():           # Inherited from GenericConfigWin
+
+
+#   def setup_notebook():       # Inherited from GenericConfigWin
+
+
+#   def add_notebook_tab():     # Inherited from GenericConfigWin
+
+
+#   def setup_button_strip():   # Inherited from GenericEditWin
+
+
+#   def setup_gap():            # Inherited from GenericConfigWin
+
+
+    # (Non-widget functions)
+
+
+    def apply_changes(self):
+
+        """Called by self.on_button_ok_clicked() and
+        self.on_button_apply_clicked().
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+        Apply to those changes to the object being edited.
+        """
+
+        # Import the main window (for convenience)
+        main_win_obj = self.app_obj.main_win_obj
+
+        # Apply any changes the user has made
+        for key in self.edit_dict.keys():
+            setattr(self.edit_obj, key, self.edit_dict[key])
+
+
+        # If 'divert_mode' has changed, the Video Catalogue must be redrawn
+        if 'divert_mode' in self.edit_dict \
+        and self.app_obj.catalogue_mode_type != 'simple' \
+        and main_win_obj.video_index_current is not None:
+
+            main_win_obj.video_catalogue_redraw_all(
+                main_win_obj.video_index_current,
+                main_win_obj.catalogue_toolbar_current_page,
+            )
+
+        # The changes can now be cleared
+        self.edit_dict = {}
+
+
+#   def retrieve_val():         # Inherited from GenericConfigWin
+
+
+    # (Setup tabs)
+
+
+    def setup_tabs(self):
+
+        """Called by self.setup(), .on_button_apply_clicked() and
+        .on_button_reset_clicked().
+
+        Sets up the tabs for this edit window.
+        """
+
+        self.setup_name_tab()
+        self.setup_downloads_tab()
+        self.setup_delay_tab()
+        self.setup_mirrors_tab()
+
+
+    def setup_name_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Name' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Name'))
+
+        grid_width = 4
+
+        label = self.add_label(grid,
+            _('Name'),
+            0, 0, 2, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'name',
+            2, 0, 1, 1,
+        )
+        entry.set_hexpand(True)
+
+        entry2 = self.add_entry(grid,
+            None,
+            3, 0, 1, 1,
+        )
+        entry2.set_text('#' + str(self.edit_obj.uid))
+        entry2.set_hexpand(False)
+
+        label2 = self.add_label(grid,
+            _('Usage'),
+            0, 1, 2, 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            None,
+            2, 1, 2, 1,
+        )
+        entry3.set_editable(False)
+
+        if self.edit_obj == self.app_obj.general_custom_dl_obj:
+            entry3.set_text(
+                _('Applies everywhere except the Classic Mode Tab'),
+            )
+        elif self.edit_obj == self.app_obj.classic_custom_dl_obj:
+            entry3.set_text(_('Applies to the Classic Mode Tab'))
+        else:
+            entry3.set_text(_('Applies when selected'))
+
+        # (Empty box for spacing)
+        box = Gtk.VBox()
+        grid.attach(box, 0, 2, grid_width, 1)
+        box.set_vexpand(True)
+
+        frame = self.add_pixbuf(grid,
+            'copy_large',
+            0, 3, 1, 1,
+        )
+        frame.set_hexpand(False)
+
+        button = Gtk.Button(
+            _(
+                'Import settings from the general custom download into this' \
+                + ' window',
+            ),
+        )
+        grid.attach(button, 1, 3, (grid_width - 1), 1)
+        button.set_hexpand(True)
+        button.connect('clicked', self.on_clone_settings_clicked)
+        if self.edit_obj == self.app_obj.general_custom_dl_obj:
+            # No point cloning the General Custom Download Manager onto itself
+            button.set_sensitive(False)
+
+        frame2 = self.add_pixbuf(grid,
+            'warning_large',
+            0, 4, 1, 1,
+        )
+        frame2.set_hexpand(False)
+
+        button2 = Gtk.Button(
+            _('Completely reset all settings to their default values'),
+        )
+        grid.attach(button2, 1, 4, (grid_width - 1), 1)
+        button2.set_hexpand(True)
+        button2.connect('clicked', self.on_reset_settings_clicked)
+
+
+    def setup_downloads_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Downloads' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Downloads'))
+        grid_width = 3
+
+        # Download settings
+        self.add_label(grid,
+            '<u>' + _('Download settings') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.checkbutton = self.add_checkbutton(grid,
+            _('Download each video independently of its channel or playlist'),
+            None,
+            0, 1, grid_width, 1,
+        )
+        self.checkbutton.set_active(self.edit_obj.dl_by_video_flag)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            '<i>' + _('Hint: enable this setting first!') + '</i>',
+            0, 2, grid_width, 1,
+        )
+
+        self.checkbutton2 = self.add_checkbutton(grid,
+            _(
+                'Split videos into video clips using timestamps (requires' \
+                + ' FFmpeg)',
+            ),
+            None,
+            0, 3, grid_width, 1,
+        )
+        self.checkbutton2.set_active(self.edit_obj.split_flag)
+        if not self.edit_obj.dl_by_video_flag:
+            self.checkbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.checkbutton3 = self.add_checkbutton(grid,
+            _(
+                'Remove slices from the video using SponsorBlock data' \
+                + ' (requires FFmpeg)'),
+            None,
+            0, 4, grid_width, 1,
+        )
+        self.checkbutton3.set_active(self.edit_obj.slice_flag)
+        if not self.edit_obj.dl_by_video_flag \
+        or self.edit_obj.split_flag:
+            self.checkbutton3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 5, 1, 8)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+        scrolled.set_hexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Remove'), _('Type'), ]
+        ):
+            if i == 0:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        liststore = Gtk.ListStore(bool, str)
+        treeview.set_model(liststore)
+
+        # Initialise the list
+        self.setup_downloads_tab_update_treeview(liststore)
+
+        # Editing buttons
+        label = self.add_label(grid,
+            _('Types of video slice to remove:'),
+            1, 5, 2, 1,
+        )
+        label.set_hexpand(False)
+
+        self.combo = self.add_combo(grid,
+            formats.SPONSORBLOCK_CATEGORY_LIST,
+            None,
+            1, 6, 1, 1,
+        )
+        self.combo.set_hexpand(False)
+        self.combo.set_active(0)
+        if not self.edit_obj.slice_flag:
+            self.combo.set_sensitive(False)
+
+        self.button = Gtk.Button(_('Toggle'))
+        grid.attach(self.button, 2, 6, 1, 1)
+        self.button.set_hexpand(False)
+        if not self.edit_obj.slice_flag:
+            self.button.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 1, 7, 2, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        self.button2 = Gtk.Button(_('Remove all'))
+        grid2.attach(self.button2, 0, 0, 1, 1)
+        self.button2.set_hexpand(True)
+        if not self.edit_obj.slice_flag:
+            self.button2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.button3 = Gtk.Button(_('Remove none'))
+        grid2.attach(self.button3, 1, 0, 1, 1)
+        self.button3.set_hexpand(True)
+        if not self.edit_obj.slice_flag:
+            self.button3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Empty labels for aesthetics)
+        for i in range(5):
+            self.add_label(grid,
+                '',
+                1, (8 + i), 2, 1,
+            )
+
+        # (Signal connects from above)
+        self.checkbutton.connect(
+            'toggled',
+            self.on_dl_by_video_button_toggled,
+        )
+        self.checkbutton2.connect(
+            'toggled',
+            self.on_split_button_toggled,
+        )
+        self.checkbutton3.connect(
+            'toggled',
+            self.on_slice_button_toggled,
+        )
+        self.button.connect(
+            'clicked',
+            self.on_toggle_button_clicked,
+            liststore,
+        )
+        self.button2.connect(
+            'clicked',
+            self.on_select_all_button_clicked,
+            liststore,
+        )
+        self.button3.connect(
+            'clicked',
+            self.on_unselect_all_button_clicked,
+            liststore,
+        )
+
+
+    def setup_downloads_tab_update_treeview(self, liststore):
+
+        """ Called by self.setup_downloads_tab.
+
+        Fills or updates the treeview.
+
+        Args:
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        liststore.clear()
+
+        slice_dict = self.retrieve_val('slice_dict')
+        for category in formats.SPONSORBLOCK_CATEGORY_LIST:
+
+            row_list = []
+            if slice_dict[category]:
+                row_list.append(True)
+            else:
+                row_list.append(False)
+
+            row_list.append(category)
+
+            liststore.append(row_list)
+
+
+    def setup_delay_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Delays' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Delays'))
+        grid_width = 2
+
+        # Download delay settings
+        self.add_label(grid,
+            '<u>' + _('Download delay settings') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.checkbutton4 = self.add_checkbutton(grid,
+            _('Apply a delay after each video/channel/playlist is downloaded'),
+            None,
+            0, 1, grid_width, 1,
+        )
+        self.checkbutton4.set_active(self.edit_obj.delay_flag)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Maximum delay to apply (in minutes)'),
+            0, 2, 1, 1,
+        )
+
+        self.spinbutton = self.add_spinbutton(grid,
+            0.2,
+            None,
+            0.2,                    # Step
+            None,
+            1, 2, 1, 1,
+        )
+        if not self.edit_obj.delay_flag:
+            self.spinbutton.set_sensitive(False)
+
+        self.add_label(grid,
+            _(
+            'Minimum delay to apply (in minutes; randomises the actual delay)'
+            ),
+            0, 3, 1, 1,
+        )
+
+        self.spinbutton2 = self.add_spinbutton(grid,
+            0,
+            self.edit_obj.delay_max,
+            0.2,                    # Step
+            'delay_min',
+            1, 3, 1, 1,
+        )
+        if not self.edit_obj.delay_flag:
+            self.spinbutton2.set_sensitive(False)
+
+        # (Signal connects from above)
+        self.checkbutton4.connect(
+            'toggled',
+            self.on_delay_button_toggled,
+        )
+        self.spinbutton.connect(
+            'value-changed',
+            self.on_delay_spinbutton_changed,
+        )
+
+
+    def setup_mirrors_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Mirrors' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('Mirrors'))
+        grid_width = 2
+
+        # Mirror settings
+        self.add_label(grid,
+            '<u>' + _('Mirror settings') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Obtain a YouTube video from the original website'),
+            None,
+            None,
+            0, 1, grid_width, 1,
+        )
+
+        self.radiobutton2 = self.add_radiobutton(grid,
+            self.radiobutton,
+            _('Obtain the video from HookTube rather than YouTube'),
+            None,
+            None,
+            0, 2, grid_width, 1,
+        )
+        if self.edit_obj.divert_mode == 'hooktube':
+            self.radiobutton2.set_active(True)
+
+        self.radiobutton3 = self.add_radiobutton(grid,
+            self.radiobutton2,
+            _('Obtain the video from Invidious rather than YouTube'),
+            None,
+            None,
+            0, 3, grid_width, 1,
+        )
+        if self.edit_obj.divert_mode == 'invidious':
+            self.radiobutton3.set_active(True)
+
+        self.radiobutton4 = self.add_radiobutton(grid,
+            self.radiobutton3,
+            _('Obtain the video from this YouTube front-end:'),
+            None,
+            None,
+            0, 4, 1, 1,
+        )
+        if self.edit_obj.divert_mode == 'other':
+            self.radiobutton4.set_active(True)
+        # (Signal connect appears below)
+
+        self.entry = self.add_entry(grid,
+            'divert_website',
+            1, 4, 1, 1,
+        )
+        self.entry.set_hexpand(True)
+        if not self.edit_obj.divert_mode == 'other':
+            self.entry.set_sensitive(False)
+
+        msg = _('Type the exact text that replaces youtube.com e.g.')
+        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+
+        self.add_label(grid,
+            '<i>' + msg + '   <b>hooktube.com</b></i>',
+            0, 6, grid_width, 1,
+        )
+
+        if not self.edit_obj.dl_by_video_flag:
+            self.radiobutton.set_sensitive(False)
+            self.radiobutton2.set_sensitive(False)
+            self.radiobutton3.set_sensitive(False)
+            self.radiobutton4.set_sensitive(False)
+            self.entry.set_sensitive(False)
+
+        # (Signal connects from above)
+        self.radiobutton.connect(
+            'toggled',
+            self.on_divert_button_toggled,
+        )
+        self.radiobutton2.connect(
+            'toggled',
+            self.on_divert_button_toggled,
+        )
+        self.radiobutton3.connect(
+            'toggled',
+            self.on_divert_button_toggled,
+        )
+        self.radiobutton4.connect(
+            'toggled',
+            self.on_divert_button_toggled,
+        )
+
+
+    # Callback class methods
+
+
+    def on_clone_settings_clicked(self, button):
+
+        """Called by callback in self.setup_name_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _(
+            'This procedure cannot be reversed. Are you sure you want to' \
+            + ' continue?',
+            ),
+            'question',
+            'yes-no',
+            self,           # Parent window is this window
+            {
+                'yes': 'clone_custom_dl_manager_from_window',
+                'data': [self, self.edit_obj],
+            },
+        )
+
+
+    def on_delay_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_delay_tab().
+
+        Enables/disables delays between downloads of individual media data
+        objects.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['delay_flag'] = True
+
+            self.spinbutton.set_sensitive(True)
+            self.spinbutton2.set_sensitive(True)
+
+        else:
+
+            self.edit_dict['delay_flag'] = False
+
+            self.spinbutton.set_sensitive(False)
+            self.spinbutton2.set_sensitive(False)
+
+
+    def on_delay_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_delay_tab().
+
+        Updates both delay spinbutton widgets, as well as setting the IV.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        value = spinbutton.get_value()
+        self.edit_dict['delay_max'] = value
+        self.spinbutton2.set_range(0, value)
+
+
+    def on_divert_button_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_mirrors_tab().
+
+        Sets the YouTube mirror from which downloads are obtained.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if self.radiobutton.get_active():
+            self.edit_dict['divert_mode'] = 'default'
+        elif self.radiobutton2.get_active():
+            self.edit_dict['divert_mode'] = 'hooktube'
+        elif self.radiobutton3.get_active():
+            self.edit_dict['divert_mode'] = 'invidious'
+        elif self.radiobutton4.get_active():
+            self.edit_dict['divert_mode'] = 'other'
+
+        if self.radiobutton4.get_active():
+            self.entry.set_sensitive(True)
+        else:
+            self.entry.set_sensitive(False)
+            self.entry.set_text('')
+
+
+    def on_dl_by_video_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloads_tab().
+
+        Enables/disables downloading videos independently of their channels/
+        playlists.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['dl_by_video_flag'] = True
+
+            self.checkbutton2.set_sensitive(True)
+            if self.retrieve_val('split_flag'):
+                self.checkbutton3.set_sensitive(False)
+            else:
+                self.checkbutton3.set_sensitive(True)
+            self.radiobutton.set_sensitive(True)
+            self.radiobutton2.set_sensitive(True)
+            self.radiobutton3.set_sensitive(True)
+            self.radiobutton4.set_sensitive(True)
+            if self.retrieve_val('divert_mode') == 'other':
+                self.entry.set_sensitive(True)
+            else:
+                self.entry.set_sensitive(False)
+
+        else:
+
+            self.edit_dict['dl_by_video_flag'] = False
+
+            self.checkbutton2.set_sensitive(False)
+            self.checkbutton3.set_sensitive(False)
+            self.radiobutton.set_sensitive(False)
+            self.radiobutton2.set_sensitive(False)
+            self.radiobutton3.set_sensitive(False)
+            self.radiobutton4.set_sensitive(False)
+            self.entry.set_sensitive(False)
+
+
+    def on_reset_settings_clicked(self, button):
+
+        """Called by callback in self.setup_name_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _(
+            'This procedure cannot be reversed. Are you sure you want to' \
+            + ' continue?',
+            ),
+            'question',
+            'yes-no',
+            self,           # Parent window is this window
+            {
+                'yes': 'reset_custom_dl_manager',
+                # (Reset this edit window, if the user clicks 'yes')
+                'data': [self],
+            },
+        )
+
+
+    def on_select_all_button_clicked(self, button, liststore):
+
+        """Called by callback in self.setup_downloads_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        slice_dict = self.retrieve_val('slice_dict')
+        for key in slice_dict:
+            slice_dict[key] = True
+
+        self.edit_dict['slice_dict'] = slice_dict
+
+        # Update the treeview
+        self.setup_downloads_tab_update_treeview(liststore)
+
+
+    def on_slice_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloads_tab().
+
+        Enables/disables removing slices from a video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['slice_flag'] = True
+
+            self.combo.set_sensitive(True)
+            self.button.set_sensitive(True)
+            self.button2.set_sensitive(True)
+            self.button3.set_sensitive(True)
+
+        else:
+
+            self.edit_dict['split_flag'] = False
+
+            self.combo.set_sensitive(False)
+            self.button.set_sensitive(False)
+            self.button2.set_sensitive(False)
+            self.button3.set_sensitive(False)
+
+
+    def on_split_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloads_tab().
+
+        Enables/disables splitting a video into video clips.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['split_flag'] = True
+
+            self.checkbutton3.set_sensitive(False)
+            self.checkbutton3.set_active(False)
+
+        else:
+
+            self.edit_dict['split_flag'] = False
+
+            self.checkbutton3.set_sensitive(True)
+
+
+    def on_toggle_button_clicked(self, button, liststore):
+
+        """Called by callback in self.setup_downloads_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        combo_iter = self.combo.get_active_iter()
+        combo_model = self.combo.get_model()
+        category = combo_model[combo_iter][0]
+
+        slice_dict = self.retrieve_val('slice_dict')
+
+        if slice_dict[category]:
+            slice_dict[category] = False
+        else:
+            slice_dict[category] = True
+
+        self.edit_dict['slice_dict'] = slice_dict
+
+        # Update the treeview
+        self.setup_downloads_tab_update_treeview(liststore)
+
+
+    def on_unselect_all_button_clicked(self, button, liststore):
+
+        """Called by callback in self.setup_downloads_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        slice_dict = self.retrieve_val('slice_dict')
+        for key in slice_dict:
+            slice_dict[key] = False
+
+        self.edit_dict['slice_dict'] = slice_dict
+
+        # Update the treeview
+        self.setup_downloads_tab_update_treeview(liststore)
+
+
 class OptionsEditWin(GenericEditWin):
 
     """Python class for an 'edit window' to modify values in an
@@ -2934,8 +3854,16 @@ class OptionsEditWin(GenericEditWin):
 
         entry = self.add_entry(grid,
             'name',
-            2, 0, 2, 1,
+            2, 0, 1, 1,
         )
+        entry.set_hexpand(True)
+
+        entry2 = self.add_entry(grid,
+            None,
+            3, 0, 1, 1,
+        )
+        entry2.set_text('#' + str(self.edit_obj.uid))
+        entry2.set_hexpand(False)
 
         label2 = self.add_label(grid,
             _('Download options applied to'),
@@ -2944,41 +3872,41 @@ class OptionsEditWin(GenericEditWin):
 
         if self.media_data_obj:
 
-            entry2 = self.add_entry(grid,
+            entry3 = self.add_entry(grid,
                 None,
                 2, 1, 1, 1,
             )
-            entry2.set_editable(False)
-            entry2.set_hexpand(False)
-            entry2.set_width_chars(8)
-            entry2.set_text('#' + str(self.media_data_obj.dbid))
+            entry3.set_editable(False)
+            entry3.set_hexpand(False)
+            entry3.set_width_chars(8)
+            entry3.set_text('#' + str(self.media_data_obj.dbid))
 
-            entry3 = self.add_entry(grid,
+            entry4 = self.add_entry(grid,
                 None,
                 3, 1, 1, 1,
             )
-            entry3.set_editable(False)
-            entry3.set_hexpand(True)
+            entry4.set_editable(False)
+            entry4.set_hexpand(True)
 
-            entry3.set_text(
+            entry4.set_text(
                 self.media_data_obj.get_translated_type(True) \
                 + ': ' + self.media_data_obj.name,
             )
 
         else:
 
-            entry2 = self.add_entry(grid,
+            entry3 = self.add_entry(grid,
                 None,
                 2, 1, 2, 1,
             )
-            entry2.set_editable(False)
+            entry3.set_editable(False)
 
             if self.edit_obj == self.app_obj.general_options_obj:
-                entry2.set_text(_('All channels, playlists and folders'))
+                entry3.set_text(_('All channels, playlists and folders'))
             elif self.edit_obj == self.app_obj.classic_options_obj:
-                entry2.set_text(_('Downloads in the Classic Mode Tab'))
+                entry3.set_text(_('Downloads in the Classic Mode Tab'))
             else:
-                entry2.set_text(_('These options are not applied to anything'))
+                entry3.set_text(_('These options are not applied to anything'))
 
         self.add_label(grid,
             _(
@@ -7639,9 +8567,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.output_mode_radiobutton3 = None    # Gtk.RadioButton
         self.output_mode_radiobutton4 = None    # Gtk.RadioButton
         self.output_mode_radiobutton5 = None    # Gtk.RadioButton
+        self.output_mode_radiobutton6 = None    # Gtk.RadioButton
         self.h264_grid = None                   # Gtk.Grid
         self.gif_grid = None                    # Gtk.Grid
         self.clip_grid = None                   # Gtk.Grid
+        self.slice_grid = None                  # Gtk.Grid
         self.merge_grid = None                  # Gtk.Grid
         self.thumb_grid = None                  # Gtk.Grid
         # (Settings tab, H.264 grid)
@@ -7666,7 +8596,19 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.add_timestamp_button = None        # Gtk.Button
         self.delete_timestamp_button = None     # Gtk.Button
         self.show_prefs_button = None           # Gtk.Button
-        self.clear_list_button = None           # Gtk.Button
+        self.clear_timestamp_button = None      # Gtk.Button
+        # (Settings tab, slice grid)
+        self.slice_mode_radiobutton = None      # Gtk.RadioButton
+        self.slice_mode_radiobutton2 = None     # Gtk.RadioButton
+        self.slice_mode_liststore = None        # Gtk.ListStore
+        self.category_combo = None              # Gtk.ComboBox
+        self.action_combo = None                # Gtk.ComboBox
+        self.slice_start_entry = None           # Gtk.Entry
+        self.slice_stop_entry = None            # Gtk.Entry
+        self.add_slice_button = None            # Gtk.Button
+        self.delete_slice_button = None         # Gtk.Button
+        self.show_settings_button = None        # Gtk.Button
+        self.clear_slice_button = None          # Gtk.Button
         # (Optimise tab)
         self.seek_flag_checkbutton = None       # Gtk.CheckButton
         self.tuning_film_flag_checkbutton = None
@@ -7702,7 +8644,21 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.simple_delete_timestamp_button = None
                                                 # Gtk.Button
         self.simple_show_prefs_button = None    # Gtk.Button
-        self.simple_clear_list_button = None    # Gtk.Button
+        self.simple_clear_timestamp_button = None
+                                                # Gtk.Button
+        # (Slices tab)
+        self.simple_slice_mode_checkbutton = None
+                                                # Gtk.CheckButton
+        self.simple_slice_mode_radiobutton = None
+                                                # Gtk.RadioButton
+        self.simple_slice_mode_radiobutton2 = None
+                                                # Gtk.RadioButton
+        self.simple_slice_mode_liststore = None # Gtk.ListStore
+        self.simple_category_combo = None       # Gtk.ComboBox
+        self.simple_action_combo = None         # Gtk.ComboBox
+        self.simple_slice_start_entry = None    # Gtk.Entry
+        self.simple_slice_stop_entry = None     # Gtk.Entry
+        self.simple_show_settings_button = None # Gtk.Button
         # (Videox tab)
         self.video_liststore = None             # Gtk.ListStore
 
@@ -7904,6 +8860,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.setup_optimise_tab()
         else:
             self.setup_clips_tab()
+            self.setup_slices_tab()
 
         self.setup_videos_tab()
 
@@ -7936,8 +8893,16 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         entry = self.add_entry(grid,
             'name',
-            2, 0, 2, 1,
+            2, 0, 1, 1,
         )
+        entry.set_hexpand(True)
+
+        entry2 = self.add_entry(grid,
+            None,
+            3, 0, 1, 1,
+        )
+        entry2.set_text('#' + str(self.edit_obj.uid))
+        entry2.set_hexpand(False)
 
         self.add_label(grid,
             _('Extra command line options (e.g. --help)'),
@@ -8160,12 +9125,12 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_Settings'))
 
-        grid_width = 6
+        grid_width = 7
         self.settings_grid = grid
 
         # Input mode
         label = self.add_label(grid,
-            '<u>' + _('Source file') + '</u>',
+            '<u>' + _('Source') + '</u>',
             0, 0, 1, 1,
         )
         label.set_hexpand(False)
@@ -8175,7 +9140,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             _('Downloaded video/audio'),
             None,
             None,
-            1, 0, 3, 1,
+            1, 0, 4, 1,
         )
         self.input_mode_radiobutton.set_hexpand(False)
         # (Signal connect appears below)
@@ -8183,7 +9148,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.audio_flag_checkbutton = self.add_checkbutton(grid,
             _('with audio'),
             None,
-            4, 0, 1, 1,
+            5, 0, 1, 1,
         )
         self.audio_flag_checkbutton.set_hexpand(False)
         if self.retrieve_val('audio_flag'):
@@ -8194,10 +9159,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         self.input_mode_radiobutton2 = self.add_radiobutton(grid,
             self.input_mode_radiobutton,
-            _('Video thumbnail'),
+            _('Thumbnail'),
             None,
             None,
-            5, 0, 1, 1,
+            6, 0, 1, 1,
         )
         self.input_mode_radiobutton2.set_hexpand(False)
         if self.retrieve_val('input_mode') == 'thumb':
@@ -8206,7 +9171,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         # Output mode
         label2 = self.add_label(grid,
-            '<u>' + _('Output file') + '</u>',
+            '<u>' + _('Output') + '</u>',
             0, 1, 1, 1,
         )
         label2.set_hexpand(False)
@@ -8247,34 +9212,47 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         self.output_mode_radiobutton4 = self.add_radiobutton(grid,
             self.output_mode_radiobutton3,
-            _('Merge video/audio'),
+            _('Video slice'),
             None,
             None,
             4, 1, 1, 1,
         )
         self.output_mode_radiobutton4.set_hexpand(False)
-        if self.retrieve_val('output_mode') == 'merge':
+        if self.retrieve_val('output_mode') == 'slice':
             self.output_mode_radiobutton4.set_active(True)
         # (Signal connect appears below)
 
         self.output_mode_radiobutton5 = self.add_radiobutton(grid,
             self.output_mode_radiobutton4,
-            _('Video thumbnail'),
+            _('Merge video/audio'),
             None,
             None,
             5, 1, 1, 1,
         )
         self.output_mode_radiobutton5.set_hexpand(False)
-        if self.retrieve_val('output_mode') == 'thumb':
+        if self.retrieve_val('output_mode') == 'merge':
             self.output_mode_radiobutton5.set_active(True)
+        # (Signal connect appears below)
+
+        self.output_mode_radiobutton6 = self.add_radiobutton(grid,
+            self.output_mode_radiobutton5,
+            _('Thumbnail'),
+            None,
+            None,
+            6, 1, 1, 1,
+        )
+        self.output_mode_radiobutton6.set_hexpand(False)
+        if self.retrieve_val('output_mode') == 'thumb':
+            self.output_mode_radiobutton6.set_active(True)
         # (Signal connect appears below)
 
         # Supplementary grids: one for each 'output_mode'
         # Only one of them is visible at any time (this saves a lot of time
-        #   (de)sensitising widgets
+        #   (de)sensitising widgets)
         self.h264_grid = self.setup_settings_tab_h264_grid(2, grid_width)
         self.gif_grid = self.setup_settings_tab_gif_grid(2, grid_width)
         self.clip_grid = self.setup_settings_tab_clip_grid(2, grid_width)
+        self.slice_grid = self.setup_settings_tab_slice_grid(2, grid_width)
         self.merge_grid = self.setup_settings_tab_merge_grid(2, grid_width)
         self.thumb_grid = self.setup_settings_tab_thumb_grid(2, grid_width)
 
@@ -8313,6 +9291,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
             grid_width,
         )
         self.output_mode_radiobutton5.connect(
+            'toggled',
+            self.on_output_mode_radiobutton_toggled,
+            grid_width,
+        )
+        self.output_mode_radiobutton6.connect(
             'toggled',
             self.on_output_mode_radiobutton_toggled,
             grid_width,
@@ -8673,7 +9656,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             'toggled',
             self.on_split_mode_radiobutton_toggled,
         )
-        self.split_mode_radiobutton.connect(
+        self.split_mode_radiobutton2.connect(
             'toggled',
             self.on_split_mode_radiobutton_toggled,
         )
@@ -8708,7 +9691,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         treeview.set_model(self.split_mode_liststore)
 
         # Initialise the list
-        self.setup_settings_tab_update_treeview()
+        self.setup_settings_tab_update_clip_treeview()
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
@@ -8794,19 +9777,231 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.on_clip_prefs_clicked,
         )
 
-        self.clear_list_button = Gtk.Button(_('Clear list'))
-        grid2.attach(self.clear_list_button, 3, 2, 1, 1)
-        self.clear_list_button.connect(
+        self.clear_timestamp_button = Gtk.Button(_('Clear list'))
+        grid2.attach(self.clear_timestamp_button, 3, 2, 1, 1)
+        self.clear_timestamp_button.connect(
             'clicked',
             self.on_clear_timestamp_clicked,
         )
         if not custom_flag:
-            self.clear_list_button.set_sensitive(False)
+            self.clear_timestamp_button.set_sensitive(False)
 
         return grid
 
 
-    def setup_settings_tab_update_treeview(self):
+    def setup_settings_tab_slice_grid(self, row, outer_width):
+
+        """Called by self.setup_settings_tab().
+
+        Creates a supplementary grid, within the tab's outer grid, which can be
+        swapped in and out as the 'output_mode' option is changed.
+
+        This supplementary grid is visible when 'output_mode' is 'slice'.
+
+        Args:
+
+            row (int): The row on the tab's outer grid, on which the
+                supplementary grid is to be placed
+
+            outer_width (int): The width of the tab's outer grid
+
+        Return values:
+
+            The new Gtk.Grid().
+
+        """
+
+        grid = Gtk.Grid()
+        if self.retrieve_val('output_mode') == 'slice':
+            self.settings_grid.attach(grid, 0, row, outer_width, 1)
+        grid.set_border_width(self.spacing_size)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        grid_width = 4
+
+        self.slice_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Use the videos\' own slice data'),
+            None,
+            None,
+            0, 0, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.slice_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.slice_mode_radiobutton,
+            _('Use this slice data'),
+            None,
+            None,
+            1, 0, 1, 1,
+        )
+        if self.retrieve_val('slice_mode') == 'custom':
+            self.slice_mode_radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        self.slice_mode_radiobutton.connect(
+            'toggled',
+            self.on_slice_mode_radiobutton_toggled,
+        )
+        self.slice_mode_radiobutton2.connect(
+            'toggled',
+            self.on_slice_mode_radiobutton_toggled,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Category'), _('Action Type'), _('Start'), _('Stop') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.slice_mode_liststore = Gtk.ListStore(str, str, str, str)
+        treeview.set_model(self.slice_mode_liststore)
+
+        # Initialise the list
+        self.setup_settings_tab_update_slice_treeview()
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 2, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        # Strip of widgets at the bottom
+        label = self.add_label(grid2,
+            _('Category'),
+            0, 0, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        if self.retrieve_val('slice_mode') == 'video':
+            custom_flag = False
+        else:
+            custom_flag = True
+
+        self.category_combo = self.add_combo(grid2,
+            formats.SPONSORBLOCK_CATEGORY_LIST,
+            None,
+            1, 0, 1, 1,
+        )
+        self.category_combo.set_active(0)
+        if not custom_flag:
+            self.category_combo.set_sensitive(False)
+
+        label2 = self.add_label(grid2,
+            _('Action Type'),
+            2, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        self.action_combo = self.add_combo(grid2,
+            formats.SPONSORBLOCK_ACTION_LIST,
+            None,
+            3, 0, 1, 1,
+        )
+        self.action_combo.set_active(0)
+        if not custom_flag:
+            self.action_combo.set_sensitive(False)
+
+        label3 = self.add_label(grid2,
+            _('Start (timestamp or seconds)'),
+            0, 1, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        self.slice_start_entry = self.add_entry(grid2,
+            None,
+            1, 1, 1, 1,
+        )
+        if not custom_flag:
+            self.slice_start_entry.set_sensitive(False)
+
+        label4 = self.add_label(grid2,
+            _('Stop'),
+            2, 1, 1, 1,
+        )
+        label4.set_hexpand(False)
+
+        self.slice_stop_entry = self.add_entry(grid2,
+            None,
+            3, 1, 1, 1,
+        )
+        if not custom_flag:
+            self.slice_stop_entry.set_sensitive(False)
+
+        # Add yet another grid for the bottom row
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 3, grid_width, 1)
+        grid3.set_vexpand(False)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
+
+        self.add_slice_button = Gtk.Button(_('Add slice'))
+        grid3.attach(self.add_slice_button, 0, 0, 1, 1)
+        self.add_slice_button.set_hexpand(True)
+        self.add_slice_button.connect(
+            'clicked',
+            self.on_add_slice_clicked,
+        )
+        if not custom_flag:
+            self.add_slice_button.set_sensitive(False)
+
+        self.delete_slice_button = Gtk.Button(_('Delete sliuce'))
+        grid3.attach(self.delete_slice_button, 1, 0, 1, 1)
+        self.delete_slice_button.set_hexpand(True)
+        self.delete_slice_button.connect(
+            'clicked',
+            self.on_delete_slice_clicked,
+            treeview,
+        )
+        if not custom_flag:
+            self.delete_slice_button.set_sensitive(False)
+
+        self.show_settings_button = Gtk.Button(_('SponsorBlock settings'))
+        grid3.attach(self.show_settings_button, 2, 0, 1, 1)
+        self.show_settings_button.set_hexpand(True)
+        self.show_settings_button.connect(
+            'clicked',
+            self.on_slice_settings_clicked,
+        )
+
+        self.clear_slice_button = Gtk.Button(_('Clear list'))
+        grid3.attach(self.clear_slice_button, 3, 0, 1, 1)
+        self.clear_slice_button.set_hexpand(True)
+        self.clear_slice_button.connect(
+            'clicked',
+            self.on_clear_slice_clicked,
+        )
+        if not custom_flag:
+            self.clear_slice_button.set_sensitive(False)
+
+        return grid
+
+
+    def setup_settings_tab_update_clip_treeview(self):
 
         """ Called by self.setup_settings_tab_clip_grid().
 
@@ -8832,6 +10027,28 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             self.split_mode_liststore.append(
                 [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
+    def setup_settings_tab_update_slice_treeview(self):
+
+        """ Called by self.setup_settings_tab_slice_grid().
+
+        Fills or updates the treeview.
+        """
+
+        self.slice_mode_liststore.clear()
+
+        # Add slice data to the treeview, one row at a time
+        for mini_dict in self.retrieve_val('slice_list'):
+
+            self.slice_mode_liststore.append(
+                [
+                    mini_dict['category'],
+                    mini_dict['action'],
+                    str(mini_dict['start_time']),
+                    str(mini_dict['stop_time']),
+                ],
             )
 
 
@@ -9095,10 +10312,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
             'toggled',
             self.on_split_mode_radiobutton_toggled,
         )
-        self.simple_split_mode_radiobutton2.connect(
-            'toggled',
-            self.on_split_mode_radiobutton_toggled,
-        )
 
         # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
         #   we'll do everything ourselves)
@@ -9216,14 +10429,14 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.on_clip_prefs_clicked,
         )
 
-        self.simple_clear_list_button = Gtk.Button(_('Clear list'))
-        grid2.attach(self.simple_clear_list_button, 3, 2, 1, 1)
-        self.simple_clear_list_button.connect(
+        self.simple_clear_timestamp_button = Gtk.Button(_('Clear list'))
+        grid2.attach(self.simple_clear_timestamp_button, 3, 2, 1, 1)
+        self.simple_clear_timestamp_button.connect(
             'clicked',
             self.on_clear_timestamp_clicked,
         )
         if not custom_flag:
-            self.simple_clear_list_button.set_sensitive(False)
+            self.simple_clear_timestamp_button.set_sensitive(False)
 
 
     def setup_clips_tab_update_treeview(self):
@@ -9252,6 +10465,234 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             self.simple_split_mode_liststore.append(
                 [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
+    def setup_slices_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Slices' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Slices'))
+
+        grid_width = 2
+        output_mode = self.retrieve_val('output_mode')
+        slice_mode = self.retrieve_val('split_mode')
+
+        self.simple_slice_mode_checkbutton = self.add_checkbutton(grid,
+            _('Remove slices from the video(s)'),
+            None,
+            0, 0, 1, 1,
+        )
+        if output_mode == 'slice':
+            self.simple_slice_mode_checkbutton.set_active(True)
+        # (Signal connect appears below)
+
+        self.simple_slice_mode_radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Use the videos\' own slice data'),
+            None,
+            None,
+            1, 0, 1, 1,
+        )
+        if output_mode != 'slice':
+            self.simple_slice_mode_radiobutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.simple_slice_mode_radiobutton2 = self.add_radiobutton(grid,
+            self.simple_slice_mode_radiobutton,
+            _('Use this slice data'),
+            None,
+            None,
+            1, 1, 1, 1,
+        )
+        if output_mode != 'slice':
+            self.simple_slice_mode_radiobutton2.set_sensitive(False)
+        if slice_mode == 'custom':
+            self.simple_slice_mode_radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        self.simple_slice_mode_checkbutton.connect(
+            'toggled',
+            self.on_simple_slice_toggled,
+        )
+        self.simple_slice_mode_radiobutton.connect(
+            'toggled',
+            self.on_slice_mode_radiobutton_toggled,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Category'), _('Action Type'), _('Start'), _('Stop') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.simple_slice_mode_liststore = Gtk.ListStore(str, str, str, str)
+        treeview.set_model(self.simple_slice_mode_liststore)
+
+        # Initialise the list
+        self.setup_slices_tab_update_treeview()
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 3, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        # Strip of widgets at the bottom
+        label = self.add_label(grid2,
+            _('Category'),
+            0, 0, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        if slice_mode == 'video':
+            custom_flag = False
+        else:
+            custom_flag = True
+
+        self.simple_category_combo = self.add_combo(grid2,
+            formats.SPONSORBLOCK_CATEGORY_LIST,
+            None,
+            1, 0, 1, 1,
+        )
+        self.simple_category_combo.set_active(0)
+        if not custom_flag:
+            self.simple_category_combo.set_sensitive(False)
+
+        label2 = self.add_label(grid2,
+            _('Action Type'),
+            2, 0, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        self.simple_action_combo = self.add_combo(grid2,
+            formats.SPONSORBLOCK_ACTION_LIST,
+            None,
+            3, 0, 1, 1,
+        )
+        self.simple_action_combo.set_active(0)
+        if not custom_flag:
+            self.simple_action_combo.set_sensitive(False)
+
+        label3 = self.add_label(grid2,
+            _('Start (timestamp or seconds)'),
+            0, 1, 1, 1,
+        )
+        label3.set_hexpand(False)
+
+        self.simple_slice_start_entry = self.add_entry(grid2,
+            None,
+            1, 1, 1, 1,
+        )
+        if not custom_flag:
+            self.simple_slice_start_entry.set_sensitive(False)
+
+        label4 = self.add_label(grid2,
+            _('Stop'),
+            2, 1, 1, 1,
+        )
+        label4.set_hexpand(False)
+
+        self.simple_slice_stop_entry = self.add_entry(grid2,
+            None,
+            3, 1, 1, 1,
+        )
+        if not custom_flag:
+            self.simple_slice_stop_entry.set_sensitive(False)
+
+        # Add yet another grid for the bottom row
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 4, grid_width, 1)
+        grid3.set_vexpand(False)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
+
+        self.simple_add_slice_button = Gtk.Button(_('Add slice'))
+        grid3.attach(self.simple_add_slice_button, 0, 2, 1, 1)
+        self.simple_add_slice_button.set_hexpand(True)
+        self.simple_add_slice_button.connect(
+            'clicked',
+            self.on_add_slice_clicked,
+        )
+        if not custom_flag:
+            self.simple_add_slice_button.set_sensitive(False)
+
+        self.simple_delete_slice_button = Gtk.Button(_('Delete slice'))
+        grid3.attach(self.simple_delete_slice_button, 1, 2, 1, 1)
+        self.simple_delete_slice_button.set_hexpand(True)
+        self.simple_delete_slice_button.connect(
+            'clicked',
+            self.on_delete_slice_clicked,
+            treeview,
+        )
+        if not custom_flag:
+            self.simple_delete_slice_button.set_sensitive(False)
+
+        self.simple_show_settings_button \
+        = Gtk.Button(_('SponsorBlock settings'))
+        grid3.attach(self.simple_show_settings_button, 2, 2, 1, 1)
+        self.simple_show_settings_button.set_hexpand(True)
+        self.simple_show_settings_button.connect(
+            'clicked',
+            self.on_slice_settings_clicked,
+        )
+
+        self.simple_clear_slice_button = Gtk.Button(_('Clear list'))
+        grid3.attach(self.simple_clear_slice_button, 3, 2, 1, 1)
+        self.simple_clear_slice_button.set_hexpand(True)
+        self.simple_clear_slice_button.connect(
+            'clicked',
+            self.on_clear_slice_clicked,
+        )
+        if not custom_flag:
+            self.simple_clear_slice_button.set_sensitive(False)
+
+
+    def setup_slices_tab_update_treeview(self):
+
+        """ Called by self.setup_slices_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.simple_slice_mode_liststore.clear()
+
+        # Add slice data to the treeview, one row at a time
+        for mini_dict in self.retrieve_val('slice_list'):
+
+            self.simple_slice_mode_liststore.append(
+                [
+                    mini_dict['category'],
+                    mini_dict['action'],
+                    str(mini_dict['start_time']),
+                    str(mini_dict['stop_time']),
+                ],
             )
 
 
@@ -9482,13 +10923,146 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.edit_dict,
         ),
 
-        if result_list:
-            self.results_textbuffer.set_text(' '.join(result_list[0][2]))
-        else:
+        if not result_list:
             self.results_textbuffer.set_text('')
+
+        else:
+            text = ' '.join(result_list[0][2])
+            if self.retrieve_val('output_mode') == 'slice':
+
+                # Show the concatenation command on a second line
+                concat_list = [
+                    self.app_obj.ffmpeg_manager_obj.get_executable(),
+                    '-safe',
+                    '0',
+                    '-f',
+                    'concat',
+                    '-i',
+                    'clips.txt',
+                    '-c',
+                    'copy',
+                    result_list[0][2][-1],      # Path to the output file
+                ]
+
+                text += '\n' + ' '.join(concat_list)
+
+            self.results_textbuffer.set_text(text)
 
 
     # Callback class methods
+
+
+    def on_add_slice_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_slice_grid().
+
+        In simple mode, called from a callback in self.setup_slices_tab().
+
+        Adds a new slice to the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            tree_iter = self.category_combo.get_active_iter()
+            model = self.category_combo.get_model()
+            category = model[tree_iter][0]
+
+            tree_iter2 = self.action_combo.get_active_iter()
+            model2 = self.action_combo.get_model()
+            action_type = model2[tree_iter2][0]
+
+            start_time = utils.strip_whitespace(
+                self.slice_start_entry.get_text(),
+            )
+
+            stop_time = utils.strip_whitespace(
+                self.slice_stop_entry.get_text(),
+            )
+
+        else:
+
+            tree_iter = self.simple_category_combo.get_active_iter()
+            model = self.simple_category_combo.get_model()
+            category = model[tree_iter][0]
+
+            tree_iter2 = self.simple_action_combo.get_active_iter()
+            model2 = self.simple_action_combo.get_model()
+            action_type = model2[tree_iter2][0]
+
+            start_time = utils.strip_whitespace(
+                self.simple_slice_start_entry.get_text(),
+            )
+
+            stop_time = utils.strip_whitespace(
+                self.simple_slice_stop_entry.get_text(),
+            )
+
+        # Do nothing if specified timestamps aren't valid ('stop_time' is NOT
+        #   optional)
+        start_time = float(
+            utils.timestamp_convert_to_seconds(self.app_obj, start_time),
+        )
+
+        stop_time = float(
+            utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
+        )
+
+        try:
+            ignore = float(start_time)
+            ignore = float(stop_time)
+
+        except:
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        if stop_time <= start_time:
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        # Compile the mini-dictionary in the format described by
+        #   media.Video.__init__()
+        mini_dict = {
+            'category': category,
+            'action': action_type,
+            'start_time': start_time,
+            'stop_time': stop_time,
+            'duration': 0,
+        }
+
+        # Add it to the list
+        slice_list = self.retrieve_val('slice_list')
+        slice_list.append(mini_dict)
+        slice_list = list(sorted(slice_list, key=lambda x:x['start_time']))
+        self.edit_dict['slice_list'] = slice_list
+
+        # Show changes, and empty entry boxes
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            self.setup_settings_tab_update_slice_treeview()
+            self.slice_start_entry.set_text('')
+            self.slice_stop_entry.set_text('')
+
+        else:
+
+            self.setup_slices_tab_update_treeview()
+            self.simple_slice_start_entry.set_text('')
+            self.simple_slice_stop_entry.set_text('')
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
 
 
     def on_add_timestamp_clicked(self, button):
@@ -9497,7 +11071,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         In simple mode, called from a callback in self.setup_clips_tab().
 
-        Adds a new timestamp to video's timestamp list, optionally with a
+        Adds a new timestamp to the video's timestamp list, optionally with a
         clip title.
 
         Args:
@@ -9565,7 +11139,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             #   specified, becomes 'start_stamp' for the next group)
             if not self.app_obj.ffmpeg_simple_options_flag:
 
-                self.setup_settings_tab_update_treeview()
+                self.setup_settings_tab_update_clip_treeview()
 
                 if stop_stamp is not None:
                     self.start_stamp_entry.set_text(
@@ -9598,6 +11172,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 'ok',
                 self,           # Parent window is this window
                 )
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
 
 
     def on_audio_flag_checkbutton_toggled(self, checkbutton):
@@ -9655,6 +11232,28 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.update_system_cmd()
 
 
+    def on_clear_slice_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_slice_grid().
+
+        Empties the slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_dict['slice_list'] = []
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            self.setup_settings_tab_update_slice_treeview()
+        else:
+            self.setup_slices_tab_update_treeview()
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
     def on_clear_timestamp_clicked(self, button):
 
         """Called from a callback in self.setup_settings_tab_clip_grid().
@@ -9669,9 +11268,28 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         self.edit_dict['split_list'] = []
         if not self.app_obj.ffmpeg_simple_options_flag:
-            self.setup_settings_tab_update_treeview()
+            self.setup_settings_tab_update_clip_treeview()
         else:
             self.setup_clips_tab_update_treeview()
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_clip_prefs_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_clip_grid() and
+        .setup_clips_tab().
+
+        Opens the preferences window to show clip settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'clips')
 
 
     def on_clone_options_clicked(self, button):
@@ -9699,9 +11317,72 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
+    def on_delete_slice_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_settings_tab_slice_grid() and
+        .setup_slices_tab().
+
+        Deletes the selected slices from the slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview displaying the slice list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        category = model[this_iter][0]
+        action_type = model[this_iter][1]
+        start_time = float(model[this_iter][2])
+        stop_time = float(model[this_iter][3])
+
+        # Slices are stored as a list of mini-dictionaries, in the form
+        #   described by media.Video.__init__()
+        # Walk the list, and delete the first matching mini-dictionary
+        slice_list = self.retrieve_val('slice_list')
+        mod_list = []
+        match_flag = False
+
+        for mini_dict in slice_list:
+
+            if not match_flag \
+            and mini_dict['category'] == category \
+            and mini_dict['action'] == action_type \
+            and mini_dict['start_time'] == start_time \
+            and mini_dict['stop_time'] == stop_time:
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_dict)
+
+        self.edit_dict['slice_list'] = mod_list
+
+        # (Show changes)
+        if not self.app_obj.ffmpeg_simple_options_flag:
+            self.setup_settings_tab_update_slice_treeview()
+        else:
+            self.setup_slices_tab_update_treeview()
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
     def on_delete_timestamp_clicked(self, button, treeview):
 
-        """Called from a callback in self.setup_settings_tab_clip_grid().
+        """Called from a callback in self.setup_settings_tab_clip_grid() and
+        .setup_clips_tab().
 
         Deletes the selected timestamps from the timestamp list.
 
@@ -9750,9 +11431,12 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         # (Show changes)
         if not self.app_obj.ffmpeg_simple_options_flag:
-            self.setup_settings_tab_update_treeview()
+            self.setup_settings_tab_update_clip_treeview()
         else:
             self.setup_clips_tab_update_treeview()
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
 
 
     def on_input_mode_radiobutton_toggled(self, radiobutton):
@@ -9847,6 +11531,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.settings_grid.remove(self.gif_grid)
         elif old_value == 'split':
             self.settings_grid.remove(self.clip_grid)
+        elif old_value == 'slice':
+            self.settings_grid.remove(self.slice_grid)
         elif old_value == 'merge':
             self.settings_grid.remove(self.merge_grid)
         else:
@@ -9878,13 +11564,21 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         elif self.output_mode_radiobutton4.get_active():
 
+            self.edit_dict['output_mode'] = 'slice'
+
+            self.settings_grid.attach(self.slice_grid, 0, 2, grid_width, 1)
+            self.setup_file_tab_set_sensitive(False)
+            self.setup_optimise_tab_set_sensitive(False)
+
+        elif self.output_mode_radiobutton5.get_active():
+
             self.edit_dict['output_mode'] = 'merge'
 
             self.settings_grid.attach(self.merge_grid, 0, 2, grid_width, 1)
             self.setup_file_tab_set_sensitive(True)
             self.setup_optimise_tab_set_sensitive(False)
 
-        elif self.output_mode_radiobutton5.get_active():
+        elif self.output_mode_radiobutton6.get_active():
 
             self.edit_dict['output_mode'] = 'thumb'
 
@@ -10020,22 +11714,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         )
 
 
-    def on_clip_prefs_clicked(self, button):
-
-        """Called from a callback in self.setup_settings_tab_clip_grid() and
-        .setup_clips_tab().
-
-        Opens the preferences window to show clip settings.
-
-        Args:
-
-            button (Gtk.Button): The widget clicked
-
-        """
-
-        SystemPrefWin(self.app_obj, 'clips')
-
-
     def on_simple_options_clicked(self, button):
 
         """Called by callback in self.setup_name_tab().
@@ -10120,6 +11798,53 @@ class FFmpegOptionsEditWin(GenericEditWin):
             )
 
 
+    def on_simple_slice_toggled(self, checkbutton):
+
+        """Called by callback in self.setup_slices_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if not checkbutton.get_active():
+
+            self.edit_dict['output_mode'] = 'h264'
+            radio_sens_flag = False
+            sens_flag = False
+
+        else:
+
+            # (Update the corresponding checkbutton in the 'Clips' tab)
+            self.simple_split_mode_checkbutton.set_active(False)
+
+            # (Respond to clicks on this checkbutton)
+            self.edit_dict['output_mode'] = 'slice'
+            radio_sens_flag = True
+
+            if self.retrieve_val('slice_mode') == 'video':
+                sens_flag = False
+            else:
+                sens_flag = True
+
+        # (De)sensitise widgets
+        self.simple_slice_mode_radiobutton.set_sensitive(radio_sens_flag)
+        self.simple_slice_mode_radiobutton2.set_sensitive(radio_sens_flag)
+        self.simple_category_combo.set_sensitive(sens_flag)
+        self.simple_action_combo.set_sensitive(sens_flag)
+        self.simple_slice_start_entry.set_sensitive(sens_flag)
+        self.simple_slice_stop_entry.set_sensitive(sens_flag)
+
+        self.simple_add_slice_button.set_sensitive(sens_flag)
+        self.simple_delete_slice_button.set_sensitive(sens_flag)
+        self.simple_show_settings_button.set_sensitive(True)
+        self.simple_clear_slice_button.set_sensitive(sens_flag)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
     def on_simple_split_toggled(self, checkbutton):
 
         """Called by callback in self.setup_clips_tab().
@@ -10138,6 +11863,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         else:
 
+            # (Update the corresponding checkbutton in the 'Slices' tab)
+            self.simple_slice_mode_checkbutton.set_active(False)
+
+            # (Respond to clicks on this checkbutton)
             self.edit_dict['output_mode'] = 'split'
             radio_sens_flag = True
 
@@ -10155,10 +11884,89 @@ class FFmpegOptionsEditWin(GenericEditWin):
         self.simple_add_timestamp_button.set_sensitive(sens_flag)
         self.simple_delete_timestamp_button.set_sensitive(sens_flag)
         self.simple_show_prefs_button.set_sensitive(True)
-        self.simple_clear_list_button.set_sensitive(sens_flag)
+        self.simple_clear_timestamp_button.set_sensitive(sens_flag)
 
         # Update the system command in the 'Name' tab
         self.update_system_cmd()
+
+
+    def on_slice_mode_radiobutton_toggled(self, radiobutton):
+
+        """Called by callback in self.setup_settings_tab_slice_grid().
+
+        In simple mode, called from a callback in self.setup_slices_tab().
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if not self.app_obj.ffmpeg_simple_options_flag:
+
+            if self.slice_mode_radiobutton.get_active():
+
+                self.edit_dict['slice_mode'] = 'video'
+                sens_flag = False
+
+            else:
+
+                self.edit_dict['slice_mode'] = 'custom'
+                sens_flag = True
+
+            # (De)sensitise widgets
+            self.category_combo.set_sensitive(sens_flag)
+            self.action_combo.set_sensitive(sens_flag)
+            self.slice_start_entry.set_sensitive(sens_flag)
+            self.slice_stop_entry.set_sensitive(sens_flag)
+            self.add_slice_button.set_sensitive(sens_flag)
+            self.delete_slice_button.set_sensitive(sens_flag)
+            self.show_settings_button.set_sensitive(True)
+            self.clear_slice_button.set_sensitive(sens_flag)
+
+        else:
+
+            if self.simple_slice_mode_radiobutton.get_active():
+
+                self.edit_dict['slice_mode'] = 'video'
+                sens_flag = False
+
+            else:
+
+                self.edit_dict['slice_mode'] = 'custom'
+                if self.retrieve_val('output_mode') == 'slice':
+                    sens_flag = True
+                else:
+                    sens_flag = False
+
+            # (De)sensitise widgets
+            self.simple_category_combo.set_sensitive(sens_flag)
+            self.simple_action_combo.set_sensitive(sens_flag)
+            self.simple_slice_start_entry.set_sensitive(sens_flag)
+            self.simple_slice_stop_entry.set_sensitive(sens_flag)
+            self.simple_add_slice_button.set_sensitive(sens_flag)
+            self.simple_delete_slice_button.set_sensitive(sens_flag)
+            self.simple_show_settings_button.set_sensitive(True)
+            self.simple_clear_slice_button.set_sensitive(sens_flag)
+
+        # Update the system command in the 'Name' tab
+        self.update_system_cmd()
+
+
+    def on_slice_settings_clicked(self, button):
+
+        """Called from a callback in self.setup_settings_tab_slice_grid() and
+        .setup_slices_tab().
+
+        Opens the preferences window to show slice settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'slices')
 
 
     def on_split_mode_radiobutton_toggled(self, radiobutton):
@@ -10192,7 +12000,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.add_timestamp_button.set_sensitive(sens_flag)
             self.delete_timestamp_button.set_sensitive(sens_flag)
             self.show_prefs_button.set_sensitive(True)
-            self.clear_list_button.set_sensitive(sens_flag)
+            self.clear_timestamp_button.set_sensitive(sens_flag)
 
         else:
 
@@ -10215,8 +12023,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.simple_clip_title_entry.set_sensitive(sens_flag)
             self.simple_add_timestamp_button.set_sensitive(sens_flag)
             self.simple_delete_timestamp_button.set_sensitive(sens_flag)
-            self.simple_show_prefs_button.set_sensitive(sens_flag)
-            self.simple_clear_list_button.set_sensitive(sens_flag)
+            self.simple_show_prefs_button.set_sensitive(True)
+            self.simple_clear_timestamp_button.set_sensitive(sens_flag)
 
         # Update the system command in the 'Name' tab
         self.update_system_cmd()
@@ -10600,6 +12408,8 @@ class VideoEditWin(GenericEditWin):
         self.remove_options_button = None       # Gtk.Button
         # (Widgets used in the Timestamps tab)
         self.timestamp_liststore = None         # Gtk.ListStore
+        # (Widgets used in the Slices tab)
+        self.slice_liststore = None             # Gtk.ListStore
 
 
         # IV list - other
@@ -10661,7 +12471,24 @@ class VideoEditWin(GenericEditWin):
     # (Non-widget functions)
 
 
-#   def apply_changes():        # Inherited from GenericEditWin
+    def apply_changes(self):
+
+        """Called by self.on_button_ok_clicked() and
+        self.on_button_apply_clicked().
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+        Apply to those changes to the object being edited.
+        """
+
+        # Apply any changes the user has made
+        for key in self.edit_dict.keys():
+            setattr(self.edit_obj, key, self.edit_dict[key])
+
+        # The changes can now be cleared
+        self.edit_dict = {}
+
+        # Redraw this media.Video in the Video Catalogue, if it's visible
+        self.app_obj.main_win_obj.video_catalogue_update_video(self.edit_obj)
 
 
 #   def retrieve_val():         # Inherited from GenericConfigWin
@@ -10683,6 +12510,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_livestream_tab()
         self.setup_descrip_tab()
         self.setup_timestamps_tab()
+        self.setup_slices_tab()
         self.setup_errors_warnings_tab()
 
 
@@ -10765,14 +12593,63 @@ class VideoEditWin(GenericEditWin):
         grid3.set_row_spacing(self.spacing_size)
 
         checkbutton = self.add_checkbutton(grid3,
-            _('Video has been downloaded'),
+            _('Video downloaded'),
             'dl_flag',
-            0, 0, 2, 1,
+            0, 0, 1, 1,
         )
         checkbutton.set_sensitive(False)
 
+        checkbutton2 = self.add_checkbutton(grid3,
+            _('Video unwatched'),
+            'new_flag',
+            1, 0, 1, 1,
+        )
+        checkbutton2.set_sensitive(False)
+
+        checkbutton3 = self.add_checkbutton(grid3,
+            _('Video has been split from an original'),
+            'split_flag',
+            0, 1, 2, 1,
+        )
+        checkbutton3.set_sensitive(False)
+
+        checkbutton4 = self.add_checkbutton(grid3,
+            _('Video is archived'),
+            'archive_flag',
+            0, 2, 1, 1,
+        )
+        checkbutton4.set_sensitive(False)
+
+        checkbutton5 = self.add_checkbutton(grid3,
+            _('Video is bookmarked'),
+            'bookmark_flag',
+            1, 2, 1, 1,
+        )
+        checkbutton5.set_sensitive(False)
+
+        checkbutton6 = self.add_checkbutton(grid3,
+            _('Video is favourite'),
+            'fav_flag',
+            0, 3, 1, 1,
+        )
+        checkbutton6.set_sensitive(False)
+
+        checkbutton7 = self.add_checkbutton(grid3,
+            _('Video is in waiting list'),
+            'waiting_flag',
+            1, 3, 1, 1,
+        )
+        checkbutton7.set_sensitive(False)
+
+        checkbutton8 = self.add_checkbutton(grid3,
+            _('Always simulate download of this video'),
+            'dl_sim_flag',
+            0, 4, 2, 1,
+        )
+        checkbutton8.set_sensitive(False)
+
         label2 = self.add_label(grid3,
-            _('Duration'),
+            _('Video ID'),
             2, 0, 1, 1,
         )
         label2.set_hexpand(False)
@@ -10782,20 +12659,11 @@ class VideoEditWin(GenericEditWin):
             3, 0, 1, 1,
         )
         entry2.set_editable(False)
-        if self.edit_obj.duration is not None:
-            entry2.set_text(
-                utils.convert_seconds_to_string(self.edit_obj.duration),
-            )
-
-        checkbutton2 = self.add_checkbutton(grid3,
-            _('Video is marked as unwatched'),
-            'new_flag',
-            0, 1, 2, 1,
-        )
-        checkbutton2.set_sensitive(False)
+        if self.edit_obj.vid is not None:
+            entry2.set_text(self.edit_obj.vid)
 
         label3 = self.add_label(grid3,
-            _('File size'),
+            _('Duration'),
             2, 1, 1, 1,
         )
         label3.set_hexpand(False)
@@ -10805,18 +12673,13 @@ class VideoEditWin(GenericEditWin):
             3, 1, 1, 1,
         )
         entry3.set_editable(False)
-        if self.edit_obj.file_size is not None:
-            entry3.set_text(self.edit_obj.get_file_size_string())
-
-        checkbutton3 = self.add_checkbutton(grid3,
-            _('Video has been split from an original'),
-            'split_flag',
-            0, 2, 2, 1,
-        )
-        checkbutton3.set_sensitive(False)
+        if self.edit_obj.duration is not None:
+            entry3.set_text(
+                utils.convert_seconds_to_string(self.edit_obj.duration),
+            )
 
         label4 = self.add_label(grid3,
-            _('Upload time'),
+            _('File size'),
             2, 2, 1, 1,
         )
         label4.set_hexpand(False)
@@ -10826,25 +12689,11 @@ class VideoEditWin(GenericEditWin):
             3, 2, 1, 1,
         )
         entry4.set_editable(False)
-        if self.edit_obj.upload_time is not None:
-            entry4.set_text(self.edit_obj.get_upload_time_string())
-
-        checkbutton4 = self.add_checkbutton(grid3,
-            _('Video is archived'),
-            'archive_flag',
-            0, 3, 1, 1,
-        )
-        checkbutton4.set_sensitive(False)
-
-        checkbutton5 = self.add_checkbutton(grid3,
-            _('Video is bookmarked'),
-            'bookmark_flag',
-            1, 3, 1, 1,
-        )
-        checkbutton5.set_sensitive(False)
+        if self.edit_obj.file_size is not None:
+            entry4.set_text(self.edit_obj.get_file_size_string())
 
         label5 = self.add_label(grid3,
-            _('Receive time'),
+            _('Upload time'),
             2, 3, 1, 1,
         )
         label5.set_hexpand(False)
@@ -10854,29 +12703,22 @@ class VideoEditWin(GenericEditWin):
             3, 3, 1, 1,
         )
         entry5.set_editable(False)
+        if self.edit_obj.upload_time is not None:
+            entry5.set_text(self.edit_obj.get_upload_time_string())
+
+        label6 = self.add_label(grid3,
+            _('Receive time'),
+            2, 4, 1, 1,
+        )
+        label6.set_hexpand(False)
+
+        entry6 = self.add_entry(grid3,
+            None,
+            3, 4, 1, 1,
+        )
+        entry6.set_editable(False)
         if self.edit_obj.receive_time is not None:
-            entry5.set_text(self.edit_obj.get_receive_time_string())
-
-        checkbutton6 = self.add_checkbutton(grid3,
-            _('Video is favourite'),
-            'fav_flag',
-            0, 4, 1, 1,
-        )
-        checkbutton6.set_sensitive(False)
-
-        checkbutton7 = self.add_checkbutton(grid3,
-            _('Video is in waiting list'),
-            'waiting_flag',
-            1, 4, 1, 1,
-        )
-        checkbutton7.set_sensitive(False)
-
-        checkbutton8 = self.add_checkbutton(grid3,
-            _('Always simulate download of this video'),
-            'dl_sim_flag',
-            2, 4, 2, 1,
-        )
-        checkbutton8.set_sensitive(False)
+            entry6.set_text(self.edit_obj.get_receive_time_string())
 
         # (Signal connect from above)
         button.connect(
@@ -10885,6 +12727,7 @@ class VideoEditWin(GenericEditWin):
             entry,
             entry2,
             entry3,
+            entry4,
         )
 
 
@@ -10898,7 +12741,7 @@ class VideoEditWin(GenericEditWin):
         Sets up the 'Livestream' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('_Livestream'))
+        tab, grid = self.add_notebook_tab(_('_Live'))
 
         grid_width = 2
 
@@ -11050,10 +12893,17 @@ class VideoEditWin(GenericEditWin):
             0, 0, grid_width, 1,
         )
 
+        self.add_label(grid,
+            '<i>' + _(
+                'Timestamps can be used to download or create video clips',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
         # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
         #   we'll do everything ourselves)
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 1, grid_width, 1)
+        grid.attach(frame, 0, 2, grid_width, 1)
 
         scrolled = Gtk.ScrolledWindow()
         frame.add(scrolled)
@@ -11085,72 +12935,72 @@ class VideoEditWin(GenericEditWin):
         # Strip of widgets at the bottom
         label = self.add_label(grid,
             _('Start timestamp (e.g. 15:29)'),
-            0, 2, 1, 1,
+            0, 3, 1, 1,
         )
         label.set_hexpand(False)
 
         entry = self.add_entry(grid,
             None,
-            1, 2, 1, 1,
+            1, 3, 1, 1,
         )
         entry.set_width_chars(12)
         entry.set_hexpand(False)
 
         label2 = self.add_label(grid,
             _('Stop timestamp (optional)'),
-            2, 2, 1, 1,
+            2, 3, 1, 1,
         )
         label2.set_hexpand(False)
 
         entry2 = self.add_entry(grid,
             None,
-            3, 2, 1, 1,
+            3, 3, 1, 1,
         )
         entry2.set_width_chars(12)
         entry2.set_hexpand(False)
 
         label3 = self.add_label(grid,
             _('Clip title (optional)'),
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
         label3.set_hexpand(False)
 
         entry3 = self.add_entry(grid,
             None,
-            1, 3, 3, 1,
+            1, 4, 3, 1,
         )
         entry3.set_hexpand(True)
 
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
         grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 4, grid_width, 1)
+        grid.attach(grid2, 0, 5, grid_width, 1)
         grid2.set_vexpand(False)
         grid2.set_column_spacing(self.spacing_size)
         grid2.set_row_spacing(self.spacing_size)
 
         button = Gtk.Button(_('Add timestamp'))
-        grid2.attach(button, 0, 1, 1, 1)
+        grid2.attach(button, 0, 0, 1, 1)
         button.set_hexpand(True)
         button.connect(
             'clicked',
-            self.on_add_button_clicked,
+            self.on_add_stamp_button_clicked,
             entry,
             entry2,
             entry3,
         )
 
         button2 = Gtk.Button(_('Delete timestamp'))
-        grid2.attach(button2, 1, 1, 1, 1)
+        grid2.attach(button2, 1, 0, 1, 1)
         button2.set_hexpand(True)
         button2.connect(
             'clicked',
-            self.on_delete_button_clicked,
+            self.on_delete_stamp_button_clicked,
             treeview,
         )
 
         button3 = Gtk.Button(_('Clip preferences'))
-        grid2.attach(button3, 2, 1, 1, 1)
+        grid2.attach(button3, 2, 0, 1, 1)
         button3.set_hexpand(True)
         button3.connect(
             'clicked',
@@ -11158,25 +13008,25 @@ class VideoEditWin(GenericEditWin):
         )
 
         button4 = Gtk.Button(_('Clear list'))
-        grid2.attach(button4, 3, 1, 1, 1)
+        grid2.attach(button4, 3, 0, 1, 1)
         button4.set_hexpand(True)
         button4.connect(
             'clicked',
-            self.on_clear_button_clicked,
+            self.on_clear_stamp_button_clicked,
         )
 
         button5 = Gtk.Button(_('Reset list using video description'))
-        grid2.attach(button5, 2, 2, 2, 1)
+        grid2.attach(button5, 2, 1, 2, 1)
         button5.set_hexpand(True)
         button5.connect(
             'clicked',
-            self.on_extract_button_clicked,
+            self.on_extract_stamp_button_clicked,
         )
 
 
     def setup_timestamps_tab_update_treeview(self):
 
-        """ Called by self.setup_files_urls_tab().
+        """ Called by self.setup_timestamps_tab().
 
         Fills or updates the treeview.
         """
@@ -11200,6 +13050,195 @@ class VideoEditWin(GenericEditWin):
 
             self.timestamp_liststore.append(
                 [ start_stamp, stop_stamp, clip_title ],
+            )
+
+
+    def setup_slices_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Slices' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Slices'))
+
+        grid_width = 4
+
+        # Video Slices
+        self.add_label(grid,
+            '<u>' + _('Video Slices') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+                'SponsorBlock provides a list of slices that can be' \
+                + ' removed from a video',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Category'), _('Action Type'), _('Start'), _('Stop') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.slice_liststore = Gtk.ListStore(str, str, str, str)
+        treeview.set_model(self.slice_liststore)
+
+        # Initialise the list
+        self.setup_slices_tab_update_treeview()
+
+        # Strip of widgets at the bottom
+        self.add_label(grid,
+            _('Category'),
+            0, 3, 1, 1
+        )
+
+        combo = self.add_combo(grid,
+            formats.SPONSORBLOCK_CATEGORY_LIST,
+            None,
+            1, 3, 1, 1,
+        )
+        combo.set_active(0)
+
+        self.add_label(grid,
+            _('Action Type'),
+            2, 3, 1, 1
+        )
+
+        combo2 = self.add_combo(grid,
+            formats.SPONSORBLOCK_ACTION_LIST,
+            None,
+            3, 3, 1, 1,
+        )
+        combo2.set_active(0)
+
+        label = self.add_label(grid,
+            _('Start (timestamp or seconds)'),
+            0, 4, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        entry = self.add_entry(grid,
+            None,
+            1, 4, 1, 1,
+        )
+        entry.set_hexpand(False)
+
+        label2 = self.add_label(grid,
+            _('Stop'),
+            2, 4, 1, 1,
+        )
+        label2.set_hexpand(False)
+
+        entry2 = self.add_entry(grid,
+            None,
+            3, 4, 1, 1,
+        )
+        entry2.set_hexpand(False)
+
+        # To avoid messing up the neat format of the rows above, add another
+        #   grid, and put the next set of widgets inside it
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 5, grid_width, 1)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        button = Gtk.Button(_('Add slice'))
+        grid2.attach(button, 0, 0, 1, 1)
+        button.set_hexpand(True)
+        button.connect(
+            'clicked',
+            self.on_add_slice_button_clicked,
+            combo,
+            combo2,
+            entry,
+            entry2,
+        )
+
+        button2 = Gtk.Button(_('Delete slice'))
+        grid2.attach(button2, 1, 0, 1, 1)
+        button2.set_hexpand(True)
+        button2.connect(
+            'clicked',
+            self.on_delete_slice_button_clicked,
+            treeview,
+        )
+
+        button3 = Gtk.Button(_('SponsorBlock settings'))
+        grid2.attach(button3, 2, 0, 1, 1)
+        button3.set_hexpand(True)
+        button3.connect(
+            'clicked',
+            self.on_block_prefs_clicked,
+        )
+
+        button4 = Gtk.Button(_('Clear list'))
+        grid2.attach(button4, 3, 0, 1, 1)
+        button4.set_hexpand(True)
+        button4.connect(
+            'clicked',
+            self.on_clear_slice_button_clicked,
+        )
+
+
+    def setup_slices_tab_update_treeview(self):
+
+        """ Called by self.setup_slices_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.slice_liststore.clear()
+
+        # Add each slice to the treeview, one row at a time
+        for mini_dict in self.edit_obj.slice_list:
+
+            if 'category' in mini_dict:
+                category = mini_dict['category']
+            else:
+                category = 'n/a'
+
+            if 'action' in mini_dict:
+                action = mini_dict['action']
+            else:
+                action = 'n/a'
+
+            if 'start_time' in mini_dict:
+                start_time = mini_dict['start_time']
+            else:
+                start_time = 'n/a'
+
+            if 'stop_time' in mini_dict:
+                stop_time = mini_dict['stop_time']
+            else:
+                stop_time = 'n/a'
+
+            self.slice_liststore.append(
+                [ category, action, str(start_time), str(stop_time) ],
             )
 
 
@@ -11260,7 +13299,90 @@ class VideoEditWin(GenericEditWin):
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
-    def on_add_button_clicked(self, button, entry, entry2, entry3):
+    def on_add_slice_button_clicked(self, button, combo, combo2, entry, \
+    entry2):
+
+        """Called from a callback in self.setup_slicess_tab().
+
+        Adds a new slice to the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo, combo2 (Gtk.Entry): Other widgets to modify
+
+            entry, entry2 (Gtk.Entry): Other widgets to modify
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        category = model[tree_iter][0]
+
+        tree_iter2 = combo2.get_active_iter()
+        model2 = combo2.get_model()
+        action_type = model2[tree_iter2][0]
+
+        start_time = float(
+            utils.timestamp_convert_to_seconds(
+                self.app_obj,
+                utils.strip_whitespace(entry.get_text()),
+            )
+        )
+
+        stop_time = float(
+            utils.timestamp_convert_to_seconds(
+                self.app_obj,
+                utils.strip_whitespace(entry2.get_text()),
+            )
+        )
+
+        # Do nothing if specified timestamps aren't valid ('stop' is NOT
+        #   optional)
+        try:
+            ignore = float(start_time)
+            ignore = float(stop_time)
+
+        except:
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        if stop_time <= start_time:
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        # Compile the mini-dictionary in the format returned by SponsorBlock
+        mini_dict = {
+            'category': category,
+            'action': action_type,
+            'start_time': start_time,
+            'stop_time': stop_time,
+            'duration': 0,
+        }
+
+        # Add it to the list
+        slice_list = self.retrieve_val('slice_list')
+        slice_list.append(mini_dict)
+
+        # (The called function will sort the list)
+        self.edit_obj.set_slices(slice_list)
+
+        # (Show changes, and empty entry boxes)
+        self.setup_slices_tab_update_treeview()
+        entry.set_text('')
+        entry2.set_text('')
+
+
+    def on_add_stamp_button_clicked(self, button, entry, entry2, entry3):
 
         """Called from a callback in self.setup_timestamps_tab().
 
@@ -11314,9 +13436,14 @@ class VideoEditWin(GenericEditWin):
             # (Show changes, and empty entry boxes. The 'stop' timestamp, if
             #   specified, becomes the 'start' timestamp for the next group)
             self.setup_timestamps_tab_update_treeview()
-            entry.set_text(
-                utils.timestamp_add_second(self.app_obj, stop_stamp),
-            )
+
+            if stop_stamp is None:
+                entry.set_text('')
+            else:
+                entry.set_text(
+                    utils.timestamp_add_second(self.app_obj, stop_stamp),
+                )
+
             entry2.set_text('')
             entry3.set_text('')
 
@@ -11327,10 +13454,41 @@ class VideoEditWin(GenericEditWin):
                 'error',
                 'ok',
                 self,           # Parent window is this window
-                )
+            )
 
 
-    def on_clear_button_clicked(self, button):
+    def on_block_prefs_clicked(self, button):
+
+        """Called from a callback in self.setup_slices_tab().
+
+        Opens the preferences window to show (Sponsor)Block settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'slices')
+
+
+    def on_clear_slice_button_clicked(self, button):
+
+        """Called from a callback in self.setup_slices_tab().
+
+        Empties the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.reset_slices()
+        self.setup_slices_tab_update_treeview()
+
+
+    def on_clear_stamp_button_clicked(self, button):
 
         """Called from a callback in self.setup_timestamps_tab().
 
@@ -11361,7 +13519,63 @@ class VideoEditWin(GenericEditWin):
         SystemPrefWin(self.app_obj, 'clips')
 
 
-    def on_delete_button_clicked(self, button, treeview):
+    def on_delete_slice_button_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_slices_tab().
+
+        Deletes the selected slice from the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview displaying the slice list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        category = model[this_iter][0]
+        action_type = model[this_iter][1]
+        start_time = float(model[this_iter][2])
+        stop_time = float(model[this_iter][3])
+
+        # Slices are stored as a list of mini-dictionaries, in the form
+        #   described by self.on_add_slice_button_clicked()
+        # Walk the list, and delete the first matching mini-dictionary
+        slice_list = self.retrieve_val('slice_list')
+        mod_list = []
+        match_flag = False
+
+        for mini_dict in slice_list:
+
+            if not match_flag \
+            and mini_dict['category'] == category \
+            and mini_dict['action'] == action_type \
+            and mini_dict['start_time'] == start_time \
+            and mini_dict['stop_time'] == stop_time:
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_dict)
+
+        # (The called function will sort the list)
+        self.edit_obj.set_slices(mod_list)
+
+        # (Show changes)
+        self.setup_slices_tab_update_treeview()
+
+
+    def on_delete_stamp_button_clicked(self, button, treeview):
 
         """Called from a callback in self.setup_timestamps_tab().
 
@@ -11415,7 +13629,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_timestamps_tab_update_treeview()
 
 
-    def on_extract_button_clicked(self, button):
+    def on_extract_stamp_button_clicked(self, button):
 
         """Called from a callback in self.setup_timestamps_tab().
 
@@ -11432,7 +13646,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_timestamps_tab_update_treeview()
 
 
-    def on_file_button_clicked(self, button, entry, entry2, entry3):
+    def on_file_button_clicked(self, button, entry, entry2, entry3, entry4):
 
         """Called from a callback in self.setup_general_tab().
 
@@ -11443,7 +13657,7 @@ class VideoEditWin(GenericEditWin):
 
             button (Gtk.Button): The widget clicked
 
-            entry, entry2, entry3 (Gtk.Entry): Other widgets to update
+            entry, entry2, entry3, entry4 (Gtk.Entry): Other widgets to update
 
         """
 
@@ -11514,20 +13728,24 @@ class VideoEditWin(GenericEditWin):
 
             # Update the entry boxes
             entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
-            if self.edit_obj.duration is not None:
 
-                entry2.set_text(
+            if self.edit_obj.vid is not None:
+                entry2.set_text(self.edit_obj.vid)
+            else:
+                entry2.set_text('')
+
+            if self.edit_obj.duration is not None:
+                entry3.set_text(
                     utils.convert_seconds_to_string(self.edit_obj.duration),
                 )
 
             else:
-
-                entry2.set_text('')
+                entry3.set_text('')
 
             if self.edit_obj.file_size is not None:
-                entry3.set_text(self.edit_obj.get_file_size_string())
+                entry4.set_text(self.edit_obj.get_file_size_string())
             else:
-                entry3.set_text('')
+                entry4.set_text('')
 
             # If the video exists, then we can mark it as downloaded
             if not self.edit_obj.dl_flag:
@@ -12111,12 +14329,12 @@ class FolderEditWin(GenericEditWin):
         """
 
         self.setup_general_tab()
+        self.setup_download_options_tab()
         self.setup_statistics_tab()
         if mainapp.HAVE_MATPLOTLIB_FLAG:
             self.setup_history_tab()
         if self.edit_obj == self.app_obj.fixed_recent_folder:
             self.setup_recent_tab()
-        self.setup_download_options_tab()
 
 
     def setup_general_tab(self):
@@ -13363,13 +15581,16 @@ class SystemPrefWin(GenericPrefWin):
 
         app_obj (mainapp.TartubeApp): The main application object
 
-        init_mode (str or None): 'db' to open the tab with options for
-            switching the Tartube database, 'forks' to open the tab with
-            youtube-dl forks, 'paths' to open the tab with youtube-dl paths,
-            'live' to open the tab with livestream options, 'options' to open
-            the tab with the list of download options, 'custom_dl' to open the
-            tab with custom download preferences, 'clips' to open the tab with
-            video clip preferences. Any other value is ignored
+        init_mode (str or None): If specified, a tab is automatically selected:
+            - 'db' - options for switching the Tartube database
+            - 'forks' - youtube-dl forks,
+            - 'paths' - youtube-dl paths,
+            - 'live' - livestream options
+            - 'options' - the list of download options
+            - 'custom_dl' - custom download preferences
+            - 'clips' - video clip preferences
+            - 'slices' - video slice preferences
+            - (any other value is ignored)
 
     """
 
@@ -13408,7 +15629,9 @@ class SystemPrefWin(GenericPrefWin):
         self.entry = None                       # Gtk.Entry
         self.entry2 = None                      # Gtk.Entry
         self.url_liststore = None               # Gtk.ListStore
-        # (IVs used to handle widget changes in the 'Downloader' tab)
+        # (IVs used to handle widget changes in the 'Custom' tab)
+        self.custom_liststore = None            # Gtk.ListStore
+        # (IVs used to handle widget changes in the 'Downloaders' tab)
         self.path_liststore = None              # Gtk.ListStore
         self.cmd_liststore = None               # Gtk.ListStore
         # (IVs used to handle widget changes in the 'Scheduling' tab)
@@ -13453,14 +15676,16 @@ class SystemPrefWin(GenericPrefWin):
 
             app_obj (mainapp.TartubeApp): The main application object
 
-            init_mode (str or None): 'db' to open the tab with options for
-                switching the Tartube database, 'forks' to open the tab with
-                youtube-dl forks, 'paths' to open the tab with youtube-dl
-                paths, 'live' to open the tab with livestream options,
-                'options' to open the tab with the list of download options,
-                'custom_dl' to open the tab with custom download preferences,
-                'clips' to open the tab with video clip preferences. Any other
-                value is ignored
+            init_mode (str or None): If specified:
+                - 'db' - options for switching the Tartube database
+                - 'forks' - youtube-dl forks,
+                - 'paths' - youtube-dl paths,
+                - 'live' - livestream options
+                - 'options' - the list of download options
+                - 'custom_dl' - custom download preferences
+                - 'clips' - video clip preferences
+                - 'slices' - video slice preferences
+                - (any other value is ignored)
 
         Return values:
 
@@ -13509,14 +15734,16 @@ class SystemPrefWin(GenericPrefWin):
 
         Args:
 
-            init_mode (str or None): 'db' to open the tab with options for
-                switching the Tartube database, 'forks' to open the tab with
-                youtube-dl forks, 'paths' to open the tab with youtube-dl
-                paths, 'live' to open the tab with livestream options,
-                'options' to open the tab with the list of download options,
-                'custom_dl' to open the tab with custom download preferences,
-                'clips' to open the tab with video clip preferences. Any other
-                value is ignored
+            init_mode (str or None): If specified:
+                - 'db' - options for switching the Tartube database
+                - 'forks' - youtube-dl forks,
+                - 'paths' - youtube-dl paths,
+                - 'live' - livestream options
+                - 'options' - the list of download options
+                - 'custom_dl' - custom download preferences
+                - 'clips' - video clip preferences
+                - 'slices' - video slice preferences
+                - (any other value is ignored)
 
         """
 
@@ -13536,6 +15763,20 @@ class SystemPrefWin(GenericPrefWin):
                 self.select_custom_dl_tab()
             elif init_mode == 'clips':
                 self.select_clips_tab()
+            elif init_mode == 'slices':
+                self.select_slices_tab()
+
+
+    def select_switch_db_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set Tartube's
+        data directory (which contains the Tartube database file).
+        """
+
+        self.notebook.set_current_page(1)
+        self.files_inner_notebook.set_current_page(2)
 
 
     def select_forks_tab(self):
@@ -13548,18 +15789,6 @@ class SystemPrefWin(GenericPrefWin):
 
         self.notebook.set_current_page(5)
         self.downloader_inner_notebook.set_current_page(0)
-
-
-    def select_switch_db_tab(self):
-
-        """Can be called by anything.
-
-        Makes the visible tab the one on which the user can set Tartube's
-        data directory (which contains the Tartube database file).
-        """
-
-        self.notebook.set_current_page(1)
-        self.files_inner_notebook.set_current_page(1)
 
 
     def select_paths_tab(self):
@@ -13583,7 +15812,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(6)
 
 
     def select_options_tab(self):
@@ -13606,7 +15835,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(3)
 
 
     def select_clips_tab(self):
@@ -13618,7 +15847,19 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(6)
+        self.operations_inner_notebook.set_current_page(4)
+
+
+    def select_slices_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the video slice preferences are
+        displayed.
+        """
+
+        self.notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(5)
 
 
     # (Setup tabs)
@@ -14048,9 +16289,9 @@ class SystemPrefWin(GenericPrefWin):
 
         # ...with its own tabs
         self.setup_files_device_tab(self.files_inner_notebook)
+        self.setup_files_config_tab(self.files_inner_notebook)
         self.setup_files_database_tab(self.files_inner_notebook)
         self.setup_files_backups_tab(self.files_inner_notebook)
-        self.setup_files_export_tab(self.files_inner_notebook)
         self.setup_files_videos_tab(self.files_inner_notebook)
         self.setup_files_urls_tab(self.files_inner_notebook)
         self.setup_files_temp_folders_tab(self.files_inner_notebook)
@@ -14155,21 +16396,55 @@ class SystemPrefWin(GenericPrefWin):
             self.on_disk_stop_spinbutton_changed,
         )
 
+
+    def setup_files_config_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Config' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(_('_Config'), inner_notebook)
+
         # Configuration preferences
         self.add_label(grid,
             '<u>' + _('Configuration preferences') + '</u>',
-            0, 7, grid_width, 1,
+            0, 0, 1, 1,
         )
 
         self.add_label(grid,
-            _('Tartube configuration file loaded from:'),
-            0, 8, grid_width, 1,
+            _('Tartube configuration file loaded from'),
+            0, 1, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.get_config_path(),
+            False,
+            0, 2, 1, 1,
+        )
+        entry.set_sensitive(False)
+
+        self.add_label(grid,
+            _('Default location for Tartube configuration'),
+            0, 3, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            self.app_obj.config_file_xdg_path,
+            False,
+            0, 4, 1, 1,
+        )
+        entry2.set_sensitive(False)
+
+        self.add_label(grid,
+            _('Alternative location for Tartube configuration'),
+            0, 5, 1, 1,
         )
 
         entry3 = self.add_entry(grid,
-            self.app_obj.get_config_path(),
+            self.app_obj.config_file_path,
             False,
-            0, 9, grid_width, 1,
+            0, 6, 1, 1,
         )
         entry3.set_sensitive(False)
 
@@ -14368,17 +16643,19 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab(_('_Backups'), inner_notebook)
 
+        grid_width = 3
+
         # Backup preferences
         self.add_label(grid,
             '<u>' + _('Backup preferences') + '</u>',
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
         self.add_label(grid,
             '<i>' + _(
                 'When saving a database file, Tartube makes a backup copy of' \
                 + ' it (in case something goes wrong)',
             ) + '</i>',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
 
         radiobutton = self.add_radiobutton(grid,
@@ -14387,7 +16664,7 @@ class SystemPrefWin(GenericPrefWin):
             'Delete the backup file as soon as the save procedure is' \
             + ' finished',
             ),
-            0, 2, 1, 1,
+            0, 2, grid_width, 1,
         )
         # (Signal connect appears below)
 
@@ -14396,7 +16673,7 @@ class SystemPrefWin(GenericPrefWin):
             _(
             'Keep the backup file, replacing any previous backup file',
             ),
-            0, 3, 1, 1,
+            0, 3, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'single':
             radiobutton2.set_active(True)
@@ -14408,7 +16685,7 @@ class SystemPrefWin(GenericPrefWin):
             'Make a new backup file once per day, after the day\'s first' \
             + ' save procedure',
             ),
-            0, 4, 1, 1,
+            0, 4, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'daily':
             radiobutton3.set_active(True)
@@ -14417,7 +16694,7 @@ class SystemPrefWin(GenericPrefWin):
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
             _('Make a new backup file for every save procedure'),
-            0, 5, 1, 1,
+            0, 5, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'always':
             radiobutton4.set_active(True)
@@ -14448,30 +16725,15 @@ class SystemPrefWin(GenericPrefWin):
             'always',
         )
 
-
-    def setup_files_export_tab(self, inner_notebook):
-
-        """Called by self.setup_files_tab().
-
-        Sets up the 'Export' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Export'),
-            inner_notebook,
-        )
-
-        grid_width = 3
-
         # Export preferences
         self.add_label(grid,
             '<u>' + _('Export preferences') + '</u>',
-            0, 0, 3, 1,
+            0, 6, grid_width, 1,
         )
 
         label = self.add_label(grid,
             _('Separator used in CSV exports'),
-            0, 1, 1, 1,
+            0, 7, 1, 1,
         )
         label.set_hexpand(False)
 
@@ -14479,7 +16741,7 @@ class SystemPrefWin(GenericPrefWin):
         combo = self.add_combo(grid,
             ['|', ','],
             self.app_obj.export_csv_separator,
-            1, 1, 1, 1,
+            1, 7, 1, 1,
         )
         combo.set_hexpand(False)
         combo.connect('changed', self.on_separator_combo_changed)
@@ -15291,8 +17553,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton8 = self.add_checkbutton(grid,
             _(
-            'Disable the \'Download all\' buttons in the toolbar and the' \
-            + ' Videos Tab',
+            'Disable the download buttons in the toolbar and the Videos Tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
@@ -16460,13 +18721,15 @@ class SystemPrefWin(GenericPrefWin):
         # ...with its own tabs
         self.setup_operations_limits_tab(self.operations_inner_notebook)
         self.setup_operations_stop_tab(self.operations_inner_notebook)
-        self.setup_operations_prefs_tab(self.operations_inner_notebook)
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
-        self.setup_operations_custom_tab(self.operations_inner_notebook)
-        self.setup_operations_livestreams_tab(self.operations_inner_notebook)
+        self.setup_operations_custom_dl_tab(self.operations_inner_notebook)
         self.setup_operations_clips_tab(self.operations_inner_notebook)
-        self.setup_operations_proxies_tab(self.operations_inner_notebook)
+        self.setup_operations_slices_tab(self.operations_inner_notebook)
+        self.setup_operations_livestreams_tab(self.operations_inner_notebook)
         self.setup_operations_actions_tab(self.operations_inner_notebook)
+        self.setup_operations_mirrors_tab(self.operations_inner_notebook)
+        self.setup_operations_proxies_tab(self.operations_inner_notebook)
+        self.setup_operations_prefs_tab(self.operations_inner_notebook)
 
 
     def setup_operations_limits_tab(self, inner_notebook):
@@ -16713,7 +18976,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called by self.setup_operations_tab().
 
-        Sets up the 'Performance' inner notebook tab.
+        Sets up the 'Stop' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -16726,7 +18989,7 @@ class SystemPrefWin(GenericPrefWin):
         # Time-saving settings
         self.add_label(grid,
             '<u>' + _('Time-saving settings') + '</u>',
-            0, 4, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -16736,20 +18999,20 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.operation_limit_flag,
             True,               # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 1, grid_width, 1,
         )
         checkbutton.set_hexpand(False)
         # (Signal connect appears below)
 
         self.add_label(grid,
             _('Stop after this many videos (when checking)'),
-            0, 6, 1, 1,
+            0, 2, 1, 1,
         )
 
         entry = self.add_entry(grid,
             self.app_obj.operation_check_limit,
             True,
-            1, 6, 1, 1,
+            1, 2, 1, 1,
         )
         entry.set_width_chars(4)
         entry.connect('changed', self.on_check_limit_changed)
@@ -16758,13 +19021,13 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Stop after this many videos (when downloading)'),
-            0, 7, 1, 1,
+            0, 3, 1, 1,
         )
 
         entry2 = self.add_entry(grid,
             self.app_obj.operation_download_limit,
             True,
-            1, 7, 1, 1,
+            1, 3, 1, 1,
         )
         entry2.set_width_chars(4)
         entry2.connect('changed', self.on_dl_limit_changed)
@@ -16777,178 +19040,6 @@ class SystemPrefWin(GenericPrefWin):
             self.on_limit_button_toggled,
             entry,
             entry2,
-        )
-
-
-    def setup_operations_prefs_tab(self, inner_notebook):
-
-        """Called by self.setup_operations_tab().
-
-        Sets up the 'Preferences' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('P_references'),
-            inner_notebook,
-        )
-
-        grid_width = 2
-
-        # URL flexibility preferences
-        self.add_label(grid,
-            '<u>' + _('URL flexibility preferences') + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        radiobutton = self.add_radiobutton(grid,
-            None,
-            _(
-            'If a video\'s URL represents a channel/playlist, not a video,' \
-            + ' don\'t download it',
-            ),
-            0, 1, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        radiobutton2 = self.add_radiobutton(grid,
-            radiobutton,
-            _('...or, download multiple videos into the containing folder'),
-            0, 2, grid_width, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'multi':
-            radiobutton2.set_active(True)
-        # (Signal connect appears below)
-
-        radiobutton3 = self.add_radiobutton(grid,
-            radiobutton2,
-            _(
-            '...or, create a new channel, and download the videos into that',
-            ),
-            0, 3, grid_width, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'channel':
-            radiobutton3.set_active(True)
-        # (Signal connect appears below)
-
-        radiobutton4 = self.add_radiobutton(grid,
-            radiobutton3,
-            _(
-            '...or, create a new playlist, and download the videos into that',
-            ),
-            0, 4, grid_width, 1,
-        )
-        if self.app_obj.operation_convert_mode == 'playlist':
-            radiobutton4.set_active(True)
-        # (Signal connect appears below)
-
-        # (Signal connects from above)
-        radiobutton.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'disable',
-        )
-        radiobutton2.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'multi',
-        )
-        radiobutton3.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'channel',
-        )
-        radiobutton4.connect(
-            'toggled',
-            self.on_convert_from_button_toggled,
-            'playlist',
-        )
-
-        # Missing video preferences
-        self.add_label(grid,
-            '<u>' + _('Missing video preferences') + '</u>',
-            0, 5, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'Add videos which have been removed from a channel/playlist to' \
-            + ' the Missing Videos folder',
-            ),
-            self.app_obj.track_missing_videos_flag,
-            True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-            'Only add videos that were uploaded within this many days',
-            ),
-            self.app_obj.track_missing_time_flag,
-            True,                   # Can be toggled by user
-            0, 7, 1, 1,
-        )
-        if not self.app_obj.track_missing_videos_flag:
-            checkbutton2.set_sensitive(False)
-        # (Signal connect appears below)
-
-        spinbutton = self.add_spinbutton(grid,
-            0,
-            365,
-            1,                  # Step
-            self.app_obj.track_missing_time_days,
-            1, 7, 1, 1,
-        )
-        if not self.app_obj.track_missing_videos_flag \
-        or not self.app_obj.track_missing_time_flag:
-            spinbutton.set_sensitive(False)
-        # (Signal connect appears below)
-
-        # (Signal connects from above)
-        checkbutton.connect(
-            'toggled',
-            self.on_missing_videos_button_toggled,
-            checkbutton2,
-            spinbutton,
-        )
-        checkbutton2.connect(
-            'toggled',
-            self.on_missing_time_button_toggled,
-            spinbutton,
-        )
-        spinbutton.connect(
-            'value-changed',
-            self.on_missing_time_spinbutton_changed,
-        )
-
-        # Invidious mirror
-        self.add_label(grid,
-            '<u>' + _('Invidious mirror') + '</u>',
-            0, 8, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            _(
-                'To find an updated list of Invidious mirrors, use any' \
-                + ' search engine!',
-            ),
-            0, 9, grid_width, 1,
-        )
-
-        entry = self.add_entry(grid,
-            self.app_obj.custom_invidious_mirror,
-            True,
-            0, 10, grid_width, 1,
-        )
-        entry.connect('changed', self.on_invidious_mirror_changed)
-
-        msg = _('Type the exact text that replaces youtube.com e.g.')
-        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
-
-        self.add_label(grid,
-            '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \
-            + '</b></i>',
-            0, 11, grid_width, 1,
         )
 
 
@@ -17123,7 +19214,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton9.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
 
-    def setup_operations_custom_tab(self, inner_notebook):
+    def setup_operations_custom_dl_tab(self, inner_notebook):
 
         """Called by self.setup_operations_tab().
 
@@ -17131,388 +19222,210 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Custom'), inner_notebook)
-        grid_width = 2
+        grid_width = 4
 
-        # Custom download preferences
+        # Custom downloads
         self.add_label(grid,
-            '<u>' + _('Custom download preferences') + '</u>',
+            '<u>' + _('Custom downloads') + '</u>',
             0, 0, grid_width, 1,
         )
 
-        checkbutton = self.add_checkbutton(grid,
-            _(
-            'In custom downloads, download each video independently of its' \
-            + ' channel or playlist',
-            ),
-            self.app_obj.custom_dl_by_video_flag,
-            True,                   # Can be toggled by user
-            0, 1, grid_width, 1,
-        )
-        # (Signal connect appears below)
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
 
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-            '...and split videos into video clips using timestamps',
-            ),
-            self.app_obj.custom_dl_split_flag,
-            True,                   # Can be toggled by user
-            0, 2, grid_width, 1,
-        )
-        # (Signal connect appears below)
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
 
-        checkbutton3 = self.add_checkbutton(grid,
-            _(
-            'In custom downloads, apply a delay after each video/channel/' \
-            + 'playlist is downloaded',
-            ),
-            self.app_obj.custom_dl_delay_flag,
-            True,                   # Can be toggled by user
-            0, 3, grid_width, 1,
-        )
-        # (Signal connect appears below)
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
 
+        # (The final column is deliberately empty, so that the previous column
+        #   doesn't expand to fill the whole available area)
+        for i, column_title in enumerate(
+            [ '#', _('Name'), _('Default'), _('Classic Mode'), '']
+        ):
+            if i == 2 or i == 3:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        self.custom_liststore = Gtk.ListStore(int, str, bool, bool, str)
+        treeview.set_model(self.custom_liststore)
+
+        # Initialise the list
+        self.setup_operations_custom_dl_tab_update_treeview()
+
+        # Add editing buttons
         self.add_label(grid,
-            _('Maximum delay to apply (in minutes)'),
-            0, 4, 1, 1,
-        )
-
-        spinbutton = self.add_spinbutton(grid,
-            0.2,
-            None,
-            0.2,                    # Step
-            self.app_obj.custom_dl_delay_max,
-            1, 4, 1, 1,
-        )
-        # (Signal connect appears below)
-        if not self.app_obj.custom_dl_delay_flag:
-            spinbutton.set_sensitive(False)
-
-        self.add_label(grid,
-            _(
-            'Minimum delay to apply (in minutes; randomises the actual' \
-            + ' delay)',
-            ),
-            0, 5, 1, 1,
-        )
-
-        spinbutton2 = self.add_spinbutton(grid,
-            0,
-            self.app_obj.custom_dl_delay_max,
-            0.2,                    # Step
-            self.app_obj.custom_dl_delay_min,
-            1, 5, 1, 1,
-        )
-        spinbutton2.connect(
-            'value-changed',
-            self.on_delay_min_spinbutton_changed,
-        )
-        if not self.app_obj.custom_dl_delay_flag:
-            spinbutton2.set_sensitive(False)
-
-        radiobutton = self.add_radiobutton(grid,
-            None,
-            _(
-            'In custom downloads, obtain a YouTube video from the original' \
-            + ' website',
-            ),
-            0, 6, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        radiobutton2 = self.add_radiobutton(grid,
-            radiobutton,
-            _(
-            'In custom downloads, obtain the video from HookTube rather' \
-            + ' than YouTube',
-            ),
-            0, 7, grid_width, 1,
-        )
-        if self.app_obj.custom_dl_divert_mode == 'hooktube':
-            radiobutton2.set_active(True)
-        # (Signal connect appears below)
-
-        radiobutton3 = self.add_radiobutton(grid,
-            radiobutton2,
-            _(
-            'In custom downloads, obtain the video from Invidious rather' \
-            + ' than YouTube',
-            ),
-            0, 8, grid_width, 1,
-        )
-        if self.app_obj.custom_dl_divert_mode == 'invidious':
-            radiobutton3.set_active(True)
-        # (Signal connect appears below)
-
-        radiobutton4 = self.add_radiobutton(grid,
-            radiobutton3,
-            _(
-            'In custom downloads, obtain the video from the YouTube' \
-            + ' front-end specified below',
-            ),
-            0, 9, grid_width, 1,
-        )
-        if self.app_obj.custom_dl_divert_mode == 'other':
-            radiobutton4.set_active(True)
-        # (Signal connect appears below)
-
-        entry = self.add_entry(grid,
-            self.app_obj.custom_dl_divert_website,
-            True,
-            0, 10, grid_width, 1,
-        )
-        entry.connect('changed', self.on_alt_website_changed)
-        if not self.app_obj.custom_dl_divert_mode == 'other':
-            entry.set_sensitive(False)
-
-        msg = _('Type the exact text that replaces youtube.com e.g.')
-        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
-
-        self.add_label(grid,
-            '<i>' + msg + '   <b>hooktube.com</b></i>',
-            0, 11, grid_width, 1,
-        )
-
-        if not self.app_obj.custom_dl_by_video_flag:
-            checkbutton2.set_sensitive(False)
-            radiobutton.set_sensitive(False)
-            radiobutton2.set_sensitive(False)
-            radiobutton3.set_sensitive(False)
-            radiobutton4.set_sensitive(False)
-            entry.set_sensitive(False)
-
-        # (Signal connects from above)
-        checkbutton.connect(
-            'toggled',
-            self.on_custom_video_button_toggled,
-            checkbutton2,
-            radiobutton, radiobutton2, radiobutton3, radiobutton4,
-            entry,
-        )
-
-        checkbutton2.connect(
-            'toggled',
-            self.on_custom_split_button_toggled,
-        )
-
-        checkbutton3.connect(
-            'toggled',
-            self.on_custom_delay_button_toggled,
-            spinbutton,
-            spinbutton2,
-        )
-
-        spinbutton.connect(
-            'value-changed',
-            self.on_delay_max_spinbutton_changed,
-            spinbutton2,
-        )
-
-        radiobutton.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            entry,
-            'default',
-        )
-
-        radiobutton2.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            entry,
-            'hooktube',
-        )
-
-        radiobutton3.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            entry,
-            'invidious',
-        )
-
-        radiobutton4.connect(
-            'toggled',
-            self.on_custom_divert_button_toggled,
-            entry,
-            'other',
-        )
-
-
-    def setup_operations_livestreams_tab(self, inner_notebook):
-
-        """Called by self.setup_scheduling_tab().
-
-        Sets up the 'Streams' inner notebook tab.
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('L_ivestreams'),
-            inner_notebook,
-        )
-
-        grid_width = 2
-
-        # Livestream preferences
-        self.add_label(grid,
-            '<u>' + _(
-                'Livestream preferences (compatible websites only)',
-            ) + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Detect livestreams announced within this many days'),
-            self.app_obj.enable_livestreams_flag,
-            True,                   # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        # (Signal connect appears below)
-        spinbutton = self.add_spinbutton(grid,
-            0, None, 1, self.app_obj.livestream_max_days,
-            1, 1, 1, 1,
-        )
-        if not self.app_obj.enable_livestreams_flag:
-            spinbutton.set_sensitive(False)
-        # (Signal connect appears below)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('How often to check the status of livestreams (in minutes)'),
-            self.app_obj.scheduled_livestream_flag,
-            True,                   # Can be toggled by user
+            'Name',
             0, 2, 1, 1,
         )
-        if not self.app_obj.enable_livestreams_flag:
-            checkbutton2.set_sensitive(False)
-        # (Signal connect appears below)
 
-        spinbutton2 = self.add_spinbutton(grid,
-            1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
+        entry = self.add_entry(grid,
+            None,
+            True,
             1, 2, 1, 1,
         )
-        if not self.app_obj.enable_livestreams_flag \
-        or not self.app_obj.scheduled_livestream_flag:
-            spinbutton2.set_sensitive(False)
-        # (Signal connect appears below)
 
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Check more frequently when a livestream is due to start'),
-            self.app_obj.scheduled_livestream_extra_flag,
-            True,                   # Can be toggled by user
-            0, 3, grid_width, 1,
-        )
-        if not self.app_obj.enable_livestreams_flag \
-        or not self.app_obj.scheduled_livestream_flag:
-            checkbutton3.set_sensitive(False)
-        checkbutton3.connect(
-            'toggled',
-            self.on_extra_livestreams_button_toggled,
+        button = Gtk.Button()
+        grid.attach(button, 2, 2, 1, 1)
+        button.set_label(_('Add'))
+        button.connect(
+            'clicked',
+            self.on_custom_dl_add_button_clicked,
+            entry,
         )
 
-        # (Signal connects from above)
-        checkbutton.connect(
-            'toggled',
-            self.on_enable_livestreams_button_toggled,
-            checkbutton2,
-            checkbutton3,
-            spinbutton,
-            spinbutton2,
+        button2 = Gtk.Button()
+        grid.attach(button2, 3, 2, 1, 1)
+        button2.set_label(_('Import'))
+        button2.connect(
+            'clicked',
+            self.on_custom_dl_import_button_clicked,
+            entry,
         )
 
-        spinbutton.connect(
-            'value-changed',
-            self.on_livestream_max_days_spinbutton_changed,
+        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
+        #   mess up the formatting)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 3, grid_width, 1)
+
+        button3 = Gtk.Button()
+        grid2.attach(button3, 0, 0, 1, 1)
+        button3.set_label(_('Edit'))
+        button3.connect(
+            'clicked',
+            self.on_custom_dl_edit_button_clicked,
+            treeview,
         )
 
-        checkbutton2.connect(
-            'toggled',
-            self.on_scheduled_livestreams_button_toggled,
-            checkbutton3,
-            spinbutton2,
+        button4 = Gtk.Button()
+        grid2.attach(button4, 1, 0, 1, 1)
+        button4.set_label(_('Export'))
+        button4.connect(
+            'clicked',
+            self.on_custom_dl_export_button_clicked,
+            treeview,
         )
 
-        spinbutton2.connect(
-            'value-changed',
-            self.on_scheduled_livestreams_spinbutton_changed,
+        button5 = Gtk.Button()
+        grid2.attach(button5, 2, 0, 1, 1)
+        button5.set_label(_('Clone'))
+        button5.connect(
+            'clicked',
+            self.on_custom_dl_clone_button_clicked,
+            treeview,
         )
 
-        # Broadcast preferences
-        self.add_label(grid,
-            '<u>' + _(
-                'Broadcast preferences (compatible websites only)',
-            ) + '</u>',
-            0, 4, grid_width, 1,
+        button6 = Gtk.Button()
+        grid2.attach(button6, 3, 0, 1, 1)
+        button6.set_label(_('Use in Classic Mode tab'))
+        button6.connect(
+            'clicked',
+            self.on_custom_dl_use_classic_button_clicked,
+            treeview,
         )
 
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Use Youtube Stream Capture to download broadcasting' \
-                + ' livestreams (requires aria2)',
+        button7 = Gtk.Button()
+        grid2.attach(button7, 4, 0, 1, 1)
+        button7.set_label(_('Delete'))
+        button7.connect(
+            'clicked',
+            self.on_custom_dl_delete_button_clicked,
+            treeview,
+        )
+
+        # (Use an empty label for spacing)
+        label = self.add_label(grid2,
+            '',
+            5, 0, 1, 1,
+        )
+        label.set_hexpand(True)
+
+        button8 = Gtk.Button()
+        grid2.attach(button8, 6, 0, 1, 1)
+        button8.set_label(_('Refresh list'))
+        button8.connect(
+            'clicked',
+            self.setup_operations_custom_dl_tab_update_treeview,
+        )
+
+
+    def setup_operations_custom_dl_tab_update_treeview(self):
+
+        """Can be called by anything.
+
+        Fills or updates the treeview.
+
+        """
+
+        self.custom_liststore.clear()
+
+        for uid in sorted(self.app_obj.custom_dl_reg_dict):
+            self.setup_operations_custom_dl_tab_add_row(
+                self.app_obj.custom_dl_reg_dict[uid],
+            )
+
+
+    def setup_operations_custom_dl_tab_add_row(self, custom_dl_obj):
+
+        """Can be called by anything.
+
+        Adds a row to the treeview.
+
+        Args:
+
+            custom_dl_obj (downloads.CustomDLManager) - The custom download
+                manager object to display on this row
+
+        """
+
+        row_list = []
+
+        row_list.append(custom_dl_obj.uid)
+        row_list.append(
+            utils.tidy_up_long_string(
+                custom_dl_obj.name,
+                self.app_obj.main_win_obj.short_string_max_len,
             ),
-            self.app_obj.ytsc_priority_flag,
-            True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        self.add_label(grid,
-            _('Timeout after this many minutes of inactivity'),
-            0, 6, 1, 1,
         )
 
-        spinbutton3 = self.add_spinbutton(grid,
-            1, None, 0.2,
-            self.app_obj.ytsc_wait_time,
-            1, 6, 1, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton3.set_sensitive(False)
-        # (Signal connect appears below)
+        if self.app_obj.general_custom_dl_obj \
+        and self.app_obj.general_custom_dl_obj == custom_dl_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
 
-        self.add_label(grid,
-            _('Number of restarts after a timeout'),
-            0, 7, 1, 1,
-        )
+        if self.app_obj.classic_custom_dl_obj \
+        and self.app_obj.classic_custom_dl_obj == custom_dl_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
 
-        spinbutton4 = self.add_spinbutton(grid,
-            0, None, 1,
-            self.app_obj.ytsc_restart_max,
-            1, 7, 1, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton4.set_sensitive(False)
-        # (Signal connect appears below)
+        # (The final column is deliberately empty, so that the previous column
+        #   doesn't expand to fill the whole available area)
+        row_list.append('')
 
-        checkbutton5 = self.add_checkbutton(grid,
-            _(
-            'Bypass usual limits on simultaneous downloads, so that' \
-            + ' all broadcasts can be downloaded',
-            ),
-            self.app_obj.num_worker_bypass_flag,
-            True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            checkbutton5.set_sensitive(False)
-        # (Signal connect appears below)
-
-        # (Signal connects from above)
-        checkbutton4.connect(
-            'toggled',
-            self.on_ytsc_priority_button_toggled,
-            spinbutton3,
-            spinbutton4,
-            checkbutton5,
-        )
-        spinbutton3.connect(
-            'value-changed',
-            self.on_ytsc_wait_time_spinbutton_changed,
-        )
-        spinbutton4.connect(
-            'value-changed',
-            self.on_ytsc_restart_max_spinbutton_changed,
-        )
-        checkbutton5.connect(
-            'toggled',
-            self.on_worker_bypass_button_toggled,
-        )
+        self.custom_liststore.append(row_list)
 
 
     def setup_operations_clips_tab(self, inner_notebook):
@@ -17714,38 +19627,270 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton9.connect('toggled', self.on_auto_delete_flag_toggled)
 
 
-    def setup_operations_proxies_tab(self, inner_notebook):
+    def setup_operations_slices_tab(self, inner_notebook):
 
         """Called by self.setup_scheduling_tab().
 
-        Sets up the 'Proxies' inner notebook tab.
+        Sets up the 'Slices' inner notebook tab.
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Proxies'),
+            _('_Slices'),
             inner_notebook,
         )
 
-        # Proxies
+        grid_width = 1
+
+        # Video Slices
         self.add_label(grid,
-            '<u>' + _('Proxies') + '</u>',
-            0, 0, 1, 1,
+            '<u>' + _('Video Slices (requires FFmpeg)') + '</u>',
+            0, 0, grid_width, 1,
         )
 
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'While checking/downloading videos, check each video against' \
+            + ' the SponsorBlock server',
+            ),
+            self.app_obj.sblock_fetch_flag,
+            True,               # Can be toggled by user
+            0, 1, grid_width, 1,
+        )
+        checkbutton.connect('toggled', self.on_sblock_fetch_button_toggled)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'When contacting the server, obfuscate each video\'s ID' \
+            + ' (recommended)',
+            ),
+            self.app_obj.sblock_obfuscate_flag,
+            True,               # Can be toggled by user
+            0, 2, grid_width, 1,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_sblock_obfuscate_button_toggled,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+            'If slices have already been extracted, replace the old list',
+            ),
+            self.app_obj.sblock_replace_flag,
+            True,               # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton3.connect(
+            'toggled',
+            self.on_sblock_replace_button_toggled,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'If slices have been extracted, contact the server again' \
+            + ' before removing more slices from the video',
+            ),
+            self.app_obj.sblock_re_extract_flag,
+            True,               # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton4.connect(
+            'toggled',
+            self.on_sblock_re_extract_button_toggled,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'After removing slices from a video, reset all timestamp and' \
+            + ' slice data (recommended)',
+            ),
+            self.app_obj.slice_video_cleanup_flag,
+            True,               # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_slice_cleanup_button_toggled,
+        )
+
+
+    def setup_operations_livestreams_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Streams' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('L_ivestreams'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # Livestream preferences
         self.add_label(grid,
-            '<i>' \
-            + _(
-            'During a download operation, Tartube will cycle betwween the' \
-            + ' proxies in this list',
-            ) + '</i>',
+            '<u>' + _(
+                'Livestream preferences (compatible websites only)',
+            ) + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Detect livestreams announced within this many days'),
+            self.app_obj.enable_livestreams_flag,
+            True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
-
-        textview, textbuffer = self.add_textview(grid,
-            self.app_obj.dl_proxy_list,
-            0, 2, 1, 1
+        # (Signal connect appears below)
+        spinbutton = self.add_spinbutton(grid,
+            0, None, 1, self.app_obj.livestream_max_days,
+            1, 1, 1, 1,
         )
-        textbuffer.connect('changed', self.on_proxy_textview_changed)
+        if not self.app_obj.enable_livestreams_flag:
+            spinbutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('How often to check the status of livestreams (in minutes)'),
+            self.app_obj.scheduled_livestream_flag,
+            True,                   # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag:
+            checkbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        spinbutton2 = self.add_spinbutton(grid,
+            1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
+            1, 2, 1, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag \
+        or not self.app_obj.scheduled_livestream_flag:
+            spinbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Check more frequently when a livestream is due to start'),
+            self.app_obj.scheduled_livestream_extra_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag \
+        or not self.app_obj.scheduled_livestream_flag:
+            checkbutton3.set_sensitive(False)
+        checkbutton3.connect(
+            'toggled',
+            self.on_extra_livestreams_button_toggled,
+        )
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_enable_livestreams_button_toggled,
+            checkbutton2,
+            checkbutton3,
+            spinbutton,
+            spinbutton2,
+        )
+
+        spinbutton.connect(
+            'value-changed',
+            self.on_livestream_max_days_spinbutton_changed,
+        )
+
+        checkbutton2.connect(
+            'toggled',
+            self.on_scheduled_livestreams_button_toggled,
+            checkbutton3,
+            spinbutton2,
+        )
+
+        spinbutton2.connect(
+            'value-changed',
+            self.on_scheduled_livestreams_spinbutton_changed,
+        )
+
+        # Broadcast preferences
+        self.add_label(grid,
+            '<u>' + _(
+                'Broadcast preferences (compatible websites only)',
+            ) + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+                'Use Youtube Stream Capture to download broadcasting' \
+                + ' livestreams (requires aria2)',
+            ),
+            self.app_obj.ytsc_priority_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Timeout after this many minutes of inactivity'),
+            0, 6, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 0.2,
+            self.app_obj.ytsc_wait_time,
+            1, 6, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Number of restarts after a timeout'),
+            0, 7, 1, 1,
+        )
+
+        spinbutton4 = self.add_spinbutton(grid,
+            0, None, 1,
+            self.app_obj.ytsc_restart_max,
+            1, 7, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton4.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Bypass usual limits on simultaneous downloads, so that' \
+            + ' all broadcasts can be downloaded',
+            ),
+            self.app_obj.num_worker_bypass_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            checkbutton5.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton4.connect(
+            'toggled',
+            self.on_ytsc_priority_button_toggled,
+            spinbutton3,
+            spinbutton4,
+            checkbutton5,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_ytsc_wait_time_spinbutton_changed,
+        )
+        spinbutton4.connect(
+            'value-changed',
+            self.on_ytsc_restart_max_spinbutton_changed,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_worker_bypass_button_toggled,
+        )
 
 
     def setup_operations_actions_tab(self, inner_notebook):
@@ -17910,6 +20055,252 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_dialogue_button_toggled,
             'default',
+        )
+
+
+    def setup_operations_mirrors_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Mirrors' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Mirrors'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # Invidious mirror
+        self.add_label(grid,
+            '<u>' + _('Invidious mirror') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _(
+                'To find an updated list of Invidious mirrors, use any' \
+                + ' search engine!',
+            ),
+            0, 1, grid_width, 1,
+        )
+
+        entry = self.add_entry(grid,
+            self.app_obj.custom_invidious_mirror,
+            True,
+            0, 2, 1, 1,
+        )
+        entry.connect('changed', self.on_invidious_mirror_changed)
+
+        button = Gtk.Button(_('Reset'))
+        grid.attach(button, 1, 2, 1, 1)
+        button.set_tooltip_text(_('Use the default Invidious mirror'))
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_reset_invidious_clicked, entry)
+
+        msg = _('Type the exact text that replaces youtube.com e.g.')
+        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+
+        self.add_label(grid,
+            '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \
+            + '</b></i>',
+            0, 3, grid_width, 1,
+        )
+
+        # SponsorBlock API mirror
+        self.add_label(grid,
+            '<u>' + _('SponsorBlock API mirror') + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            self.app_obj.custom_sblock_mirror,
+            True,
+            0, 5, 1, 1,
+        )
+        entry2.connect('changed', self.on_sblock_mirror_changed)
+
+        button2 = Gtk.Button(_('Reset'))
+        grid.attach(button2, 1, 5, 1, 1)
+        button2.set_tooltip_text(_('Use the default SponsorBlock URL'))
+        button2.connect('clicked', self.on_reset_sblock_clicked, entry2)
+
+
+    def setup_operations_proxies_tab(self, inner_notebook):
+
+        """Called by self.setup_scheduling_tab().
+
+        Sets up the 'Proxies' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Proxies'),
+            inner_notebook,
+        )
+
+        # Proxies
+        self.add_label(grid,
+            '<u>' + _('Proxies') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' \
+            + _(
+            'During a download operation, Tartube will cycle betwween the' \
+            + ' proxies in this list',
+            ) + '</i>',
+            0, 1, 1, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            self.app_obj.dl_proxy_list,
+            0, 2, 1, 1
+        )
+        textbuffer.connect('changed', self.on_proxy_textview_changed)
+
+
+    def setup_operations_prefs_tab(self, inner_notebook):
+
+        """Called by self.setup_operations_tab().
+
+        Sets up the 'Preferences' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('P_references'),
+            inner_notebook,
+        )
+
+        grid_width = 3
+
+        # URL flexibility preferences
+        self.add_label(grid,
+            '<u>' + _('URL flexibility preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            _(
+            'If a video\'s URL represents a channel/playlist, not a video,' \
+            + ' don\'t download it',
+            ),
+            0, 1, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            _('...or, download multiple videos into the containing folder'),
+            0, 2, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'multi':
+            radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        radiobutton3 = self.add_radiobutton(grid,
+            radiobutton2,
+            _(
+            '...or, create a new channel, and download the videos into that',
+            ),
+            0, 3, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'channel':
+            radiobutton3.set_active(True)
+        # (Signal connect appears below)
+
+        radiobutton4 = self.add_radiobutton(grid,
+            radiobutton3,
+            _(
+            '...or, create a new playlist, and download the videos into that',
+            ),
+            0, 4, grid_width, 1,
+        )
+        if self.app_obj.operation_convert_mode == 'playlist':
+            radiobutton4.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'disable',
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'multi',
+        )
+        radiobutton3.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'channel',
+        )
+        radiobutton4.connect(
+            'toggled',
+            self.on_convert_from_button_toggled,
+            'playlist',
+        )
+
+        # Missing video preferences
+        self.add_label(grid,
+            '<u>' + _('Missing video preferences') + '</u>',
+            0, 5, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'Add videos which have been removed from a channel/playlist to' \
+            + ' the Missing Videos folder',
+            ),
+            self.app_obj.track_missing_videos_flag,
+            True,                   # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'Only add videos that were uploaded within this many days',
+            ),
+            self.app_obj.track_missing_time_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        if not self.app_obj.track_missing_videos_flag:
+            checkbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        spinbutton = self.add_spinbutton(grid,
+            0,
+            365,
+            1,                  # Step
+            self.app_obj.track_missing_time_days,
+            1, 7, 2, 1,
+        )
+        spinbutton.set_hexpand(True)
+        if not self.app_obj.track_missing_videos_flag \
+        or not self.app_obj.track_missing_time_flag:
+            spinbutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_missing_videos_button_toggled,
+            checkbutton2,
+            spinbutton,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_missing_time_button_toggled,
+            spinbutton,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_missing_time_spinbutton_changed,
         )
 
 
@@ -19356,21 +21747,6 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_alt_day_string(model[tree_iter][1])
 
 
-    def on_alt_website_changed(self, entry):
-
-        """Called from callback in self.setup_operations_custom_tab().
-
-        Sets the YouTube alternative front end to use.
-
-        Args:
-
-            entry (Gtk.Entry): The widget changed
-
-        """
-
-        self.app_obj.set_custom_dl_divert_website(entry.get_text())
-
-
     def on_archive_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_operations_downloads_tab().
@@ -19931,7 +22307,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_check_limit_changed(self, entry):
 
-        """Called from callback in self.setup_operations_stop_tab().
+        """Called from callback in self.setup_operations_block_tab().
 
         Sets the limit at which a download operation will stop checking a
         channel or playlist.
@@ -20453,81 +22829,244 @@ class SystemPrefWin(GenericPrefWin):
             )
 
 
-    def on_custom_delay_button_toggled(self, checkbutton, spinbutton,
-    spinbutton2):
+    def on_custom_dl_add_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_operations_custom_tab().
+        """Called from callback in self.setup_operations_custom_dl_tab().
 
-        Enables/disables a delay after downloads of a media data object
-        (during custom downloads).
+        Adds a new downloads.CustomDLManager object.
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The widget clicked
+            button (Gtk.Button): The widget clicked
 
-            spinbutton, spinbutton2 (Gtk.SpinButton): Other widgets to be
-                (de)sensitised
+            entry (Gtk.Entry): Widget providiing a name for the new object
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.custom_dl_delay_flag:
-            self.app_obj.set_custom_dl_delay_flag(True)
-            spinbutton.set_sensitive(True)
-            spinbutton2.set_sensitive(True)
+        name = entry.get_text()
+        if name == '':
+            return
 
-        elif not checkbutton.get_active() \
-        and self.app_obj.custom_dl_delay_flag:
-            self.app_obj.set_custom_dl_delay_flag(False)
-            spinbutton.set_sensitive(False)
-            spinbutton2.set_sensitive(False)
+        new_obj = self.app_obj.create_custom_dl_manager(name)
+
+        # Update the treeview
+        self.setup_operations_custom_dl_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+        # All other widgets for creating an custom download manager object open
+        #   its edit window, so we'll do the same here
+        CustomDLEditWin(self.app_obj, new_obj)
 
 
-    def on_custom_divert_button_toggled(self, radiobutton, entry, value):
+    def on_custom_dl_clone_button_clicked(self, button, treeview):
 
-        """Called from callback in self.setup_operations_custom_tab().
+        """Called from callback in self.setup_operations_custom_dl_tab().
 
-        Enables/disables diverting downloads of YouTube videos to HookTube or
-        Invidious.
+        Clones the selected downloads.CustomDLManager object.
 
         Args:
 
-            radiobutton (Gtk.RadioButton): The widget clicked
-
-            entry (Gtk.Entry): Another widget to be modified
-
-            value (str): The new value of the IV
+            button (Gtk.Button): The widget clicked
 
         """
 
-        if radiobutton.get_active():
-            self.app_obj.set_custom_dl_divert_mode(value)
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
 
-        if value == 'other':
-            entry.set_sensitive(True)
-        else:
-            entry.set_text('')
-            entry.set_sensitive(False)
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.custom_dl_reg_dict:
+
+                    new_obj = self.app_obj.clone_custom_dl_manager(
+                        self.app_obj.custom_dl_reg_dict[uid],
+                    )
+
+                    # Open an edit window, so the user can set the cloned
+                    #   object's name
+                    CustomDLEditWin(self.app_obj, new_obj)
 
 
-    def on_custom_split_button_toggled(self, checkbutton):
+    def on_custom_dl_delete_button_clicked(self, button, treeview):
 
-        """Called from callback in self.setup_operations_custom_tab().
+        """Called from callback in self.setup_operations_custom_dl_tab().
 
-        Enables/disables splitting a video into clips during a custom download.
+        Deletes the selected downloads.CustomDLManager object, if allowed.
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The widget clicked
+            button (Gtk.Button): The widget clicked
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.custom_dl_split_flag:
-            self.app_obj.set_custom_dl_split_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.custom_dl_split_flag:
-            self.app_obj.set_custom_dl_split_flag(False)
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        uid = model[this_iter][0]
+        if not uid in self.app_obj.custom_dl_reg_dict:
+            return
+
+        custom_dl_obj = self.app_obj.custom_dl_reg_dict[uid]
+        if self.app_obj.general_custom_dl_obj \
+        and self.app_obj.general_custom_dl_obj == custom_dl_obj:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('The default custom download manager cannot be deleted'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        # Prompt for confirmation
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _('Are you sure you want to delete this custom download manager?'),
+            'question',
+            'yes-no',
+            self,           # Parent window is this window
+            {
+                'yes': 'delete_custom_dl_manager',
+                # Specified manager
+                'data': custom_dl_obj,
+            },
+        )
+
+
+    def on_custom_dl_edit_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_operations_custom_dl_tab().
+
+        Opens an edit window for the selected downloads.CustomDLManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.custom_dl_reg_dict:
+
+                    CustomDLEditWin(
+                        self.app_obj,
+                        self.app_obj.custom_dl_reg_dict[uid],
+                    )
+
+
+    def on_custom_dl_export_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_operations_custom_dl_tab().
+
+        Exports the selected downloads.CustomDLManager object to a JSON file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.custom_dl_reg_dict:
+
+                    self.app_obj.export_custom_dl_manager(
+                        self.app_obj.custom_dl_reg_dict[uid],
+                    )
+
+
+    def on_custom_dl_import_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_operations_custom_dl_tab().
+
+        Imports a JSON file and creates a new downloads.CustomDLManager for it.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Widget providiing a name for the new object.
+                If the entry is empty, then the name specified by the JSON file
+                itself is used
+
+        """
+
+        self.app_obj.import_custom_dl_manager(entry.get_text())
+
+        # Update the treeview
+        self.setup_operations_custom_dl_tab_update_treeview()
+        # Empty the entry box
+        entry.set_text('')
+
+
+    def on_custom_dl_use_classic_button_clicked(self, button, treeview):
+
+        """Called from callback in self.setup_operations_custom_dl_tab().
+
+        Applies the selected downloads.CustomDLManager object to the Classic
+        Mode tab.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if path_list:
+
+            # (Multiple selection is not enabled)
+            this_iter = model.get_iter(path_list[0])
+            if this_iter is not None:
+
+                uid = model[this_iter][0]
+                if uid in self.app_obj.custom_dl_reg_dict:
+
+                    custom_dl_obj = self.app_obj.custom_dl_reg_dict[uid]
+
+                    # If this is already the custom download manager for the
+                    #   Classic Mode tab, then remove it (but don't delete the
+                    #   object itself)
+                    if self.app_obj.classic_custom_dl_obj \
+                    and self.app_obj.classic_custom_dl_obj == custom_dl_obj:
+
+                        self.app_obj.disapply_classic_custom_dl_manager()
+
+                    else:
+
+                        self.app_obj.apply_classic_custom_dl_manager(
+                            self.app_obj.custom_dl_reg_dict[uid],
+                        )
+
+        # Update the treeview
+        self.setup_operations_custom_dl_tab_update_treeview()
 
 
     def on_custom_textview_changed(self, textbuffer):
@@ -20582,53 +23121,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_split_video_custom_title(text)
 
         entry.set_text(self.app_obj.split_video_custom_title)
-
-
-    def on_custom_video_button_toggled(self, checkbutton, checkbutton2,
-        radiobutton, radiobutton2, radiobutton3, radiobutton4, entry):
-
-        """Called from callback in self.setup_operations_custom_tab().
-
-        Enables/disables downloading videos independently of its channel/
-        playlist.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            checkbutton2 (Gtk.CheckButton): Another widget to update
-
-            radiobutton, radiobutton2, radiobutton3, radiobutton4
-                (Gtk.RadioButton): Other widgets to update
-
-            entry (Gtk.Entry): Another widget to update
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.custom_dl_by_video_flag:
-
-            self.app_obj.set_custom_dl_by_video_flag(True)
-
-            checkbutton2.set_sensitive(True)
-            radiobutton.set_sensitive(True)
-            radiobutton2.set_sensitive(True)
-            radiobutton3.set_sensitive(True)
-            radiobutton4.set_sensitive(True)
-            entry.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.custom_dl_by_video_flag:
-
-            self.app_obj.set_custom_dl_by_video_flag(False)
-
-            checkbutton2.set_sensitive(False)
-            checkbutton2.set_active(False)
-            radiobutton.set_sensitive(False)
-            radiobutton2.set_sensitive(False)
-            radiobutton3.set_sensitive(False)
-            radiobutton4.set_sensitive(False)
-            entry.set_sensitive(False)
 
 
     def on_data_block_button_toggled(self, checkbutton):
@@ -21177,47 +23669,6 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text(self.app_obj.ytsc_path)
 
 
-    def on_delay_max_spinbutton_changed(self, spinbutton, spinbutton2):
-
-        """Called from callback in self.setup_operations_custom_tab().
-
-        Sets the maximum delay between media data object downloads during a
-        custom download.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The widget clicked
-
-            spinbutton2 (Gtk.SpinButton): Another widget to be modified
-
-        """
-
-        value = spinbutton.get_value()
-
-        self.app_obj.set_custom_dl_delay_max(value)
-        # Adjust the other spinbutton, so that the minimum value never exceeds
-        #   the maximum value
-        spinbutton2.set_range(0, value)
-        if value < self.app_obj.custom_dl_delay_min:
-            spinbutton2.set_value(value)
-
-
-    def on_delay_min_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_operations_custom_tab().
-
-        Sets the minimum delay between media data object downloads during a
-        custom download.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The widget clicked
-
-        """
-
-        self.app_obj.set_custom_dl_delay_min(spinbutton.get_value())
-
-
     def on_delete_shutdown_button_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_files_temp_folders_tab().
@@ -21389,7 +23840,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_dl_limit_changed(self, entry):
 
-        """Called from callback in self.setup_operations_stop_tab().
+        """Called from callback in self.setup_operations_block_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
@@ -21741,7 +24192,11 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        new_obj = self.app_obj.create_ffmpeg_options(entry.get_text())
+        name = entry.get_text()
+        if name == '':
+            return
+
+        new_obj = self.app_obj.create_ffmpeg_options(name)
 
         # Update the treeview
         self.setup_options_ffmpeg_list_tab_update_treeview()
@@ -22070,7 +24525,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_invidious_mirror_changed(self, entry):
 
-        """Called from callback in self.setup_operations_prefs_tab().
+        """Called from callback in self.on_invidious_mirror_changed().
 
         Sets the Invidious mirror to use.
 
@@ -22133,7 +24588,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_limit_button_toggled(self, checkbutton, entry, entry2):
 
-        """Called from callback in self.setup_operations_stop_tab().
+        """Called from callback in self.setup_operations_block_tab().
 
         Sets the limit at which a download operation will stop downloading a
         channel or playlist.
@@ -22752,7 +25207,11 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        new_obj = self.app_obj.create_download_options(entry.get_text())
+        name = entry.get_text()
+        if name == '':
+            return
+
+        new_obj = self.app_obj.create_download_options(name)
 
         # If required, clone download options from the General Options Manager
         #   into the new object
@@ -23529,6 +25988,42 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text('')
 
 
+    def on_reset_invidious_clicked(self, button, entry):
+
+        """Called from callback in self.setup_operations_mirrors_tab().
+
+        Resets the Invidious mirror
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        self.app_obj.reset_custom_invidious_mirror()
+        entry.set_text(self.app_obj.custom_invidious_mirror)
+
+
+    def on_reset_sblock_clicked(self, button, entry):
+
+        """Called from callback in self.setup_operations_mirrors_tab().
+
+        Resets the URL of the SponsorBlock API.
+
+        Args:
+
+            button (Gtk.Button): The widget that was clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        self.app_obj.reset_custom_sblock_mirror()
+        entry.set_text(self.app_obj.custom_sblock_mirror)
+
+
     def on_reset_size_clicked(self, button):
 
         """Called from a callback in self.setup_windows_main_window_tab().
@@ -23625,6 +26120,124 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_save_flag(True)
         elif not checkbutton.get_active() and self.app_obj.operation_save_flag:
             self.app_obj.set_operation_save_flag(False)
+
+
+    def on_sblock_fetch_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables contacting the SponsorBlock server.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.sblock_fetch_flag:
+            self.app_obj.set_sblock_fetch_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.sblock_fetch_flag:
+            self.app_obj.set_sblock_fetch_flag(False)
+
+
+    def on_sblock_obfuscate_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables obfuscating video IDs in requests to the SponsorBlock
+        server.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.sblock_obfuscate_flag:
+            self.app_obj.set_sblock_obfuscate_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.sblock_obfuscate_flag:
+            self.app_obj.set_sblock_obfuscate_flag(False)
+
+
+    def on_sblock_replace_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables replacing any previous set of video slices.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.sblock_replace_flag:
+            self.app_obj.set_sblock_replace_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.sblock_replace_flag:
+            self.app_obj.set_sblock_replace_flag(False)
+
+
+    def on_sblock_re_extract_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables re-extracting SponsorBlock before removing slices
+        from a video.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.sblock_re_extract_flag:
+            self.app_obj.set_sblock_re_extract_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.sblock_re_extract_flag:
+            self.app_obj.set_sblock_re_extract_flag(False)
+
+
+    def on_slice_cleanup_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables clearing timestamp/slice data from a video, after it
+        has had its video slices removed.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.slice_video_cleanup_flag:
+            self.app_obj.set_slice_video_cleanup_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.slice_video_cleanup_flag:
+            self.app_obj.set_slice_video_cleanup_flag(False)
+
+
+    def on_sblock_mirror_changed(self, entry):
+
+        """Called from callback in self.setup_operations_mirrors_tab().
+
+        Sets the SponsorBlock API mirror to use.
+
+        Args:
+
+            entry (Gtk.Entry): The widget changed
+
+        """
+
+        self.app_obj.set_custom_sblock_mirror(entry.get_text())
 
 
     def on_scheduled_add_button_clicked(self, button, entry):
@@ -23852,7 +26465,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_separator_combo_changed(self, combo):
 
-        """Called from a callback in self.setup_files_export_tab().
+        """Called from a callback in self.setup_files_backups_tab().
 
         Sets the CSV export separator.
 
@@ -24472,7 +27085,7 @@ class SystemPrefWin(GenericPrefWin):
             button (Gtk.Button): The widget that was clicked
 
             combo (Gtk.ComboBox): The widget in which a sound effect is
-                selected.
+                selected
 
         """
 

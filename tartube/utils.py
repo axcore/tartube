@@ -27,6 +27,7 @@ from gi.repository import Gtk, Gdk
 # Import other modules
 import datetime
 import glob
+import hashlib
 import locale
 import math
 import os
@@ -394,6 +395,63 @@ clip_path=None):
         return new_video_obj
 
 
+def clip_extract_data(stamp_list, clip_num):
+
+    """Can be called by anything.
+
+    media.Video.stamp_list stores details for video clips in groups of three,
+    in the form
+        [start_stamp, stop_stamp, clip_title]
+
+    This function is called with a copy of media.Video.stamp_list (or some data
+    in the same format), and the index of one of those groups, corresponding to
+    a single video clip.
+
+    If 'stop_stamp' is not specified, then 'start_stamp' of the following
+    clip is used (unless that clip also starts at the same time, in which
+    case we use the next clip that does not start at the same time).
+
+    If there are no more clips, then this clip will end at the end of the
+    video.
+
+    Args:
+
+        clip_num (int): The index of a group in self.stamp_list, the first
+            clip is #0. It is the calling function's responsibility to
+            ensure that clip_num is not outside the bounds of
+            self.stamp_list
+
+    Return values:
+
+        Returns a list in the form
+
+            start_stamp, stop_stamp, clip_title
+
+        ...in which 'stop_stamp' might have been modified, as described
+            above
+
+    """
+
+    list_size = len(stamp_list)
+    mini_list = stamp_list[clip_num]
+
+    start_stamp = mini_list[0]
+    stop_stamp = mini_list[1]
+    clip_title = mini_list[2]
+
+    if stop_stamp is None and clip_num < (list_size - 1):
+
+        for i in range((clip_num + 1), list_size):
+
+            next_list = stamp_list[i]
+
+            if next_list[0] != start_stamp:
+                stop_stamp = next_list[0]
+                break
+
+    return start_stamp, stop_stamp, clip_title
+
+
 def clip_prepare_title(app_obj, video_obj, clip_title_dict, clip_title,
 clip_num, clip_max):
 
@@ -429,7 +487,7 @@ clip_num, clip_max):
 
     # If 'clip_title' is not specified, use a generic clip title
     # (The value is None only when not splitting a video)
-    if clip_title is not None and clip_title == '':
+    if clip_title is None or clip_title == '':
         clip_title = app_obj.split_video_custom_title
 
     # All clips from the same video should be formatted with a fixed number of
@@ -759,7 +817,7 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     """
 
-    if not re.search('^' + app_obj.data_dir, old_path):
+    if old_path[0:len(app_obj.data_dir)] != app_obj.data_dir:
 
         # Special case: if 'old_path' is outside Tartube's data directory, then
         #   there is no equivalent path in the temporary directory
@@ -844,6 +902,92 @@ def convert_seconds_to_string(seconds, short_flag=False):
 
     else:
         return str(datetime.timedelta(seconds=seconds))
+
+
+def convert_slices_to_clips(app_obj, custom_dl_obj, slice_list, temp_flag):
+
+    """Called by downloads.ClipDownloader.do_download_remove_slices() and
+    process.ProcessManager.slice_video().
+
+    Convert a list of video slices to be removed from a video into a list of
+    video clips to be retained.
+
+    'slice_list' is a list of dictionaries, one per slice, in the form
+        mini_dict['category'] = One of the values in
+            formats.SPONSORBLOCK_CATEGORY_LIST (e.g. 'sponsor')
+        mini_dict['action'] = One of the values in
+            formats.SPONSORBLOCK_ACTION_LIST (e.g. 'skip')
+        mini_dict['start_time']
+        mini_dict['stop_time'] = Floating point values in seconds, the
+            beginning and end of the slice
+        mini_dict['duration'] = The video duration, as reported by
+            SponsorBlock. This valus is not required by Tartube code, and its
+            default value is 0
+
+    The returned list is in groups of two, in the form
+        [start_time, stop_time]
+    ...where 'start_time' and 'stop_time' are floating-point values in
+    seconds. 'stop_time' can be None to signify the end of the video, but
+    'start_time' is 0 to signify the start of the video.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies. If not specified, all slices must be removed
+
+        slice_list (list): The list of slices to be removed, in the form
+            described above
+
+        temp_flag (bool): If True, the user specified slices in
+            mainwin.on_video_catalogue_process_slice(), so regardless of
+            the contents of downloads.CustomDLManager.slice_dict, all slices
+            must be removed
+
+    Return values:
+
+        The converted list described above
+
+    """
+
+    clip_list = []
+    count = 0
+    # (The first clip starts at the beginning of the video)
+    previous_time = 0
+
+    for mini_dict in slice_list:
+
+        # (Only remove video slices which the user has opted to remove)
+        if temp_flag \
+        or custom_dl_obj is None \
+        or custom_dl_obj.slice_dict[mini_dict['category']]:
+
+            # (If the video starts with a removable slice, then the first
+            #   clip will start after the slice)
+            if mini_dict['start_time'] != 0 \
+            and mini_dict['start_time'] != '0':
+
+                # Remove this slice
+                count += 1
+
+                # This clip start at the end of the previous slice. and
+                #   ends at the start of this slice
+                clip_list.append([
+                    previous_time,
+                    mini_dict['start_time'],
+                ])
+
+            # Next clip starts at the end of this slice
+            previous_time = mini_dict['stop_time']
+
+    if previous_time != 0 and previous_time != '0':
+
+        # (The last clip starts at the end of the last removable slice, and
+        #   ends at the end of the video)
+        clip_list.append([ previous_time, None ])
+
+    return clip_list
 
 
 def convert_youtube_id_to_rss(media_type, youtube_id):
@@ -931,7 +1075,7 @@ def convert_youtube_to_invidious(app_obj, url):
     return url
 
 
-def convert_youtube_to_other(app_obj, url):
+def convert_youtube_to_other(app_obj, url, custom_dl_obj=None):
 
     """Can be called by anything.
 
@@ -944,17 +1088,24 @@ def convert_youtube_to_other(app_obj, url):
 
         url (str): The weblink to convert
 
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that provides the alternative front-end. If not specified,
+            the General Custom Download Manager is used
+
     Returns:
 
         The converted string
 
     """
 
+    if custom_dl_obj is None:
+        custom_dl_obj = app_obj.general_custom_dl_obj
+
     if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
 
         url = re.sub(
             r'youtube\.com',
-            app_obj.custom_dl_divert_website,
+            custom_dl_obj.divert_website,
             url,
             # Substitute first occurence only
             1,
@@ -1267,6 +1418,147 @@ def extract_livestream_data(stderr):
     return {}
 
 
+def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
+
+    """Called by functions in downloads.VideoDownloader,
+    downloads.ClipDownloader and process.ProcessManager.
+
+    Contacts the SponsorBlock API server to retrieve video slice data for the
+    speciffied video.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video for which SponsorBlock data should
+            should be retrieved. The calling code must check that its
+            .vid is set
+
+        page_num (int or None): The page number of the Output Tab where
+            output can be displayed. If None, then no output is displayed
+            in the Output Tab at all; otherwise, output is displayed (or not)
+            depending on the usual Tartube settings
+
+        terminal_flag (bool): If False, then no output is displayed in the
+            terminal at all; otherwise, output is displayed (or not) depending
+            on the usual Tartube settings
+
+    """
+
+    if not app_obj.sblock_obfuscate_flag:
+
+        # Don't hash the video's ID
+        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/'
+        payload = { 'videoID': video_obj.vid }
+
+    else:
+
+        # Hash the video's ID
+        vid = video_obj.vid
+        hashed = hashlib.sha256(vid.encode())
+        hex_str = hashed.hexdigest()
+
+        short_str = hex_str[0:4]
+
+        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/' \
+        + short_str
+        payload = {}
+
+    # Write to the Output Tab and/or terminal, if required
+    msg = '[SponsorBlock] Contacting ' + url + '...'
+    if page_num is not None and app_obj.ytdl_output_stdout_flag:
+        app_obj.main_win_obj.output_tab_write_stdout(page_num, msg)
+    if terminal_flag and app_obj.ytdl_write_stdout_flag:
+        print(msg)
+
+    # Contact the server
+    try:
+        request_obj = requests.get(
+            url,
+            params = payload,
+            timeout = app_obj.request_get_timeout,
+        )
+
+    except:
+
+        msg = '[SponsorBlock] Could not contact server'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag and app_obj.ytdl_write_stderr_flag:
+            print(msg)
+
+        return
+
+    # 400 = bad request, 404 = not found
+    if request_obj.status_code == 400:
+
+        msg = '[SponsorBlock] Server returned error 400: bad request'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag and app_obj.ytdl_write_stderr_flag:
+            print(msg)
+
+        return
+
+    elif request_obj.status_code == 404:
+
+        msg = '[SponsorBlock] Server returned error 404: video ID not found'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag and app_obj.ytdl_write_stderr_flag:
+            print(msg)
+
+        return
+
+    # (Conversion to JSON might produce an exception)
+    try:
+        json_table = request_obj.json()
+
+    except:
+
+        msg = '[SponsorBlock] Server returned invalid data'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag and app_obj.ytdl_write_stderr_flag:
+            print(msg)
+
+        return
+
+    # Only use the data matching the video (since the video ID may have
+    #   been obfuscated just above)
+    for mini_dict in json_table:
+
+        if not 'videoID' in mini_dict or not 'segments' in mini_dict:
+
+            msg = '[SponsorBlock] Server returned invalid data'
+            if page_num is not None and app_obj.ytdl_output_stderr_flag:
+                app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+            if terminal_flag and app_obj.ytdl_write_stderr_flag:
+                print(msg)
+
+            return
+
+        elif mini_dict['videoID'] == video_obj.vid:
+
+            video_obj.convert_slices(mini_dict['segments'])
+
+            if page_num is not None:
+
+                msg = '[SponsorBlock] Video slices retrieved: ' \
+                + str(len(video_obj.slice_list))
+
+                if page_num is not None and app_obj.ytdl_output_stdout_flag:
+                    app_obj.main_win_obj.output_tab_write_stdout(
+                        page_num,
+                        msg,
+                    )
+
+                if terminal_flag and app_obj.ytdl_write_stdout_flag:
+                    print(msg)
+
+            return
+
+
 def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
 
     """Can be called by anything.
@@ -1467,54 +1759,8 @@ def find_thumbnail_from_filename(app_obj, dir_path, filename):
         if os.path.isfile(thumb_path):
             return thumb_path
 
-        # No matching thumbnail found
-        return None
-
-    else:
-
-        # All other media.Video objects
-        for ext in formats.IMAGE_FORMAT_LIST:
-
-            # Look in Tartube's permanent data directory
-            normal_path = video_obj.check_actual_path_by_ext(app_obj, ext)
-            if normal_path is not None:
-                return normal_path
-
-            elif temp_dir_flag:
-
-                # Look in temporary data directory
-                data_dir_len = len(app_obj.downloads_dir)
-
-                temp_path = video_obj.get_actual_path_by_ext(app_obj, ext)
-                temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
-                if os.path.isfile(temp_path):
-                    return temp_path
-
-        # Catch YouTube .jpg thumbnails, in the form .jpg?...
-        # v2.2.005 The glob.glob() call crashes on certain videos. I'm not sure
-        #   why, but we can circumvent the crash with try...except
-        normal_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
-        try:
-            for glob_path in glob.glob(normal_path):
-                if os.path.isfile(glob_path):
-                    return glob_path
-        except:
-            pass
-
-        if temp_dir_flag:
-
-            temp_path = video_obj.get_actual_path_by_ext(app_obj, '.jpg*')
-            temp_path = app_obj.temp_dl_dir + temp_path[data_dir_len:]
-
-            try:
-                for glob_path in glob.glob(temp_path):
-                    if os.path.isfile(glob_path):
-                        return glob_path
-            except:
-                pass
-
-        # No matching thumbnail found
-        return None
+    # No matching thumbnail found
+    return None
 
 
 def find_thumbnail_restricted(app_obj, video_obj):
@@ -1652,7 +1898,7 @@ def format_bytes(num_bytes):
 
 def generate_ytdl_system_cmd(app_obj, media_data_obj, options_list,
 dl_sim_flag=False, dl_classic_flag=False, missing_video_check_flag=None,
-divert_mode=None):
+custom_dl_obj=None, divert_mode=None):
 
     """Called by downloads.VideoDownloader.do_download() and
     mainwin.SystemCmdDialogue.update_textbuffer().
@@ -1682,8 +1928,11 @@ divert_mode=None):
             trying to detect missing videos (downloaded by user, but since
             removed by the creator), False otherwise
 
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies, if any
+
         divert_mode (str): If not None, should be one of the values of
-            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube',
+            downloads.CustomDLManager.divert_mode: 'default', 'hooktube',
             'invidious' or 'other'. If not 'default', a media.Video object
             whose source URL points to YouTube should be converted to the
             specified alternative YouTube front-end (no conversion takes place
@@ -1767,9 +2016,9 @@ divert_mode=None):
         elif divert_mode == 'invidious':
             source = convert_youtube_to_invidious(app_obj, source)
         elif divert_mode == 'custom' \
-        and app_obj.custom_dl_divert_website is not None \
-        and len(app_obj.custom_dl_divert_website) > 2:
-            source = convert_youtube_to_other(app_obj, source)
+        and custom_dl_obj.divert_website is not None \
+        and len(custom_dl_obj.divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
     # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
@@ -1841,8 +2090,166 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     return cmd_list
 
 
+def generate_slice_system_cmd(app_obj, orig_video_obj, options_list, \
+temp_dir, clip_count, start_time, stop_time, custom_dl_obj, divert_mode, \
+classic_flag):
+
+    """Called by downloads.ClipDownloader.do_download_remove_slices() (only).
+
+    A modified version of utils.generate_split_system_cmd().
+
+    Prepares the system command that instructs youtube-dl to download a video
+    clip (instead of downloading the whole video). The downloaded clips are
+    expected to be concatenated together to make a single video.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        orig_video_obj (media.Video): The video object for the video from which
+            the clip is downloaded
+
+        options_list (list): A list of download options generated by a call to
+            options.OptionsParser.parse()
+
+        temp_dir (str): The directory into which the clip will be downloaded;
+            should be a temporary directory, which will be removed as soon as
+            the clips have been concatenated together
+
+        clip_count (int): The nnumber of clips created so far, including this
+            one
+
+        start_time (float): Time in seconds at which the clip starts
+
+        stop_time (float): Time in seconds at which the clip stops. If not
+            specified, then the stop point is the end of the video
+
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies, if any
+
+        divert_mode (str): If not None, should be one of the values of
+            downloads.CustomDLManager.divert_mode: 'default', 'hooktube',
+            'invidious' or 'other'. If not 'default', a media.Video object
+            whose source URL points to YouTube should be converted to the
+            specified alternative YouTube front-end (no conversion takes place
+            for channels/playlists/folders)
+
+        classic_flag (bool): Specifies the (standard) operation type. True for
+            'classic_custom', False for 'custom'
+
+    """
+
+    # Filter out download options that get in the way. A list of them is
+    #   specified in mainapp.TartubeApp.split_ignore_option_dict
+    # Unlike the corresponding code in utils.generate_split_system_cmd(), we
+    #   do write the metadata files (if required), but only for the first clip
+    # Exception: if the parent container's .dl_no_db_flag is set, don't write
+    #   the metadata files at all
+    mod_options_list = []
+    while options_list:
+
+        item = options_list.pop(0)
+        if item in app_obj.split_ignore_option_dict \
+        and (
+            orig_video_obj.parent_obj.dl_no_db_flag \
+            or clip_count > 1 \
+            or (
+                item != '--write-description' \
+                and item != '--write-info-json' \
+                and item != '--write-annotations' \
+                and item != '--write-thumbnail'
+            )
+        ):
+            if app_obj.split_ignore_option_dict[item]:
+                # This option takes an argument
+                options_list.pop(0)
+
+        else:
+            mod_options_list.append(item)
+
+    # Set the file format. If none is specified by download options, then use
+    #   a default one
+    # FFmpeg cannot split media in DASH formats, so we need to check for that
+    # If --format is not specified but --extract_audio is specified, then don't
+    #   insert a --format option at all
+    format_match_flag = False
+    audio_match_flag = False
+    for i in range(0, len(mod_options_list)):
+
+        if mod_options_list[i] == '-f' or mod_options_list[i] == '--format':
+
+            mod_options_list[i+1] = '(' + mod_options_list[i + 1] \
+            + ')[protocol!*=dash]'
+
+            format_match_flag = True
+
+        if mod_options_list[i] == '-x' \
+        or mod_options_list[i] == '--extract-audio':
+
+            audio_match_flag = True
+
+    if not format_match_flag and not audio_match_flag:
+
+        mod_options_list.append('-f')
+        mod_options_list.append('(bestvideo+bestaudio/best)[protocol!*=dash]')
+
+    # Supply youtube-dl with the path to the ffmpeg binary, if the user has
+    #   provided one
+    if app_obj.ffmpeg_path is not None:
+        mod_options_list.append('--ffmpeg-location')
+        mod_options_list.append(app_obj.ffmpeg_path)
+
+    # Specify the external downloader, and the timestamps for the clip
+    slice_arg = '-ss ' + str(start_time)
+    if stop_time is not None:
+        slice_arg += ' -to ' + str(stop_time)
+
+    mod_options_list.append('--external-downloader')
+    mod_options_list.append('ffmpeg')
+    mod_options_list.append('--external-downloader-args')
+    mod_options_list.append(slice_arg)
+
+    # Set the output template
+    mod_options_list.append('-o')
+    mod_options_list.append(
+        os.path.abspath(
+            os.path.join(temp_dir, 'clip_' + str(clip_count) + '.%(ext)s'),
+        )
+    )
+
+    # Convert a YouTube URL to an alternative YouTube front-end, if required
+    source = orig_video_obj.source
+    if divert_mode is not None:
+        if divert_mode == 'hooktube':
+            source = convert_youtube_to_hooktube(source)
+        elif divert_mode == 'invidious':
+            source = convert_youtube_to_invidious(app_obj, source)
+        elif divert_mode == 'custom' \
+        and custom_dl_obj.divert_website is not None \
+        and len(custom_dl_obj.divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
+    #   (Git #243)
+    if app_obj.ytdl_path_custom_flag:
+
+        cmd_list \
+        = ['python3'] + [ytdl_path] + mod_options_list + [source]
+
+    else:
+
+        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+    return cmd_list
+
+
 def generate_split_system_cmd(app_obj, orig_video_obj, options_list, dest_dir,
-clip_title, start_stamp, stop_stamp, divert_mode, classic_flag):
+clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
 
     """Called by downloads.ClipDownloader.do_download() (only).
 
@@ -1872,8 +2279,11 @@ clip_title, start_stamp, stop_stamp, divert_mode, classic_flag):
         stop_stamp (str or None): Timestamp at which the clip stops. If not
             specified, then the stop point is the end of the video
 
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies, if any
+
         divert_mode (str): If not None, should be one of the values of
-            mainapp.TartubeApp.custom_dl_divert_mode: 'default', 'hooktube',
+            downloads.CustomDLManager.divert_mode: 'default', 'hooktube',
             'invidious' or 'other'. If not 'default', a media.Video object
             whose source URL points to YouTube should be converted to the
             specified alternative YouTube front-end (no conversion takes place
@@ -1965,9 +2375,9 @@ clip_title, start_stamp, stop_stamp, divert_mode, classic_flag):
         elif divert_mode == 'invidious':
             source = convert_youtube_to_invidious(app_obj, source)
         elif divert_mode == 'custom' \
-        and app_obj.custom_dl_divert_website is not None \
-        and len(app_obj.custom_dl_divert_website) > 2:
-            source = convert_youtube_to_other(app_obj, source)
+        and custom_dl_obj.divert_website is not None \
+        and len(custom_dl_obj.divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
     # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
@@ -2277,7 +2687,7 @@ def move_metadata_to_subdir(app_obj, video_obj, ext):
 
     """
 
-    main_path = video_obj.get_actual_path_by_ext(app_obj, '.description')
+    main_path = video_obj.get_actual_path_by_ext(app_obj, ext)
     subdir = os.path.abspath(
         os.path.join(
             video_obj.parent_obj.get_actual_dir(app_obj),
@@ -2287,7 +2697,7 @@ def move_metadata_to_subdir(app_obj, video_obj, ext):
 
     subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
         app_obj,
-        '.description',
+        ext,
     )
 
     if os.path.isfile(main_path) and not os.path.isfile(subdir_path):
@@ -2442,63 +2852,6 @@ def parse_options(options_string):
                 quote_list = []
 
     return return_list
-
-
-def prepare_video_clip(stamp_list, clip_num):
-
-    """Can be called by anything.
-
-    media.Video.stamp_list stores details for video clips in groups of three,
-    in the form
-        [start_stamp, stop_stamp, clip_title]
-
-    This function is called with a copy of media.Video.stamp_list (or some data
-    in the same format), and the index of one of those groups, corresponding to
-    a single video clip.
-
-    If 'stop_stamp' is not specified, then 'start_stamp' of the following
-    clip is used (unless that clip also starts at the same time, in which
-    case we use the next clip that does not start at the same time).
-
-    If there are no more clips, then this clip will end at the end of the
-    video.
-
-    Args:
-
-        clip_num (int): The index of a group in self.stamp_list, the first
-            clip is #0. It is the calling function's responsibility to
-            ensure that clip_num is not outside the bounds of
-            self.stamp_list
-
-    Return values:
-
-        Returns a list in the form
-
-            start_stamp, stop_stamp, clip_title
-
-        ...in which 'stop_stamp' might have been modified, as described
-            above
-
-    """
-
-    list_size = len(stamp_list)
-    mini_list = stamp_list[clip_num]
-
-    start_stamp = mini_list[0]
-    stop_stamp = mini_list[1]
-    clip_title = mini_list[2]
-
-    if stop_stamp is None and clip_num < (list_size - 1):
-
-        for i in range((clip_num + 1), list_size):
-
-            next_list = stamp_list[i]
-
-            if next_list[0] != start_stamp:
-                stop_stamp = next_list[0]
-                break
-
-    return start_stamp, stop_stamp, clip_title
 
 
 def rename_file(app_obj, old_path, new_path):
@@ -2991,6 +3344,46 @@ def timestamp_compare(app_obj, start_stamp, stop_stamp):
         return False
     else:
         return True
+
+
+def timestamp_convert_to_seconds(app_obj, stamp):
+
+    """Can be called by anything.
+
+    Converts a timestamp to a value in seconds.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        stamp (str): A timestamp in the form 'mm:ss' or 'h:mm:ss'. Leading
+            zeroes are optional for all components, and the 'h' component can
+            contain any number of digits
+
+    Returns:
+
+        The converted value, or the original value if 'stamp' is not a valid
+            timestamp.
+
+    """
+
+    regex = r'^' + app_obj.timestamp_regex + r'$'
+    match = re.search(regex, stamp)
+    if match:
+        hours = match.groups()[1]
+        if hours is not None:
+            hours = int(hours)
+
+        minutes = int(match.groups()[2])
+        seconds = int(match.groups()[3])
+
+        if hours:
+            return seconds + minutes*60 + hours*60*60
+        else:
+            return seconds + minutes*60
+
+    else:
+        return stamp
 
 
 def timestamp_format(app_obj, stamp):

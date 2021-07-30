@@ -30,7 +30,6 @@ from gi.repository import GObject
 import datetime
 import json
 import __main__
-import signal
 import os
 import queue
 import random
@@ -100,8 +99,8 @@ class DownloadManager(threading.Thread):
             checked for new videos, without downloading anything. 'real' if
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
-            additional options applied (specified by IVs like
-            mainapp.TartubeApp.custom_dl_by_video_flag).
+            additional options applied (specified by a
+            downloads.CustomDLManager object)
 
             For downloads launched from the Classic Mode Tab, 'classic_real'
             for an ordinary download, 'classic_sim' for a simulated download,
@@ -113,13 +112,18 @@ class DownloadManager(threading.Thread):
             media data objects to download, each one represented by a
             downloads.DownloadItem object
 
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies to this download operation. Only specified if
+            'operation_type' is 'custom' or 'classic_custom'
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj, operation_type, download_list_obj):
+    def __init__(self, app_obj, operation_type, download_list_obj, \
+    custom_dl_obj):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 124 __init__')
@@ -139,6 +143,10 @@ class DownloadManager(threading.Thread):
         # An ordered list of media data objects to download, each one
         #   represented by a downloads.DownloadItem object
         self.download_list_obj = download_list_obj
+        # The custom download manager (downloads.CustomDLManager) that applies
+        #   to this download operation. Only specified if 'operation_type' is
+        #   'custom' or 'classic_custom'
+        self.custom_dl_obj = custom_dl_obj
         # List of downloads.DownloadWorker objects, each one handling one of
         #   several simultaneous downloads
         self.worker_list = []
@@ -149,8 +157,8 @@ class DownloadManager(threading.Thread):
         # 'sim' if channels/playlists should just be checked for new videos,
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
-        #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag).
+        #   'custom' is like 'real', but with additional settings applied
+        #   (specified by a downloads.CustomDLManager object)
         # For downloads launched from the Classic Mode Tab, 'classic_real'
         #   for an ordinary download, 'classic_sim' for a simulated download,
         #   and 'classic_custom' for a custom download. A download operation
@@ -189,14 +197,15 @@ class DownloadManager(threading.Thread):
         self.current_item_obj = None
 
         # On-going counts of how many videos have been downloaded (real and
-        #   simulated, and including videos from which one or clips have been
-        #   extracted), how many clips have been extracted, and how much disk
-        #   space has been consumed (in bytes), so that the operation can be
-        #   auto-stopped, if required
+        #   simulated, and including videos from which one or more clips have
+        #   been extracted), how many clips have been extracted, how many video
+        #   slices have been removed, and how much disc space has been consumed
+        #   (in bytes), so that the operation can be auto-stopped, if required
         self.total_video_count = 0
         self.total_dl_count = 0
         self.total_sim_count = 0
         self.total_clip_count = 0
+        self.total_slice_count = 0
         self.total_size_count = 0
 
         # If mainapp.TartubeApp.operation_convert_mode is set to any value
@@ -991,7 +1000,7 @@ class DownloadManager(threading.Thread):
 
     def register_clip(self):
 
-        """Called by ClipDownloader.extract_stdout_data().
+        """Called by ClipDownloader.confirm_video().
 
         A shorter version of self.register_video(). Clips do not count
         towards video limits, but we still keep track of them.
@@ -1004,6 +1013,24 @@ class DownloadManager(threading.Thread):
             utils.debug_time('dld 797 register_clip')
 
         self.total_clip_count += 1
+
+
+    def register_slice(self):
+
+        """Called by ClipDownloader.do_download_remove_slices().
+
+        A shorter version of self.register_video(). Video slices removed from
+        videos do not count towards video limits, but we still keep track of
+        them.
+
+        When all of the video sliceshave been removed, a further call to
+        self.register_video() must be made.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 797 register_slice')
+
+        self.total_slice_count += 1
 
 
     def register_video(self, dl_type):
@@ -1250,8 +1277,10 @@ class DownloadWorker(threading.Thread):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1015 run')
 
-        # Import the main application (for convenience)
+        # Import the main application and custom download manager (for
+        #   convenience)
         app_obj = self.download_manager_obj.app_obj
+        custom_dl_obj = self.download_manager_obj.custom_dl_obj
 
         # Handle a job, or wait for the downloads.DownloadManager to assign
         #   this worker a job
@@ -1293,18 +1322,25 @@ class DownloadWorker(threading.Thread):
                     self.run_stream_downloader(media_data_obj)
 
                 elif isinstance(media_data_obj, media.Video) \
+                and not media_data_obj.live_mode \
                 and (
                     self.download_item_obj.operation_type == 'custom' \
                     or self.download_item_obj.operation_type \
                     == 'classic_custom'
                 ) and (
                     (
-                        app_obj.custom_dl_by_video_flag \
-                        and app_obj.custom_dl_split_flag
+                        custom_dl_obj.dl_by_video_flag \
+                        and custom_dl_obj.split_flag
                         and media_data_obj.stamp_list
-                    ) or app_obj.temp_stamp_list
+                    ) or (
+                        custom_dl_obj.dl_by_video_flag \
+                        and not custom_dl_obj.split_flag \
+                        and custom_dl_obj.slice_flag
+                        and media_data_obj.slice_list
+                    ) or app_obj.temp_stamp_list \
+                    or app_obj.temp_slice_list
                 ):
-                    self.run_clip_downloader(media_data_obj)
+                    self.run_clip_slice_downloader(media_data_obj)
 
                 else:
                     self.run_video_downloader(media_data_obj)
@@ -1333,17 +1369,17 @@ class DownloadWorker(threading.Thread):
                     self.download_item_obj.operation_type == 'custom' \
                     or self.download_item_obj.operation_type \
                     == 'classic_custom'
-                ) and app_obj.custom_dl_delay_flag:
+                ) and custom_dl_obj.delay_flag:
 
                     # Set the delay (in seconds), a randomised value if
                     #   required
-                    if app_obj.custom_dl_delay_min:
+                    if custom_dl_obj.delay_min:
                         delay = random.randint(
-                            int(app_obj.custom_dl_delay_min * 60),
-                            int(app_obj.custom_dl_delay_max * 60),
+                            int(custom_dl_obj.delay_min * 60),
+                            int(custom_dl_obj.delay_max * 60),
                         )
                     else:
-                        delay = int(app_obj.custom_dl_delay_max * 60)
+                        delay = int(custom_dl_obj.delay_max * 60)
 
                     time.sleep(delay)
 
@@ -1477,7 +1513,7 @@ class DownloadWorker(threading.Thread):
             self.check_rss(media_data_obj)
 
 
-    def run_clip_downloader(self, media_data_obj):
+    def run_clip_slice_downloader(self, media_data_obj):
 
         """Called by self.run()
 
@@ -1493,10 +1529,12 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1107 run_clip_downloader')
+            utils.debug_time('dld 1107 run_clip_slice_downloader')
 
-        # Import the main application (for convenience)
+        # Import the main application and custom download manager (for
+        #   convenience)
         app_obj = self.download_manager_obj.app_obj
+        custom_dl_obj = self.download_manager_obj.custom_dl_obj
 
         # Set up the new downloads.ClipDownloader object
         self.downloader_obj = ClipDownloader(
@@ -1515,7 +1553,15 @@ class DownloadWorker(threading.Thread):
         )
 
         # Execute the assigned job
-        return_code = self.downloader_obj.do_download()
+        # ClipDownloader handles two related operations. Both start by
+        #   downloading the video as clips. The second operation concatenates
+        #   the clips back together, which has the effect of removing one or
+        #   more slices from a video
+        if (custom_dl_obj.split_flag and media_data_obj.stamp_list) \
+        or app_obj.temp_stamp_list:
+            return_code = self.downloader_obj.do_download_clip()
+        else:
+            return_code = self.downloader_obj.do_download_remove_slices()
 
         # In the event of an error, nothing updates the video's row in the
         #   Video Catalogue, and therefore the error icon won't be visible
@@ -1881,8 +1927,8 @@ class DownloadList(object):
             checked for new videos, without downloading anything. 'real' if
             videos should be downloaded (or not) depending on each media data
             object's .dl_sim_flag IV. 'custom' is like 'real', but with
-            additional options applied (specified by IVs like
-            mainapp.TartubeApp.custom_dl_by_video_flag)
+            additional options applied (specified by a
+            downloads.CustomDLManager object)
 
             For downloads launched from the Classic Mode Tab, 'classic_real'
             for an ordinary download, 'classic_sim' for a simulated download,
@@ -1900,13 +1946,18 @@ class DownloadList(object):
             previous call to this function. If an empty list, all
             dummy media.Video objects are downloaded
 
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies to this download operation. Only specified if
+            'operation_type' is 'custom' or 'classic_custom'
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj, operation_type, media_data_list):
+    def __init__(self, app_obj, operation_type, media_data_list, \
+    custom_dl_obj):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1552 __init__')
@@ -1915,6 +1966,10 @@ class DownloadList(object):
         # -----------------------
         self.app_obj = app_obj
 
+        # The custom download manager (downloads.CustomDLManager) that applies
+        #   to this download operation. Only specified if 'operation_type' is
+        #   'custom' or 'classic_custom'
+        self.custom_dl_obj = custom_dl_obj
 
         # IV list - other
         # ---------------
@@ -1922,7 +1977,7 @@ class DownloadList(object):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        #   (specified by a downloads.CustomDLManager object)
         # For downloads launched from the Classic Mode Tab, 'classic_real'
         #   for an ordinary download, 'classic_sim' for a simulated download,
         #   and 'classic_custom' for a custom download. A download operation
@@ -2332,7 +2387,9 @@ class DownloadList(object):
         # (Exception: for custom downloads, do get videos independently of
         #   their channel/playlist, if allowed)
         # Don't download videos in a folder, if this is a simulated download,
-        #   and the video has already been checked
+        #   and the video has already been checked (exception: if the video
+        #   has been passed to the download operation directly, for example by
+        #   right-clicking the video and selecting 'Check video')
         # (Exception: do download videos in a folder if they're marked as
         #   livestreams, in case the livestream has finished)
         if isinstance(media_data_obj, media.Video):
@@ -2343,7 +2400,7 @@ class DownloadList(object):
                 and recursion_flag
                 and (
                     not custom_flag
-                    or not self.app_obj.custom_dl_by_video_flag
+                    or not self.custom_dl_obj.dl_by_video_flag
                     or media_data_obj.dl_flag
                 )
             ):
@@ -2352,6 +2409,7 @@ class DownloadList(object):
             if isinstance(media_data_obj.parent_obj, media.Folder) \
             and (operation_type == 'sim' or operation_type == 'classic_sim') \
             and self.app_obj.operation_sim_shortcut_flag \
+            and recursion_flag \
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
             and utils.find_thumbnail(self.app_obj, media_data_obj):
@@ -2399,13 +2457,13 @@ class DownloadList(object):
         if (
             isinstance(media_data_obj, media.Video)
             and custom_flag
-            and self.app_obj.custom_dl_by_video_flag
+            and self.custom_dl_obj.dl_by_video_flag
             and not media_data_obj.dl_flag
         ) or (
             isinstance(media_data_obj, media.Video)
             and (
                 not custom_flag
-                or not self.app_obj.custom_dl_by_video_flag
+                or not self.custom_dl_obj.dl_by_video_flag
             )
         ) or (
             (
@@ -2413,7 +2471,7 @@ class DownloadList(object):
                 or isinstance(media_data_obj, media.Playlist)
             ) and (
                 not custom_flag
-                or not self.app_obj.custom_dl_by_video_flag
+                or not self.custom_dl_obj.dl_by_video_flag
             )
         ):
             # (Broadcasting livestreams should always take priority over
@@ -2464,7 +2522,7 @@ class DownloadList(object):
         or (
             not isinstance(media_data_obj, media.Video)
             and custom_flag
-            and self.app_obj.custom_dl_by_video_flag
+            and self.custom_dl_obj.dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
                 self.create_item(
@@ -2719,7 +2777,7 @@ class DownloadItem(object):
             without downloading anything. 'real' if videos should be downloaded
             (or not) depending on each media data object's .dl_sim_flag IV.
             'custom' is like 'real', but with additional options applied
-            (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+            (specified by a downloads.CustomDLManager object)
 
             For downloads launched from the Classic Mode Tab, 'classic_real'
             for an ordinary download, 'classic_sim' for a simulated download,
@@ -2766,7 +2824,7 @@ class DownloadItem(object):
         #   without downloading anything. 'real' if videos should be downloaded
         #   (or not) depending on each media data object's .dl_sim_flag IV.
         #   'custom' is like 'real', but with additional options applied
-        #   (specified by IVs like mainapp.TartubeApp.custom_dl_by_video_flag)
+        #   (specified by a downloads.CustomDLManager object)
         # For downloads launched from the Classic Mode Tab, 'classic_real' for
         #   an ordinary download, 'classic_sim' for a simulated download, and
         #   'classic_custom' for a custom download. A download operation using
@@ -3162,7 +3220,8 @@ class VideoDownloader(object):
                 self.download_item_obj.media_data_obj,
                 media.Video,
             ):
-                divert_mode = app_obj.custom_dl_divert_mode
+                divert_mode \
+                = self.download_manager_obj.custom_dl_obj.divert_mode
 
             cmd_list = utils.generate_ytdl_system_cmd(
                 app_obj,
@@ -3171,6 +3230,7 @@ class VideoDownloader(object):
                 self.dl_sim_flag,
                 self.dl_classic_flag,
                 self.missing_video_check_flag,
+                self.download_manager_obj.custom_dl_obj,
                 divert_mode,
             )
 
@@ -3220,9 +3280,9 @@ class VideoDownloader(object):
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors="replace")
+                        stdout = stdout.decode('cp1252', errors='replace')
                     else:
-                        stdout = stdout.decode('utf-8', errors="replace")
+                        stdout = stdout.decode('utf-8', errors='replace')
 
                     # Convert the statistics into a python dictionary in a
                     #   standard format, specified in the comments for
@@ -3323,9 +3383,9 @@ class VideoDownloader(object):
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
             if os.name == 'nt':
-                stderr = stderr.decode('cp1252', errors="replace")
+                stderr = stderr.decode('cp1252', errors='replace')
             else:
-                stderr = stderr.decode('utf-8', errors="replace")
+                stderr = stderr.decode('utf-8', errors='replace')
 
             # A network error is treated the same way as a stalled download
             if app_obj.operation_auto_restart_network_flag \
@@ -3652,6 +3712,9 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 3202 confirm_new_video')
 
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
         # Special case: don't add videos to the Tartube database at all
         media_data_obj = self.download_item_obj.media_data_obj
         if not isinstance(media_data_obj, media.Video) \
@@ -3660,7 +3723,7 @@ class VideoDownloader(object):
             # Deal with the video description, JSON data and thumbnail,
             #   according to the settings in options.OptionsManager
             utils.handle_files_after_download(
-                self.download_manager_obj.app_obj,
+                app_obj,
                 self.download_worker_obj.options_manager_obj,
                 dir_path,
                 filename,
@@ -3668,7 +3731,6 @@ class VideoDownloader(object):
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
-            # The True argument specifies that this function is the caller
             self.download_manager_obj.register_video('new')
 
         # Special case: if the download operation was launched from the
@@ -3681,8 +3743,6 @@ class VideoDownloader(object):
 
         # All other cases
         elif not self.video_num in self.video_check_dict:
-
-            app_obj = self.download_manager_obj.app_obj
 
             # Create a new media.Video object for the video
             if self.url_is_not_video_flag:
@@ -3713,6 +3773,18 @@ class VideoDownloader(object):
             or isinstance(video_obj.parent_obj, media.Playlist):
                 video_obj.set_index(self.video_num)
 
+            # Contact SponsorBlock server to fetch video slice data
+            if app_obj.custom_sblock_mirror != '' \
+            and app_obj.sblock_fetch_flag \
+            and video_obj.vid != None \
+            and (not video_obj.slice_list or app_obj.sblock_replace_flag):
+                utils.fetch_slice_data(
+                    app_obj,
+                    video_obj,
+                    self.download_worker_obj.worker_id,
+                    True,       # Write to terminal, if allowed
+                )
+
             # Update the main window
             GObject.timeout_add(
                 0,
@@ -3726,7 +3798,6 @@ class VideoDownloader(object):
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
-            # The True argument specifies that this function is the caller
             self.download_manager_obj.register_video('new')
 
             # Update the checklist
@@ -3781,6 +3852,18 @@ class VideoDownloader(object):
             os.path.abspath(os.path.join(dir_path, filename + extension)),
         )
 
+        # Contact SponsorBlock server to fetch video slice data
+        if app_obj.custom_sblock_mirror != '' \
+        and app_obj.sblock_fetch_flag \
+        and video_obj.vid != None \
+        and (not video_obj.slice_list or app_obj.sblock_replace_flag):
+            utils.fetch_slice_data(
+                app_obj,
+                video_obj,
+                self.download_worker_obj.worker_id,
+                True,       # Write to terminal, if allowed
+            )
+
         # Deal with the video description, JSON data and thumbnail, according
         #   to the settings in options.OptionsManager
         utils.handle_files_after_download(
@@ -3800,8 +3883,8 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data().
 
         When youtube-dl reports a video has already been downloaded, make sure
-        the media.Video object is marked as downloaded, and upate the video
-        catalogue in the main window if necessary.
+        the media.Video object is marked as downloaded, and upate the main
+        window if necessary.
 
         Args:
 
@@ -4010,6 +4093,9 @@ class VideoDownloader(object):
         else:
             name = None
 
+        if 'id' in json_dict:
+            vid = json_dict['id']
+
         chapter_list = []
         if 'chapters' in json_dict:
             chapter_list = json_dict['chapters']
@@ -4130,6 +4216,9 @@ class VideoDownloader(object):
             elif filename is not None:
                 video_obj.set_nickname(filename)
 
+            if vid is not None:
+                video_obj.set_vid(vid)
+
             if upload_time is not None:
                 video_obj.set_upload_time(upload_time)
 
@@ -4225,6 +4314,9 @@ class VideoDownloader(object):
                     video_obj.set_nickname(name)
                 elif filename is not None:
                     video_obj.set_nickname(filename)
+
+            if not video_obj.vid and vid is not None:
+                video_obj.set_vid(vid)
 
             if not video_obj.upload_time and upload_time is not None:
                video_obj.set_upload_time(upload_time)
@@ -4410,6 +4502,18 @@ class VideoDownloader(object):
 
                 utils.move_thumbnail_to_subdir(app_obj, video_obj)
 
+        # Contact SponsorBlock server to fetch video slice data
+        if app_obj.custom_sblock_mirror != '' \
+        and app_obj.sblock_fetch_flag \
+        and video_obj.vid != None \
+        and (not video_obj.slice_list or app_obj.sblock_replace_flag):
+            utils.fetch_slice_data(
+                app_obj,
+                video_obj,
+                self.download_worker_obj.worker_id,
+                True,       # Write to terminal, if allowed
+            )
+
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), add a line to the Results List, as well
         #   as updating the Video Catalogue
@@ -4453,7 +4557,7 @@ class VideoDownloader(object):
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
             if os.name == 'nt':
-                filename = filename.encode().decode('cp1252', errors="replace")
+                filename = filename.encode().decode('cp1252', errors='replace')
 
             try:
 
@@ -5471,12 +5575,15 @@ class VideoDownloader(object):
 
 class ClipDownloader(object):
 
-    """Called by downloads.DownloadWorker.run_clip_downloader().
+    """Called by downloads.DownloadWorker.run_clip_slice_downloader().
 
     A modified VideoDownloader to download one or more video clips from a
-    specified video (rather than downloading the complete video)
+    specified video (rather than downloading the complete video).
 
-    Python class to create multiple system child process, one for each clip.
+    Optionally concatenates the clips back together, which has the effect of
+    removing one or more slices from a video.
+
+    Python class to create multiple system child processes, one for each clip.
 
     Reads from the child process STDOUT and STDERR, having set up a
     downloads.PipeReader object to do so in an asynchronous way.
@@ -5582,7 +5689,7 @@ class ClipDownloader(object):
         #   overwrite higher in the hierarchy (with a bigger number)
         self.return_code = self.OK
         # The time (in seconds) between iterations of the loop in
-        #   self.do_download()
+        #   self.do_download_clips()
         self.sleep_time = 0.1
 
         # Flag set to True if this download operation was launched from the
@@ -5598,7 +5705,7 @@ class ClipDownloader(object):
         self.stop_soon_flag = False
         # When self.stop_soon_flag is True, the next call to
         #   self.extract_stdout_data() for a downlaoded clip sets this flag to
-        #   True, informing self.do_download() that it can stop the child
+        #   True, informing self.do_download_clips() that it can stop the child
         #   process
         self.stop_now_flag = False
 
@@ -5620,6 +5727,7 @@ class ClipDownloader(object):
 
         # Dictionary of clip tiles used during this operation (i.e. when
         #   splitting a video into clips), used to re-name duplicates
+        # Not used when removing video slices
         self.clip_title_dict = {}
 
         # Code
@@ -5632,9 +5740,9 @@ class ClipDownloader(object):
     # Public class methods
 
 
-    def do_download(self):
+    def do_download_clips(self):
 
-        """Called by downloads.DownloadWorker.run_clip_downloader().
+        """Called by downloads.DownloadWorker.run_clip_slice_downloader().
 
         Using the URL described by self.download_item_obj (which must
         represent a media.Video object, during a 'custom' or 'classic_custom'
@@ -5649,7 +5757,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2691 do_download')
+            utils.debug_time('dld 2691 do_download_clips')
 
         # Import the main application and video object (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -5734,7 +5842,7 @@ class ClipDownloader(object):
             #   clip is used. If there are no more clips, then this clip will
             #   end at the end of the video
             start_stamp, stop_stamp, clip_title \
-            = utils.prepare_video_clip(stamp_list, i)
+            = utils.clip_extract_data(stamp_list, i)
 
             # Set a (hopefully unique) clip title
             clip_title = utils.clip_prepare_title(
@@ -5749,6 +5857,12 @@ class ClipDownloader(object):
             self.clip_title_dict[clip_title] = None
 
             # Prepare a system command...
+            if self.download_manager_obj.custom_dl_obj is not None:
+                divert_mode \
+                = self.download_manager_obj.custom_dl_obj.divert_mode
+            else:
+                divert_mode = None
+
             cmd_list = utils.generate_split_system_cmd(
                 app_obj,
                 orig_video_obj,
@@ -5757,7 +5871,8 @@ class ClipDownloader(object):
                 clip_title,
                 start_stamp,
                 stop_stamp,
-                app_obj.custom_dl_divert_mode,
+                self.download_manager_obj.custom_dl_obj,
+                divert_mode,
                 self.dl_classic_flag,
             )
 
@@ -5777,8 +5892,8 @@ class ClipDownloader(object):
             #   translated)
             app_obj.main_win_obj.output_tab_write_stdout(
                 self.download_worker_obj.worker_id,
-                '[tartube] Downloading clip ' + str(i + 1) + '/' \
-                + str(list_size),
+                '[' + __main__.__packagename__ + '] Downloading clip ' \
+                + str(i + 1) + '/' + str(list_size),
             )
 
             # Create a new child process using the command
@@ -5826,9 +5941,9 @@ class ClipDownloader(object):
                         # On MS Windows we use cp1252, so that Tartube can
                         #   communicate with the Windows console
                         if os.name == 'nt':
-                            stdout = stdout.decode('cp1252', errors="replace")
+                            stdout = stdout.decode('cp1252', errors='replace')
                         else:
-                            stdout = stdout.decode('utf-8', errors="replace")
+                            stdout = stdout.decode('utf-8', errors='replace')
 
                         # Remove weird carriage returns that insert empty lines
                         #   into the Output Tab
@@ -5874,9 +5989,9 @@ class ClipDownloader(object):
                 #   python's convenience
                 stderr = self.stderr_queue.get_nowait().rstrip()
                 if os.name == 'nt':
-                    stderr = stderr.decode('cp1252', errors="replace")
+                    stderr = stderr.decode('cp1252', errors='replace')
                 else:
-                    stderr = stderr.decode('utf-8', errors="replace")
+                    stderr = stderr.decode('utf-8', errors='replace')
 
                 # After a network error, stop trying to download clips
                 if self.is_network_error(stderr):
@@ -5933,7 +6048,7 @@ class ClipDownloader(object):
             # Deal with a confirmed download (if any)
             if self.dl_path is not None and self.dl_confirm_flag:
 
-                self.confirm_video(
+                self.confirm_video_clip(
                     dest_obj,
                     dest_dir,
                     orig_video_obj,
@@ -5976,6 +6091,483 @@ class ClipDownloader(object):
         return self.return_code
 
 
+    def do_download_remove_slices(self):
+
+        """Called by downloads.DownloadWorker.run_clip_slice_downloader().
+
+        Modified version of self.do_download_clips().
+
+        The media.Video object specifies one or more video slices that must be
+        removed. We start by downloading the video in clips, as before. The
+        clips are the portions of the video that we want to keep.
+
+        Then, we concatenate the clips back together, which has the effect of
+        'downloading' a video with the specified slices removed.
+
+        Returns:
+
+            The final return code, a value in the range 0-5 (as described
+            above)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 2691 do_download_remove_slices')
+
+        # Import the main application and video object (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+        orig_video_obj = self.download_item_obj.media_data_obj
+
+        # Set the default return code. Everything is OK unless we encounter any
+        #   problems
+        self.return_code = self.OK
+
+        if not self.dl_classic_flag:
+
+            # Reset the errors/warnings stored in the media data object, the
+            #   last time it was checked/downloaded
+            self.download_item_obj.media_data_obj.reset_error_warning()
+
+        # Contact the SponsorBlock server to update the video's slice data, if
+        #   allowed
+        # (No point doing it, if the temporary buffer is set)
+        if not app_obj.temp_slice_list:
+
+            if app_obj.sblock_re_extract_flag \
+            and not orig_video_obj.slice_list:
+                utils.fetch_slice_data(
+                    app_obj,
+                    orig_video_obj,
+                    self.download_worker_obj.worker_id,
+                )
+
+            # Check that at least one slice now exists
+            if not orig_video_obj.slice_list:
+
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    _('No slices defined in video\'s slice list'),
+                )
+
+                self.stop()
+                return self.ERROR
+
+        # Create a temporary directory for this video so we don't accidentally
+        #   overwrite anything
+        parent_dir = orig_video_obj.parent_obj.get_actual_dir(app_obj)
+        temp_dir = self.create_temp_dir(orig_video_obj, parent_dir)
+        if temp_dir is None:
+            return self.ERROR
+
+        # If the temporary buffer specifies a slice list, use it; otherwise
+        #   use the video's actual slice list
+        if not app_obj.temp_slice_list:
+            slice_list = orig_video_obj.slice_list.copy()
+            temp_flag = False
+
+        else:
+            slice_list = app_obj.temp_slice_list.copy()
+            # (The temporary buffer, once used, must be emptied immediately)
+            app_obj.reset_temp_slice_list()
+            temp_flag = True
+
+        # Convert this list from a list of video slices to be removed, to a
+        #   list of video clips to be retained
+        # The returned list is in groups of two, in the form
+        #   [start_time, stop_time]
+        # ...where 'start_time' and 'stop_time' are floating-point values in
+        #   seconds. 'stop_time' can be None to signify the end of the video,
+        #   but 'start_time' is 0 to signify the start of the video
+        clip_list = utils.convert_slices_to_clips(
+            app_obj,
+            self.download_manager_obj.custom_dl_obj,
+            slice_list,
+            temp_flag,
+        )
+
+        # Download the clips, one at a time
+        confirmed_list = []
+        count = 0
+        list_size = len(clip_list)
+        for mini_list in clip_list:
+
+            count += 1
+            start_time = mini_list[0]
+            stop_time = mini_list[1]
+
+            # Reset detection variables
+            self.dl_path = None
+            self.dl_confirm_flag = False
+
+            # Prepare a system command...
+            if self.download_manager_obj.custom_dl_obj is not None:
+                divert_mode \
+                = self.download_manager_obj.custom_dl_obj.divert_mode
+            else:
+                divert_mode = None
+
+            cmd_list = utils.generate_slice_system_cmd(
+                app_obj,
+                orig_video_obj,
+                self.download_worker_obj.options_list.copy(),
+                temp_dir,
+                count,
+                start_time,
+                stop_time,
+                self.download_manager_obj.custom_dl_obj,
+                divert_mode,
+                self.dl_classic_flag,
+            )
+
+            # ...display it in the Output Tab (if required)...
+            if app_obj.ytdl_output_system_cmd_flag:
+                app_obj.main_win_obj.output_tab_write_system_cmd(
+                    self.download_worker_obj.worker_id,
+                    ' '.join(cmd_list),
+                )
+
+            # ...and the terminal (if required)
+            if app_obj.ytdl_write_system_cmd_flag:
+                print(' '.join(cmd_list))
+
+            # Write an additional message in the Output Tab, in the same style
+            #   as those produced by youtube-dl/FFmpeg (and therefore not
+            #   translated)
+            app_obj.main_win_obj.output_tab_write_stdout(
+                self.download_worker_obj.worker_id,
+                '[' + __main__.__packagename__ + '] Downloading clip ' \
+                + str(count) + '/' + str(list_size),
+            )
+
+            # Create a new child process using the command
+            self.create_child_process(cmd_list)
+
+            # Pass data on to self.download_worker_obj so the main window can
+            #   be updated
+            if stop_time is not None:
+                clip = 'Clip ' + str(start_time) + 's - ' + str(stop_time) \
+                + 's'
+            else:
+                clip = 'Clip ' + str(start_time) + 's - end'
+
+            self.download_worker_obj.data_callback({
+                'playlist_index': count,
+                'playlist_size': list_size,
+                'status': formats.ACTIVE_STAGE_DOWNLOAD,
+                'filename': clip,
+            })
+
+            # So that we can read from the child process STDOUT and STDERR,
+            #   attach a file descriptor to the PipeReader objects
+            if self.child_process is not None:
+
+                self.stdout_reader.attach_file_descriptor(
+                    self.child_process.stdout,
+                )
+
+                self.stderr_reader.attach_file_descriptor(
+                    self.child_process.stderr,
+                )
+
+            # While downloading the media data object, update the callback
+            #   function with the status of the current job
+            while self.is_child_process_alive():
+
+                # Pause a moment between each iteration of the loop (we don't
+                #   want to hog system resources)
+                time.sleep(self.sleep_time)
+
+                # Read from the child process STDOUT, and convert into unicode
+                #   for Python's convenience
+                while not self.stdout_queue.empty():
+
+                    stdout = self.stdout_queue.get_nowait().rstrip()
+                    if stdout:
+
+                        # On MS Windows we use cp1252, so that Tartube can
+                        #   communicate with the Windows console
+                        if os.name == 'nt':
+                            stdout = stdout.decode('cp1252', errors='replace')
+                        else:
+                            stdout = stdout.decode('utf-8', errors='replace')
+
+                        # Remove weird carriage returns that insert empty lines
+                        #   into the Output Tab
+                        stdout = re.sub(r"[\r]+", "", stdout)
+
+                        # Extract output from stdout
+                        self.extract_stdout_data(stdout)
+
+                        # Show output in the Output Tab (if required)
+                        if app_obj.ytdl_output_stdout_flag:
+
+                            app_obj.main_win_obj.output_tab_write_stdout(
+                                self.download_worker_obj.worker_id,
+                                stdout,
+                            )
+
+                        # Show output in the terminal (if required)
+                        if app_obj.ytdl_write_stdout_flag:
+
+                            # Git #175, Japanese text may produce a codec error
+                            #   here, despite the .decode() call above
+                            try:
+                                print(stdout)
+                            except:
+                                print(
+                                    'STDOUT text with unprintable characters'
+                                )
+
+                # Stop this clip downloader, if required to do so, having just
+                #   finished downloading a clip
+                if self.stop_now_flag:
+                    self.stop()
+
+            # The child process has finished
+            while not self.stderr_queue.empty():
+
+                # v2.3.168 I'm not sure that any detectable errors are actually
+                #   produced, but nevertheless this section can handle any
+                #   such errors
+
+                # Read from the child process STDERR queue (we don't need to
+                #   read it in real time), and convert into unicode for
+                #   python's convenience
+                stderr = self.stderr_queue.get_nowait().rstrip()
+                if os.name == 'nt':
+                    stderr = stderr.decode('cp1252', errors='replace')
+                else:
+                    stderr = stderr.decode('utf-8', errors='replace')
+
+                # After a network error, stop trying to download clips
+                if self.is_network_error(stderr):
+
+                    self.stop()
+                    self.last_data_callback()
+                    return self.STALLED
+
+                # Show output in the Output Tab (if required)
+                if (app_obj.ytdl_output_stderr_flag):
+                    app_obj.main_win_obj.output_tab_write_stderr(
+                        self.download_worker_obj.worker_id,
+                        stderr,
+                    )
+
+                # Show output in the terminal (if required)
+                if (app_obj.ytdl_write_stderr_flag):
+                    # Git #175, Japanese text may produce a codec error here,
+                    #   despite the .decode() call above
+                    try:
+                        print(stderr)
+                    except:
+                        print('STDERR text with unprintable characters')
+
+            # We also set the return code to self.ERROR if the download didn't
+            #   start or if the child process return code is greater than 0
+            # Original notes from youtube-dl-gui:
+            #   NOTE: In Linux if the called script is just empty Python exits
+            #       normally (ret=0), so we can't detect this or similar cases
+            #       using the code below
+            #   NOTE: In Unix a negative return code (-N) indicates that the
+            #       child was terminated by signal N (e.g. -9 = SIGKILL)
+            if self.child_process is None:
+                self.set_return_code(self.ERROR)
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    _('FAILED: Clip download did not start'),
+                )
+
+            elif self.child_process.returncode > 0:
+                self.set_return_code(self.ERROR)
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                        _(
+                        'FAILED: Child process exited with non-zero code: {}'
+                        ).format(self.child_process.returncode),
+                )
+
+            # General error handling
+            if self.return_code != self.OK:
+
+                break
+
+            # Add a confirmed download to the list
+            if self.dl_path is not None and self.dl_confirm_flag:
+
+                confirmed_list.append(self.dl_path)
+                self.video_num += 1
+                self.video_total += 1
+
+        # If fewer clips than expected were downloaded, then don't use any of
+        #   them
+        if len(confirmed_list) != len(clip_list):
+
+            self.set_return_code(self.ERROR)
+
+            app_obj.main_win_obj.output_tab_write_stderr(
+                self.download_worker_obj.worker_id,
+                _('FAILED: One or more clips were not downloaded'),
+            )
+
+        else:
+
+            # Otherwise, get the video's (original) file extension from the
+            #   first clip
+            file_path, file_ext = os.path.splitext(confirmed_list[0])
+
+            # Ordinarily, the user will check a video before custom downloading
+            #   it. If not, the media.Video object won't have a .file_name set,
+            #   which breaks the code below; in that case, we'll have to
+            #   generate a name ourselves
+            if orig_video_obj.file_name is None:
+                fallback_name = _('Video') + ' ' + str(orig_video_obj.dbid)
+                orig_video_obj.set_name(fallback_name)
+                orig_video_obj.set_nickname(fallback_name)
+                orig_video_obj.set_file(fallback_name, file_ext)
+
+            # If there is more than one clip, they must be concatenated to
+            #   produce a single video (like the original video, from which the
+            #   video slices have been removed)
+            if len(confirmed_list) == 1:
+                output_path = confirmed_list[0]
+
+            else:
+                # For FFmpeg's benefit, write a text file listing every clip
+                line_list = []
+                clips_file = os.path.abspath(
+                    os.path.join(temp_dir, 'clips.txt'),
+                )
+
+                for confirmed_path in confirmed_list:
+                    line_list.append('file \'' + confirmed_path + '\'')
+
+                with open(clips_file, 'w') as fh:
+                    fh.write('\n'.join(line_list))
+
+                # Prepare the FFmpeg command to concatenate the clips together
+                output_path = os.path.abspath(
+                    os.path.join(
+                        temp_dir,
+                        orig_video_obj.file_name + file_ext,
+                    ),
+                )
+
+                cmd_list = [
+                    app_obj.ffmpeg_manager_obj.get_executable(),
+                    '-safe',
+                    '0',
+                    '-f',
+                    'concat',
+                    '-i',
+                    clips_file,
+                    '-c',
+                    'copy',
+                    output_path,
+                ]
+
+                # ...display it in the Output Tab (if required)...
+                if app_obj.ytdl_output_system_cmd_flag:
+                    app_obj.main_win_obj.output_tab_write_system_cmd(
+                        self.download_worker_obj.worker_id,
+                        ' '.join(cmd_list),
+                    )
+
+                # ...and the terminal (if required)
+                if app_obj.ytdl_write_system_cmd_flag:
+                    print(' '.join(cmd_list))
+
+
+                # Create a new child process using the command
+                self.create_child_process(cmd_list)
+
+                # Pass data on to self.download_worker_obj so the main window
+                #   can be updated
+                self.download_worker_obj.data_callback({
+                    'playlist_index': self.video_total,
+                    'playlist_size': self.video_total,
+                    'status': formats.ACTIVE_STAGE_CONCATENATE,
+                    'filename': '',
+                })
+
+                # So that we can read from the child process STDOUT and STDERR,
+                #   attach a file descriptor to the PipeReader objects
+                if self.child_process is not None:
+
+                    self.stdout_reader.attach_file_descriptor(
+                        self.child_process.stdout,
+                    )
+
+                    self.stderr_reader.attach_file_descriptor(
+                        self.child_process.stderr,
+                    )
+
+                # Wait for the concatenation to finish. We are not bothered
+                #   about reading the child process STDOUT/STDERR, since we can
+                #   just test for the existence of the output file
+                while self.is_child_process_alive():
+                    time.sleep(self.sleep_time)
+
+                if not os.path.isfile(output_path):
+
+                    app_obj.main_win_obj.output_tab_write_stderr(
+                        self.download_worker_obj.worker_id,
+                        _('FAILED: Can\'t concatenate clips'),
+                    )
+
+                    return self.ERROR
+
+            # Move the single video file back into the parent directory,
+            #   replacing any file of the same name that's already there
+            moved_path = os.path.abspath(
+                os.path.join(
+                    parent_dir,
+                    orig_video_obj.file_name + file_ext,
+                ),
+            )
+
+            try:
+
+                if os.path.isfile(moved_path):
+                    os.remove(moved_path)
+
+                shutil.move(output_path, moved_path)
+
+            except:
+
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    _(
+                        'FAILED: Clips were concatenated, but could not move' \
+                        + ' the output file out of the temporary directory',
+                    ),
+                )
+
+                return self.ERROR
+
+            # Also move metadata files, if they don't already exist in the
+            #   parent directory (or its /.data and ./thumbs sub-directories)
+            self.move_metadata_files(orig_video_obj, temp_dir, parent_dir)
+
+            # downloads.DownloadManager tracks the number of video slices
+            #   removed
+            for i in range(len(slice_list)):
+                self.download_manager_obj.register_slice()
+
+            # Update Tartube's database
+            self.confirm_video_remove_slices(orig_video_obj, moved_path)
+
+        # Delete the temporary directory
+        shutil.rmtree(temp_dir)
+
+        # Pass a dictionary of values to downloads.DownloadWorker, confirming
+        #   the result of the job. The values are passed on to the main
+        #   window
+        self.last_data_callback()
+
+        # Pass the result back to the parent downloads.DownloadWorker object
+        return self.return_code
+
+
     def close(self):
 
         """Can be called by anything.
@@ -5991,9 +6583,10 @@ class ClipDownloader(object):
         self.stderr_reader.join()
 
 
-    def confirm_video(self, dest_obj, dest_dir, orig_video_obj, clip_title):
+    def confirm_video_clip(self, dest_obj, dest_dir, orig_video_obj, \
+    clip_title):
 
-        """Called by self.do_download() when a video clip is confirmed as
+        """Called by self.do_download_clips() when a video clip is confirmed as
         having been downloaded.
 
         Args:
@@ -6011,10 +6604,13 @@ class ClipDownloader(object):
 
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 3102 confirm_video_clip')
+
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Downlaod confirmed
+        # Download confirmed
         self.video_num += 1
         self.video_total += 1
         self.download_manager_obj.register_clip()
@@ -6081,9 +6677,80 @@ class ClipDownloader(object):
             self.stop_now_flag = True
 
 
+    def confirm_video_remove_slices(self, orig_video_obj, output_path):
+
+        """Called by self.do_download_remove_slices().
+
+        Once a video has been downloaded as a sequence of clips, then
+        concatenated into a single video file (thereby removing one or more
+        video slices), make sure the medai.Video object is marked as
+        downloaded, and update the main window.
+
+        Args:
+
+            orig_video_obj (media.Video): The video to be downloaded
+
+            output_path (str): Full path to the concatenated video
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 2691 confirm_video_remove_slices')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Special case: don't add videos to the Tartube database
+        if orig_video_obj.parent_obj.dl_no_db_flag:
+            # (Do nothing, in this case)
+            pass
+
+        # Special case: if the download operation was launched from the
+        #   Classic Mode Tab, then we only need to update the dummy
+        #   media.Video object, and to move/remove description/metadata/
+        #   thumbnail files, as appropriate
+        elif self.dl_classic_flag:
+
+            orig_video_obj.set_dl_flag(True)
+            orig_video_obj.set_dummy_path(output_path)
+
+        elif not orig_video_obj.dl_flag:
+
+            # Mark the video as downloaded
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_downloaded,
+                orig_video_obj,
+                True,               # Video is downloaded
+            )
+
+            # Do add an entry to the Results List (as well as updating the
+            #   Video Catalogue, as normal)
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
+                self.download_item_obj,
+                orig_video_obj,
+                # No call to self.compile_mini_options_dict, because this
+                #   function deals with download options like
+                #   'move_description' by itself
+                {},
+            )
+
+        # Register the download with DownloadManager, so that download limits
+        #   can be applied, if required
+        self.download_manager_obj.register_video('new')
+
+        # Timestamp and slice information is now obsolete for this video, and
+        #   can be removed, if required
+        if app_obj.slice_video_cleanup_flag:
+            orig_video_obj.reset_timestamps()
+            orig_video_obj.reset_slices()
+
+
     def create_child_process(self, cmd_list):
 
-        """Called by self.do_download() shortly after the call to
+        """Called by self.do_download_clips() shortly after the call to
         utils.generate_split_system_cmd().
 
         Based on YoutubeDLDownloader._create_process().
@@ -6127,14 +6794,68 @@ class ClipDownloader(object):
 
         except (ValueError, OSError) as error:
             # (There is no need to update the media data object's error list,
-            #   as the code in self.do_download() will notice the child
+            #   as the code in self.do_download_clips() will notice the child
             #   process didn't start, and set its own error message)
             self.set_return_code(self.ERROR)
 
 
+    def create_temp_dir(self, orig_video_obj, parent_dir):
+
+        """Called by self.do_download_remove_slices().
+
+        Before downloading a video in clips, and then concatenating the clips,
+        create a temporary directory for the clips so we don't accidentally
+        overwrite anything.
+
+        Args:
+
+            orig_video_obj (media.Video): The video to be downloaded
+
+            parent_dir (str): Full path to the parent container's directory
+
+        Return values:
+
+            The temporary directory created on success, None on failure
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4154 create_temp_dir')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Work out where the temporary directory should be...
+        temp_dir = os.path.abspath(
+            os.path.join(
+                parent_dir,
+                '.clips_' + str(orig_video_obj.dbid)
+            ),
+        )
+
+        # ...then create it
+        try:
+            if os.path.isdir(temp_dir):
+                shutil.rmtree(temp_dir)
+
+            os.makedirs(temp_dir)
+
+            return temp_dir
+
+        except:
+            app_obj.main_win_obj.output_tab_write_stderr(
+                self.download_worker_obj.worker_id,
+                _('FAILED: Can\'t create a temporary folder for video clips'),
+            )
+
+            self.stop()
+
+            return None
+
+
     def extract_stdout_data(self, stdout):
 
-        """Called by self.do_download().
+        """Called by self.do_download_clips().
 
         Extracts output from the child process.
 
@@ -6192,12 +6913,13 @@ class ClipDownloader(object):
 
     def is_child_process_alive(self):
 
-        """Called by self.do_download() and self.stop().
+        """Called by self.do_download_clips(), .do_download_remove_slices and
+        .stop().
 
         Based on YoutubeDLDownloader._proc_is_alive().
 
-        Called continuously during the self.do_download() loop to check whether
-        the child process has finished or not.
+        Called continuously during the loop to check whether the child process
+        has finished or not.
 
         Returns:
 
@@ -6216,7 +6938,7 @@ class ClipDownloader(object):
 
     def is_network_error(self, stderr):
 
-        """Called by self.do_download(); an exact copy of the function in
+        """Called by self.do_download_clips(); an exact copy of the function in
         VideoDownloader.
 
         Try to detect network errors, indicating a stalled download.
@@ -6255,7 +6977,7 @@ class ClipDownloader(object):
 
     def last_data_callback(self):
 
-        """Called by self.do_download().
+        """Called by self.do_download_clips().
 
         Based on VideoDownloader.last_data_callback().
 
@@ -6300,9 +7022,209 @@ class ClipDownloader(object):
         self.download_worker_obj.data_callback(dl_stat_dict, True)
 
 
+    def move_metadata_files(self, orig_video_obj, temp_dir, parent_dir):
+
+        """Called by self.do_download_remove_slices().
+
+        After moving the (concatenated) video file from its temporary directory
+        into the parent container's directory, do the same to the metadata
+        files.
+
+        Depending on settings in the options.OptionsManager, they may be
+        moved into a sub-directory of the parent cotainer's directory instead.
+
+        Args:
+
+            orig_video_obj (media.Video): The video that was downloaded as a
+                sequence of clips
+
+            temp_dir (str): Full path to the temporary directory into which the
+                video and its metadata files was downloaded
+
+            parent_dir (str): Full path to the parent container's directory
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 4706 move_metadata_files')
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Handle the description file
+        options_obj = self.download_worker_obj.options_manager_obj
+        if options_obj.options_dict['keep_description']:
+
+            descrip_path = os.path.abspath(
+                os.path.join(temp_dir, 'clip_1.description'),
+            )
+
+            if os.path.isfile(descrip_path):
+
+                moved_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        orig_video_obj.file_name + '.description',
+                    ),
+                )
+
+                if options_obj.options_dict['move_description']:
+                    final_path = os.path.abspath(
+                        os.path.join(
+                            parent_dir,
+                            '.data',
+                            orig_video_obj.file_name + '.description',
+                        ),
+                    )
+                else:
+                    final_path = moved_path
+
+                if not os.path.isfile(moved_path) \
+                and not os.path.isfile(final_path):
+                    shutil.move(descrip_path, moved_path)
+
+                    # Further move the file into its sub-directory, if
+                    #   required, first creating that sub-directory if it
+                    #   doesn't exist
+                    if options_obj.options_dict['move_description']:
+                        utils.move_metadata_to_subdir(
+                            app_obj,
+                            orig_video_obj,
+                            '.description',
+                        )
+
+        # Handle the .info.json file
+        if options_obj.options_dict['keep_info']:
+
+            json_path = os.path.abspath(
+                os.path.join(temp_dir, 'clip_1.info.json'),
+            )
+
+            if os.path.isfile(json_path):
+
+                moved_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        orig_video_obj.file_name + '.info.json',
+                    ),
+                )
+
+                if options_obj.options_dict['move_info']:
+                    final_path = os.path.abspath(
+                        os.path.join(
+                            parent_dir,
+                            '.data',
+                            orig_video_obj.file_name + '.info.json',
+                        ),
+                    )
+                else:
+                    final_path = moved_path
+
+                if not os.path.isfile(moved_path) \
+                and not os.path.isfile(final_path):
+                    shutil.move(json_path, moved_path)
+
+                    if options_obj.options_dict['move_info']:
+                        utils.move_metadata_to_subdir(
+                            app_obj,
+                            orig_video_obj,
+                            '.info.json',
+                        )
+
+        # v2.1.101 - Annotations were removed by YouTube in 2019, so this
+        #   feature is not available, and will not be available until the
+        #   authors have some annotations to test
+#       if options_obj.options_dict['keep_annotations']:
+#
+#           xml_path = os.path.abspath(
+#               os.path.join(temp_dir, 'clip_1.annotations.xml'),
+#           )
+#
+#           if os.path.isfile(xml_path):
+#
+#               moved_path = os.path.abspath(
+#                   os.path.join(
+#                       parent_dir,
+#                       orig_video_obj.file_name + '.annotations.xml',
+#                   ),
+#               )
+#
+#               if options_obj.options_dict['move_annotations']:
+#                   final_path = os.path.abspath(
+#                       os.path.join(
+#                           parent_dir,
+#                           '.data',
+#                           orig_video_obj.file_name + '.annotations.xml',
+#                       ),
+#                   )
+#               else:
+#                   final_path = moved_path
+#
+#               if not os.path.isfile(moved_path) \
+#               and not os.path.isfile(final_path):
+#                   shutil.move(xml_path, moved_path)
+#
+#                   if options_obj.options_dict['move_annotations']:
+#                       utils.move_metadata_to_subdir(
+#                           app_obj,
+#                           orig_video_obj,
+#                           '.annotations.xml',
+#                       )
+
+        # Handle the thumbnail
+        if options_obj.options_dict['keep_thumbnail']:
+
+            thumb_path = utils.find_thumbnail_from_filename(
+                app_obj,
+                temp_dir,
+                'clip_1',
+            )
+
+            if thumb_path is not None and os.path.isfile(thumb_path):
+
+                name, ext = os.path.splitext(thumb_path)
+
+                moved_path = os.path.abspath(
+                    os.path.join(
+                        parent_dir,
+                        orig_video_obj.file_name + ext,
+                    ),
+                )
+
+                if not os.path.isfile(moved_path):
+                    shutil.move(thumb_path, moved_path)
+
+                    # Convert .webp thumbnails to .jpg, if required
+                    convert_path = utils.find_thumbnail_webp(
+                        app_obj,
+                        orig_video_obj,
+                    )
+                    if convert_path is not None \
+                    and not app_obj.ffmpeg_fail_flag \
+                    and app_obj.ffmpeg_convert_webp_flag \
+                    and not app_obj.ffmpeg_manager_obj.convert_webp(
+                        convert_path,
+                    ):
+                        app_obj.set_ffmpeg_fail_flag(True)
+                        GObject.timeout_add(
+                            0,
+                            app_obj.system_error,
+                            999,
+                            app_obj.ffmpeg_fail_msg,
+                        )
+
+                    # Move to the sub-directory, if required
+                    if options_obj.options_dict['move_thumbnail']:
+                        utils.move_thumbnail_to_subdir(
+                            app_obj,
+                            orig_video_obj,
+                        )
+
+
     def set_return_code(self, code):
 
-        """Called by self.do_download(), .create_child_process() and .stop().
+        """Called by self.do_download_clips(), .do_download_remove_slices(),
+        .create_child_process() and .stop().
 
         Based on YoutubeDLDownloader._set_returncode().
 
@@ -6856,9 +7778,9 @@ class StreamDownloader(object):
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors="replace")
+                        stdout = stdout.decode('cp1252', errors='replace')
                     else:
-                        stdout = stdout.decode('utf-8', errors="replace")
+                        stdout = stdout.decode('utf-8', errors='replace')
 
                     # Intercept various STDOUT messages
                     finished_flag = False
@@ -7027,9 +7949,9 @@ class StreamDownloader(object):
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
                     if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors="replace")
+                        stdout = stdout.decode('cp1252', errors='replace')
                     else:
-                        stdout = stdout.decode('utf-8', errors="replace")
+                        stdout = stdout.decode('utf-8', errors='replace')
 
                     # Intercept various STDOUT messages, depending on whether
                     #   the merge has started yet, or not
@@ -7565,7 +8487,10 @@ class JSONFetcher(object):
             if stdout:
 
                 # (Convert bytes to string)
-                stdout = stdout.decode()
+                if os.name == 'nt':
+                    stdout = stdout.decode('cp1252', errors='replace')
+                else:
+                    stdout = stdout.decode('utf-8', errors='replace')
                 if stdout[:1] == '{':
 
                     # Broadcasting livestream detected; create a new
@@ -7593,7 +8518,10 @@ class JSONFetcher(object):
                 if stderr:
 
                     # (Convert bytes to string)
-                    stderr = stderr.decode()
+                    if os.name == 'nt':
+                        stderr = stderr.decode('cp1252', errors='replace')
+                    else:
+                        stderr = stderr.decode('utf-8', errors='replace')
                     live_data_dict = utils.extract_livestream_data(stderr)
                     if live_data_dict:
 
@@ -8135,7 +9063,10 @@ class MiniJSONFetcher(object):
             if stdout:
 
                 # (Convert bytes to string)
-                stdout = stdout.decode()
+                if os.name == 'nt':
+                    stdout = stdout.decode('cp1252', errors='replace')
+                else:
+                    stdout = stdout.decode('utf-8', errors='replace')
                 if stdout[:1] == '{':
 
                     # Broadcasting livestream detected
@@ -8182,6 +9113,9 @@ class MiniJSONFetcher(object):
                     if 'title' in json_dict:
                         self.video_obj.set_nickname(json_dict['title'])
 
+                    if 'id' in json_dict:
+                        self.video_obj.set_vid(json_dict['id'])
+
                     if 'description' in json_dict:
                         self.video_obj.set_video_descrip(
                             app_obj,
@@ -8197,7 +9131,10 @@ class MiniJSONFetcher(object):
             if stderr:
 
                 # (Convert bytes to string)
-                stderr = stderr.decode()
+                if os.name == 'nt':
+                    stderr = stderr.decode('cp1252', errors='replace')
+                else:
+                    stderr = stderr.decode('utf-8', errors='replace')
 
                 # (v2.2.100: In approximately October 2020, YouTube started
                 #   using a new error message for livestreams waiting to start
@@ -8368,6 +9305,155 @@ class MiniJSONFetcher(object):
 
             else:
                 os.killpg(self.child_process.pid, signal.SIGKILL)
+
+
+class CustomDLManager(object):
+
+    """Called by mainapp.TartubeApp.create_custom_dl_manager().
+
+    Python class to store settings for a custom download. The user can create
+    as many instances of this object as they like, and can launch a custom
+    download using settings from any of them.
+
+    Args:
+
+        uid (int): Unique ID for this custom download manager (unique only to
+            this class of objects)
+
+        name (str): Non-unique name forthis custom download manager
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, uid, name):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 6494 __init__')
+
+        # IV list - other
+        # ---------------
+        # Unique ID for this custom download manager
+        self.uid = uid
+        # A non-unique name for this custom download manager
+        self.name = name
+
+        # If True, during a custom download, download every video which is
+        #   marked as not downloaded (often after clicking the 'Check all'
+        #   button); don't download channels/playlists directly
+        self.dl_by_video_flag = False
+        # If True, during a custom download, split a video into video clips
+        #   using its timestamps. Ignored if self.dl_by_video_flag is False
+        # Note that IVs for splitting videos (e.g.
+        #   mainapp.TartubeApp.split_video_name_mode) apply in this situation
+        #   as well
+        self.split_flag = False
+        # If True, during a custom download, video slices identified by
+        #   SponsorBlock are removed. Ignored if self.dl_by_video_flag is
+        #   False, or if self.split_flag is True
+        self.slice_flag = False
+        # A dictionary specifying which categories of video slice should be
+        #   removed. Keys are SponsorBlock categories; values are True to
+        #   remove the slice, False to retain it
+        # NB A sorted list of keys from this dictionary appears in
+        #   formats.SPONSORBLOCK_CATEGORY_LIST
+        self.slice_dict = {
+            'sponsor': True,
+            'selfpromo': False,
+            'interaction': False,
+            'intro': False,
+            'outro': False,
+            'preview': False,
+            'music_offtopic': False,
+        }
+        # If True, during a custom download, a delay (in minutes) is applied
+        #   between media data object downloads. When applied to a
+        #   channel/playlist, the delay occurs after the whole channel/
+        #   playlist. When applied directly to videos, the delay occurs after
+        #   each video
+        self.delay_flag = False
+        # The maximum delay to apply (in minutes, minimum value 0.2). Ignored
+        #   if self.delay_flag is False
+        self.delay_max = 5
+        # The minimum delay to apply (in minutes, minimum value 0, maximum
+        #   value self.delay_max). If specified, the delay is a random length
+        #   of time between this value and self.delay_max. Ignored if
+        #   self.delay_flag is False
+        self.delay_min = 0
+        # During a custom download, any videos whose source URL is YouTube can
+        #   be diverted to another website. This IV uses the values:
+        #       'default' - Use the original YouTube URL
+        #       'hooktube' - Divert to hooktube.com
+        #       'invidious' - Divert to invidio.us
+        #       'other' - user enters their own alternative front-end website
+        self.divert_mode = 'default'
+        # If self.divert_mode is 'other', the address of the YouTube
+        #   alternative. The string directly replaces the 'youtube.com' part of
+        #   a URL; so the string must be something like 'hooktube.com' not
+        #   'http://hooktube.com' or anything like that
+        # Ignored if it does not contain at least 3 characters. Ignored for any
+        #   other value of self.divert_mode
+        self.divert_website = ''
+
+
+    # Public class methods
+
+
+    def clone_settings(self, other_obj):
+
+        """Called by mainapp.TartubeApp.clone_custom_dl_manager_from_window().
+
+        Clones custom download settings from the specified object into this
+        object, completely replacing this object's settings.
+
+        Args:
+
+            other_obj (downloads.CustomDLManager): The custom download manager
+                object (usually the current one), from which settings will be
+                cloned
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 6494 clone_settings')
+
+        self.dl_by_video_flag = other_obj.dl_by_video_flag
+        self.split_flag = other_obj.split_flag
+        self.slice_flag = other_obj.slice_flag
+        self.slice_dict = other_obj.slice_dict.copy()
+        self.divert_mode = other_obj.divert_mode
+        self.divert_website = other_obj.divert_website
+        self.delay_flag = other_obj.delay_flag
+        self.delay_min = other_obj.delay_min
+
+
+    def reset_settings(self):
+
+        """Currently not called by anything (but might be needed in the
+        future).
+
+        Resets settings to their default values.
+        """
+
+        self.dl_by_video_flag = False
+        self.split_flag = False
+        self.slice_flag = False
+        self.slice_dict = {
+            'sponsor': True,
+            'selfpromo': False,
+            'interaction': False,
+            'intro': False,
+            'outro': False,
+            'preview': False,
+            'music_offtopic': False,
+        }
+        self.divert_mode = 'default'
+        self.divert_website = ''
+        self.delay_flag = False
+        self.delay_max = 5
+        self.delay_min = 0
 
 
 class PipeReader(threading.Thread):

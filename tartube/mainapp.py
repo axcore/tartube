@@ -427,9 +427,10 @@ class TartubeApp(Gtk.Application):
         #   item is clicked; False if only the next level should be expanded
         #   (ignored if self.auto_expand_video_index_flag is False)
         self.full_expand_video_index_flag = False
-        # Flag set to True if the 'Download all' buttons in the main window
-        #   toolbar and in the Videos tab should be disabled (in case the user
-        #   is sure they only want to do simulated downloads)
+        # Flag set to True if the 'Download all' and 'Custom download all'
+        #   buttons in the main window toolbar and in the Videos tab should be
+        #   disabled (in case the user is sure they only want to do simulated
+        #   downloads)
         # Does not apply to the download buttons in the Classic Mode tab
         self.disable_dl_all_flag = False
         # Flag set to True if a 'Custom download all' button should be visible
@@ -834,8 +835,12 @@ class TartubeApp(Gtk.Application):
         #       Update using PyPI youtube-dl path
         # 'ytdl_update_win_32',
         #       Windows 32-bit update (recommended)
+        # 'ytdl_update_win_32_no_dependencies',
+        #       Windows 32-bit update (use --no-dependencies option)
         # 'ytdl_update_win_64',
         #       Windows 64-bit update (recommended)
+        # 'ytdl_update_win_64_no_dependencies',
+        #       Windows 64-bit update (use --no-dependencies option)
         # 'ytdl_update_disabled'
         #       youtube-dl updates are disabled
         # A dictionary containing some possibilities, populated by self.start()
@@ -1082,46 +1087,32 @@ class TartubeApp(Gtk.Application):
         # Custom mirror to use (can be set by the user)
         self.custom_invidious_mirror = self.default_invidious_mirror
 
+        # Default SponsorBlock API mirror to use (this value never changes)
+        self.default_sblock_mirror = 'sponsor.ajay.app/api'
+        # Custom mirror to use (can be set by the user)
+        self.custom_sblock_mirror = self.default_sblock_mirror
+
         # Custom download operation settings
-        # If True, during a custom download, download every video which is
-        #   marked as not downloaded (often after clicking the 'Check all'
-        #   button); don't download channels/playlists directly
-        self.custom_dl_by_video_flag = False
-        # If True, during a custom download, split a video into video clips
-        #   using its timestamps. Ignored if self.custom_dl_by_video_flag is
-        #   False
-        # Note that IVs for splitting videos (e.g. self.split_video_name_mode)
-        #   apply in this situation as well
-        self.custom_dl_split_flag = False
-        # During a custom download, any videos whose source URL is YouTube can
-        #   be diverted to another website
-        #       'default' - Use the original YouTube URL
-        #       'hooktube' - Divert to hooktube.com
-        #       'invidious' - Divert to invidio.us
-        #       'other' - user enters their own alternative front-end website
-        self.custom_dl_divert_mode = 'default'
-        # If self.custom_dl_divert_mode is 'other', the address of the
-        #   YouTube alternative. The string directly replaces the 'youtube.com'
-        #   part of a URL; so the string must be something like 'hooktube.com'
-        #   not 'http://hooktube.com' or anything like that
-        # Ignored if it does not contain at least 3 characters. Ignored for any
-        #   other value of self.custom_dl_divert_mode
-        self.custom_dl_divert_website = ''
-        # If True, during a custom download, a delay (in minutes) is applied
-        #   between media data object downloads. When applied to a
-        #   channel/playlist, the delay occurs after the whole channel/
-        #   playlist. When applied directly to videos, the delay occurs after
-        #   each video
-        self.custom_dl_delay_flag = False
-        # The maximum delay to apply (in minutes, minimum value 0.2).
-        #   Ignored if self.custom_dl_delay_flag is False
-        self.custom_dl_delay_max = 5
-        # The minimum delay to apply (in minutes, minimum value 0, maximum
-        #   value self.custom_dl_delay_max). If specified, the delay is a
-        #   random length of time between this value and
-        #   self.custom_dl_delay_max. Ignored if self.custom_dl_delay_flag is
-        #   False
-        self.custom_dl_delay_min = 0
+        # A downloads.CustomDLManager object specifies settings to use during a
+        #   custom download
+        # Each CustomDLManager has a unique .uid IV (unique only to this class
+        #   of objects), and a non-unique name (in case the user wants to
+        #   import settings, which might have a duplicate name)
+        # The number of downloads.CustomDLManager objects ever created
+        #   (including any that have been deleted), used to generate the unique
+        #   .uid
+        self.custom_dl_reg_count = 0
+        # A dictionary containing all downloads.CustomDLManager objects (but
+        #   not those which have been deleted)
+        # Dictionary in the form
+        #   key = object's unique .uid
+        #   value = the custom download manager object itself
+        self.custom_dl_reg_dict = {}
+        # The General Custom Download Manager, used as the default manager
+        self.general_custom_dl_obj = None
+        # The downloads.CustomDLManager object used in the Classic Mode Tab. If
+        #   None, then self.general_custom_dl_obj is used
+        self.classic_custom_dl_obj = None
 
         # List of proxies. If set, a download operation cycles between them.
         #   Does not apply to YTSC downloads
@@ -1633,15 +1624,18 @@ class TartubeApp(Gtk.Application):
         self.operation_waiting_flag = False
         self.operation_waiting_type = None
         self.operation_waiting_list = []
+        self.operation_waiting_obj = None
         # Flag set to True if files should be saved at the end of every
         #   operation
         self.operation_save_flag = True
         # Flag set to True if, during download operations using simulated
         #   downloads, videos whose parent is a media.Folder (i.e. videos not
         #   in channels/playlists) should not be added to the downlist list,
-        #   unless the location of the video file is not set and no thumbnail
-        #   has been downloaded. If False, those videos are always added to
-        #   the download list
+        #   unless (1) the location of the video file is not set and no
+        #   thumbnail has been downloaded, or (2) the video is passed directly
+        #   to the download operation (for example, by right-clicking a video
+        #   and selecting 'Check Video' in the popup menu). If False, those
+        #   videos are always added to the download list
         # (This does not affect real downloads, in which such videos are never
         #   added to the download list)
         self.operation_sim_shortcut_flag = True
@@ -1753,9 +1747,9 @@ class TartubeApp(Gtk.Application):
         #   replaced, when a video is checked/downloaded
         self.video_timestamps_replace_flag = False
         # Flag set to True if, just before trying to split a video based on its
-        #   timestamps, process.ProcessManager should try to extract the
-        #   timestamps from the description (if none have been extracted so
-        #   far)
+        #   timestamps, downloads.ClipDownloader and process.ProcessManager
+        #   should try to re-extract the timestamps from the metadata or
+        #   description files (if none have been extracted so far)
         self.video_timestamps_re_extract_flag = False
         # When splitting videos, the format for the name of the video clips:
         #   num                 Number
@@ -1805,6 +1799,28 @@ class TartubeApp(Gtk.Application):
         #   media.Video.stamp_List. Used when the user right-clicks a video and
         #   selects 'Create video clip...' or 'Download video clip...'
         self.temp_stamp_list = []
+
+        # Flag set to True if downloads.VideoDownloader should contact the
+        #   SponsorBlock server, when checking/downloading videos
+        self.sblock_fetch_flag = False
+        # Flag set to True if we should obfuscate the video's ID, when
+        #   contacting the server (recommended for privacy)
+        self.sblock_obfuscate_flag = True
+        # Flag set to True if the previous set of video slices should be
+        #   replaced, when a video is checked/downlaoded
+        self.sblock_replace_flag = False
+        # Flag set to True if, just before trying to remove slices from a
+        #   video, downloads.ClipDownloader and process.ProcessManager should
+        #   contact SponsorBlock again to update the video slice list (if it is
+        #   currently empty)
+        self.sblock_re_extract_flag = False
+        # Flag set to True if timestamps/slices should be removed from a video,
+        #   after it is sliced (since they are then incorrect)
+        self.slice_video_cleanup_flag = True
+        # Temporary marked slice buffer, using the same format as
+        #   media.Video.slice_List. Used when the user right-clicks a video
+        #   and selects 'Remove video slices...'
+        self.temp_slice_list = []
 
         # Flag set to True if 'Child process exited with non-zero code'
         #   messages, generated by Tartube, should be ignored (in the
@@ -2300,15 +2316,15 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(download_all_menu_action)
 
-        custom_dl_all_menu_action = Gio.SimpleAction.new(
-            'custom_dl_all_menu',
-            None,
-        )
-        custom_dl_all_menu_action.connect(
-            'activate',
-            self.on_menu_custom_dl_all,
-        )
-        self.add_action(custom_dl_all_menu_action)
+#        custom_dl_all_menu_action = Gio.SimpleAction.new(
+#            'custom_dl_all_menu',
+#            None,
+#        )
+#        custom_dl_all_menu_action.connect(
+#            'activate',
+#            self.on_menu_custom_dl_all,
+#        )
+#        self.add_action(custom_dl_all_menu_action)
 
         refresh_db_menu_action = Gio.SimpleAction.new('refresh_db_menu', None)
         refresh_db_menu_action.connect('activate', self.on_menu_refresh_db)
@@ -2658,6 +2674,16 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(custom_dl_all_button_action)
 
+        custom_dl_select_button_action = Gio.SimpleAction.new(
+            'custom_dl_select_button',
+            None,
+        )
+        custom_dl_select_button_action.connect(
+            'activate',
+            self.on_menu_custom_dl_select,
+        )
+        self.add_action(custom_dl_select_button_action)
+
         # Classic Mode Tab actions
         # ------------------------
 
@@ -2921,6 +2947,13 @@ class TartubeApp(Gtk.Application):
         # Part 3 - setup some managers
         # ----------------------------
 
+        # Start the dialogue manager (thread-safe code for Gtk message dialogue
+        #   windows)
+        self.dialogue_manager_obj = dialogue.DialogueManager(
+            self,
+            self.main_win_obj,
+        )
+
         # Set the General Options Manager
         self.general_options_obj = self.create_download_options('general')
         # Apply a different set of download options to the Classic Mode Tab, by
@@ -2930,12 +2963,10 @@ class TartubeApp(Gtk.Application):
         # Set the current FFmpeg Options Manager
         self.ffmpeg_options_obj = self.create_ffmpeg_options('default')
 
-        # Start the dialogue manager (thread-safe code for Gtk message dialogue
-        #   windows)
-        self.dialogue_manager_obj = dialogue.DialogueManager(
-            self,
-            self.main_win_obj,
-        )
+        # Set the General Custom Download Manager
+        self.general_custom_dl_obj = self.create_custom_dl_manager('general')
+        # Use a different manager in the Classic Mode tab, by default
+        self.classic_custom_dl_obj = self.create_custom_dl_manager('classic')
 
         # Part 4 - Load the config file
         # -----------------------------
@@ -3903,25 +3934,33 @@ class TartubeApp(Gtk.Application):
             self.disk_space_stop_flag = json_dict['disk_space_stop_flag']
             self.disk_space_stop_limit = json_dict['disk_space_stop_limit']
 
-        if version >= 1004024:  # v1.4.024
-            self.custom_dl_by_video_flag = json_dict['custom_dl_by_video_flag']
-        if version >= 2003155:  # v2.3.155
-            self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
         if version >= 2001094:  # v2.1.094
             self.custom_invidious_mirror = json_dict['custom_invidious_mirror']
+        if version >= 2003236:  # v2.3.236
+            self.custom_sblock_mirror = json_dict['custom_sblock_mirror']
 
-        if version >= 1004052:  # v1.4.052
-            self.custom_dl_divert_mode = json_dict['custom_dl_divert_mode']
-        elif version >= 1004024:  # v1.4.024
-            if json_dict['custom_dl_divert_hooktube_flag']:
-                self.custom_dl_divert_mode = 'hooktube'
-        if version >= 2001047:  # v2.1.047
-            self.custom_dl_divert_website \
-            = json_dict['custom_dl_divert_website']
-        if version >= 1004024:  # v1.4.024
-            self.custom_dl_delay_flag = json_dict['custom_dl_delay_flag']
-            self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
-            self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
+        # (Moved to database file)
+#        if version >= 1004024:  # v1.4.024
+#            self.custom_dl_by_video_flag \
+#            = json_dict['custom_dl_by_video_flag']
+#        if version >= 2003155:  # v2.3.155
+#            self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
+#        if version >= 2003240:  # v2.3.240
+#            self.custom_dl_slice_flag = json_dict['custom_dl_slice_flag']
+#            self.custom_dl_slice_dict = json_dict['custom_dl_slice_dict']
+        # (Moved to database file)
+#        if version >= 1004052:  # v1.4.052
+#            self.custom_dl_divert_mode = json_dict['custom_dl_divert_mode']
+#        elif version >= 1004024:  # v1.4.024
+#            if json_dict['custom_dl_divert_hooktube_flag']:
+#                self.custom_dl_divert_mode = 'hooktube'
+#        if version >= 2001047:  # v2.1.047
+#            self.custom_dl_divert_website \
+#            = json_dict['custom_dl_divert_website']
+#        if version >= 1004024:  # v1.4.024
+#            self.custom_dl_delay_flag = json_dict['custom_dl_delay_flag']
+#            self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
+#            self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
 
         if version >= 2003029:  # v2.3.029
             self.dl_proxy_list = json_dict['dl_proxy_list']
@@ -4159,6 +4198,16 @@ class TartubeApp(Gtk.Application):
             = json_dict['split_video_auto_open_flag']
             self.split_video_auto_delete_flag \
             = json_dict['split_video_auto_delete_flag']
+
+        if version >= 2003236:  # v2.3.236
+            self.sblock_fetch_flag = json_dict['sblock_fetch_flag']
+            self.sblock_obfuscate_flag = json_dict['sblock_obfuscate_flag']
+        if version >= 2003257:  # v2.3.257
+            self.sblock_replace_flag = json_dict['sblock_replace_flag']
+            self.sblock_re_extract_flag = json_dict['sblock_re_extract_flag']
+        if version >= 2003250:  # v2.3.250
+            self.slice_video_cleanup_flag \
+            = json_dict['slice_video_cleanup_flag']
 
         if version >= 5004:     # v0.5.004
             self.ignore_child_process_exit_flag \
@@ -4443,7 +4492,7 @@ class TartubeApp(Gtk.Application):
 
             self.ytdl_path_custom_flag = json_dict['ytdl_path_custom_flag']
 
-        # (In version v.2.3183, self.ytdl_update_dict was modified again)
+        # (In version v2.3.183, self.ytdl_update_dict was modified again)
         if version < 2003183:  # v2.3.183
 
             self.ytdl_update_dict['ytdl_update_pip_no_dependencies'] = [
@@ -4465,6 +4514,47 @@ class TartubeApp(Gtk.Application):
                     ytdl_update_list.append('ytdl_update_pip3_no_dependencies')
 
                 ytdl_update_list.append(item)
+
+            self.ytdl_update_list = ytdl_update_list
+
+        # (In version v2.3.277, self.ytdl_update_dict was modified yet again)
+        if version < 2003277:  # v2.3.277
+
+            if os.name == 'nt' and 'PROGRAMFILES(X86)' in os.environ:
+
+                self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
+                    '..\\..\\..\\mingw64\\bin\python3.exe',
+                    '..\\..\\..\\mingw64\\bin\pip3-script.py',
+                    'install',
+                    '--upgrade',
+                    '--no-dependencies',
+                    'youtube-dl',
+                ]
+
+            elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
+
+                self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
+                    '..\\..\\..\\mingw64\\bin\python3.exe',
+                    '..\\..\\..\\mingw64\\bin\pip3-script.py',
+                    'install',
+                    '-upgrade',
+                    '--no-dependencies',
+                    'youtube-dl',
+                ]
+
+            ytdl_update_list = []
+            for item in self.ytdl_update_list:
+
+                ytdl_update_list.append(item)
+                if item == 'ytdl_update_win_64':
+                    ytdl_update_list.append(
+                        'ytdl_update_win_64_no_dependencies',
+                    )
+
+                elif item == 'ytdl_update_win_32':
+                    ytdl_update_list.append(
+                        'ytdl_update_win_32_no_dependencies',
+                    )
 
             self.ytdl_update_list = ytdl_update_list
 
@@ -4812,14 +4902,7 @@ class TartubeApp(Gtk.Application):
             'disk_space_stop_limit': self.disk_space_stop_limit,
 
             'custom_invidious_mirror': self.custom_invidious_mirror,
-
-            'custom_dl_by_video_flag': self.custom_dl_by_video_flag,
-            'custom_dl_split_flag': self.custom_dl_split_flag,
-            'custom_dl_divert_mode': self.custom_dl_divert_mode,
-            'custom_dl_divert_website': self.custom_dl_divert_website,
-            'custom_dl_delay_flag': self.custom_dl_delay_flag,
-            'custom_dl_delay_max': self.custom_dl_delay_max,
-            'custom_dl_delay_min': self.custom_dl_delay_min,
+            'custom_sblock_mirror': self.custom_sblock_mirror,
 
             'dl_proxy_list': self.dl_proxy_list,
 
@@ -4917,6 +5000,12 @@ class TartubeApp(Gtk.Application):
             'split_video_custom_title': self.split_video_custom_title,
             'split_video_auto_open_flag': self.split_video_auto_open_flag,
             'split_video_auto_delete_flag': self.split_video_auto_delete_flag,
+
+            'sblock_fetch_flag': self.sblock_fetch_flag,
+            'sblock_obfuscate_flag': self.sblock_obfuscate_flag,
+            'sblock_replace_flag': self.sblock_replace_flag,
+            'sblock_re_extract_flag': self.sblock_re_extract_flag,
+            'slice_video_cleanup_flag': self.slice_video_cleanup_flag,
 
             'ignore_child_process_exit_flag': \
             self.ignore_child_process_exit_flag,
@@ -5037,15 +5126,7 @@ class TartubeApp(Gtk.Application):
 
         except:
             os.remove(lock_path)
-
-            msg = _('Failed to save the Tartube config file') \
-                + '\n\n' + _('File load/save has been disabled')
-
-            if not self.main_win_obj:
-                self.disable_load_save(msg)
-            else:
-                self.disable_load_save()
-                self.file_error_dialogue(msg)
+            self.disable_load_save(_('Failed to save the Tartube config file'))
 
             return
 
@@ -5174,7 +5255,7 @@ class TartubeApp(Gtk.Application):
 
         # Reset main window tabs now so the user can't manipulate their widgets
         #   during the load
-        # (Don't reset the Erors/Warnings tab, as failed attempts to load a
+        # (Don't reset the Errors/Warnings tab, as failed attempts to load a
         #   database generate messages there)
         if self.main_win_obj:
             self.main_win_obj.video_index_reset()
@@ -5250,6 +5331,11 @@ class TartubeApp(Gtk.Application):
             self.downloads_dir = self.data_dir
 
         # Set IVs to their new values
+        if version >= 2003259:  # v2.3.258
+            self.custom_dl_reg_count = load_dict['custom_dl_reg_count']
+            self.custom_dl_reg_dict = load_dict['custom_dl_reg_dict']
+            self.general_custom_dl_obj = load_dict['general_custom_dl_obj']
+            self.classic_custom_dl_obj = load_dict['classic_custom_dl_obj']
         self.media_reg_count = load_dict['media_reg_count']
         self.media_reg_dict = load_dict['media_reg_dict']
         self.media_name_dict = load_dict['media_name_dict']
@@ -5609,7 +5695,6 @@ class TartubeApp(Gtk.Application):
                         json_dict = self.file_manager_obj.load_json(json_path)
                         if 'title' in json_dict:
                             media_data_obj.nickname = json_dict['title']
-
 
         if version < 1001031:  # v1.1.031
 
@@ -6285,7 +6370,7 @@ class TartubeApp(Gtk.Application):
 
         if version < 2003107:      # v2.3.107
 
-            # This version adds new settings to
+            # This version adds new options to
             #   ffmpeg_tartube.FFmpegOptionsManager
             for options_obj in self.ffmpeg_reg_dict.values():
                 options_obj.options_dict['gpu_encoding'] = 'libx264'
@@ -6332,7 +6417,7 @@ class TartubeApp(Gtk.Application):
 
         if version < 2003140:       # v2.3.140
 
-            # This version adds new settings to
+            # This version adds new options to
             #   ffmpeg_tartube.FFmpegOptionsManager
             for options_obj in self.ffmpeg_reg_dict.values():
                 options_obj.options_dict['split_mode'] = 'video'
@@ -6503,6 +6588,22 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['no_allow_dynamic_mpd'] = False
                 options_obj.options_dict['hls_split_discontinuity'] = False
 
+        if version < 2003237:      # v2.3.237
+
+            # This version adds new IVs to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.vid = None
+                    media_data_obj.slice_list = []
+
+        if version < 2003251:      # v2.3.251
+
+            # This version adds new options to
+            #   ffmpeg_tartube.FFmpegOptionsManager
+            for options_obj in self.ffmpeg_reg_dict.values():
+                options_obj.options_dict['slice_mode'] = 'video'
+                options_obj.options_dict['slice_list'] = []
+
 
     def save_db(self):
 
@@ -6554,6 +6655,11 @@ class TartubeApp(Gtk.Application):
             'script_version': __main__.__version__,
             'save_date': str(local.strftime('%d %b %Y')),
             'save_time': str(local.strftime('%H:%M:%S')),
+            # Custom downloads
+            'custom_dl_reg_count': self.custom_dl_reg_count,
+            'custom_dl_reg_dict': self.custom_dl_reg_dict,
+            'general_custom_dl_obj': self.general_custom_dl_obj,
+            'classic_custom_dl_obj': self.classic_custom_dl_obj,
             # Media data objects
             'media_reg_count': self.media_reg_count,
             'media_reg_dict': self.media_reg_dict,
@@ -7167,6 +7273,10 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 6253 reset_db')
 
         # Reset IVs to their default states
+        self.custom_dl_reg_count = 0
+        self.custom_dl_reg_dict = {}
+        self.general_custom_dl_obj = self.create_custom_dl_manager('general')
+        self.classic_custom_dl_obj = self.create_custom_dl_manager('classic')
         self.media_reg_count = 0
         self.media_reg_dict = {}
         self.media_name_dict = {}
@@ -7750,11 +7860,13 @@ class TartubeApp(Gtk.Application):
             if 'PROGRAMFILES(X86)' in os.environ:
                 # 64-bit MS Windows
                 recommended = 'ytdl_update_win_64'
+                alt_recommended = 'ytdl_update_win_64_no_dependencies'
                 python_path = '..\\..\\..\\mingw64\\bin\python3.exe'
                 pip_path = '..\\..\\..\\mingw64\\bin\pip3-script.py'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
+                alt_recommended = 'ytdl_update_win_32_no_dependencies'
                 python_path = '..\\..\\..\\mingw32\\bin\python3.exe'
                 pip_path = '..\\..\\..\\mingw32\\bin\pip3-script.py'
 
@@ -7767,6 +7879,14 @@ class TartubeApp(Gtk.Application):
                     pip_path,
                     'install',
                     '--upgrade',
+                    'youtube-dl',
+                ],
+                alt_recommended: [
+                    python_path,
+                    pip_path,
+                    'install',
+                    '--upgrade',
+                    '--no-dependencies',
                     'youtube-dl',
                 ],
                 'ytdl_update_pip3': [
@@ -7795,6 +7915,7 @@ class TartubeApp(Gtk.Application):
             }
             self.ytdl_update_list = [
                 recommended,
+                alt_recommended,
                 'ytdl_update_pip3',
                 'ytdl_update_pip3_no_dependencies',
                 'ytdl_update_pip',
@@ -8477,7 +8598,7 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            error_msg (str or None): An optional error message that can be#
+            error_msg (str or None): An optional error message that can be
                 retrieved later, if required
 
             lock_flag (bool): True when the error was caused by being unable to
@@ -9042,7 +9163,7 @@ class TartubeApp(Gtk.Application):
 
 
     def download_manager_start(self, operation_type, \
-    automatic_flag=False, media_data_list=[]):
+    automatic_flag=False, media_data_list=[], custom_dl_obj=None):
 
         """Can be called by anything.
 
@@ -9056,8 +9177,8 @@ class TartubeApp(Gtk.Application):
                 checked for new videos, without downloading anything. 'real'
                 if videos should be downloaded (or not) depending on each media
                 data object's .dl_sim_flag IV. 'custom' is like 'real', but
-                with additional options applied (specified by IVs like
-                self.custom_dl_by_video_flag).
+                with additional options applied (specified by a
+                downloads.CustomDLManager object)
 
                 For downloads launched from the Classic Mode Tab,
                 'classic_real' for an ordinary download, 'classic_sim' for a
@@ -9080,6 +9201,10 @@ class TartubeApp(Gtk.Application):
                 earlier call to this function; if the list is empty, all
                 dummy media.Video objects in mainwin.MainWin.classic_media_dict
                 are downloaded
+
+            custom_dl_obj (downloads.CustomDLManager or None): The custom
+                download manager that applies to this download operation. Only
+                specified when 'operation_type' is 'custom' or 'classic_custom'
 
         """
 
@@ -9193,6 +9318,7 @@ class TartubeApp(Gtk.Application):
                             operation_type,
                             automatic_flag,
                             media_data_list,
+                            custom_dl_obj,
                         ],
                     },
                 )
@@ -9200,9 +9326,12 @@ class TartubeApp(Gtk.Application):
         else:
 
             # Start the download operation immediately
-            self.download_manager_continue(
-                [operation_type, automatic_flag, media_data_list],
-            )
+            self.download_manager_continue([
+                operation_type,
+                automatic_flag,
+                media_data_list,
+                custom_dl_obj,
+            ])
 
 
     def download_manager_continue(self, arg_list):
@@ -9218,7 +9347,8 @@ class TartubeApp(Gtk.Application):
             arg_list (list): List of arguments originally supplied to
                 self.download_manager_start(). A list in the form
 
-                    [ operation_type, automatic_flag, media_data_list ]
+                    [ operation_type, automatic_flag, media_data_list,
+                        custom_dl_obj ]
 
         """
 
@@ -9229,6 +9359,7 @@ class TartubeApp(Gtk.Application):
         operation_type = arg_list.pop(0)
         automatic_flag = arg_list.pop(0)
         media_data_list = arg_list.pop(0)
+        custom_dl_obj = arg_list.pop(0)
 
         # When not called by the Classic Mode Tab:
         #
@@ -9259,6 +9390,7 @@ class TartubeApp(Gtk.Application):
             self,
             operation_type,
             media_data_list,
+            custom_dl_obj,
         )
 
         if not download_list_obj.download_item_list:
@@ -9302,6 +9434,7 @@ class TartubeApp(Gtk.Application):
             self.operation_waiting_flag = True
             self.operation_waiting_type = operation_type
             self.operation_waiting_list = media_data_list
+            self.operation_waiting_obj = custom_dl_obj
             return
 
         # Set a list of proxies. When one is required, a call to
@@ -9410,6 +9543,7 @@ class TartubeApp(Gtk.Application):
             self,
             operation_type,
             download_list_obj,
+            custom_dl_obj,
         )
         self.download_manager_obj = self.current_manager_obj
 
@@ -9460,10 +9594,17 @@ class TartubeApp(Gtk.Application):
         #   were extrascted, along with their metadata
         classic_extract_list = self.download_manager_obj.classic_extract_list
 
-        # Get the number of videos downloaded (real and simulated)
+        # Get the number of videos downloaded (real and simulated), as well as
+        #   the number of individual video clips downloaded and the number of
+        #   video slices removed
         dl_count = self.download_manager_obj.total_dl_count
         sim_count = self.download_manager_obj.total_sim_count
         clip_count = self.download_manager_obj.total_clip_count
+        slice_count = self.download_manager_obj.total_slice_count
+
+        # For the 'classic_sim' operation, we need to use the same custom
+        #   download manager
+        custom_dl_obj = self.download_manager_obj.custom_dl_obj
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
@@ -9552,7 +9693,8 @@ class TartubeApp(Gtk.Application):
             if self.show_newbie_dialogue_flag \
             and dl_count == 0 \
             and sim_count == 0 \
-            and clip_count == 0:
+            and clip_count == 0 \
+            and slice_count == 0:
 
                 show_newbie_dialogue_flag = True
 
@@ -9569,10 +9711,15 @@ class TartubeApp(Gtk.Application):
                     + str(dl_count) + '\n' + _('Videos checked:') \
                     + ' ' + str(sim_count)
 
-                if clip_count:
+                if clip_count or slice_count:
+                    msg += '\n'
 
-                    msg += '\n\n' + _('Clips downloaded:') + ' ' \
+                if clip_count:
+                    msg += '\n' + _('Clips downloaded:') + ' ' \
                     + str(clip_count)
+                if slice_count:
+                    msg += '\n' + _('Video slices removed:') + ' ' \
+                    + str(slice_count)
 
                 if time_num >= 10:
                     msg += '\n\n' + _('Time taken:') + ' ' \
@@ -9662,6 +9809,7 @@ class TartubeApp(Gtk.Application):
                 'classic_custom',
                 False,              # Not called from a timer
                 dummy_list,
+                custom_dl_obj,
             )
 
         # Show the newbie dialogue, if required
@@ -9966,6 +10114,7 @@ class TartubeApp(Gtk.Application):
                     self.operation_waiting_type,
                     False,
                     self.operation_waiting_list,
+                    self.operation_waiting_obj,
                 ],
             )
 
@@ -9973,6 +10122,7 @@ class TartubeApp(Gtk.Application):
             self.operation_waiting_flag = False
             self.operation_waiting_type = None
             self.operation_waiting_list = []
+            self.operation_waiting_obj = None
 
 
     def refresh_manager_start(self, media_data_obj=None):
@@ -11770,6 +11920,9 @@ class TartubeApp(Gtk.Application):
                 if 'title' in json_dict:
                     video_obj.set_nickname(json_dict['title'])
 
+                if 'id' in json_dict:
+                    video_obj.set_vid(json_dict['id'])
+
                 if 'upload_date' in json_dict:
 
                     try:
@@ -12743,6 +12896,223 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_select_row(source_obj)
 
 
+    def move_videos(self, dest_obj, video_list):
+
+        """Called by mainwin.MainWin.on_video_index_drag_data_received().
+
+        Moves one or more videos to a new parent container.
+
+        Args:
+
+            dest_obj (media.Channel, media.Playlist, media.Folder): The
+                destination container
+
+            video_list (list): List of media.Video objects to move into the
+                destination container
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11211 move_videos')
+
+        if isinstance(dest_obj, media.Video) or not video_list:
+            return self.system_error(
+                999,
+                'Move videos request failed sanity check',
+            )
+
+        for video_obj in video_list:
+            if not isinstance(video_obj, media.Video):
+                return self.system_error(
+                    999,
+                    'Move videos request failed sanity check',
+                )
+
+        # Videos cannot be dragged into most fixed folders
+        if isinstance(dest_obj, media.Folder) \
+        and dest_obj.priv_flag:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('Videos cannot be dragged into this folder'),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Prompt the user for confirmation
+        if len(video_list) == 1:
+            msg = _(
+                'Are you sure you want to move the video to \'{0}\'?',
+            ).format(dest_obj.name)
+
+        else:
+
+            msg = _(
+                'Are you sure you want to move \'{0}\' videos to \'{1}\'?',
+            ).format(len(video_list), dest_obj.name)
+
+        if isinstance(dest_obj, media.Folder) \
+        and dest_obj.temp_flag:
+            msg += '\n\n' + _(
+                'WARNING: The destination folder is marked as temporary, so' \
+                + ' everything inside it will be DELETED when Tartube' \
+                + ' restarts!',
+            )
+
+        # If the user clicks 'yes', call self.move_videos_continue() to
+        #   complete the move
+        self.dialogue_manager_obj.show_msg_dialogue(
+            msg,
+            'question',
+            'yes-no',
+            None,                   # Parent window is main window
+            # Arguments passed directly to .move_videos_continue()
+            {
+                'yes': 'move_videos_continue',
+                'data': [dest_obj, video_list],
+            },
+        )
+
+
+    def move_videos_continue(self, media_list):
+
+        """Called by self.move_videos().
+
+        Moves a list of videos to a new channel, playlist or folder.
+
+        Args:
+
+            media_list (list): List in the form (destination, video_list),
+                where the 'destination' is a media.Channel, media.Playlist or
+                media.Folder object, and 'video_list' is a list of media.Video
+                objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 11148 move_videos_continue')
+
+        dest_obj = media_list[0]
+        video_list = media_list[1]
+
+        # Get the destination directory. If the channel/playlist/folder is
+        #   set up to use another channel/playlist/folder's directory,
+        #   then ignore that: use its default directory
+        # Exception: do use an external directory, if it is set
+        if dest_obj.external_dir:
+            dest_dir = dest_obj.external_dir
+        else:
+            dest_dir = dest_obj.get_default_dir(self)
+
+        # Move videos and their associated files, one at a time
+        success_count = 0
+        fail_count = 0
+        already_count = 0
+        for video_obj in video_list:
+
+            if video_obj.file_name is None:
+                # No video file to move
+                fail_count += 1
+                continue
+
+            if video_obj.parent_obj == dest_obj:
+                # Video is already here
+                already_count += 1
+                continue
+
+            # Move the video file (if it has been downloaded)
+            if video_obj.dl_flag:
+                old_path = video_obj.get_actual_path(self)
+                new_path = os.path.abspath(
+                    os.path.join(
+                        dest_dir,
+                        video_obj.file_name + video_obj.file_ext,
+                    ),
+                )
+
+                if not os.path.isfile(old_path) \
+                or os.path.isfile(new_path):
+                    # Don't move a non-existent file, or overwrite an existing
+                    #   file
+                    fail_count += 1
+                    continue
+
+                try:
+                    shutil.move(old_path, new_path)
+
+                except:
+                    fail_count += 1
+                    continue
+
+            # Move the metadata files
+            for file_ext in ('.description', '.info.json', '.annotations.xml'):
+
+                old_path = video_obj.check_actual_path_by_ext(self, file_ext)
+                if old_path is not None:
+
+                    new_path = os.path.abspath(
+                        os.path.join(
+                            dest_dir,
+                            video_obj.file_name + file_ext,
+                        ),
+                    )
+
+                    if os.path.isfile(old_path) \
+                    and not os.path.isfile(new_path):
+                        try:
+                            shutil.move(old_path, new_path)
+                        except:
+                            pass
+
+            # Move the thumbnail
+            old_path = utils.find_thumbnail(self, video_obj)
+            if old_path is not None:
+
+                ignore, thumb_file = os.path.split(old_path)
+                new_path = os.path.abspath(
+                    os.path.join(dest_dir, thumb_file),
+                )
+
+                if os.path.isfile(old_path) and not os.path.isfile(new_path):
+                    try:
+                        shutil.move(old_path, new_path)
+                    except:
+                        pass
+
+            # Update IVs in the old and new parent containers
+            video_obj.parent_obj.del_child(video_obj)
+            # (The True argument instructs the container to delay sorting its
+            #   children)
+            dest_obj.add_child(self, video_obj, True)
+            # Update the video
+            video_obj.set_parent_obj(dest_obj)
+
+            success_count += 1
+
+        # All done. Tell the destination to sort its children
+        dest_obj.sort_children(self)
+
+        # Redraw the Video Index (the videos may have come from multiple
+        #   locations, so it's simpler just to redraw the whole thing)
+        if success_count:
+            self.main_win_obj.video_index_reset()
+            self.main_win_obj.video_index_populate()
+            # Open the destination, which redraws the Video Catalogue
+            self.main_win_obj.video_index_select_row(dest_obj)
+
+        # Show confirmation dialogue
+        msg = _('Videos moved') + ': ' + str(success_count) \
+        + '\n' + _('Videos not moved:') + ': ' \
+        + str(fail_count + already_count)
+
+        self.dialogue_manager_obj.show_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+        )
+
+
     # (Convert channels to playlists, and vice-versa)
 
 
@@ -13275,7 +13645,8 @@ class TartubeApp(Gtk.Application):
             # Remove the media data object from our IVs
             del self.media_reg_dict[media_data_obj.dbid]
             del self.media_name_dict[media_data_obj.name]
-            del self.media_unavailable_dict[media_data_obj.name]
+            if media_data_obj.name in self.media_unavailable_dict:
+                del self.media_unavailable_dict[media_data_obj.name]
             if media_data_obj.dbid in self.media_top_level_list:
                 index = self.media_top_level_list.index(media_data_obj.dbid)
                 del self.media_top_level_list[index]
@@ -17266,6 +17637,504 @@ class TartubeApp(Gtk.Application):
             self.download_manager_start('real', False, video_list)
 
 
+    # (Custom download manager objects)
+
+
+    def delete_custom_dl_manager(self, custom_dl_obj):
+
+        """Called by callback in
+        config.SystemPrefWin.on_custom_dl_delete_button_clicked().
+
+        Deletes the specified custom download manager object
+        (downloads.CustomDLManager), which might be applied to the Classic Mode
+        tab (or not).
+
+        Args:
+
+            custom_dl_obj (downloads.CustomDLManager): The object to delete
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15074 delete_custom_dl_manager')
+
+        # Sanity check
+        if self.current_manager_obj \
+        or self.general_custom_dl_obj == custom_dl_obj:
+            return self.system_error(
+                999,
+                'Delete custom download manager request failed sanity check',
+            )
+
+        # Destroy the downloads.CustomDLManager object itself
+        del self.custom_dl_reg_dict[custom_dl_obj.uid]
+
+        if self.classic_custom_dl_obj \
+        and self.classic_custom_dl_obj == custom_dl_obj:
+            self.classic_custom_dl_obj = None
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_operations_custom_dl_tab_update_treeview()
+
+
+    def apply_classic_custom_dl_manager(self, custom_dl_obj):
+
+        """Called by
+        config.SystemPrefWin.on_custom_dl_use_classic_button_clicked().
+
+        Applies a specified custom download manager object
+        (downloads.CustomDLManager) for use in the Classic Mode Tab.
+
+        Args:
+
+            custom_dl_obj (downloads.CustomDLManager): The custom download
+                manager object to apply
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15126 apply_classic_custom_dl_manager')
+
+        if self.current_manager_obj:
+            return self.system_error(
+                999,
+                'Apply custom download manager request failed sanity check',
+            )
+
+        # Apply the custom download manager
+        self.classic_custom_dl_obj = custom_dl_obj
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_operations_custom_dl_tab_update_treeview()
+
+
+    def disapply_classic_custom_dl_manager(self):
+
+        """Called by
+        config.SystemPrefWin.on_custom_dl_use_classic_button_clicked().
+
+        Disapplies the custom download manager object
+        (downloads.CustomDLManager) used in the Classic Mode tab, but doesn't
+        destroy the object.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15153 disapply_classic_custom_dl_manager')
+
+        if self.current_manager_obj or not self.classic_custom_dl_obj:
+            return self.system_error(
+                999,
+                'Disapply custom download manager request failed sanity check',
+            )
+
+        # Disapply the custom download manager
+        self.classic_custom_dl_obj = None
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_operations_custom_dl_tab_update_treeview()
+
+
+    def create_custom_dl_manager(self, name):
+
+        """Can be called by anything.
+
+        Create a new downloads.CustomDLManager object, and updates the IVs
+        self.custom_dl_reg_count and self.custom_dl_reg_dict.
+
+        (It is up to the calling code to update self.general_custom_dl_obj or
+        self.classic_custom_dl_obj, if required.)
+
+        Args:
+
+            name (str): A non-unique name for the custom manager
+
+        Return values:
+
+            Returns the downloads.CustomDLManager object created
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15195 create_custom_dl_manager')
+
+        self.custom_dl_reg_count += 1
+
+        custom_dl_obj = downloads.CustomDLManager(
+            self.custom_dl_reg_count,
+            name,
+        )
+
+        self.custom_dl_reg_dict[custom_dl_obj.uid] = custom_dl_obj
+
+        return custom_dl_obj
+
+
+    def clone_custom_dl_manager_from_window(self, data_list):
+
+        """Called by config.CustomDLEditWin.on_clone_settings_clicked().
+
+        Clones settings from the current custom download manager into the
+        specified one.
+
+        Args:
+
+            data_list (list): List of values supplied by the dialogue window.
+                The first is the edit window for the custom download manager
+                object (which must be reset). The second value is the custom
+                download manager object, into which new settings will be
+                cloned
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15521 clone_custom_dl_manager_from_window')
+
+        edit_win_obj = data_list.pop(0)
+        custom_dl_obj = data_list.pop(0)
+
+        # Clone values from the current custom download manager
+        custom_dl_obj.clone_settings(self.general_custom_dl_obj)
+        # Reset the edit window to display the new (cloned) values
+        edit_win_obj.reset_with_new_edit_obj(custom_dl_obj)
+
+
+    def clone_custom_dl_manager(self, old_custom_dl_obj):
+
+        """Can be called by anything.
+
+        Clones a custom download manager object, and returns the clone, which
+        has the same name as the original, but a different .uid.
+
+        Args:
+
+            old_custom_dl_obj (downloads.CustomDLManager): The object to clone.
+                Any custom download manager object (including the General
+                Custom Download Manager) can be cloned
+
+        Return values:
+
+            The new cloned object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15231 clone_custom_dl_manager')
+
+        # Work out a name for the clone that's not already in use
+        # (custom download manager objects don't have unique names, but in this
+        #   case we'll give it a unique name, so that the user can clearly see
+        #   what has happened)
+        match = re.search('^(.*)\s+(\d+)$', old_custom_dl_obj.name)
+        if match:
+            base_name = match.group(1)
+            index = int(match.group(2))
+        else:
+            base_name = old_custom_dl_obj.name
+            index = 1
+
+        match_flag = True
+        while match_flag:
+
+            match_flag = False
+            index += 1
+
+            test_name = base_name + ' ' + str(index)
+            for this_obj in self.custom_dl_reg_dict.values():
+
+                if this_obj.name == test_name:
+                    match_flag = True
+                    break
+
+        new_name = base_name + ' ' + str(index)
+
+        # Create a new custom download manager object
+        new_custom_dl_obj = self.create_custom_dl_manager(new_name)
+        # Copy the original's values into the new object
+        new_custom_dl_obj.clone_settings(old_custom_dl_obj)
+
+        # Update the list in any preference windows that are open
+        for config_win_obj in self.main_win_obj.config_win_list:
+            if isinstance(config_win_obj, config.SystemPrefWin):
+                config_win_obj.setup_operations_custom_dl_tab_update_treeview()
+
+        return new_custom_dl_obj
+
+
+    def reset_custom_dl_manager(self, data_list):
+
+        """Called by config.CustomDLEditWin.on_reset_settings_clicked().
+
+        Resets the specified custom download manager object, setting its IVs to
+        their default values.
+
+        Args:
+
+            data_list (list): List of values supplied by the dialogue window,
+                the first of which is the edit window for the custom download
+                manager object (which must be reset)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15548 reset_custom_dl_manager')
+
+        edit_win_obj = data_list.pop(0)
+        old_custom_dl_obj = edit_win_obj.edit_obj
+
+        # Replace the old object with a new one, which has the effect of
+        #   resetting its settings to the default values
+        new_custom_dl_obj \
+        = self.create_custom_dl_manager(old_custom_dl_obj.name)
+
+        # Update IVs
+        del self.custom_dl_reg_dict[old_custom_dl_obj.uid]
+        if self.general_custom_dl_obj == old_custom_dl_obj:
+            self.general_custom_dl_obj = new_custom_dl_obj
+
+        # Reset the edit window to display the new (default) values
+        edit_win_obj.reset_with_new_edit_obj(new_custom_dl_obj)
+
+
+    def export_custom_dl_manager(self, custom_dl_obj):
+
+        """Called by callback in
+        config.SystemPrefWin.on_custom_dl_export_button_clicked().
+
+        Exports data from the specified downloads.CustomDLManager object as a
+        JSON file. The data can be-imported (probably when a different
+        Tartube database is loaded) in a call to
+        self.import_custom_dl_manager().
+
+        Args:
+
+            custom_dl_obj (downloads.CustomDLManager): The object whose data
+                should be exported
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15298 export_custom_dl_manager')
+
+        # Prompt the user for the file path to use
+        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
+            _('Select where to save the custom download export'),
+            self.main_win_obj,
+            'save',
+            custom_dl_obj.name + '.json',
+        )
+
+        response = dialogue_win.run()
+        if response != Gtk.ResponseType.OK:
+            dialogue_win.destroy()
+            return
+
+        file_path = dialogue_win.get_filename()
+        dialogue_win.destroy()
+        if not file_path:
+            return
+
+        # Compile a dictionary of data to export. Each key matches an IV in
+        #   the downloads.CustomDLManager object
+        export_dict = {
+            'name': custom_dl_obj.name,
+
+            'dl_by_video_flag': custom_dl_obj.dl_by_video_flag,
+            'split_flag': custom_dl_obj.split_flag,
+            'slice_flag': custom_dl_obj.slice_flag,
+            'slice_dict': custom_dl_obj.slice_dict.copy(),
+            'delay_flag': custom_dl_obj.delay_flag,
+            'delay_max': custom_dl_obj.delay_max,
+            'delay_min': custom_dl_obj.delay_min,
+            'divert_mode': custom_dl_obj.divert_mode,
+            'divert_website': custom_dl_obj.divert_website,
+        }
+
+        # The exported JSON file has the same metadata as a config file, with
+        #   only the 'file_type' being different
+
+        # Prepare values
+        local = utils.get_local_time()
+
+        # Prepare a dictionary of data to save as a JSON file
+        json_dict = {
+            # Metadata
+            'script_name': __main__.__packagename__,
+            'script_version': __main__.__version__,
+            'save_date': str(local.strftime('%d %b %Y')),
+            'save_time': str(local.strftime('%H:%M:%S')),
+            'file_type': 'custom_dl_export',
+               # Data
+            'export_dict': export_dict,
+        }
+
+        # Try to save the file
+        try:
+            with open(file_path, 'w') as outfile:
+                json.dump(json_dict, outfile, indent=4)
+
+        except Exception as e:
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                _('Failed to save the custom download export file:') \
+                + '\n\n' + str(e),
+                'error',
+                'ok',
+            )
+
+        # Export was successful
+        self.dialogue_manager_obj.show_msg_dialogue(
+            _('Custom download exported to:') + '\n\n' + file_path,
+            'info',
+            'ok',
+        )
+
+
+    def import_custom_dl_manager(self, custom_dl_name=None):
+
+        """Called by a callback in
+        config.SystemPrefWin.on_custom_dl_import_button_clicked().
+
+        Imports the contents of a JSON export file generated by a call to
+        self.export_custom_dl_manager().
+
+        Creates a new downloads.CustomDLManager object, and copies the imported
+        data into it.
+
+        Args:
+
+            custom_dl_name (str or None): If specified, the new
+                downloads.CustomDLManager object is given that name. If not
+                specified, the new object is given the name specified by the
+                export file
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15385 import_custom_dl_manager')
+
+        # Prompt the user for the export file to load
+        dialogue_win = self.dialogue_manager_obj.show_file_chooser(
+            _('Select the custom download export file'),
+            self.main_win_obj,
+            'open',
+        )
+
+        response = dialogue_win.run()
+        if response != Gtk.ResponseType.OK:
+            dialogue_win.destroy()
+            return
+
+        file_path = dialogue_win.get_filename()
+        dialogue_win.destroy()
+        if not file_path:
+            return
+
+        # Try to load the export file
+        json_dict = self.file_manager_obj.load_json(file_path)
+        if not json_dict:
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                _('Failed to load the custom download export file'),
+                'error',
+                'ok',
+            )
+
+        # Do some basic checks on the loaded data
+        # (At the moment, JSON export files are compatible with all
+        #   versions of Tartube after v2.2.0; this may change in future)
+        if not json_dict \
+        or not 'script_name' in json_dict \
+        or not 'script_version' in json_dict \
+        or not 'save_date' in json_dict \
+        or not 'save_time' in json_dict \
+        or not 'file_type' in json_dict \
+        or json_dict['script_name'] != __main__.__packagename__ \
+        or json_dict['file_type'] != 'custom_dl_export':
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                _('The custom download export file is invalid'),
+                'error',
+                'ok',
+            )
+
+        # Retrieve the data itself. export_dict is in the form described in the
+        #   comments in self.export_custom_dl_manager()
+        export_dict = json_dict['export_dict']
+
+        if not export_dict:
+            return self.dialogue_manager_obj.show_msg_dialogue(
+                _('The custom download export file is invalid (or empty)'),
+                'error',
+                'ok',
+            )
+
+        # Create a new custom download manager object. If a name was specified
+        #   in the call to this function, use that; otherwise use the name
+        #   specified by the export
+        if custom_dl_name is None or custom_dl_name == '':
+            custom_dl_name = export_dict['name']
+
+        custom_dl_obj = self.create_custom_dl_manager(custom_dl_name)
+
+        # Set the new object's settings
+        custom_dl_obj.dl_by_video_flag = export_dict['dl_by_video_flag']
+        custom_dl_obj.split_flag = export_dict['split_flag']
+        custom_dl_obj.slice_flag = export_dict['slice_flag']
+        custom_dl_obj.slice_dict = export_dict['slice_dict']
+        custom_dl_obj.delay_flag = export_dict['delay_flag']
+        custom_dl_obj.delay_max = export_dict['delay_max']
+        custom_dl_obj.delay_min = export_dict['delay_min']
+        custom_dl_obj.divert_mode = export_dict['divert_mode']
+        custom_dl_obj.divert_website = export_dict['divert_website']
+
+        # Show a confirmation
+        self.dialogue_manager_obj.show_msg_dialogue(
+            ('Imported:') + ' ' + custom_dl_name,
+            'info',
+            'ok',
+        )
+
+
+    def compile_custom_dl_manager_list(self):
+
+        """Can be called by anything.
+
+        Returns a list of download.CustomDLManager objects, sorted by name, but
+        excluding self.general_custom_dl_obj and self.classic_custom_dl_obj.
+
+        Return values:
+
+            The sorted list (may be empty)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 15385 compile_custom_dl_manager_list')
+
+        manager_list = []
+        for this_obj in self.custom_dl_reg_dict.values():
+
+            if (
+                not self.general_custom_dl_obj
+                or this_obj != self.general_custom_dl_obj
+            ) and (
+                not self.classic_custom_dl_obj
+                or this_obj != self.classic_custom_dl_obj
+            ):
+                manager_list.append(this_obj)
+
+        # (Sort alphabetically by name)
+        def get_name(obj):
+            return obj.name
+
+        manager_list.sort(key=get_name)
+
+        return manager_list
+
+
     # (Download options manager objects)
 
 
@@ -17287,9 +18156,9 @@ class TartubeApp(Gtk.Application):
                 options are applied
 
             options_obj (options.OptionsManager or None): The download options
-                to apply, which not have been applied to any other media data
-                object, and must not be the General Options Manager. If not
-                specified, a new download options object is created
+                to apply, which must not have been applied to any other media
+                data object, and must not be the General Options Manager. If
+                not specified, a new download options object is created
 
         """
 
@@ -17468,6 +18337,11 @@ class TartubeApp(Gtk.Application):
         Applies a specified download options object (options.OptionsManager)
         for use in the Classic Mode Tab.
 
+        Args:
+
+            options_obj (options.OptionsManager): The download options object
+                to apply
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -17599,7 +18473,7 @@ class TartubeApp(Gtk.Application):
         Args:
 
             old_options_obj (options.OptionsManager): The object to clone. Any
-                options manager object (including the General Options manager)
+                options manager object (including the General Options Manager)
                 can be cloned
 
         Return values:
@@ -17710,7 +18584,7 @@ class TartubeApp(Gtk.Application):
         Args:
 
             options_obj (options.OptionsManager): The object whose data should
-                be exported.
+                be exported
 
         """
 
@@ -17756,7 +18630,7 @@ class TartubeApp(Gtk.Application):
             'save_date': str(local.strftime('%d %b %Y')),
             'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'options_export',
-               # Data
+            # Data
             'export_dict': export_dict,
         }
 
@@ -17998,7 +18872,7 @@ class TartubeApp(Gtk.Application):
 
         new_name = base_name + ' ' + str(index)
 
-        # Create a new options object, with the same name as the original
+        # Create a new options object
         new_options_obj = self.create_ffmpeg_options(new_name)
         # Copy the original's values into the new object
         new_options_obj.clone_options(old_options_obj)
@@ -18138,7 +19012,7 @@ class TartubeApp(Gtk.Application):
             'save_date': str(local.strftime('%d %b %Y')),
             'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'ffmpeg_export',
-               # Data
+            # Data
             'export_dict': export_dict,
         }
 
@@ -19301,7 +20175,7 @@ class TartubeApp(Gtk.Application):
 
             self.download_manager_start('classic_real')
 
-        elif self.custom_dl_by_video_flag:
+        elif self.classic_custom_dl_obj.dl_by_video_flag:
 
             # If the user has opted to download each video independently of its
             #   channel or playlist, then we have to do a simulated first, in
@@ -19315,7 +20189,12 @@ class TartubeApp(Gtk.Application):
 
             # Otherwise, a full custom download can proceed immediately,
             #   without performing the simulated download first
-            self.download_manager_start('classic_custom')
+            self.download_manager_start(
+                'classic_custom',
+                False,          # Not called by slow timer
+                [],             # Download all URLs
+                self.classic_custom_dl_obj,
+            )
 
 
     def on_button_classic_ffmpeg(self, action, par):
@@ -20982,7 +21861,34 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 18248 on_menu_custom_dl_all')
 
-        self.download_manager_start('custom')
+        self.download_manager_start(
+            'custom',
+            False,          # Not called by self.script_slow_timer_callback()
+            [],             # Download all media data objects
+            self.general_custom_dl_obj,
+        )
+
+
+    def on_menu_custom_dl_select(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Open a popup menu for the user to select a custom download manager,
+        before starting a custom download using that manager.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18249 on_menu_custom_dl_select')
+
+        # Open the popup menu
+        self.main_win_obj.custom_dl_popup_menu()
 
 
     def on_menu_download_all(self, action, par):
@@ -22156,91 +23062,6 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.setup_bg_colour(key)
 
 
-    def set_custom_dl_by_video_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19315 set_custom_dl_by_video_flag')
-
-        if not flag:
-            self.custom_dl_by_video_flag = False
-        else:
-            self.custom_dl_by_video_flag = True
-
-
-    def set_custom_dl_delay_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19326 set_custom_dl_delay_flag')
-
-        if not flag:
-            self.custom_dl_delay_flag = False
-        else:
-            self.custom_dl_delay_flag = True
-
-
-    def set_custom_dl_delay_max(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19337 set_custom_dl_delay_max')
-
-        self.custom_dl_delay_max = value
-
-
-    def set_custom_dl_delay_min(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19345 set_custom_dl_delay_min')
-
-        self.custom_dl_delay_min = value
-
-
-    def set_custom_dl_divert_mode(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19353 set_custom_dl_divert_mode')
-
-        self.custom_dl_divert_mode = value
-
-        # The Video Catalogue must be redrawn to reset labels (but not when
-        #   SimpleCatalogueItem are visible)
-        if self.catalogue_mode_type != 'simple' \
-        and self.main_win_obj.video_index_current is not None:
-
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
-                self.main_win_obj.catalogue_toolbar_current_page,
-            )
-
-
-    def set_custom_dl_divert_website(self, value):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19371 set_custom_dl_divert_website')
-
-        self.custom_dl_divert_website = value
-
-        # The Video Catalogue must be redrawn to reset labels (but not when
-        #   SimpleCatalogueItem are visible)
-        if self.catalogue_mode_type != 'simple' \
-        and self.main_win_obj.video_index_current is not None:
-
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
-                self.main_win_obj.catalogue_toolbar_current_page,
-            )
-
-
-    def set_custom_dl_split_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19372 set_custom_dl_split_flag')
-
-        if not flag:
-            self.custom_dl_split_flag = False
-        else:
-            self.custom_dl_split_flag = True
-
-
     def set_custom_invidious_mirror(self, value):
 
         if DEBUG_FUNC_FLAG:
@@ -22259,6 +23080,24 @@ class TartubeApp(Gtk.Application):
             )
 
 
+    def reset_custom_invidious_mirror(self):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19389 reset_custom_invidious_mirror')
+
+        self.custom_invidious_mirror = self.default_invidious_mirror
+
+        # The Video Catalogue must be redrawn to reset labels (but not when
+        #   SimpleCatalogueItems are visible)
+        if self.catalogue_mode_type != 'simple' \
+        and self.main_win_obj.video_index_current is not None:
+
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+                self.main_win_obj.catalogue_toolbar_current_page,
+            )
+
+
     def set_custom_locale(self, value):
 
         if DEBUG_FUNC_FLAG:
@@ -22266,6 +23105,22 @@ class TartubeApp(Gtk.Application):
 
         self.custom_locale = value
         self.update_locale_flag = True
+
+
+    def set_custom_sblock_mirror(self, value):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19389 set_custom_sblock_mirror')
+
+        self.custom_sblock_mirror = value
+
+
+    def reset_custom_sblock_mirror(self):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19389 reset_custom_sblock_mirror')
+
+        self.custom_sblock_mirror = self.default_sblock_mirror
 
 
     def set_data_dir(self, path):
@@ -23216,6 +24071,50 @@ class TartubeApp(Gtk.Application):
             self.results_list_reverse_flag = True
 
 
+    def set_sblock_fetch_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20370 set_sblock_fetch_flag')
+
+        if not flag:
+            self.sblock_fetch_flag = False
+        else:
+            self.sblock_fetch_flag = True
+
+
+    def set_sblock_obfuscate_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20370 set_sblock_obfuscate_flag')
+
+        if not flag:
+            self.sblock_obfuscate_flag = False
+        else:
+            self.sblock_obfuscate_flag = True
+
+
+    def set_sblock_re_extract_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20371 set_sblock_re_extract_flag')
+
+        if not flag:
+            self.sblock_re_extract_flag = False
+        else:
+            self.sblock_re_extract_flag = True
+
+
+    def set_sblock_replace_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20371 set_sblock_replace_flag')
+
+        if not flag:
+            self.sblock_replace_flag = False
+        else:
+            self.sblock_replace_flag = True
+
+
     def add_scheduled_list(self, scheduled_obj):
 
         if DEBUG_FUNC_FLAG:
@@ -23438,6 +24337,17 @@ class TartubeApp(Gtk.Application):
             self.show_tooltips_extra_flag = True
 
 
+    def set_slice_video_cleanup_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20371 set_slice_video_cleanup_flag')
+
+        if not flag:
+            self.slice_video_cleanup_flag = False
+        else:
+            self.slice_video_cleanup_flag = True
+
+
     def set_sound_custom(self, value):
 
         if DEBUG_FUNC_FLAG:
@@ -23570,6 +24480,22 @@ class TartubeApp(Gtk.Application):
             self.system_warning_show_flag = False
         else:
             self.system_warning_show_flag = True
+
+
+    def set_temp_slice_list(self, slice_list):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20495 set_temp_slice_list')
+
+        self.temp_slice_list = slice_list
+
+
+    def reset_temp_slice_list(self):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20496 reset_temp_slice_list')
+
+        self.temp_slice_list = []
 
 
     def set_temp_stamp_list(self, stamp_list):

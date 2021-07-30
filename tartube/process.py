@@ -29,6 +29,7 @@ from gi.repository import GObject
 import os
 import re
 import shutil
+import subprocess
 import threading
 import time
 
@@ -80,6 +81,10 @@ class ProcessManager(threading.Thread):
         # A list of media.Video objects to be processed with FFmpeg
         self.video_list = video_list
 
+        # The child process created by self.create_child_process(). Used only
+        #   by self.slice_video() to concatenate video clips; all other child
+        #   processes are handled by ffmpeg_tartube.FFmpegManager
+        self.child_process = None
 
         # IV list - other
         # ---------------
@@ -108,6 +113,8 @@ class ProcessManager(threading.Thread):
         #   may require mainapp.TartubeApp.update_manager_finished to redraw
         #   the Video Index and Video Catalogue)
         self.split_success_flag = False
+        # Flag set to True if a fatal error occurs
+        self.fatal_error_flag = False
 
         # Dictionary of clip tiles used during this operation (i.e. when
         #   splitting a video into clips), used to re-name duplicates
@@ -146,7 +153,8 @@ class ProcessManager(threading.Thread):
         )
 
         # Process each video in turn
-        dest_dir = None
+        dest_dir_list = []
+        check_dict = {}
         while self.running_flag and self.video_list:
 
             video_obj = self.video_list.pop(0)
@@ -159,172 +167,40 @@ class ProcessManager(threading.Thread):
                 + str(self.job_total) + ': ' + video_obj.name,
             )
 
-            if self.options_obj.options_dict['output_mode'] != 'split':
+            if self.options_obj.options_dict['output_mode'] == 'split':
 
-                # One source video produces one output video
-                self.process_video(video_obj)
+                # Split the video into video clips
+                dest_dir = self.split_video(video_obj)
+                if self.fatal_error_flag:
+                    break
 
-            else:
+                else:
+                    # Add the returned destination directory to a list,
+                    #   first checking for duplicates
+                    if not dest_dir in check_dict:
+                        dest_dir_list.append(dest_dir)
+                        check_dict[dest_dir] = None
 
-                # Re-extract timestamps from the video's .info.json or
-                #   description file, if allowed
-                # (No point doing it, if the temporary buffer is set)
-                if not self.app_obj.temp_stamp_list:
+            elif self.options_obj.options_dict['output_mode'] == 'slice':
 
-                    if self.app_obj.video_timestamps_re_extract_flag \
-                    and not video_obj.stamp_list:
-                        self.app_obj.update_video_from_json(video_obj, True)
-
-                    if self.app_obj.video_timestamps_re_extract_flag \
-                    and not video_obj.stamp_list:
-                        video_obj.extract_timestamps_from_descrip(self.app_obj)
-
-                # Set the containing folder, creating a media.Folder object
-                #   and/or a sub-directory for the video clips, if required
-                parent_obj, parent_dir, dest_obj, dest_dir \
-                = utils.clip_set_destination(self.app_obj, video_obj)
-
-                if parent_obj is None:
-
-                    # There is already a media.Folder with the same name,
-                    #   somewhere else in the database
-                    self.app_obj.main_win_obj.output_tab_write_stderr(
-                        1,
-                        _(
-                        'FAILED: Can\'t create the destination folder either' \
-                        + ' because a folder with the same name already' \
-                        + ' exists, or because new folders can\'t be added' \
-                        + ' to the parent folder',
-                        ),
-                    )
-
-                    self.fail_count += 1
+                # Produce a single output video with slices removed
+                dest_dir = self.slice_video(video_obj)
+                if self.fatal_error_flag:
                     # This is a fatal error
                     break
 
-                # Import the correct timestamp list
-                if self.app_obj.temp_stamp_list:
-
-                    # Use the temporary buffer
-                    stamp_list = self.app_obj.temp_stamp_list.copy()
-                    # (The temporary buffer, once used, must be emptied
-                    #   immediately)
-                    self.app_obj.reset_temp_stamp_list()
-
-                elif self.options_obj.options_dict['split_mode'] == 'video' \
-                and video_obj.stamp_list:
-
-                    # Use the video's own timestamp list
-                    stamp_list = orig_video_obj.stamp_list.copy()
-
-                elif self.options_obj.options_dict['split_mode'] == 'custom' \
-                and self.options_obj.options_dict['split_list']:
-
-                    # Use the timestamp list specified by the FFmpeg options
-                    #   object
-                    stamp_list = self.options_obj.options_dict['split_list']
-
-                # Split the video
-                if stamp_list:
-
-                    # One source video is split into one or more video clips,
-                    #   using timestamps provided by the media.Video object
-                    #   itself
-                    # Each video clip uses a separate FFmpeg command
-                    list_size = len(stamp_list)
-                    for i in range(list_size):
-
-                        # List in the form
-                        #   [start_stamp, stop_stamp, clip_title]
-                        # If 'stop_stamp' is not specified, then the
-                        #   'start_stamp' of the next clip is used. If there
-                        #   are no more clips, then this clip will end at the
-                        #   end of the video
-                        start_stamp, stop_stamp, clip_title \
-                        = utils.prepare_video_clip(stamp_list, i)
-
-                        # Set a (hopefully unique) clip title
-                        clip_title = utils.clip_prepare_title(
-                            self.app_obj,
-                            video_obj,
-                            self.clip_title_dict,
-                            clip_title,
-                            i + 1,
-                            list_size,
-                        )
-
-                        self.clip_title_dict[clip_title] = None
-
-                        # Update the Output Tab
-                        if not stop_stamp:
-
-                            self.app_obj.main_win_obj.output_tab_write_stdout(
-                                1,
-                                _('Video clip') + ' ' + str(i + 1) + '/' \
-                                + str(list_size) + ': ' + start_stamp + ' - ' \
-                                + _('End of video') + ': ' + clip_title
-                            )
-
-                        else:
-
-                            self.app_obj.main_win_obj.output_tab_write_stdout(
-                                1,
-                                _('Video clip') + ' ' + str(i + 1) + '/' \
-                                + str(list_size) + ': ' + start_stamp + ' - ' \
-                                + stop_stamp + ': ' + clip_title
-                            )
-
-                        # Extract the clip
-                        result = self.process_video(
-                            video_obj,
-                            dest_dir,
-                            start_stamp,
-                            stop_stamp,
-                            clip_title,
-                        )
-
-                        if not result:
-
-                            # Don't continue creating more clips after an error
-                            break
-
-                        elif dest_obj \
-                        and self.app_obj.split_video_add_db_flag:
-
-                            new_video_obj = utils.clip_add_to_db(
-                                self.app_obj,
-                                dest_obj,
-                                video_obj,
-                                clip_title,
-                            )
-
-                            if new_video_obj:
-
-                                # All done
-                                self.new_video_list.append(new_video_obj)
-                                self.split_success_flag = True
-
                 else:
+                    # Add the returned destination directory to a list,
+                    #   first checking for duplicates
+                    if not dest_dir in check_dict:
+                        dest_dir_list.append(dest_dir)
+                        check_dict[dest_dir] = None
 
-                    self.app_obj.main_win_obj.output_tab_write_stderr(
-                        1,
-                        _('FAILED: No timestamps associated with video'),
-                    )
+            else:
 
-                    self.fail_count += 1
-                    result = False
-
-                # Splitting of this video is complete. Delete the original
-                #   video, if required
-                if result \
-                and self.app_obj.split_video_auto_delete_flag \
-                and isinstance(video_obj.parent_obj, media.Folder):
-                    self.app_obj.delete_video(
-                        video_obj,
-                        True,           # Delete all files
-                        True,           # Don't update Video Index yet
-                        True,           # Or Video Catalogue
-                    )
+                # Process the video with FFmpeg. One source video produces one
+                #   output video
+                self.process_video(video_obj)
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
@@ -346,22 +222,127 @@ class ProcessManager(threading.Thread):
             self.app_obj.process_manager_halt_timer,
         )
 
-        # Open the destination directory, if required
-        if dest_dir is not None \
+        # Open the destination directories, if required
+        if self.options_obj.options_dict['output_mode'] == 'split' \
         and self.app_obj.split_video_auto_open_flag:
-            utils.open_file(self.app_obj, dest_dir)
+
+            for dest_dir in dest_dir_list:
+                utils.open_file(self.app_obj, dest_dir)
 
 
-    def process_video(self, video_obj, dest_dir=None, start_stamp=None, \
-    stop_stamp=None, clip_title=None):
+    def create_child_process(self, cmd_list):
 
-        """Called by self.run().
+        """Called by self.slice_video() only, in order to concatenate video
+        clips into a single video file. All other child process are handled by
+        ffmpeg_tartube.FFmpegManager.
+
+        Based on YoutubeDLDownloader._create_process().
+
+        Executes the system command, creating a new child process which
+        concatenates files.
+
+        Args:
+
+            cmd_list (list): Python list that contains the command to execute.
+
+        """
+
+        info = preexec = None
+        if os.name == 'nt':
+            # Hide the child process window that MS Windows helpfully creates
+            #   for us
+            info = subprocess.STARTUPINFO()
+            info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            # Make this child process the process group leader, so that we can
+            #   later kill the whole process group with os.killpg
+            preexec = os.setsid
+
+        try:
+            self.child_process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=preexec,
+                startupinfo=info,
+            )
+
+        except (ValueError, OSError) as error:
+            pass
+
+
+    def create_temp_dir(self, orig_video_obj, parent_dir):
+
+        """Called by self.slice_video().
+
+        Before splitting a video into clips, and then concatenating the clips,
+        create a temporary directory for the clips so we don't accidentally
+        overwrite anything.
+
+        Args:
+
+            orig_video_obj (media.Video): The video to be split
+
+            parent_dir (str): Full path to the parent container's directory
+
+        Return values:
+
+            The temporary directory created on success, None on failure
+
+        """
+
+        # Work out where the temporary directory should be...
+        temp_dir = os.path.abspath(
+            os.path.join(
+                parent_dir,
+                '.clips_' + str(orig_video_obj.dbid)
+            ),
+        )
+
+        # ...then create it
+        try:
+            if os.path.isdir(temp_dir):
+                shutil.rmtree(temp_dir)
+
+            os.makedirs(temp_dir)
+
+            return temp_dir
+
+        except:
+            return None
+
+
+    def is_child_process_alive(self):
+
+        """Called by self.split_video().
+
+        Based on YoutubeDLDownloader._proc_is_alive().
+
+        Called continuously during concatenation of video clips to check
+        whether the child process has finished or not.
+
+        Returns:
+
+            True if the child process is alive, otherwise returns False.
+
+        """
+
+        if self.child_process is None:
+            return False
+
+        return self.child_process.poll() is None
+
+
+    def process_video(self, orig_video_obj, dest_dir=None, start_point=None, \
+    stop_point=None, clip_title=None):
+
+        """Called by self.run(), .slice_video() and .split_video().
 
         Sends a single video to FFmpeg for post-processing.
 
         Args:
 
-            video_obj (media.Video): The video to be sent to FFmpeg
+            orig_video_obj (media.Video): The video to be sent to FFmpeg
 
             dest_dir (str): When splitting a video, the directory into which
                 the video clips are saved (which may or may not be the same as
@@ -369,10 +350,12 @@ class ProcessManager(threading.Thread):
                 may be the directory for a media.Folder object, or not. Not
                 specified when not splitting a video
 
-            start_stamp, stop_stamp (str): When splitting a video, the
+            start_point, stop_point (str): When splitting a video, the
                 timestamps at which to start/stop (e.g. '15:29'). If
-                'stop_stamp' is not specified, the clip ends at the end of
-                the video
+                'stop_point' is not specified, the clip ends at the end of
+                the video. When removing video slices, the time (in seconds)
+                at the beginning/end of each slice. If 'stop_point' is not
+                specified, the slice ends at the end of the video
 
             clip_title (str): When splitting a video, the title of this video
                 clip (if specified)
@@ -388,8 +371,11 @@ class ProcessManager(threading.Thread):
         #   just in case, check again
         # (Special case: 'dummy' video objects (those downloaded in the Classic
         #   Mode tab) use different IVs)
-        if video_obj.file_name is None \
-        and (not video_obj.dummy_flag or video_obj.dummy_path is None):
+        if orig_video_obj.file_name is None \
+        and (
+            not orig_video_obj.dummy_flag
+            or orig_video_obj.dummy_path is None
+        ):
             self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
                 _('FAILED: File name is not known'),
@@ -403,9 +389,9 @@ class ProcessManager(threading.Thread):
         #   list, and including the source/output files)
         source_path, output_path, cmd_list = self.options_obj.get_system_cmd(
             self.app_obj,
-            video_obj,
-            start_stamp,
-            stop_stamp,
+            orig_video_obj,
+            start_point,
+            stop_point,
             clip_title,
             dest_dir,
         )
@@ -425,7 +411,7 @@ class ProcessManager(threading.Thread):
         GObject.timeout_add(
             0,
             self.app_obj.main_win_obj.update_progress_bar,
-            video_obj.name,
+            orig_video_obj.name,
             self.job_count,
             self.job_total,
         )
@@ -439,7 +425,7 @@ class ProcessManager(threading.Thread):
         # Process the video
         success_flag, msg \
         = self.app_obj.ffmpeg_manager_obj.run_ffmpeg_with_options(
-            video_obj,
+            orig_video_obj,
             source_path,
             cmd_list,
         )
@@ -465,7 +451,7 @@ class ProcessManager(threading.Thread):
             )
 
             # (If splitting files, there is nothing more to do)
-            if start_stamp is not None:
+            if start_point is not None:
                 return True
 
             # Otherwise, delete the original video file, if required
@@ -492,7 +478,7 @@ class ProcessManager(threading.Thread):
             #   changed?
             new_dir, new_file = os.path.split(output_path)
             new_name, new_ext = os.path.splitext(new_file)
-            old_name = video_obj.name
+            old_name = orig_video_obj.name
 
             rename_flag = False
             if (
@@ -509,7 +495,7 @@ class ProcessManager(threading.Thread):
 
                 thumb_path = utils.find_thumbnail(
                     self.app_obj,
-                    video_obj,
+                    orig_video_obj,
                     True,           # Rename a temporary thumbnail too
                 )
 
@@ -549,16 +535,426 @@ class ProcessManager(threading.Thread):
             # If a video/audio file was processed, update its filename
             if self.options_obj.options_dict['input_mode'] != 'thumb':
 
-                if not video_obj.dummy_flag:
-                    video_obj.set_file_from_path(output_path)
+                if not orig_video_obj.dummy_flag:
+                    orig_video_obj.set_file_from_path(output_path)
                 else:
-                    video_obj.set_dummy_path(output_path)
+                    orig_video_obj.set_dummy_path(output_path)
 
                 # Also update its .name IV (but its .nickname)
                 if rename_flag:
-                    video_obj.set_name(new_name)
+                    orig_video_obj.set_name(new_name)
 
             return True
+
+
+    def slice_video(self, orig_video_obj):
+
+        """Called by self.run().
+
+        Removes slices from a video using FFmpeg.
+
+        Args:
+
+            orig_video_obj (media.Video): The video to be sent to FFmpeg
+
+        Return values:
+
+            The video's parent directory on success, None on failure
+
+        """
+
+        # Contact the SponsorBlock server to update the video's slice data, if
+        #   allowed
+        # (No point doing it, if the temporary buffer is set)
+        if not self.app_obj.temp_slice_list:
+
+            if self.app_obj.sblock_re_extract_flag \
+            and not orig_video_obj.slice_list:
+                utils.fetch_slice_data(
+                    app_obj,
+                    orig_video_obj,
+                    self.download_worker_obj.worker_id,
+                )
+
+        # Import the correct slice list
+        if self.app_obj.temp_slice_list:
+
+            # Use the temporary buffer
+            slice_list = self.app_obj.temp_slice_list.copy()
+            temp_flag = True
+            # (The temporary buffer, once used, must be emptied immediately)
+            self.app_obj.reset_temp_slice_list()
+
+        elif self.options_obj.options_dict['slice_mode'] == 'video' \
+        and orig_video_obj.slice_list:
+
+            # Use the video's own slice list
+            slice_list = orig_video_obj.slice_list.copy()
+            temp_flag = False
+
+        elif self.options_obj.options_dict['slice_mode'] == 'custom' \
+        and self.options_obj.options_dict['slice_list']:
+
+            # Use the slice list specified by the FFmpeg options object
+            slice_list = self.options_obj.options_dict['slice_list']
+            temp_flag = False
+
+        # Convert this list from a list of video slices to be removed, to a
+        #   list of video clips to be retained
+        # The returned list is in groups of two, in the form
+        #   [start_time, stop_time]
+        # ...where 'start_time' and 'stop_time' are floating-point values in
+        #   seconds. 'stop_time' can be None to signify the end of the video,
+        #   but 'start_time' is 0 to signify the start of the video
+        clip_list = utils.convert_slices_to_clips(
+            self.app_obj,
+            self.app_obj.general_custom_dl_obj,
+            slice_list,
+            temp_flag,
+        )
+        if not clip_list:
+
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _('FAILED: No slices associated with video'),
+            )
+
+            self.fail_count += 1
+            return None
+
+        # Create a temporary directory for this video so we don't accidentally
+        #   overwrite anything
+        parent_dir = orig_video_obj.parent_obj.get_actual_dir(self.app_obj)
+        orig_video_path = orig_video_obj.get_actual_path(self.app_obj)
+        temp_dir = self.create_temp_dir(orig_video_obj, parent_dir)
+        if temp_dir is None:
+
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _('FAILED: Can\'t create temporary directory'),
+            )
+
+            self.fail_count += 1
+            self.fatal_error_flag = True
+            return None
+
+        # Extract the clips, one at a time. For each video clip, we use a
+        #   separate FFmpeg command
+        list_size = len(clip_list)
+        for i in range(list_size):
+
+            mini_list = clip_list[i]
+            start_time = mini_list[0]
+            stop_time = mini_list[1]
+
+            # Update the Output Tab
+            if not stop_time:
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Video clip') + ' ' + str(i + 1) + '/' + str(list_size) \
+                    + ': ' + str(start_time) + ' - ' + _('End of video')
+                )
+
+            else:
+
+                self.app_obj.main_win_obj.output_tab_write_stdout(
+                    1,
+                    _('Video clip') + ' ' + str(i + 1) + '/' + str(list_size) \
+                    + ': ' + str(start_time) + ' - ' + str(stop_time)
+                )
+
+            # Extract the clip
+            if not self.process_video(
+                orig_video_obj,
+                temp_dir,
+                start_time,
+                stop_time,
+                'clip_' + str(i + 1),       # Clip title
+            ):
+                # Don't continue creating more clips after an error
+                self.fatal_error_flag = True
+                # (Delete the temporary directory after failure)
+                shutil.rmtree(temp_dir)
+                return None
+
+        # If there is more than one clip, they must be concatenated to produce
+        #   a single video (like the original video, from which the video
+        #   slices have been removed)
+        if list_size == 1:
+            output_path = os.path.abspath(
+                os.path.join(temp_dir, 'clip_1' + orig_video_obj.file_ext),
+            )
+
+        else:
+            # For FFmpeg's benefit, write a text file listing every clip
+            line_list = []
+            clips_file = os.path.abspath(
+                os.path.join(temp_dir, 'clips.txt'),
+            )
+
+            for i in range(list_size):
+                line_list.append(
+                    'file \'' + os.path.abspath(
+                        os.path.join(
+                            temp_dir,
+                            'clip_' + str(i + 1) + orig_video_obj.file_ext,
+                        ),
+                    ),
+                )
+
+            with open(clips_file, 'w') as fh:
+                fh.write('\n'.join(line_list))
+
+            # Prepare the FFmpeg command to concatenate the clips together
+            output_path = os.path.abspath(
+                os.path.join(
+                    temp_dir,
+                    orig_video_obj.file_name + orig_video_obj.file_ext,
+                ),
+            )
+
+            cmd_list = [
+                self.app_obj.ffmpeg_manager_obj.get_executable(),
+                '-safe',
+                '0',
+                '-f',
+                'concat',
+                '-i',
+                clips_file,
+                '-c',
+                'copy',
+                output_path,
+            ]
+
+            # Update the Output Tab again
+            self.app_obj.main_win_obj.output_tab_write_system_cmd(
+                1,
+                ' '.join(cmd_list),
+            )
+
+            # Create a new child process using the command
+            self.create_child_process(cmd_list)
+
+            # Wait for the concatenation to finish. We are not bothered
+            #   about reading the child process STDOUT/STDERR, since we can
+            #   just test for the existence of the output file
+            while self.is_child_process_alive():
+                time.sleep(self.sleep_time)
+
+            if not os.path.isfile(output_path):
+
+                self.app_obj.main_win_obj.output_tab_write_stderr(
+                    1,
+                    _('FAILED: Can\'t concatenate clips'),
+                )
+
+                # (Delete the temporary directory after failure)
+                self.fail_count += 1
+                shutil.rmtree(temp_dir)
+                return None
+
+        # Move the single video file back into the parent directory,
+        #   replacing any file of the same name that's already there
+        try:
+
+            if os.path.isfile(orig_video_path):
+                os.remove(orig_video_path)
+
+            shutil.move(output_path, orig_video_path)
+
+        except:
+
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _(
+                    'FAILED: Clips were concatenated, but could not move' \
+                    + ' the output file out of the temporary directory',
+                ),
+            )
+
+            # (Delete the temporary directory after failure)
+            self.fail_count += 1
+            shutil.rmtree(temp_dir)
+            return None
+
+        # Delete the temporary directory
+        shutil.rmtree(temp_dir)
+
+        # Procedure successful
+        return parent_dir
+
+
+    def split_video(self, orig_video_obj):
+
+        """Called by self.run().
+
+        Splits a video into video clips using FFmpeg.
+
+        Args:
+
+            orig_video_obj (media.Video): The video to be sent to FFmpeg
+
+        Return values:
+
+            The destination directory of the clips on success, None on failure
+
+        """
+
+        # Re-extract timestamps from the video's .info.json or .description
+        #   file, if allowed
+        # (No point doing it, if the temporary buffer is set)
+        if not self.app_obj.temp_stamp_list:
+
+            if self.app_obj.video_timestamps_re_extract_flag \
+            and not orig_video_obj.stamp_list:
+                self.app_obj.update_video_from_json(orig_video_obj, True)
+
+            if self.app_obj.video_timestamps_re_extract_flag \
+            and not orig_video_obj.stamp_list:
+                orig_video_obj.extract_timestamps_from_descrip(self.app_obj)
+
+        # Set the containing folder, creating a media.Folder object and/or a
+        #   sub-directory for the video clips, if required
+        parent_obj, parent_dir, dest_obj, dest_dir \
+        = utils.clip_set_destination(self.app_obj, orig_video_obj)
+
+        if parent_obj is None:
+
+            # There is already a media.Folder with the same name, somewhere
+            #   else in the database
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _(
+                'FAILED: Can\'t create the destination folder either because' \
+                + ' a folder with the same name already exists, or because' \
+                + ' new folders can\'t be added to the parent folder',
+                ),
+            )
+
+            self.fail_count += 1
+            self.fatal_error_flag = True
+            return None
+
+        # Import the correct timestamp list
+        if self.app_obj.temp_stamp_list:
+
+            # Use the temporary buffer
+            stamp_list = self.app_obj.temp_stamp_list.copy()
+            # (The temporary buffer, once used, must be emptied immediately)
+            self.app_obj.reset_temp_stamp_list()
+
+        elif self.options_obj.options_dict['split_mode'] == 'video' \
+        and orig_video_obj.stamp_list:
+
+            # Use the video's own timestamp list
+            stamp_list = orig_video_obj.stamp_list.copy()
+
+        elif self.options_obj.options_dict['split_mode'] == 'custom' \
+        and self.options_obj.options_dict['split_list']:
+
+            # Use the timestamp list specified by the FFmpeg options object
+            stamp_list = self.options_obj.options_dict['split_list']
+
+        # Split the video
+        if stamp_list:
+
+            # One source video is split into one or more video clips, using
+            #   timestamps provided by the media.Video object itself
+            # Each video clip uses a separate FFmpeg command
+            list_size = len(stamp_list)
+            for i in range(list_size):
+
+                # List in the form
+                #   [start_stamp, stop_stamp, clip_title]
+                # If 'stop_stamp' is not specified, then the 'start_stamp' of
+                #   the next clip is used. If there are no more clips, then
+                #   this clip will end at the end of the video
+                start_stamp, stop_stamp, clip_title \
+                = utils.clip_extract_data(stamp_list, i)
+
+                # Set a (hopefully unique) clip title
+                clip_title = utils.clip_prepare_title(
+                    self.app_obj,
+                    orig_video_obj,
+                    self.clip_title_dict,
+                    clip_title,
+                    i + 1,
+                    list_size,
+                )
+
+                self.clip_title_dict[clip_title] = None
+
+                # Update the Output Tab
+                if not stop_stamp:
+
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        1,
+                        _('Video clip') + ' ' + str(i + 1) + '/' \
+                        + str(list_size) + ': ' + start_stamp + ' - ' \
+                        + _('End of video') + ': ' + clip_title
+                    )
+
+                else:
+
+                    self.app_obj.main_win_obj.output_tab_write_stdout(
+                        1,
+                        _('Video clip') + ' ' + str(i + 1) + '/' \
+                        + str(list_size) + ': ' + start_stamp + ' - ' \
+                        + stop_stamp + ': ' + clip_title
+                    )
+
+                # Extract the clip
+                if not self.process_video(
+                    orig_video_obj,
+                    dest_dir,
+                    start_stamp,
+                    stop_stamp,
+                    clip_title,
+                ):
+                    # Don't continue creating more clips after an error
+                    self.fatal_error_flag = True
+                    return None
+
+                elif dest_obj \
+                and self.app_obj.split_video_add_db_flag:
+
+                    new_video_obj = utils.clip_add_to_db(
+                        self.app_obj,
+                        dest_obj,
+                        orig_video_obj,
+                        clip_title,
+                    )
+
+                    if new_video_obj:
+
+                        # All done
+                        self.new_video_list.append(new_video_obj)
+                        self.split_success_flag = True
+
+        else:
+
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                _('FAILED: No timestamps associated with video'),
+            )
+
+            self.fail_count += 1
+            return None
+
+        # Splitting of this video is complete. Delete the original video, if
+        #   required
+        if self.app_obj.split_video_auto_delete_flag \
+        and isinstance(orig_video_obj.parent_obj, media.Folder):
+            self.app_obj.delete_video(
+                orig_video_obj,
+                True,           # Delete all files
+                True,           # Don't update Video Index yet
+                True,           # Or Video Catalogue
+            )
+
+        # Procedure successful
+        return dest_dir
 
 
     def stop_process_operation(self):

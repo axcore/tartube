@@ -1687,6 +1687,9 @@ class Video(GenericMedia):
         self.nickname = name
         # Download source (a URL)
         self.source = None
+        # The website's video ID, if known (e.g. on YouTube, everything after
+        #   https://www.youtube.com/watch?v=)
+        self.vid = None
 
         # Flag set to True if Tartube should always simulate the download of
         #   video, or False if the downloads.DownloadManager object should
@@ -1811,6 +1814,21 @@ class Video(GenericMedia):
         #   not specified)
         # 'clip_title' is always optional, and is None if not specified
         self.stamp_list = []
+        # List containing data retrieved from SponsorBlock, or added manually
+        #   by the user
+        # Every item in the list is a dictionary containing data for a single
+        #   video slice, in the form:
+        #       mini_dict['category'] = One of the values in
+        #           formats.SPONSORBLOCK_CATEGORY_LIST (e.g. 'sponsor')
+        #       mini_dict['action'] = One of the values in
+        #           formats.SPONSORBLOCK_ACTION_LIST (e.g. 'skip')
+        #       mini_dict['start_time']
+        #       mini_dict['stop_time'] = Floating point values in seconds,
+        #           the beginning and end of the slice
+        #       mini_dict['duration'] = The video duration, as reported by
+        #           SponsorBlock. This valus is not required by Tartube code,
+        #           and its default value is 0
+        self.slice_list = []
 
         # List of error/warning messages generated the last time the video was
         #   checked or downloaded. Both set to empty lists if the video has
@@ -2144,6 +2162,7 @@ class Video(GenericMedia):
 
         """
 
+        # Do the checking, as promised above
         if not app_obj.video_timestamps_extract_json_flag \
         or (self.stamp_list and not app_obj.video_timestamps_replace_flag):
             return
@@ -2191,6 +2210,61 @@ class Video(GenericMedia):
 
         # All done
         self.stamp_list = stamp_list
+
+
+    def set_slices(self, slice_list):
+
+        """Can be called by anything.
+
+        Sets the video's slice list, first sorting it.
+        """
+
+        self.slice_list \
+        = list(sorted(slice_list, key=lambda x:x['start_time']))
+
+
+    def convert_slices(self, slice_data_list):
+
+        """Can be called by anything, but principally called by
+        utils.fetch_slice_data().
+
+        A modified form of self.set_slices().
+
+        From SponsorBlock we retrieve a slice data for a video. Convert the
+        data from used by SponsorBlock into the form used by Tartube, before
+        saving it in self.slice_list.
+        """
+
+        new_list = []
+        for old_mini_dict in slice_data_list:
+
+            # (Filter out invalid data. Don't worry about the 'videoDuration'
+            #   field, as Tartube doesn't need it; and ignore the 'UUID' field
+            #   completely)
+            if 'category' in old_mini_dict \
+            and 'actionType' in old_mini_dict \
+            and 'segment' in old_mini_dict:
+
+                new_mini_dict = {}
+                new_mini_dict['category'] = old_mini_dict['category']
+                new_mini_dict['action'] = old_mini_dict['actionType']
+                new_mini_dict['start_time'] = old_mini_dict['segment'][0]
+                new_mini_dict['stop_time'] = old_mini_dict['segment'][1]
+                new_mini_dict['duration'] = old_mini_dict['videoDuration']
+
+                new_list.append(new_mini_dict)
+
+        self.slice_list = list(sorted(new_list, key=lambda x:x['start_time']))
+
+
+    def reset_slices(self):
+
+        """Can be called by anything.
+
+        Empties the video's slice list.
+        """
+
+        self.slice_list = []
 
 
     def set_timestamps(self, stamp_list):
@@ -2417,6 +2491,11 @@ class Video(GenericMedia):
         self.orig_parent = parent_obj.name
 
 
+    def set_parent_obj(self, parent_obj):
+
+        self.parent_obj = parent_obj
+
+
     def set_receive_time(self, other_video_obj=None):
 
         """Can be called by anything.
@@ -2454,6 +2533,11 @@ class Video(GenericMedia):
     def set_upload_time(self, unix_time=None):
 
         self.upload_time = int(unix_time)
+
+
+    def set_vid(self, vid):
+
+        self.vid = vid
 
 
     def set_video_descrip(self, app_obj, descrip, max_length):
