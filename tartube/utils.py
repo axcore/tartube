@@ -416,10 +416,11 @@ def clip_extract_data(stamp_list, clip_num):
 
     Args:
 
-        clip_num (int): The index of a group in self.stamp_list, the first
-            clip is #0. It is the calling function's responsibility to
-            ensure that clip_num is not outside the bounds of
-            self.stamp_list
+        stamp_list (list): The copy of a media.Video's .stamp_list IV
+
+        clip_num (int): The index of a group in stamp_list, the first clip is
+            #0. It is the calling function's responsibility to ensure that
+            clip_num is not outside the bounds of stamp_list
 
     Return values:
 
@@ -2473,7 +2474,7 @@ def get_dl_config_path(app_obj):
 
         return os.path.abspath(
             os.path.join(
-                self.app_obj.script_parent_dir,
+                app_obj.script_parent_dir,
                 ytdl_fork + '.conf',
             ),
         )
