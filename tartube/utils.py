@@ -738,56 +738,6 @@ def clip_set_destination(app_obj, video_obj):
         return parent_obj, parent_dir, dest_obj, dest_dir
 
 
-def convert_item(item, to_unicode=False):
-
-    """Can be called by anything.
-
-    Based on the convert_item() function in youtube-dl-gui.
-
-    Convert item between 'unicode' and 'str'.
-
-    Args:
-
-        item (-): Can be any python item
-
-        to_unicode (bool): When True it will convert all the 'str' types to
-            'unicode'. When False it will convert all the 'unicode' types back
-            to 'str'
-
-    Returns:
-
-        The converted item
-
-    """
-
-    if to_unicode and isinstance(item, str):
-        # Convert str to unicode
-        return item.decode(get_encoding(), 'ignore')
-
-    if not to_unicode and isinstance(item, unicode):
-        # Convert unicode to str
-        return item.encode(get_encoding(), 'ignore')
-
-    if hasattr(item, '__iter__'):
-        # Handle iterables
-        temp_list = []
-
-        for sub_item in item:
-            if isinstance(item, dict):
-                temp_list.append(
-                    (
-                        convert_item(sub_item, to_unicode),
-                        convert_item(item[sub_item], to_unicode),
-                    )
-                )
-            else:
-                temp_list.append(convert_item(sub_item, to_unicode))
-
-        return type(item)(temp_list)
-
-    return item
-
-
 def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     """Can be called by anything.

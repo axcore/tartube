@@ -298,10 +298,7 @@ class InfoManager(threading.Thread):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
-                    if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors='replace')
-                    else:
-                        stdout = stdout.decode('utf-8', errors='replace')
+                    stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                     self.output_list.append(stdout)
                     self.stdout_list.append(stdout)
@@ -319,12 +316,9 @@ class InfoManager(threading.Thread):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            if os.name == 'nt':
-                stderr = stderr.decode('cp1252', errors='replace')
-            else:
-                stderr = stderr.decode('utf-8', errors='replace')
-
             if stderr:
+
+                stderr = stderr.decode(utils.get_encoding(), 'replace')
 
                 # While testing youtube-dl, don't treat anything as an error
                 if self.info_type == 'test_ytdl':

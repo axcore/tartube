@@ -142,7 +142,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.test_ytdl_menu_item = None         # Gtk.MenuItem
         self.install_ffmpeg_menu_item = None    # Gtk.MenuItem
         self.tidy_up_menu_item = None           # Gtk.MenuItem
-        self.stop_operation_menu_item  = None   # Gtk.MenuItem
+        self.stop_operation_menu_item = None    # Gtk.MenuItem
+        self.stop_soon_menu_item = None         # Gtk.MenuItem
         self.cancel_live_menu_item  = None      # Gtk.MenuItem
         self.update_live_menu_item  = None      # Gtk.MenuItem
         # (from self.setup_main_toolbar)
@@ -1210,7 +1211,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.custom_dl_all_menu_item = \
         Gtk.MenuItem.new_with_mnemonic(_('C_ustom download all'))
         ops_sub_menu.append(self.custom_dl_all_menu_item)
-#        self.custom_dl_all_menu_item.set_action_name('app.custom_dl_all_menu')
         self.custom_dl_all_menu_item.set_submenu(custom_dl_submenu)
 
         # Separator
@@ -1269,6 +1269,15 @@ class MainWin(Gtk.ApplicationWindow):
         self.stop_operation_menu_item.set_action_name(
             'app.stop_operation_menu',
         )
+        self.stop_operation_menu_item.set_sensitive(False)
+
+        self.stop_soon_menu_item = \
+        Gtk.MenuItem.new_with_mnemonic(_('_Stop after current videos'))
+        ops_sub_menu.append(self.stop_soon_menu_item)
+        self.stop_soon_menu_item.set_action_name(
+            'app.stop_soon_menu',
+        )
+        self.stop_soon_menu_item.set_sensitive(False)
 
         # Livestreams column
         live_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_Livestreams'))
@@ -3536,6 +3545,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
 
         self.stop_operation_menu_item.set_sensitive(False)
+        self.stop_soon_menu_item.set_sensitive(False)
 
         if self.test_menu_item:
             self.test_menu_item.set_sensitive(sens_flag)
@@ -3711,6 +3721,11 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.stop_operation_menu_item.set_sensitive(False)
             self.stop_operation_toolbutton.set_sensitive(False)
+
+        if not not_dl_operation_flag and not sens_flag:
+            self.stop_soon_menu_item.set_sensitive(True)
+        else:
+            self.stop_soon_menu_item.set_sensitive(False)
 
         # The corresponding buttons in the Classic Mode Tab must also be
         #   updated

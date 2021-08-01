@@ -1636,11 +1636,9 @@ class OptionsParser(object):
         #   'output_template' are ignored. However, 'output_format_list' is
         #   normally only used with yt-dlp)
         if not copy_dict['output_format_list'] \
-        and (
-            self.app_obj.ytdl_fork is None \
-            or self.app_obj.ytdl_fork != 'yt-dlp' \
-            or not self.app_obj.ytdlp_filter_options_flag
-        ):
+        or self.app_obj.ytdl_fork is None \
+        or self.app_obj.ytdl_fork != 'yt-dlp' \
+        or not self.app_obj.ytdlp_filter_options_flag:
             # Set the youtube-dl output template for the video's file
             template \
             = formats.FILE_OUTPUT_CONVERT_DICT[copy_dict['output_format']]

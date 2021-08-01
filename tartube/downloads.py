@@ -1147,6 +1147,10 @@ class DownloadManager(threading.Thread):
 
         self.running_flag = False
 
+        # In the Progress List, change the status of remaining items from
+        #   'Waiting' to 'Not started'
+        self.download_list_obj.abandon_remaining_items()
+
 
     def stop_download_operation_soon(self):
 
@@ -1165,6 +1169,10 @@ class DownloadManager(threading.Thread):
         for worker_obj in self.worker_list:
             if worker_obj.running_flag:
                 worker_obj.downloader_obj.stop_soon()
+
+        # In the Progress List, change the status of remaining items from
+        #   'Waiting' to 'Not started'
+        self.download_list_obj.abandon_remaining_items()
 
 
 class DownloadWorker(threading.Thread):
@@ -1869,27 +1877,27 @@ class DownloadWorker(threading.Thread):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 1476 data_callback')
 
-        app_obj = self.download_manager_obj.app_obj
+        main_win_obj = self.download_manager_obj.app_obj.main_win_obj
 
         if not self.download_item_obj.operation_classic_flag:
 
             GObject.timeout_add(
                 0,
-                app_obj.main_win_obj.progress_list_receive_dl_stats,
+                main_win_obj.progress_list_receive_dl_stats,
                 self.download_item_obj,
                 dl_stat_dict,
                 last_flag,
             )
 
-            # If download a video individually, need to update the tooltips in
-            #   the Results List to show any errors/warnings (which won't show
-            #   up if the video was not downloaded)
+            # If downloading a video individually, need to update the tooltips
+            #   in the Results List to show any errors/warnings (which won't
+            #   show up if the video was not downloaded)
             if last_flag \
             and isinstance(self.download_item_obj.media_data_obj, media.Video):
 
                 GObject.timeout_add(
                     0,
-                    app_obj.main_win_obj.results_list_update_tooltip,
+                    main_win_obj.results_list_update_tooltip,
                     self.download_item_obj.media_data_obj,
                 )
 
@@ -1897,7 +1905,7 @@ class DownloadWorker(threading.Thread):
 
             GObject.timeout_add(
                 0,
-                app_obj.main_win_obj.classic_mode_tab_receive_dl_stats,
+                main_win_obj.classic_mode_tab_receive_dl_stats,
                 self.download_item_obj,
                 dl_stat_dict,
                 last_flag,
@@ -2207,6 +2215,64 @@ class DownloadList(object):
 
 
     # Public class methods
+
+
+    @synchronise(_SYNC_LOCK)
+    def abandon_remaining_items(self):
+
+        """Called by downloads.DownloadManager.stop_download_operation() and
+        .stop_download_operation_soon().
+
+        When the download operation has been stopped by the user, any rows in
+        the main window's Progress List (or Classic Progress List) currently
+        marked as 'Waiting' should be marked as 'Not started'.
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 1800 abandon_remaining_items')
+
+        main_win_obj = self.app_obj.main_win_obj
+        download_manager_obj = self.app_obj.download_manager_obj
+
+        # In case of any recent calls to self.create_item(), which want to
+        #   place new DownloadItems at the beginning of the queue, then
+        #   merge the temporary queue into the main one
+        if self.temp_item_list:
+            self.download_item_list \
+            = self.temp_item_list + self.download_item_list
+
+        # 'dl_stat_dict' holds a dictionary of statistics in a standard format
+        #   specified by downloads.VideoDownloader.extract_stdout_data()
+        # Prepare the dictionary to be passed on to the main window, so the
+        #   statistics can be displayed there for every 'Waiting' item
+        dl_stat_dict = {}
+        dl_stat_dict['status'] = formats.MAIN_STAGE_NOT_STARTED
+
+        for item_id in self.download_item_list:
+            this_item = self.download_item_dict[item_id]
+
+            if this_item.stage == formats.MAIN_STAGE_QUEUED:
+                this_item.stage = formats.MAIN_STAGE_NOT_STARTED
+
+                if not download_manager_obj.operation_classic_flag:
+
+                    GObject.timeout_add(
+                        0,
+                        main_win_obj.progress_list_receive_dl_stats,
+                        this_item,
+                        dl_stat_dict,
+                        True,       # Final set of statistics for this item
+                    )
+
+                else:
+
+                    GObject.timeout_add(
+                        0,
+                        main_win_obj.classic_mode_tab_receive_dl_stats,
+                        this_item,
+                        dl_stat_dict,
+                        True,       # Final set of statistics for this item
+                    )
 
 
     @synchronise(_SYNC_LOCK)
@@ -3279,10 +3345,7 @@ class VideoDownloader(object):
 
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
-                    if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors='replace')
-                    else:
-                        stdout = stdout.decode('utf-8', errors='replace')
+                    stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                     # Convert the statistics into a python dictionary in a
                     #   standard format, specified in the comments for
@@ -3332,7 +3395,9 @@ class VideoDownloader(object):
                         # Git #175, Japanese text may produce a codec error
                         #   here, despite the .decode() call above
                         try:
-                            print(stdout)
+                            print(
+                                stdout.encode(utils.get_encoding(), 'replace'),
+                            )
                         except:
                             print('STDOUT text with unprintable characters')
 
@@ -3382,10 +3447,10 @@ class VideoDownloader(object):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            if os.name == 'nt':
-                stderr = stderr.decode('cp1252', errors='replace')
-            else:
-                stderr = stderr.decode('utf-8', errors='replace')
+
+            # On MS Windows we use cp1252, so that Tartube can communicate with
+            #   the Windows console
+            stderr = stderr.decode(utils.get_encoding(), 'replace')
 
             # A network error is treated the same way as a stalled download
             if app_obj.operation_auto_restart_network_flag \
@@ -3418,7 +3483,7 @@ class VideoDownloader(object):
                 # Git #175, Japanese text may produce a codec error here,
                 #   despite the .decode() call above
                 try:
-                    print(stderr)
+                    print(stderr.encode(utils.get_encoding(), 'replace'))
                 except:
                     print('STDERR text with unprintable characters')
 
@@ -4556,8 +4621,10 @@ class VideoDownloader(object):
 
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
-            if os.name == 'nt':
-                filename = filename.encode().decode('cp1252', errors='replace')
+            filename = filename.encode().decode(
+                utils.get_encoding(),
+                'replace',
+            )
 
             try:
 
@@ -5940,10 +6007,7 @@ class ClipDownloader(object):
 
                         # On MS Windows we use cp1252, so that Tartube can
                         #   communicate with the Windows console
-                        if os.name == 'nt':
-                            stdout = stdout.decode('cp1252', errors='replace')
-                        else:
-                            stdout = stdout.decode('utf-8', errors='replace')
+                        stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                         # Remove weird carriage returns that insert empty lines
                         #   into the Output Tab
@@ -5966,7 +6030,12 @@ class ClipDownloader(object):
                             # Git #175, Japanese text may produce a codec error
                             #   here, despite the .decode() call above
                             try:
-                                print(stdout)
+                                print(
+                                    stdout.encode(
+                                        utils.get_encoding(),
+                                        'replace',
+                                    ),
+                                )
                             except:
                                 print(
                                     'STDOUT text with unprintable characters'
@@ -5988,10 +6057,10 @@ class ClipDownloader(object):
                 #   read it in real time), and convert into unicode for
                 #   python's convenience
                 stderr = self.stderr_queue.get_nowait().rstrip()
-                if os.name == 'nt':
-                    stderr = stderr.decode('cp1252', errors='replace')
-                else:
-                    stderr = stderr.decode('utf-8', errors='replace')
+
+                # On MS Windows we use cp1252, so that Tartube can communicate
+                #   with the Windows console
+                stderr = stderr.decode(utils.get_encoding(), 'replace')
 
                 # After a network error, stop trying to download clips
                 if self.is_network_error(stderr):
@@ -6012,7 +6081,7 @@ class ClipDownloader(object):
                     # Git #175, Japanese text may produce a codec error here,
                     #   despite the .decode() call above
                     try:
-                        print(stderr)
+                        print(stderr.encode(utils.get_encoding(), 'replace'))
                     except:
                         print('STDERR text with unprintable characters')
 
@@ -6286,10 +6355,7 @@ class ClipDownloader(object):
 
                         # On MS Windows we use cp1252, so that Tartube can
                         #   communicate with the Windows console
-                        if os.name == 'nt':
-                            stdout = stdout.decode('cp1252', errors='replace')
-                        else:
-                            stdout = stdout.decode('utf-8', errors='replace')
+                        stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                         # Remove weird carriage returns that insert empty lines
                         #   into the Output Tab
@@ -6312,7 +6378,12 @@ class ClipDownloader(object):
                             # Git #175, Japanese text may produce a codec error
                             #   here, despite the .decode() call above
                             try:
-                                print(stdout)
+                                print(
+                                    stdout.encode(
+                                        utils.get_encoding(),
+                                        'replace',
+                                    ),
+                                )
                             except:
                                 print(
                                     'STDOUT text with unprintable characters'
@@ -6334,10 +6405,10 @@ class ClipDownloader(object):
                 #   read it in real time), and convert into unicode for
                 #   python's convenience
                 stderr = self.stderr_queue.get_nowait().rstrip()
-                if os.name == 'nt':
-                    stderr = stderr.decode('cp1252', errors='replace')
-                else:
-                    stderr = stderr.decode('utf-8', errors='replace')
+
+                # On MS Windows we use cp1252, so that Tartube can communicate
+                #   with the Windows console
+                stderr = stderr.decode(utils.get_encoding(), 'replace')
 
                 # After a network error, stop trying to download clips
                 if self.is_network_error(stderr):
@@ -6358,7 +6429,7 @@ class ClipDownloader(object):
                     # Git #175, Japanese text may produce a codec error here,
                     #   despite the .decode() call above
                     try:
-                        print(stderr)
+                        print(stderr.encode(utils.get_encoding(), 'replace'))
                     except:
                         print('STDERR text with unprintable characters')
 
@@ -7777,10 +7848,7 @@ class StreamDownloader(object):
 
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
-                    if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors='replace')
-                    else:
-                        stdout = stdout.decode('utf-8', errors='replace')
+                    stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                     # Intercept various STDOUT messages
                     finished_flag = False
@@ -7857,7 +7925,9 @@ class StreamDownloader(object):
                         # Git #175, Japanese text may produce a codec error
                         #   here, despite the .decode() call above
                         try:
-                            print(stdout)
+                            print(
+                                stdout.encode(utils.get_encoding(), 'replace'),
+                            )
                         except:
                             print('STDOUT text with unprintable characters')
 
@@ -7948,10 +8018,7 @@ class StreamDownloader(object):
 
                     # On MS Windows we use cp1252, so that Tartube can
                     #   communicate with the Windows console
-                    if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors='replace')
-                    else:
-                        stdout = stdout.decode('utf-8', errors='replace')
+                    stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                     # Intercept various STDOUT messages, depending on whether
                     #   the merge has started yet, or not
@@ -8000,7 +8067,9 @@ class StreamDownloader(object):
                         # Git #175, Japanese text may produce a codec error
                         #   here, despite the .decode() call above
                         try:
-                            print(stdout)
+                            print(
+                                stdout.encode(utils.get_encoding(), 'replace'),
+                            )
                         except:
                             print('STDOUT text with unprintable characters')
 
@@ -8487,10 +8556,7 @@ class JSONFetcher(object):
             if stdout:
 
                 # (Convert bytes to string)
-                if os.name == 'nt':
-                    stdout = stdout.decode('cp1252', errors='replace')
-                else:
-                    stdout = stdout.decode('utf-8', errors='replace')
+                stdout = stdout.decode(utils.get_encoding(), 'replace')
                 if stdout[:1] == '{':
 
                     # Broadcasting livestream detected; create a new
@@ -8518,10 +8584,7 @@ class JSONFetcher(object):
                 if stderr:
 
                     # (Convert bytes to string)
-                    if os.name == 'nt':
-                        stderr = stderr.decode('cp1252', errors='replace')
-                    else:
-                        stderr = stderr.decode('utf-8', errors='replace')
+                    stderr = stderr.decode(utils.get_encoding(), 'replace')
                     live_data_dict = utils.extract_livestream_data(stderr)
                     if live_data_dict:
 
@@ -9063,10 +9126,7 @@ class MiniJSONFetcher(object):
             if stdout:
 
                 # (Convert bytes to string)
-                if os.name == 'nt':
-                    stdout = stdout.decode('cp1252', errors='replace')
-                else:
-                    stdout = stdout.decode('utf-8', errors='replace')
+                stdout = stdout.decode(utils.get_encoding(), 'replace')
                 if stdout[:1] == '{':
 
                     # Broadcasting livestream detected
@@ -9131,10 +9191,7 @@ class MiniJSONFetcher(object):
             if stderr:
 
                 # (Convert bytes to string)
-                if os.name == 'nt':
-                    stderr = stderr.decode('cp1252', errors='replace')
-                else:
-                    stderr = stderr.decode('utf-8', errors='replace')
+                stderr = stderr.decode(utils.get_encoding(), 'replace')
 
                 # (v2.2.100: In approximately October 2020, YouTube started
                 #   using a new error message for livestreams waiting to start

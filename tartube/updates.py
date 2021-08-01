@@ -241,7 +241,7 @@ class UpdateManager(threading.Thread):
             while not self.stdout_queue.empty():
 
                 stdout = self.stdout_queue.get_nowait().rstrip()
-                stdout = stdout.decode('cp1252', errors='replace')
+                stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                 if stdout:
 
@@ -256,7 +256,7 @@ class UpdateManager(threading.Thread):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            stderr = stderr.decode('cp1252', errors='replace')
+            stderr = stderr.decode(utils.get_encoding(), 'replace')
 
             # Ignore pacman warning messages, e.g. 'warning: dependency cycle
             #   detected:'
@@ -431,10 +431,7 @@ class UpdateManager(threading.Thread):
                 stdout = self.stdout_queue.get_nowait().rstrip()
                 if stdout:
 
-                    if os.name == 'nt':
-                        stdout = stdout.decode('cp1252', errors='replace')
-                    else:
-                        stdout = stdout.decode('utf-8', errors='replace')
+                    stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                     # "It looks like you installed youtube-dl with a package
                     #   manager, pip, setup.py or a tarball. Please use that to
@@ -466,12 +463,9 @@ class UpdateManager(threading.Thread):
             #   it in real time), and convert into unicode for python's
             #   convenience
             stderr = self.stderr_queue.get_nowait().rstrip()
-            if os.name == 'nt':
-                stderr = stderr.decode('cp1252', errors='replace')
-            else:
-                stderr = stderr.decode('utf-8', errors='replace')
-
             if stderr:
+
+                stderr = stderr.decode(utils.get_encoding(), 'replace')
 
                 # If the user has pip installed, rather than pip3, they will by
                 #   now (mid-2019) be seeing a Python 2.7 deprecation warning.

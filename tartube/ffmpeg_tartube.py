@@ -380,7 +380,7 @@ class FFmpegManager(object):
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            stderr = stderr.decode('utf-8', errors='replace')
+            stderr = stderr.decode(utils.get_encoding(), 'replace')
             return [ False, stderr.strip().split('\n')[-1] ]
 
         else:
@@ -430,7 +430,7 @@ class FFmpegManager(object):
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            stderr = stderr.decode('utf-8', errors='replace')
+            stderr = stderr.decode(utils.get_encoding(), 'replace')
             return [ False, stderr.strip().split('\n')[-1] ]
 
         else:
