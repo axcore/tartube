@@ -2086,7 +2086,7 @@ classic_flag):
             for channels/playlists/folders)
 
         classic_flag (bool): Specifies the (standard) operation type. True for
-            'classic_custom', False for 'custom'
+            'classic_custom', False for 'custom_real'
 
     """
 
@@ -2241,7 +2241,7 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
             for channels/playlists/folders)
 
         classic_flag (bool): Specifies the (standard) operation type. True for
-            'classic_custom', False for 'custom'
+            'classic_custom', False for 'custom_real'
 
     """
 

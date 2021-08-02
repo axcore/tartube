@@ -2961,6 +2961,7 @@ class TartubeApp(Gtk.Application):
         self.general_custom_dl_obj = self.create_custom_dl_manager('general')
         # Use a different manager in the Classic Mode tab, by default
         self.classic_custom_dl_obj = self.create_custom_dl_manager('classic')
+        self.classic_custom_dl_obj.set_dl_precede_flag(True)
 
         # Part 4 - Load the config file
         # -----------------------------
@@ -4670,7 +4671,7 @@ class TartubeApp(Gtk.Application):
 
             new_obj = media.Scheduled(
                 'default_custom',
-                'custom',
+                'custom_real',
                 scheduled_custom_mode,
             )
 
@@ -6597,6 +6598,29 @@ class TartubeApp(Gtk.Application):
             for options_obj in self.ffmpeg_reg_dict.values():
                 options_obj.options_dict['slice_mode'] = 'video'
                 options_obj.options_dict['slice_list'] = []
+
+        if version < 2003291:      # v2.3.291
+
+            # This version adds a new IV to downloads.CustomDLManager objects
+            for custom_dl_obj in self.custom_dl_reg_dict.values():
+
+                if self.classic_custom_dl_obj is not None \
+                and self.classic_custom_dl_obj == custom_dl_obj:
+                    custom_dl_obj.dl_by_video_flag = True
+                    custom_dl_obj.dl_precede_flag = True
+                else:
+                    custom_dl_obj.dl_precede_flag = False
+
+        if version < 2003295:      # v2.3.295
+
+            # This version adds a new IV to media.Scheduled objects
+            for scheduled_obj in self.scheduled_list:
+                if scheduled_obj.dl_mode == 'custom':
+                    scheduled_obj.dl_mode = 'custom_real'
+                    scheduled_obj.custom_dl_uid \
+                    = self.general_custom_dl_obj.uid
+                else:
+                    scheduled_obj.custom_dl_uid = None
 
 
     def save_db(self):
@@ -9170,15 +9194,21 @@ class TartubeApp(Gtk.Application):
             operation_type (str): 'sim' if channels/playlists should just be
                 checked for new videos, without downloading anything. 'real'
                 if videos should be downloaded (or not) depending on each media
-                data object's .dl_sim_flag IV. 'custom' is like 'real', but
-                with additional options applied (specified by a
-                downloads.CustomDLManager object)
+                data object's .dl_sim_flag IV
+
+                'custom_real' is like 'real', but with additional options
+                applied (specified by a downloads.CustomDLManager object).
+                A 'custom_real' operation is sometimes preceded by a
+                'custom_sim' operation (which is the same as a 'sim' operation,
+                except that it is always followed by a 'custom_real'
+                operation)
 
                 For downloads launched from the Classic Mode Tab,
-                'classic_real' for an ordinary download, 'classic_sim' for a
-                simulated download, and 'classic_custom' for a custom download.
-                A download operation using 'classic_sim' is always followed by
-                another one using 'classic_custom'
+                'classic_real' for an ordinary download, or 'classic_custom'
+                for a custom download. A 'classic_custom' operation is always
+                preceded by a 'classic_sim' operation (which is the same as a
+                'sim' operation, except that it is always followed by a
+                'classic_custom' operation)
 
             automatic_flag (bool): True when called by
                 self.script_slow_timer_callback(). When set, dialogue windows
@@ -9198,20 +9228,72 @@ class TartubeApp(Gtk.Application):
 
             custom_dl_obj (downloads.CustomDLManager or None): The custom
                 download manager that applies to this download operation. Only
-                specified when 'operation_type' is 'custom' or 'classic_custom'
+                specified when 'operation_type' is 'custom_sim', 'custom_real',
+                'classic_sim' or 'classic_real'
+
+                For 'custom_real' and 'classic_real', not specified if
+                self.temp_stamp_list or self.temp_slice_list are specified
+                (because those values take priority)
+
+                For 'custom_real', not specified if media_data_list contains
+                media.Scheduled objects
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 7803 download_manager_start')
 
-        # The operation may have been scheduled to begin on startup. For
-        #   aesthetic reasons, we actually wait a few seconds before
-        #   initiating those operations. If the user starts a download
-        #   operation before that happens, then cancel the scheduled one
-        self.scheduled_check_start_check_time = None
-        self.scheduled_dl_start_check_time = None
-        self.scheduled_custom_start_check_time = None
+        # Code to deal with calls from self.script_slow_timer_callback()
+        if media_data_list:
+
+            first_obj = media_data_list[0]
+            if isinstance(first_obj, media.Scheduled):
+
+                # If the first item in the list is a media.Scheduled object,
+                #   then they all should be
+                for scheduled_obj in media_data_list:
+                    if not isinstance(scheduled_obj, media.Scheduled):
+                        self.system_error(
+                            999,
+                            'Unexpected item in scheduled download list',
+                        )
+
+                        return
+
+                # If a media.Scheduled object which wants to start a
+                #   'custom_real' download exists in 'media_data_list', it
+                #   should be the only one there
+                if first_obj.dl_mode == 'custom_real' \
+                and first_obj.custom_dl_uid is not None \
+                and len(media_data_list) > 1:
+                    if not isinstance(scheduled_obj, media.Scheduled):
+                        self.system_error(
+                            999,
+                            'Unexpected item in scheduled download list',
+                        )
+
+                        return
+
+                # Set the time at which this scheduled download began
+                for scheduled_obj in media_data_list:
+                    scheduled_obj.set_last_time(int(time.time()))
+
+                # Conver the 'operation_type' for this download operation from
+                #   'custom_real' to 'custom_sim' or 'real', as required
+                if first_obj.dl_mode == 'custom_real':
+
+                    if first_obj.custom_dl_uid is None \
+                    or not first_obj.custom_dl_uid in self.custom_dl_reg_dict:
+                        # Fallback
+                        operation_type = 'real'
+
+                    elif not custom_dl_obj:
+
+                        custom_dl_obj \
+                        = self.custom_dl_reg_dict[first_obj.custom_dl_uid]
+                        if custom_dl_obj.dl_by_video_flag \
+                        and custom_dl_obj.dl_precede_flag:
+                            operation_type = 'custom_sim'
 
         # If a livestream operation is running, tell it to stop immediately
         if self.livestream_manager_obj:
@@ -9437,11 +9519,19 @@ class TartubeApp(Gtk.Application):
         self.dl_proxy_cycle_list = self.dl_proxy_list.copy()
 
         # Remove videos from the 'Recent Videos' folder, so it can be re-filled
-        #   by any videos checked/downloaded by this operation...
+        #   by any videos checked/downloaded by this operation
+        # (Don't do so when the download operation was launched from the
+        #   Classic Mode tab, or when a 'custom_sim' operation has finished and
+        #   we're about to start a 'custom_real' operation)
         if operation_type != 'classic_real' \
         and operation_type != 'classic_sim' \
-        and operation_type != 'classic_custom':
-
+        and operation_type != 'classic_custom' \
+        and (
+            operation_type != 'custom_real' \
+            or not custom_dl_obj \
+            or not custom_dl_obj.dl_by_video_flag \
+            or not custom_dl_obj.dl_precede_flag
+        ):
             remove_time = int(time.time()) \
             - (self.fixed_recent_folder_days * 24 * 60 * 60)
 
@@ -9452,8 +9542,7 @@ class TartubeApp(Gtk.Application):
                 or child_obj.receive_time < remove_time:
                     self.fixed_recent_folder.del_child(child_obj)
 
-            # ...and update the Video Index (and Video Catalogue, if
-            #   appropriate)
+            # Update the Video Index (and the Video Catalogue, if appropriate)
             self.main_win_obj.video_index_update_row_icon(
                 self.fixed_recent_folder,
             )
@@ -9467,18 +9556,6 @@ class TartubeApp(Gtk.Application):
                     self.main_win_obj.video_index_current,
                 )
 
-        # For the benefit of future scheduled download operations, set the
-        #   time at which this operation began
-        if not media_data_list:
-            if operation_type == 'sim':
-                self.scheduled_check_last_time = int(time.time())
-            elif operation_type == 'custom':
-                self.scheduled_custom_last_time = int(time.time())
-            else:
-                # (All Classic Mode downloads, even 'classic_sim' and
-                #   'classic_custom', update this IV)
-                self.scheduled_dl_last_time = int(time.time())
-
         # Don't show a dialogue window at the end of a scheduled download
         if automatic_flag:
             self.no_dialogue_this_time_flag = True
@@ -9486,13 +9563,11 @@ class TartubeApp(Gtk.Application):
         # During a download operation, show a progress bar in the Videos Tab
         #   (except when launched from the Classic Mode Tab, in which case we
         #   just desensitise the existing buttons)
-        if operation_type == 'sim':
+        if operation_type == 'sim' or operation_type == 'custom_sim':
             self.main_win_obj.show_progress_bar('check')
-        elif operation_type == 'real' or operation_type == 'custom':
+        elif operation_type == 'real' or operation_type == 'custom_real':
             self.main_win_obj.show_progress_bar('download')
         else:
-            # (For Classic Mode downloads, desensitise rather than replace the
-            #   buttons)
             self.main_win_obj.sensitise_progress_bar(False)
 
         # Reset the Progress List
@@ -9504,7 +9579,8 @@ class TartubeApp(Gtk.Application):
 
         if operation_type == 'sim' \
         or operation_type == 'real' \
-        or operation_type == 'custom':
+        or operation_type == 'custom_sim' \
+        or operation_type == 'custom_real':
 
             # Initialise the Progress List with one row for each media data
             #   object in the downloads.DownloadList object
@@ -9577,13 +9653,22 @@ class TartubeApp(Gtk.Application):
         # This function behaves differently, if the download operation was
         #   launched from the Classic Mode Tab
         operation_type = self.download_manager_obj.operation_type
-        if operation_type == 'sim' \
-        or operation_type == 'real' \
-        or operation_type == 'custom':
-            classic_mode_flag = False
-        else:
+        if operation_type == 'clasic_sim' \
+        or operation_type == 'classic_real' \
+        or operation_type == 'classic_custom':
             classic_mode_flag = True
+        else:
+            classic_mode_flag = False
 
+        # If the operation was stopped manually, don't proceed from a
+        #   'custom_sim' to a 'custom_real' operation, or from a
+        #   'classic_sim' to a 'classic_real' operation
+        manual_stop_flag = self.download_manager_obj.manual_stop_flag
+
+        # For 'custom_sim' operations, get the original list of media data
+        #   objects that was passed to self.download_manager_start()
+        orig_media_data_list \
+        = self.download_manager_obj.download_list_obj.orig_media_data_list
         # For Classic Mode Tab custom downloads, get the list of videos which
         #   were extrascted, along with their metadata
         classic_extract_list = self.download_manager_obj.classic_extract_list
@@ -9596,15 +9681,15 @@ class TartubeApp(Gtk.Application):
         clip_count = self.download_manager_obj.total_clip_count
         slice_count = self.download_manager_obj.total_slice_count
 
-        # For the 'classic_sim' operation, we need to use the same custom
-        #   download manager
+        # For the 'custom_sim'/'classic_sim' operation, we need to use the same
+        #   custom download manager
         custom_dl_obj = self.download_manager_obj.custom_dl_obj
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
-        # For refresh operations, RefreshManager.stop_time() might not have
-        #   been set at this point (for some reason), so we need to check for
-        #   the equivalent problem
+        # For refresh operations, refresh.RefreshManager.stop_time() might not
+        #   have been set at this point (for some reason), so we need to check
+        #   for the equivalent problem
         if self.download_manager_obj.stop_time is not None:
             time_num = int(
                 self.download_manager_obj.stop_time \
@@ -9680,6 +9765,7 @@ class TartubeApp(Gtk.Application):
 
         # Show a dialogue window or desktop notification, if required
         elif not self.no_dialogue_this_time_flag \
+        and operation_type != 'custom_sim' \
         and operation_type != 'classic_sim':
 
             # If videos were expected to be checked/downloaded, but nothing
@@ -9736,12 +9822,17 @@ class TartubeApp(Gtk.Application):
         # Also reset operation IVs
         self.operation_halted_flag = False
 
-        # A custom download launched from the Classic Mode tab may be performed
-        #   with two consecutive download operations, one to extract a list of
-        #   individual videos (along with their metadata), and one to download
-        #   the videos, one at a time
+        # A 'classic_sim' operation is followed by a 'classic_real' operation,
+        #   but only if some videos were extracted during the 'classic_sim'
+        #   operation
+        # A 'custom_sim' operation is followed by a 'custom_real' operation in
+        #   all cases
+        # Exception: If the first of the two operations was stopped manually,
+        #   don't start the second one
         # Launch the second operation, if the first has just finished
-        if operation_type == 'classic_sim' and classic_extract_list:
+        if operation_type == 'classic_sim' \
+        and classic_extract_list \
+        and not manual_stop_flag:
 
             # The list is in groups of two, in the form
             #   [ parent_obj, json_dict ]
@@ -9806,8 +9897,20 @@ class TartubeApp(Gtk.Application):
                 custom_dl_obj,
             )
 
-        # Show the newbie dialogue, if required
-        elif show_newbie_dialogue_flag and not self.debug_disable_newbie_flag:
+        elif operation_type == 'custom_sim' and not manual_stop_flag:
+
+            # Start the second download operation
+            self.download_manager_start(
+                'custom_real',
+                False,              # Not called from a timer
+                orig_media_data_list,
+                custom_dl_obj,
+            )
+
+        # Otherwise, show the newbie dialogue, if required
+        elif show_newbie_dialogue_flag \
+        and not self.debug_disable_newbie_flag \
+        and not manual_stop_flag:
 
             dialogue_win = mainwin.NewbieDialogue(self.main_win_obj)
             dialogue_win.run()
@@ -11579,6 +11682,50 @@ class TartubeApp(Gtk.Application):
         )
 
 
+    def announce_video_clone(self, video_obj):
+
+        """Called by downloads.VideoDownloader.confirm_old_video().
+
+        This is a modified version of self.update_video_when_file_found(),
+        called when a channel/playlist/folder is using an alternative
+        download destination for its videos (in which case,
+        self.update_video_when_file_found() can't be called).
+
+        Args:
+
+            video_obj (media.Video): The video which already exists on the
+                user's filesystem (in the alternative download destination)
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 10221 announce_video_clone')
+
+        video_path = video_obj.get_actual_path(self)
+
+        # Only set the .name IV if the video is currently unnamed
+        if video_obj.name == self.default_video_name:
+            video_obj.set_name(video_obj.file_name)
+            # (The video's title, stored in the .nickname IV, will be updated
+            #   from the JSON data in a momemnt)
+            video_obj.set_nickname(video_obj.file_name)
+
+        # Set the file size
+        video_obj.set_file_size(os.path.getsize(video_path))
+
+        # If the JSON file was downloaded, we can extract video statistics from
+        #   it
+        self.update_video_from_json(video_obj)
+
+        # For any of those statistics that haven't been set (because the JSON
+        #   file was missing or didn't contain the right statistics), set them
+        #   directly
+        self.update_video_from_filesystem(video_obj, video_path)
+
+        # Mark the video as (fully) downloaded (and update everything else)
+        self.mark_video_downloaded(video_obj, True)
+
+
     def create_livestream_from_download(self, container_obj, live_mode,
     video_name, video_source, video_descrip, video_upload_time,
     live_data_dict={}):
@@ -11835,50 +11982,6 @@ class TartubeApp(Gtk.Application):
             self.mark_video_new(video_obj, False)
             if video_obj.waiting_flag:
                 self.mark_video_waiting(video_obj, False)
-
-
-    def announce_video_clone(self, video_obj):
-
-        """Called by downloads.VideoDownloader.confirm_old_video().
-
-        This is a modified version of self.update_video_when_file_found(),
-        called when a channel/playlist/folder is using an alternative
-        download destination for its videos (in which case,
-        self.update_video_when_file_found() can't be called).
-
-        Args:
-
-            video_obj (media.Video): The video which already exists on the
-                user's filesystem (in the alternative download destination)
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 10221 announce_video_clone')
-
-        video_path = video_obj.get_actual_path(self)
-
-        # Only set the .name IV if the video is currently unnamed
-        if video_obj.name == self.default_video_name:
-            video_obj.set_name(video_obj.file_name)
-            # (The video's title, stored in the .nickname IV, will be updated
-            #   from the JSON data in a momemnt)
-            video_obj.set_nickname(video_obj.file_name)
-
-        # Set the file size
-        video_obj.set_file_size(os.path.getsize(video_path))
-
-        # If the JSON file was downloaded, we can extract video statistics from
-        #   it
-        self.update_video_from_json(video_obj)
-
-        # For any of those statistics that haven't been set (because the JSON
-        #   file was missing or didn't contain the right statistics), set them
-        #   directly
-        self.update_video_from_filesystem(video_obj, video_path)
-
-        # Mark the video as (fully) downloaded (and update everything else)
-        self.mark_video_downloaded(video_obj, True)
 
 
     def update_video_from_json(self, video_obj, chapters_only_flag=False):
@@ -17660,6 +17763,13 @@ class TartubeApp(Gtk.Application):
                 'Delete custom download manager request failed sanity check',
             )
 
+        # Any media.Scheduled object which references the custom download
+        #   manager must be updated
+        for scheduled_obj in self.scheduled_list:
+            if scheduled_obj.custom_dl_uid is not None \
+            and scheduled_obj.custom_dl_uid == custom_dl_obj.uid:
+                scheduled_obj.reset_custom_dl_uid()
+
         # Destroy the downloads.CustomDLManager object itself
         del self.custom_dl_reg_dict[custom_dl_obj.uid]
 
@@ -17699,6 +17809,10 @@ class TartubeApp(Gtk.Application):
 
         # Apply the custom download manager
         self.classic_custom_dl_obj = custom_dl_obj
+
+        # The manager for the Classic Mode tab must do a simulated download
+        #   before a real download
+        custom_dl_obj.set_dl_precede_flag(True)
 
         # Update the list in any preference windows that are open
         for config_win_obj in self.main_win_obj.config_win_list:
@@ -19210,12 +19324,13 @@ class TartubeApp(Gtk.Application):
         # Depending on settings, one or several scheduled downloads may be
         #   started at the same time
         # Compile a list of media.Scheduled objects, each one representing a
-        #   scheduled download that should start now
+        #   scheduled download that is due to start now
         first_list = []
         next_list = []
         all_obj = False
         shutdown_flag = False
         ignore_limits_flag = False
+        no_join_flag = False
 
         for scheduled_obj in self.scheduled_list:
 
@@ -19235,8 +19350,11 @@ class TartubeApp(Gtk.Application):
                 not self.download_manager_obj \
                 or scheduled_obj.join_mode != 'skip'
             ):
-                if scheduled_obj.exclusive_flag:
-
+                if scheduled_obj.exclusive_flag \
+                or (
+                    scheduled_obj.dl_mode == 'custom_real' \
+                    and scheduled_obj.custom_dl_uid is not None
+                ):
                     # Only perform this scheduled download
                     first_list = [scheduled_obj]
                     next_list = []
@@ -19245,6 +19363,10 @@ class TartubeApp(Gtk.Application):
 
                     if scheduled_obj.all_flag:
                         all_obj = scheduled_obj
+
+                    if scheduled_obj.dl_mode == 'custom_real' \
+                    and scheduled_obj.custom_dl_uid is not None:
+                        no_join_flag = True
 
                     break
 
@@ -19270,13 +19392,13 @@ class TartubeApp(Gtk.Application):
         #   over a real download, which takes priority over a simulated
         #   download
         dl_mode = None
-        for schedule_obj in start_list:
+        for scheduled_obj in start_list:
 
             if dl_mode is None \
             or (dl_mode == 'sim' and scheduled_obj.dl_mode != 'sim') \
             or (
                 dl_mode == 'real'
-                and scheduled_obj.dl_mode == 'custom'
+                and scheduled_obj.dl_mode == 'custom_real'
             ):
                 dl_mode = scheduled_obj.dl_mode
                 join_mode = scheduled_obj.join_mode
@@ -19284,73 +19406,71 @@ class TartubeApp(Gtk.Application):
         # If any scheduled downloads are due to start, and any of the
         #   media.Scheduled objects have their .all_flag IV set, then we simply
         #   download everything
-        if start_list and all_obj:
+        if start_list and all_obj and dl_mode is not None:
 
-            if dl_mode is not None:
+            # Download everything
 
-                # Download everything
+            # If no download operation is in progress, start one (if we're
+            #   allowed to)
+            if not self.download_manager_obj \
+            and not self.current_manager_obj \
+            and not self.main_win_obj.config_win_list:
 
-                # If no download operation is in progress, start one (if we're
-                #   allowed to)
-                if not self.download_manager_obj \
-                and not self.current_manager_obj \
-                and not self.main_win_obj.config_win_list:
+                self.download_manager_start(
+                    dl_mode,
+                    True,       # This function is the calling function
+                    [all_obj],  # Make sure performance limits respected
+                )
 
-                    self.download_manager_start(
-                        dl_mode,
-                        True,       # This function is the calling function
-                        [all_obj],  # Make sure performance limits respected
-                    )
+                # Ignore operation limits, if required
+                if ignore_limits_flag:
+                    self.download_manager_obj.apply_ignore_limits()
 
-                    # Ignore operation limits, if required
-                    if ignore_limits_flag:
-                        self.download_manager_obj.apply_ignore_limits()
+                # Shutdown Tartube after this d/l operation, if required
+                if self.download_manager_obj and shutdown_flag:
+                    self.halt_after_operation_flag = True
 
-                    # Shutdown Tartube after this d/l operation, if required
-                    if self.download_manager_obj and shutdown_flag:
-                        self.halt_after_operation_flag = True
+                # Set the next download time for each scheduled download
+                self.script_slow_timer_reset_scheduled_dl(start_list)
+                # Return 1 to keep the timer going (or 0 to halt the once-only
+                #   timer)
+                return self.script_slow_timer_get_return_value()
 
-                    # Set the next download time for each scheduled download
-                    self.script_slow_timer_reset_scheduled_dl(start_list)
-                    # Return 1 to keep the timer going (or 0 to halt the
-                    #   once-only timer)
-                    return self.script_slow_timer_get_return_value()
+            # Otherwise, add all media data objects in the top-level list (all
+            #   children are downloaded too)
+            elif self.download_manager_obj and join_mode != 'skip':
 
-                # Otherwise, add all media data objects in the top-level list
-                #   (all children are downloaded too)
-                elif self.download_manager_obj and join_mode != 'skip':
+                for dbid in self.media_top_level_list:
 
-                    for dbid in self.media_top_level_list:
+                    media_data_obj = self.media_reg_dict[dbid]
+                    # (Don't try to download the 'All Videos' folder, etc)
+                    if not isinstance(media_data_obj. media.Folder) \
+                    or not media_data_obj.priv_flag:
 
-                        media_data_obj = self.media_reg_dict[dbid]
-                        # (Don't try to download the 'All Videos' folder, etc)
-                        if not isinstance(media_data_obj. media.Folder) \
-                        or not media_data_obj.priv_flag:
+                        self.script_slow_timer_insert_download(
+                            media_data_obj,
+                            all_obj,
+                            dl_mode,
+                            join_mode,
+                            ignore_limits_flag,
+                        )
 
-                            self.script_slow_timer_insert_download(
-                                media_data_obj,
-                                all_obj,
-                                dl_mode,
-                                join_mode,
-                                ignore_limits_flag,
-                            )
+                # Shutdown Tartube after this d/l operation, if required
+                if shutdown_flag:
+                    self.halt_after_operation_flag = True
 
-                    # Shutdown Tartube after this d/l operation, if required
-                    if shutdown_flag:
-                        self.halt_after_operation_flag = True
-
-                    # Set the next download time for each scheduled download
-                    self.script_slow_timer_reset_scheduled_dl(start_list)
-                    # Return 1 to keep the timer going (or 0 to halt the
-                    #   once-only timer)
-                    return self.script_slow_timer_get_return_value()
+                # Set the next download time for each scheduled download
+                self.script_slow_timer_reset_scheduled_dl(start_list)
+                # Return 1 to keep the timer going (or 0 to halt the once-only
+                #   timer)
+                return self.script_slow_timer_get_return_value()
 
         # If any scheduled downloads are still due to start, and a download
         #   operation is already in progress, then we can simpy add new media
         #   data objects to it
-        if start_list and self.download_manager_obj:
+        if start_list and self.download_manager_obj and not no_join_flag:
 
-            for schedule_obj in start_list:
+            for scheduled_obj in start_list:
 
                 for name in scheduled_obj.media_list:
 
@@ -20172,12 +20292,17 @@ class TartubeApp(Gtk.Application):
         elif self.classic_custom_dl_obj.dl_by_video_flag:
 
             # If the user has opted to download each video independently of its
-            #   channel or playlist, then we have to do a simulated first, in
-            #   order to collect the URLs of each invidual video
+            #   channel or playlist, then we have to do a simulated download
+            #   first, in order to collect the URLs of each invidual video
             #   ('classic_sim')
             # When that download operation has finished, we can do a (real)
             #   custom download for each video ('classic_custom')
-            self.download_manager_start('classic_sim')
+            self.download_manager_start(
+                'classic_sim',
+                False,          # Not called by slow timer
+                [],             # Download all URLs
+                self.classic_custom_dl_obj,
+            )
 
         else:
 
@@ -21855,12 +21980,24 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 18248 on_menu_custom_dl_all')
 
-        self.download_manager_start(
-            'custom',
-            False,          # Not called by self.script_slow_timer_callback()
-            [],             # Download all media data objects
-            self.general_custom_dl_obj,
-        )
+        if not self.general_custom_dl_obj.dl_by_video_flag \
+        or not self.general_custom_dl_obj.dl_precede_flag:
+
+            self.download_manager_start(
+                'custom_real',
+                False,          # Not called by the timer
+                [],             # Download all media data objects
+                self.general_custom_dl_obj,
+            )
+
+        else:
+
+            self.download_manager_start(
+                'custom_sim',
+                False,          # Not called by the timer
+                [],             # Download all media data objects
+                self.general_custom_dl_obj,
+            )
 
 
     def on_menu_custom_dl_select(self, action, par):

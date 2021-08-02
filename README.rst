@@ -843,13 +843,15 @@ By default, **Tartube** instructs **youtube-dl** to download a channel or a play
 
 If you need to download each individual video directly, for any reason, you can do this:
 
-- Firstly, fetch the list of videos, for example by clicking the **Check all** button
-- Then, open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
+- Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
 - In the new window, click the **Downloads** tab
 - Click **Download each video independently of its channel or playlist** to select it
+- Click **Check channels/playlists/folders before each custom download** to select it
 - Click **OK** to close the window
 
 Many custom download settings only work when Tartube is downloading videos one at a time. If you enable this setting, you will be able to enable several other settings (including some in the other tabs).
+
+Note that, in earlier verions of **Tartube**, it was necessary to check the channels and playlists yourself, before starting a custom download. If you have selected both buttons, this will no longer be necessary.
 
 6.13.3 Diverting to HookTube / Invidious
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

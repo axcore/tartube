@@ -12890,12 +12890,24 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a custom download operation
-        self.app_obj.download_manager_start(
-            'custom',
-            False,
-            [media_data_obj],
-            self.app_obj.general_custom_dl_obj,
-        )
+        if not self.app_obj.general_custom_dl_obj.dl_by_video_flag \
+        or not self.app_obj.general_custom_dl_obj.dl_precede_flag:
+
+            self.app_obj.download_manager_start(
+                'custom_real',
+                False,
+                [media_data_obj],
+                self.app_obj.general_custom_dl_obj,
+            )
+
+        else:
+
+            self.app_obj.download_manager_start(
+                'custom_sim',
+                False,
+                [media_data_obj],
+                self.app_obj.general_custom_dl_obj,
+            )
 
 
     def on_video_index_delete_container(self, menu_item, media_data_obj):
@@ -14686,12 +14698,24 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a custom download operation
-        self.app_obj.download_manager_start(
-            'custom',
-            False,
-            [media_data_obj],
-            self.app_obj.general_custom_dl_obj,
-        )
+        if not self.app_obj.general_custom_dl_obj.dl_by_video_flag \
+        or not self.app_obj.general_custom_dl_obj.dl_precede_flag:
+
+            self.app_obj.download_manager_start(
+                'custom_real',
+                False,
+                [media_data_obj],
+                self.app_obj.general_custom_dl_obj,
+            )
+
+        else:
+
+            self.app_obj.download_manager_start(
+                'custom_sim',
+                False,
+                [media_data_obj],
+                self.app_obj.general_custom_dl_obj,
+            )
 
 
     def on_video_catalogue_custom_dl_multi(self, menu_item, media_data_list):
@@ -14718,12 +14742,24 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Start a download operation
-        self.app_obj.download_manager_start(
-            'custom',
-            False,
-            media_data_list,
-            self.app_obj.general_custom_dl_obj,
-        )
+        if not self.app_obj.general_custom_dl_obj.dl_by_video_flag \
+        or not self.app_obj.general_custom_dl_obj.dl_precede_flag:
+
+            self.app_obj.download_manager_start(
+                'custom_real',
+                False,
+                media_data_list,
+                self.app_obj.general_custom_dl_obj,
+            )
+
+        else:
+
+            self.app_obj.download_manager_start(
+                'custom_sim',
+                False,
+                media_data_list,
+                self.app_obj.general_custom_dl_obj,
+            )
 
         # Standard de-selection of everything in the Video Catalogue
         self.video_catalogue_unselect_all()
@@ -15441,9 +15477,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             if not media_data_obj.dl_flag:
 
-                # Start a (custom) download operation to download the clip
+                # Start a (custom) download operation to download the clip. We
+                #   don't need to specify a downloads.CustomDLManager in this
+                #   case
                 self.app_obj.download_manager_start(
-                    'custom',
+                    'custom_real',
                     # Not called from .script_slow_timer_callback()
                     False,
                     [ media_data_obj ],
@@ -15637,9 +15675,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             if not media_data_obj.dl_flag:
 
-                # Start a (custom) download operation to download the clip
+                # Start a (custom) download operation to download the sliced
+                #   video. We don't need to specify a downloads.CustomDLManager
+                #   in this case
                 self.app_obj.download_manager_start(
-                    'custom',
+                    'custom_real',
                     # Not called from .script_slow_timer_callback()
                     False,
                     [ media_data_obj ],
@@ -17323,12 +17363,26 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 16020 on_custom_dl_menu_select')
 
-        self.app_obj.download_manager_start(
-            'custom',
-            False,          # Not called by the slow timer
-            media_data_list,
-            self.app_obj.custom_dl_reg_dict[uid],
-        )
+        custom_dl_obj = self.app_obj.custom_dl_reg_dict[uid]
+
+        if not custom_dl_obj.dl_by_video_flag \
+        or not custom_dl_obj.dl_precede_flag:
+
+            self.app_obj.download_manager_start(
+                'custom_real',
+                False,          # Not called by the slow timer
+                media_data_list,
+                custom_dl_obj,
+            )
+
+        else:
+
+            self.app_obj.download_manager_start(
+                'custom_sim',
+                False,          # Not called by the slow timer
+                media_data_list,
+                custom_dl_obj,
+            )
 
 
     def on_classic_menu_custom_dl_prefs(self, menu_item):
@@ -25204,6 +25258,9 @@ class AddChannelDialogue(Gtk.Dialog):
         self.folder_list.sort()
         self.folder_list.insert(0, '')
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+
+        # !!! DEBUG Git 316
+        print(self.folder_list)
 
         if suggest_parent_name is not None:
             self.folder_list.insert(0, suggest_parent_name)

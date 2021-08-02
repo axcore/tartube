@@ -98,23 +98,32 @@ class DownloadManager(threading.Thread):
         operation_type (str): 'sim' if channels/playlists should just be
             checked for new videos, without downloading anything. 'real' if
             videos should be downloaded (or not) depending on each media data
-            object's .dl_sim_flag IV. 'custom' is like 'real', but with
-            additional options applied (specified by a
-            downloads.CustomDLManager object)
+            object's .dl_sim_flag IV
+
+            'custom_real' is like 'real', but with additional options applied
+            (specified by a downloads.CustomDLManager object). A 'custom_real'
+            operation is sometimes preceded by a 'custom_sim' operation (which
+            is the same as a 'sim' operation, except that it is always followed
+            by a 'custom_real' operation)
 
             For downloads launched from the Classic Mode Tab, 'classic_real'
-            for an ordinary download, 'classic_sim' for a simulated download,
-            and 'classic_custom' for a custom download. A download operation
-            using 'classic_sim' is always followed by another one using
-            'classic_custom'
+            for an ordinary download, or 'classic_custom' for a custom
+            download. A 'classic_custom' operation is always preceded by a
+            'classic_sim' operation (which is the same as a 'sim' operation,
+            except that it is always followed by a 'classic_custom' operation)
 
         download_list_obj (downloads.DownloadManager): An ordered list of
             media data objects to download, each one represented by a
             downloads.DownloadItem object
 
         custom_dl_obj (downloads.CustomDLManager or None): The custom download
-            manager that applies to this download operation. Only specified if
-            'operation_type' is 'custom' or 'classic_custom'
+            manager that applies to this download operation. Only specified
+            when 'operation_type' is 'custom_sim', 'custom_real', 'classic_sim'
+            or 'classic_real'
+
+            For 'custom_real' and 'classic_real', not specified if
+            mainapp.TartubeApp.temp_stamp_list or .temp_slice_list are
+            specified (because those values take priority)
 
     """
 
@@ -144,8 +153,11 @@ class DownloadManager(threading.Thread):
         #   represented by a downloads.DownloadItem object
         self.download_list_obj = download_list_obj
         # The custom download manager (downloads.CustomDLManager) that applies
-        #   to this download operation. Only specified if 'operation_type' is
-        #   'custom' or 'classic_custom'
+        #   to this download operation. Only specified when 'operation_type' is
+        #   'custom_sim', 'custom_real', 'classic_sim' or 'classic_real'
+        # For 'custom_real' and 'classic_real', not specified if
+        #   mainapp.TartubeApp.temp_stamp_list or .temp_slice_list are
+        #   specified (because those values take priority)
         self.custom_dl_obj = custom_dl_obj
         # List of downloads.DownloadWorker objects, each one handling one of
         #   several simultaneous downloads
@@ -156,14 +168,17 @@ class DownloadManager(threading.Thread):
         # ---------------
         # 'sim' if channels/playlists should just be checked for new videos,
         #   without downloading anything. 'real' if videos should be downloaded
-        #   (or not) depending on each media data object's .dl_sim_flag IV.
-        #   'custom' is like 'real', but with additional settings applied
-        #   (specified by a downloads.CustomDLManager object)
-        # For downloads launched from the Classic Mode Tab, 'classic_real'
-        #   for an ordinary download, 'classic_sim' for a simulated download,
-        #   and 'classic_custom' for a custom download. A download operation
-        #   using 'classic_sim' is always followed by another one using
-        #   'classic_custom'
+        #   (or not) depending on each media data object's .dl_sim_flag IV
+        # 'custom_real' is like 'real', but with additional options applied
+        #   (specified by a downloads.CustomDLManager object). A 'custom_real'
+        #   operation is sometimes preceded by a 'custom_sim' operation (which
+        #   is the same as a 'sim' operation, except that it is always followed
+        #   by a 'custom_real' operation)
+        # For downloads launched from the Classic Mode Tab, 'classic_real' for
+        #   an ordinary download, or 'classic_custom' for a custom download. A
+        #   'classic_custom' operation is always preceded by a 'classic_sim'
+        #   operation (which is the same as a 'sim' operation, except that it
+        #   is always followed by a 'classic_custom' operation)
         # This is the default value for the download operation, when it starts.
         #   If the user wants to add new download.DownloadItem objects during
         #   an operation, the code can call
@@ -171,8 +186,7 @@ class DownloadManager(threading.Thread):
         #   operation_type
         self.operation_type = operation_type
         # Shortcut flag to test the operation type; True for 'classic_sim',
-        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
-        #   'custom'
+        #   'classic_real' and 'classic_custom'; False for all other values
         self.operation_classic_flag = False         # (Set below)
 
         # The time at which the download operation began (in seconds since
@@ -187,6 +201,10 @@ class DownloadManager(threading.Thread):
         # Flag set to False if self.stop_download_operation() is called
         # The False value halts the main loop in self.run()
         self.running_flag = True
+        # Flag set to True if the operation has been stopped manually by the
+        #   user (via a call to self.stop_download_operation() or
+        #   .stop_download_operation_soon()
+        self.manual_stop_flag = False
 
         # Number of download jobs started (number of downloads.DownloadItem
         #   objects which have been allocated to a worker)
@@ -1146,6 +1164,7 @@ class DownloadManager(threading.Thread):
             utils.debug_time('dld 884 stop_download_operation')
 
         self.running_flag = False
+        self.manual_stop_flag = True
 
         # In the Progress List, change the status of remaining items from
         #   'Waiting' to 'Not started'
@@ -1164,6 +1183,8 @@ class DownloadManager(threading.Thread):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 900 stop_download_operation_soon')
+
+        self.manual_stop_flag = True
 
         self.download_list_obj.prevent_fetch_new_items()
         for worker_obj in self.worker_list:
@@ -1324,6 +1345,7 @@ class DownloadWorker(threading.Thread):
                 and isinstance(media_data_obj, media.Video) \
                 and not media_data_obj.dummy_flag \
                 and self.download_item_obj.operation_type != 'sim' \
+                and self.download_item_obj.operation_type != 'custom_sim' \
                 and self.download_item_obj.operation_type != 'classic_sim' \
                 and media_data_obj.live_mode == 2 \
                 and utils.is_youtube(media_data_obj.source):
@@ -1332,16 +1354,18 @@ class DownloadWorker(threading.Thread):
                 elif isinstance(media_data_obj, media.Video) \
                 and not media_data_obj.live_mode \
                 and (
-                    self.download_item_obj.operation_type == 'custom' \
+                    self.download_item_obj.operation_type == 'custom_real' \
                     or self.download_item_obj.operation_type \
                     == 'classic_custom'
                 ) and (
                     (
-                        custom_dl_obj.dl_by_video_flag \
+                        custom_dl_obj \
+                        and custom_dl_obj.dl_by_video_flag \
                         and custom_dl_obj.split_flag
                         and media_data_obj.stamp_list
                     ) or (
-                        custom_dl_obj.dl_by_video_flag \
+                        custom_dl_obj \
+                        and custom_dl_obj.dl_by_video_flag \
                         and not custom_dl_obj.split_flag \
                         and custom_dl_obj.slice_flag
                         and media_data_obj.slice_list
@@ -1371,13 +1395,14 @@ class DownloadWorker(threading.Thread):
                     + ': ' + _('Worker now available again'),
                 )
 
-                # During custom downloads, apply a delay if one has been
-                #   specified
+                # During (real, not simulated) custom downloads, apply a delay
+                #   if one has been specified
                 if (
-                    self.download_item_obj.operation_type == 'custom' \
+                    self.download_item_obj.operation_type == 'custom_real' \
                     or self.download_item_obj.operation_type \
                     == 'classic_custom'
-                ) and custom_dl_obj.delay_flag:
+                ) and custom_dl_obj \
+                and custom_dl_obj.delay_flag:
 
                     # Set the delay (in seconds), a randomised value if
                     #   required
@@ -1565,8 +1590,11 @@ class DownloadWorker(threading.Thread):
         #   downloading the video as clips. The second operation concatenates
         #   the clips back together, which has the effect of removing one or
         #   more slices from a video
-        if (custom_dl_obj.split_flag and media_data_obj.stamp_list) \
-        or app_obj.temp_stamp_list:
+        if (
+            custom_dl_obj \
+            and custom_dl_obj.split_flag \
+            and media_data_obj.stamp_list
+        ) or app_obj.temp_stamp_list:
             return_code = self.downloader_obj.do_download_clip()
         else:
             return_code = self.downloader_obj.do_download_remove_slices()
@@ -1934,15 +1962,19 @@ class DownloadList(object):
         operation_type (str): 'sim' if channels/playlists should just be
             checked for new videos, without downloading anything. 'real' if
             videos should be downloaded (or not) depending on each media data
-            object's .dl_sim_flag IV. 'custom' is like 'real', but with
-            additional options applied (specified by a
-            downloads.CustomDLManager object)
+            object's .dl_sim_flag IV
+
+            'custom_real' is like 'real', but with additional options applied
+            (specified by a downloads.CustomDLManager object). A 'custom_real'
+            operation is sometimes preceded by a 'custom_sim' operation (which
+            is the same as a 'sim' operation, except that it is always followed
+            by a 'custom_real' operation)
 
             For downloads launched from the Classic Mode Tab, 'classic_real'
-            for an ordinary download, 'classic_sim' for a simulated download,
-            and 'classic_custom' for a custom download. A download operation
-            using 'classic_sim' is always followed by another one using
-            'classic_custom'
+            for an ordinary download, or 'classic_custom' for a custom
+            download. A 'classic_custom' operation is always preceded by a
+            'classic_sim' operation (which is the same as a 'sim' operation,
+            except that it is always followed by a 'classic_custom' operation)
 
         media_data_list (list): List of media.Video, media.Channel,
             media.Playlist and/or media.Folder objects. Can also be a list of
@@ -1955,8 +1987,13 @@ class DownloadList(object):
             dummy media.Video objects are downloaded
 
         custom_dl_obj (downloads.CustomDLManager or None): The custom download
-            manager that applies to this download operation. Only specified if
-            'operation_type' is 'custom' or 'classic_custom'
+            manager that applies to this download operation. Only specified
+            when 'operation_type' is 'custom_sim', 'custom_real', 'classic_sim'
+            or 'classic_real'
+
+            For 'custom_real' and 'classic_real', not specified if
+            mainapp.TartubeApp.temp_stamp_list or .temp_slice_list are
+            specified (because those values take priority)
 
     """
 
@@ -1975,33 +2012,38 @@ class DownloadList(object):
         self.app_obj = app_obj
 
         # The custom download manager (downloads.CustomDLManager) that applies
-        #   to this download operation. Only specified if 'operation_type' is
-        #   'custom' or 'classic_custom'
+        #   to this download operation. Only specified when 'operation_type' is
+        #   'custom_sim', 'custom_real', 'classic_sim' or 'classic_real'
+        # For 'custom_real' and 'classic_real', not specified if
+        #   mainapp.TartubeApp.temp_stamp_list or .temp_slice_list are
+        #   specified (because those values take priority)
         self.custom_dl_obj = custom_dl_obj
 
         # IV list - other
         # ---------------
         # 'sim' if channels/playlists should just be checked for new videos,
         #   without downloading anything. 'real' if videos should be downloaded
-        #   (or not) depending on each media data object's .dl_sim_flag IV.
-        #   'custom' is like 'real', but with additional options applied
-        #   (specified by a downloads.CustomDLManager object)
-        # For downloads launched from the Classic Mode Tab, 'classic_real'
-        #   for an ordinary download, 'classic_sim' for a simulated download,
-        #   and 'classic_custom' for a custom download. A download operation
-        #   using 'classic_sim' is always followed by another one using
-        #   'classic_custom'
+        #   (or not) depending on each media data object's .dl_sim_flag IV
+        # 'custom_real' is like 'real', but with additional options applied
+        #   (specified by a downloads.CustomDLManager object). A 'custom_real'
+        #   operation is sometimes preceded by a 'custom_sim' operation (which
+        #   is the same as a 'sim' operation, except that it is always followed
+        #   by a 'custom_real' operation)
+        # For downloads launched from the Classic Mode Tab, 'classic_real' for
+        #   an ordinary download, or 'classic_custom' for a custom download. A
+        #   'classic_custom' operation is always preceded by a 'classic_sim'
+        #   operation (which is the same as a 'sim' operation, except that it
+        #   is always followed by a 'classic_custom' operation)
         # This IV records the default setting for this operation. Once the
         #   download operation starts, new download.DownloadItem objects can
         #   be added to the list in a call to self.create_item(), and that call
-        #   can specify a value ('sim', 'real' or 'custom') that overrides the
-        #   default value, just for that call
+        #   can specify a value that overrides the default value, just for that
+        #   call
         # Overriding the default value is not possible for download operations
         #   initiated from the Classic Mode tab
         self.operation_type = operation_type
         # Shortcut flag to test the operation type; True for 'classic_sim',
-        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
-        #   'custom'
+        #   'classic_real' and 'classic_custom'; False forall other values
         self.operation_classic_flag = False         # (Set below)
         # Flag set to True in a call to self.prevent_fetch_new_items(), in
         #   which case subsequent calls to self.fetch_next_item() return
@@ -2027,6 +2069,12 @@ class DownloadList(object):
         #   end of this function (or in the next call to
         #   self.fetch_next_item() )
         self.temp_item_list = []
+
+        # We preserve the 'media_data_list' argument (which may be an empty
+        #   list). Used by mainapp.TartubeApp.download_manager_finished during
+        #   a 'custom_sim' operation, in order to initiate the subsequent
+        #   'custom_real' operation
+        self.orig_media_data_list = media_data_list
 
         # Corresponding dictionary of downloads.DownloadItem items for quick
         #   lookup, containing items from both self.download_item_list and
@@ -2359,7 +2407,7 @@ class DownloadList(object):
                 self.operation_type is 'classic_real', 'classic_sim' or
                 'classic_custom', and will cause an error. The value is always
                 None when called by self.__init__(). Otherwise, the value can
-                be None, 'sim', 'real' or 'custom'
+                be None, 'sim', 'real', 'custom_sim' or 'custom_real'
 
             priority_flag (bool): True if media_data_obj is to be added to the
                 beginning of the list, False if it is to be added to the end
@@ -2412,7 +2460,8 @@ class DownloadList(object):
 
             operation_type = self.operation_type
 
-        if operation_type == 'custom' or operation_type == 'classic_custom':
+        if operation_type == 'custom_real' \
+        or operation_type == 'classic_custom':
             custom_flag = True
         else:
             custom_flag = False
@@ -2422,9 +2471,7 @@ class DownloadList(object):
         # (The manager might be specified by obj itself, or it might be
         #   specified by obj's parent, or we might use the default
         #   options.OptionsManager)
-        if operation_type == 'sim' \
-        or operation_type == 'real' \
-        or operation_type == 'custom':
+        if not self.operation_classic_flag:
 
             options_manager_obj = utils.get_options_manager(
                 self.app_obj,
@@ -2466,15 +2513,20 @@ class DownloadList(object):
                 and recursion_flag
                 and (
                     not custom_flag
-                    or not self.custom_dl_obj.dl_by_video_flag
-                    or media_data_obj.dl_flag
+                    or (
+                        self.custom_dl_obj \
+                        and not self.custom_dl_obj.dl_by_video_flag
+                    ) or media_data_obj.dl_flag
                 )
             ):
                 return None
 
             if isinstance(media_data_obj.parent_obj, media.Folder) \
-            and (operation_type == 'sim' or operation_type == 'classic_sim') \
-            and self.app_obj.operation_sim_shortcut_flag \
+            and (
+                operation_type == 'sim' \
+                or operation_type == 'custom_sim' \
+                or operation_type == 'classic_sim'
+            ) and self.app_obj.operation_sim_shortcut_flag \
             and recursion_flag \
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
@@ -2495,7 +2547,7 @@ class DownloadList(object):
 
         # Don't simulated downloads of video in channels/playlists/folders
         #   whose whose .dl_no_db_flag is set
-        if operation_type == 'sim' \
+        if (operation_type == 'sim' or operation_type == 'custom_sim') \
         and (
             (
                 isinstance(media_data_obj, media.Video) \
@@ -2523,21 +2575,28 @@ class DownloadList(object):
         if (
             isinstance(media_data_obj, media.Video)
             and custom_flag
+            and self.custom_dl_obj
             and self.custom_dl_obj.dl_by_video_flag
             and not media_data_obj.dl_flag
         ) or (
             isinstance(media_data_obj, media.Video)
             and (
-                not custom_flag
-                or not self.custom_dl_obj.dl_by_video_flag
+                not custom_flag \
+                or (
+                    self.custom_dl_obj \
+                    and not self.custom_dl_obj.dl_by_video_flag
+                )
             )
         ) or (
             (
                 isinstance(media_data_obj, media.Channel) \
                 or isinstance(media_data_obj, media.Playlist)
             ) and (
-                not custom_flag
-                or not self.custom_dl_obj.dl_by_video_flag
+                not custom_flag \
+                or (
+                    self.custom_dl_obj \
+                    and not self.custom_dl_obj.dl_by_video_flag
+                )
             )
         ):
             # (Broadcasting livestreams should always take priority over
@@ -2588,6 +2647,7 @@ class DownloadList(object):
         or (
             not isinstance(media_data_obj, media.Video)
             and custom_flag
+            and self.custom_dl_obj
             and self.custom_dl_obj.dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
@@ -2839,18 +2899,6 @@ class DownloadItem(object):
             (might be different from the default value stored in
             DownloadManager.operation_type)
 
-            'sim' if channels/playlists should just be checked for new videos,
-            without downloading anything. 'real' if videos should be downloaded
-            (or not) depending on each media data object's .dl_sim_flag IV.
-            'custom' is like 'real', but with additional options applied
-            (specified by a downloads.CustomDLManager object)
-
-            For downloads launched from the Classic Mode Tab, 'classic_real'
-            for an ordinary download, 'classic_sim' for a simulated download,
-            and 'classic_custom' for a custom download. A download operation
-            using 'classic_sim' is always followed by another one using
-            'classic_custom'
-
         ignore_limits_flag (bool): Flag set to True if operation limits
             (mainapp.TartubeApp.operation_limit_flag) should be ignored
 
@@ -2886,20 +2934,9 @@ class DownloadItem(object):
 
         # The value that applies to this DownloadItem only (might be different
         #   from the default value stored in DownloadManager.operation_type)
-        # 'sim' if channels/playlists should just be checked for new videos,
-        #   without downloading anything. 'real' if videos should be downloaded
-        #   (or not) depending on each media data object's .dl_sim_flag IV.
-        #   'custom' is like 'real', but with additional options applied
-        #   (specified by a downloads.CustomDLManager object)
-        # For downloads launched from the Classic Mode Tab, 'classic_real' for
-        #   an ordinary download, 'classic_sim' for a simulated download, and
-        #   'classic_custom' for a custom download. A download operation using
-        #   'classic_sim' is always followed by another one using
-        #   'classic_custom'
         self.operation_type = operation_type
         # Shortcut flag to test the operation type; True for 'classic_sim',
-        #   'classic_real' and 'classic_custom'; False for 'sim', 'real' and
-        #   'custom'
+        #   'classic_real' and 'classic_custom'; False for all other values
         self.operation_classic_flag = False         # (Set below)
 
         # Flag set to True if operation limits
@@ -3172,7 +3209,8 @@ class VideoDownloader(object):
         #   descendants
         if not self.download_item_obj.operation_classic_flag:
 
-            if self.download_item_obj.operation_type == 'sim':
+            if self.download_item_obj.operation_type == 'sim' \
+            or self.download_item_obj.operation_type == 'custom_sim':
                 dl_sim_flag = True
             else:
                 dl_sim_flag = media_data_obj.dl_sim_flag
@@ -3280,12 +3318,12 @@ class VideoDownloader(object):
 
             divert_mode = None
             if (
-                self.download_item_obj.operation_type == 'custom' \
+                self.download_item_obj.operation_type == 'custom_real' \
                 or self.download_item_obj.operation_type == 'classic_custom'
             ) and isinstance(
                 self.download_item_obj.media_data_obj,
                 media.Video,
-            ):
+            ) and self.download_manager_obj.custom_dl_obj:
                 divert_mode \
                 = self.download_manager_obj.custom_dl_obj.divert_mode
 
@@ -5812,9 +5850,9 @@ class ClipDownloader(object):
         """Called by downloads.DownloadWorker.run_clip_slice_downloader().
 
         Using the URL described by self.download_item_obj (which must
-        represent a media.Video object, during a 'custom' or 'classic_custom'
-        download operation), downloads a series of one or more clips, using the
-        timestamps specified by the media.Video itself.
+        represent a media.Video object, during a 'custom_real' or
+        'classic_custom' download operation), downloads a series of one or more
+        clips, using the timestamps specified by the media.Video itself.
 
         Returns:
 
@@ -9401,6 +9439,10 @@ class CustomDLManager(object):
         #   marked as not downloaded (often after clicking the 'Check all'
         #   button); don't download channels/playlists directly
         self.dl_by_video_flag = False
+        # If True, during a custom download, perform a simulated download first
+        #   (as happens by default in custom downloads launched from the
+        #   Classic Mode tab). Ignored if self.dl_by_video_flag is False
+        self.dl_precede_flag = False
         # If True, during a custom download, split a video into video clips
         #   using its timestamps. Ignored if self.dl_by_video_flag is False
         # Note that IVs for splitting videos (e.g.
@@ -9430,6 +9472,8 @@ class CustomDLManager(object):
         #   channel/playlist, the delay occurs after the whole channel/
         #   playlist. When applied directly to videos, the delay occurs after
         #   each video
+        # NB The delay is applied during real downloads, but not during
+        #   simulated downloads (operation types 'custom_sim' or 'classic_sim')
         self.delay_flag = False
         # The maximum delay to apply (in minutes, minimum value 0.2). Ignored
         #   if self.delay_flag is False
@@ -9494,6 +9538,9 @@ class CustomDLManager(object):
         Resets settings to their default values.
         """
 
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 6494 reset_settings')
+
         self.dl_by_video_flag = False
         self.split_flag = False
         self.slice_flag = False
@@ -9511,6 +9558,29 @@ class CustomDLManager(object):
         self.delay_flag = False
         self.delay_max = 5
         self.delay_min = 0
+
+
+    def set_dl_precede_flag(self, flag):
+
+        """Can be called by anything. Mostly called by
+        mainapp.TartubeApp.start() and .set_dl_precede_flag().
+
+        Updates the IV.
+
+        Args:
+
+            flag (bool): The new value of the IV
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 6494 set_dl_precede_flag')
+
+        if not flag:
+            self.dl_precede_flag = False
+        else:
+            self.dl_by_video_flag = True
+            self.dl_precede_flag = True
 
 
 class PipeReader(threading.Thread):

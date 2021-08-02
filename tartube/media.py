@@ -2542,7 +2542,7 @@ class Video(GenericMedia):
 
     def set_video_descrip(self, app_obj, descrip, max_length):
 
-        """Can be caled by anything.
+        """Can be called by anything.
 
         Converts the video description into a list of lines, max_length
         characters long (longer lines are split into shorter ones).
@@ -2576,6 +2576,12 @@ class Video(GenericMedia):
         else:
             self.descrip = None
             self.short = None
+
+
+    def reset_video_descrip(self):
+
+        self.descrip = None
+        self.short = None
 
 
     def set_waiting_flag(self, flag):
@@ -3777,8 +3783,9 @@ class Scheduled(object):
             character)
 
         dl_mode (str): Download operation type: 'sim' (for simulated
-            downloads), 'real' (for real downloads) or 'custom' (for custom
-            downloads)
+            downloads), 'real' (for real downloads) or 'custom_real' (for
+            custom downloads; the value is checked before being used, and
+            converted to 'custom_sim' where necessary)
 
         start_mode (str) 'none' to disable this schedule, 'start' to perform
             the operation whenever Tartube starts, or 'scheduled' to perform
@@ -3799,8 +3806,15 @@ class Scheduled(object):
         self.name = name
 
         # Download operation type: 'sim' (for simulated downloads), 'real' (for
-        #   real downloads) or 'custom' (for custom downloads)
+        #   real downloads) or 'custom_real' (for all custom downloads; the
+        #   value is checked before being used, and converted to 'custom_sim'
+        #   where necessary)
         self.dl_mode = dl_mode
+        # The .uid of the custom download programme to use (a key in
+        #   mainapp.TartubeApp.custom_dl_reg_dict). If None or an unrecognised
+        #   value, a 'real' download takes place
+        # Ignored if self.dl_mode is not 'custom_real'
+        self.custom_dl_uid = None
         # Start mode - 'none' to disable this schedule, 'start' to perform the
         #   operation whenever Tartube starts, or 'scheduled' to perform the
         #   operation at regular intervals
@@ -3873,6 +3887,13 @@ class Scheduled(object):
 
 
     # Set accessors
+
+
+    def reset_custom_dl_uid(self):
+
+        self.custom_dl_uid = None
+        if self.dl_mode == 'custom_real':
+            self.dl_mode = 'real'
 
 
     def set_last_time(self, time):

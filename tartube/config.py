@@ -1234,8 +1234,9 @@ class GenericEditWin(GenericConfigWin):
 
         if prop is not None:
             val = self.retrieve_val(prop)
-            index = combo_list.index(val)
-            combo.set_active(index)
+            if val in combo_list:
+                index = combo_list.index(val)
+                combo.set_active(index)
 
             combo.connect('changed', self.on_combo_changed, prop)
 
@@ -1292,8 +1293,9 @@ class GenericEditWin(GenericConfigWin):
 
         if prop is not None:
             val = self.retrieve_val(prop)
-            index = index_list.index(val)
-            combo.set_active(index)
+            if val in index_list:
+                index = index_list.index(val)
+                combo.set_active(index)
 
             combo.connect('changed', self.on_combo_with_data_changed, prop)
 
@@ -2696,11 +2698,12 @@ class CustomDLEditWin(GenericEditWin):
         self.checkbutton = None                 # Gtk.CheckButton
         self.checkbutton2 = None                # Gtk.CheckButton
         self.checkbutton3 = None                # Gtk.CheckButton
+        self.checkbutton4 = None                # Gtk.CheckButton
         self.combo = None                       # Gtk.ComboBox
         self.button = None                      # Gkt.Button
         self.button2 = None                     # Gkt.Button
         self.button3 = None                     # Gkt.Button
-        self.checkbutton4 = None                # Gtk.CheckButton
+        self.checkbutton5 = None                # Gtk.CheckButton
         self.spinbutton = None                  # Gtk.SpinButton
         self.spinbutton2 = None                 # Gtk.SpinButton
         self.radiobutton = None                 # Gtk.RadioButton
@@ -2929,34 +2932,50 @@ class CustomDLEditWin(GenericEditWin):
 
         self.checkbutton2 = self.add_checkbutton(grid,
             _(
+                'Check channels/playlists/folders before each custom' \
+                + ' download (recommended)',
+            ),
+            'dl_precede_flag',
+            0, 3, grid_width, 1,
+        )
+        self.checkbutton2.set_active(self.edit_obj.dl_precede_flag)
+        if not self.edit_obj.dl_by_video_flag \
+        or (
+            self.app_obj.classic_custom_dl_obj is not None \
+            and self.app_obj.classic_custom_dl_obj == self.edit_obj
+        ):
+            self.checkbutton2.set_sensitive(False)
+
+        self.checkbutton3 = self.add_checkbutton(grid,
+            _(
                 'Split videos into video clips using timestamps (requires' \
                 + ' FFmpeg)',
             ),
             None,
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
-        self.checkbutton2.set_active(self.edit_obj.split_flag)
+        self.checkbutton3.set_active(self.edit_obj.split_flag)
         if not self.edit_obj.dl_by_video_flag:
-            self.checkbutton2.set_sensitive(False)
+            self.checkbutton3.set_sensitive(False)
         # (Signal connect appears below)
 
-        self.checkbutton3 = self.add_checkbutton(grid,
+        self.checkbutton4 = self.add_checkbutton(grid,
             _(
                 'Remove slices from the video using SponsorBlock data' \
                 + ' (requires FFmpeg)'),
             None,
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
-        self.checkbutton3.set_active(self.edit_obj.slice_flag)
+        self.checkbutton4.set_active(self.edit_obj.slice_flag)
         if not self.edit_obj.dl_by_video_flag \
         or self.edit_obj.split_flag:
-            self.checkbutton3.set_sensitive(False)
+            self.checkbutton4.set_sensitive(False)
         # (Signal connect appears below)
 
         # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
         #   we'll do everything ourselves)
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 5, 1, 8)
+        grid.attach(frame, 0, 6, 1, 8)
 
         scrolled = Gtk.ScrolledWindow()
         frame.add(scrolled)
@@ -2999,14 +3018,14 @@ class CustomDLEditWin(GenericEditWin):
         # Editing buttons
         label = self.add_label(grid,
             _('Types of video slice to remove:'),
-            1, 5, 2, 1,
+            1, 6, 2, 1,
         )
         label.set_hexpand(False)
 
         self.combo = self.add_combo(grid,
             formats.SPONSORBLOCK_CATEGORY_LIST,
             None,
-            1, 6, 1, 1,
+            1, 7, 1, 1,
         )
         self.combo.set_hexpand(False)
         self.combo.set_active(0)
@@ -3014,7 +3033,7 @@ class CustomDLEditWin(GenericEditWin):
             self.combo.set_sensitive(False)
 
         self.button = Gtk.Button(_('Toggle'))
-        grid.attach(self.button, 2, 6, 1, 1)
+        grid.attach(self.button, 2, 7, 1, 1)
         self.button.set_hexpand(False)
         if not self.edit_obj.slice_flag:
             self.button.set_sensitive(False)
@@ -3023,7 +3042,7 @@ class CustomDLEditWin(GenericEditWin):
         # To avoid messing up the neat format of the rows above, add another
         #   grid, and put the next set of widgets inside it
         grid2 = Gtk.Grid()
-        grid.attach(grid2, 1, 7, 2, 1)
+        grid.attach(grid2, 1, 8, 2, 1)
         grid2.set_vexpand(False)
         grid2.set_column_spacing(self.spacing_size)
         grid2.set_row_spacing(self.spacing_size)
@@ -3054,11 +3073,11 @@ class CustomDLEditWin(GenericEditWin):
             'toggled',
             self.on_dl_by_video_button_toggled,
         )
-        self.checkbutton2.connect(
+        self.checkbutton3.connect(
             'toggled',
             self.on_split_button_toggled,
         )
-        self.checkbutton3.connect(
+        self.checkbutton4.connect(
             'toggled',
             self.on_slice_button_toggled,
         )
@@ -3123,12 +3142,12 @@ class CustomDLEditWin(GenericEditWin):
             0, 0, grid_width, 1,
         )
 
-        self.checkbutton4 = self.add_checkbutton(grid,
+        self.checkbutton5 = self.add_checkbutton(grid,
             _('Apply a delay after each video/channel/playlist is downloaded'),
             None,
             0, 1, grid_width, 1,
         )
-        self.checkbutton4.set_active(self.edit_obj.delay_flag)
+        self.checkbutton5.set_active(self.edit_obj.delay_flag)
         # (Signal connect appears below)
 
         self.add_label(grid,
@@ -3164,7 +3183,7 @@ class CustomDLEditWin(GenericEditWin):
             self.spinbutton2.set_sensitive(False)
 
         # (Signal connects from above)
-        self.checkbutton4.connect(
+        self.checkbutton5.connect(
             'toggled',
             self.on_delay_button_toggled,
         )
@@ -3390,10 +3409,11 @@ class CustomDLEditWin(GenericEditWin):
             self.edit_dict['dl_by_video_flag'] = True
 
             self.checkbutton2.set_sensitive(True)
+            self.checkbutton3.set_sensitive(True)
             if self.retrieve_val('split_flag'):
-                self.checkbutton3.set_sensitive(False)
+                self.checkbutton4.set_sensitive(False)
             else:
-                self.checkbutton3.set_sensitive(True)
+                self.checkbutton4.set_sensitive(True)
             self.radiobutton.set_sensitive(True)
             self.radiobutton2.set_sensitive(True)
             self.radiobutton3.set_sensitive(True)
@@ -3408,7 +3428,11 @@ class CustomDLEditWin(GenericEditWin):
             self.edit_dict['dl_by_video_flag'] = False
 
             self.checkbutton2.set_sensitive(False)
+            self.checkbutton2.set_active(False)
             self.checkbutton3.set_sensitive(False)
+            self.checkbutton3.set_active(False)
+            self.checkbutton4.set_sensitive(False)
+            self.checkbutton4.set_active(False)
             self.radiobutton.set_sensitive(False)
             self.radiobutton2.set_sensitive(False)
             self.radiobutton3.set_sensitive(False)
@@ -3511,14 +3535,14 @@ class CustomDLEditWin(GenericEditWin):
 
             self.edit_dict['split_flag'] = True
 
-            self.checkbutton3.set_sensitive(False)
-            self.checkbutton3.set_active(False)
+            self.checkbutton4.set_sensitive(False)
+            self.checkbutton4.set_active(False)
 
         else:
 
             self.edit_dict['split_flag'] = False
 
-            self.checkbutton3.set_sensitive(True)
+            self.checkbutton4.set_sensitive(True)
 
 
     def on_toggle_button_clicked(self, button, liststore):
@@ -8925,8 +8949,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
             0, 4, grid_width, 1,
         )
         self.result_textview.set_editable(False)
-        self.result_textview.set_can_focus(False)
         self.result_textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.result_textview.set_can_focus(False)
         # (Set the system command, as it stands)
         self.update_system_cmd()
 
@@ -12862,18 +12886,61 @@ class VideoEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Description'))
+        grid_width = 2
 
         # Video description
         self.add_label(grid,
             '<u>' + _('Video description') + '</u>',
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         textview, textbuffer = self.add_textview(grid,
             'descrip',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
         textview.set_editable(False)
+        textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_can_focus(False)
+
+        button = Gtk.Button.new_with_label(
+            _('Update from the description file, and set the line length to:'),
+        )
+        grid.attach(button, 0, 2, 1, 1)
+        # (Signal connect appears below)
+
+        min_value = self.app_obj.main_win_obj.medium_string_max_len
+        max_value = self.app_obj.main_win_obj.descrip_line_max_len
+        if max_value < min_value:
+            max_value = min_value
+
+        spinbutton = self.add_spinbutton(grid,
+            min_value,
+            max_value,
+            1,
+            None,
+            1, 2, 1, 1,
+        )
+        spinbutton.set_value(self.app_obj.main_win_obj.descrip_line_max_len)
+
+        button2 = Gtk.Button.new_with_label(
+            _('Clear the description (does not modify the description file)'),
+        )
+        grid.attach(button2, 0, 3, grid_width, 1)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        button.connect(
+            'clicked',
+            self.on_load_descrip_button_clicked,
+            spinbutton,
+            textbuffer,
+        )
+
+        button2.connect(
+            'clicked',
+            self.on_clear_descrip_button_clicked,
+            textbuffer,
+        )
 
 
     def setup_timestamps_tab(self):
@@ -13270,6 +13337,7 @@ class VideoEditWin(GenericEditWin):
         )
         textview.set_editable(False)
         textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_can_focus(False)
 
         self.add_label(grid,
             '<i>' + _(
@@ -13285,6 +13353,7 @@ class VideoEditWin(GenericEditWin):
         )
         textview2.set_editable(False)
         textview2.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview2.set_can_focus(False)
 
 
     # Callback class methods
@@ -13470,6 +13539,25 @@ class VideoEditWin(GenericEditWin):
         """
 
         SystemPrefWin(self.app_obj, 'slices')
+
+
+    def on_clear_descrip_button_clicked(self, button, textbuffer):
+
+        """Called from a callback in self.setup_descrip_tab().
+
+        Clears the video's .descrip IV (but doesn't modify the .description
+        file itself).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            textbuffer (Gtk.TextBuffer): The textview's textbuffer
+
+        """
+
+        self.edit_obj.reset_video_descrip()
+        textbuffer.set_text('')
 
 
     def on_clear_slice_button_clicked(self, button):
@@ -13755,6 +13843,31 @@ class VideoEditWin(GenericEditWin):
             self.app_obj.main_win_obj.video_catalogue_update_video(
                 self.edit_obj,
             )
+
+
+    def on_load_descrip_button_clicked(self, button, spinbutton, textbuffer):
+
+        """Called from a callback in self.setup_descrip_tab().
+
+        Updates the video's description from its .description file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Widget setting the maximum line
+                length
+
+            textbuffer (Gtk.TextBuffer): The textview's textbuffer
+
+        """
+
+        self.edit_obj.read_video_descrip(
+            self.app_obj,
+            int(spinbutton.get_value()),
+        )
+
+        textbuffer.set_text(self.edit_obj.descrip)
 
 
 class ChannelPlaylistEditWin(GenericEditWin):
@@ -14151,6 +14264,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         )
         textview.set_editable(False)
         textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_can_focus(False)
 
         if self.media_type == 'channel':
             string = _(
@@ -14174,6 +14288,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         )
         textview2.set_editable(False)
         textview2.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview2.set_can_focus(False)
 
 
     # (Support functions)
@@ -14994,7 +15109,7 @@ class ScheduledEditWin(GenericEditWin):
         combo_list = [
             [_('Check channels, playlist and folders'), 'sim'],
             [_('Download channels, playlists and folders'), 'real'],
-            [_('Perform a custom download'), 'custom'],
+            [_('Perform a custom download'), 'custom_real'],
         ]
 
         combo = self.add_combo_with_data(grid,
@@ -15003,76 +15118,125 @@ class ScheduledEditWin(GenericEditWin):
             1, 2, (grid_width - 1), 1,
         )
         combo.set_hexpand(True)
+        # (Signal connect appears below, overriding the generic one)
 
         self.add_label(grid,
-            _('Start mode'),
+            _('Custom download name'),
             0, 3, 1, 1,
         )
 
-        combo2_list = [
+        combo_list2 = [
+            [
+                '',
+                '',     # self.on_custom_dl_combo_changed() converts it to None
+            ],
+            [
+                self.app_obj.general_custom_dl_obj.name,
+                self.app_obj.general_custom_dl_obj.uid,
+            ],
+        ]
+        if self.app_obj.classic_custom_dl_obj is not None:
+            combo_list2.append([
+                self.app_obj.classic_custom_dl_obj.name,
+                self.app_obj.classic_custom_dl_obj.uid,
+            ])
+
+        for custom_dl_obj in self.app_obj.custom_dl_reg_dict.values():
+            if self.app_obj.general_custom_dl_obj != custom_dl_obj \
+            and (
+                not self.app_obj.classic_custom_dl_obj \
+                or self.app_obj.classic_custom_dl_obj != custom_dl_obj
+            ):
+                combo_list2.append([custom_dl_obj.name, custom_dl_obj.uid])
+
+        combo2 = self.add_combo_with_data(grid,
+            combo_list2,
+            'custom_dl_uid',
+            1, 3, (grid_width - 1), 1,
+        )
+        combo2.set_hexpand(True)
+        if self.edit_obj.dl_mode != 'custom_real':
+            combo2.set_sensitive(False)
+        # (Signal connect appears below, overriding the generic one)
+
+        self.add_label(grid,
+            _('Start mode'),
+            0, 4, 1, 1,
+        )
+
+        combo3_list = [
             [_('Perform this download at regular intervals'), 'scheduled'],
             [_('Perform this download when Tartube starts'), 'start'],
             [_('Disable this scheduled download'), 'none'],
         ]
 
-        combo2 = self.add_combo_with_data(grid,
-            combo2_list,
+        combo3 = self.add_combo_with_data(grid,
+            combo3_list,
             None,
-            1, 3, (grid_width - 1), 1,
+            1, 4, (grid_width - 1), 1,
         )
-        combo2.set_hexpand(True)
+        combo3.set_hexpand(True)
         # (Signal connect appears below)
 
         self.add_label(grid,
             _('Time between scheduled downloads'),
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
             1, None, 1,
             'wait_value',
-            1, 4, 1, 1,
+            1, 5, 1, 1,
         )
 
-        combo3_list = []
+        combo4_list = []
         for unit in formats.TIME_METRIC_LIST:
             if unit != 'seconds':
-                combo3_list.append(
+                combo4_list.append(
                     [ formats.TIME_METRIC_TRANS_DICT[unit], unit ],
                 )
 
-        combo3 = self.add_combo_with_data(grid,
-            combo3_list,
+        combo4 = self.add_combo_with_data(grid,
+            combo4_list,
             'wait_unit',
-            2, 4, 1, 1,
+            2, 5, 1, 1,
         )
-        combo3.set_hexpand(True)
+        combo4.set_hexpand(True)
 
         if self.edit_obj.start_mode == 'start':
-            combo2.set_active(1)
+            combo3.set_active(1)
             spinbutton.set_sensitive(False)
-            combo3.set_sensitive(False)
+            combo4.set_sensitive(False)
         elif self.edit_obj.start_mode == 'none':
-            combo2.set_active(2)
+            combo3.set_active(2)
             spinbutton.set_sensitive(False)
-            combo3.set_sensitive(False)
+            combo4.set_sensitive(False)
         else:
-            combo2.set_active(0)
+            combo3.set_active(0)
 
-        # (Signal connect from above)
+        # (Signal connects from above)
+        combo.connect(
+            'changed',
+            self.on_dl_mode_combo_changed,
+            combo2,
+        )
         combo2.connect(
+            'changed',
+            self.on_custom_dl_combo_changed,
+        )
+        combo3.connect(
             'changed',
             self.on_start_mode_combo_changed,
             spinbutton,
-            combo3,
+            combo4,
         )
 
         self.add_label(grid,
             _('If another scheduled download is running:'),
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
-        combo4_list = [
+        combo5_list = [
             [
                 _(
                 'Add channels, playlists and folders to the end of the queue',
@@ -15095,12 +15259,12 @@ class ScheduledEditWin(GenericEditWin):
             ],
         ]
 
-        combo4 = self.add_combo_with_data(grid,
-            combo4_list,
+        combo5 = self.add_combo_with_data(grid,
+            combo5_list,
             'join_mode',
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
-        combo4.set_hexpand(True)
+        combo5.set_hexpand(True)
 
         self.add_checkbutton(grid,
             _('This scheduled download takes priority over others') \
@@ -15110,7 +15274,7 @@ class ScheduledEditWin(GenericEditWin):
             + ' finished',
             ),
             'exclusive_flag',
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -15119,13 +15283,13 @@ class ScheduledEditWin(GenericEditWin):
             + ' channel/playlist/folder',
             ),
             'ignore_limits_flag',
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             _('Shut down Tartube when this scheduled download has finished'),
             'shutdown_flag',
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
 
 
@@ -15414,6 +15578,53 @@ class ScheduledEditWin(GenericEditWin):
         # Update widgets
         liststore.clear()
         self.radiobutton.set_active(True)
+
+
+    def on_custom_dl_combo_changed(self, combo):
+
+        """Called from callback in self.setup_general_tab().
+
+        Sets the IV.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        value = model[tree_iter][1]
+
+        if value is None or value == '':
+            self.edit_dict['custom_dl_uid'] = None
+        else:
+            self.edit_dict['custom_dl_uid'] = int(value)
+
+
+    def on_dl_mode_combo_changed(self, combo, combo2):
+
+        """Called from callback in self.setup_general_tab().
+
+        Sets the IV, and (de)sensitises other widgets.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            combo2 (Gtk.ComboBox): Another widget to update
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.edit_dict['dl_mode'] = model[tree_iter][1]
+
+        if self.edit_dict['dl_mode'] == 'custom_real':
+            combo2.set_sensitive(True)
+        else:
+            combo2.set_active(0)
+            combo2.set_sensitive(False)
 
 
     def on_remove_button_clicked(self, button, combo, treeview):
@@ -16293,6 +16504,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_files_database_tab(self.files_inner_notebook)
         self.setup_files_backups_tab(self.files_inner_notebook)
         self.setup_files_videos_tab(self.files_inner_notebook)
+        self.setup_files_update_tab(self.files_inner_notebook)
         self.setup_files_urls_tab(self.files_inner_notebook)
         self.setup_files_temp_folders_tab(self.files_inner_notebook)
         self.setup_files_statistics_tab(self.files_inner_notebook)
@@ -16766,7 +16978,7 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
-        grid_width = 4
+        grid_width = 2
 
         # Automatic video deletion preferences
         self.add_label(grid,
@@ -16778,13 +16990,13 @@ class SystemPrefWin(GenericPrefWin):
             _('Automatically delete downloaded videos after this many days'),
             self.app_obj.auto_delete_flag,
             True,               # Can be toggled by user
-            0, 1, 2, 1,
+            0, 1, 1, 1,
         )
         # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.auto_delete_days,
-            2, 1, 2, 1,
+            1, 1, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -16801,7 +17013,7 @@ class SystemPrefWin(GenericPrefWin):
         # (Signal connects from above)
         checkbutton.connect(
             'toggled',
-            self.on_auto_delete_button_toggled,
+            self.on_watched_videos_button_toggled,
             spinbutton,
             checkbutton2,
         )
@@ -16832,13 +17044,13 @@ class SystemPrefWin(GenericPrefWin):
         self.radiobutton2 = self.add_radiobutton(grid,
             self.radiobutton,
             _('The first # characters must match exactly'),
-            0, 6, 2, 1,
+            0, 6, 1, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_first_chars,
-            2, 6, 2, 1,
+            1, 6, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -16848,13 +17060,13 @@ class SystemPrefWin(GenericPrefWin):
             'Ignore the last # characters; the remaining name must match' \
             + ' exactly',
             ),
-            0, 7, 2, 1,
+            0, 7, 1, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton2 = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_ignore_chars,
-            2, 7, 2, 1,
+            1, 7, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -16882,10 +17094,25 @@ class SystemPrefWin(GenericPrefWin):
             self.on_match_spinbutton_changed,
         )
 
-        # Video timestamps
+
+    def setup_files_update_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Update' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Update'),
+            inner_notebook,
+        )
+
+        grid_width = 2
+
+        # Update video descriptions
         self.add_label(grid,
-            '<u>' + _('Video timestamps') + '</u>',
-            0, 8, grid_width, 1,
+            '<u>' + _('Update video descriptions') + '</u>',
+            0, 0, grid_width, 1,
         )
 
         self.add_label(grid,
@@ -16894,21 +17121,69 @@ class SystemPrefWin(GenericPrefWin):
                 'These procedures might take a long time on a large database',
             ) \
             + '</i>',
-            0, 9, grid_width, 1,
+            0, 1, grid_width, 1,
         )
 
-        button = Gtk.Button(_('Extract timestamps for all videos'))
-        grid.attach(button, 0, 10, 1, 1)
-        button.set_hexpand(False)
+        button = Gtk.Button.new_with_label(
+            _('Update from description files, and set the line lengths to:'),
+        )
+        grid.attach(button, 0, 2, 1, 1)
+        # (Signal connect appears below)
+
+        min_value = self.app_obj.main_win_obj.medium_string_max_len
+        max_value = self.app_obj.main_win_obj.descrip_line_max_len
+        if max_value < min_value:
+            max_value = min_value
+
+        spinbutton = self.add_spinbutton(grid,
+            min_value,
+            max_value,
+            1,
+            self.app_obj.main_win_obj.descrip_line_max_len,
+            1, 2, 1, 1,
+        )
+
+        button2 = Gtk.Button.new_with_label(
+            _('Clear descriptions (does not modify the description files)'),
+        )
+        grid.attach(button2, 0, 3, grid_width, 1)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
         button.connect(
+            'clicked',
+            self.on_load_descrips_button_clicked,
+            spinbutton,
+        )
+
+        button2.connect(
+            'clicked',
+            self.on_clear_descrips_button_clicked,
+        )
+
+        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
+        #   mess up the formatting)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 4, grid_width, 1)
+
+        # Video timestamps
+        self.add_label(grid2,
+            '<u>' + _('Video timestamps') + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        button3 = Gtk.Button(_('Extract timestamps for all videos'))
+        grid2.attach(button3, 0, 5, 1, 1)
+        button3.set_hexpand(False)
+        button3.connect(
             'clicked',
             self.on_extract_stamps_button_clicked,
         )
 
-        button2 = Gtk.Button(_('Remove timestamps from all videos'))
-        grid.attach(button2, 1, 10, 3, 1)
-        button2.set_hexpand(False)
-        button2.connect(
+        button4 = Gtk.Button(_('Remove timestamps from all videos'))
+        grid2.attach(button4, 1, 5, 1, 1)
+        button4.set_hexpand(False)
+        button4.connect(
             'clicked',
             self.on_remove_stamps_button_clicked,
         )
@@ -18543,11 +18818,11 @@ class SystemPrefWin(GenericPrefWin):
         row_list.append(scheduled_obj.name)
 
         if scheduled_obj.dl_mode == 'sim':
-            row_list.append('check')
+            row_list.append(_('Check'))
         elif scheduled_obj.dl_mode == 'real':
-            row_list.append('download')
+            row_list.append(_('Download'))
         else:
-            row_list.append('custom')
+            row_list.append(_('Custom'))
 
         row_list.append(scheduled_obj.start_mode)
         row_list.append(
@@ -21103,7 +21378,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton.connect('toggled', self.on_auto_clone_button_toggled)
 
-        checkbutton = self.add_checkbutton(grid,
+        checkbutton2 = self.add_checkbutton(grid,
             _(
             'After downloading a video, destroy its download options',
             ),
@@ -21111,7 +21386,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        checkbutton.connect('toggled', self.on_auto_delete_button_toggled)
+        checkbutton2.connect('toggled', self.on_auto_delete_button_toggled)
 
 
     def setup_options_ffmpeg_list_tab(self, inner_notebook):
@@ -21830,37 +22105,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_auto_delete_options_flag(False)
 
 
-    def on_auto_delete_button_toggled(self, checkbutton, spinbutton,
-    checkbutton2):
-
-        """Called from callback in self.setup_files_video_deletion_tab().
-
-        Enables/disables automatic deletion of downloaded videos.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
-
-            checkbutton2 (Gtk.CheckButton): Another widget to be
-                (de)sensitised
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.auto_delete_flag:
-            self.app_obj.set_auto_delete_flag(True)
-            spinbutton.set_sensitive(True)
-            checkbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.auto_delete_flag:
-            self.app_obj.set_auto_delete_flag(False)
-            spinbutton.set_sensitive(False)
-            checkbutton2.set_sensitive(False)
-
-
     def on_auto_delete_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_files_video_deletion_tab().
@@ -22362,6 +22606,46 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_child_process_exit_flag:
             self.app_obj.set_ignore_child_process_exit_flag(False)
+
+
+    def on_clear_descrips_button_clicked(self, button):
+
+        """Called from a callback in self.setup_files_update_tab().
+
+        For every video in the database, clears the description (but doesn't
+        modify the description file itself).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        video_count = 0
+        update_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+
+                if media_data_obj.descrip is not None \
+                and media_data_obj.descrip != '':
+                    update_count += 1
+
+                media_data_obj.reset_video_descrip()
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos updated:') + ' ' + str(update_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
 
 
     def on_clipboard_button_toggled(self, checkbutton):
@@ -24087,7 +24371,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_extract_stamps_button_clicked(self, button):
 
-        """Called from callback in self.setup_files_videos_tab().
+        """Called from callback in self.setup_files_update_tab().
 
         Extracts timestamps from the description of every video in the
         database.
@@ -24792,6 +25076,53 @@ class SystemPrefWin(GenericPrefWin):
         main_win_obj.video_catalogue_redraw_all(
             main_win_obj.video_index_current,
             main_win_obj.catalogue_toolbar_current_page,
+        )
+
+
+    def on_load_descrips_button_clicked(self, button, spinbutton):
+
+        """Called from a callback in self.setup_files_update_tab().
+
+        For every video in the database, updates the description from the
+        .description file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Widget setting the maximum line
+                length
+
+        """
+
+        video_count = 0
+        update_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+
+                old_descrip = media_data_obj.descrip
+
+                media_data_obj.read_video_descrip(
+                    self.app_obj,
+                    int(spinbutton.get_value()),
+                )
+
+                if old_descrip != media_data_obj.descrip:
+                    update_count += 1
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos updated:') + ' ' + str(update_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
         )
 
 
@@ -25897,7 +26228,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_remove_stamps_button_clicked(self, button):
 
-        """Called from callback in self.setup_files_videos_tab().
+        """Called from callback in self.setup_files_update_tab().
 
         Clears timestamps from every video in the database.
 
@@ -27250,6 +27581,37 @@ class SystemPrefWin(GenericPrefWin):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         self.app_obj.main_win_obj.set_video_res(model[tree_iter][0])
+
+
+    def on_watched_videos_button_toggled(self, checkbutton, spinbutton,
+    checkbutton2):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Enables/disables automatic deletion of downloaded videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            checkbutton2 (Gtk.CheckButton): Another widget to be
+                (de)sensitised
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(True)
+            spinbutton.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(False)
+            spinbutton.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
 
 
     def on_worker_button_toggled(self, checkbutton, alt_flag=False):

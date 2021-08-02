@@ -1296,9 +1296,9 @@ class OptionsParser(object):
             options_manager_obj (options.OptionsManager): The object containing
                 the download options for this media data object
 
-            operation_type (str): 'sim', 'real', 'custom', 'classic_sim',
-                'classic_real', 'classic_custom' (matching possible values of
-                downloads.DownloadManager.operation_type)
+            operation_type (str): 'sim', 'real', 'custom_sim', 'custom_real',
+                'classic_sim', 'classic_real', 'classic_custom' (matching
+                possible values of downloads.DownloadManager.operation_type)
 
             scheduled_obj (media.Scheduled): If a scheduled download is
                 involved, the corresponding object (so bandwidth limits can be
@@ -1589,9 +1589,9 @@ class OptionsParser(object):
 
             copy_dict (dict): Copy of the original options dictionary
 
-            operation_type (str): 'sim', 'real', 'custom', 'classic_sim',
-                'classic_real', 'classic_custom' (matching possible values of
-                downloads.DownloadManager.operation_type)
+            operation_type (str): 'sim', 'real', 'custom_sim', 'custom_real',
+                'classic_sim', 'classic_real', 'classic_custom' (matching
+                possible values of downloads.DownloadManager.operation_type)
 
             options_list (list): List of download options compiled so far; this
                 function adds options directly to the list
@@ -1687,7 +1687,8 @@ class OptionsParser(object):
 
             copy_dict (dict): Copy of the original options dictionary
 
-            operation_type (str): 'sim', 'real', 'custom', 'classic' (matching
+            operation_type (str): 'sim', 'real', 'custom_sim', 'custom_real',
+                'classic_sim', 'classic_real', 'classic_custom' (matching
                 possible values of downloads.DownloadManager.operation_type)
 
         """
