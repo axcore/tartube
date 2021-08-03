@@ -6622,6 +6622,15 @@ class TartubeApp(Gtk.Application):
                 else:
                     scheduled_obj.custom_dl_uid = None
 
+        if version < 2003304:      # v2.3.304
+
+            # This version fixes an incorrect value for an IV in media.Folder
+            #   objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Folder) \
+                and media_data_obj.restrict_mode == 'free':
+                    media_data_obj.restrict_mode = 'open'
+
 
     def save_db(self):
 
@@ -12558,7 +12567,7 @@ class TartubeApp(Gtk.Application):
 
 
     def add_folder(self, name, parent_obj=None, dl_sim_flag=False,
-    restrict_mode='free', fixed_flag=False, priv_flag=False, temp_flag=False):
+    restrict_mode='open', fixed_flag=False, priv_flag=False, temp_flag=False):
 
         """Can be called by anything.
 

@@ -1,3 +1,237 @@
+v2.3.306 (3 Jul 2021)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- You can now download videos as a sequence of video clips, or split a video
+    you've already downloaded into clips. Tartube can extract a list of
+    timestamps from a video's description, or extract the chapter list from a
+    video's medadata file. You can also specify your own timestamps. See the
+    README for details about how this works. Video Clips are added to the new
+    'Video Clips' folder, by default. This functionality requires FFmpeg
+    (Git #282)
+- Tartube now provides SponsorBlock integration. Tartube can download a video
+    with the sponsored sections removed. It can also remove sections from a
+    video you have already downloaded. Tartube can fetch information from
+    SponsorBlock directly, or you can specify your own video sections to
+    remove. See the README for details about how this works. This functionality
+    requires FFmpeg
+- Custom downloads have been overhauled. You can now create as many different
+    custom downloads as you like: click 'Edit > System preferences... >
+    Operations > Custom' for a list of them. The defautl custom download is
+    the one called 'general'. A custom download normally involves 'checking'
+    channels/playlists before 'download'ing them; this can now be done
+    automatically
+- A 'Custom download all' button can be added to the Videos tab, beneath the
+    'Download all' button, if it's convenient for you. Click 'Edit > System
+    preferences... > Windows > Main window' and select 'Show a Custom Downlaod
+    all button in the Videos Tab'
+- Until now, Tartube has only been able to download videos into its own
+    data folder. You can now download channels and playlists to any location on
+    your filesystem. This is not recommended unless you have a good reason (see
+    the README for a list of good reasons). To change the download destination
+    for a channel (etc), right-click the channel and select 'Channel actions >
+    Set download destination...', then in the new window select 'Use an
+    external location' and click the 'Set' button. When Tartube starts, it
+    checks that any external locations are readable/writable and, if not, the
+    channel/playlist's name is drawn with a line through it (Git #296)
+- Added a new 'Recent Videos' folder. By default, it shows videos checked/
+    downloaded during the last download operation. This behaviour can be
+    changed by right-clicking the folder, and selecting 'Downloads >
+    Set removal time' or 'Show > Folder properties... > Recent videos'
+- Added alternative performance limits (for example, to limit bandwidth at
+    certains times of the day). To set up these limits, click 'Edit > System
+    preferences... > Operations > Limits'. When the alternative limits apply,
+    a grey icon in the Progress tab changes colour. Scheduled downloads also
+    now have their own alternative performance limits, which override those
+    specified elsewhere (Git #288)
+- You can now bulk-update the URLs for channels and playlists (for example, by
+    using a regex to modify the ending of each URL). Click 'Edit > System
+    preferences... > File > URLs'. Double-click a single URL to edit it, or use
+    the buttons at the bottom of the tab to bulk-edit URLs. The name of the
+    channels/playlists can also be edited by double-clicking them (Git #286)
+- You can now add many channels and playlists at the same time, using a single
+    dialogue window. Click 'Operations > Add many channels/playlists...'
+    (Git #222)
+- Changed the layout of the Classic Mode tab, to clarify the difference between
+    a video being downloaded in a particular format, and being converted to
+    that format after the download has finished. Before, video and audio files
+    downloaded from the tab were handled inconsistently. Now, a download of an
+    .mkv file will only fail if the website doesn't provide the video in that
+    format, and the user has not chosen to convert the file after download
+- When a download operation fails to check/download anything, the user will now
+    see a dialogue window, suggesting some things to do. This should improve
+    the experience for new users when Tartube fails to work for no obvious
+    reason
+
+MINOR NEW FEATURES
+- It's now possible to export/import Tartube's database as a .CSV file. The
+    separator is '|' by default; that can be changed in 'Edit > System
+    preferences... > Files > Backups'. The menu interface for export/import has
+    been simplified (Git #222)
+- When exporting Tartube's database as plain text, it's now possible to
+    preserve the database's file structure and/or to include a list of videos.
+    The changes mean that plain text exports from v2.3.206 and earlier will no
+    longer work. (It is quite simple to edit the exports by hand, if any users
+    are affected by these changes)
+- Exports from Tartube's database (in any format) now include videos inside the
+    'Unsorted Videos' and 'Video Clips' folders
+- Messages in the Errors/Warnings tab now show dates and times. This can be
+    disabled using the button at the bottom of the tab (Git #281)
+- In case Tartube's main window becomes too big for the desktop, added a button
+    to reset its size in 'Edit > System preferences... > Windows > Main window'
+    (Git #291)
+- When Tartube's main window was minimised to the tray, and then restored, it
+    was not restored to its old position on the desktop. You can now enable
+    this behaviour, if you want: click 'Edit > System preferences... >
+    Windows > Tray', and select 'After closing to the tray, restore the
+    window's position' (Git #292)
+- You can now override youtube-dl download options completely, specifying your
+    own options explicitly. CLick 'Edit > General download options...', click
+    the 'Show advanced download options' button if it's visible, then specify
+    your requirements in the area above (Git #276)
+- If users attempt to add a YouTube channel/playlist whose URL does not end in
+    '.../videos', they will now see a dialogue window with a reminder to click
+    the YouTube VIDEOS tab, before copying the URL. The reminder can be
+    disabled in 'Edit > System preferences... > Windows > Dialogues' (Git #286)
+- In the Classic Mode tab, the re-download button can now be clicked while
+    other downloads are still taking place. Therefore, if one video fails to
+    download, you can force it to re-download without waiting for everything
+    else to finish (Git #293)
+- The maximum number of simultaneous downloads has been increased to 32. This
+    high setting is not recommended unless you actually want YouTube to ban
+    your IP (Git #294)
+- Changed the maximum line length for video descriptions, stored in Tartube's
+    database, from 50 to 80 characters (Tartube's main window used to be less
+    wide by default, so the shorter limit is no longer necessary). You can now
+    update each video's description in its edit window (right-click the video
+    and select 'Show video > Properties... > Description'). You can also
+    update all videos in the database (Edit > System preferences... > Files >
+    Update'
+- The video's edit window has a button for changing the video file, but it
+    wasn't obvious that the button is clickable. Improved the layout
+- You can now change the background colours used in the Video Catalogue by
+    clicking 'Edit > System preferences... > Windows > Colours'. The default
+    colours have been tweaked, as they made some clickable labels hard to read
+- Replaced the icon used to show a video that's not been checked or downloaded
+    yet (which improves the look of the Video Catalogue)
+- In the Classic Mode tab, if the user forgets to click the 'Add URLs' button
+    before clicking the 'Download all' button, they will now see a dialogue
+    window reminding them of what to do
+- You can now set channels, playlists and folders so that videos can be
+    downloaded without updating Tartube's database (in effect, making the
+    Videos tab behave like the Classic Mode tab). For example, to apply this to
+    a channel, right-click the channel and select 'Downloads > Don't add videos
+    to Tartube's database'
+- Added the ability for youtube-dl to authenticate using a .netrc file. To
+    enable this, click 'Edit > General download options...'. Click the 'Show
+    advanced download options' button if it's visible. Then click 'Advanced >
+    netrc'. For your convenience, the .netrc file itself can be edited in this
+    tab. This feature has not been tested on MS Windows yet (Git #305)
+- Added a comparable ability to use and edit the youtube-dl configuration file.
+    Click 'Edit > General download options...'. Click the 'Show advanced
+    download options' button if it's visible. Then click 'Advanced >
+    Configurations'
+- All download options in the edit window ('Edit > General downlaod
+    options...') now have a tooltip, showing the actual youtube-dl/yt-dlp
+    option
+- Added a range of download options for yt-dlp only (which cannot be used with
+    youtube-dl), including '--paths' (Git #299)
+- Names of channels and playlists in the Video Catalogue are now clickable,
+    and will open the channel/playlist URL in your web browser if clicked
+- Videos inside folders (for example, inside the 'Unsorted Videos' folder) can
+    can now be checked, if they have already been checked (for example, by
+    right-clicking a video and selecting 'Check video'). This is useful for
+    updating timestamps, chapters and SponsorBlock data
+- You can now drag videos from the Video Catalogue into a new channel, playlist
+    or folder (Git #309)
+- The default and alternative locations for Tartube's configuration file are
+    now visible in the preferences window ('Edit > System preferences... >
+    Files > Config')
+- In the Progress tab, you could already right-click a video and select 'Stop
+    after these videos'. Added a corresponding item to the main window's menu
+- After stopping a download manually (for example by clicking the 'Stop' button
+    in the main toolbar), items that were marked as 'Waiting' and marked as
+    'Not started'. This might relieve some confusion
+
+MAJOR FIXES
+- On MS Windows, it was not possible to install yt-dlp because of MSYS2 issues.
+    Tartube will now install yt-dlp without dependencies, by default, which
+    fixes the problem. This behaviour can be changed in 'Edit > System
+    preferences... > Downloaders > Forks' (Git #269, #279)
+- Also fixed yt-dlp dependency issues (Git #317)
+- Fixed an error on startup, occuring when Tartube was unable to load its
+    default database, and started checking for others
+- Fixed an error that failed to load Tartube's configuration file created
+    between versions v1.3.088 - v2.3.149
+- Fixed an error that affected all list values in the edit windows for
+    download options and FFmpeg options, while using those windows
+- Fixed an error that made radio buttons unusable in some edit windows
+- Fixed an error that failed to open the preferences window from the Classic
+    Mode tab's menu
+- Download options for deleting the video description, metadata, annotations
+    and thumbnail files after downloading the video were ignored in the Classic
+    Mode tab, when enabled. Fixed (Git #295)
+- The main window's 'Add video' and 'Custom download all' buttons did not work,
+    after loading a database created by v2.3.110. Fixed (Git #307)
+- Fixed an error that occured when renaming channels/playlists/folders in
+    certain circumstances
+- After disabling checking and/or downloading videos for a folder, checking/
+    downloading for any child channels/playlists/folders was also supposed to
+    be disabled, but this did not work as intended. The original behaviour has
+    been changed, so that enabling/disabling the settings does not apply to a
+    folder's children
+- The setting to move a video's metadata files to a sub-directory did not work
+    as intended. Code to detect a thumbnail's likely location had become
+    garbled. Both fixed
+- Fixed a rare error when trying to delete a channel/playlist
+- Fixed an error that prevented the download of Japanese-language videos from
+    finishing. Updated related code to improve the handling of non-UTF-8 text
+    in general (Git #308)
+- Fixed failure to obtain the path to Tartube's config file (Git #314)
+- Fixed problems with an incomplete list of folders (for example, in the
+    'Add channel' dialogue window (Git #316)
+
+MINOR FIXES
+- Several users have complained that some icons are not visible in the main
+    window. This seems to be an issue with incorrect (or broken) installation
+    of the Gtk library on certain distributions. Tartube now uses its own
+    icons, by default, rather than the stock Gtk icons. This behaviour can be
+    changed in 'Edit > System preferences... > Windows > Main Window'
+- Some Tartube icons were a little difficult to see, so they have been switched
+    for better icons
+- Fixed .bat files in the MS Windows installers, so that Tartube starts when
+    Python 2 is installed (Git #271)
+- Small improvements to the layouts of various dialogue windows
+- In the Progress tab, the button 'Max downloads' was not actually used by
+    anything, nor was its setting remembered after restarting Tartube. This has
+    been fixed. When the button is not selected, a default maximum of two
+    simultaneous downloads applies
+- Disabled the instruction to show a youtube-dl system command for Tartube
+    folders (which have no URL for youtube-dl to use)
+- Fixed a faulty dialogue window when dragging a channel/playlist/folder into
+    the 'Temporary Videos' folder
+- Fixed problems downloading videos as audio from the FFmpeg options window
+- Fixed problems in the download options edit window, in the 'Sound only' tab
+    (downloading as audio could be enabled, but not disabled)
+- Fixed problems in which the edit window for a video's properties could not
+    be opened, if the video's file size was unknown, or if Tartube's custom
+    icons were enabled
+- When the user fetches a list of video formats, Tartube now switches to the
+    Output tab automatically
+- When custom downloads are enabled in the Classic Mode tab, the 'Download all'
+    button is replaced by a 'Custom download all' button, for clarity
+- Video sizes are displayed in the Video Catalogue, but empty space was visible
+    instead of 'Unknown' when the file size was not known. Fixed
+- Minor fixes to the popup menus in the Video Catalogue
+- The youtube-dl 'Download did not start' message is now visible in the Output
+    tab, as well as the Errors/Warnings tab
+- Continuing locale problems are not yet resolved, but the code will now use
+    the actual locale, rather than defaulting to UTF-8 (on Linux) and cp1252
+    (on MS Windows)
+- Fixed typo in the 'stalled' stage of a video download, which might have
+    caused problems
+- Fixed broken button in System Preferences window (Git #224)
+
 v2.3.110 (28 Feb 2021)
 -------------------------------------------------------------------------------
 

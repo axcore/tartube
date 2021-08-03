@@ -25259,9 +25259,6 @@ class AddChannelDialogue(Gtk.Dialog):
         self.folder_list.insert(0, '')
         self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
 
-        # !!! DEBUG Git 316
-        print(self.folder_list)
-
         if suggest_parent_name is not None:
             self.folder_list.insert(0, suggest_parent_name)
 
