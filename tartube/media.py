@@ -228,7 +228,7 @@ class GenericContainer(GenericMedia):
 
         Args:
 
-            data_type (str): 'receive' to compile vidoe frequencies by
+            data_type (str): 'receive' to compile video frequencies by
                 receive (download) time, 'download' to compile by download time
 
             period (int): A time period, in seconds (e.g. 86400 for a day)
@@ -724,7 +724,7 @@ class GenericContainer(GenericMedia):
 
         Returns:
 
-            True or False.
+            True or False
 
         """
 
@@ -1666,8 +1666,8 @@ class Video(GenericMedia):
         # IV list - other
         # ---------------
         # Unique media data object ID (an integer)
-        # When a download operation is launched from the Classic Mode Tab,
-        #   the code creates a series of dummy media.Video objects that aren't
+        # When a download operation is launched from the Classic Mode tab, the
+        #   code creates a series of dummy media.Video objects that aren't
         #   added to the media data registry. Those dummy objects have negative
         #   dbids
         self.dbid = dbid
@@ -1829,6 +1829,27 @@ class Video(GenericMedia):
         #           SponsorBlock. This valus is not required by Tartube code,
         #           and its default value is 0
         self.slice_list = []
+        # List containing video comments, extracted from the video's metadata.
+        #   Only popuplated when downloading the video with yt-dlp
+        # List of dictionaries, sorted by timestamp (most recent first). Each
+        #   dictionary contains a reduced set of the keys extracted from yt-dl
+        #   data, including these compulsory items:
+        #       ['id']: (int) Simple seequential integer ID, the first omment
+        #           added to the list is 1
+        #       ['text']: (str) Text of the comment itself
+        #       ['parent']: (int): ID of the parent comment, or None if no
+        #           parent
+        # These items are optional:
+        #       ['timestamp']: (int) Epoch timestamp of the comment. As of
+        #           v2.3.318, all comments in a YouTube video share the same
+        #           timestamp
+        #       ['time']: (str) String describing the comment age, e.g. '3 days
+        #           ago'
+        #       ['author']: (str) Name of comment author
+        #       ['likes']: (int) Number of likes
+        #       ['fav_flag']: (bool) True if comment favourited, False if not
+        #       ['ul_flag']: (bool) True if commenter is uploader, False if not
+        self.comment_list = []
 
         # List of error/warning messages generated the last time the video was
         #   checked or downloaded. Both set to empty lists if the video has
@@ -1841,7 +1862,7 @@ class Video(GenericMedia):
         self.warning_list = []
 
         # IVs used only when the download operation is launched from the
-        #   Classic Mode Tab
+        #   Classic Mode tab
         # Flag set to True if this is a dummy media.Video object
         self.dummy_flag = False
         # The destination directory for the download
@@ -2012,7 +2033,7 @@ class Video(GenericMedia):
         """
 
         descrip_path = self.check_actual_path_by_ext(app_obj, '.description')
-        if (descrip_path):
+        if descrip_path:
 
             text = app_obj.file_manager_obj.load_text(descrip_path)
             if text is not None:
@@ -2286,6 +2307,87 @@ class Video(GenericMedia):
         """
 
         self.stamp_list = []
+
+
+    def set_comments(self, comment_list):
+
+        """Can be called by anything.
+
+        Sets the video's comments list, after sorting it.
+        """
+
+        # 'comment_list' contains a sequence of dictionaries. Some of the keys
+        #   in the dictionaries are not required, and must be removed
+        # The key is the original field provided by yt-dlp, the corresponding
+        #   value is the field used by media.Video
+        check_dict = {
+            'id': 'id',
+            'text': 'text',
+            'timestamp': 'timestamp',
+            'time_text': 'time',
+            'like_count': 'likes',
+            'is_favorited': 'fav_flag',
+            'author': 'author',
+            'author_is_uploader': 'ul_flag',
+            'parent': 'parent',
+        }
+
+        # Use simple sequential integers for the 'id' and 'parent' fields
+        id_count = 1
+        parent_dict = {}
+
+        # Process each comment
+        new_list = []
+
+        for mini_dict in comment_list:
+
+            new_dict = {}
+
+            for key in mini_dict.keys():
+                if key in check_dict and mini_dict[key] is not None:
+
+                    if key == 'id':
+                        this_id = id_count
+                        parent_dict[mini_dict[key]] = this_id
+                        new_dict['id'] = this_id
+
+                        id_count += 1
+
+                    elif key == 'parent':
+                        if not mini_dict[key] in parent_dict:
+                            new_dict['parent'] = None
+                        else:
+                            new_dict['parent'] = parent_dict[mini_dict[key]]
+
+                    else:
+                        new_dict[check_dict[key]] = mini_dict[key]
+
+            # This key is also compulosry; add a null parent, if not found
+            if not 'parent' in new_dict:
+                new_dict['parent'] = None
+
+            # These keys are compulsory, ignore the comment if they're not
+            #   found
+            if 'id' in new_dict and 'text' in new_dict:
+                new_list.append(new_dict)
+
+        # Sort comments by timestamp
+        # v2.3.317 disabled, since all timestamps are the same for each video
+        #   at the moment
+#        new_list = list(sorted(new_list, key=lambda x:x['time']))
+
+        # Update the IV
+        self.comment_list = new_list
+
+
+    def reset_comments(self):
+
+        """Can be called by anything.
+
+        Empties the video's comment list.
+        """
+
+        self.comment_list = []
 
 
     # Set accessors
@@ -3070,11 +3172,11 @@ class Channel(GenericRemoteContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (str) - The channel name
+        name (str): The channel name
 
-        parent_obj (media.Folder) - The parent media data object, if any
+        parent_obj (media.Folder): The parent media data object, if any
 
-        options_obj (options.OptionsManager) - The object specifying download
+        options_obj (options.OptionsManager): The object specifying download
             options for this channel, if any
 
     """
@@ -3259,11 +3361,11 @@ class Playlist(GenericRemoteContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (str) - The playlist name
+        name (str): The playlist name
 
-        parent_obj (media.Folder) - The parent media data object, if any
+        parent_obj (media.Folder): The parent media data object, if any
 
-        options_obj (options.OptionsManager) - The object specifying download
+        options_obj (options.OptionsManager): The object specifying download
             options for this channel, if any
 
     """
@@ -3450,25 +3552,25 @@ class Folder(GenericContainer):
 
         dbid (int): A unique ID for this media data object
 
-        name (str) - The folder name
+        name (str): The folder name
 
-        parent_obj (media.Folder) - The parent media data object, if any
+        parent_obj (media.Folder): The parent media data object, if any
 
-        options_obj (options.OptionsManager) - The object specifying download
+        options_obj (options.OptionsManager): The object specifying download
             options for this channel, if any
 
-        fixed_flag (bool) - If True, this folder can't be deleted by the user
+        fixed_flag (bool): If True, this folder can't be deleted by the user
 
-        priv_flag (bool) - If True, the user can't add anything to this folder,
+        priv_flag (bool): If True, the user can't add anything to this folder,
             because Tartube uses it for special purposes
 
-        restrict_mode (str) - 'full' if this folder can contain videos, but not
+        restrict_mode (str): 'full' if this folder can contain videos, but not
             channels/playlists/folders, 'partial' if this folder can contain
             videos and folders, but not channels and playlists, 'open' if this
             folder can contain any combination of videos, channels, playlists
             and folders
 
-        temp_flag (bool) - If True, the folder's contents should be deleted
+        temp_flag (bool): If True, the folder's contents should be deleted
             when Tartube shuts down (but the folder itself remains)
 
     """
@@ -3787,7 +3889,7 @@ class Scheduled(object):
             custom downloads; the value is checked before being used, and
             converted to 'custom_sim' where necessary)
 
-        start_mode (str) 'none' to disable this schedule, 'start' to perform
+        start_mode (str): 'none' to disable this schedule, 'start' to perform
             the operation whenever Tartube starts, or 'scheduled' to perform
             the operation at regular intervals
 

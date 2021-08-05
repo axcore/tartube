@@ -27,6 +27,8 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 
 # Import other modules
+import datetime
+import html
 import os
 
 
@@ -162,7 +164,7 @@ class GenericConfigWin(Gtk.Window):
 
         Returns:
 
-            The tab created (in the form of a Gtk.Box) and its Gtk.Grid.
+            The tab created (in the form of a Gtk.Box) and its Gtk.Grid
 
         """
 
@@ -232,7 +234,7 @@ class GenericConfigWin(Gtk.Window):
 
         Returns:
 
-            The tab created (in the form of a Gtk.Box) and its Gtk.Grid.
+            The tab created (in the form of a Gtk.Box) and its Gtk.Grid
 
         """
 
@@ -287,6 +289,36 @@ class GenericConfigWin(Gtk.Window):
 
 
     # (Add widgets)
+
+
+    def add_secondary_grid(self, grid, x, y, wid, hei):
+
+        """Called by various functions in the child edit window.
+
+        Adds another Gtk.Grid, to be placed inside the tab's main grid, in
+        order to avoid messing up widget spacing elsewhere in the tab.
+
+        Args:
+
+            grid (Gtk.Grid): The existing grid on which the new grid will be
+                placed
+
+            x, y, wid, hei (int): Position on the existing grid at which the
+                new grid is placed
+
+        Return values:
+
+            The new Gtk.Grid
+
+        """
+
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, x, y, wid, hei)
+        grid2.set_vexpand(False)
+        grid2.set_column_spacing(self.spacing_size)
+        grid2.set_row_spacing(self.spacing_size)
+
+        return grid2
 
 
     def add_image(self, grid, image_path, x, y, wid, hei):
@@ -1136,7 +1168,7 @@ class GenericEditWin(GenericConfigWin):
 
         Returns:
 
-            The original or modified value of that attribute.
+            The original or modified value of that attribute
 
         """
 
@@ -2822,7 +2854,6 @@ class CustomDLEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Name'))
-
         grid_width = 4
 
         label = self.add_label(grid,
@@ -2856,10 +2887,10 @@ class CustomDLEditWin(GenericEditWin):
 
         if self.edit_obj == self.app_obj.general_custom_dl_obj:
             entry3.set_text(
-                _('Applies everywhere except the Classic Mode Tab'),
+                _('Applies everywhere except the Classic Mode tab'),
             )
         elif self.edit_obj == self.app_obj.classic_custom_dl_obj:
-            entry3.set_text(_('Applies to the Classic Mode Tab'))
+            entry3.set_text(_('Applies to the Classic Mode tab'))
         else:
             entry3.set_text(_('Applies when selected'))
 
@@ -3039,13 +3070,9 @@ class CustomDLEditWin(GenericEditWin):
             self.button.set_sensitive(False)
         # (Signal connect appears below)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 1, 8, 2, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 1, 8, 2, 1)
 
         self.button2 = Gtk.Button(_('Remove all'))
         grid2.attach(self.button2, 0, 0, 1, 1)
@@ -3777,7 +3804,7 @@ class OptionsEditWin(GenericEditWin):
 
         Returns:
 
-            The original or modified value of that attribute.
+            The original or modified value of that attribute
 
         """
 
@@ -3865,7 +3892,6 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Name'))
-
         grid_width = 4
 
         if self.media_data_obj:
@@ -3928,7 +3954,7 @@ class OptionsEditWin(GenericEditWin):
             if self.edit_obj == self.app_obj.general_options_obj:
                 entry3.set_text(_('All channels, playlists and folders'))
             elif self.edit_obj == self.app_obj.classic_options_obj:
-                entry3.set_text(_('Downloads in the Classic Mode Tab'))
+                entry3.set_text(_('Downloads in the Classic Mode tab'))
             else:
                 entry3.set_text(_('These options are not applied to anything'))
 
@@ -3946,8 +3972,7 @@ class OptionsEditWin(GenericEditWin):
 
                 checkbutton = self.add_checkbutton(grid,
                     _(
-                    'Use ONLY these options (Tartube adds the downloader' \
-                    + ' and the output folder',
+                    'Use ONLY these options (Tartube adds the output folder)',
                     ),
                     None,
                     0, 3, grid_width, 1,
@@ -3958,8 +3983,8 @@ class OptionsEditWin(GenericEditWin):
 
                 checkbutton = self.add_checkbutton(grid,
                     _(
-                    'Use ONLY these options (Tartube adds the downloader' \
-                    + ' and the output directory)'
+                    'Use ONLY these options (Tartube adds the output' \
+                    + ' directory)',
                     ),
                     None,
                     0, 3, grid_width, 1,
@@ -3969,10 +3994,7 @@ class OptionsEditWin(GenericEditWin):
             checkbutton.set_active(self.retrieve_val('direct_cmd_flag'))
 
             checkbutton2 = self.add_checkbutton(grid,
-                _(
-                'Ignore the video/playlist/channel URL, because a URL is' \
-                + ' specified below',
-                ),
+                _('Use only the URL specified below'),
                 'direct_url_flag',
                 0, 4, grid_width, 1,
             )
@@ -4065,13 +4087,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'File names' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('File _names'),
             inner_notebook,
         )
-
         grid_width = 4
 
         # File name options
@@ -4243,13 +4269,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Filesystem' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Filesystem'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Filesystem options
@@ -4342,13 +4372,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Cookies' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Cookies'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # Cookies options
@@ -4411,13 +4445,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Write files' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Write/move files'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Write other files options
@@ -4500,6 +4538,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Write files' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -4594,13 +4637,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_formats_tab().
 
         Sets up the 'Preferred' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Preferred'),
             inner_notebook,
         )
-
         grid_width = 4
 
         # Preferred format options
@@ -4723,13 +4770,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_formats_tab().
 
         Sets up the 'Advanced' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Advanced'),
             inner_notebook,
         )
-
         grid_width = 2
         extra_row = 0
 
@@ -4898,6 +4949,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'General' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab('_General', inner_notebook)
@@ -4918,6 +4974,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'Playlists' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -4933,6 +4994,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'Size limits' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -4948,6 +5014,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'Dates' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Dates'), inner_notebook)
@@ -4960,6 +5031,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'Views' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Views'), inner_notebook)
@@ -4972,6 +5048,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'Filtering' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -4987,6 +5068,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_downloads_tab().
 
         Sets up the 'External' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_External'), inner_notebook)
@@ -5240,6 +5326,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_subtitles_tab().
 
         Sets up the 'Options' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Options'), inner_notebook)
@@ -5382,6 +5473,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_subtitles_tab().
 
         Sets up the 'Format' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -5467,13 +5563,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Output' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Output'),
             inner_notebook,
         )
-
         grid_width = 4
 
         # List of output filename templates
@@ -5601,13 +5701,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Paths' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Paths'),
             inner_notebook,
         )
-
         grid_width = 5
 
         # List of output paths
@@ -5741,13 +5845,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Videos' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Videos'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Video Selection Options
@@ -5792,13 +5900,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Downloads' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Downloads'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Download Options
@@ -5810,7 +5922,7 @@ class OptionsEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _(
-                'Number of fragments of a dash/hls video to download' \
+                'Number of fragments of a DASH/HLS video to download' \
                 + ' concurrently',
             ),
             0, 1, 1, 1
@@ -5844,13 +5956,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Filesystem' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Filesystem'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Filesystem Options
@@ -5909,19 +6025,17 @@ class OptionsEditWin(GenericEditWin):
         )
         self.add_tooltip('--no-clean-infojson', checkbutton4)
 
-        checkbutton5 = self.add_checkbutton(grid,
-            _('Retrieve video comments and add to .info.json file'),
-            'write_comments',
-            0, 6, grid_width, 1,
-        )
-        self.add_tooltip('--write-comments', checkbutton5)
-
 
     def setup_ytdlp_shortcuts_tab(self, inner_notebook):
 
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Shortcuts' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -5970,6 +6084,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Verbosity' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -6010,13 +6129,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Workarounds' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Workarounds'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Workaround Options
@@ -6062,6 +6185,11 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Formats' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -6116,13 +6244,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Post-Process' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Post-processing'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Post-Processing Options
@@ -6197,13 +6329,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_ytdlp_tab().
 
         Sets up the 'Extractor' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('E_xtractor'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Extractor Options
@@ -6293,13 +6429,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the 'Configuration' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Configurations'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # Configuration file options
@@ -6369,13 +6509,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the 'Authentication' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Authentication'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Authentication options
@@ -6470,13 +6614,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the '.netrc' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('._netrc'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # .netrc options
@@ -6551,10 +6699,14 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the 'Network' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Network'), inner_notebook)
-
         grid_width = 2
 
         # Network options
@@ -6619,13 +6771,17 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the 'Geo-restriction' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Geo-restriction'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Geo-restriction options
@@ -6687,10 +6843,14 @@ class OptionsEditWin(GenericEditWin):
         """Called by self.setup_advanced_tab().
 
         Sets up the 'Workaround' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab('_Workaround', inner_notebook)
-
         grid_width = 2
 
         # Workaround options
@@ -7446,7 +7606,7 @@ class OptionsEditWin(GenericEditWin):
 
             dir_path = os.path.dirname(dl_config_path)
             if not os.path.isdir(dir_path):
-                os.makedirs(dir_path)
+                self.app_obj.make_directory(dir_path)
 
             fh = open(dl_config_path, 'w')
             fh.write(
@@ -7674,15 +7834,15 @@ class OptionsEditWin(GenericEditWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            name = model[iter][0]
+            name = model[tree_iter][0]
             # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
@@ -7803,15 +7963,15 @@ class OptionsEditWin(GenericEditWin):
         """
 
         selection = other_treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            name = model[iter][0]
+            name = model[tree_iter][0]
             # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
             extract_code = formats.VIDEO_OPTION_DICT[name]
 
@@ -7823,7 +7983,7 @@ class OptionsEditWin(GenericEditWin):
             self.edit_dict['video_format_list'] = format_list
 
             # Update the right-hand side treeview
-            model.remove(iter)
+            model.remove(tree_iter)
 
             # Update other widgets, as required
             add_button.set_sensitive(True)
@@ -8073,15 +8233,15 @@ class OptionsEditWin(GenericEditWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            lang_name = model[iter][0]
+            lang_name = model[tree_iter][0]
             # Convert a language to its ISO 639-1 Language Code, e.g. convert
             #   'English' to 'en'
             lang_code = formats.LANGUAGE_CODE_DICT[lang_name]
@@ -8130,15 +8290,15 @@ class OptionsEditWin(GenericEditWin):
         """
 
         selection = other_treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            lang_name = model[iter][0]
+            lang_name = model[tree_iter][0]
             # Convert a language to its ISO 639-1 Language Code, e.g. convert
             #   'English' to 'en'
             lang_code = formats.LANGUAGE_CODE_DICT[lang_name]
@@ -8837,7 +8997,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         Returns:
 
-            The original or modified value of that attribute.
+            The original or modified value of that attribute
 
         """
 
@@ -8907,7 +9067,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Name'))
-
         grid_width = 4
 
         self.add_label(grid,
@@ -9148,7 +9307,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Settings'))
-
         grid_width = 7
         self.settings_grid = grid
 
@@ -9423,12 +9581,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
             0, 3, 1, 1,
         )
 
-        # (Use yet another grid to avoid messing up the surrounding layout)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 1, 3, (inner_width - 1), 1)
-        grid2.set_border_width(self.spacing_size)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 1, 3, (inner_width - 1), 1)
 
         label2 = self.add_label(grid2,
             _('Lossless') + '\n' + _('Large file'),
@@ -9717,13 +9872,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Initialise the list
         self.setup_settings_tab_update_clip_treeview()
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 2, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 2, grid_width, 1)
 
         # Strip of widgets at the bottom
         label = self.add_label(grid2,
@@ -9906,13 +10057,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Initialise the list
         self.setup_settings_tab_update_slice_treeview()
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 2, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 2, grid_width, 1)
 
         # Strip of widgets at the bottom
         label = self.add_label(grid2,
@@ -9976,12 +10123,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         if not custom_flag:
             self.slice_stop_entry.set_sensitive(False)
 
-        # Add yet another grid for the bottom row
-        grid3 = Gtk.Grid()
-        grid.attach(grid3, 0, 3, grid_width, 1)
-        grid3.set_vexpand(False)
-        grid3.set_column_spacing(self.spacing_size)
-        grid3.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         self.add_slice_button = Gtk.Button(_('Add slice'))
         grid3.attach(self.add_slice_button, 0, 0, 1, 1)
@@ -10164,7 +10308,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Optimisations'))
-
         grid_width = 2
 
         self.seek_flag_checkbutton = self.add_checkbutton(grid,
@@ -10284,8 +10427,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Clips'))
-
         grid_width = 2
+
         output_mode = self.retrieve_val('output_mode')
         split_mode = self.retrieve_val('split_mode')
 
@@ -10369,13 +10512,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Initialise the list
         self.setup_clips_tab_update_treeview()
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         # Strip of widgets at the bottom
         label = self.add_label(grid2,
@@ -10500,8 +10639,8 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Slices'))
-
         grid_width = 2
+
         output_mode = self.retrieve_val('output_mode')
         slice_mode = self.retrieve_val('split_mode')
 
@@ -10580,13 +10719,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Initialise the list
         self.setup_slices_tab_update_treeview()
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         # Strip of widgets at the bottom
         label = self.add_label(grid2,
@@ -10650,12 +10785,9 @@ class FFmpegOptionsEditWin(GenericEditWin):
         if not custom_flag:
             self.simple_slice_stop_entry.set_sensitive(False)
 
-        # Add yet another grid for the bottom row
-        grid3 = Gtk.Grid()
-        grid.attach(grid3, 0, 4, grid_width, 1)
-        grid3.set_vexpand(False)
-        grid3.set_column_spacing(self.spacing_size)
-        grid3.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
 
         self.simple_add_slice_button = Gtk.Button(_('Add slice'))
         grid3.attach(self.simple_add_slice_button, 0, 2, 1, 1)
@@ -10769,7 +10901,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Videos'))
-
         grid_width = 2
 
         # List of videos to be processed
@@ -10858,7 +10989,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """Called by self.setup_videos_tab().
 
         Fills or updates the treeview.
-
         """
 
         self.video_liststore.clear()
@@ -10929,7 +11059,6 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         Updates the contents of the textview showing a specimen system command,
         incorporating the modified value.
-
         """
 
         # This particular call returns a list inside a tuple, for no obvious
@@ -12060,7 +12189,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         """Called from callback in self.setup_videos_tab().
 
         This function is required for detecting when the user drags and drops
-        data into the Videos Tab.
+        data into the Videos tab.
 
         If the data contains full paths to a video/audio file and/or URLs,
         then we can search the media data registry, looking for matching
@@ -12110,7 +12239,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                         mod_list.append(mod_line)
 
             # The True argument means to include 'dummy' media.Videos from the
-            #   Classic Mode Tab in the search
+            #   Classic Mode tab in the search
             video_list = self.app_obj.retrieve_videos_from_db(mod_list, True)
 
             # (Remember if the video list is currently empty, or not)
@@ -12434,6 +12563,11 @@ class VideoEditWin(GenericEditWin):
         self.timestamp_liststore = None         # Gtk.ListStore
         # (Widgets used in the Slices tab)
         self.slice_liststore = None             # Gtk.ListStore
+        # (Widgets used in the Comments tab)
+        self.comment_scrolled = None            # Gtk.ScrolledWindow
+        self.comment_treeview = None            # Gtk.TreeView
+        self.comment_liststore = None           # Gtk.ListStore
+        self.comment_listbox = None             # Gtk.ListBox
 
 
         # IV list - other
@@ -12535,6 +12669,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_descrip_tab()
         self.setup_timestamps_tab()
         self.setup_slices_tab()
+        self.setup_comments_tab()
         self.setup_errors_warnings_tab()
 
 
@@ -12572,13 +12707,9 @@ class VideoEditWin(GenericEditWin):
             -1,
         )
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 2, 5, 1, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 2, 5, 1, 1)
 
         entry = self.add_entry(grid2,
             None,
@@ -12603,18 +12734,14 @@ class VideoEditWin(GenericEditWin):
 
         grid2.attach(button, 1, 0, 1, 1)
         button.set_tooltip_text(_('Set the file (if this is the wrong one)'))
-        # (Signal connect appears below)
         if self.edit_obj.parent_obj.name \
         in self.app_obj.media_unavailable_dict:
             button.set_sensitive(False)
+        # (Signal connect appears below)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid3 = Gtk.Grid()
-        grid.attach(grid3, 0, 6, 3, 1)
-        grid3.set_vexpand(False)
-        grid3.set_column_spacing(self.spacing_size)
-        grid3.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 6, 3, 1)
 
         checkbutton = self.add_checkbutton(grid3,
             _('Video downloaded'),
@@ -12766,7 +12893,6 @@ class VideoEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Live'))
-
         grid_width = 2
 
         # Livestream properties
@@ -12923,7 +13049,7 @@ class VideoEditWin(GenericEditWin):
         spinbutton.set_value(self.app_obj.main_win_obj.descrip_line_max_len)
 
         button2 = Gtk.Button.new_with_label(
-            _('Clear the description (does not modify the description file)'),
+            _('Clear the description (does not modify the file)'),
         )
         grid.attach(button2, 0, 3, grid_width, 1)
         # (Signal connect appears below)
@@ -12951,7 +13077,6 @@ class VideoEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Timestamps'))
-
         grid_width = 4
 
         # Timestamps
@@ -13038,13 +13163,9 @@ class VideoEditWin(GenericEditWin):
         )
         entry3.set_hexpand(True)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 5, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
 
         button = Gtk.Button(_('Add timestamp'))
         grid2.attach(button, 0, 0, 1, 1)
@@ -13128,7 +13249,6 @@ class VideoEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Slices'))
-
         grid_width = 4
 
         # Video Slices
@@ -13226,13 +13346,9 @@ class VideoEditWin(GenericEditWin):
         )
         entry2.set_hexpand(False)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 5, grid_width, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
 
         button = Gtk.Button(_('Add slice'))
         grid2.attach(button, 0, 0, 1, 1)
@@ -13307,6 +13423,455 @@ class VideoEditWin(GenericEditWin):
             self.slice_liststore.append(
                 [ category, action, str(start_time), str(stop_time) ],
             )
+
+
+    def setup_comments_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Comments' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Comments'))
+        grid_width = 3
+
+        # Comments
+        self.add_label(grid,
+            '<u>' + _('Comments') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            '<i>' + _('Video comments can only be downloaded by yt-dlp') \
+            + '</i>',
+            0, 1, 1, 1,
+        )
+        label.set_hexpand(True)
+
+        label2 = self.add_label(grid,
+            _('Comments:'),
+            1, 1, 1, 1,
+        )
+        label2.set_hexpand(True)
+
+        entry = self.add_entry(grid,
+            None,
+            2, 1, 1, 1,
+        )
+        entry.set_hexpand(False)
+        entry.set_max_width_chars(8)
+        entry.set_text(str(len(self.edit_obj.comment_list)))
+
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        self.comment_scrolled = Gtk.ScrolledWindow()
+        frame.add(self.comment_scrolled)
+        self.comment_scrolled.set_vexpand(True)
+        self.comment_scrolled.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC,
+        )
+
+        # For a flat list, use a Gtk.TreeView. For a formmated list, use a
+        #   Gtk.ListBox
+        if not self.app_obj.comment_show_formatted_flag:
+            self.setup_comments_tab_add_treeview()
+        else:
+            self.setup_comments_tab_add_listbox()
+
+        # Initialise the list
+        self.setup_comments_tab_update_list()
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
+
+        # Editing widgets
+        radiobutton = self.add_radiobutton(grid2,
+            None,
+            _('Show comment timestamps'),
+            None,
+            None,
+            0, 3, 1, 1,
+        )
+        radiobutton.set_hexpand(False)
+        # (Signal connect appears below)
+
+        radiobutton2 = self.add_radiobutton(grid2,
+            radiobutton,
+            _('Show comment times as text'),
+            None,
+            None,
+            1, 3, 1, 1,
+        )
+        radiobutton2.set_hexpand(False)
+        if self.app_obj.comment_show_text_time_flag:
+            radiobutton2.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_time_radiobutton_toggled,
+        )
+
+        # (Empty label for spacing)
+        label3 = self.add_label(grid2,
+            '',
+            2, 3, 1, 1,
+        )
+        label3.set_hexpand(True)
+
+        radiobutton3 = self.add_radiobutton(grid2,
+            None,
+            _('Show unformatted list'),
+            None,
+            None,
+            0, 4, 1, 1,
+        )
+        radiobutton3.set_hexpand(False)
+        # (Signal connect appears below)
+
+        radiobutton4 = self.add_radiobutton(grid2,
+            radiobutton3,
+            _('Show formatted list'),
+            None,
+            None,
+            1, 4, 1, 1,
+        )
+        radiobutton4.set_hexpand(False)
+        if self.app_obj.comment_show_formatted_flag:
+            radiobutton4.set_active(True)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        radiobutton3.connect(
+            'toggled',
+            self.on_format_radiobutton_toggled,
+        )
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
+
+        button = Gtk.Button.new_with_label(
+            _('Update from the metadata file'),
+        )
+        grid3.attach(button, 0, 0, 1, 1)
+        button.set_hexpand(True)
+        button.connect(
+            'clicked',
+            self.on_load_comments_button_clicked,
+        )
+        json_path = self.edit_obj.check_actual_path_by_ext(
+            self.app_obj,
+            '.info.json',
+        )
+        if json_path is None:
+            button.set_sensitive(False)
+
+        button2 = Gtk.Button.new_with_label(
+            _('Clear comments (does not modify the file)'),
+        )
+        grid3.attach(button2, 1, 0, 1, 1)
+        button2.set_hexpand(True)
+        button2.connect(
+            'clicked',
+            self.on_clear_comments_button_clicked,
+        )
+
+
+    def setup_comments_tab_add_treeview(self):
+
+        """Called by self.setup_comments_tab().
+
+        For a flat list, we use a Gtk.TreeView.
+        """
+
+        # (This treeview replaces the old treeview or Gtk.ListBox)
+        self.setup_comments_tab_remove_child()
+
+        self.comment_treeview = Gtk.TreeView()
+        self.comment_scrolled.add(self.comment_treeview)
+        self.comment_treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [
+                _('Time'), _('Author'), _('Comment'), _('Likes'),
+                _('Favourite'), _('Uploader'),
+            ],
+        ):
+            if i < 4:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                self.comment_treeview.append_column(column_text)
+                column_text.set_resizable(True)
+                # (Employ a twin strategy to cope with spam: split long values
+                #   into multiple lines, and limit the (default) column size)
+                if i == 1:
+                    column_text.set_min_width(100)
+                    column_text.set_max_width(200)
+                elif i == 2:
+                    column_text.set_min_width(100)
+                else:
+                    column_text.set_min_width(50)
+            else:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                self.comment_treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+                column_toggle.set_min_width(50)
+
+        self.comment_liststore = Gtk.ListStore(
+            str, str, str, str, bool, bool,
+        )
+        self.comment_treeview.set_model(self.comment_liststore)
+
+
+    def setup_comments_tab_add_listbox(self):
+
+        """Called by self.setup_comments_tab().
+
+        For a formatted list, we use a Gtk.ListBox.
+        """
+
+        # (This listbox replaces the old treeview or Gtk.ListBox)
+        self.setup_comments_tab_remove_child()
+
+        self.comment_listbox = Gtk.ListBox()
+        self.comment_scrolled.add(self.comment_listbox)
+        self.comment_listbox.set_can_focus(False)
+        self.comment_listbox.set_vexpand(True)
+
+
+    def setup_comments_tab_remove_child(self):
+
+        """Called by self.setup_comments_tab_add_treeview() and
+        self.setup_comments_tab_add_listbox().
+
+        Removes the containing Gtk.Frame's textview or listbox, before adding
+        a new child widget.
+        """
+
+        if self.comment_treeview is not None:
+            self.comment_scrolled.remove(self.comment_treeview)
+            self.comment_treeview = None
+            self.comment_liststore = None
+        elif self.comment_listbox is not None:
+            self.comment_scrolled.remove(self.comment_listbox)
+            self.comment_listbox = None
+
+
+    def setup_comments_tab_update_list(self):
+
+        """Can be called by anything.
+
+        Fills or updates either the treeview or the listbox, whichever is
+        visible at the moment.
+        """
+
+        if self.comment_treeview is not None:
+            self.setup_comments_tab_update_treeview()
+        else:
+            self.setup_comments_tab_update_listbox()
+
+        # (The Gtk.ListBox won't appear filled without this line)
+        self.show_all()
+
+
+    def setup_comments_tab_update_treeview(self):
+
+        """ Called by self.setup_comments_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.comment_liststore.clear()
+
+        shorter = 30
+        longer = 80
+
+        # Add each comment to the treeview, one row at a time
+        # (Employ a twin strategy to cope with spam: split long values into
+        #   multiple lines, and limit the (default) column size)
+        longest = 0
+        for mini_dict in self.edit_obj.comment_list:
+
+            # (The keys 'id' and 'text' are compulsory)
+            if not self.app_obj.comment_show_text_time_flag \
+            and 'timestamp' in mini_dict:
+                ts = datetime.datetime.fromtimestamp(mini_dict['timestamp'])
+                ts.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+                time = ts.strftime('%Y-%m-%d %H:%M:%S')
+
+            elif self.app_obj.comment_show_text_time_flag \
+            and 'time' in mini_dict:
+                time = mini_dict['time']
+
+            else:
+                time = 'n/a'
+
+            if 'author' in mini_dict:
+                author = mini_dict['author']
+            else:
+                author = 'n/a'
+
+            if 'likes' in mini_dict:
+                likes = mini_dict['likes']
+            else:
+                likes = '0'
+
+            if 'fav_flag' in mini_dict:
+                fav_flag = mini_dict['fav_flag']
+            else:
+                fav_flag = False
+
+            if 'ul_flag' in mini_dict:
+                ul_flag = mini_dict['ul_flag']
+            else:
+                ul_flag = False
+
+            self.comment_liststore.append([
+                time,
+                utils.shorten_string(author, shorter),
+                utils.tidy_up_long_string(mini_dict['text'], longer),
+                str(likes),
+                fav_flag,
+                ul_flag,
+            ])
+
+
+    def setup_comments_tab_update_listbox(self):
+
+        """ Called by self.setup_comments_tab().
+
+        Fills or updates the listbox.
+        """
+
+        for child in self.comment_listbox.get_children():
+            self.comment_listbox.remove(child)
+
+        shorter = 30
+        longer = 80
+        # Import the main window (for convenience)
+        main_win_obj = self.app_obj.main_win_obj
+
+        # The media.Video object's .comment_list is a flat list. Compile a
+        #   dictionary, so we can find each commment's parents
+        check_dict = {}
+        for mini_dict in self.edit_obj.comment_list:
+            check_dict[mini_dict['id']] = mini_dict
+
+        # Add each comment to the listbox, one row at a time
+        for mini_dict in self.edit_obj.comment_list:
+
+            row = Gtk.ListBoxRow()
+
+            hbox = Gtk.HBox()
+            row.add(hbox)
+            # (self.spacing_size is a little too big)
+            hbox.set_border_width(3)
+
+            # Indent the comment, depending on how many parents this comment
+            #   has
+            # The indentation is applied by adding a Gtk.Label of the right
+            #   length, up to a sensible maximum
+            count = 0
+            this_dict = mini_dict
+            while count <= 8 and this_dict['parent'] is not None:
+                this_dict = check_dict[this_dict['parent']]
+                count += 1
+
+            if count:
+                label = Gtk.Label.new()
+                hbox.pack_start(label, False, False, 0)
+                label.set_text('        ' * count)
+
+            box = Gtk.Box()
+            hbox.add(box)
+
+            vbox = Gtk.VBox()
+            box.add(vbox)
+
+            hbox2 = Gtk.HBox()
+            vbox.pack_start(hbox2, False, False, 0)
+
+            if mini_dict['ul_flag']:
+                image = Gtk.Image.new_from_pixbuf(
+                    main_win_obj.pixbuf_dict['uploader_small'],
+                )
+                hbox2.pack_start(image, False, False, 0)
+
+            if 'author' in mini_dict:
+                msg = '<b>' \
+                + html.escape(
+                    utils.shorten_string(mini_dict['author'], shorter),
+                    quote=False,
+                ) + '</b>'
+            else:
+                msg = '<b>Anonymous</b>'
+
+            if not self.app_obj.comment_show_text_time_flag \
+            and 'timestamp' in mini_dict:
+                ts = datetime.datetime.fromtimestamp(mini_dict['timestamp'])
+                ts.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+                time = ts.strftime('%Y-%m-%d %H:%M:%S')
+
+            elif self.app_obj.comment_show_text_time_flag \
+            and 'time' in mini_dict:
+                time = mini_dict['time']
+
+            else:
+                time = 'Unknown time'
+
+            msg += ' <i>' + time + '</i>'
+
+            label2 = Gtk.Label()
+            hbox2.pack_start(label2, False, False, 0)
+            label2.set_markup(msg)
+            label2.set_alignment(0, 0.5)
+
+            if mini_dict['likes']:
+                image = Gtk.Image.new_from_pixbuf(
+                    main_win_obj.pixbuf_dict['likes_small'],
+                )
+                hbox2.pack_start(image, False, False, self.spacing_size)
+
+                label3 = Gtk.Label()
+                hbox2.pack_start(label3, False, False, 0)
+                label3.set_text(str(mini_dict['likes']))
+                label3.set_alignment(0, 0.5)
+
+            if mini_dict['fav_flag']:
+                image = Gtk.Image.new_from_pixbuf(
+                    main_win_obj.pixbuf_dict['favourite_small'],
+                )
+                hbox2.pack_start(image, False, False, self.spacing_size)
+
+            hbox3 = Gtk.HBox()
+            vbox.pack_start(hbox3, False, False, 0)
+
+            label4 = Gtk.Label()
+            hbox3.pack_start(label4, False, False, 0)
+            label4.set_text(
+                html.escape(
+                    utils.tidy_up_long_string(mini_dict['text'], longer),
+                    quote=False
+                    ,
+                ),
+            )
+            label4.set_alignment(0, 0.5)
+
+            self.comment_listbox.add(row)
 
 
     def setup_errors_warnings_tab(self):
@@ -13541,6 +14106,23 @@ class VideoEditWin(GenericEditWin):
         SystemPrefWin(self.app_obj, 'slices')
 
 
+    def on_clear_comments_button_clicked(self, button):
+
+        """Called from a callback in self.setup_descrip_tab().
+
+        Clears the video's .comment_list IV (but doesn't modify the
+        .info.json file itself).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.reset_comments()
+        self.setup_comments_tab_update_list()
+
+
     def on_clear_descrip_button_clicked(self, button, textbuffer):
 
         """Called from a callback in self.setup_descrip_tab().
@@ -13764,7 +14346,7 @@ class VideoEditWin(GenericEditWin):
         # Get the user's response
         response = dialogue_win.run()
         if response == Gtk.ResponseType.OK:
-            new_path = dialogue_win.get_filename()
+            new_path = os.path.abspath(dialogue_win.get_filename())
 
         dialogue_win.destroy()
         if response == Gtk.ResponseType.OK:
@@ -13845,6 +14427,45 @@ class VideoEditWin(GenericEditWin):
             )
 
 
+    def on_format_radiobutton_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_comments_tab().
+
+        Updates the mainapp.TartubeApp IV, and redraws the treeview.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The clicked widget
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_comment_show_formatted_flag(False)
+            self.setup_comments_tab_add_treeview()
+        else:
+            self.app_obj.set_comment_show_formatted_flag(True)
+            self.setup_comments_tab_add_listbox()
+
+        self.setup_comments_tab_update_list()
+        self.show_all()
+
+
+    def on_load_comments_button_clicked(self, button):
+
+        """Called from a callback in self.setup_comments_tab().
+
+        Updates the video's comments from its .info.json file.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.app_obj.update_video_from_json(self.edit_obj, 'comments')
+        self.setup_comments_tab_update_list()
+
+
     def on_load_descrip_button_clicked(self, button, spinbutton, textbuffer):
 
         """Called from a callback in self.setup_descrip_tab().
@@ -13868,6 +14489,26 @@ class VideoEditWin(GenericEditWin):
         )
 
         textbuffer.set_text(self.edit_obj.descrip)
+
+
+    def on_time_radiobutton_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_comments_tab().
+
+        Updates the mainapp.TartubeApp IV, and redraws the treeview.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The clicked widget
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_comment_show_text_time_flag(False)
+        else:
+            self.app_obj.set_comment_show_text_time_flag(True)
+
+        self.setup_comments_tab_update_list()
 
 
 class ChannelPlaylistEditWin(GenericEditWin):
@@ -14027,13 +14668,9 @@ class ChannelPlaylistEditWin(GenericEditWin):
         self.add_source_properties(grid)
         self.add_destination_properties(grid)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 7, 3, 1)
-        grid2.set_vexpand(False)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 7, 3, 1)
 
         if self.media_type == 'channel':
             string = _(
@@ -14147,7 +14784,6 @@ class ChannelPlaylistEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_History'))
-
         grid_width = 6
 
         self.add_label(grid,
@@ -14470,13 +15106,9 @@ class FolderEditWin(GenericEditWin):
         self.add_container_properties(grid)
         self.add_destination_properties(grid)
 
-        # To avoid messing up the neat format of the rows above, add another
-        #   grid, and put the next set of widgets inside it
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 7, 3, 1)
-        grid2.set_border_width(self.spacing_size)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 7, 3, 1)
 
         checkbutton = self.add_checkbutton(grid2,
             _('Don\'t add videos to Tartube\'s database'),
@@ -14561,7 +15193,6 @@ class FolderEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Statistics'))
-
         grid_width = 4
 
         self.add_label(grid,
@@ -14710,7 +15341,6 @@ class FolderEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_History'))
-
         grid_width = 6
 
         self.add_label(grid,
@@ -14757,7 +15387,6 @@ class FolderEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Recent Videos'))
-
         grid_width = 2
 
         self.add_label(grid,
@@ -15081,7 +15710,6 @@ class ScheduledEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_General'))
-
         grid_width = 3
 
         self.add_label(grid,
@@ -15301,7 +15929,6 @@ class ScheduledEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Media'))
-
         grid_width = 4
 
         self.add_label(grid,
@@ -15440,7 +16067,6 @@ class ScheduledEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Limits'))
-
         grid_width = 3
 
         self.add_label(grid,
@@ -15643,15 +16269,15 @@ class ScheduledEditWin(GenericEditWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            name = model[iter][0]
+            name = model[tree_iter][0]
 
         # Check the media data object exists in the list and in the media data
         #   registry
@@ -16119,6 +16745,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_general_tab().
 
         Sets up the 'Language' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Language'), inner_notebook)
@@ -16164,14 +16795,19 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_general_tab().
 
         Sets up the 'Stability' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Stability'),
             inner_notebook,
         )
-
         grid_width = 2
+
         label_length \
         = self.app_obj.main_win_obj.exceedingly_long_string_max_len
 
@@ -16254,6 +16890,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_general_tab().
 
         Sets up the 'Modules' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Modules'), inner_notebook)
@@ -16364,13 +17005,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_general_tab().
 
         Sets up the 'Debug' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Debugging'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Debugging preferences
@@ -16517,6 +17162,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Device' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Device'), inner_notebook)
@@ -16614,6 +17264,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Config' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Config'), inner_notebook)
@@ -16666,10 +17321,14 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Database' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('D_atabase'), inner_notebook)
-
         grid_width = 6
 
         # Database preferences
@@ -16789,10 +17448,9 @@ class SystemPrefWin(GenericPrefWin):
             button6,
         )
 
-        # (Add a second grid, so widget positioning on the first one isn't
-        #   messed up)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 5, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
 
         checkbutton = self.add_checkbutton(grid2,
             _(
@@ -16851,10 +17509,14 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Backups' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Backups'), inner_notebook)
-
         grid_width = 3
 
         # Backup preferences
@@ -16971,13 +17633,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Videos' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Videos'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Automatic video deletion preferences
@@ -17100,13 +17766,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Update' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Update'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Update video descriptions
@@ -17161,10 +17831,9 @@ class SystemPrefWin(GenericPrefWin):
             self.on_clear_descrips_button_clicked,
         )
 
-        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
-        #   mess up the formatting)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 4, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
 
         # Video timestamps
         self.add_label(grid2,
@@ -17188,19 +17857,53 @@ class SystemPrefWin(GenericPrefWin):
             self.on_remove_stamps_button_clicked,
         )
 
+        # Video comments
+        self.add_label(grid2,
+            '<u>' + _('Video comments') + '</u>',
+            0, 6, grid_width, 1,
+        )
+
+        button5 = Gtk.Button(_('Extract comments for all videos'))
+        grid2.attach(button5, 0, 7, 1, 1)
+        button5.set_hexpand(False)
+        button5.connect(
+            'clicked',
+            self.on_extract_comments_button_clicked,
+        )
+
+        button6 = Gtk.Button(_('Remove comments from all videos'))
+        grid2.attach(button6, 1, 7, 1, 1)
+        button6.set_hexpand(False)
+        button6.connect(
+            'clicked',
+            self.on_remove_comments_button_clicked,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+                'Comments are extracted from each video\'s metadata file,' \
+                + ' so this procedure may take a long time',
+            ) + '</i>',
+            0, 8, grid_width, 1,
+        )
+
 
     def setup_files_urls_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
         Sets up the 'URLs' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_URLs'),
             inner_notebook,
         )
-
         grid_width = 5
 
         # Update channel/playlist URLs
@@ -17322,10 +18025,9 @@ class SystemPrefWin(GenericPrefWin):
             4, 2, 1, 1,
         )
 
-        # (Add a second grid, so widget positioning on the first one isn't
-        #   messed up)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         button = Gtk.Button(
             _('Search and replace text in the selected URLs'),
@@ -17418,6 +18120,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Temporary folders' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -17472,13 +18179,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'Statistics' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Statistics'),
             inner_notebook,
         )
-
         grid_width = 4
 
         self.add_label(grid,
@@ -17643,13 +18354,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_files_tab().
 
         Sets up the 'History' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_History'),
             inner_notebook,
         )
-
         grid_width = 6
 
         self.add_label(grid,
@@ -17717,14 +18432,18 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Main Window' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Main window'),
             inner_notebook,
         )
-
-        grid_width = 2
+        grid_width = 3
 
         # Main window preferences
         self.add_label(grid,
@@ -17733,30 +18452,30 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Remember the size of the main window when shutting down'),
+            _('Remember size of the main window'),
             self.app_obj.main_win_save_size_flag,
             True,                   # Can be toggled by user
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
 
-        button = Gtk.Button(_('Reset size'))
-        grid.attach(button, 1, 1, 1, 1)
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Remember slider positions'),
+            self.app_obj.main_win_save_slider_flag,
+            True,                   # Can be toggled by user
+            1, 1, 1, 1,
+        )
+        checkbutton2.connect('toggled', self.on_remember_slider_button_toggled)
+        if not self.app_obj.main_win_save_size_flag:
+            checkbutton2.set_sensitive(False)
+
+        button = Gtk.Button(_('Reset both'))
+        grid.attach(button, 2, 1, 1, 1)
         button.set_hexpand(True)
         button.connect(
             'clicked',
             self.on_reset_size_clicked,
         )
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Also remember the position of main window sliders'),
-            self.app_obj.main_win_save_slider_flag,
-            True,                   # Can be toggled by user
-            0, 2, grid_width, 1,
-        )
-        checkbutton2.connect('toggled', self.on_remember_slider_button_toggled)
-        if not self.app_obj.main_win_save_size_flag:
-            checkbutton2.set_sensitive(False)
 
         # (Signal connect from above)
         checkbutton.connect(
@@ -17769,7 +18488,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Don\'t show the main window toolbar'),
             self.app_obj.toolbar_hide_flag,
             True,                   # Can be toggled by user
-            0, 3, grid_width, 1,
+            0, 2, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -17777,7 +18496,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Don\'t show labels in the main window toolbar'),
             self.app_obj.toolbar_squeeze_flag,
             True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
+            1, 2, 2, 1,
         )
         checkbutton4.connect('toggled', self.on_squeeze_button_toggled)
         if self.app_obj.toolbar_hide_flag:
@@ -17797,7 +18516,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.show_custom_icons_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 3, grid_width, 1,
         )
         checkbutton5.connect('toggled', self.on_show_custom_icons_toggled)
 
@@ -17805,7 +18524,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Show tooltips for videos, channels, playlists and folders'),
             self.app_obj.show_tooltips_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 4, grid_width, 1,
         )
         # (Signal connect appears below)
 
@@ -17813,7 +18532,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Show errors/warnings in tooltips (but not in the Videos tab)'),
             self.app_obj.show_tooltips_extra_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 5, grid_width, 1,
         )
         checkbutton7.connect('toggled', self.on_show_tooltips_extra_toggled)
         if not self.app_obj.show_tooltips_flag:
@@ -17828,39 +18547,39 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton8 = self.add_checkbutton(grid,
             _(
-            'Disable the download buttons in the toolbar and the Videos Tab',
+            'Disable the download buttons in the toolbar and the Videos tab',
             ),
             self.app_obj.disable_dl_all_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         checkbutton8.connect('toggled', self.on_disable_dl_all_toggled)
 
         checkbutton9 = self.add_checkbutton(grid,
             _(
-            'Show a \'Custom download all\' button in the Videos Tab',
+            'Show a \'Custom download all\' button in the Videos tab',
             ),
             self.app_obj.show_custom_dl_button_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         checkbutton9.connect('toggled', self.on_show_custom_dl_button_toggled)
 
         checkbutton10 = self.add_checkbutton(grid,
             _(
-            'In the Progress Tab, hide finished videos / channels / playlists',
+            'In the Progress tab, hide finished downloads',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 8, 1, 1,
         )
         checkbutton10.connect('toggled', self.on_hide_button_toggled)
 
         checkbutton11 = self.add_checkbutton(grid,
-            _('In the Progress Tab, show results in reverse order'),
+            _('Show downloads in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            1, 8, 2, 1,
         )
         checkbutton11.connect('toggled', self.on_reverse_button_toggled)
 
@@ -17868,7 +18587,7 @@ class SystemPrefWin(GenericPrefWin):
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 12, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton12.connect(
             'toggled',
@@ -17879,12 +18598,12 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton13 = self.add_checkbutton(grid,
             _(
-            'In the Classic Mode Tab, when adding URLs, remove duplicates' \
+            'In the Classic Mode tab, when adding URLs, remove duplicates' \
             + ' rather than retaining them',
             ),
             self.app_obj.classic_duplicate_remove_flag,
             True,                   # Can be toggled by user
-            0, 13, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         checkbutton13.connect(
             'toggled',
@@ -17893,12 +18612,12 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton14 = self.add_checkbutton(grid,
             _(
-            'In the Errors/Warnings Tab, don\'t reset the tab text when' \
+            'In the Errors/Warnings tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 14, grid_width, 1,
+            0, 11, grid_width, 1,
         )
         checkbutton14.connect('toggled', self.on_system_keep_button_toggled)
 
@@ -17908,15 +18627,19 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Tabs' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Videos'), inner_notebook)
-
         grid_width = 2
 
         # Video Index preferences
         self.add_label(grid,
-            '<u>' + _('Video Index (left side of the Videos Tab)') + '</u>',
+            '<u>' + _('Video Index (left side of the Videos tab)') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -17975,7 +18698,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # Video Catalogue preferences
         self.add_label(grid,
-            '<u>' + _('Video Catalogue (right side of the Videos Tab)') \
+            '<u>' + _('Video Catalogue (right side of the Videos tab)') \
             + '</u>',
             0, 6, grid_width, 1,
         )
@@ -17996,7 +18719,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.catalogue_draw_frame_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 8, 1, 1,
         )
         checkbutton6.connect('toggled', self.on_draw_frame_button_toggled)
 
@@ -18006,13 +18729,17 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.catalogue_draw_icons_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            1, 8, 1, 1,
         )
         checkbutton7.connect('toggled', self.on_draw_icons_button_toggled)
 
-        self.add_label(grid,
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 9, grid_width, 1)
+
+        self.add_label(grid2,
             _('Thumbnail size (when videos are displayed on a grid)'),
-            0, 10, 1, 1,
+            0, 0, 1, 1,
         )
 
         store = Gtk.ListStore(str, str)
@@ -18021,7 +18748,7 @@ class SystemPrefWin(GenericPrefWin):
             store.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 10, 1, 1)
+        grid2.attach(combo, 1, 0, 1, 1)
         combo.set_hexpand(True)
 
         renderer_text = Gtk.CellRendererText()
@@ -18038,19 +18765,19 @@ class SystemPrefWin(GenericPrefWin):
         )
         combo.connect('changed', self.on_thumb_size_combo_changed)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid2,
             _('Show livestreams with a different background colour'),
             self.app_obj.livestream_use_colour_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 1, grid_width, 1,
         )
         # (Signal connect appears below)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid2,
             _('Use same background colours for livestream and debut videos'),
             self.app_obj.livestream_simple_colour_flag,
             True,                   # Can be toggled by user
-            0, 12, grid_width, 1,
+            0, 2, grid_width, 1,
         )
         if not self.app_obj.livestream_use_colour_flag:
             checkbutton9.set_sensitive(False)
@@ -18067,13 +18794,13 @@ class SystemPrefWin(GenericPrefWin):
             self.on_livestream_simple_button_toggled,
         )
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid2,
             _(
             'Channel and playlist names are clickable (grid mode only)',
             ),
             self.app_obj.catalogue_clickable_container_flag,
             True,                   # Can be toggled by user
-            0, 13, grid_width, 1,
+            0, 3, grid_width, 1,
         )
         checkbutton10.connect('toggled', self.on_clickable_button_toggled)
 
@@ -18083,6 +18810,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Drag' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Drag'), inner_notebook)
@@ -18138,6 +18870,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'System tray' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -18206,6 +18943,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Dialogues' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -18267,13 +19009,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Colours' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Colours'),
             inner_notebook,
         )
-
         grid_width = 5
 
         # Video Catalogue Colour preferences
@@ -18405,13 +19151,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Errors/Warnings' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Errors/Warnings'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Errors/Warnings tab preferences
@@ -18546,13 +19296,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_windows_tab().
 
         Sets up the 'Websites' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Websites'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # YouTube error/warning preferences
@@ -18666,10 +19420,14 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_scheduling_tab().
 
         Sets up the 'Start' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Start'), inner_notebook)
-
         grid_width = 5
 
         # Scheduled download preferences
@@ -18842,10 +19600,14 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_scheduling_tab().
 
         Sets up the 'Stop' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('S_top'), inner_notebook)
-
         grid_width = 3
 
         # Scheduled stop preferences
@@ -18998,9 +19760,10 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_stop_tab(self.operations_inner_notebook)
         self.setup_operations_downloads_tab(self.operations_inner_notebook)
         self.setup_operations_custom_dl_tab(self.operations_inner_notebook)
+        self.setup_operations_livestreams_tab(self.operations_inner_notebook)
         self.setup_operations_clips_tab(self.operations_inner_notebook)
         self.setup_operations_slices_tab(self.operations_inner_notebook)
-        self.setup_operations_livestreams_tab(self.operations_inner_notebook)
+        self.setup_operations_comments_tab(self.operations_inner_notebook)
         self.setup_operations_actions_tab(self.operations_inner_notebook)
         self.setup_operations_mirrors_tab(self.operations_inner_notebook)
         self.setup_operations_proxies_tab(self.operations_inner_notebook)
@@ -19012,13 +19775,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_operations_tab().
 
         Sets up the 'Limits' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Limits'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # Performance limits
@@ -19153,10 +19920,9 @@ class SystemPrefWin(GenericPrefWin):
             2, 7, 1, 1,
         )
 
-        # (Add a second grid, so widget positioning on the first one isn't
-        #   messed up)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 8, (grid_width - 1), 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 8, (grid_width - 1), 1)
 
         label = self.add_label(grid2,
             _('Alternative limits apply between') + '   ',
@@ -19252,13 +20018,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_operations_tab().
 
         Sets up the 'Stop' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Stop'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Time-saving settings
@@ -19323,13 +20093,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_operations_tab().
 
         Sets up the 'Downloads' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Downloads'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Download operation preferences
@@ -19494,6 +20268,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_operations_tab().
 
         Sets up the 'Custom' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Custom'), inner_notebook)
@@ -19579,10 +20358,9 @@ class SystemPrefWin(GenericPrefWin):
             entry,
         )
 
-        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
-        #   mess up the formatting)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         button3 = Gtk.Button()
         grid2.attach(button3, 0, 0, 1, 1)
@@ -19669,7 +20447,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Args:
 
-            custom_dl_obj (downloads.CustomDLManager) - The custom download
+            custom_dl_obj (downloads.CustomDLManager): The custom download
                 manager object to display on this row
 
         """
@@ -19703,18 +20481,205 @@ class SystemPrefWin(GenericPrefWin):
         self.custom_liststore.append(row_list)
 
 
+    def setup_operations_livestreams_tab(self, inner_notebook):
+
+        """Called by self.setup_operations_tab().
+
+        Sets up the 'Streams' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('L_ivestreams'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Livestream preferences
+        self.add_label(grid,
+            '<u>' + _(
+                'Livestream preferences (compatible websites only)',
+            ) + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Detect livestreams announced within this many days'),
+            self.app_obj.enable_livestreams_flag,
+            True,                   # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        # (Signal connect appears below)
+        spinbutton = self.add_spinbutton(grid,
+            0, None, 1, self.app_obj.livestream_max_days,
+            1, 1, 1, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag:
+            spinbutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('How often to check the status of livestreams (in minutes)'),
+            self.app_obj.scheduled_livestream_flag,
+            True,                   # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag:
+            checkbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        spinbutton2 = self.add_spinbutton(grid,
+            1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
+            1, 2, 1, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag \
+        or not self.app_obj.scheduled_livestream_flag:
+            spinbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Check more frequently when a livestream is due to start'),
+            self.app_obj.scheduled_livestream_extra_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        if not self.app_obj.enable_livestreams_flag \
+        or not self.app_obj.scheduled_livestream_flag:
+            checkbutton3.set_sensitive(False)
+        checkbutton3.connect(
+            'toggled',
+            self.on_extra_livestreams_button_toggled,
+        )
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_enable_livestreams_button_toggled,
+            checkbutton2,
+            checkbutton3,
+            spinbutton,
+            spinbutton2,
+        )
+
+        spinbutton.connect(
+            'value-changed',
+            self.on_livestream_max_days_spinbutton_changed,
+        )
+
+        checkbutton2.connect(
+            'toggled',
+            self.on_scheduled_livestreams_button_toggled,
+            checkbutton3,
+            spinbutton2,
+        )
+
+        spinbutton2.connect(
+            'value-changed',
+            self.on_scheduled_livestreams_spinbutton_changed,
+        )
+
+        # Broadcast preferences
+        self.add_label(grid,
+            '<u>' + _(
+                'Broadcast preferences (compatible websites only)',
+            ) + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+                'Use Youtube Stream Capture to download broadcasting' \
+                + ' livestreams (requires aria2)',
+            ),
+            self.app_obj.ytsc_priority_flag,
+            True,                   # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Timeout after this many minutes of inactivity'),
+            0, 6, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 0.2,
+            self.app_obj.ytsc_wait_time,
+            1, 6, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('Number of restarts after a timeout'),
+            0, 7, 1, 1,
+        )
+
+        spinbutton4 = self.add_spinbutton(grid,
+            0, None, 1,
+            self.app_obj.ytsc_restart_max,
+            1, 7, 1, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            spinbutton4.set_sensitive(False)
+        # (Signal connect appears below)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Bypass usual limits on simultaneous downloads, so that' \
+            + ' all broadcasts can be downloaded',
+            ),
+            self.app_obj.num_worker_bypass_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        if not self.app_obj.ytsc_priority_flag:
+            checkbutton5.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton4.connect(
+            'toggled',
+            self.on_ytsc_priority_button_toggled,
+            spinbutton3,
+            spinbutton4,
+            checkbutton5,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_ytsc_wait_time_spinbutton_changed,
+        )
+        spinbutton4.connect(
+            'value-changed',
+            self.on_ytsc_restart_max_spinbutton_changed,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_worker_bypass_button_toggled,
+        )
+
+
     def setup_operations_clips_tab(self, inner_notebook):
 
-        """Called by self.setup_scheduling_tab().
+        """Called by self.setup_operations_tab().
 
         Sets up the 'Clips' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Clips'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Video Clips
@@ -19904,16 +20869,20 @@ class SystemPrefWin(GenericPrefWin):
 
     def setup_operations_slices_tab(self, inner_notebook):
 
-        """Called by self.setup_scheduling_tab().
+        """Called by self.setup_operations_tab().
 
         Sets up the 'Slices' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Slices'),
             inner_notebook,
         )
-
         grid_width = 1
 
         # Video Slices
@@ -19989,182 +20958,69 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_operations_livestreams_tab(self, inner_notebook):
+    def setup_operations_comments_tab(self, inner_notebook):
 
-        """Called by self.setup_scheduling_tab().
+        """Called by self.setup_operations_tab().
 
-        Sets up the 'Streams' inner notebook tab.
+        Sets up the 'Comments' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('L_ivestreams'),
+            _('_Comments'),
             inner_notebook,
         )
+        grid_width = 1
 
-        grid_width = 2
-
-        # Livestream preferences
+        # Video comments
         self.add_label(grid,
-            '<u>' + _(
-                'Livestream preferences (compatible websites only)',
-            ) + '</u>',
+            '<u>' + _('Video Comments (requires yt-dlp)') + '</u>',
             0, 0, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Detect livestreams announced within this many days'),
-            self.app_obj.enable_livestreams_flag,
-            True,                   # Can be toggled by user
-            0, 1, 1, 1,
+            _(
+            'When checking/downloading videos, store comments in the' \
+            + ' metadata file',
+            ),
+            self.app_obj.comment_fetch_flag,
+            True,               # Can be toggled by user
+            0, 1, grid_width, 1,
         )
         # (Signal connect appears below)
-        spinbutton = self.add_spinbutton(grid,
-            0, None, 1, self.app_obj.livestream_max_days,
-            1, 1, 1, 1,
+
+        self.add_label(grid,
+            '<i>' + _('Warning: fetching comments will increase the download' \
+            + ' time, perhaps by a lot!') + '</i>',
+            0, 2, grid_width, 1,
         )
-        if not self.app_obj.enable_livestreams_flag:
-            spinbutton.set_sensitive(False)
-        # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('How often to check the status of livestreams (in minutes)'),
-            self.app_obj.scheduled_livestream_flag,
-            True,                   # Can be toggled by user
-            0, 2, 1, 1,
-        )
-        if not self.app_obj.enable_livestreams_flag:
-            checkbutton2.set_sensitive(False)
-        # (Signal connect appears below)
-
-        spinbutton2 = self.add_spinbutton(grid,
-            1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
-            1, 2, 1, 1,
-        )
-        if not self.app_obj.enable_livestreams_flag \
-        or not self.app_obj.scheduled_livestream_flag:
-            spinbutton2.set_sensitive(False)
-        # (Signal connect appears below)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Check more frequently when a livestream is due to start'),
-            self.app_obj.scheduled_livestream_extra_flag,
-            True,                   # Can be toggled by user
+            _('Also store comments in the Tartube database'),
+            self.app_obj.comment_store_flag,
+            True,               # Can be toggled by user
             0, 3, grid_width, 1,
         )
-        if not self.app_obj.enable_livestreams_flag \
-        or not self.app_obj.scheduled_livestream_flag:
-            checkbutton3.set_sensitive(False)
-        checkbutton3.connect(
-            'toggled',
-            self.on_extra_livestreams_button_toggled,
-        )
+        # (Signal connect appears below)
 
         # (Signal connects from above)
         checkbutton.connect(
             'toggled',
-            self.on_enable_livestreams_button_toggled,
+            self.on_comment_fetch_button_toggled,
             checkbutton2,
-            checkbutton3,
-            spinbutton,
-            spinbutton2,
         )
+        checkbutton2.connect('toggled', self.on_comment_store_button_toggled)
 
-        spinbutton.connect(
-            'value-changed',
-            self.on_livestream_max_days_spinbutton_changed,
-        )
-
-        checkbutton2.connect(
-            'toggled',
-            self.on_scheduled_livestreams_button_toggled,
-            checkbutton3,
-            spinbutton2,
-        )
-
-        spinbutton2.connect(
-            'value-changed',
-            self.on_scheduled_livestreams_spinbutton_changed,
-        )
-
-        # Broadcast preferences
         self.add_label(grid,
-            '<u>' + _(
-                'Broadcast preferences (compatible websites only)',
-            ) + '</u>',
+            '<i>' + _(
+                'Warning: storing comments will increase the size of' \
+                + ' Tartube\'s datbase, perhaps by a lot!',
+            ) + '</i>',
             0, 4, grid_width, 1,
-        )
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Use Youtube Stream Capture to download broadcasting' \
-                + ' livestreams (requires aria2)',
-            ),
-            self.app_obj.ytsc_priority_flag,
-            True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        self.add_label(grid,
-            _('Timeout after this many minutes of inactivity'),
-            0, 6, 1, 1,
-        )
-
-        spinbutton3 = self.add_spinbutton(grid,
-            1, None, 0.2,
-            self.app_obj.ytsc_wait_time,
-            1, 6, 1, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton3.set_sensitive(False)
-        # (Signal connect appears below)
-
-        self.add_label(grid,
-            _('Number of restarts after a timeout'),
-            0, 7, 1, 1,
-        )
-
-        spinbutton4 = self.add_spinbutton(grid,
-            0, None, 1,
-            self.app_obj.ytsc_restart_max,
-            1, 7, 1, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton4.set_sensitive(False)
-        # (Signal connect appears below)
-
-        checkbutton5 = self.add_checkbutton(grid,
-            _(
-            'Bypass usual limits on simultaneous downloads, so that' \
-            + ' all broadcasts can be downloaded',
-            ),
-            self.app_obj.num_worker_bypass_flag,
-            True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            checkbutton5.set_sensitive(False)
-        # (Signal connect appears below)
-
-        # (Signal connects from above)
-        checkbutton4.connect(
-            'toggled',
-            self.on_ytsc_priority_button_toggled,
-            spinbutton3,
-            spinbutton4,
-            checkbutton5,
-        )
-        spinbutton3.connect(
-            'value-changed',
-            self.on_ytsc_wait_time_spinbutton_changed,
-        )
-        spinbutton4.connect(
-            'value-changed',
-            self.on_ytsc_restart_max_spinbutton_changed,
-        )
-        checkbutton5.connect(
-            'toggled',
-            self.on_worker_bypass_button_toggled,
         )
 
 
@@ -20173,13 +21029,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_scheduling_tab().
 
         Sets up the 'Actions' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Actions'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # Livestream actions
@@ -20338,13 +21198,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_scheduling_tab().
 
         Sets up the 'Mirrors' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Mirrors'),
             inner_notebook,
         )
-
         grid_width = 2
 
         # Invidious mirror
@@ -20407,6 +21271,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_scheduling_tab().
 
         Sets up the 'Proxies' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -20441,13 +21310,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_operations_tab().
 
         Sets up the 'Preferences' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('P_references'),
             inner_notebook,
         )
-
         grid_width = 3
 
         # URL flexibility preferences
@@ -20604,6 +21477,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_downloader_tab().
 
         Sets up the 'Forks' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -20803,6 +21681,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_downloader_tab().
 
         Sets up the 'File Paths' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -20938,13 +21821,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_downloader_tab().
 
         Sets up the 'FFmpeg / AVConv' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_FFmpeg / AVConv'),
             inner_notebook,
         )
-
         grid_width = 4
 
         # Post-processor file paths
@@ -21049,13 +21936,17 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_downloader_tab().
 
         Sets up the 'Stream Capture' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Stream Capture'),
             inner_notebook,
         )
-
         grid_width = 4
 
         # Youtube Stream Capture file path
@@ -21127,6 +22018,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_options_tab().
 
         Sets up the 'Download options' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -21216,10 +22112,9 @@ class SystemPrefWin(GenericPrefWin):
             entry,
         )
 
-        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
-        #   mess up the formatting)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         button3 = Gtk.Button()
         grid2.attach(button3, 0, 0, 1, 1)
@@ -21287,7 +22182,6 @@ class SystemPrefWin(GenericPrefWin):
         """Can be called by anything.
 
         Fills or updates the treeview.
-
         """
 
         self.options_liststore.clear()
@@ -21353,6 +22247,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_downloader_tab().
 
         Sets up the 'Preferences' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -21394,6 +22293,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_options_tab().
 
         Sets up the 'FFmpeg options' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -21481,10 +22385,9 @@ class SystemPrefWin(GenericPrefWin):
             entry,
         )
 
-        # (Use a separate Gtk.Grid on the row below those buttons, so we don't
-        #   mess up the formatting)
-        grid2 = Gtk.Grid()
-        grid.attach(grid2, 0, 3, grid_width, 1)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
 
         button3 = Gtk.Button()
         grid2.attach(button3, 0, 0, 1, 1)
@@ -21552,7 +22455,6 @@ class SystemPrefWin(GenericPrefWin):
         """Can be called by anything.
 
         Fills or updates the treeview.
-
         """
 
         self.ffmpeg_liststore.clear()
@@ -21621,24 +22523,28 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called by self.setup_output_tab().
 
-        Sets up the 'Output Tab' inner notebook tab.
+        Sets up the 'Output tab' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Output Tab'),
+            _('_Output tab'),
             inner_notebook,
         )
-
         grid_width = 2
 
-        # Output Tab preferences
+        # Output tab preferences
         self.add_label(grid,
-            '<u>' + _('Output Tab preferences') + '</u>',
+            '<u>' + _('Output tab preferences') + '</u>',
             0, 0, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Display downloader system commands in the Output Tab'),
+            _('Display downloader system commands in the Output tab'),
             self.app_obj.ytdl_output_system_cmd_flag,
             True,               # Can be toggled by user
             0, 1, grid_width, 1,
@@ -21647,7 +22553,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_output_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Display output from downloader\'s STDOUT in the Output Tab'),
+            _('Display output from downloader\'s STDOUT in the Output tab'),
             self.app_obj.ytdl_output_stdout_flag,
             True,               # Can be toggled by user
             0, 2, grid_width, 1,
@@ -21686,7 +22592,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Display output from downloader\'s STDERR in the Output Tab'),
+            _('Display output from downloader\'s STDERR in the Output tab'),
             self.app_obj.ytdl_output_stderr_flag,
             True,               # Can be toggled by user
             0, 5, grid_width, 1,
@@ -21695,7 +22601,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton5.connect('toggled', self.on_output_stderr_button_toggled)
 
         checkbutton6 = self.add_checkbutton(grid,
-            _('Limit the size of Output Tab pages to'),
+            _('Limit the size of Output tab pages to'),
             self.app_obj.output_size_apply_flag,
             True,               # Can be toggled by user
             0, 6, 1, 1,
@@ -21716,7 +22622,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton7 = self.add_checkbutton(grid,
-            _('Empty pages in the Output Tab at the start of every operation'),
+            _('Empty pages in the Output tab at the start of every operation'),
             self.app_obj.ytdl_output_start_empty_flag,
             True,               # Can be toggled by user
             0, 7, grid_width, 1,
@@ -21750,7 +22656,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton10 = self.add_checkbutton(grid,
             _(
             'During a refresh operation, show all matching videos in the' \
-            + ' Output Tab',
+            + ' Output tab',
             ),
             self.app_obj.refresh_output_videos_flag,
             True,               # Can be toggled by user
@@ -21786,6 +22692,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_output_tab().
 
         Sets up the 'Terminal window' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(
@@ -21868,6 +22779,11 @@ class SystemPrefWin(GenericPrefWin):
         """Called by self.setup_output_tab().
 
         Sets up the 'Both' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
         """
 
         tab, grid = self.add_inner_notebook_tab(_('_Both'), inner_notebook)
@@ -21875,7 +22791,7 @@ class SystemPrefWin(GenericPrefWin):
         # Special preferences
         self.add_label(grid,
             '<u>' + _(
-                'Special preferences (applies to both the Output Tab and the' \
+                'Special preferences (applies to both the Output tab and the' \
                 + ' terminal window)',
             ) + '</u>',
             0, 0, 1, 1,
@@ -22488,7 +23404,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the download speed limit. Toggling the corresponding
-        Gtk.CheckButton in the Progress Tab sets the IV (and makes sure the two
+        Gtk.CheckButton in the Progress tab sets the IV (and makes sure the two
         checkbuttons have the same status).
 
         Args:
@@ -22526,7 +23442,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_limits_tab().
 
         Sets the simultaneous download limit. Setting the value of the
-        corresponding Gtk.SpinButton in the Progress Tab sets the IV (and
+        corresponding Gtk.SpinButton in the Progress tab sets the IV (and
         makes sure the two spinbuttons have the same value).
 
         Args:
@@ -22713,6 +23629,51 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(False)
 
 
+    def on_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called from callback in self.setup_operations_comments_tab().
+
+        Enables/disables fetching video comments.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.comment_fetch_flag:
+            self.app_obj.set_comment_fetch_flag(True)
+            checkbutton2.set_sensitive(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.comment_fetch_flag:
+            self.app_obj.set_comment_fetch_flag(False)
+            checkbutton2.set_active(False)
+            checkbutton2.set_sensitive(False)
+
+
+    def on_comment_store_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_comments_tab().
+
+        Enables/disables storing video comments in the Tartube database.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.comment_store_flag:
+            self.app_obj.set_comment_store_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.comment_store_flag:
+            self.app_obj.set_comment_store_flag(False)
+
+
     def on_complex_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_videos_tab().
@@ -22880,15 +23841,15 @@ class SystemPrefWin(GenericPrefWin):
 
         # Get the dbid for the selected line's channel/playlist
         model = treeview.get_model()
-        iter = model.get_iter(path)
-        if iter is not None:
+        tree_iter = model.get_iter(path)
+        if tree_iter is not None:
 
-            dbid = model[iter][0]
+            dbid = model[tree_iter][0]
             media_data_obj = self.app_obj.media_reg_dict[dbid]
 
             if not checkbutton.get_active():
                 media_data_obj.set_source(text)
-                model[iter][3] = text
+                model[tree_iter][3] = text
 
             else:
 
@@ -22899,7 +23860,7 @@ class SystemPrefWin(GenericPrefWin):
                     self,           # Parent window is this window
                     {
                         'yes': 'update_container_url',
-                        'data': [model, iter, media_data_obj, text],
+                        'data': [model, tree_iter, media_data_obj, text],
                     },
                 )
 
@@ -22956,10 +23917,10 @@ class SystemPrefWin(GenericPrefWin):
         model = this_tuple[0]
         for path in this_tuple[1]:
 
-            iter = model.get_iter(path)
-            if iter is not None:
+            tree_iter = model.get_iter(path)
+            if tree_iter is not None:
 
-                dbid = model[iter][0]
+                dbid = model[tree_iter][0]
                 if dbid in self.app_obj.media_reg_dict:
 
                     media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -23526,10 +24487,10 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is not None and not self.app_obj.disable_load_save_flag:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is not None and not self.app_obj.disable_load_save_flag:
 
-            data_dir = model[iter][0]
+            data_dir = model[tree_iter][0]
 
             if data_dir != self.app_obj.data_dir:
                 button2.set_sensitive(True)
@@ -23579,15 +24540,15 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            data_dir = model[iter][0]
+            data_dir = model[tree_iter][0]
 
         # Should not be possible to click the button, when the current
         #   directory is selected, but we'll check anyway
@@ -23812,15 +24773,15 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         selection = treeview.get_selection()
-        (model, iter) = selection.get_selected()
-        if iter is None:
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
 
             # Nothing selected
             return
 
         else:
 
-            data_dir = model[iter][0]
+            data_dir = model[tree_iter][0]
 
         # Should not be possible to click the button, when the current
         #   directory is selected, but we'll check anyway
@@ -24025,7 +24986,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_windows_main_window_tab().
 
         Enables/disables the 'Download all' buttons in the main window toolbar
-        and in the Videos Tab.
+        and in the Videos tab.
 
         Args:
 
@@ -24369,6 +25330,60 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_scheduled_livestream_extra_flag(False)
 
 
+    def on_extract_comments_button_clicked(self, button):
+
+        """Called from callback in self.setup_files_update_tab().
+
+        Extracts timestamps from the description of every video in the
+        database.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        video_count = 0
+        attempt_count = 0
+        success_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+
+                if not media_data_obj.comment_list:
+
+                    attempt_count += 1
+                    self.app_obj.update_video_from_json(
+                        media_data_obj,
+                        'comments',
+                    )
+
+                    if media_data_obj.comment_list:
+                        success_count += 1
+
+        # Redraw the Video Catalogue, at its current page
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
+        )
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos checked:') + ' ' + str(attempt_count) + '\n' \
+        + _('Videos updated:') + ' ' + str(success_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
+
+
     def on_extract_stamps_button_clicked(self, button):
 
         """Called from callback in self.setup_files_update_tab().
@@ -24405,6 +25420,13 @@ class SystemPrefWin(GenericPrefWin):
                     if media_data_obj.stamp_list:
 
                         success_count += 1
+
+        # Redraw the Video Catalogue, at its current page
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
+        )
 
         # Confirm the result
         msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
@@ -25155,11 +26177,8 @@ class SystemPrefWin(GenericPrefWin):
                 #   well as some text
                 # Use an extra grid to avoid messing up the layout of widgets
                 #   above
-                grid2 = Gtk.Grid()
-                grid.attach(grid2, 0, 2, 2, 1)
+                grid2 = self.add_secondary_grid(grid, 0, 2, 2, 1)
                 grid2.set_border_width(self.spacing_size * 2)
-                grid2.set_column_spacing(self.spacing_size)
-                grid2.set_row_spacing(self.spacing_size)
 
                 frame = self.add_image(grid2,
                     self.app_obj.main_win_obj.icon_dict['warning_large'],
@@ -25778,7 +26797,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_output_outputtab_tab().
 
-        Enables/disables emptying pages in the Output Tab at the start of every
+        Enables/disables emptying pages in the Output tab at the start of every
         operation.
 
         Args:
@@ -25800,7 +26819,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from a callback in self.setup_output_outputtab_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the Output
-        Tab.
+        tab.
 
         Args:
 
@@ -25821,7 +26840,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from a callback in self.setup_output_outputtab_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the Output
-        Tab.
+        tab.
 
         Args:
 
@@ -25842,7 +26861,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from a callback in self.setup_output_outputtab_tab().
 
         Enables/disables writing output from youtube-dl's STDERR to the Output
-        Tab.
+        tab.
 
         Args:
 
@@ -25864,7 +26883,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from a callback in self.setup_output_outputtab_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the Output
-        Tab.
+        tab.
 
         Args:
 
@@ -25893,7 +26912,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_output_outputtab_tab().
 
-        Enables/disables displaying a summary page in the Output Tab.
+        Enables/disables displaying a summary page in the Output tab.
 
         Args:
 
@@ -25913,8 +26932,8 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_output_outputtab_tab().
 
-        Enables/disables applying a maximum size to the Output Tab pages.
-        Toggling the corresponding Gtk.CheckButton in the Output Tab sets the
+        Enables/disables applying a maximum size to the Output tab pages.
+        Toggling the corresponding Gtk.CheckButton in the Output tab sets the
         IV (and makes sure the two checkbuttons have the same status).
 
         Args:
@@ -25936,8 +26955,8 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_output_outputtab_tab().
 
-        Sets the maximum size of the Output Tab pages. Setting the value of the
-        corresponding Gtk.SpinButton in the Output Tab sets the IV (and
+        Sets the maximum size of the Output tab pages. Setting the value of the
+        corresponding Gtk.SpinButton in the Output tab sets the IV (and
         makes sure the two spinbuttons have the same value).
 
         Args:
@@ -25955,7 +26974,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_output_outputtab_tab().
 
-        Enables/disables writing youtube-dl system commands to the Output Tab.
+        Enables/disables writing youtube-dl system commands to the Output tab.
 
         Args:
 
@@ -25996,7 +27015,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_windows_videos_tab().
 
         Enables/disables 'today' and 'yesterday' rather than a numerical date
-        in the Videos Tab.
+        in the Videos tab.
 
         Args:
 
@@ -26095,7 +27114,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_output_outputtab_tab().
 
-        Enables/disables displaying non-matching videos in the Output Tab
+        Enables/disables displaying non-matching videos in the Output tab
         during a refresh operation.
 
         Args:
@@ -26116,7 +27135,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_output_outputtab_tab().
 
-        Enables/disables displaying matching videos in the Output Tab during a
+        Enables/disables displaying matching videos in the Output tab during a
         refresh operation.
 
         Args:
@@ -26209,7 +27228,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_windows_main_window_tab().
 
-        Enables/disables removeing duplicate URLs from the Classic Mode Tab,
+        Enables/disables removeing duplicate URLs from the Classic Mode tab,
         after the 'Add URLs' button is clicked.
 
         Args:
@@ -26224,6 +27243,51 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.classic_duplicate_remove_flag:
             self.app_obj.set_classic_duplicate_remove_flag(False)
+
+
+    def on_remove_comments_button_clicked(self, button):
+
+        """Called from callback in self.setup_files_update_tab().
+
+        Clears comments from every video in the database.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        video_count = 0
+        success_count = 0
+
+        for media_data_obj in self.app_obj.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_count += 1
+                if media_data_obj.comment_list:
+
+                    success_count += 1
+                    media_data_obj.reset_comments()
+
+
+        # Redraw the Video Catalogue, at its current page
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
+        )
+
+        # Confirm the result
+        msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
+        + _('Videos updated:') + ' ' + str(success_count)
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            'info',
+            'ok',
+            self,           # Parent window is this window
+        )
 
 
     def on_remove_stamps_button_clicked(self, button):
@@ -26250,6 +27314,14 @@ class SystemPrefWin(GenericPrefWin):
 
                     success_count += 1
                     media_data_obj.reset_timestamps()
+
+
+        # Redraw the Video Catalogue, at its current page
+        main_win_obj = self.app_obj.main_win_obj
+        main_win_obj.video_catalogue_redraw_all(
+            main_win_obj.video_index_current,
+            main_win_obj.catalogue_toolbar_current_page,
+        )
 
         # Confirm the result
         msg = _('Total videos:') + ' ' + str(video_count) + '\n\n' \
@@ -26359,7 +27431,8 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from a callback in self.setup_windows_main_window_tab().
 
-        Resets the main window to its default size.
+        Resets the main window to its default size, and repositions sliders to
+        their default positions.
 
         Args:
 
@@ -26371,6 +27444,12 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.main_win_width,
             self.app_obj.main_win_height,
         )
+
+        self.app_obj.main_win_obj.reset_sliders()
+
+        # Because of Gtk issues, the slider's position must be reset twice, the
+        #   second time by mainapp.TartubeApp.script_fast_timer_callback()
+        self.app_obj.set_main_win_slider_reset_flag(True)
 
 
     def on_reset_ytsc_button_clicked(self, button, entry):
@@ -26935,7 +28014,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_windows_main_window_tab().
 
         Enables/disables showing the 'Custom download all' button in the Videos
-        Tab.
+        tab.
 
         Args:
 
@@ -27547,7 +28626,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the video resolution limit. Toggling the corresponding
-        Gtk.CheckButton in the Progress Tab sets the IV (and makes sure the two
+        Gtk.CheckButton in the Progress tab sets the IV (and makes sure the two
         checkbuttons have the same status).
 
         Args:
@@ -27619,7 +28698,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_limits_tab().
 
         Enables/disables the simultaneous download limit. Toggling the
-        corresponding Gtk.CheckButton in the Progress Tab sets the IV (and
+        corresponding Gtk.CheckButton in the Progress tab sets the IV (and
         makes sure the two checkbuttons have the same status).
 
         Args:
@@ -27678,7 +28757,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_limits_tab().
 
         Sets the simultaneous download limit. Setting the value of the
-        corresponding Gtk.SpinButton in the Progress Tab sets the IV (and
+        corresponding Gtk.SpinButton in the Progress tab sets the IV (and
         makes sure the two spinbuttons have the same value).
 
         Args:

@@ -188,7 +188,7 @@ class InfoManager(threading.Thread):
 
             return self.run_check_version()
 
-        # Show information about the info operation in the Output Tab
+        # Show information about the info operation in the Output tab
         if self.info_type == 'test_ytdl':
 
             msg = _(
@@ -270,7 +270,7 @@ class InfoManager(threading.Thread):
         # Create the new child process
         self.create_child_process(cmd_list)
 
-        # Show the system command in the Output Tab
+        # Show the system command in the Output tab
         space = ' '
         self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
@@ -303,7 +303,7 @@ class InfoManager(threading.Thread):
                     self.output_list.append(stdout)
                     self.stdout_list.append(stdout)
 
-                    # Show command line output in the Output Tab
+                    # Show command line output in the Output tab
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
                         stdout,
@@ -336,7 +336,7 @@ class InfoManager(threading.Thread):
                 else:
                     self.stderr_list.append(stderr)
 
-                # Show command line output in the Output Tab
+                # Show command line output in the Output tab
                 self.app_obj.main_win_obj.output_tab_write_stderr(
                     1,
                     stderr,
@@ -368,7 +368,7 @@ class InfoManager(threading.Thread):
         if not self.stderr_list:
             self.success_flag = True
 
-        # Show a confirmation in the the Output Tab
+        # Show a confirmation in the the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Info operation finished'),
@@ -396,7 +396,7 @@ class InfoManager(threading.Thread):
         can display them.
         """
 
-        # Show information about the info operation in the Output Tab
+        # Show information about the info operation in the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Starting info operation, checking for new releases of Tartube'),
@@ -487,7 +487,7 @@ class InfoManager(threading.Thread):
         #   mainapp.TartubeApp.info_manager_finished()
         self.success_flag = True
 
-        # Show a confirmation in the the Output Tab
+        # Show a confirmation in the the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Info operation finished'),

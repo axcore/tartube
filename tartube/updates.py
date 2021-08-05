@@ -156,7 +156,7 @@ class UpdateManager(threading.Thread):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         """
 
@@ -200,7 +200,7 @@ class UpdateManager(threading.Thread):
         application with the result of the update (success or failure).
         """
 
-        # Show information about the update operation in the Output Tab
+        # Show information about the update operation in the Output tab
         self.install_ffmpeg_write_output(
             _('Starting update operation, installing FFmpeg'),
         )
@@ -216,7 +216,7 @@ class UpdateManager(threading.Thread):
             ['pacman', '-S', binary, '--noconfirm'],
         )
 
-        # Show the system command in the Output Tab
+        # Show the system command in the Output tab
         self.install_ffmpeg_write_output(
             ' '.join( ['pacman', '-S', binary, '--noconfirm'] ),
             True,                   # A system command, not a message
@@ -245,7 +245,7 @@ class UpdateManager(threading.Thread):
 
                 if stdout:
 
-                    # Show command line output in the Output Tab (or wizard
+                    # Show command line output in the Output tab (or wizard
                     #   window textview)
                     self.install_ffmpeg_write_output(stdout)
 
@@ -264,7 +264,7 @@ class UpdateManager(threading.Thread):
 
                 self.stderr_list.append(stderr)
 
-                # Show command line output in the Output Tab (or wizard window
+                # Show command line output in the Output tab (or wizard window
                 #   textview)
                 self.install_ffmpeg_write_output(stderr)
 
@@ -285,7 +285,7 @@ class UpdateManager(threading.Thread):
         if not self.stderr_list:
             self.success_flag = True
 
-        # Show a confirmation in the the Output Tab (or wizard window textview)
+        # Show a confirmation in the the Output tab (or wizard window textview)
         self.install_ffmpeg_write_output(_('Update operation finished'))
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
@@ -300,7 +300,7 @@ class UpdateManager(threading.Thread):
 
         """Called by self.install_ffmpeg().
 
-        Writes a message to the Output Tab (or to the setup wizard window, if
+        Writes a message to the Output tab (or to the setup wizard window, if
         called from there).
 
         Args:
@@ -308,7 +308,7 @@ class UpdateManager(threading.Thread):
             msg (str): The message to display
 
             system_cmd_flag (bool): If True, display system commands in a
-                different colour in the Output Tab (ignored when writing in
+                different colour in the Output tab (ignored when writing in
                 the setup wizard window)
 
         """
@@ -343,7 +343,7 @@ class UpdateManager(threading.Thread):
         application with the result of the update (success or failure).
         """
 
-        # Show information about the update operation in the Output Tab (or in
+        # Show information about the update operation in the Output tab (or in
         #   the setup wizard window, if called from there)
         downloader = self.app_obj.get_downloader(self.wiz_win_obj)
         self.install_ytdl_write_output(
@@ -404,7 +404,7 @@ class UpdateManager(threading.Thread):
         # Create a new child process using that command
         self.create_child_process(mod_list)
 
-        # Show the system command in the Output Tab
+        # Show the system command in the Output tab
         self.install_ytdl_write_output(
             ' '.join(mod_list),
             True,                   # A system command, not a message
@@ -452,7 +452,7 @@ class UpdateManager(threading.Thread):
                         self.intercept_version_from_stdout(stdout, downloader)
                         self.stdout_list.append(stdout)
 
-                    # Show command line output in the Output Tab (or wizard
+                    # Show command line output in the Output tab (or wizard
                     #   window textview)
                     self.install_ytdl_write_output(stdout)
 
@@ -478,7 +478,7 @@ class UpdateManager(threading.Thread):
                 and not re.search('You should consider upgrading', stderr):
                     self.stderr_list.append(stderr)
 
-                # Show command line output in the Output Tab (or wizard window
+                # Show command line output in the Output tab (or wizard window
                 #   textview)
                 self.install_ytdl_write_output(stderr)
 
@@ -505,7 +505,7 @@ class UpdateManager(threading.Thread):
         if not self.stderr_list:
             self.success_flag = True
 
-        # Show a confirmation in the the Output Tab (or wizard window textview)
+        # Show a confirmation in the the Output tab (or wizard window textview)
         self.install_ytdl_write_output(_('Update operation finished'))
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
@@ -520,7 +520,7 @@ class UpdateManager(threading.Thread):
 
         """Called by self.install_ytdl().
 
-        Writes a message to the Output Tab (or to the setup wizard window, if
+        Writes a message to the Output tab (or to the setup wizard window, if
         called from there).
 
         Args:
@@ -528,7 +528,7 @@ class UpdateManager(threading.Thread):
             msg (str): The message to display
 
             system_cmd_flag (bool): If True, display system commands in a
-                different colour in the Output Tab (ignored when writing in
+                different colour in the Output tab (ignored when writing in
                 the setup wizard window)
 
         """

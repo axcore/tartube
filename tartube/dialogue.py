@@ -48,7 +48,7 @@ class DialogueManager(threading.Thread):
 
     Args:
 
-        app_obj: The mainapp.TartubeApp object
+        app_obj (mainapp.TartubeApp): The main application
 
         main_win_obj (mainwin.MainWin): The main window
 
@@ -220,9 +220,9 @@ class DialogueManager(threading.Thread):
                 The parent window for the dialogue window. If None, the main
                 window is used as the parent window
 
-            action (str or None): The type of fille chooser
-                to create: 'open' to set a file for opening, 'save' to save a
-                file, or 'folder' to select a folder
+            action (str or None): The type of fille chooser to create: 'open'
+                to set a file for opening, 'save' to save a file, or 'folder'
+                to select a folder
 
             file_path (str or None): The file path to suggest to the user. If
                 not specified, then the file chooser is opened in Tartube's

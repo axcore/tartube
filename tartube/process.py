@@ -146,7 +146,7 @@ class ProcessManager(threading.Thread):
         complete.
         """
 
-        # Show information about the process operation in the Output Tab
+        # Show information about the process operation in the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Starting process operation'),
@@ -160,7 +160,7 @@ class ProcessManager(threading.Thread):
             video_obj = self.video_list.pop(0)
             self.job_count += 1
 
-            # Update our progress in the Output Tab
+            # Update our progress in the Output tab
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 _('Video') + ' ' + str(self.job_count) + '/' \
@@ -209,7 +209,7 @@ class ProcessManager(threading.Thread):
         # Operation complete. Set the stop time
         self.stop_time = int(time.time())
 
-        # Show a confirmation in the Output Tab
+        # Show a confirmation in the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Process operation finished'),
@@ -302,9 +302,9 @@ class ProcessManager(threading.Thread):
         # ...then create it
         try:
             if os.path.isdir(temp_dir):
-                shutil.rmtree(temp_dir)
+                self.app_obj.remove_directory(temp_dir)
 
-            os.makedirs(temp_dir)
+            self.app_obj.make_directory(temp_dir)
 
             return temp_dir
 
@@ -416,7 +416,7 @@ class ProcessManager(threading.Thread):
             self.job_total,
         )
 
-        # Update the Output Tab again
+        # Update the Output tab again
         self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
             ' '.join(cmd_list),
@@ -460,12 +460,7 @@ class ProcessManager(threading.Thread):
             and os.path.isfile(output_path) \
             and source_path != output_path:
 
-                try:
-
-                    os.remove(source_path)
-
-                except:
-
+                if not self.app_obj.remove_file(source_path):
                     self.fail_count += 1
 
                     self.app_obj.main_win_obj.output_tab_write_stderr(
@@ -509,21 +504,17 @@ class ProcessManager(threading.Thread):
                         ),
                     )
 
-                    # (Don't call utils.rename_file(), as we need our own
-                    #   try/except)
-                    try:
+                    # (On MSWin, can't do os.rename if the destination file
+                    #   already exists)
+                    if os.path.isfile(new_thumb_path):
+                        self.app_obj.remove_file(new_thumb_path)
 
-                        # (On MSWin, can't do os.rename if the destination file
-                        #   already exists)
-                        if os.path.isfile(new_thumb_path):
-                            os.remove(new_thumb_path)
-
-                        # (os.rename sometimes fails on external hard drives;
-                        #   this is safer)
-                        shutil.move(thumb_path, new_thumb_path)
-
-                    except:
-
+                    # (os.rename sometimes fails on external hard drives; this
+                    #   is safer)
+                    if not self.app_obj.move_file_or_directory(
+                        thumb_path,
+                        new_thumb_path,
+                    ):
                         self.fail_count += 1
 
                         self.app_obj.main_win_obj.output_tab_write_stderr(
@@ -647,7 +638,7 @@ class ProcessManager(threading.Thread):
             start_time = mini_list[0]
             stop_time = mini_list[1]
 
-            # Update the Output Tab
+            # Update the Output tab
             if not stop_time:
 
                 self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -675,7 +666,7 @@ class ProcessManager(threading.Thread):
                 # Don't continue creating more clips after an error
                 self.fatal_error_flag = True
                 # (Delete the temporary directory after failure)
-                shutil.rmtree(temp_dir)
+                self.app_obj.remove_directory(temp_dir)
                 return None
 
         # If there is more than one clip, they must be concatenated to produce
@@ -727,7 +718,7 @@ class ProcessManager(threading.Thread):
                 output_path,
             ]
 
-            # Update the Output Tab again
+            # Update the Output tab again
             self.app_obj.main_win_obj.output_tab_write_system_cmd(
                 1,
                 ' '.join(cmd_list),
@@ -751,20 +742,18 @@ class ProcessManager(threading.Thread):
 
                 # (Delete the temporary directory after failure)
                 self.fail_count += 1
-                shutil.rmtree(temp_dir)
+                self.app_obj.remove_directory(temp_dir)
                 return None
 
-        # Move the single video file back into the parent directory,
-        #   replacing any file of the same name that's already there
-        try:
+        # Move the single video file back into the parent directory, replacing
+        #   any file of the same name that's already there
+        if os.path.isfile(orig_video_path):
+            self.app_obj.remove_file(orig_video_path)
 
-            if os.path.isfile(orig_video_path):
-                os.remove(orig_video_path)
-
-            shutil.move(output_path, orig_video_path)
-
-        except:
-
+        if not self.app_obj.move_file_or_directory(
+            output_path,
+            orig_video_path,
+        ):
             self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
                 _(
@@ -775,11 +764,11 @@ class ProcessManager(threading.Thread):
 
             # (Delete the temporary directory after failure)
             self.fail_count += 1
-            shutil.rmtree(temp_dir)
+            self.app_obj.remove_directory(temp_dir)
             return None
 
         # Delete the temporary directory
-        shutil.rmtree(temp_dir)
+        self.app_obj.remove_directory(temp_dir)
 
         # Procedure successful
         return parent_dir
@@ -808,7 +797,7 @@ class ProcessManager(threading.Thread):
 
             if self.app_obj.video_timestamps_re_extract_flag \
             and not orig_video_obj.stamp_list:
-                self.app_obj.update_video_from_json(orig_video_obj, True)
+                self.app_obj.update_video_from_json(orig_video_obj, 'chapters')
 
             if self.app_obj.video_timestamps_re_extract_flag \
             and not orig_video_obj.stamp_list:
@@ -885,7 +874,7 @@ class ProcessManager(threading.Thread):
 
                 self.clip_title_dict[clip_title] = None
 
-                # Update the Output Tab
+                # Update the Output tab
                 if not stop_stamp:
 
                     self.app_obj.main_win_obj.output_tab_write_stdout(

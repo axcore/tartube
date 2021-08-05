@@ -159,7 +159,7 @@ class FFmpegManager(object):
             else:
 
                 # Conversion succeeded
-                os.remove(escaped_thumbnail_filename)
+                self.app_obj.remove_file(escaped_thumbnail_filename)
                 thumbnail_jpg_filename = self.replace_extension(
                     thumbnail_filename,
                     'jpg',

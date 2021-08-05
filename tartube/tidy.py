@@ -223,7 +223,7 @@ class TidyManager(threading.Thread):
         complete.
         """
 
-        # Show information about the tidy operation in the Output Tab
+        # Show information about the tidy operation in the Output tab
         if not self.init_obj:
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -406,7 +406,7 @@ class TidyManager(threading.Thread):
         # Operation complete. Set the stop time
         self.stop_time = int(time.time())
 
-        # Show a confirmation in the Output Tab
+        # Show a confirmation in the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Tidy operation finished'),
@@ -604,6 +604,9 @@ class TidyManager(threading.Thread):
 
         """
 
+        # Import the main window (for convenience)
+        main_win_obj = self.app_obj.main_win_obj
+
         for video_obj in media_data_obj.compile_all_videos( [] ):
 
             if video_obj.file_name is not None \
@@ -637,21 +640,29 @@ class TidyManager(threading.Thread):
                         and os.path.isfile(video_path):
 
                             # Delete the corrupted file
-                            os.remove(video_path)
+                            if self.app_obj.remove_file(video_path):
+                                self.video_corrupt_deleted_count += 1
 
-                            self.video_corrupt_deleted_count += 1
-
-                            self.app_obj.main_win_obj.output_tab_write_stdout(
-                                1,
-                                '   ' + _(
+                                main_win_obj.output_tab_write_stdout(
+                                    1,
+                                    '   ' + _(
                                     'Deleted (possibly) corrupted video file:',
-                                ) + ' \'' + video_obj.name + '\'',
-                            )
+                                    ) + ' \'' + video_obj.name + '\'',
+                                )
 
-                            self.app_obj.mark_video_downloaded(
-                                video_obj,
-                                False,
-                            )
+                                self.app_obj.mark_video_downloaded(
+                                    video_obj,
+                                    False,
+                                )
+
+                            else:
+                                main_win_obj.output_tab_write_stderr(
+                                    1,
+                                    '   ' + _(
+                                        'Failed to delete (possibly)' \
+                                        + ' corrupted video file:',
+                                    ) + ' \'' + video_obj.name + '\'',
+                                )
 
                         else:
 
@@ -764,12 +775,11 @@ class TidyManager(threading.Thread):
                 and os.path.isfile(video_path):
 
                     # Delete the downloaded video file
-                    os.remove(video_path)
+                    if self.app_obj.remove_file(video_path):
 
-                    # Mark the video as not downloaded
-                    self.app_obj.mark_video_downloaded(video_obj, False)
-
-                    self.video_deleted_count += 1
+                        # Mark the video as not downloaded
+                        self.app_obj.mark_video_downloaded(video_obj, False)
+                        self.video_deleted_count += 1
 
                 if self.del_others_flag:
 
@@ -786,9 +796,8 @@ class TidyManager(threading.Thread):
                             ext,
                         )
 
-                        if os.path.isfile(other_path):
-                            os.remove(other_path)
-
+                        if os.path.isfile(other_path) \
+                        and self.app_obj.remove_file(other_path):
                             self.other_deleted_count += 1
 
         # For an encore, delete all post-processing artefacts in the form
@@ -813,9 +822,8 @@ class TidyManager(threading.Thread):
                     os.path.join(search_path, check_path),
                 )
 
-                if os.path.isfile(full_path):
-
-                    os.remove(full_path)
+                if os.path.isfile(full_path) \
+                and self.app_obj.remove_file(full_path):
                     self.other_deleted_count += 1
 
 
@@ -840,10 +848,9 @@ class TidyManager(threading.Thread):
             ),
         )
 
-        if os.path.isfile(archive_path):
-
-            # Delete the archive file
-            os.remove(archive_path)
+        # Delete the archive file
+        if os.path.isfile(archive_path) \
+        and self.app_obj.remove_file(archive_path):
             self.archive_deleted_count += 1
 
 
@@ -899,15 +906,14 @@ class TidyManager(threading.Thread):
                     if os.path.isfile(main_path) \
                     and not os.path.isfile(subdir_path):
 
-                        try:
-                            if not os.path.isdir(subdir):
-                                os.makedirs(subdir)
+                        if not os.path.isdir(subdir):
+                            self.app_obj.make_directory(subdir)
 
-                            shutil.move(main_path, subdir_path)
+                        if self.app_obj.move_file_or_directory(
+                            main_path,
+                            subdir_path,
+                        ):
                             self.thumb_moved_count += 1
-
-                        except:
-                            pass
 
 
     def delete_thumb(self, media_data_obj):
@@ -944,11 +950,10 @@ class TidyManager(threading.Thread):
                         thumb_path,
                     )
 
+                # Delete the thumbnail file
                 if thumb_path is not None \
-                and os.path.isfile(thumb_path):
-
-                    # Delete the thumbnail file
-                    os.remove(thumb_path)
+                and os.path.isfile(thumb_path) \
+                and self.app_obj.remove_file(thumb_path):
                     self.thumb_deleted_count += 1
 
 
@@ -1048,17 +1053,16 @@ class TidyManager(threading.Thread):
                     if os.path.isfile(main_path) \
                     and not os.path.isfile(subdir_path):
 
-                        try:
-                            if not os.path.isdir(subdir):
-                                os.makedirs(subdir)
+                        if not os.path.isdir(subdir):
+                            self.app_obj.make_directory(subdir)
 
-                            # (os.rename sometimes fails on external hard
-                            #   drives; this is safer)
-                            shutil.move(main_path, subdir_path)
+                        # (os.rename sometimes fails on external hard drives;
+                        #   this is safer)
+                        if self.app_obj.move_file_or_directory(
+                            main_path,
+                            subdir_path,
+                        ):
                             self.data_moved_count += 1
-
-                        except:
-                            pass
 
 
     def delete_descrip(self, media_data_obj):
@@ -1095,11 +1099,10 @@ class TidyManager(threading.Thread):
                     main_path,
                 )
 
+                # Delete the description file
                 if main_path is not None \
-                and os.path.isfile(main_path):
-
-                    # Delete the description file
-                    os.remove(main_path)
+                and os.path.isfile(main_path) \
+                and self.app_obj.remove_file(main_path):
                     self.descrip_deleted_count += 1
 
                 # (Repeat for a file that might be in the sub-directory
@@ -1116,9 +1119,8 @@ class TidyManager(threading.Thread):
                 )
 
                 if subdir_path is not None \
-                and os.path.isfile(subdir_path):
-
-                    os.remove(subdir_path)
+                and os.path.isfile(subdir_path) \
+                and self.app_obj.remove_file(subdir_path):
                     self.descrip_deleted_count += 1
 
 
@@ -1156,11 +1158,10 @@ class TidyManager(threading.Thread):
                     main_path,
                 )
 
+                # Delete the metadata file
                 if main_path is not None \
-                and os.path.isfile(main_path):
-
-                    # Delete the metadata file
-                    os.remove(main_path)
+                and os.path.isfile(main_path) \
+                and self.app_obj.remove_file(main_path):
                     self.json_deleted_count += 1
 
                 # (Repeat for a file that might be in the sub-directory
@@ -1177,9 +1178,8 @@ class TidyManager(threading.Thread):
                 )
 
                 if subdir_path is not None \
-                and os.path.isfile(subdir_path):
-
-                    os.remove(subdir_path)
+                and os.path.isfile(subdir_path) \
+                and self.app_obj.remove_file(subdir_path):
                     self.json_deleted_count += 1
 
 
@@ -1217,11 +1217,10 @@ class TidyManager(threading.Thread):
                     main_path,
                 )
 
+                # Delete the annotation file
                 if main_path is not None \
-                and os.path.isfile(main_path):
-
-                    # Delete the annotation file
-                    os.remove(main_path)
+                and os.path.isfile(main_path) \
+                and self.app_obj.remove_file(main_path):
                     self.xml_deleted_count += 1
 
                 # (Repeat for a file that might be in the sub-directory
@@ -1238,9 +1237,8 @@ class TidyManager(threading.Thread):
                 )
 
                 if subdir_path is not None \
-                and os.path.isfile(subdir_path):
-
-                    os.remove(subdir_path)
+                and os.path.isfile(subdir_path) \
+                and self.app_obj.remove_file(subdir_path):
                     self.xml_deleted_count += 1
 
 

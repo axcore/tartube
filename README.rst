@@ -1,9 +1,9 @@
 ===================================================
 Tartube - The Easy Way To Watch And Download Videos
 ===================================================
-------------------------------------------------------------
-Works with YouTube, BitChute, and hundreds of other websites
-------------------------------------------------------------
+----------------------------------------------------------
+Works with YouTube, Odysee, and hundreds of other websites
+----------------------------------------------------------
 
 .. image:: screenshots/tartube.png
   :alt: Tartube screenshot
@@ -31,11 +31,11 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 2 Why should I use Tartube?
 ===========================
 
-- You can fetch a list of videos from your favourite channels and playlists on `YouTube <https://www.youtube.com/>`__, `BitChute <https://www.bitchute.com/>`__, and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
+- You can fetch a list of videos from your favourite channels and playlists on `YouTube <https://www.youtube.com/>`__, `Odysee <https://odysee.com/>`__, and hundreds of other websites (see `here <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__ for a full list)
 - If buffering is an issue, you can download a temporary copy of a video before automatically opening it in your favourite media player
 - **Tartube** will organise your videos into convenient folders (if that's what you want)
 - **Tartube** can alert you when livestreams and debut videos are starting (**YouTube** only)
-- If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), **Tartube** can interact with both sites without creating duplicates
+- If creators upload their videos to more than one website (**YouTube** and **Odysee**, for example), **Tartube** can interact with both sites without creating duplicates
 - Certain websites operate an "only one opinion allowed" policy. If you think that the censors will remove a video, against the wishes of its creators and before you've had a chance to watch it, **Tartube** can make an archive copy
 - Certain websites frequently place restrictions on a video, not because it is unsuitable for some audiences, but for purely political reasons. Tartube can, in some circumstances, see videos that are region-blocked and/or age-restricted
 - Certain websites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
@@ -88,7 +88,7 @@ Source code:
 - Start **Tartube**. A setup window should appear
 - When prompted, choose a folder in which **Tartube** can store videos
 - When prompted, choose a downloader
-- On some systems, you will be prompted to install the downloader and/or `Ffmpeg <https://ffmpeg.org/>`__. On other operating systems, you will have to install them yourself
+- On some systems, you will be prompted to install the downloader and/or `FFmpeg <https://ffmpeg.org/>`__. On other operating systems, you will have to install them yourself
 
 Tartube can store its videos in a database. If that's what you want, do this:
 
@@ -202,7 +202,7 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
         **brew install adwaita-icon-theme**
 
-- It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too
+- It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too
 
         **brew install ffmpeg**
 
@@ -228,7 +228,7 @@ Linux distributions based on Debian, such as Ubuntu and Linux Mint, can install 
 2. **Tartube** asks you to choose a data directory, so do that
 3. Click **Operations > Update youtube-dl**
 
-It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most Debian-based systems, you can open a terminal window and run this command:
+It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too. On most Debian-based systems, you can open a terminal window and run this command:
 
         **sudo apt-get install ffmpeg**
 
@@ -254,7 +254,7 @@ On Fedora, the procedure is:
 3. Type: ``pip3 install youtube-dl`` or ``pip3 install yt-dlp``
 4. You can now run **Tartube**.
 
-It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most RHEL-based systems (for example, Fedora 29-32), you can open a terminal window and run these commands:
+It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too. On most RHEL-based systems (for example, Fedora 29-32), you can open a terminal window and run these commands:
 
         **sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm**
 
@@ -273,7 +273,7 @@ On Arch-based systems. such as Manjaro, Tartube can be installed using the semi-
 4. Type: ``makepkg -si``
 5. You can now run **Tartube**.
 
-It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too. On most Arch-based systems, you can open a terminal window and run this command:
+It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too. On most Arch-based systems, you can open a terminal window and run this command:
 
         **sudo pacman -S ffmpeg**
 
@@ -282,7 +282,7 @@ It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, to
 
 On Gentoo-based systems, **Tartube** can be installed using the semi-official ebuild package, using the link above.
 
-Tartube requires `youtube-dl <https://youtube-dl.org/>`__. It is strongly recommended that you install `Ffmpeg <https://ffmpeg.org/>`__, too.
+Tartube requires `youtube-dl <https://youtube-dl.org/>`__. It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too.
 
 If you're not sure how to install using ebuild, then it might be easier to install from PyPI.
 
@@ -330,7 +330,7 @@ These dependencies are optional, but recommended:
 -  `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
 -  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
 -  `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
--  `Ffmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
+-  `FFmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
 -  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 -  `aria2 <https://aria2.github.io/>`__ - required for Youtube Stream Capture
 -  `matplotlib <https://matplotlib.org/>`__ - required for drawing graphs
@@ -452,6 +452,7 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.27.4 Removing video slices`_
 * `6.27.5 Video slice shortcuts`_
 * `6.28 Using youtube-dl forks`_
+* `6.29 Video Comments`_
 
 6.1 Setting up Tartube
 ----------------------
@@ -510,7 +511,7 @@ On other systems, users can modify **Tartube**'s settings. There are several loc
 
 **youtube-dl** uses FFmpeg by default, but it can use AVConv for certain tasks.
 
-For more information about **Tartube**'s use of Ffmpeg and AVConv, see `6.25 More information about FFmpeg and AVConv`_.
+For more information about **Tartube**'s use of FFmpeg and AVConv, see `6.25 More information about FFmpeg and AVConv`_.
 
 6.4.1 On MS Windows
 ~~~~~~~~~~~~~~~~~~~
@@ -556,6 +557,7 @@ When you start **Tartube** for the first time, there are several folders already
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
 - The **Unsorted Videos** folder is a useful place to put videos that don't belong to a particular channel or playlist
+- The **Video Clips** folder is a useful place to put video clips  (see `6.26 Video clips`_)
 
 6.6 Adding videos
 -----------------
@@ -764,7 +766,7 @@ In fact, you can create as many sets of download options as you like.
 .. image:: screenshots/example17.png
   :alt: The list of download options
 
-The first item in the list, **general**, is the default set of download options. The second item, **classic**, are the download options that apply in the **Classic Mode** Tab (see `6.22 Classic Mode`_).
+The first item in the list, **general**, is the default set of download options. The second item, **classic**, are the download options that apply in the **Classic Mode** tab (see `6.22 Classic Mode`_).
 
 Download options are saved in the Tartube database, so if you switch databases (see `6.20.2 Multiple databases`_), a different selection of download options will apply. If you want to move a set of download options from one database to another, you can **Export** them, then switch databases, then **Import** them.
 
@@ -829,7 +831,7 @@ You can create as many different custom downloads as you like.
 If you use custom downloads a lot, you can add some extra buttons to the **Videos** tab.
 
 - Click **Edit > System preferences... > Windows > Main window**
-- Click **Show a 'Custom download all' button in the Videos Tab** to select it
+- Click **Show a 'Custom download all' button in the Videos tab** to select it
 
 .. image:: screenshots/example21.png
   :alt: The option custom download button
@@ -999,7 +1001,7 @@ If new videos are later added to the channel, playlist or folder, they will auto
 **Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's filesystem. There are four situations in which this might be useful:
 
 - A channel has several playlists. You have added both the channel and its playlists to **Tartube**'s database, but you don't want to download duplicate videos
-- A creator releases their videos on **BitChute** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
+- A creator releases their videos on **Odysee** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
 - You don't care about keeping videos in separate directories/folders on your filesystem. You just want to download all videos to one location
 - A separate application will process the videos, after Tartube has downloaded them
 
@@ -1020,15 +1022,15 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 6.17.2 Combining channels from different websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A creator might release their videos on **YouTube**, but also on a site like **BitChute**. Sometimes they will only release a particular video on **BitChute**.
+A creator might release their videos on **YouTube**, but also on a site like **Odysee**. Sometimes they will only release a particular video on **Odysee**.
 
 You can add both channels in the normal way but, if you do, **Tartube** will download many videos twice.
 
 The solution is to tell **Tartube** to store videos from both channels in a single location. In that way, you can still see a list of videos in each channel, but duplicate videos are not actually downloaded.
 
 - Click **Media > Add channel**..., and then enter the **YouTube** channel's details
-- Click **Media > Add channel**..., and then enter the **BitChute** channel's details
-- Right-click the **BitChute** channel and select **Channel actions > Set download destination...**
+- Click **Media > Add channel**..., and then enter the **Odysee** channel's details
+- Right-click the **Odysee** channel and select **Channel actions > Set download destination...**
 - In the dialogue window, click **Use a different location**, select the name of the **YouTube** channel, then click the **OK** button
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
@@ -1223,10 +1225,10 @@ Some websites, such as **YouTube**, allow you to download the audio (in **.m4a**
 
 **Tartube** compiles a database of the videos, channels and playlists it has downloaded.
 
-If you want something simpler, then click the **Classic Mode** Tab, which has an interface that looks just like `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__.
+If you want something simpler, then click the **Classic Mode** tab, which has an interface that looks just like `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__.
 
 .. image:: screenshots/example25.png
-  :alt: The Classic Mode Tab
+  :alt: The Classic Mode tab
 
 - Copy and paste the links (URLs) of videos, channels and/or playlists into the box at the top
 - Click the **+** button to select a destination. All the videos are downloaded to this location
@@ -1246,7 +1248,7 @@ Because the videos aren't in a database, you can move them anywhere you want (on
 If you *only* use this tab, you can tell **Tartube** to open it automatically.
 
 - Click **Edit > System preferences... > Windows > Main window**
-- Select **When Tartube starts, automatically open the Classic Mode Tab**
+- Select **When Tartube starts, automatically open the Classic Mode tab**
 
 If you don't want **Tartube** to forget URLs when it restarts, you can do this:
 
@@ -1639,6 +1641,39 @@ If a youtube-dl fork is still compatible with the original, then **Tartube** can
 - Click **OK** to close the preferences window
 - Now click **Operations > Update youtube-dl**, which will download (or update) the fork on your system
 
+6.29 Video Comments
+-------------------
+
+**yt-dlp** can retrieve a video's comments (**youtube-dl** cannot, currently).
+
+The comments are written to the video's metadata (**.info.json**) file. **Tartube** can also store a copy of the comments in its database.
+
+Fetching comments will increase the length of a download, perhaps by a lot. Adding comments to Tartube's database may increase its size *dramatically*, meaning that on startup, the database takes much longer to load.
+
+This is how to enable comment fetching.
+
+- Click **Edit > System preferences... > Downloaders > Forks**, and make sure **yt-dlp** is selected
+- In the same window, click the tab **Operations > Comments**
+- Select **When checking/downloading videos, store comments in the metadata file**
+- If you like, you can select **Also store comments in the Tartube database**
+
+By default, the metadata file isn't kept permanently. If you want a permanent archive of video comments, you should do this:
+
+- Click **Edit > General download options... > Files > Write/move files**
+- Make sure **Write video's metadata to an .info.json file** is selected
+- Now click the tab **Keep files**
+- Make sure the two **Keep the metadata file** buttons are selected
+
+Comments can be loaded from the metadata file into the Tartube database at any time.
+
+- Right-click a video, and select **Show video > Properties... > Comments**
+- If the metadata file exists, you can click the button **Update from the metadata file**
+
+Alternatively, you can update the entire database at once. (This may take a long time.)
+
+- Click **Edit > System preferences... > Files > Update**
+- Click the button **Extract comments for all videos**
+
 7 Frequently-Asked Questions
 ============================
 
@@ -1731,7 +1766,7 @@ If stability is a problem, you can disable some minor cosmetic features. **Tartu
 
 Another option is to reduce the number of simultaneous downloads. (On crash-prone systems, two simultaneous downloads seems to be safe, but four is rather less safe.)
 
-- In the main window, click the **Progress** Tab
+- In the main window, click the **Progress** tab
 - At the bottom of the tab, click the **Max downloads** checkbutton to select it, and reduce the number of simultaneous downloads to 1 or 2
 - (It's not necessary to reduce the download speed; this has no effect on stability)
 
@@ -1761,7 +1796,7 @@ Because most people don't like typing, **Tartube** offers a shortcut.
 - In the dialogue window, enter the link (URL) to the video
 - You can add more **youtube-dl** download options, if you want. See `here <https://github.com/ytdl-org/youtube-dl/>`__ for a complete list of them
 - Click the **OK** button to close the window and begin the test
-- Click the **Output** Tab to watch the test as it progresses
+- Click the **Output** tab to watch the test as it progresses
 - When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl** was able to download
 
 7.5 Downloads never finish
@@ -1834,7 +1869,7 @@ You can drastically reduce the time this takes by telling **Tartube** to stop ch
 This works well on sites like YouTube, which send information about videos in the order they were uploaded, newest first. We can't guarantee it will work on every site.
 
 - Click **Edit > System preferences... > Operations > Performance**
-- Select the checkbox **Stop checking/downloading a channel/playlist when it starts sending vidoes you already have**
+- Select the checkbox **Stop checking/downloading a channel/playlist when it starts sending videos you already have**
 - In the **Stop after this many videos (when checking)** box, enter the value 3
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
 - Click **OK** to close the window

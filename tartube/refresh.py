@@ -132,7 +132,7 @@ class RefreshManager(threading.Thread):
         complete.
         """
 
-        # Show information about the refresh operation in the Output Tab
+        # Show information about the refresh operation in the Output tab
         if not self.init_obj:
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
@@ -186,7 +186,7 @@ class RefreshManager(threading.Thread):
         # Operation complete. Set the stop time
         self.stop_time = int(time.time())
 
-        # Show a confirmation in the Output Tab
+        # Show a confirmation in the Output tab
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Refresh operation finished'),
@@ -254,7 +254,7 @@ class RefreshManager(threading.Thread):
         local_match_count = 0
         local_new_count = 0
 
-        # Update our progress in the Output Tab
+        # Update our progress in the Output tab
         if isinstance(media_data_obj, media.Channel):
             string = _('Channel:') + '  '
         elif isinstance(media_data_obj, media.Playlist):
@@ -404,7 +404,7 @@ class RefreshManager(threading.Thread):
                 #   match it
                 del check_dict[filename]
 
-                # Update our progress in the Output Tab (if required)
+                # Update our progress in the Output tab (if required)
                 if self.app_obj.refresh_output_videos_flag:
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
@@ -457,7 +457,7 @@ class RefreshManager(threading.Thread):
 
                 # If the video's JSON file exists downloaded, we can extract
                 #   video statistics from it
-                self.app_obj.update_video_from_json(video_obj)
+                self.app_obj.update_video_from_json(video_obj, 'chapters')
 
                 # For any of those statistics that haven't been set (because
                 #   the JSON file was missing or didn't contain the right
@@ -524,7 +524,7 @@ class RefreshManager(threading.Thread):
         # (No new media.Video objects are created)
         local_missing_count = 0
 
-        # Update our progress in the Output Tab
+        # Update our progress in the Output tab
         if isinstance(media_data_obj, media.Channel):
             string = _('Channel:') + '  '
         elif isinstance(media_data_obj, media.Playlist):
@@ -561,7 +561,7 @@ class RefreshManager(threading.Thread):
                     # Video doesn't exist, so mark it as not downloaded
                     self.app_obj.mark_video_downloaded(child_obj, False)
 
-                    # Update our progress in the Output Tab (if required)
+                    # Update our progress in the Output tab (if required)
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         1,
                         '      ' + _('Missing:') + ' ' + child_obj.name,
@@ -578,7 +578,7 @@ class RefreshManager(threading.Thread):
                     #   as new)
                     self.app_obj.mark_video_downloaded(child_obj, True, True)
 
-                    # Update our progress in the Output Tab (if required)
+                    # Update our progress in the Output tab (if required)
                     if self.app_obj.refresh_output_videos_flag:
                         self.app_obj.main_win_obj.output_tab_write_stdout(
                             1,

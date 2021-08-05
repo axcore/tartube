@@ -343,6 +343,11 @@ class TartubeApp(Gtk.Application):
         self.main_win_videos_slider_posn = self.paned_default_size
         self.main_win_progress_slider_posn = self.paned_default_size
         self.main_win_classic_slider_posn = self.paned_default_size + 50
+        # Because of Gtk issues, resetting main window sliders to their default
+        #   positions has to be done twice. Flag set to True if
+        #   self.script_fast_timer_callback() should reset the position of
+        #   sliders again
+        self.main_win_slider_reset_flag = False
 
         # The current Gtk version
         self.gtk_version_major = Gtk.get_major_version()
@@ -498,7 +503,7 @@ class TartubeApp(Gtk.Application):
         #   Errors/Warnings tab
         self.operation_warning_show_flag = True
         # Flag set to True if the date (as well as the time) should be shown in
-        #   the Errors/Warnings Tab
+        #   the Errors/Warnings tab
         self.system_msg_show_date_flag = True
         # Flag set to True if the total number of system error/warning messages
         #   shown in the tab label is not reset until the 'Clear the list'
@@ -626,7 +631,7 @@ class TartubeApp(Gtk.Application):
             ),
         )
         # Inside the temporary directory, a folder for Youtube Stream Capture
-        #   downlaods
+        #   downloads
         self.temp_ytsc_dir = os.path.abspath(
             os.path.join(
                 os.path.expanduser('~'),
@@ -747,15 +752,15 @@ class TartubeApp(Gtk.Application):
         #   loaded a database file, or wants to call .save_db to create one
         self.allow_db_save_flag = False
 
-        # Flag set to True if the Classic Mode Tab should be the visible one,
+        # Flag set to True if the Classic Mode tab should be the visible one,
         #   when Tartube first starts (for the benefit of users who only want
         #   Classic Mode downloads)
         self.show_classic_tab_on_startup_flag = False
         # Flag set to True if custom downloads are enabled in the Classic Mode
-        #   Tab
+        #   tab
         self.classic_custom_dl_flag = False
         # Users can add more destination directories to the combobox in the
-        #   Classic Mode Tab. Tartube remembers those directories, up to the
+        #   Classic Mode tab. Tartube remembers those directories, up to the
         #   maximum number specified below
         self.classic_dir_list = [ os.path.expanduser('~') ]
         # The maximum size of the list. When a new directory is added by the
@@ -780,7 +785,7 @@ class TartubeApp(Gtk.Application):
         # List of pending URLs. Set just before the config file is saved, and
         #   used just after it is loaded
         self.classic_pending_list = []
-        # In the Classic Mode Tab, when the user clicks the 'Add URLs' button,
+        # In the Classic Mode tab, when the user clicks the 'Add URLs' button,
         #   flag set to True if a duplicate URL (one which has already been
         #   added to the Classic Progress List), should be deleted from the
         #   textview at the top, rather than being retained
@@ -858,7 +863,7 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if the Output tab should be revealed automatically
         #   during an update operation, and during some info operations
         self.auto_switch_output_flag = True
-        # Maximum size of textviews in the Output Tab
+        # Maximum size of textviews in the Output tab
         self.output_size_default = 1000
         # (Absolute minimum and maximum values)
         self.output_size_max = 10000
@@ -899,27 +904,27 @@ class TartubeApp(Gtk.Application):
             self.ytdl_fork_no_dependency_flag = False
 
         # Flag set to True if youtube-dl system commands should be displayed in
-        #   the Output Tab
+        #   the Output tab
         self.ytdl_output_system_cmd_flag = True
         # Flag set to True if youtube-dl's STDOUT should be displayed in the
-        #   Output Tab
+        #   Output tab
         self.ytdl_output_stdout_flag = True
         # Flag set to True if we should ignore JSON output when displaying text
-        #   in the Output Tab (ignored if self.ytdl_output_stdout_flag is
+        #   in the Output tab (ignored if self.ytdl_output_stdout_flag is
         #   False)
         self.ytdl_output_ignore_json_flag = True
         # Flag set to True if we should ignore download progress (as a
-        #   percentage) when displaying text in the Output Tab (ignored if
+        #   percentage) when displaying text in the Output tab (ignored if
         #   self.ytdl_output_stdout_flag is False)
         self.ytdl_output_ignore_progress_flag = True
         # Flag set to True if youtube-dl's STDERR should be displayed in the
-        #   Output Tab
+        #   Output tab
         self.ytdl_output_stderr_flag = True
-        # Flag set to True if pages in the Output Tab should be emptied at the
+        # Flag set to True if pages in the Output tab should be emptied at the
         #   start of each operation
         self.ytdl_output_start_empty_flag = True
         # Flag set to True if a summary page should be visible in the Output
-        #   Tab. Changes to this flag are applied when Tartube restarts
+        #   tab. Changes to this flag are applied when Tartube restarts
         self.ytdl_output_show_summary_flag = False
 
         # Flag set to True if youtube-dl system commands should be written to
@@ -940,20 +945,20 @@ class TartubeApp(Gtk.Application):
         self.ytdl_write_stderr_flag = False
 
         # Flag set to True if youtube-dl should show verbose output (using the
-        #   --verbose option). The setting applies to both the Output Tab and
+        #   --verbose option). The setting applies to both the Output tab and
         #   the terminal window
         self.ytdl_write_verbose_flag = False
         # Flag set to True if Youtube Stream Capture should show verbose
-        #   output. This setting applies to both the Output Tab and the
+        #   output. This setting applies to both the Output tab and the
         #   terminal window
         self.ytsc_write_verbose_flag = False
 
         # Flag set to True if, during a refresh operation, videos should be
-        #   displayed in the Output Tab. Set to False if only channels,
+        #   displayed in the Output tab. Set to False if only channels,
         #   playlists and folders should be displayed there
         self.refresh_output_videos_flag = True
         # Flag set to True if, during a refresh operation, non-matching videos
-        #   should be displayed in the Output Tab. Set to False if only
+        #   should be displayed in the Output tab. Set to False if only
         #   matching videos should be displayed there. Ignore if
         #   self.refresh_output_videos_flag is False
         self.refresh_output_verbose_flag = False
@@ -981,7 +986,7 @@ class TartubeApp(Gtk.Application):
         # Path to the AVConv binary
         self.avconv_path = None
         # Flag set to True when a call to FFmpegManager.convert_webp() fails,
-        #   indicating that Ffmpeg is not installed on the user's system
+        #   indicating that FFmpeg is not installed on the user's system
         # When True, the code will not attempt to convert any more .webp
         #   thumbnails to .jpg (until the user restarts Tartube)
         self.ffmpeg_fail_flag = False
@@ -1030,7 +1035,7 @@ class TartubeApp(Gtk.Application):
         self.ytsc_restart_max = 5
 
         # During a download operation, a GObject timer runs, so that the
-        #   Progress Tab and Output Tab can be updated at regular intervals
+        #   Progress tab and Output tab can be updated at regular intervals
         # There is also a delay between the instant at which youtube-dl
         #   reports a video file has been downloaded, and the instant at which
         #   it appears in the filesystem. The timer checks for newly-existing
@@ -1110,7 +1115,7 @@ class TartubeApp(Gtk.Application):
         self.custom_dl_reg_dict = {}
         # The General Custom Download Manager, used as the default manager
         self.general_custom_dl_obj = None
-        # The downloads.CustomDLManager object used in the Classic Mode Tab. If
+        # The downloads.CustomDLManager object used in the Classic Mode tab. If
         #   None, then self.general_custom_dl_obj is used
         self.classic_custom_dl_obj = None
 
@@ -1124,7 +1129,7 @@ class TartubeApp(Gtk.Application):
         self.dl_proxy_cycle_list = []
 
         # During an update operation, a separate GObject timer runs, so that
-        #   the Output Tab can be updated at regular intervals
+        #   the Output tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
         self.update_timer_id = None
         # The timer interval time (in milliseconds)
@@ -1139,7 +1144,7 @@ class TartubeApp(Gtk.Application):
         self.update_timer_check_time = None
 
         # During a refresh operation, a separate GObject timer runs, so that
-        #   the Output Tab can be updated at regular intervals
+        #   the Output tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
         self.refresh_timer_id = None
         # The timer interval time (in milliseconds)
@@ -1154,7 +1159,7 @@ class TartubeApp(Gtk.Application):
         self.refresh_timer_check_time = None
 
         # During an info operation, a separate GObject timer runs, so that
-        #   the Output Tab can be updated at regular intervals
+        #   the Output tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
         self.info_timer_id = None
         # The timer interval time (in milliseconds)
@@ -1171,7 +1176,7 @@ class TartubeApp(Gtk.Application):
         self.info_timer_check_time = None
 
         # During a tidy operation, a separate GObject timer runs, so that
-        #   the Output Tab can be updated at regular intervals
+        #   the Output tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
         self.tidy_timer_id = None
         # The timer interval time (in milliseconds)
@@ -1188,7 +1193,7 @@ class TartubeApp(Gtk.Application):
         self.tidy_timer_check_time = None
 
         # During a process operation, a separate GObject timer runs, so that
-        #   the Output Tab can be updated at regular intervals
+        #   the Output tab can be updated at regular intervals
         # The timer's ID (None when no timer is running)
         self.process_timer_id = None
         # The timer interval time (in milliseconds)
@@ -1473,7 +1478,7 @@ class TartubeApp(Gtk.Application):
         self.options_reg_dict = {}
         # The general (default) options.OptionsManager object described above
         self.general_options_obj = None
-        # The options.OptionsManager object used in the Classic Mode Tab. If
+        # The options.OptionsManager object used in the Classic Mode tab. If
         #   None, then self.general_options_obj is used
         self.classic_options_obj = None
         # Flag set to True if the General Options Manager
@@ -1678,7 +1683,7 @@ class TartubeApp(Gtk.Application):
         #   is not created in that folder. If the original media.Video object
         #   is contained in a channel or playlist, all modes to default to
         #   'disable'
-        # For downloads launched from the Classic Mode Tab, none of this
+        # For downloads launched from the Classic Mode tab, none of this
         #   applies. Tartube downloads all videos associated with the URLs,
         #   and doesn't much care if the URLs represent channels and playlists
         #   or not
@@ -1706,7 +1711,7 @@ class TartubeApp(Gtk.Application):
         # Ignored for system folders like 'Unsorted Videos'
         self.allow_ytdl_archive_flag = True
         # Flag set to True if an archive file should be created when
-        #   downloading from the Classic Mode Tab (this is marked 'not
+        #   downloading from the Classic Mode tab (this is marked 'not
         #   recommended' in the edit window)
         self.classic_ytdl_archive_flag = False
         # If self.allow_ytdl_archive_flag is set, youtube-dl will have created
@@ -1807,7 +1812,7 @@ class TartubeApp(Gtk.Application):
         #   contacting the server (recommended for privacy)
         self.sblock_obfuscate_flag = True
         # Flag set to True if the previous set of video slices should be
-        #   replaced, when a video is checked/downlaoded
+        #   replaced, when a video is checked/downloaded
         self.sblock_replace_flag = False
         # Flag set to True if, just before trying to remove slices from a
         #   video, downloads.ClipDownloader and process.ProcessManager should
@@ -1821,6 +1826,22 @@ class TartubeApp(Gtk.Application):
         #   media.Video.slice_List. Used when the user right-clicks a video
         #   and selects 'Remove video slices...'
         self.temp_slice_list = []
+
+        # Flag set to True if download operations with yt-dlp should add the
+        #   '--write-comments' option, downloading comments to the .info.json
+        #   file
+        self.comment_fetch_flag = False
+        # Flag set to True if the comments should also be stored in the Tartube
+        #   database, in each media.Vidoe object
+        self.comment_store_flag = False
+        # Flag set to False if the 'timestamp' field should be visible in the
+        #   config.VideoEditWin; True if the 'time' field should be visible
+        #   (as of v2.3.318, all comments in a YouTube video share the same
+        #   timestamp)
+        self.comment_show_text_time_flag = True
+        # Flag set to False if a flat list of comments should be visible in the
+        #   config.VideoEditWin; True if a formatted list should be visible
+        self.comment_show_formatted_flag = False
 
         # Flag set to True if 'Child process exited with non-zero code'
         #   messages, generated by Tartube, should be ignored (in the
@@ -2147,7 +2168,6 @@ class TartubeApp(Gtk.Application):
             '--force-overwrites': False,
             '--write-playlist-metafiles': False,
             '--no-clean-infojson': False,
-            '--write-comments': False,
             # Internet Shortcut Options
             '--write-link': False,
             '--write-url-link': False,
@@ -2636,7 +2656,7 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(cancel_date_toolbutton_action)
 
-        # Videos Tab actions
+        # Videos tab actions
         # ------------------
 
         # Buttons
@@ -2678,7 +2698,7 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(custom_dl_select_button_action)
 
-        # Classic Mode Tab actions
+        # Classic Mode tab actions
         # ------------------------
 
         # Buttons
@@ -2950,7 +2970,7 @@ class TartubeApp(Gtk.Application):
 
         # Set the General Options Manager
         self.general_options_obj = self.create_download_options('general')
-        # Apply a different set of download options to the Classic Mode Tab, by
+        # Apply a different set of download options to the Classic Mode tab, by
         #   default
         self.classic_options_obj = self.create_download_options('classic')
 
@@ -3108,9 +3128,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.update_catalogue_filter_widgets()
         self.main_win_obj.update_catalogue_sort_widgets()
         self.main_win_obj.update_catalogue_thumb_widgets()
-        # Add the right number of pages to the Output Tab
+        # Add the right number of pages to the Output tab
         self.main_win_obj.output_tab_setup_pages()
-        # If the flag it set, switch to the Classic Mode Tab
+        # If the flag it set, switch to the Classic Mode tab
         if not __main__.__pkg_no_download_flag__ \
         and self.show_classic_tab_on_startup_flag:
             self.main_win_obj.notebook.set_current_page(
@@ -3218,11 +3238,7 @@ class TartubeApp(Gtk.Application):
         # Create the temporary data directories (or empty them, if they already
         #   exist)
         if os.path.isdir(self.temp_dir):
-
-            try:
-                shutil.rmtree(self.temp_dir)
-            except:
-                pass
+            self.remove_directory(self.temp_dir)
 
         else:
             self.make_directory(self.temp_dir)
@@ -3269,8 +3285,8 @@ class TartubeApp(Gtk.Application):
         elif self.disable_load_save_flag:
 
             # (If self.show_classic_tab_on_startup_flag is set, then the
-            #   Classic Mode Tab is visible. This looks weird, so quickly
-            #   switch back to the Videos Tab)
+            #   Classic Mode tab is visible. This looks weird, so quickly
+            #   switch back to the Videos tab)
             self.main_win_obj.notebook.set_current_page(0)
 
             if self.disable_load_save_msg is None:
@@ -3314,7 +3330,7 @@ class TartubeApp(Gtk.Application):
                 self.script_fast_timer_callback,
             )
 
-        # Part 11 - Restore pending URLs to the Classic Mode Tab's textview
+        # Part 11 - Restore pending URLs to the Classic Mode tab's textview
         # -----------------------------------------------------------------
 
         if self.classic_pending_list:
@@ -3479,7 +3495,7 @@ class TartubeApp(Gtk.Application):
 
         # Delete Tartube's temporary folder from the filesystem
         if os.path.isdir(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+            self.remove_directory(self.temp_dir)
 
         # Save the config and database files for the final time, and release
         #   the database lockfile
@@ -4204,6 +4220,16 @@ class TartubeApp(Gtk.Application):
             self.slice_video_cleanup_flag \
             = json_dict['slice_video_cleanup_flag']
 
+        if version >= 2003316:  # v2.3.316
+            self.comment_fetch_flag = json_dict['comment_fetch_flag']
+            self.comment_store_flag = json_dict['comment_store_flag']
+        if version >= 2003318:  # v2.3.318
+            self.comment_show_text_time_flag \
+            = json_dict['comment_show_text_time_flag']
+        if version >= 2003319:  # v2.3.319
+            self.comment_show_formatted_flag \
+            = json_dict['comment_show_formatted_flag']
+
         if version >= 5004:     # v0.5.004
             self.ignore_child_process_exit_flag \
             = json_dict['ignore_child_process_exit_flag']
@@ -4757,7 +4783,7 @@ class TartubeApp(Gtk.Application):
                 = self.main_win_obj.classic_paned.get_position()
 
         # If the user wants to recover undownloaded URLs from the Classic Mode
-        #   Tab when Tartube restarts, then compile that list of URLs now
+        #   tab when Tartube restarts, then compile that list of URLs now
         if self.classic_pending_flag:
 
             self.classic_pending_list \
@@ -5002,6 +5028,11 @@ class TartubeApp(Gtk.Application):
             'sblock_re_extract_flag': self.sblock_re_extract_flag,
             'slice_video_cleanup_flag': self.slice_video_cleanup_flag,
 
+            'comment_fetch_flag': self.comment_fetch_flag,
+            'comment_store_flag': self.comment_store_flag,
+            'comment_show_text_time_flag': self.comment_show_text_time_flag,
+            'comment_show_formatted_flag': self.comment_show_formatted_flag,
+
             'ignore_child_process_exit_flag': \
             self.ignore_child_process_exit_flag,
             'ignore_http_404_error_flag': self.ignore_http_404_error_flag,
@@ -5120,14 +5151,14 @@ class TartubeApp(Gtk.Application):
                 json.dump(json_dict, outfile, indent=4)
 
         except:
-            os.remove(lock_path)
+            self.remove_file(lock_path)
             self.disable_load_save(_('Failed to save the Tartube config file'))
 
             return
 
         # Procedure successful; remove the lock
         if not self.debug_ignore_lockfile_flag:
-            os.remove(lock_path)
+            self.remove_file(lock_path)
 
 
     def get_config_path(self):
@@ -5997,7 +6028,7 @@ class TartubeApp(Gtk.Application):
             )
 
             if os.path.isfile(temp_path):
-                os.remove(temp_path)
+                self.remove_file(temp_path)
 
             # 'Unsorted Videos'
             unsorted_path = os.path.abspath(
@@ -6008,11 +6039,11 @@ class TartubeApp(Gtk.Application):
             )
 
             if os.path.isfile(unsorted_path):
-                os.remove(unsorted_path)
+                self.remove_file(unsorted_path)
 
         if version < 2000025:  # v2.0.025
 
-            # This version adds the Classic Mode Tab, and new IVs used by it.
+            # This version adds the Classic Mode tab, and new IVs used by it.
             #   Most of them are only created when needed
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
@@ -6631,6 +6662,20 @@ class TartubeApp(Gtk.Application):
                 and media_data_obj.restrict_mode == 'free':
                     media_data_obj.restrict_mode = 'open'
 
+        if version < 2003314:      # v2.3.314
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.comment_list = []
+
+        if version < 2003316:  # v2.3.316
+
+            # This version removes an option to options.OptionsManager
+            for options_obj in options_obj_list:
+                if 'write_comments' in options_obj.options_dict:
+                    del options_obj.options_dict['write_comments']
+
 
     def save_db(self):
 
@@ -6814,7 +6859,7 @@ class TartubeApp(Gtk.Application):
 
             # Make the backup file permanent, or not, depending on settings
             if self.db_backup_mode == 'default':
-                os.remove(temp_bu_path)
+                self.remove_file(temp_bu_path)
 
             elif self.db_backup_mode == 'single':
 
@@ -6832,12 +6877,9 @@ class TartubeApp(Gtk.Application):
 
                 # Only make a new backup file once per day
                 if not os.path.isfile(daily_bu_path):
-
                     utils.rename_file(self, temp_bu_path, daily_bu_path)
-
                 else:
-
-                    os.remove(temp_bu_path)
+                    self.remove_file(temp_bu_path)
 
             elif self.db_backup_mode == 'always':
 
@@ -7106,19 +7148,17 @@ class TartubeApp(Gtk.Application):
         # For the old database, delete Tartube's temporary folder from the
         #   filesystem
         if os.path.isdir(self.backup_temp_dir):
-            shutil.rmtree(self.backup_temp_dir)
+            self.remove_directory(self.backup_temp_dir)
 
         # For the new database, the temporary data directory should be emptied,
         #   if it already exists)
-        if os.path.isdir(self.temp_dir):
-            try:
-                shutil.rmtree(self.temp_dir)
+        if os.path.isdir(self.temp_dir) \
+        and not self.remove_directory(self.temp_dir):
 
-            except:
-                if not self.make_directory(self.temp_dir):
-                    return False
-                else:
-                    shutil.rmtree(self.temp_dir)
+            if not self.make_directory(self.temp_dir):
+                return False
+            else:
+                self.remove_directory(self.temp_dir)
 
         if not os.path.isdir(self.temp_dir):
             self.make_directory(self.temp_dir)
@@ -8410,7 +8450,6 @@ class TartubeApp(Gtk.Application):
 
         This function must only be called for that reason; fixed folders cannot
         otherwise be renamed.
-
         """
 
         if DEBUG_FUNC_FLAG:
@@ -8585,12 +8624,9 @@ class TartubeApp(Gtk.Application):
                 # Remove files from the filesystem, leaving an empty directory
                 dir_path = media_data_obj.get_default_dir(self)
                 if os.path.isdir(dir_path):
-                    shutil.rmtree(dir_path)
+                    self.remove_directory(dir_path)
 
-                try:
-                    os.makedirs(dir_path)
-                except:
-                    pass
+                self.make_directory(dir_path)
 
 
     def open_temp_folders(self):
@@ -8668,7 +8704,7 @@ class TartubeApp(Gtk.Application):
         if self.db_lock_file_path is not None:
 
             if os.path.isfile(self.db_lock_file_path):
-                os.remove(self.db_lock_file_path)
+                self.remove_file(self.db_lock_file_path)
 
             self.db_lock_file_path = None
 
@@ -8690,7 +8726,7 @@ class TartubeApp(Gtk.Application):
         )
 
         if os.path.exists(lock_path):
-            os.remove(lock_path)
+            self.remove_file(lock_path)
 
 
     def file_error_dialogue(self, msg):
@@ -8757,7 +8793,123 @@ class TartubeApp(Gtk.Application):
             # Show a system error
             self.system_error(
                 105,
-                'Failed to create directory  \'' + dir_path + '\'',
+                'Failed to create directory \'' + dir_path + '\'',
+            )
+
+            return False
+
+
+    def remove_directory(self, dir_path):
+
+        """Can be called by anything.
+
+        The call to shutil.rmtree() might fail.
+
+        Convenience function to intercept the error, and display a system error
+        in response.
+
+        Args:
+
+            dir_path (str): The full path to the directory to be removed with a
+                call to shutil.rmtree()
+
+        Returns:
+
+            True if the directory was removed, False if not
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7460 remove_directory')
+
+        try:
+            shutil.rmtree(dir_path)
+            return True
+
+        except:
+
+            # Show a system error
+            self.system_error(
+                999,
+                'Failed to remove directory \'' + dir_path + '\'',
+            )
+
+            return False
+
+
+    def remove_file(self, file_path):
+
+        """Can be called by anything.
+
+        The call to os.remove() might fail.
+
+        Convenience function to intercept the error, and display a system error
+        in response.
+
+        Args:
+
+            file_path (str): The full path to the file to be removed with a
+                call to os.remove()
+
+        Returns:
+
+            True if the file was removed, False if not
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7460 remove_file')
+
+        try:
+            os.remove(file_path)
+            return True
+
+        except:
+
+            # Show a system error
+            self.system_error(
+                999,
+                'Failed to remove file \'' + file_path + '\'',
+            )
+
+            return False
+
+
+    def move_file_or_directory(self, old_path, new_path):
+
+        """Can be called by anything.
+
+        The call to shutil.move() might fail.
+
+        Convenience function to intercept the error, and display a system error
+        in response.
+
+        Args:
+
+            old_path (str): The current full path of the file or directory
+
+            new_path (str): The new full path of the file or directory
+
+        Returns:
+
+            True if the file/directory was moved, False if not
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 7460 move_file_or_directory')
+
+        try:
+            shutil.move(old_path, new_path)
+            return True
+
+        except:
+
+            # Show a system error
+            self.system_error(
+                999,
+                'Failed to move file/directory \'' + old_path + '\' to \'' \
+                + new_path + '\'',
             )
 
             return False
@@ -8907,7 +9059,7 @@ class TartubeApp(Gtk.Application):
 
         Returns:
 
-            True if the user selects a location, False if they do not.
+            True if the user selects a location, False if they do not
 
         """
 
@@ -9212,7 +9364,7 @@ class TartubeApp(Gtk.Application):
                 except that it is always followed by a 'custom_real'
                 operation)
 
-                For downloads launched from the Classic Mode Tab,
+                For downloads launched from the Classic Mode tab,
                 'classic_real' for an ordinary download, or 'classic_custom'
                 for a custom download. A 'classic_custom' operation is always
                 preceded by a 'classic_sim' operation (which is the same as a
@@ -9446,7 +9598,7 @@ class TartubeApp(Gtk.Application):
         media_data_list = arg_list.pop(0)
         custom_dl_obj = arg_list.pop(0)
 
-        # When not called by the Classic Mode Tab:
+        # When not called by the Classic Mode tab:
         #
         # The media data registry consists of a collection of media data
         #   objects (media.Video, media.Channel, media.Playlist and
@@ -9461,7 +9613,7 @@ class TartubeApp(Gtk.Application):
         # Those downloads.DownloadItem objects are collectively stored in a
         #   downloads.DownloadList object
         #
-        # When called by the Classic Mode Tab:
+        # When called by the Classic Mode tab:
         #
         # The user has added one or more URLs to the tab's download list and,
         #   in response, Tartube has created a number of dummy media.Video
@@ -9569,8 +9721,8 @@ class TartubeApp(Gtk.Application):
         if automatic_flag:
             self.no_dialogue_this_time_flag = True
 
-        # During a download operation, show a progress bar in the Videos Tab
-        #   (except when launched from the Classic Mode Tab, in which case we
+        # During a download operation, show a progress bar in the Videos tab
+        #   (except when launched from the Classic Mode tab, in which case we
         #   just desensitise the existing buttons)
         if operation_type == 'sim' or operation_type == 'custom_sim':
             self.main_win_obj.show_progress_bar('check')
@@ -9583,7 +9735,7 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.progress_list_reset()
         # Reset the Results List
         self.main_win_obj.results_list_reset()
-        # Reset the Output Tab
+        # Reset the Output tab
         self.main_win_obj.output_tab_reset_pages()
 
         if operation_type == 'sim' \
@@ -9603,8 +9755,8 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.show_all()
 
         # During a download operation, a GObject timer runs, so that at regular
-        #   intervals we can update the Progress Tab/Classic Progress Tab, and
-        #   the Output Tab
+        #   intervals we can update the Progress tab/Classic Progress tab, and
+        #   the Output tab
         # There is also a delay between the instant at which youtube-dl reports
         #   a video file has been downloaded, and the instant at which it
         #   appears in the filesystem. The timer checks for newly-existing
@@ -9660,7 +9812,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 8109 download_manager_finished')
 
         # This function behaves differently, if the download operation was
-        #   launched from the Classic Mode Tab
+        #   launched from the Classic Mode tab
         operation_type = self.download_manager_obj.operation_type
         if operation_type == 'clasic_sim' \
         or operation_type == 'classic_real' \
@@ -9678,7 +9830,7 @@ class TartubeApp(Gtk.Application):
         #   objects that was passed to self.download_manager_start()
         orig_media_data_list \
         = self.download_manager_obj.download_list_obj.orig_media_data_list
-        # For Classic Mode Tab custom downloads, get the list of videos which
+        # For Classic Mode tab custom downloads, get the list of videos which
         #   were extrascted, along with their metadata
         classic_extract_list = self.download_manager_obj.classic_extract_list
 
@@ -9722,7 +9874,7 @@ class TartubeApp(Gtk.Application):
         self.watch_after_dl_list = []
 
         # After a download operation, save files, if allowed (but don't bother
-        #   when launched from the Classic Mode Tab)
+        #   when launched from the Classic Mode tab)
         if not classic_mode_flag and self.operation_save_flag:
             self.save_config()
             self.save_db()
@@ -9732,7 +9884,7 @@ class TartubeApp(Gtk.Application):
 
         if not classic_mode_flag:
 
-            # Remove the progress bar in the Videos Tab
+            # Remove the progress bar in the Videos tab
             self.main_win_obj.hide_progress_bar()
 
             # If remaining lines in the Progress List should be hidden, hide
@@ -10026,7 +10178,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.output_tab_show_first_page()
 
         # During an update operation, a GObject timer runs, so that the Output
-        #   Tab can be updated at regular intervals
+        #   tab can be updated at regular intervals
         # Create the timer
         self.update_timer_id = GObject.timeout_add(
             self.update_timer_time,
@@ -10081,7 +10233,7 @@ class TartubeApp(Gtk.Application):
             return False
 
         # During an update operation, a GObject timer runs, so that the Output
-        #   Tab can be updated at regular intervals
+        #   tab can be updated at regular intervals
         # Create the timer
         self.update_timer_id = GObject.timeout_add(
             self.update_timer_time,
@@ -10375,9 +10527,9 @@ class TartubeApp(Gtk.Application):
             # Redraw the Video Index and Video Catalogue
             self.main_win_obj.video_index_catalogue_reset()
 
-        # During a refresh operation, show a progress bar in the Videos Tab
+        # During a refresh operation, show a progress bar in the Videos tab
         self.main_win_obj.show_progress_bar('refresh')
-        # Reset the Output Tab
+        # Reset the Output tab
         self.main_win_obj.output_tab_reset_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(False, True)
@@ -10385,7 +10537,7 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.show_all()
 
         # During a refresh operation, a GObject timer runs, so that the Output
-        #   Tab can be updated at regular intervals
+        #   tab can be updated at regular intervals
         # Create the timer
         self.refresh_timer_id = GObject.timeout_add(
             self.refresh_timer_time,
@@ -10459,10 +10611,10 @@ class TartubeApp(Gtk.Application):
 
         # Update the status icon in the system tray
         self.status_icon_obj.update_icon()
-        # Remove the progress bar in the Videos Tab
+        # Remove the progress bar in the Videos tab
         self.main_win_obj.hide_progress_bar()
         # Any remaining messages generated by refresh.RefreshManager should be
-        #   shown in the Output Tab immediately
+        #   shown in the Output tab immediately
         self.main_win_obj.output_tab_update_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(True)
@@ -10605,7 +10757,7 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.sensitise_check_dl_buttons(False, info_type)
 
         # During an info operation, a GObject timer runs, so that the Output
-        #   Tab can be updated at regular intervals
+        #   tab can be updated at regular intervals
         # Create the timer
         self.info_timer_id = GObject.timeout_add(
             self.info_timer_time,
@@ -10616,12 +10768,9 @@ class TartubeApp(Gtk.Application):
         #   anything is downloaded
         if info_type == 'test_ytdl':
 
-            if os.path.isdir(self.temp_test_dir):
-                try:
-                    shutil.rmtree(self.temp_test_dir)
-                    os.makedirs(self.temp_test_dir)
-                except:
-                    pass
+            if os.path.isdir(self.temp_test_dir) \
+            and self.remove_directory(self.temp_test_dir):
+                self.make_directory(self.temp_test_dir)
 
         # Initiate the info operation. Any code can check whether an operation
         #   is in progress, or not, by checking this IV
@@ -10710,7 +10859,7 @@ class TartubeApp(Gtk.Application):
                 else:
                     msg = _('Operation complete')
 
-                msg += '\n\n' + _('Click the Output Tab to see the results')
+                msg += '\n\n' + _('Click the Output tab to see the results')
 
             else:
 
@@ -10826,7 +10975,6 @@ class TartubeApp(Gtk.Application):
 
         """
 
-
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 9120 tidy_manager_start')
 
@@ -10866,16 +11014,16 @@ class TartubeApp(Gtk.Application):
             # Redraw the Video Index and Video Catalogue
             self.main_win_obj.video_index_catalogue_reset()
 
-        # During a tidy operation, show a progress bar in the Videos Tab
+        # During a tidy operation, show a progress bar in the Videos tab
         self.main_win_obj.show_progress_bar('tidy')
-        # Reset the Output Tab
+        # Reset the Output tab
         self.main_win_obj.output_tab_reset_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(False, True)
         # Make the widget changes visible
         self.main_win_obj.show_all()
 
-        # During a tidy operation, a GObject timer runs, so that the Output Tab
+        # During a tidy operation, a GObject timer runs, so that the Output tab
         #   can be updated at regular intervals
         # Create the timer
         self.tidy_timer_id = GObject.timeout_add(
@@ -10947,10 +11095,10 @@ class TartubeApp(Gtk.Application):
 
         # Update the status icon in the system tray
         self.status_icon_obj.update_icon()
-        # Remove the progress bar in the Videos Tab
+        # Remove the progress bar in the Videos tab
         self.main_win_obj.hide_progress_bar()
         # Any remaining messages generated by tidy.TidyManager should be shown
-        #   in the Output Tab immediately
+        #   in the Output tab immediately
         self.main_win_obj.output_tab_update_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(True)
@@ -11011,7 +11159,6 @@ class TartubeApp(Gtk.Application):
         Creates a new downloads.StreamManager object to handle the livestream
         operation. When the operation is complete,
         self.livestream_manager_finished() is called.
-
         """
 
         if DEBUG_FUNC_FLAG:
@@ -11264,9 +11411,9 @@ class TartubeApp(Gtk.Application):
 
         # (Process operations should not cause Gtk stability issues)
 
-        # During a process operation, show a progress bar in the Videos Tab
+        # During a process operation, show a progress bar in the Videos tab
         self.main_win_obj.show_progress_bar('process')
-        # Reset the Output Tab
+        # Reset the Output tab
         self.main_win_obj.output_tab_reset_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(False, True)
@@ -11274,7 +11421,7 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.show_all()
 
         # During a process operation, a GObject timer runs, so that the Output
-        #   Tab can be updated at regular intervals
+        #   tab can be updated at regular intervals
         # Create the timer
         self.process_timer_id = GObject.timeout_add(
             self.process_timer_time,
@@ -11370,10 +11517,10 @@ class TartubeApp(Gtk.Application):
 
         # Update the status icon in the system tray
         self.status_icon_obj.update_icon()
-        # Remove the progress bar in the Videos Tab
+        # Remove the progress bar in the Videos tab
         self.main_win_obj.hide_progress_bar()
         # Any remaining messages generated by process.ProcessManager should be
-        #   shown in the Output Tab immediately
+        #   shown in the Output tab immediately
         self.main_win_obj.output_tab_update_pages()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(True)
@@ -11437,7 +11584,7 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            download_item_obj (downloads.DownloadItem) - The object used to
+            download_item_obj (downloads.DownloadItem): The object used to
                 track the download status of a media data object (media.Video,
                 media.Channel or media.Playlist)
 
@@ -11993,12 +12140,12 @@ class TartubeApp(Gtk.Application):
                 self.mark_video_waiting(video_obj, False)
 
 
-    def update_video_from_json(self, video_obj, chapters_only_flag=False):
+    def update_video_from_json(self, video_obj, mode='default'):
 
         """Called by self.update_video_when_file_found(),
         .announce_video_clone(),
         refresh.RefreshManager.refresh_from_default_destination() and
-        process.ProcessManager.run().
+        process.ProcessManager.run() and several other functions.
 
         If a video's JSON file exists, extract video statistics from it, and
         use them to update the video object.
@@ -12007,9 +12154,8 @@ class TartubeApp(Gtk.Application):
 
             video_obj (media.Video): The video object to update
 
-            chapters_only_flag (bool): True when called by
-                process.ProcessManager, in which case only video timestamps are
-                updated
+            mode (str): 'default' to update everything, 'chapters' to update
+                only video timestamps, 'comments' to update only comments
 
         """
 
@@ -12021,7 +12167,7 @@ class TartubeApp(Gtk.Application):
 
             json_dict = self.file_manager_obj.load_json(json_path)
 
-            if not chapters_only_flag:
+            if mode == 'default':
 
                 if 'title' in json_dict:
                     video_obj.set_nickname(json_dict['title'])
@@ -12058,23 +12204,29 @@ class TartubeApp(Gtk.Application):
                         )
                     )
 
-            if 'chapters' in json_dict \
-            and self.video_timestamps_extract_json_flag \
-            and (not self.stamp_list or self.video_timestamps_replace_flag):
-
-                video_obj.extract_timestamps_from_chapters(
-                    self,
-                    json_dict['chapters'],
-                )
-
-            if not chapters_only_flag:
-
                 if 'description' in json_dict:
                     video_obj.set_video_descrip(
                         self,
                         json_dict['description'],
                         self.main_win_obj.descrip_line_max_len,
                     )
+
+            if (
+                (mode == 'default' and self.comment_store_flag) \
+                or mode == 'comments'
+            ) and 'comments' in json_dict:
+                video_obj.set_comments(json_dict['comments'])
+
+            if (
+                (mode == 'default' and self.video_timestamps_extract_json_flag)
+                or mode == 'chapters'
+            ) and 'chapters' in json_dict \
+            and (not self.stamp_list or self.video_timestamps_replace_flag):
+
+                video_obj.extract_timestamps_from_chapters(
+                    self,
+                    json_dict['chapters'],
+                )
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
@@ -12584,7 +12736,7 @@ class TartubeApp(Gtk.Application):
                 True, which forces simulated downloads for any videos,
                 channels or playlists contained in the folder
 
-            restrict_mode (str) - 'full' if this folder can contain videos, but
+            restrict_mode (str): 'full' if this folder can contain videos, but
                 not channels/playlists/folders, 'partial' if this folder can
                 contain videos and folders, but not channels and playlists,
                 'open' if this folder can contain any combination of videos,
@@ -12773,7 +12925,19 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 10964 move_container_to_top_continue')
 
         # Move the sub-directories to their new location
-        shutil.move(media_data_obj.get_default_dir(self), self.downloads_dir)
+        if not self.move_file_or_directory(
+            media_data_obj.get_default_dir(self),
+            self.downloads_dir,
+        ):
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'Could not move \'{0}\' (filesystem error)'
+                ).format(media_data_obj.name),
+                'error',
+                'ok',
+            )
+
+            return
 
         # Update IVs
         media_data_obj.parent_obj.del_child(media_data_obj)
@@ -12972,10 +13136,19 @@ class TartubeApp(Gtk.Application):
         dest_obj = media_list[1]
 
         # Move the sub-directories to their new location
-        shutil.move(
+        if not self.move_file_or_directory(
             source_obj.get_default_dir(self),
             dest_obj.get_default_dir(self),
-        )
+        ):
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'Could not move \'{0}\' (filesystem error)'
+                ).format(media_data_obj.name),
+                'error',
+                'ok',
+            )
+
+            return
 
         # Update both media data objects' IVs
         if source_obj.parent_obj:
@@ -13144,10 +13317,7 @@ class TartubeApp(Gtk.Application):
                     fail_count += 1
                     continue
 
-                try:
-                    shutil.move(old_path, new_path)
-
-                except:
+                if not self.move_file_or_directory(old_path, new_path):
                     fail_count += 1
                     continue
 
@@ -13166,10 +13336,7 @@ class TartubeApp(Gtk.Application):
 
                     if os.path.isfile(old_path) \
                     and not os.path.isfile(new_path):
-                        try:
-                            shutil.move(old_path, new_path)
-                        except:
-                            pass
+                         self.move_file_or_directory(old_path, new_path)
 
             # Move the thumbnail
             old_path = utils.find_thumbnail(self, video_obj)
@@ -13181,10 +13348,7 @@ class TartubeApp(Gtk.Application):
                 )
 
                 if os.path.isfile(old_path) and not os.path.isfile(new_path):
-                    try:
-                        shutil.move(old_path, new_path)
-                    except:
-                        pass
+                    self.move_file_or_directory(old_path, new_path)
 
             # Update IVs in the old and new parent containers
             video_obj.parent_obj.del_child(video_obj)
@@ -13360,7 +13524,7 @@ class TartubeApp(Gtk.Application):
             else:
 
                 # This is the options.OptionsManager used in the Classic Mode
-                #   Tab (an unlikely situation, but possible)
+                #   tab (an unlikely situation, but possible)
                 self.classic_options_obj.reset_dbid()
                 # Update the list in any preference windows that are open
                 for win_obj in self.main_win_obj.config_win_list:
@@ -13457,7 +13621,7 @@ class TartubeApp(Gtk.Application):
         mainwin.MainWin.on_video_catalogue_re_download().
 
         Deletes the files associated with a media.Video object, including not
-        just the original vidoe/audio file, but its metadata files too.
+        just the original video/audio file, but its metadata files too.
 
         Args:
 
@@ -13500,13 +13664,13 @@ class TartubeApp(Gtk.Application):
                     = os.path.splitext(video_obj.dummy_path)
                     main_path = dummy_file + '.' + ext
                     if os.path.isfile(main_path):
-                        os.remove(main_path)
+                        self.remove_file(main_path)
 
             else:
 
                 main_path = video_obj.get_default_path_by_ext(self, ext)
                 if os.path.isfile(main_path):
-                    os.remove(main_path)
+                    self.remove_file(main_path)
 
                 else:
 
@@ -13517,13 +13681,13 @@ class TartubeApp(Gtk.Application):
                     )
 
                     if os.path.isfile(subdir_path):
-                        os.remove(subdir_path)
+                        self.remove_file(subdir_path)
 
         # (Thumbnails might be in one of two locations, so are handled
         #   separately)
         thumb_path = utils.find_thumbnail(self, video_obj)
         if thumb_path and os.path.isfile(thumb_path):
-            os.remove(thumb_path)
+            self.remove_file(thumb_path)
 
 
     def delete_container(self, media_data_obj, empty_flag=False):
@@ -13661,15 +13825,12 @@ class TartubeApp(Gtk.Application):
         # Confirmation obtained, so delete the files
         container_dir = media_data_obj.get_default_dir(self)
         if os.path.isdir(container_dir):
-            shutil.rmtree(container_dir)
+            self.remove_directory(container_dir)
 
         # If emptying the container rather than deleting it, just create a
         #   replacement (empty) directory on the filesystem
         if empty_flag:
-            try:
-                os.makedirs(container_dir)
-            except:
-                pass
+            self.make_directory(container_dir)
 
         # Now call self.delete_container_complete() to handle the media data
         #   registry
@@ -13721,7 +13882,7 @@ class TartubeApp(Gtk.Application):
             else:
 
                 # This is the options.OptionsManager used in the Classic Mode
-                #   Tab (an unlikely situation, but possible)
+                #   tab (an unlikely situation, but possible)
                 self.classic_options_obj.reset_dbid()
                 # Update the list in any preference windows that are open
                 for win_obj in self.main_win_obj.config_win_list:
@@ -15890,10 +16051,7 @@ class TartubeApp(Gtk.Application):
             # Attempt to rename the sub-directory itself
             old_dir = media_data_obj.get_default_dir(self)
             new_dir = media_data_obj.get_default_dir(self, new_name)
-            try:
-                shutil.move(old_dir, new_dir)
-
-            except:
+            if not self. self.move_file_or_directory(old_dir, new_dir):
                 return self.dialogue_manager_obj.show_msg_dialogue(
                     _('Failed to rename \'{0}\'').format(media_data_obj.name),
                     'error',
@@ -15968,10 +16126,7 @@ class TartubeApp(Gtk.Application):
         or not media_data_obj.priv_flag:
             old_dir = media_data_obj.get_default_dir(self)
             new_dir = media_data_obj.get_default_dir(self, new_name)
-            try:
-                shutil.move(old_dir, new_dir)
-
-            except:
+            if not  self.move_file_or_directory(old_dir, new_dir):
                 return False
 
         # Filesystem updated, so now update the media data object itself. This
@@ -16043,13 +16198,13 @@ class TartubeApp(Gtk.Application):
 
         # Extract values from the argument list
         model = data_list.pop(0)
-        iter = data_list.pop(0)
+        tree_iter = data_list.pop(0)
         media_data_obj = data_list.pop(0)
         url = data_list.pop(0)
 
         # Update the media data object
         media_data_obj.set_source(url)
-        model[iter][3] = url
+        model[tree_iter][3] = url
 
 
     def update_container_url_multiple(self, data_list):
@@ -16097,8 +16252,8 @@ class TartubeApp(Gtk.Application):
             else:
                 # (Update the contents of the treeview cell immediately)
                 media_data_obj.set_source(mod_url)
-                iter = model.get_iter(path)
-                model[iter][3] = mod_url
+                tree_iter = model.get_iter(path)
+                model[tree_iter][3] = mod_url
                 success_count += 1
 
         # Confirm the result
@@ -17798,7 +17953,7 @@ class TartubeApp(Gtk.Application):
         config.SystemPrefWin.on_custom_dl_use_classic_button_clicked().
 
         Applies a specified custom download manager object
-        (downloads.CustomDLManager) for use in the Classic Mode Tab.
+        (downloads.CustomDLManager) for use in the Classic Mode tab.
 
         Args:
 
@@ -18452,7 +18607,7 @@ class TartubeApp(Gtk.Application):
         A modified version of self.apply_download_options.
 
         Applies a specified download options object (options.OptionsManager)
-        for use in the Classic Mode Tab.
+        for use in the Classic Mode tab.
 
         Args:
 
@@ -19526,7 +19681,7 @@ class TartubeApp(Gtk.Application):
             #   their .dl_mode and .join_mode IVs
             self.download_manager_start(
                 # In this case, the default operation type does not matter, but
-                #   it's still nice to display 'Checking...' in the Videos Tab
+                #   it's still nice to display 'Checking...' in the Videos tab
                 #   label, if we're only doing simulated downloads
                 dl_mode,
                 True,       # This function is the calling function
@@ -19688,6 +19843,8 @@ class TartubeApp(Gtk.Application):
         Several times a second, check whether there are any mainwin.Catalogue
         objects to add to the Video Catalogue and, if so, adds them.
 
+        Resets the position of main window sliders, if that is due to happen.
+
         Optionally checks the number of columns that can fit in the available
         space of the Video Catalogue grid (when visible), and increase/
         reduces the size of the grid, if necessary.
@@ -19700,6 +19857,12 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG and not DEBUG_NO_TIMER_FUNC_FLAG:
             utils.debug_time('app 16210 script_fast_timer_callback')
+
+        # Reset the position of main window sliders (due to Gtk issues, for a
+        #   second time), if required
+        if self.main_win_slider_reset_flag:
+            self.main_win_slider_reset_flag = False
+            self.main_win_obj.reset_sliders()
 
         # Update the Video Catalogue, increasing/decreasing the number of
         #   columns in the grid (if visible, and if necessary)
@@ -19722,9 +19885,9 @@ class TartubeApp(Gtk.Application):
         """Called by GObject timer created by self.download_manager_continue().
 
         During a download operation, a GObject timer runs, so that the Progress
-        Tab and Output Tab can be updated at regular intervals. (When the
-        download operation is launched from the Classic Mode Tab, the
-        Classic Progress List and Output Tab are updated.)
+        tab and Output tab can be updated at regular intervals. (When the
+        download operation is launched from the Classic Mode tab, the
+        Classic Progress List and Output tab are updated.)
 
         There is also a delay between the instant at which youtube-dl reports a
         video file has been downloaded, and the instant at which it appears in
@@ -19734,7 +19897,7 @@ class TartubeApp(Gtk.Application):
         During download operations, youtube-dl output is temporarily stored
         (because Gtk widgets cannot be updated from within a thread). This
         function calls  mainwin.MainWin.output_tab_update_pages()  to display
-        that output in the Output Tab.
+        that output in the Output tab.
 
         If required, this function periodically checks whether the device
         containing self.data_dir is running out of space (and halts the
@@ -19750,7 +19913,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 16258 dl_timer_callback')
 
         # This function behaves differently, if the download operation was
-        #   launched from the Classic Mode Tab
+        #   launched from the Classic Mode tab
         if not self.download_manager_obj \
         or not self.download_manager_obj.operation_classic_flag:
             classic_mode_flag = False
@@ -19825,7 +19988,7 @@ class TartubeApp(Gtk.Application):
         """Called by GObject timer created by self.update_manager_start().
 
         During an update operation, a GObject timer runs, so that the Output
-        Tab can be updated at regular intervals.
+        tab can be updated at regular intervals.
 
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the update operation.
@@ -19834,7 +19997,7 @@ class TartubeApp(Gtk.Application):
         are temporarily stored (because Gtk widgets cannot be updated from
         within a thread). This function calls
         mainwin.MainWin.output_tab_update_pages() to display those messages in
-        the Output Tab.
+        the Output tab.
 
         Returns:
 
@@ -19869,7 +20032,7 @@ class TartubeApp(Gtk.Application):
         """Called by GObject timer created by self.refresh_manager_continue().
 
         During a refresh operation, a GObject timer runs, so that the Output
-        Tab can be updated at regular intervals.
+        tab can be updated at regular intervals.
 
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the refresh operation.
@@ -19878,7 +20041,7 @@ class TartubeApp(Gtk.Application):
         are temporarily stored (because Gtk widgets cannot be updated from
         within a thread). This function calls
         mainwin.MainWin.output_tab_update_pages() to display those messages in
-        the Output Tab.
+        the Output tab.
 
         Returns:
 
@@ -19912,8 +20075,8 @@ class TartubeApp(Gtk.Application):
 
         """Called by GObject timer created by self.info_manager_start().
 
-        During an info operation, a GObject timer runs, so that the Output
-        Tab can be updated at regular intervals.
+        During an info operation, a GObject timer runs, so that the Output tab
+        can be updated at regular intervals.
 
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the info operation.
@@ -19922,7 +20085,7 @@ class TartubeApp(Gtk.Application):
         are temporarily stored (because Gtk widgets cannot be updated from
         within a thread). This function calls
         mainwin.MainWin.output_tab_update_pages() to display those messages in
-        the Output Tab.
+        the Output tab.
 
         Returns:
 
@@ -19956,8 +20119,8 @@ class TartubeApp(Gtk.Application):
 
         """Called by GObject timer created by self.tidy_manager_start().
 
-        During a tidy operation, a GObject timer runs, so that the Output
-        Tab can be updated at regular intervals.
+        During a tidy operation, a GObject timer runs, so that the Output tab
+        can be updated at regular intervals.
 
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the tidy operation.
@@ -19966,7 +20129,7 @@ class TartubeApp(Gtk.Application):
         are temporarily stored (because Gtk widgets cannot be updated from
         within a thread). This function calls
         mainwin.MainWin.output_tab_update_pages() to display those messages in
-        the Output Tab.
+        the Output tab.
 
         Returns:
 
@@ -20001,7 +20164,7 @@ class TartubeApp(Gtk.Application):
         """Called by GObject timer created by self.process_manager_continue().
 
         During a process operation, a GObject timer runs, so that the Output
-        Tab can be updated at regular intervals.
+        tab can be updated at regular intervals.
 
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the process operation.
@@ -20010,7 +20173,7 @@ class TartubeApp(Gtk.Application):
         are temporarily stored (because Gtk widgets cannot be updated from
         within a thread). This function calls
         mainwin.MainWin.output_tab_update_pages() to display those messages in
-        the Output Tab.
+        the Output tab.
 
         Returns:
 
@@ -20104,7 +20267,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        In the Classic Mode Tab, transfers URLs in the textview into the
+        In the Classic Mode tab, transfers URLs in the textview into the
         Classic Progress List, creating a new dummy media.Video object for each
         URL, and updating IVs.
 
@@ -20127,7 +20290,7 @@ class TartubeApp(Gtk.Application):
         """Called from a callback in self.do_startup().
 
         Opens the file chooser dialogue, so the user can set a new destination
-        directory for videos downloaded in the Classic Mode Tab.
+        directory for videos downloaded in the Classic Mode tab.
 
         Args:
 
@@ -20173,7 +20336,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Opens the directory for videos downloaded in the Classic Mode Tab.
+        Opens the directory for videos downloaded in the Classic Mode tab.
 
         Args:
 
@@ -20384,7 +20547,7 @@ class TartubeApp(Gtk.Application):
 
         """Called from a callback in self.do_startup().
 
-        Opens a popup menu for the Classic Mode Tab.
+        Opens a popup menu for the Classic Mode tab.
 
         Args:
 
@@ -23131,6 +23294,25 @@ class TartubeApp(Gtk.Application):
             self.classic_pending_flag = False
 
 
+    def set_catalogue_clickable_container_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time(
+                'app 19282 set_catalogue_clickable_container_flag',
+            )
+
+        if not flag:
+            self.catalogue_clickable_container_flag = False
+        else:
+            self.catalogue_clickable_container_flag = True
+
+        # Re-draw the Video Catalogue to implement the new setting
+        if self.main_win_obj.video_index_current is not None:
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+            )
+
+
     def set_catalogue_sort_mode(self, mode):
 
         if DEBUG_FUNC_FLAG:
@@ -23169,25 +23351,6 @@ class TartubeApp(Gtk.Application):
             self.classic_ytdl_archive_flag = True
 
 
-    def set_catalogue_clickable_container_flag(self, flag):
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time(
-                'app 19282 set_catalogue_clickable_container_flag',
-            )
-
-        if not flag:
-            self.catalogue_clickable_container_flag = False
-        else:
-            self.catalogue_clickable_container_flag = True
-
-        # Re-draw the Video Catalogue to implement the new setting
-        if self.main_win_obj.video_index_current is not None:
-            self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
-            )
-
-
     def set_close_to_tray_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -23197,6 +23360,50 @@ class TartubeApp(Gtk.Application):
             self.close_to_tray_flag = False
         else:
             self.close_to_tray_flag = True
+
+
+    def set_comment_fetch_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19293 set_comment_fetch_flag')
+
+        if not flag:
+            self.comment_fetch_flag = False
+        else:
+            self.comment_fetch_flag = True
+
+
+    def set_comment_show_formatted_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19737 set_comment_show_formatted_flag')
+
+        if not flag:
+            self.comment_show_formatted_flag = False
+        else:
+            self.comment_show_formatted_flag = True
+
+
+    def set_comment_show_text_time_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19737 set_comment_show_text_time_flag')
+
+        if not flag:
+            self.comment_show_text_time_flag = False
+        else:
+            self.comment_show_text_time_flag = True
+
+
+    def set_comment_store_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19293 set_comment_store_flag')
+
+        if not flag:
+            self.comment_store_flag = False
+        else:
+            self.comment_store_flag = True
 
 
     def set_complex_index_flag(self, flag):
@@ -23889,6 +24096,17 @@ class TartubeApp(Gtk.Application):
             self.main_win_save_slider_flag = True
 
 
+    def set_main_win_slider_reset_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19150 set_main_win_slider_reset_flag')
+
+        if not flag:
+            self.main_win_slider_reset_flag = False
+        else:
+            self.main_win_slider_reset_flag = True
+
+
     def set_match_first_chars(self, num_chars):
 
         if DEBUG_FUNC_FLAG:
@@ -23947,7 +24165,7 @@ class TartubeApp(Gtk.Application):
         Sets the new value for the number of simultaneous downloads allowed. If
         a download operation is in progress, informs the download manager
         object, so the number of download workers can be adjusted. Also
-        increases the number of pages in the Output Tab, if necessary.
+        increases the number of pages in the Output tab, if necessary.
         """
 
         if DEBUG_FUNC_FLAG:
@@ -24012,7 +24230,7 @@ class TartubeApp(Gtk.Application):
         if value < self.output_size_min or value > self.output_size_max:
             return self.system_error(
                 168,
-                'Set Output Tab page size request failed sanity check',
+                'Set Output tab page size request failed sanity check',
             )
 
         old_value = self.output_size_default

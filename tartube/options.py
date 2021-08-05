@@ -354,7 +354,7 @@ class OptionsManager(object):
 
         [Download Options]
 
-        concurrent_fragments (int): Number of fragments of a dash/hlsnative
+        concurrent_fragments (int): Number of fragments of a DASH/hlsnative
             video that should be download concurrently (default is 1)
 
         throttled_rate (int): Minimum download rate in bytes per second below
@@ -379,10 +379,6 @@ class OptionsManager(object):
 
         no_clean_info_json (bool): If True, writes all fields to the infojson
             (default is to remove some private fields)
-
-        write_comments (bool): If True, retrieves video comments to be placed
-            in the .info.json. The comments are fetched even without this
-            option if the extraction is known to be quick
 
         [Internet Shortcut Options]
 
@@ -808,7 +804,6 @@ class OptionsManager(object):
             'force_overwrites': False,
             'write_playlist_metafiles': False,
             'no_clean_info_json': False,
-            'write_comments': False,
             # (Internet Shortcut Options)
             'write_link': False,
             'write_url_link': False,
@@ -870,7 +865,7 @@ class OptionsManager(object):
 
         """Called by mainapp.TartubeApp.apply_classic_download_options().
 
-        When the user applies download options in the Classic Mode Tab, a few
+        When the user applies download options in the Classic Mode tab, a few
         options should have different default values; this function sets them.
         """
 
@@ -1177,8 +1172,6 @@ class OptionsParser(object):
             ),
             # --no-clean-infojson
             OptionHolder('no_clean_info_json', '--no-clean-infojson', False),
-            # --write-comments
-            OptionHolder('write_comments', '--write-comments', False),
             # (Internet Shortcut Options)
             # --write-link
             OptionHolder('write_link', '--write-link', False),
@@ -1611,7 +1604,7 @@ class OptionsParser(object):
         or operation_type == 'classic_custom':
 
             # Special case: if a download operation was launched from the
-            #   Classic Mode Tab, the directory is specified in that tab
+            #   Classic Mode tab, the directory is specified in that tab
             dir_path = media_data_obj.dummy_dir
 
         elif not isinstance(media_data_obj, media.Video) \
@@ -1696,7 +1689,7 @@ class OptionsParser(object):
         if isinstance(media_data_obj, media.Video):
 
             # Special case: if a download operation was launched from the
-            #   Classic Mode Tab, the video format may be specified by that tab
+            #   Classic Mode tab, the video format may be specified by that tab
             if (
                 operation_type == 'classic_sim' \
                 or operation_type == 'classic_real' \
@@ -1718,7 +1711,7 @@ class OptionsParser(object):
                     # Download the video in the specified format, if available
 
                     # Ignore all video/audio formats except the one specified
-                    #   by the user in the Classic Mode Tab
+                    #   by the user in the Classic Mode tab
                     copy_dict['video_format'] = format_str
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []
@@ -1736,7 +1729,7 @@ class OptionsParser(object):
 
                     # Converting video formats requires post-processing
                     # Ignore all video/audio formats except the one specified
-                    #   by the user in the Classic Mode Tab
+                    #   by the user in the Classic Mode tab
                     copy_dict['video_format'] = '0'
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []

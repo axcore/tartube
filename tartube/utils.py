@@ -84,7 +84,8 @@ drag_drop_text=None, no_modify_flag=None):
     Returns:
 
         The URL added to the entry (or that would have been added to the entry)
-        or None if no valid and non-duplicate URL was found in the clipboard
+            or None if no valid and non-duplicate URL was found in the
+            clipboard
 
     """
 
@@ -263,7 +264,7 @@ def check_url(url):
 
     Returns:
 
-        True if the URL is valid, False if invalid.
+        True if the URL is valid, False if invalid
 
     """
 
@@ -653,11 +654,13 @@ def clip_set_destination(app_obj, video_obj):
 
     Return values:
 
-        A list in the form
+        A list in the form:
+
             (
                 arent_folder_object, parent_directory,
                 destination_folder_object, destination_directory
             )
+
         ...with all values set to None if there was an error
 
     """
@@ -694,7 +697,7 @@ def clip_set_destination(app_obj, video_obj):
         )
 
         if not os.path.isdir(dest_dir):
-            os.makedirs(dest_dir)
+            app_obj.make_directory(dest_dir)
 
         return parent_obj, parent_dir, None, dest_dir
 
@@ -763,7 +766,7 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     Returns:
 
-        new_path: The converted full file path, or None if a filesystem error
+        Returns the converted full file path, or None if a filesystem error
             occurs
 
     """
@@ -796,18 +799,14 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     # The destination folder must exist, before moving files into it
     if not os.path.exists(new_dir):
-        try:
-            os.makedirs(new_dir)
-        except:
+        if not app_obj.make_directory(new_dir):
             return None
 
     # On MS Windows, a file name new_path must not exist, or an exception will
     #   be raised
-    if os.path.isfile(new_path):
-        try:
-            os.remove(new_path)
-        except:
-            return None
+    if os.path.isfile(new_path) \
+    and not app_obj.remove_file(new_path):
+        return None
 
     # Move the file now, if the calling code requires that
     if move_flag:
@@ -1146,7 +1145,7 @@ def disk_get_total_space(path=None, bytes_flag=False):
     Returns:
 
         The total size in MB (or in bytes, if the flag is specified). If no
-        path or an invalid path is specified, returns 0
+            path or an invalid path is specified, returns 0
 
     """
 
@@ -1186,7 +1185,7 @@ def disk_get_used_space(path=None, bytes_flag=False):
     Returns:
 
         The used space in MB (or in bytes, if the flag is specified). If no
-        path or an invalid path is specified, returns 0
+            path or an invalid path is specified, returns 0
 
     """
 
@@ -1225,6 +1224,7 @@ def extract_livestream_data(stderr):
     Return values:
 
         If extraction is successful, returns a dictionary of three values:
+
             live_msg (str): Text that can be displayed in the Video Catalogue
             live_time (int): Approximate time (matching time.time()) at which
                 the livestream is due to start
@@ -1385,9 +1385,9 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
             should be retrieved. The calling code must check that its
             .vid is set
 
-        page_num (int or None): The page number of the Output Tab where
-            output can be displayed. If None, then no output is displayed
-            in the Output Tab at all; otherwise, output is displayed (or not)
+        page_num (int or None): The page number of the Output tab where output
+            can be displayed. If None, then no output is displayed in the
+            Output tab at all; otherwise, output is displayed (or not)
             depending on the usual Tartube settings
 
         terminal_flag (bool): If False, then no output is displayed in the
@@ -1415,7 +1415,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
         + short_str
         payload = {}
 
-    # Write to the Output Tab and/or terminal, if required
+    # Write to the Output tab and/or terminal, if required
     msg = '[SponsorBlock] Contacting ' + url + '...'
     if page_num is not None and app_obj.ytdl_output_stdout_flag:
         app_obj.main_win_obj.output_tab_write_stdout(page_num, msg)
@@ -1606,7 +1606,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
 
     Returns:
 
-        path (str): The full path to the thumbnail file, or None
+        The full path to the thumbnail file, or None
 
     """
 
@@ -1697,7 +1697,7 @@ def find_thumbnail_from_filename(app_obj, dir_path, filename):
 
     Returns:
 
-        path (str): The full path to the thumbnail file, or None
+        The full path to the thumbnail file, or None
 
     """
 
@@ -1732,9 +1732,9 @@ def find_thumbnail_restricted(app_obj, video_obj):
 
     Returns:
 
-        return_list (list): A list whose items, when combined, will be the full
-            path to the thumbnail file. If no thumbnail file was found, an
-            empty list is returned
+        A list whose items, when combined, will be the full path to the
+            thumbnail file. If no thumbnail file was found, an empty list is
+            returned
 
     """
 
@@ -1774,7 +1774,7 @@ def find_thumbnail_webp(app_obj, video_obj):
 
     Returns:
 
-        path (str): The full path to the thumbnail file, or None
+        The full path to the thumbnail file, or None
 
     """
 
@@ -1873,7 +1873,7 @@ custom_dl_obj=None, divert_mode=None):
             False if a real download is to take place
 
         dl_classic_flag (bool): True if the download operation was launched
-            from the Classic Mode Tab, False otherwise
+            from the Classic Mode tab, False otherwise
 
         missing_video_check_flag (bool): True if the download operation is
             trying to detect missing videos (downloaded by user, but since
@@ -1891,8 +1891,7 @@ custom_dl_obj=None, divert_mode=None):
 
     Returns:
 
-        Python list that contains the system command to execute and its
-            arguments
+        A list that contains the system command to execute and its arguments
 
     """
 
@@ -1940,6 +1939,12 @@ custom_dl_obj=None, divert_mode=None):
             options_list.append(
                 os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
             )
+
+    # Fetch video comments, if required
+    if app_obj.comment_fetch_flag \
+    and app_obj.ytdl_fork is not None \
+    and app_obj.ytdl_fork == 'yt-dlp':
+        options_list.append('--write-comments')
 
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:
@@ -2010,12 +2015,9 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
 
     Returns:
 
-        Python list that contains the system command to execute and its
-            arguments
+        A list that contains the system command to execute and its arguments
 
     """
-
-
 
     # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
@@ -2357,7 +2359,7 @@ def get_encoding():
 
     Returns:
 
-        The system encoding.
+        The system encoding
 
     """
 
@@ -2379,7 +2381,7 @@ def get_local_time():
 
     Returns:
 
-        A datetime.datetime object, configured to the local time zone.
+        A datetime.datetime object, configured to the local time zone
 
     """
 
@@ -2451,8 +2453,8 @@ def get_options_manager(app_obj, media_data_obj):
 
     Return values:
 
-        The options.OptionsManager object that applies to the specified
-            media data object
+        The options.OptionsManager object that applies to the specified media
+            data object
 
     """
 
@@ -2560,9 +2562,9 @@ dummy_obj=None):
 
         if os.path.isfile(descrip_path):
             if not os.path.isfile(new_path):
-                shutil.move(descrip_path, new_path)
+                app_obj.move_file_or_directory(descrip_path, new_path)
             else:
-                os.remove(descrip_path)
+                app_obj.remove_file(descrip_path)
 
     # (Don't replace a file that already exists)
     elif descrip_path \
@@ -2583,9 +2585,9 @@ dummy_obj=None):
 
         if os.path.isfile(json_path):
             if not os.path.isfile(new_path):
-                shutil.move(json_path, new_path)
+                app_obj.move_file_or_directory(json_path, new_path)
             else:
-                os.remove(json_path)
+                app_obj.remove_file(json_path)
 
     elif json_path \
     and not os.path.isfile(json_path) \
@@ -2608,9 +2610,9 @@ dummy_obj=None):
 
         if os.path.isfile(thumb_path):
             if not os.path.isfile(new_path):
-                shutil.move(thumb_path, new_path)
+                app_obj.move_file_or_directory(thumb_path, new_path)
             else:
-                os.remove(thumb_path)
+                app_obj.remove_file(thumb_path)
 
     elif thumb_path \
     and not os.path.isfile(thumb_path) \
@@ -2653,16 +2655,10 @@ def move_metadata_to_subdir(app_obj, video_obj, ext):
 
     if os.path.isfile(main_path) and not os.path.isfile(subdir_path):
 
-        try:
-            if not os.path.isdir(subdir):
-                os.makedirs(subdir)
+        if not os.path.isdir(subdir):
+            app_obj.make_directory(subdir)
 
-            # (os.rename sometimes fails on external hard drives; this
-            #   is safer)
-            shutil.move(main_path, subdir_path)
-
-        except:
-            pass
+        app_obj.move_file_or_directory(main_path, subdir_path)
 
 
 def move_thumbnail_to_subdir(app_obj, video_obj):
@@ -2704,14 +2700,10 @@ def move_thumbnail_to_subdir(app_obj, video_obj):
         if os.path.isfile(main_path) \
         and not os.path.isfile(subdir_path):
 
-            try:
-                if not os.path.isdir(subdir):
-                    os.makedirs(subdir)
+            if not os.path.isdir(subdir):
+                app_obj.make_directory(subdir)
 
-                shutil.move(main_path, subdir_path)
-
-            except:
-                pass
+            app_obj.move_file_or_directory(main_path, subdir_path)
 
 
 def open_file(app_obj, uri):
@@ -2826,7 +2818,7 @@ def rename_file(app_obj, old_path, new_path):
 
         # (On MSWin, can't do os.rename if the destination file already exists)
         if os.path.isfile(new_path):
-            os.remove(new_path)
+            app_obj.remove_file(new_path)
 
         # (os.rename sometimes fails on external hard drives; this is safer)
         shutil.move(old_path, new_path)
@@ -3314,7 +3306,7 @@ def timestamp_convert_to_seconds(app_obj, stamp):
     Returns:
 
         The converted value, or the original value if 'stamp' is not a valid
-            timestamp.
+            timestamp
 
     """
 

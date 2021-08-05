@@ -420,7 +420,7 @@ msgid "Operation complete"
 msgstr "Handeling voltooid"
 
 #: .././mainapp.py:10713
-msgid "Click the Output Tab to see the results"
+msgid "Click the Output tab to see the results"
 msgstr "Klik op het tabblad 'Uitvoer' om de resultaten te bekijken"
 
 #: .././mainapp.py:10726
@@ -3904,11 +3904,11 @@ msgid "Usage"
 msgstr ""
 
 #: .././config.py:2859
-msgid "Applies everywhere except the Classic Mode Tab"
+msgid "Applies everywhere except the Classic Mode tab"
 msgstr ""
 
 #: .././config.py:2862
-msgid "Applies to the Classic Mode Tab"
+msgid "Applies to the Classic Mode tab"
 msgstr ""
 
 #: .././config.py:2864
@@ -4044,7 +4044,7 @@ msgid "All channels, playlists and folders"
 msgstr "Alle kanalen, afspeellijsten en mappen"
 
 #: .././config.py:3931
-msgid "Downloads in the Classic Mode Tab"
+msgid "Downloads in the Classic Mode tab"
 msgstr "Downloads in de klassieke modus"
 
 #: .././config.py:3933
@@ -4743,7 +4743,7 @@ msgid "Download Options"
 msgstr ""
 
 #: .././config.py:5813
-msgid "Number of fragments of a dash/hls video to download concurrently"
+msgid "Number of fragments of a DASH/HLS video to download concurrently"
 msgstr ""
 
 #: .././config.py:5828
@@ -6724,20 +6724,20 @@ msgstr ""
 "'Video's')"
 
 #: .././config.py:17831
-msgid "Disable the download buttons in the toolbar and the Videos Tab"
+msgid "Disable the download buttons in the toolbar and the Videos tab"
 msgstr ""
 
 #: .././config.py:17841
-msgid "Show a 'Custom download all' button in the Videos Tab"
+msgid "Show a 'Custom download all' button in the Videos tab"
 msgstr ""
 
 #: .././config.py:17851
-msgid "In the Progress Tab, hide finished videos / channels / playlists"
+msgid "In the Progress tab, hide finished videos / channels / playlists"
 msgstr ""
 "Afgeronde video's, kanalen en afspeellijsten verbergen op voortgangstabblad"
 
 #: .././config.py:17860
-msgid "In the Progress Tab, show results in reverse order"
+msgid "In the Progress tab, show results in reverse order"
 msgstr "Resultaten in omgekeerde volgorde tonen op voortgangstabblad"
 
 #: .././config.py:17868
@@ -6746,18 +6746,18 @@ msgstr "Automatisch opstarten in klassieke modus"
 
 #: .././config.py:17882
 msgid ""
-"In the Classic Mode Tab, when adding URLs, remove duplicates rather than "
+"In the Classic Mode tab, when adding URLs, remove duplicates rather than "
 "retaining them"
 msgstr "Duplicaten verwijderen tijdens toevoegen van url's in klassieke modus"
 
 #: .././config.py:17896
-msgid "In the Errors/Warnings Tab, don't reset the tab text when it is clicked"
+msgid "In the Errors/Warnings tab, don't reset the tab text when it is clicked"
 msgstr ""
 "Herstel de tabbladtekst niet na aanklikken op het tabblad 'Fouten/"
 "Waarschuwingen'"
 
 #: .././config.py:17919
-msgid "Video Index (left side of the Videos Tab)"
+msgid "Video Index (left side of the Videos tab)"
 msgstr "Video-index (links van het tabblad 'Video's')"
 
 #: .././config.py:17925
@@ -6782,7 +6782,7 @@ msgid "Expand the whole tree, not just the level beneath the clicked folder"
 msgstr "Boomstructuur volledig uitklappen na aanklikken"
 
 #: .././config.py:17978
-msgid "Video Catalogue (right side of the Videos Tab)"
+msgid "Video Catalogue (right side of the Videos tab)"
 msgstr "Videocatalogus (rechts van het tabblad 'Video's')"
 
 #: .././config.py:17985
@@ -7715,19 +7715,19 @@ msgid "O_utput"
 msgstr "_Uitvoer"
 
 #: .././config.py:21628
-msgid "_Output Tab"
+msgid "_Output tab"
 msgstr "_Uitvoertabblad"
 
 #: .././config.py:21636
-msgid "Output Tab preferences"
+msgid "Output tab preferences"
 msgstr "Instellingen omtrent uitvoertabblad"
 
 #: .././config.py:21641
-msgid "Display downloader system commands in the Output Tab"
+msgid "Display downloader system commands in the Output tab"
 msgstr "Systeemopdrachten van downloader tonen op tabblad 'Uitvoer'"
 
 #: .././config.py:21650
-msgid "Display output from downloader's STDOUT in the Output Tab"
+msgid "Display output from downloader's STDOUT in the Output tab"
 msgstr "STDOUT-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
 #: .././config.py:21659 .././config.py:21821
@@ -7739,15 +7739,15 @@ msgid "...but don't write each video's download progress"
 msgstr "...maar schrijf geen downloadvoortgang van elke video weg"
 
 #: .././config.py:21689
-msgid "Display output from downloader's STDERR in the Output Tab"
+msgid "Display output from downloader's STDERR in the Output tab"
 msgstr "STDERR-uitvoer van downloader tonen op tabblad 'Uitvoer'"
 
 #: .././config.py:21698
-msgid "Limit the size of Output Tab pages to"
+msgid "Limit the size of Output tab pages to"
 msgstr "Aantal pagina's op tabblad 'Uitvoer' beperken tot"
 
 #: .././config.py:21719
-msgid "Empty pages in the Output Tab at the start of every operation"
+msgid "Empty pages in the Output tab at the start of every operation"
 msgstr "Pagina's op tabblad 'Uitvoer' legen na elke actie"
 
 #: .././config.py:21729
@@ -7762,7 +7762,7 @@ msgid "During update/info operations, automatically switch to the Output tab"
 msgstr ""
 
 #: .././config.py:21752
-msgid "During a refresh operation, show all matching videos in the Output Tab"
+msgid "During a refresh operation, show all matching videos in the Output tab"
 msgstr ""
 "Alle overeenkomende video's tonen op tabblad 'Uitvoer' tijdens bijwerken"
 
@@ -7796,7 +7796,7 @@ msgstr "_Beide"
 
 #: .././config.py:21878
 msgid ""
-"Special preferences (applies to both the Output Tab and the terminal window)"
+"Special preferences (applies to both the Output tab and the terminal window)"
 msgstr ""
 "Speciale instellingen (van toepassing op het tabblad 'Uitvoer' en het "
 "terminalvenster)"
@@ -8072,7 +8072,7 @@ msgstr ""
 msgid "FAILED: Can't create a temporary folder for video clips"
 msgstr ""
 
-#. This object creates more messages for the Output Tab and/or terminal,
+#. This object creates more messages for the Output tab and/or terminal,
 #. than downloads.VideoDownloader would do, as the output generated by
 #. Youtube Stream Capture is not easy for the user to interpret
 #: .././downloads.py:7578
@@ -8789,7 +8789,7 @@ msgstr "Bezig met starten van bijwerkactie om FFmpeg te installeren"
 msgid "FFmpeg installation did not start"
 msgstr "De FFmpeg-installatie kan niet worden gestart"
 
-#. Show a confirmation in the the Output Tab (or wizard window textview)
+#. Show a confirmation in the the Output tab (or wizard window textview)
 #: .././updates.py:289 .././updates.py:509
 msgid "Update operation finished"
 msgstr "Bijwerkactie voltooid"
@@ -8897,7 +8897,7 @@ msgstr "Het bijwerken is niet gestart"
 #~ msgid "_Temporary folders"
 #~ msgstr "_Tijdelijke mappen"
 
-#~ msgid "Disable the 'Download all' buttons in the toolbar and the Videos Tab"
+#~ msgid "Disable the 'Download all' buttons in the toolbar and the Videos tab"
 #~ msgstr ""
 #~ "'Alles downloaden'-knoppen op werkbalk en tabblad 'Video's' uitschakelen"
 

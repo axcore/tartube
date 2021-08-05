@@ -106,7 +106,7 @@ class DownloadManager(threading.Thread):
             is the same as a 'sim' operation, except that it is always followed
             by a 'custom_real' operation)
 
-            For downloads launched from the Classic Mode Tab, 'classic_real'
+            For downloads launched from the Classic Mode tab, 'classic_real'
             for an ordinary download, or 'classic_custom' for a custom
             download. A 'classic_custom' operation is always preceded by a
             'classic_sim' operation (which is the same as a 'sim' operation,
@@ -174,7 +174,7 @@ class DownloadManager(threading.Thread):
         #   operation is sometimes preceded by a 'custom_sim' operation (which
         #   is the same as a 'sim' operation, except that it is always followed
         #   by a 'custom_real' operation)
-        # For downloads launched from the Classic Mode Tab, 'classic_real' for
+        # For downloads launched from the Classic Mode tab, 'classic_real' for
         #   an ordinary download, or 'classic_custom' for a custom download. A
         #   'classic_custom' operation is always preceded by a 'classic_sim'
         #   operation (which is the same as a 'sim' operation, except that it
@@ -327,7 +327,7 @@ class DownloadManager(threading.Thread):
         )
 
         # (Monitor changes to the number of workers, and number of available
-        #   workers, so that we can display a running total in the Output Tab's
+        #   workers, so that we can display a running total in the Output tab's
         #   summary page)
         local_worker_available_count = 0
         local_worker_total_count = 0
@@ -337,7 +337,7 @@ class DownloadManager(threading.Thread):
         #   self.stop_download_operation()
         while self.running_flag:
 
-            # Send a message to the Output Tab's summary page, if required.
+            # Send a message to the Output tab's summary page, if required.
             #   The number of workers shown doesn't include those dedicated to
             #   broadcasting livestreams
             available_count = 0
@@ -434,7 +434,7 @@ class DownloadManager(threading.Thread):
             if not self.current_item_obj:
                 if self.check_workers_all_finished():
 
-                    # Send a message to the Output Tab's summary page
+                    # Send a message to the Output tab's summary page
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         0,
                         manager_string + _('All threads finished'),
@@ -458,7 +458,7 @@ class DownloadManager(threading.Thread):
                 # Otherwise, initialise the worker's IVs for the next job
                 elif worker_obj:
 
-                    # Send a message to the Output Tab's summary page
+                    # Send a message to the Output tab's summary page
                     self.app_obj.main_win_obj.output_tab_write_stdout(
                         0,
                         _('Thread #') + str(worker_obj.worker_id) \
@@ -489,7 +489,7 @@ class DownloadManager(threading.Thread):
             time.sleep(self.sleep_time)
 
         # Download operation complete (or has been stopped). Send messages to
-        #   the Output Tab's summary page
+        #   the Output tab's summary page
         self.app_obj.main_win_obj.output_tab_write_stdout(
             0,
             manager_string + _('Downloads complete (or stopped)'),
@@ -537,7 +537,7 @@ class DownloadManager(threading.Thread):
                 self.app_obj.main_win_obj.classic_mode_tab_display_dl_stats,
             )
 
-        # Tell the Output Tab to display any remaining messages immediately
+        # Tell the Output tab to display any remaining messages immediately
         GObject.timeout_add(
             0,
             self.app_obj.main_win_obj.output_tab_update_pages,
@@ -572,7 +572,7 @@ class DownloadManager(threading.Thread):
 
         else:
 
-            # For download operations launched from the Classic Mode Tab, we
+            # For download operations launched from the Classic Mode tab, we
             #   don't need to wait at all
             GObject.timeout_add(
                 0,
@@ -610,7 +610,7 @@ class DownloadManager(threading.Thread):
 
         Returns:
 
-            True if alternative limits apply, False if not.
+            True if alternative limits apply, False if not
 
         """
 
@@ -686,7 +686,7 @@ class DownloadManager(threading.Thread):
 
         Returns:
 
-            True if the alternative limits apply today, False if not.
+            True if the alternative limits apply today, False if not
 
         """
 
@@ -889,7 +889,7 @@ class DownloadManager(threading.Thread):
         # Bypass the worker limit to create an additional worker, to be used
         #   only for broadcasting livestreams
         self.worker_list.append(DownloadWorker(self, True))
-        # Create an additional page in the main window's Output Tab, if
+        # Create an additional page in the main window's Output tab, if
         #   required
         self.app_obj.main_win_obj.output_tab_setup_pages()
 
@@ -909,7 +909,7 @@ class DownloadManager(threading.Thread):
         Returns:
 
             The first available downloads.DownloadWorker, or None if there are
-                no available workers.
+                no available workers
 
         """
 
@@ -1058,7 +1058,7 @@ class DownloadManager(threading.Thread):
         a new video.
 
         Can also be called by .confirm_old_video() when downloading from the
-        Classic Mode Tab.
+        Classic Mode tab.
 
         Furthermore, called by ClipDownloader.do_download() when all clips for
         a video have been extracted, at least one of them successfully.
@@ -1255,7 +1255,7 @@ class DownloadWorker(threading.Thread):
         # IV list - other
         # ---------------
         # A number identifying this worker, matching the number of the page
-        #   in the Output Tab (so the first worker created is #1)
+        #   in the Output tab (so the first worker created is #1)
         self.worker_id = len(download_manager_obj.worker_list) + 1
 
         # The time (in seconds) between iterations of the loop in self.run()
@@ -1377,7 +1377,7 @@ class DownloadWorker(threading.Thread):
                 else:
                     self.run_video_downloader(media_data_obj)
 
-                # Send a message to the Output Tab's summary page
+                # Send a message to the Output tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
                     0,
                     _('Thread #') + str(self.worker_id) \
@@ -1388,7 +1388,7 @@ class DownloadWorker(threading.Thread):
                 # This worker is now available for a new job
                 self.available_flag = True
 
-                # Send a message to the Output Tab's summary page
+                # Send a message to the Output tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
                     0,
                     _('Thread #') + str(self.worker_id) \
@@ -1435,7 +1435,7 @@ class DownloadWorker(threading.Thread):
 
             media_data_obj (media.Video, media.Channel, media.Playlist,
                 media.Folder): The media data object being downloaded. When the
-                download operation was launched from the Classic Mode Tab, a
+                download operation was launched from the Classic Mode tab, a
                 dummy media.Video object
 
         """
@@ -1463,7 +1463,7 @@ class DownloadWorker(threading.Thread):
             if first_flag:
 
                 first_flag = False
-                # Send a message to the Output Tab's summary page
+                # Send a message to the Output tab's summary page
                 app_obj.main_win_obj.output_tab_write_stdout(
                     0,
                     _('Thread #') + str(self.worker_id) \
@@ -1535,7 +1535,7 @@ class DownloadWorker(threading.Thread):
         and media_data_obj.child_list \
         and media_data_obj.rss:
 
-            # Send a message to the Output Tab's summary page
+            # Send a message to the Output tab's summary page
             app_obj.main_win_obj.output_tab_write_stdout(
                 0,
                 _('Thread #') + str(self.worker_id) \
@@ -1557,7 +1557,7 @@ class DownloadWorker(threading.Thread):
 
             media_data_obj (media.Video): The media data object being
                 downloaded. When the download operation was launched from the
-                Classic Mode Tab, a dummy media.Video object
+                Classic Mode tab, a dummy media.Video object
 
         """
 
@@ -1576,7 +1576,7 @@ class DownloadWorker(threading.Thread):
             self.download_item_obj,
         )
 
-        # Send a message to the Output Tab's summary page
+        # Send a message to the Output tab's summary page
         app_obj.main_win_obj.output_tab_write_stdout(
             0,
             _('Thread #') + str(self.worker_id) \
@@ -1648,7 +1648,7 @@ class DownloadWorker(threading.Thread):
             self.download_item_obj,
         )
 
-        # Send a message to the Output Tab's summary page
+        # Send a message to the Output tab's summary page
         app_obj.main_win_obj.output_tab_write_stdout(
             0,
             _('Thread #') + str(self.worker_id) \
@@ -1970,7 +1970,7 @@ class DownloadList(object):
             is the same as a 'sim' operation, except that it is always followed
             by a 'custom_real' operation)
 
-            For downloads launched from the Classic Mode Tab, 'classic_real'
+            For downloads launched from the Classic Mode tab, 'classic_real'
             for an ordinary download, or 'classic_custom' for a custom
             download. A 'classic_custom' operation is always preceded by a
             'classic_sim' operation (which is the same as a 'sim' operation,
@@ -2029,7 +2029,7 @@ class DownloadList(object):
         #   operation is sometimes preceded by a 'custom_sim' operation (which
         #   is the same as a 'sim' operation, except that it is always followed
         #   by a 'custom_real' operation)
-        # For downloads launched from the Classic Mode Tab, 'classic_real' for
+        # For downloads launched from the Classic Mode tab, 'classic_real' for
         #   an ordinary download, or 'classic_custom' for a custom download. A
         #   'classic_custom' operation is always preceded by a 'classic_sim'
         #   operation (which is the same as a 'sim' operation, except that it
@@ -2057,7 +2057,7 @@ class DownloadList(object):
         # An ordered list of downloads.DownloadItem objects, one for each
         #   media.Video, media.Channel, media.Playlist or media.Folder object
         #   (including dummy media.Video objects used by download operations
-        #   launched from the Classic Mode Tab)
+        #   launched from the Classic Mode tab)
         # This list stores each item's .item_id
         self.download_item_list = []
         # A supplementary list of downloads.DownloadItem objects
@@ -2211,12 +2211,12 @@ class DownloadList(object):
         # Downloads from the Classic Mode tab
         else:
 
-            # The download operation was launched from the Classic Mode Tab.
+            # The download operation was launched from the Classic Mode tab.
             #   Each URL to be downloaded is represented by a dummy media.Video
             #   object (one which is not in the media data registry)
             main_win_obj = self.app_obj.main_win_obj
 
-            # The user may have rearranged rows in the Classic Mode Tab, so
+            # The user may have rearranged rows in the Classic Mode tab, so
             #   get a list of (all) dummy media.Videos in the rearranged order
             # (It should be safe to assume that the Gtk.Liststore contains
             #   exactly the same number of rows, as dummy media.Video objects
@@ -2667,7 +2667,7 @@ class DownloadList(object):
     def create_dummy_item(self, media_data_obj):
 
         """Called by self.__init__() only, when the download operation was
-        launched from the Classic Mode Tab (this function is not called
+        launched from the Classic Mode tab (this function is not called
         recursively).
 
         Creates a downloads.DownloadItem object for each dummy media.Video
@@ -2723,7 +2723,7 @@ class DownloadList(object):
         Returns:
 
             The next downloads.DownloadItem object, or None if there are none
-                left.
+                left
 
         """
 
@@ -2880,12 +2880,12 @@ class DownloadItem(object):
 
     Args:
 
-        item_id (int) - The number of downloads.DownloadItem objects created,
+        item_id (int): The number of downloads.DownloadItem objects created,
             used to give each one a unique ID
 
         media_data_obj (media.Video, media.Channel, media.Playlist,
             media.Folder): The media data object to be downloaded. When the
-            download operation was launched from the Classic Mode Tab, a dummy
+            download operation was launched from the Classic Mode tab, a dummy
             media.Video object
 
         scheduled_obj (media.Scheduled): The scheduled download object which
@@ -2917,7 +2917,7 @@ class DownloadItem(object):
         # IV list - class objects
         # -----------------------
         # The media data object to be downloaded. When the download operation
-        #   was launched from the Classic Mode Tab, a dummy media.Video object
+        #   was launched from the Classic Mode tab, a dummy media.Video object
         self.media_data_obj = media_data_obj
         # The scheduled download object which wants to download media_data_obj
         #   (None if no scheduled download applies in this case)
@@ -3098,7 +3098,7 @@ class VideoDownloader(object):
         #   object, or False if we actually downloading videos (set below)
         self.dl_sim_flag = False
         # Flag set to True if this download operation was launched from the
-        #   Classic Mode Tab, False if not (set below)
+        #   Classic Mode tab, False if not (set below)
         self.dl_classic_flag = False
 
         # Flag set to True by a call from any function to self.stop_soon()
@@ -3141,14 +3141,14 @@ class VideoDownloader(object):
         #       value = the media.Video object created
         self.video_check_dict = {}
         # The code imported from youtube-dl-gui doesn't recognise a downloaded
-        #   video, if Ffmpeg isn't used to extract it (because Ffmpeg is not
+        #   video, if FFmpeg isn't used to extract it (because FFmpeg is not
         #   installed, or because the website doesn't support it, or whatever)
         # In this situation, youtube-dl's STDOUT messages don't definitively
         #   establish when it has finished downloading a video
         # When a file destination is announced; it is temporarily stored in
         #   these IVs. When STDOUT receives a message in the form
         #       [download] 100% of 2.06MiB in 00:02
-        #   ...and the filename isn't one that Ffmpeg would use (e.g.
+        #   ...and the filename isn't one that FFmpeg would use (e.g.
         #       'myvideo.f136.mp4' or 'myvideo.f136.m4a', then assume that the
         #       video has finished downloading
         self.temp_path = None
@@ -3204,7 +3204,7 @@ class VideoDownloader(object):
 
         # All media data objects can be marked as simulate downloads only
         #   (except when the download operation was launched from the Classic
-        #   Mode Tab)
+        #   Mode tab)
         # The setting applies not just to the media data object, but all of its
         #   descendants
         if not self.download_item_obj.operation_classic_flag:
@@ -3270,7 +3270,7 @@ class VideoDownloader(object):
         Returns:
 
             The final return code, a value in the range 0-5 (as described
-            above)
+                above)
 
         """
 
@@ -3338,7 +3338,7 @@ class VideoDownloader(object):
                 divert_mode,
             )
 
-        # ...display it in the Output Tab (if required)...
+        # ...display it in the Output tab (if required)...
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
@@ -3397,7 +3397,7 @@ class VideoDownloader(object):
                     #   main window can be updated
                     self.download_worker_obj.data_callback(dl_stat_dict)
 
-                    # Show output in the Output Tab (if required). For
+                    # Show output in the Output tab (if required). For
                     #   simulated downloads, a message is displayed by
                     #   self.confirm_sim_video() instead
                     if app_obj.ytdl_output_stdout_flag \
@@ -3509,7 +3509,7 @@ class VideoDownloader(object):
                     self.set_return_code(self.ERROR)
                     self.download_item_obj.media_data_obj.set_error(stderr)
 
-            # Show output in the Output Tab (if required)
+            # Show output in the Output tab (if required)
             if app_obj.ytdl_output_stderr_flag:
                 app_obj.main_win_obj.output_tab_write_stderr(
                     self.download_worker_obj.worker_id,
@@ -3645,7 +3645,7 @@ class VideoDownloader(object):
             utils.debug_time('dld 3032 check_dl_is_correct_type')
 
         # Special case: if the download operation was launched from the
-        #   Classic Mode Tab, there is no need to do anything
+        #   Classic Mode tab, there is no need to do anything
         if self.dl_classic_flag:
             return True
 
@@ -3837,7 +3837,7 @@ class VideoDownloader(object):
             self.download_manager_obj.register_video('new')
 
         # Special case: if the download operation was launched from the
-        #   Classic Mode Tab, then we only need to update the dummy
+        #   Classic Mode tab, then we only need to update the dummy
         #   media.Video object, and to move/remove description/metadata/
         #   thumbnail files, as appropriate
         elif self.dl_classic_flag:
@@ -4016,7 +4016,7 @@ class VideoDownloader(object):
             self.download_manager_obj.register_video('old')
 
         # Special case: if the download operation was launched from the
-        #   Classic Mode Tab, then we only need to update the dummy
+        #   Classic Mode tab, then we only need to update the dummy
         #   media.Video object
         elif self.dl_classic_flag:
 
@@ -4243,6 +4243,11 @@ class VideoDownloader(object):
         else:
             live_flag = False
 
+        if 'comments' in json_dict:
+            comment_list = json_dict['comments']
+        else:
+            comment_list = []
+
         # Does an existing media.Video object match this video?
         media_data_obj = self.download_item_obj.media_data_obj
         video_obj = None
@@ -4344,6 +4349,9 @@ class VideoDownloader(object):
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
 
+            if comment_list and app_obj.comment_store_flag:
+                video_obj.set_comments(comment_list)
+
             # If downloading from a channel/playlist, remember the video's
             #   index. (The server supplies an index even for a channel, and
             #   the user might want to convert a channel to a playlist)
@@ -4442,6 +4450,9 @@ class VideoDownloader(object):
                     descrip,
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
+
+            if not video_obj.comment_list and comment_list:
+                video_obj.set_comments(comment_list)
 
             # If downloading from a channel/playlist, remember the video's
             #   index. (The server supplies an index even for a channel, and
@@ -4559,6 +4570,10 @@ class VideoDownloader(object):
             #   as the video (but with a different extension)
             # Get the thumbnail's extension...
             remote_file, remote_ext = os.path.splitext(thumbnail)
+            # Fix for Odysee videos, whose thumbnail extension is not specified
+            #   in the .info.json fiel
+            if remote_ext == '':
+                remote_ext = '.webp'
 
             # ...and thus get the filename used by youtube-dl when storing the
             #   thumbnail locally
@@ -4645,7 +4660,7 @@ class VideoDownloader(object):
             )
 
         # For simulated downloads, self.do_download() has not displayed
-        #   anything in the Output Tab/terminal window; so do that now (if
+        #   anything in the Output tab/terminal window; so do that now (if
         #   required)
         if (app_obj.ytdl_output_stdout_flag):
 
@@ -5008,7 +5023,7 @@ class VideoDownloader(object):
                     dl_stat_dict['filesize'] = stdout_list[3]
 
                     # If the most recently-received filename isn't one used by
-                    #   Ffmpeg, then this marks the end of a video download
+                    #   FFmpeg, then this marks the end of a video download
                     # (See the comments in self.__init__)
                     if len(stdout_list) > 4 \
                     and stdout_list[4] == 'in' \
@@ -5301,7 +5316,7 @@ class VideoDownloader(object):
 
         Returns:
 
-            True if the child process is alive, otherwise returns False.
+            True if the child process is alive, otherwise returns False
 
         """
 
@@ -5569,7 +5584,7 @@ class VideoDownloader(object):
         else:
             dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
 
-        # Use some empty values in dl_stat_dict so that the Progress Tab
+        # Use some empty values in dl_stat_dict so that the Progress tab
         #   doesn't show arbitrary data from the last file downloaded
         # Exception: in Classic Mode, don't do that for self.ALREADY, otherwise
         #   the filename will never be visible
@@ -5798,7 +5813,7 @@ class ClipDownloader(object):
         self.sleep_time = 0.1
 
         # Flag set to True if this download operation was launched from the
-        #   Classic Mode Tab, False if not (set below)
+        #   Classic Mode tab, False if not (set below)
         self.dl_classic_flag = False
         # Flag set to True if an attempt to copy an original videos' thumbnail
         #   fails (in which case, don't try again)
@@ -5809,7 +5824,7 @@ class ClipDownloader(object):
         #   the next clip has been downloaded
         self.stop_soon_flag = False
         # When self.stop_soon_flag is True, the next call to
-        #   self.extract_stdout_data() for a downlaoded clip sets this flag to
+        #   self.extract_stdout_data() for a downloaded clip sets this flag to
         #   True, informing self.do_download_clips() that it can stop the child
         #   process
         self.stop_now_flag = False
@@ -5857,7 +5872,7 @@ class ClipDownloader(object):
         Returns:
 
             The final return code, a value in the range 0-5 (as described
-            above)
+                above)
 
         """
 
@@ -5885,7 +5900,7 @@ class ClipDownloader(object):
 
             if app_obj.video_timestamps_re_extract_flag \
             and not orig_video_obj.stamp_list:
-                app_obj.update_video_from_json(orig_video_obj, True)
+                app_obj.update_video_from_json(orig_video_obj, 'chapters')
 
             if app_obj.video_timestamps_re_extract_flag \
             and not orig_video_obj.stamp_list:
@@ -5981,7 +5996,7 @@ class ClipDownloader(object):
                 self.dl_classic_flag,
             )
 
-            # ...display it in the Output Tab (if required)...
+            # ...display it in the Output tab (if required)...
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
@@ -5992,7 +6007,7 @@ class ClipDownloader(object):
             if app_obj.ytdl_write_system_cmd_flag:
                 print(' '.join(cmd_list))
 
-            # Write an additional message in the Output Tab, in the same style
+            # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
             app_obj.main_win_obj.output_tab_write_stdout(
@@ -6048,13 +6063,13 @@ class ClipDownloader(object):
                         stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                         # Remove weird carriage returns that insert empty lines
-                        #   into the Output Tab
+                        #   into the Output tab
                         stdout = re.sub(r"[\r]+", "", stdout)
 
                         # Extract output from stdout
                         self.extract_stdout_data(stdout)
 
-                        # Show output in the Output Tab (if required)
+                        # Show output in the Output tab (if required)
                         if app_obj.ytdl_output_stdout_flag:
 
                             app_obj.main_win_obj.output_tab_write_stdout(
@@ -6107,7 +6122,7 @@ class ClipDownloader(object):
                     self.last_data_callback()
                     return self.STALLED
 
-                # Show output in the Output Tab (if required)
+                # Show output in the Output tab (if required)
                 if (app_obj.ytdl_output_stderr_flag):
                     app_obj.main_win_obj.output_tab_write_stderr(
                         self.download_worker_obj.worker_id,
@@ -6170,7 +6185,7 @@ class ClipDownloader(object):
 
             # Delete the original video, if required, and if it's not inside a
             #   channel/playlist
-            # (Don't bother trying to delete a 'dummy' media.Vidoe object, for
+            # (Don't bother trying to delete a 'dummy' media.Video object, for
             #   download operations launched from the Classic Mode tab)
             if app_obj.split_video_auto_delete_flag \
             and not isinstance(orig_video_obj.parent_obj, media.Channel) \
@@ -6214,7 +6229,7 @@ class ClipDownloader(object):
         Returns:
 
             The final return code, a value in the range 0-5 (as described
-            above)
+                above)
 
         """
 
@@ -6326,7 +6341,7 @@ class ClipDownloader(object):
                 self.dl_classic_flag,
             )
 
-            # ...display it in the Output Tab (if required)...
+            # ...display it in the Output tab (if required)...
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
@@ -6337,7 +6352,7 @@ class ClipDownloader(object):
             if app_obj.ytdl_write_system_cmd_flag:
                 print(' '.join(cmd_list))
 
-            # Write an additional message in the Output Tab, in the same style
+            # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
             app_obj.main_win_obj.output_tab_write_stdout(
@@ -6396,13 +6411,13 @@ class ClipDownloader(object):
                         stdout = stdout.decode(utils.get_encoding(), 'replace')
 
                         # Remove weird carriage returns that insert empty lines
-                        #   into the Output Tab
+                        #   into the Output tab
                         stdout = re.sub(r"[\r]+", "", stdout)
 
                         # Extract output from stdout
                         self.extract_stdout_data(stdout)
 
-                        # Show output in the Output Tab (if required)
+                        # Show output in the Output tab (if required)
                         if app_obj.ytdl_output_stdout_flag:
 
                             app_obj.main_win_obj.output_tab_write_stdout(
@@ -6455,7 +6470,7 @@ class ClipDownloader(object):
                     self.last_data_callback()
                     return self.STALLED
 
-                # Show output in the Output Tab (if required)
+                # Show output in the Output tab (if required)
                 if (app_obj.ytdl_output_stderr_flag):
                     app_obj.main_win_obj.output_tab_write_stderr(
                         self.download_worker_obj.worker_id,
@@ -6574,7 +6589,7 @@ class ClipDownloader(object):
                     output_path,
                 ]
 
-                # ...display it in the Output Tab (if required)...
+                # ...display it in the Output tab (if required)...
                 if app_obj.ytdl_output_system_cmd_flag:
                     app_obj.main_win_obj.output_tab_write_system_cmd(
                         self.download_worker_obj.worker_id,
@@ -6634,15 +6649,10 @@ class ClipDownloader(object):
                 ),
             )
 
-            try:
+            if os.path.isfile(moved_path):
+                app_obj.remove_file(moved_path)
 
-                if os.path.isfile(moved_path):
-                    os.remove(moved_path)
-
-                shutil.move(output_path, moved_path)
-
-            except:
-
+            if not app_obj.move_file_or_directory(output_path, moved_path):
                 app_obj.main_win_obj.output_tab_write_stderr(
                     self.download_worker_obj.worker_id,
                     _(
@@ -6666,7 +6676,7 @@ class ClipDownloader(object):
             self.confirm_video_remove_slices(orig_video_obj, moved_path)
 
         # Delete the temporary directory
-        shutil.rmtree(temp_dir)
+        app_obj.remove_directory(temp_dir)
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -6815,7 +6825,7 @@ class ClipDownloader(object):
             pass
 
         # Special case: if the download operation was launched from the
-        #   Classic Mode Tab, then we only need to update the dummy
+        #   Classic Mode tab, then we only need to update the dummy
         #   media.Video object, and to move/remove description/metadata/
         #   thumbnail files, as appropriate
         elif self.dl_classic_flag:
@@ -6945,9 +6955,9 @@ class ClipDownloader(object):
         # ...then create it
         try:
             if os.path.isdir(temp_dir):
-                shutil.rmtree(temp_dir)
+                app_obj.remove_directory(temp_dir)
 
-            os.makedirs(temp_dir)
+            app_obj.make_directory(temp_dir)
 
             return temp_dir
 
@@ -7032,7 +7042,7 @@ class ClipDownloader(object):
 
         Returns:
 
-            True if the child process is alive, otherwise returns False.
+            True if the child process is alive, otherwise returns False
 
         """
 
@@ -7190,7 +7200,7 @@ class ClipDownloader(object):
 
                 if not os.path.isfile(moved_path) \
                 and not os.path.isfile(final_path):
-                    shutil.move(descrip_path, moved_path)
+                    app_obj.move_file_or_directory(descrip_path, moved_path)
 
                     # Further move the file into its sub-directory, if
                     #   required, first creating that sub-directory if it
@@ -7231,7 +7241,7 @@ class ClipDownloader(object):
 
                 if not os.path.isfile(moved_path) \
                 and not os.path.isfile(final_path):
-                    shutil.move(json_path, moved_path)
+                    app_obj.move_file_or_directory(json_path, moved_path)
 
                     if options_obj.options_dict['move_info']:
                         utils.move_metadata_to_subdir(
@@ -7271,7 +7281,7 @@ class ClipDownloader(object):
 #
 #               if not os.path.isfile(moved_path) \
 #               and not os.path.isfile(final_path):
-#                   shutil.move(xml_path, moved_path)
+#                   app_obj.move_file_or_directory(xml_path, moved_path)
 #
 #                   if options_obj.options_dict['move_annotations']:
 #                       utils.move_metadata_to_subdir(
@@ -7301,7 +7311,7 @@ class ClipDownloader(object):
                 )
 
                 if not os.path.isfile(moved_path):
-                    shutil.move(thumb_path, moved_path)
+                    app_obj.move_file_or_directory(thumb_path, moved_path)
 
                     # Convert .webp thumbnails to .jpg, if required
                     convert_path = utils.find_thumbnail_webp(
@@ -7561,7 +7571,7 @@ class StreamDownloader(object):
         Returns:
 
             The final return code, a value in the range 0-5 (as described
-            above)
+                above)
 
         """
 
@@ -7572,7 +7582,7 @@ class StreamDownloader(object):
         app_obj = self.download_manager_obj.app_obj
         video_obj = self.download_item_obj.media_data_obj
 
-        # This object creates more messages for the Output Tab and/or terminal,
+        # This object creates more messages for the Output tab and/or terminal,
         #   than downloads.VideoDownloader would do, as the output generated by
         #   Youtube Stream Capture is not easy for the user to interpret
         self.show_msg(_('Tartube is starting the stream capture...'))
@@ -7589,7 +7599,7 @@ class StreamDownloader(object):
 
         try:
             if not os.path.isdir(self.temp_dir_path):
-                os.makedirs(self.temp_dir_path)
+                app_obj.make_directory(self.temp_dir_path)
 
         except:
             self.download_item_obj.media_data_obj.set_error(
@@ -7668,7 +7678,7 @@ class StreamDownloader(object):
             + [video_obj.source] + ['--output-directory'] \
             + [self.temp_dir_path]
 
-            # ...and display it in the Output Tab/terminal, if required
+            # ...and display it in the Output tab/terminal, if required
             self.show_cmd(' '.join(cmd_list))
 
             # Create a new child process using that system command...
@@ -7753,7 +7763,7 @@ class StreamDownloader(object):
         # Generate the system command...
         cmd_list = ['python3'] + [self.ytsc_merge_path] + [video_obj.source] \
         + ['--output-directory'] + [self.temp_dir_path]
-        # ...and display it in the Output Tab/terminal, if required
+        # ...and display it in the Output tab/terminal, if required
         self.show_cmd(' '.join(cmd_list))
 
         # Create a new child process using that system command...
@@ -7893,7 +7903,7 @@ class StreamDownloader(object):
                     write_flag = False
 
                     # Intercept the segment number, and update the IV (but
-                    #   don't display that line in the Output Tab)
+                    #   don't display that line in the Output tab)
                     match = re.search('^Segment number\: (\d+)', stdout)
                     if match:
 
@@ -7949,7 +7959,7 @@ class StreamDownloader(object):
 
                     self.download_worker_obj.data_callback(dl_stat_dict)
 
-                    # Show output in the Output Tab (if required)
+                    # Show output in the Output tab (if required)
                     if app_obj.ytsc_write_verbose_flag \
                     or (app_obj.ytdl_output_stdout_flag and write_flag):
                         app_obj.main_win_obj.output_tab_write_stdout(
@@ -8091,7 +8101,7 @@ class StreamDownloader(object):
 
                     self.download_worker_obj.data_callback(dl_stat_dict)
 
-                    # Show output in the Output Tab (if required)
+                    # Show output in the Output tab (if required)
                     if app_obj.ytsc_write_verbose_flag \
                     or (app_obj.ytdl_output_stdout_flag and write_flag):
                         app_obj.main_win_obj.output_tab_write_stdout(
@@ -8192,7 +8202,7 @@ class StreamDownloader(object):
 
         Returns:
 
-            True if the child process is alive, otherwise returns False.
+            True if the child process is alive, otherwise returns False
 
         """
 
@@ -8233,7 +8243,7 @@ class StreamDownloader(object):
         elif self.return_code == self.STOPPED:
             dl_stat_dict['status'] = formats.ERROR_STAGE_STOPPED
 
-        # Use some empty values in dl_stat_dict so that the Progress Tab
+        # Use some empty values in dl_stat_dict so that the Progress tab
         #   doesn't show arbitrary data from the last file downloaded
         dl_stat_dict['playlist_index'] = ''
         dl_stat_dict['playlist_size'] = ''
@@ -8270,7 +8280,7 @@ class StreamDownloader(object):
 
         """Called by self.do_capture() and .do_merge().
 
-        Shows a system command in the Output Tab and/or terminal window, if
+        Shows a system command in the Output tab and/or terminal window, if
         required.
 
         Args:
@@ -8285,7 +8295,7 @@ class StreamDownloader(object):
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Display the command in the Output Tab, if allowed
+        # Display the command in the Output tab, if allowed
         if app_obj.ytdl_output_system_cmd_flag:
 
             app_obj.main_win_obj.output_tab_write_system_cmd(
@@ -8305,7 +8315,7 @@ class StreamDownloader(object):
 
         """Called by self.do_capture() and .do_merge().
 
-        Shows a message in the Output Tab and/or terminal window, if required.
+        Shows a message in the Output tab and/or terminal window, if required.
 
         Args:
 
@@ -8319,7 +8329,7 @@ class StreamDownloader(object):
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Display the message in the Output Tab, if allowed
+        # Display the message in the Output tab, if allowed
         if app_obj.ytdl_output_stdout_flag:
 
             app_obj.main_win_obj.output_tab_write_stdout(
@@ -9325,7 +9335,7 @@ class MiniJSONFetcher(object):
 
         Returns:
 
-            True if the child process is alive, otherwise returns False.
+            True if the child process is alive, otherwise returns False
 
         """
 
@@ -9603,7 +9613,7 @@ class PipeReader(threading.Thread):
     Warnings:
 
         All the actions are based on 'str' types. The calling function must
-        convert the queued items back to 'unicode', if necessary.
+        convert the queued items back to 'unicode', if necessary
 
     """
 
