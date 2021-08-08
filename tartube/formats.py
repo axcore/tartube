@@ -621,8 +621,10 @@ while language_setup_list:
     LANGUAGE_CODE_DICT[key] = value
 
 DIALOGUE_ICON_DICT = {
+    'newbie_classic_icon': 'newbie_classic_icon.png',
     'newbie_icon': 'newbie_icon_64.png',
     'ready_icon': 'ready_icon_64.png',
+    'setup_classic_icon': 'setup_classic_icon.png',
     'system_icon': 'system_icon_64.png',
     'yt_remind_icon_en': 'yt_remind_icon_en.png',
     'yt_remind_icon_kr': 'yt_remind_icon_kr.png',

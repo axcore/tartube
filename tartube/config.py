@@ -10111,7 +10111,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.slice_start_entry.set_sensitive(False)
 
         label4 = self.add_label(grid2,
-            _('Stop'),
+            _('Stop (optional)'),
             2, 1, 1, 1,
         )
         label4.set_hexpand(False)
@@ -10773,7 +10773,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.simple_slice_start_entry.set_sensitive(False)
 
         label4 = self.add_label(grid2,
-            _('Stop'),
+            _('Stop (optional)'),
             2, 1, 1, 1,
         )
         label4.set_hexpand(False)
@@ -10842,13 +10842,29 @@ class FFmpegOptionsEditWin(GenericEditWin):
         # Add slice data to the treeview, one row at a time
         for mini_dict in self.retrieve_val('slice_list'):
 
+            if 'category' in mini_dict:
+                category = mini_dict['category']
+            else:
+                category = 'n/a'
+
+            if 'action' in mini_dict:
+                action = mini_dict['action']
+            else:
+                action = 'n/a'
+
+            if 'start_time' in mini_dict:
+                start_time = mini_dict['start_time']
+            else:
+                start_time = 'n/a'
+
+            if 'stop_time' in mini_dict \
+            and mini_dict['stop_time'] is not None:
+                stop_time = mini_dict['stop_time']
+            else:
+                stop_time = 'n/a'
+
             self.simple_slice_mode_liststore.append(
-                [
-                    mini_dict['category'],
-                    mini_dict['action'],
-                    str(mini_dict['start_time']),
-                    str(mini_dict['stop_time']),
-                ],
+                [ category, action, str(start_time), str(stop_time) ],
             )
 
 
@@ -11161,13 +11177,17 @@ class FFmpegOptionsEditWin(GenericEditWin):
             utils.timestamp_convert_to_seconds(self.app_obj, start_time),
         )
 
-        stop_time = float(
-            utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
-        )
+        if stop_time == '':
+            stop_time = None
+        else:
+            stop_time = float(
+                utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
+            )
 
         try:
             ignore = float(start_time)
-            ignore = float(stop_time)
+            if stop_time is not None:
+                ignore = float(stop_time)
 
         except:
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -11177,7 +11197,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 self,           # Parent window is this window
             )
 
-        if stop_time <= start_time:
+        if stop_time is not None and stop_time <= start_time:
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',
@@ -13335,7 +13355,7 @@ class VideoEditWin(GenericEditWin):
         entry.set_hexpand(False)
 
         label2 = self.add_label(grid,
-            _('Stop'),
+            _('Stop (optional)'),
             2, 4, 1, 1,
         )
         label2.set_hexpand(False)
@@ -13415,7 +13435,8 @@ class VideoEditWin(GenericEditWin):
             else:
                 start_time = 'n/a'
 
-            if 'stop_time' in mini_dict:
+            if 'stop_time' in mini_dict \
+            and mini_dict['stop_time'] is not None:
                 stop_time = mini_dict['stop_time']
             else:
                 stop_time = 'n/a'
@@ -13958,25 +13979,25 @@ class VideoEditWin(GenericEditWin):
         model2 = combo2.get_model()
         action_type = model2[tree_iter2][0]
 
+        start_time = utils.strip_whitespace(entry.get_text())
+        stop_time = utils.strip_whitespace(entry2.get_text())
+
         start_time = float(
-            utils.timestamp_convert_to_seconds(
-                self.app_obj,
-                utils.strip_whitespace(entry.get_text()),
-            )
+            utils.timestamp_convert_to_seconds(self.app_obj, start_time),
         )
 
-        stop_time = float(
-            utils.timestamp_convert_to_seconds(
-                self.app_obj,
-                utils.strip_whitespace(entry2.get_text()),
+        if stop_time == '':
+            stop_time = None
+        else:
+            stop_time = float(
+                utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
             )
-        )
 
-        # Do nothing if specified timestamps aren't valid ('stop' is NOT
-        #   optional)
+        # Do nothing if specified timestamps aren't valid
         try:
             ignore = float(start_time)
-            ignore = float(stop_time)
+            if stop_time is not None:
+                ignore = float(stop_time)
 
         except:
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -13986,7 +14007,7 @@ class VideoEditWin(GenericEditWin):
                 self,           # Parent window is this window
             )
 
-        if stop_time <= start_time:
+        if stop_time is not None and stop_time <= start_time:
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',

@@ -1824,7 +1824,8 @@ class Video(GenericMedia):
         #           formats.SPONSORBLOCK_ACTION_LIST (e.g. 'skip')
         #       mini_dict['start_time']
         #       mini_dict['stop_time'] = Floating point values in seconds,
-        #           the beginning and end of the slice
+        #           the beginning and end of the slice. If 'stop_time' is None,
+        #           the end of the video is used
         #       mini_dict['duration'] = The video duration, as reported by
         #           SponsorBlock. This valus is not required by Tartube code,
         #           and its default value is 0

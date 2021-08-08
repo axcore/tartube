@@ -929,7 +929,12 @@ def convert_slices_to_clips(app_obj, custom_dl_obj, slice_list, temp_flag):
                 ])
 
             # Next clip starts at the end of this slice
-            previous_time = mini_dict['stop_time']
+            if mini_dict['stop_time'] is not None:
+                previous_time = mini_dict['stop_time']
+            else:
+                # This clip ends at the end of the video; ignore any additional
+                #   data in slice_list
+                return clip_list
 
     if previous_time != 0 and previous_time != '0':
 

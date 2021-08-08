@@ -277,7 +277,7 @@ class GenericWizWin(Gtk.Window):
         pass
 
 
-    def reset_changes(self):
+    def cancel_changes(self):
 
         """Called by self.on_button_cancel_clicked().
 
@@ -480,7 +480,7 @@ class GenericWizWin(Gtk.Window):
 
         """
 
-        self.reset_changes()
+        self.cancel_changes()
         self.destroy()
 
 
@@ -573,6 +573,8 @@ class SetupWizWin(GenericWizWin):
         self.ffmpeg_scrolled = None             # Gtk.ScrolledWindow
         self.ffmpeg_textview = None             # Gtk.TextView
         self.ffmpeg_textbuffer = None           # Gtk.TextBuffer
+        self.auto_open_button = None            # Gtk.Button
+
 
         # IV list - other
         # ---------------
@@ -605,6 +607,9 @@ class SetupWizWin(GenericWizWin):
             self.ytdl_fork_no_dependency_flag = False
         # The new value of mainapp.TartubeApp.ytdl_update_current(), if any
         self.ytdl_update_current = None
+        # The new value of
+        #   mainapp.TartubeApp.show_classic_tab_on_startup_flag(), if any
+        self.show_classic_tab_on_startup_flag = None
 
         # Flag set to True, once the 'More options' button has been clicked,
         #   so that it is never visible again
@@ -628,13 +633,16 @@ class SetupWizWin(GenericWizWin):
         if self.mswin_flag:
             self.page_list.append('setup_fetch_downloader_page')
             self.page_list.append('setup_fetch_ffmpeg_page')
+            self.page_list.append('setup_classic_mode_page')
             self.page_list.append('setup_finish_page_mswin')
 
         elif __main__.__pkg_strict_install_flag__:
+            self.page_list.append('setup_classic_mode_page')
             self.page_list.append('setup_finish_page_strict')
 
         else:
             self.page_list.append('setup_fetch_downloader_page')
+            self.page_list.append('setup_classic_mode_page')
             self.page_list.append('setup_finish_page_default')
 
         # Set up the wizard window
@@ -681,15 +689,20 @@ class SetupWizWin(GenericWizWin):
             self.ytdl_fork_no_dependency_flag,
         )
 
-        # (A None value, only if it hasn't been changed)
+        # (A None value, only if they haven't been changed)
         if self.ytdl_update_current is not None:
             self.app_obj.set_ytdl_update_current(self.ytdl_update_current)
+
+        if self.show_classic_tab_on_startup_flag is not None:
+            self.app_obj.set_show_classic_tab_on_startup_flag(
+                self.show_classic_tab_on_startup_flag,
+            )
 
         # Continue with general initialisation
         self.app_obj.open_wiz_win_continue()
 
 
-    def reset_changes(self):
+    def cancel_changes(self):
 
         """Called by self.on_button_cancel_clicked().
 
@@ -1219,7 +1232,7 @@ class SetupWizWin(GenericWizWin):
                     + ' YouTube.',
                 ),
                 60,
-            )  + '</span>',
+            ) + '</span>',
             0, 1, grid_width, 1,
         )
 
@@ -1255,6 +1268,56 @@ class SetupWizWin(GenericWizWin):
         self.ffmpeg_button.connect(
             'clicked',
             self.on_button_fetch_ffmpeg_clicked,
+        )
+
+
+    def setup_classic_mode_page(self):
+
+        """Called by self.setup_page().
+
+        Invites the user to open Tartube at the Classic Mode tab.
+        """
+
+        grid_width = 3
+
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + _('Tartube adds videos to a database.') \
+            + '</span>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + _(
+                'If you don\'t need a database, you can use the Classic' \
+                + ' Mode tab.',
+            ) + '</span>',
+            0, 1, grid_width, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 2, grid_width, 1)
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['setup_classic_icon'],
+            0, 3, grid_width, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 4, grid_width, 1)
+
+        if not self.show_classic_tab_on_startup_flag:
+            msg = _('Always open Tartube at this tab')
+        else:
+            msg = _('Don\'t open Tartube at this tab')
+
+        self.auto_open_button = Gtk.Button(msg)
+        self.inner_grid.attach(self.auto_open_button, 1, 5, 1, 1)
+        self.auto_open_button.set_hexpand(False)
+        self.auto_open_button.connect(
+            'clicked',
+            self.on_button_auto_open_clicked,
         )
 
 
@@ -1345,27 +1408,30 @@ class SetupWizWin(GenericWizWin):
             0, 5, 1, 1,
         )
 
+        # (Empty label for spacing)
+        self.add_empty_label(0, 6, 1, 1)
+
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
                 _(
-                    'Without FFmpeg, Tartube cannot download high-resolution' \
-                    + ' videos, and cannot display video thumbnails from' \
-                    + ' YouTube.',
+                    'Without FFmpeg, Tartube cannot download video clips or' \
+                    + ' high-resolution videos, and cannot display many' \
+                    + ' video thumbnails.'
                 ),
                 60,
             ) + '</span>',
-            0, 6, 1, 1,
+            0, 7, 1, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 7, 1, 1)
+        self.add_empty_label(0, 8, 1, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + _('Click the <b>OK</b> button to start Tartube!') \
             + '</span>',
-            0, 8, 1, 1,
+            0, 9, 1, 1,
         )
 
 
@@ -1397,27 +1463,30 @@ class SetupWizWin(GenericWizWin):
             0, 3, 1, 1,
         )
 
+        # (Empty label for spacing)
+        self.add_empty_label(0, 4, 1, 1)
+
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
                 _(
-                    'Without FFmpeg, Tartube cannot download high-resolution' \
-                    + ' videos, and cannot display video thumbnails from' \
-                    + ' YouTube.',
+                    'Without FFmpeg, Tartube cannot download video clips or' \
+                    + ' high-resolution videos, and cannot display many' \
+                    + ' video thumbnails.',
                 ),
                 60,
             ) + '</span>',
-            0, 4, 1, 1,
+            0, 5, 1, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 5, 1, 1)
+        self.add_empty_label(0, 6, 1, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + _('Click the <b>OK</b> button to start Tartube!') \
             + '</span>',
-            0, 6, 1, 1,
+            0, 7, 1, 1,
         )
 
 
@@ -1552,6 +1621,27 @@ class SetupWizWin(GenericWizWin):
     # (Callbacks)
 
 
+    def on_button_auto_open_clicked(self, button):
+
+        """Called from a callback in self.setup_classic_mode_page().
+
+        Sets whether the main window should open at the Classic Mode tab, or
+        not.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if not self.show_classic_tab_on_startup_flag:
+            self.show_classic_tab_on_startup_flag = True
+            button.set_label(_('Don\'t open Tartube at this tab'))
+        else:
+            self.show_classic_tab_on_startup_flag = False
+            button.set_label(_('Always open Tartube at this tab'))
+
+
     def on_button_cancel_clicked(self, button):
 
         """Modified version of the standard function, called from a callback in
@@ -1566,7 +1656,7 @@ class SetupWizWin(GenericWizWin):
 
         """
 
-        self.reset_changes()
+        self.cancel_changes()
         if not self.app_obj.update_manager_obj:
             self.destroy()
 

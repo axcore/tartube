@@ -15633,6 +15633,7 @@ class MainWin(Gtk.ApplicationWindow):
         start_time = utils.strip_whitespace(dialogue_win.start_time)
         stop_time = utils.strip_whitespace(dialogue_win.stop_time)
         all_flag = dialogue_win.all_flag
+        all_but_flag = dialogue_win.all_but_flag
         dialogue_win.destroy()
 
         if response != Gtk.ResponseType.CANCEL \
@@ -15649,12 +15650,13 @@ class MainWin(Gtk.ApplicationWindow):
                         )
                     )
 
-                    stop_time = float(
-                        utils.timestamp_convert_to_seconds(
-                            self.app_obj,
-                            stop_time,
+                    if stop_time is not None:
+                        stop_time = float(
+                            utils.timestamp_convert_to_seconds(
+                                self.app_obj,
+                                stop_time,
+                            )
                         )
-                    )
 
                 except:
                     self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -15665,7 +15667,7 @@ class MainWin(Gtk.ApplicationWindow):
 
                     return
 
-                if stop_time <= start_time:
+                if stop_time is not None and stop_time <= start_time:
                     self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                         _('Invalid start/stop times'),
                         'error',
@@ -15676,22 +15678,68 @@ class MainWin(Gtk.ApplicationWindow):
 
                 # Compile the mini-dictionary in the format described by
                 #   media.Video.__init__()
-                mini_dict = {
-                    'category': 'sponsor',
-                    'action': 'skip',
-                    'start_time': start_time,
-                    'stop_time': stop_time,
-                    'duration': 0,
-                }
+                # Then store the values in a temporary buffer, so that
+                #   download/process operations can retrieve them
+                if not all_but_flag:
 
-                # Store the values in a temporary buffer, so that download/
-                #   process operations can retrieve them
-                self.app_obj.set_temp_slice_list([ mini_dict ])
+                    mini_dict = {
+                        'category': 'sponsor',
+                        'action': 'skip',
+                        'start_time': start_time,
+                        'stop_time': stop_time,
+                        'duration': 0,
+                    }
+
+                    self.app_obj.set_temp_slice_list([ mini_dict ])
+
+                elif start_time > 0 and stop_time is not None:
+
+                    mini_dict = {
+                        'category': 'sponsor',
+                        'action': 'skip',
+                        'start_time': 0,
+                        'stop_time': start_time,
+                        'duration': 0,
+                    }
+
+                    mini_dict2 = {
+                        'category': 'sponsor',
+                        'action': 'skip',
+                        'start_time': stop_time,
+                        'stop_time': None,
+                        'duration': 0,
+                    }
+
+                    self.app_obj.set_temp_slice_list([ mini_dict, mini_dict2 ])
+
+                elif start_time > 0 and stop_time is None:
+
+                    mini_dict = {
+                        'category': 'sponsor',
+                        'action': 'skip',
+                        'start_time': 0,
+                        'stop_time': start_time,
+                        'duration': 0,
+                    }
+
+                    self.app_obj.set_temp_slice_list([ mini_dict ])
+
+                else:
+
+                    mini_dict = {
+                        'category': 'sponsor',
+                        'action': 'skip',
+                        'start_time': stop_time,
+                        'stop_time': None,
+                        'duration': 0,
+                    }
+
+                    self.app_obj.set_temp_slice_list([ mini_dict ])
 
             else:
 
-                # Remove all slices in the media.Video's .slice_list, ignoring
-                #   any times the user just entered in the dialogue window
+                # Use all slices in the media.Video's .slice_list, ignoring any
+                #   times the user just entered in the dialogue window
                 self.app_obj.set_temp_slice_list(media_data_obj.slice_list)
 
             if not media_data_obj.dl_flag:
@@ -27916,13 +27964,16 @@ class NewbieDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
+        classic_mode_flag (bool): True if the download operation was launched
+            from the Classic Mode tab, False otherwise
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, main_win_obj):
+    def __init__(self, main_win_obj, classic_mode_flag):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 25247 __init__')
@@ -27990,58 +28041,81 @@ class NewbieDialogue(Gtk.Dialog):
         # Separator
         grid.attach(Gtk.HSeparator(), 1, 1, grid_width, 1)
 
-        label2 = Gtk.Label(
+        if not classic_mode_flag:
+            extra_rows = 0
+
+        else:
+            extra_rows = 3
+
+            label2 = Gtk.Label(
+                _('Check the video/audio file actually exists'),
+            )
+            grid.attach(label2, 1, 2, grid_width, 1)
+
+            label3 = Gtk.Label(
+                _('(Try converting instead of a direct download)'),
+            )
+            grid.attach(label3, 1, 3, grid_width, 1)
+
+            frame = Gtk.Frame()
+            grid.attach(frame, 1, 4, grid_width, 1)
+
+            image2 = Gtk.Image.new_from_pixbuf(
+                main_win_obj.pixbuf_dict['newbie_classic_icon'],
+            )
+            frame.add(image2)
+
+        label4 = Gtk.Label(
             '   ' + _('Check the downloader is installed and updated') + '   ',
         )
-        grid.attach(label2, 1, 2, grid_width, 1)
+        grid.attach(label4, 1, (extra_rows + 2), grid_width, 1)
 
         button = Gtk.Button.new_with_label(
             _('Update') + ' ' + self.main_win_obj.app_obj.get_downloader(),
         )
-        grid.attach(button, 1, 3, grid_width, 1)
+        grid.attach(button, 1, (extra_rows + 3), grid_width, 1)
         button.connect('clicked', self.on_update_button_clicked)
 
-
-        label3 = Gtk.Label(
+        label5 = Gtk.Label(
             _('Tell Tartube where to find the downloader'),
         )
-        grid.attach(label3, 1, 4, grid_width, 1)
+        grid.attach(label5, 1, (extra_rows + 4), grid_width, 1)
 
         button2 = Gtk.Button.new_with_label(
             _('Set the downloader\'s file path'),
         )
-        grid.attach(button2, 1, 5, grid_width, 1)
+        grid.attach(button2, 1, (extra_rows + 5), grid_width, 1)
         button2.connect('clicked', self.on_config_button_clicked)
 
         button3 = Gtk.Button.new_with_label(
             _('Try a different downloader'),
         )
-        grid.attach(button3, 1, 6, grid_width, 1)
+        grid.attach(button3, 1, (extra_rows + 6), grid_width, 1)
         button3.connect('clicked', self.on_change_button_clicked)
 
-        label4 = Gtk.Label(
+        label6 = Gtk.Label(
             _('Find more help'),
         )
-        grid.attach(label4, 1, 7, grid_width, 1)
+        grid.attach(label6, 1, (extra_rows + 7), grid_width, 1)
 
         button4 = Gtk.Button.new_with_label(
             _('Read the FAQ'),
         )
-        grid.attach(button4, 1, 8, 1, 1)
+        grid.attach(button4, 1, (extra_rows + 8), 1, 1)
         button4.connect('clicked', self.on_website_button_clicked)
 
         button5 = Gtk.Button.new_with_label(
             _('Ask for help'),
         )
-        grid.attach(button5, 2, 8, 1, 1)
+        grid.attach(button5, 2, (extra_rows + 8), 1, 1)
         button5.connect('clicked', self.on_issues_button_clicked)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 1, 9, grid_width, 1)
+        grid.attach(Gtk.HSeparator(), 1, (extra_rows + 9), grid_width, 1)
 
-        label5 = Gtk.Label()
-        grid.attach(label5, 1, 10, grid_width, 1)
-        label5.set_markup(
+        label7 = Gtk.Label()
+        grid.attach(label7, 1, (extra_rows + 10), grid_width, 1)
+        label7.set_markup(
             _(
                 'Don\'t forget to check the <b>Output</b> tab and the\n' \
                 '<b>Errors/Warnings</b> tab for error messages!',
@@ -28049,10 +28123,10 @@ class NewbieDialogue(Gtk.Dialog):
         )
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 1, 11, grid_width, 1)
+        grid.attach(Gtk.HSeparator(), 1, (extra_rows + 11), grid_width, 1)
 
         checkbutton = Gtk.CheckButton()
-        grid.attach(checkbutton, 1, 12, grid_width, 1)
+        grid.attach(checkbutton, 1, (extra_rows + 12), grid_width, 1)
         checkbutton.set_label(_('Always show this window'))
         if self.show_flag:
             checkbutton.set_active(True)
@@ -28479,6 +28553,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
         self.start_time = None
         self.stop_time = None
         self.all_flag = False
+        self.all_but_flag = False
 
 
         # Code
@@ -28524,7 +28599,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         label2 = Gtk.Label()
         grid.attach(label2, 0, 2, 1, 1)
-        label2.set_markup(_('Stop'))
+        label2.set_markup(_('Stop (optional)'))
         label2.set_alignment(0, 0.5)
 
         entry2 = Gtk.Entry()
@@ -28532,7 +28607,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
         entry2.connect('changed', self.on_stop_entry_changed)
 
         if not video_obj.dl_flag:
-            msg = _('Download this sliced video')
+            msg = _('Download and remove this slice')
         else:
             msg = _('Create this sliced video')
 
@@ -28542,6 +28617,20 @@ class PrepareSliceDialogue(Gtk.Dialog):
         button.connect('clicked', self.on_one_button_clicked)
         button.set_sensitive(False)
 
+        if video_obj.dl_flag:
+            extra_rows = 0
+            button = Gtk.Button()
+
+        else:
+            extra_rows = 1
+            button2 = Gtk.Button.new_with_label(
+                _('Download and remove everything but this slice'),
+            )
+            grid.attach(button2, 0, 5, 1, 1)
+            button2.set_hexpand(False)
+            button2.connect('clicked', self.on_all_but_button_clicked)
+            button2.set_sensitive(False)
+
         if not video_obj.dl_flag:
             msg = _('Download video with all slices removed')
         else:
@@ -28549,15 +28638,15 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         msg += ' (' + str(len(video_obj.slice_list)) + ')'
 
-        button2 = Gtk.Button.new_with_label(msg)
-        grid.attach(button2, 0, 5, 1, 1)
-        button2.set_hexpand(False)
-        button2.connect('clicked', self.on_all_button_clicked)
+        button3 = Gtk.Button.new_with_label(msg)
+        grid.attach(button3, 0, (5 + extra_rows), 1, 1)
+        button3.set_hexpand(False)
+        button3.connect('clicked', self.on_all_button_clicked)
         if not video_obj.slice_list:
-            button2.set_sensitive(False)
+            button3.set_sensitive(False)
 
         # (Signal connect from above)
-        entry.connect('changed', self.on_start_entry_changed, button)
+        entry.connect('changed', self.on_start_entry_changed, button, button2)
 
         # Display the dialogue window
         self.show_all()
@@ -28585,6 +28674,26 @@ class PrepareSliceDialogue(Gtk.Dialog):
         self.destroy()
 
 
+    def on_all_but_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Marks everything but the specified slice to be removed, using the
+        specified times.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24914 on_all_but_button_clicked')
+
+        self.all_but_flag = True
+        self.destroy()
+
+
     def on_one_button_clicked(self, button):
 
         """Called from a callback in self.__init__().
@@ -28604,7 +28713,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
         self.destroy()
 
 
-    def on_start_entry_changed (self, entry, button):
+    def on_start_entry_changed (self, entry, button, button2):
 
         """Called from callback in self.__init__().
 
@@ -28614,7 +28723,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
             entry (Gtk.Entry): The clicked widget
 
-            button (Gtk.Button): Another widget to be modified
+            button, button2 (Gtk.Button): Other widgets to be modified
 
         """
 
@@ -28627,11 +28736,13 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
             self.start_time = None
             button.set_sensitive(False)
+            button2.set_sensitive(False)
 
         else:
 
             self.start_time = value
             button.set_sensitive(True)
+            button2.set_sensitive(True)
 
 
     def on_stop_entry_changed (self, entry):

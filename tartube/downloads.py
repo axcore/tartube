@@ -225,6 +225,11 @@ class DownloadManager(threading.Thread):
         self.total_clip_count = 0
         self.total_slice_count = 0
         self.total_size_count = 0
+        # Special count for media.Video objects which have already been
+        #   checked/downloaded, and are being checked again (directly, for
+        #   example after right-clicking the video)
+        # If non-zero, prevents mainwin.NewbieDialogue from opening
+        self.other_video_count = 0
 
         # If mainapp.TartubeApp.operation_convert_mode is set to any value
         #   other than 'disable', then a media.Video object whose URL
@@ -276,14 +281,10 @@ class DownloadManager(threading.Thread):
         # Note that if a downloads.DownloadItem was created by a
         #   media.Scheduled object that specifies more (or fewer) workers,
         #   then self.change_worker_count() will be called
-        if self.alt_limits_flag \
-        and self.app_obj.alt_num_worker_apply_flag:
+        if self.alt_limits_flag:
             worker_count = self.app_obj.alt_num_worker
-
-        elif (not self.alt_limits_flag) \
-        and self.app_obj.num_worker_apply_flag:
+        elif self.app_obj.num_worker_apply_flag:
             worker_count = self.app_obj.num_worker_default
-
         else:
             worker_count = self.app_obj.num_worker_max
 
@@ -401,8 +402,7 @@ class DownloadManager(threading.Thread):
                     # Change the number of workers. Bandwidth changes are
                     #   applied by OptionsParser.build_limit_rate()
                     if self.app_obj.num_worker_default \
-                    != self.app_obj.alt_num_worker \
-                    and self.app_obj.alt_num_worker_apply_flag:
+                    != self.app_obj.alt_num_worker:
 
                         if not new_flag:
 
@@ -616,6 +616,9 @@ class DownloadManager(threading.Thread):
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 475 check_alt_limits')
+
+        if not self.app_obj.alt_num_worker_apply_flag:
+            return False
 
         # Get the current time and day of the week
         local = utils.get_local_time()
@@ -1068,23 +1071,29 @@ class DownloadManager(threading.Thread):
 
         Args:
 
-            dl_type (str): 'new', 'sim', 'old' or 'clip', depending on the
-                calling function
+            dl_type (str): 'new', 'sim', 'old', 'clip' or 'other', depending on
+                the calling function
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 797 register_video')
 
-        self.total_video_count += 1
-        if dl_type == 'new':
-            self.total_dl_count += 1
-        elif dl_type == 'sim':
-            self.total_sim_count += 1
+        if dl_type == 'other':
+            # Special count for already checked/downloaded media.Videos, in
+            #   order to prevent mainwin.NewbieDialogue opening
+            self.other_video_count += 1
 
-        if self.app_obj.autostop_videos_flag \
-        and self.total_video_count >= self.app_obj.autostop_videos_value:
-            self.stop_download_operation()
+        else:
+            self.total_video_count += 1
+            if dl_type == 'new':
+                self.total_dl_count += 1
+            elif dl_type == 'sim':
+                self.total_sim_count += 1
+
+            if self.app_obj.autostop_videos_flag \
+            and self.total_video_count >= self.app_obj.autostop_videos_value:
+                self.stop_download_operation()
 
 
     def register_video_size(self, size=None):
@@ -2445,7 +2454,7 @@ class DownloadList(object):
 
                 GObject.timeout_add(
                     0,
-                    app_obj.system_error,
+                    self.app_obj.system_error,
                     302,
                     'Invalid argument in Classic Mode tab download operation',
                 )
@@ -2575,9 +2584,11 @@ class DownloadList(object):
         if (
             isinstance(media_data_obj, media.Video)
             and custom_flag
-            and self.custom_dl_obj
-            and self.custom_dl_obj.dl_by_video_flag
-            and not media_data_obj.dl_flag
+            and (
+                (self.custom_dl_obj and self.custom_dl_obj.dl_by_video_flag) \
+                or self.app_obj.temp_stamp_list \
+                or self.app_obj.temp_slice_list
+            )
         ) or (
             isinstance(media_data_obj, media.Video)
             and (
@@ -4173,7 +4184,9 @@ class VideoDownloader(object):
 
             return
 
-        if 'upload_date' in json_dict:
+        # (Git #322, 'upload_date' might be None)
+        if 'upload_date' in json_dict \
+        and json_dict['upload_date'] is not None:
 
             try:
                 # date_string in form YYYYMMDD
@@ -4387,7 +4400,7 @@ class VideoDownloader(object):
             and video_obj.name != app_obj.default_video_name:
 
                 # This video must not be displayed in the Results List, and
-                #   does counts towards the limit (if any) specified by
+                #   counts towards the limit (if any) specified by
                 #   mainapp.TartubeApp.operation_check_limit
                 self.video_limit_count += 1
 
@@ -4400,8 +4413,12 @@ class VideoDownloader(object):
                 and app_obj.operation_check_limit \
                 and self.video_limit_count >= app_obj.operation_check_limit:
                     # Limit reached. When we reach the end of this function,
-                    #   stop checking videos in this channel playlist
+                    #   stop checking videos in this channel/playlist
                     stop_flag = True
+
+                # The call to DownloadManager.register_video() below doesn't
+                #   take account of this situation, so make our own call
+                self.download_manager_obj.register_video('other')
 
             else:
 

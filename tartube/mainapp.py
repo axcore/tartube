@@ -9841,6 +9841,7 @@ class TartubeApp(Gtk.Application):
         sim_count = self.download_manager_obj.total_sim_count
         clip_count = self.download_manager_obj.total_clip_count
         slice_count = self.download_manager_obj.total_slice_count
+        other_count = self.download_manager_obj.other_video_count
 
         # For the 'custom_sim'/'classic_sim' operation, we need to use the same
         #   custom download manager
@@ -9935,7 +9936,8 @@ class TartubeApp(Gtk.Application):
             and dl_count == 0 \
             and sim_count == 0 \
             and clip_count == 0 \
-            and slice_count == 0:
+            and slice_count == 0 \
+            and other_count == 0:
 
                 show_newbie_dialogue_flag = True
 
@@ -9946,11 +9948,11 @@ class TartubeApp(Gtk.Application):
                 else:
                     msg = _('Download operation halted')
 
-                if dl_count or sim_count:
+                if dl_count or sim_count or other_count:
 
                     msg += '\n\n' + _('Videos downloaded:') + ' ' \
                     + str(dl_count) + '\n' + _('Videos checked:') \
-                    + ' ' + str(sim_count)
+                    + ' ' + str(sim_count + other_count)
 
                 if clip_count or slice_count:
                     msg += '\n'
@@ -10073,7 +10075,10 @@ class TartubeApp(Gtk.Application):
         and not self.debug_disable_newbie_flag \
         and not manual_stop_flag:
 
-            dialogue_win = mainwin.NewbieDialogue(self.main_win_obj)
+            dialogue_win = mainwin.NewbieDialogue(
+                self.main_win_obj,
+                classic_mode_flag,
+            )
             dialogue_win.run()
 
             # Retrieve user choices from the dialogue window...
@@ -12175,7 +12180,9 @@ class TartubeApp(Gtk.Application):
                 if 'id' in json_dict:
                     video_obj.set_vid(json_dict['id'])
 
-                if 'upload_date' in json_dict:
+                # (Git #322, 'upload_date' might be None)
+                if 'upload_date' in json_dict \
+                and json_dict['upload_date'] is not None:
 
                     try:
                         # date_string in form YYYYMMDD

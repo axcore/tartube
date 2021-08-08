@@ -1,3 +1,48 @@
+v2.3.332 (8 Jul 2021)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Tartube can extract a video's comments, and optionally store them in its own
+    database. (In either case, comments are stored in the video's .info.json
+    file). This feature is only available when using yt-dlp. To enable it,
+    click 'Edit > System preferences... > Operations > Comments', and select
+    'When checking/downloading videos, store comments in the metadata file',
+    (Note that the download option in 'Edit > General download options...' has
+    been removed). To view comments for a video, right-click the video and
+    select 'Show video > Properties > Comments'
+
+MINOR NEW FEATURES
+- In the preferences window (Edit > System preferences... > Windows > Main
+    window), the 'Reset' button now resets the position of various sldiers, as
+    well as the size of the main window
+- Added a few more video/audio formats to the list selectable in the download
+    options window
+- In the video slices dialogue window (right-click a video and select 'Special
+    > Remove video slices...') the user can now opt to remove a slice, or to
+    remove everything but a slice. The latter behaviour is slightly different
+    to downloading a video clip, because downloading a clip will create a new
+    entry in Tartube's database. The new button should clarify what the window
+    is actually supposed to do (Git #322)
+- In the new-ish dialogue window that appears when nothing is downloaded, there
+    is a new section remnnding Classic Mode users that they can't download a
+    file that doesn't exist (and what to do about that) (Git #326)
+- The same dialogue window appeared after checking a single video that had
+    previously been checked/downloaded. Fixed
+- The setup dialogue window now explains to users what the Classic Mode tab is
+    for, and lets them specify that the main window should always open at that
+    tab, if they want
+
+MAJOR FIXES
+- The button to set the media file in a video's edit window did not work on
+    MS Windwos. Fixed (Git #320)
+- In the Progress tab, the 'Maximum downloads' setting was broken. Fixed
+- Fixed an error caused when a video's upload date (as returned by youtube-dl)
+    was None
+
+MINOR FIXES
+- .webp thumbnails from Odysee (and perhaps other websites) were not converted
+    into a displayable format; fixed
+
 v2.3.306 (3 Jul 2021)
 -------------------------------------------------------------------------------
 
