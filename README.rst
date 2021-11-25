@@ -1177,6 +1177,7 @@ It is important to note that *only a list of videos, channels, playlists and fol
 - In the dialogue window, choose what you want to export
 - If you want a list that you can edit in an ordinary text editor, select the **Export as plain text** option
 - If you want a list that yuu can edit in a spreadsheet, select the **Export as CSV** option
+- Otherwise, you should select the **Export as JSON** option
 - Click the **OK** button, then select where to save the export file
 
 It is safe to share this export file with other people. It doesn't contain any personal information.
@@ -1186,6 +1187,35 @@ This is how to import the data into a different **Tartube** database.
 - Click **Media > Import into database...**
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
+
+6.20.5 Export formats
+---------------------
+
+The format of exported plain text/CSV files changed in v2.3.208, and again in v2.3.307. If you try to import files from earlier versions, you may not get everything you were expecting.
+
+Here are some notes for anyone who wants to edit the CSV export by hand (for example, in a spreadsheet):
+
+- There are six columns
+- A parent channel/playlist/folder is always listed directly above its child videos/channels/playlists/folders
+- The first column should contain the string **video**, **channel**, **playlist** or **folder**
+- The second column is the name of the video/channel/playlist/folder. Note that channels/playlists/folders cannot share a name (but any number of duplicate video names are allowed)
+- The third column is the source URL for a video, channel or playlist. This field is always empty for folders
+- The fourth column is the name of the parent channel, playlist or folder (or an empty field, if there is no parent)
+- The fifth and sixth columns apply only to videos. For channels/playlists/folders, they are always empty fields. For videos, they can still be empty fields, if the data is not known
+- The fifth column is the video ID supplied by the website
+- The sixth column is the video filename (e.g. **my video.mp4**)
+
+Here are some notes for anyone who wants to edit the plain text export by hand:
+
+- Channels/playlists/folders are represnted by groups of four lines
+- Videos are represented by groups of six lines
+- Each group starts with the line **@video**, **@channel**, **@playlist** or **@folder**
+- A parent channel/playlist/folder is always listed directly above its child videos/channels/playlists/folders
+- Line 2 is the name of the video/channel/playlist/folder. Note that channels/playlists/folders cannot share a name (but any number of duplicate video names are allowed)
+- Line 3 is the source URL for a video, channel or playlist. This line is always empty for folders
+- Line 4 is the name of the parent channel, playlist or folder (or an empty line, if there is no parent)
+- For videos, line 5 is the video ID supplied by the website (or an empty line, if the ID is unknown)
+- For videos, line 6 is the video filename (e.g. **my video.mp4**, or an empty line, if the filename is unknown)
 
 6.21 Converting to audio
 ------------------------

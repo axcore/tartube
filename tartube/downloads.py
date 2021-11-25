@@ -5436,6 +5436,18 @@ class VideoDownloader(object):
                 stderr,
             )
         ) or (
+            app_obj.ignore_page_given_flag \
+            and re.search(
+                r'A channel.user page was given',
+                stderr,
+            )
+        ) or (
+            app_obj.ignore_no_descrip_flag \
+            and re.search(
+                r'There.s no playlist description to write',
+                stderr,
+            )
+        ) or (
             app_obj.ignore_yt_age_restrict_flag \
             and (
                 re.search(

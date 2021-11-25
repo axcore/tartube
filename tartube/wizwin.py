@@ -1459,7 +1459,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + 'It is stronly recommended that you install FFmpeg.</span>',
+            + 'It is strongly recommended that you install FFmpeg.</span>',
             0, 3, 1, 1,
         )
 

@@ -1987,8 +1987,10 @@ custom_dl_obj=None, divert_mode=None):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
         cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
     else:
         cmd_list = [ytdl_path] + options_list + [source]
@@ -2034,8 +2036,10 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
         cmd_list = ['python3'] + [ytdl_path] + options_list
     else:
         cmd_list = [ytdl_path] + options_list
@@ -2193,14 +2197,12 @@ classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
-
-        cmd_list \
-        = ['python3'] + [ytdl_path] + mod_options_list + [source]
-
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
     else:
-
         cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
@@ -2343,14 +2345,12 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
-
-        cmd_list \
-        = ['python3'] + [ytdl_path] + mod_options_list + [source]
-
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
     else:
-
         cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list

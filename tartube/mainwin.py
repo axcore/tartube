@@ -29663,7 +29663,7 @@ class SetDestinationDialogue(Gtk.Dialog):
 
             # An external directory is not allowed inside Tartube's data
             #   directory
-            if re.match('^' + app_obj.data_dir, dest_dir):
+            if dest_dir[:len(app_obj.data_dir)] == app_obj.data_dir:
 
                 if os.name == 'nt':
                     msg = _(

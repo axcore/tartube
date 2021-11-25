@@ -388,7 +388,17 @@ class UpdateManager(threading.Thread):
                 ytdl_update_current = 'ytdl_update_win_32_no_dependencies'
 
         # Set the system command
-        cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
+        if os.name == 'nt' \
+        and ytdl_update_current == 'ytdl_update_custom_path' \
+        and re.search('\.exe$', self.app_obj.ytdl_path):
+            # Special case: on MS Windows, a custom path may point at an .exe,
+            #   therefore 'python3' must be removed from the system command
+            #   (we can't run 'python3.exe youtube-dl.exe' or anything like
+            #   that)
+            cmd_list = [self.app_obj.ytdl_path, '-U']
+
+        else:
+            cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
 
         mod_list = []
         for arg in cmd_list:

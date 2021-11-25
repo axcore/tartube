@@ -797,15 +797,20 @@ class GenericContainer(GenericMedia):
 
             if isinstance(child_obj, Video):
 
-                # (Don't bother exporting a video whose source URL is not
+                # (Don't bother exporting a video whose source URL/file is not
                 #   known)
-                if include_video_flag and child_obj.source is not None:
+                if include_video_flag \
+                and child_obj.source is not None \
+                and child_obj.file_name is not None \
+                and child_obj.file_ext is not None:
 
                     mini_dict = {
                         'type': 'video',
                         'dbid': child_obj.dbid,
+                        'vid': child_obj.vid,
                         'name': child_obj.name,
                         'nickname': None,
+                        'file': child_obj.file_name + child_obj.file_ext,
                         'source': child_obj.source,
                         'db_dict': {},
                     }
@@ -829,8 +834,10 @@ class GenericContainer(GenericMedia):
         return_dict = {
             'type': media_type,
             'dbid': self.dbid,
+            'vid': None,
             'name': self.name,
             'nickname': self.nickname,
+            'file': None,
             'source': None,
             'db_dict': db_dict,
         }
@@ -901,15 +908,20 @@ class GenericContainer(GenericMedia):
 
                 if isinstance(child_obj, Video):
 
-                    # (Don't bother exporting a video whose source URL is not
-                    #   known)
-                    if include_video_flag and child_obj.source is not None:
+                    # (Don't bother exporting a video whose source URL/file is
+                    #   not known)
+                    if include_video_flag \
+                    and child_obj.source is not None \
+                    and child_obj.file_name is not None \
+                    and child_obj.file_ext is not None:
 
                         child_mini_dict = {
                             'type': 'video',
                             'dbid': child_obj.dbid,
+                            'vid': child_obj.vid,
                             'name': child_obj.name,
                             'nickname': None,
+                            'file': child_obj.file_name + child_obj.file_ext,
                             'source': child_obj.source,
                             'db_dict': {},
                         }
@@ -929,8 +941,10 @@ class GenericContainer(GenericMedia):
             mini_dict = {
                 'type': media_type,
                 'dbid': self.dbid,
+                'vid': None,
                 'name': self.name,
                 'nickname': self.nickname,
+                'file': None,
                 'source': self.source,
                 'db_dict': child_dict,
             }
