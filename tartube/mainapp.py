@@ -105,7 +105,7 @@ import media
 import options
 import process
 import refresh
-#import testing
+import testing
 import tidy
 import updates
 import utils
@@ -5337,6 +5337,8 @@ class TartubeApp(Gtk.Application):
         # Convert a version, e.g. 1.234.567, into a simple number, e.g.
         #   1234567, that can be compared with other versions
         version = self.convert_version(load_dict['script_version'])
+        # !!! DEBUG
+        print('DEBUG: db version: ' + str(version))
         # Now check that the database file wasn't written by a more recent
         #   version of Tartube (which this older version might not be able to
         #   read)
@@ -6687,6 +6689,14 @@ class TartubeApp(Gtk.Application):
                 if 'write_comments' in options_obj.options_dict:
                     del options_obj.options_dict['write_comments']
 
+        # !!! DEBUG Attempt to fix Git 356 with a sledgehammer
+        if version < 2003353:      # v2.3.353
+
+            for media_data_obj in self.media_reg_dict.values():
+                if not isinstance(media_data_obj, media.Video) \
+                and not hasattr(media_data_obj, 'external_dir'):
+                    media_data_obj.external_dir = None
+
         # --- Do this last, or call to .check_integrity_db() fails -----------
 
         if version < 2002115:       # v2.2.115
@@ -6696,9 +6706,9 @@ class TartubeApp(Gtk.Application):
             # Can fix both problems by doing a silent database integrity check
             self.check_integrity_db(True)
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------------   
         pass
-
+        
 
     def save_db(self):
 
