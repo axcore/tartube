@@ -1903,6 +1903,44 @@ class Video(GenericMedia):
             self.parent_obj.add_child(app_obj, self, no_sort_flag)
 
 
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'vid': None,
+            'live_mode': 0,
+            'live_debut_flag': False,
+            'was_live_flag': False,
+            'live_time': 0,
+            'live_msg': '',
+            'archive_flag': False,
+            'bookmark_flag': False,
+            'missing_flag': False,
+            'waiting_flag': False,
+            'orig_parent': None,
+            'split_flag': False,
+            'stamp_list': [],
+            'slice_list': [],
+            'comment_list': [],
+            'dummy_flag': False,
+            'dummy_dir': None,
+            'dummy_path': None,
+            'dummy_format': None,
+        }
+
+
     # Public class methods
 
 
@@ -3315,6 +3353,36 @@ class Channel(GenericRemoteContainer):
             self.parent_obj.add_child(app_obj, self)
 
 
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'rss': None,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
+
+
     # Public class methods
 
 
@@ -3502,6 +3570,36 @@ class Playlist(GenericRemoteContainer):
         # Update the parent (if any)
         if self.parent_obj:
             self.parent_obj.add_child(app_obj, self)
+
+
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'rss': None,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
 
 
     # Public class methods
@@ -3717,6 +3815,44 @@ class Folder(GenericContainer):
         # Update the parent (if any)
         if self.parent_obj:
             self.parent_obj.add_child(app_obj, self)
+
+
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        if hasattr(self, 'restrict_flag'):
+            if self.restrict_flag:
+                restrict_mode = 'full'
+            else:
+                restrict_mode = 'open'
+        else:
+            restrict_mode = self.restrict_mode
+
+        return {
+            'nickname': self.name,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'restrict_mode': restrict_mode,
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
 
 
     # Public class methods

@@ -671,7 +671,7 @@ Checking/download videos:
 - To **Check** or **Download** videos, channels and playlists, use the main menu, or the buttons near the top of the window, or the buttons in the bottom-left corner, or right-click an individual video, channel or playlist
 - A **Custom Download** can be started from the main menu (**Operations > Custom download all** or by right-clicking a video, channel, playlist or folder
 
-Refreshing the filesystem:
+Refreshing the database:
 
 - **Refresh** - Examines your filesystem. If you have manually copied any videos to the location in which **Tartube** stores its files, those videos are added to **Tartube**'s database
 - To **Refresh** **Tartube**'s database, use the main menu (**Operations > Refresh database...**) or right-click a channel/playlist/folder

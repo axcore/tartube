@@ -5337,8 +5337,6 @@ class TartubeApp(Gtk.Application):
         # Convert a version, e.g. 1.234.567, into a simple number, e.g.
         #   1234567, that can be compared with other versions
         version = self.convert_version(load_dict['script_version'])
-        # !!! DEBUG
-        print('DEBUG: db version: ' + str(version))
         # Now check that the database file wasn't written by a more recent
         #   version of Tartube (which this older version might not be able to
         #   read)
@@ -6689,15 +6687,8 @@ class TartubeApp(Gtk.Application):
                 if 'write_comments' in options_obj.options_dict:
                     del options_obj.options_dict['write_comments']
 
-        # !!! DEBUG Attempt to fix Git 356 with a sledgehammer
-        if version < 2003353:      # v2.3.353
-
-            for media_data_obj in self.media_reg_dict.values():
-                if not isinstance(media_data_obj, media.Video) \
-                and not hasattr(media_data_obj, 'external_dir'):
-                    media_data_obj.external_dir = None
-
         # --- Do this last, or call to .check_integrity_db() fails -----------
+        # --------------------------------------------------------------------
 
         if version < 2002115:       # v2.2.115
 
@@ -6706,9 +6697,14 @@ class TartubeApp(Gtk.Application):
             # Can fix both problems by doing a silent database integrity check
             self.check_integrity_db(True)
 
-        # --------------------------------------------------------------------   
-        pass
-        
+        elif self.check_broken_objs():
+
+            # v2.3.356: Git #356 reports failure of self.update_db() to update
+            #   the database correctly, in a way that's hard to analyse
+            # Solve all future issues of this kind by routinely checking
+            #   that media data objects have the IVs they're supposed to have
+            self.fix_broken_objs()
+
 
     def save_db(self):
 
@@ -7426,8 +7422,8 @@ class TartubeApp(Gtk.Application):
         the database for inconsistencies.
 
         If inconsistencies are found, prompt the user for permission to
-        repair them. The repair process only updates Tartube IVs; it doesn't
-        delete any files or folders in the filesystem.
+        repair them. The repair process only updates Tartube data; it doesn't
+        modify any other files or folders in the user's filesystem.
 
         Args:
 
@@ -7483,6 +7479,9 @@ class TartubeApp(Gtk.Application):
         #   options.OptionsManager objects)
         error_options_dict = {}
         error_options_media_dict = {}
+        # (The number of media data objects which appear to have missing IVs,
+        #   because of some failure or other in self.update_db() )
+        broken_obj_count = 0
 
         # Check that entries in self.media_name_dict appear in
         #   self.media_reg_dict
@@ -7682,14 +7681,20 @@ class TartubeApp(Gtk.Application):
                         error_options_media_dict[media_data_obj.dbid] \
                         = media_data_obj
 
+        # .update_db() updates objects from earlier releases of Tartube with
+        #   new IVs. Git #356 reports a database that has become broken due to
+        #   missing IVs that .update_db() was not able to add
+        # Check one example of each type of object, looking for missing IVs
+        broken_obj_count = self.check_broken_objs()
+
         # Check complete
-#        if not mod_error_reg_dict \
-#        and not error_master_dict \
-#        and not error_slave_dict \
-#        and not flag_error_count \
-#        and not error_options_dict \
-#        and not error_options_media_dict:
-        if False:
+        if not mod_error_reg_dict \
+        and not error_master_dict \
+        and not error_slave_dict \
+        and not flag_error_count \
+        and not error_options_dict \
+        and not error_options_media_dict \
+        and not broken_obj_count:
 
             if not no_prompt_flag:
 
@@ -7713,6 +7718,7 @@ class TartubeApp(Gtk.Application):
                     error_slave_dict,
                     error_options_dict,
                     error_options_media_dict,
+                    broken_obj_count,
                     no_prompt_flag,
                     parent_win_obj,
                 ],
@@ -7744,6 +7750,7 @@ class TartubeApp(Gtk.Application):
                         error_slave_dict,
                         error_options_dict,
                         error_options_media_dict,
+                        broken_obj_count,
                         no_prompt_flag,
                         parent_win_obj,
                     ],
@@ -7790,6 +7797,10 @@ class TartubeApp(Gtk.Application):
                         and options.OptionsManager objects. These
                         errors are fixed separately)
 
+                broken_obj_count (list): The number of media data objects which
+                    appear to have missing IVs, because of some failure or
+                    other in self.update_db()
+
                 no_prompt_flag (bool): If True, don't show a dialogue window at
                     the end of the procedure
 
@@ -7809,6 +7820,7 @@ class TartubeApp(Gtk.Application):
         error_slave_dict = data_list.pop(0)
         error_options_dict = data_list.pop(0)
         error_options_media_dict = data_list.pop(0)
+        broken_obj_count = data_list.pop(0)
         no_prompt_flag = data_list.pop(0)
         parent_win_obj = data_list.pop(0)
 
@@ -7890,6 +7902,10 @@ class TartubeApp(Gtk.Application):
         for media_data_obj in error_options_media_dict.values():
             media_data_obj.reset_options_obj()
 
+        # Deal with broken objects due to failures in .update_db()
+        if broken_obj_count:
+            self.fix_broken_objs()
+
         # Save the database file (unless load/save has been disabled very
         #   recently)
         if not self.disable_load_save_flag:
@@ -7907,6 +7923,149 @@ class TartubeApp(Gtk.Application):
                 'ok',
                 parent_win_obj,
             )
+
+
+    def check_broken_objs(self):
+
+        """Called by self.update_db() and .check_integrity_db().
+
+        Git #356 reports failure of self.update_db() to update the database
+        correctly, in a way that's hard to analyse.
+
+        Check that all media data objects have the IVs they're supposed to
+        have, and return the number of problems found.
+
+        Returns:
+
+            A number in the range 0-4
+
+        """
+
+        count = 0
+
+        # Get a specimen of each type of media data object
+        video_obj, channel_obj, playlist_obj, folder_obj \
+        = self.compile_specimen_obj_list()
+
+        # Check IVs in a specimen media.Video objec
+        if video_obj:
+
+            iv_dict = video_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(video_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Channel objec
+        if channel_obj:
+
+            iv_dict = channel_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(channel_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Playlist objec
+        if playlist_obj:
+
+            iv_dict = playlist_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(playlist_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Folder objec
+        if folder_obj:
+
+            iv_dict = folder_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(folder_obj, key)):
+                    count += 1
+                    break
+
+        # Return the number of problems found
+        return count
+
+
+    def fix_broken_objs(self):
+
+        """Called by self.update_db() and .check_integrity_db(), immediately
+        after a call to self.check_broken_objs().
+
+        Some or all media data objects have missing IVs, as a result of a
+        failure somewhere in self.update_db(). Update all media data objects to
+        add any missing IVs with default values.
+        """
+
+        for media_data_obj in self.media_reg_dict.values():
+
+            update_dict = media_data_obj.compile_updated_ivs()
+            for key in update_dict.keys():
+
+                if not hasattr(media_data_obj, key):
+                    setattr(media_data_obj, key, update_dict[key])
+
+
+    def compile_specimen_obj_list(self):
+
+        """Called by self.check_broken_objs().
+
+        Returns a list of specimen media data objects: one media.Video,
+        media.Channel, media.Playlist and media.Folder object.
+
+        Returns:
+
+            A list of objects, in the order (video, channel, playlist, folder).
+                If those objects haven't been created yet, the list contains
+                one or more None values instead
+
+        """
+
+        # Find a specimen media.Video object
+        video_obj = None
+        for media_data_obj in self.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_obj = media_data_obj
+                break
+
+        # Find specimen media.Channel, media.Playlist and media.Folder objects
+        count = 0
+        channel_obj = None
+        playlist_obj = None
+        folder_obj = None
+
+        for media_data_obj in self.media_name_dict.values():
+
+            if isinstance(media_data_obj, media.Channel) and not channel_obj:
+
+                channel_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+            elif isinstance(media_data_obj, media.Playlist) \
+            and not playlist_obj:
+
+                playlist_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+            elif isinstance(media_data_obj, media.Folder) \
+            and not folder_obj:
+
+                folder_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+        return video_obj, channel_obj, playlist_obj, folder_obj
 
 
     def update_data_dirs(self):
