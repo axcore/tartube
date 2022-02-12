@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -37,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import time
+from urllib.parse import urlparse, urljoin
 
 
 # Import our modules
@@ -268,19 +269,23 @@ def check_url(url):
 
     """
 
-    prepared_request = requests.models.PreparedRequest()
-    try:
-        prepared_request.prepare_url(url, None)
+    # Based on various methods suggested by
+    # https://stackoverflow.com/questions/25259134/
+    #   how-can-i-check-whether-a-url-is-valid-using-urlparse
 
-        # The requests module allows a lot of URLs that are definitely not of
-        #   interest to us
-        # This filter seems to catch most of the gibberish (although it's not
-        #   perfect)
-        if re.search('^\S+\.\S', url) \
-        or re.search('localhost', url):
-            return True
-        else:
-            return False
+    try:
+        # Add a scheme, if the specified URL doesn't provide one
+        if not re.match(r'^[a-zA-Z]+://', url):
+            url = 'http://' + url
+
+        final_url = urlparse(urljoin(url, '/'))
+        is_valid = (
+            all([final_url.scheme, final_url.netloc, final_url.path])
+            and len(final_url.netloc.split(".")) > 1
+        )
+
+        return is_valid
+
     except:
         return False
 

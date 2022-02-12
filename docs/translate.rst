@@ -7,7 +7,7 @@ You want to contribute a translation to this project? Well, that's just great!
 The simple way
 --------------
 
-1. Get a copy of the file `../tartube/po/messages.pot <tartube/po/messages.pot>`__ 
+1. Get a copy of the file `../tartube/po/messages.pot <tartube/po/messages.pot>`__
 2. Open it in a text editor
 3. Read the notes below
 4. Translate everything
@@ -33,7 +33,7 @@ Header
 ======
 
 The lines at the top must be changed from this::
-    
+
     # SOME DESCRIPTIVE TITLE.
     # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
     # This file is distributed under the same license as the PACKAGE package.
@@ -41,7 +41,7 @@ The lines at the top must be changed from this::
 ...to this::
 
     # Tartube
-    # Copyright (C) 2019-2021 A S Lewis
+    # Copyright (C) 2019-2022 A S Lewis
     # This file is distributed under the same license as the Tartube package.
 
 The Project-Id-Version must be changed from this::
@@ -106,7 +106,7 @@ Some pieces of text are spread across several lines, like this::
 
     msgid ""
     "The video file is missing from Tartube's data folder (try downloading the "
-    "video again!)"    
+    "video again!)"
     msgstr ""
 
 The two strings are added to each other, producing a single string. You can do the same, if you want. (It doesn't matter how many strings you use).
@@ -120,7 +120,7 @@ Multiple strings are combined without extra space characters. You should add the
     "¡No puedo usar "
     "YouTube "
     "porque no hablo inglés!"
-    
+
 Please preserve capitalisation and punctuation::
 
     msgid "Help!"
@@ -128,10 +128,10 @@ Please preserve capitalisation and punctuation::
 
     msgid "HELP!"
     msgstr "¡AYUDA!"
-    
+
     msgid "help!"
     msgstr "¡ayuda!"
-    
+
 One exception to this rule is underline/underscore characters. These denote keyboard shortcuts. Don't add the underline/underscore character to your translation::
 
     msgid "_Channel"
@@ -164,7 +164,7 @@ Some strings contain {0}, {1}, {2} and so on. These are substituted for somethin
 Your translation must include the literal {0}, {1}, {2} and so on.
 
     msgstr "blah blah blah {0} blah blah {1} blah blah"
-    
+
 If your translation uses a different word order, then treat the substrings like a word.
 
     msgstr "Give to the {1} the {0}, please"
@@ -177,7 +177,7 @@ Earlier version of Tartube used *directory* on Linux systems, and *folder* on MS
 Downloads
 =========
 
-You have probably noticed two buttons in Tartube's main window: **Check all** and **Download all**. 
+You have probably noticed two buttons in Tartube's main window: **Check all** and **Download all**.
 
 The first one fetches a list of videos from websites, but doesn't download the videos. The second one fetches a list of videos from websites AND downloads the videos.
 
@@ -186,7 +186,7 @@ Throughout **messages.pot**, the word *check* is used with this meaning. You can
 Operations
 ==========
 
-Throughout **messages.pot**, the word *operation* has a fixed meaning. When Tartube is busy doing something, many buttons don't work (are greyed out). 
+Throughout **messages.pot**, the word *operation* has a fixed meaning. When Tartube is busy doing something, many buttons don't work (are greyed out).
 
 For example, click the **Download all** button, and it is greyed out until the downloads are finished.
 

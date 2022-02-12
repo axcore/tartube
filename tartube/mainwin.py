@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -29570,6 +29570,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         entry = Gtk.Entry()
         grid.attach(entry, 0, 8, grid_width, 1)
         entry.set_editable(False)
+        entry.set_can_focus(False)
         if media_data_obj.external_dir is not None:
             entry.set_text(media_data_obj.external_dir)
         elif prev_external_dir is not None:

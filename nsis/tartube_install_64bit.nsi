@@ -1,6 +1,6 @@
-# Tartube v2.3.358 installer script for MS Windows
+# Tartube v2.3.367 installer script for MS Windows
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -249,7 +249,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.3.358-64bit.exe"
+    OutFile "install-tartube-2.3.367-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -352,7 +352,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.3.358"
+#        "DisplayVersion" "2.3.367"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
