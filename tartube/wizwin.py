@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1459,7 +1459,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + 'It is stronly recommended that you install FFmpeg.</span>',
+            + 'It is strongly recommended that you install FFmpeg.</span>',
             0, 3, 1, 1,
         )
 

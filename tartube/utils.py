@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -37,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import time
+from urllib.parse import urlparse, urljoin
 
 
 # Import our modules
@@ -268,19 +269,23 @@ def check_url(url):
 
     """
 
-    prepared_request = requests.models.PreparedRequest()
-    try:
-        prepared_request.prepare_url(url, None)
+    # Based on various methods suggested by
+    # https://stackoverflow.com/questions/25259134/
+    #   how-can-i-check-whether-a-url-is-valid-using-urlparse
 
-        # The requests module allows a lot of URLs that are definitely not of
-        #   interest to us
-        # This filter seems to catch most of the gibberish (although it's not
-        #   perfect)
-        if re.search('^\S+\.\S', url) \
-        or re.search('localhost', url):
-            return True
-        else:
-            return False
+    try:
+        # Add a scheme, if the specified URL doesn't provide one
+        if not re.match(r'^[a-zA-Z]+://', url):
+            url = 'http://' + url
+
+        final_url = urlparse(urljoin(url, '/'))
+        is_valid = (
+            all([final_url.scheme, final_url.netloc, final_url.path])
+            and len(final_url.netloc.split(".")) > 1
+        )
+
+        return is_valid
+
     except:
         return False
 
@@ -1987,8 +1992,10 @@ custom_dl_obj=None, divert_mode=None):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
         cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
     else:
         cmd_list = [ytdl_path] + options_list + [source]
@@ -2034,8 +2041,10 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
         cmd_list = ['python3'] + [ytdl_path] + options_list
     else:
         cmd_list = [ytdl_path] + options_list
@@ -2193,14 +2202,12 @@ classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
-
-        cmd_list \
-        = ['python3'] + [ytdl_path] + mod_options_list + [source]
-
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
     else:
-
         cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
@@ -2343,14 +2350,12 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243)
-    if app_obj.ytdl_path_custom_flag:
-
-        cmd_list \
-        = ['python3'] + [ytdl_path] + mod_options_list + [source]
-
+    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
     else:
-
         cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list

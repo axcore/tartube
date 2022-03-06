@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -5985,7 +5985,7 @@ class OptionsEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _(
-                'Limit filnema lenght (excluding extension) to this many' \
+                'Limit filname length (excluding extension) to this many' \
                 + ' characters',
             ),
             0, 2, 1, 1
@@ -6221,7 +6221,7 @@ class OptionsEditWin(GenericEditWin):
         checkbutton3 = self.add_checkbutton(grid,
             _(
                 'Check formats selected are actually downloadable' \
-                + ' (Experimental',
+                + ' (Experimental)',
             ),
             'check_formats',
             0, 3, 1, 1,
@@ -13585,12 +13585,18 @@ class VideoEditWin(GenericEditWin):
             'clicked',
             self.on_load_comments_button_clicked,
         )
-        json_path = self.edit_obj.check_actual_path_by_ext(
-            self.app_obj,
-            '.info.json',
-        )
-        if json_path is None:
+        # (The call to .check_actual_path_by_ext() requires a value of
+        #   media.Video.file_name that is not None)
+        if self.edit_obj.file_name is None \
+        or self.edit_obj.file_ext is None:
             button.set_sensitive(False)
+        else:
+            json_path = self.edit_obj.check_actual_path_by_ext(
+                self.app_obj,
+                '.info.json',
+            )
+            if json_path is None:
+                button.set_sensitive(False)
 
         button2 = Gtk.Button.new_with_label(
             _('Clear comments (does not modify the file)'),
@@ -17925,7 +17931,7 @@ class SystemPrefWin(GenericPrefWin):
             _('_URLs'),
             inner_notebook,
         )
-        grid_width = 5
+        grid_width = 2
 
         # Update channel/playlist URLs
         self.add_label(grid,
@@ -18011,17 +18017,38 @@ class SystemPrefWin(GenericPrefWin):
         # Initialise the list
         self.setup_files_urls_tab_update_treeview()
 
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 2, grid_width, 1)
+
         # Strip of widgets beneath the list
-        self.add_label(grid,
+        self.add_label(grid2,
             _('Pattern'),
-            0, 2, 1, 1,
+            0, 0, 1, 1,
         )
 
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Regex'),
+        entry = self.add_entry(grid2,
+            None,
+            True,
+            1, 0, 1, 1,
+        )
+
+        self.add_label(grid2,
+            _('Substitution'),
+            2, 0, 1, 1,
+        )
+
+        entry2 = self.add_entry(grid2,
+            None,
+            True,
+            3, 0, 1, 1,
+        )
+
+        checkbutton2 = self.add_checkbutton(grid2,
+            _('This pattern is a regex'),
             self.app_obj.url_change_regex_flag,
             True,               # Can be toggled by user
-            1, 2, 1, 1,
+            0, 1, 2, 1,
         )
         checkbutton2.set_hexpand(False)
         checkbutton2.connect(
@@ -18029,31 +18056,10 @@ class SystemPrefWin(GenericPrefWin):
             self.on_url_regex_button_toggled,
         )
 
-        entry = self.add_entry(grid,
-            None,
-            True,
-            2, 2, 1, 1,
-        )
-
-        self.add_label(grid,
-            _('Substitution'),
-            3, 2, 1, 1,
-        )
-
-        entry2 = self.add_entry(grid,
-            None,
-            True,
-            4, 2, 1, 1,
-        )
-
-        # (To avoid messing up the neat format of the rows above, add a
-        #   secondary grid, and put the next set of widgets inside it)
-        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
-
         button = Gtk.Button(
             _('Search and replace text in the selected URLs'),
         )
-        grid2.attach(button, 0, 1, 1, 1)
+        grid2.attach(button, 2, 1, 2, 1)
         button.set_hexpand(True)
         button.connect(
             'clicked',
@@ -18064,10 +18070,20 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         button2 = Gtk.Button()
-        grid2.attach(button2, 1, 1, 1, 1)
+        grid2.attach(button2, 2, 2, 1, 1)
         button2.set_hexpand(True)
-        button2.set_label(_('Refresh list'))
+        button2.set_label(_('Open URLs'))
         button2.connect(
+            'clicked',
+            self.on_open_url_clicked,
+            treeview,
+        )
+
+        button3 = Gtk.Button()
+        grid2.attach(button3, 3, 2, 1, 1)
+        button3.set_hexpand(True)
+        button3.set_label(_('Refresh list'))
+        button3.connect(
             'clicked',
             self.setup_files_urls_tab_update_treeview,
         )
@@ -19310,6 +19326,22 @@ class SystemPrefWin(GenericPrefWin):
             0, 11, grid_width, 1,
         )
         checkbutton12.connect('toggled', self.on_no_subtitles_button_toggled)
+
+        checkbutton13 = self.add_checkbutton(grid,
+            _('Ignore \'A channel/user page was given\' warnings'),
+            self.app_obj.ignore_page_given_flag,
+            True,                   # Can be toggled by user
+            0, 12, grid_width, 1,
+        )
+        checkbutton13.connect('toggled', self.on_page_given_button_toggled)
+
+        checkbutton14 = self.add_checkbutton(grid,
+            _('Ignore \'There\'s no playlist description to write\' warnings'),
+            self.app_obj.ignore_no_descrip_flag,
+            True,                   # Can be toggled by user
+            0, 13, grid_width, 1,
+        )
+        checkbutton14.connect('toggled', self.on_no_descrip_button_toggled)
 
 
     def setup_windows_websites_tab(self, inner_notebook):
@@ -26474,6 +26506,48 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ignore_no_subtitles_flag(False)
 
 
+    def on_page_given_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables ignoring of the 'a channel/user page was given'
+        warning messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_page_given_flag:
+            self.app_obj.set_ignore_page_given_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_page_given_flag:
+            self.app_obj.set_ignore_page_given_flag(False)
+
+
+    def on_no_descrip_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables ignoring of the 'no playlist description to write'
+        warning messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_no_descrip_flag:
+            self.app_obj.set_ignore_no_descrip_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_no_descrip_flag:
+            self.app_obj.set_ignore_no_descrip_flag(False)
+
+
     def on_open_desktop_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_files_temp_folders_tab().
@@ -26493,6 +26567,39 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.open_temp_on_desktop_flag:
             self.app_obj.set_open_temp_on_desktop_flag(False)
+
+
+    def on_open_url_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_files_urls_tab().
+
+        Opens the URL in the selected line.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeView): The parent treeview
+
+        """
+
+        # Get the media data objects for each selected line
+        selection = treeview.get_selection()
+        this_tuple = selection.get_selected_rows()
+        # (Confusingly, first item in the tuple is the Gtk.ListStore)
+        model = this_tuple[0]
+        for path in this_tuple[1]:
+
+            tree_iter = model.get_iter(path)
+            if tree_iter is not None:
+
+                dbid = model[tree_iter][0]
+                if dbid in self.app_obj.media_reg_dict:
+
+                    media_data_obj = self.app_obj.media_reg_dict[dbid]
+                    if media_data_obj.source is not None:
+
+                        utils.open_file(self.app_obj, media_data_obj.source)
 
 
     def on_operation_error_button_toggled(self, checkbutton):

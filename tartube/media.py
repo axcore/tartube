@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -797,15 +797,20 @@ class GenericContainer(GenericMedia):
 
             if isinstance(child_obj, Video):
 
-                # (Don't bother exporting a video whose source URL is not
+                # (Don't bother exporting a video whose source URL/file is not
                 #   known)
-                if include_video_flag and child_obj.source is not None:
+                if include_video_flag \
+                and child_obj.source is not None \
+                and child_obj.file_name is not None \
+                and child_obj.file_ext is not None:
 
                     mini_dict = {
                         'type': 'video',
                         'dbid': child_obj.dbid,
+                        'vid': child_obj.vid,
                         'name': child_obj.name,
                         'nickname': None,
+                        'file': child_obj.file_name + child_obj.file_ext,
                         'source': child_obj.source,
                         'db_dict': {},
                     }
@@ -829,8 +834,10 @@ class GenericContainer(GenericMedia):
         return_dict = {
             'type': media_type,
             'dbid': self.dbid,
+            'vid': None,
             'name': self.name,
             'nickname': self.nickname,
+            'file': None,
             'source': None,
             'db_dict': db_dict,
         }
@@ -901,15 +908,20 @@ class GenericContainer(GenericMedia):
 
                 if isinstance(child_obj, Video):
 
-                    # (Don't bother exporting a video whose source URL is not
-                    #   known)
-                    if include_video_flag and child_obj.source is not None:
+                    # (Don't bother exporting a video whose source URL/file is
+                    #   not known)
+                    if include_video_flag \
+                    and child_obj.source is not None \
+                    and child_obj.file_name is not None \
+                    and child_obj.file_ext is not None:
 
                         child_mini_dict = {
                             'type': 'video',
                             'dbid': child_obj.dbid,
+                            'vid': child_obj.vid,
                             'name': child_obj.name,
                             'nickname': None,
+                            'file': child_obj.file_name + child_obj.file_ext,
                             'source': child_obj.source,
                             'db_dict': {},
                         }
@@ -929,8 +941,10 @@ class GenericContainer(GenericMedia):
             mini_dict = {
                 'type': media_type,
                 'dbid': self.dbid,
+                'vid': None,
                 'name': self.name,
                 'nickname': self.nickname,
+                'file': None,
                 'source': self.source,
                 'db_dict': child_dict,
             }
@@ -1887,6 +1901,44 @@ class Video(GenericMedia):
         # Update the parent
         if parent_obj:
             self.parent_obj.add_child(app_obj, self, no_sort_flag)
+
+
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'vid': None,
+            'live_mode': 0,
+            'live_debut_flag': False,
+            'was_live_flag': False,
+            'live_time': 0,
+            'live_msg': '',
+            'archive_flag': False,
+            'bookmark_flag': False,
+            'missing_flag': False,
+            'waiting_flag': False,
+            'orig_parent': None,
+            'split_flag': False,
+            'stamp_list': [],
+            'slice_list': [],
+            'comment_list': [],
+            'dummy_flag': False,
+            'dummy_dir': None,
+            'dummy_path': None,
+            'dummy_format': None,
+        }
 
 
     # Public class methods
@@ -3301,6 +3353,36 @@ class Channel(GenericRemoteContainer):
             self.parent_obj.add_child(app_obj, self)
 
 
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'rss': None,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
+
+
     # Public class methods
 
 
@@ -3488,6 +3570,36 @@ class Playlist(GenericRemoteContainer):
         # Update the parent (if any)
         if self.parent_obj:
             self.parent_obj.add_child(app_obj, self)
+
+
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        return {
+            'nickname': self.name,
+            'rss': None,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
 
 
     # Public class methods
@@ -3703,6 +3815,44 @@ class Folder(GenericContainer):
         # Update the parent (if any)
         if self.parent_obj:
             self.parent_obj.add_child(app_obj, self)
+
+
+    def compile_updated_ivs(self):
+
+        """Called by mainapp.TartubeApp.check_broken_objs() and
+        .fix_broken_objs().
+
+        Returns a dictionary of IVs that have been added since the first
+        public release of Tartube (v0.1.0), and their default values
+
+        Returns:
+
+            The dictionary described above
+
+        """
+
+        if hasattr(self, 'restrict_flag'):
+            if self.restrict_flag:
+                restrict_mode = 'full'
+            else:
+                restrict_mode = 'open'
+        else:
+            restrict_mode = self.restrict_mode
+
+        return {
+            'nickname': self.name,
+            'last_sort_mode': 'default',
+            'external_dir': None,
+            'master_dbid': self.dbid,
+            'slave_dbid_list': [],
+            'restrict_mode': restrict_mode,
+            'dl_no_db_flag': False,
+            'dl_disable_flag': False,
+            'bookmark_count': 0,
+            'live_count': 0,
+            'missing_count': 0,
+            'waiting_count': 0,
+        }
 
 
     # Public class methods

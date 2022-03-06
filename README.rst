@@ -59,14 +59,14 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.332 (8 Aug 2021)**
+Latest version: **v2.3.367 (12 Feb 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-64bit-portable.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-32bit-portable/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.332/python3-tartube_2.3.332.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-32bit-portable/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.367/python3-tartube_2.3.367.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -169,6 +169,8 @@ If you want to perform a manual installation, you can follow this procedure, whi
 
 5.2 Installation - MacOS
 ------------------------
+
+**Several users have reported problems installing Tartube on MacOS. The authors do not use MacOS, so we don't know how to fix these problems. Apologies in advance!**
 
 MacOS users should use the following procedure (with thanks to JeremyShih):
 
@@ -671,7 +673,7 @@ Checking/download videos:
 - To **Check** or **Download** videos, channels and playlists, use the main menu, or the buttons near the top of the window, or the buttons in the bottom-left corner, or right-click an individual video, channel or playlist
 - A **Custom Download** can be started from the main menu (**Operations > Custom download all** or by right-clicking a video, channel, playlist or folder
 
-Refreshing the filesystem:
+Refreshing the database:
 
 - **Refresh** - Examines your filesystem. If you have manually copied any videos to the location in which **Tartube** stores its files, those videos are added to **Tartube**'s database
 - To **Refresh** **Tartube**'s database, use the main menu (**Operations > Refresh database...**) or right-click a channel/playlist/folder
@@ -1177,6 +1179,7 @@ It is important to note that *only a list of videos, channels, playlists and fol
 - In the dialogue window, choose what you want to export
 - If you want a list that you can edit in an ordinary text editor, select the **Export as plain text** option
 - If you want a list that yuu can edit in a spreadsheet, select the **Export as CSV** option
+- Otherwise, you should select the **Export as JSON** option
 - Click the **OK** button, then select where to save the export file
 
 It is safe to share this export file with other people. It doesn't contain any personal information.
@@ -1186,6 +1189,35 @@ This is how to import the data into a different **Tartube** database.
 - Click **Media > Import into database...**
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
+
+6.20.5 Export formats
+---------------------
+
+The format of exported plain text/CSV files changed in v2.3.208, and again in v2.3.307. If you try to import files from earlier versions, you may not get everything you were expecting.
+
+Here are some notes for anyone who wants to edit the CSV export by hand (for example, in a spreadsheet):
+
+- There are six columns
+- A parent channel/playlist/folder is always listed directly above its child videos/channels/playlists/folders
+- The first column should contain the string **video**, **channel**, **playlist** or **folder**
+- The second column is the name of the video/channel/playlist/folder. Note that channels/playlists/folders cannot share a name (but any number of duplicate video names are allowed)
+- The third column is the source URL for a video, channel or playlist. This field is always empty for folders
+- The fourth column is the name of the parent channel, playlist or folder (or an empty field, if there is no parent)
+- The fifth and sixth columns apply only to videos. For channels/playlists/folders, they are always empty fields. For videos, they can still be empty fields, if the data is not known
+- The fifth column is the video ID supplied by the website
+- The sixth column is the video filename (e.g. **my video.mp4**)
+
+Here are some notes for anyone who wants to edit the plain text export by hand:
+
+- Channels/playlists/folders are represnted by groups of four lines
+- Videos are represented by groups of six lines
+- Each group starts with the line **@video**, **@channel**, **@playlist** or **@folder**
+- A parent channel/playlist/folder is always listed directly above its child videos/channels/playlists/folders
+- Line 2 is the name of the video/channel/playlist/folder. Note that channels/playlists/folders cannot share a name (but any number of duplicate video names are allowed)
+- Line 3 is the source URL for a video, channel or playlist. This line is always empty for folders
+- Line 4 is the name of the parent channel, playlist or folder (or an empty line, if there is no parent)
+- For videos, line 5 is the video ID supplied by the website (or an empty line, if the ID is unknown)
+- For videos, line 6 is the video filename (e.g. **my video.mp4**, or an empty line, if the filename is unknown)
 
 6.21 Converting to audio
 ------------------------

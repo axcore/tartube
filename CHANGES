@@ -1,3 +1,36 @@
+v2.3.367 (12 Feb 2022)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- MS Windows users have been reporting that FFmpeg cannot be installed any
+    more; this release attempts to fix that issue (but I can't be sure that the
+    fix will work)
+- In order to cope with yt-dlp spam, added some new ignorable warnings (see
+    Edit > System preferences... > Windows > Errors/Warnings)
+- In Edit > System preferences > Files > URLs, there is a new button for
+    opening a URL in your system's web browser. Also changed the layout of that
+    tab to make it a little easier to understand
+
+MAJOR FIXES
+- When the Tartube database was corrupted, on startup Tartube was unable to
+    create temporary directories, so the application closes even before the
+    main window is created. Fixed that, and also fixed the failure to show a
+    dialogue window when a lock can't be placed on the database file
+- Fixed various issues when exporting/importing Tartube's database
+- Fixed inability to rename channels/playlists/folders under certain
+    circumstances
+
+MINOR FIXES
+- Fixed minor typos in various edit windows
+- When the downloader is yt-dlp and the user selects a custom executable,
+    Tartube installs youtube-dl instead. Fixed (Git #299)
+- In the same situation (on MS Windows only), Tartube tries to execute an .exe
+    file as if it were a Python script. Fixed (Git #299)
+- On MS Windows, user could not set an external download path for a channel or
+    playlist. Fixed (Git #329)
+- Fixed inability to load databases from Tartrubr v2.2.007 (Git #356)
+- Valid URLs like "yahho.com" were not accepted as valid. Fixed
+
 v2.3.332 (8 Jul 2021)
 -------------------------------------------------------------------------------
 

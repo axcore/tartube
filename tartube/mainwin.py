@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -29570,6 +29570,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         entry = Gtk.Entry()
         grid.attach(entry, 0, 8, grid_width, 1)
         entry.set_editable(False)
+        entry.set_can_focus(False)
         if media_data_obj.external_dir is not None:
             entry.set_text(media_data_obj.external_dir)
         elif prev_external_dir is not None:
@@ -29663,7 +29664,7 @@ class SetDestinationDialogue(Gtk.Dialog):
 
             # An external directory is not allowed inside Tartube's data
             #   directory
-            if re.match('^' + app_obj.data_dir, dest_dir):
+            if dest_dir[:len(app_obj.data_dir)] == app_obj.data_dir:
 
                 if os.name == 'nt':
                     msg = _(

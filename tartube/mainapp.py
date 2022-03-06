@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2021 A S Lewis
+# Copyright (C) 2019-2022 A S Lewis
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -822,6 +822,8 @@ class TartubeApp(Gtk.Application):
         #       Update using default youtube-dl path
         # 'ytdl_update_local_path'
         #       Update using local youtube-dl path
+        # 'ytdl_update_custom_path'
+        #       Update using the path sepcified by self.ytdl_path
         # 'ytdl_update_pip'
         #       Update using pip
         # 'ytdl_update_pip_no_dependencies'
@@ -1868,6 +1870,12 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if 'video doesn't have subtitles' errors should be
         #   ignored (in the Errors/Warnings tab)
         self.ignore_no_subtitles_flag = True
+        # Flag set to True if 'A channel/user page was given' warnings should
+        #   be ignored (in the Errors/Warnings tab)
+        self.ignore_page_given_flag = False
+        # Flag set to True if 'There's no playlist description to write'
+        #   warnings should be ignored (in the Errors/Warnings tab)
+        self.ignore_no_descrip_flag = False
 
         # Flag set to True if YouTube copyright messages should be ignored (in
         #   the Errors/Warnings tab)
@@ -4250,6 +4258,9 @@ class TartubeApp(Gtk.Application):
         if version >= 1002004:  # v1.2.004
             self.ignore_no_subtitles_flag \
             = json_dict['ignore_no_subtitles_flag']
+        if version >= 2003340:  # v2.3.340
+            self.ignore_page_given_flag = json_dict['ignore_page_given_flag']
+            self.ignore_no_descrip_flag = json_dict['ignore_no_descrip_flag']
 
         if version >= 5004:     # v0.5.004
             self.ignore_yt_copyright_flag \
@@ -4433,7 +4444,7 @@ class TartubeApp(Gtk.Application):
 
 
         # (In version v2.0.086, these IVs were completely overhauled on all
-        #   operatin systems)
+        #   operating systems)
         if version < 2000096:  # v2.0.096
 
             update_dict = {
@@ -5042,6 +5053,8 @@ class TartubeApp(Gtk.Application):
             self.ignore_missing_format_error_flag,
             'ignore_no_annotations_flag': self.ignore_no_annotations_flag,
             'ignore_no_subtitles_flag': self.ignore_no_subtitles_flag,
+            'ignore_page_given_flag': self.ignore_page_given_flag,
+            'ignore_no_descrip_flag': self.ignore_no_descrip_flag,
 
             'ignore_yt_copyright_flag': self.ignore_yt_copyright_flag,
             'ignore_yt_age_restrict_flag': self.ignore_yt_age_restrict_flag,
@@ -5270,11 +5283,9 @@ class TartubeApp(Gtk.Application):
 
             except:
 
-                # (The True argument signals that the user should be prompted
-                #   to artificially remove the lockfile)
+                # (Failure may mean that the directory is unwriteable)
                 self.disable_load_save(
                     _('Failed to load the Tartube database file'),
-                    True,
                 )
 
                 return False
@@ -6275,12 +6286,12 @@ class TartubeApp(Gtk.Application):
                     media_data_obj.live_debut_flag = False
                     media_data_obj.live_time = 0
 
-        if version < 2002115:       # v2.2.115
-
-            # The update code for v1.4.037 and v2.1.012 crashes with a python
-            #   error, when loading a v1.4 database
-            # Can fix both problems by doing a silent database integrity check
-            self.check_integrity_db(True)
+#        if version < 2002115:       # v2.2.115
+#
+#            # The update code for v1.4.037 and v2.1.012 crashes with a python
+#            #   error, when loading a v1.4 database
+#            # Can fix both problems by doing a silent database integrity check
+#            self.check_integrity_db(True)
 
         if version < 2002125:      # v2.2.125
 
@@ -6675,6 +6686,24 @@ class TartubeApp(Gtk.Application):
             for options_obj in options_obj_list:
                 if 'write_comments' in options_obj.options_dict:
                     del options_obj.options_dict['write_comments']
+
+        # --- Do this last, or call to .check_integrity_db() fails -----------
+        # --------------------------------------------------------------------
+
+        if version < 2002115:       # v2.2.115
+
+            # The update code for v1.4.037 and v2.1.012 crashes with a python
+            #   error, when loading a v1.4 database
+            # Can fix both problems by doing a silent database integrity check
+            self.check_integrity_db(True)
+
+        elif self.check_broken_objs():
+
+            # v2.3.356: Git #356 reports failure of self.update_db() to update
+            #   the database correctly, in a way that's hard to analyse
+            # Solve all future issues of this kind by routinely checking
+            #   that media data objects have the IVs they're supposed to have
+            self.fix_broken_objs()
 
 
     def save_db(self):
@@ -7393,8 +7422,8 @@ class TartubeApp(Gtk.Application):
         the database for inconsistencies.
 
         If inconsistencies are found, prompt the user for permission to
-        repair them. The repair process only updates Tartube IVs; it doesn't
-        delete any files or folders in the filesystem.
+        repair them. The repair process only updates Tartube data; it doesn't
+        modify any other files or folders in the user's filesystem.
 
         Args:
 
@@ -7450,6 +7479,9 @@ class TartubeApp(Gtk.Application):
         #   options.OptionsManager objects)
         error_options_dict = {}
         error_options_media_dict = {}
+        # (The number of media data objects which appear to have missing IVs,
+        #   because of some failure or other in self.update_db() )
+        broken_obj_count = 0
 
         # Check that entries in self.media_name_dict appear in
         #   self.media_reg_dict
@@ -7649,14 +7681,20 @@ class TartubeApp(Gtk.Application):
                         error_options_media_dict[media_data_obj.dbid] \
                         = media_data_obj
 
+        # .update_db() updates objects from earlier releases of Tartube with
+        #   new IVs. Git #356 reports a database that has become broken due to
+        #   missing IVs that .update_db() was not able to add
+        # Check one example of each type of object, looking for missing IVs
+        broken_obj_count = self.check_broken_objs()
+
         # Check complete
-#        if not mod_error_reg_dict \
-#        and not error_master_dict \
-#        and not error_slave_dict \
-#        and not flag_error_count \
-#        and not error_options_dict \
-#        and not error_options_media_dict:
-        if False:
+        if not mod_error_reg_dict \
+        and not error_master_dict \
+        and not error_slave_dict \
+        and not flag_error_count \
+        and not error_options_dict \
+        and not error_options_media_dict \
+        and not broken_obj_count:
 
             if not no_prompt_flag:
 
@@ -7680,6 +7718,7 @@ class TartubeApp(Gtk.Application):
                     error_slave_dict,
                     error_options_dict,
                     error_options_media_dict,
+                    broken_obj_count,
                     no_prompt_flag,
                     parent_win_obj,
                 ],
@@ -7711,6 +7750,7 @@ class TartubeApp(Gtk.Application):
                         error_slave_dict,
                         error_options_dict,
                         error_options_media_dict,
+                        broken_obj_count,
                         no_prompt_flag,
                         parent_win_obj,
                     ],
@@ -7757,6 +7797,10 @@ class TartubeApp(Gtk.Application):
                         and options.OptionsManager objects. These
                         errors are fixed separately)
 
+                broken_obj_count (list): The number of media data objects which
+                    appear to have missing IVs, because of some failure or
+                    other in self.update_db()
+
                 no_prompt_flag (bool): If True, don't show a dialogue window at
                     the end of the procedure
 
@@ -7776,6 +7820,7 @@ class TartubeApp(Gtk.Application):
         error_slave_dict = data_list.pop(0)
         error_options_dict = data_list.pop(0)
         error_options_media_dict = data_list.pop(0)
+        broken_obj_count = data_list.pop(0)
         no_prompt_flag = data_list.pop(0)
         parent_win_obj = data_list.pop(0)
 
@@ -7857,6 +7902,10 @@ class TartubeApp(Gtk.Application):
         for media_data_obj in error_options_media_dict.values():
             media_data_obj.reset_options_obj()
 
+        # Deal with broken objects due to failures in .update_db()
+        if broken_obj_count:
+            self.fix_broken_objs()
+
         # Save the database file (unless load/save has been disabled very
         #   recently)
         if not self.disable_load_save_flag:
@@ -7874,6 +7923,149 @@ class TartubeApp(Gtk.Application):
                 'ok',
                 parent_win_obj,
             )
+
+
+    def check_broken_objs(self):
+
+        """Called by self.update_db() and .check_integrity_db().
+
+        Git #356 reports failure of self.update_db() to update the database
+        correctly, in a way that's hard to analyse.
+
+        Check that all media data objects have the IVs they're supposed to
+        have, and return the number of problems found.
+
+        Returns:
+
+            A number in the range 0-4
+
+        """
+
+        count = 0
+
+        # Get a specimen of each type of media data object
+        video_obj, channel_obj, playlist_obj, folder_obj \
+        = self.compile_specimen_obj_list()
+
+        # Check IVs in a specimen media.Video objec
+        if video_obj:
+
+            iv_dict = video_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(video_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Channel objec
+        if channel_obj:
+
+            iv_dict = channel_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(channel_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Playlist objec
+        if playlist_obj:
+
+            iv_dict = playlist_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(playlist_obj, key)):
+                    count += 1
+                    break
+
+        # Check IVs in a specimen media.Folder objec
+        if folder_obj:
+
+            iv_dict = folder_obj.compile_updated_ivs()
+            for key in iv_dict.keys():
+
+                if not (hasattr(folder_obj, key)):
+                    count += 1
+                    break
+
+        # Return the number of problems found
+        return count
+
+
+    def fix_broken_objs(self):
+
+        """Called by self.update_db() and .check_integrity_db(), immediately
+        after a call to self.check_broken_objs().
+
+        Some or all media data objects have missing IVs, as a result of a
+        failure somewhere in self.update_db(). Update all media data objects to
+        add any missing IVs with default values.
+        """
+
+        for media_data_obj in self.media_reg_dict.values():
+
+            update_dict = media_data_obj.compile_updated_ivs()
+            for key in update_dict.keys():
+
+                if not hasattr(media_data_obj, key):
+                    setattr(media_data_obj, key, update_dict[key])
+
+
+    def compile_specimen_obj_list(self):
+
+        """Called by self.check_broken_objs().
+
+        Returns a list of specimen media data objects: one media.Video,
+        media.Channel, media.Playlist and media.Folder object.
+
+        Returns:
+
+            A list of objects, in the order (video, channel, playlist, folder).
+                If those objects haven't been created yet, the list contains
+                one or more None values instead
+
+        """
+
+        # Find a specimen media.Video object
+        video_obj = None
+        for media_data_obj in self.media_reg_dict.values():
+
+            if isinstance(media_data_obj, media.Video):
+
+                video_obj = media_data_obj
+                break
+
+        # Find specimen media.Channel, media.Playlist and media.Folder objects
+        count = 0
+        channel_obj = None
+        playlist_obj = None
+        folder_obj = None
+
+        for media_data_obj in self.media_name_dict.values():
+
+            if isinstance(media_data_obj, media.Channel) and not channel_obj:
+
+                channel_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+            elif isinstance(media_data_obj, media.Playlist) \
+            and not playlist_obj:
+
+                playlist_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+            elif isinstance(media_data_obj, media.Folder) \
+            and not folder_obj:
+
+                folder_obj = media_data_obj
+                count += 1
+                if count >= 3:
+                    break
+
+        return video_obj, channel_obj, playlist_obj, folder_obj
 
 
     def update_data_dirs(self):
@@ -9128,9 +9320,18 @@ class TartubeApp(Gtk.Application):
 
         if not wiz_win_obj:
 
-            if self.ytdl_fork is not None \
-            and not self.ytdl_path_custom_flag:
+            if self.ytdl_path_custom_flag:
+
+                if re.search('youtube-dl', arg) \
+                and self.ytdl_path is not None:
+                    return self.ytdl_path
+                else:
+                    # Failsafe
+                    return arg
+
+            elif self.ytdl_fork is not None:
                 return re.sub('youtube-dl', self.ytdl_fork, arg)
+
             else:
                 return arg
 
@@ -12228,8 +12429,10 @@ class TartubeApp(Gtk.Application):
                 (mode == 'default' and self.video_timestamps_extract_json_flag)
                 or mode == 'chapters'
             ) and 'chapters' in json_dict \
-            and (not self.stamp_list or self.video_timestamps_replace_flag):
-
+            and (
+                not video_obj.stamp_list \
+                or self.video_timestamps_replace_flag
+            ):
                 video_obj.extract_timestamps_from_chapters(
                     self,
                     json_dict['chapters'],
@@ -16058,7 +16261,7 @@ class TartubeApp(Gtk.Application):
             # Attempt to rename the sub-directory itself
             old_dir = media_data_obj.get_default_dir(self)
             new_dir = media_data_obj.get_default_dir(self, new_name)
-            if not self. self.move_file_or_directory(old_dir, new_dir):
+            if not self.move_file_or_directory(old_dir, new_dir):
                 return self.dialogue_manager_obj.show_msg_dialogue(
                     _('Failed to rename \'{0}\'').format(media_data_obj.name),
                     'error',
@@ -16577,9 +16780,14 @@ class TartubeApp(Gtk.Application):
         #
         #       type        - set to 'video', 'channel', 'playlist' or 'folder'
         #       dbid        - set to the media data object's .dbid
+        #       vid         - set to the media data object's .vid (or None for
+        #                       channels, playlists and folders)
         #       name        - set to the media data object's .name IV
         #       nickname    - set to the media data object's .nickname IV (or
         #                       None for videos)
+        #       file        - set to the filename and extension of a video
+        #                       (e.g. 'video.mp4'; None for channels, playlists
+        #                       and folders)
         #       source      - set to the media data object's .source IV (or
         #                       None for folders)
         #       db_dict     - the children of this media data object, stored in
@@ -16719,10 +16927,11 @@ class TartubeApp(Gtk.Application):
             self.export_csv_separator = separator
 
             # Lines in the CSV file are in the following format:
-            #   type|name|url|container_name
+            #   type|name|url|container_name|vid|file
             #
             # 'type' is one of 'video', 'channel', 'playlist' or 'folder'
             # For folders, 'url' is unspecified
+            # 'vid' and 'file' are only specified for videos
             # If there is no parent container, 'container_name' is unspecified.
             #   The parent container must be listed before its children
             # The separator is specified by self.export_csv_separator; the
@@ -16767,10 +16976,19 @@ class TartubeApp(Gtk.Application):
             #       <url>
             #       <container name>
             #
+            # For videos, a group of six is used, in the format
+            #
+            #       @type
+            #       <name>
+            #       <url>
+            #       <container name>
+            #       <vid>
+            #       <filename>
+            #
             # '@type' is one of '@video', '@channel', '@playlist' or '@folder'
             # For folders, <url> is an empty line
             # If there is no parent container, <container_name> is an empty
-            #   line. The parent container must be listed before its children
+            #   line. The parent container is always listed before its children
 
             # Prepare the list of lines
             line_list = self.export_from_db_to_text_insert(
@@ -16859,20 +17077,28 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                if isinstance(media_data_obj, media.Channel):
-                    line_list.append('@channel')
-                    line_list.append(media_data_obj.name)
-                    line_list.append(media_data_obj.source)
-
-                elif isinstance(media_data_obj, media.Playlist):
-                    line_list.append('@playlist')
-                    line_list.append(media_data_obj.name)
-                    line_list.append(media_data_obj.source)
-
-                else:
+                if isinstance(media_data_obj, media.Folder):
                     line_list.append('@folder')
                     line_list.append(media_data_obj.name)
-                    line_list.append('')            # Folders have no URL
+                    # Folders have no URL
+                    line_list.append('')
+
+                else:
+
+                    if media_data_obj.source is not None:
+                        source = media_data_obj.source
+                    else:
+                        source = ''
+
+                    if isinstance(media_data_obj, media.Channel):
+                        line_list.append('@channel')
+                        line_list.append(media_data_obj.name)
+                        line_list.append(source)
+
+                    else:
+                        line_list.append('@playlist')
+                        line_list.append(media_data_obj.name)
+                        line_list.append(source)
 
                 if media_data_obj.parent_obj:
                     line_list.append(media_data_obj.parent_obj.name)
@@ -16884,10 +17110,29 @@ class TartubeApp(Gtk.Application):
                     for child_obj in media_data_obj.child_list:
 
                         if isinstance(child_obj, media.Video):
+
                             line_list.append('@video')
                             line_list.append(child_obj.name)
-                            line_list.append(child_obj.source)
+
+                            if child_obj.source is not None:
+                                line_list.append(child_obj.source)
+                            else:
+                                line_list.append('')
+
                             line_list.append(media_data_obj.name)
+
+                            if child_obj.vid is not None:
+                                line_list.append(child_obj.vid)
+                            else:
+                                line_list.append('')
+
+                            if child_obj.file_name is not None \
+                            and child_obj.file_ext is not None:
+                                line_list.append(
+                                    child_obj.file_name + child_obj.file_ext,
+                                )
+                            else:
+                                line_list.append('')
 
             if mini_dict['db_dict']:
                 line_list = self.export_from_db_to_text_insert(
@@ -16951,23 +17196,32 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                if isinstance(media_data_obj, media.Channel):
-                    line = 'channel' + separator \
-                    + media_data_obj.name + separator \
-                    + media_data_obj.source + separator
-
-                elif isinstance(media_data_obj, media.Playlist):
-                    line = 'playlist' + separator \
-                    + media_data_obj.name + separator \
-                    + media_data_obj.source + separator
+                if isinstance(media_data_obj, media.Folder):
+                    # Folders have no URL
+                    line = 'folder' + separator + media_data_obj.name \
+                    + separator + separator
 
                 else:
-                    line = 'folder' + separator \
-                    + media_data_obj.name + separator \
-                    + separator                     # Folders have no URL
+
+                    if media_data_obj.source is not None:
+                        source = media_data_obj.source
+                    else:
+                        source = ''
+
+                    if isinstance(media_data_obj, media.Channel):
+                        line = 'channel' + separator + media_data_obj.name \
+                        + separator + source + separator
+
+                    else:
+                        line = 'playlist' + separator + media_data_obj.name \
+                        + separator + source + separator
 
                 if media_data_obj.parent_obj:
                     line += media_data_obj.parent_obj.name
+
+                # (Channels, playlists and folders do not have the .vid,
+                #   .file_name or .file_ext IVs
+                line += separator + separator
 
                 line_list.append(line)
 
@@ -16976,10 +17230,28 @@ class TartubeApp(Gtk.Application):
                     for child_obj in media_data_obj.child_list:
 
                         if isinstance(child_obj, media.Video):
-                            line = 'video' + separator \
-                            + child_obj.name + separator \
-                            + child_obj.source + separator \
-                            + media_data_obj.name
+
+                            # Create a line in the form
+                            #   type|name|url|container_name|vid|file
+                            line = 'video' + separator + child_obj.name \
+                            + separator
+
+                            if child_obj.source is not None:
+                                line += child_obj.source + separator
+                            else:
+                                line += separator
+
+                            line += media_data_obj.name + separator
+
+                            if child_obj.vid is not None:
+                                line += child_obj.vid + separator
+                            else:
+                                line += separator
+
+                            if child_obj.file_name is not None \
+                            and child_obj.file_ext is not None:
+                                line += child_obj.file_name \
+                                + child_obj.file_ext
 
                             line_list.append(line)
 
@@ -17009,11 +17281,12 @@ class TartubeApp(Gtk.Application):
         in self.export_from_db().
 
         A CSV export file contains lines in the format
-        'type|name|url|container_name', as described in the comments in
-        self.export_from_db().
+        'type|name|url|container_name|vid|file', as described in the comments
+        in self.export_from_db().
 
-        A plain text export file contains lines in groups of four, in the
-        format described in the comments in self.export_from_db().
+        A plain text export file contains lines in groups of four (or groups of
+        six for videos), in the format described in the comments in
+        self.export_from_db().
         """
 
         if DEBUG_FUNC_FLAG:
@@ -17179,11 +17452,14 @@ class TartubeApp(Gtk.Application):
         been loaded.
 
         A CSV export file contains lines in the format
-        'type|name|url|container_name', as described in the comments in
-        self.export_from_db().
+        'type|name|url|container_name|vid|file', as described in the comments
+        in self.export_from_db().
 
-        'type' is one of 'video', 'channel', 'playlist' or 'folder'
-        For folders, <url> is not specified
+        'type' is one of 'video', 'channel', 'playlist' or 'folder'.
+
+        For folders, <url> is not specified. 'vid' and 'file' are only
+        specified for videos.
+
         If there is no parent container, <container_name> is not specified. The
         parent container must be listed before its children
 
@@ -17206,7 +17482,7 @@ class TartubeApp(Gtk.Application):
         check_flag = False
         separator = '\\' + self.export_csv_separator
         regex = '^(.*)' + separator + '(.*)' + separator + '(.*)' + separator \
-        + '(.*)'
+        + '(.*)' + separator + '(.*)' + separator + '(.*)'
 
         # Create entries corresponding to the fixed folders 'Unsorted Videos'
         #   and 'Video Clips'
@@ -17214,8 +17490,10 @@ class TartubeApp(Gtk.Application):
         db_dict[fake_dbid] = {
             'type': 'folder',
             'dbid': fake_dbid,
+            'vid': None,
             'name': self.fixed_misc_folder.name,
             'nickname': self.fixed_misc_folder.nickname,
+            'file': None,
             'source': None,
             'db_dict': {},
         }
@@ -17224,8 +17502,10 @@ class TartubeApp(Gtk.Application):
         db_dict[fake_dbid] = {
             'type': 'folder',
             'dbid': fake_dbid,
+            'vid': None,
             'name': self.fixed_clips_folder.name,
             'nickname': self.fixed_clips_folder.nickname,
+            'file': None,
             'source': None,
             'db_dict': {},
         }
@@ -17246,14 +17526,29 @@ class TartubeApp(Gtk.Application):
             name = match.groups()[1]
             source = match.groups()[2]
             container_name = match.groups()[3]
+            vid = match.groups()[4]
+            filename = match.groups()[5]
 
             if (
                 media_type != 'video' and media_type != 'channel' \
-                and media_type != 'playlist' and media_type != 'folder'
+                and media_type != 'playlist' and media_type != 'folder' \
             ) \
             or name == '' \
-            or (media_type != 'folder' and not utils.check_url(source)):
+            or (
+                media_type != 'folder' \
+                and source != '' \
+                and not utils.check_url(source) \
+            ):
                 break
+
+            # If the original media data object's .source/.vid/.file_name/
+            #   .file_ext IVs were set to None, they were saved as empty lines
+            if source == '':
+                source = None
+            if vid == '':
+                vid = None
+            if filename == '':
+                filename = None
 
             # (We have already created entries for 'Unsorted Videos' and
             #   'Video Clips')
@@ -17266,8 +17561,10 @@ class TartubeApp(Gtk.Application):
                 mini_dict = {
                     'type': media_type,
                     'dbid': fake_dbid,
+                    'vid': vid,
                     'name': name,
                     'nickname': name,
+                    'file': filename,
                     'source': source,
                     'db_dict': {},
                 }
@@ -17327,14 +17624,23 @@ class TartubeApp(Gtk.Application):
             <url>
             <container name>
 
+        For videos, a group of six is used, in the format:
+
+            @type
+            <name>
+            <url>
+            <container name>
+            <vid>
+            <filename>
+
         '@type' is one of '@video', '@channel', '@playlist' or '@folder'
         For folders, <url> is an empty line
         If there is no parent container, <container_name> is an empty line. The
         parent container must be listed before its children
 
-        N.B. The export format changed in v2.3.208. This function will try to
-        recognise exports from earlier versions, but it's not guaranteed to
-        work.
+        N.B. The export format changed in v2.3.208, and again in v2.3.337. This
+        function will try to recognise exports from earlier versions, but it's
+        not guaranteed to work.
 
         Args:
 
@@ -17353,6 +17659,7 @@ class TartubeApp(Gtk.Application):
         db_dict = {}
         fake_dbid = 0
         check_flag = False
+        video_check_flag = False
 
         # Create entries corresponding to the fixed folders 'Unsorted Videos'
         #   and 'Video Clips'
@@ -17360,8 +17667,10 @@ class TartubeApp(Gtk.Application):
         db_dict[fake_dbid] = {
             'type': 'folder',
             'dbid': fake_dbid,
+            'vid': None,
             'name': self.fixed_misc_folder.name,
             'nickname': self.fixed_misc_folder.nickname,
+            'file': None,
             'source': None,
             'db_dict': {},
         }
@@ -17370,8 +17679,10 @@ class TartubeApp(Gtk.Application):
         db_dict[fake_dbid] = {
             'type': 'folder',
             'dbid': fake_dbid,
+            'vid': None,
             'name': self.fixed_clips_folder.name,
             'nickname': self.fixed_clips_folder.nickname,
+            'file': None,
             'source': None,
             'db_dict': {},
         }
@@ -17380,8 +17691,8 @@ class TartubeApp(Gtk.Application):
         line_list = text.split('\n')
 
         # Extract each group of four lines, and check they are valid
-        # If a group of four is invalid (or if we reach the end of the file in
-        #   the middle of a group of 4), ignore that group and any subsequent
+        # If a group of four/six is invalid (or if we reach the end of the file
+        #   in the middle of a group of), ignore that group and any subsequent
         #   groups, and just use the data already extracted
         # Spltting by '\n' will create a group with just one empty line, so
         #   we don't check that line_list is empty
@@ -17391,22 +17702,27 @@ class TartubeApp(Gtk.Application):
             name = line_list[1]
             source = line_list[2]
             container_name = line_list[3]
+            vid = None
+            filename = None
 
-            line_list = line_list[4:]
-
+            # Basic checks
             if media_type is None \
             or (
                 media_type != '@video' and media_type != '@channel' \
-                and media_type != '@playlist' and media_type != '@folder'
+                and media_type != '@playlist' and media_type != '@folder' \
             ) \
             or name is None \
             or name == '' \
             or source is None \
-            or (media_type != '@folder' and not utils.check_url(source)) \
+            or (
+                media_type != '@folder' \
+                and source != '' \
+                and not utils.check_url(source) \
+            ) \
             or container_name is None:
                 break
 
-            # N.B. The export format changed in v2.3.208. Try to detect exports
+            # The export format changed in v2.3.208. Try to detect exports
             #   from earlier versions (this is not guaranteed to work)
             if not check_flag:
 
@@ -17418,20 +17734,56 @@ class TartubeApp(Gtk.Application):
                 or container_name == '@folder':
                     break
 
+            # The export format changed again in v2.3.337, to use groups of six
+            #   for videos
+            if media_type != '@video':
+                line_list = line_list[4:]
+
+            else:
+                vid = line_list[4]
+                filename = line_list[5]
+                line_list = line_list[6:]
+
+                # More basic checks, and try to detect exports from earlier
+                #   versions
+                if vid is None or filename is None:
+                    break
+
+                if not video_check_flag:
+
+                    video_check_flag = True
+
+                    if vid == '@video' \
+                    or vid == '@channel' \
+                    or vid == '@playlist' \
+                    or vid == '@folder':
+                        break
+
+            # If the original media data object's .source/.vid/.file_name/
+            #   .file_ext IVs were set to None, they were saved as empty lines
+            if source == '':
+                source = None
+            if vid == '':
+                vid = None
+            if filename == '':
+                filename = None
+
             # (We have already created entries for 'Unsorted Videos' and
             #   'Video Clips')
             if name != self.fixed_misc_folder.name \
             and name != self.fixed_clips_folder.name:
 
-                # A valid group of four; add an entry to db_dict using a fake
-                #   dbid
+                # A valid group of four/six; add an entry to db_dict using a
+                #   fake dbid
                 fake_dbid += 1
 
                 mini_dict = {
                     'type': media_type[1:],     # Remove initial @
                     'dbid': fake_dbid,
+                    'vid': vid,
                     'name': name,
                     'nickname': name,
+                    'file': filename,
                     'source': source,
                     'db_dict': {},
                 }
@@ -17650,6 +18002,13 @@ class TartubeApp(Gtk.Application):
                             video_count += 1
                             video_obj.set_name(mini_dict['name'])
                             video_obj.set_nickname(mini_dict['nickname'])
+                            video_obj.set_vid(mini_dict['vid'])
+
+                            if mini_dict['file'] is not None:
+                                filename, ext = os.path.splitext(
+                                    mini_dict['file'],
+                                )
+                                video_obj.set_file(filename, ext)
 
             else:
 
@@ -23935,6 +24294,17 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_annotations_flag = True
 
 
+    def set_ignore_no_descrip_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19792 set_ignore_no_descrip_flag')
+
+        if not flag:
+            self.ignore_no_descrip_flag = False
+        else:
+            self.ignore_no_descrip_flag = True
+
+
     def set_ignore_no_subtitles_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
@@ -23944,6 +24314,17 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_subtitles_flag = False
         else:
             self.ignore_no_subtitles_flag = True
+
+
+    def set_ignore_page_given_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19792 set_ignore_page_given_flag')
+
+        if not flag:
+            self.ignore_page_given_flag = False
+        else:
+            self.ignore_page_given_flag = True
 
 
     def set_ignore_yt_age_restrict_mode(self, value):
