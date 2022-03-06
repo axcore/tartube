@@ -4651,7 +4651,7 @@ msgid "Force filenames to be MS Windows compatible"
 msgstr ""
 
 #: .././config.py:5988
-msgid "Limit filname length (excluding extension) to this many characters"
+msgid "Limit filename length (excluding extension) to this many characters"
 msgstr ""
 
 #: .././config.py:6003
