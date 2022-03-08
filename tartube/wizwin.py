@@ -598,7 +598,7 @@ class SetupWizWin(GenericWizWin):
         self.data_dir = None
         # The name of the youtube-dl fork to use, by default ('None' when
         #   youtube-dl itself should be used)
-        self.ytdl_fork = None
+        self.ytdl_fork = 'yt-dlp'
         # Flag set to True if yt-dlp (only), when installed via pip, should be
         #   installed without dependencies
         if os.name == 'nt':

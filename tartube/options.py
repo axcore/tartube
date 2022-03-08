@@ -380,6 +380,16 @@ class OptionsManager(object):
         no_clean_info_json (bool): If True, writes all fields to the infojson
             (default is to remove some private fields)
 
+        no_cookies (bool): If True, does not read/dump cookies from/to file
+            (default)
+
+        cookies_from_browser (str): The name of the browser and (optionally)
+            the name/path of the profile to load cookies from; a string in the
+            from BROWSER[+KEYRING][:PROFILE]
+
+        no_cookies_from_browser (bool): If true, does not load cookies from the
+            browser (default)
+
         [Internet Shortcut Options]
 
         write_link (bool): If True, writes an internet shortcut file, depending
@@ -804,6 +814,9 @@ class OptionsManager(object):
             'force_overwrites': False,
             'write_playlist_metafiles': False,
             'no_clean_info_json': False,
+            'no_cookies': False,
+            'cookies_from_browser': '',
+            'no_cookies_from_browser': True,
             # (Internet Shortcut Options)
             'write_link': False,
             'write_url_link': False,
@@ -940,7 +953,7 @@ class OptionsParser(object):
             # -i, --ignore-errors
             OptionHolder('ignore_errors', '-i', False),
             # --abort-on-error
-            OptionHolder('abort_on_error', '--abort-on-error ', False),
+            OptionHolder('abort_on_error', '--abort-on-error', False),
             # NETWORK OPTIONS
             # --proxy URL
             OptionHolder('proxy', '--proxy', ''),
@@ -1043,7 +1056,7 @@ class OptionsParser(object):
                 False,
             ),
             # --prefer-insecure
-            OptionHolder('prefer_insecure', '--prefer-insecure ', False),
+            OptionHolder('prefer_insecure', '--prefer-insecure', False),
             # --user-agent UA
             OptionHolder('user_agent', '--user-agent', ''),
             # --referer URL
@@ -1172,6 +1185,16 @@ class OptionsParser(object):
             ),
             # --no-clean-infojson
             OptionHolder('no_clean_info_json', '--no-clean-infojson', False),
+            # --no-cookies
+            OptionHolder('no_cookies', '--no-cookies', False),
+            # --cookies-from-browser BROWSER[+KEYRING][:PROFILE]
+            OptionHolder('cookies_from_browser', '--cookies-from-browser', ''),
+            # --no-cookies-from-browser
+            OptionHolder(
+                'no_cookies_from_browser',
+                '--no-cookies-from-browser',
+                True,
+            ),
             # (Internet Shortcut Options)
             # --write-link
             OptionHolder('write_link', '--write-link', False),

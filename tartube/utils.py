@@ -950,6 +950,25 @@ def convert_slices_to_clips(app_obj, custom_dl_obj, slice_list, temp_flag):
     return clip_list
 
 
+def convert_youtube_id_to_playlist(youtube_id):
+
+    """Can be called by anything.
+
+    Converts an ID provided by YouTube into the full URL for a playlist.
+
+    Args:
+
+        youtube_id (str): The YouTube playlist ID
+
+    Returns:
+
+        The full URL for the playlist
+
+    """
+
+    return 'https://www.youtube.com/playlist?list=' + youtube_id
+
+
 def convert_youtube_id_to_rss(media_type, youtube_id):
 
     """Can be called by anything; usually called by
@@ -972,6 +991,25 @@ def convert_youtube_id_to_rss(media_type, youtube_id):
 
     return 'https://www.youtube.com/feeds/videos.xml?' + media_type \
     + '_id=' + youtube_id
+
+
+def convert_youtube_id_to_video(youtube_id):
+
+    """Can be called by anything.
+
+    Converts an ID provided by YouTube into the full URL for the video.
+
+    Args:
+
+        youtube_id (str): The YouTube video ID
+
+    Returns:
+
+        The full URL for the video
+
+    """
+
+    return 'https://www.youtube.com/watch?v=' + youtube_id
 
 
 def convert_youtube_to_hooktube(url):
@@ -1950,11 +1988,18 @@ custom_dl_obj=None, divert_mode=None):
                 os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
             )
 
-    # Fetch video comments, if required
-    if app_obj.comment_fetch_flag \
-    and app_obj.ytdl_fork is not None \
-    and app_obj.ytdl_fork == 'yt-dlp':
-        options_list.append('--write-comments')
+    # yt-dlp options
+    if app_obj.ytdl_fork is not None and app_obj.ytdl_fork == 'yt-dlp':
+
+        # Fetch video comments, if required
+        if app_obj.comment_fetch_flag:
+            options_list.append('--write-comments')
+
+        # On MS Windows, if --restrict-filenames is not specified, then insert
+        #   --windows-filenames. (I can't be sure that yt-dlp knows it is
+        #   running on MS Windows, when running inside MSYS2)
+        if os.name == 'nt' and not '--restrict-filenames' in options_list:
+            options_list.append('--windows-filenames')
 
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:
@@ -2160,6 +2205,15 @@ classic_flag):
         mod_options_list.append('-f')
         mod_options_list.append('(bestvideo+bestaudio/best)[protocol!*=dash]')
 
+    # On MS Windows and yt-dlp, if --restrict-filenames is not specified, then
+    #   insert --windows-filenames. (I can't be sure that yt-dlp knows it is
+    #   running on MS Windows, when running inside MSYS2)
+    if app_obj.ytdl_fork is not None \
+    and app_obj.ytdl_fork == 'yt-dlp' \
+    and os.name == 'nt' \
+    and not '--restrict-filenames' in mod_options_list:
+        mod_options_list.append('--windows-filenames')
+
     # Supply youtube-dl with the path to the ffmpeg binary, if the user has
     #   provided one
     if app_obj.ffmpeg_path is not None:
@@ -2299,6 +2353,15 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
 
         mod_options_list.append('-f')
         mod_options_list.append('(bestvideo+bestaudio/best)[protocol!*=dash]')
+
+    # On MS Windows and yt-dlp, if --restrict-filenames is not specified, then
+    #   insert --windows-filenames. (I can't be sure that yt-dlp knows it is
+    #   running on MS Windows, when running inside MSYS2)
+    if app_obj.ytdl_fork is not None \
+    and app_obj.ytdl_fork == 'yt-dlp' \
+    and os.name == 'nt' \
+    and not '--restrict-filenames' in mod_options_list:
+        mod_options_list.append('--windows-filenames')
 
     # Supply youtube-dl with the path to the ffmpeg binary, if the user has
     #   provided one

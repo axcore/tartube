@@ -112,6 +112,10 @@ class DialogueManager(threading.Thread):
 
         """
 
+        if self.app_obj.dialogue_disable_msg_flag:
+            print(msg)
+            return
+
         if parent_win_obj is None:
             parent_win_obj = self.main_win_obj
 
@@ -182,6 +186,10 @@ class DialogueManager(threading.Thread):
             Gtk.MessageDialog window
 
         """
+
+        if self.app_obj.dialogue_disable_msg_flag:
+            print(msg)
+            return
 
         if parent_win_obj is None:
             parent_win_obj = self.main_win_obj

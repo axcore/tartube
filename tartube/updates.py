@@ -576,22 +576,18 @@ class UpdateManager(threading.Thread):
 
         """
 
-        substring = re.search(
+        regex_list = [
             'Requirement already up\-to\-date.*\(([^\(\)]+)\)\s*$',
-            stdout,
-        )
+            'Requirement already satisfied.*\(([^\(\)]+)\)\s*$',
+            'yt-dlp is up to date \(([^\(\)]+)\)\s*$',
+            'Successfully installed ' + downloader + '\-([^\(\)]+)\s*$',
+        ]
 
-        if substring:
-            self.ytdl_version = substring.group(1)
-
-        else:
-            substring = re.search(
-                'Successfully installed ' + downloader + '\-([^\(\)]+)\s*$',
-                stdout,
-            )
-
+        for regex in regex_list:
+            substring = re.search(regex, stdout)
             if substring:
                 self.ytdl_version = substring.group(1)
+                return
 
 
     def is_child_process_alive(self):

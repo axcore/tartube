@@ -3635,17 +3635,20 @@ class OptionsEditWin(GenericEditWin):
         edit_obj (options.OptionsManager): The object whose attributes will be
             edited in this window
 
+        init_mode (str or None): If specified, a tab is automatically selected;
+            one of the values specified in the comments to self.select_tab()
+
     """
 
 
     # Standard class methods
 
 
-    def __init__(self, app_obj, edit_obj):
+    def __init__(self, app_obj, edit_obj, init_mode=None):
 
         Gtk.Window.__init__(self, title=_('Download options'))
 
-        if self.is_duplicate(app_obj, edit_obj):
+        if self.is_duplicate(app_obj, edit_obj, init_mode):
             return
 
         # IV list - class objects
@@ -3717,11 +3720,55 @@ class OptionsEditWin(GenericEditWin):
         # Set up the edit window
         self.setup()
 
+        # Automatically open a particular tab, if required
+        self.select_tab(init_mode)
+
 
     # Public class methods
 
 
-#   def is_duplicate():         # Inherited from GenericConfigWin
+    def is_duplicate(self, app_obj, edit_obj, init_mode):
+
+        """Called by self.__init__.
+
+        Don't open this edit window, if another with the same .edit_obj is
+        already open.
+
+        If 'init_mode' is specified, switch the visible tab in the existing
+        preference window (if any).
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application object
+
+            edit_obj (options.OptionsManager): The object whose attributes will
+                be edited in this window
+
+            init_mode (str or None): One of the values specified in the
+                comments to self.select_tab()
+
+        Return values:
+
+            True if a duplicate is found, False if not
+
+        """
+
+        for config_win_obj in app_obj.main_win_obj.config_win_list:
+
+            if isinstance(config_win_obj, GenericEditWin) \
+            and config_win_obj.edit_obj == edit_obj:
+
+                # Duplicate found. Make it prominent...
+                config_win_obj.present()
+                # ...and switch to a particular tab, if required
+                config_win_obj.select_tab(init_mode)
+
+                return True
+
+        # Not a duplicate
+        return False
+
+
 
 
 #   def setup():                # Inherited from GenericConfigWin
@@ -3740,6 +3787,51 @@ class OptionsEditWin(GenericEditWin):
 
 
 #   def setup_gap():            # Inherited from GenericConfigWin
+
+
+    def select_tab(self, init_mode=None):
+
+        """Called by self.__init__().
+
+        On startup, automatically open a particular tab, if required.
+
+        Args:
+
+            init_mode (str or None): If specified:
+                - 'formats' - media formats
+                - 'subs' - subtitles
+                - (any other value is ignored)
+
+        """
+
+        if init_mode is not None:
+
+            if init_mode == 'formats':
+                self.select_formats_tab()
+            elif init_mode == 'subs':
+                self.select_subs_tab()
+
+
+    def select_formats_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the media format options are
+        displayed.
+        """
+
+        self.notebook.set_current_page(2)
+
+
+    def select_subs_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the subtitle options are
+        displayed.
+        """
+
+        self.notebook.set_current_page(5)
 
 
     # (Non-widget functions)
@@ -3833,7 +3925,7 @@ class OptionsEditWin(GenericEditWin):
 
 
     def add_tooltip(self, text, widget=None, widget2=None, widget3=None, \
-    widget4=None):
+    widget4=None, widget5=None):
 
         """Called by various tabs, to show the equivalent youtube-dl switches
         for each Tartube download option.
@@ -3844,8 +3936,8 @@ class OptionsEditWin(GenericEditWin):
 
             text (str): The text to use in the tooltip
 
-            widget, widget2, widget3, widget4 (widget or None): Any Gtk
-                widget for which we can call .set_tooltip_text()
+            widget, widget2, widget3, widget4, widget5 (widget or None): Any
+                Gtk widget for which we can call .set_tooltip_text()
 
         """
 
@@ -3857,6 +3949,8 @@ class OptionsEditWin(GenericEditWin):
             widget3.set_tooltip_text(text)
         if widget4 is not None:
             widget4.set_tooltip_text(text)
+        if widget5 is not None:
+            widget5.set_tooltip_text(text)
 
 
     # (Setup tabs)
@@ -3871,13 +3965,13 @@ class OptionsEditWin(GenericEditWin):
         """
 
         self.setup_name_tab()
+        self.setup_downloads_tab()
         self.setup_files_tab()
         self.setup_formats_tab()
-        self.setup_downloads_tab()
         if not self.app_obj.simple_options_flag:
             self.setup_post_process_tab()
         else:
-            self.setup_sound_only_tab()
+            self.setup_convert_tab()
         self.setup_subtitles_tab()
         if not self.app_obj.simple_options_flag:
             self.setup_ytdlp_tab()
@@ -3960,8 +4054,8 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_label(grid,
             _(
-            'Extra command line options (e.g. --help; do not use -o or' \
-            + ' --output)',
+            'Additional download options, e.g. --write-subs (do not use -o' \
+            + ' or --output)',
             ),
             0, 2, grid_width, 1,
         )
@@ -4059,6 +4153,186 @@ class OptionsEditWin(GenericEditWin):
         )
         grid.attach(button4, 1, 8, (grid_width - 1), 1)
         button4.connect('clicked', self.on_reset_options_clicked)
+
+
+    def setup_downloads_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Downloads' tab.
+        """
+
+        # Simple options only
+        if self.app_obj.simple_options_flag:
+
+            tab, grid = self.add_notebook_tab(_('_Downloads'))
+
+            row_count = 0
+
+            # Download options
+            self.add_label(grid,
+                '<u>' + _('Download options') + '</u>',
+                0, row_count, 1, 1,
+            )
+
+            row_count += 1
+            row_count = self.downloads_age_widgets(grid, row_count)
+            row_count = self.downloads_date_widgets(grid, row_count)
+            row_count = self.downloads_views_widgets(grid, row_count)
+
+        # All options
+        else:
+
+            # Add this tab...
+            tab, grid = self.add_notebook_tab(_('_Downloads'), 0)
+
+            # ...and an inner notebook...
+            inner_notebook = self.add_inner_notebook(grid)
+
+            # ...with its own tabs
+            self.setup_downloads_general_tab(inner_notebook)
+            self.setup_downloads_playlists_tab(inner_notebook)
+            self.setup_downloads_size_limits_tab(inner_notebook)
+            self.setup_downloads_dates_tab(inner_notebook)
+            self.setup_downloads_views_tab(inner_notebook)
+            self.setup_downloads_filtering_tab(inner_notebook)
+            self.setup_downloads_external_tab(inner_notebook)
+
+
+    def setup_downloads_general_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'General' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab('_General', inner_notebook)
+
+        # Download options
+        self.add_label(grid,
+            '<u>' + _('Download options') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        row_count = 1
+        row_count = self.downloads_general_widgets(grid, row_count)
+        row_count = self.downloads_age_widgets(grid, row_count)
+
+
+    def setup_downloads_playlists_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Playlists' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Playlists'),
+            inner_notebook,
+        )
+
+        row_count = self.downloads_playlist_widgets(grid, 0)
+
+
+    def setup_downloads_size_limits_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Size limits' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Size limits'),
+            inner_notebook,
+        )
+
+        row_count = self.downloads_size_limit_widgets(grid, 0)
+
+
+    def setup_downloads_dates_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Dates' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(_('_Dates'), inner_notebook)
+
+        row_count = self.downloads_date_widgets(grid, 0)
+
+
+    def setup_downloads_views_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Views' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(_('_Views'), inner_notebook)
+
+        row_count = self.downloads_views_widgets(grid, 0)
+
+
+    def setup_downloads_filtering_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Filtering' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Filtering'),
+            inner_notebook,
+        )
+
+        row_count = self.downloads_filtering_widgets(grid, 0)
+
+
+    def setup_downloads_external_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'External' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(_('_External'), inner_notebook)
+
+        row_count = self.downloads_external_widgets(grid, 0)
 
 
     def setup_files_tab(self):
@@ -4648,39 +4922,105 @@ class OptionsEditWin(GenericEditWin):
             _('_Preferred'),
             inner_notebook,
         )
+        # (Force both treeviews to take half the available width)
+        grid.set_column_homogeneous(True)
         grid_width = 4
 
         # Preferred format options
         self.add_label(grid,
             '<u>' + _('Preferred format options') + '</u>',
-            0, 0, 4, 1,
+            0, 0, grid_width, 1,
         )
 
+        if self.app_obj.simple_options_flag:
+
+            # Newbies frequently get confused by this tab, so add an
+            #   explanatory warning
+
+            hbox = Gtk.HBox()
+            grid.attach(hbox, 0, 1, grid_width, 1)
+
+            frame = Gtk.Frame()
+            hbox.pack_start(frame, False, False, 0)
+            frame.set_hexpand(False)
+
+            hbox2 = Gtk.HBox()
+            frame.add(hbox2)
+            hbox2.set_border_width(self.spacing_size)
+
+            image = Gtk.Image()
+            hbox2.pack_start(image, False, False, 0)
+            image.set_from_pixbuf(
+                self.app_obj.main_win_obj.pixbuf_dict['attention_large'],
+            )
+
+            frame2 = Gtk.Frame()
+            hbox.pack_start(frame2, True, True, self.spacing_size)
+            frame2.set_hexpand(True)
+
+            vbox = Gtk.VBox()
+            frame2.add(vbox)
+            vbox.set_border_width(self.spacing_size)
+
+            label = Gtk.Label()
+            vbox.pack_start(label, True, True, 0)
+            label.set_markup(
+                '<b>' + _(
+                    'If your preferred formats are not available, the' \
+                    + ' download will fail!',
+                ) + '</b>',
+            )
+
+            label2 = Gtk.Label()
+            vbox.pack_start(label2, True, True, 0)
+            label2.set_markup(
+                '<b>' + _(
+                    'If you want a specific format, install FFmpeg and use' \
+                    + ' the Convert tab!',
+                ) + '</b>',
+            )
+
         # Left column
-        label = self.add_label(grid,
+        self.add_label(grid,
             _('Recognised video/audio formats'),
-            0, 1, 2, 1,
+            0, 2, 2, 1,
         )
 
         treeview, liststore = self.add_treeview(grid,
-            0, 2, 2, 1,
+            0, 3, 2, 1,
         )
 
         for key in formats.VIDEO_OPTION_LIST:
             liststore.append([key])
 
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 4, 2, 1)
+
         button = Gtk.Button(_('Add format') + ' >>>')
-        grid.attach(button, 0, 3, 2, 1)
+        grid2.attach(button, 0, 0, 1, 1)
+        button.set_hexpand(True)
+        # (Signal connect appears below)
+
+        button2 = Gtk.Button()
+        grid2.attach(button2, 1, 0, 1, 1)
+        button2.set_hexpand(False)
+        button2.set_image(
+            Gtk.Image.new_from_pixbuf(
+                self.app_obj.main_win_obj.pixbuf_dict['keyboard_small'],
+            ),
+        )
+        button2.set_tooltip_text(_('Type extractor code directly'))
         # (Signal connect appears below)
 
         # Right column
-        label2 = self.add_label(grid,
+        self.add_label(grid,
             _('List of preferred formats'),
-            2, 1, 2, 1,
+            2, 2, 2, 1,
         )
 
         treeview2, self.formats_liststore = self.add_treeview(grid,
-            2, 2, 2, 1,
+            2, 3, 2, 1,
         )
         self.add_tooltip('-f, --format FORMAT', treeview, treeview2)
 
@@ -4693,16 +5033,16 @@ class OptionsEditWin(GenericEditWin):
         #   be set
         self.formats_tab_redraw_list()
 
-        button2 = Gtk.Button('<<< ' + _('Remove format'))
-        grid.attach(button2, 2, 3, 2, 1)
+        button3 = Gtk.Button('<<< ' + _('Remove format'))
+        grid.attach(button3, 2, 4, 2, 1)
         # (Signal connect appears below)
 
-        button3 = Gtk.Button('^ ' + _('Move up'))
-        grid.attach(button3, 2, 4, 1, 1)
+        button4 = Gtk.Button('^ ' + _('Move up'))
+        grid.attach(button4, 2, 5, 1, 1)
         # (Signal connect appears below)
 
-        button4 = Gtk.Button('v ' + _('Move down'))
-        grid.attach(button4, 3, 4, 1, 1)
+        button5 = Gtk.Button('v ' + _('Move down'))
+        grid.attach(button5, 3, 5, 1, 1)
         # (Signal connect appears below)
 
         # (Signal connects from above)
@@ -4710,57 +5050,72 @@ class OptionsEditWin(GenericEditWin):
         button.connect(
             'clicked',
             self.on_formats_tab_add_clicked,
-            button2,
             button3,
             button4,
+            button5,
+            treeview,
+        )
+        # 'Type extractor code directly'
+        button2.connect(
+            'clicked',
+            self.on_formats_tab_type_clicked,
+            button3,
+            button4,
+            button5,
             treeview,
         )
         # 'Remove format'
-        button2.connect(
+        button3.connect(
             'clicked',
             self.on_formats_tab_remove_clicked,
             button,
-            button3,
+            button2,
             button4,
+            button5,
             treeview2,
         )
         # 'Move up'
-        button3.connect(
+        button4.connect(
             'clicked',
             self.on_formats_tab_up_clicked,
             treeview2,
         )
         # 'Move down'
-        button4.connect(
+        button5.connect(
             'clicked',
             self.on_formats_tab_down_clicked,
             treeview2,
         )
 
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 6, grid_width, 1)
+
         # Desensitise buttons, as appropriate
         format_count = self.formats_tab_count_formats()
         if format_count == 0:
-            button2.set_sensitive(False)
             button3.set_sensitive(False)
             button4.set_sensitive(False)
+            button5.set_sensitive(False)
 
-        label3 = self.add_label(grid,
+        label3 = self.add_label(grid3,
             _(
             'If a merge is required after post-processing, output to this' \
             + ' format:',
             ),
-            0, 5, grid_width, 1,
+            0, 0, 1, 1,
         )
 
         combo_list = ['', 'flv', 'mkv', 'mp4', 'ogg', 'webm']
-        combo = self.add_combo(grid,
+        combo = self.add_combo(grid3,
             combo_list,
             None,
-            (grid_width - 1), 5, 1, 1,
+            1, 0, 1, 1,
         )
         combo.set_active(
             combo_list.index(self.retrieve_val('merge_output_format')),
         )
+        combo.set_hexpand(True)
         combo.connect('changed', self.on_formats_tab_combo_changed)
         self.add_tooltip('--merge-output-format FORMAT', label3, combo)
 
@@ -4900,206 +5255,45 @@ class OptionsEditWin(GenericEditWin):
         self.add_tooltip('--youtube-skip-dash-manifest', checkbutton2)
 
 
-    def setup_downloads_tab(self):
+    def setup_convert_tab(self):
 
         """Called by self.setup_tabs().
 
-        Sets up the 'Downloads' tab.
+        Sets up the 'Convert' tab.
         """
 
-        # Simple options only
-        if self.app_obj.simple_options_flag:
-
-            tab, grid = self.add_notebook_tab(_('_Downloads'))
-
-            row_count = 0
-
-            # Download options
-            self.add_label(grid,
-                '<u>' + _('Download options') + '</u>',
-                0, row_count, 1, 1,
-            )
-
-            row_count += 1
-            row_count = self.downloads_age_widgets(grid, row_count)
-            row_count = self.downloads_date_widgets(grid, row_count)
-            row_count = self.downloads_views_widgets(grid, row_count)
-
-        # All options
-        else:
-
-            # Add this tab...
-            tab, grid = self.add_notebook_tab(_('_Downloads'), 0)
-
-            # ...and an inner notebook...
-            inner_notebook = self.add_inner_notebook(grid)
-
-            # ...with its own tabs
-            self.setup_downloads_general_tab(inner_notebook)
-            self.setup_downloads_playlists_tab(inner_notebook)
-            self.setup_downloads_size_limits_tab(inner_notebook)
-            self.setup_downloads_dates_tab(inner_notebook)
-            self.setup_downloads_views_tab(inner_notebook)
-            self.setup_downloads_filtering_tab(inner_notebook)
-            self.setup_downloads_external_tab(inner_notebook)
-
-
-    def setup_downloads_general_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'General' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab('_General', inner_notebook)
-
-        # Download options
-        self.add_label(grid,
-            '<u>' + _('Download options') + '</u>',
-            0, 0, 1, 1,
-        )
-
-        row_count = 1
-        row_count = self.downloads_general_widgets(grid, row_count)
-        row_count = self.downloads_age_widgets(grid, row_count)
-
-
-    def setup_downloads_playlists_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'Playlists' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Playlists'),
-            inner_notebook,
-        )
-
-        row_count = self.downloads_playlist_widgets(grid, 0)
-
-
-    def setup_downloads_size_limits_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'Size limits' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Size limits'),
-            inner_notebook,
-        )
-
-        row_count = self.downloads_size_limit_widgets(grid, 0)
-
-
-    def setup_downloads_dates_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'Dates' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(_('_Dates'), inner_notebook)
-
-        row_count = self.downloads_date_widgets(grid, 0)
-
-
-    def setup_downloads_views_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'Views' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(_('_Views'), inner_notebook)
-
-        row_count = self.downloads_views_widgets(grid, 0)
-
-
-    def setup_downloads_filtering_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'Filtering' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Filtering'),
-            inner_notebook,
-        )
-
-        row_count = self.downloads_filtering_widgets(grid, 0)
-
-
-    def setup_downloads_external_tab(self, inner_notebook):
-
-        """Called by self.setup_downloads_tab().
-
-        Sets up the 'External' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(_('_External'), inner_notebook)
-
-        row_count = self.downloads_external_widgets(grid, 0)
-
-
-    def setup_sound_only_tab(self):
-
-        """Called by self.setup_tabs().
-
-        Sets up the 'Sound Only' tab.
-        """
-
-        tab, grid = self.add_notebook_tab(_('_Sound only'))
+        tab, grid = self.add_notebook_tab(_('_Convert'))
         grid_width = 4
 
-        # Sound only options
+        # Convert to video
         self.add_label(grid,
-            '<u>' + _('Sound only options') + '</u>',
+            '<u>' + _('Convert to video') + '</u>',
             0, 0, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Convert downloaded video to another format'),
+            0, 1, 2, 1,
+        )
+
+        combo_list = ['', 'avi', 'flv', 'mkv', 'mp4', 'ogg', 'webm']
+        combo = self.add_combo(grid,
+            combo_list,
+            'recode_video',
+            2, 1, 2, 1,
+        )
+        self.add_tooltip('--recode-video FORMAT', label, combo)
+
+        # Convert to audio
+        self.add_label(grid,
+            '<u>' + _('Convert to audio') + '</u>',
+            0, 2, grid_width, 1,
         )
 
         # (The MS Windows installer includes FFmpeg)
         text = _(
             'Download each video, extract the sound, and then discard the' \
-            + ' original videos',
+            + ' original video',
         )
         if os.name != 'nt':
             text += '\n' + _(
@@ -5109,13 +5303,13 @@ class OptionsEditWin(GenericEditWin):
         checkbutton = self.add_checkbutton(grid,
             text,
             'extract_audio',
-            0, 1, grid_width, 1,
+            0, 3, grid_width, 1,
         )
         self.add_tooltip('-x, --extract-audio', checkbutton)
 
         label = self.add_label(grid,
             _('Use this audio format:') + ' ',
-            0, 2, 1, 1,
+            0, 4, 1, 1,
         )
         label.set_hexpand(False)
 
@@ -5124,14 +5318,14 @@ class OptionsEditWin(GenericEditWin):
         combo = self.add_combo(grid,
             combo_list,
             'audio_format',
-            1, 2, 1, 1,
+            1, 4, 1, 1,
         )
         combo.set_hexpand(True)
         self.add_tooltip('--audio-format FORMAT', label, combo)
 
         label2 = self.add_label(grid,
             _('Use this audio quality:') + ' ',
-            2, 2, 1, 1,
+            2, 4, 1, 1,
         )
         label2.set_hexpand(False)
 
@@ -5144,7 +5338,7 @@ class OptionsEditWin(GenericEditWin):
         combo2 = self.add_combo_with_data(grid,
             combo2_list,
             'audio_quality',
-            3, 2, 1, 1,
+            3, 4, 1, 1,
         )
         combo2.set_hexpand(True)
         self.add_tooltip('--audio-quality QUALITY', label2, combo2)
@@ -5300,7 +5494,7 @@ class OptionsEditWin(GenericEditWin):
             'fixup_policy',
             1, 9, 1, 1,
         )
-        self.add_tooltip('--fixup POLICY', checkbutton)
+        self.add_tooltip('--fixup POLICY', combo4)
 
 
     def setup_subtitles_tab(self):
@@ -5550,6 +5744,7 @@ class OptionsEditWin(GenericEditWin):
         self.setup_ytdlp_videos_tab(inner_notebook)
         self.setup_ytdlp_downloads_tab(inner_notebook)
         self.setup_ytdlp_filesystem_tab(inner_notebook)
+        self.setup_ytdlp_cookies_tab(inner_notebook)
         self.setup_ytdlp_shortcuts_tab(inner_notebook)
         self.setup_ytdlp_verbosity_tab(inner_notebook)
         self.setup_ytdlp_workarounds_tab(inner_notebook)
@@ -5985,7 +6180,7 @@ class OptionsEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _(
-                'Limit filname length (excluding extension) to this many' \
+                'Limit filename length (excluding extension) to this many' \
                 + ' characters',
             ),
             0, 2, 1, 1
@@ -6024,6 +6219,287 @@ class OptionsEditWin(GenericEditWin):
             0, 5, grid_width, 1,
         )
         self.add_tooltip('--no-clean-infojson', checkbutton4)
+
+
+    def setup_ytdlp_cookies_tab(self, inner_notebook):
+
+        """Called by self.setup_ytdlp_tab().
+
+        Sets up the 'Cookies' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Cookies'),
+            inner_notebook,
+        )
+
+        # Cookie Options
+        self.add_label(grid,
+            '<u>' + _('Cookie Options') + '</u> <b>[' + _('yt-dlp only') \
+            + ']</b>',
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Do not read/dump cookies from/to the cookiejar file'),
+            'no_cookies',
+            0, 1, 1, 1,
+        )
+        self.add_tooltip('--no-cookies', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Do not load cookies from browser'),
+            'no_cookies_from_browser',
+            0, 2, 1, 1,
+        )
+        self.add_tooltip('--no-cookies-from-browser', checkbutton2)
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, 1, 1)
+
+        label = self.add_label(grid2,
+            _('Retrieve cookies from browser'),
+            0, 0, 1, 1
+        )
+        label.set_hexpand(False)
+
+        entry = self.add_entry(grid2,
+            None,
+            1, 0, 1, 1,
+        )
+        entry.set_hexpand(True)
+        entry.set_editable(False)
+        entry.set_text(self.retrieve_val('cookies_from_browser'))
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 4, 1, 1)
+
+        self.add_label(grid3,
+            _('Browser'),
+            0, 0, 1, 1
+        )
+
+        combo_list = [
+            '', 'brave', 'chrome', 'chromium', 'edge', 'firefox', 'opera',
+            'safari', 'vivaldi',
+        ]
+        combo = self.add_combo(grid3,
+            combo_list,
+            None,
+            1, 0, 1, 1
+        )
+        combo.set_active(0)
+        combo.set_hexpand(True)
+        # (Signal connect appears below)
+
+        self.add_label(grid3,
+            _('Chromium keyring'),
+            2, 0, 1, 1
+        )
+
+        combo_list2 = ['', 'basictext', 'gnomekeyring', 'kwallet']
+        combo2 = self.add_combo(grid3,
+            combo_list2,
+            None,
+            3, 0, 1, 1
+        )
+        combo2.set_active(0)
+        combo2.set_hexpand(True)
+        # (Signal connect appears below)
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid4 = self.add_secondary_grid(grid, 0, 5, 1, 1)
+
+        label2 = self.add_label(grid4,
+            _('Browser profile name (optional)'),
+            0, 0, 1, 1
+        )
+        label2.set_hexpand(False)
+
+        entry2 = self.add_entry(grid4,
+            None,
+            1, 0, 3, 1,
+        )
+        entry2.set_hexpand(True)
+        # (Signal connect appears below)
+
+        label3 = self.add_label(grid4,
+            _('Browser profile path (optional)'),
+            0, 1, 1, 1
+        )
+        label3.set_hexpand(False)
+
+        entry3 = self.add_entry(grid4,
+            None,
+            1, 1, 1, 1,
+        )
+        entry3.set_hexpand(True)
+        entry3.set_editable(False)
+
+        set_button = Gtk.Button(_('Set'))
+        grid4.attach(set_button, 2, 1, 1, 1)
+        # (Signal connect appears below)
+
+        reset_button = Gtk.Button(_('Reset'))
+        grid4.attach(reset_button, 3, 1, 1, 1)
+        # (Signal connect appears below)
+
+        self.add_tooltip(
+            '--cookies-from-browser BROWSER[+KEYRING][:PROFILE]',
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+
+        # Set the initial values for those widgets, retrieving them from the
+        #   'cookies_from_browser' download option
+        match = re.search(
+            '^([^+:]+)(\+[^+:]+)?(\:.*)?',
+            self.retrieve_val('cookies_from_browser'),
+        )
+        if match:
+            browser = match.groups()[0]
+            keyring = match.groups()[1]
+            profile = match.groups()[2]
+
+            if browser != '':
+
+                for i in range(len(combo_list)):
+                    if combo_list[i] == browser:
+                        combo.set_active(i)
+                        break
+
+                if keyring != '':
+
+                    # (Remove initial +/: characters)
+                    keyring = keyring[1:]
+
+                    for i in range(len(combo_list2)):
+                        if combo_list2[i] == keyring:
+                            combo2.set_active(i)
+                            break
+
+                if profile != '':
+
+                    # (Remove initial +/: characters)
+                    profile = profile[1:]
+
+                    # This might be a profile name, or a profile path. Assume
+                    #   it's a name unless the path exists
+                    if not os.path.isfile(profile):
+                        entry2.set_text(profile)
+                    else:
+                        entry3.set_text(profile)
+
+        # (Signal connects from above)
+        combo.connect(
+            'changed',
+            self.setup_ytdlp_cookies_tab_update,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+        combo2.connect(
+            'changed',
+            self.setup_ytdlp_cookies_tab_update,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+        entry2.connect(
+            'changed',
+            self.on_cookies_ytdlp_entry_changed,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+        set_button.connect(
+            'clicked',
+            self.on_cookies_ytdlp_set_button_clicked,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+        reset_button.connect(
+            'clicked',
+            self.on_cookies_ytdlp_reset_button_clicked,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+
+
+    def setup_ytdlp_cookies_tab_update(self, widget, entry, combo, combo2, \
+    entry2, entry3):
+
+        """Called by self.setup_ytdlp_cookies_tab() to set the
+        'cookies_from_browser' download option, updating several widgets.
+
+        Also called by several callbacks.
+
+        Args:
+
+            widget (Gtk.Entry or Gtk.Combo): Ignored
+
+            entry (Gtk.Entry): The entry box displaying the download option
+
+            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
+                settings are combined to set the 'cookies_from_browser'
+                download option
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        browser = model[tree_iter][0]
+
+        if browser == '':
+
+            # Special case: reset the other two widgets, which causes further
+            #   calls to this function, in which the download option is updated
+            entry2.set_text('')
+            combo2.set_active(0)
+            return
+
+        # Otherwise, set the new value of 'cookies_from_browser' now
+        tree_iter2 = combo2.get_active_iter()
+        model2 = combo2.get_model()
+        keyring = model2[tree_iter2][0]
+
+        profile_name = entry2.get_text()
+        profile_path = entry3.get_text()
+
+        value = browser
+        if keyring != '':
+            value += '+' + keyring
+
+        if profile_name != '':
+            value += ':' + profile_name
+        elif profile_path != '':
+            value += ':' + profile_path
+
+        self.edit_dict['cookies_from_browser'] = value
+        entry.set_text(value)
 
 
     def setup_ytdlp_shortcuts_tab(self, inner_notebook):
@@ -7559,6 +8035,118 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
+    def on_cookies_ytdlp_entry_changed(self, widget, entry, combo, \
+    combo2, entry2, entry3):
+
+        """Called by callback in self.setup_ytdlp_cookies_tab().
+
+        Args:
+
+            widget (Gtk.Entry): The widget modified (ignored)
+
+            entry (Gtk.Entry): The entry box displaying the download option
+
+            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
+                settings are combined to set the 'cookies_from_browser'
+                download option
+
+        """
+
+        # (The other entry also specifies the profile; at least one of them
+        #   must be empty)
+        if entry2.get_text() != '':
+            entry3.set_text('')
+
+        # Update the download option, and display it in 'entry'
+        self.setup_ytdlp_cookies_tab_update(
+            None,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+
+
+    def on_cookies_ytdlp_reset_button_clicked(self, button, entry, combo, \
+    combo2, entry2, entry3):
+
+        """Called by callback in self.setup_ytdlp_cookies_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): The entry box displaying the download option
+
+            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
+                settings are combined to set the 'cookies_from_browser'
+                download option
+
+        """
+
+        entry3.set_text('')
+
+        # Update the download option, and display it in 'entry'
+        self.setup_ytdlp_cookies_tab_update(
+            None,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+
+
+    def on_cookies_ytdlp_set_button_clicked(self, button, entry, combo, \
+    combo2, entry2, entry3):
+
+        """Called by callback in self.setup_ytdlp_cookies_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): The entry box displaying the download option
+
+            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
+                settings are combined to set the 'cookies_from_browser'
+                download option
+
+        """
+
+        # Prompt the user for a new file
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Select the browser profile'),
+            self,
+            'open',
+        )
+
+        # Get the user's response
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+        if response == Gtk.ResponseType.OK:
+            entry3.set_text(new_path)
+
+            # (The other entry also specifies the profile; at least one of them
+            #   must be empty)
+            if new_path != '':
+                entry2.set_text('')
+
+        # Update the download option, and display it in 'entry'
+        self.setup_ytdlp_cookies_tab_update(
+            None,
+            entry,
+            combo,
+            combo2,
+            entry2,
+            entry3,
+        )
+
+
     def on_direct_cmd_toggled(self, checkbutton, checkbutton2):
 
         """Called by callback in self.setup_name_tab().
@@ -7946,7 +8534,7 @@ class OptionsEditWin(GenericEditWin):
 
 
     def on_formats_tab_remove_clicked(self, remove_button, add_button, \
-    up_button, down_button, other_treeview):
+    type_button, up_button, down_button, other_treeview):
 
         """Called by callback in self.setup_formats_tab().
 
@@ -7954,8 +8542,8 @@ class OptionsEditWin(GenericEditWin):
 
             remove_button (Gtk.Button): The widget clicked
 
-            add_button, up_button, down_button (Gtk.Button): Other widgets to
-                be modified by this function
+            add_button, type_button, up_button, down_button (Gtk.Button): Other
+                widgets to be modified by this function
 
             other_treeview (Gtk.TreeView): The treeview on the right side of
                 the tab
@@ -7987,12 +8575,77 @@ class OptionsEditWin(GenericEditWin):
 
             # Update other widgets, as required
             add_button.set_sensitive(True)
+            type_button.set_sensitive(True)
             if not format_list:
 
                 # No formats left to remove
                 remove_button.set_sensitive(False)
                 up_button.set_sensitive(False)
                 down_button.set_sensitive(False)
+
+
+    def on_formats_tab_type_clicked(self, type_button, remove_button, \
+    up_button, down_button, treeview):
+
+        """Called by callback in self.setup_formats_tab().
+
+        Args:
+
+            type_button (Gtk.Button): The widget clicked
+
+            remove_button, up_button, down_button (Gtk.Button): Other widgets
+                to be modified by this function
+
+            treeview (Gtk.TreeView): The treeview on the left side of the tab
+
+        """
+
+        # Prompt the user to type an extractor code directly
+        dialogue_win = mainwin.ExtractorCodeDialogue(self)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window, before destroying it
+        if response == Gtk.ResponseType.OK:
+            extract_code = dialogue_win.extract_code
+
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK and extract_code is not None:
+
+            if not extract_code in formats.VIDEO_OPTION_TYPE_DICT:
+
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Unrecognised extractor code'),
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+                return
+
+            else:
+
+                # Update the option (code copied from
+                #   self.on_formats_tab_add_clicked() above)
+                format_list = self.retrieve_val('video_format_list')
+                if extract_code in format_list:
+                    return
+                else:
+                    format_list.append(extract_code)
+                    self.edit_dict['video_format_list'] = format_list
+
+                # Update the other treeview, adding the format to it (and don't
+                #   modify this treeview)
+                for name in formats.VIDEO_OPTION_DICT.keys():
+                    if formats.VIDEO_OPTION_DICT[name] == extract_code:
+                        self.formats_liststore.append([name])
+
+                        # Update other widgets, as required
+                        remove_button.set_sensitive(True)
+                        up_button.set_sensitive(True)
+                        down_button.set_sensitive(True)
+
+                        break
 
 
     def on_formats_tab_up_clicked(self, up_button, treeview):
@@ -14590,7 +15243,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
         self.apply_options_button = None        # Gtk.Button
         self.edit_options_button = None         # Gtk.Button
         self.remove_options_button = None       # Gtk.Button
-
+        # (Widgets used in the Playlists tab)
+        self.playlists_liststore = None         # Gtk.ListStore
 
         # IV list - other
         # ---------------
@@ -14670,6 +15324,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         self.setup_general_tab()
         self.setup_download_options_tab()
+        self.setup_assoc_playlist_tab()
         if mainapp.HAVE_MATPLOTLIB_FLAG:
             self.setup_history_tab()
         self.setup_rss_feed_tab()
@@ -14801,6 +15456,143 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
 
 #   def setup_download_options_tab():   # Inherited from GenericConfigWin
+
+
+    def setup_assoc_playlist_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Associated Playlists' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('_Associated Playlists'))
+        grid_width = 4
+
+        self.add_label(grid,
+            '<u>' + _('Associated playlists') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+                'When a video is associated with a playlist, the playlist\'s' \
+                + ' ID is stored here',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Playlist ID'), _('Playlist Title') ],
+        ):
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        self.playlists_liststore = Gtk.ListStore(str, str)
+        treeview.set_model(self.playlists_liststore)
+
+        # Initialise the list
+        self.setup_assoc_playlist_tab_update_treeview()
+
+        # Strip of widgets at the bottom
+        checkbutton = self.add_checkbutton(grid,
+            _('Set the channel as the download destination'),
+            None,
+            0, 3, 2, 1,
+        )
+        if self.media_type != 'channel':
+            checkbutton.set_sensitive(False)
+
+        button = Gtk.Button(_('Add selected playlist'))
+        grid.attach(button, 2, 3, 1, 1)
+        button.connect(
+            'clicked',
+            self.on_add_assoc_playlist_button_clicked,
+            treeview,
+            checkbutton,
+        )
+
+        button2 = Gtk.Button(_('Add all playlists'))
+        grid.attach(button2, 3, 3, 1, 1)
+        button2.connect(
+            'clicked',
+            self.on_all_assoc_playlist_button_clicked,
+            checkbutton,
+        )
+
+        button3 = Gtk.Button(_('Download preferences'))
+        grid.attach(button3, 0, 4, 1, 1)
+        button3.connect(
+            'clicked',
+            self.on_assoc_playlist_prefs_button_clicked,
+        )
+
+        button4 = Gtk.Button(_('Clear list'))
+        grid.attach(button4, 1, 4, 1, 1)
+        button4.connect(
+            'clicked',
+            self.on_clear_assoc_playlist_button_clicked,
+        )
+
+        # (This button works even if mainapp.TartubeApp.store_playlist_id_flag
+        #   is False)
+        button5 = Gtk.Button(_('Reset list using metadata file'))
+        grid.attach(button5, 2, 4, 2, 1)
+        button5.connect(
+            'clicked',
+            self.on_reset_assoc_playlist_button_clicked,
+        )
+
+
+    def setup_assoc_playlist_tab_update_treeview(self):
+
+        """ Called by self.setup_assoc_playlist_tab().
+
+        Fills or updates the treeview.
+        """
+
+        self.playlists_liststore.clear()
+
+        # Add each playlist to the treeview, one row at a time
+        # (The treeview needs to be sorted by its second column, corresponding
+        #   to values in the IV's key-value pairs)
+        sort_list = sorted(
+            self.edit_obj.playlist_id_dict.items(), key=lambda x:x[1],
+        )
+        sort_dict = dict(sort_list)
+
+        for playlist_id in sort_dict.keys():
+
+            playlist_title = self.edit_obj.playlist_id_dict[playlist_id]
+
+            if playlist_title is None:
+                self.playlists_liststore.append(
+                    [ playlist_id, '<' + _('Unnamed playlist') + '>' ],
+                )
+
+            else:
+                self.playlists_liststore.append(
+                    [ playlist_id, playlist_title ],
+                )
 
 
     def setup_history_tab(self):
@@ -14966,6 +15758,221 @@ class ChannelPlaylistEditWin(GenericEditWin):
     # Callback class methods
 
 
+    def on_add_assoc_playlist_button_clicked(self, button, treeview, \
+    checkbutton):
+
+        """Called from a callback in self.setup_assoc_playlist_tab().
+
+        The selected associated playlist is added to Tartube's database (if
+        possible).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview displaying the associated
+                playlist list
+
+            checkbutton (Gtk.CheckButton): Another widget to check
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+
+            return
+
+        playlist_id = model[this_iter][0]
+        playlist_title = model[this_iter][1]
+
+        # If 'playlist_title' is specified, then only create a playlist if no
+        #   other container has the same URL or name
+        # If 'playlist_title' is not specified, the just check for duplicate
+        #   URLs; if a new playlist is created, create an artificial title
+        if playlist_title != '' \
+        and playlist_title in self.app_obj.media_name_dict:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('The name \'{0}\' is already in use').format(playlist_title),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        url = utils.convert_youtube_id_to_playlist(playlist_id)
+        for dbid in self.app_obj.media_name_dict.values():
+
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            if not isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.source == url:
+
+                return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('The playlist is already in Tartube\'s database'),
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+
+
+        # Name an unnamed playlist
+        if playlist_title == '':
+            playlist_title \
+            = utils.find_available_name(self, 'playlist', 1, -1)
+
+        # Create the new playlist, with the same parent as this window's
+        #   channel/playlist
+        playlist_obj = self.app_obj.add_playlist(
+            playlist_title,
+            self.edit_obj.parent_obj,       # May be 'None'
+            url,
+        )
+        if not playlist_obj:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Unable to create new playlist'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+        else:
+
+            # This window's channel is the download destination for the
+            #   playlist, if required
+            if checkbutton.get_active():
+                playlist_obj.set_master_dbid(self.app_obj, self.edit_obj.dbid)
+
+            # Update the Video Index. The True argument tells the function not
+            #   to select the new playlist
+            self.app_obj.main_win_obj.video_index_add_row(playlist_obj, True)
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'Added playlist \'{0}\' to Tartube\'s database',
+                ).format(playlist_title),
+                'info',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+
+    def on_all_assoc_playlist_button_clicked(self, button):
+
+        """Called from a callback in self.setup_assoc_playlist_tab().
+
+        All associated playlists are added to Tartube's database (where
+        possible).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        success_count = 0
+        fail_count = 0
+
+        if not self.edit_obj.playlist_id_dict:
+            # No playlists to add
+            return
+
+        # Go through the list of associated playlists, eliminating any which
+        #   already exist (duplicate names or duplicate source URLs), and
+        #   assigning a name to any unnamed playlist
+        for playlist_id in self.edit_obj.playlist_id_dict.keys():
+
+            playlist_title = self.edit_obj.playlist_id_dict[playlist_id]
+
+            if playlist_title != '' \
+            and playlist_title in self.app_obj.media_name_dict:
+                fail_count += 1
+                continue
+
+            url = utils.convert_youtube_id_to_playlist(playlist_id)
+            match_flag = False
+            for dbid in self.app_obj.media_name_dict.values():
+
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+                if not isinstance(media_data_obj, media.Folder) \
+                and media_data_obj.source == url:
+                    match_flag = True
+                    break
+
+            if match_flag:
+                fail_count += 1
+                continue
+
+            # Name an unnamed playlist
+            if playlist_title == '':
+                playlist_title = utils.find_available_name(
+                    self,
+                    'playlist',
+                    1,
+                    -1,
+                ),
+
+            # Create the new playlist, with the same parent as this window's
+            #   channel/playlist
+            playlist_obj = self.app_obj.add_playlist(
+                playlist_title,
+                self.edit_obj.parent_obj,       # May be 'None'
+                url,
+            )
+            if not playlist_obj:
+                fail_count += 1
+
+            else:
+                # This window's channel is the download destination for the
+                #   playlist, if required
+                if checkbutton.get_active():
+                    playlist_obj.set_master_dbid(
+                        self.app_obj,
+                        self.edit_obj.dbid,
+                    )
+
+                # Update the Video Index. The True argument tells the function
+                #   not to select the new playlist
+                self.app_obj.main_win_obj.video_index_add_row(
+                    playlist_obj,
+                    True,
+                )
+
+                success_count += 1
+
+        # Show confirmation
+        msg = _('Playlists added: {0}').format(success_count) \
+        + '\n' + _('Playlists not added: {0}').format(fail_count)
+
+        return self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+           'info',
+           'ok',
+            self,           # Parent window is this window
+        )
+
+
+    def on_assoc_playlist_prefs_button_clicked(self, button):
+
+        """Called from a callback in self.setup_assoc_playlist_tab().
+
+        Opens the preferences window to show associated playlist settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        SystemPrefWin(self.app_obj, 'downloads')
+
+
 #   def on_button_apply_options_clicked():  # Inherited from GenericConfigWin
 
 
@@ -14975,12 +15982,37 @@ class ChannelPlaylistEditWin(GenericEditWin):
 #   def on_button_remove_options_clicked(): # Inherited from GenericConfigWin
 
 
-    def never_called_func(self):
+    def on_clear_assoc_playlist_button_clicked(self, button):
 
-        """Function that is never called, but which makes this class object
-        collapse neatly in my IDE."""
+        """Called from a callback in self.setup_assoc_playlist_tab().
 
-        pass
+        Empties the channel/playlist's associated playlist list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.reset_playlist_id()
+        self.setup_assoc_playlist_tab_update_treeview()
+
+
+    def on_reset_assoc_playlist_button_clicked(self, button):
+
+        """Called from a callback in self.setup_assoc_playlist_tab().
+
+        Restores the channel/playlist's associated playlist list, extracting
+        playlist IDs from the metadata file of each child video.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.edit_obj.extract_playlist_id(self.app_obj)
+        self.setup_assoc_playlist_tab_update_treeview()
 
 
 class FolderEditWin(GenericEditWin):
@@ -16445,16 +17477,8 @@ class SystemPrefWin(GenericPrefWin):
 
         app_obj (mainapp.TartubeApp): The main application object
 
-        init_mode (str or None): If specified, a tab is automatically selected:
-            - 'db' - options for switching the Tartube database
-            - 'forks' - youtube-dl forks,
-            - 'paths' - youtube-dl paths,
-            - 'live' - livestream options
-            - 'options' - the list of download options
-            - 'custom_dl' - custom download preferences
-            - 'clips' - video clip preferences
-            - 'slices' - video slice preferences
-            - (any other value is ignored)
+        init_mode (str or None): If specified, a tab is automatically selected;
+            one of the values specified in the comments to self.select_tab()
 
     """
 
@@ -16534,22 +17558,14 @@ class SystemPrefWin(GenericPrefWin):
         same class is already open.
 
         If 'init_mode' is specified, switch the visible tab in the existing
-        preference window (if any)
+        preference window (if any).
 
         Args:
 
             app_obj (mainapp.TartubeApp): The main application object
 
-            init_mode (str or None): If specified:
-                - 'db' - options for switching the Tartube database
-                - 'forks' - youtube-dl forks,
-                - 'paths' - youtube-dl paths,
-                - 'live' - livestream options
-                - 'options' - the list of download options
-                - 'custom_dl' - custom download preferences
-                - 'clips' - video clip preferences
-                - 'slices' - video slice preferences
-                - (any other value is ignored)
+            init_mode (str or None): One of the values specified in the
+                comments to self.select_tab()
 
         Return values:
 
@@ -16599,13 +17615,14 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             init_mode (str or None): If specified:
+                - 'clips' - video clip preferences
+                - 'custom_dl' - custom download preferences
                 - 'db' - options for switching the Tartube database
+                - 'downloads' - Download operation preferences
                 - 'forks' - youtube-dl forks,
-                - 'paths' - youtube-dl paths,
                 - 'live' - livestream options
                 - 'options' - the list of download options
-                - 'custom_dl' - custom download preferences
-                - 'clips' - video clip preferences
+                - 'paths' - youtube-dl paths,
                 - 'slices' - video slice preferences
                 - (any other value is ignored)
 
@@ -16613,81 +17630,36 @@ class SystemPrefWin(GenericPrefWin):
 
         if init_mode is not None:
 
-            if init_mode == 'db':
+            if init_mode == 'clips':
+                self.select_clips_tab()
+            elif init_mode == 'custom_dl':
+                self.select_custom_dl_tab()
+            elif init_mode == 'db':
                 self.select_switch_db_tab()
+            elif init_mode == 'downloads':
+                self.select_downloads_tab()
             elif init_mode == 'forks':
                 self.select_forks_tab()
-            elif init_mode == 'paths':
-                self.select_paths_tab()
             elif init_mode == 'live':
                 self.select_livestream_tab()
             elif init_mode == 'options':
                 self.select_options_tab()
-            elif init_mode == 'custom_dl':
-                self.select_custom_dl_tab()
-            elif init_mode == 'clips':
-                self.select_clips_tab()
+            elif init_mode == 'paths':
+                self.select_paths_tab()
             elif init_mode == 'slices':
                 self.select_slices_tab()
 
 
-    def select_switch_db_tab(self):
+    def select_clips_tab(self):
 
         """Can be called by anything.
 
-        Makes the visible tab the one on which the user can set Tartube's
-        data directory (which contains the Tartube database file).
-        """
-
-        self.notebook.set_current_page(1)
-        self.files_inner_notebook.set_current_page(2)
-
-
-    def select_forks_tab(self):
-
-        """Can be called by anything.
-
-        Makes the visible tab the one on which the user can set youtube-dl
-        forks.
-        """
-
-        self.notebook.set_current_page(5)
-        self.downloader_inner_notebook.set_current_page(0)
-
-
-    def select_paths_tab(self):
-
-        """Can be called by anything.
-
-        Makes the visible tab the one on which the user can set youtube-dl
-        paths.
-        """
-
-        self.notebook.set_current_page(5)
-        self.downloader_inner_notebook.set_current_page(1)
-
-
-    def select_livestream_tab(self):
-
-        """Can be called by anything.
-
-        Makes the visible tab the one on which the user can set livestream
-        options.
-        """
-
-        self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(6)
-
-
-    def select_options_tab(self):
-
-        """Can be called by anything.
-
-        Makes the visible tab the one on which the list of download options is
+        Makes the visible tab the one on which the video clip preferences are
         displayed.
         """
 
-        self.notebook.set_current_page(6)
+        self.notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(5)
 
 
     def select_custom_dl_tab(self):
@@ -16702,16 +17674,75 @@ class SystemPrefWin(GenericPrefWin):
         self.operations_inner_notebook.set_current_page(3)
 
 
-    def select_clips_tab(self):
+    def select_switch_db_tab(self):
 
         """Can be called by anything.
 
-        Makes the visible tab the one on which the video clip preferences are
-        displayed.
+        Makes the visible tab the one on which the user can set Tartube's
+        data directory (which contains the Tartube database file).
+        """
+
+        self.notebook.set_current_page(1)
+        self.files_inner_notebook.set_current_page(2)
+
+
+    def select_downloads_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the custom download preferences
+        are displayed.
+        """
+
+        self.notebook.set_current_page(4)
+        self.operations_inner_notebook.set_current_page(2)
+
+
+    def select_forks_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set youtube-dl
+        forks.
+        """
+
+        self.notebook.set_current_page(5)
+        self.downloader_inner_notebook.set_current_page(0)
+
+
+    def select_livestream_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set livestream
+        options.
         """
 
         self.notebook.set_current_page(4)
         self.operations_inner_notebook.set_current_page(4)
+
+
+    def select_options_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the list of download options is
+        displayed.
+        """
+
+        self.notebook.set_current_page(6)
+
+
+    def select_paths_tab(self):
+
+        """Can be called by anything.
+
+        Makes the visible tab the one on which the user can set youtube-dl
+        paths.
+        """
+
+        self.notebook.set_current_page(5)
+        self.downloader_inner_notebook.set_current_page(1)
 
 
     def select_slices_tab(self):
@@ -16723,7 +17754,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(5)
+        self.operations_inner_notebook.set_current_page(6)
 
 
     # (Setup tabs)
@@ -19040,6 +20071,24 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.set_hexpand(False)
         checkbutton3.connect('toggled', self.on_yt_remind_button_toggled)
 
+        # Debugging preferences
+        self.add_label(grid,
+            '<u>' + _('Debugging preferences') + '</u>',
+            0, 4, 1, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Temporarily disable message dialogue windows (display messages' \
+            + ' in terminal instead)',
+            ),
+            self.app_obj.dialogue_disable_msg_flag,
+            True,               # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        checkbutton4.connect('toggled', self.on_dialogue_disable_toggled)
+
 
     def setup_windows_colours_tab(self, inner_notebook):
 
@@ -20295,9 +21344,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton7.connect('toggled', self.on_archive_classic_button_toggled)
 
         checkbutton8 = self.add_checkbutton(grid,
-            _(
-            'When checking videos, apply a 60-second timeout',
-            ),
+            _('When checking videos, apply a 60-second timeout'),
             self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
             0, 9, grid_width, 1,
@@ -20306,14 +21353,25 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton9 = self.add_checkbutton(grid,
             _(
+            'Extract playlist IDs from each video, and store them in the' \
+            + ' parent channel/playlist',
+            ),
+            self.app_obj.store_playlist_id_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
+        checkbutton9.connect('toggled', self.on_store_playlist_id_toggled)
+
+        checkbutton10 = self.add_checkbutton(grid,
+            _(
             'Convert .webp thumbnails into .jpg thumbnails (using FFmpeg)' \
             + ' after downloading them',
             ),
             self.app_obj.ffmpeg_convert_webp_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
-        checkbutton9.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
+        checkbutton10.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
 
     def setup_operations_custom_dl_tab(self, inner_notebook):
@@ -20655,14 +21713,22 @@ class SystemPrefWin(GenericPrefWin):
         # (Signal connect appears below)
 
         self.add_label(grid,
+            '<i>' + _(
+                'N.B. If this option is not selected, youtube-dl will still' \
+                + ' try to download livestreams',
+            ) + '</i>',
+            0, 6, grid_width, 1,
+        )
+
+        self.add_label(grid,
             _('Timeout after this many minutes of inactivity'),
-            0, 6, 1, 1,
+            0, 7, 1, 1,
         )
 
         spinbutton3 = self.add_spinbutton(grid,
             1, None, 0.2,
             self.app_obj.ytsc_wait_time,
-            1, 6, 1, 1,
+            1, 7, 1, 1,
         )
         if not self.app_obj.ytsc_priority_flag:
             spinbutton3.set_sensitive(False)
@@ -20670,13 +21736,13 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Number of restarts after a timeout'),
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
 
         spinbutton4 = self.add_spinbutton(grid,
             0, None, 1,
             self.app_obj.ytsc_restart_max,
-            1, 7, 1, 1,
+            1, 8, 1, 1,
         )
         if not self.app_obj.ytsc_priority_flag:
             spinbutton4.set_sensitive(False)
@@ -20689,7 +21755,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.num_worker_bypass_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         if not self.app_obj.ytsc_priority_flag:
             checkbutton5.set_sensitive(False)
@@ -25034,6 +26100,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_dialogue_mode(mode)
 
 
+    def on_dialogue_disable_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_windows_dialogues_tab().
+
+        Enables/disables message dialogue windows (for testing purposes).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_disable_msg_flag:
+            self.app_obj.set_dialogue_disable_msg_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_disable_msg_flag:
+            self.app_obj.set_dialogue_disable_msg_flag(False)
+
+
     def on_disable_dl_all_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_main_window_tab().
@@ -28357,6 +29443,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.toolbar_squeeze_flag:
             self.app_obj.set_toolbar_squeeze_flag(False)
+
+
+    def on_store_playlist_id_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Enables/disables storing video's playlist IDs in the parent channel/
+        playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.store_playlist_id_flag:
+            self.app_obj.set_store_playlist_id_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.store_playlist_id_flag:
+            self.app_obj.set_store_playlist_id_flag(False)
 
 
     def on_system_dates_button_toggled(self, checkbutton):

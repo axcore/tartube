@@ -281,7 +281,7 @@ video_option_setup_list = [
     '400',      'mp4 [1440p] <400>',                        False,
     '401',      'mp4 [2160p] <401>',                        False,
     '402',      'mp4 [2880p] <402>',                        False,
-    '571',      'mp4 [8k] <571',                            False,
+    '571',      'mp4 [8k] <571>',                           False,
     '43',       'webm [360p] <43>',                         False,
     '44',       'webm [480p] <44>',                         False,
     '45',       'webm [720p] <45>',                         False,
@@ -703,54 +703,35 @@ TOOLBAR_ICON_DICT = {
 }
 
 LARGE_ICON_DICT = {
-    'video_both_large': 'video_both.png',
-    'video_left_large': 'video_left.png',
-    'video_none_large': 'video_none.png',
-    'video_right_large': 'video_right.png',
-
-    'channel_both_large': 'channel_both.png',
-    'channel_left_large': 'channel_left.png',
-    'channel_none_large': 'channel_none.png',
-    'channel_right_large': 'channel_right.png',
-
-    'playlist_both_large': 'playlist_both.png',
-    'playlist_left_large': 'playlist_left.png',
-    'playlist_none_large': 'playlist_none.png',
-    'playlist_right_large': 'playlist_right.png',
-
-    'folder_both_large': 'folder_yellow_both.png',
-    'folder_left_large': 'folder_yellow_left.png',
-    'folder_none_large': 'folder_yellow_none.png',
-    'folder_right_large': 'folder_yellow_right.png',
-
-    'folder_private_both_large': 'folder_red_both.png',
-    'folder_private_left_large': 'folder_red_left.png',
-    'folder_private_none_large': 'folder_red_none.png',
-    'folder_private_right_large': 'folder_red_right.png',
-
-    'folder_fixed_both_large': 'folder_green_both.png',
-    'folder_fixed_left_large': 'folder_green_left.png',
-    'folder_fixed_none_large': 'folder_green_none.png',
-    'folder_fixed_right_large': 'folder_green_right.png',
-
-    'folder_temp_both_large': 'folder_blue_both.png',
-    'folder_temp_left_large': 'folder_blue_left.png',
-    'folder_temp_none_large': 'folder_blue_none.png',
-    'folder_temp_right_large': 'folder_blue_right.png',
-
-    'folder_no_parent_both_large': 'folder_black_both.png',
-    'folder_no_parent_left_large': 'folder_black_left.png',
-    'folder_no_parent_none_large': 'folder_black_none.png',
-    'folder_no_parent_right_large': 'folder_black_right.png',
-
+    'attention_large': 'attention.png',
+    'channel_large': 'channel.png',
     'copy_large': 'copy.png',
+    'error_large': 'error.png',
+    'folder_large': 'folder_yellow.png',
+    'folder_fixed_large': 'folder_green.png',
+    'folder_no_parent_large': 'folder_black.png',
+    'folder_private_large': 'folder_red.png',
+    'folder_temp_large': 'folder_blue.png',
     'hand_left_large': 'hand_left.png',
     'hand_right_large': 'hand_right.png',
     'limits_off_large': 'limits_off.png',
     'limits_on_large': 'limits_on.png',
+    'playlist_large': 'playlist.png',
     'question_large': 'question.png',
+    'video_large': 'video.png',
     'warning_large': 'warning.png',
 }
+
+LARGE_ICON_COMPOSITE_LIST = [
+    'channel_large',
+    'folder_large',
+    'folder_fixed_large',
+    'folder_no_parent_large',
+    'folder_private_large',
+    'folder_temp_large',
+    'playlist_large',
+    'video_large',
+]
 
 SMALL_ICON_DICT = {
     'video_small': 'video.png',
@@ -761,6 +742,7 @@ SMALL_ICON_DICT = {
     'archived_small': 'archived.png',
     'arrow_up_small': 'arrow_up.png',
     'arrow_down_small': 'arrow_down.png',
+    'attention_small': 'attention.png',
     'check_small': 'check.png',
     'comment_small': 'comment.png',
     'debut_now_small': 'debut_now.png',
@@ -775,6 +757,7 @@ SMALL_ICON_DICT = {
     'folder_blue_small': 'folder_blue.png',
     'folder_green_small': 'folder_green.png',
     'folder_red_small': 'folder_red.png',
+    'keyboard_small': 'keyboard.png',
     'likes_small': 'likes.png',
     'have_file_small': 'have_file.png',
     'live_now_small': 'live_now.png',
@@ -823,7 +806,7 @@ THUMB_ICON_DICT = {
 }
 
 EXTERNAL_ICON_DICT = {
-    'ytdl-gui': 'youtube-dl-gui.png',
+    'ytdl_gui': 'youtube-dl-gui.png',
 }
 
 # (Replaces system stock icons, if not available)

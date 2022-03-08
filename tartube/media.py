@@ -1630,6 +1630,58 @@ class GenericRemoteContainer(GenericContainer):
                 )
 
 
+    def set_playlist_id(self, playlist_id, playlist_title):
+
+        # (Don't overwrite an existing entry unless the existing name is blank)
+        if not playlist_id in self.playlist_id_dict \
+        or self.playlist_id_dict[playlist_id] is None:
+            self.playlist_id_dict[playlist_id] = playlist_title
+
+
+    def reset_playlist_id(self):
+
+        self.playlist_id_dict = {}
+
+
+    def extract_playlist_id(self, app_obj):
+
+        """Can be called by anything, but mostly called by
+        config.ChannelPlaylistEditWin.on_reset_assoc_playlist_button_clicked().
+
+        Reads the .info.json file for every child media.Video object, extracts
+        the 'playlist_id' and 'playlist_title' fields, and uses them to update
+        self.playlist_id_dict.
+
+        Does not check mainapp.TartubeApp.store_playlist_id_flag; the calling
+        code should do that, if necessary.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+        """
+
+        self.playlist_id_dict = {}
+
+        for child_obj in self.child_list:
+
+            json_path = child_obj.check_actual_path_by_ext(
+                app_obj,
+                '.info.json',
+            )
+            if json_path is not None:
+
+                json_dict = app_obj.file_manager_obj.load_json(json_path)
+                if 'playlist_id' in json_dict:
+
+                    if 'playlist_title' in json_dict:
+                        self.playlist_id_dict[json_dict['playlist_id']] \
+                        = json_dict['playlist_title']
+
+                    else:
+                        self.playlist_id_dict[json_dict['playlist_id']] = None
+
+
     def set_source(self, source):
 
         self.source = source
@@ -3334,6 +3386,14 @@ class Channel(GenericRemoteContainer):
         self.new_count = 0
         self.waiting_count = 0
 
+        # Dictionary of playlist IDs extracted from every video in this channel
+        #   (can be used to compile a list of playlists associated with a
+        #   channel)
+        # Dictionary in the form
+        #   playlist_id_dict[playlist_id] = playlist_title
+        # ...where 'playlist_title' is None if the title is not known
+        self.playlist_id_dict = {}
+
         # List of error/warning messages generated the last time the channel
         #   was checked or downloaded. Both set to empty lists if the channel
         #   has never been checked or downloaded, or if there was no error/
@@ -3552,6 +3612,16 @@ class Playlist(GenericRemoteContainer):
         self.missing_count = 0
         self.new_count = 0
         self.waiting_count = 0
+
+        # Dictionary of playlist IDs extracted from every video in this
+        #   playlist (will usually contain just one key-value pair; however, if
+        #   the URL self.source is actually a channel, not a playlist, it may
+        #   contain many key-value pairs; presumably the user will want to
+        #   convert the media.Playlist to a media.Channel at some point)
+        # Dictionary in the form
+        #   playlist_id_dict[playlist_id] = playlist_title
+        # ...where 'playlist_title' is None if the title is not known
+        self.playlist_id_dict = {}
 
         # List of error/warning messages generated the last time the channel
         #   was checked or downloaded. Both set to empty lists if the channel

@@ -293,7 +293,7 @@ class TartubeApp(Gtk.Application):
 
         # Default window sizes (in pixels)
         self.main_win_width = 1000
-        self.main_win_height = 750
+        self.main_win_height = 700
         self.config_win_width = 650
         self.config_win_height = 450
         # Default slider position. This value applies to the sliders in the
@@ -776,7 +776,7 @@ class TartubeApp(Gtk.Application):
         self.classic_format_selection = None
         # Flag set to False, if videos should be downloaded in that format, or
         #   True if they should be converted to the format using FFmpeg/AVConv
-        self.classic_format_convert_flag = False
+        self.classic_format_convert_flag = True
         # Flag set to True, if pending URLs (still visible in the top half of
         #   the Classic Mode tab, or not yet downloaded in the bottom half)
         #   should be saved when Tartube shuts down, and restored (to the top
@@ -1247,6 +1247,10 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if the newbie dialogue should appear after a failed
         #   download operation, explaining what to do
         self.show_newbie_dialogue_flag = True
+        # Flag set to True if a dialogue should appear when the user opens the
+        #   MSYS2 terminal from the main menu (on MS Windows only; ignored on
+        #   other systems)
+        self.show_msys2_dialogue_flag = True
 
         # Media data classes are those specified in media.py. Those class
         #   objects are media.Video (for individual videos), media.Channel,
@@ -1706,6 +1710,12 @@ class TartubeApp(Gtk.Application):
         #   doesn't end with .../videos, the user should be prompted to add it
         self.dialogue_yt_remind_flag = True
 
+        # On Virtualbox MSWin installations, dialogue windows can freeze
+        #   Tartube, forcing a restart. Flag set to True if message dialogue
+        #   windows (only) should be disabled, their messages being displayed
+        #   in the terminal instead
+        self.dialogue_disable_msg_flag = False
+
         # Flag set to True if, when downloading videos, youtube-dl should be
         #   passed, --download-archive, creating the file ytdl-archive.txt
         # If the file exists, youtube-dl won't re-download a video a user has
@@ -1743,6 +1753,11 @@ class TartubeApp(Gtk.Application):
         #   are marked as missing. Ignored if self.track_missing_videos_flag or
         #   self.track_missing_time_flag is False
         self.track_missing_time_days = 14
+        # Flag set to True if Tartube should retrieve the playlist ID from each
+        #   checked/downloaded video, and store it in the parent channel/
+        #   playlist. (The user can use the collected IDs to get a list of
+        #   playlists associated with a channel)
+        self.store_playlist_id_flag = True
 
         # Flag set to True if a list of timestamps should be extracted from a
         #   video's .info.json file, when it is received
@@ -2254,6 +2269,27 @@ class TartubeApp(Gtk.Application):
         gen_options_action.connect('activate', self.on_menu_general_options)
         self.add_action(gen_options_action)
 
+        # 'System' column
+        if os.name == 'nt':
+
+            open_msys2_action = Gio.SimpleAction.new('open_msys2_menu', None)
+            open_msys2_action.connect('activate', self.on_menu_open_msys2)
+            self.add_action(open_msys2_action)
+
+            show_install_action = Gio.SimpleAction.new(
+                'show_install_menu',
+                None,
+            )
+            show_install_action.connect('activate', self.on_menu_show_install)
+            self.add_action(show_install_action)
+
+            show_script_action = Gio.SimpleAction.new(
+                'show_script_menu',
+                None,
+            )
+            show_script_action.connect('activate', self.on_menu_show_script)
+            self.add_action(show_script_action)
+
         # 'Media' column
         add_video_menu_action = Gio.SimpleAction.new('add_video_menu', None)
         add_video_menu_action.connect('activate', self.on_menu_add_video)
@@ -2751,16 +2787,6 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(classic_add_urls_button_action)
 
-        classic_remove_button_action = Gio.SimpleAction.new(
-            'classic_remove_button',
-            None,
-        )
-        classic_remove_button_action.connect(
-            'activate',
-            self.on_button_classic_remove,
-        )
-        self.add_action(classic_remove_button_action)
-
         classic_play_button_action = Gio.SimpleAction.new(
             'classic_play_button',
             None,
@@ -2771,25 +2797,15 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(classic_play_button_action)
 
-        classic_move_up_button_action = Gio.SimpleAction.new(
-            'classic_move_up_button',
+        classic_open_button_action = Gio.SimpleAction.new(
+            'classic_open_button',
             None,
         )
-        classic_move_up_button_action.connect(
+        classic_open_button_action.connect(
             'activate',
-            self.on_button_classic_move_up,
+            self.on_button_classic_open,
         )
-        self.add_action(classic_move_up_button_action)
-
-        classic_move_down_button_action = Gio.SimpleAction.new(
-            'classic_move_down_button',
-            None,
-        )
-        classic_move_down_button_action.connect(
-            'activate',
-            self.on_button_classic_move_down,
-        )
-        self.add_action(classic_move_down_button_action)
+        self.add_action(classic_open_button_action)
 
         classic_redownload_button_action = Gio.SimpleAction.new(
             'classic_redownload_button',
@@ -2820,6 +2836,36 @@ class TartubeApp(Gtk.Application):
             self.on_button_classic_ffmpeg,
         )
         self.add_action(classic_ffmpeg_button_action)
+
+        classic_move_up_button_action = Gio.SimpleAction.new(
+            'classic_move_up_button',
+            None,
+        )
+        classic_move_up_button_action.connect(
+            'activate',
+            self.on_button_classic_move_up,
+        )
+        self.add_action(classic_move_up_button_action)
+
+        classic_move_down_button_action = Gio.SimpleAction.new(
+            'classic_move_down_button',
+            None,
+        )
+        classic_move_down_button_action.connect(
+            'activate',
+            self.on_button_classic_move_down,
+        )
+        self.add_action(classic_move_down_button_action)
+
+        classic_remove_button_action = Gio.SimpleAction.new(
+            'classic_remove_button',
+            None,
+        )
+        classic_remove_button_action.connect(
+            'activate',
+            self.on_button_classic_remove,
+        )
+        self.add_action(classic_remove_button_action)
 
         classic_clear_dl_button_action = Gio.SimpleAction.new(
             'classic_clear_dl_button',
@@ -3874,8 +3920,9 @@ class TartubeApp(Gtk.Application):
             self.classic_dir_list = json_dict['classic_dir_list']
             self.classic_dir_previous = json_dict['classic_dir_previous']
         if version >= 2003190:  # v2.3.190
+            # (Before v2.3.369, this values was stored with leading zeroes)
             self.classic_format_selection \
-            = json_dict['classic_format_selection']
+            = utils.strip_whitespace(json_dict['classic_format_selection'])
             self.classic_format_convert_flag \
             = json_dict['classic_format_convert_flag']
         if version >= 2002129:  # v2.2.129
@@ -4034,6 +4081,9 @@ class TartubeApp(Gtk.Application):
         if version >= 2003114:  # v2.3.114
             self.show_newbie_dialogue_flag \
             = json_dict['show_newbie_dialogue_flag']
+        if version >= 2003376:  # v2.3.376
+            self.show_msys2_dialogue_flag \
+            = json_dict['show_msys2_dialogue_flag']
 
         if version >= 1003032:  # v1.3.032
             self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
@@ -4178,6 +4228,10 @@ class TartubeApp(Gtk.Application):
         if version >= 2003130:  # v2.3.130
             self.dialogue_yt_remind_flag = json_dict['dialogue_yt_remind_flag']
 
+        if version >= 2003371:  # v2.3.371
+            self.dialogue_disable_msg_flag \
+            = json_dict['dialogue_disable_msg_flag']
+
         if version >= 1003018:  # v1.3.018
             self.allow_ytdl_archive_flag \
             = json_dict['allow_ytdl_archive_flag']
@@ -4194,6 +4248,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['track_missing_time_flag']
             self.track_missing_time_days \
             = json_dict['track_missing_time_days']
+        if version >= 2003382:  # v2.3.382
+            self.store_playlist_id_flag \
+            = json_dict['store_playlist_id_flag']
 
         if version >= 2003181:  # v2.3.181
             self.video_timestamps_extract_json_flag \
@@ -4566,8 +4623,8 @@ class TartubeApp(Gtk.Application):
             elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
 
                 self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
-                    '..\\..\\..\\mingw64\\bin\python3.exe',
-                    '..\\..\\..\\mingw64\\bin\pip3-script.py',
+                    '..\\..\\..\\mingw32\\bin\python3.exe',
+                    '..\\..\\..\\mingw32\\bin\pip3-script.py',
                     'install',
                     '-upgrade',
                     '--no-dependencies',
@@ -4958,6 +5015,7 @@ class TartubeApp(Gtk.Application):
             'operation_download_limit': self.operation_download_limit,
 
             'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
+            'show_msys2_dialogue_flag': self.show_msys2_dialogue_flag,
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
             'auto_delete_options_flag': self.auto_delete_options_flag,
@@ -5008,6 +5066,8 @@ class TartubeApp(Gtk.Application):
             'dialogue_keep_open_flag': self.dialogue_keep_open_flag,
             'dialogue_yt_remind_flag': self.dialogue_yt_remind_flag,
 
+            'dialogue_disable_msg_flag': self.dialogue_disable_msg_flag,
+
             'allow_ytdl_archive_flag': self.allow_ytdl_archive_flag,
             'classic_ytdl_archive_flag': \
             self.classic_ytdl_archive_flag,
@@ -5015,6 +5075,7 @@ class TartubeApp(Gtk.Application):
             'track_missing_videos_flag': self.track_missing_videos_flag,
             'track_missing_time_flag': self.track_missing_time_flag,
             'track_missing_time_days': self.track_missing_time_days,
+            'store_playlist_id_flag': self.store_playlist_id_flag,
 
             'video_timestamps_extract_json_flag': \
             self.video_timestamps_extract_json_flag,
@@ -6625,7 +6686,7 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['no_allow_dynamic_mpd'] = False
                 options_obj.options_dict['hls_split_discontinuity'] = False
 
-        if version < 2003237:      # v2.3.237
+        if version < 2003237:       # v2.3.237
 
             # This version adds new IVs to media.Video objects
             for media_data_obj in self.media_reg_dict.values():
@@ -6633,7 +6694,7 @@ class TartubeApp(Gtk.Application):
                     media_data_obj.vid = None
                     media_data_obj.slice_list = []
 
-        if version < 2003251:      # v2.3.251
+        if version < 2003251:       # v2.3.251
 
             # This version adds new options to
             #   ffmpeg_tartube.FFmpegOptionsManager
@@ -6641,7 +6702,7 @@ class TartubeApp(Gtk.Application):
                 options_obj.options_dict['slice_mode'] = 'video'
                 options_obj.options_dict['slice_list'] = []
 
-        if version < 2003291:      # v2.3.291
+        if version < 2003291:       # v2.3.291
 
             # This version adds a new IV to downloads.CustomDLManager objects
             for custom_dl_obj in self.custom_dl_reg_dict.values():
@@ -6653,7 +6714,7 @@ class TartubeApp(Gtk.Application):
                 else:
                     custom_dl_obj.dl_precede_flag = False
 
-        if version < 2003295:      # v2.3.295
+        if version < 2003295:       # v2.3.295
 
             # This version adds a new IV to media.Scheduled objects
             for scheduled_obj in self.scheduled_list:
@@ -6664,7 +6725,7 @@ class TartubeApp(Gtk.Application):
                 else:
                     scheduled_obj.custom_dl_uid = None
 
-        if version < 2003304:      # v2.3.304
+        if version < 2003304:       # v2.3.304
 
             # This version fixes an incorrect value for an IV in media.Folder
             #   objects
@@ -6673,19 +6734,39 @@ class TartubeApp(Gtk.Application):
                 and media_data_obj.restrict_mode == 'free':
                     media_data_obj.restrict_mode = 'open'
 
-        if version < 2003314:      # v2.3.314
+        if version < 2003314:       # v2.3.314
 
             # This version adds a new IV to media.Video objects
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.comment_list = []
 
-        if version < 2003316:  # v2.3.316
+        if version < 2003316:       # v2.3.316
 
             # This version removes an option to options.OptionsManager
             for options_obj in options_obj_list:
                 if 'write_comments' in options_obj.options_dict:
                     del options_obj.options_dict['write_comments']
+
+        if version < 2003375:       # v2.3.375
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+
+                # (yt-dlp only)
+                options_obj.options_dict['no_cookies'] = False
+                options_obj.options_dict['cookies_from_browser'] = ''
+                options_obj.options_dict['no_cookies_from_browser'] = True
+
+        if version < 2003382:      # v2.3.382
+
+            # This version adds a new IV to media.Channel and media.Playlist
+            #   objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Channel) \
+                or isinstance(media_data_obj, media.Playlist):
+                    media_data_obj.playlist_id_dict = {}
+
 
         # --- Do this last, or call to .check_integrity_db() fails -----------
         # --------------------------------------------------------------------
@@ -8276,20 +8357,20 @@ class TartubeApp(Gtk.Application):
                 self.ytdl_path_pypi,
             )
 
-            if os.path.isfile(self.ytdl_path_default):
-                self.ytdl_path = self.ytdl_path_default
-            elif os.path.isfile(pypi_path) \
+            if os.path.isfile(pypi_path) \
             or __main__.__pkg_install_flag__:
                 self.ytdl_path = self.ytdl_path_pypi
+            elif os.path.isfile(self.ytdl_path_default):
+                self.ytdl_path = self.ytdl_path_default
             else:
                 self.ytdl_path = self.ytdl_bin
 
             if not __main__.__pkg_strict_install_flag__:
 
-                if self.ytdl_path == self.ytdl_path_default:
-                    self.ytdl_update_current = 'ytdl_update_default_path'
-                elif self.ytdl_path == self.ytdl_path_pypi:
+                if self.ytdl_path == self.ytdl_path_pypi:
                     self.ytdl_update_current = 'ytdl_update_pip3_recommend'
+                elif self.ytdl_path == self.ytdl_path_default:
+                    self.ytdl_update_current = 'ytdl_update_default_path'
                 else:
                     self.ytdl_update_current = 'ytdl_update_local_path'
 
@@ -10545,7 +10626,7 @@ class TartubeApp(Gtk.Application):
                 msg = _('Update operation halted')
             else:
                 msg = _('Update operation complete') \
-                + '\n\n' + self.get_downloader() + ' ' \
+                + '\n\n' + self.get_downloader(wiz_win_obj) + ' ' \
                 + _('version:') + ' '
                 if ytdl_version is not None:
                     msg += ytdl_version
@@ -11021,6 +11102,7 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 8991 info_manager_finished')
 
         # Import IVs from info.InfoManager, before it is destroyed
+        video_obj = self.info_manager_obj.video_obj
         info_type = self.info_manager_obj.info_type
         success_flag = self.info_manager_obj.success_flag
         output_list = self.info_manager_obj.output_list.copy()
@@ -11055,9 +11137,26 @@ class TartubeApp(Gtk.Application):
         if url_string is not None and url_string != '':
              utils.open_file(self, self.temp_test_dir)
 
-        # Then show a dialogue window/desktop notification, if allowed
-        if self.operation_dialogue_mode != 'default':
+        # Show a confirmation, if allowed
+        if self.operation_dialogue_mode == 'dialogue' \
+        and (info_type == 'formats' or info_type == 'subs') \
+        and success_flag:
 
+            # Show a custom dialogue window, that enables the user to modify or
+            #   apply download options directly
+            dialogue_win = mainwin.FormatsSubsDialogue(
+                self.main_win_obj,
+                video_obj,
+                info_type,
+            )
+
+            response = dialogue_win.run()
+            dialogue_win.destroy()
+
+        elif self.operation_dialogue_mode != 'default':
+
+            # Then show a message dialogue window/desktop notification, if
+            #   allowed
             if info_type != 'version' or not success_flag:
 
                 if not success_flag:
@@ -12437,6 +12536,21 @@ class TartubeApp(Gtk.Application):
                     self,
                     json_dict['chapters'],
                 )
+
+            if self.store_playlist_id_flag \
+            and 'playlist_id' in json_dict \
+            and not isinstance(video_obj.parent_obj, media.Folder):
+
+                if 'playlist_title' in json_dict:
+                    video_obj.parent_obj.set_playlist_id(
+                        json_dict['playlist_id'],
+                        json_dict['playlist_title'],
+                    )
+                else:
+                    video_obj.parent_obj.set_playlist_id(
+                        json_dict['playlist_id'],
+                        None,
+                    )
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
@@ -20970,6 +21084,58 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.classic_mode_tab_move_row(False)
 
 
+    def on_button_classic_open(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Opens the destination(s) of any videos downloaded from the selected
+        rows in the Classic Progress List.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 16911 on_button_classic_open')
+
+        selection = self.main_win_obj.classic_progress_treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            # Nothing selected
+            return
+
+        # Get the the dummy media.Video objects for each selected row, and
+        #   produce a list of destinations, ignoring duplicates
+        dir_list = []
+        for path in path_list:
+
+            this_iter = model.get_iter(path)
+            dbid = model[this_iter][0]
+            dummy_obj = self.main_win_obj.classic_media_dict[dbid]
+
+            if dummy_obj.dummy_dir \
+            and not dummy_obj.dummy_dir in dir_list:
+                dir_list.append(dummy_obj.dummy_dir)
+
+        if not dir_list:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('No destination(s) to show'),
+                'error',
+                'ok',
+            )
+
+        else:
+
+            for this_dir in dir_list:
+                utils.open_file(self, this_dir)
+
+
     def on_button_classic_play(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -22728,6 +22894,35 @@ class TartubeApp(Gtk.Application):
         config.SystemPrefWin(self, 'live')
 
 
+    def on_menu_open_msys2(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        On MS Windows, opens the MINGW terminal for MSYS2.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18438 on_menu_open_msys2')
+
+        if 'PROGRAMFILES(X86)' in os.environ:
+            utils.open_file(self, '..\\..\\..\\mingw64.exe')
+        else:
+            utils.open_file(self, '..\\..\\..\\mingw32.exe')
+
+        if self.show_msys2_dialogue_flag:
+
+            dialogue_win = mainwin.MSYS2Dialogue(self.main_win_obj)
+            dialogue_win.run()
+            dialogue_win.destroy()
+
+
     def on_menu_refresh_db(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -22856,6 +23051,51 @@ class TartubeApp(Gtk.Application):
             if isinstance(media_data_obj, media.Folder) \
             and media_data_obj.hidden_flag:
                 self.mark_folder_hidden(media_data_obj, False)
+
+
+    def on_menu_show_install(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        On MS Windows (only), opens Tartube's installation folder.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18561 on_menu_show_install')
+
+        # (This path assumes that the standard NSIS installation script was
+        #   used to install Tartube)
+        utils.open_file(
+            self,
+            self.script_parent_dir + '\\..\\..\\..\\..\\..',
+        )
+
+
+    def on_menu_show_script(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        On MS Windows (only), opens Tartube's home folder.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 18561 on_menu_show_install')
+
+        utils.open_file(self, self.script_parent_dir)
 
 
     def on_menu_stop_soon(self, action, par):
@@ -23968,10 +24208,21 @@ class TartubeApp(Gtk.Application):
             self.dialogue_copy_clipboard_flag = True
 
 
+    def set_dialogue_disable_msg_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 19519 set_dialogue_disable_msg_flag')
+
+        if not flag:
+            self.dialogue_disable_msg_flag = False
+        else:
+            self.dialogue_disable_msg_flag = True
+
+
     def set_dialogue_keep_open_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 19518 set_dialogue_keep_open_flag')
+            utils.debug_time('app 19520 set_dialogue_keep_open_flag')
 
         if not flag:
             self.dialogue_keep_open_flag = False
@@ -25017,10 +25268,21 @@ class TartubeApp(Gtk.Application):
             self.show_custom_icons_flag = True
 
 
+    def set_show_msys2_dialogue_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20370 set_show_msys2_dialogue_flag')
+
+        if not flag:
+            self.show_msys2_dialogue_flag = False
+        else:
+            self.show_msys2_dialogue_flag = True
+
+
     def set_show_newbie_dialogue_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 20370 set_show_newbie_dialogue_flag')
+            utils.debug_time('app 20371 set_show_newbie_dialogue_flag')
 
         if not flag:
             self.show_newbie_dialogue_flag = False
@@ -25214,10 +25476,21 @@ class TartubeApp(Gtk.Application):
             self.split_video_subdir_flag = True
 
 
+    def set_store_playlist_id_flag(self, flag):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 20462 set_store_playlist_id_flag')
+
+        if not flag:
+            self.store_playlist_id_flag = False
+        else:
+            self.store_playlist_id_flag = True
+
+
     def set_system_error_show_flag(self, flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('app 20462 set_system_error_show_flag')
+            utils.debug_time('app 20463 set_system_error_show_flag')
 
         if not flag:
             self.system_error_show_flag = False

@@ -4261,6 +4261,15 @@ class VideoDownloader(object):
         else:
             comment_list = []
 
+        if 'playlist_id' in json_dict:
+            playlist_id = json_dict['playlist_id']
+            if 'playlist_title' in json_dict:
+                playlist_title = json_dict['playlist_title']
+            else:
+                playlist_title = None
+        else:
+            playlist_id = None
+
         # Does an existing media.Video object match this video?
         media_data_obj = self.download_item_obj.media_data_obj
         video_obj = None
@@ -4364,6 +4373,14 @@ class VideoDownloader(object):
 
             if comment_list and app_obj.comment_store_flag:
                 video_obj.set_comments(comment_list)
+
+            if app_obj.store_playlist_id_flag \
+            and playlist_id is not None \
+            and not isinstance(video_obj.parent_obj, media.Folder):
+                video_obj.parent_obj.set_playlist_id(
+                    playlist_id,
+                    playlist_title,
+                )
 
             # If downloading from a channel/playlist, remember the video's
             #   index. (The server supplies an index even for a channel, and
@@ -4470,6 +4487,14 @@ class VideoDownloader(object):
 
             if not video_obj.comment_list and comment_list:
                 video_obj.set_comments(comment_list)
+
+            if app_obj.store_playlist_id_flag \
+            and playlist_id is not None \
+            and not isinstance(video_obj.parent_obj, media.Folder):
+                video_obj.parent_obj.set_playlist_id(
+                    playlist_id,
+                    playlist_title,
+                )
 
             # If downloading from a channel/playlist, remember the video's
             #   index. (The server supplies an index even for a channel, and

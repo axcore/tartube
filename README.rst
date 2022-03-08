@@ -59,14 +59,14 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.367 (12 Feb 2022)**
+Latest version: **v2.3.332 (8 Aug 2021)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-64bit-portable.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-32bit-portable/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.367/python3-tartube_2.3.367.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-32bit-portable/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.332/python3-tartube_2.3.332.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332.rpm/download>`__ from Sourceforge
 
 There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
@@ -170,7 +170,7 @@ If you want to perform a manual installation, you can follow this procedure, whi
 5.2 Installation - MacOS
 ------------------------
 
-**Several users have reported problems installing Tartube on MacOS. The authors do not use MacOS, so we don't know how to fix these problems. Apologies in advance!**
+**Several users have reported problems installing Tartube on MacOS. The authors do not use MacOS and don't know how to fix these problems. Apologies in advance.**
 
 MacOS users should use the following procedure (with thanks to JeremyShih):
 
@@ -377,7 +377,7 @@ Packages can be created in the standard way. For example, an RPM package would b
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The procedure used to create the MS Windows installers is described in full in the
-`installer scripts themselves <nsis/tatrube_install_64bit.nsi>`__.
+`installer scripts themselves <nsis/tartube_install_64bit.nsi>`__.
 
 6 Using Tartube
 ===============
@@ -416,10 +416,11 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.16.2 Favourite channels, playlists and folders`_
 * `6.17 Combining channels, playlists and folders`_
 * `6.17.1 Combining one channel and many playlists`_
-* `6.17.2 Combining channels from different websites`_
-* `6.17.3 Download all videos to a single folder`_
-* `6.17.4 Download all videos to an external folder`_
-* `6.17.5 External folders and yt-dlp`_
+* `6.17.2 Extracting playlists from a channel`_
+* `6.17.3 Combining channels from different websites`_
+* `6.17.4 Download all videos to a single folder`_
+* `6.17.5 Download all videos to an external folder`_
+* `6.17.6 External folders and yt-dlp`_
 * `6.18 Archiving videos`_
 * `6.19 Performance limits`_
 * `6.20 Managing databases`_
@@ -1021,7 +1022,35 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 - Now, right-click on each playlist in turn, and then select **Playlist actions > Set download destination...**
 - In the dialogue window, click **Use a different location**, select the name of the channel, then click the **OK** button.
 
-6.17.2 Combining channels from different websites
+6.17.2 Extracting playlists from a channel
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As described above, a creator might have a single channel, and several playlists. If there are a *lot* of playlists, it might take a long time to add them all to Tartube's database. However, there is a shortcut for YouTube channels.
+
+- On the channel's webpage, click the **Playlists** tab
+- Add a new channel to Tartube's database, using this URL (which should end in **../playlists**) 
+
+YouTube does not always send us the list of playlists; that's why it's necessary to click the **Playlists** tab, rather than the **Videos** tab, as we normally would.
+
+Now you have two choices. If you want to keep the original channel in your database, without downloading duplicate videos, do this:
+
+- In Tartube's main window, right-click the channel, and select **Check channel**
+- When the operation has finished, right-click the channel and select **Show > Channel properties... > Associated Playlists**
+- Select the button **Set the channel as the download destination**
+- Click the **Add all playlists button**
+- Click **OK** to close the window
+- On the channel's webpage, click the **Videos** tab
+- In Tartube's main window, right-click the channel, and select **Channel actions > Set URL...**, and replace the URL with the one ending in **../videos**
+
+Alternatively, if you don't want to keep the original channel, do this:
+
+- In Tartube's main window, right-click the channel, and select **Check channel**
+- When the operation has finished, right-click the channel and select **Show > Channel properties... > Associated Playlists**
+- Click the **Add all playlists button**
+- Click **OK** to close the window
+- When you're ready, delete the channel
+
+6.17.3 Combining channels from different websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might release their videos on **YouTube**, but also on a site like **Odysee**. Sometimes they will only release a particular video on **Odysee**.
@@ -1037,7 +1066,7 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
 
-6.17.3 Download all videos to a single folder
+6.17.4 Download all videos to a single folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don't care about keeping videos in separate directories/folders on your filesystem, you can download *all* videos into the **Unsorted videos** folder. Regardless of whether you have added one channel or a thousand, all the videos will be stored in that one location.
@@ -1048,7 +1077,7 @@ If you don't care about keeping videos in separate directories/folders on your f
 
 Alternatively, you could select **Temporary Videos**. If you do, videos will be deleted when you restart **Tartube** (and will not be re-downloaded in the future).
 
-6.17.4 Download all videos to an external folder
+6.17.5 Download all videos to an external folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, all files are downloaded into Tartube's data folder. Users often request that **Tartube** should be able to download videos to other locations in the filesystem, *while retaining those videos in Tartube's database.*
@@ -1070,7 +1099,7 @@ If one of these reasons applies, then you can do this:
 - Click the **Set** button, and choose an external folder
 - When you're ready, click the **OK** button to apply your changes
 
-6.17.5 External folders and yt-dlp
+6.17.6 External folders and yt-dlp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware of the download option **--paths**, which may be more convenient in some situations. See the **yt-dlp** documentation for more information about how it works. In Tartube, it can be configured like this:
@@ -1755,14 +1784,10 @@ A: Tartube is known to fail on Windows 7 systems that have not been updated for 
 A: New installers for MS Windows are not released frequently, but small updates and fixes *are* uploaded frequently to `Github <https://github.com/axcore/tartube/>`__. You can update your Tartube installation quite easily.
 
 - Download the latest source code from `Github <https://github.com/axcore/tartube/>`__
-- On your MS Windows system, enable hidden folders. (Use a search engine if you're not sure how to do that)
-- Open the folder where Tartube's source code was installed. By default, that is
-
-        **C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\**
-
-- Remove the folder (the one containing a file called **setup.py**)
-- Replace it with the folder you just downloaded
-- Check that the replacement folder contains a file called **setup.py**
+- In Tartube's main menu, select **System > Show Tartube script folder**
+- A folder opens containing files such as **setup.py** and **README.rst**
+- Copy the downloaded source code into this folder, replacing old files with new ones
+- Restart Tartube
 
 A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
@@ -1776,8 +1801,10 @@ It may be helpful to turn on debug messages (which are visible in a terminal win
 
 On MS Windows, this is how to run **Tartube** from inside a terminal window:
 
-- First, enable hidden folders on your system
-- Then, run the application: **C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\mingw64.exe**
+- In Tartube's main menu, select **System > Show Tartube install folder**
+- After the folder window opens, shut down Tartube
+- In the folder window, click the **msys64** or **msys32** folder to open it
+- Open the terminal by double-clicking **mingw64.exe** or **mingw32.exe**
 - In this window, type these commands to start **Tartube** (paying attention to the *forward* slashes):
 
         **cd /home/user/tartube**
@@ -2033,7 +2060,7 @@ This is a **youtube-dl** issue. A general solution is described in `this post <h
 
 The solution describes how to create a cookies.txt file, which can be specified as a download option.
 
-Having created the file, in the same edit window, click the **General** tab. In the box labelled **Extra command line options**, you can add:
+Having created the file, in the same edit window, click the **General** tab. In the box labelled **Additional download options**, you can add:
 
 **--cookies=YT-cookies.txt**
 
@@ -2070,19 +2097,20 @@ Unfortunately, it is not possible to switch between proxies while downloading a 
 
 A: **Tartube** is a Linux application. The installer for MS Windows contains not just **Tartube** itself, but a copy of Python and a whole bunch of essential graphics libraries, all of them ported to MS Windows.
 
+Installing `FFmpeg <https://ffmpeg.org/>`__ will dramatically increase the size of the installed folder.
+
 If you're at all suspicious that such a small application uses such a large installer, you are invited to examine the installed files for yourself:
 
-**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube**
-
-(You might need to enable hidden folders; this can be done from the Control Panel.)
+- In Tartube's main menu, select **System > Show Tartube install folder**
 
 Everything is copied into this single folder. The installer doesn't modify the Windows registry, nor does it install files anywhere else (other than to the desktop and the Start Menu).
 
 The NSIS scripts used to create the installers can be found here:
 
-**C:\\Users\\YOURNAME\\AppData\\Local\\Tartube\\msys64\\home\\user\\tartube\\nsis**
+- In Tartube's main menu, select **System > Show Tartube script folder**
+- Click the **nsis** folder to open it
 
-The scripts contain full instructions, so you should be able to create your own installer, which can be compared with the official one.
+The scripts contain full instructions, so you should be able to create your own installer and then compare it to the official one.
 
 7.23 Doesn't work on 32-bit Windows
 -----------------------------------
@@ -2165,7 +2193,12 @@ A: Tartube shows download statistics in a number of places, for example **Edit >
 
 The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of the Tartube installers use it. If you want graphs, you have to install matplotlib yourself.
 
-On Linux/BSD, use your system's software manager. On MS Windows, run the application **C:\Users\YOURNAME\AppData\Local\Tartube\msys64\mingw64.exe**, and in the new window type **pacman -S mingw-w64-x86_64-python-matplotlib**.
+On Linux/BSD, use your system's software manager.
+
+On MS Windows, do this:
+
+- In Tartube's main menu, select **System > Open MSYS2 terminal...**
+- In the terminal window, type **pacman -S mingw-w64-x86_64-python-matplotlib**.
 
 7.31 Tartube is not visible in the system tray
 ----------------------------------------------

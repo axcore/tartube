@@ -262,6 +262,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.error_list_button = None           # Gtk.Button
         # (from self.setup_classic_mode_tab)
         self.classic_paned = None               # Gtk.VPaned
+        self.classic_banner_img = None          # Gtk.Image
+        self.classic_banner_label = None        # Gtk.Label
+        self.classic_banner_label2 = None       # Gtk.Label
         self.classic_menu_button = None         # Gtk.Button
         self.classic_textview = None            # Gtk.TextView
         self.classic_textbuffer = None          # Gtk.TextBuffer
@@ -280,13 +283,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_progress_treeview = None   # Gtk.TreeView
         self.classic_progress_liststore = None  # Gtk.ListStore
         self.classic_progress_tooltip_column = 1
-        self.classic_remove_button = None       # Gtk.Button
         self.classic_play_button = None         # Gtk.Button
-        self.classic_move_up_button = None      # Gtk.Button
-        self.classic_move_down_button = None    # Gtk.Button
+        self.classic_open_button = None         # Gtk.Button
         self.classic_redownload_button = None   # Gtk.Button
         self.classic_stop_button = None         # Gtk.Button
         self.classic_ffmpeg_button = None       # Gtk.Button
+        self.classic_move_up_button = None      # Gtk.Button
+        self.classic_move_down_button = None    # Gtk.Button
+        self.classic_remove_button = None       # Gtk.Button
         self.classic_download_button = None     # Gtk.Button
         self.classic_clear_button = None        # Gtk.Button
         self.classic_clear_dl_button = None     # Gtk.Button
@@ -322,6 +326,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Paths to Tartube standard icon files. Dictionary in the form
         #   key - a string like 'video_both_large'
         #   value - full filepath to the icon file
+        # N.B. In this dictionary, composite pixbufs created by
+        #   self.setup_composite_pixbufs() use the value 'None'
         self.icon_dict = {}
         # Loading icon files whenever they're neeeded causes frequent Gtk
         #   crashes. Instead, we create a GdkPixbuf.Pixbuf for all standard
@@ -875,6 +881,9 @@ class MainWin(Gtk.ApplicationWindow):
                         GdkPixbuf.Pixbuf.new_from_file(full_path),
                     )
 
+                # Composite icons using a base file and one or more overlays
+                self.setup_composite_pixbufs(icon_dir_path)
+
                 # Store the correct icon_dir_path, so that StatusIcon can use
                 #   it
                 self.icon_dir_path = icon_dir_path
@@ -888,6 +897,150 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         self.app_obj.do_shutdown()
+
+
+    def setup_composite_pixbufs(self, icon_dir_path):
+
+        """Called by self.setup_pixbufs().
+
+        Most Tartube icons are loaded from a single file. The Video Index uses
+        composite icons, loaded from a base file and some optional overlays.
+
+        The base icons are specified by formats.LARGE_ICON_COMPOSITE_LIST,
+        a subset of keys in formats.LARGE_ICON_DICT.
+
+        This function creates the composites, and updates self.icon_dict and
+        self.pixbuf_dict.
+
+        Args:
+
+            icon_dir_path (str): Full path to a directory in which Tartube's
+                icons are stored (depends on the operating system and the
+                installation method)
+
+        """
+
+        for base in formats.LARGE_ICON_COMPOSITE_LIST:
+
+            # Produce an image whose name (in self.icon_dict) is in the form
+            #   'base_tl_tr_bl_br', where the last four components are optional
+            #   and represent overlays adding an icon on the top-left,
+            #   top-right, bottom-left and/or bottom-right
+            for tl in range(2):
+                for tr in range(2):
+                    for bl in range(2):
+                        for br in range(2):
+                            for alt in range(2):
+
+                                icon_name = base
+                                pixbuf = GdkPixbuf.Pixbuf.new_from_file(
+                                    os.path.abspath(
+                                        os.path.join(
+                                            icon_dir_path,
+                                            'large',
+                                            formats.LARGE_ICON_DICT[base],
+                                        ),
+                                    ),
+                                )
+
+                                # Add the top-left overlay when tl = 1, don't
+                                #   add it when tl = 0 (etc)
+                                if tl:
+                                    icon_name += '_tl'
+                                    pixbuf = self.apply_pixbuf_overlay(
+                                        icon_dir_path,
+                                        pixbuf,
+                                        '_tl',
+                                    )
+
+                                if tr:
+                                    icon_name += '_tr'
+                                    pixbuf = self.apply_pixbuf_overlay(
+                                        icon_dir_path,
+                                        pixbuf,
+                                        '_tr',
+                                    )
+
+                                if bl:
+
+                                    # The bottom-left icon has two variants
+                                    if not alt:
+                                        icon_name += '_bl'
+                                        pixbuf = self.apply_pixbuf_overlay(
+                                            icon_dir_path,
+                                            pixbuf,
+                                            '_bl',
+                                        )
+
+                                    else:
+                                        icon_name += '_bl_alt'
+                                        pixbuf = self.apply_pixbuf_overlay(
+                                            icon_dir_path,
+                                            pixbuf,
+                                            '_bl_alt',
+                                        )
+
+                                if br:
+                                    icon_name += '_br'
+                                    pixbuf = self.apply_pixbuf_overlay(
+                                        icon_dir_path,
+                                        pixbuf,
+                                        '_br',
+                                    )
+
+                                # (Composite pixbufs have no file path)
+                                self.icon_dict[icon_name] = None
+                                self.pixbuf_dict[icon_name] = pixbuf
+
+
+    def apply_pixbuf_overlay(self, icon_dir_path, base_pixbuf, name):
+
+        """Called by self.setup_composite_pixbufs().
+
+        Creates a composite pixbuf using a base pixbuf and an overlay pixbuf.
+
+        Args:
+
+            icon_dir_path (str): Full path to a directory in which Tartube's
+                icons are stored (depends on the operating system and the
+                installation method)
+
+            base_pixbuf (GdkPixbuf.Pixbuf): The base pixbuf
+
+            name (str): One of the strings '_tl', '_tr', '_bl', '_bl_alt' or
+                'br', represnting icons in the ../icons/overlays directory
+
+        Return values:
+
+            Returns the composite pixbuf
+
+        """
+
+        overlay_pixbuf = GdkPixbuf.Pixbuf.new_from_file(
+            os.path.abspath(
+                os.path.join(
+                    icon_dir_path,
+                    'overlays',
+                    'overlay' + name + '.png',
+                ),
+            ),
+        )
+
+        overlay_pixbuf.composite(
+            base_pixbuf,
+            0,
+            0,
+            base_pixbuf.props.width,
+            base_pixbuf.props.height,
+            0,
+            0,
+            1,
+            1,
+            GdkPixbuf.InterpType.BILINEAR,
+            250,
+        )
+
+        return base_pixbuf
 
 
     def setup_bg_colour(self, bg_name):
@@ -1086,6 +1239,39 @@ class MainWin(Gtk.ApplicationWindow):
         )
         edit_sub_menu.append(self.gen_options_menu_item)
         self.gen_options_menu_item.set_action_name('app.gen_options_menu')
+
+        # System column (MS Windows only)
+        if os.name == 'nt':
+
+            # Separator
+            system_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_System'))
+            self.menubar.add(system_menu_column)
+
+            system_sub_menu = Gtk.Menu()
+            system_menu_column.set_submenu(system_sub_menu)
+
+            self.open_msys2_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Open MSYS2 terminal...'),
+            )
+            system_sub_menu.append(self.open_msys2_menu_item)
+            self.open_msys2_menu_item.set_action_name('app.open_msys2_menu')
+
+            # Separator
+            system_sub_menu.append(Gtk.SeparatorMenuItem())
+
+            self.show_install_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Show Tartube _install folder'),
+            )
+            system_sub_menu.append(self.show_install_menu_item)
+            self.show_install_menu_item.set_action_name(
+                'app.show_install_menu',
+            )
+
+            self.show_script_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Show Tartube _script folder'),
+            )
+            system_sub_menu.append(self.show_script_menu_item)
+            self.show_script_menu_item.set_action_name('app.show_script_menu')
 
         # Media column
         media_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_Media'))
@@ -2560,9 +2746,8 @@ class MainWin(Gtk.ApplicationWindow):
         frame.add(hbox2)
         hbox2.set_border_width(self.spacing_size)
 
-        image = Gtk.Image()
-        hbox2.pack_start(image, False, False, 0)
-        image.set_from_pixbuf(self.pixbuf_dict['ytdl-gui'])
+        self.classic_banner_img = Gtk.Image()
+        hbox2.pack_start(self.classic_banner_img, False, False, 0)
 
         frame2 = Gtk.Frame()
         hbox.pack_start(frame2, True, True, self.spacing_size)
@@ -2572,22 +2757,13 @@ class MainWin(Gtk.ApplicationWindow):
         frame2.add(vbox)
         vbox.set_border_width(self.spacing_size)
 
-        label = Gtk.Label()
-        vbox.pack_start(label, True, True, 0)
-        label.set_markup(
-            '<b>' + _(
-                'This tab emulates the classic youtube-dl-gui interface',
-            ) + '</b>',
-        )
+        self.classic_banner_label = Gtk.Label()
+        vbox.pack_start(self.classic_banner_label, True, True, 0)
 
-        label2 = Gtk.Label()
-        vbox.pack_start(label2, True, True, 0)
-        label2.set_markup(
-            '<b>' + _(
-                'Videos downloaded here are not added to Tartube\'s' \
-                + ' database',
-            ) + '</b>',
-        )
+        self.classic_banner_label2 = Gtk.Label()
+        vbox.pack_start(self.classic_banner_label2, True, True, 0)
+
+        self.update_classic_mode_tab_update_banner()
 
         if not self.app_obj.show_custom_icons_flag:
             self.classic_menu_button = Gtk.Button.new_from_icon_name(
@@ -2749,13 +2925,14 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_format_combo.set_active(0)
         else:
             for i in range(len(combo_list)):
-                if combo_list[i] == self.app_obj.classic_format_selection:
+                if combo_list[i] \
+                == '  ' + self.app_obj.classic_format_selection:
                     self.classic_format_combo.set_active(i)
                     break
 
         self.classic_format_radiobutton = Gtk.RadioButton.new_with_label(
             None,
-            _('Download in this format'),
+            _('Convert to this format (requires FFmpeg/AVConv)'),
         )
         grid.attach(self.classic_format_radiobutton, 2, 4, 1, 1)
         self.classic_format_radiobutton.set_hexpand(False)
@@ -2764,20 +2941,19 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_format_radiobutton2 \
         = Gtk.RadioButton.new_with_label_from_widget(
             self.classic_format_radiobutton,
-            _('Convert to this format using FFmpeg/AVConv'),
+            _('Download in this format'),
         )
         grid.attach(self.classic_format_radiobutton2, 3, 4, 1, 1)
         self.classic_format_radiobutton2.set_hexpand(True)
 
-        if self.app_obj.classic_format_convert_flag:
+        if not self.app_obj.classic_format_convert_flag:
             self.classic_format_radiobutton2.set_active(True)
         if self.app_obj.classic_format_selection is None:
             self.classic_format_radiobutton.set_sensitive(False)
             self.classic_format_radiobutton2.set_sensitive(False)
 
         # (Signal connects from above)
-        # If the user selects the 'Default' item, desensitise the second
-        #   radiobutton
+        # If the user selects the 'Default' item, desensitise the radiobuttons
         # If the user selects the 'Video:' or 'Audio:' items, automatically
         #   select the first item below that
         self.classic_format_combo.connect(
@@ -2896,22 +3072,6 @@ class MainWin(Gtk.ApplicationWindow):
         grid2.attach(hbox3, 0, 2, 1, 1)
 
         if not self.app_obj.show_custom_icons_flag:
-            self.classic_remove_button = Gtk.Button.new_from_icon_name(
-                Gtk.STOCK_DELETE,
-                Gtk.IconSize.BUTTON,
-            )
-        else:
-            self.classic_remove_button = Gtk.Button.new()
-            self.classic_remove_button.set_image(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_delete']),
-            )
-        hbox3.pack_start(self.classic_remove_button, False, False, 0)
-        self.classic_remove_button.set_action_name(
-            'app.classic_remove_button',
-        )
-        self.classic_remove_button.set_tooltip_text(_('Remove from list'))
-
-        if not self.app_obj.show_custom_icons_flag:
             self.classic_play_button = Gtk.Button.new_from_icon_name(
                 Gtk.STOCK_MEDIA_PLAY,
                 Gtk.IconSize.BUTTON,
@@ -2923,53 +3083,34 @@ class MainWin(Gtk.ApplicationWindow):
                     self.pixbuf_dict['stock_media_play'],
                 ),
             )
-        hbox3.pack_start(
-            self.classic_play_button,
-            False,
-            False,
-            self.spacing_size,
-        )
+        hbox3.pack_start(self.classic_play_button, False, False, 0)
         self.classic_play_button.set_action_name(
             'app.classic_play_button',
         )
         self.classic_play_button.set_tooltip_text(_('Play video'))
 
         if not self.app_obj.show_custom_icons_flag:
-            self.classic_move_up_button = Gtk.Button.new_from_icon_name(
-                Gtk.STOCK_GO_UP,
+            self.classic_open_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_OPEN,
                 Gtk.IconSize.BUTTON,
             )
         else:
-            self.classic_move_up_button = Gtk.Button.new()
-            self.classic_move_up_button.set_image(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_up']),
-            )
-        hbox3.pack_start(self.classic_move_up_button, False, False, 0)
-        self.classic_move_up_button.set_action_name(
-            'app.classic_move_up_button',
-        )
-        self.classic_move_up_button.set_tooltip_text(_('Move up'))
-
-        if not self.app_obj.show_custom_icons_flag:
-            self.classic_move_down_button = Gtk.Button.new_from_icon_name(
-                Gtk.STOCK_GO_DOWN,
-                Gtk.IconSize.BUTTON,
-            )
-        else:
-            self.classic_move_down_button = Gtk.Button.new()
-            self.classic_move_down_button.set_image(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_down']),
+            self.classic_open_button = Gtk.Button.new()
+            self.classic_open_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_open'],
+                ),
             )
         hbox3.pack_start(
-            self.classic_move_down_button,
+            self.classic_open_button,
             False,
             False,
             self.spacing_size,
         )
-        self.classic_move_down_button.set_action_name(
-            'app.classic_move_down_button',
+        self.classic_open_button.set_action_name(
+            'app.classic_open_button',
         )
-        self.classic_move_down_button.set_tooltip_text(_('Move down'))
+        self.classic_open_button.set_tooltip_text(_('Open destination(s)'))
 
         if not self.app_obj.show_custom_icons_flag:
             self.classic_redownload_button = Gtk.Button.new_from_icon_name(
@@ -3003,7 +3144,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_stop_button,
             False,
             False,
-            self.spacing_size,
+            self.spacing_size
         )
         self.classic_stop_button.set_action_name(
             'app.classic_stop_button',
@@ -3027,6 +3168,64 @@ class MainWin(Gtk.ApplicationWindow):
             'app.classic_ffmpeg_button',
         )
         self.classic_ffmpeg_button.set_tooltip_text(_('Process with FFmpeg'))
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_move_up_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_GO_UP,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_move_up_button = Gtk.Button.new()
+            self.classic_move_up_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_up']),
+            )
+        hbox3.pack_start(
+            self.classic_move_up_button,
+            False,
+            False,
+            self.spacing_size,
+        )
+        self.classic_move_up_button.set_action_name(
+            'app.classic_move_up_button',
+        )
+        self.classic_move_up_button.set_tooltip_text(_('Move up'))
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_move_down_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_GO_DOWN,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_move_down_button = Gtk.Button.new()
+            self.classic_move_down_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_down']),
+            )
+        hbox3.pack_start(self.classic_move_down_button, False, False, 0)
+        self.classic_move_down_button.set_action_name(
+            'app.classic_move_down_button',
+        )
+        self.classic_move_down_button.set_tooltip_text(_('Move down'))
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.classic_remove_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_DELETE,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_remove_button = Gtk.Button.new()
+            self.classic_remove_button.set_image(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_delete']),
+            )
+        hbox3.pack_start(
+            self.classic_remove_button,
+            False,
+            False,
+            self.spacing_size
+        )
+        self.classic_remove_button.set_action_name(
+            'app.classic_remove_button',
+        )
+        self.classic_remove_button.set_tooltip_text(_('Remove from list'))
 
         if not self.app_obj.classic_custom_dl_flag:
             self.classic_download_button = Gtk.Button(
@@ -4641,6 +4840,52 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.alt_limits_frame.set_tooltip_text(
                 _('Alternative limits do not currently apply'),
+            )
+
+
+    def update_classic_mode_tab_update_banner(self):
+
+        """Called initially by self.setup_classic_mode_tab(), and then by
+        several callbacks.
+
+        Updates the layout of the banner at the top of the Classic Mode tab,
+        according to current settings.
+        """
+
+        if self.app_obj.classic_format_selection is None \
+        or self.app_obj.classic_format_convert_flag:
+
+            self.classic_banner_img.set_from_pixbuf(
+                self.pixbuf_dict['ytdl_gui'],
+            )
+            self.classic_banner_label.set_markup(
+                '<b>' + _(
+                    'This tab emulates the classic youtube-dl-gui interface',
+                ) + '</b>',
+            )
+            self.classic_banner_label2.set_markup(
+                '<b>' + _(
+                    'Videos downloaded here are not added to Tartube\'s' \
+                    + ' database',
+                ) + '</b>',
+            )
+
+        else:
+
+            self.classic_banner_img.set_from_pixbuf(
+                self.pixbuf_dict['warning_large'],
+            )
+            self.classic_banner_label.set_markup(
+                '<b>' + _(
+                    'If your preferred formats are not available, the' \
+                    + ' download will fail!',
+                ) + '</b>',
+            )
+            self.classic_banner_label2.set_markup(
+                '<b>' + _(
+                    'If you want a specific format, install FFMpeg and' \
+                    + ' select \'Convert to this format\'!',
+                ) + '</b>',
             )
 
 
@@ -7138,9 +7383,79 @@ class MainWin(Gtk.ApplicationWindow):
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
+        # Play video
+        play_video_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Play video'),
+        )
+        play_video_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'play',
+            video_list,
+        )
+        popup_menu.append(play_video_menu_item)
+
+        # Open destination
+        open_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Open destination(s)'),
+        )
+        open_destination_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'open',
+            video_list,
+        )
+        popup_menu.append(open_destination_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Re-download
+        re_download_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Re-download'),
+        )
+        re_download_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'redownload',
+            video_list,
+        )
+        popup_menu.append(re_download_menu_item)
+
+        # Stop download
+        stop_download_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Stop download'),
+        )
+        stop_download_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'stop',
+            video_list,
+        )
+        popup_menu.append(stop_download_menu_item)
+        if not self.app_obj.current_manager_obj:
+            stop_download_menu_item.set_sensitive(False)
+
+        # Process with FFmpeg
+        process_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Process with _FFmpeg'),
+        )
+        process_ffmpeg_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'ffmpeg',
+            video_list,
+        )
+        popup_menu.append(process_ffmpeg_menu_item)
+        if self.app_obj.current_manager_obj:
+            process_ffmpeg_menu_item.set_sensitive(False)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
         # Copy file path
         copy_path_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Copy file _path'),
+            _('_Copy file path'),
         )
         copy_path_menu_item.connect(
             'activate',
@@ -7152,7 +7467,7 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(copy_path_menu_item)
 
         # Copy URL
-        copy_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Copy _URL'))
+        copy_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Copy UR_L'))
         copy_url_menu_item.connect(
             'activate',
             self.on_classic_progress_list_get_url,
@@ -7164,7 +7479,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Copy system command
         copy_cmd_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Copy system _command'),
+            _('Copy s_ystem command'),
         )
         copy_cmd_menu_item.connect(
             'activate',
@@ -7178,16 +7493,44 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Open destination
-        open_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Open destination(s)'),
+        # Move up
+        move_up_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Move _up'),
         )
-        open_destination_menu_item.connect(
+        move_up_menu_item.connect(
             'activate',
-            self.on_classic_progress_list_open_destination,
+            self.on_classic_progress_list_from_popup,
+            'move_up',
             video_list,
         )
-        popup_menu.append(open_destination_menu_item)
+        popup_menu.append(move_up_menu_item)
+
+        # Move down
+        move_down_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Move _down'),
+        )
+        move_down_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'move_down',
+            video_list,
+        )
+        popup_menu.append(move_down_menu_item)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Remove from list
+        remove_from_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Re_move from list'),
+        )
+        remove_from_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'remove',
+            video_list,
+        )
+        popup_menu.append(remove_from_menu_item)
 
         # Create the popup menu
         popup_menu.show_all()
@@ -8295,70 +8638,39 @@ class MainWin(Gtk.ApplicationWindow):
         icon = None
         if not self.app_obj.show_small_icons_in_index_flag:
 
+            # (The favourite icon for the red folder is a different colour)
+            alt_flag = False
+
             # Large icons, bigger selection
             if isinstance(media_data_obj, media.Channel):
-
-                if media_data_obj.fav_flag and media_data_obj.options_obj:
-                    icon = 'channel_both_large'
-                elif media_data_obj.fav_flag:
-                    icon = 'channel_left_large'
-                elif media_data_obj.options_obj:
-                    icon = 'channel_right_large'
-                else:
-                    icon = 'channel_none_large'
-
+                icon = 'channel_large'
             elif isinstance(media_data_obj, media.Playlist):
-
-                if media_data_obj.fav_flag and media_data_obj.options_obj:
-                    icon = 'playlist_both_large'
-                elif media_data_obj.fav_flag:
-                    icon = 'playlist_left_large'
-                elif media_data_obj.options_obj:
-                    icon = 'playlist_right_large'
-                else:
-                    icon = 'playlist_none_large'
-
+                icon = 'playlist_large'
             elif isinstance(media_data_obj, media.Folder):
-
                 if media_data_obj.priv_flag:
-                    if media_data_obj.fav_flag and media_data_obj.options_obj:
-                        icon = 'folder_private_both_large'
-                    elif media_data_obj.fav_flag:
-                        icon = 'folder_private_left_large'
-                    elif media_data_obj.options_obj:
-                        icon = 'folder_private_right_large'
-                    else:
-                        icon = 'folder_private_none_large'
-
+                    icon = 'folder_private_large'
+                    alt_flag = True
                 elif media_data_obj.temp_flag:
-                    if media_data_obj.fav_flag and media_data_obj.options_obj:
-                        icon = 'folder_temp_both_large'
-                    elif media_data_obj.fav_flag:
-                        icon = 'folder_temp_left_large'
-                    elif media_data_obj.options_obj:
-                        icon = 'folder_temp_right_large'
-                    else:
-                        icon = 'folder_temp_none_large'
-
+                    icon = 'folder_temp_large'
                 elif media_data_obj.fixed_flag:
-                    if media_data_obj.fav_flag and media_data_obj.options_obj:
-                        icon = 'folder_fixed_both_large'
-                    elif media_data_obj.fav_flag:
-                        icon = 'folder_fixed_left_large'
-                    elif media_data_obj.options_obj:
-                        icon = 'folder_fixed_right_large'
-                    else:
-                        icon = 'folder_fixed_none_large'
-
+                    icon = 'folder_fixed_large'
                 else:
-                    if media_data_obj.fav_flag and media_data_obj.options_obj:
-                        icon = 'folder_both_large'
-                    elif media_data_obj.fav_flag:
-                        icon = 'folder_left_large'
-                    elif media_data_obj.options_obj:
-                        icon = 'folder_right_large'
-                    else:
-                        icon = 'folder_none_large'
+                    icon = 'folder_large'
+
+            # (Apply overlays)
+            if media_data_obj.name in self.app_obj.media_unavailable_dict:
+                icon += '_tl'
+            if media_data_obj.dl_no_db_flag \
+            or media_data_obj.dl_disable_flag \
+            or media_data_obj.dl_sim_flag:
+                icon += '_tr'
+            if media_data_obj.fav_flag:
+                if not alt_flag:
+                    icon += '_bl'
+                else:
+                    icon += '_bl_alt'
+            if media_data_obj.options_obj:
+                icon += '_br'
 
         else:
 
@@ -8456,7 +8768,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         Cell renderer function. When the text column of the Video Index is
         about to be rendered, set the font to normal, bold or italic, depending
-        on the media data object's IVs.
+        on settings.
 
         Args:
 
@@ -8490,13 +8802,9 @@ class MainWin(Gtk.ApplicationWindow):
             dbid = model.get_value(tree_iter, 0)
             media_data_obj = self.app_obj.media_reg_dict[dbid]
 
-            # If an external directory is disable, show as strikethrough
-            if media_data_obj.name in self.app_obj.media_unavailable_dict:
-                renderer.set_property('strikethrough', True)
+            # When large icons are visible, we only change the Pango.Weight
+            if not self.app_obj.show_small_icons_in_index_flag:
 
-            else:
-
-                # (Without this line, everything is set to 'strikethrough'
                 renderer.set_property('strikethrough', False)
 
                 # If marked new (unwatched), show as bold text
@@ -8505,21 +8813,42 @@ class MainWin(Gtk.ApplicationWindow):
                 else:
                     renderer.set_property('weight', Pango.Weight.NORMAL)
 
-                # If adding videos to the database or checking/downloading is
-                #   disabled, show as italic text (perhaps in addition to bold
-                #   text)
-                if media_data_obj.dl_no_db_flag:
-                    renderer.set_property('style', Pango.Style.ITALIC)
-                    renderer.set_property('underline', Pango.Underline.ERROR)
-                elif media_data_obj.dl_disable_flag:
-                    renderer.set_property('style', Pango.Style.ITALIC)
-                    renderer.set_property('underline', True)
-                elif media_data_obj.dl_sim_flag:
-                    renderer.set_property('style', Pango.Style.ITALIC)
-                    renderer.set_property('underline', False)
+            # When smaller icons are visible, use italics and strikethrough
+            else:
+
+                # If an external directory is disabled, show as strikethrough
+                if media_data_obj.name in self.app_obj.media_unavailable_dict:
+                    renderer.set_property('strikethrough', True)
+
                 else:
-                    renderer.set_property('style', Pango.Style.NORMAL)
-                    renderer.set_property('underline', False)
+
+                    # (Without this line, everything is set to 'strikethrough'
+                    renderer.set_property('strikethrough', False)
+
+                    # If marked new (unwatched), show as bold text
+                    if media_data_obj.new_count:
+                        renderer.set_property('weight', Pango.Weight.BOLD)
+                    else:
+                        renderer.set_property('weight', Pango.Weight.NORMAL)
+
+                    # If adding videos to the database or checking/downloading
+                    #   is disabled, show as italic text (perhaps in addition
+                    #   to bold text)
+                    if media_data_obj.dl_no_db_flag:
+                        renderer.set_property('style', Pango.Style.ITALIC)
+                        renderer.set_property(
+                            'underline',
+                            Pango.Underline.ERROR,
+                        )
+                    elif media_data_obj.dl_disable_flag:
+                        renderer.set_property('style', Pango.Style.ITALIC)
+                        renderer.set_property('underline', True)
+                    elif media_data_obj.dl_sim_flag:
+                        renderer.set_property('style', Pango.Style.ITALIC)
+                        renderer.set_property('underline', False)
+                    else:
+                        renderer.set_property('style', Pango.Style.NORMAL)
+                        renderer.set_property('underline', False)
 
         else:
 
@@ -9843,7 +10172,7 @@ class MainWin(Gtk.ApplicationWindow):
                 intercepted the keypress
 
             keyval (str): One of the keys in self.catalogue_grid_intercept_dict
-                (e.g. 'Up', 'Left', 'Page_Up'
+                (e.g. 'Up', 'Left', 'Page_Up')
 
             select_type (str): 'shift' if the SHIFT key is held down at the
                 moment of the click, 'ctrl' if the CTRL button is held down,
@@ -9909,7 +10238,6 @@ class MainWin(Gtk.ApplicationWindow):
 
                 scroller_height -= this_height
                 if scroller_height < 0:
-
                     break
 
                 else:
@@ -9928,10 +10256,19 @@ class MainWin(Gtk.ApplicationWindow):
                             y_pos = height
 
                     check_obj = self.catalogue_grid.get_child_at(x_pos, y_pos)
-                    if not check_obj:
-                        break
-                    else:
+                    if check_obj:
                         this_obj = check_obj
+
+                    else:
+                        # Either we have scrolled 'below' the bottom row, or we
+                        #   are at the bottom row, which is not full
+                        # Select a video in the bottom row, as close to column
+                        #   y_pos as possible)
+                        for this_x in range(x_pos, -1, -1):
+
+                            if self.catalogue_grid.get_child_at(this_x, y_pos):
+                                x_pos = this_x
+                                break
 
             if this_obj != gridbox_obj:
 
@@ -9975,9 +10312,26 @@ class MainWin(Gtk.ApplicationWindow):
             elif keyval == 'Down':
 
                 y_pos += 1
+                grid_count = self.catalogue_grid_column_count \
+                * self.catalogue_grid_row_count
+                video_count = len(self.video_catalogue_dict.keys())
+
                 if y_pos > height:
-                    # (Already at the bottom)
+
+                    # (The bottom row is full, and we are already at the
+                    #   bottom)
                     return
+
+                elif y_pos == height and grid_count > video_count:
+
+                    # (One row above the bottom one, which is not full. Select
+                    #   a video in the bottom row, as close to column y_pos as
+                    #   possible)
+                    for this_x in range(x_pos, -1, -1):
+
+                        if self.catalogue_grid.get_child_at(this_x, y_pos):
+                            x_pos = this_x
+                            break
 
             # Fetch the gridbox at the new location
             new_gridbox_obj = self.catalogue_grid.get_child_at(x_pos, y_pos)
@@ -11443,7 +11797,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   the specified format with FFmpeg/AVConv. This is signified by
         #   adding 'convert_' to the beginning of the format string
         if format_str is not None \
-        and self.classic_format_radiobutton2.get_active():
+        and self.classic_format_radiobutton.get_active():
             format_str = 'convert_' + format_str
 
         # Extract a list of URLs from the textview
@@ -17386,9 +17740,14 @@ class MainWin(Gtk.ApplicationWindow):
         # (Should only be possible to set the first of thse items, but we'll
         #   check anyway)
         if text != default_item and text != video_item and text != audio_item:
-            self.app_obj.set_classic_format_selection(text)
+            # (Ignore the first two space characters)
+            self.app_obj.set_classic_format_selection(text[2:])
         else:
             self.app_obj.set_classic_format_selection(None)
+
+        # (Update the banner at the top of the tab, according to current
+        #   conditions)
+        self.update_classic_mode_tab_update_banner()
 
 
     def on_classic_format_radiobutton_toggled(self, radiobutton):
@@ -17406,9 +17765,13 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if radiobutton.get_active():
-            self.app_obj.set_classic_format_convert_flag(False)
-        else:
             self.app_obj.set_classic_format_convert_flag(True)
+        else:
+            self.app_obj.set_classic_format_convert_flag(False)
+
+        # (Update the banner at the top of the tab, according to current
+        #   conditions)
+        self.update_classic_mode_tab_update_banner()
 
 
     def on_custom_dl_menu_select(self, menu_item, media_data_list, uid):
@@ -17741,6 +18104,51 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_classic_progress_list_from_popup(self, menu_item, menu_item_type, \
+    video_list):
+
+        """Called from a callback in self.classic_progress_list_popup_menu().
+
+        In the popup menu, some items duplicate the buttons at the bottom of
+        the tab. When items in the menu are selected, re-direct the request to
+        the code used by the buttons.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The menu item that was clicked
+
+            menu_item_type (str): Identifies the menu item clicked, one of the
+                strings 'play', 'open', 'redownload', 'stop', 'ffmpeg',
+                'move_up', 'move_down', 'remove'
+
+            video_list (list): List of media.Video objects to which the action
+                will apply
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 16180 on_classic_progress_list_from_popup')
+
+        # Re-direct the request to the button callbacks, supplying dummy
+        #   action/par arguments (which are ignored anyway)
+        if action == 'play':
+            self.app_obj.on_button_classic_play(None, None)
+        elif action == 'open':
+            self.app_obj.on_button_classic_open(None, None)
+        elif action == 'redownload':
+            self.app_obj.on_button_classic_redownload(None, None)
+        elif action == 'stop':
+            self.app_obj.on_button_classic_stop(None, None)
+        elif action == 'ffmpeg':
+            self.app_obj.on_button_classic_ffmpeg(None, None)
+        elif action == 'move_up':
+            self.app_obj.on_button_classic_move_up(None, None)
+        elif action == 'move_down':
+            self.app_obj.on_button_classic_move_down(None, None)
+        elif action == 'remove':
+            self.app_obj.on_button_classic_remove(None, None)
+
+
     def on_classic_progress_list_get_cmd(self, menu_item, dummy_obj):
 
         """Called from a callback in self.classic_progress_list_popup_menu().
@@ -17834,40 +18242,6 @@ class MainWin(Gtk.ApplicationWindow):
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_text(dummy_obj.source, -1)
-
-
-    def on_classic_progress_list_open_destination(self, menu_item, dummy_list):
-
-        """Called from a callback in self.classic_progress_list_popup_menu().
-
-        Opens the download destination for the specified dummy media.Video
-        objects.
-
-        Args:
-
-            menu_item (Gtk.MenuItem): The menu item that was clicked
-
-            dummy_list (list): List of dummy media.Video objects on the clicked
-                row(s)
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            utils.debug_time(
-                'mwn 16276 on_classic_progress_list_open_destination',
-            )
-
-        # Open every destination, but eliminate duplicates
-        dir_list = []
-
-        for dummy_obj in dummy_list:
-
-            if dummy_obj.dummy_dir \
-            and not dummy_obj.dummy_dir in dir_list:
-                dir_list.append(dummy_obj.dummy_dir)
-
-        for this_dir in dir_list:
-            utils.open_file(self.app_obj, this_dir)
 
 
     def on_classic_progress_list_right_click(self, treeview, event):
@@ -25311,7 +25685,7 @@ class AddChannelDialogue(Gtk.Dialog):
         self.drag_dest_add_text_targets()
 
         # (The frame and its image are invisible, unless self.entry2 contains
-        #   a YouTube URL that doesn't end with /videos)
+        #   a YouTube URL that doesn't end with /videos or /playlists2)
         self.frame = Gtk.Frame()
         self.frame.set_tooltip_text(
             _(
@@ -25496,9 +25870,9 @@ class AddChannelDialogue(Gtk.Dialog):
 
         """Called from callback in self.__init__().
 
-        When the entry containing a URL is changed to one contianing a YouTube
-        URL that doesn't end inf /videos, make the reminder icon visible (and
-        vice-versa).
+        When the entry containing a URL is changed to one containing a YouTube
+        URL that doesn't end in /videos or /playlists, make the reminder icon
+        visible (and vice-versa).
 
         Args:
 
@@ -25514,12 +25888,16 @@ class AddChannelDialogue(Gtk.Dialog):
         url = entry.get_text()
         if self.main_win_obj.app_obj.dialogue_yt_remind_flag \
         and utils.is_youtube(url) \
-        and not re.search(r'\/videos\s*$', url):
+        and not re.search(r'\/videos\s*$', url)\
+        and not re.search(r'\/playlists\s*$', url):
             grid.attach(self.frame, 0, 5, 2, 1)
         else:
             for widget in grid.get_children():
                 if widget == self.frame:
                     grid.remove(self.frame)
+                    # The window is now too large vertically; this restores its
+                    #   proper size
+                    self.resize(1, 1)
                     break
 
         self.show_all()
@@ -26728,7 +27106,8 @@ class CalendarDialogue(Gtk.Dialog):
 
     Args:
 
-        parent_win_obj (mainwin.MainWin): The parent window
+        parent_win_obj (mainwin.MainWin or config.OptionsEditWin): The parent
+            window
 
         date (str): A date in the form YYYYMMDD. If set, that date is
             selected in the calendar. If an empty string or None, no date is
@@ -26747,8 +27126,7 @@ class CalendarDialogue(Gtk.Dialog):
 
         # IV list - class objects
         # -----------------------
-        # Tartube's main window
-        self.main_win_obj = parent_win_obj
+        self.parent_win_obj = parent_win_obj
 
 
         # IV list - Gtk widgets
@@ -27289,6 +27667,354 @@ class ExportDialogue(Gtk.Dialog):
             combo.set_sensitive(True)
         else:
             combo.set_sensitive(False)
+
+
+class ExtractorCodeDialogue(Gtk.Dialog):
+
+    """Called by config.OptionsEditWin.on_formats_tab_type_clicked().
+
+    Python class handling a dialogue window that prompts the user to type a
+    format extractor code.
+
+    Args:
+
+        parent_win_obj (config.SystemPrefWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, parent_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24469 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        self.parent_win_obj = parent_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # The extractor code types, or None if nothing typed
+        self.extract_code = None
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Type extractor code'),
+            parent_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(parent_win_obj.spacing_size)
+        grid.set_row_spacing(parent_win_obj.spacing_size)
+
+        # (Get the minimum and maximum numeric values specified in formats.py.
+        #   Actually, the user can type a non-numeric value appearing as a key
+        #   in formats.VIDEO_OPTION_TYPE_DICT, e.g. '144p' or 'mp4', but we
+        #   don't advertise the fact
+        min_code = 1
+        max_code = 1
+        for value in formats.VIDEO_OPTION_TYPE_DICT.keys():
+
+            if isinstance(value, int):
+
+                if value < min_code:
+                    min_code = value
+                elif value > max_code:
+                    max_code = value
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 1, 1)
+        label.set_markup(
+            _(
+            'Type an extractor code in the range {0}-{1}'
+            ).format(str(min_code), str(max_code))
+        )
+
+        label2 = Gtk.Label()
+        grid.attach(label, 0, 1, 1, 1)
+        label2.set_markup(_('e.g. 136 for mp4 720p'))
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 2, 1, 1)
+        entry.connect('changed', self.on_entry_changed)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    def on_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Sets the extractor code.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24470 on_entry_changed')
+
+        value = entry.get_text()
+        # (Unspecified extractor codes are stored as None, not empty strings)
+        if value == '':
+            self.extract_code = None
+        else:
+            self.extract_code = value
+
+
+class FormatsSubsDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.info_manager_finished().
+
+    Python class handling a dialogue window that prompts the user to set or
+    apply download options, having fetched available formats/subtitles for a
+    (single) video.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        video_obj (media.Video): The selected video
+
+        info_type (str): The information fetched during the info operation:
+            'formats' or 'subs'
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_obj, info_type):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 24618 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # The selected video
+        self.video_obj = video_obj
+        # The information fetched during the info operation: 'formats' or
+        #   'subs'
+        self.info_type = info_type
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Operation complete'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        if info_type == 'formats':
+            msg = _('Click the Output tab to see available formats')
+        else:
+            msg = _('Click the Output tab to see available subtitles')
+
+        label = Gtk.Label(msg)
+        grid.attach(label, 0, 0, 1, 1)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 1, 1, 1)
+
+        button = Gtk.Button.new_with_label(
+            _('Update general download options'),
+        )
+        grid.attach(button, 0, 2, 1, 1)
+        button.connect('clicked', self.on_general_button_clicked)
+
+        if not video_obj.options_obj:
+
+            button2 = Gtk.Button.new_with_label(
+                _('Apply download options to this video only'),
+            )
+            grid.attach(button2, 0, 3, 1, 1)
+            button2.connect('clicked', self.on_apply_button_clicked)
+
+        else:
+
+            button2 = Gtk.Button.new_with_label(
+                _('Update this video\'s download options'),
+            )
+            grid.attach(button2, 0, 3, 1, 1)
+            button2.connect('clicked', self.on_update_button_clicked)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_apply_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, applies download options to the selected
+        video only.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25250 on_apply_button_clicked')
+
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
+        # Check the video still exists
+        if not self.video_obj.dbid in app_obj.media_reg_dict \
+        or app_obj.media_reg_dict[self.video_obj.dbid] != self.video_obj:
+            self.destroy()
+
+        else:
+
+            # Clone general download options...
+            options_obj = app_obj.clone_download_options(
+                app_obj.general_options_obj,
+            )
+
+            # ...and apply the cloned options to the video
+            app_obj.apply_download_options(self.video_obj, options_obj)
+
+            # Open an edit window to show the options immediately
+            win_obj = config.OptionsEditWin(
+                app_obj,
+                options_obj,
+                self.info_type,
+            )
+
+            self.destroy()
+            win_obj.present()
+
+
+    def on_general_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the edit window for the current
+        options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25250 on_general_button_clicked')
+
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
+        # Check the video still exists
+        if not self.video_obj.dbid in app_obj.media_reg_dict \
+        or app_obj.media_reg_dict[self.video_obj.dbid] != self.video_obj:
+            self.destroy()
+
+        else:
+
+            win_obj = config.OptionsEditWin(
+                app_obj,
+                app_obj.general_options_obj,
+                self.info_type,
+            )
+
+            self.destroy()
+            win_obj.present()
+
+
+    def on_update_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        When the button is clicked, open the edit window for the video's
+        existing options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25250 on_update_button_clicked')
+
+        # Import the main application (for convenience)
+        app_obj = self.main_win_obj.app_obj
+
+        # Check the video still exists
+        if not self.video_obj.dbid in app_obj.media_reg_dict \
+        or app_obj.media_reg_dict[self.video_obj.dbid] != self.video_obj:
+            self.destroy()
+
+        else:
+
+            win_obj = config.OptionsEditWin(
+                app_obj,
+                self.video_obj.options_obj,
+                self.info_type,
+            )
+
+            self.destroy()
+            win_obj.present()
 
 
 class ImportDialogue(Gtk.Dialog):
@@ -27953,6 +28679,122 @@ class MountDriveDialogue(Gtk.Dialog):
             self.destroy()
 
 
+class MSYS2Dialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.on_menu_open_msys2().
+
+    Python class handling a dialogue window that advises users how the MINGW
+    terminal is used.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25247 __init__')
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        #   (none)
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('MSYS2 terminal'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 0, 1, 1)
+        label.set_markup(
+            _('On MS Windows, Tartube runs in the MSYS2 environment.'),
+        )
+        label.set_xalign(0)
+
+        label2 = Gtk.Label()
+        grid.attach(label2, 0, 1, 1, 1)
+        label2.set_markup(
+            _(
+            'Advanced users can use the MSYS2 terminal to make changes to' \
+            + ' the\nenvironment (for example, to tweak youtube-dl or FFmpeg)',
+            ),
+        )
+        label2.set_xalign(0)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 2, 1, 1)
+
+        checkbutton = Gtk.CheckButton()
+        grid.attach(checkbutton, 0, 3, 1, 1)
+        checkbutton.set_label(_('Always show this window'))
+        if main_win_obj.app_obj.show_msys2_dialogue_flag:
+            checkbutton.set_active(True)
+        checkbutton.connect('toggled', self.on_checkbutton_toggled)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Public class methods
+
+
+    def on_checkbutton_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        Enables/disables showing this dialogue window.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 25249 on_checkbutton_toggled')
+
+        if checkbutton.get_active():
+            self.main_win_obj.app_obj.set_show_msys2_dialogue_flag(True)
+        else:
+            self.main_win_obj.app_obj.set_show_msys2_dialogue_flag(False)
+
+
 class NewbieDialogue(Gtk.Dialog):
 
     """Called by mainapp.TartubeApp.download_manager_finished().
@@ -28436,7 +29278,7 @@ class PrepareClipDialogue(Gtk.Dialog):
         self.destroy()
 
 
-    def on_start_entry_changed (self, entry, button):
+    def on_start_entry_changed(self, entry, button):
 
         """Called from callback in self.__init__().
 
@@ -28466,7 +29308,7 @@ class PrepareClipDialogue(Gtk.Dialog):
             button.set_sensitive(True)
 
 
-    def on_stop_entry_changed (self, entry):
+    def on_stop_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
 
@@ -28488,7 +29330,7 @@ class PrepareClipDialogue(Gtk.Dialog):
             self.stop_stamp = value
 
 
-    def on_title_entry_changed (self, entry):
+    def on_title_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
 
@@ -29460,6 +30302,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         #       destination set (a media data object can't have an alternative
         #       destination, and be an alternative destination at the same
         #       time)
+        #   - media_data_obj's alternative download destination, if any
         #   - The most recently-selected alternative download destination, if
         #       any
         #   - media_data_obj itself
@@ -29469,7 +30312,10 @@ class SetDestinationDialogue(Gtk.Dialog):
             this_obj = app_obj.media_reg_dict[this_dbid]
 
             if this_dbid != media_data_obj.dbid \
-            and (prev_dbid is None or prev_dbid != this_dbid) \
+            and (
+                media_data_obj.master_dbid == media_data_obj.dbid \
+                or media_data_obj.master_dbid != this_dbid
+            ) and (prev_dbid is None or prev_dbid != this_dbid) \
             and this_obj.dbid == this_obj.master_dbid:
                 mod_dbid_list.append(this_dbid)
 
@@ -29481,11 +30327,14 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         name_list.sort(key=lambda x: x.lower())
 
-        # ...and then add the previous destination, and the media data object
-        #   itself, at the top of it
+        # ...and then add, at the top of the list, possible destinations that
+        #   were filtered out
         name_list.insert(0, media_data_obj.name)
 
-        if prev_dbid is not None:
+        if media_data_obj.master_dbid != media_data_obj.dbid:
+            current_obj = app_obj.media_reg_dict[media_data_obj.master_dbid]
+            name_list.insert(0, current_obj.name)
+        elif prev_dbid is not None:
             prev_obj = app_obj.media_reg_dict[prev_dbid]
             name_list.insert(0, prev_obj.name)
 
