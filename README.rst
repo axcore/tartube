@@ -24,7 +24,7 @@ Works with YouTube, Odysee, and hundreds of other websites
 
 **Tartube** is a GUI front-end for `youtube-dl <https://youtube-dl.org/>`__, `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ and other compatible video downloaders.
 
-It is partly based on `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__ and is written in Python 3 / Gtk 3. Tartube runs on MS Windows, Linux, BSD and MacOS.
+It is written in Python 3 / Gtk 3 and runs on MS Windows, Linux, BSD and MacOS.
 
 Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
@@ -59,21 +59,27 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.332 (8 Aug 2021)**
+Latest version: **v2.3.447 (20 Mar 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-64bit-portable.zip/download>`__ from Sourceforge
-- `MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.332/install-tartube-2.3.332-32bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332-32bit-portable/download>`__ from Sourceforge (but see `7.23 Doesn't work on 32-bit Windows`_)
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.332/python3-tartube_2.3.332.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.332/tartube-2.3.332.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.447/install-tartube-2.3.447-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447-64bit-portable.zip/download>`__ from Sourceforge
+- Tartube is no longer supported on MS Windows (32-bit) - see `7.22 Doesn't work on 32-bit Windows`_
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.447/python3-tartube_2.3.447.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447.rpm/download>`__ from Sourceforge
 
-There are also some DEB/RPM packages marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
+Official 'Strict' packages:
 
-Semi-official packages:
+Alternative DEB/RPM packages are marked STRICT. In these packages, updates to **youtube-dl** from within **Tartube** have been disabled. If **Tartube** is uploaded to a repository with lots of rules, such as the official Debian repository, then you should probably use the STRICT packages.
 
-- `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
+Semi-official packages (MS Windows):
+
+- `Chocolatey package <https://community.chocolatey.org/packages/tartube>`__
+
+Semi-official packages (Linux):
+
 - `Arch AUR package <https://aur.archlinux.org/packages/tartube/>`__
+- `Gentoo ebuild (available in src_prepare-overlay) <https://gitlab.com/src_prepare/src_prepare-overlay/>`__ from Gitlab
 
 Source code:
 
@@ -117,7 +123,7 @@ If you just want to download videos with a minimum of fuss, do this:
 
 MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. You must be using Windows Vista or above; the installer will not work on Windows XP.
 
-There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat** or **tartube_portable_32bit.bat**.
+There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat**.
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
@@ -393,14 +399,16 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.7 Adding channels and playlists`_
 * `6.8 Adding videos, channels and playlists together`_
 * `6.8.1 Bulk-adding channels and playlists`_
-* `6.8.2 Updating adding channels and playlists`_
+* `6.8.2 Replacing generic channel/playlist names`_
+* `6.8.3 Replacing channel/playlist URLs in bulk`_
 * `6.9 Adding folders`_
 * `6.10 Things you can do`_
 * `6.11 Download options`_
 * `6.11.1 Advanced download options`_
 * `6.11.2 Other download options`_
 * `6.11.3 Managing download options`_
-* `6.11.4 Download options for yt-dlp`_
+* `6.11.4 Setting download options`_
+* `6.11.5 Download options for yt-dlp`_
 * `6.12 Scheduled downloads`_
 * `6.13 Custom downloads`_
 * `6.13.1 Creating custom downloads`_
@@ -408,7 +416,8 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.13.3 Diverting to HookTube / Invidious`_
 * `6.13.4 Delays between downloads`_
 * `6.13.5 Splitting and slicing videos`_
-* `6.13.6 Launching custom downloads`_
+* `6.13.6 Ignoring videos without subtitles`_
+* `6.13.7 Launching custom downloads`_
 * `6.14 Watching videos`_
 * `6.15 Filtering and finding videos`_
 * `6.16 Marking videos`_
@@ -428,6 +437,8 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.20.2 Multiple databases`_
 * `6.20.3 Multiple Tartubes`_
 * `6.20.4 Exporting/importing the database`_
+* `6.20.5 Importing from YouTube`_
+* `6.20.6 Old Export formats`_
 * `6.21 Converting to audio`_
 * `6.22 Classic Mode`_
 * `6.22.1 Customising Classic Mode`_
@@ -638,10 +649,28 @@ Secondly, you could import a text file contaiing a list of channels/playlists. Y
 
 When you're ready, click **Media > Import into database > Plain text export file...**
 
-6.8.2 Updating adding channels and playlists
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.8.2 Replacing generic channel/playlist names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need to update *existing* channels and playlists, you can do so by clicking **Edit > System preferences... > Files > URLs**.
+There are several situations in which **Tartube** might create a channel with a generic name like **channel_1**, or a playlist with a generic name like **playlist_2**.
+
+* Click **Add video**, and enter a URL which is actually a channel or a playlist
+* Add several channels/playlists together by clicking **Media > Add many channels/playlists...**
+
+In this situation, you can either rename all the new channels and playlists yourself, one at a time, or you can let **Tartube** try to do it automatically. (This works fine on **YouTube** and many other sites, but not necessarily on all of them.)
+
+* For each channel/playlist you want to rename, download or check at least one video
+* Tartube will extract the channel/playlist name from each videos' metadata
+* In the main menu, click **Media > Reset channel/playlist names...**
+* Select everything you want to rename
+* When you're ready, click the **OK** button to perform the renaming
+
+Don't forget, you can limit the number of videos checked downloaded in **Edit > System preferences... > Operations > Stop**. This should make the first step much quicker.
+
+6.8.3 Replacing channel/playlist URLs in bulk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to update the URLs of many channels and playlists, you can do so by clicking **Edit > System preferences... > Files > URLs**.
 
 6.9 Adding folders
 ------------------
@@ -721,7 +750,7 @@ A new window opens. Any changes you make in this window aren't actually applied 
 6.11.1 Advanced download options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some of the options are intended for advanced users, so they're hidden by default. To revel them, click the button **Show advanced download options**.
+Some of the options are intended for advanced users, so they're hidden by default. To reveal them, click the button **Show advanced download options**.
 
 .. image:: screenshots/example13.png
   :alt: Showing advanced download options
@@ -773,7 +802,57 @@ The first item in the list, **general**, is the default set of download options.
 
 Download options are saved in the Tartube database, so if you switch databases (see `6.20.2 Multiple databases`_), a different selection of download options will apply. If you want to move a set of download options from one database to another, you can **Export** them, then switch databases, then **Import** them.
 
-6.11.4 Download options for yt-dlp
+6.11.4 Setting download options
+-------------------------------
+
+Here is a quick summary of the download options that are most useful, assuming that advanced download options are hidden (see `6.11.1 Advanced download options`_).
+
+You can change the format of the filename for the downloaded video, so it includes useful information such as the playlist number or the video resolution.
+
+- Click **Files > File names**
+- In the drop-down box marked **Format for video file names**, select one of the options
+- If you select the **Custom** option, the drop-down boxes and buttons below become useable
+
+When you download a video, a thumbnail and a metadata file are usually downloaded too. This can be customised.
+
+- Click **Files > Write/move files** to select which files are downloaded
+- Click **Files > Keep files** to select which files are not deleted at the end of the download operation
+
+If you want to specify which video and audio formats should be downloaded, at which resolution and at which bitrate, do this:
+
+- Click **Files > Formats**
+- From the list on the left, select one of the video/audio formats
+- Click the **Add format** button
+
+**youtube-dl** downloads very high-resolution videos as two separate files, video and audio. If **Ffmpeg** is installed, the two separate files are automatically merged into one output file.
+
+If you want to specify the format of the output file, for example to create an **.mp4** file, do this:
+
+- Click **Files > Formats**
+- From the list on the left, select **mp4**
+- Click the **Add format** button
+- In the drop-down box marked **If a merge is required after post-processing, output to this format**, select **mp4**
+
+Most videos cannot be downloaded in every media format. For example, **YouTube** does not offer **mp3** downloads. If you want files in a particular video/audio format, often it's necessary to use **Ffmpeg** to convert the downloaded video.
+
+- Click **Files > Convert**
+- Select a video and/or audio format
+
+**youtube-dl** can download subtitles for a video, if they exist. The chat replay of **YouTube** livestreams can also be downloaded, and is handled as if it were another set of subtitles.
+
+- Click **Subtitles > Options**
+- Select **Download all available subtitles**
+
+If you want to download subtiles only in particular languages:
+
+- Select **Download subtitles file for these languages**
+- Select a language from the list on the left
+- Click the **Add language** button
+- Repeat for as many languages as you want
+
+See also `6.13.6 Ignoring videos without subtitles`_.
+
+6.11.5 Download options for yt-dlp
 ----------------------------------
 
 The **yt-dlp** tab contains download options that only work with `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ (or any fork based on it). If you try to use them with `youtube-dl <https://youtube-dl.org/>`__ you'll get an error.
@@ -815,9 +894,9 @@ You can create as many scheduled downloads as you like. Scheduled downloads are 
 6.13 Custom downloads
 ---------------------
 
-By default, **Tartube** downloads videos as quickly as possible, one link (URL) at a time. A link might point to an individual video, or it might point to a whole channel or playlist. **Tartube** will try to download the whole video from its original link.
+By default, **Tartube** downloads videos as quickly as possible, one link (URL) at a time. A link might point to an individual video, or it might point to a whole channel or playlist. **Tartube** will try to download every video associated with the link.
 
-A **Custom download** enables you to modify this behaviour, if desired. You can use it to fetch videos from a mirror, add random delays, download video clips, or to download videos with the adverts removed.
+A **Custom download** enables you to modify this behaviour, if desired. You can use it to fetch videos from a mirror, add random delays, download video clips, ignore videos without subtitles, or to download videos with the adverts removed.
 
 It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 
@@ -849,14 +928,11 @@ By default, **Tartube** instructs **youtube-dl** to download a channel or a play
 If you need to download each individual video directly, for any reason, you can do this:
 
 - Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
-- In the new window, click the **Downloads** tab
-- Click **Download each video independently of its channel or playlist** to select it
+- In the new window, click **Download each video independently of its channel or playlist** to select it
 - Click **Check channels/playlists/folders before each custom download** to select it
 - Click **OK** to close the window
 
 Many custom download settings only work when Tartube is downloading videos one at a time. If you enable this setting, you will be able to enable several other settings (including some in the other tabs).
-
-Note that, in earlier verions of **Tartube**, it was necessary to check the channels and playlists yourself, before starting a custom download. If you have selected both buttons, this will no longer be necessary.
 
 6.13.3 Diverting to HookTube / Invidious
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -897,7 +973,28 @@ You can also remove slices from a video *while it is being downloaded*. This is 
 
 Both of these features require **FFmpeg**.
 
-6.13.6 Launching custom downloads
+6.13.6 Ignoring videos without subtitles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can ask Tartube not to download videos without subtitles.
+
+- Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
+- In the new window, click the **Subtitles** tab
+- Click **Only download videos with available subtitles** to select it
+- Click **OK** to close the window
+- You can now start the custom download
+
+Note that this setting *reduces the number of videos downloaded*. It isn't responsible for downloading the subtitles themselves. Here is how to do that:
+
+- In Tartube's main menu, click **Edit > General download options > Subtitles > Options**
+- Select **Download all available subtitles files**
+- Alternatively, select **Download subtitles files for these languages**, and then add one or more languages below
+- Click **OK** to close the window
+- You can now start the custom download
+
+**youtube-dl** handles YouTube live chat in the same way as subtitles, so you can select that instead of (or as well as) the languages.
+
+6.13.7 Launching custom downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Besides the optional button described above, there are several ways to start a custom download.
@@ -1028,7 +1125,7 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 As described above, a creator might have a single channel, and several playlists. If there are a *lot* of playlists, it might take a long time to add them all to Tartube's database. However, there is a shortcut for YouTube channels.
 
 - On the channel's webpage, click the **Playlists** tab
-- Add a new channel to Tartube's database, using this URL (which should end in **../playlists**) 
+- Add a new channel to Tartube's database, using this URL (which should end in **../playlists**)
 
 YouTube does not always send us the list of playlists; that's why it's necessary to click the **Playlists** tab, rather than the **Videos** tab, as we normally would.
 
@@ -1167,7 +1264,7 @@ It's fine to add new videos to the database, or to remove them. Just be careful 
 
 - In **Tartube**'s main window, add each channel and playlist in the normal way
 - When you're ready, click the **Check all** button. This adds a list of videos to **Tartube**'s database, without actually downloading the videos themselves
-- Copy the video files into **Tartube**'s data directory (folder). For example, copy all your **PewDiePie** videos into **../tartube-data/downloads/PewDiePie**
+- Copy the video files into **Tartube**'s data directory (folder). For example, copy all your **PewDiePie** videos into **../tartube-data/PewDiePie**
 - In the **Tartube** menu, click **Operations > Refresh database...**. **Tartube** will search for video files, and try to match them with the list of videos you just compiled
 - The whole process might some time, so be patient
 
@@ -1219,8 +1316,25 @@ This is how to import the data into a different **Tartube** database.
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
-6.20.5 Export formats
----------------------
+6.20.5 Importing from YouTube
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also import your YouTube subscriptions directly.
+
+- Click **Media > Import YouTube subscriptions**
+- A wizard window opens, showing you how to export your YouTube subscriptions as a single **.zip** file
+- When you have the export file, click the **Next** button
+- Click **Select file**, and choose the export file
+- If the file is valid, click the **Next** button again
+- Select the channels you want to import, then click **OK** to update Tartube's database
+
+If you have a lot of channels to import, you might want to import them into a folder.
+
+- In the **Videos** tab, create a new folder, or select an existing folder
+- Click **Media > Import YouTube subscriptions**, and continue as above
+
+6.20.6 Old Export formats
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The format of exported plain text/CSV files changed in v2.3.208, and again in v2.3.307. If you try to import files from earlier versions, you may not get everything you were expecting.
 
@@ -1286,7 +1400,7 @@ Some websites, such as **YouTube**, allow you to download the audio (in **.m4a**
 
 **Tartube** compiles a database of the videos, channels and playlists it has downloaded.
 
-If you want something simpler, then click the **Classic Mode** tab, which has an interface that looks just like `youtube-dl-gui <https://mrs0m30n3.github.io/youtube-dl-gui/>`__.
+If you want something simpler, then click the **Classic Mode** tab, which has an interface that looks just like older GUIs.
 
 .. image:: screenshots/example25.png
   :alt: The Classic Mode tab
@@ -1332,7 +1446,7 @@ In the bottom half of the window, you can select one or more URLs by clicking th
 
 **Tartube** can detect livestreams, and to notify you when they start.
 
-At the moment, this feature only works on **YouTube**, and it doesn't work at all on 32-bit MS Windows.
+At the moment, this feature only works on **YouTube**.
 
 6.23.1 Detecting livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1739,40 +1853,38 @@ Alternatively, you can update the entire database at once. (This may take a long
 ============================
 
 * `7.1 Tartube won't install/won't run/doesn't work`_
-* `7.2 Tartube crashes a lot`_
-* `7.3 "Download did not start" error`_
-* `7.4 Can't download a video`_
-* `7.5 Downloads never finish`_
-* `7.6 Videos are missing after a crash`_
-* `7.7 Tartube database is broken`_
-* `7.8 'Check all' button takes too long`_
-* `7.9 'Download all' button takes too long`_
-* `7.10 Videos downloaded to inconvenient location`_
-* `7.11 Tartube database file is getting in the way`_
-* `7.12 Duplicate video names`_
-* `7.13 Convert video to audio`_
-* `7.14 Video is downloaded as separate video/audio files`_
-* `7.15 Too many folders in the main window`_
-* `7.16 Not enough videos in the main window`_
-* `7.17 Toolbar is too small`_
-* `7.18 Toolbar is too big`_
-* `7.19 YouTube name/password not accepted`_
-* `7.20 Georestriction workarounds don't work`_
-* `7.21 Video website blocks me`_
-* `7.22 MS Windows installer is too big`_
-* `7.23 Doesn't work on 32-bit Windows`_
-* `7.24 Tartube can't detect livestreams`_
-* `7.25 Livestream is already finished`_
-* `7.26 Can't hear livestream alarms`_
-* `7.27 Some icons not visible`_
-* `7.28 Video thumbnails not visible`_
-* `7.29 Video text not visible`_
-* `7.30 Graphs not visible`_
-* `7.31 Tartube is not visible in the system tray`_
-* `7.32 Tartube is not portable`_
-* `7.33 Run out of disk space`_
-* `7.34 British spelling`_
-* `7.35 No puedo hablar inglés`_
+* `7.2 "Download did not start" error`_
+* `7.3 Can't download a video`_
+* `7.4 Downloads never finish`_
+* `7.5 Videos are missing after a crash`_
+* `7.6 Tartube database is broken`_
+* `7.7 'Check all' button takes too long`_
+* `7.8 'Download all' button takes too long`_
+* `7.9 Channel downloads one video at a time`_
+* `7.10 Tartube database file is getting in the way`_
+* `7.11 Duplicate video names`_
+* `7.12 Convert video to audio`_
+* `7.13 Video is downloaded as separate video/audio files`_
+* `7.14 Too many folders in the main window`_
+* `7.15 Not enough videos in the main window`_
+* `7.16 Toolbar is too small`_
+* `7.17 Toolbar is too big`_
+* `7.18 YouTube name/password not accepted`_
+* `7.19 Georestriction workarounds don't work`_
+* `7.20 Video website blocks me`_
+* `7.21 MS Windows installer is too big`_
+* `7.22 Doesn't work on 32-bit Windows`_
+* `7.23 Tartube can't detect livestreams`_
+* `7.24 Livestream is already finished`_
+* `7.25 Can't hear livestream alarms`_
+* `7.26 Some icons not visible`_
+* `7.27 Video thumbnails not visible`_
+* `7.28 Video text not visible`_
+* `7.29 Graphs not visible`_
+* `7.30 Tartube is not visible in the system tray`_
+* `7.31 Tartube is not portable`_
+* `7.32 Run out of disk space`_
+* `7.33 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -1793,50 +1905,26 @@ A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
 A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
 
-It may be helpful to turn on debug messages (which are visible in a terminal window). There are several ways to enable debug messages:
-
-- Click **Edit > System preferences... > General > Debugging**, and click the checkboxes to enable them. (These settings are reset when Tartube restarts)
-- Place an (empty) file called **debug.txt** in the same folder/directory as the **Tartube** executable. If you're not sure where that is, click **Edit > System preferences... > General > Debugging**
-- Edit the source code files **mainapp.py**, **mainwin.py** and **downloads.py**. In each file, change the value of **DEBUG_FUNC_FLAG** to **True** (note the capitalisation)
-
 On MS Windows, this is how to run **Tartube** from inside a terminal window:
 
 - In Tartube's main menu, select **System > Show Tartube install folder**
 - After the folder window opens, shut down Tartube
-- In the folder window, click the **msys64** or **msys32** folder to open it
-- Open the terminal by double-clicking **mingw64.exe** or **mingw32.exe**
+- In the folder window, click the **msys64** folder to open it
+- Open the terminal by double-clicking **mingw64.exe**
 - In this window, type these commands to start **Tartube** (paying attention to the *forward* slashes):
 
         **cd /home/user/tartube**
 
         **python3 tartube/tartube**
 
-7.2 Tartube crashes a lot
--------------------------
-
-*Q: I can install and run Tartube, but it keeps crashing!*
-
-A: Tartube uses the Gtk graphics library. Regrettably, this library is notoriously unstable.
-
-If stability is a problem, you can disable some minor cosmetic features. **Tartube**'s functionality is not affected. You can do anything, even when the cosmetic features are disabled.
-
-- Click **Edit > System preferences... > General > Stability**
-- Click **Disable some cosmetic features to prevent crashes and other issues** to select it
-
-Another option is to reduce the number of simultaneous downloads. (On crash-prone systems, two simultaneous downloads seems to be safe, but four is rather less safe.)
-
-- In the main window, click the **Progress** tab
-- At the bottom of the tab, click the **Max downloads** checkbutton to select it, and reduce the number of simultaneous downloads to 1 or 2
-- (It's not necessary to reduce the download speed; this has no effect on stability)
-
-7.3 "Download did not start" error
+7.2 "Download did not start" error
 ----------------------------------
 
 *Q: When I try to download videos, nothing happens! In the Errors/Warnings tab, I can see "Download did not start"!*
 
 A: See `6.3 Setting the downloader's location`_
 
-7.4 Can't download a video
+7.3 Can't download a video
 --------------------------
 
 *Q: I can't download my favourite video!*
@@ -1858,19 +1946,14 @@ Because most people don't like typing, **Tartube** offers a shortcut.
 - Click the **Output** tab to watch the test as it progresses
 - When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl** was able to download
 
-7.5 Downloads never finish
+7.4 Downloads never finish
 --------------------------
 
 *Q: I clicked the 'Download all' button and it starts, but never finishes!*
 
 A: This generally indicates an error in the Python, Gtk and/or **Tartube** code. If you're running **Tartube** from a terminal window (see `7.1 Tartube won't install/won't run/doesn't work`_), you should be able to see the error, which you can report on `our GitHub page <https://github.com/axcore/tartube/issues>`__.
 
-There are two things you can try in the meantime:
-
-- Click **Edit > System preferences... > General > Modules**, and select the **Disable some cosmetic features to prevent crashes and other issues** button
-- Click **File > Check database integrity**
-
-7.6 Videos are missing after a crash
+7.5 Videos are missing after a crash
 ------------------------------------
 
 *Q: After I downloaded some videos, Tartube crashed, and now all my videos are missing!*
@@ -1891,16 +1974,22 @@ A: **Tartube** creates a backup copy of its database, before trying to save a ne
 
 Note that **Tartube** does not create backup copies of the videos you've downloaded. That is your responsibility!
 
-7.7 Tartube database is broken
+7.6 Tartube database is broken
 ------------------------------
 
 *Q: The Tartube database is totally broken! How do I rebuild it? I don't want to download everything again!*
 
-A: There is a built-in database repair tool. Click **File > Check database integrity**
+A: If **Tartube** is able to load the database at all, then there is a built-in database repair tool. Click **File > Check database integrity**
 
-A: Try using one of the database backups - see `7.6 Videos are missing after a crash`_
+A: Try loading one of the database backups - see `7.5 Videos are missing after a crash`_
 
-A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist, despite the best efforts of tha uthors. If you really want to rebuild the database from scratch, this is how to do it.
+A: If the database file (**tartube.db**) is not actually corrupted, you can extract a list of channels and playlists from it. The list is exported as a JSON file.
+
+To create the export, click **File > Database preferences > Dump database to JSON**.
+
+The export can then be re-imported into your current database in the normal way (see `6.20.4 Exporting/importing the database`_).
+
+A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist, despite the best efforts of the authors. If you really want to rebuild the database from scratch, this is how to do it.
 
 Firstly, click **Media > Export from database...**. In the dialogue window, it's not necessary to select the button **Include lists of videos**. Click the **OK** button. Let Tartube create the backup file. You now have a backup of the names and URLs for every channel/playlist you've added.
 
@@ -1916,7 +2005,9 @@ All the channels/playlists should now be visible in the main window. Click the *
 
 Your new database now contains information about all the videos, but it doesn't know that most of those videos have been downloaded already. Click **Operations > Refresh database...** to take care of that.
 
-7.8 'Check all' button takes too long
+A: Database files created by **Tartube** v1.1.0 and earlier cannot be loaded due to serialisation issues. There is possibly no way to fix this.
+
+7.7 'Check all' button takes too long
 -------------------------------------
 
 *Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!*
@@ -1933,32 +2024,39 @@ This works well on sites like YouTube, which send information about videos in th
 - In the **Stop after this many videos (when downloading)** box, enter the value 3
 - Click **OK** to close the window
 
-7.9 'Download all' button takes too long
+7.8 'Download all' button takes too long
 ----------------------------------------
 
-*Q: I clicked the 'Download all' button, but the operation takes so long! It only downloaded two new videos!*
+*Q: I clicked the 'Download all' button. The whole operation took so long, even though Tartube only downloaded two  new videos!*
 
-A: **youtube-dl** can create an archive file especially for this purpose (namely that some channels have no new videos to download, but others have many new videos).
+A: **youtube-dl** can create an archive file. The archive file remembers which videos have been downloaded, so that **youtube-dl** can skip them (which saves a lot of time).
 
-To enable this functionality, click **Edit > System preferences... > Operations > Downloads** and click **Allow downloader to create its own archive file...** to select it.
+To enable this functionality, click **Edit > System preferences... > Operations > Archive** and select **Allow downloader to create its own archive file**.
 
-7.10 Videos downloaded to inconvenient location
------------------------------------------------
+By default, the archive file is stored in the same folder as the video, but you can change this behaviour, if you like.
 
-*Q: Tartube always downloads its channels and playlists into ../tartube-data/downloads. Why doesn't it just download directly into ../tartube-data?*
+- Click **Store the archive file in Tartube's data directory** to create a single archive file that applies to every video, channel and playlist in Tartube's database
+- Click **Store the archive file at this location** to create an archive file somewhere else, then click **Set** to choose a folder
 
-A: This was implemented in v1.4.0. If you installed an earlier version of **Tartube**, you don't need to take any action; **Tartube** can cope with both the old and new file structures.
+7.9 Channel downloads one video at a time
+-----------------------------------------
 
-If you installed an earlier version of **Tartube**, and if you want to move your channels and playlists out of **../tartube-data/downloads**, this is how to do it:
+*Q: In the Progress tab, 'Max downloads' is set to 2. But when I download my favourite channel, it downloads only one video at a time!*
 
-- Open the data directory (folder). If you're not sure where to find **Tartube**'s data directory, you can click **Edit > System preferences... > Files > Database**.
-- Make sure **Tartube** is not running. The **Tartube** window is sometimes minimised, and sometimes only visible in the system tray
-- Now open the **../downloads** directory
-- Move everything inside that directory into the directory above, e.g. move everything from **../tartube-data/downloads** into **../tartube-data**
-- Delete the empty **../downloads** directory
-- You can now restart **Tartube**
+**Tartube** passes a list of URLs to **youtube-dl**. Each URL may represent a single video, or multiple videos. **youtube-dl** downloads videos from each URL, one at a time.
 
-7.11 Tartube database file is getting in the way
+When you add a channel (or a playlist), **Tartube** knows the URL of the channel, but it doesn't know anything about the videos inside it. Therefore it passes the URL of the channel to **youtube-dl**. Therefore the channel is downloaded, one video at a time.
+
+You can download multiple videos from the same channel simultaneously, if you want (but it probably won't speed up your overall download).
+
+- Right-click the channel and select **Check channel**
+- When the operation finishes, Tartube will know the URL of each video
+- In the list of videos, select every video (press **CTRL + A**)
+- Right-click one of the videos, and select **Download videos**
+
+Alternatively, you can use custom downloads (see `6.13 Custom downloads`_).
+
+7.10 Tartube database file is getting in the way
 ------------------------------------------------
 
 *Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?*
@@ -1973,7 +2071,7 @@ At the moment, the answer is '**Tartube** is working fine, fix your own computer
 - If you want to move your videos from one location to another, it's easy - just move a single directory (folder) and everything it contains. There is no need to reconfigure anything; just tell **Tartube** where to find the new directory (folder)
 - Splitting up the data folder and the database file would require a lot of code to be rewritten, and this would probably introduce lots of new bugs
 
-7.12 Duplicate video names
+7.11 Duplicate video names
 --------------------------
 
 *Q: I downloaded a channel, but some of the videos in the channel have the same name. Tartube only downloads one of them!*
@@ -1984,14 +2082,14 @@ A: Tartube can create files with names in different formats. The name of two vid
 - In the box **Format for video file names**, select **Title + ID**
 - Click **OK** to close the window
 
-7.13 Convert video to audio
+7.12 Convert video to audio
 ---------------------------
 
 *Q: I want to convert the video files to audio files!*
 
 A: See `6.21 Converting to audio`_
 
-7.14 Video is downloaded as separate video/audio files
+7.13 Video is downloaded as separate video/audio files
 ------------------------------------------------------
 
 *Q: I downloaded a video and expected a single video file, instead Tartube downloaded several files, none of which are playable!*
@@ -2002,7 +2100,7 @@ A: The solution to both problems is to install FFmpeg, and to set the output for
 
 Firstly, make sure FFmpeg is installed on your system - see `6.4 Installing FFmpeg / AVConv`_.
 
-Secondly, set your desired output format. Open the Download options window (for example, click **Edit > General download options... > Formats > Preferred**). Add a format like **mp4** to the **List of preferred formats**, then add the same format to **If a merge is required after post-processing, output to this format**.
+Secondly, set your desired output format. Open the Download options window (for example, click **Edit > General download options... > Formats**). Add a format like **mp4** to the **List of preferred formats**, then add the same format to **If a merge is required after post-processing, output to this format**.
 
 For some reason, youtube-dl ignores the download option unless the format is specified in both places. (You will see a warning if you forget.)
 
@@ -2011,7 +2109,7 @@ For some reason, youtube-dl ignores the download option unless the format is spe
 
 Tartube can merge a video and audio file together, long after they have been downloaded - see `6.25 More information about FFmpeg and AVConv`_.
 
-7.15 Too many folders in the main window
+7.14 Too many folders in the main window
 ----------------------------------------
 
 *Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
@@ -2026,14 +2124,14 @@ A: In the main menu, click **Edit > System preferences... > Windows > Videos**, 
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop some channels/playlists into it
 
-7.16 Not enough videos in the main window
+7.15 Not enough videos in the main window
 -----------------------------------------
 
 *Q: I want to see all the videos on a single page, not spread over several pages!*
 
 A: At the bottom of the **Tartube** window, set the page size to zero, and press **ENTER**.
 
-7.17 Toolbar is too small
+7.16 Toolbar is too small
 -------------------------
 
 *Q: The toolbar is too small! There isn't enough room for all the buttons!*
@@ -2042,14 +2140,14 @@ A: Click **Edit > System preferences... > Windows > Main window** and then click
 
 MS Windows users can already see a toolbar without labels.
 
-7.18 Toolbar is too big
+7.17 Toolbar is too big
 -----------------------
 
 *Q: The toolbar is too big! Make it go away!*
 
 A: Click **Edit > System preferences... > Windows > Main window**, and then click **Don't show the main window toolbar**. The new setting is applied when you restart **Tartube**.
 
-7.19 YouTube name/password not accepted
+7.18 YouTube name/password not accepted
 ---------------------------------------
 
 *Q: I added my YouTube username and password, but I am still seeing authentification errors!*
@@ -2066,7 +2164,7 @@ Having created the file, in the same edit window, click the **General** tab. In 
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-7.20 Georestriction workarounds don't work
+7.19 Georestriction workarounds don't work
 ------------------------------------------
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
@@ -2077,7 +2175,7 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to buy a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__.
 
-7.21 Video website blocks me
+7.20 Video website blocks me
 ----------------------------
 
 *Q: I downloaded some videos from a channel, but then YouTube blocked me, and I can't download the rest of them!*
@@ -2090,7 +2188,7 @@ A: You can specify a list of proxies (**Edit > System preferences... > Operation
 
 Unfortunately, it is not possible to switch between proxies while downloading a channel (youtube-dl does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
 
-7.22 MS Windows installer is too big
+7.21 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -2112,14 +2210,16 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer and then compare it to the official one.
 
-7.23 Doesn't work on 32-bit Windows
+7.22 Doesn't work on 32-bit Windows
 -----------------------------------
 
 *Q: Tartube does not install/work on 32-bit Windows*
 
-A: Cygwin and MSYS2 have `dropped support for 32-bit Windows <https://www.msys2.org/news/#2020-05-17-32-bit-msys2-no-longer-actively-supported>`__. This means that some Tartube features do not work on 32-bit systems and, at some point, Tartube will no longer be supported on 32-bit systems as well.
+A: Cygwin and MSYS2 have `dropped support for 32-bit Windows <https://www.msys2.org/news/#2020-05-17-32-bit-msys2-no-longer-actively-supported>`__.
 
-7.24 Tartube can't detect livestreams
+Therefore there will be no further releases of Tartube for 32-bit Windows. Old installers will still work, and for a time it will still be possible to use them to install Tartube and youtube-dl. However, as of March 2022 it is already not possible to install FFmpeg.
+
+7.23 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -2130,16 +2230,16 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 **pip3 install feedparser**
 
-The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again. At the time of writing, **Tartube** cannot detect livestreams on 32-bit MS Windows.
+The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.25 Livestream is already finished
+7.24 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.26 Can't hear livestream alarms
+7.25 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -2150,9 +2250,9 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 **pip3 install playsound**
 
-The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again. At the time of writing, **playsound** cannot ne installed on 32-bit MS Windows.
+The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.27 Some icons not visible
+7.26 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -2163,7 +2263,7 @@ A: Since v2.4, **Tartube** uses a set of custom icons, replacing system (stock) 
 
 If you want to restore stock icons, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to deselect it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.28 Video thumbnails not visible
+7.27 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
@@ -2177,14 +2277,14 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.29 Video text not visible
+7.28 Video text not visible
 ---------------------------
 
 *Q: I can't see the text below each video!*
 
 A: If the background colours in the Video Catalogue are getting in the way, you can change them: click **Edit > Sysem preferences... > Windows > Colours**.
 
-7.30 Graphs not visible
+7.29 Graphs not visible
 -----------------------
 
 *Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
@@ -2200,7 +2300,7 @@ On MS Windows, do this:
 - In Tartube's main menu, select **System > Open MSYS2 terminal...**
 - In the terminal window, type **pacman -S mingw-w64-x86_64-python-matplotlib**.
 
-7.31 Tartube is not visible in the system tray
+7.30 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -2209,7 +2309,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.32 Tartube is not portable
+7.31 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -2226,7 +2326,7 @@ However, you can create an empty **settings.json** file in the source code direc
 
 You can see both locations by clicking **Edit > System preferences... > Files > Config**.
 
-7.33 Run out of disk space
+7.32 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -2237,14 +2337,7 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.34 British spelling
----------------------
-
-*Q: These British spellings are getting on my nerves!*
-
-A: Click **Edit > System preferences... > General > Language**, then click the drop-down box to select American English, and then restart **Tartube**
-
-7.35 No puedo hablar inglés
+7.33 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

@@ -212,10 +212,7 @@ class RefreshManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.refresh_manager_halt_timer,
-        )
+        self.app_obj.refresh_manager_halt_timer()
 
 
     def refresh_from_default_destination(self, media_data_obj):
@@ -240,9 +237,7 @@ class RefreshManager(threading.Thread):
 
         # Update the main window's progress bar
         self.job_count += 1
-        GObject.timeout_add(
-            0,
-            self.app_obj.main_win_obj.update_progress_bar,
+        self.app_obj.main_win_obj.update_progress_bar(
             media_data_obj.name,
             self.job_count,
             self.job_total,
@@ -509,9 +504,7 @@ class RefreshManager(threading.Thread):
 
         # Update the main window's progress bar
         self.job_count += 1
-        GObject.timeout_add(
-            0,
-            self.app_obj.main_win_obj.update_progress_bar,
+        self.app_obj.main_win_obj.update_progress_bar(
             media_data_obj.name,
             self.job_count,
             self.job_total,

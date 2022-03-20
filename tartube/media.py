@@ -1853,6 +1853,10 @@ class Video(GenericMedia):
         #   playlist)
         # For videos whose parent is a media.Folder, the value remains as None
         self.index = None
+        # List of subtitles available for this video. Items in the list are
+        #   language codes gathered from the video's metadata file (e.g.
+        #   'en_US', 'live_chat')
+        self.subs_list = []
 
         # Video description. A string of any length, containing newline
         #   characters if necessary. (Set to None if the video description is
@@ -2195,7 +2199,7 @@ class Video(GenericMedia):
             #   highest number of digits found
 
             # 15:52 Title
-            result = re.match(regex, line)
+            result = re.search(regex, line)
 
             if result:
 
@@ -2207,7 +2211,7 @@ class Video(GenericMedia):
             else:
 
                 # Title 15:52
-                result = re.match(rev_regex, line)
+                result = re.search(rev_regex, line)
                 if result:
 
                     title = result.groups()[0]
@@ -2495,6 +2499,61 @@ class Video(GenericMedia):
         self.comment_list = []
 
 
+    def contains_comment(self, search_text, regex_flag):
+
+        """Called by mainwin.MainWin.video_catalogue_apply_filter().
+
+        Returns True if any comment contains the specified 'search_text', or
+        False if none of them do (of if there are no comments to search).
+
+        Args:
+
+            search_text(str): The text/pattern for which to search
+
+            regex_flag (bool): True if 'search_text' is a regex, False
+                otherwise
+
+        """
+
+        if not regex_flag:
+
+            lower_text = search_text.lower()
+            for mini_dict in self.comment_list:
+                if mini_dict['text'].find(lower_text) > -1:
+                    return True
+
+        else:
+
+            for mini_dict in self.comment_list:
+                if re.search(search_text, mini_dict['text'], re.IGNORECASE):
+                    return True
+
+        # No matching comments
+        return False
+
+
+    def extract_subs_list(self, subs_dict):
+
+        """Called by mainapp.TartubeApp.update_video_from_json() and
+        downloads.VideoDownloader.confirm_sim_video().
+
+        The calling code has extracted a dictionary of subtitles from this
+        video's metadata. Each key in the dictionary should be a language
+        code, e.g. 'en_us', 'live_chat'
+
+        Use this dictionary to update the IV.
+
+        Args:
+
+            subs_dict (dict): The dictionary described above
+
+        """
+
+        self.subs_list = []
+        for key in subs_dict.keys():
+            self.subs_list.append(key)
+
+
     # Set accessors
 
 
@@ -2735,6 +2794,11 @@ class Video(GenericMedia):
             self.split_flag = True
         else:
             self.split_flag = False
+
+
+    def reset_subs_list(self):
+
+        self.subs_list = []
 
 
     def set_upload_time(self, unix_time=None):

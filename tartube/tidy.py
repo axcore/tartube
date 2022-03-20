@@ -520,10 +520,7 @@ class TidyManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.tidy_manager_halt_timer,
-        )
+        self.app_obj.tidy_manager_halt_timer()
 
 
     def tidy_directory(self, media_data_obj):
@@ -541,9 +538,7 @@ class TidyManager(threading.Thread):
 
         # Update the main window's progress bar
         self.job_count += 1
-        GObject.timeout_add(
-            0,
-            self.app_obj.main_win_obj.update_progress_bar,
+        self.app_obj.main_win_obj.update_progress_bar(
             media_data_obj.name,
             self.job_count,
             self.job_total,
@@ -844,7 +839,7 @@ class TidyManager(threading.Thread):
         archive_path = os.path.abspath(
             os.path.join(
                 media_data_obj.get_default_dir(self.app_obj),
-                'ytdl-archive.txt',
+                self.app_obj.ytdl_archive_name,
             ),
         )
 

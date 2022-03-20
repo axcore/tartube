@@ -29,12 +29,14 @@ from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 # Import other modules
 import os
 import re
+import zipfile
 
 
 # Import our modules
 import __main__
 import formats
 import mainapp
+import media
 import utils
 # Use same gettext translations
 from mainapp import _
@@ -396,6 +398,35 @@ class GenericWizWin(Gtk.Window):
         return label
 
 
+    def add_checkbutton(self, text, x, y, wid, hei):
+
+        """Called by various functions in the child wizard window.
+
+        Adds a Gtk.CheckButton to self.inner_grid.
+
+        Args:
+
+            text (string or None): The text to display in the checkbutton's
+                label. No label is used if 'text' is an empty string or None
+
+            x, y, wid, hei (int): Position on the grid at which the widget is
+                placed
+
+        Returns:
+
+            The checkbutton widget created
+
+        """
+
+        checkbutton = Gtk.CheckButton()
+        self.inner_grid.attach(checkbutton, x, y, wid, hei)
+        checkbutton.set_hexpand(True)
+        if text is not None and text != '':
+            checkbutton.set_label(text)
+
+        return checkbutton
+
+
     def add_radiobutton(self, prev_button, text, x, y, wid, hei):
 
         """Called by various functions in the child wizard window.
@@ -454,7 +485,7 @@ class GenericWizWin(Gtk.Window):
         scrolled = Gtk.ScrolledWindow()
         frame.add(scrolled)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_size_request(-1, 150)
+        scrolled.set_size_request(-1, 125)
 
         textview = Gtk.TextView()
         scrolled.add(textview)
@@ -581,16 +612,16 @@ class SetupWizWin(GenericWizWin):
         # Size (in pixels) of gaps between preference window widgets
         self.spacing_size = self.app_obj.default_spacing_size
 
-        # Make the code a little simpler, by checking for MS Windows just once
-        #   (set below)
-        self.mswin_flag = False
-
         # List of 'pages' (widget layouts on self.inner_grid). Each item in the
         #   list is the function to call
         self.page_list = []                     # Set below
         # The number of the current page (the first is 0), matching an index in
         #   self.page_list
         self.current_page = 0
+
+        # Make the code a little simpler, by checking for MS Windows just once
+        #   (set below)
+        self.mswin_flag = False
 
         # User choices; they are applied when the window is closed (and
         #   self.apply_changes() is called)
@@ -614,6 +645,9 @@ class SetupWizWin(GenericWizWin):
         # Flag set to True, once the 'More options' button has been clicked,
         #   so that it is never visible again
         self.more_options_flag = False
+
+        # Standard length of text in the wizard window
+        self.text_len = 60
 
         # Code
         # ----
@@ -778,7 +812,8 @@ class SetupWizWin(GenericWizWin):
             edition = _('Standard edition')
 
         self.add_label(
-            '<span style="italic">' + edition + '</span>',
+            '<span style="italic">' \
+            + utils.tidy_up_long_string(edition, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -787,15 +822,19 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Please take a few moments to set up the application') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Please take a few moments to set up the application.'),
+                self.text_len,
+            ) + '</span>',
             0, 4, 1, 1,
         )
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + _('Click the <b>Next</b> button to get started') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the <b>Next</b> button to get started.'),
+                self.text_len,
+            ) + '</span>',
             0, 5, 1, 1,
         )
 
@@ -811,8 +850,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Tartube stores all of its downloads in one place.') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Tartube stores all of its downloads in one place.'),
+                self.text_len,
+            ) + '</span>',
             0, 0, grid_width, 1,
         )
 
@@ -826,7 +867,7 @@ class SetupWizWin(GenericWizWin):
                     'If you don\'t want to use the default location, then' \
                     + ' click <b>Choose</b> to select a different one.',
                 ),
-                60,
+                self.text_len,
             )
 
             msg2 = utils.tidy_up_long_string(
@@ -834,7 +875,7 @@ class SetupWizWin(GenericWizWin):
                     'If you have used Tartube before, you can select an' \
                     + ' existing directory, instead of creating a new one.',
                 ),
-                60,
+                self.text_len,
             )
 
         else:
@@ -845,7 +886,7 @@ class SetupWizWin(GenericWizWin):
                     'If you have used Tartube before, you can select an' \
                     + ' existing folder, instead of creating a new one.',
                 ),
-                60,
+                self.text_len,
             )
 
         self.add_label(
@@ -923,8 +964,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Choose which downloader to use.') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Choose which downloader to use.'),
+                self.text_len,
+            ) + '</span>',
             0, 0, grid_width, 1,
         )
 
@@ -1121,25 +1164,47 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Click the button to install or update the downloader.') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the button to install or update the downloader.'),
+                self.text_len,
+            ) + '</span>',
             0, 0, grid_width, 1,
         )
 
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, grid_width, 1)
+
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _(
-                'You should do this, even if you think it is already' \
-                + ' installed.',
+            + utils.tidy_up_long_string(
+                _(
+                    'You should do this, even if you think it is already' \
+                    + ' installed.',
+                ),
+                self.text_len,
             ) + '</span>',
-            0, 1, grid_width, 1,
+            0, 2, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, grid_width, 1)
+        self.add_empty_label(0, 3, grid_width, 1)
+
+        if os.name != 'nt':
+            extra_rows = 0
+
+        else:
+            extra_rows = 1
+            self.add_label(
+                '<span font_size="large" style="italic">' \
+                + _('Estimated install size') + ': <b>15 MB</b></span>',
+                0, (3 + extra_rows), grid_width, 1,
+            )
 
         self.downloader_button = Gtk.Button(_('Install and update downloader'))
-        self.inner_grid.attach(self.downloader_button, 1, 3, 1, 1)
+        self.inner_grid.attach(
+            self.downloader_button,
+            1, (4 + extra_rows), 1, 1,
+        )
         self.downloader_button.set_hexpand(False)
         # (Signal connect appears below)
 
@@ -1147,7 +1212,10 @@ class SetupWizWin(GenericWizWin):
         # (Making the button invisible doesn't work, so instead don't add it
         #   to the grid at all)
         if os.name != 'nt' and not self.more_options_flag:
-            self.inner_grid.attach(self.update_button, 1, 4, 1, 1)
+            self.inner_grid.attach(
+                self.update_button,
+                1, (5 + extra_rows), 1, 1,
+            )
         self.update_button.set_hexpand(False)
         # (Signal connect appears below)
 
@@ -1161,7 +1229,10 @@ class SetupWizWin(GenericWizWin):
 
         self.update_combo = Gtk.ComboBox.new_with_model(self.update_liststore)
         if os.name != 'nt':
-            self.inner_grid.attach(self.update_combo, 1, 4, 1, 1)
+            self.inner_grid.attach(
+                self.update_combo,
+                1, (5 + extra_rows), 1, 1,
+            )
         if not self.more_options_flag:
             self.update_combo.set_visible(False)
 
@@ -1184,12 +1255,9 @@ class SetupWizWin(GenericWizWin):
         #   youtube-dl itself, is visible (if applicable)
         self.refresh_update_combo()
 
-        # (Empty label for spacing)
-        self.add_empty_label(0, 4, grid_width, 1)
-
         self.downloader_scrolled, self.downloader_textview, \
         self.downloader_textbuffer = self.add_textview(
-            0, 5, grid_width, 1,
+            0, (7 + extra_rows), grid_width, 1,
         )
 
         # (Signal connects from above)
@@ -1218,10 +1286,15 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Click the button to install FFmpeg.') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the button to install FFmpeg.'),
+                self.text_len,
+            ) + '</span>',
             0, 0, grid_width, 1,
         )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1231,37 +1304,49 @@ class SetupWizWin(GenericWizWin):
                     + ' videos, and cannot display video thumbnails from' \
                     + ' YouTube.',
                 ),
-                60,
+                self.text_len,
             ) + '</span>',
-            0, 1, grid_width, 1,
+            0, 2, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, grid_width, 1)
+        self.add_empty_label(0, 3, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _(
-                'The operation might take several minutes. Please be' \
-                + ' patient.',
+            + utils.tidy_up_long_string(
+                _(
+                    'The operation might take several minutes. If it fails,' \
+                    + ' try clicking the <b>Install FFmpeg</b> button again.',
+                ),
+                self.text_len,
             ) + '</span>',
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 4, grid_width, 1)
+        self.add_empty_label(0, 5, grid_width, 1)
+
+        if os.name != 'nt':
+            extra_rows = 0
+
+        else:
+            extra_rows = 1
+
+            self.add_label(
+                '<span font_size="large" style="italic">' \
+                + _('Estimated install size') + ': <b>1.5 GB</b></span>',
+                0, (5 + extra_rows), grid_width, 1,
+            )
 
         self.ffmpeg_button = Gtk.Button(_('Install FFmpeg'))
-        self.inner_grid.attach(self.ffmpeg_button, 1, 5, 1, 1)
+        self.inner_grid.attach(self.ffmpeg_button, 1, (6 + extra_rows), 1, 1)
         self.ffmpeg_button.set_hexpand(False)
         # (Signal connect appears below)
 
-        # (Empty label for spacing)
-        self.add_empty_label(0, 6, grid_width, 1)
-
         self.ffmpeg_scrolled, self.ffmpeg_textview, self.ffmpeg_textbuffer \
         = self.add_textview(
-            0, 7, grid_width, 1,
+            0, (7 + extra_rows), grid_width, 1,
         )
 
         # (Signal connects from above)
@@ -1282,16 +1367,18 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _('Tartube adds videos to a database.') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Tartube adds videos to a database.'),
+                self.text_len,
+            ) + '</span>',
             0, 0, grid_width, 1,
         )
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + _(
-                'If you don\'t need a database, you can use the Classic' \
-                + ' Mode tab.',
+            + utils.tidy_up_long_string(
+                _('If you don\'t need a database, you can use Classic Mode.'),
+                self.text_len,
             ) + '</span>',
             0, 1, grid_width, 1,
         )
@@ -1349,7 +1436,7 @@ class SetupWizWin(GenericWizWin):
                     'If you need to re-install or update the downloader or' \
                     + ' FFmpeg, you can do it from the main window\'s menu.',
                 ),
-                60,
+                self.text_len,
             ) + '</span>',
             0, 3, 1, 1,
         )
@@ -1359,8 +1446,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + _('Click the <b>OK</b> button to start Tartube!') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the <b>OK</b> button to start Tartube!'),
+                self.text_len,
+            ) + '</span>',
             0, 5, 1, 1,
         )
 
@@ -1394,7 +1483,7 @@ class SetupWizWin(GenericWizWin):
                     'You must install the downloader on your system, before' \
                     + ' you can use Tartube.'
                 ),
-                60,
+                self.text_len,
             ) + '</span>',
             0, 3, 1, 1,
         )
@@ -1404,7 +1493,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + 'It is strongly recommended that you install FFmpeg.</span>',
+            + utils.tidy_up_long_string(
+                _('It is strongly recommended that you install FFmpeg.'),
+                self.text_len,
+            ) + '</span>',
             0, 5, 1, 1,
         )
 
@@ -1419,7 +1511,7 @@ class SetupWizWin(GenericWizWin):
                     + ' high-resolution videos, and cannot display many' \
                     + ' video thumbnails.'
                 ),
-                60,
+                self.text_len,
             ) + '</span>',
             0, 7, 1, 1,
         )
@@ -1429,8 +1521,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + _('Click the <b>OK</b> button to start Tartube!') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the <b>OK</b> button to start Tartube!'),
+                self.text_len,
+            ) + '</span>',
             0, 9, 1, 1,
         )
 
@@ -1459,7 +1553,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + 'It is strongly recommended that you install FFmpeg.</span>',
+            + utils.tidy_up_long_string(
+                _('It is strongly recommended that you install FFmpeg.'),
+                self.text_len,
+            ) + '</span>',
             0, 3, 1, 1,
         )
 
@@ -1474,7 +1571,7 @@ class SetupWizWin(GenericWizWin):
                     + ' high-resolution videos, and cannot display many' \
                     + ' video thumbnails.',
                 ),
-                60,
+                self.text_len,
             ) + '</span>',
             0, 5, 1, 1,
         )
@@ -1484,8 +1581,10 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + _('Click the <b>OK</b> button to start Tartube!') \
-            + '</span>',
+            + utils.tidy_up_long_string(
+                _('Click the <b>OK</b> button to start Tartube!'),
+                self.text_len,
+            ) + '</span>',
             0, 7, 1, 1,
         )
 
@@ -1501,22 +1600,19 @@ class SetupWizWin(GenericWizWin):
         When installing/updating youtube-dl (or a fork), write a message in the
         textview.
 
+        N.B. Because Gtk is not thread safe, this function must always be
+        called from within GObject.timeout_add().
+
         Args:
 
             msg (str): The message to display
 
         """
 
-        # v2.2.209 This install sometimes freezes on MS Windows, due to some
-        #   Gtk problem or other. Solution is to split up long messages in the
-        #   textview
-        msg = utils.tidy_up_long_string(msg)
-        for line in msg.split('\n'):
-
-            self.downloader_textbuffer.insert(
-                self.downloader_textbuffer.get_end_iter(),
-                line + '\n',
-            )
+        self.downloader_textbuffer.insert(
+            self.downloader_textbuffer.get_end_iter(),
+            utils.tidy_up_long_string(msg) + '\n',
+        )
 
         adjust = self.downloader_scrolled.get_vadjustment()
         adjust.set_value(adjust.get_upper())
@@ -1537,7 +1633,11 @@ class SetupWizWin(GenericWizWin):
 
         """
 
-        self.downloader_page_write(msg)
+        GObject.timeout_add(
+            0,
+            self.downloader_page_write,
+            msg,
+        )
 
         self.downloader_button.set_sensitive(True)
         self.next_button.set_sensitive(True)
@@ -1551,22 +1651,19 @@ class SetupWizWin(GenericWizWin):
 
         When installing FFmpeg, write a message in the textview.
 
+        N.B. Because Gtk is not thread safe, this function must always be
+        called from within GObject.timeout_add().
+
         Args:
 
             msg (str): The message to display
 
         """
 
-        # v2.2.209 This install sometimes freezes on MS Windows, due to some
-        #   Gtk problem or other. Solution is to split up long messages in the
-        #   textview
-        msg = utils.tidy_up_long_string(msg)
-        for line in msg.split('\n'):
-
-            self.ffmpeg_textbuffer.insert(
-                self.ffmpeg_textbuffer.get_end_iter(),
-                line + '\n',
-            )
+        self.ffmpeg_textbuffer.insert(
+            self.ffmpeg_textbuffer.get_end_iter(),
+            utils.tidy_up_long_string(msg) + '\n',
+        )
 
         adjust = self.ffmpeg_scrolled.get_vadjustment()
         adjust.set_value(adjust.get_upper())
@@ -1587,7 +1684,11 @@ class SetupWizWin(GenericWizWin):
 
         """
 
-        self.ffmpeg_page_write(msg)
+        GObject.timeout_add(
+            0,
+            self.ffmpeg_page_write,
+            msg,
+        )
 
         self.ffmpeg_button.set_sensitive(True)
         self.next_button.set_sensitive(True)
@@ -1937,3 +2038,770 @@ class SetupWizWin(GenericWizWin):
         if not radiobutton.get_active():
             radiobutton.set_active(True)
 
+
+class ImportYTWizWin(GenericWizWin):
+
+    """Python class for a 'wizard window' used to import YouTube subscriptions.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application object
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, app_obj):
+
+        Gtk.Window.__init__(self, title=_('Import YouTube subscriptions'))
+
+        if self.is_duplicate(app_obj):
+            return
+
+        # IV list - class objects
+        # -----------------------
+        # The mainapp.TartubeApp object
+        self.app_obj = app_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.grid = None                        # Gtk.Grid
+        self.vbox = None                        # Gtk.VBox
+        self.inner_grid = None                  # Gtk.Grid
+        self.cancel_button = None               # Gtk.Button
+        self.next_button = None                 # Gtk.Button
+        self.prev_button = None                 # Gtk.Button
+        # (From self.setup_finish_page)
+        self.liststore = None                   # Gtk.ListStore
+        self.checkbutton = None                 # Gtk.CheckButton
+
+
+        # IV list - other
+        # ---------------
+        # Size (in pixels) of gaps between preference window widgets
+        self.spacing_size = self.app_obj.default_spacing_size
+
+        # List of 'pages' (widget layouts on self.inner_grid). Each item in the
+        #   list is the function to call
+        self.page_list = []                     # Set below
+        # The number of the current page (the first is 0), matching an index in
+        #   self.page_list
+        self.current_page = 0
+
+        # User choices
+        # Path to the YouTube export file
+        self.import_path = None
+        # Dictionary of importable channels/playlists, in the form described in
+        #   mainapp.TartubeApp.export_from_db()
+        self.db_dict = {}
+
+        # Standard length of text in the wizard window
+        self.text_len = 60
+
+
+        # Code
+        # ----
+
+        # Set the page list
+        self.page_list = [
+            'setup_start_page',
+            'setup_load_page',
+            'setup_finish_page',
+        ]
+
+        # Set up the wizard window
+        self.setup()
+
+
+    # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericWizWin
+
+
+#   def setup():                # Inherited from GenericWizWin
+
+
+#   def setup_grid():           # Inherited from GenericWizWin
+
+
+#   def setup_button_strip():   # Inherited from GenericWizWin
+
+
+#   def setup_page():           # Inherited from GenericWizWin
+
+
+#   def convert_next_button():  # Inherited from GenericWizWin
+
+
+    def apply_changes(self):
+
+        """Called by self.on_button_next_clicked().
+
+        Import the specified channels/playlists into the Tartube database.
+        """
+
+        (video_count, channel_count, playlist_count, folder_count) \
+        = self.app_obj.process_import(
+            self.db_dict,           # The imported data...
+            self.db_dict,           # ...already exists in 'flattened' form
+            None,                   # No parent 'mini_dict' yet
+            False,                  # No videos to import
+            self.checkbutton.get_active(),
+            True,                   # Imported into selected folder, if any
+            0,                      # video_count
+            0,                      # channel_count
+            0,                      # playlist count
+            0,                      # folder_count
+        )
+
+        if not channel_count and not playlist_count:
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Nothing has been imported'),
+                'error',
+                'ok',
+            )
+
+        else:
+
+            # Show a confirmation
+            msg = _('Imported into database') \
+                + ':\n\n' + _('Videos') + ': ' + str(video_count) \
+                + '\n' + _('Channels') + ': ' + str(channel_count) \
+                + '\n' + _('Playlists') + ': ' + str(playlist_count) \
+                + '\n' + _('Folders') + ': ' + str(folder_count)
+
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+                msg,
+                'info',
+                'ok',
+            )
+
+
+#   def cancel_changes():       # Inherited from GenericWizWin
+
+
+#   def close():                # Inherited from GenericWizWin
+
+
+    # (Setup pages)
+
+
+    def setup_start_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['yt_icon'],
+            0, 0, 1, 1,
+        )
+
+        self.add_label(
+            '<span font_size="large" font_weight="bold">' \
+            + _('Import YouTube Subscriptions') + '</span>',
+            0, 1, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 2, 1, 1)
+
+        row = 2
+        for msg in [
+            _('Open YouTube in your browser, and sign in'),
+            _('Click the channel icon in the top-right corner'),
+            _('Select <b>Your data in YouTube</b>'),
+            _('Under <b>Your YouTube dashboard</b>, click <b>More</b>'),
+            _('Click <b>Download YouTube data</b>'),
+            _('Click <b>All YouTube data included</b>'),
+            _('Deselect everything except <b>Subscriptions</b>'),
+            _('Click <b>Next step</b>, then <b>Create export</b>'),
+            _('Wait a few moments, then click  <b>Download</b>'),
+
+        ]:
+            row += 1
+            self.add_label(
+                '<span font_size="large" style="italic">* ' \
+                + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+                0, row, 1, 1,
+            )
+
+
+    def setup_load_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        grid_width = 3
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['yt_icon'],
+            0, 0, grid_width, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, grid_width, 1)
+
+        self.add_label(
+            '<span font_size="large"  style="italic">' \
+            + _('Select the YouTube export file') \
+            + '</span>',
+            0, 2, grid_width, 1,
+        )
+
+        button = Gtk.Button(_('Select file'))
+        self.inner_grid.attach(button, 1, 3, 1, 1)
+        # (Signal connect appears below)
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 4, grid_width, 1)
+
+        # The specified path appears here, after it has been selected
+        if self.import_path is None:
+
+            label = self.add_label(
+                '',
+                0, 5, grid_width, 1,
+            )
+
+        else:
+
+            label = self.add_label(
+                '<span font_size="large" font_weight="bold">' \
+                + self.import_path + '</span>',
+                0, 5, grid_width, 1,
+            )
+
+        # (Signal connects from above)
+        button.connect(
+            'clicked',
+            self.on_button_choose_import_clicked,
+            label,
+        )
+
+        # Disable the Next button until a valid import has been selected
+        if self.import_path is None:
+            self.next_button.set_sensitive(False)
+
+
+    def setup_finish_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        grid_width = 5
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['yt_icon'],
+            0, 0, grid_width, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        self.inner_grid.attach(scrolled, 0, 2, grid_width, 1)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_size_request(-1, 250)
+
+        frame = Gtk.Frame()
+        scrolled.add_with_viewport(frame)
+
+        treeview = Gtk.TreeView()
+        frame.add(treeview)
+        treeview.set_headers_visible(True)
+        treeview.set_can_focus(False)
+
+        for i, column_title in enumerate(
+            [ _('Import'), _('Type'), _('Name'), _('URL'), 'hide' ],
+        ):
+            if i == 0:
+                renderer_toggle = Gtk.CellRendererToggle()
+                renderer_toggle.connect('toggled', self.on_checkbutton_toggled)
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+            elif i == 1:
+                renderer_pixbuf = Gtk.CellRendererPixbuf()
+                column_pixbuf = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_pixbuf,
+                    pixbuf=i,
+                )
+                treeview.append_column(column_pixbuf)
+                column_pixbuf.set_resizable(False)
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                if column_title == 'hide':
+                    column_text.set_visible(False)
+                else:
+                    column_text.set_resizable(True)
+                    if i == 2:
+                        renderer_text.connect(
+                            'edited',
+                            self.on_container_name_edited,
+                        )
+                    elif i == 3:
+                        renderer_text.connect(
+                            'edited',
+                            self.on_container_url_edited,
+                        )
+                renderer_text.set_property('editable', True)
+
+        self.liststore = Gtk.ListStore(
+            bool, GdkPixbuf.Pixbuf, str, str, int,
+        )
+        treeview.set_model(self.liststore)
+
+        # Populate the treeview
+
+        # (Sorting function for the code immediately below)
+        def sort_dict_by_name(this_dict):
+            return this_dict['name']
+
+        # Deal with importable channels/playlists in alphabetical order
+        for mini_dict in sorted(self.db_dict.values(), key=sort_dict_by_name):
+
+            self.liststore.append([
+                mini_dict['import_flag'],
+                self.app_obj.main_win_obj.pixbuf_dict[
+                    mini_dict['type'] + '_small'
+                ],
+                mini_dict['name'],
+                mini_dict['source'],
+                mini_dict['dbid'],
+            ])
+
+        # Strip of widgets at the bottom
+        self.checkbutton = self.add_checkbutton(
+            _('Merge channels/playlists'),
+            0, 3, 1, 1,
+        )
+
+        button = Gtk.Button(_('Toggle channel/playlist'))
+        self.inner_grid.attach(button, 1, 3, 1, 1)
+        button.connect(
+            'clicked',
+            self.on_button_toggle_container_clicked,
+            treeview,
+        )
+
+        button2 = Gtk.Button(_('Select all'))
+        self.inner_grid.attach(button2, 2, 3, 1, 1)
+        button2.connect('clicked', self.on_button_select_all_clicked)
+
+        button3 = Gtk.Button(_('Unselect all'))
+        self.inner_grid.attach(button3, 3, 3, 1, 1)
+        button3.connect('clicked', self.on_button_unselect_all_clicked)
+
+
+    # (Support functions)
+
+
+    def validate_import(self, label):
+
+        """Called by self.on_button_choose_import_clicked().
+
+        The path to the export file has been stored in self.import_path.
+
+        Check the file exists, is valid, and contains some YouTube
+        subscriptions. Update IVs and the text of 'label' accordingly
+
+        Args:
+
+            label (Gtk.Label): A widget to update
+
+        Return values:
+
+            True on success, False of failure
+
+        """
+
+        fail_msg = None
+
+        # Check a .zip file really exists
+        if self.import_path is None \
+        or not os.path.isfile(self.import_path) \
+        or not zipfile.is_zipfile(self.import_path):
+            fail_msg = _('Missing of invalid export file')
+
+        # Prepare to extract the archive in a temporary directory, deleting any
+        #   existing directory first
+        temp_dir = None
+        if not fail_msg:
+
+            temp_dir = os.path.abspath(
+                os.path.join(
+                    self.app_obj.temp_dir,
+                    'zip',
+                ),
+            )
+
+            if os.path.isdir(temp_dir) \
+            and not self.app_obj.remove_directory(temp_dir):
+                fail_msg = _('Unable to prepare export file for extraction')
+
+        if not fail_msg:
+
+            if not self.app_obj.make_directory(temp_dir):
+                fail_msg = _('Unable to prepare export file for extraction')
+
+        # Extract the subscriptions.csv file from the archive
+        if not fail_msg:
+
+            rel_path = os.path.join(
+                'Takeout',
+                'YouTube and YouTube Music',
+                'subscriptions',
+                'subscriptions.csv',
+            )
+
+            try:
+                with(zipfile.ZipFile(self.import_path)) as zip_file:
+                    zip_file.extract(member=rel_path, path=temp_dir)
+
+            except:
+                fail_msg = _('Unable to extract export file')
+
+        # Check that a subscriptions.csv exists
+        if not fail_msg:
+
+            csv_path = os.path.abspath(
+                os.path.join(
+                    temp_dir,
+                    'Takeout',
+                    'YouTube and YouTube Music',
+                    'subscriptions',
+                    'subscriptions.csv',
+                ),
+            )
+
+            if not os.path.isfile(csv_path):
+                fail_msg = _('Missing subscriptions in export file')
+
+        # Extract a list of channels/playlists from the export file
+        subscription_list = []
+        if not fail_msg:
+
+            # List of lists; each minilist represents one channel/playlist,
+            #   and is in the form [name, URL]
+            try:
+
+                fh = open(csv_path, 'r')
+                count = 0
+                for line in fh.readlines():
+
+                    # Ignore the first line, which should be
+                    #   'Channel ID,Channel URL,Channel title'
+                    count += 1
+                    if count > 1:
+
+                        match = re.search(
+                            '^([^,]+),([^,]+),([^,\n]+)\n*$',
+                            line,
+                        )
+                        if match:
+                            subscription_list.append([
+                                match.groups()[2],      # Channel title
+                                match.groups()[1],      # URL
+                            ])
+
+            except:
+                fail_msg = _('Cannot read subscriptions in export file')
+
+        if not fail_msg and not subscription_list:
+            fail_msg = _('No subscriptions in export file')
+
+        # Delete the temporary directory and update the text of the label
+        if temp_dir is not None:
+            self.app_obj.remove_directory(temp_dir)
+
+        if fail_msg:
+
+            # (No channels/playlists are currently importable)
+            self.db_dict = {}
+
+            label.set_markup(
+                '<span font_size="large" font_weight="bold">' + fail_msg \
+                + '</span>',
+            )
+
+            return False
+
+        else:
+
+            if len(subscription_list) == 1:
+
+                label.set_markup(
+                    '<span font_size="large" font_weight="bold">'  \
+                    + _('Export file is valid, extracted 1 subscription') \
+                    + '</span>',
+                )
+
+            else:
+
+                label.set_markup(
+                    '<span font_size="large" font_weight="bold">'  \
+                    + _(
+                        'Export file is valid, extracted {0} subscriptions',
+                    ).format(len(subscription_list)) \
+                    + '</span>',
+                )
+
+            # Convert 'subscription_list' into the standard export/import
+            #   format described in mainapp.TartubeApp.export_from_db()
+            self.db_dict = {}
+            count = 0
+
+            for mini_list in subscription_list:
+
+                count += 1
+
+                mini_dict = {
+                    # (Assume everything is a channel, initially)
+                    'type': 'channel',
+                    # (Use a fake .dbid; code in mainapp.TartubeApp creates
+                    #   new media.Channel and media.Playlist objects with
+                    #   real .dbids)
+                    'dbid': count,
+                    'vid': None,
+                    'name': mini_list[0],
+                    'nickname': mini_list[0],
+                    'file': None,
+                    'source': mini_list[1],
+                    # (This procedure does not import videos)
+                    'db_dict': {},
+                    # (Add one of the extra key-value pairs also added by
+                    #   mainwin.ImportDialogue)
+                    'import_flag': True,
+                }
+
+                self.db_dict[count] = mini_dict
+
+            # Procedure complete
+            return True
+
+
+    # (Callbacks)
+
+
+    def on_button_choose_import_clicked(self, button, label):
+
+        """Called from a callback in self.setup_load_page().
+
+        Opens a file chooser dialogue, so the user can set the location of the
+        YouTube export.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            label (Gtk.Label): Once set, the path to the directory is displayed
+                in this label
+
+        """
+
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            'Select the YouTube export',
+            self,
+            'open',
+        )
+
+        # Get the user's response
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+
+            self.import_path = dialogue_win.get_filename()
+            # Check the export file, storing the results in various IVs, and
+            #   setting label accordingly
+            # Then enable/disable the Next button
+            if not self.validate_import(label):
+                self.next_button.set_sensitive(False)
+            else:
+                self.next_button.set_sensitive(True)
+
+        dialogue_win.destroy()
+
+
+    def on_button_select_all_clicked(self, button):
+
+        """Called from a callback in self.setup_finish_page().
+
+        Mark all channels/playlists to be imported.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.liststore)):
+            self.liststore[path][0] = True
+
+        for mini_dict in self.db_dict.values():
+            mini_dict['import_flag'] = True
+
+
+    def on_button_toggle_container_clicked(self, button, treeview):
+
+        """Called from a callback in self.setup_finish_page().
+
+        Switch the selected channel to a playlist, or vice-versa.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeView): The treeview to be modified
+
+        """
+
+        selection = treeview.get_selection()
+        (model, tree_iter) = selection.get_selected()
+        if tree_iter is None:
+
+            # Nothing selected
+            return
+
+        # Update the dictionary of data to be imported
+        fake_dbid = model[tree_iter][4]
+        for mini_dict in self.db_dict.values():
+
+            if mini_dict['dbid'] == fake_dbid:
+
+                if mini_dict['type'] == 'channel':
+                    mini_dict['type'] = 'playlist'
+                else:
+                    mini_dict['type'] = 'channel'
+
+                # Update the treeview's row
+                model[tree_iter] = [
+                    mini_dict['import_flag'],
+                    self.app_obj.main_win_obj.pixbuf_dict[
+                        mini_dict['type'] + '_small'
+                    ],
+                    mini_dict['name'],
+                    mini_dict['source'],
+                    mini_dict['dbid'],
+                ]
+
+                return
+
+
+    def on_button_unselect_all_clicked(self, button):
+
+        """Called from a callback in self.setup_finish_page().
+
+        Mark all channels/playlists to be not imported.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.liststore)):
+            self.liststore[path][0] = False
+
+        for mini_dict in self.db_dict.values():
+            mini_dict['import_flag'] = False
+
+
+    def on_checkbutton_toggled(self, checkbutton, path):
+
+        """Called from a callback in self.__init__().
+
+        Respond when the user selects/deselects an item in the treeview.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            path (int): A number representing the widget's row
+
+        """
+
+        # The user has clicked on the checkbutton widget, so toggle the widget
+        #   itself
+        self.liststore[path][0] = not self.liststore[path][0]
+
+        # Update IVs
+        mini_dict = self.db_dict[self.liststore[path][4]]
+        mini_dict['import_flag'] = self.liststore[path][0]
+
+
+    def on_container_name_edited(self, widget, path, text):
+
+        """Called from callback in self.setup_finish_page().
+
+        Updates the name of a channel/playlist.
+
+        Args:
+
+            widget (Gtk.CellRendererText): The widget clicked
+
+            path (int): Path to the treeview line that was edited
+
+            text (str): The new contents of the cell
+
+        """
+
+        # Check the entered text is a valid name
+        if text == '' \
+        or re.search('^\s*$', text) \
+        or not self.app_obj.check_container_name_is_legal(text):
+            return
+
+        # Update the column text
+        self.liststore[path][2] = text
+
+        # Update IVs
+        mini_dict = self.db_dict[self.liststore[path][4]]
+        mini_dict['name'] = text
+        mini_dict['nickname'] = text
+
+
+    def on_container_url_edited(self, widget, path, text):
+
+        """Called from callback in self.setup_finish_page().
+
+        Updates the URL of a channel/playlist.
+
+        Args:
+
+            widget (Gtk.CellRendererText): The widget clicked
+
+            path (int): Path to the treeview line that was edited
+
+            text (str): The new contents of the cell
+
+        """
+
+        # Check the entered text is a valid name
+        if not utils.check_url(text):
+            return
+
+        # Update the column text
+        self.liststore[path][3] = text
+
+        # Update IVs
+        mini_dict = self.db_dict[self.liststore[path][4]]
+        mini_dict['source'] = text

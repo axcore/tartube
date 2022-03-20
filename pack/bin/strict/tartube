@@ -42,8 +42,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.3.393'
-__date__ = '8 Mar 2022'
+__version__ = '2.3.447'
+__date__ = '20 Mar 2022'
 __copyright__ = 'Copyright \xa9 2019-2022 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2022 A S Lewis.
@@ -64,7 +64,7 @@ __author_list__ = [
     'A S Lewis',
 ]
 __credit_list__ = [
-    # (This list is formmated to suit Gtk.AboutDialog)
+    # (This list is formatted to suit Gtk.AboutDialog)
     'Partially based on youtube-dl-gui by MrS0m30n3',
     'https://github.com/MrS0m30n3/youtube-dl-gui',
     'FFmpeg thumbnail code adapted from youtube-dl',
@@ -78,8 +78,7 @@ __credit_list__ = [
     'https://github.com/mrwnwttk',
 ]
 __description__ = 'A front-end GUI for youtube-dl,\n' \
-+ 'partly based on youtube-dl-gui\n' \
-+ 'and written in Python 3 / Gtk 3'
++ 'written in Python 3 / Gtk 3'
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
 __website_bugs__ = 'https://github.com/axcore/tartube'

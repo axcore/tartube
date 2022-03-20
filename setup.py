@@ -31,8 +31,7 @@ long_description="""
 Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
 downloaders.
 
-It is partly based on youtube-dl-gui and is written in Python 3 / Gtk 3.
-Tartube runs on MS Windows, Linux, BSD and MacOS.
+It is written in Python 3 / Gtk 3 and runs on MS Windows, Linux, BSD and MacOS.
 
 - You can fetch a list of videos from your favourite channels and playlists on
 YouTube, BitChute, and hundreds of other websites
@@ -63,8 +62,7 @@ Note for PyPI users: Tartube should be installed with: pip3 install tartube
 """
 
 alt_description = """
-Tartube is a GUI front-end for youtube-dl, partly based on youtube-dl-gui
-and written in Python 3 / Gtk 3.
+Tartube is a GUI front-end for youtube-dl, written in Python 3 / Gtk 3.
 """
 
 # data_files for setuptools.setup are added here
@@ -182,7 +180,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.3.333',
+    version='2.3.447',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

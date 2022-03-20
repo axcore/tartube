@@ -217,10 +217,7 @@ class ProcessManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.process_manager_halt_timer,
-        )
+        self.app_obj.process_manager_halt_timer()
 
         # Open the destination directories, if required
         if self.options_obj.options_dict['output_mode'] == 'split' \
@@ -408,9 +405,7 @@ class ProcessManager(threading.Thread):
             return False
 
         # Update the main window's progress bar
-        GObject.timeout_add(
-            0,
-            self.app_obj.main_win_obj.update_progress_bar,
+        self.app_obj.main_win_obj.update_progress_bar(
             orig_video_obj.name,
             self.job_count,
             self.job_total,

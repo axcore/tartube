@@ -260,7 +260,7 @@ class UpdateManager(threading.Thread):
 
             # Ignore pacman warning messages, e.g. 'warning: dependency cycle
             #   detected:'
-            if stderr and not re.match('warning\:', stderr):
+            if stderr and not re.search('^warning\:', stderr):
 
                 self.stderr_list.append(stderr)
 
@@ -290,10 +290,7 @@ class UpdateManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.update_manager_halt_timer,
-        )
+        self.app_obj.update_manager_halt_timer()
 
 
     def install_ffmpeg_write_output(self, msg, system_cmd_flag=False):
@@ -322,8 +319,6 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            # Gtk does not like updating the textview from within a Python
-            #   thread. Avoid a crash by using a timer
             GObject.timeout_add(
                 0,
                 self.wiz_win_obj.ffmpeg_page_write,
@@ -520,10 +515,7 @@ class UpdateManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.update_manager_halt_timer,
-        )
+        self.app_obj.update_manager_halt_timer()
 
 
     def install_ytdl_write_output(self, msg, system_cmd_flag=False):
@@ -552,8 +544,6 @@ class UpdateManager(threading.Thread):
 
         else:
 
-            # Gtk does not like updating the textview from within a Python
-            #   thread. Avoid a crash by using a timer
             GObject.timeout_add(
                 0,
                 self.wiz_win_obj.downloader_page_write,

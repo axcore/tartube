@@ -329,7 +329,7 @@ class InfoManager(threading.Thread):
                 #   makes the info operation fail
                 elif self.info_type == 'subs':
 
-                    if not re.match('WARNING\:', stderr):
+                    if not re.search('^WARNING\:', stderr):
                         self.stderr_list.append(stderr)
 
                 # When fetching formats, recognise all warnings as errors
@@ -376,10 +376,7 @@ class InfoManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.info_manager_halt_timer,
-        )
+        self.app_obj.info_manager_halt_timer()
 
 
     def run_check_version(self):
@@ -495,10 +492,7 @@ class InfoManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.info_manager_halt_timer,
-        )
+        self.app_obj.info_manager_halt_timer()
 
 
     def create_child_process(self, cmd_list):

@@ -876,7 +876,8 @@ class OptionsManager(object):
 
     def set_classic_mode_options(self):
 
-        """Called by mainapp.TartubeApp.apply_classic_download_options().
+        """Called by mainapp.TartubeApp.start() and
+        .apply_classic_download_options().
 
         When the user applies download options in the Classic Mode tab, a few
         options should have different default values; this function sets them.

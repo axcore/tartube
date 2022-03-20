@@ -417,10 +417,13 @@ FILE_SIZE_UNIT_LIST = [
 ]
 
 language_setup_list = [
-    # ISO 639-1 Language Codes
+    # ISO 639-1 Language Codes (with one extra key-value pair to handle live
+    #   chat)
     # English is top of the list, because it's the default setting in
     #   options.OptionsManager
-    'English', 'en',
+    # NB These values must not contain square brackets [...]
+    _('English'), 'en',
+    'YouTube live chat', 'live_chat',
     'Abkhazian', 'ab',
     'Afar', 'aa',
     'Afrikaans', 'af',
@@ -461,7 +464,7 @@ language_setup_list = [
     'Czech', 'cs',
     'Danish', 'da',
     'Divehi, Dhivehi, Maldivian', 'dv',
-    'Dutch', 'nl',
+    _('Dutch'), 'nl',
     'Dzongkha', 'dz',
     'Esperanto', 'eo',
     'Estonian', 'et',
@@ -511,7 +514,7 @@ language_setup_list = [
     'Kyrgyz', 'ky',
     'Komi', 'kv',
     'Kongo', 'kg',
-    'Korean', 'ko',
+    _('Korean'), 'ko',
     'Kurdish', 'ku',
     'Kwanyama', 'kj',
     'Lao', 'lo',
@@ -626,6 +629,7 @@ DIALOGUE_ICON_DICT = {
     'ready_icon': 'ready_icon_64.png',
     'setup_classic_icon': 'setup_classic_icon.png',
     'system_icon': 'system_icon_64.png',
+    'yt_icon': 'yt_icon_32.png',
     'yt_remind_icon_en': 'yt_remind_icon_en.png',
     'yt_remind_icon_kr': 'yt_remind_icon_kr.png',
     'yt_remind_icon_nl': 'yt_remind_icon_nl.png',
@@ -766,6 +770,7 @@ SMALL_ICON_DICT = {
     'slice_small': 'slice.png',
     'split_file_small': 'split_file.png',
     'stamp_small': 'stamp.png',
+    'subs_small': 'subs.png',
     'system_error_small': 'system_error.png',
     'system_warning_small': 'system_warning.png',
     'unavailable_small': 'unavailable.png',
@@ -868,6 +873,17 @@ else:
         'system_icon_256.png',
         'system_icon_512.png',
     ]
+
+CONFIG_WIN_ICON_LIST = [
+    'config_icon_16.png',
+    'config_icon_24.png',
+    'config_icon_32.png',
+    'config_icon_48.png',
+    'config_icon_64.png',
+    'config_icon_128.png',
+    'config_icon_256.png',
+    'config_icon_512.png',
+]
 
 def do_translate(config_flag=False):
 

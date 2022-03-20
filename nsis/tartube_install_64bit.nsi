@@ -1,4 +1,4 @@
-# Tartube v2.3.393 installer script for MS Windows
+# Tartube v2.3.447 installer script for MS Windows
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
@@ -17,8 +17,7 @@
 #
 # Build instructions:
 #   - These instructions describe how to create an installer for Tartube on a
-#       64-bit MS Windows machine, Windows Vista or higher. For 32-bit machines
-#       see the tartube_install_32bit.nsi file
+#       64-bit MS Windows machine, Windows Vista or higher
 #
 #   - Download and install NSIS from
 #
@@ -29,9 +28,9 @@
 #
 #       http://www.msys2.org/
 #
-#   - Run the file to install MSYS2. We suggest that you create a directory
-#       called C:\testme, and then let MSYS2 install itself inside that
-#       directory, i.e. C:\testme\msys64
+#   - Run the file to install MSYS2. We suggest that you create a top-level
+#       folder. Here, we call it C:\testme. Let MSYS2 install itself inside
+#       that directory, i.e. C:\testme\msys64
 #
 #   - Run the mingw64 terminal, i.e.
 #
@@ -63,13 +62,22 @@
 #   - The C:\testme folder now contains about 2GB of data. If you like, you can
 #       use all of it (which would create an installer of about 600MB). In most
 #       cases, though, you will probably want to remove everything that's not
-#       necessary. This table shows which files and folders are in the official
-#       Tartube installer (which is about 90MB). Everything else can be
-#       deleted:
+#       necessary
 #
+#   - This table shows which files and folders are in the official Tartube
+#       installer (which is about 120MB). Files/folders ending in * represent
+#       multiple files/folders which must be retained. Everything else can be
+#       deleted
+#
+#   - Note that version numbers will change over time; retain which version of
+#       the file/folder is available
+#
+#       C:\testme\msys64\clang64
+#       C:\testme\msys64\clangarm64
 #       C:\testme\msys64\dev
 #       C:\testme\msys64\etc
 #       C:\testme\msys64\home
+#       C:\testme\msys64\installerResources
 #       C:\testme\msys64\mingw64.exe
 #       C:\testme\msys64\mingw64\bin
 #       C:\testme\msys64\mingw64\bin\gdbus*
@@ -78,14 +86,17 @@
 #       C:\testme\msys64\mingw64\bin\gio*
 #       C:\testme\msys64\mingw64\bin\glib*
 #       C:\testme\msys64\mingw64\bin\gobject*
+#       C:\testme\msys64\mingw64\bin\gsettings
 #       C:\testme\msys64\mingw64\bin\gtk*
+#       C:\testme\msys64\mingw64\bin\img2webp
 #       C:\testme\msys64\mingw64\bin\json*
 #       C:\testme\msys64\mingw64\bin\lib*
+#       C:\testme\msys64\mingw64\bin\msvcr*
 #       C:\testme\msys64\mingw64\bin\openssl
 #       C:\testme\msys64\mingw64\bin\pip*
 #       C:\testme\msys64\mingw64\bin\python*
-#       C:\testme\msys64\mingw64\bin\pyenv*
 #       C:\testme\msys64\mingw64\bin\sqlite*
+#       C:\testme\msys64\mingw64\bin\xml*
 #       C:\testme\msys64\mingw64\bin\zlib1.dll
 #       C:\testme\msys64\mingw64\include\gdk-pixbuf-2.0
 #       C:\testme\msys64\mingw64\include\gio-win32-2.0
@@ -93,12 +104,13 @@
 #       C:\testme\msys64\mingw64\include\gsettings-desktop-schemas
 #       C:\testme\msys64\mingw64\include\gtk-3.0
 #       C:\testme\msys64\mingw64\include\json-glib-1.0
+#       C:\testme\msys64\mingw64\include\libxml2
 #       C:\testme\msys64\mingw64\include\ncurses
 #       C:\testme\msys64\mingw64\include\ncursesw
 #       C:\testme\msys64\mingw64\include\openssl
 #       C:\testme\msys64\mingw64\include\pycairo
 #       C:\testme\msys64\mingw64\include\pygobject-3.0
-#       C:\testme\msys64\mingw64\include\python3.8
+#       C:\testme\msys64\mingw64\include\python3.9
 #       C:\testme\msys64\mingw64\include\readline
 #       C:\testme\msys64\mingw64\include\tk8.6
 #       C:\testme\msys64\mingw64\lib\gdk-pixbuf-2.0
@@ -106,40 +118,53 @@
 #       C:\testme\msys64\mingw64\lib\girepository-1.0
 #       C:\testme\msys64\mingw64\lib\glib-2.0
 #       C:\testme\msys64\mingw64\lib\gtk-3.0
-#       C:\testme\msys64\mingw64\lib\python3.8\collections
-#       C:\testme\msys64\mingw64\lib\python3.8\ctypes
-#       C:\testme\msys64\mingw64\lib\python3.8\distutils
-#       C:\testme\msys64\mingw64\lib\python3.8\email
-#       C:\testme\msys64\mingw64\lib\python3.8\encodings
-#       C:\testme\msys64\mingw64\lib\python3.8\ensurepip
-#       C:\testme\msys64\mingw64\lib\python3.8\html
-#       C:\testme\msys64\mingw64\lib\python3.8\http
-#       C:\testme\msys64\mingw64\lib\python3.8\importlib
-#       C:\testme\msys64\mingw64\lib\python3.8\json
-#       C:\testme\msys64\mingw64\lib\python3.8\lib2to3
-#       C:\testme\msys64\mingw64\lib\python3.8\lib-dynload
-#       C:\testme\msys64\mingw64\lib\python3.8\logging
-#       C:\testme\msys64\mingw64\lib\python3.8\msilib
-#       C:\testme\msys64\mingw64\lib\python3.8\multiprocessing
-#       C:\testme\msys64\mingw64\lib\python3.8\site-packages
-#       C:\testme\msys64\mingw64\lib\python3.8\sqlite3
-#       C:\testme\msys64\mingw64\lib\python3.8\urllib
-#       C:\testme\msys64\mingw64\lib\python3.8\xml
-#       C:\testme\msys64\mingw64\lib\python3.8\xmlrpc
-#       C:\testme\msys64\mingw64\lib\python3.8\*.py
+#       C:\testme\msys64\mingw64\lib\python3.9\asyncio
+#       C:\testme\msys64\mingw64\lib\python3.9\collections
+#       C:\testme\msys64\mingw64\lib\python3.9\concurrent
+#       C:\testme\msys64\mingw64\lib\python3.9\ctypes
+#       C:\testme\msys64\mingw64\lib\python3.9\distutils
+#       C:\testme\msys64\mingw64\lib\python3.9\email
+#       C:\testme\msys64\mingw64\lib\python3.9\encodings
+#       C:\testme\msys64\mingw64\lib\python3.9\ensurepip
+#       C:\testme\msys64\mingw64\lib\python3.9\html
+#       C:\testme\msys64\mingw64\lib\python3.9\http
+#       C:\testme\msys64\mingw64\lib\python3.9\importlib
+#       C:\testme\msys64\mingw64\lib\python3.9\json
+#       C:\testme\msys64\mingw64\lib\python3.9\lib2to3
+#       C:\testme\msys64\mingw64\lib\python3.9\lib-dynload
+#       C:\testme\msys64\mingw64\lib\python3.9\logging
+#       C:\testme\msys64\mingw64\lib\python3.9\msilib
+#       C:\testme\msys64\mingw64\lib\python3.9\multiprocessing
+#       C:\testme\msys64\mingw64\lib\python3.9\site-packages
+#       C:\testme\msys64\mingw64\lib\python3.9\sqlite3
+#       C:\testme\msys64\mingw64\lib\python3.9\urllib
+#       C:\testme\msys64\mingw64\lib\python3.9\xml
+#       C:\testme\msys64\mingw64\lib\python3.9\xmlrpc
+#       C:\testme\msys64\mingw64\lib\python3.9\*.py
+#       C:\testme\msys64\mingw64\lib\thread2.8.4
+#       C:\testme\msys64\mingw64\lib\sqlite3.36.0
+#       C:\testme\msys64\mingw64\lib\terminfo
 #       C:\testme\msys64\mingw64\lib\thread2.8.4
 #       C:\testme\msys64\mingw64\lib\tk8.6
-#       C:\testme\msys64\mingw64\share\gettext
+#       C:\testme\msys64\mingw64\share\gettext*
 #       C:\testme\msys64\mingw64\share\gir-1.0
 #       C:\testme\msys64\mingw64\share\glib-2.0
 #       C:\testme\msys64\mingw64\share\gtk-3.0
 #       C:\testme\msys64\mingw64\share\icons
 #       C:\testme\msys64\mingw64\share\locale\en*
 #       C:\testme\msys64\mingw64\share\locale\locale.alias
+#       C:\testme\msys64\mingw64\share\sqlite
+#       C:\testme\msys64\mingw64\share\terminfo
 #       C:\testme\msys64\mingw64\share\themes
 #       C:\testme\msys64\mingw64\share\thumbnailers
+#       C:\testme\msys64\mingw64\share\xml
 #       C:\testme\msys64\mingw64\ssl
 #       C:\testme\msys64\tmp
+#       C:\testme\msys64\ucrt64
+#       C:\testme\msys64\usr\bin\core_perl
+#       C:\testme\msys64\usr\bin\site_perl
+#       C:\testme\msys64\usr\bin\vendor_perl
+#       C:\testme\msys64\usr\bin\AtomicParsley
 #       C:\testme\msys64\usr\bin\bash
 #       C:\testme\msys64\usr\bin\chmod
 #       C:\testme\msys64\usr\bin\cut
@@ -149,19 +174,26 @@
 #       C:\testme\msys64\usr\bin\env
 #       C:\testme\msys64\usr\bin\find
 #       C:\testme\msys64\usr\bin\findfs
+#       C:\testme\msys64\usr\bin\getent
+#       C:\testme\msys64\usr\bin\gettext*
+#       C:\testme\msys64\usr\bin\gio-querymodules
+#       C:\testme\msys64\usr\bin\glib-compile-schemas
+#       C:\testme\msys64\usr\bin\gobject-query
 #       C:\testme\msys64\usr\bin\gpg*
+#       C:\testme\msys64\usr\bin\grep
 #       C:\testme\msys64\usr\bin\hostid
 #       C:\testme\msys64\usr\bin\hostname
 #       C:\testme\msys64\usr\bin\iconv
 #       C:\testme\msys64\usr\bin\id
 #       C:\testme\msys64\usr\bin\ln
-#       C:\testme\msys64\usr\bin\lndir
 #       C:\testme\msys64\usr\bin\locale
 #       C:\testme\msys64\usr\bin\ls
 #       C:\testme\msys64\usr\bin\mintty
 #       C:\testme\msys64\usr\bin\mkdir
 #       C:\testme\msys64\usr\bin\msys-2.0.dll
+#       C:\testme\msys64\usr\bin\msys-argp-0.dll
 #       C:\testme\msys64\usr\bin\msys-assuan-0.dll
+#       C:\testme\msys64\usr\bin\msys-atomic-1.dll
 #       C:\testme\msys64\usr\bin\msys-bz2-1.dll
 #       C:\testme\msys64\usr\bin\msys-gcc_s-1.dll
 #       C:\testme\msys64\usr\bin\msys-gcrypt-20.dll
@@ -176,27 +208,39 @@
 #       C:\testme\msys64\usr\bin\msys-intl-8.dll
 #       C:\testme\msys64\usr\bin\msys-ncurses++w6.dll
 #       C:\testme\msys64\usr\bin\msys-ncursesw6.dll
+#       C:\testme\msys64\usr\bin\msys-pcre-1.dll
+#       C:\testme\msys64\usr\bin\msys-pcre2-8-0.dll
 #       C:\testme\msys64\usr\bin\msys-readline8.dll
 #       C:\testme\msys64\usr\bin\msys-sqlite3-0.dll
 #       C:\testme\msys64\usr\bin\msys-stdc++06.dll
 #       C:\testme\msys64\usr\bin\msys-z.dll
+#       C:\testme\msys64\usr\bin\mv
 #       C:\testme\msys64\usr\bin\pac*
+#       C:\testme\msys64\usr\bin\rm
+#       C:\testme\msys64\usr\bin\rmdir
+#       C:\testme\msys64\usr\bin\sed
 #       C:\testme\msys64\usr\bin\test
 #       C:\testme\msys64\usr\bin\tzset
+#       C:\testme\msys64\usr\bin\uname
+#       C:\testme\msys64\usr\bin\vercmp
+#       C:\testme\msys64\usr\bin\which
+#       C:\testme\msys64\usr\bin\xml*
 #       C:\testme\msys64\usr\lib\gettext
 #       C:\testme\msys64\usr\lib\gio
 #       C:\testme\msys64\usr\lib\openssl
-#       C:\testme\msys64\usr\lib\python3.8
+#       C:\testme\msys64\usr\lib\python3.9
+#       C:\testme\msys64\usr\lib\terminfo
+#       C:\testme\msys64\usr\lib\thread2.8.5
 #       C:\testme\msys64\usr\share\cygwin
 #       C:\testme\msys64\usr\share\glib-2.0
 #       C:\testme\msys64\usr\share\mintty
 #       C:\testme\msys64\usr\share\Msys
 #       C:\testme\msys64\usr\share\pacman
-#       C:\testme\msys64\usr\share\pactoys
+#       C:\testme\msys64\usr\share\terminfo
 #       C:\testme\msys64\usr\ssl
 #       C:\testme\msys64\var\lib\pacman
 #
-#   - The followng optional dependencies are required for fetching livestreams.
+#   - The following optional dependencies are required for fetching livestreams.
 #       If you decide to install them (it's recommended that you do), run the
 #       mingw64 terminal again, if it's not still open
 #
@@ -204,6 +248,7 @@
 #
 #   - In the terminal window, type
 #
+#       pip3 install wheel
 #       pip3 install feedparser
 #       pip3 install playsound
 #
@@ -249,7 +294,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.3.393-64bit.exe"
+    OutFile "install-tartube-2.3.447-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -352,7 +397,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.3.393"
+#        "DisplayVersion" "2.3.447"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

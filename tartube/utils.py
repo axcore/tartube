@@ -275,7 +275,7 @@ def check_url(url):
 
     try:
         # Add a scheme, if the specified URL doesn't provide one
-        if not re.match(r'^[a-zA-Z]+://', url):
+        if not re.search(r'^[a-zA-Z]+://', url):
             url = 'http://' + url
 
         final_url = urlparse(urljoin(url, '/'))
@@ -396,7 +396,11 @@ clip_path=None):
         # If the clips' parent media data object (a channel, playlist or
         #   folder) is selected in the Video Index, update the Video Catalogue
         #   for the clip
-        app_obj.main_win_obj.video_catalogue_update_video(new_video_obj)
+        GObject.timeout_add(
+            0,
+            app_obj.main_win_obj.video_catalogue_update_video,
+            new_video_obj,
+        )
 
         return new_video_obj
 
@@ -1110,34 +1114,6 @@ def convert_youtube_to_other(app_obj, url, custom_dl_obj=None):
         )
 
     return url
-
-
-def debug_time(msg):
-
-    """Called by all functions in downloads.py, info.py, mainapp.py,
-    mainwin.py, refresh.py, tidy.py and updates.py.
-
-    Writes the current time, and the name of the calling function to STDOUT,
-    e.g. '2020-01-16 08:55:06 ap 91 __init__'.
-
-    Args:
-
-        msg (str): The message to write
-
-    """
-
-    # Uncomment this code to display the time with microseconds
-#    print(str(datetime.datetime.now().time()) + ' ' + msg)
-
-    # Uncomment this code to display the time without microseconds
-    dt = datetime.datetime.now()
-    print(str(dt.replace(microsecond=0)) + ' ' + msg)
-
-    # Uncomment this code to display the message, without a timestamp
-#    print(msg)
-
-    # This line makes my IDE collapse functions nicely
-    return
 
 
 def disk_get_free_space(path, bytes_flag=False):
@@ -1951,19 +1927,25 @@ custom_dl_obj=None, divert_mode=None):
     # If actually downloading videos, use (or create) an archive file so that,
     #   if the user deletes the videos, youtube-dl won't try to download them
     #   again
-    # We don't use an archive file when downloading into a system folder
+    # We don't use an archive file when downloading into a system folder,
+    #   unless a non-default location for the file has been specified
     if (
-        not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
-        or dl_classic_flag and app_obj.classic_ytdl_archive_flag
+        not app_obj.block_ytdl_archive_flag \
+        and (
+            not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
+            or dl_classic_flag and app_obj.classic_ytdl_archive_flag
+        )
     ):
         if not dl_classic_flag \
         and (
             not isinstance(media_data_obj, media.Folder)
             or not media_data_obj.fixed_flag
+            or app_obj.allow_ytdl_archive_mode != 'default'
         ) and (
             not isinstance(media_data_obj, media.Video)
             or not isinstance(media_data_obj.parent_obj, media.Folder)
             or not media_data_obj.parent_obj.fixed_flag
+            or app_obj.allow_ytdl_archive_mode != 'default'
         ):
             # (Create the archive file in the media data object's default
             #   sub-directory, not the alternative download destination, as
@@ -1973,9 +1955,24 @@ custom_dl_obj=None, divert_mode=None):
             else:
                 dl_path = media_data_obj.get_default_dir(app_obj)
 
+            if app_obj.allow_ytdl_archive_mode == 'top':
+                archive_dir = app_obj.data_dir
+            elif app_obj.allow_ytdl_archive_mode == 'custom':
+                if app_obj.allow_ytdl_archive_path is not None \
+                and app_obj.allow_ytdl_archive_path != '':
+                    archive_dir = app_obj.allow_ytdl_archive_path
+                else:
+                    # Failsafe
+                    archive_dir = dl_path
+            else:
+                # app_obj.allow_ytdl_archive_mode == 'default'
+                archive_dir = dl_path
+
             options_list.append('--download-archive')
             options_list.append(
-                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
+                os.path.abspath(
+                    os.path.join(archive_dir, app_obj.ytdl_archive_name),
+                ),
             )
 
         elif dl_classic_flag:
@@ -1985,7 +1982,9 @@ custom_dl_obj=None, divert_mode=None):
 
             options_list.append('--download-archive')
             options_list.append(
-                os.path.abspath(os.path.join(dl_path, 'ytdl-archive.txt')),
+                os.path.abspath(
+                    os.path.join(dl_path, app_obj.ytdl_archive_name),
+                ),
             )
 
     # yt-dlp options
@@ -2693,6 +2692,44 @@ dummy_obj=None):
     and dummy_obj:
 
         move_thumbnail_to_subdir(app_obj, dummy_obj)
+
+
+def match_subs(custom_dl_obj, subs_list):
+
+    """Called by downloads.DownloadList.create_item() and
+    downloads.VideoDownloader.confirm_sim_video().
+
+    The CustomDLManager object may specify one or more languages; compare
+    that list to a video's list of available subtitles, to see if there are any
+    matches.
+
+    Args:
+
+        custom_dl_obj (downloads.CustomDLManager): The custom download
+            mager which specifies a list of languages
+
+        subs_list (list): A list of language codes extracted from the video's
+            metadata, one for each set of subtitles
+
+    Return values:
+
+        True if any language matches an available subtitle, False if none
+            of them match
+
+    """
+
+    # 'short_code' is a value in formats.LANGUAGE_CODE_DICT, e.g. 'en',
+    #   'live_chat'
+    for short_code in custom_dl_obj.dl_if_subs_list:
+
+        # media.VideoObj.subs_list contains the language code specified by
+        #   the metadata file, e.g. 'en_US'. Ignore everything but the
+        #   first two letters
+        for long_code in subs_list:
+            if long_code.lower().startswith(short_code):
+                return True
+
+    return False
 
 
 def move_metadata_to_subdir(app_obj, video_obj, ext):

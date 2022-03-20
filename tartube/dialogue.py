@@ -473,7 +473,7 @@ class MessageDialogue(Gtk.MessageDialog):
 
 class FileChooserDialogue(Gtk.FileChooserDialog):
 
-    """Called by dialogue.DialogueManager.show_file_chooser_dialogue().
+    """Called by dialogue.DialogueManager.show_file_chooser().
 
     Sub-class for the standard Gtk file chooser dialogue, with a callback to
     reduce its size below the the size of the observable universe.
