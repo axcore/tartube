@@ -162,10 +162,15 @@ if pkg_flag:
 #   and ../sounds into a suitable location
 subdir_list = [
     'dialogue',
+    'external',
+    'ico',
     'large',
     'locale',
+    'overlays',
     'small',
     'status',
+    'stock',
+    'thumbas',
     'toolbar',
     'win',
 ]
@@ -180,7 +185,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.3.447',
+    version='2.3.450',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',
