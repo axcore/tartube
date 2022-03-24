@@ -59,14 +59,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version: **v2.3.447 (20 Mar 2022)**
+Latest version, MS Windows: **v2.3.447 (20 Mar 2022)**
+
+Latest version, everything else: **v2.3.250 (24 Mar 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
 - `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.447/install-tartube-2.3.447-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.22 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.450/python3-tartube_2.3.450.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.450/tartube-2.3.450.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.447/python3-tartube_2.3.450.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.450.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -2344,7 +2346,7 @@ The only thing that can be done is to disable the checks and warnings altogether
 
 A: Necesitamos más traductores.
 
-If you would like to contribute a translation of this project, please read `this document <docs/translate.rst>`__.
+If you would like to contribute a translation of this project, please read `this document <docs/translate.html>`__.
 
 8 Contributing
 ==============
