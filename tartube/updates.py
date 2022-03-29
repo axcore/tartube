@@ -35,6 +35,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 
 
 # Import our modules
@@ -54,7 +55,7 @@ class UpdateManager(threading.Thread):
 
     Python class to create a system child process, to do one of two jobs:
 
-    1. Install FFmpeg (on MS Windows only)
+    1. Install FFmpeg or matplotlib (on MS Windows only)
 
     2. Install youtube-dl, or update it to its most recent version.
 
@@ -65,8 +66,9 @@ class UpdateManager(threading.Thread):
 
         app_obj (mainapp.TartubeApp): The main application
 
-        update_type (str): 'ffmpeg' to install FFmpeg (on MS Windows only), or
-            'ytdl' to install/update youtube-dl
+        update_type (str): 'ffmpeg' to install FFmpeg (on MS Windows only),
+            'matplotlib' to install matplotlib (on MS Windows only), or 'ytdl'
+            to install/update youtube-dl
 
         wiz_win_obj (wizwin.SetupWizWin or None): The calling setup wizard
             window (if set, the main window doesn't exist yet)
@@ -89,24 +91,26 @@ class UpdateManager(threading.Thread):
         #   exist yet)
         self.wiz_win_obj = wiz_win_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = downloads.PipeReader(self.stdout_queue)
-        self.stderr_reader = downloads.PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = downloads.PipeReader(self.queue, 'stdout')
+        self.stderr_reader = downloads.PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
         # ---------------
-        # 'ffmpeg' to install FFmpeg (on MS Windows only), or 'ytdl' to
-        #   install/update youtube-dl
+        # The time (in seconds) between iterations of the loop in
+        #   self.install_ffmpeg(), .install_matplotlib() and .install_ytdl()
+        self.sleep_time = 0.1
+
+        # 'ffmpeg' to install FFmpeg (on MS Windows only), 'matplotlib' to
+        #   install matplotlib (on MS Windows only), or 'ytdl' to install/
+        #   update youtube-dl
         self.update_type = update_type
         # Flag set to True if the update operation succeeds, False if it fails
         self.success_flag = False
@@ -141,13 +145,16 @@ class UpdateManager(threading.Thread):
 
         if self.update_type == 'ffmpeg':
             self.install_ffmpeg()
+        elif self.update_type == 'matplotlib':
+            self.install_matplotlib()
         else:
             self.install_ytdl()
 
 
     def create_child_process(self, cmd_list):
 
-        """Called by self.install_ffmpeg() or .install_ytdl().
+        """Called by self.install_ffmpeg(), .install_matplotlib() or
+        .install_ytdl().
 
         Based on code from downloads.VideoDownloader.create_child_process().
 
@@ -212,61 +219,32 @@ class UpdateManager(threading.Thread):
         else:
             binary = 'mingw-w64-x86_64-ffmpeg'
 
-        self.create_child_process(
-            ['pacman', '-S', binary, '--noconfirm'],
-        )
-
-        # Show the system command in the Output tab
+        # Prepare a system command...
+        cmd_list = ['pacman', '-S', binary, '--noconfirm']
+        # ...and display it in the Output tab (if required)
         self.install_ffmpeg_write_output(
-            ' '.join( ['pacman', '-S', binary, '--noconfirm'] ),
+            ' '.join(cmd_list),
             True,                   # A system command, not a message
         )
 
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         while self.is_child_process_alive():
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
 
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                if stdout:
-
-                    # Show command line output in the Output tab (or wizard
-                    #   window textview)
-                    self.install_ffmpeg_write_output(stdout)
-
-        # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-            # Ignore pacman warning messages, e.g. 'warning: dependency cycle
-            #   detected:'
-            if stderr and not re.search('^warning\:', stderr):
-
-                self.stderr_list.append(stderr)
-
-                # Show command line output in the Output tab (or wizard window
-                #   textview)
-                self.install_ffmpeg_write_output(stderr)
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_ffmpeg_child_process():
+                pass
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
@@ -326,6 +304,106 @@ class UpdateManager(threading.Thread):
             )
 
 
+    def install_matplotlib(self):
+
+        """Called by self.run().
+
+        A modified version of self.install_ytdl, that installs matplotlib on an
+        MS Windows system.
+
+        Creates a child process to run the installation process.
+
+        Reads from the child process STDOUT and STDERR, and calls the main
+        application with the result of the update (success or failure).
+        """
+
+        # Show information about the update operation in the Output tab
+        self.install_matplotlib_write_output(
+            _('Starting update operation, installing matplotlib'),
+        )
+
+        # Create a new child process to install either the 64-bit or 32-bit
+        #   version of matplotlib, as appropriate
+        if sys.maxsize <= 2147483647:
+            binary = 'mingw-w64-i686-python-matplotlib'
+        else:
+            binary = 'mingw-w64-x86_64-python-matplotlib'
+
+        # Prepare a system command...
+        cmd_list = ['pacman', '-S', binary, '--noconfirm']
+        # ...and display it in the Output tab (if required)
+        self.install_matplotlib_write_output(
+            ' '.join(cmd_list),
+            True,                   # A system command, not a message
+        )
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
+        if self.child_process is not None:
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
+
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_matplotlib_child_process():
+                pass
+
+        # (Generate our own error messages for debugging purposes, in certain
+        #   situations)
+        if self.child_process is None:
+            self.stderr_list.append(_('matplotlib installation did not start'))
+
+        elif self.child_process.returncode > 0:
+            self.stderr_list.append(
+                _('Child process exited with non-zero code: {}').format(
+                    self.child_process.returncode,
+                )
+            )
+
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.update_manager_finished
+        if not self.stderr_list:
+            self.success_flag = True
+
+        # Show a confirmation in the the Output tab (or wizard window textview)
+        self.install_matplotlib_write_output(_('Update operation finished'))
+
+        # Let the timer run for a few more seconds to prevent Gtk errors (for
+        #   systems with Gtk < 3.24)
+        self.app_obj.update_manager_halt_timer()
+
+
+    def install_matplotlib_write_output(self, msg, system_cmd_flag=False):
+
+        """Called by self.install_matplotlib().
+
+        Writes a message to the Output tab (or to the setup wizard window, if
+        called from there).
+
+        Args:
+
+            msg (str): The message to display
+
+            system_cmd_flag (bool): If True, display system commands in a
+                different colour in the Output tab (ignored when writing in
+                the setup wizard window)
+
+        """
+
+        if not system_cmd_flag:
+            self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
+        else:
+            self.app_obj.main_win_obj.output_tab_write_system_cmd(1, msg)
+
+
     def install_ytdl(self):
 
         """Called by self.run().
@@ -382,7 +460,7 @@ class UpdateManager(threading.Thread):
             elif ytdl_update_current == 'ytdl_update_win_32':
                 ytdl_update_current = 'ytdl_update_win_32_no_dependencies'
 
-        # Set the system command
+        # Prepare a system command...
         if os.name == 'nt' \
         and ytdl_update_current == 'ytdl_update_custom_path' \
         and re.search('\.exe$', self.app_obj.ytdl_path):
@@ -406,86 +484,30 @@ class UpdateManager(threading.Thread):
 
             mod_list.append(arg)
 
-        # Create a new child process using that command
-        self.create_child_process(mod_list)
-
-        # Show the system command in the Output tab
+        # ...and display it in the Output tab (if required)
         self.install_ytdl_write_output(
             ' '.join(mod_list),
             True,                   # A system command, not a message
         )
 
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # Create a new child process using that command...
+        self.create_child_process(mod_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         while self.is_child_process_alive():
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
 
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                if stdout:
-
-                    stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                    # "It looks like you installed youtube-dl with a package
-                    #   manager, pip, setup.py or a tarball. Please use that to
-                    #   update."
-                    # "The script youtube-dl is installed in '...' which is not
-                    #   on PATH. Consider adding this directory to PATH..."
-                    if re.search('It looks like you installed', stdout) \
-                    or re.search(
-                        'The script ' + downloader + ' is installed',
-                        stdout,
-                    ):
-                        self.stderr_list.append(stdout)
-
-                    else:
-
-                        # Try to intercept the new version number for
-                        #   youtube-dl
-                        self.intercept_version_from_stdout(stdout, downloader)
-                        self.stdout_list.append(stdout)
-
-                    # Show command line output in the Output tab (or wizard
-                    #   window textview)
-                    self.install_ytdl_write_output(stdout)
-
-        # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            if stderr:
-
-                stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-                # If the user has pip installed, rather than pip3, they will by
-                #   now (mid-2019) be seeing a Python 2.7 deprecation warning.
-                #   Ignore that message, if received
-                # If a newer version of pip is available, the user will see a
-                #   'You should consider upgrading' warning. Ignore that too,
-                #   if received
-                if not re.search('DEPRECATION', stderr) \
-                and not re.search('You are using pip version', stderr) \
-                and not re.search('You should consider upgrading', stderr):
-                    self.stderr_list.append(stderr)
-
-                # Show command line output in the Output tab (or wizard window
-                #   textview)
-                self.install_ytdl_write_output(stderr)
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_ytdl_child_process(downloader):
+                pass
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
@@ -567,8 +589,10 @@ class UpdateManager(threading.Thread):
         """
 
         regex_list = [
-            'Requirement already up\-to\-date.*\(([^\(\)]+)\)\s*$',
-            'Requirement already satisfied.*\(([^\(\)]+)\)\s*$',
+            'Requirement already up\-to\-date\: ' + downloader \
+            + ' in .*\(([^\(\)]+)\)\s*$',
+            'Requirement already satisfied\: ' + downloader \
+            + ' in .*\(([^\(\)]+)\)\s*$',
             'yt-dlp is up to date \(([^\(\)]+)\)\s*$',
             'Successfully installed ' + downloader + '\-([^\(\)]+)\s*$',
         ]
@@ -582,8 +606,8 @@ class UpdateManager(threading.Thread):
 
     def is_child_process_alive(self):
 
-        """Called by self.install_ffmpeg(), .install_ytdl() and
-        .stop_update_operation().
+        """Called by self.install_ffmpeg(), .install_matplotlib(),
+        .install_ytdl() and .stop_update_operation().
 
         Based on code from downloads.VideoDownloader.is_child_process_alive().
 
@@ -600,6 +624,218 @@ class UpdateManager(threading.Thread):
             return False
 
         return self.child_process.poll() is None
+
+
+    def read_ffmpeg_child_process(self):
+
+        """Called by self.install_ffmpeg().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.app_obj.system_error(
+                701,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Show command line output in the Output tab (or wizard window
+            #   textview)
+            self.install_ffmpeg_write_output(data)
+
+        # STDERR
+        else:
+
+            # Ignore pacman warning messages, e.g. 'warning: dependency cycle
+            #   detected:'
+            if data and not re.search('^warning\:', data):
+
+                self.stderr_list.append(data)
+
+                # Show command line output in the Output tab (or wizard window
+                #   textview)
+                self.install_ffmpeg_write_output(data)
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
+
+
+    def read_matplotlib_child_process(self):
+
+        """Called by self.install_matplotlib().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.app_obj.system_error(
+                701,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Show command line output in the Output tab (or wizard window
+            #   textview)
+            self.install_matplotlib_write_output(data)
+
+        # STDERR
+        else:
+
+            # Ignore pacman warning messages, e.g. 'warning: dependency cycle
+            #   detected:'
+            if data and not re.search('^warning\:', data):
+
+                self.stderr_list.append(data)
+
+                # Show command line output in the Output tab (or wizard window
+                #   textview)
+                self.install_matplotlib_write_output(data)
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
+
+
+    def read_ytdl_child_process(self, downloader):
+
+        """Called by self.install_ytdl().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Args:
+
+            downloader (str): e.g. 'youtube-dl'
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.app_obj.system_error(
+                702,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # "It looks like you installed youtube-dl with a package manager,
+            #   pip, setup.py or a tarball. Please use that to update."
+            # "The script youtube-dl is installed in '...' which is not on
+            #   PATH. Consider adding this directory to PATH..."
+            if re.search('It looks like you installed', data) \
+            or re.search(
+                'The script ' + downloader + ' is installed',
+                data,
+            ):
+                self.stderr_list.append(data)
+
+            else:
+
+                # Try to intercept the new version number for youtube-dl
+                self.intercept_version_from_stdout(data, downloader)
+                self.stdout_list.append(data)
+
+            # Show command line output in the Output tab (or wizard window
+            #   textview)
+            self.install_ytdl_write_output(data)
+
+        # STDERR
+        else:
+
+            # If the user has pip installed, rather than pip3, they will by now
+            #   (mid-2019) be seeing a Python 2.7 deprecation warning. Ignore
+            #   that message, if received
+            # If a newer version of pip is available, the user will see a
+            #   'You should consider upgrading' warning. Ignore that too, if
+            #   received
+            if not re.search('DEPRECATION', data) \
+            and not re.search('You are using pip version', data) \
+            and not re.search('You should consider upgrading', data):
+                self.stderr_list.append(data)
+
+            # Show command line output in the Output tab (or wizard window
+            #   textview)
+            self.install_ytdl_write_output(data)
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
 
 
     def stop_update_operation(self):

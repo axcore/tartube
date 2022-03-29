@@ -253,6 +253,44 @@ mark_end=None, drag_drop_text=None):
         )
 
 
+def check_day(this_day_num, target_day_str):
+
+    """Can be called by anything.
+
+    formats.SPECIFIED_DAYS_DICT contains a set of strings representing one or
+    more days, e.g. 'every_day', 'monday'.
+
+    Check whether one of those strings matches a particular day.
+
+    Args:
+
+        this_day_num (int): Number in the range 0 (Monday) to 6 (Sunday),
+            usually representing today
+
+        target_day_str (str): One of the strings in formats.SPECIFIED_DAYS_DICT
+
+    Return values:
+
+        True if 'this_day_num' matches 'target_day_str', False otherwise
+
+    """
+
+    if target_day_str != 'every_day':
+
+        if (target_day_str == 'weekdays' and this_day_num > 4) \
+        or (target_day_str == 'weekends' and this_day_num < 5) \
+        or (target_day_str == 'monday' and this_day_num != 0) \
+        or (target_day_str == 'tuesday' and this_day_num != 1) \
+        or (target_day_str == 'wednesday' and this_day_num != 2) \
+        or (target_day_str == 'thursday' and this_day_num != 3) \
+        or (target_day_str == 'friday' and this_day_num != 4) \
+        or (target_day_str == 'saturday' and this_day_num != 5) \
+        or (target_day_str == 'sunday' and this_day_num != 6):
+            return False
+
+    return True
+
+
 def check_url(url):
 
     """Can be called by anything.

@@ -34,6 +34,7 @@ import requests
 import signal
 import subprocess
 import threading
+import time
 
 
 # Import our modules
@@ -110,22 +111,22 @@ class InfoManager(threading.Thread):
         #   self.info_type is 'test_ytdl')
         self.video_obj = media_data_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = downloads.PipeReader(self.stdout_queue)
-        self.stderr_reader = downloads.PipeReader(self.stderr_queue)
-
-        # The child process created by self.create_child_process()
+        # The child process created by self.run()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = downloads.PipeReader(self.queue, 'stdout')
+        self.stderr_reader = downloads.PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
         # ---------------
+        # The time (in seconds) between iterations of the loop in self.run()
+        self.sleep_time = 0.1
+
         # The type of information to fetch: 'formats' for a list of video
         #   formats, 'subs' for a list of subtitles, 'test_ytdl' to test
         #   youtube-dl with specified options, or 'version' to check for a new
@@ -219,7 +220,7 @@ class InfoManager(threading.Thread):
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
-        # Prepare the system command
+        # Prepare the system command...
         if self.info_type == 'formats':
 
             cmd_list = [
@@ -267,80 +268,31 @@ class InfoManager(threading.Thread):
 
                 cmd_list.append(self.url_string)
 
-        # Create the new child process
-        self.create_child_process(cmd_list)
-
-        # Show the system command in the Output tab
+        # ...display it in the Output tab (if required)
         space = ' '
         self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
             space.join(cmd_list),
         )
 
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         while self.is_child_process_alive():
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
 
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                if stdout:
-
-                    stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                    self.output_list.append(stdout)
-                    self.stdout_list.append(stdout)
-
-                    # Show command line output in the Output tab
-                    self.app_obj.main_win_obj.output_tab_write_stdout(
-                        1,
-                        stdout,
-                    )
-
-        # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            if stderr:
-
-                stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-                # While testing youtube-dl, don't treat anything as an error
-                if self.info_type == 'test_ytdl':
-                    self.stdout_list.append(stderr)
-
-                # When fetching subtitles from a video that has none, don't
-                #   treat youtube-dl WARNING: messages as something that
-                #   makes the info operation fail
-                elif self.info_type == 'subs':
-
-                    if not re.search('^WARNING\:', stderr):
-                        self.stderr_list.append(stderr)
-
-                # When fetching formats, recognise all warnings as errors
-                else:
-                    self.stderr_list.append(stderr)
-
-                # Show command line output in the Output tab
-                self.app_obj.main_win_obj.output_tab_write_stderr(
-                    1,
-                    stderr,
-                )
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_child_process():
+                pass
 
         # (Generate our own error messages for debugging purposes, in certain
         #   situations)
@@ -556,6 +508,85 @@ class InfoManager(threading.Thread):
             return False
 
         return self.child_process.poll() is None
+
+
+    def read_child_process(self):
+
+        """Called by self.run().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.app_obj.system_error(
+                601,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            self.output_list.append(data)
+            self.stdout_list.append(data)
+
+            # Show command line output in the Output tab
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                data,
+            )
+
+        # STDERR
+        else:
+
+            # While testing youtube-dl, don't treat anything as an error
+            if self.info_type == 'test_ytdl':
+                self.stdout_list.append(data)
+
+            # When fetching subtitles from a video that has none, don't treat
+            #   youtube-dl WARNING: messages as something that makes the info
+            #   operation fail
+            elif self.info_type == 'subs':
+
+                if not re.search('^WARNING\:', data):
+                    self.stderr_list.append(data)
+
+            # When fetching formats, recognise all warnings as errors
+            else:
+                self.stderr_list.append(data)
+
+            # Show command line output in the Output tab
+            self.app_obj.main_win_obj.output_tab_write_stderr(
+                1,
+                data,
+            )
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
 
 
     def stop_info_operation(self):

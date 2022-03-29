@@ -1757,10 +1757,57 @@ class Video(GenericMedia):
         #   https://www.youtube.com/watch?v=)
         self.vid = None
 
+        # Flag set to True once the file has been downloaded, and is confirmed
+        #   to exist in Tartube's data directory
+        self.dl_flag = False
         # Flag set to True if Tartube should always simulate the download of
         #   video, or False if the downloads.DownloadManager object should
         #   decide whether to simulate, or not
         self.dl_sim_flag = False
+        # Flag set to True if a this video is a video clip has been split off
+        #   from another video in Tartube's database (which may or may not
+        #   still exist)
+        self.split_flag = False
+        # Flag set to True if the video is marked as being censored, age-
+        #   restricted or otherwise unavailable for download
+        self.block_flag = False
+
+        # The size of the video (in bytes)
+        self.file_size = None
+        # The video's upload time (in Unix time)
+        # YouTube (etc) only supplies a date, which Tartube then converts into
+        #   seconds, so videos uploaded on the same day will have the same
+        #   value for self.upload_time)
+        self.upload_time = None
+        # The time at which Tartube downloaded this video (in Unix time)
+        # When downloading a channel or playlist, we assume that YouTube (etc)
+        #   supplies us with the most recent upload first
+        # Therefore, when sorting videos by time, if self.upload_time is the
+        #   same (multiple videos were uploaded on the same day), then those
+        #   videos are sorted with the lowest value of self.receive_time first
+        self.receive_time = None
+        # The video's duration (in integer seconds)
+        self.duration = None
+        # For videos in a channel or playlist (i.e. a media.Video object whose
+        #   parent is a media.Channel or media.Playlist object), the video's
+        #   index in the channel/playlist. (The server supplies an index even
+        #   for a channel, and the user might want to convert a channel to a
+        #   playlist)
+        # For videos whose parent is a media.Folder, the value remains as None
+        self.index = None
+
+        # The video's filename and extension
+        self.file_name = None
+        self.file_ext = None
+
+        # Video description. A string of any length, containing newline
+        #   characters if necessary. (Set to None if the video description is
+        #   not known)
+        self.descrip = None
+        # Video short description - the first line in self.descrip, limited to
+        #   a certain number of characters (specifically,
+        #   mainwin.MainWin.very_long_string_max_len)
+        self.short = None
 
         # Livestream mode: 0 if the video is not a livestream (or if it was a
         #   livestream which has now finished, and behaves like a normal
@@ -1814,58 +1861,15 @@ class Video(GenericMedia):
         #   'Waiting Videos' system folder
         self.waiting_flag = False
 
-        # The video's filename and extension
-        self.file_name = None
-        self.file_ext = None
-
         # When a video is marked to be downloaded in the fixed 'Temporary
         #   Videos' folder, we store the name of the original parent channel/
         #   playlist/folder here, for display in the Video Catalogue
         self.orig_parent = None
 
-        # Flag set to True once the file has been downloaded, and is confirmed
-        #   to exist in Tartube's data directory
-        self.dl_flag = False
-        # Flag set to True if a this video is a video clip has been split off
-        #   from another video in Tartube's database (which may or may not
-        #   still exist)
-        self.split_flag = False
-        # The size of the video (in bytes)
-        self.file_size = None
-        # The video's upload time (in Unix time)
-        # YouTube (etc) only supplies a date, which Tartube then converts into
-        #   seconds, so videos uploaded on the same day will have the same
-        #   value for self.upload_time)
-        self.upload_time = None
-        # The time at which Tartube downloaded this video (in Unix time)
-        # When downloading a channel or playlist, we assume that YouTube (etc)
-        #   supplies us with the most recent upload first
-        # Therefore, when sorting videos by time, if self.upload_time is the
-        #   same (multiple videos were uploaded on the same day), then those
-        #   videos are sorted with the lowest value of self.receive_time first
-        self.receive_time = None
-        # The video's duration (in integer seconds)
-        self.duration = None
-        # For videos in a channel or playlist (i.e. a media.Video object whose
-        #   parent is a media.Channel or media.Playlist object), the video's
-        #   index in the channel/playlist. (The server supplies an index even
-        #   for a channel, and the user might want to convert a channel to a
-        #   playlist)
-        # For videos whose parent is a media.Folder, the value remains as None
-        self.index = None
         # List of subtitles available for this video. Items in the list are
         #   language codes gathered from the video's metadata file (e.g.
         #   'en_US', 'live_chat')
         self.subs_list = []
-
-        # Video description. A string of any length, containing newline
-        #   characters if necessary. (Set to None if the video description is
-        #   not known)
-        self.descrip = None
-        # Video short description - the first line in self.descrip, limited to
-        #   a certain number of characters (specifically,
-        #   mainwin.MainWin.very_long_string_max_len)
-        self.short = None
 
         # List of timestamps, extracted from the video's description and/or
         #   metadata, or added manually by the user
@@ -2063,8 +2067,13 @@ class Video(GenericMedia):
             else:
                 live_str = ''
 
-            text \
-            = ' #' + str(self.dbid) + live_str + ':   ' + self.name + '\n\n'
+            if self.block_flag:
+                block_str = ' <' + _('BLOCKED') + '>'
+            else:
+                block_str = ''
+
+            text = ' #' + str(self.dbid) + live_str + block_str + ':   ' \
+            + self.name + '\n\n'
 
             if self.parent_obj:
 
@@ -2563,6 +2572,14 @@ class Video(GenericMedia):
             self.archive_flag = True
         else:
             self.archive_flag = False
+
+
+    def set_block_flag(self, flag):
+
+        if flag:
+            self.block_flag = True
+        else:
+            self.block_flag = False
 
 
     def set_bookmark_flag(self, flag):
@@ -4174,9 +4191,9 @@ class Scheduled(object):
             custom downloads; the value is checked before being used, and
             converted to 'custom_sim' where necessary)
 
-        start_mode (str): 'none' to disable this schedule, 'start' to perform
-            the operation whenever Tartube starts, or 'scheduled' to perform
-            the operation at regular intervals
+        start_mode (str): 'disabled' to disable this schedule, 'start' to
+            perform the operation whenever Tartube starts, or 'repeat' to
+            perform the operation at regular intervals
 
     """
 
@@ -4202,26 +4219,49 @@ class Scheduled(object):
         #   value, a 'real' download takes place
         # Ignored if self.dl_mode is not 'custom_real'
         self.custom_dl_uid = None
-        # Start mode - 'none' to disable this schedule, 'start' to perform the
-        #   operation whenever Tartube starts, or 'scheduled' to perform the
-        #   operation at regular intervals
+
+        # Start mode
+        #   'disabled' - disable this scheduled download
+        #   'start' - perform the operation whenever Tartube starts
+        #   'start_after' - perform the operation some time after Tartube
+        #       starts
+        #   'repeat' - perform the operation at regular intervals
+        #   'timetable' - perform the operation at pre-determined intervals
         self.start_mode = start_mode
 
-        # The time between scheduled downloads, when self.start_mode is
-        #   'scheduled' (minimum value 1, ignored for other values of
-        #   self.start_mode)
+        # The time between scheduled downloads (minimum value 1)
+        # self.start_mode = 'start_after'
+        #   The time after Tartube starts at which the scheduled download
+        #       happens
+        # self.start_mode = 'repeat':
+        #   The time between repeating scheduled downloads
         self.wait_value = 2
-        # ...using this unit (any of the values in formats.TIME_METRIC_LIST;
-        #   the 'seconds' value is not available in the edit window's combobox)
+        # self.wait_value uses this unit (any of the values in
+        #   formats.TIME_METRIC_LIST; but the 'seconds' value is not available
+        #   in the edit window's combobox)
         self.wait_unit = 'hours'
+
+        # Timetable of times at which the scheduled download happens. when
+        #   self.start_mode = 'timetable'
+        # Each item in the list is a mini-list in the form
+        #   [ day_string, time_string ]
+        # ... where 'day_string' is a kay in formats.SPECIFIED_DAYS_DICT (e.g.
+        #       'every_day', 'monday', and 'time_string' is a 24-hour time in
+        #       the form 'hh:mm'
+        self.timetable_list = []
+        # A window of 5 minutes during which scheduled downloads can start
+        #   (i.e. if the timetable time is 14:00 and Tartube is started at
+        #   14:02, the scheduled download still starts)
+        # Absolute minimum value is 1, recommended minimum is 60
+        self.timetable_window = 300
 
         # The time (system time, in seconds) at which this scheduled download
         #   last started (regardless of whether it was scheduled to begin at
         #   that time, or not)
         self.last_time = 0
-        # When self.start_mode is 'start', mainapp.TartubeApp.start sets this
-        #   value to the time at which the scheduled download should start
-        #   (which will be a few seconds after startup)
+        # When self.start_mode is 'start' or 'start_after',
+        #   mainapp.TartubeApp.start sets this value to the time at which the
+        #   scheduled download should start
         # Once the scheduled download is started, the value is set back to 0
         self.only_time = 0
 
@@ -4271,6 +4311,88 @@ class Scheduled(object):
 
 
     # Public class methods
+
+
+    def check_start(self):
+
+        """Called by mainapp.TartubeApp.script_slow_timer_callback().
+
+        Tests whether it is time to start this scheduled download, or not.
+
+        Return values:
+
+            True to start the scheduled download, False otherwise.
+
+        """
+
+        wait_time = self.wait_value * formats.TIME_METRIC_DICT[self.wait_unit]
+
+        if (
+            (
+                self.start_mode == 'repeat' \
+                and self.last_time + wait_time < time.time()
+            ) or (
+                (
+                    self.start_mode == 'start' \
+                    or self.start_mode == 'start_after'
+                ) and self.only_time > 0 \
+                and self.only_time < time.time()
+            ) or (
+                self.start_mode == 'timetable' \
+                and self.check_timetable()
+            )
+        ):
+            return True
+        else:
+            return False
+
+
+    def check_timetable(self):
+
+        """Called by self.check_start() when self.start_mode is 'timetable'.
+
+        Tests whether it is time to start this scheduled download, or not,
+        depending on dates/times specified in self.timetable_list().
+
+        Return values:
+
+            True to start the scheduled download, False otherwise.
+
+        """
+
+        local = utils.get_local_time()
+        current_day = local.today().weekday()
+        current_hours = int(local.strftime('%H'))
+        current_minutes = int(local.strftime('%M'))
+
+        # Each 'mini_list' is in the form [ day_string, time_string ]
+        for mini_list in self.timetable_list:
+
+            # Today?
+            if not utils.check_day(current_day, mini_list[0]):
+                continue
+
+            # Between these two times (a window of 5 minutes, by default)?
+            early_time = datetime.datetime.now()
+            early_time = early_time.replace(
+                hour = int(mini_list[1][0:2]),
+                minute = int(mini_list[1][3:5]),
+                second = 0,
+            )
+
+            late_time = early_time \
+            + datetime.timedelta(seconds=self.timetable_window)
+
+            # Give each scheduled download a two minute window in which to
+            #   start
+            if early_time > datetime.datetime.fromtimestamp(
+                self.last_time + self.timetable_window,
+            ) and datetime.datetime.fromtimestamp(time.time()) >= early_time \
+            and datetime.datetime.fromtimestamp(time.time()) <= late_time:
+                return True
+
+        # Try again later
+        return False
 
 
     # Set accessors

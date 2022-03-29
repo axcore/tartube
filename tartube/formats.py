@@ -808,6 +808,12 @@ THUMB_ICON_DICT = {
     'thumb_default_medium': 'thumb_default_medium.png',
     'thumb_default_large': 'thumb_default_large.png',
     'thumb_default_enormous': 'thumb_default_enormous.png',
+
+    'thumb_block_tiny': 'thumb_block_tiny.png',
+    'thumb_block_small': 'thumb_block_small.png',
+    'thumb_block_medium': 'thumb_block_medium.png',
+    'thumb_block_large': 'thumb_block_large.png',
+    'thumb_block_enormous': 'thumb_block_enormous.png',
 }
 
 EXTERNAL_ICON_DICT = {

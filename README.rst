@@ -59,16 +59,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Latest version, MS Windows: **v2.3.447 (20 Mar 2022)**
+Stable release: **v2.3.447 (20 Mar 2022)**
 
-Latest version, everything else: **v2.3.250 (24 Mar 2022)**
+Development release: **v2.3.471 (29 Mar 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
 - `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.447/install-tartube-2.3.447-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447-64bit-portable.zip/download>`__ from Sourceforge
-- Tartube is no longer supported on MS Windows (32-bit) - see `7.22 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.447/python3-tartube_2.3.450.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.450.rpm/download>`__ from Sourceforge
+- Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.447/python3-tartube_2.3.447.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -713,7 +713,7 @@ Refreshing the database:
 
 Updating packages:
 
-- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. Also installs FFmpeg (on MS Windows only); see `6.4 Installing FFmpeg / AVConv`_
+- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. On MS Windows, also installs **FFmpeg** (see `6.4 Installing FFmpeg / AVConv`_) and **matplotlib** (see `7.30 Graphs not visible`_)
 - *Protip*: Do an **'Update'** operation before you do a **'Check'** or **'Download'** operation
 
 Fetching information:
@@ -877,11 +877,9 @@ The **yt-dlp** tab contains download options that only work with `yt-dlp <https:
 A new window appears. You can use this window to congifure the scheduled download.
 
 - In the **Download mode** box, select whether **Tartube** should check videos, download them, or perform a custom download (see `6.13 Custom downloads`_)
-- In the **Start mode** box, select whether this download should be performed once, or when **Tartube** starts, or at regular intervals
-- If you choose regular intervals, then you can set the length of the interval
+- In the **Start** tab, select whether this download should be performed once, or when **Tartube** starts, or at regular intervals, or at specified times
 
-.. image:: screenshots/example20.png
-  :alt: The drag-and-drop tab
+When you specify times (like 'Mondays at 15:00'), there is a five-minute window in which the scheduled download can begin. This means that, if you open Tartube at 15:02, the scheduled download will still start (but not if you open Tartube at 15:10).
 
 Now click the **Media** tab. By default, a scheduled download checks or downloads everything in **Tartube**'s database, but if you don't want that, you can select individual channels, playlists and folders.
 
@@ -1874,19 +1872,20 @@ Alternatively, you can update the entire database at once. (This may take a long
 * `7.18 YouTube name/password not accepted`_
 * `7.19 Georestriction workarounds don't work`_
 * `7.20 Video website blocks me`_
-* `7.21 MS Windows installer is too big`_
-* `7.22 Doesn't work on 32-bit Windows`_
-* `7.23 Tartube can't detect livestreams`_
-* `7.24 Livestream is already finished`_
-* `7.25 Can't hear livestream alarms`_
-* `7.26 Some icons not visible`_
-* `7.27 Video thumbnails not visible`_
-* `7.28 Video text not visible`_
-* `7.29 Graphs not visible`_
-* `7.30 Tartube is not visible in the system tray`_
-* `7.31 Tartube is not portable`_
-* `7.32 Run out of disk space`_
-* `7.33 No puedo hablar inglés`_
+* `7.21 Too many blocked videos`_
+* `7.22 MS Windows installer is too big`_
+* `7.23 Doesn't work on 32-bit Windows`_
+* `7.24 Tartube can't detect livestreams`_
+* `7.25 Livestream is already finished`_
+* `7.26 Can't hear livestream alarms`_
+* `7.27 Some icons not visible`_
+* `7.28 Video thumbnails not visible`_
+* `7.29 Video text not visible`_
+* `7.30 Graphs not visible`_
+* `7.31 Tartube is not visible in the system tray`_
+* `7.32 Tartube is not portable`_
+* `7.33 Run out of disk space`_
+* `7.34 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2190,7 +2189,19 @@ A: You can specify a list of proxies (**Edit > System preferences... > Operation
 
 Unfortunately, it is not possible to switch between proxies while downloading a channel (youtube-dl does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
 
-7.21 MS Windows installer is too big
+7.21 Too many blocked videos
+----------------------------
+
+*Q: The Videos tab is full of 'blocked' videos!*
+
+.. image:: screenshots/example33.png
+  :alt: A selection of blocked videos
+
+A: If Tartube detects a video that has been age-restricted, censored or otherwise blocked, it is still added to the database. Unfortunately, Tartube doesn't know anything about the video, not even when it was uploaded, so videos like this appear at the top of the list.
+
+If you don't want the blocked videos in your database, you can click **Edit > System preferences > Operations > Downloads**, and then de-select **Add censored, age-restricted and other blocked videos to the database**
+
+7.22 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -2212,7 +2223,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer and then compare it to the official one.
 
-7.22 Doesn't work on 32-bit Windows
+7.23 Doesn't work on 32-bit Windows
 -----------------------------------
 
 *Q: Tartube does not install/work on 32-bit Windows*
@@ -2221,7 +2232,7 @@ A: Cygwin and MSYS2 have `dropped support for 32-bit Windows <https://www.msys2.
 
 Therefore there will be no further releases of Tartube for 32-bit Windows. Old installers will still work, and for a time it will still be possible to use them to install Tartube and youtube-dl. However, as of March 2022 it is already not possible to install FFmpeg.
 
-7.23 Tartube can't detect livestreams
+7.24 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -2234,14 +2245,14 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.24 Livestream is already finished
+7.25 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.25 Can't hear livestream alarms
+7.26 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -2254,7 +2265,7 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.26 Some icons not visible
+7.27 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -2265,7 +2276,7 @@ A: Since v2.4, **Tartube** uses a set of custom icons, replacing system (stock) 
 
 If you want to restore stock icons, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to deselect it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.27 Video thumbnails not visible
+7.28 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
@@ -2279,30 +2290,27 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.28 Video text not visible
+7.29 Video text not visible
 ---------------------------
 
 *Q: I can't see the text below each video!*
 
 A: If the background colours in the Video Catalogue are getting in the way, you can change them: click **Edit > Sysem preferences... > Windows > Colours**.
 
-7.29 Graphs not visible
+7.30 Graphs not visible
 -----------------------
 
 *Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
 
 A: Tartube shows download statistics in a number of places, for example **Edit > System preferences... > Files > History**.
 
-The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of the Tartube installers use it. If you want graphs, you have to install matplotlib yourself.
+The graphs are created by `matplotlib <https://matplotlib.org/>`__, but none of the Tartube installers include it (because it's quite a large download). If you want graphs, you have to install matplotlib yourself.
 
 On Linux/BSD, use your system's software manager.
 
-On MS Windows, do this:
+On MS Windows, click **Operations > Install matplotlib...**
 
-- In Tartube's main menu, select **System > Open MSYS2 terminal...**
-- In the terminal window, type **pacman -S mingw-w64-x86_64-python-matplotlib**.
-
-7.30 Tartube is not visible in the system tray
+7.31 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -2311,7 +2319,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.31 Tartube is not portable
+7.32 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -2328,7 +2336,7 @@ However, you can create an empty **settings.json** file in the source code direc
 
 You can see both locations by clicking **Edit > System preferences... > Files > Config**.
 
-7.32 Run out of disk space
+7.33 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -2339,14 +2347,14 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.33 No puedo hablar inglés
+7.34 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*
 
 A: Necesitamos más traductores.
 
-If you would like to contribute a translation of this project, please read `this document <docs/translate.html>`__.
+If you would like to contribute a translation of this project, please read `this document <docs/translate.rst>`__.
 
 8 Contributing
 ==============

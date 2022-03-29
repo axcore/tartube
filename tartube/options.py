@@ -747,7 +747,7 @@ class OptionsManager(object):
             'nomtime': False,
             'write_description': True,
             'write_info': True,
-            'write_annotations': True,
+            'write_annotations': False,
             'cookies_path': '',
             # THUMBNAIL IMAGES
             'write_thumbnail': True,

@@ -586,6 +586,7 @@ class DownloadManager(threading.Thread):
         current_minutes = int(local.strftime('%M'))
         # 0=Monday, 6=Sunday
         current_day = local.today().weekday()
+        target_day_str = self.app_obj.alt_day_string
 
         # The period of alternative performance limits have a start and stop
         #   time, stored as strings in the form '21:00'
@@ -612,7 +613,7 @@ class DownloadManager(threading.Thread):
         if start_hours < stop_hours \
         or (start_hours == stop_hours and start_minutes < stop_minutes):
 
-            if not self.check_alt_limits_day(current_day) \
+            if not utils.check_day(current_day, target_day_str) \
             or start_before_flag \
             or (not stop_before_flag):
                 return False
@@ -628,49 +629,15 @@ class DownloadManager(threading.Thread):
                 prev_day = 6
 
             if (
-                self.check_alt_limits_day(current_day) \
+                self.utils.check_day(current_day, target_day_str) \
                 and (not start_before_flag)
             ) or (
-                self.check_alt_limits_day(prev_day) \
+                self.utils.check_day(prev_day, target_day_str) \
                 and stop_before_flag
             ):
                 return True
             else:
                 return False
-
-
-    def check_alt_limits_day(self, this_day):
-
-        """Called by self.check_alt_limits().
-
-        Test the day(s) of the week on which alternative limits apply. The
-        specified day(s) are stored as a string in the form 'every_day',
-        'weekdays', 'weekends', or 'monday', 'tuesday' etc.
-
-        Returns:
-
-            True if the alternative limits apply today, False if not
-
-        """
-
-        # Test the day(s) of the week on which alterative limits apply. The
-        #   specified day(s) are stored as a string in the form 'every_day',
-        #   'weekdays', 'weekends', or 'monday', 'tuesday' etc.
-        day_str = self.app_obj.alt_day_string
-        if day_str != 'every_day':
-
-            if (day_str == 'weekdays' and this_day > 4) \
-            or (day_str == 'weekends' and this_day < 5) \
-            or (day_str == 'monday' and this_day != 0) \
-            or (day_str == 'tuesday' and this_day != 1) \
-            or (day_str == 'wednesday' and this_day != 2) \
-            or (day_str == 'thursday' and this_day != 3) \
-            or (day_str == 'friday' and this_day != 4) \
-            or (day_str == 'saturday' and this_day != 5) \
-            or (day_str == 'sunday' and this_day != 6):
-                return False
-
-        return True
 
 
     def change_worker_count(self, number):
@@ -1389,12 +1356,17 @@ class DownloadWorker(threading.Thread):
             # Execute the assigned job
             return_code = self.downloader_obj.do_download()
 
+            # Any youtube-dl error/warning messages which have not yet been
+            #   passed to their media.Video objects can now be processed
+            for vid in self.downloader_obj.video_msg_buffer_dict.keys():
+                self.downloader_obj.process_error_warning(vid)
+
             # If the download stalled, -1 is returned. If we're allowed to
             #   restart a stalled download, do that; otherwise give up
             if return_code > -1 \
             or (
                 app_obj.operation_auto_restart_max != 0
-                and app_obj.operation_auto_restart_max >= restart_count
+                and restart_count >= app_obj.operation_auto_restart_max
             ):
                 break
 
@@ -1404,7 +1376,7 @@ class DownloadWorker(threading.Thread):
                 # Show confirmation of the restart
                 if app_obj.ytdl_output_stdout_flag:
                     app_obj.main_win_obj.output_tab_write_stdout(
-                        self.download_worker_obj.worker_id,
+                        self.worker_id,
                         _('Tartube is restarting a stalled download'),
                     )
 
@@ -1773,7 +1745,7 @@ class DownloadWorker(threading.Thread):
 
     def data_callback(self, dl_stat_dict, last_flag=False):
 
-        """Called by downloads.VideoDownloader.do_download() and
+        """Called by downloads.VideoDownloader.read_child_process() and
         .last_data_callback().
 
         Based on Worker._data_hook() and ._talk_to_gui().
@@ -2915,18 +2887,15 @@ class VideoDownloader(object):
         #   youtube-dl should download video(s)
         self.download_item_obj = download_item_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = PipeReader(self.stdout_queue)
-        self.stderr_reader = PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
@@ -2946,10 +2915,12 @@ class VideoDownloader(object):
         #   finish downloading
         self.long_sleep_time = 10
 
-        # The time (matches time.time() ) at which the last activity occured
-        #   (last output to STDOUT); used to restart a stalled download, if
-        #   required
-        self.last_activity_time = None
+        # The time (matches time.time() ) at which the first youtube-dl
+        #   network error was detected. Reset back to None when the download
+        #   resumes. If the download does not resume quickly enough
+        #   (according to settings), then this download is marked as stalled,
+        #   and can be restarted, if settings require that
+        self.network_error_time = None
 
         # Flag set to True if we are simulating downloads for this media data
         #   object, or False if we actually downloading videos (set below)
@@ -2963,6 +2934,9 @@ class VideoDownloader(object):
         #   the next call to self.confirm_new_video(), .confirm_old_video()
         #   .confirm_sim_video()
         self.stop_soon_flag = False
+        # Exception: after the FFmpeg "Merging formats into..." message, wait
+        #   for the merge to complete before giving up
+        self.stop_after_merge_flag = False
         # When self.stop_soon_flag is True, the next call to
         #   self.confirm_new_video(), .confirm_old_video() or
         #   .confirm_sim_video() sets this flag to True, informing
@@ -2977,6 +2951,14 @@ class VideoDownloader(object):
         #   videos actually found
         self.video_num = None
         self.video_total = None
+        # When the 'Downloading webpage' message is detected, denoting the
+        #   start of a real (not simulated) download, this IV is set to the
+        #   video's ID. The value is reset when self.confirm_new_video() etc
+        #   is called, or when an error/warning with a different video ID is
+        #   detected
+        # When set, any youtube-dl errors/warnings which do not specify their
+        #   own video ID can be assumed to belong to this video
+        self.probable_video_id = None
         # self.extract_stdout_data() detects the completion of a download job
         #   in one of several ways
         # The first time it happens for each individual video,
@@ -3045,6 +3027,19 @@ class VideoDownloader(object):
         #   media.Video object, but a channel/playlist is detected (regardless
         #   of the value of mainapp.TartubeApp.operation_convert_mode)
         self.url_is_not_video_flag = False
+
+        # Buffer for youtube-dl error/warning messages that can be associated
+        #   with a particular video ID
+        # The corresponding media.Video object might not exist at the time the
+        #   error/warning is processed, so it is temporarily stored here, so
+        #   that the parent downloads.DownloadWorker can retrieve it
+        # Dictionary in the form
+        #   key = The video ID (corresponds to media.Video.vid)
+        #   value = A list in the form
+        #       [ [type, message], [type, message] ... ]
+        # ...where 'type' is the string 'error' or 'warning', and 'message'
+        #   is the error/warning generated
+        self.video_msg_buffer_dict = {}
 
         # For channels/playlists, a list of child media.Video objects, used to
         #   track missing videos (when required)
@@ -3199,24 +3194,17 @@ class VideoDownloader(object):
                 ' '.join(cmd_list),
             )
 
-        # ...and the terminal (if required)...
+        # ...and the terminal (if required)
         if app_obj.ytdl_write_system_cmd_flag:
             print(' '.join(cmd_list))
 
-        # ...and create a new child process using that command
+        # Create a new child process using that command...
         self.create_child_process(cmd_list)
-
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         # While downloading the media data object, update the callback function
         #   with the status of the current job
@@ -3226,72 +3214,10 @@ class VideoDownloader(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
-
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                if stdout:
-
-                    self.last_activity_time = time.time()
-
-                    # On MS Windows we use cp1252, so that Tartube can
-                    #   communicate with the Windows console
-                    stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                    # Convert the statistics into a python dictionary in a
-                    #   standard format, specified in the comments for
-                    #   self.extract_stdout_data()
-                    dl_stat_dict = self.extract_stdout_data(stdout)
-                    # If the job's status is formats.COMPLETED_STAGE_ALREADY
-                    #   or formats.ERROR_STAGE_ABORT, set our self.return_code
-                    #   IV
-                    self.extract_stdout_status(dl_stat_dict)
-                    # Pass the dictionary on to self.download_worker_obj so the
-                    #   main window can be updated
-                    self.download_worker_obj.data_callback(dl_stat_dict)
-
-                    # Show output in the Output tab (if required). For
-                    #   simulated downloads, a message is displayed by
-                    #   self.confirm_sim_video() instead
-                    if app_obj.ytdl_output_stdout_flag \
-                    and (
-                        not app_obj.ytdl_output_ignore_progress_flag \
-                        or not re.search(
-                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
-                            stdout,
-                        )
-                    ) and (
-                        not app_obj.ytdl_output_ignore_json_flag \
-                        or stdout[:1] != '{'
-                    ):
-                        app_obj.main_win_obj.output_tab_write_stdout(
-                            self.download_worker_obj.worker_id,
-                            stdout,
-                        )
-
-                    # Show output in the terminal (if required). For simulated
-                    #   downloads, a message is displayed by
-                    #   self.confirm_sim_video() instead
-                    if app_obj.ytdl_write_stdout_flag \
-                    and (
-                        not app_obj.ytdl_write_ignore_progress_flag \
-                        or not re.search(
-                            r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
-                            stdout,
-                        )
-                    ) and (
-                        not app_obj.ytdl_write_ignore_json_flag \
-                        or stdout[:1] != '{'
-                    ):
-                        # Git #175, Japanese text may produce a codec error
-                        #   here, despite the .decode() call above
-                        try:
-                            print(
-                                stdout.encode(utils.get_encoding(), 'replace'),
-                            )
-                        except:
-                            print('STDOUT text with unprintable characters')
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_child_process():
+                pass
 
             # Apply the JSON timeout, if required
             if app_obj.apply_json_timeout_flag \
@@ -3310,20 +3236,22 @@ class VideoDownloader(object):
             # If a download has stalled (there has been no activity for some
             #   time), halt the child process (allowing the parent worker to
             #   restart the stalled download, if required)
-            restart_time = (app_obj.operation_auto_restart_time * 60)
             if app_obj.operation_auto_restart_flag \
-            and self.last_activity_time is not None \
-            and (self.last_activity_time + restart_time) < time.time():
+            and self.network_error_time is not None:
 
-                # Stop the child process
-                self.stop()
+                restart_time = app_obj.operation_auto_restart_time * 60
+                if (self.network_error_time + restart_time) < time.time():
 
-                # Pass a dictionary of values to downloads.DownloadWorker,
-                #   confirming the result of the job. The values are passed on
-                #   to the main window
-                self.last_data_callback()
+                    # Stalled download. Stop the child process
+                    self.stop()
 
-                return self.STALLED
+                    # Pass a dictionary of values to downloads.DownloadWorker,
+                    #   confirming the result of the job. The values are passed
+                    #   on to the main window
+                    self.set_return_code(self.STALLED)
+                    self.last_data_callback()
+
+                    return self.return_code
 
             # Stop this video downloader, if required to do so, having just
             #   finished checking/downloading a video
@@ -3331,52 +3259,6 @@ class VideoDownloader(object):
                 self.stop()
 
         # The child process has finished
-        while not self.stderr_queue.empty():
-
-            # Read from the child process STDERR queue (we don't need to read
-            #   it in real time), and convert into unicode for python's
-            #   convenience
-            stderr = self.stderr_queue.get_nowait().rstrip()
-
-            # On MS Windows we use cp1252, so that Tartube can communicate with
-            #   the Windows console
-            stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-            # A network error is treated the same way as a stalled download
-            if app_obj.operation_auto_restart_network_flag \
-            and self.is_network_error(stderr):
-
-                self.stop()
-                self.last_data_callback()
-                return self.STALLED
-
-            # Check for recognised errors/warnings
-            if not self.is_ignorable(stderr):
-
-                if self.is_warning(stderr):
-                    self.set_return_code(self.WARNING)
-                    self.download_item_obj.media_data_obj.set_warning(stderr)
-
-                elif not self.is_debug(stderr):
-                    self.set_return_code(self.ERROR)
-                    self.download_item_obj.media_data_obj.set_error(stderr)
-
-            # Show output in the Output tab (if required)
-            if app_obj.ytdl_output_stderr_flag:
-                app_obj.main_win_obj.output_tab_write_stderr(
-                    self.download_worker_obj.worker_id,
-                    stderr,
-                )
-
-            # Show output in the terminal (if required)
-            if app_obj.ytdl_write_stderr_flag:
-                # Git #175, Japanese text may produce a codec error here,
-                #   despite the .decode() call above
-                try:
-                    print(stderr.encode(utils.get_encoding(), 'replace'))
-                except:
-                    print('STDERR text with unprintable characters')
-
         # We also set the return code to self.ERROR if the download didn't
         #   start or if the child process return code is greater than 0
         # Original notes from youtube-dl-gui:
@@ -3630,7 +3512,8 @@ class VideoDownloader(object):
             self.missing_video_check_list.remove(match_obj)
 
 
-    def confirm_new_video(self, dir_path, filename, extension):
+    def confirm_new_video(self, dir_path, filename, extension, \
+    merge_flag=False):
 
         """Called by self.extract_stdout_data().
 
@@ -3649,6 +3532,9 @@ class VideoDownloader(object):
             filename (str): The video's filename, e.g. 'My Video'
 
             extension (str): The video's extension, e.g. '.mp4'
+
+            merge_flag (bool): True if this function was called as the result
+                of a 'Merging formats into...' message
 
         """
 
@@ -3752,10 +3638,16 @@ class VideoDownloader(object):
             or (extension is not None and video_obj.file_ext != extension):
                 video_obj.set_file_ext(extension)
 
+        # The probable video ID, if captured, can now be reset
+        self.probable_video_id = None
+
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
         if self.stop_soon_flag:
-            self.stop_now_flag = True
+            if merge_flag and not self.stop_now_flag:
+                self.stop_after_merge_flag = True
+            else:
+                self.stop_now_flag = True
 
 
     def confirm_new_video_classic_mode(self, dir_path, filename, extension):
@@ -3811,6 +3703,9 @@ class VideoDownloader(object):
         # Register the download with DownloadManager, so that download limits
         #   can be applied, if required
         self.download_manager_obj.register_video('new')
+
+        # The probable video ID, if captured, can now be reset
+        self.probable_video_id = None
 
 
     def confirm_old_video(self, dir_path, filename, extension):
@@ -3941,6 +3836,9 @@ class VideoDownloader(object):
                             self.download_worker_obj.options_manager_obj,
                         ),
                     )
+
+        # The probable video ID, if captured, can now be reset
+        self.probable_video_id = None
 
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
@@ -4784,7 +4682,7 @@ class VideoDownloader(object):
 
     def extract_stdout_data(self, stdout):
 
-        """Called by self.do_download().
+        """Called by self.read_child_process().
 
         Based on the extract_data() function in youtube-dl-gui's
         downloaders.py.
@@ -4856,6 +4754,8 @@ class VideoDownloader(object):
         if stdout_list[0] == '[download]':
 
             dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
+            if self.network_error_time is not None:
+                self.network_error_time = None
 
             # Get path, filename and extension
             if stdout_list[1] == 'Destination:':
@@ -5006,7 +4906,7 @@ class VideoDownloader(object):
                 dl_stat_dict['extension'] = extension
                 self.reset_temp_destination()
 
-                self.confirm_new_video(path, filename, extension)
+                self.confirm_new_video(path, filename, extension, True)
 
             # Get the final file extension after simple FFmpeg post-processing
             #   (i.e. not after a file merge)
@@ -5050,6 +4950,28 @@ class VideoDownloader(object):
             #   set, first removing the final colon that should be there
             youtube_id = re.sub('\:*$', '', stdout_list[1])
             media_data_obj.set_rss(youtube_id)
+
+        elif (
+            not self.dl_sim_flag \
+            and stdout_list[2] == 'Downloading' \
+            and stdout_list[3] == 'webpage' \
+            and re.search('^\[[^\]\:]+\]', stdout_list[0]) \
+        ):
+            # (The re.search() above excludes [youtube:channel] and
+            #   [youtube:playlist], etc)
+            self.probable_video_id = re.sub('\:*$', '', stdout_list[1])
+
+        elif (
+            stdout_list[0] == 'Deleting' \
+            and stdout_list[1] == 'original' \
+            and stdout_list[2] == 'file' \
+            and self.stop_after_merge_flag \
+        ):
+            # (We were waiting for an FFmpeg to finish, before stopping the
+            #   download)
+            self.stop_now_flag = True
+            self.stop_after_merge_flag = False
+            return dl_stat_dict
 
         elif stdout_list[0][0] == '{':
 
@@ -5143,7 +5065,7 @@ class VideoDownloader(object):
 
     def extract_stdout_status(self, dl_stat_dict):
 
-        """Called by self.do_download() immediately after a call to
+        """Called by self.read_child_process() immediately after a call to
         self.extract_stdout_data().
 
         Based on YoutubeDLDownloader._extract_info().
@@ -5169,6 +5091,42 @@ class VideoDownloader(object):
             if dl_stat_dict['status'] == formats.ERROR_STAGE_ABORT:
                 self.set_return_code(self.FILESIZE_ABORT)
                 dl_stat_dict['status'] = None
+
+
+    def is_blocked(self, stderr):
+
+        """Called by self.register_error_warning().
+
+        See if a STDERR message indicates a video that is censored, age-
+        restricted or otherwise unavailable for download.
+
+        Args:
+
+            stderr (str): A message from the child process STDERR
+
+        Returns:
+
+            True if the video is blocked, False if not
+
+        """
+
+        # N.B. These strings also appear in self.is_ignorable()
+        regex_list = [
+            'Content Warning',
+            'This video may be inappropriate for some users',
+            'Sign in to confirm your age',
+            'This video contains content from.*copyright grounds',
+            'This video requires payment to watch',
+            'The uploader has not made this video available',
+        ]
+
+        for regex in regex_list:
+
+            if re.search('\s*(\S*)\:\s' + regex, stderr):
+                return True
+
+        # Not blocked
+        return None
 
 
     def is_child_process_alive(self):
@@ -5218,7 +5176,7 @@ class VideoDownloader(object):
 
     def is_ignorable(self, stderr):
 
-        """Called by self.do_download().
+        """Called by self.register_error_warning().
 
         Before testing a STDERR message, see if it's one of the frequent
         messages which the user has opted to ignore (if any).
@@ -5297,7 +5255,7 @@ class VideoDownloader(object):
             app_obj.ignore_yt_age_restrict_flag \
             and (
                 re.search(
-                    r'ERROR\: Content Warning',
+                    r'Content Warning',
                     stderr,
                 ) or re.search(
                     r'This video may be inappropriate for some users',
@@ -5356,7 +5314,7 @@ class VideoDownloader(object):
 
     def is_network_error(self, stderr):
 
-        """Called by self.do_download().
+        """Called by self.read_child_process().
 
         Try to detect network errors, indicating a stalled download.
 
@@ -5374,16 +5332,11 @@ class VideoDownloader(object):
 
         """
 
-        # v2.3.012, this error is seen on MS Windows:
-        #   unable to download video data: <urlopen error [WinError 10060] A
-        #   connection attempt failed because the connected party did not
-        #   properly respond after a period of time, or established connection
-        #   failed because connected host has failed to respond>
-        # Don't know yet what the equivalent on other operating systems is, so
-        #   we'll detect the first part, which is a string generated by
-        #   youtube-dl itself
-
-        if re.search(r'unable to download video data', stderr):
+        if re.search(r'[Uu]nable to download video data', stderr) \
+        or re.search(r'[Uu]nable to download webpage', stderr) \
+        or re.search(r'[Nn]ame or service not known', stderr) \
+        or re.search(r'urlopen error', stderr) \
+        or re.search(r'Got server HTTP error', stderr):
             return True
         else:
             return False
@@ -5413,7 +5366,7 @@ class VideoDownloader(object):
 
     def last_data_callback(self):
 
-        """Called by self.do_download().
+        """Called by self.read_child_process().
 
         Based on YoutubeDLDownloader._last_data_hook().
 
@@ -5466,6 +5419,435 @@ class VideoDownloader(object):
         self.download_worker_obj.data_callback(dl_stat_dict, True)
 
 
+    def match_vid_or_url(self, media_data_obj, vid, url=None):
+
+        """Called by self.register_error_warning().
+
+        Tests whether a media.Video object has a specified video ID, or a the
+        URL expected from that video ID.
+
+        Args:
+
+            media_data_obj (media.Video): The video to test
+
+            vid (str): The video ID
+
+            url (str or None): A URL expected from that video ID, or None if
+                we don't know how to convert the video ID into a URL
+
+        Return values:
+
+            True if the video matches the video ID or URL, False otherwise
+
+        """
+
+        if (
+            media_data_obj.vid is not None \
+            and media_data_obj.vid == vid
+        ) or (
+            media_data_obj.source is not None \
+            and media_data_obj.source == url
+        ):
+            return True
+        else:
+            return False
+
+
+    def process_error_warning(self, vid):
+
+        """Called by downloads.DownloadWorker.run_video_downloader() or by any
+        other code.
+
+        When a youtube-dl error/warning message is received with an
+        identifiable video ID, the corresponding media.Video object might not
+        yet exist.
+
+        The error/warning is stored temporarily in self.video_msg_buffer_dict()
+        until it can be passed on to the media.Video. (If the media.Video still
+        does not exist, pass it on to the parent channel/playlist/folder
+        instead).
+
+        Args:
+
+            vid (str): The video ID, a key in self.video_msg_buffer_dict
+
+        """
+
+        if not vid in self.video_msg_buffer_dict:
+
+            app_obj.system_error(
+                999,
+                'Missing VID in video error/warning buffer',
+            )
+
+            return
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Search for a matching media.Video
+        video_obj = None
+
+        if isinstance(self.download_item_obj.media_data_obj, media.Video):
+
+            # This should not happen, but handle it anyway
+            video_obj = self.download_item_obj.media_data_obj
+
+        else:
+
+            for child_obj in self.download_item_obj.media_data_obj.child_list:
+
+                if isinstance(child_obj, media.Video) \
+                and child_obj.vid is not None \
+                and child_obj.vid == vid:
+
+                    video_obj = child_obj
+                    break
+
+        # mini_list is in the form [ msg_type, data ]
+        for mini_list in self.video_msg_buffer_dict[vid]:
+
+            if video_obj is None:
+
+                # No matching media.Video found; assign the error/warning to
+                #   the parent channel/playlist/folder instead
+                if mini_list[0] == 'warning':
+                    self.download_item_obj.media_data_obj.set_warning(
+                        mini_list[1],
+                    )
+
+                else:
+                    self.download_item_obj.media_data_obj.set_error(
+                        mini_list[1],
+                    )
+
+            else:
+
+                if mini_list[0] == 'warning':
+                    video_obj.set_warning(mini_list[1])
+                else:
+                    video_obj.set_error(mini_list[1])
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.video_catalogue_update_video,
+                    video_obj,
+                )
+
+
+    def read_child_process(self):
+
+        """Called by self.do_download().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read. None if both queues were
+                empty, or if STDERR was read and a network error was detected
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Look out for network errors that indicate a stalled download
+            # (I'm not sure why this message does not appear in STDERR;
+            #   self.is_network_error() checks for the same pattern)
+            if app_obj.operation_auto_restart_flag \
+            and self.network_error_time is None \
+            and re.search('Got server HTTP error', data):
+
+                self.network_error_time = time.time()
+
+            else:
+
+                # Convert download statistics into a python dictionary in a
+                #   standard format, specified in the comments for
+                #   self.extract_stdout_data()
+                dl_stat_dict = self.extract_stdout_data(data)
+                # If the job's status is formats.COMPLETED_STAGE_ALREADY or
+                #   formats.ERROR_STAGE_ABORT, set our self.return_code IV
+                self.extract_stdout_status(dl_stat_dict)
+                # Pass the dictionary on to self.download_worker_obj so the
+                #   main window can be updated
+                self.download_worker_obj.data_callback(dl_stat_dict)
+
+            # Show output in the Output tab (if required). For simulated
+            #   downloads, a message is displayed by self.confirm_sim_video()
+            #   instead
+            if app_obj.ytdl_output_stdout_flag \
+            and (
+                not app_obj.ytdl_output_ignore_progress_flag \
+                or not re.search(
+                    r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                    data,
+                )
+            ) and (
+                not app_obj.ytdl_output_ignore_json_flag \
+                or data[:1] != '{'
+            ):
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required). For simulated
+            #   downloads, a message is displayed by
+            #   self.confirm_sim_video() instead
+            if app_obj.ytdl_write_stdout_flag \
+            and (
+                not app_obj.ytdl_write_ignore_progress_flag \
+                or not re.search(
+                    r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                    data,
+                )
+            ) and (
+                not app_obj.ytdl_write_ignore_json_flag \
+                or data[:1] != '{'
+            ):
+                # Git #175, Japanese text may produce a codec error here,
+                #   despite the .decode() call above
+                try:
+                    print(
+                        data.encode(utils.get_encoding(), 'replace'),
+                    )
+                except:
+                    print('STDOUT text with unprintable characters')
+
+        # STDERR
+        else:
+
+            # Look out for network errors that indicate a stalled download
+            if app_obj.operation_auto_restart_flag \
+            and self.network_error_time is None \
+            and self.is_network_error(data):
+
+                self.network_error_time = time.time()
+
+            else:
+
+                # Check for recognised errors/warnings, and update the
+                #   appropriate media data object (immediately, if possible, or
+                #   later otherwise)
+                self.register_error_warning(data)
+
+            # Show output in the Output tab (if required)
+            if app_obj.ytdl_output_stderr_flag:
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required)
+            if app_obj.ytdl_write_stderr_flag:
+                # Git #175, Japanese text may produce a codec error here,
+                #   despite the .decode() call above
+                try:
+                    print(data.encode(utils.get_encoding(), 'replace'))
+                except:
+                    print('STDERR text with unprintable characters')
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
+
+
+    def register_error_warning(self, data):
+
+        """Called by self.read_child_process()
+
+        When youtube-dl produces an error or warning (in its STDERR), pass that
+        error/warning on to the appropriate media data object: the video
+        responsible, if possible, or the parent channel/playlist/folder if not.
+
+        Args:
+
+            data (str): The error/warning message from the child process STDERR
+
+        """
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Try to identify the video ID that produced the error/warning. As of
+        #   v2.3.453, some error/warning messages contain the video ID, others
+        #   do not
+        msg_type = None
+        vid = None
+
+        if self.is_warning(data):
+
+            self.set_return_code(self.WARNING)
+            msg_type = 'warning'
+
+            # e.g. WARNING: [youtube] abcdefgh: here are no annotations
+            if not isinstance(
+                self.download_item_obj.media_data_obj,
+                media.Video,
+            ):
+                match = re.search(
+                    '^WARNING\:\s*\[[^\]]+\]\s*(\S+)\s*\:',
+                    data,
+                )
+
+                if match:
+                    vid = match.groups()[0]
+
+        elif not self.is_debug(data):
+
+            self.set_return_code(self.ERROR)
+            msg_type = 'error'
+
+            # e.g. ERROR: [youtube] abcdefgh: Sign in to confirm your age
+            if not isinstance(
+                self.download_item_obj.media_data_obj,
+                media.Video,
+            ):
+                match = re.search(
+                    '^ERROR\:\s*\[[^\]]+\]\s*(\S+)\s*\:',
+                    data,
+                )
+
+                if match:
+                    vid = match.groups()[0]
+
+        if not msg_type:
+            # Not an error/warning
+            return
+
+        # If the error/warning marks the video as blocked, we can add it to
+        #   the database (to alert the user about its existence)
+        new_obj = None
+        if app_obj.add_blocked_videos_flag \
+        and vid is not None \
+        and self.is_blocked(data):
+
+            # Check this video is not already in the parent channel/playlist/
+            #   folder
+            media_data_obj = self.download_item_obj.media_data_obj
+            # !!! DEBUG: self.is_blocked() assumes that the STDERR messages
+            # !!!       are only generated by YouTube; nevertheless, generalise
+            # !!!       this for all websites
+            url = None
+            if re.search('^ERROR\: \[youtube\]', data):
+                url = utils.convert_youtube_id_to_video(vid)
+
+            if isinstance(media_data_obj, media.Video) \
+            and self.match_vid_or_url(media_data_obj, vid, url):
+
+                media_data_obj.set_block_flag(True)
+
+            else:
+
+                match_flag = False
+                for child_obj in media_data_obj.child_list:
+
+                    if self.match_vid_or_url(child_obj, vid, url):
+                        match_flag = True
+                        break
+
+                if not match_flag:
+
+                    # Video is not in the database, so add it
+                    new_obj = app_obj.add_video(media_data_obj, url)
+                    if new_obj:
+                        new_obj.set_block_flag(True)
+                        new_obj.set_vid(vid)
+
+        # Assign the error/warning to a media data object
+        if not self.is_ignorable(data):
+
+            # If the error/warning is anonymous (does not contain the video
+            #   ID), then we can use the most probable video ID
+            if vid is None \
+            and app_obj.auto_assign_errors_warnings_flag \
+            and self.probable_video_id is not None:
+                vid = self.probable_video_id
+
+            # Decide which media data object should have this error/warning
+            #   assigned to it
+            if new_obj:
+
+                # We created a new media.Video object just a moment ago, so
+                #   assign the error/warning to it directly
+                if msg_type == 'warning':
+                    new_obj.set_warning(data)
+                else:
+                    new_obj.set_error(data)
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.video_catalogue_update_video,
+                    new_obj,
+                )
+
+            elif isinstance(
+                self.download_item_obj.media_data_obj,
+                media.Video,
+            ):
+                # We are downloading a single video, so we don't need the video
+                #   ID (in which case, the error/warning can be assigned to it
+                #   directly)
+                if msg_type == 'warning':
+                    self.download_item_obj.media_data_obj.set_warning(data)
+                else:
+                    self.download_item_obj.media_data_obj.set_error(data)
+
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.video_catalogue_update_video,
+                    self.download_item_obj.media_data_obj,
+                )
+
+            elif vid is None:
+
+                # We are downloading a channel/playlist/folder and the video ID
+                #   is not known, so assign the error/warning to the channel/
+                #   playlist/folder
+                if msg_type == 'warning':
+                    self.download_item_obj.media_data_obj.set_warning(data)
+                else:
+                    self.download_item_obj.media_data_obj.set_error(data)
+
+            else:
+
+                # The corresponding media.Video object might not exist yet.
+                #   Temporarily store the error/warning in a buffer, so that
+                #   the parent downloads.DownloadWorker can retrieve it
+                if vid in self.video_msg_buffer_dict:
+                    self.video_msg_buffer_dict[vid].append( [msg_type, data] )
+                else:
+                    self.video_msg_buffer_dict[vid] = [ [msg_type, data] ]
+
+
     def set_return_code(self, code):
 
         """Called by self.do_download(), .create_child_process(),
@@ -5483,7 +5865,8 @@ class VideoDownloader(object):
 
         """
 
-        if code >= self.return_code:
+        # (The code -1, STALLED, overrules everything else)
+        if code == -1 or code >= self.return_code:
             self.return_code = code
 
 
@@ -5633,18 +6016,15 @@ class ClipDownloader(object):
         #   youtube-dl should download video(s)
         self.download_item_obj = download_item_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = PipeReader(self.stdout_queue)
-        self.stderr_reader = PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
@@ -5861,8 +6241,13 @@ class ClipDownloader(object):
                 + str(i + 1) + '/' + str(list_size),
             )
 
-            # Create a new child process using the command
+            # Create a new child process using that command...
             self.create_child_process(cmd_list)
+            # ...and set up the PipeReader objects to read from the child
+            #   process STDOUT and STDERR
+            if self.child_process is not None:
+                self.stdout_reader.attach_fh(self.child_process.stdout)
+                self.stderr_reader.attach_fh(self.child_process.stderr)
 
             # Pass data on to self.download_worker_obj so the main window can
             #   be updated
@@ -5876,18 +6261,6 @@ class ClipDownloader(object):
                 'clip_flag': True,
             })
 
-            # So that we can read from the child process STDOUT and STDERR,
-            #   attach a file descriptor to the PipeReader objects
-            if self.child_process is not None:
-
-                self.stdout_reader.attach_file_descriptor(
-                    self.child_process.stdout,
-                )
-
-                self.stderr_reader.attach_file_descriptor(
-                    self.child_process.stderr,
-                )
-
             # While downloading the media data object, update the callback
             #   function with the status of the current job
             while self.is_child_process_alive():
@@ -5896,48 +6269,10 @@ class ClipDownloader(object):
                 #   want to hog system resources)
                 time.sleep(self.sleep_time)
 
-                # Read from the child process STDOUT, and convert into unicode
-                #   for Python's convenience
-                while not self.stdout_queue.empty():
-
-                    stdout = self.stdout_queue.get_nowait().rstrip()
-                    if stdout:
-
-                        # On MS Windows we use cp1252, so that Tartube can
-                        #   communicate with the Windows console
-                        stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                        # Remove weird carriage returns that insert empty lines
-                        #   into the Output tab
-                        stdout = re.sub(r"[\r]+", "", stdout)
-
-                        # Extract output from stdout
-                        self.extract_stdout_data(stdout)
-
-                        # Show output in the Output tab (if required)
-                        if app_obj.ytdl_output_stdout_flag:
-
-                            app_obj.main_win_obj.output_tab_write_stdout(
-                                self.download_worker_obj.worker_id,
-                                stdout,
-                            )
-
-                        # Show output in the terminal (if required)
-                        if app_obj.ytdl_write_stdout_flag:
-
-                            # Git #175, Japanese text may produce a codec error
-                            #   here, despite the .decode() call above
-                            try:
-                                print(
-                                    stdout.encode(
-                                        utils.get_encoding(),
-                                        'replace',
-                                    ),
-                                )
-                            except:
-                                print(
-                                    'STDOUT text with unprintable characters'
-                                )
+                # Read from the child process STDOUT and STDERR, in the correct
+                #   order, until there is nothing left to read
+                while self.read_child_process():
+                    pass
 
                 # Stop this clip downloader, if required to do so, having just
                 #   finished downloading a clip
@@ -5945,44 +6280,6 @@ class ClipDownloader(object):
                     self.stop()
 
             # The child process has finished
-            while not self.stderr_queue.empty():
-
-                # v2.3.168 I'm not sure that any detectable errors are actually
-                #   produced, but nevertheless this section can handle any
-                #   such errors
-
-                # Read from the child process STDERR queue (we don't need to
-                #   read it in real time), and convert into unicode for
-                #   python's convenience
-                stderr = self.stderr_queue.get_nowait().rstrip()
-
-                # On MS Windows we use cp1252, so that Tartube can communicate
-                #   with the Windows console
-                stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-                # After a network error, stop trying to download clips
-                if self.is_network_error(stderr):
-
-                    self.stop()
-                    self.last_data_callback()
-                    return self.STALLED
-
-                # Show output in the Output tab (if required)
-                if (app_obj.ytdl_output_stderr_flag):
-                    app_obj.main_win_obj.output_tab_write_stderr(
-                        self.download_worker_obj.worker_id,
-                        stderr,
-                    )
-
-                # Show output in the terminal (if required)
-                if (app_obj.ytdl_write_stderr_flag):
-                    # Git #175, Japanese text may produce a codec error here,
-                    #   despite the .decode() call above
-                    try:
-                        print(stderr.encode(utils.get_encoding(), 'replace'))
-                    except:
-                        print('STDERR text with unprintable characters')
-
             # We also set the return code to self.ERROR if the download didn't
             #   start or if the child process return code is greater than 0
             # Original notes from youtube-dl-gui:
@@ -6203,8 +6500,13 @@ class ClipDownloader(object):
                 + str(count) + '/' + str(list_size),
             )
 
-            # Create a new child process using the command
+            # Create a new child process using that command...
             self.create_child_process(cmd_list)
+            # ...and set up the PipeReader objects to read from the child
+            #   process STDOUT and STDERR
+            if self.child_process is not None:
+                self.stdout_reader.attach_fh(self.child_process.stdout)
+                self.stderr_reader.attach_fh(self.child_process.stderr)
 
             # Pass data on to self.download_worker_obj so the main window can
             #   be updated
@@ -6221,18 +6523,6 @@ class ClipDownloader(object):
                 'filename': clip,
             })
 
-            # So that we can read from the child process STDOUT and STDERR,
-            #   attach a file descriptor to the PipeReader objects
-            if self.child_process is not None:
-
-                self.stdout_reader.attach_file_descriptor(
-                    self.child_process.stdout,
-                )
-
-                self.stderr_reader.attach_file_descriptor(
-                    self.child_process.stderr,
-                )
-
             # While downloading the media data object, update the callback
             #   function with the status of the current job
             while self.is_child_process_alive():
@@ -6241,48 +6531,10 @@ class ClipDownloader(object):
                 #   want to hog system resources)
                 time.sleep(self.sleep_time)
 
-                # Read from the child process STDOUT, and convert into unicode
-                #   for Python's convenience
-                while not self.stdout_queue.empty():
-
-                    stdout = self.stdout_queue.get_nowait().rstrip()
-                    if stdout:
-
-                        # On MS Windows we use cp1252, so that Tartube can
-                        #   communicate with the Windows console
-                        stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                        # Remove weird carriage returns that insert empty lines
-                        #   into the Output tab
-                        stdout = re.sub(r"[\r]+", "", stdout)
-
-                        # Extract output from stdout
-                        self.extract_stdout_data(stdout)
-
-                        # Show output in the Output tab (if required)
-                        if app_obj.ytdl_output_stdout_flag:
-
-                            app_obj.main_win_obj.output_tab_write_stdout(
-                                self.download_worker_obj.worker_id,
-                                stdout,
-                            )
-
-                        # Show output in the terminal (if required)
-                        if app_obj.ytdl_write_stdout_flag:
-
-                            # Git #175, Japanese text may produce a codec error
-                            #   here, despite the .decode() call above
-                            try:
-                                print(
-                                    stdout.encode(
-                                        utils.get_encoding(),
-                                        'replace',
-                                    ),
-                                )
-                            except:
-                                print(
-                                    'STDOUT text with unprintable characters'
-                                )
+                # Read from the child process STDOUT and STDERR, in the correct
+                #   order, until there is nothing left to read
+                while self.read_child_process():
+                    pass
 
                 # Stop this clip downloader, if required to do so, having just
                 #   finished downloading a clip
@@ -6290,44 +6542,6 @@ class ClipDownloader(object):
                     self.stop()
 
             # The child process has finished
-            while not self.stderr_queue.empty():
-
-                # v2.3.168 I'm not sure that any detectable errors are actually
-                #   produced, but nevertheless this section can handle any
-                #   such errors
-
-                # Read from the child process STDERR queue (we don't need to
-                #   read it in real time), and convert into unicode for
-                #   python's convenience
-                stderr = self.stderr_queue.get_nowait().rstrip()
-
-                # On MS Windows we use cp1252, so that Tartube can communicate
-                #   with the Windows console
-                stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-                # After a network error, stop trying to download clips
-                if self.is_network_error(stderr):
-
-                    self.stop()
-                    self.last_data_callback()
-                    return self.STALLED
-
-                # Show output in the Output tab (if required)
-                if (app_obj.ytdl_output_stderr_flag):
-                    app_obj.main_win_obj.output_tab_write_stderr(
-                        self.download_worker_obj.worker_id,
-                        stderr,
-                    )
-
-                # Show output in the terminal (if required)
-                if (app_obj.ytdl_write_stderr_flag):
-                    # Git #175, Japanese text may produce a codec error here,
-                    #   despite the .decode() call above
-                    try:
-                        print(stderr.encode(utils.get_encoding(), 'replace'))
-                    except:
-                        print('STDERR text with unprintable characters')
-
             # We also set the return code to self.ERROR if the download didn't
             #   start or if the child process return code is greater than 0
             # Original notes from youtube-dl-gui:
@@ -6442,9 +6656,13 @@ class ClipDownloader(object):
                 if app_obj.ytdl_write_system_cmd_flag:
                     print(' '.join(cmd_list))
 
-
-                # Create a new child process using the command
+                # Create a new child process using that command...
                 self.create_child_process(cmd_list)
+                # ...and set up the PipeReader objects to read from the child
+                #   process STDOUT and STDERR
+                if self.child_process is not None:
+                    self.stdout_reader.attach_fh(self.child_process.stdout)
+                    self.stderr_reader.attach_fh(self.child_process.stderr)
 
                 # Pass data on to self.download_worker_obj so the main window
                 #   can be updated
@@ -6454,18 +6672,6 @@ class ClipDownloader(object):
                     'status': formats.ACTIVE_STAGE_CONCATENATE,
                     'filename': '',
                 })
-
-                # So that we can read from the child process STDOUT and STDERR,
-                #   attach a file descriptor to the PipeReader objects
-                if self.child_process is not None:
-
-                    self.stdout_reader.attach_file_descriptor(
-                        self.child_process.stdout,
-                    )
-
-                    self.stderr_reader.attach_file_descriptor(
-                        self.child_process.stderr,
-                    )
 
                 # Wait for the concatenation to finish. We are not bothered
                 #   about reading the child process STDOUT/STDERR, since we can
@@ -6795,7 +7001,7 @@ class ClipDownloader(object):
 
     def extract_stdout_data(self, stdout):
 
-        """Called by self.do_download_clips().
+        """Called by self.read_child_process().
 
         Extracts output from the child process.
 
@@ -6908,7 +7114,7 @@ class ClipDownloader(object):
 
     def last_data_callback(self):
 
-        """Called by self.do_download_clips().
+        """Called by self.read_child_process().
 
         Based on VideoDownloader.last_data_callback().
 
@@ -7144,6 +7350,120 @@ class ClipDownloader(object):
                         )
 
 
+    def read_child_process(self):
+
+        """Called by self.do_download_clips() and
+        self.do_download_remove_slices().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Remove weird carriage returns that insert empty lines into the
+            #   Output tab
+            data = re.sub(r"[\r]+", "", data)
+
+            # Extract output from STDOUT
+            self.extract_stdout_data(data)
+
+            # Show output in the Output tab (if required)
+            if app_obj.ytdl_output_stdout_flag:
+
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required)
+            if app_obj.ytdl_write_stdout_flag:
+
+                # Git #175, Japanese text may produce a codec error
+                #   here, despite the .decode() call above
+                try:
+                    print(
+                        data.encode(
+                            utils.get_encoding(),
+                            'replace',
+                        ),
+                    )
+                except:
+                    print(
+                        'STDOUT text with unprintable characters'
+                    )
+
+        # STDERR
+        else:
+
+            # v2.3.168 I'm not sure that any detectable errors are actually
+            #   produced, but nevertheless this section can handle any such
+            #   errors
+
+            # After a network error, stop trying to download clips
+            if self.is_network_error(data):
+
+                self.stop()
+                self.last_data_callback()
+                self.set_return_code(self.STALLED)
+
+                self.queue.task_done()
+                return None
+
+            # Show output in the Output tab (if required)
+            if app_obj.ytdl_output_stderr_flag:
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required)
+            if app_obj.ytdl_write_stderr_flag:
+                # Git #175, Japanese text may produce a codec error here,
+                #   despite the .decode() call above
+                try:
+                    print(data.encode(utils.get_encoding(), 'replace'))
+                except:
+                    print('STDERR text with unprintable characters')
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
+
+
     def set_return_code(self, code):
 
         """Called by self.do_download_clips(), .do_download_remove_slices(),
@@ -7277,20 +7597,15 @@ class StreamDownloader(object):
         #   youtube-dl should download video(s)
         self.download_item_obj = download_item_obj
 
-        # This object reads from the child process STDOUT in an asynchronous
-        #   way. STDERR is not read, but for conformity with
-        #   downloads.VideoDownloader (and for future changes to the code), it
-        #   is available
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = PipeReader(self.stdout_queue)
-        self.stderr_reader = PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
@@ -7647,19 +7962,13 @@ class StreamDownloader(object):
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # Set up the PipeReader objects to read from the child process STDOUT
+        #   and STDERR
         # (As described above, STDERR is currently ignored, but might be used
         #   in the future)
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         # While capturing the stream or merging the video segments, update the
         #   callback function with the status of the current job
@@ -7669,102 +7978,10 @@ class StreamDownloader(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
-
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                if stdout:
-
-                    # On MS Windows we use cp1252, so that Tartube can
-                    #   communicate with the Windows console
-                    stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                    # Intercept various STDOUT messages
-                    finished_flag = False
-                    write_flag = False
-
-                    # Intercept the segment number, and update the IV (but
-                    #   don't display that line in the Output tab)
-                    match = re.search('^Segment number\: (\d+)', stdout)
-                    if match:
-
-                        segment_num = int(match.group(1))
-                        if segment_num > self.segment_count:
-                            self.segment_count = segment_num
-
-                    # Intercept the segments directory, if we don't already
-                    #   have it
-                    if not write_flag and self.segments_dir is None:
-
-                        match = re.search(
-                            '^[INFO] Created directory (.*)',
-                            stdout,
-                        )
-
-                        if match:
-
-                            write_flag = True
-                            self.segments_dir = match.group(1)
-
-                    # Intercept other messages which can be displayed, even
-                    #   when verbose output is turned off
-                    # (Some of lines captured here, could also have been
-                    #   captured by the code block above)
-                    if not write_flag \
-                    and (
-                        re.search('^\w+\|OK\s+\|', stdout) \
-                        or re.search('^\w+\|ERR\s+\|', stdout)
-                    ):
-                        write_flag = True
-
-                    # Intercept the message, showing that the first stage is
-                    #   complete
-                    if not write_flag:
-
-                        match = re.search('Exceeded.*retries', stdout)
-                        if match:
-                            finished_flag = True
-                            write_flag = True
-
-                    # Pass a dictionary of values to self.download_worker_obj
-                    #   so the main window can be updated
-                    # The dictionary is based on the one created by
-                    #   downloads.VideoDownloader (but with far fewer values
-                    #   included)
-                    dl_stat_dict = {
-                        'playlist_index': self.segment_count,
-                        'playlist_size': '?',
-                        'dl_sim_flag': False,
-                        'status': formats.ACTIVE_STAGE_CAPTURE,
-                    }
-
-                    self.download_worker_obj.data_callback(dl_stat_dict)
-
-                    # Show output in the Output tab (if required)
-                    if app_obj.ytsc_write_verbose_flag \
-                    or (app_obj.ytdl_output_stdout_flag and write_flag):
-                        app_obj.main_win_obj.output_tab_write_stdout(
-                            self.download_worker_obj.worker_id,
-                            stdout,
-                        )
-
-                    # Show output in the terminal (if required)
-                    if app_obj.ytsc_write_verbose_flag \
-                    or (app_obj.ytdl_write_stdout_flag and write_flag):
-                        # Git #175, Japanese text may produce a codec error
-                        #   here, despite the .decode() call above
-                        try:
-                            print(
-                                stdout.encode(utils.get_encoding(), 'replace'),
-                            )
-                        except:
-                            print('STDOUT text with unprintable characters')
-
-                    # If the download appears to be complete, stop the child
-                    #   process
-                    if finished_flag:
-                        self.stop()
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_capture_child_process():
+                pass
 
             # If no segments have been received and it's time to give up (or to
             #   restart the child process), then do so
@@ -7813,19 +8030,13 @@ class StreamDownloader(object):
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # Set up the PipeReader objects to read from the child process STDOUT
+        #   and STDERR
         # (As described above, STDERR is currently ignored, but might be used
         #   in the future)
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         # While capturing the stream or merging the video segments, update the
         #   callback function with the status of the current job
@@ -7835,74 +8046,10 @@ class StreamDownloader(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-            # Read from the child process STDOUT, and convert into unicode for
-            #   Python's convenience
-            while not self.stdout_queue.empty():
-
-                stdout = self.stdout_queue.get_nowait().rstrip()
-                if stdout:
-
-                    # On MS Windows we use cp1252, so that Tartube can
-                    #   communicate with the Windows console
-                    stdout = stdout.decode(utils.get_encoding(), 'replace')
-
-                    # Intercept various STDOUT messages, depending on whether
-                    #   the merge has started yet, or not
-                    finished_flag = False
-                    write_flag = False
-
-                    # Intercept output file information
-                    if re.search('^\[INFO\]', stdout) \
-                    or re.search('^\[WARNING\]', stdout) \
-                    or re.search('^\[ERROR\]', stdout):
-                        write_flag = True
-
-                    else:
-
-                        match = re.search('^Output file\: (.*)', stdout)
-                        if match:
-                            self.output_path = match.group(1)
-                            finished_flag = True
-                            write_flag = True
-
-                    # Pass a dictionary of values to self.download_worker_obj
-                    #   so the main window can be updated
-                    # The dictionary is based on the one created by
-                    #   downloads.VideoDownloader (but with far fewer values
-                    #   included)
-                    dl_stat_dict = {
-                        'playlist_index': self.segment_count,
-                        'playlist_size': '?',
-                        'dl_sim_flag': False,
-                        'status': formats.ACTIVE_STAGE_MERGE,
-                    }
-
-                    self.download_worker_obj.data_callback(dl_stat_dict)
-
-                    # Show output in the Output tab (if required)
-                    if app_obj.ytsc_write_verbose_flag \
-                    or (app_obj.ytdl_output_stdout_flag and write_flag):
-                        app_obj.main_win_obj.output_tab_write_stdout(
-                            self.download_worker_obj.worker_id,
-                            stdout,
-                        )
-
-                    # Show output in the terminal (if required)
-                    if app_obj.ytsc_write_verbose_flag \
-                    or (app_obj.ytdl_write_stdout_flag and write_flag):
-                        # Git #175, Japanese text may produce a codec error
-                        #   here, despite the .decode() call above
-                        try:
-                            print(
-                                stdout.encode(utils.get_encoding(), 'replace'),
-                            )
-                        except:
-                            print('STDOUT text with unprintable characters')
-
-                    # If the download appears to be complete, stop the child
-                    #   process
-                    if finished_flag:
-                        self.stop()
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_merge_child_process():
+                pass
 
 
     def close(self):
@@ -8017,6 +8164,244 @@ class StreamDownloader(object):
 
         # The True argument shows that this function is the caller
         self.download_worker_obj.data_callback(dl_stat_dict, True)
+
+
+    def read_capture_child_process(self):
+
+        """Called by self.do_capture_child_process().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        (As described above, STDERR is currently ignored, but might be used
+        in the future).
+
+        Return values:
+
+            True if STDOUT was read, None otherwise
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Intercept various STDOUT messages
+            finished_flag = False
+            write_flag = False
+
+            # Intercept the segment number, and update the IV (but don't
+            #   display that line in the Output tab)
+            match = re.search('^Segment number\: (\d+)', data)
+            if match:
+
+                segment_num = int(match.group(1))
+                if segment_num > self.segment_count:
+                    self.segment_count = segment_num
+
+            # Intercept the segments directory, if we don't already have it
+            if not write_flag and self.segments_dir is None:
+
+                match = re.search(
+                    '^[INFO] Created directory (.*)',
+                    data,
+                )
+
+                if match:
+                    write_flag = True
+                    self.segments_dir = match.group(1)
+
+            # Intercept other messages which can be displayed, even when
+            #   verbose output is turned off
+            # (Some of lines captured here, could also have been captured by
+            #   the code block above)
+            if not write_flag \
+            and (
+                re.search('^\w+\|OK\s+\|', data) \
+                or re.search('^\w+\|ERR\s+\|', data)
+            ):
+                write_flag = True
+
+            # Intercept the message, showing that the first stage is complete
+            if not write_flag:
+
+                match = re.search('Exceeded.*retries', data)
+                if match:
+                    finished_flag = True
+                    write_flag = True
+
+            # Pass a dictionary of values to self.download_worker_obj so the
+            #   main window can be updated
+            # The dictionary is based on the one created by
+            #   downloads.VideoDownloader (but with far fewer values included)
+            dl_stat_dict = {
+                'playlist_index': self.segment_count,
+                'playlist_size': '?',
+                'dl_sim_flag': False,
+                'status': formats.ACTIVE_STAGE_CAPTURE,
+            }
+
+            self.download_worker_obj.data_callback(dl_stat_dict)
+
+            # Show output in the Output tab (if required)
+            if app_obj.ytsc_write_verbose_flag \
+            or (app_obj.ytdl_output_stdout_flag and write_flag):
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required)
+            if app_obj.ytsc_write_verbose_flag \
+            or (app_obj.ytdl_write_stdout_flag and write_flag):
+                # Git #175, Japanese text may produce a codec error
+                #   here, despite the .decode() call above
+                try:
+                    print(
+                        data.encode(utils.get_encoding(), 'replace'),
+                    )
+                except:
+                    print('STDOUT text with unprintable characters')
+
+            # If the download appears to be complete, stop the child
+            #   process
+            if finished_flag:
+                self.stop()
+
+            # STDOUT was not empty
+            self.queue.task_done()
+            return True
+
+
+    def read_merge_child_process(self):
+
+        """Called by self.do_merge_child_process().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        (As described above, STDERR is currently ignored, but might be used
+        in the future).
+
+        Return values:
+
+            True if STDOUT was read, None otherwise
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Intercept various STDOUT messages, depending on whether the merge
+            #   has started yet, or not
+            finished_flag = False
+            write_flag = False
+
+            # Intercept output file information
+            if re.search('^\[INFO\]', data) \
+            or re.search('^\[WARNING\]', data) \
+            or re.search('^\[ERROR\]', data):
+                write_flag = True
+
+            else:
+
+                match = re.search('^Output file\: (.*)', data)
+                if match:
+                    self.output_path = match.group(1)
+                    finished_flag = True
+                    write_flag = True
+
+            # Pass a dictionary of values to self.download_worker_obj so the
+            #   main window can be updated
+            # The dictionary is based on the one created by
+            #   downloads.VideoDownloader (but with far fewer values included)
+            dl_stat_dict = {
+                'playlist_index': self.segment_count,
+                'playlist_size': '?',
+                'dl_sim_flag': False,
+                'status': formats.ACTIVE_STAGE_MERGE,
+            }
+
+            self.download_worker_obj.data_callback(dl_stat_dict)
+
+            # Show output in the Output tab (if required)
+            if app_obj.ytsc_write_verbose_flag \
+            or (app_obj.ytdl_output_stdout_flag and write_flag):
+                app_obj.main_win_obj.output_tab_write_stdout(
+                    self.download_worker_obj.worker_id,
+                    data,
+                )
+
+            # Show output in the terminal (if required)
+            if app_obj.ytsc_write_verbose_flag \
+            or (app_obj.ytdl_write_stdout_flag and write_flag):
+                # Git #175, Japanese text may produce a codec error here,
+                #   despite the .decode() call above
+                try:
+                    print(
+                        data.encode(utils.get_encoding(), 'replace'),
+                    )
+                except:
+                    print('STDOUT text with unprintable characters')
+
+            # If the download appears to be complete, stop the child process
+            if finished_flag:
+                self.stop()
+
+            # STDOUT was not empty
+            self.queue.task_done()
+            return True
 
 
     def set_return_code(self, code):
@@ -8222,18 +8607,15 @@ class JSONFetcher(object):
         #   been detected
         self.container_obj = container_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = PipeReader(self.stdout_queue)
-        self.stderr_reader = PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
@@ -8312,26 +8694,20 @@ class JSONFetcher(object):
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
-        # Generate the system command...
+        # Generate the system command (but don't display it in the Output tab)
         if app_obj.ytdl_path_custom_flag:
             cmd_list = ['python3'] + [ytdl_path] + ['--dump-json'] \
             + [self.video_source]
         else:
             cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_source]
-        # ...and create a new child process using that command
+
+        # Create a new child process using that command...
         self.create_child_process(cmd_list)
-
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # ...and set up the PipeReader objects to read from the child process'
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         # Wait for the process to finish
         while self.is_child_process_alive():
@@ -8340,60 +8716,8 @@ class JSONFetcher(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-        # Process has finished. If the JSON data has been received, indicating
-        #   a livestream currently broadcasting, it's in STDOUT
-        new_video_flag = False
-        while not self.stdout_queue.empty():
-
-            stdout = self.stdout_queue.get_nowait().rstrip()
-            if stdout:
-
-                # (Convert bytes to string)
-                stdout = stdout.decode(utils.get_encoding(), 'replace')
-                if stdout[:1] == '{':
-
-                    # Broadcasting livestream detected; create a new
-                    #   media.Video object
-                    app_obj.create_livestream_from_download(
-                        self.container_obj,
-                        2,                      # Livestream has started
-                        self.video_name,
-                        self.video_source,
-                        self.video_descrip,
-                        self.video_upload_time,
-                    )
-
-                    new_video_flag = True
-
-        # Messages indicating that a livestream is waiting to start are in
-        #   STDERR (for some reason)
-        if not new_video_flag:
-
-            while not self.stderr_queue.empty():
-
-                stderr = self.stderr_queue.get_nowait().rstrip()
-                if stderr:
-
-                    # (Convert bytes to string)
-                    stderr = stderr.decode(utils.get_encoding(), 'replace')
-                    live_data_dict = utils.extract_livestream_data(stderr)
-                    if live_data_dict:
-
-                        # Waiting livestream detected; create a new media.Video
-                        #   object
-                        app_obj.create_livestream_from_download(
-                            self.container_obj,
-                            1,                  # Livestream waiting to start
-                            self.video_name,
-                            self.video_source,
-                            self.video_descrip,
-                            self.video_upload_time,
-                            live_data_dict,
-                        )
-
-                        new_video_flag = True
-
-        if new_video_flag:
+        # Process has finished. Read from STDOUT and STDERR
+        if self.read_child_process():
 
             # Download the video's thumbnail, if possible
             if self.video_thumb_source:
@@ -8533,6 +8857,88 @@ class JSONFetcher(object):
             return False
 
         return self.child_process.poll() is None
+
+
+    def read_child_process(self):
+
+        """Called by self.do_fetch().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        For this JSONFetcher object, the order doesn't matter very much: we
+        are expecting data in either STDOUT or STDERR.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # Convert bytes to string
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            if data[:1] == '{':
+
+                # Broadcasting livestream detected; create a new media.Video
+                #   object
+                app_obj.create_livestream_from_download(
+                    self.container_obj,
+                    2,                      # Livestream has started
+                    self.video_name,
+                    self.video_source,
+                    self.video_descrip,
+                    self.video_upload_time,
+                )
+
+        # STDERR
+        else:
+
+            live_data_dict = utils.extract_livestream_data(data)
+            if live_data_dict:
+
+                # Waiting livestream detected; create a new media.Video
+                #   object
+                app_obj.create_livestream_from_download(
+                    self.container_obj,
+                    1,                  # Livestream waiting to start
+                    self.video_name,
+                    self.video_source,
+                    self.video_descrip,
+                    self.video_upload_time,
+                    live_data_dict,
+                )
+
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
 
 
     def stop(self):
@@ -8797,18 +9203,15 @@ class MiniJSONFetcher(object):
         #   and selecting 'Check this video')
         self.video_obj = video_obj
 
-        # This object reads from the child process STDOUT and STDERR in an
-        #   asynchronous way
-        # Standard Python synchronised queue classes
-        self.stdout_queue = queue.Queue()
-        self.stderr_queue = queue.Queue()
-        # The downloads.PipeReader objects created to handle reading from the
-        #   pipes
-        self.stdout_reader = PipeReader(self.stdout_queue)
-        self.stderr_reader = PipeReader(self.stderr_queue)
-
         # The child process created by self.create_child_process()
         self.child_process = None
+
+        # Read from the child process STDOUT (i.e. self.child_process.stdout)
+        #   and STDERR (i.e. self.child_process.stderr) in an asynchronous way
+        #   by polling this queue.PriorityQueue object
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
 
 
         # IV list - other
@@ -8841,26 +9244,20 @@ class MiniJSONFetcher(object):
         if os.name != 'nt':
             ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
-        # Generate the system command...
+        # Generate the system command
         if app_obj.ytdl_path_custom_flag:
             cmd_list = ['python3'] + [ytdl_path] + ['--dump-json'] \
             + [self.video_obj.source]
         else:
             cmd_list = [ytdl_path] + ['--dump-json'] + [self.video_obj.source]
-        # ...and create a new child process using that command
+
+        # Create a new child process using that command...
         self.create_child_process(cmd_list)
-
-        # So that we can read from the child process STDOUT and STDERR, attach
-        #   a file descriptor to the PipeReader objects
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
-
-            self.stdout_reader.attach_file_descriptor(
-                self.child_process.stdout,
-            )
-
-            self.stderr_reader.attach_file_descriptor(
-                self.child_process.stderr,
-            )
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
 
         # Wait for the process to finish
         while self.is_child_process_alive():
@@ -8869,94 +9266,10 @@ class MiniJSONFetcher(object):
             #   to hog system resources)
             time.sleep(self.sleep_time)
 
-        # Process has finished. If the JSON data has been received, indicating
-        #   a livestream currently broadcasting, it's in STDOUT
-        while not self.stdout_queue.empty():
-
-            stdout = self.stdout_queue.get_nowait().rstrip()
-            if stdout:
-
-                # (Convert bytes to string)
-                stdout = stdout.decode(utils.get_encoding(), 'replace')
-                if stdout[:1] == '{':
-
-                    # Broadcasting livestream detected
-                    json_dict = self.parse_json(stdout)
-                    if self.video_obj.live_mode == 1:
-
-                        # Waiting livestream has gone live
-                        app_obj.mark_video_live(
-                            self.video_obj,
-                            2,              # Livestream is broadcasting
-                            {},             # No livestream data
-                            True,           # Don't update Video Index yet
-                            True,           # Don't update Video Catalogue yet
-                        )
-                        # (Mark this video as modified, so that
-                        #   mainapp.TartubeApp can update the Video Catalogue
-                        #   once the livestream operation has finished)
-                        self.livestream_manager_obj.mark_video_as_started(
-                            self.video_obj,
-                        )
-
-                    elif self.video_obj.live_mode == 2 \
-                    and not json_dict['is_live']:
-
-                        # Broadcasting livestream has finished
-                        app_obj.mark_video_live(
-                            self.video_obj,
-                            0,                  # Livestream has finished
-                            {},             # Reset any livestream data
-                            None,           # Reset any l/s server messages
-                            True,           # Don't update Video Index yet
-                            True,           # Don't update Video Catalogue yet
-                        )
-                        self.livestream_manager_obj.mark_video_as_stopped(
-                            self.video_obj,
-                        )
-
-                    # The video's name and description might change during the
-                    #   livestream; update them, if so
-                    if 'title' in json_dict:
-                        self.video_obj.set_nickname(json_dict['title'])
-
-                    if 'id' in json_dict:
-                        self.video_obj.set_vid(json_dict['id'])
-
-                    if 'description' in json_dict:
-                        self.video_obj.set_video_descrip(
-                            app_obj,
-                            json_dict['description'],
-                            app_obj.main_win_obj.descrip_line_max_len,
-                        )
-
-        # Messages indicating that a livestream is waiting to start are in
-        #   STDERR (for some reason)
-        while not self.stderr_queue.empty():
-
-            stderr = self.stderr_queue.get_nowait().rstrip()
-            if stderr:
-
-                # (Convert bytes to string)
-                stderr = stderr.decode(utils.get_encoding(), 'replace')
-
-                # (v2.2.100: In approximately October 2020, YouTube started
-                #   using a new error message for livestreams waiting to start
-                if self.video_obj.live_mode == 1:
-
-                    live_data_dict = utils.extract_livestream_data(stderr)
-                    if live_data_dict:
-                        self.video_obj.set_live_data(live_data_dict)
-
-                elif self.video_obj.live_mode == 2 \
-                and re.search('This video is unavailable', stderr):
-
-                    # The livestream broadcast has been deleted by its owner
-                    #   (or is not available on the website, possibly
-                    #   temporarily)
-                    self.livestream_manager_obj.mark_video_as_missing(
-                        self.video_obj,
-                    )
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_child_process():
+                pass
 
 
     def close(self):
@@ -9069,6 +9382,125 @@ class MiniJSONFetcher(object):
             )
 
             return {}
+
+
+    def read_child_process(self):
+
+        """Called by self.do_fetch().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Import the main application (for convenience)
+        app_obj = self.livestream_manager_obj.app_obj
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            self.download_manager_obj.app_obj.system_error(
+                999,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # Convert bytes to string
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            if data[:1] == '{':
+
+                # Broadcasting livestream detected
+                json_dict = self.parse_json(data)
+                if self.video_obj.live_mode == 1:
+
+                    # Waiting livestream has gone live
+                    app_obj.mark_video_live(
+                        self.video_obj,
+                        2,              # Livestream is broadcasting
+                        {},             # No livestream data
+                        True,           # Don't update Video Index yet
+                        True,           # Don't update Video Catalogue yet
+                    )
+                    # (Mark this video as modified, so that
+                    #   mainapp.TartubeApp can update the Video Catalogue once
+                    #   the livestream operation has finished)
+                    self.livestream_manager_obj.mark_video_as_started(
+                        self.video_obj,
+                    )
+
+                elif self.video_obj.live_mode == 2 \
+                and not json_dict['is_live']:
+
+                    # Broadcasting livestream has finished
+                    app_obj.mark_video_live(
+                        self.video_obj,
+                        0,                  # Livestream has finished
+                        {},             # Reset any livestream data
+                        None,           # Reset any l/s server messages
+                        True,           # Don't update Video Index yet
+                        True,           # Don't update Video Catalogue yet
+                    )
+                    self.livestream_manager_obj.mark_video_as_stopped(
+                        self.video_obj,
+                    )
+
+                # The video's name and description might change during the
+                #   livestream; update them, if so
+                if 'title' in json_dict:
+                    self.video_obj.set_nickname(json_dict['title'])
+
+                if 'id' in json_dict:
+                    self.video_obj.set_vid(json_dict['id'])
+
+                if 'description' in json_dict:
+                    self.video_obj.set_video_descrip(
+                        app_obj,
+                        json_dict['description'],
+                        app_obj.main_win_obj.descrip_line_max_len,
+                    )
+
+        # STDERR
+        else:
+
+            # (v2.2.100: In approximately October 2020, YouTube started using a
+            #   new error message for livestreams waiting to start)
+            if self.video_obj.live_mode == 1:
+
+                live_data_dict = utils.extract_livestream_data(data)
+                if live_data_dict:
+                    self.video_obj.set_live_data(live_data_dict)
+
+            elif self.video_obj.live_mode == 2 \
+            and re.search('This video is unavailable', data):
+
+                # The livestream broadcast has been deleted by its owner (or is
+                #   not available on the website, possibly temporarily)
+                self.livestream_manager_obj.mark_video_as_missing(
+                    self.video_obj,
+                )
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
 
 
     def stop(self):
@@ -9290,16 +9722,20 @@ class PipeReader(threading.Thread):
 
     Based on the PipeReader class in youtube-dl-gui.
 
-    Python class used by downloads.VideoDownloader and updates.UpdateManager to
-    avoid deadlocks when reading from child process pipes STDOUT and STDERR.
+    Python class used by downloads.VideoDownloader, downloads.ClipDownloader,
+    downloads.StreamDownloader, downloads.JSONFetcher,
+    downloads.MiniJSONFetcher, info.InfoManager and updates.UpdateManager,
+    to avoid deadlocks when reading from child process pipes STDOUT and STDERR.
 
     This class uses python threads and queues in order to read from child
     process pipes in an asynchronous way.
 
     Args:
 
-        queue (queue.Queue): Python queue to store the output of the child
-            process.
+        queue (queue.PriorityQueue): Python queue to store the output of the
+            child process
+
+        pipe_type (str): This object reads from either 'stdout' or 'stderr'
 
     Warnings:
 
@@ -9312,23 +9748,28 @@ class PipeReader(threading.Thread):
     # Standard class methods
 
 
-    def __init__(self, queue):
+    def __init__(self, queue, pipe_type):
 
         super(PipeReader, self).__init__()
 
         # IV list - other
         # ---------------
-        # Python queue to store the output of the child process.
-        self.output_queue = queue
+        # Python queue.PriorityQueue to store the output of the child process
+        self.queue = queue
+        # This object reads from either 'stdout' or 'stderr'
+        self.pipe_type = pipe_type
 
         # The time (in seconds) between iterations of the loop in self.run()
-        self.sleep_time = 0.25
+        # Without some kind of delay, the GUI interface becomes sluggish. The
+        #   length of the delay doesn't matter, so make it as short as
+        #   reasonably possible
+        self.sleep_time = 0.001
         # Flag that is set to False by self.join(), which enables the loop in
         #   self.run() to terminate
         self.running_flag = True
-        # Set by self.attach_file_descriptor(). The file descriptor for the
-        #   child process STDOUT or STDERR
-        self.file_descriptor = None
+        # Set by self.attach_fh(). The filehandle for the child process STDOUT
+        #   or STDERR, e.g. downloads.VideoDownloader.child_process.stdout
+        self.fh = None
 
 
         # Code
@@ -9345,7 +9786,7 @@ class PipeReader(threading.Thread):
 
         """Called as a result of self.__init__().
 
-        Reads from STDOUT or STERR using the attached filed descriptor.
+        Reads from STDOUT or STERR using the attached filed filehandle.
         """
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
@@ -9355,9 +9796,9 @@ class PipeReader(threading.Thread):
 
         while self.running_flag:
 
-            if self.file_descriptor is not None:
+            if self.fh is not None:
 
-                for line in iter(self.file_descriptor.readline, str('')):
+                for line in iter(self.fh.readline, str('')):
 
                     if line == b'':
                         break
@@ -9366,28 +9807,35 @@ class PipeReader(threading.Thread):
                         ignore_line = True
 
                     if not ignore_line:
-                        self.output_queue.put_nowait(line)
 
-                self.file_descriptor = None
+                        # Add a tuple to the queue.PriorityQueue. The queue's
+                        #   entries are sorted by the first item of the tuple,
+                        #   so the queue is read in the correct order
+                        self.queue.put_nowait(
+                            [time.time(), self.pipe_type, line],
+                        )
+
+                self.fh = None
                 ignore_line = False
 
             time.sleep(self.sleep_time)
 
 
-    def attach_file_descriptor(self, filedesc):
+    def attach_fh(self, fh):
 
-        """Called by downloads.VideoDownloader.do_download and comparable
+        """Called by downloads.VideoDownloader.do_download() and comparable
         functions.
 
-        Sets the file descriptor for the child process STDOUT or STDERR.
+        Sets the filehandle for the child process STDOUT or STDERR, e.g.
+        downloads.VideoDownloader.child_process.stdout
 
         Args:
 
-            filedesc (filehandle): The open filehandle for STDOUT or STDERR
+            fh (filehandle): The open filehandle for STDOUT or STDERR
 
         """
 
-        self.file_descriptor = filedesc
+        self.fh = fh
 
 
     def join(self, timeout=None):

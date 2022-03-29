@@ -1642,22 +1642,19 @@ class TartubeApp(Gtk.Application):
         # (This does not affect real downloads, in which such videos are never
         #   added to the download list)
         self.operation_sim_shortcut_flag = True
+
         # Flag set to True if, during download operations (of all kinds), if a
         #   job stalls, it should be restarted
         self.operation_auto_restart_flag = False
-        # How many minutes of inactivity before restarting the job (minimum
-        #   value is 1, ignored if self.operation_sim_shortcut_flag is not set)
-        self.operation_auto_restart_time = 10
-        # Flag set to True if a job that experiences a network error should be
-        #   treated as a stalled download, and restarted; False if a network
-        #   error should terminate the job, as usual
-        # Note that network errors are not easy to detect from youtube-dl's
-        #   output, so as of v2.3.012, detection may not work for every error
-        self.operation_auto_restart_network_flag = False
+        # When youtube-dl reports network problems, how many minutes should
+        #   Tartube wait before restarting the job (minimum value is 1,
+        #   ignore if self.operation_auto_restart_flag is not set)
+        self.operation_auto_restart_time = 2
         # The maximum number of times to restart a stalled job. If 0, no
         #   maximum applies. Ignored ignored if
         #   self.operation_sim_shortcut_flag is not set)
-        self.operation_auto_restart_max = 3
+        self.operation_auto_restart_max = 5
+
         # How to notify the user at the end of each download/update/refresh
         #   operation: 'dialogue' to use a dialogue window, 'desktop' to use a
         #   desktop notification, or 'default' to do neither
@@ -1751,10 +1748,22 @@ class TartubeApp(Gtk.Application):
         #   are marked as missing. Ignored if self.track_missing_videos_flag or
         #   self.track_missing_time_flag is False
         self.track_missing_time_days = 14
+        # Flag set to True if, during a real (not simulated) download,
+        #   youtube-dl error/warning messages without a video ID (which is, at
+        #   the time of writing, most of them) should be assigned to the most
+        #   probable media.Video object; False if anonymous messages should be
+        #   assigned to the parent channel/playlist/folder instead
+        # (Assigning anonymous messages to videos is not an exact science, but
+        #   should work well enough for most users)
+        self.auto_assign_errors_warnings_flag = True
+        # Flag set to True if, during a download operation, videos marked as
+        #   being censored, age-restricted or otherwise unavailable for
+        #   download should be added to the database
+        self.add_blocked_videos_flag = True
         # Flag set to True if Tartube should retrieve the playlist ID from each
-        #   checked/downloaded video, and store it in the parent channel/
-        #   playlist. (The user can use the collected IDs to get a list of
-        #   playlists associated with a channel)
+        #   checked/downloaded video's metadata, and store it in the parent
+        #   channel/playlist. (The user can use the collected IDs to get a list
+        #   of playlists associated with a channel)
         self.store_playlist_id_flag = True
 
         # Flag set to True if a list of timestamps should be extracted from a
@@ -2405,9 +2414,27 @@ class TartubeApp(Gtk.Application):
         ytdl_test_menu_action.connect('activate', self.on_menu_test_ytdl)
         self.add_action(ytdl_test_menu_action)
 
-        ffmpeg_menu_action = Gio.SimpleAction.new('install_ffmpeg_menu', None)
-        ffmpeg_menu_action.connect('activate', self.on_menu_install_ffmpeg)
-        self.add_action(ffmpeg_menu_action)
+        if os.name == 'nt':
+
+            ffmpeg_menu_action = Gio.SimpleAction.new(
+                'install_ffmpeg_menu',
+                None,
+            )
+            ffmpeg_menu_action.connect(
+                'activate',
+                self.on_menu_install_ffmpeg,
+            )
+            self.add_action(ffmpeg_menu_action)
+
+            matplotlib_menu_action = Gio.SimpleAction.new(
+                'install_matplotlib_menu',
+                None,
+            )
+            matplotlib_menu_action.connect(
+                'activate',
+                self.on_menu_install_matplotlib,
+            )
+            self.add_action(matplotlib_menu_action)
 
         tidy_up_menu_action = Gio.SimpleAction.new('tidy_up_menu', None)
         tidy_up_menu_action.connect('activate', self.on_menu_tidy_up)
@@ -3404,12 +3431,21 @@ class TartubeApp(Gtk.Application):
 
         if not self.disable_load_save_flag:
 
-            # If scheduled download operation(s) are scheduled to occur on
-            #   startup, then prepare them to start
-            # (For aesthetic reasons, that will be a few seconds from now)
+            # If scheduled download operation(s) are scheduled to occur on or
+            #   some time after startup, then prepare them to start
             for scheduled_obj in self.scheduled_list:
+
                 if scheduled_obj.start_mode == 'start':
+                    # (For aesthetic reasons, the scheduled download does not
+                    #   start immediately, but a few seconds from now)
                     scheduled_obj.set_only_time(time.time())
+
+                elif scheduled_obj.start_mode == 'start_after':
+
+                    wait_time = scheduled_obj.wait_value \
+                    * formats.TIME_METRIC_DICT[scheduled_obj.wait_unit]
+
+                    scheduled_obj.set_only_time(time.time() + wait_time)
 
         # Part 13 - Any debug stuff can go here
         # -------------------------------------
@@ -3582,6 +3618,8 @@ class TartubeApp(Gtk.Application):
             300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-405)
             500-599: utils.py       (in use: 501-503)
+            600-699: info.py        (in use: 601)
+            700-799: updates.py     (in use: 701-702)
 
         """
 
@@ -4204,17 +4242,20 @@ class TartubeApp(Gtk.Application):
         if version >= 1004003:  # v1.4.003
             self.operation_sim_shortcut_flag \
             = json_dict['operation_sim_shortcut_flag']
+
         if version >= 2002112:  # v2.2.112
             self.operation_auto_restart_flag \
             = json_dict['operation_auto_restart_flag']
             self.operation_auto_restart_time \
             = json_dict['operation_auto_restart_time']
-        if version >= 2003012:  # v2.3.012
-            self.operation_auto_restart_network_flag \
-            = json_dict['operation_auto_restart_network_flag']
+        # Removed v2.3.461
+#        if version >= 2003012:  # v2.3.012
+#            self.operation_auto_restart_network_flag \
+#            = json_dict['operation_auto_restart_network_flag']
         if version >= 2002169:  # v2.2.169
             self.operation_auto_restart_max \
             = json_dict['operation_auto_restart_max']
+
 #       # Removed v1.3.028
 #        self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
         if version >= 1003028:  # v1.3.028
@@ -4264,6 +4305,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['track_missing_time_flag']
             self.track_missing_time_days \
             = json_dict['track_missing_time_days']
+        if version >= 2003464:  # v2.3.464
+            self.add_blocked_videos_flag \
+            = json_dict['add_blocked_videos_flag']
         if version >= 2003382:  # v2.3.382
             self.store_playlist_id_flag \
             = json_dict['store_playlist_id_flag']
@@ -4687,17 +4731,17 @@ class TartubeApp(Gtk.Application):
         """
 
         # Set up variables whose values are the default values of the old IVs
-        scheduled_check_mode = 'none'
+        scheduled_check_mode = 'disabled'
         scheduled_check_wait_value = 2
         scheduled_check_wait_unit = 'hours'
         scheduled_check_last_time = 0
 
-        scheduled_dl_mode = 'none'
+        scheduled_dl_mode = 'disabled'
         scheduled_dl_wait_value = 2
         scheduled_dl_wait_unit = 'hours'
         scheduled_dl_last_time = 0
 
-        scheduled_custom_mode = 'none'
+        scheduled_custom_mode = 'disabled'
         scheduled_custom_wait_value = 2
         scheduled_custom_wait_unit = 'hours'
         scheduled_custom_last_time = 0
@@ -4742,8 +4786,24 @@ class TartubeApp(Gtk.Application):
             scheduled_custom_last_time \
             = json_dict['scheduled_custom_last_time']
 
+        # v2.3.467, changes to the values of some media.Scheduled IVs
+        if scheduled_check_mode == 'none':
+            scheduled_check_mode = 'disabled'
+        elif scheduled_check_mode == 'scheduled':
+            scheduled_check_mode = 'repeat'
+
+        if scheduled_dl_mode == 'none':
+            scheduled_dl_mode = 'disabled'
+        elif scheduled_dl_mode == 'scheduled':
+            scheduled_dl_mode = 'repeat'
+
+        if scheduled_custom_mode == 'none':
+            scheduled_custom_mode = 'disabled'
+        elif scheduled_custom_mode == 'scheduled':
+            scheduled_custom_mode = 'repeat'
+
         # Finally create new media.Scheduled objects
-        if scheduled_check_mode != 'none':
+        if scheduled_check_mode != 'disabled':
 
             new_obj = media.Scheduled(
                 'default_check',
@@ -4758,7 +4818,7 @@ class TartubeApp(Gtk.Application):
 
             self.scheduled_list.append(new_obj)
 
-        if scheduled_dl_mode != 'none':
+        if scheduled_dl_mode != 'disabled':
 
             new_obj = media.Scheduled(
                 'default_download',
@@ -4773,7 +4833,7 @@ class TartubeApp(Gtk.Application):
 
             self.scheduled_list.append(new_obj)
 
-        if scheduled_custom_mode != 'none':
+        if scheduled_custom_mode != 'disabled':
 
             new_obj = media.Scheduled(
                 'default_custom',
@@ -5065,11 +5125,11 @@ class TartubeApp(Gtk.Application):
             'operation_auto_update_flag': self.operation_auto_update_flag,
             'operation_save_flag': self.operation_save_flag,
             'operation_sim_shortcut_flag': self.operation_sim_shortcut_flag,
+
             'operation_auto_restart_flag': self.operation_auto_restart_flag,
             'operation_auto_restart_time': self.operation_auto_restart_time,
-            'operation_auto_restart_network_flag': \
-            self.operation_auto_restart_network_flag,
             'operation_auto_restart_max': self.operation_auto_restart_max,
+
             'operation_dialogue_mode': self.operation_dialogue_mode,
             'operation_convert_mode': self.operation_convert_mode,
             'use_module_moviepy_flag': self.use_module_moviepy_flag,
@@ -5090,6 +5150,7 @@ class TartubeApp(Gtk.Application):
             'track_missing_videos_flag': self.track_missing_videos_flag,
             'track_missing_time_flag': self.track_missing_time_flag,
             'track_missing_time_days': self.track_missing_time_days,
+            'add_blocked_videos_flag': self.add_blocked_videos_flag,
             'store_playlist_id_flag': self.store_playlist_id_flag,
 
             'video_timestamps_extract_json_flag': \
@@ -6803,8 +6864,26 @@ class TartubeApp(Gtk.Application):
                 custom_dl_obj.ignore_if_no_subs_flag = False
                 custom_dl_obj.dl_if_subs_list = []
 
+        if version < 2003464:       # v2.3.464
 
-        # --- Do this last, or call to .check_integrity_db() fails -----------
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.block_flag = False
+
+        if version < 2003470:       # v2.3.470
+
+            # This version modifies IVs in media.Scheduled objects
+            for scheduled_obj in self.scheduled_list:
+                scheduled_obj.timetable_list = []
+                scheduled_obj.timetable_window = 300
+                if scheduled_obj.start_mode == 'scheduled':
+                    scheduled_obj.start_mode = 'repeat'
+                if scheduled_obj.start_mode == 'none':
+                    scheduled_obj.start_mode = 'disabled'
+
+
+        # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
         if version < 2002115:       # v2.2.115
@@ -10285,7 +10364,7 @@ class TartubeApp(Gtk.Application):
         1. Install youtube-dl (or a fork of it), or update it to its most
             recent version.
 
-        2. Install FFmpeg (on MS Windows only)
+        2. Install FFmpeg or matplotlib(on MS Windows only)
 
         Creates a new updates.UpdateManager object to handle the update
         operation. When the operation is complete,
@@ -10293,8 +10372,8 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            update_type (str): 'ffmpeg' to install FFmpeg, or 'ytdl' to
-                install/update youtube-dl
+            update_type (str): 'ffmpeg' to install FFmpeg, 'matplotlib' to
+                install matplotlib, or 'ytdl' to install/update youtube-dl
 
         """
 
@@ -10344,6 +10423,14 @@ class TartubeApp(Gtk.Application):
                 + ' system',
             )
 
+        elif update_type == 'matplotlib' and os.name != 'nt':
+            # The same applies to matplotlib
+            return self.system_error(
+                999,
+                'Update operation cannot install matplotlib on your' \
+                + ' operating system',
+            )
+
         # During an update operation, certain widgets are modified and/or
         #   desensitised
         self.main_win_obj.sensitise_check_dl_buttons(False, update_type)
@@ -10379,7 +10466,8 @@ class TartubeApp(Gtk.Application):
         1. Install youtube-dl (or a fork of it), or update it to its most
             recent version.
 
-        2. Install FFmpeg (on MS Windows only)
+        2. Install FFmpeg (on MS Windows only; at the moment, the wizard
+            window does not try to install matplotlib)
 
         Creates a new updates.UpdateManager object to handle the update
         operation. When the operation is complete,
@@ -10427,8 +10515,9 @@ class TartubeApp(Gtk.Application):
 
     def update_manager_halt_timer(self):
 
-        """Called by updates.UpdateManager.install_ffmpeg() or
-        .install_ytdl() when those functions have finished.
+        """Called by updates.UpdateManager.install_ffmpeg(),
+        .install_matplotlib or .install_ytdl() when those functions have
+        finished.
 
         During an update operation, a GObject timer was running. Let it
         continue running for a few seconds more.
@@ -10446,6 +10535,8 @@ class TartubeApp(Gtk.Application):
         The update operation has finished, so update IVs and main window
         widgets.
         """
+
+        global HAVE_MATPLOTLIB_FLAG
 
         # Import IVs from updates.UpdateManager, before it is destroyed
         update_type = self.update_manager_obj.update_type
@@ -10474,9 +10565,13 @@ class TartubeApp(Gtk.Application):
             if os.name != 'nt' and not wiz_win_obj:
                 self.auto_detect_paths()
 
+        # If matplotlib is successfully installed, update the setting
+        if update_type == 'matplotlib' and success_flag:
+            HAVE_MATPLOTLIB_FLAG = True
+
+        # After an update operation, save files, if allowed
         if not wiz_win_obj:
 
-            # After an update operation, save files, if allowed
             if self.operation_save_flag:
                 self.save_config()
                 self.save_db()
@@ -10490,7 +10585,7 @@ class TartubeApp(Gtk.Application):
 
         # Then show a dialogue window/desktop notification, if allowed (and if
         #   a download operation is not waiting to start)
-        if update_type == 'ffmpeg':
+        if update_type == 'ffmpeg' or update_type == 'matplotlib':
 
             if not success_flag:
                 msg = _('Installation failed')
@@ -19652,19 +19747,8 @@ class TartubeApp(Gtk.Application):
 
         for scheduled_obj in self.scheduled_list:
 
-            wait_time = scheduled_obj.wait_value \
-            + formats.TIME_METRIC_DICT[scheduled_obj.wait_unit]
-
-            if (
-                (
-                    scheduled_obj.start_mode == 'scheduled' \
-                    and scheduled_obj.last_time + wait_time < time.time()
-                ) or (
-                    scheduled_obj.start_mode == 'start' \
-                    and scheduled_obj.only_time > 0 \
-                    and scheduled_obj.only_time < time.time()
-                )
-            ) and (
+            if scheduled_obj.check_start() \
+            and (
                 not self.download_manager_obj \
                 or scheduled_obj.join_mode != 'skip'
             ):
@@ -19688,8 +19772,10 @@ class TartubeApp(Gtk.Application):
 
                     break
 
-                # 'start' should be done before 'scheduled'
-                if scheduled_obj.start_mode == 'start':
+                # 'start'/'start_after' should be done before 'repeat' and
+                #   'timetable'
+                if scheduled_obj.start_mode == 'start' \
+                or scheduled_obj.start_mode == 'start_after':
                     first_list.append(scheduled_obj)
                 else:
                     next_list.append(scheduled_obj)
@@ -22335,6 +22421,23 @@ class TartubeApp(Gtk.Application):
         self.update_manager_start('ffmpeg')
 
 
+    def on_menu_install_matplotlib(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Start an update operation to install matplotlib (on MS Windows only).
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.update_manager_start('matplotlib')
+
+
     def on_menu_live_preferences(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -22948,6 +23051,14 @@ class TartubeApp(Gtk.Application):
     # Set accessors
 
 
+    def set_add_blocked_videos_flag(self, flag):
+
+        if not flag:
+            self.add_blocked_videos_flag = False
+        else:
+            self.add_blocked_videos_flag = True
+
+
     def set_allow_ytdl_archive_flag(self, flag):
 
         if not flag:
@@ -23024,6 +23135,14 @@ class TartubeApp(Gtk.Application):
 
         if video_obj.dbid in self.media_reg_auto_alarm_dict:
             del self.media_reg_auto_alarm_dict[video_obj.dbid]
+
+
+    def set_auto_assign_errors_warnings_flag(self, flag):
+
+        if not flag:
+            self.auto_assign_errors_warnings_flag = False
+        else:
+            self.auto_assign_errors_warnings_flag = True
 
 
     def set_auto_clone_options_flag(self, flag):
@@ -24017,14 +24136,6 @@ class TartubeApp(Gtk.Application):
     def set_operation_auto_restart_max(self, value):
 
         self.operation_auto_restart_max = value
-
-
-    def set_operation_auto_restart_network_flag(self, flag):
-
-        if not flag:
-            self.operation_auto_restart_network_flag = False
-        else:
-            self.operation_auto_restart_network_flag = True
 
 
     def set_operation_auto_restart_time(self, value):

@@ -137,6 +137,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.update_ytdl_menu_item = None       # Gtk.MenuItem
         self.test_ytdl_menu_item = None         # Gtk.MenuItem
         self.install_ffmpeg_menu_item = None    # Gtk.MenuItem
+        self.install_matplotlib_menu_item = None
+                                                # Gtk.MenuItem
         self.tidy_up_menu_item = None           # Gtk.MenuItem
         self.stop_operation_menu_item = None    # Gtk.MenuItem
         self.stop_soon_menu_item = None         # Gtk.MenuItem
@@ -1427,16 +1429,26 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
-        self.install_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Install FFmpeg...'),
-        )
-        ops_sub_menu.append(self.install_ffmpeg_menu_item)
-        self.install_ffmpeg_menu_item.set_action_name(
-            'app.install_ffmpeg_menu',
-        )
+        if os.name == 'nt':
 
-        # Separator
-        ops_sub_menu.append(Gtk.SeparatorMenuItem())
+            self.install_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Install FFmpeg...'),
+            )
+            ops_sub_menu.append(self.install_ffmpeg_menu_item)
+            self.install_ffmpeg_menu_item.set_action_name(
+                'app.install_ffmpeg_menu',
+            )
+
+            self.install_matplotlib_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Install matplotlib...'),
+            )
+            ops_sub_menu.append(self.install_matplotlib_menu_item)
+            self.install_matplotlib_menu_item.set_action_name(
+                'app.install_matplotlib_menu',
+            )
+
+            # Separator
+            ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
         self.tidy_up_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Tidy up _files...'),
@@ -3788,10 +3800,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.test_ytdl_menu_item.set_sensitive(sens_flag)
 
-        if os.name != 'nt':
-            self.install_ffmpeg_menu_item.set_sensitive(False)
-        else:
+        if os.name == 'nt':
             self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
+            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
 
         self.stop_operation_menu_item.set_sensitive(False)
         self.stop_soon_menu_item.set_sensitive(False)
@@ -3927,11 +3938,16 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.download_all_toolbutton.set_sensitive(sens_flag)
 
-        if not __main__.__pkg_strict_install_flag__:
+        if __main__.__pkg_strict_install_flag__:
+            self.update_ytdl_menu_item.set_sensitive(False)
+        else:
             self.update_ytdl_menu_item.set_sensitive(sens_flag)
 
         self.test_ytdl_menu_item.set_sensitive(sens_flag)
-        self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
+
+        if os.name == 'nt':
+            self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
+            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
 
         if not_dl_operation_flag:
             self.update_live_menu_item.set_sensitive(sens_flag)
@@ -4324,7 +4340,8 @@ class MainWin(Gtk.ApplicationWindow):
                 True at the end of it
 
             operation_type (str): 'ffmpeg' for an update operation to install
-                FFmpeg, 'ytdl' for an update operation to install/update
+                FFmpeg, 'matplotlib' for an update operation to install
+                matplotlib, 'ytdl' for an update operation to install/update
                 youtube-dl, 'formats' for an info operation to fetch available
                 video formats, 'subs' for an info operation to fetch
                 available subtitles, 'test_ytdl' for an info operation in which
@@ -4334,9 +4351,10 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if operation_type is not None \
-        and operation_type != 'ffmpeg' and operation_type != 'ytdl' \
-        and operation_type != 'formats' and operation_type != 'subs' \
-        and operation_type != 'test_ytdl' and operation_type != 'version':
+        and operation_type != 'ffmpeg' and operation_type != 'matplotlib' \
+        and operation_type != 'ytdl' and operation_type != 'formats' \
+        and operation_type != 'subs' and operation_type != 'test_ytdl' \
+        and operation_type != 'version':
             return self.app_obj.system_error(
                 205,
                 'Invalid update/info operation argument',
@@ -4408,6 +4426,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             if operation_type == 'ffmpeg':
                 msg = _('Installing FFmpeg')
+            elif operation_type == 'matplotlib':
+                msg = _('Installing matplotlib')
             elif operation_type == 'ytdl':
                 msg = _('Updating downloader')
             elif operation_type == 'formats':
@@ -19960,7 +19980,7 @@ class ComplexCatalogueItem(object):
                     self.thumb_image.set_from_pixbuf(arglist[0])
                     thumb_flag = True
 
-        # No thumbnail file found, so use a default files
+        # No thumbnail file found, so use a default file
         if not thumb_flag:
             if self.video_obj.fav_flag and self.video_obj.options_obj:
                 self.thumb_image.set_from_pixbuf(
@@ -22478,8 +22498,14 @@ class GridCatalogueItem(ComplexCatalogueItem):
         # No thumbnail file found, so use a default icon file
         if not thumb_flag:
 
+            if not self.video_obj.block_flag:
+                thumb_type = 'default'
+            else:
+                thumb_type = 'block'
+
+            pixbuf_name = 'thumb_' + thumb_type + '_' + thumb_size
             self.thumb_image.set_from_pixbuf(
-                self.main_win_obj.pixbuf_dict['thumb_default_' + thumb_size],
+                self.main_win_obj.pixbuf_dict[pixbuf_name],
             )
 
 
