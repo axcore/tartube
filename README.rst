@@ -61,7 +61,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.3.484 (31 Mar 2022)**
 
-Development release: **v2.3.484 (29 Mar 2022)**
+Development release: **v2.3.484 (31 Mar 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
