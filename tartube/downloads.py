@@ -539,11 +539,20 @@ class DownloadManager(threading.Thread):
         #   marked as downloaded (we can stop before that, if all the videos
         #   have been already marked)
         if not self.operation_classic_flag:
-            self.app_obj.download_manager_halt_timer()
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.download_manager_halt_timer,
+            )
+
         else:
+
             # For download operations launched from the Classic Mode tab, we
             #   don't need to wait at all
-            self.app_obj.download_manager_finished()
+            GObject.timeout_add(
+                0,
+                self.app_obj.download_manager_finished,
+            )
 
 
     def apply_ignore_limits(self):
@@ -5528,6 +5537,14 @@ class VideoDownloader(object):
                 else:
                     video_obj.set_error(mini_list[1])
 
+                # Code in downloads.DownloadWorker.run_video_downloader()
+                #   calls mainwin.MainWin.errors_list_add_row() for the
+                #   main downloads.DownloadItem and its errors/warnings; but
+                #   for a child video, we have to call it directly
+                # The True argument means 'display the last error/warning only'
+                #   in case the same video generates several errors
+                app_obj.main_win_obj.errors_list_add_row(video_obj, True)
+
                 GObject.timeout_add(
                     0,
                     app_obj.main_win_obj.video_catalogue_update_video,
@@ -5794,7 +5811,17 @@ class VideoDownloader(object):
 
             # Decide which media data object should have this error/warning
             #   assigned to it
-            if new_obj:
+            if self.dl_classic_flag:
+
+                # During Classic Mode downloads, no point trying to assign
+                #   errors/warnings to dummy media.Video objects in a channel/
+                #   playlist
+                if msg_type == 'warning':
+                    self.download_item_obj.media_data_obj.set_warning(data)
+                else:
+                    self.download_item_obj.media_data_obj.set_error(data)
+
+            elif new_obj:
 
                 # We created a new media.Video object just a moment ago, so
                 #   assign the error/warning to it directly
@@ -5802,6 +5829,14 @@ class VideoDownloader(object):
                     new_obj.set_warning(data)
                 else:
                     new_obj.set_error(data)
+
+                # Code in downloads.DownloadWorker.run_video_downloader()
+                #   calls mainwin.MainWin.errors_list_add_row() for the
+                #   main downloads.DownloadItem and its errors/warnings; but
+                #   for a child video, we have to call it directly
+                # The True argument means 'display the last error/warning only'
+                #   in case the same video generates several errors
+                app_obj.main_win_obj.errors_list_add_row(new_obj, True)
 
                 GObject.timeout_add(
                     0,

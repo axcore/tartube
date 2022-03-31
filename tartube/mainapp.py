@@ -422,6 +422,11 @@ class TartubeApp(Gtk.Application):
         # In the Video Catalogue, flag set to True if status icons should be
         #   drawn, False if not
         self.catalogue_draw_icons_flag = True
+        # In the Video Catalogue, flag set to True if blocked videos should be
+        #   drawn, False if not. Note that when a filter is applied, any
+        #   matching blocked videos are always visible, regardless of the
+        #   value of this IV
+        self.catalogue_draw_blocked_flag = False
         # In the Video Catalogue, flag set to True if channel/playlist names
         #   should be clickable (in grid mode only)
         self.catalogue_clickable_container_flag = True
@@ -743,11 +748,15 @@ class TartubeApp(Gtk.Application):
         #   top (and so it appears as the first item in the combobox). This IV
         #   is then reset
         self.classic_dir_previous = None
-        # The selected format. If 'Default' is selected, set to None
+        # The selected format. If 'Default' is selected in the Classic Mode
+        #   tab's combo, set to None
         self.classic_format_selection = None
         # Flag set to False, if videos should be downloaded in that format, or
         #   True if they should be converted to the format using FFmpeg/AVConv
         self.classic_format_convert_flag = True
+        # The selected resolution. If 'Resolution' is selected in the Classic
+        #   Mode tab's combo, set to None
+        self.classic_resolution_selection = None
         # Flag set to True, if pending URLs (still visible in the top half of
         #   the Classic Mode tab, or not yet downloaded in the bottom half)
         #   should be saved when Tartube shuts down, and restored (to the top
@@ -3899,6 +3908,9 @@ class TartubeApp(Gtk.Application):
             = json_dict['catalogue_draw_frame_flag']
             self.catalogue_draw_icons_flag \
             = json_dict['catalogue_draw_icons_flag']
+        if version >= 2003481:  # v2.3.481
+            self.catalogue_draw_blocked_flag \
+            = json_dict['catalogue_draw_blocked_flag']
         if version >= 2003232:  # v2.3.232
             self.catalogue_clickable_container_flag \
             = json_dict['catalogue_clickable_container_flag']
@@ -3973,6 +3985,9 @@ class TartubeApp(Gtk.Application):
             = utils.strip_whitespace(json_dict['classic_format_selection'])
             self.classic_format_convert_flag \
             = json_dict['classic_format_convert_flag']
+        if version >= 2003473:  # v2.3.473
+            self.classic_resolution_selection \
+            = json_dict['classic_resolution_selection']
         if version >= 2002129:  # v2.2.129
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
@@ -4972,6 +4987,7 @@ class TartubeApp(Gtk.Application):
             self.catalogue_filter_comment_flag,
             'catalogue_draw_frame_flag': self.catalogue_draw_frame_flag,
             'catalogue_draw_icons_flag': self.catalogue_draw_icons_flag,
+            'catalogue_draw_blocked_flag': self.catalogue_draw_blocked_flag,
             'catalogue_clickable_container_flag': \
             self.catalogue_clickable_container_flag,
 
@@ -5012,6 +5028,7 @@ class TartubeApp(Gtk.Application):
             'classic_dir_previous': self.classic_dir_previous,
             'classic_format_selection': self.classic_format_selection,
             'classic_format_convert_flag': self.classic_format_convert_flag,
+            'classic_resolution_selection': self.classic_resolution_selection,
             'classic_pending_flag': self.classic_pending_flag,
             'classic_pending_list': self.classic_pending_list,
             'classic_duplicate_remove_flag': \
@@ -13759,7 +13776,7 @@ class TartubeApp(Gtk.Application):
         """
 
         # Sanity check
-        if video_obj.file_name is None:
+        if video_obj.file_name is None and not video_obj.dummy_flag:
             return
 
         # There might be thousands of files in the directory, so using
@@ -23335,6 +23352,14 @@ class TartubeApp(Gtk.Application):
             self.block_ytdl_archive_flag = True
 
 
+    def set_catalogue_draw_blocked_flag(self, flag):
+
+        if not flag:
+            self.catalogue_draw_blocked_flag = False
+        else:
+            self.catalogue_draw_blocked_flag = True
+
+
     def set_catalogue_draw_frame_flag(self, flag):
 
         if not flag:
@@ -23439,6 +23464,11 @@ class TartubeApp(Gtk.Application):
     def set_classic_format_selection(self, value):
 
         self.classic_format_selection = value
+
+
+    def set_classic_resolution_selection(self, value):
+
+        self.classic_resolution_selection = value
 
 
     def set_classic_ytdl_archive_flag(self, flag):

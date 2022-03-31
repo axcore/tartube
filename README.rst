@@ -59,16 +59,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.3.447 (20 Mar 2022)**
+Stable release: **v2.3.484 (31 Mar 2022)**
 
-Development release: **v2.3.471 (29 Mar 2022)**
+Development release: **v2.3.484 (29 Mar 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.447/install-tartube-2.3.447-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.484/install-tartube-2.3.484-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.484/tartube-2.3.484-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.447/python3-tartube_2.3.447.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.447/tartube-2.3.447.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.484/python3-tartube_2.3.484.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.484/tartube-2.3.484.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -2199,7 +2199,9 @@ Unfortunately, it is not possible to switch between proxies while downloading a 
 
 A: If Tartube detects a video that has been age-restricted, censored or otherwise blocked, it is still added to the database. Unfortunately, Tartube doesn't know anything about the video, not even when it was uploaded, so videos like this appear at the top of the list.
 
-If you don't want the blocked videos in your database, you can click **Edit > System preferences > Operations > Downloads**, and then de-select **Add censored, age-restricted and other blocked videos to the database**
+If you don't want to see blocked videos in the **Videos** tab, deselect the button in the toolbar. (If you're not sure how to use the toolbar, see see `6.15 Filtering and finding videos`_.)
+
+If you don't want the blocked videos added to your database at all, you can click **Edit > System preferences > Operations > Downloads**, and then de-select **Add censored, age-restricted and other blocked videos to the database**
 
 7.22 MS Windows installer is too big
 ------------------------------------

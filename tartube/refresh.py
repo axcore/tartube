@@ -210,9 +210,11 @@ class RefreshManager(threading.Thread):
             +  str(self.video_new_count),
         )
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.refresh_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.refresh_manager_halt_timer,
+        )
 
 
     def refresh_from_default_destination(self, media_data_obj):

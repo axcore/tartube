@@ -266,9 +266,11 @@ class UpdateManager(threading.Thread):
         # Show a confirmation in the the Output tab (or wizard window textview)
         self.install_ffmpeg_write_output(_('Update operation finished'))
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.update_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
 
 
     def install_ffmpeg_write_output(self, msg, system_cmd_flag=False):
@@ -376,9 +378,11 @@ class UpdateManager(threading.Thread):
         # Show a confirmation in the the Output tab (or wizard window textview)
         self.install_matplotlib_write_output(_('Update operation finished'))
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.update_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
 
 
     def install_matplotlib_write_output(self, msg, system_cmd_flag=False):
@@ -537,7 +541,10 @@ class UpdateManager(threading.Thread):
 
         # Let the timer run for a few more seconds to prevent Gtk errors (for
         #   systems with Gtk < 3.24)
-        self.app_obj.update_manager_halt_timer()
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
 
 
     def install_ytdl_write_output(self, msg, system_cmd_flag=False):

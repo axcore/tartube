@@ -215,9 +215,11 @@ class ProcessManager(threading.Thread):
             _('Process operation finished'),
         )
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.process_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.process_manager_halt_timer,
+        )
 
         # Open the destination directories, if required
         if self.options_obj.options_dict['output_mode'] == 'split' \

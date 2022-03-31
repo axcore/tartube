@@ -4140,8 +4140,6 @@ class OptionsEditWin(GenericEditWin):
         return False
 
 
-
-
 #   def setup():                # Inherited from GenericConfigWin
 
 

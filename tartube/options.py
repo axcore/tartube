@@ -1720,23 +1720,43 @@ class OptionsParser(object):
                 or operation_type == 'classic_custom'
             ) and media_data_obj.dummy_format is not None:
 
+                # A string specifying the media format to download, or None if
+                #   the user didn't specify one
+                # The string is made up of three optional components in a fixed
+                #   order and separated by underlines: 'convert', the video/
+                #   audio format, and the video resolution, for example 'mp4',
+                #   'mp4_720p', 'convert_mp4_720p'
+                # Valid values are those specified by formats.VIDEO_FORMAT_LIST
+                #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
                 format_str = media_data_obj.dummy_format
                 convert_flag = False
-                # If format_str is not None, then it is one of Tartube's
-                #   standard media formats, or one of those values preceded by
-                #   'convert_'. Remove the trailing text, if found
-                match = re.search('^convert_(.*)$', format_str)
-                if match:
-                    format_str = match.group(1)
+                this_format = None
+                this_res = None
+
+                split_list = format_str.split('_')
+                if split_list and split_list[0] == 'convert':
+                    split_list.pop(0)
                     convert_flag = True
 
-                if not convert_flag:
+                if split_list \
+                and (
+                    split_list[0] in formats.VIDEO_FORMAT_LIST \
+                    or split_list[0] in formats.AUDIO_FORMAT_LIST
+                ):
+                    this_format = split_list.pop(0)
 
-                    # Download the video in the specified format, if available
+                if split_list \
+                and split_list[0] in formats.VIDEO_RESOLUTION_LIST:
+                    this_res = formats.VIDEO_RESOLUTION_DICT[split_list.pop(0)]
+
+                if not convert_flag and this_res is None:
+
+                    # Download the video in the specified format and
+                    #   resolution, if available
 
                     # Ignore all video/audio formats except the one specified
                     #   by the user in the Classic Mode tab
-                    copy_dict['video_format'] = format_str
+                    copy_dict['video_format'] = this_format
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []
                     copy_dict['video_format_mode'] = ''
@@ -1745,29 +1765,32 @@ class OptionsParser(object):
                     # v2.1.009: Since the user doesn't have the possibility of
                     #   setting the -f and --merge-output-format options to the
                     #   same value (e.g. 'mp4'), we must do so artificially
-                    copy_dict['merge_output_format'] = format_str
+                    copy_dict['merge_output_format'] = this_format
 
                     return
 
-                elif format_str in formats.VIDEO_FORMAT_DICT:
+                elif this_format is not None \
+                and this_format in formats.VIDEO_FORMAT_DICT:
 
                     # Converting video formats requires post-processing
                     # Ignore all video/audio formats except the one specified
                     #   by the user in the Classic Mode tab
-                    copy_dict['video_format'] = '0'
+                    if this_res is None:
+                        copy_dict['video_format'] = '0'
+                    else:
+                        copy_dict['video_format'] \
+                        = 'bestvideo[height<=?' + this_res + ']' \
+                        + '+bestaudio/best[height<=?' + this_res + ']'
+
                     copy_dict['all_formats'] = False
                     copy_dict['video_format_list'] = []
                     copy_dict['video_format_mode'] = ''
-                    copy_dict['recode_video'] = ''
-
-                    # v2.1.009: Since the user doesn't have the possibility of
-                    #   setting the -f and --merge-output-format options to the
-                    #   same value (e.g. 'mp4'), we must do so artificially
-                    copy_dict['merge_output_format'] = format_str
+                    copy_dict['recode_video'] = this_format
 
                     return
 
-                elif format_str in formats.AUDIO_FORMAT_DICT:
+                elif this_format is not None \
+                and this_format in formats.AUDIO_FORMAT_DICT:
 
                     # Converting audio formats requires post-processing
                     copy_dict['video_format'] = '0'
@@ -1775,12 +1798,23 @@ class OptionsParser(object):
                     copy_dict['video_format_list'] = []
                     copy_dict['video_format_mode'] = ''
                     copy_dict['extract_audio'] = True
-                    copy_dict['audio_format'] = format_str
+                    copy_dict['audio_format'] = this_format
                     copy_dict['recode_video'] = ''
 
                     return
 
+                elif this_format is None and this_res is not None:
+
+                    copy_dict['video_format'] = \
+                    'bestvideo[height<=?' + this_res + ']' \
+                    + '+bestaudio/best[height<=?' + this_res + ']'
+                    copy_dict['all_formats'] = False
+                    copy_dict['video_format_list'] = []
+                    copy_dict['video_format_mode'] = ''
+                    copy_dict['recode_video'] = ''
+
             # Special case: for broadcasting livestreams, use only HLS
+            # !!! DEBUG
             # v2.0.067: Downloading livestreams doesn't work at all for me, so
             #   I'm not sure whether this is appropriate, or not. Once it's
             #   fixed, perhaps we can offer the user a choice of formats

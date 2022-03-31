@@ -326,9 +326,11 @@ class InfoManager(threading.Thread):
             _('Info operation finished'),
         )
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.info_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.info_manager_halt_timer,
+        )
 
 
     def run_check_version(self):
@@ -442,9 +444,11 @@ class InfoManager(threading.Thread):
             _('Info operation finished'),
         )
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.info_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.info_manager_halt_timer,
+        )
 
 
     def create_child_process(self, cmd_list):

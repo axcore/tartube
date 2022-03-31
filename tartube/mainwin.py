@@ -227,6 +227,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_thumb_combo = None       # Gtk.ComboBox
         self.catalogue_frame_button = None      # Gtk.CheckButton
         self.catalogue_icons_button = None      # Gtk.CheckButton
+        self.catalogue_blocked_button = None    # Gtk.CheckButton
         # (from self.setup_progress_tab)
         self.progress_paned = None              # Gtk.VPaned
         self.progress_list_scrolled = None      # Gtk.ScrolledWindow
@@ -283,6 +284,9 @@ class MainWin(Gtk.ApplicationWindow):
                                                 # Gtk.Button
         self.classic_format_liststore = None    # Gtk.ListStore
         self.classic_format_combo = None        # Gtk.ComboBox
+        self.classic_resolution_liststore = None
+                                                # Gtk.ListStore
+        self.classic_resolution_combo = None    # Gtk.ComboBox
         self.classic_format_radiobutton = None  # Gtk.RadioButton
         self.classic_format_radiobutton2 = None # Gtk.RadioButton
         self.classic_add_urls_button = None     # Gtk.Button
@@ -464,7 +468,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.grid_select_wait_colour = None     # Purple
         self.grid_select_live_colour = None     # Purple
 
-        # The video catalogue splits its video list into pages (as Gtk
+        # The Video Catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
         # The number of videos per page is specified by
         #   mainapp.TartubeApp.catalogue_page_size
@@ -2447,6 +2451,20 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_draw_icons_checkbutton_changed,
         )
 
+        toolitem20 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem20, -1)
+
+        self.catalogue_blocked_button = Gtk.CheckButton()
+        toolitem20.add(self.catalogue_blocked_button)
+        self.catalogue_blocked_button.set_label(_('Show blocked videos'))
+        self.catalogue_blocked_button.set_active(
+            self.app_obj.catalogue_draw_blocked_flag,
+        )
+        self.catalogue_blocked_button.connect(
+            'toggled',
+            self.on_draw_blocked_checkbutton_changed,
+        )
+
         # Set up the Video catalogue
         self.video_catalogue_reset()
 
@@ -2790,7 +2808,7 @@ class MainWin(Gtk.ApplicationWindow):
         grid.set_column_spacing(self.spacing_size)
         grid.set_row_spacing(self.spacing_size * 2)
 
-        grid_width = 6
+        grid_width = 7
 
         # First row - some decoration, and a button to open a popup menu
         # --------------------------------------------------------------------
@@ -2905,7 +2923,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_dest_dir_combo = Gtk.ComboBox.new_with_model(
             self.classic_dest_dir_liststore,
         )
-        grid.attach(self.classic_dest_dir_combo, 1, 3, 3, 1)
+        grid.attach(self.classic_dest_dir_combo, 1, 3, 4, 1)
         renderer_text = Gtk.CellRendererText()
         self.classic_dest_dir_combo.pack_start(renderer_text, True)
         self.classic_dest_dir_combo.add_attribute(renderer_text, 'text', 0)
@@ -2927,7 +2945,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_add']),
             )
-        grid.attach(self.classic_dest_dir_button, 4, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_button, 5, 3, 1, 1)
         self.classic_dest_dir_button.set_action_name(
             'app.classic_dest_dir_button',
         )
@@ -2946,7 +2964,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_open_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_open']),
             )
-        grid.attach(self.classic_dest_dir_open_button, 5, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_open_button, 6, 3, 1, 1)
         self.classic_dest_dir_open_button.set_action_name(
             'app.classic_dest_dir_open_button',
         )
@@ -2987,16 +3005,46 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_format_combo.set_active(0)
         else:
             for i in range(len(combo_list)):
-                if combo_list[i] \
-                == '  ' + self.app_obj.classic_format_selection:
+                if combo_list[i] == '  ' \
+                + self.app_obj.classic_format_selection:
                     self.classic_format_combo.set_active(i)
                     break
 
+        # Video resolution
+        combo_list2 = [_('Highest')]
+        for item in formats.VIDEO_RESOLUTION_LIST:
+            combo_list2.append('  ' + item)
+
+        self.classic_resolution_liststore = Gtk.ListStore(str)
+        for string in combo_list2:
+            self.classic_resolution_liststore.append( [string] )
+
+        self.classic_resolution_combo = Gtk.ComboBox.new_with_model(
+            self.classic_resolution_liststore,
+        )
+        grid.attach(self.classic_resolution_combo, 2, 4, 1, 1)
+        renderer_text = Gtk.CellRendererText()
+        self.classic_resolution_combo.pack_start(renderer_text, True)
+        self.classic_resolution_combo.add_attribute(renderer_text, 'text', 0)
+        self.classic_resolution_combo.set_entry_text_column(0)
+        # (Signal connect appears below)
+
+        # (The None value represents the first line in the combo, 'Resolution')
+        if self.app_obj.classic_resolution_selection is None:
+            self.classic_resolution_combo.set_active(0)
+        else:
+            for i in range(len(combo_list2)):
+                if combo_list2[i] == '  ' \
+                + self.app_obj.classic_resolution_selection:
+                    self.classic_resolution_combo.set_active(i)
+                    break
+
+        # Clarifiers
         self.classic_format_radiobutton = Gtk.RadioButton.new_with_label(
             None,
-            _('Convert to this format (requires FFmpeg/AVConv)'),
+            _('Convert to this format (requires FFmpeg)'),
         )
-        grid.attach(self.classic_format_radiobutton, 2, 4, 1, 1)
+        grid.attach(self.classic_format_radiobutton, 3, 4, 1, 1)
         self.classic_format_radiobutton.set_hexpand(False)
         # (Signal connect appears below)
 
@@ -3005,12 +3053,12 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_format_radiobutton,
             _('Download in this format'),
         )
-        grid.attach(self.classic_format_radiobutton2, 3, 4, 1, 1)
+        grid.attach(self.classic_format_radiobutton2, 4, 4, 1, 1)
         self.classic_format_radiobutton2.set_hexpand(True)
 
         if not self.app_obj.classic_format_convert_flag:
             self.classic_format_radiobutton2.set_active(True)
-        if self.app_obj.classic_format_selection is None:
+        if self.app_obj.classic_format_selection:
             self.classic_format_radiobutton.set_sensitive(False)
             self.classic_format_radiobutton2.set_sensitive(False)
 
@@ -3022,7 +3070,10 @@ class MainWin(Gtk.ApplicationWindow):
             'changed',
             self.on_classic_format_combo_changed,
         )
-
+        self.classic_resolution_combo.connect(
+            'changed',
+            self.on_classic_resolution_combo_changed,
+        )
         self.classic_format_radiobutton.connect(
             'toggled',
             self.on_classic_format_radiobutton_toggled,
@@ -3032,7 +3083,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_add_urls_button = Gtk.Button(
             '     ' + _('Add URLs') + '     ',
         )
-        grid.attach(self.classic_add_urls_button, 4, 4, 2, 1)
+        grid.attach(self.classic_add_urls_button, 5, 4, 2, 1)
         self.classic_add_urls_button.set_action_name(
             'app.classic_add_urls_button',
         )
@@ -8993,6 +9044,8 @@ class MainWin(Gtk.ApplicationWindow):
         #   specified by the IV; otherwise, use all child videos
         if self.video_catalogue_filtered_flag:
             child_list = self.video_catalogue_filtered_list.copy()
+        elif not self.app_obj.catalogue_draw_blocked_flag:
+            child_list = container_obj.get_unblocked_videos()
         else:
             child_list = container_obj.child_list.copy()
 
@@ -9173,11 +9226,16 @@ class MainWin(Gtk.ApplicationWindow):
         # At the same time, reduce the parent container's list of children,
         #   eliminating those which are media.Channel, media.Playlist and
         #   media.Folder objects
+        # Exclude any blocked videos, unless settings require us to show
+        #   blocked videos
         sibling_video_list = []
 
         for child_obj in container_obj.child_list:
-            if isinstance(child_obj, media.Video):
-
+            if isinstance(child_obj, media.Video) \
+            and (
+                app_obj.catalogue_draw_blocked_flag \
+                or not child_obj.block_flag
+            ):
                 sibling_video_list.append(child_obj)
 
                 # (If the page size is 0, then all videos are drawn on one
@@ -10251,6 +10309,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_thumb_combo.set_sensitive(False)
         self.catalogue_frame_button.set_sensitive(False)
         self.catalogue_icons_button.set_sensitive(False)
+        self.catalogue_blocked_button.set_sensitive(False)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_regex_togglebutton.set_sensitive(False)
         self.catalogue_apply_filter_button.set_sensitive(False)
@@ -10322,6 +10381,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_thumb_combo.set_sensitive(False)
             self.catalogue_frame_button.set_sensitive(False)
             self.catalogue_icons_button.set_sensitive(False)
+            self.catalogue_blocked_button.set_sensitive(False)
             self.catalogue_filter_entry.set_sensitive(False)
             self.catalogue_regex_togglebutton.set_sensitive(False)
             self.catalogue_apply_filter_button.set_sensitive(False)
@@ -10341,11 +10401,13 @@ class MainWin(Gtk.ApplicationWindow):
 
                 self.catalogue_frame_button.set_sensitive(False)
                 self.catalogue_icons_button.set_sensitive(False)
+                self.catalogue_blocked_button.set_sensitive(False)
 
             else:
 
                 self.catalogue_frame_button.set_sensitive(True)
                 self.catalogue_icons_button.set_sensitive(True)
+                self.catalogue_blocked_button.set_sensitive(True)
 
             self.catalogue_filter_entry.set_sensitive(True)
             self.catalogue_regex_togglebutton.set_sensitive(True)
@@ -10365,6 +10427,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         Applies a filter, so that all videos not matching the search text are
         hidden in the Video Catalogue.
+
+        Note that blocked videos matching the search text are always visible,
+        regardless of the value of
+        mainapp.TartubeApp.catalogue_draw_blocked_flag
         """
 
         # Sanity check - something must be selected in the Video Index
@@ -11618,12 +11684,33 @@ class MainWin(Gtk.ApplicationWindow):
             and not format_str in formats.AUDIO_FORMAT_LIST:
                 format_str = None
 
+        # Set the specified resolution, leaving the value as None if the
+        #   'Highest' item is selected
+        tree_iter3 = self.classic_resolution_combo.get_active_iter()
+        model3 = self.classic_resolution_combo.get_model()
+        resolution_str = model3[tree_iter3][0]
+        # (Selectable resolutions in the combo begin with whitespace)
+        if not re.search('^\s', resolution_str):
+            resolution_str = None
+        else:
+            resolution_str = utils.strip_whitespace(resolution_str)
+            # (One last check for a valid resolution)
+            if not resolution_str in formats.VIDEO_RESOLUTION_LIST:
+                resolution_str = None
+
         # If the radiobutton is selected, we convert a downloaded video to
         #   the specified format with FFmpeg/AVConv. This is signified by
         #   adding 'convert_' to the beginning of the format string
         if format_str is not None \
         and self.classic_format_radiobutton.get_active():
             format_str = 'convert_' + format_str
+        # The resolution, if specified, is added to the end of the format
+        #   string
+        if resolution_str is not None:
+            if format_str is None:
+                format_str = resolution_str
+            else:
+                format_str += '_' + resolution_str
 
         # Extract a list of URLs from the textview
         url_string = self.classic_textbuffer.get_text(
@@ -11706,8 +11793,14 @@ class MainWin(Gtk.ApplicationWindow):
             dest_dir (str): Full path to the directory into which any videos
                 (and other files) are downloaded
 
-            format_str (str or None): The media format to download, or None if
-                the user didn't specify one
+            format_str (str or None): A string specifying the media format to
+                download, or None if the user didn't specify one. The string
+                is made up of three optional components in a fixed order and
+                separated by underlines: 'convert', the video/audio format, and
+                the video resolution, for example 'mp4', 'mp4_720p',
+                'convert_mp4_720p'. Valid values are those specified by
+                formats.VIDEO_FORMAT_LIST, formats.AUDIO_FORMAT_LIST and
+                formats.VIDEO_RESOLUTION_LIST
 
         Returns:
 
@@ -12493,7 +12586,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.errors_list_refresh_label()
 
 
-    def errors_list_add_row(self, media_data_obj):
+    def errors_list_add_row(self, media_data_obj, last_flag=False):
 
         """Called by downloads.DownloadWorker.run_video_downloader().
 
@@ -12504,9 +12597,23 @@ class MainWin(Gtk.ApplicationWindow):
 
             media_data_obj (media.Video, media.Channel or media.Playlist): The
                 media data object whose download (real or simulated) generated
-                the error/warning messages.
+                the error/warning messages
+
+            last_flag (bool): If True, only the last error/warning message is
+                displayed (useful in case this function might be called several
+                times for a single media data object)
 
         """
+
+        if last_flag and media_data_obj.error_list:
+            error_list = [ media_data_obj.error_list[-1] ]
+        else:
+            error_list = media_data_obj.error_list
+
+        if last_flag and media_data_obj.warning_list:
+            warning_list = [ media_data_obj.warning_list[-1] ]
+        else:
+            warning_list = media_data_obj.warning_list
 
         # Create a new row for every error and warning message
         # Use the same time on each
@@ -12518,7 +12625,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.operation_error_show_flag:
 
-            for msg in media_data_obj.error_list:
+            for msg in error_list:
 
                 # Prepare the icons
                 pixbuf = self.pixbuf_dict['error_small']
@@ -12561,7 +12668,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.operation_warning_show_flag:
 
-            for msg in media_data_obj.warning_list:
+            for msg in warning_list:
 
                 # Prepare the icons
                 pixbuf = self.pixbuf_dict['warning_small']
@@ -17102,6 +17209,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def on_classic_format_combo_changed(self, combo):
 
+
         """Called from callback in self.setup_classic_mode_tab().
 
         In the combobox displaying video/audio formats, if the user selects the
@@ -17152,6 +17260,12 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.app_obj.set_classic_format_selection(None)
 
+        # (If an audio format has been selected, then the resolution combo
+        #   must be reset)
+        if self.app_obj.classic_format_selection is not None \
+        and self.app_obj.classic_format_selection in formats.AUDIO_FORMAT_DICT:
+            self.classic_resolution_combo.set_active(0)
+
         # (Update the banner at the top of the tab, according to current
         #   conditions)
         self.update_classic_mode_tab_update_banner()
@@ -17179,46 +17293,6 @@ class MainWin(Gtk.ApplicationWindow):
         # (Update the banner at the top of the tab, according to current
         #   conditions)
         self.update_classic_mode_tab_update_banner()
-
-
-    def on_custom_dl_menu_select(self, menu_item, media_data_list, uid):
-
-        """Called from a callback in self.custom_dl_popup_menu().
-
-        Starts a custom download using the specified custom download manager.
-
-        Args:
-
-            menu_item (Gtk.MenuItem): The clicked menu item
-
-            media_data_list (list): List of media.Video, media.Channel,
-                media.Playlist and media.Folder objects to download. If an
-                empty list, all media data objects are custom downloaded
-
-            uid (int): Unique .uid of the downloads.CustomDLManager to use
-
-        """
-
-        custom_dl_obj = self.app_obj.custom_dl_reg_dict[uid]
-
-        if not custom_dl_obj.dl_by_video_flag \
-        or not custom_dl_obj.dl_precede_flag:
-
-            self.app_obj.download_manager_start(
-                'custom_real',
-                False,          # Not called by the slow timer
-                media_data_list,
-                custom_dl_obj,
-            )
-
-        else:
-
-            self.app_obj.download_manager_start(
-                'custom_sim',
-                False,          # Not called by the slow timer
-                media_data_list,
-                custom_dl_obj,
-            )
 
 
     def on_classic_menu_custom_dl_prefs(self, menu_item):
@@ -17503,21 +17577,21 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Re-direct the request to the button callbacks, supplying dummy
         #   action/par arguments (which are ignored anyway)
-        if action == 'play':
+        if menu_item_type == 'play':
             self.app_obj.on_button_classic_play(None, None)
-        elif action == 'open':
+        elif menu_item_type == 'open':
             self.app_obj.on_button_classic_open(None, None)
-        elif action == 'redownload':
+        elif menu_item_type == 'redownload':
             self.app_obj.on_button_classic_redownload(None, None)
-        elif action == 'stop':
+        elif menu_item_type == 'stop':
             self.app_obj.on_button_classic_stop(None, None)
-        elif action == 'ffmpeg':
+        elif menu_item_type == 'ffmpeg':
             self.app_obj.on_button_classic_ffmpeg(None, None)
-        elif action == 'move_up':
+        elif menu_item_type == 'move_up':
             self.app_obj.on_button_classic_move_up(None, None)
-        elif action == 'move_down':
+        elif menu_item_type == 'move_down':
             self.app_obj.on_button_classic_move_down(None, None)
-        elif action == 'remove':
+        elif menu_item_type == 'remove':
             self.app_obj.on_button_classic_remove(None, None)
 
 
@@ -17642,6 +17716,32 @@ class MainWin(Gtk.ApplicationWindow):
                 self.classic_progress_list_popup_menu(event, path)
 
 
+    def on_classic_resolution_combo_changed(self, combo):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Update IVs.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = self.classic_resolution_combo.get_active_iter()
+        model = self.classic_resolution_combo.get_model()
+        text = utils.strip_whitespace(model[tree_iter][0])
+
+        # (Dummy items in the combo)
+        default_item = _('Highest')
+
+        # (Update the IV)
+        if text != default_item:
+            self.app_obj.set_classic_resolution_selection(text)
+        else:
+            self.app_obj.set_classic_resolution_selection(None)
+
+
     def on_bandwidth_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_progress_tab().
@@ -17686,6 +17786,46 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.app_obj.set_bandwidth_apply_flag(False)
+
+
+    def on_custom_dl_menu_select(self, menu_item, media_data_list, uid):
+
+        """Called from a callback in self.custom_dl_popup_menu().
+
+        Starts a custom download using the specified custom download manager.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_list (list): List of media.Video, media.Channel,
+                media.Playlist and media.Folder objects to download. If an
+                empty list, all media data objects are custom downloaded
+
+            uid (int): Unique .uid of the downloads.CustomDLManager to use
+
+        """
+
+        custom_dl_obj = self.app_obj.custom_dl_reg_dict[uid]
+
+        if not custom_dl_obj.dl_by_video_flag \
+        or not custom_dl_obj.dl_precede_flag:
+
+            self.app_obj.download_manager_start(
+                'custom_real',
+                False,          # Not called by the slow timer
+                media_data_list,
+                custom_dl_obj,
+            )
+
+        else:
+
+            self.app_obj.download_manager_start(
+                'custom_sim',
+                False,          # Not called by the slow timer
+                media_data_list,
+                custom_dl_obj,
+            )
 
 
     def on_delete_event(self, widget, event):
@@ -17739,6 +17879,29 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.set_progress_list_hide_flag(checkbutton.get_active())
 
 
+    def on_draw_blocked_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos tab, when the user toggles the checkbutton, enable/
+        disable drawing blocked videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_catalogue_draw_blocked_flag(checkbutton.get_active())
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            1,
+            True,           # Reset scrollbars
+            True,           # Don't cancel the filter, if applied
+        )
+
+
     def on_draw_frame_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
@@ -17785,7 +17948,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.app_obj.set_catalogue_draw_icons_flag(checkbutton.get_active())
         # (No need to redraw the Video Catalogue, just to make the status icons
-        #   visible/invisible
+        #   visible/invisible)
         if self.app_obj.catalogue_mode_type != 'simple':
             for catalogue_obj in self.video_catalogue_dict.values():
                 catalogue_obj.update_status_images()

@@ -1,3 +1,65 @@
+v2.3.484 (31 Mar 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- YouTube has stepped up its efforts to block videos, so uesrs are experiencing
+    more errors than normal. In these cases, Tartube will now add a video to
+    its database, marked as blocked/unavailable for download. This behaviour
+    can be disabled in Edit > System preferences... > Operations > Downloads.
+    Blocked videos are not normally visible in the Videos tab; to make them
+    visible, expand the toolbar at the bottom of the tab, and select 'Show
+    blocked videos'. Blocked videos are always visible when a filter is applied
+    (as long as they match the filter)
+- Scheduled downloads can now be set to start at certain of the day and week,
+    or at some specified time after Tartube starts (Git #362)
+- In the Classic Mode tab, you can now select a video resolution as well as a
+    video/audio format. Both settings, if set, override download options. The
+    resolution setting does not require FFmpeg/AVConv
+
+MINOR NEW FEATURES
+- Users on MS Windows can now install matplotlib from the main window menu.
+    When installed, it's possible to see graphs showing your download history
+    (for example, in Edit > System preferences... > Files > History)
+
+MAJOR FIXES
+- Fixed unusable installers on all platforms except MS Windows, in the v2.3.447
+    release (Git 389)
+- Fixed frequent crashes when downloads in the Classic Mode tab fail to
+    download anything
+- youtube-dl errors and warnings are now assigned to individual videos, rather
+    than to their parent channels/playlists/folders. There is some guesswork
+    involved, but it should be accurate enough for most users. In the Output
+    tab, errors and warnings now appear in real time in their original order,
+    rather than at the end of the output, after the download has finished
+    (Git #321, 170 and others)
+- In the list in the bottom half of the Progress tab, the popup menu items
+    'Stop after this video' and 'Stop after these videos' produced an
+    annoying unnamed video, because the child process was halted before the
+    FFmpeg file merge could take place. Fixed
+- Attemps to restart a stalled download (see the settings in Edit > System
+    preferences window... > Operations > Downloads) did not work as intended.
+    Should be fixed, although testing has been difficult (Git 174)
+- Fixed incorrect timing between the first and subsequent occurences of a
+    scheduled download
+- Fixed broken re-download button/menu item in the Classic Mode tab
+
+MINOR FIXES
+- Fixed the faulty layout in the preferences window, in the Windows >
+    Errors/Warnings tab. Moved the 'Ignore' buttons to a new tab,
+    Operations > Ignore
+- In the main window's menu, the option to install FFmpeg should be
+    desensitised on all system except MS Windows. In certain circumstances, it
+    become re-resensitised. Fixed
+- In download options, the option to 'Write video's annotations to an
+    .annotations file' is now disabled by default (since most website do not
+    provide annotations any more, and in that case the option, when enabled,
+    creates error messages)
+- When updating/installing youtube-dl (etc) from PyPI, and the user already
+    has the current version installed, fixed faulty detection of the version
+    number
+- In the preferences window, Downloads > File paths, removed the useless
+    'Local path' setting on MS Windows
+
 v2.3.447 (20 Mar 2022)
 -------------------------------------------------------------------------------
 

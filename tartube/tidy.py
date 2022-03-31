@@ -518,9 +518,11 @@ class TidyManager(threading.Thread):
                 + str(self.xml_deleted_count),
             )
 
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        self.app_obj.tidy_manager_halt_timer()
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.tidy_manager_halt_timer,
+        )
 
 
     def tidy_directory(self, media_data_obj):

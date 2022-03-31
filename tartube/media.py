@@ -709,6 +709,28 @@ class GenericContainer(GenericMedia):
             return level
 
 
+    def get_unblocked_videos(self):
+
+        """Can be called by anything.
+
+        Returns a list of everything in self.child_list() which is a
+        media.Video object whose .block_flag is False.
+
+        Returns:
+
+            The filtered list
+
+        """
+
+        return_list = []
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video) and not child_obj.block_flag:
+                return_list.append(child_obj)
+
+        return return_list
+
+
     def is_hidden(self):
 
         """Called by mainwin.MainWin.video_index_add_row() and
@@ -1944,15 +1966,14 @@ class Video(GenericMedia):
         self.dummy_dir = None
         # The full path to a downloaded file, if available
         self.dummy_path = None
-        # The video/audio format to use
-        # Valid strings are the values in formats.VIDEO_FORMAT_LIST and
-        #   formats.AUDIO_FORMAT_LIST, which attemps to download the media in
-        #   that format
-        # Also valid are the same values preceded by 'convert_', which uses
-        #   FFmpeg/AVConv to convert the downloaded media into the specified
-        #   format
-        # Also valid is None, in which case the format(s) specified by the
-        #   General Options Manager are u sed
+        # A string specifying the media format to download, or None if the user
+        #   didn't specify one
+        # The string is made up of three optional components in a fixed order
+        #   and separated by underlines: 'convert', the video/audio format, and
+        #   the video resolution, for example 'mp4', 'mp4_720p',
+        #   'convert_mp4_720p'
+        # Valid values are those specified by formats.VIDEO_FORMAT_LIST,
+        #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
         self.dummy_format = None
 
         # Code
@@ -4191,9 +4212,11 @@ class Scheduled(object):
             custom downloads; the value is checked before being used, and
             converted to 'custom_sim' where necessary)
 
-        start_mode (str): 'disabled' to disable this schedule, 'start' to
-            perform the operation whenever Tartube starts, or 'repeat' to
-            perform the operation at regular intervals
+        start_mode (str): 'disabled' to disable this scheduled download,
+            'start' to perform the operation whenever Tartube starts,
+            'start_after' to perform the operation some time after Tartube
+            starts, 'repeat' to perform the operation at regular intervals,
+            'timtetable' to perform the operation at pre-determined intervals
 
     """
 
