@@ -540,7 +540,9 @@ class InfoManager(threading.Thread):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.app_obj.system_error,
                 601,
                 'Malformed STDOUT or STDERR data',
             )

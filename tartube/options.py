@@ -34,6 +34,8 @@ import formats
 import mainapp
 import media
 import utils
+# Use same gettext translations
+from mainapp import _
 
 
 # Classes
@@ -611,11 +613,15 @@ class OptionsManager(object):
         # Unique ID for this options manager
         self.uid = uid
         # A non-unique name for this options manager. Managers that are
-        #   attached to a media data object have the same name as that object.
-        #   (The name is not unique because, for example, videos could have the
+        #   attached to a media data object have the same name as that object
+        # (The name is not unique because, for example, videos could have the
         #   same name as a channel; it's up to the user to avoid duplicate
         #   names)
+        # Empty strings are not valid as names
         self.name = name
+        # A short description, intended for use in the Drag and Drop tab
+        # Empty strings are valid as descriptions
+        self.descrip = name
         # If this object is attached to a media data object, the .dbid of that
         #   object; otherwise None
         self.dbid = dbid
@@ -874,14 +880,34 @@ class OptionsManager(object):
         }
 
 
-    def set_classic_mode_options(self):
+    def set_general_options(self):
+
+        """Called by mainapp.TartubeApp.start().
+
+        Configures this object with a suitable description.
+        """
+
+        self.descrip = _('General (default) download options')
+
+
+    def set_classic_mode_options(self, no_descrip_flag=False):
 
         """Called by mainapp.TartubeApp.start() and
         .apply_classic_download_options().
 
-        When the user applies download options in the Classic Mode tab, a few
-        options should have different default values; this function sets them.
+        Also called by self.set_mp3_options().
+
+        Configures this object for use in the Classic Mode tab.
+
+        Args:
+
+            no_descrip_flag (bool): Set to True when called from
+                self.set_mp3_options()
+
         """
+
+        if not no_descrip_flag:
+            self.descrip = _('Download options for the Classic Mode tab')
 
         self.options_dict['write_description'] = False
         self.options_dict['write_info'] = False
@@ -902,6 +928,24 @@ class OptionsManager(object):
         self.options_dict['sim_keep_info'] = False
         self.options_dict['sim_keep_annotations'] = False
         self.options_dict['sim_keep_thumbnail'] = False
+
+
+    def set_mp3_options(self):
+
+        """Called by mainapp.TartubeApp.start().
+
+        Configures this object to download MP3s.
+        """
+
+        self.descrip = _('Download and convert to MP3 (requires FFmpeg)')
+
+        # (Actual downloads take place in the Classic Mode tab, so use the same
+        #   file options)
+        self.set_classic_mode_options(True)
+
+        # (Convert everything to MP3)
+        self.options_dict['extract_audio'] = True
+        self.options_dict['audio_format'] = 'mp3'
 
 
     # Set accessors

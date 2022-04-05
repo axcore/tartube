@@ -407,7 +407,9 @@ class ProcessManager(threading.Thread):
             return False
 
         # Update the main window's progress bar
-        self.app_obj.main_win_obj.update_progress_bar(
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.update_progress_bar,
             orig_video_obj.name,
             self.job_count,
             self.job_total,

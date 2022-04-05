@@ -746,6 +746,18 @@ class GenericConfigWin(Gtk.Window):
         return True
 
 
+    def ytdlp_only(self):
+
+        """Shorcut function, call for various underlined text.
+
+        Return values:
+
+            The formatted string 'yt-dlp only'
+
+        """
+        return ' <b>[' + _('yt-dlp only') + ']</b>'
+
+
     # (Shared callbacks)
 
 
@@ -2787,6 +2799,11 @@ class CustomDLEditWin(GenericEditWin):
         self.radiobutton2 = None                # Gtk.RadioButton
         self.radiobutton3 = None                # Gtk.RadioButton
         self.radiobutton4 = None                # Gtk.RadioButton
+        # (From self.setup_livestreams_tab)
+        self.checkbutton8 = None                # Gtk.CheckButton
+        self.checkbutton9 = None                # Gtk.CheckButton
+        self.checkbutton10 = None               # Gtk.CheckButton
+        self.checkbutton11 = None               # Gtk.CheckButton
 
 
         # IV list - other
@@ -2891,6 +2908,7 @@ class CustomDLEditWin(GenericEditWin):
         self.setup_slices_tab()
         self.setup_delay_tab()
         self.setup_mirrors_tab()
+        self.setup_livestreams_tab()
 
         # Unusual step - signal connects go here, after all widgets have been
         #   created
@@ -2926,21 +2944,9 @@ class CustomDLEditWin(GenericEditWin):
             'toggled',
             self.on_slice_button_toggled,
         )
-        self.button5.connect(
-            'clicked',
-            self.on_toggle_button_clicked,
-            self.liststore3,
-        )
-        self.button6.connect(
-            'clicked',
-            self.on_select_all_button_clicked,
-            self.liststore3,
-        )
-        self.button7.connect(
-            'clicked',
-            self.on_unselect_all_button_clicked,
-            self.liststore3,
-        )
+        self.button5.connect('clicked', self.on_toggle_button_clicked)
+        self.button6.connect('clicked', self.on_select_all_button_clicked)
+        self.button7.connect('clicked', self.on_unselect_all_button_clicked)
 
         # (From self.setup_delay_tab)
         self.checkbutton7.connect(
@@ -2968,6 +2974,24 @@ class CustomDLEditWin(GenericEditWin):
         self.radiobutton4.connect(
             'toggled',
             self.on_divert_button_toggled,
+        )
+
+        # (From self.setup_livestreams_tab)
+        self.checkbutton8.connect(
+            'toggled',
+            self.on_ignore_live_button_toggled,
+        )
+        self.checkbutton9.connect(
+            'toggled',
+            self.on_ignore_old_live_button_toggled,
+        )
+        self.checkbutton10.connect(
+            'toggled',
+            self.on_dl_if_live_button_toggled,
+        )
+        self.checkbutton11.connect(
+            'toggled',
+            self.on_dl_if_old_live_button_toggled,
         )
 
 
@@ -3019,40 +3043,42 @@ class CustomDLEditWin(GenericEditWin):
         else:
             entry3.set_text(_('Applies when selected'))
 
-        # (Add a non-standard grid, inside a frame using up minimal space.
-        #   Above and below the frame are two empty boxes for spacing)
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 2, grid_width, 1)
+        grid_width2 = 3
+        grid2.set_vexpand(True)
 
-        # (Empty box)
-        box = Gtk.VBox()
-        grid.attach(box, 0, 2, grid_width, 1)
-        box.set_vexpand(True)
+        # (Empty label for spacing)
+        label3 = Gtk.Label()
+        grid2.attach(label3, 0, 0, grid_width2, 1)
+        label3.set_hexpand(True)
 
-        # (Full box)
-        box2 = Gtk.Box()
-        grid.attach(box2, 0, 3, grid_width, 1)
-
+        # (Frame containing text)
         frame = Gtk.Frame()
-        box2.pack_start(frame, True, False, self.spacing_size)
+        grid2.attach(frame, 1, 1, 1, 1)
+        frame.set_hexpand(False)
 
-        grid2 = Gtk.Grid()
-        frame.add(grid2)
-        grid2.set_border_width(self.spacing_size * 2)
-        grid2.set_column_spacing(self.spacing_size)
-        grid2.set_row_spacing(self.spacing_size)
+        grid3 = Gtk.Grid()
+        frame.add(grid3)
+        grid3.set_border_width(self.spacing_size * 2)
+        grid3.set_column_spacing(self.spacing_size)
+        grid3.set_row_spacing(self.spacing_size)
+        grid3.set_hexpand(False)
 
-        self.add_label(grid2,
+        self.add_label(grid3,
             '<b>' + _('HINT') + '</b>: ' + _('Enable these settings first!'),
-            0, 0, grid_width, 1,
+            0, 0, 1, 1,
         )
 
-        self.checkbutton = self.add_checkbutton(grid2,
+        self.checkbutton = self.add_checkbutton(grid3,
             _('Download each video independently of its channel or playlist'),
             None,
             0, 1, 1, 1,
         )
         self.checkbutton.set_active(self.edit_obj.dl_by_video_flag)
 
-        self.checkbutton2 = self.add_checkbutton(grid2,
+        self.checkbutton2 = self.add_checkbutton(grid3,
             _(
                 'Check channels/playlists/folders before each custom' \
                 + ' download (recommended)',
@@ -3068,17 +3094,39 @@ class CustomDLEditWin(GenericEditWin):
         ):
             self.checkbutton2.set_sensitive(False)
 
-        # (Empty box)
-        box3 = Gtk.VBox()
-        grid.attach(box3, 0, 4, grid_width, 1)
-        box3.set_vexpand(True)
+        # (Frame containing text)
+        frame2 = Gtk.Frame()
+        grid2.attach(frame2, 1, 2, 1, 1)
+        frame.set_hexpand(False)
 
-        # (Strips of widgets at the bottom)
-        frame2 = self.add_pixbuf(grid,
-            'copy_large',
-            0, 5, 1, 1,
+        grid4 = Gtk.Grid()
+        frame2.add(grid4)
+        grid4.set_border_width(self.spacing_size * 2)
+        grid4.set_column_spacing(self.spacing_size)
+        grid4.set_row_spacing(self.spacing_size)
+        grid4.set_hexpand(False)
+
+        self.add_label(grid4,
+            '<b>' + _('HINT') + '</b>: ' + _(
+                'The <b>Check all</b> and <b>Download all</b> buttons will' \
+                + ' not start a custom download!',
+            ),
+            0, 0, 1, 1,
         )
-        frame2.set_hexpand(False)
+        self.add_label(grid4,
+            _(
+                'Use the main menu, or right-click a video, channel,' \
+                + ' playlist or folder!',
+            ),
+            0, 1, 1, 1,
+        )
+
+        # (Strips of widgets at the bottom of the primary grid)
+        frame3 = self.add_pixbuf(grid,
+            'copy_large',
+            0, 3, 1, 1,
+        )
+        frame3.set_hexpand(False)
 
         self.button = Gtk.Button(
             _(
@@ -3086,22 +3134,22 @@ class CustomDLEditWin(GenericEditWin):
                 + ' window',
             ),
         )
-        grid.attach(self.button, 1, 5, (grid_width - 1), 1)
+        grid.attach(self.button, 1, 3, (grid_width - 1), 1)
         self.button.set_hexpand(True)
         if self.edit_obj == self.app_obj.general_custom_dl_obj:
             # No point cloning the General Custom Download Manager onto itself
             self.button.set_sensitive(False)
 
-        frame3 = self.add_pixbuf(grid,
+        frame4 = self.add_pixbuf(grid,
             'warning_large',
-            0, 6, 1, 1,
+            0, 4, 1, 1,
         )
-        frame3.set_hexpand(False)
+        frame4.set_hexpand(False)
 
         self.button2 = Gtk.Button(
             _('Completely reset all settings to their default values'),
         )
-        grid.attach(self.button2, 1, 6, (grid_width - 1), 1)
+        grid.attach(self.button2, 1, 4, (grid_width - 1), 1)
         self.button2.set_hexpand(True)
 
 
@@ -3256,9 +3304,9 @@ class CustomDLEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('S_lices'))
         grid_width = 3
 
-        # Clip settings
+        # Slice settings
         self.add_label(grid,
-            '<u>' + _('Clip settings') + '</u>',
+            '<u>' + _('Slice settings') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -3521,6 +3569,58 @@ class CustomDLEditWin(GenericEditWin):
             self.entry.set_sensitive(False)
 
 
+    def setup_livestreams_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Livestreams' tab.
+        """
+
+        tab, grid = self.add_notebook_tab(_('Li_vestreams'))
+
+        # Livestream settings
+        self.add_label(grid,
+            '<u>' + _('Livestream settings') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        self.checkbutton8 = self.add_checkbutton(grid,
+            _('Don\'t download broadcasting livestreams'),
+            None,
+            0, 1, 1, 1,
+        )
+        self.checkbutton8.set_active(self.edit_obj.ignore_stream_flag)
+        if not self.edit_obj.dl_by_video_flag:
+            self.checkbutton8.set_sensitive(False)
+
+        self.checkbutton9 = self.add_checkbutton(grid,
+            _('Don\'t download finished livestreams'),
+            None,
+            0, 2, 1, 1,
+        )
+        self.checkbutton9.set_active(self.edit_obj.ignore_old_stream_flag)
+        if not self.edit_obj.dl_by_video_flag:
+            self.checkbutton9.set_sensitive(False)
+
+        self.checkbutton10 = self.add_checkbutton(grid,
+            _('Only download broadcasting livestreams'),
+            None,
+            0, 3, 1, 1,
+        )
+        self.checkbutton10.set_active(self.edit_obj.ignore_stream_flag)
+        if not self.edit_obj.dl_by_video_flag:
+            self.checkbutton10.set_sensitive(False)
+
+        self.checkbutton11 = self.add_checkbutton(grid,
+            _('Only download finished livestreams'),
+            None,
+            0, 4, 1, 1,
+        )
+        self.checkbutton11.set_active(self.edit_obj.ignore_old_stream_flag)
+        if not self.edit_obj.dl_by_video_flag:
+            self.checkbutton11.set_sensitive(False)
+
+
     # Callback class methods
 
 
@@ -3678,6 +3778,7 @@ class CustomDLEditWin(GenericEditWin):
 
             self.edit_dict['dl_by_video_flag'] = True
 
+            self.checkbutton2.set_active(True)
             self.checkbutton2.set_sensitive(True)
             if not self.retrieve_val('dl_precede_flag'):
                 self.checkbutton3.set_active(False)
@@ -3714,6 +3815,10 @@ class CustomDLEditWin(GenericEditWin):
                 self.entry.set_sensitive(True)
             else:
                 self.entry.set_sensitive(False)
+            self.checkbutton8.set_sensitive(True)
+            self.checkbutton9.set_sensitive(True)
+            self.checkbutton10.set_sensitive(True)
+            self.checkbutton11.set_sensitive(True)
 
         else:
 
@@ -3736,6 +3841,58 @@ class CustomDLEditWin(GenericEditWin):
             self.radiobutton3.set_sensitive(False)
             self.radiobutton4.set_sensitive(False)
             self.entry.set_sensitive(False)
+            self.checkbutton8.set_active(False)
+            self.checkbutton8.set_sensitive(False)
+            self.checkbutton9.set_active(False)
+            self.checkbutton9.set_sensitive(False)
+            self.checkbutton10.set_active(False)
+            self.checkbutton10.set_sensitive(False)
+            self.checkbutton11.set_active(False)
+            self.checkbutton11.set_sensitive(False)
+
+
+    def on_dl_if_live_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_tabs().
+
+        Enables/disables only downloading broadcasting livestreams.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['dl_if_stream_flag'] = True
+            self.checkbutton8.set_active(False)
+
+        else:
+
+            self.edit_dict['dl_if_stream_flag'] = False
+
+
+    def on_dl_if_old_live_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_tabs().
+
+        Enables/disables only downloading finished livestreams.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['dl_if_old_stream_flag'] = True
+            self.checkbutton9.set_active(False)
+
+        else:
+
+            self.edit_dict['dl_if_old_stream_flag'] = False
 
 
     def on_dl_if_subs_button_toggled(self, checkbutton):
@@ -3806,6 +3963,50 @@ class CustomDLEditWin(GenericEditWin):
             self.checkbutton4.set_active(False)
             self.button3.set_sensitive(False)
             self.button4.set_sensitive(False)
+
+
+    def on_ignore_live_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_tabs().
+
+        Enables/disables not downloading broadcasting livestreams.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['ignore_stream_flag'] = True
+            self.checkbutton10.set_active(False)
+
+        else:
+
+            self.edit_dict['ignore_stream_flag'] = False
+
+
+    def on_ignore_old_live_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_tabs().
+
+        Enables/disables not downloading finished livestreams.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active():
+
+            self.edit_dict['ignore_old_stream_flag'] = True
+            self.checkbutton11.set_active(False)
+
+        else:
+
+            self.edit_dict['ignore_old_stream_flag'] = False
 
 
     def on_remove_language_clicked(self, button):
@@ -4230,6 +4431,9 @@ class OptionsEditWin(GenericEditWin):
         if 'name' in self.edit_dict \
         and self.edit_dict['name'] != '':
             self.edit_obj.name = self.edit_dict['name']
+        # The description can also be updated, even if it is blank
+        if 'descrip' in self.edit_dict:
+            self.edit_obj.descrip = self.edit_dict['descrip']
 
         # The changes can now be cleared
         self.edit_dict = {}
@@ -4242,6 +4446,13 @@ class OptionsEditWin(GenericEditWin):
         self.edit_obj.rearrange_formats()
         # ...then redraw the textview in the Formats tab
         self.formats_tab_redraw_list()
+
+        # Update the associated mainwin.DropZoneBox in the main window's
+        #   Drag and Drop tab
+        if self.edit_obj.uid in self.app_obj.classic_dropzone_list:
+            dropzone_obj \
+            = self.app_obj.main_win_obj.drag_drop_dict[self.edit_obj.uid]
+            dropzone_obj.update_widgets()
 
 
     def retrieve_val(self, name):
@@ -4273,7 +4484,10 @@ class OptionsEditWin(GenericEditWin):
 
             return self.edit_dict[name]
 
-        elif name == 'uid' or name == 'name' or name == 'dbid':
+        elif name == 'uid' \
+        or name == 'name' \
+        or name == 'descrip' \
+        or name == 'dbid':
 
             return getattr(self.edit_obj, name)
 
@@ -4343,7 +4557,6 @@ class OptionsEditWin(GenericEditWin):
             self.setup_convert_tab()
         self.setup_subtitles_tab()
         if not self.app_obj.simple_options_flag:
-            self.setup_ytdlp_tab()
             self.setup_advanced_tab()
 
 
@@ -4351,7 +4564,7 @@ class OptionsEditWin(GenericEditWin):
 
         """Called by self.setup_tabs().
 
-        Sets up the 'General' tab.
+        Sets up the 'Name' tab.
         """
 
         tab, grid = self.add_notebook_tab(_('_Name'))
@@ -4377,56 +4590,68 @@ class OptionsEditWin(GenericEditWin):
         )
         entry2.set_text('#' + str(self.edit_obj.uid))
         entry2.set_hexpand(False)
+        entry2.set_max_length(8)
+
+        label = self.add_label(grid,
+            _('Description'),
+            0, 1, 2, 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            'descrip',
+            2, 1, 2, 1,
+        )
+        entry3.set_hexpand(True)
 
         label2 = self.add_label(grid,
             _('Download options applied to'),
-            0, 1, 2, 1,
+            0, 2, 2, 1,
         )
 
         if self.media_data_obj:
 
-            entry3 = self.add_entry(grid,
-                None,
-                2, 1, 1, 1,
-            )
-            entry3.set_editable(False)
-            entry3.set_hexpand(False)
-            entry3.set_width_chars(8)
-            entry3.set_text('#' + str(self.media_data_obj.dbid))
-
             entry4 = self.add_entry(grid,
                 None,
-                3, 1, 1, 1,
+                2, 2, 1, 1,
             )
             entry4.set_editable(False)
-            entry4.set_hexpand(True)
+            entry4.set_hexpand(False)
+            entry4.set_width_chars(8)
+            entry4.set_text('#' + str(self.media_data_obj.dbid))
 
-            entry4.set_text(
+            entry5 = self.add_entry(grid,
+                None,
+                3, 2, 1, 1,
+            )
+            entry5.set_editable(False)
+            entry5.set_hexpand(True)
+
+            entry5.set_text(
                 self.media_data_obj.get_translated_type(True) \
                 + ': ' + self.media_data_obj.name,
             )
 
         else:
 
-            entry3 = self.add_entry(grid,
+            entry4 = self.add_entry(grid,
                 None,
-                2, 1, 2, 1,
+                2, 2, 2, 1,
             )
-            entry3.set_editable(False)
+            entry4.set_editable(False)
 
             if self.edit_obj == self.app_obj.general_options_obj:
-                entry3.set_text(_('All channels, playlists and folders'))
+                entry4.set_text(_('All channels, playlists and folders'))
             elif self.edit_obj == self.app_obj.classic_options_obj:
-                entry3.set_text(_('Downloads in the Classic Mode tab'))
+                entry4.set_text(_('Downloads in the Classic Mode tab'))
             else:
-                entry3.set_text(_('These options are not applied to anything'))
+                entry4.set_text(_('These options are not applied to anything'))
 
         self.add_label(grid,
             _(
             'Additional download options, e.g. --write-subs (do not use -o' \
             + ' or --output)',
             ),
-            0, 2, grid_width, 1,
+            0, 3, grid_width, 1,
         )
 
         if not self.app_obj.simple_options_flag:
@@ -4438,7 +4663,7 @@ class OptionsEditWin(GenericEditWin):
                     'Use ONLY these options (Tartube adds the output folder)',
                     ),
                     None,
-                    0, 3, grid_width, 1,
+                    0, 4, grid_width, 1,
                 )
                 # (Signal connect appears below)
 
@@ -4450,7 +4675,7 @@ class OptionsEditWin(GenericEditWin):
                     + ' directory)',
                     ),
                     None,
-                    0, 3, grid_width, 1,
+                    0, 4, grid_width, 1,
                 )
                 # (Signal connect appears below)
 
@@ -4459,7 +4684,7 @@ class OptionsEditWin(GenericEditWin):
             checkbutton2 = self.add_checkbutton(grid,
                 _('Use only the URL specified below'),
                 'direct_url_flag',
-                0, 4, grid_width, 1,
+                0, 5, grid_width, 1,
             )
 
             # (Signal connects from above)
@@ -4471,25 +4696,25 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_textview(grid,
             'extra_cmd_string',
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
         if self.app_obj.simple_options_flag:
             frame = self.add_pixbuf(grid,
                 'hand_right_large',
-                0, 6, 1, 1,
+                0, 7, 1, 1,
             )
             frame.set_hexpand(False)
 
         else:
             frame = self.add_pixbuf(grid,
                 'hand_left_large',
-                0, 6, 1, 1,
+                0, 7, 1, 1,
             )
             frame.set_hexpand(False)
 
         button2 = Gtk.Button()
-        grid.attach(button2, 1, 6, (grid_width - 1), 1)
+        grid.attach(button2, 1, 7, (grid_width - 1), 1)
         if not self.app_obj.simple_options_flag:
             button2.set_label(_('Hide advanced download options'))
         else:
@@ -4498,14 +4723,14 @@ class OptionsEditWin(GenericEditWin):
 
         frame2 = self.add_pixbuf(grid,
             'copy_large',
-            0, 7, 1, 1,
+            0, 8, 1, 1,
         )
         frame2.set_hexpand(False)
 
         button3 = Gtk.Button(
             _('Import general download options into this window'),
         )
-        grid.attach(button3, 1, 7, (grid_width - 1), 1)
+        grid.attach(button3, 1, 8, (grid_width - 1), 1)
         button3.connect('clicked', self.on_clone_options_clicked)
         if self.edit_obj == self.app_obj.general_options_obj:
             # No point cloning the General Options Manager onto itself
@@ -4513,14 +4738,14 @@ class OptionsEditWin(GenericEditWin):
 
         frame3 = self.add_pixbuf(grid,
             'warning_large',
-            0, 8, 1, 1,
+            0, 9, 1, 1,
         )
         frame3.set_hexpand(False)
 
         button4 = Gtk.Button(
             _('Completely reset all download options to their default values'),
         )
-        grid.attach(button4, 1, 8, (grid_width - 1), 1)
+        grid.attach(button4, 1, 9, (grid_width - 1), 1)
         button4.connect('clicked', self.on_reset_options_clicked)
 
 
@@ -4536,16 +4761,8 @@ class OptionsEditWin(GenericEditWin):
 
             tab, grid = self.add_notebook_tab(_('_Downloads'))
 
-            row_count = 0
-
-            # Download options
-            self.add_label(grid,
-                '<u>' + _('Download options') + '</u>',
-                0, row_count, 1, 1,
-            )
-
-            row_count += 1
-            row_count = self.downloads_age_widgets(grid, row_count)
+            row_count = self.downloads_age_widgets(grid, 0)
+            row_count = self.downloads_size_limit_widgets(grid, row_count)
             row_count = self.downloads_date_widgets(grid, row_count)
             row_count = self.downloads_views_widgets(grid, row_count)
 
@@ -4560,10 +4777,11 @@ class OptionsEditWin(GenericEditWin):
 
             # ...with its own tabs
             self.setup_downloads_general_tab(inner_notebook)
+            self.setup_downloads_videos_tab(inner_notebook)
             self.setup_downloads_playlists_tab(inner_notebook)
-            self.setup_downloads_size_limits_tab(inner_notebook)
-            self.setup_downloads_dates_tab(inner_notebook)
-            self.setup_downloads_views_tab(inner_notebook)
+            self.setup_downloads_limits_tab(inner_notebook)
+            self.setup_downloads_formats_tab(inner_notebook)
+            self.setup_downloads_extractor_tab(inner_notebook)
             self.setup_downloads_filtering_tab(inner_notebook)
             self.setup_downloads_external_tab(inner_notebook)
 
@@ -4582,15 +4800,131 @@ class OptionsEditWin(GenericEditWin):
 
         tab, grid = self.add_inner_notebook_tab('_General', inner_notebook)
 
-        # Download options
+        # General download options
         self.add_label(grid,
-            '<u>' + _('Download options') + '</u>',
+            '<u>' + _('General download options') + '</u>',
             0, 0, 1, 1,
         )
 
         row_count = 1
         row_count = self.downloads_general_widgets(grid, row_count)
-        row_count = self.downloads_age_widgets(grid, row_count)
+
+        # General download options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('General download options') + '</u>' + self.ytdlp_only(),
+            0, (row_count + 1), 2, 1,
+        )
+
+        label = self.add_label(grid,
+            _(
+                'Number of fragments of a DASH/HLS video to download' \
+                + ' concurrently',
+            ),
+            0, (row_count + 2), 1, 1
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            1, None, 1,
+            'concurrent_fragments',
+            1, (row_count + 2), 1, 1
+        )
+        self.add_tooltip('-N, --concurrent-fragments N', label, spinbutton)
+
+        label2 = self.add_label(grid,
+            _(
+                'Minimum download rate (bytes/sec) below which throttling' \
+                + ' is assumed',
+            ),
+            0, (row_count + 3), 1, 1
+        )
+
+        spinbutton2 = self.add_spinbutton(grid,
+            0, None, 100,
+            'throttled_rate',
+            1, (row_count + 3), 1, 1
+        )
+        self.add_tooltip('--throttled-rate RATE', label2, spinbutton2)
+
+
+    def setup_downloads_videos_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Videos' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Videos'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Video selection options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Video selection options') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Stop download process when encountering a file in the archive'),
+            'break_on_existing',
+            0, 1, grid_width, 1,
+        )
+        self.add_tooltip('--break-on-existing', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+                'Stop download process when encountering a file that has' \
+                + ' been filtered out',
+            ),
+            'break_on_reject',
+            0, 2, grid_width, 1,
+        )
+        self.add_tooltip('--break-on-reject', checkbutton2)
+
+        label = self.add_label(grid,
+            _('Number of failures allowed before rest of playlist is skipped'),
+            0, 3, 1, 1
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            0, None, 1,
+            'skip_playlist_after_errors',
+            1, 3, 1, 1
+        )
+        self.add_tooltip('--skip-playlist-after-errors N', label, spinbutton)
+
+        # Verbosity and simulation options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Verbosity and simulation options') + '</u>' \
+            + self.ytdlp_only(),
+            0, 4, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+                'Ignore \'No video formats\' error (useful for extracting' \
+                + ' metadata from unavailable videos)',
+            ),
+            'ignore_no_formats_error',
+            0, 5, grid_width, 1,
+        )
+        self.add_tooltip('--ignore-no-formats-error', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+                'Force download archive entries to be written as long as' \
+                + ' no errors occur',
+            ),
+            'force_write_archive',
+            0, 6, grid_width, 1,
+        )
+        self.add_tooltip('--force-write-archive', checkbutton2)
 
 
     def setup_downloads_playlists_tab(self, inner_notebook):
@@ -4613,11 +4947,11 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_playlist_widgets(grid, 0)
 
 
-    def setup_downloads_size_limits_tab(self, inner_notebook):
+    def setup_downloads_limits_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
-        Sets up the 'Size limits' inner notebook tab.
+        Sets up the 'Limits' inner notebook tab.
 
         Args:
 
@@ -4626,18 +4960,21 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Size limits'),
+            _('_Limits'),
             inner_notebook,
         )
 
-        row_count = self.downloads_size_limit_widgets(grid, 0)
+        row_count = self.downloads_age_widgets(grid, 0)
+        row_count = self.downloads_size_limit_widgets(grid, row_count)
+        row_count = self.downloads_date_widgets(grid, row_count)
+        row_count = self.downloads_views_widgets(grid, row_count)
 
 
-    def setup_downloads_dates_tab(self, inner_notebook):
+    def setup_downloads_formats_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
-        Sets up the 'Dates' inner notebook tab.
+        Sets up the 'Formats' inner notebook tab.
 
         Args:
 
@@ -4645,16 +4982,57 @@ class OptionsEditWin(GenericEditWin):
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(_('_Dates'), inner_notebook)
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Formats'),
+            inner_notebook,
+        )
 
-        row_count = self.downloads_date_widgets(grid, 0)
+        # Video format options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Video format options') + '</u>' + self.ytdlp_only(),
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Allow multiple video streams to be merged into a single file'),
+            'video_multistreams',
+            0, 1, 1, 1,
+        )
+        self.add_tooltip('--video-multistreams', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Allow multiple audio streams to be merged into a single file'),
+            'audio_multistreams',
+            0, 2, 1, 1,
+        )
+        self.add_tooltip('--audio-multistreams', checkbutton2)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+                'Check formats selected are actually downloadable' \
+                + ' (Experimental)',
+            ),
+            'check_formats',
+            0, 3, 1, 1,
+        )
+        self.add_tooltip('--check-formats', checkbutton3)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+                'Allow unplayable formats to be listed and downloaded (also' \
+                + ' disables post-processing)',
+            ),
+            'allow_unplayable_formats',
+            0, 4, 1, 1,
+        )
+        self.add_tooltip('--allow-unplayable-formats', checkbutton4)
 
 
-    def setup_downloads_views_tab(self, inner_notebook):
+    def setup_downloads_extractor_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
-        Sets up the 'Views' inner notebook tab.
+        Sets up the 'Extractor' inner notebook tab.
 
         Args:
 
@@ -4662,9 +5040,69 @@ class OptionsEditWin(GenericEditWin):
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(_('_Views'), inner_notebook)
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Extractor'),
+            inner_notebook,
+        )
+        grid_width = 2
 
-        row_count = self.downloads_views_widgets(grid, 0)
+        # Extractor options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Extractor options') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            'Number of retries for known extractor errors',
+            0, 1, 1, 1,
+        )
+
+        combo_list = [
+            '', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'infinite',
+        ]
+
+        combo = self.add_combo(grid,
+            combo_list,
+            'extractor_retries',
+            1, 1, 1, 1
+        )
+        combo.set_hexpand(True)
+        self.add_tooltip('--extractor-retries RETRIES', label, combo)
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Do not process dynamic DASH manifests'),
+            'no_allow_dynamic_mpd',
+            0, 2, grid_width, 1,
+        )
+        self.add_tooltip('--no-allow-dynamic-mpd', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+                'Split HLS playlists to different formats at discontinuities' \
+                + ' such as ad breaks',
+            ),
+            'hls_split_discontinuity',
+            0, 3, grid_width, 1,
+        )
+        self.add_tooltip('--hls-split-discontinuity', checkbutton2)
+
+        # Extractor arguments
+        self.add_label(grid,
+            '<u>' + _('Extractor arguments') + '</u>',
+            0, 4, grid_width, 1,
+        )
+
+        label2 = self.add_label(grid,
+            '<i>' + _('One argument per line, e.g.') \
+            + '</i> youtube:skip=dash,hls;player_client=android',
+            0, 5, grid_width, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            'extractor_args_list',
+            0, 6, grid_width, 1,
+        )
+        self.add_tooltip('--extractor-args KEY:ARGS', label2, textview)
 
 
     def setup_downloads_filtering_tab(self, inner_notebook):
@@ -4680,7 +5118,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Filtering'),
+            _('F_iltering'),
             inner_notebook,
         )
 
@@ -4699,7 +5137,7 @@ class OptionsEditWin(GenericEditWin):
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(_('_External'), inner_notebook)
+        tab, grid = self.add_inner_notebook_tab(_('E_xternal'), inner_notebook)
 
         row_count = self.downloads_external_widgets(grid, 0)
 
@@ -4719,10 +5157,15 @@ class OptionsEditWin(GenericEditWin):
 
         # ...with its own tabs
         self.setup_files_names_tab(inner_notebook)
+        if not self.app_obj.simple_options_flag:
+            self.setup_files_override_tab(inner_notebook)
+            self.setup_files_paths_tab(inner_notebook)
         self.setup_files_filesystem_tab(inner_notebook)
         self.setup_files_cookies_tab(inner_notebook)
-        self.setup_files_write_files_tab(inner_notebook)
-        self.setup_files_keep_files_tab(inner_notebook)
+        if not self.app_obj.simple_options_flag:
+            self.setup_files_shortcuts_tab(inner_notebook)
+        self.setup_files_write_move_tab(inner_notebook)
+        self.setup_files_keep_tab(inner_notebook)
 
 
     def setup_files_names_tab(self, inner_notebook):
@@ -4907,6 +5350,288 @@ class OptionsEditWin(GenericEditWin):
             self.file_tab_sensitise_widgets(False)
 
 
+    def setup_files_override_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Override' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Override'),
+            inner_notebook,
+        )
+        grid_width = 4
+
+        # List of output filename templates (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('List of output filename templates') + '</u>' \
+            + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+                'Overrides the output template in the \'File names\' tab',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate([ _('Type'), _('Template') ]):
+
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        liststore = Gtk.ListStore(str, str)
+        treeview.set_model(liststore)
+
+        # Initialise the list
+        self.setup_files_override_tab_update_treeview(liststore)
+
+        # Add editing buttons
+        label = self.add_label(grid,
+            _('Output type'),
+            0, 3, 1, 1,
+        )
+
+        combo_list = formats.YTDLP_OUTPUT_TYPE_LIST.copy()
+        combo = self.add_combo(grid,
+            combo_list,
+            None,
+            1, 3, 1, 1,
+        )
+        combo.set_active(0)
+
+        label2 = self.add_label(grid,
+            _('Output template'),
+            0, 4, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            1, 4, (grid_width - 1), 1,
+        )
+
+        button = Gtk.Button()
+        grid.attach(button, 0, 5, 1, 1)
+        button.set_label(_('Add'))
+        button.connect(
+            'clicked',
+            self.on_ytdlp_output_add_button_clicked,
+            liststore,
+            combo,
+            entry,
+        )
+
+        button2 = Gtk.Button()
+        grid.attach(button2, 1, 5, 1, 1)
+        button2.set_label(_('Delete'))
+        button2.connect(
+            'clicked',
+            self.on_ytdlp_output_delete_button_clicked,
+            treeview,
+        )
+
+        button3 = Gtk.Button()
+        grid.attach(button3, 3, 5, 1, 1)
+        button3.set_label(_('Refresh list'))
+        button3.connect(
+            'clicked',
+            self.on_ytdlp_output_refresnh_button_clicked,
+            treeview,
+        )
+
+
+    def setup_files_override_tab_update_treeview(self, liststore):
+
+        """Can be called by anything.
+
+        Fills or updates the treeview.
+
+        Args:
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        liststore.clear()
+
+        for item in self.retrieve_val('output_format_list'):
+
+            # (Each 'item' is in the form TYPES:TEMPLATE)
+            match = re.search('^([^\:]+)\:(.*)', item)
+            if match:
+                liststore.append([ match.groups()[0], match.groups()[1] ])
+
+
+    def setup_files_paths_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Paths' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Paths'),
+            inner_notebook,
+        )
+        grid_width = 5
+
+        # List of output paths (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('List of output paths') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
+        #   we'll do everything ourselves)
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 1, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate([ _('Type'), _('Path') ]):
+
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn(
+                column_title,
+                renderer_text,
+                text=i,
+            )
+            treeview.append_column(column_text)
+            column_text.set_resizable(True)
+
+        liststore = Gtk.ListStore(str, str)
+        treeview.set_model(liststore)
+
+        # Initialise the list
+        self.setup_files_paths_tab_update_treeview(liststore)
+
+        # Add editing buttons
+        label = self.add_label(grid,
+            _('Output type'),
+            0, 2, 1, 1,
+        )
+
+        combo_list = formats.YTDLP_OUTPUT_TYPE_LIST.copy()
+        combo_list.insert(0, 'home')
+        combo_list.insert(1, 'temp')
+        combo = self.add_combo(grid,
+            combo_list,
+            None,
+            1, 2, 1, 1,
+        )
+        combo.set_active(0)
+
+        label2 = self.add_label(grid,
+            _('Output path'),
+            0, 3, 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            None,
+            1, 3, (grid_width - 2), 1,
+        )
+        entry.set_editable(False)
+
+        button = Gtk.Button()
+        grid.attach(button, 4, 3, 1, 1)
+        button.set_label(_('Set'))
+        button.connect(
+            'clicked',
+            self.on_ytdlp_paths_set_button_clicked,
+            entry,
+        )
+
+        button2 = Gtk.Button()
+        grid.attach(button2, 0, 4, 1, 1)
+        button2.set_label(_('Add'))
+        button2.connect(
+            'clicked',
+            self.on_ytdlp_paths_add_button_clicked,
+            liststore,
+            combo,
+            entry,
+        )
+
+        button3 = Gtk.Button()
+        grid.attach(button3, 1, 4, 1, 1)
+        button3.set_label(_('Delete'))
+        button3.connect(
+            'clicked',
+            self.on_ytdlp_paths_delete_button_clicked,
+            treeview,
+        )
+
+        button4 = Gtk.Button()
+        grid.attach(button4, 3, 4, 2, 1)
+        button4.set_label(_('Refresh list'))
+        button4.connect(
+            'clicked',
+            self.on_ytdlp_paths_refresh_button_clicked,
+            treeview,
+        )
+
+
+    def setup_files_paths_tab_update_treeview(self, liststore):
+
+        """Can be called by anything.
+
+        Fills or updates the treeview.
+
+        Args:
+
+            liststore (Gtk.ListStore): The treeview's model
+
+        """
+
+        liststore.clear()
+
+        for item in self.retrieve_val('output_path_list'):
+
+            # (Each 'item' is in the form TYPES:PATH)
+            match = re.search('^([^\:]+)\:(.*)', item)
+            if match:
+                liststore.append([ match.groups()[0], match.groups()[1] ])
+
+
     def setup_files_filesystem_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
@@ -4947,16 +5672,10 @@ class OptionsEditWin(GenericEditWin):
             )
             self.add_tooltip('--no-mtime', checkbutton2)
 
-        # Filesystem overrides
-        self.add_label(grid,
-            '<u>' + _('Filesystem overrides') + '</u>',
-            0, 3, grid_width, 1,
-        )
-
         checkbutton = self.add_checkbutton(grid,
             _('Download all videos into this folder'),
             None,
-            0, 4, 1, 1,
+            0, 3, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -4978,7 +5697,7 @@ class OptionsEditWin(GenericEditWin):
             store.append( [pixbuf, self.app_obj.fixed_temp_folder.name] )
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 4, 1, 1)
+        grid.attach(combo, 1, 3, 1, 1)
         renderer_pixbuf5 = Gtk.CellRendererPixbuf()
         combo.pack_start(renderer_pixbuf5, False)
         combo.add_attribute(renderer_pixbuf5, 'pixbuf', 0)
@@ -5009,6 +5728,67 @@ class OptionsEditWin(GenericEditWin):
         checkbutton.connect('toggled', self.on_fixed_folder_toggled, combo)
         combo.connect('changed', self.on_fixed_folder_changed)
 
+        if not self.app_obj.simple_options_flag:
+
+            # (To avoid messing up the neat format of the rows above, add a
+            #   secondary grid, and put the next set of widgets inside it)
+            grid2 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
+
+            # Filesystem options (yt-dlp only)
+            self.add_label(grid2,
+                '<u>' + _('Filesystem options') + '</u>' + self.ytdlp_only(),
+                0, 0, grid_width, 1,
+            )
+
+            checkbutton2 = self.add_checkbutton(grid2,
+                _('Force filenames to be MS Windows compatible'),
+                'windows_filenames',
+                0, 1, grid_width, 1,
+            )
+            self.add_tooltip('--windows-filenames', checkbutton2)
+
+            label = self.add_label(grid2,
+                _(
+                    'Limit filename length (excluding extension) to this' \
+                    + ' many characters',
+                ),
+                0, 2, 1, 1
+            )
+
+            spinbutton = self.add_spinbutton(grid2,
+                0, None, 1,
+                'trim_filenames',
+                1, 2, 1, 1
+            )
+            self.add_tooltip('--trim-filenames', label, spinbutton)
+
+            checkbutton3 = self.add_checkbutton(grid2,
+                _(
+                    'Overwrite all video and metadata files (includes' \
+                    + ' \'--no-continue\')',
+                ),
+                'force_overwrites',
+                0, 3, grid_width, 1,
+            )
+            self.add_tooltip('--force-overwrites', checkbutton3)
+
+            checkbutton4 = self.add_checkbutton(grid2,
+                _('Write playlist metadata in addition to video metadata'),
+                'write_playlist_metafiles',
+                0, 4, grid_width, 1,
+            )
+            self.add_tooltip('--write-playlist-metafiles', checkbutton4)
+
+            checkbutton5 = self.add_checkbutton(grid2,
+                _(
+                    'Write all fields, including private fields, to the' \
+                    + ' .info.json file',
+                ),
+                'no_clean_info_json',
+                0, 5, grid_width, 1,
+            )
+            self.add_tooltip('--no-clean-infojson', checkbutton5)
+
 
     def setup_files_cookies_tab(self, inner_notebook):
 
@@ -5035,7 +5815,7 @@ class OptionsEditWin(GenericEditWin):
         )
 
         label = self.add_label(grid,
-            '<i>' + _('Path to the downloader\'s cookie jar file') + '</i>',
+            _('Path to the downloader\'s cookie jar file'),
             0, 1, 1, 1,
         )
 
@@ -5082,12 +5862,289 @@ class OptionsEditWin(GenericEditWin):
             entry,
         )
 
+        if not self.app_obj.simple_options_flag:
 
-    def setup_files_write_files_tab(self, inner_notebook):
+            # (To avoid messing up the neat format of the rows above, add a
+            #   secondary grid, and put the next set of widgets inside it)
+            grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
+
+            # Cookie options (yt-dlp only)
+            self.add_label(grid2,
+                '<u>' + _('Cookie options') + '</u>' + self.ytdlp_only(),
+                0, 0, 1, 1,
+            )
+
+            checkbutton = self.add_checkbutton(grid2,
+                _('Do not read/dump cookies from/to the cookiejar file'),
+                'no_cookies',
+                0, 1, 1, 1,
+            )
+            self.add_tooltip('--no-cookies', checkbutton)
+
+            checkbutton2 = self.add_checkbutton(grid2,
+                _('Do not load cookies from browser'),
+                'no_cookies_from_browser',
+                0, 2, 1, 1,
+            )
+            self.add_tooltip('--no-cookies-from-browser', checkbutton2)
+
+            # (To avoid messing up the neat format of the rows above, add a
+            #   secondary grid, and put the next set of widgets inside it)
+            grid3 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
+
+            label2 = self.add_label(grid3,
+                _('Retrieve cookies from browser'),
+                0, 0, 1, 1
+            )
+            label2.set_hexpand(False)
+
+            entry2 = self.add_entry(grid3,
+                None,
+                1, 0, 1, 1,
+            )
+            entry2.set_hexpand(True)
+            entry2.set_editable(False)
+            entry2.set_text(self.retrieve_val('cookies_from_browser'))
+
+            # (To avoid messing up the neat format of the rows above, add a
+            #   secondary grid, and put the next set of widgets inside it)
+            grid4 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
+
+            self.add_label(grid4,
+                _('Browser'),
+                0, 0, 1, 1
+            )
+
+            combo_list = [
+                '', 'brave', 'chrome', 'chromium', 'edge', 'firefox', 'opera',
+                'safari', 'vivaldi',
+            ]
+            combo = self.add_combo(grid4,
+                combo_list,
+                None,
+                1, 0, 1, 1
+            )
+            combo.set_active(0)
+            combo.set_hexpand(True)
+            # (Signal connect appears below)
+
+            self.add_label(grid4,
+                _('Chromium keyring'),
+                2, 0, 1, 1
+            )
+
+            combo_list2 = ['', 'basictext', 'gnomekeyring', 'kwallet']
+            combo2 = self.add_combo(grid4,
+                combo_list2,
+                None,
+                3, 0, 1, 1
+            )
+            combo2.set_active(0)
+            combo2.set_hexpand(True)
+            # (Signal connect appears below)
+
+            # (To avoid messing up the neat format of the rows above, add a
+            #   secondary grid, and put the next set of widgets inside it)
+            grid5 = self.add_secondary_grid(grid, 0, 6, grid_width, 1)
+
+            label3 = self.add_label(grid5,
+                _('Browser profile name (optional)'),
+                0, 0, 1, 1
+            )
+            label3.set_hexpand(False)
+
+            entry3 = self.add_entry(grid5,
+                None,
+                1, 0, 3, 1,
+            )
+            entry3.set_hexpand(True)
+            # (Signal connect appears below)
+
+            label4 = self.add_label(grid5,
+                _('Browser profile path (optional)'),
+                0, 1, 1, 1
+            )
+            label4.set_hexpand(False)
+
+            entry4 = self.add_entry(grid5,
+                None,
+                1, 1, 1, 1,
+            )
+            entry4.set_hexpand(True)
+            entry4.set_editable(False)
+
+            set_button = Gtk.Button(_('Set'))
+            grid5.attach(set_button, 2, 1, 1, 1)
+            # (Signal connect appears below)
+
+            reset_button = Gtk.Button(_('Reset'))
+            grid5.attach(reset_button, 3, 1, 1, 1)
+            # (Signal connect appears below)
+
+            self.add_tooltip(
+                '--cookies-from-browser BROWSER[+KEYRING][:PROFILE]',
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+
+            # Set the initial values for those widgets, retrieving them from
+            #   the 'cookies_from_browser' download option
+            match = re.search(
+                '^([^+:]+)(\+[^+:]+)?(\:.*)?',
+                self.retrieve_val('cookies_from_browser'),
+            )
+            if match:
+                browser = match.groups()[0]
+                keyring = match.groups()[1]
+                profile = match.groups()[2]
+
+                if browser != '':
+
+                    for i in range(len(combo_list)):
+                        if combo_list[i] == browser:
+                            combo.set_active(i)
+                            break
+
+                    if keyring != '' and keyring is not None:
+
+                        # (Remove initial +/: characters)
+                        keyring = keyring[1:]
+
+                        for i in range(len(combo_list2)):
+                            if combo_list2[i] == keyring:
+                                combo2.set_active(i)
+                                break
+
+                    if profile != '' and profile is not None:
+
+                        # (Remove initial +/: characters)
+                        profile = profile[1:]
+
+                        # This might be a profile name, or a profile path.
+                        #   Assume it's a name unless the path exists
+                        if not os.path.isfile(profile):
+                            entry3.set_text(profile)
+                        else:
+                            entry4.set_text(profile)
+
+            # (Signal connects from above)
+            combo.connect(
+                'changed',
+                self.setup_files_cookies_tab_update,
+                checkbutton2,
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+            combo2.connect(
+                'changed',
+                self.setup_files_cookies_tab_update,
+                checkbutton2,
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+            entry3.connect(
+                'changed',
+                self.on_cookies_ytdlp_entry_changed,
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+            set_button.connect(
+                'clicked',
+                self.on_cookies_ytdlp_set_button_clicked,
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+            reset_button.connect(
+                'clicked',
+                self.on_cookies_ytdlp_reset_button_clicked,
+                entry2,
+                combo,
+                combo2,
+                entry3,
+                entry4,
+            )
+
+
+    def setup_files_cookies_tab_update(self, widget, checkbutton, entry,
+    combo, combo2, entry2, entry3):
+
+        """Called by self.setup_files_cookies_tab() to set the
+        'cookies_from_browser' download option, updating several widgets.
+
+        Also called by several callbacks.
+
+        Args:
+
+            widget (Gtk.Entry or Gtk.Combo): Ignored
+
+            checkbutton (Gtk.CheckButton): The 'Do not load cookies from
+                browser' checkbutton
+
+            entry (Gtk.Entry): The entry box displaying the download option
+
+            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
+                settings are combined to set the 'cookies_from_browser'
+                download option
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        browser = model[tree_iter][0]
+
+        if browser == '':
+
+            # Special case: reset the other two widgets, which causes further
+            #   calls to this function, in which the download option is updated
+            entry2.set_text('')
+            combo2.set_active(0)
+            return
+
+        # Otherwise, set the new value of 'cookies_from_browser' now
+        tree_iter2 = combo2.get_active_iter()
+        model2 = combo2.get_model()
+        keyring = model2[tree_iter2][0]
+
+        profile_name = entry2.get_text()
+        profile_path = entry3.get_text()
+
+        value = browser
+        if keyring != '':
+            value += '+' + keyring
+
+        if profile_name != '':
+            value += ':' + profile_name
+        elif profile_path != '':
+            value += ':' + profile_path
+
+        self.edit_dict['cookies_from_browser'] = value
+        entry.set_text(value)
+
+        # (To avoid confusion, reset the 'Do not load cookies from browser'
+        #   checkbutton; the user can re-enable it, if they want)
+        checkbutton.set_active(False)
+
+
+    def setup_files_shortcuts_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
-        Sets up the 'Write files' inner notebook tab.
+        Sets up the 'Shortcuts' inner notebook tab.
 
         Args:
 
@@ -5096,12 +6153,65 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Write/move files'),
+            _('_Shortcuts'),
+            inner_notebook,
+        )
+
+        # Internet shortcut options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Internet shortcut options') + '</u>' \
+            + self.ytdlp_only(),
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Write an internet shortcut file (.url, .webloc or .desktop)'),
+            'write_link',
+            0, 1, 1, 1,
+        )
+        self.add_tooltip('--write-link', checkbutton)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Write a Windows internet shortcut file (.url)'),
+            'write_url_link',
+            0, 2, 1, 1,
+        )
+        self.add_tooltip('--write-url-link', checkbutton2)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Write a macOS inernet shortcut file (.webloc)'),
+            'write_webloc_link',
+            0, 3, 1, 1,
+        )
+        self.add_tooltip('--write-webloc-link', checkbutton3)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _('Write a Linux internet shortcut file (.desktop)'),
+            'write_desktop_link',
+            0, 4, 1, 1,
+        )
+        self.add_tooltip('--write-desktop-link', checkbutton4)
+
+
+    def setup_files_write_move_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Write/move' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Write/move'),
             inner_notebook,
         )
         grid_width = 2
 
-        # Write other files options
+        # File write options
         self.add_label(grid,
             '<u>' + _('File write options') + '</u>',
             0, 0, grid_width, 1,
@@ -5176,11 +6286,11 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
-    def setup_files_keep_files_tab(self, inner_notebook):
+    def setup_files_keep_tab(self, inner_notebook):
 
         """Called by self.setup_files_tab().
 
-        Sets up the 'Write files' inner notebook tab.
+        Sets up the 'Keep' inner notebook tab.
 
         Args:
 
@@ -5189,7 +6299,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Keep files'),
+            _('_Keep'),
             inner_notebook,
         )
 
@@ -5739,7 +6849,28 @@ class OptionsEditWin(GenericEditWin):
         Sets up the 'Post-processing' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('_Post-processing'))
+        # Add this tab...
+        tab, grid = self.add_notebook_tab(_('_Post-processing'), 0)
+
+        # ...and an inner notebook...
+        inner_notebook = self.add_inner_notebook(grid)
+
+        # ...with its own tabs
+        self.setup_post_process_general_tab(inner_notebook)
+        self.setup_post_process_ytdlp_tab(inner_notebook)
+
+
+    def setup_post_process_general_tab(self, inner_notebook):
+
+        """Called by self.setup_post_process_tab().
+
+        Sets up the 'General' inner notebook tab.
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_General'),
+            inner_notebook,
+        )
         grid_width = 2
         grid.set_column_homogeneous(True)
 
@@ -5883,6 +7014,90 @@ class OptionsEditWin(GenericEditWin):
             1, 9, 1, 1,
         )
         self.add_tooltip('--fixup POLICY', combo4)
+
+
+    def setup_post_process_ytdlp_tab(self, inner_notebook):
+
+        """Called by self.setup_post_process_tab().
+
+        Sets up the 'yt-dlp' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_yt-dlp'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Post-processing options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Post-processing options') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Remux video into another container if necessary'),
+            0, 1, 1, 1
+        )
+
+        combo_list = [
+            '', 'mp4', 'mkv', 'flv', 'webm', 'mov', 'avi',
+            'mp3', 'mka', 'm4a', 'ogg', 'opus',
+        ]
+
+        combo = self.add_combo(grid,
+            combo_list,
+            'remux_video',
+            1, 1, 1, 1
+        )
+        combo.set_hexpand(True)
+        self.add_tooltip('--remux-video FORMAT', label, combo)
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+                'Embed metadata including chapter markers (if supported by' \
+                + ' format)',
+            ),
+            'embed_metadata',
+            0, 2, grid_width, 1,
+        )
+        self.add_tooltip('--embed-metadata', checkbutton)
+
+        label2 = self.add_label(grid,
+            _('Convert thumbnails to another format'),
+            0, 3, 1, 1
+        )
+
+        combo_list2 = ['', 'jpg', 'png']
+        combo2 = self.add_combo(grid,
+            combo_list2,
+            'convert_thumbnails',
+            1, 3, 1, 1
+        )
+        combo2.set_hexpand(True)
+        self.add_tooltip('--convert-thumbnails FORMAT', label2, combo2)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+                'Split video into multiple files based on internal chapters',
+            ),
+            'split_chapters',
+            0, 4, grid_width, 1,
+        )
+        self.add_tooltip('--split-chapters', checkbutton2)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'N.B. The \'chapter\' prefix can be used in the \'Output\'' \
+                + ' and \'Paths\' tabs',
+            ) + '</i>',
+            0, 5, grid_width, 1
+        )
 
 
     def setup_subtitles_tab(self):
@@ -6061,7 +7276,7 @@ class OptionsEditWin(GenericEditWin):
 
         """Called by self.setup_subtitles_tab().
 
-        Sets up the 'Format' inner notebook tab.
+        Sets up the 'More options' inner notebook tab.
 
         Args:
 
@@ -6118,1159 +7333,6 @@ class OptionsEditWin(GenericEditWin):
             self.on_embed_checkbutton_toggled,
         )
         self.add_tooltip('--embed-subs', self.embed_checkbutton2)
-
-
-    def setup_ytdlp_tab(self):
-
-        """Called by self.setup_tabs().
-
-        Sets up the 'yt-dlp' tab.
-        """
-
-        # Add this tab...
-        tab, grid = self.add_notebook_tab(_('_yt-dlp'), 0)
-
-        # ...and an inner notebook...
-        inner_notebook = self.add_inner_notebook(grid)
-
-        # ...with its own tabs
-        self.setup_ytdlp_output_tab(inner_notebook)
-        self.setup_ytdlp_paths_tab(inner_notebook)
-        self.setup_ytdlp_videos_tab(inner_notebook)
-        self.setup_ytdlp_downloads_tab(inner_notebook)
-        self.setup_ytdlp_filesystem_tab(inner_notebook)
-        self.setup_ytdlp_cookies_tab(inner_notebook)
-        self.setup_ytdlp_shortcuts_tab(inner_notebook)
-        self.setup_ytdlp_verbosity_tab(inner_notebook)
-        self.setup_ytdlp_workarounds_tab(inner_notebook)
-        self.setup_ytdlp_formats_tab(inner_notebook)
-        self.setup_ytdlp_post_process_tab(inner_notebook)
-        self.setup_ytdlp_extractor_tab(inner_notebook)
-
-
-    def setup_ytdlp_output_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Output' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Output'),
-            inner_notebook,
-        )
-        grid_width = 4
-
-        # List of output filename templates
-        self.add_label(grid,
-            '<u>' + _('List of output filename templates') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            '<i>' + _('Overrides the output template in the \'Files\' tab') \
-            + '</i>',
-            0, 1, grid_width, 1,
-        )
-
-        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
-        #   we'll do everything ourselves)
-        frame = Gtk.Frame()
-        grid.attach(frame, 0, 2, grid_width, 1)
-
-        scrolled = Gtk.ScrolledWindow()
-        frame.add(scrolled)
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_vexpand(True)
-
-        treeview = Gtk.TreeView()
-        scrolled.add(treeview)
-        treeview.set_headers_visible(True)
-
-        for i, column_title in enumerate([ _('Type'), _('Template') ]):
-
-            renderer_text = Gtk.CellRendererText()
-            column_text = Gtk.TreeViewColumn(
-                column_title,
-                renderer_text,
-                text=i,
-            )
-            treeview.append_column(column_text)
-            column_text.set_resizable(True)
-
-        liststore = Gtk.ListStore(str, str)
-        treeview.set_model(liststore)
-
-        # Initialise the list
-        self.setup_ytdlp_output_tab_update_treeview(liststore)
-
-        # Add editing buttons
-        label = self.add_label(grid,
-            _('Output type'),
-            0, 3, 1, 1,
-        )
-
-        combo_list = formats.YTDLP_OUTPUT_TYPE_LIST.copy()
-        combo = self.add_combo(grid,
-            combo_list,
-            None,
-            1, 3, 1, 1,
-        )
-        combo.set_active(0)
-
-        label2 = self.add_label(grid,
-            _('Output template'),
-            0, 4, 1, 1,
-        )
-
-        entry = self.add_entry(grid,
-            None,
-            1, 4, (grid_width - 1), 1,
-        )
-
-        button = Gtk.Button()
-        grid.attach(button, 0, 5, 1, 1)
-        button.set_label(_('Add'))
-        button.connect(
-            'clicked',
-            self.on_ytdlp_output_add_button_clicked,
-            liststore,
-            combo,
-            entry,
-        )
-
-        button2 = Gtk.Button()
-        grid.attach(button2, 1, 5, 1, 1)
-        button2.set_label(_('Delete'))
-        button2.connect(
-            'clicked',
-            self.on_ytdlp_output_delete_button_clicked,
-            treeview,
-        )
-
-        button3 = Gtk.Button()
-        grid.attach(button3, 3, 5, 1, 1)
-        button3.set_label(_('Refresh list'))
-        button3.connect(
-            'clicked',
-            self.on_ytdlp_output_refresnh_button_clicked,
-            treeview,
-        )
-
-
-    def setup_ytdlp_output_tab_update_treeview(self, liststore):
-
-        """Can be called by anything.
-
-        Fills or updates the treeview.
-
-        Args:
-
-            liststore (Gtk.ListStore): The treeview's model
-
-        """
-
-        liststore.clear()
-
-        for item in self.retrieve_val('output_format_list'):
-
-            # (Each 'item' is in the form TYPES:TEMPLATE)
-            match = re.search('^([^\:]+)\:(.*)', item)
-            if match:
-                liststore.append([ match.groups()[0], match.groups()[1] ])
-
-
-    def setup_ytdlp_paths_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Paths' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Paths'),
-            inner_notebook,
-        )
-        grid_width = 5
-
-        # List of output paths
-        self.add_label(grid,
-            '<u>' + _('List of output paths') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        # (GenericConfigWin.add_treeview() doesn't support multiple columns, so
-        #   we'll do everything ourselves)
-        frame = Gtk.Frame()
-        grid.attach(frame, 0, 1, grid_width, 1)
-
-        scrolled = Gtk.ScrolledWindow()
-        frame.add(scrolled)
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_vexpand(True)
-
-        treeview = Gtk.TreeView()
-        scrolled.add(treeview)
-        treeview.set_headers_visible(True)
-
-        for i, column_title in enumerate([ _('Type'), _('Path') ]):
-
-            renderer_text = Gtk.CellRendererText()
-            column_text = Gtk.TreeViewColumn(
-                column_title,
-                renderer_text,
-                text=i,
-            )
-            treeview.append_column(column_text)
-            column_text.set_resizable(True)
-
-        liststore = Gtk.ListStore(str, str)
-        treeview.set_model(liststore)
-
-        # Initialise the list
-        self.setup_ytdlp_paths_tab_update_treeview(liststore)
-
-        # Add editing buttons
-        label = self.add_label(grid,
-            _('Output type'),
-            0, 2, 1, 1,
-        )
-
-        combo_list = formats.YTDLP_OUTPUT_TYPE_LIST.copy()
-        combo_list.insert(0, 'home')
-        combo_list.insert(1, 'temp')
-        combo = self.add_combo(grid,
-            combo_list,
-            None,
-            1, 2, 1, 1,
-        )
-        combo.set_active(0)
-
-        label2 = self.add_label(grid,
-            _('Output path'),
-            0, 3, 1, 1,
-        )
-
-        entry = self.add_entry(grid,
-            None,
-            1, 3, (grid_width - 2), 1,
-        )
-        entry.set_editable(False)
-
-        button = Gtk.Button()
-        grid.attach(button, 4, 3, 1, 1)
-        button.set_label(_('Set'))
-        button.connect(
-            'clicked',
-            self.on_ytdlp_paths_set_button_clicked,
-            entry,
-        )
-
-        button2 = Gtk.Button()
-        grid.attach(button2, 0, 4, 1, 1)
-        button2.set_label(_('Add'))
-        button2.connect(
-            'clicked',
-            self.on_ytdlp_paths_add_button_clicked,
-            liststore,
-            combo,
-            entry,
-        )
-
-        button3 = Gtk.Button()
-        grid.attach(button3, 1, 4, 1, 1)
-        button3.set_label(_('Delete'))
-        button3.connect(
-            'clicked',
-            self.on_ytdlp_paths_delete_button_clicked,
-            treeview,
-        )
-
-        button4 = Gtk.Button()
-        grid.attach(button4, 3, 4, 2, 1)
-        button4.set_label(_('Refresh list'))
-        button4.connect(
-            'clicked',
-            self.on_ytdlp_paths_refresh_button_clicked,
-            treeview,
-        )
-
-
-    def setup_ytdlp_paths_tab_update_treeview(self, liststore):
-
-        """Can be called by anything.
-
-        Fills or updates the treeview.
-
-        Args:
-
-            liststore (Gtk.ListStore): The treeview's model
-
-        """
-
-        liststore.clear()
-
-        for item in self.retrieve_val('output_path_list'):
-
-            # (Each 'item' is in the form TYPES:PATH)
-            match = re.search('^([^\:]+)\:(.*)', item)
-            if match:
-                liststore.append([ match.groups()[0], match.groups()[1] ])
-
-
-    def setup_ytdlp_videos_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Videos' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Videos'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Video Selection Options
-        self.add_label(grid,
-            '<u>' + _('Video Selection Options') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Stop download process when encountering a file in the archive'),
-            'break_on_existing',
-            0, 1, grid_width, 1,
-        )
-        self.add_tooltip('--break-on-existing', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Stop download process when encountering a file that has' \
-                + ' been filtered out',
-            ),
-            'break_on_reject',
-            0, 2, grid_width, 1,
-        )
-        self.add_tooltip('--break-on-reject', checkbutton2)
-
-        label = self.add_label(grid,
-            _('Number of failures allowed before rest of playlist is skipped'),
-            0, 3, 1, 1
-        )
-
-        spinbutton = self.add_spinbutton(grid,
-            0, None, 1,
-            'skip_playlist_after_errors',
-            1, 3, 1, 1
-        )
-        self.add_tooltip('--skip-playlist-after-errors N', label, spinbutton)
-
-
-    def setup_ytdlp_downloads_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Downloads' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Downloads'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Download Options
-        self.add_label(grid,
-            '<u>' + _('Download Options') + '</u> <b>[' + _('yt-dlp only') \
-            + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _(
-                'Number of fragments of a DASH/HLS video to download' \
-                + ' concurrently',
-            ),
-            0, 1, 1, 1
-        )
-
-        spinbutton = self.add_spinbutton(grid,
-            1, None, 1,
-            'concurrent_fragments',
-            1, 1, 1, 1
-        )
-        self.add_tooltip('-N, --concurrent-fragments N', label, spinbutton)
-
-        label2 = self.add_label(grid,
-            _(
-                'Minimum download rate (bytes/sec) below which throttling' \
-                + ' is assumed',
-            ),
-            0, 2, 1, 1
-        )
-
-        spinbutton2 = self.add_spinbutton(grid,
-            0, None, 100,
-            'throttled_rate',
-            1, 2, 1, 1
-        )
-        self.add_tooltip('--throttled-rate RATE', label2, spinbutton2)
-
-
-    def setup_ytdlp_filesystem_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Filesystem' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Filesystem'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Filesystem Options
-        self.add_label(grid,
-            '<u>' + _('Filesystem Options') + '</u> <b>[' + _('yt-dlp only') \
-            + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Force filenames to be MS Windows compatible'),
-            'windows_filenames',
-            0, 1, grid_width, 1,
-        )
-        self.add_tooltip('--windows-filenames', checkbutton)
-
-        label = self.add_label(grid,
-            _(
-                'Limit filename length (excluding extension) to this many' \
-                + ' characters',
-            ),
-            0, 2, 1, 1
-        )
-
-        spinbutton = self.add_spinbutton(grid,
-            0, None, 1,
-            'trim_filenames',
-            1, 2, 1, 1
-        )
-        self.add_tooltip('--trim-filenames', label, spinbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Overwrite all video and metadata files (includes' \
-                + ' \'--no-continue\')',
-            ),
-            'force_overwrites',
-            0, 3, grid_width, 1,
-        )
-        self.add_tooltip('--force-overwrites', checkbutton2)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Write playlist metadata in addition to video metadata'),
-            'write_playlist_metafiles',
-            0, 4, grid_width, 1,
-        )
-        self.add_tooltip('--write-playlist-metafiles', checkbutton3)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Write all fields, including private fields, to the' \
-                + ' .info.json file',
-            ),
-            'no_clean_info_json',
-            0, 5, grid_width, 1,
-        )
-        self.add_tooltip('--no-clean-infojson', checkbutton4)
-
-
-    def setup_ytdlp_cookies_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Cookies' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Cookies'),
-            inner_notebook,
-        )
-
-        # Cookie Options
-        self.add_label(grid,
-            '<u>' + _('Cookie Options') + '</u> <b>[' + _('yt-dlp only') \
-            + ']</b>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Do not read/dump cookies from/to the cookiejar file'),
-            'no_cookies',
-            0, 1, 1, 1,
-        )
-        self.add_tooltip('--no-cookies', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Do not load cookies from browser'),
-            'no_cookies_from_browser',
-            0, 2, 1, 1,
-        )
-        self.add_tooltip('--no-cookies-from-browser', checkbutton2)
-
-        # (To avoid messing up the neat format of the rows above, add a
-        #   secondary grid, and put the next set of widgets inside it)
-        grid2 = self.add_secondary_grid(grid, 0, 3, 1, 1)
-
-        label = self.add_label(grid2,
-            _('Retrieve cookies from browser'),
-            0, 0, 1, 1
-        )
-        label.set_hexpand(False)
-
-        entry = self.add_entry(grid2,
-            None,
-            1, 0, 1, 1,
-        )
-        entry.set_hexpand(True)
-        entry.set_editable(False)
-        entry.set_text(self.retrieve_val('cookies_from_browser'))
-
-        # (To avoid messing up the neat format of the rows above, add a
-        #   secondary grid, and put the next set of widgets inside it)
-        grid3 = self.add_secondary_grid(grid, 0, 4, 1, 1)
-
-        self.add_label(grid3,
-            _('Browser'),
-            0, 0, 1, 1
-        )
-
-        combo_list = [
-            '', 'brave', 'chrome', 'chromium', 'edge', 'firefox', 'opera',
-            'safari', 'vivaldi',
-        ]
-        combo = self.add_combo(grid3,
-            combo_list,
-            None,
-            1, 0, 1, 1
-        )
-        combo.set_active(0)
-        combo.set_hexpand(True)
-        # (Signal connect appears below)
-
-        self.add_label(grid3,
-            _('Chromium keyring'),
-            2, 0, 1, 1
-        )
-
-        combo_list2 = ['', 'basictext', 'gnomekeyring', 'kwallet']
-        combo2 = self.add_combo(grid3,
-            combo_list2,
-            None,
-            3, 0, 1, 1
-        )
-        combo2.set_active(0)
-        combo2.set_hexpand(True)
-        # (Signal connect appears below)
-
-        # (To avoid messing up the neat format of the rows above, add a
-        #   secondary grid, and put the next set of widgets inside it)
-        grid4 = self.add_secondary_grid(grid, 0, 5, 1, 1)
-
-        label2 = self.add_label(grid4,
-            _('Browser profile name (optional)'),
-            0, 0, 1, 1
-        )
-        label2.set_hexpand(False)
-
-        entry2 = self.add_entry(grid4,
-            None,
-            1, 0, 3, 1,
-        )
-        entry2.set_hexpand(True)
-        # (Signal connect appears below)
-
-        label3 = self.add_label(grid4,
-            _('Browser profile path (optional)'),
-            0, 1, 1, 1
-        )
-        label3.set_hexpand(False)
-
-        entry3 = self.add_entry(grid4,
-            None,
-            1, 1, 1, 1,
-        )
-        entry3.set_hexpand(True)
-        entry3.set_editable(False)
-
-        set_button = Gtk.Button(_('Set'))
-        grid4.attach(set_button, 2, 1, 1, 1)
-        # (Signal connect appears below)
-
-        reset_button = Gtk.Button(_('Reset'))
-        grid4.attach(reset_button, 3, 1, 1, 1)
-        # (Signal connect appears below)
-
-        self.add_tooltip(
-            '--cookies-from-browser BROWSER[+KEYRING][:PROFILE]',
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-
-        # Set the initial values for those widgets, retrieving them from the
-        #   'cookies_from_browser' download option
-        match = re.search(
-            '^([^+:]+)(\+[^+:]+)?(\:.*)?',
-            self.retrieve_val('cookies_from_browser'),
-        )
-        if match:
-            browser = match.groups()[0]
-            keyring = match.groups()[1]
-            profile = match.groups()[2]
-
-            if browser != '':
-
-                for i in range(len(combo_list)):
-                    if combo_list[i] == browser:
-                        combo.set_active(i)
-                        break
-
-                if keyring != '':
-
-                    # (Remove initial +/: characters)
-                    keyring = keyring[1:]
-
-                    for i in range(len(combo_list2)):
-                        if combo_list2[i] == keyring:
-                            combo2.set_active(i)
-                            break
-
-                if profile != '':
-
-                    # (Remove initial +/: characters)
-                    profile = profile[1:]
-
-                    # This might be a profile name, or a profile path. Assume
-                    #   it's a name unless the path exists
-                    if not os.path.isfile(profile):
-                        entry2.set_text(profile)
-                    else:
-                        entry3.set_text(profile)
-
-        # (Signal connects from above)
-        combo.connect(
-            'changed',
-            self.setup_ytdlp_cookies_tab_update,
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-        combo2.connect(
-            'changed',
-            self.setup_ytdlp_cookies_tab_update,
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-        entry2.connect(
-            'changed',
-            self.on_cookies_ytdlp_entry_changed,
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-        set_button.connect(
-            'clicked',
-            self.on_cookies_ytdlp_set_button_clicked,
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-        reset_button.connect(
-            'clicked',
-            self.on_cookies_ytdlp_reset_button_clicked,
-            entry,
-            combo,
-            combo2,
-            entry2,
-            entry3,
-        )
-
-
-    def setup_ytdlp_cookies_tab_update(self, widget, entry, combo, combo2, \
-    entry2, entry3):
-
-        """Called by self.setup_ytdlp_cookies_tab() to set the
-        'cookies_from_browser' download option, updating several widgets.
-
-        Also called by several callbacks.
-
-        Args:
-
-            widget (Gtk.Entry or Gtk.Combo): Ignored
-
-            entry (Gtk.Entry): The entry box displaying the download option
-
-            combo, combo2, entry2, entry3 (Gtk.Combo, Gtk.Entry): Widgets whose
-                settings are combined to set the 'cookies_from_browser'
-                download option
-
-        """
-
-        tree_iter = combo.get_active_iter()
-        model = combo.get_model()
-        browser = model[tree_iter][0]
-
-        if browser == '':
-
-            # Special case: reset the other two widgets, which causes further
-            #   calls to this function, in which the download option is updated
-            entry2.set_text('')
-            combo2.set_active(0)
-            return
-
-        # Otherwise, set the new value of 'cookies_from_browser' now
-        tree_iter2 = combo2.get_active_iter()
-        model2 = combo2.get_model()
-        keyring = model2[tree_iter2][0]
-
-        profile_name = entry2.get_text()
-        profile_path = entry3.get_text()
-
-        value = browser
-        if keyring != '':
-            value += '+' + keyring
-
-        if profile_name != '':
-            value += ':' + profile_name
-        elif profile_path != '':
-            value += ':' + profile_path
-
-        self.edit_dict['cookies_from_browser'] = value
-        entry.set_text(value)
-
-
-    def setup_ytdlp_shortcuts_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Shortcuts' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Shortcuts'),
-            inner_notebook,
-        )
-
-        # Internet Shortcut Options
-        self.add_label(grid,
-            '<u>' + _('Internet Shortcut Options') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Write an internet shortcut file (.url, .webloc or .desktop)'),
-            'write_link',
-            0, 1, 1, 1,
-        )
-        self.add_tooltip('--write-link', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Write a Windows internet shortcut file (.url)'),
-            'write_url_link',
-            0, 2, 1, 1,
-        )
-        self.add_tooltip('--write-url-link', checkbutton2)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Write a macOS inernet shortcut file (.webloc)'),
-            'write_webloc_link',
-            0, 3, 1, 1,
-        )
-        self.add_tooltip('--write-webloc-link', checkbutton3)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _('Write a Linux internet shortcut file (.desktop)'),
-            'write_desktop_link',
-            0, 4, 1, 1,
-        )
-        self.add_tooltip('--write-desktop-link', checkbutton4)
-
-
-    def setup_ytdlp_verbosity_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Verbosity' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('V_erbosity'),
-            inner_notebook,
-        )
-
-        # Verbosity and Simulation Options
-        self.add_label(grid,
-            '<u>' + _('Verbosity and Simulation Options') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-                'Ignore \'No video formats\' error (useful for extracting' \
-                + ' metadata from unavailable videos)',
-            ),
-            'ignore_no_formats_error',
-            0, 1, 1, 1,
-        )
-        self.add_tooltip('--ignore-no-formats-error', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Force download archive entries to be written as long as' \
-                + ' no errors occur',
-            ),
-            'force_write_archive',
-            0, 2, 1, 1,
-        )
-        self.add_tooltip('--force-write-archive', checkbutton2)
-
-
-    def setup_ytdlp_workarounds_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Workarounds' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Workarounds'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Workaround Options
-        self.add_label(grid,
-            '<u>' + _('Workaround Options') + '</u> <b>[' + _('yt-dlp only') \
-            + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _(
-                'Number of seconds to sleep between requests during data' \
-                + ' extraction',
-            ),
-            0, 1, 1, 1
-        )
-
-        spinbutton = self.add_spinbutton(grid,
-            0, None, 1,
-            'sleep_requests',
-            1, 1, 1, 1
-        )
-        self.add_tooltip('--sleep-requests SECONDS', label, spinbutton)
-
-        label2 = self.add_label(grid,
-            _(
-                'Number of seconds to sleep before each download (or minimum' \
-                + ' time)',
-            ),
-            0, 2, 1, 1
-        )
-
-        spinbutton2 = self.add_spinbutton(grid,
-            0, None, 1,
-            'sleep_subtitles',
-            1, 2, 1, 1
-        )
-        self.add_tooltip('--sleep-subtitles SECONDS', label2, spinbutton2)
-
-
-    def setup_ytdlp_formats_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Formats' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('Fo_rmats'),
-            inner_notebook,
-        )
-
-        # Video Format Options
-        self.add_label(grid,
-            '<u>' + _('Video Format Options') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, 1, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Allow multiple video streams to be merged into a single file'),
-            'video_multistreams',
-            0, 1, 1, 1,
-        )
-        self.add_tooltip('--video-multistreams', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('Allow multiple audio streams to be merged into a single file'),
-            'audio_multistreams',
-            0, 2, 1, 1,
-        )
-        self.add_tooltip('--audio-multistreams', checkbutton2)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _(
-                'Check formats selected are actually downloadable' \
-                + ' (Experimental)',
-            ),
-            'check_formats',
-            0, 3, 1, 1,
-        )
-        self.add_tooltip('--check-formats', checkbutton3)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Allow unplayable formats to be listed and downloaded (also' \
-                + ' disables post-processing)',
-            ),
-            'allow_unplayable_formats',
-            0, 4, 1, 1,
-        )
-        self.add_tooltip('--allow-unplayable-formats', checkbutton4)
-
-
-    def setup_ytdlp_post_process_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Post-Process' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Post-processing'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Post-Processing Options
-        self.add_label(grid,
-            '<u>' + _('Post-Processing Options') + '</u> <b>[' \
-            + _('yt-dlp only') + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _('Remux video into another container if necessary'),
-            0, 1, 1, 1
-        )
-
-        combo_list = [
-            '', 'mp4', 'mkv', 'flv', 'webm', 'mov', 'avi',
-            'mp3', 'mka', 'm4a', 'ogg', 'opus',
-        ]
-
-        combo = self.add_combo(grid,
-            combo_list,
-            'remux_video',
-            1, 1, 1, 1
-        )
-        combo.set_hexpand(True)
-        self.add_tooltip('--remux-video FORMAT', label, combo)
-
-        checkbutton = self.add_checkbutton(grid,
-            _(
-                'Embed metadata including chapter markers (if supported by' \
-                + ' format)',
-            ),
-            'embed_metadata',
-            0, 2, grid_width, 1,
-        )
-        self.add_tooltip('--embed-metadata', checkbutton)
-
-        label2 = self.add_label(grid,
-            _('Convert thumbnails to another format'),
-            0, 3, 1, 1
-        )
-
-        combo_list2 = ['', 'jpg', 'png']
-        combo2 = self.add_combo(grid,
-            combo_list2,
-            'convert_thumbnails',
-            1, 3, 1, 1
-        )
-        combo2.set_hexpand(True)
-        self.add_tooltip('--convert-thumbnails FORMAT', label2, combo2)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Split video into multiple files based on internal chapters',
-            ),
-            'split_chapters',
-            0, 4, grid_width, 1,
-        )
-        self.add_tooltip('--split-chapters', checkbutton2)
-
-        self.add_label(grid,
-            '<i>' + _(
-                'N.B. The \'chapter\' prefix can be used in the \'Output\'' \
-                + ' and \'Paths\' tabs',
-            ) + '</i>',
-            0, 5, grid_width, 1
-        )
-
-
-    def setup_ytdlp_extractor_tab(self, inner_notebook):
-
-        """Called by self.setup_ytdlp_tab().
-
-        Sets up the 'Extractor' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('E_xtractor'),
-            inner_notebook,
-        )
-        grid_width = 2
-
-        # Extractor Options
-        self.add_label(grid,
-            '<u>' + _('Extractor Options') + '</u> <b>[' + _('yt-dlp only') \
-            + ']</b>',
-            0, 0, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            'Number of retries for known extractor errors',
-            0, 1, 1, 1,
-        )
-
-        combo_list = [
-            '', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'infinite',
-        ]
-
-        combo = self.add_combo(grid,
-            combo_list,
-            'extractor_retries',
-            1, 1, 1, 1
-        )
-        combo.set_hexpand(True)
-        self.add_tooltip('--extractor-retries RETRIES', label, combo)
-
-        checkbutton = self.add_checkbutton(grid,
-            _('Do not process dynamic DASH manifests'),
-            'no_allow_dynamic_mpd',
-            0, 2, grid_width, 1,
-        )
-        self.add_tooltip('--no-allow-dynamic-mpd', checkbutton)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Split HLS playlists to different formats at discontinuities' \
-                + ' such as ad breaks',
-            ),
-            'hls_split_discontinuity',
-            0, 3, grid_width, 1,
-        )
-        self.add_tooltip('--hls-split-discontinuity', checkbutton2)
-
-        # Extractor Arguments
-        self.add_label(grid,
-            '<u>' + _('Extractor Arguments') + '</u>',
-            0, 4, grid_width, 1,
-        )
-
-        label2 = self.add_label(grid,
-            '<i>' + _('One argument per line, e.g.') \
-            + '</i> youtube:skip=dash,hls;player_client=android',
-            0, 5, grid_width, 1,
-        )
-
-        textview, textbuffer = self.add_textview(grid,
-            'extractor_args_list',
-            0, 6, grid_width, 1,
-        )
-        self.add_tooltip('--extractor-args KEY:ARGS', label2, textview)
 
 
     def setup_advanced_tab(self):
@@ -7577,7 +7639,7 @@ class OptionsEditWin(GenericEditWin):
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(_('_Network'), inner_notebook)
+        tab, grid = self.add_inner_notebook_tab(_('N_etwork'), inner_notebook)
         grid_width = 2
 
         # Network options
@@ -7814,6 +7876,42 @@ class OptionsEditWin(GenericEditWin):
         )
         self.add_tooltip('--prefer-insecure', checkbutton2)
 
+        # Workaround options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Workaround options') + '</u>' + self.ytdlp_only(),
+            0, 8, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _(
+                'Number of seconds to sleep between requests during data' \
+                + ' extraction',
+            ),
+            0, 9, 1, 1
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            0, None, 1,
+            'sleep_requests',
+            1, 9, 1, 1
+        )
+        self.add_tooltip('--sleep-requests SECONDS', label, spinbutton)
+
+        label2 = self.add_label(grid,
+            _(
+                'Number of seconds to sleep before each download (or minimum' \
+                + ' time)',
+            ),
+            0, 10, 1, 1
+        )
+
+        spinbutton2 = self.add_spinbutton(grid,
+            0, None, 1,
+            'sleep_subtitles',
+            1, 10, 1, 1
+        )
+        self.add_tooltip('--sleep-subtitles SECONDS', label2, spinbutton2)
+
 
     # (Tab support functions - general)
 
@@ -7881,6 +7979,203 @@ class OptionsEditWin(GenericEditWin):
     # (Tab support functions - Downloads tab)
 
 
+    def downloads_age_widgets(self, grid, row_count):
+
+        """Called by various parts of the Downloads tabs."""
+
+        # Video age options
+        self.add_label(grid,
+            '<u>' + _('Video age options') + '</u>',
+            0, row_count, 1, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Download videos suitable for this age'),
+            0, (row_count + 1), 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'age_limit',
+            1, (row_count + 1), 1, 1,
+        )
+        self.add_tooltip('--age-limit YEARS', label, entry)
+
+        return row_count + 2
+
+
+    def downloads_date_widgets(self, grid, row_count):
+
+        """Called by various parts of the Downloads tabs."""
+
+        grid_width = 3
+
+        # Video date options
+        self.add_label(grid,
+            '<u>' + _('Video date options') + '</u>',
+            0, row_count, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Only videos uploaded on this date'),
+            0, (row_count + 1), (grid_width - 2), 1,
+        )
+
+        entry = self.add_entry(grid,
+            'date',
+            (grid_width - 2), (row_count + 1), 1, 1,
+        )
+        entry.set_editable(False)
+
+        button = Gtk.Button(_('Set'))
+        grid.attach(button, (grid_width - 1), (row_count + 1), 1, 1)
+        button.connect(
+            'clicked',
+            self.on_button_set_date_clicked,
+            entry,
+            'date',
+        )
+        self.add_tooltip('--date DATE', label, entry, button)
+
+        label2 = self.add_label(grid,
+            _('Only videos uploaded before this date'),
+            0, (row_count + 2), (grid_width - 2), 1,
+        )
+
+        entry2 = self.add_entry(grid,
+            'date_before',
+            (grid_width - 2), (row_count + 2), 1, 1,
+        )
+        entry2.set_editable(False)
+
+        button2 = Gtk.Button(_('Set'))
+        grid.attach(button2, (grid_width - 1), (row_count + 2), 1, 1)
+        button2.connect(
+            'clicked',
+            self.on_button_set_date_clicked,
+            entry2,
+            'date_before',
+        )
+        self.add_tooltip('--datebefore DATE', label2, entry2, button2)
+
+        label3 = self.add_label(grid,
+            _('Only videos uploaded after this date'),
+            0, (row_count + 3), (grid_width - 2), 1,
+        )
+
+        entry3 = self.add_entry(grid,
+            'date_after',
+            (grid_width - 2), (row_count + 3), 1, 1,
+        )
+        entry3.set_editable(False)
+
+        button3 = Gtk.Button(_('Set'))
+        grid.attach(button3, (grid_width - 1), (row_count + 3), 1, 1)
+        button3.connect(
+            'clicked',
+            self.on_button_set_date_clicked,
+            entry3,
+            'date_after',
+        )
+        self.add_tooltip('--dateafter DATE', label3, entry3, button3)
+
+        return row_count + 4
+
+
+    def downloads_external_widgets(self, grid, row_count):
+
+        """Called by various parts of the Downloads tabs."""
+
+        grid_width = 2
+
+        # External downloader options
+        self.add_label(grid,
+            '<u>' + _('External downloader options') + '</u>',
+            0, row_count, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Use this external downloader'),
+            0, (row_count + 1), 1, 1,
+        )
+
+        ext_list = [
+            '', 'aria2c', 'avconv', 'axel', 'curl', 'ffmpeg', 'httpie',
+            'wget',
+        ]
+
+        combo = self.add_combo(grid,
+            ext_list,
+            'external_downloader',
+            1, (row_count + 1), 1, 1,
+        )
+        combo.set_hexpand(True)
+        self.add_tooltip('--external-downloader COMMAND', label, combo)
+
+        label2 = self.add_label(grid,
+            _('Arguments to pass to external downloader'),
+            0, (row_count + 2), grid_width, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'external_arg_string',
+            0, (row_count + 3), grid_width, 1,
+        )
+        self.add_tooltip('--external-downloader-args ARGS', label2, entry)
+
+        return row_count + 4
+
+
+    def downloads_filtering_widgets(self, grid, row_count):
+
+        """Called by various parts of the Downloads tabs."""
+
+        grid_width = 3
+
+        # Video filtering options
+        self.add_label(grid,
+            '<u>' + _('Video filtering options') + '</u>',
+            0, row_count, grid_width, 1,
+        )
+
+        label = self.add_label(grid,
+            _('Download only matching titles (regex or caseless substring)'),
+            0, (row_count + 1), grid_width, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            'match_title_list',
+            0, (row_count + 2), grid_width, 1,
+        )
+        self.add_tooltip('--match-title REGEX', label, textview)
+
+        label2 = self.add_label(grid,
+            _(
+            'Don\'t download only matching titles (regex or caseless' \
+            + ' substring)',
+            ),
+            0, (row_count + 3), grid_width, 1,
+        )
+
+        textview2, textbuffer2 = self.add_textview(grid,
+            'reject_title_list',
+            0, (row_count + 4), grid_width, 1,
+        )
+        self.add_tooltip('--reject-title REGEX', label2, textview2)
+
+        label3 = self.add_label(grid,
+            _('Generic video filter, for example:') + ' like_count > 100',
+            0, (row_count + 5), grid_width, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'match_filter',
+            0, (row_count + 6), grid_width, 1,
+        )
+        self.add_tooltip('--match-filter FILTER', label3, entry)
+
+        return row_count + 7
+
+
     def downloads_general_widgets(self, grid, row_count):
 
         """Called by various parts of the Downloads tabs."""
@@ -7928,26 +8223,6 @@ class OptionsEditWin(GenericEditWin):
         self.add_tooltip('-R, --retries RETRIES', label, spinbutton)
 
         return row_count + 5
-
-
-    def downloads_age_widgets(self, grid, row_count):
-
-        """Called by various parts of the Downloads tabs."""
-
-        grid_width = 3
-
-        label = self.add_label(grid,
-            _('Download videos suitable for this age'),
-            0, row_count, 1, 1,
-        )
-
-        entry = self.add_entry(grid,
-            'age_limit',
-            1, row_count, 1, 1,
-        )
-        self.add_tooltip('--age-limit YEARS', label, entry)
-
-        return row_count + 2
 
 
     def downloads_playlist_widgets(self, grid, row_count):
@@ -8036,6 +8311,7 @@ class OptionsEditWin(GenericEditWin):
 
         grid_width = 3
 
+        # Video size limit options
         self.add_label(grid,
             '<u>' + _('Video size limit options') + '</u>',
             0, row_count, grid_width, 1,
@@ -8080,84 +8356,6 @@ class OptionsEditWin(GenericEditWin):
         return row_count + 3
 
 
-    def downloads_date_widgets(self, grid, row_count):
-
-        """Called by various parts of the Downloads tabs."""
-
-        grid_width = 3
-
-        # Video date options
-        self.add_label(grid,
-            '<u>' + _('Video date options') + '</u>',
-            0, row_count, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _('Only videos uploaded on this date'),
-            0, (row_count + 1), (grid_width - 2), 1,
-        )
-
-        entry = self.add_entry(grid,
-            'date',
-            (grid_width - 2), (row_count + 1), 1, 1,
-        )
-        entry.set_editable(False)
-
-        button = Gtk.Button(_('Set'))
-        grid.attach(button, (grid_width - 1), (row_count + 1), 1, 1)
-        button.connect(
-            'clicked',
-            self.on_button_set_date_clicked,
-            entry,
-            'date',
-        )
-        self.add_tooltip('--date DATE', label, entry, button)
-
-        label2 = self.add_label(grid,
-            _('Only videos uploaded before this date'),
-            0, (row_count + 2), (grid_width - 2), 1,
-        )
-
-        entry2 = self.add_entry(grid,
-            'date_before',
-            (grid_width - 2), (row_count + 2), 1, 1,
-        )
-        entry2.set_editable(False)
-
-        button2 = Gtk.Button(_('Set'))
-        grid.attach(button2, (grid_width - 1), (row_count + 2), 1, 1)
-        button2.connect(
-            'clicked',
-            self.on_button_set_date_clicked,
-            entry2,
-            'date_before',
-        )
-        self.add_tooltip('--datebefore DATE', label2, entry2, button2)
-
-        label3 = self.add_label(grid,
-            _('Only videos uploaded after this date'),
-            0, (row_count + 3), (grid_width - 2), 1,
-        )
-
-        entry3 = self.add_entry(grid,
-            'date_after',
-            (grid_width - 2), (row_count + 3), 1, 1,
-        )
-        entry3.set_editable(False)
-
-        button3 = Gtk.Button(_('Set'))
-        grid.attach(button3, (grid_width - 1), (row_count + 3), 1, 1)
-        button3.connect(
-            'clicked',
-            self.on_button_set_date_clicked,
-            entry3,
-            'date_after',
-        )
-        self.add_tooltip('--dateafter DATE', label3, entry3, button3)
-
-        return row_count + 4
-
-
     def downloads_views_widgets(self, grid, row_count):
 
         """Called by various parts of the Downloads tabs."""
@@ -8200,100 +8398,6 @@ class OptionsEditWin(GenericEditWin):
             spinbutton2.set_hexpand(True)
 
         return row_count + 3
-
-
-    def downloads_filtering_widgets(self, grid, row_count):
-
-        """Called by various parts of the Downloads tabs."""
-
-        grid_width = 3
-
-        self.add_label(grid,
-            '<u>' + _('Video filtering options') + '</u>',
-            0, row_count, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _('Download only matching titles (regex or caseless substring)'),
-            0, (row_count + 1), grid_width, 1,
-        )
-
-        textview, textbuffer = self.add_textview(grid,
-            'match_title_list',
-            0, (row_count + 2), grid_width, 1,
-        )
-        self.add_tooltip('--match-title REGEX', label, textview)
-
-        label2 = self.add_label(grid,
-            _(
-            'Don\'t download only matching titles (regex or caseless' \
-            + ' substring)',
-            ),
-            0, (row_count + 3), grid_width, 1,
-        )
-
-        textview2, textbuffer2 = self.add_textview(grid,
-            'reject_title_list',
-            0, (row_count + 4), grid_width, 1,
-        )
-        self.add_tooltip('--reject-title REGEX', label2, textview2)
-
-        label3 = self.add_label(grid,
-            _('Generic video filter, for example:') + ' like_count > 100',
-            0, (row_count + 5), grid_width, 1,
-        )
-
-        entry = self.add_entry(grid,
-            'match_filter',
-            0, (row_count + 6), grid_width, 1,
-        )
-        self.add_tooltip('--match-filter FILTER', label3, entry)
-
-        return row_count + 7
-
-
-    def downloads_external_widgets(self, grid, row_count):
-
-        """Called by various parts of the Downloads tabs."""
-
-        grid_width = 2
-
-        # External downloader options
-        self.add_label(grid,
-            '<u>' + _('External downloader options') + '</u>',
-            0, row_count, grid_width, 1,
-        )
-
-        label = self.add_label(grid,
-            _('Use this external downloader'),
-            0, (row_count + 1), 1, 1,
-        )
-
-        ext_list = [
-            '', 'aria2c', 'avconv', 'axel', 'curl', 'ffmpeg', 'httpie',
-            'wget',
-        ]
-
-        combo = self.add_combo(grid,
-            ext_list,
-            'external_downloader',
-            1, (row_count + 1), 1, 1,
-        )
-        combo.set_hexpand(True)
-        self.add_tooltip('--external-downloader COMMAND', label, combo)
-
-        label2 = self.add_label(grid,
-            _('Arguments to pass to external downloader'),
-            0, (row_count + 2), grid_width, 1,
-        )
-
-        entry = self.add_entry(grid,
-            'external_arg_string',
-            0, (row_count + 3), grid_width, 1,
-        )
-        self.add_tooltip('--external-downloader-args ARGS', label2, entry)
-
-        return row_count + 4
 
 
     # Callback class methods
@@ -8433,7 +8537,7 @@ class OptionsEditWin(GenericEditWin):
     def on_cookies_ytdlp_entry_changed(self, widget, entry, combo, \
     combo2, entry2, entry3):
 
-        """Called by callback in self.setup_ytdlp_cookies_tab().
+        """Called by callback in self.setup_files_cookies_tab().
 
         Args:
 
@@ -8453,7 +8557,7 @@ class OptionsEditWin(GenericEditWin):
             entry3.set_text('')
 
         # Update the download option, and display it in 'entry'
-        self.setup_ytdlp_cookies_tab_update(
+        self.setup_files_cookies_tab_update(
             None,
             entry,
             combo,
@@ -8466,7 +8570,7 @@ class OptionsEditWin(GenericEditWin):
     def on_cookies_ytdlp_reset_button_clicked(self, button, entry, combo, \
     combo2, entry2, entry3):
 
-        """Called by callback in self.setup_ytdlp_cookies_tab().
+        """Called by callback in self.setup_files_cookies_tab().
 
         Args:
 
@@ -8483,7 +8587,7 @@ class OptionsEditWin(GenericEditWin):
         entry3.set_text('')
 
         # Update the download option, and display it in 'entry'
-        self.setup_ytdlp_cookies_tab_update(
+        self.setup_files_cookies_tab_update(
             None,
             entry,
             combo,
@@ -8496,7 +8600,7 @@ class OptionsEditWin(GenericEditWin):
     def on_cookies_ytdlp_set_button_clicked(self, button, entry, combo, \
     combo2, entry2, entry3):
 
-        """Called by callback in self.setup_ytdlp_cookies_tab().
+        """Called by callback in self.setup_files_cookies_tab().
 
         Args:
 
@@ -8532,7 +8636,7 @@ class OptionsEditWin(GenericEditWin):
                 entry2.set_text('')
 
         # Update the download option, and display it in 'entry'
-        self.setup_ytdlp_cookies_tab_update(
+        self.setup_files_cookies_tab_update(
             None,
             entry,
             combo,
@@ -9451,7 +9555,7 @@ class OptionsEditWin(GenericEditWin):
     def on_ytdlp_output_add_button_clicked(self, button, liststore, combo, \
     entry):
 
-        """Called from callback in self.setup_ytdlp_output_tab().
+        """Called from callback in self.setup_files_override_tab().
 
         Adds a template to the 'output_format_list' option.
 
@@ -9502,12 +9606,12 @@ class OptionsEditWin(GenericEditWin):
         # Update the option
         self.edit_dict['output_format_list'] = mod_list
         # Update the treeview
-        self.setup_ytdlp_output_tab_update_treeview(liststore)
+        self.setup_files_override_tab_update_treeview(liststore)
 
 
     def on_ytdlp_output_delete_button_clicked(self, button, treeview):
 
-        """Called from a callback in self.setup_ytdlp_output_tab().
+        """Called from a callback in self.setup_files_override_tab().
 
         Deletes the selected template to the 'output_format_list' option.
 
@@ -9548,12 +9652,12 @@ class OptionsEditWin(GenericEditWin):
         # Update the option
         self.edit_dict['output_format_list'] = mod_list
         # Update the treeview
-        self.setup_ytdlp_output_tab_update_treeview(treeview.get_model())
+        self.setup_files_override_tab_update_treeview(treeview.get_model())
 
 
     def on_ytdlp_output_refresnh_button_clicked(self, button, treeview):
 
-        """Called from a callback in self.setup_ytdlp_output_tab().
+        """Called from a callback in self.setup_files_override_tab().
 
         Refreshes the treeview.
 
@@ -9566,13 +9670,13 @@ class OptionsEditWin(GenericEditWin):
         """
 
         # Update the treeview
-        self.setup_ytdlp_output_tab_update_treeview(treeview.get_model())
+        self.setup_files_override_tab_update_treeview(treeview.get_model())
 
 
     def on_ytdlp_paths_add_button_clicked(self, button, liststore, combo, \
     entry):
 
-        """Called from callback in self.setup_ytdlp_paths_tab().
+        """Called from callback in self.setup_files_paths_tab().
 
         Adds a path to the 'output_path_list' option.
 
@@ -9623,12 +9727,12 @@ class OptionsEditWin(GenericEditWin):
         # Update the option
         self.edit_dict['output_path_list'] = mod_list
         # Update the treeview
-        self.setup_ytdlp_paths_tab_update_treeview(liststore)
+        self.setup_files_paths_tab_update_treeview(liststore)
 
 
     def on_ytdlp_paths_delete_button_clicked(self, button, treeview):
 
-        """Called from a callback in self.setup_ytdlp_paths_tab().
+        """Called from a callback in self.setup_files_paths_tab().
 
         Deletes the selected path to the 'output_path_list' option.
 
@@ -9669,12 +9773,12 @@ class OptionsEditWin(GenericEditWin):
         # Update the option
         self.edit_dict['output_path_list'] = mod_list
         # Update the treeview
-        self.setup_ytdlp_paths_tab_update_treeview(treeview.get_model())
+        self.setup_files_paths_tab_update_treeview(treeview.get_model())
 
 
     def on_ytdlp_paths_refresh_button_clicked(self, button, treeview):
 
-        """Called from a callback in self.setup_ytdlp_paths_tab().
+        """Called from a callback in self.setup_files_paths_tab().
 
         Refreshes the treeview.
 
@@ -9687,12 +9791,12 @@ class OptionsEditWin(GenericEditWin):
         """
 
         # Update the treeview
-        self.setup_ytdlp_paths_tab_update_treeview(treeview.get_model())
+        self.setup_files_paths_tab_update_treeview(treeview.get_model())
 
 
     def on_ytdlp_paths_set_button_clicked(self, button, entry):
 
-        """Called from a callback in self.setup_ytdlp_paths_tab().
+        """Called from a callback in self.setup_files_paths_tab().
 
         Opens a file chooser dialogue to set the contents of the entry box.
 
@@ -10369,7 +10473,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
         grid_width = 7
         self.settings_grid = grid
 
-        # Input mode
+        # Source
         label = self.add_label(grid,
             '<u>' + _('Source') + '</u>',
             0, 0, 1, 1,
@@ -10410,7 +10514,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             self.input_mode_radiobutton2.set_active(True)
         # (Signal connect appears below)
 
-        # Output mode
+        # Output
         label2 = self.add_label(grid,
             '<u>' + _('Output') + '</u>',
             0, 1, 1, 1,
@@ -13772,6 +13876,7 @@ class VideoEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_General'))
 
+        # General properties
         self.add_label(grid,
             '<u>' + _('General properties') + '</u>',
             0, 0, 3, 1,
@@ -14025,7 +14130,9 @@ class VideoEditWin(GenericEditWin):
         if self.edit_obj.live_mode == 1:
             entry.set_text(_('Waiting to start'))
         elif self.edit_obj.live_mode == 2:
-            entry.set_text(_('Stream has started'))
+            entry.set_text(_('Livestream has started'))
+        elif self.edit_obj.was_live_flag:
+            entry.set_text(_('Livestream has finished'))
         else:
             entry.set_text(_('Not a livestream'))
 
@@ -14055,6 +14162,7 @@ class VideoEditWin(GenericEditWin):
         and not self.edit_obj.parent_obj.name \
         in self.app_obj.media_unavailable_dict:
 
+            # Livestream actions
             self.add_label(grid,
                 '<u>' + _('Livestream actions') + '</u>',
                 0, 4, grid_width, 1,
@@ -14361,9 +14469,9 @@ class VideoEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Slices'))
         grid_width = 4
 
-        # Video Slices
+        # Video slices
         self.add_label(grid,
-            '<u>' + _('Video Slices') + '</u>',
+            '<u>' + _('Video slices') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -14546,9 +14654,9 @@ class VideoEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Comments'))
         grid_width = 3
 
-        # Comments
+        # Comments (yt-dlp only)
         label = self.add_label(grid,
-            '<u>' + _('Comments') + '</u> <b>[' + _('yt-dlp only') + ']</b>',
+            '<u>' + _('Comments') + '</u>' + self.ytdlp_only(),
             0, 0, 1, 1,
         )
         label.set_hexpand(True)
@@ -15159,6 +15267,7 @@ class VideoEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_Errors / Warnings'))
 
+        # Errors / Warnings
         self.add_label(grid,
             '<u>' + _('Errors / Warnings') + '</u>',
             0, 0, 1, 1,
@@ -15980,6 +16089,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_General'))
 
+        # General properties
         self.add_label(grid,
             '<u>' + _('General properties') + '</u>',
             0, 0, 3, 1,
@@ -16108,6 +16218,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Associated Playlists'))
         grid_width = 4
 
+        # Associated playlists
         self.add_label(grid,
             '<u>' + _('Associated playlists') + '</u>',
             0, 0, grid_width, 1,
@@ -16245,6 +16356,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_History'))
         grid_width = 6
 
+        # Download history
         self.add_label(grid,
             '<u>' + _('Download history') + '</u>',
             0, 0, grid_width, 1,
@@ -16290,6 +16402,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_RSS feed'))
 
+        # RSS feed
         self.add_label(grid,
             '<u>' + _('RSS feed') + '</u>',
             0, 0, 1, 1,
@@ -16332,6 +16445,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_Errors / Warnings'))
 
+        # Errors / Warnings
         self.add_label(grid,
             '<u>' + _('Errors / Warnings') + '</u>',
             0, 0, 1, 1,
@@ -16796,6 +16910,7 @@ class FolderEditWin(GenericEditWin):
 
         tab, grid = self.add_notebook_tab(_('_General'))
 
+        # General properties
         self.add_label(grid,
             '<u>' + _('General properties') + '</u>',
             0, 0, 3, 1,
@@ -16894,6 +17009,7 @@ class FolderEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Statistics'))
         grid_width = 4
 
+        # Statistics
         self.add_label(grid,
             '<u>' + _('Statistics') + '</u>',
             0, 0, grid_width, 1,
@@ -17042,6 +17158,7 @@ class FolderEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_History'))
         grid_width = 6
 
+        # Download history
         self.add_label(grid,
             '<u>' + _('Download history') + '</u>',
             0, 0, grid_width, 1,
@@ -17088,8 +17205,9 @@ class FolderEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Recent Videos'))
         grid_width = 2
 
+        # Recent videos
         self.add_label(grid,
-            '<u>' + _('Recent Videos') + '</u>',
+            '<u>' + _('Recent videos') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -17414,6 +17532,7 @@ class ScheduledEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_General'))
         grid_width = 3
 
+        # General properties
         self.add_label(grid,
             '<u>' + _('General properties') + '</u>',
             0, 0, grid_width, 1,
@@ -17847,6 +17966,7 @@ class ScheduledEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Media'))
         grid_width = 4
 
+        # Media to download
         self.add_label(grid,
             '<u>' + _('Media to download') + '</u>',
             0, 0, grid_width, 1,
@@ -20092,6 +20212,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 4
 
+        # Statistics
         self.add_label(grid,
             '<u>' + _('Statistics') + '</u>',
             0, 0, grid_width, 1,
@@ -20267,6 +20388,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 6
 
+        # Download history
         self.add_label(grid,
             '<u>' + _('Download history') + '</u>',
             0, 0, grid_width, 1,
@@ -20537,7 +20659,7 @@ class SystemPrefWin(GenericPrefWin):
         tab, grid = self.add_inner_notebook_tab(_('_Videos'), inner_notebook)
         grid_width = 2
 
-        # Video Index preferences
+        # Video Index (left side of the Videos tab)
         self.add_label(grid,
             '<u>' + _('Video Index (left side of the Videos tab)') + '</u>',
             0, 0, grid_width, 1,
@@ -20596,7 +20718,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton4.connect('toggled', self.on_expand_full_tree_toggled)
 
-        # Video Catalogue preferences
+        # Video Catalogue (right side of the Videos tab)
         self.add_label(grid,
             '<u>' + _('Video Catalogue (right side of the Videos tab)') \
             + '</u>',
@@ -20737,7 +20859,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Show icon in system tray'),
+            _('Show Tartube in the system tray'),
             self.app_obj.show_status_icon_flag,
             True,               # Can be toggled by user
             0, 1, 1, 1,
@@ -20746,8 +20868,8 @@ class SystemPrefWin(GenericPrefWin):
         # (Signal connect appears below)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Close to the tray, rather than closing the application'),
-            self.app_obj.close_to_tray_flag,
+            _('Start Tartube in the system tray'),
+            self.app_obj.open_in_tray_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
         )
@@ -20757,19 +20879,30 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(False)
 
         checkbutton3 = self.add_checkbutton(grid,
+            _('Close to the tray, rather than closing the application'),
+            self.app_obj.close_to_tray_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        # (Signal connect appears below)
+        if not self.app_obj.show_status_icon_flag:
+            checkbutton3.set_sensitive(False)
+
+        checkbutton4 = self.add_checkbutton(grid,
             _(
             'After closing to the tray, restore the window\'s position' \
             + ' (does not work on Wayland)',
             ),
             self.app_obj.restore_posn_from_tray_flag,
             True,               # Can be toggled by user
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
-        checkbutton3.set_hexpand(False)
+        checkbutton4.set_hexpand(False)
         # (Signal connect appears below)
         if not self.app_obj.show_status_icon_flag \
         or not self.app_obj.close_to_tray_flag:
-            checkbutton3.set_sensitive(False)
+            checkbutton4.set_sensitive(False)
 
         # (Signal connects from above)
         checkbutton.connect(
@@ -20777,13 +20910,15 @@ class SystemPrefWin(GenericPrefWin):
             self.on_show_status_icon_toggled,
             checkbutton2,
             checkbutton3,
+            checkbutton4,
         )
-        checkbutton2.connect(
+        checkbutton2.connect('toggled', self.on_open_in_tray_toggled)
+        checkbutton3.connect(
             'toggled',
             self.on_close_to_tray_toggled,
-            checkbutton3,
+            checkbutton4,
         )
-        checkbutton3.connect('toggled', self.on_restore_from_tray_toggled)
+        checkbutton4.connect('toggled', self.on_restore_from_tray_toggled)
 
 
     def setup_windows_dialogues_tab(self, inner_notebook):
@@ -20888,9 +21023,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 5
 
-        # Video Catalogue Colour preferences
+        # Video catalogue colour preferences
         self.add_label(grid,
-            '<u>' + _('Video Catalogue Colour preferences') + '</u>',
+            '<u>' + _('Video catalogue colour preferences') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -21028,16 +21163,15 @@ class SystemPrefWin(GenericPrefWin):
             _('_Errors/Warnings'),
             inner_notebook,
         )
-        grid_width = 2
 
         # Errors/Warnings tab preferences
         self.add_label(grid,
             '<u>' + _('Errors/Warnings tab preferences') + '</u>',
-            0, 0, grid_width, 1,
+            0, 0, 1, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Show Tartube error messages'),
+            _('Show Tartube errors'),
             self.app_obj.system_error_show_flag,
             True,                   # Can be toggled by user
             0, 1, 1, 1,
@@ -21045,7 +21179,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_system_error_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Show Tartube warning messages'),
+            _('Show Tartube warnings'),
             self.app_obj.system_warning_show_flag,
             True,                   # Can be toggled by user
             0, 2, 1, 1,
@@ -21053,10 +21187,10 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton2.connect('toggled', self.on_system_warning_button_toggled)
 
         checkbutton3 = self.add_checkbutton(grid,
-            _('Show server error messages'),
+            _('Show operation errors'),
             self.app_obj.operation_error_show_flag,
             True,                   # Can be toggled by user
-            1, 1, 1, 1,
+            0, 3, 1, 1,
         )
         checkbutton3.connect(
             'toggled',
@@ -21064,10 +21198,10 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton4 = self.add_checkbutton(grid,
-            _('Show server warning messages'),
+            _('Show operation warnings'),
             self.app_obj.operation_warning_show_flag,
             True,                   # Can be toggled by user
-            1, 2, 1, 1,
+            0, 4, 1, 1,
         )
         checkbutton4.connect(
             'toggled',
@@ -21075,14 +21209,47 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Show dates of all messages'),
+            _('Show dates'),
             self.app_obj.system_msg_show_date_flag,
             True,                   # Can be toggled by user
-            0, 3, 1, 1,
+            0, 5, 1, 1,
         )
         checkbutton5.connect(
             'toggled',
-            self.on_system_dates_button_toggled,
+            self.on_system_date_button_toggled,
+        )
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _('Show channel/playlist/folder names'),
+            self.app_obj.system_msg_show_container_flag,
+            True,                   # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton6.connect(
+            'toggled',
+            self.on_system_container_button_toggled,
+        )
+
+        checkbutton7 = self.add_checkbutton(grid,
+            _('Show video names'),
+            self.app_obj.system_msg_show_video_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton7.connect(
+            'toggled',
+            self.on_system_video_button_toggled,
+        )
+
+        checkbutton8 = self.add_checkbutton(grid,
+            _('Show full messages'),
+            self.app_obj.system_msg_show_multi_line_flag,
+            True,                   # Can be toggled by user
+            0, 8, 1, 1,
+        )
+        checkbutton8.connect(
+            'toggled',
+            self.on_system_multi_line_button_toggled,
         )
 
 
@@ -21142,7 +21309,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         checkbutton4.connect('toggled', self.on_payment_button_toggled)
 
-        # Custom error/warning preferences
+        # General preferences
         self.add_label(grid,
             '<u>' + _('General preferences') + '</u>',
             0, 4, grid_width, 1,
@@ -22590,7 +22757,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 2
 
-        # Livestream preferences
+        # Livestream preferences (compatible websites only)
         self.add_label(grid,
             '<u>' + _(
                 'Livestream preferences (compatible websites only)',
@@ -22673,7 +22840,7 @@ class SystemPrefWin(GenericPrefWin):
             self.on_scheduled_livestreams_spinbutton_changed,
         )
 
-        # Broadcast preferences
+        # Broadcast preferences (compatible websites only)
         self.add_label(grid,
             '<u>' + _(
                 'Broadcast preferences (compatible websites only)',
@@ -22781,7 +22948,7 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 3
 
-        # Livestream actions
+        # Livestream actions (can be toggled for individual videos)
         self.add_label(grid,
             '<u>' + _(
                 'Livestream actions (can be toggled for individual videos)',
@@ -22950,9 +23117,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 2
 
-        # Video Clips
+        # Video clips (requires FFmpeg)
         self.add_label(grid,
-            '<u>' + _('Video Clips (requires FFmpeg)') + '</u>',
+            '<u>' + _('Video clips (requires FFmpeg)') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -23153,9 +23320,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 1
 
-        # Video Slices
+        # Video slices (requires FFmpeg)
         self.add_label(grid,
-            '<u>' + _('Video Slices (requires FFmpeg)') + '</u>',
+            '<u>' + _('Video slices (requires FFmpeg)') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -23244,9 +23411,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 1
 
-        # Video comments
+        # Video comments (yt-dlp only)
         self.add_label(grid,
-            '<u>' + _('Video Comments (requires yt-dlp)') + '</u>',
+            '<u>' + _('Video comments') + '</u>' + self.ytdlp_only(),
             0, 0, grid_width, 1,
         )
 
@@ -23953,7 +24120,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # Post-processor file paths
         self.add_label(grid,
-            '<u>' + _('Post-processing file paths') + '</u>',
+            '<u>' + _('Post-processor file paths') + '</u>',
             0, 0, grid_width, 1,
         )
         self.add_label(grid,
@@ -24148,9 +24315,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 4
 
-        # List of download options managers
+        # List of download options
         self.add_label(grid,
-            '<u>' + _('List of download options managers') + '</u>',
+            '<u>' + _('List of download options') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -24905,7 +25072,8 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab(_('_Both'), inner_notebook)
 
-        # Special preferences
+        # Special preferences (applies to both the Output tab and the terminal
+        #   window)
         self.add_label(grid,
             '<u>' + _(
                 'Special preferences (applies to both the Output tab and the' \
@@ -27471,7 +27639,6 @@ class SystemPrefWin(GenericPrefWin):
                 continue
 
             media_data_obj = load_dict['media_reg_dict'][dbid]
-            print(media_data_obj.name)
             # (Don't export folders; just export channels/playlists as a flat
             #   dictionary)
             if isinstance(media_data_obj, media.Channel) \
@@ -28786,6 +28953,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.open_temp_on_desktop_flag:
             self.app_obj.set_open_temp_on_desktop_flag(False)
+
+
+    def on_open_in_tray_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_windows_system_tray_tab().
+
+        Enables/disables opening Tartube in the system tray.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.open_in_tray_flag:
+            self.app_obj.set_open_in_tray_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.open_in_tray_flag:
+            self.app_obj.set_open_in_tray_flag(False)
 
 
     def on_open_url_clicked(self, button, treeview):
@@ -30500,7 +30687,7 @@ class SystemPrefWin(GenericPrefWin):
 
 
     def on_show_status_icon_toggled(self, checkbutton, checkbutton2,
-    checkbutton3):
+    checkbutton3, checkbutton4):
 
         """Called from a callback in self.setup_windows_system_tray_tab().
 
@@ -30510,8 +30697,8 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): The widget clicked
 
-            checkbutton2 (Gtk.CheckButton): Another checkbutton to sensitise/
-                desensitise, according to the new value of the flag
+            checkbutton2, checkbutton3, checkbutton4 (Gtk.CheckButton): Other
+                widgets to modify
 
         """
 
@@ -30520,6 +30707,10 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_show_status_icon_flag(True)
             checkbutton2.set_sensitive(True)
             checkbutton3.set_sensitive(True)
+            if self.app_obj.close_to_tray_flag:
+                checkbutton4.set_sensitive(True)
+            else:
+                checkbutton4.set_sensitive(False)
 
         elif not checkbutton.get_active() \
         and self.app_obj.show_status_icon_flag:
@@ -30528,6 +30719,8 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(False)
             checkbutton3.set_active(False)
             checkbutton3.set_sensitive(False)
+            checkbutton4.set_active(False)
+            checkbutton4.set_sensitive(False)
 
 
     def on_show_tooltips_toggled(self, checkbutton, checkbutton2):
@@ -30671,7 +30864,31 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_store_playlist_id_flag(False)
 
 
-    def on_system_dates_button_toggled(self, checkbutton):
+    def on_system_container_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables showing container names in the Errors/Warnings tab.
+        Toggling the corresponding Gtk.CheckButton in the Errors/Warnings tab
+        sets the IV (and makes sure the two checkbuttons have the same status).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag \
+        = main_win_obj.show_system_container_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.show_system_container_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.show_system_container_checkbutton.set_active(False)
+
+
+    def on_system_date_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_errors_warnings_tab().
 
@@ -30688,12 +30905,61 @@ class SystemPrefWin(GenericPrefWin):
 
         main_win_obj = self.app_obj.main_win_obj
         other_flag \
-        = main_win_obj.show_system_dates_checkbutton.get_active()
+        = main_win_obj.show_system_date_checkbutton.get_active()
 
         if (checkbutton.get_active() and not other_flag):
-            main_win_obj.show_system_dates_checkbutton.set_active(True)
+            main_win_obj.show_system_date_checkbutton.set_active(True)
         elif (not checkbutton.get_active() and other_flag):
-            main_win_obj.show_system_dates_checkbutton.set_active(False)
+            main_win_obj.show_system_date_checkbutton.set_active(False)
+
+
+    def on_system_multi_line_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables showing full error/warning messages in the Errors/
+        Warnings tab. Toggling the corresponding Gtk.CheckButton in the Errors/
+        Warnings tab sets the IV (and makes sure the two checkbuttons have the
+        same status).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag \
+        = main_win_obj.show_system_multi_line_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.show_system_multi_line_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.show_system_multi_line_checkbutton.set_active(False)
+
+
+    def on_system_video_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_errors_warnings_tab().
+
+        Enables/disables showing video names in the Errors/Warnings tab.
+        Toggling the corresponding Gtk.CheckButton in the Errors/Warnings tab
+        sets the IV (and makes sure the two checkbuttons have the same status).
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        main_win_obj = self.app_obj.main_win_obj
+        other_flag \
+        = main_win_obj.show_system_video_checkbutton.get_active()
+
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.show_system_video_checkbutton.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.show_system_video_checkbutton.set_active(False)
 
 
     def on_system_error_button_toggled(self, checkbutton):

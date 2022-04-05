@@ -1841,11 +1841,11 @@ class Video(GenericMedia):
         #   same way, except that for the former, this flag is set to True
         #   (and a different background colour is used in the Video Catalogue)
         self.live_debut_flag = False
-        # Flag set to True for a video which was a livestream (self.live_mode
-        #   = 1 or 2), but is now not (self.live_mode = 0). Once a livestream
-        #   video has been marked as a normal video, it can't be marked as a
-        #   livestream again. (This prevents any problems in reading the RSS
-        #   feeds from continually marking an old video as a livestream again)
+        # Flag set to True for a video which was a livestream, but is now not.
+        #   Once a livestream video has been marked as a normal video, it can't
+        #   be marked as a livestream again. (This prevents any problems in
+        #   reading the RSS feeds from continually re-marking an old video as a
+        #   livestream)
         self.was_live_flag = False
         # The time (matches time.time()) at which a livestream is due to start.
         #   YouTube supplies an approximate time (perhaps in hours or days),

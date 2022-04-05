@@ -3037,10 +3037,22 @@ def shorten_string_two_lines(string, num_chars):
                 # To keep the code simple, the algorithm ends here, with this
                 #   word on a separate line. This may produce a return string
                 #   containing only line
-                if current_line != '':
-                    line_list.append(current_line)
+                # Exception: try to split URLs on the '/' character neareest
+                #   to the end of the first 'num_chars' characters of 'word'
+                shortended_word = word[0:num_chars]
+                pos = shortended_word.rfind('/')
+                if pos > -1:
+                    pos += 1
+                    line_list.append(word[0:pos])
+                    line_list.append(word[pos:])
 
-                line_list.append(word[0:num_chars] + '...')
+                else:
+
+                    if current_line != '':
+                        line_list.append(current_line)
+
+                    line_list.append(word[0:num_chars] + '...')
+
                 break
 
             else:
@@ -3099,9 +3111,8 @@ def strip_whitespace(string):
 
     """
 
-    if string:
-        string = re.sub(r'^\s+', '', string)
-        string = re.sub(r'\s+$', '', string)
+    if string is not None:
+        string = string.strip()
 
     return string
 
@@ -3130,8 +3141,7 @@ def strip_whitespace_multiline(string):
     mod_list = []
 
     for line in line_list:
-        line = re.sub(r'^\s+', '', line)
-        line = re.sub(r'\s+$', '', line)
+        line = line.strip()
 
         if re.search('\S', line):
             mod_list.append(line)
@@ -3139,7 +3149,7 @@ def strip_whitespace_multiline(string):
     return "\n".join(mod_list)
 
 
-def tidy_up_container_name(string, max_length):
+def tidy_up_container_name(app_obj, string, max_length):
 
     """Called by mainapp.TartubeApp.on_menu_add_channel(),
     .on_menu_add_playlist() and .on_menu_add_folder().
@@ -3155,6 +3165,8 @@ def tidy_up_container_name(string, max_length):
 
     Args:
 
+        app_obj (mainapp.TartubeApp): The main application
+
         string (str): The string to convert
 
         max_length (int): The maximum length of the converted string (should be
@@ -3162,16 +3174,39 @@ def tidy_up_container_name(string, max_length):
 
     Returns:
 
-        The converted string
+        The converted string, or an empty string for an irretrievable name
 
     """
 
     if string:
 
-        string = re.sub(r'^\s+', '', string)
-        string = re.sub(r'\s+$', '', string)
+        string = string.strip()
         string = re.sub(r'\s+', ' ', string)
-        string = re.sub(r'[\/\\]', '-', string)
+
+        # Get rid of ASCII control characters (illegal on Windows, a pain in
+        #   the behind on POSIX)
+        string = re.sub(r'[\x00-\x1F]', '', string)
+
+        if os.name != 'nt':
+            # Forbidden characters on POSIX: /
+            # Forbidden on MacOS, depending on context: :
+            string = re.sub(r'[\/\:]', '-', string)
+
+        else:
+            # Illegal filenames
+            if string in app_obj.illegal_name_mswin_list:
+                return ''
+
+            for illegal in app_obj.illegal_name_mswin_list:
+                if re.search('^' + illegal + '\.'):
+                    return ''
+
+            # Forbidden characters on MS Windows: < > : " / \ | ? *
+            string = re.sub(r'[\<\>\:\/\\\|\?\*]', '-', string)
+            string = re.sub(r'[\"]', '\'', string)
+
+            # Cannot end with a dot
+            string = re.sub(r'\.+$', '', string)
 
         return string[0:max_length]
 

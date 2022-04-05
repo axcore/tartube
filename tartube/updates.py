@@ -403,9 +403,20 @@ class UpdateManager(threading.Thread):
         """
 
         if not system_cmd_flag:
-            self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.output_tab_write_stdout,
+                1,
+                msg,
+            )
+
         else:
-            self.app_obj.main_win_obj.output_tab_write_system_cmd(1, msg)
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.output_tab_write_system_cmd,
+                1,
+                msg,
+            )
 
 
     def install_ytdl(self):
@@ -659,7 +670,9 @@ class UpdateManager(threading.Thread):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.app_obj.system_error,
                 701,
                 'Malformed STDOUT or STDERR data',
             )
@@ -721,7 +734,9 @@ class UpdateManager(threading.Thread):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.app_obj.system_error,
                 701,
                 'Malformed STDOUT or STDERR data',
             )
@@ -787,7 +802,9 @@ class UpdateManager(threading.Thread):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.app_obj.system_error,
                 702,
                 'Malformed STDOUT or STDERR data',
             )

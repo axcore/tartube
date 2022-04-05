@@ -61,7 +61,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.3.484 (31 Mar 2022)**
 
-Development release: **v2.3.484 (31 Mar 2022)**
+Development release: **v2.3.518 (5 Apr 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -896,7 +896,7 @@ You can create as many scheduled downloads as you like. Scheduled downloads are 
 
 By default, **Tartube** downloads videos as quickly as possible, one link (URL) at a time. A link might point to an individual video, or it might point to a whole channel or playlist. **Tartube** will try to download every video associated with the link.
 
-A **Custom download** enables you to modify this behaviour, if desired. You can use it to fetch videos from a mirror, add random delays, download video clips, ignore videos without subtitles, or to download videos with the adverts removed.
+A **Custom download** enables you to modify this behaviour, if desired. You can use it to fetch videos from a mirror, add random delays, download video clips, download (or ignore) only livestreams, ignore videos without subtitles, or to download videos with the adverts removed.
 
 It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 

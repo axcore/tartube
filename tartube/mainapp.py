@@ -258,6 +258,10 @@ class TartubeApp(Gtk.Application):
 
         # Instance variable (IV) list - other
         # -----------------------------------
+        # Flag set to True when startup is complete. Set to True by the last
+        #   line of code in self.start_continue()
+        self.startup_complete_flag = False
+
         # Custom locale (can match one of the values in formats.LOCALE_LIST)
         self.custom_locale = locale.getdefaultlocale()[0]
 
@@ -448,6 +452,9 @@ class TartubeApp(Gtk.Application):
 
         # Flag set to True if an icon should be displayed in the system tray
         self.show_status_icon_flag = True
+        # Flag set to True if Tartube should open in the system tray. Ignored
+        #   if self.show_status_icon_flag is False
+        self.open_in_tray_flag = False
         # Flag set to True if the main window should close to the tray, rather
         #   than halting the application altogether. Ignored if
         #   self.show_status_icon_flag is False
@@ -478,13 +485,24 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if operation warning messages should be shown in the
         #   Errors/Warnings tab
         self.operation_warning_show_flag = True
+
         # Flag set to True if the date (as well as the time) should be shown in
         #   the Errors/Warnings tab
         self.system_msg_show_date_flag = True
+        # Flag set to True if the channel/playlist/folder name should be shown
+        #   in the Errors/Warnings tab
+        self.system_msg_show_container_flag = True
+        # Flag set to True if the video name should be shown in the Errors/
+        #   Warnings tab
+        self.system_msg_show_video_flag = True
+        # Flag set to True if the multi-line messages should be shown in the
+        #   Errors/ Warnings tab
+        self.system_msg_show_multi_line_flag = True
         # Flag set to True if the total number of system error/warning messages
-        #   shown in the tab label is not reset until the 'Clear the list'
-        #   button is explicitly clicked (normally, the total numbers are
-        #   reset when the user switches to a different tab)
+        #   visible (not including hidden messages)  in the tab label is not
+        #   reset until the 'Clear the list' button is explicitly clicked
+        #   (normally, the total numbers are reset when the user switches to a
+        #   different tab)
         self.system_msg_keep_totals_flag = False
 
         # For quick lookup, the directory in which the 'tartube' executable
@@ -1332,6 +1350,16 @@ class TartubeApp(Gtk.Application):
             r'^downloads$',
             __main__.__packagename__,
         ]
+        # Extended list of forbidden names for channels, playlists and folders
+        #   (on MS Windows). Each item is still illegal if followed by a file
+        #   extension, e.g. 'LPT1.txt'
+        self.illegal_name_mswin_list = [
+            'CON', 'PRN', 'AUX', 'NUL',
+            'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8',
+                'COM9',
+            'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8',
+                'LPT9',
+        ]
         # Temporary dictionary of channel/playlist names extracted from the
         #   child video's metadata. The user can use this dictionary to
         #   update channel/playlists names (for example, if they have been
@@ -1488,6 +1516,11 @@ class TartubeApp(Gtk.Application):
         # The options.OptionsManager object used in the Classic Mode tab. If
         #   None, then self.general_options_obj is used
         self.classic_options_obj = None
+        # An ordered list of options.OptionsManager .uids, used in the
+        #   Drag and Drop tab. The list does not have to contain every (or
+        #   even any) items, but there must be no duplicates
+        # Maximum size is 16 (any more items are ignored)
+        self.classic_dropzone_list = []
         # Flag set to True if the General Options Manager
         #   (self.general_options_obj) should be cloned whenever the user
         #   applies a new options manager to a media data object (e.g. by
@@ -2946,6 +2979,46 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(classic_download_button_action)
 
+        # Drag and Drop tab actions
+        # -------------------------
+
+        # Buttons
+
+        drag_drop_add_button_action = Gio.SimpleAction.new(
+            'drag_drop_add_button',
+            None,
+        )
+        drag_drop_add_button_action.connect(
+            'activate',
+            self.on_button_drag_drop_add,
+        )
+        self.add_action(drag_drop_add_button_action)
+
+        # Errors/Warnings tab actions
+        # ----------------------------
+
+        # Buttons
+
+        apply_error_filter_button_action = Gio.SimpleAction.new(
+            'apply_error_filter_toolbutton',
+            None,
+        )
+        apply_error_filter_button_action.connect(
+            'activate',
+            self.on_button_apply_error_filter,
+        )
+        self.add_action(apply_error_filter_button_action)
+
+        cancel_error_filter_button_action = Gio.SimpleAction.new(
+            'cancel_error_filter_toolbutton',
+            None,
+        )
+        cancel_error_filter_button_action.connect(
+            'activate',
+            self.on_button_cancel_error_filter,
+        )
+        self.add_action(cancel_error_filter_button_action)
+
 
     def do_activate(self):
 
@@ -3064,12 +3137,22 @@ class TartubeApp(Gtk.Application):
 
         # Set the General Options Manager
         self.general_options_obj = self.create_download_options('general')
+        self.general_options_obj.set_general_options()
         # Apply a different set of download options to the Classic Mode tab, by
         #   default
         self.classic_options_obj = self.create_download_options('classic')
-        # (In the Classic Mode tab, the average user doesn't need these extra
-        #   files)
         self.classic_options_obj.set_classic_mode_options()
+        # Create a third set of download options for use in the Drag and Drop
+        #   tab
+        mp3_options_obj = self.create_download_options('mp3')
+        mp3_options_obj.set_mp3_options()
+
+        # Add these options to the Drag and Drop Grid
+        self.classic_dropzone_list = [
+            self.general_options_obj.uid,
+            self.classic_options_obj.uid,
+            mp3_options_obj.uid,
+        ]
 
         # Set the current FFmpeg Options Manager
         self.ffmpeg_options_obj = self.create_ffmpeg_options('default')
@@ -3246,14 +3329,19 @@ class TartubeApp(Gtk.Application):
         if self.debug_open_top_left_flag:
             self.main_win_obj.move(0, 0)
 
-        # Make the main window visible
-        self.main_win_obj.show_all()
-
-        # Prepare to add an icon to the system tray, making it visible only if
-        #   required
+        # Prepare to add an icon to the system tray. It becomes actually
+        #   visible only when settings specify that
+        # Also, the main window must remain invisible, if settings specify that
+        #   Tartube should open in the system tray
         self.status_icon_obj = mainwin.StatusIcon(self)
         if self.show_status_icon_flag:
             self.status_icon_obj.show_icon()
+            if self.open_in_tray_flag:
+                self.main_win_obj.force_invisible()
+            else:
+                self.main_win_obj.show_all()
+        else:
+            self.main_win_obj.show_all()
 
         # Part 6 - Select a database file
         # -------------------------------
@@ -3456,8 +3544,16 @@ class TartubeApp(Gtk.Application):
 
                     scheduled_obj.set_only_time(time.time() + wait_time)
 
-        # Part 13 - Any debug stuff can go here
+        # Part 13 - Startup complete
         # -------------------------------------
+
+        # (This flag is necessary, so that Tartube can open in the system tray,
+        #   if settings require that)
+        self.startup_complete_flag = False
+
+        # Part 14 - Any debug stuff can go here
+        # -------------------------------------
+
         pass
 
 
@@ -3608,7 +3704,7 @@ class TartubeApp(Gtk.Application):
 
         """Can be called by anything.
 
-        Wrapper function for mainwin.MainWin.errors_list_add_system_error().
+        Wrapper function for mainwin.MainWin.errors_list_add_system_msg().
 
         Args:
 
@@ -3635,7 +3731,8 @@ class TartubeApp(Gtk.Application):
         if self.main_win_obj and self.system_error_show_flag:
             GObject.timeout_add(
                 0,
-                self.main_win_obj.errors_list_add_system_error,
+                self.main_win_obj.errors_list_add_system_msg,
+                'error',
                 error_code,
                 msg,
             )
@@ -3649,7 +3746,7 @@ class TartubeApp(Gtk.Application):
 
         """Can be called by anything.
 
-        Wrapper function for mainwin.MainWin.errors_list_add_system_warning().
+        Wrapper function for mainwin.MainWin.errors_list_add_system_msg().
 
         Args:
 
@@ -3664,7 +3761,8 @@ class TartubeApp(Gtk.Application):
         if self.main_win_obj and self.system_warning_show_flag:
             GObject.timeout_add(
                 0,
-                self.main_win_obj.errors_list_add_system_warning,
+                self.main_win_obj.errors_list_add_system_msg,
+                'warning',
                 error_code,
                 msg,
             )
@@ -3924,6 +4022,9 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1003024:  # v1.3.024
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
+        if version >= 2003504:  # v1.3.504
+            self.open_in_tray_flag = json_dict['open_in_tray_flag']
+        if version >= 1003024:  # v1.3.024
             self.close_to_tray_flag = json_dict['close_to_tray_flag']
         if version >= 2003125:  # v2.3.125
             self.restore_posn_from_tray_flag \
@@ -3948,6 +4049,13 @@ class TartubeApp(Gtk.Application):
         if version >= 2003116:  # v2.3.116
             self.system_msg_show_date_flag \
             = json_dict['system_msg_show_date_flag']
+        if version >= 2003513:  # v2.3.513
+            self.system_msg_show_container_flag \
+            = json_dict['system_msg_show_container_flag']
+            self.system_msg_show_video_flag \
+            = json_dict['system_msg_show_video_flag']
+            self.system_msg_show_multi_line_flag \
+            = json_dict['system_msg_show_multi_line_flag']
         if version >= 1000007:  # v1.0.007
             self.system_msg_keep_totals_flag \
             = json_dict['system_msg_keep_totals_flag']
@@ -4489,7 +4597,7 @@ class TartubeApp(Gtk.Application):
             = json_dict['ytdlp_filter_options_flag']
 
         # Having loaded the config file, set various file paths...
-        if self.data_dir_use_first_flag:
+        if self.data_dir_use_first_flag and self.data_dir_alt_list:
             self.data_dir = self.data_dir_alt_list[0]
 
         self.update_data_dirs()
@@ -4997,6 +5105,7 @@ class TartubeApp(Gtk.Application):
             'drag_thumb_path_flag': self.drag_thumb_path_flag,
 
             'show_status_icon_flag': self.show_status_icon_flag,
+            'open_in_tray_flag': self.open_in_tray_flag,
             'close_to_tray_flag': self.close_to_tray_flag,
             'restore_posn_from_tray_flag': self.restore_posn_from_tray_flag,
 
@@ -5008,6 +5117,11 @@ class TartubeApp(Gtk.Application):
             'operation_error_show_flag': self.operation_error_show_flag,
             'operation_warning_show_flag': self.operation_warning_show_flag,
             'system_msg_show_date_flag': self.system_msg_show_date_flag,
+            'system_msg_show_container_flag': \
+            self.system_msg_show_container_flag,
+            'system_msg_show_video_flag': self.system_msg_show_video_flag,
+            'system_msg_show_multi_line_flag': \
+            self.system_msg_show_multi_line_flag,
             'system_msg_keep_totals_flag': self.system_msg_keep_totals_flag,
 
             'data_dir': self.data_dir,
@@ -5451,7 +5565,9 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_catalogue_reset()
             self.main_win_obj.progress_list_reset()
             self.main_win_obj.results_list_reset()
-            self.main_win_obj.show_all()
+            # If opening Tartube in the system tray, we can't call .show_all()
+            if self.startup_complete_flag or not self.open_in_tray_flag:
+                self.main_win_obj.show_all()
 
         # Most main widgets are desensitised, until the database file has been
         #   loaded
@@ -5576,6 +5692,8 @@ class TartubeApp(Gtk.Application):
 #            self.classic_options_list = load_dict['classic_options_list']
         if version >= 2001007:  # v2.1.007
             self.classic_options_obj = load_dict['classic_options_obj']
+        if version >= 2003487:  # v2.3.487
+            self.classic_dropzone_list = load_dict['classic_dropzone_list']
         if version >= 2002149:  # v2.2.149
             self.ffmpeg_reg_count = load_dict['ffmpeg_reg_count']
             self.ffmpeg_reg_dict = load_dict['ffmpeg_reg_dict']
@@ -5657,9 +5775,11 @@ class TartubeApp(Gtk.Application):
         ):
             self.main_win_obj.hide_system_menu_item.set_active(False)
 
-        # Repopulate the Video Index, showing the new data
         if self.main_win_obj:
+            # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_catalogue_reset()
+            # Repopulate the Drag and Drop tab
+            self.main_win_obj.drag_drop_grid_reset()
 
         return True
 
@@ -5689,12 +5809,19 @@ class TartubeApp(Gtk.Application):
         options_obj_list = [self.general_options_obj]
         if self.classic_options_obj:
             options_obj_list.append(self.classic_options_obj)
+        for options_obj in self.options_reg_dict.values():
+            if options_obj != self.general_options_obj \
+            and (
+                self.classic_options_obj is None \
+                or options_obj != self.general_options_obj
+            ):
+                options_obj_list.append(options_obj)
 
         options_media_list = []
         for media_data_obj in self.media_reg_dict.values():
             if media_data_obj.options_obj is not None \
             and not media_data_obj.options_obj in options_obj_list:
-                options_obj_list.append(media_data_obj.options_obj)
+#                options_obj_list.append(media_data_obj.options_obj)
                 options_media_list.append(media_data_obj)
 
         if version < 3012:          # v0.3.012
@@ -6899,6 +7026,58 @@ class TartubeApp(Gtk.Application):
                 if scheduled_obj.start_mode == 'none':
                     scheduled_obj.start_mode = 'disabled'
 
+        if version < 2003487:       # v2.3.487
+
+            # This version provides options.OptionsManager objects with a
+            #   short description
+            for options_obj in options_obj_list:
+
+                if options_obj == self.general_options_obj:
+                    options_obj.descrip = _(
+                        'General (default) download options',
+                    )
+
+                elif self.classic_options_obj \
+                and options_obj == self.classic_options_obj:
+                    options_obj.descrip = _(
+                        'Download options for the Classic Mode tab',
+                    )
+
+                else:
+                    options_obj.descrip = options_obj.name
+
+            # This version also adds options.OptionsManager objects to an
+            #   ordered list for use in the Drag and Drop tab
+            self.classic_dropzone_list = [self.general_options_obj.uid]
+
+            if self.classic_options_obj:
+                self.classic_dropzone_list.append(self.classic_options_obj.uid)
+
+            # If the user has already created an options manager called 'mp3',
+            #   use it; otherwise create a new one (as self.start() does)
+            match_flag = False
+            for options_obj in options_obj_list:
+                if options_obj.name == 'mp3':
+                    match_flag = True
+                    self.classic_dropzone_list.append(options_obj.uid)
+                    break
+
+            if not match_flag:
+
+                mp3_options_obj = self.create_download_options('mp3')
+                mp3_options_obj.set_mp3_options()
+                self.classic_dropzone_list.append(mp3_options_obj.uid)
+
+        if version < 2003510:       # v2.3.510
+
+            # This version adds new IVs to downloads.CustomDLManager objects
+            for custom_dl_obj in self.custom_dl_reg_dict.values():
+
+                custom_dl_obj.ignore_stream_flag = False
+                custom_dl_obj.ignore_old_stream_flag = False
+                custom_dl_obj.dl_if_stream_flag = False
+                custom_dl_obj.dl_if_old_stream_flag = False
+
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -7002,6 +7181,7 @@ class TartubeApp(Gtk.Application):
             'options_reg_dict' : self.options_reg_dict,
             'general_options_obj' : self.general_options_obj,
             'classic_options_obj' : self.classic_options_obj,
+            'classic_dropzone_list': self.classic_dropzone_list,
             # FFmpeg options
             'ffmpeg_reg_count' : self.ffmpeg_reg_count,
             'ffmpeg_reg_dict' : self.ffmpeg_reg_dict,
@@ -9718,7 +9898,7 @@ class TartubeApp(Gtk.Application):
                 for scheduled_obj in media_data_list:
                     scheduled_obj.set_last_time(int(time.time()))
 
-                # Conver the 'operation_type' for this download operation from
+                # Convert the 'operation_type' for this download operation from
                 #   'custom_real' to 'custom_sim' or 'real', as required
                 if first_obj.dl_mode == 'custom_real':
 
@@ -12419,6 +12599,35 @@ class TartubeApp(Gtk.Application):
                     self,
                     json_dict['chapters'],
                 )
+
+            if mode == 'default':
+
+                if 'is_live' in json_dict \
+                and json_dict['is_live'] \
+                and not video_obj.live_mode \
+                and not video_obj.was_live_flag:
+                    self.mark_video_live(
+                        video_obj,
+                        2,
+                        {},
+                        True,   # Don't update Video Index
+                        True,   # Don't update Video Catalogue
+                        True,   # Don't sort the parent container
+                    )
+
+                elif 'was_live' in json_dict \
+                and json_dict['was_live']:
+                    if video_obj.live_mode:
+                        self.mark_video_live(
+                            video_obj,
+                            0,
+                            {},
+                            True,   # Don't update Video Index
+                            True,   # Don't update Video Catalogue
+                            True,   # Don't sort the parent container
+                        )
+                    elif not video_obj.was_live_flag:
+                        video_obj.set_was_live_flag(True)
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
@@ -18915,6 +19124,11 @@ class TartubeApp(Gtk.Application):
             if isinstance(config_win_obj, config.SystemPrefWin):
                 config_win_obj.setup_options_dl_list_tab_update_treeview()
 
+        # Remove any associated dropzone, and update the Drag and Drop tab
+        if options_obj.uid in self.classic_dropzone_list:
+            self.classic_dropzone_list.remove(options_obj.uid)
+            self.main_win_obj.drag_drop_grid_reset()
+
 
     def apply_classic_download_options(self, options_obj):
 
@@ -20097,6 +20311,8 @@ class TartubeApp(Gtk.Application):
         space of the Video Catalogue grid (when visible), and increase/
         reduces the size of the grid, if necessary.
 
+        Resets any confirmation messages in the Drag and Drop tab.
+
         Returns:
 
             1 to keep the timer going, or None to halt it
@@ -20123,6 +20339,11 @@ class TartubeApp(Gtk.Application):
             0,
             self.main_win_obj.video_catalogue_retry_insert_items,
         )
+
+        # Reset confirmation messages in the Drag and Drop tab, if it's time
+        #   to reset them
+        for wrapper_obj in self.main_win_obj.drag_drop_dict.values():
+            wrapper_obj.check_reset()
 
         # Return 1 to keep the timer going
         return 1
@@ -20390,6 +20611,25 @@ class TartubeApp(Gtk.Application):
     # (Menu item and toolbar button callbacks)
 
 
+    def on_button_apply_error_filter(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Applies a filter to the Errors List, hiding any messages which don't
+        match the search text specified by the user.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        # Apply the filter
+        self.main_win_obj.errors_list_apply_filter()
+
+
     def on_button_apply_filter(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -20414,6 +20654,24 @@ class TartubeApp(Gtk.Application):
 
         # Apply the filter
         self.main_win_obj.video_catalogue_apply_filter()
+
+
+    def on_button_cancel_error_filter(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Cancels the filter, restoring filtered messages in the Errors List.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        # Apply the filter
+        self.main_win_obj.errors_list_cancel_filter()
 
 
     def on_button_cancel_filter(self, action, par):
@@ -21045,6 +21303,24 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.video_catalogue_unshow_date()
+
+
+    def on_button_drag_drop_add(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Adds a new dropzone in the Drag and Drop tab.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        # Open the popup menu
+        self.main_win_obj.drag_drop_add_dropzone()
 
 
     def on_button_find_date(self, action, par):
@@ -21702,48 +21978,61 @@ class TartubeApp(Gtk.Application):
                     keep_open_flag = self.dialogue_keep_open_flag
 
                     # Remove leading/trailing whitespace from the name; make
-                    #   sure the name is not excessively long
+                    #   sure the name is not excessively long; reject system
+                    #   illegal names
                     name = utils.tidy_up_container_name(
+                        self,
                         name,
                         self.container_name_max_len,
                     )
+                    if name == '':
+                        keep_open_flag = False
+                        self.dialogue_manager_obj.show_msg_dialogue(
+                            _('That name is not permitted on your system'),
+                            'error',
+                            'ok',
+                        )
 
-                    # Find the parent media data object (a media.Folder), if
-                    #   specified
-                    parent_obj = None
-                    if parent_name and parent_name in self.media_name_dict:
-                        dbid = self.media_name_dict[parent_name]
-                        parent_obj = self.media_reg_dict[dbid]
+                    else:
 
-                        if self.dialogue_keep_open_flag \
-                        and self.dialogue_keep_container_flag:
-                            suggest_parent_name = parent_name
+                        # Find the parent media data object (a media.Folder),
+                        #   if specified
+                        parent_obj = None
+                        if parent_name and parent_name in self.media_name_dict:
+                            dbid = self.media_name_dict[parent_name]
+                            parent_obj = self.media_reg_dict[dbid]
 
-                    # Create the new channel
-                    channel_obj = self.add_channel(
-                        name,
-                        parent_obj,
-                        source,
-                        dl_sim_flag,
-                    )
+                            if self.dialogue_keep_open_flag \
+                            and self.dialogue_keep_container_flag:
+                                suggest_parent_name = parent_name
 
-                    # Add the channel to Video Index
-                    if channel_obj:
+                        # Create the new channel
+                        channel_obj = self.add_channel(
+                            name,
+                            parent_obj,
+                            source,
+                            dl_sim_flag,
+                        )
 
-                        if suggest_parent_name is not None \
-                        and suggest_parent_name \
-                        == self.main_win_obj.video_index_current:
-                            # The channel has been added to the currently
-                            #   selected folder; the True argument tells the
-                            #   function not to select the channel
-                            self.main_win_obj.video_index_add_row(
-                                channel_obj,
-                                True,
-                            )
+                        # Add the channel to Video Index
+                        if channel_obj:
 
-                        else:
-                            # Do select the new channel
-                            self.main_win_obj.video_index_add_row(channel_obj)
+                            if suggest_parent_name is not None \
+                            and suggest_parent_name \
+                            == self.main_win_obj.video_index_current:
+                                # The channel has been added to the currently
+                                #   selected folder; the True argument tells
+                                #   the function not to select the channel
+                                self.main_win_obj.video_index_add_row(
+                                    channel_obj,
+                                    True,
+                                )
+
+                            else:
+                                # Do select the new channel
+                                self.main_win_obj.video_index_add_row(
+                                    channel_obj,
+                                )
 
 
     def on_menu_add_folder(self, action, par):
@@ -21821,35 +22110,44 @@ class TartubeApp(Gtk.Application):
                 # Remove leading/trailing whitespace from the name; make sure
                 #   the name is not excessively long
                 name = utils.tidy_up_container_name(
+                    self,
                     name,
                     self.container_name_max_len,
                 )
+                if name == '':
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        _('That name is not permitted on your system'),
+                        'error',
+                        'ok',
+                    )
 
-                # Find the parent media data object (a media.Folder), if
-                #   specified
-                parent_obj = None
-                if parent_name and parent_name in self.media_name_dict:
-                    dbid = self.media_name_dict[parent_name]
-                    parent_obj = self.media_reg_dict[dbid]
+                else:
 
-                # Create the new folder
-                folder_obj = self.add_folder(name, parent_obj, dl_sim_flag)
+                    # Find the parent media data object (a media.Folder), if
+                    #   specified
+                    parent_obj = None
+                    if parent_name and parent_name in self.media_name_dict:
+                        dbid = self.media_name_dict[parent_name]
+                        parent_obj = self.media_reg_dict[dbid]
 
-                # Add the folder to the Video Index
-                if folder_obj:
+                    # Create the new folder
+                    folder_obj = self.add_folder(name, parent_obj, dl_sim_flag)
 
-                    if self.main_win_obj.video_index_current:
-                        # The new folder has been added inside the currently
-                        #   selected folder; the True argument tells the
-                        #   function not to select the new folder
-                        self.main_win_obj.video_index_add_row(
-                            folder_obj,
-                            True,
-                        )
+                    # Add the folder to the Video Index
+                    if folder_obj:
 
-                    else:
-                        # Do select the new folder
-                        self.main_win_obj.video_index_add_row(folder_obj)
+                        if self.main_win_obj.video_index_current:
+                            # The new folder has been added inside the
+                            #   currently selected folder; the True argument
+                            #   tells the function not to select the new folder
+                            self.main_win_obj.video_index_add_row(
+                                folder_obj,
+                                True,
+                            )
+
+                        else:
+                            # Do select the new folder
+                            self.main_win_obj.video_index_add_row(folder_obj)
 
 
     def on_menu_add_playlist(self, action, par):
@@ -21961,46 +22259,58 @@ class TartubeApp(Gtk.Application):
                     # Remove leading/trailing whitespace from the name; make
                     #   sure the name is not excessively long
                     name = utils.tidy_up_container_name(
+                        self,
                         name,
                         self.container_name_max_len,
                     )
+                    if name == '':
+                        keep_open_flag = False
+                        self.dialogue_manager_obj.show_msg_dialogue(
+                            _('That name is not permitted on your system'),
+                            'error',
+                            'ok',
+                        )
 
-                    # Find the parent media data object (a media.Folder), if
-                    #   specified
-                    parent_obj = None
-                    if parent_name and parent_name in self.media_name_dict:
-                        dbid = self.media_name_dict[parent_name]
-                        parent_obj = self.media_reg_dict[dbid]
+                    else:
 
-                        if self.dialogue_keep_open_flag \
-                        and self.dialogue_keep_container_flag:
-                            suggest_parent_name = parent_name
+                        # Find the parent media data object (a media.Folder),
+                        #   if specified
+                        parent_obj = None
+                        if parent_name and parent_name in self.media_name_dict:
+                            dbid = self.media_name_dict[parent_name]
+                            parent_obj = self.media_reg_dict[dbid]
 
-                    # Create the playlist
-                    playlist_obj = self.add_playlist(
-                        name,
-                        parent_obj,
-                        source,
-                        dl_sim_flag,
-                    )
+                            if self.dialogue_keep_open_flag \
+                            and self.dialogue_keep_container_flag:
+                                suggest_parent_name = parent_name
 
-                    # Add the playlist to the Video Index
-                    if playlist_obj:
+                        # Create the playlist
+                        playlist_obj = self.add_playlist(
+                            name,
+                            parent_obj,
+                            source,
+                            dl_sim_flag,
+                        )
 
-                        if suggest_parent_name is not None \
-                        and suggest_parent_name \
-                        == self.main_win_obj.video_index_current:
-                            # The playlist has been added to the currently
-                            #   selected folder; the True argument tells the
-                            #   function not to select the playlist
-                            self.main_win_obj.video_index_add_row(
-                                playlist_obj,
-                                True,
-                            )
+                        # Add the playlist to the Video Index
+                        if playlist_obj:
 
-                        else:
-                            # Do select the new playlist
-                            self.main_win_obj.video_index_add_row(playlist_obj)
+                            if suggest_parent_name is not None \
+                            and suggest_parent_name \
+                            == self.main_win_obj.video_index_current:
+                                # The playlist has been added to the currently
+                                #   selected folder; the True argument tells
+                                #   the function not to select the playlist
+                                self.main_win_obj.video_index_add_row(
+                                    playlist_obj,
+                                    True,
+                                )
+
+                            else:
+                                # Do select the new playlist
+                                self.main_win_obj.video_index_add_row(
+                                    playlist_obj,
+                                )
 
 
     def on_menu_add_video(self, action, par):
@@ -23453,6 +23763,16 @@ class TartubeApp(Gtk.Application):
         self.catalogue_sort_mode = mode
 
 
+    def add_classic_dropzone_list(self, value):
+
+        self.classic_dropzone_list.append(value)
+
+
+    def del_classic_dropzone_list(self, value):
+
+        self.classic_dropzone_list.remove(value)
+
+
     def set_classic_format_convert_flag(self, flag):
 
         if not flag:
@@ -24155,6 +24475,14 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.output_tab_update_page_size()
 
 
+    def set_open_in_tray_flag(self, flag):
+
+        if not flag:
+            self.open_in_tray_flag = False
+        else:
+            self.open_in_tray_flag = True
+
+
     def set_operation_auto_restart_flag(self, flag):
 
         if not flag:
@@ -24447,15 +24775,10 @@ class TartubeApp(Gtk.Application):
 
     def set_show_pretty_dates_flag(self, flag):
 
-        """Called by config.SystemPrefWin.on_pretty_date_button_toggled().
-
-        Shows/hides the status icon in the system tray.
-        """
-
         if not flag:
             self.show_pretty_dates_flag = False
         else:
-            self.show_status_icon_flag = True
+            self.show_pretty_dates_flag = True
 
         # Redraw the Video Catalogue, but only if something was already drawn
         #   there (and keep the current page number)
@@ -24610,12 +24933,36 @@ class TartubeApp(Gtk.Application):
             self.system_msg_keep_totals_flag = True
 
 
+    def set_system_msg_show_container_flag(self, flag):
+
+        if not flag:
+            self.system_msg_show_container_flag = False
+        else:
+            self.system_msg_show_container_flag = True
+
+
     def set_system_msg_show_date_flag(self, flag):
 
         if not flag:
             self.system_msg_show_date_flag = False
         else:
             self.system_msg_show_date_flag = True
+
+
+    def set_system_msg_show_multi_line_flag(self, flag):
+
+        if not flag:
+            self.system_msg_show_multi_line_flag = False
+        else:
+            self.system_msg_show_multi_line_flag = True
+
+
+    def set_system_msg_show_video_flag(self, flag):
+
+        if not flag:
+            self.system_msg_show_video_flag = False
+        else:
+            self.system_msg_show_video_flag = True
 
 
     def set_system_warning_show_flag(self, flag):

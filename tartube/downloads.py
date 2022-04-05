@@ -514,9 +514,18 @@ class DownloadManager(threading.Thread):
         # Tell the Progress List (or Classic Progress List) to display any
         #   remaining download statistics immediately
         if not self.operation_classic_flag:
-            self.app_obj.main_win_obj.progress_list_display_dl_stats()
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.progress_list_display_dl_stats,
+            )
+
         else:
-            self.app_obj.main_win_obj.classic_mode_tab_display_dl_stats()
+
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.classic_mode_tab_display_dl_stats,
+            )
 
         # Any media.Video objects which have been marked as doomed, can now be
         #   destroyed
@@ -883,7 +892,7 @@ class DownloadManager(threading.Thread):
             self.doomed_video_list.append(video_obj)
 
 
-    def nudge_progress_bar (self):
+    def nudge_progress_bar(self):
 
         """Can be called by anything.
 
@@ -897,7 +906,9 @@ class DownloadManager(threading.Thread):
 
         if self.current_item_obj:
 
-            self.app_obj.main_win_obj.update_progress_bar(
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.update_progress_bar,
                 self.current_item_obj.media_data_obj.name,
                 self.job_count,
                 len(self.download_list_obj.download_item_list),
@@ -1395,7 +1406,11 @@ class DownloadWorker(threading.Thread):
         # If the downloads.VideoDownloader object collected any youtube-dl
         #   error/warning messages, display them in the Error List
         if media_data_obj.error_list or media_data_obj.warning_list:
-            app_obj.main_win_obj.errors_list_add_row(media_data_obj)
+            GObject.timeout_add(
+                0,
+                app_obj.main_win_obj.errors_list_add_operation_msg,
+                media_data_obj,
+            )
 
         # In the event of an error, nothing updates the video's row in the
         #   Video Catalogue, and therefore the error icon won't be visible
@@ -1779,7 +1794,9 @@ class DownloadWorker(threading.Thread):
 
         if not self.download_item_obj.operation_classic_flag:
 
-            main_win_obj.progress_list_receive_dl_stats(
+            GObject.timeout_add(
+                0,
+                main_win_obj.progress_list_receive_dl_stats,
                 self.download_item_obj,
                 dl_stat_dict,
                 last_flag,
@@ -1791,13 +1808,17 @@ class DownloadWorker(threading.Thread):
             if last_flag \
             and isinstance(self.download_item_obj.media_data_obj, media.Video):
 
-                main_win_obj.results_list_update_tooltip(
+                GObject.timeout_add(
+                    0,
+                    main_win_obj.results_list_update_tooltip,
                     self.download_item_obj.media_data_obj,
                 )
 
         else:
 
-            main_win_obj.classic_mode_tab_receive_dl_stats(
+            GObject.timeout_add(
+                0,
+                main_win_obj.classic_mode_tab_receive_dl_stats,
                 self.download_item_obj,
                 dl_stat_dict,
                 last_flag,
@@ -2042,7 +2063,9 @@ class DownloadList(object):
                         # Videos in a private folder's .child_list can't be
                         #   downloaded (since they are also a child of a
                         #   channel, playlist or a public folder)
-                        app_obj.system_error(
+                        GObject.timeout_add(
+                            0,
+                            app_obj.system_error,
                             301,
                             _('Cannot download videos in a private folder'),
                         )
@@ -2160,7 +2183,9 @@ class DownloadList(object):
 
                 if not download_manager_obj.operation_classic_flag:
 
-                    main_win_obj.progress_list_receive_dl_stats(
+                    GObject.timeout_add(
+                        0,
+                        main_win_obj.progress_list_receive_dl_stats,
                         this_item,
                         dl_stat_dict,
                         True,       # Final set of statistics for this item
@@ -2168,7 +2193,9 @@ class DownloadList(object):
 
                 else:
 
-                    main_win_obj.classic_mode_tab_receive_dl_stats(
+                    GObject.timeout_add(
+                        0,
+                        main_win_obj.classic_mode_tab_receive_dl_stats,
                         this_item,
                         dl_stat_dict,
                         True,       # Final set of statistics for this item
@@ -2289,7 +2316,9 @@ class DownloadList(object):
 
             if self.operation_classic_flag:
 
-                self.app_obj.system_error(
+                GObject.timeout_add(
+                    0,
+                    self.app_obj.system_error,
                     302,
                     'Invalid argument in Classic Mode tab download operation',
                 )
@@ -2381,20 +2410,36 @@ class DownloadList(object):
 
             if custom_flag \
             and self.custom_dl_obj \
-            and self.custom_dl_obj.dl_by_video_flag \
-            and self.custom_dl_obj.dl_precede_flag \
-            and self.custom_dl_obj.dl_if_subs_flag \
-            and (
-                not media_data_obj.subs_list \
-                or (
-                    self.custom_dl_obj.dl_if_subs_list \
-                    and not utils.match_subs(
-                        self.custom_dl_obj,
-                        media_data_obj.subs_list,
+            and self.custom_dl_obj.dl_by_video_flag:
+
+                if self.custom_dl_obj.dl_precede_flag \
+                and self.custom_dl_obj.dl_if_subs_flag \
+                and (
+                    not media_data_obj.subs_list \
+                    or (
+                        self.custom_dl_obj.dl_if_subs_list \
+                        and not utils.match_subs(
+                            self.custom_dl_obj,
+                            media_data_obj.subs_list,
+                        )
                     )
-                )
-            ):
-                return None
+                ):
+                    return None
+
+                elif (
+                    self.custom_dl_obj.ignore_stream_flag \
+                    and media_data_obj.live_mode
+                ) or (
+                    self.custom_dl_obj.ignore_old_stream_flag \
+                    and media_data_obj.was_live_flag
+                ) or (
+                    self.custom_dl_obj.dl_if_stream_flag \
+                    and not media_data_obj.live_mode
+                ) or (
+                    self.custom_dl_obj.dl_if_old_stream_flag \
+                    and not media_data_obj.was_live_flag
+                ):
+                    return
 
         # Don't download videos in channels/playlists/folders which have been
         #   marked unavailable, because their external directory is not
@@ -2550,7 +2595,10 @@ class DownloadList(object):
 
         """
 
-        if self.app_obj.classic_options_obj is not None:
+        if media_data_obj.options_obj is not None:
+            # (Download options specified by the Drag and Drop tab)
+            options_manager_obj = media_data_obj.options_obj
+        elif self.app_obj.classic_options_obj is not None:
             options_manager_obj = self.app_obj.classic_options_obj
         else:
             options_manager_obj = self.app_obj.general_options_obj
@@ -3049,6 +3097,19 @@ class VideoDownloader(object):
         # ...where 'type' is the string 'error' or 'warning', and 'message'
         #   is the error/warning generated
         self.video_msg_buffer_dict = {}
+        # Errors/warnings for individual media.Video objects requires special
+        #   handling. We can't predict where, in the check/download process,
+        #   the first error/warning will occur
+        # Dictionary of videos which have been assigned an error/warning
+        #   by this instance of the VideoDownloader. The first error/warning
+        #   removes any errors/warnings generated by previous operations.
+        #   The call to self.confirm_new_video(), .confirm_old_video() and
+        #   .confirm_sim_video() removes any errors/warnings generated by
+        #   previous operations by consulting this dictionary
+        # Dictionary in the form
+        #   key = The video ID (corresponds to media.Video.vid)
+        #   value = True (not required)
+        self.video_error_warning_dict = {}
 
         # For channels/playlists, a list of child media.Video objects, used to
         #   track missing videos (when required)
@@ -3147,16 +3208,19 @@ class VideoDownloader(object):
             # Reset the errors/warnings stored in the media data object, the
             #   last time it was checked/downloaded
             self.download_item_obj.media_data_obj.reset_error_warning()
-
-            # If two channels/playlists/folders share a download destination,
-            #   we don't want to download both of them at the same time
-            # If this media data obj shares a download destination with another
-            #   downloads.DownloadWorker, wait until that download has finished
-            #   before starting this one
-            if not isinstance(
+            if isinstance(
                 self.download_item_obj.media_data_obj,
                 media.Video,
             ):
+                self.download_item_obj.media_data_obj.set_block_flag(False)
+
+            else:
+                # If two channels/playlists/folders share a download
+                #   destination, we don't want to download both of them at the
+                #   same time
+                # If this media data obj shares a download destination with
+                #   another downloads.DownloadWorker, wait until that download
+                #   has finished before starting this one
                 while self.download_manager_obj.check_master_slave(
                     self.download_item_obj.media_data_obj,
                 ):
@@ -3236,7 +3300,9 @@ class VideoDownloader(object):
                 #   playlist
                 self.stop()
 
-                app_obj.system_error(
+                GObject.timeout_add(
+                    0,
+                    app_obj.system_error,
                     303,
                     'Enforced timeout because downloader took too long to' \
                     + ' fetch a video\'s JSON data',
@@ -3292,7 +3358,10 @@ class VideoDownloader(object):
 
             # (The message must be visible in the Errors/Warnings tab, the
             #   Output tab and/or the terminal)
-            self.download_item_obj.media_data_obj.set_error(internal_msg)
+            self.set_error(
+                self.download_item_obj.media_data_obj,
+                internal_msg,
+            )
 
             if app_obj.ytdl_output_stderr_flag:
                 app_obj.main_win_obj.output_tab_write_stderr(
@@ -3407,7 +3476,8 @@ class VideoDownloader(object):
 
                 # Stop downloading this URL
                 self.stop()
-                media_data_obj.set_error(
+                self.set_error(
+                    media_data_obj,
                     '\'' + media_data_obj.name + '\' ' + _(
                         'This video has a URL that points to a channel or a' \
                         + ' playlist, not a video',
@@ -3547,11 +3617,14 @@ class VideoDownloader(object):
 
         """
 
-        # Import the main application (for convenience)
+        # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
+
+        # Error/warning handling for individual videos
+        video_obj = None
 
         # Special case: don't add videos to the Tartube database at all
-        media_data_obj = self.download_item_obj.media_data_obj
         if not isinstance(media_data_obj, media.Video) \
         and media_data_obj.dl_no_db_flag:
 
@@ -3621,7 +3694,9 @@ class VideoDownloader(object):
                 )
 
             # Update the main window
-            app_obj.announce_video_download(
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
                 self.compile_mini_options_dict(
@@ -3649,6 +3724,17 @@ class VideoDownloader(object):
 
         # The probable video ID, if captured, can now be reset
         self.probable_video_id = None
+
+        if video_obj:
+
+            # If no errors/warnings were received during this operation,
+            #   errors/warnings that already exist (from previous operations)
+            #   can now be cleared
+            if not video_obj.dbid in self.video_error_warning_dict:
+                video_obj.reset_error_warning()
+
+            # This confirmation clears a video marked as blocked
+            video_obj.set_block_flag(False)
 
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
@@ -3691,11 +3777,11 @@ class VideoDownloader(object):
         # Contact SponsorBlock server to fetch video slice data
         if app_obj.custom_sblock_mirror != '' \
         and app_obj.sblock_fetch_flag \
-        and video_obj.vid != None \
-        and (not video_obj.slice_list or app_obj.sblock_replace_flag):
+        and dummy_obj.vid != None \
+        and (not dummy_obj.slice_list or app_obj.sblock_replace_flag):
             utils.fetch_slice_data(
                 app_obj,
-                video_obj,
+                dummy_obj,
                 self.download_worker_obj.worker_id,
                 True,       # Write to terminal, if allowed
             )
@@ -3740,9 +3826,14 @@ class VideoDownloader(object):
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
 
+        # Error/warning handling for individual videos
+        if isinstance(media_data_obj, media.Video):
+            video_obj = media_data_obj
+        else:
+            video_obj = None
+
         # Special case: don't add videos to the Tartube database at all
-        if not isinstance(media_data_obj, media.Video) \
-        and media_data_obj.dl_no_db_flag:
+        if video_obj is None and media_data_obj.dl_no_db_flag:
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
@@ -3763,12 +3854,14 @@ class VideoDownloader(object):
             self.download_manager_obj.register_video('old')
 
         # All other cases
-        elif isinstance(media_data_obj, media.Video):
+        elif video_obj:
 
             if not media_data_obj.dl_flag:
 
-                app_obj.mark_video_downloaded(
-                    media_data_obj,
+                GObject.timeout_add(
+                    0,
+                    app_obj.mark_video_downloaded,
+                    video_obj,
                     True,               # Video is downloaded
                     True,               # Video is not new
                 )
@@ -3786,7 +3879,9 @@ class VideoDownloader(object):
 
                 if not match_obj.dl_flag:
 
-                    app_obj.mark_video_downloaded(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_downloaded,
                         match_obj,
                         True,           # Video is downloaded
                         True,           # Video is not new
@@ -3832,13 +3927,19 @@ class VideoDownloader(object):
                     #   container's sub-directory, which (probably) explains
                     #   why we couldn't find a match. Don't add anything to the
                     #   Results List
-                    app_obj.announce_video_clone(video_obj)
+                    GObject.timeout_add(
+                        0,
+                        app_obj.announce_video_clone,
+                        video_obj,
+                    )
 
                 else:
 
                     # Do add an entry to the Results List (as well as updating
                     #   the Video Catalogue, as normal)
-                    app_obj.announce_video_download(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.announce_video_download,
                         self.download_item_obj,
                         video_obj,
                         self.compile_mini_options_dict(
@@ -3848,6 +3949,17 @@ class VideoDownloader(object):
 
         # The probable video ID, if captured, can now be reset
         self.probable_video_id = None
+
+        if video_obj:
+
+            # If no errors/warnings were received during this operation,
+            #   errors/warnings that already exist (from previous operations)
+            #   can now be cleared
+            if not video_obj.dbid in self.video_error_warning_dict:
+                video_obj.reset_error_warning()
+
+            # This confirmation clears a video marked as blocked
+            video_obj.set_block_flag(False)
 
         # This VideoDownloader can now stop, if required to do so after a video
         #   has been checked/downloaded
@@ -3888,7 +4000,9 @@ class VideoDownloader(object):
             full_path = json_dict['_filename']
             path, filename, extension = self.extract_filename(full_path)
         else:
-            app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
                 304,
                 'Missing filename in JSON data',
             )
@@ -3966,6 +4080,14 @@ class VideoDownloader(object):
                 live_flag = False
         else:
             live_flag = False
+
+        if 'was_live' in json_dict:
+            if json_dict['was_live']:
+                was_live_flag = True
+            else:
+                was_live_flag = False
+        else:
+            was_live_flag = False
 
         if 'comments' in json_dict:
             comment_list = json_dict['comments']
@@ -4111,6 +4233,9 @@ class VideoDownloader(object):
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
 
+            if was_live_flag:
+                video_obj.set_was_live_flag(True)
+
             if comment_list and app_obj.comment_store_flag:
                 video_obj.set_comments(comment_list)
 
@@ -4233,6 +4358,9 @@ class VideoDownloader(object):
                     app_obj.main_win_obj.descrip_line_max_len,
                 )
 
+            if was_live_flag:
+                video_obj.set_was_live_flag(True)
+
             if not video_obj.comment_list and comment_list:
                 video_obj.set_comments(comment_list)
 
@@ -4262,7 +4390,9 @@ class VideoDownloader(object):
         # Deal with livestreams
         if video_obj.live_mode != 2 and live_flag:
 
-            app_obj.mark_video_live(
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_live,
                 video_obj,
                 2,                  # Livestream is broadcasting
                 {},                 # No livestream data
@@ -4272,7 +4402,9 @@ class VideoDownloader(object):
 
         elif video_obj.live_mode != 0 and not live_flag:
 
-            app_obj.mark_video_live(
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_live,
                 video_obj,
                 0,                  # Livestream has finished
                 {},                 # Reset any livestream data
@@ -4402,7 +4534,9 @@ class VideoDownloader(object):
             and not app_obj.ffmpeg_manager_obj.convert_webp(thumb_path):
 
                 app_obj.set_ffmpeg_fail_flag(True)
-                app_obj.system_error(
+                GObject.timeout_add(
+                    0,
+                    app_obj.system_error,
                     305,
                     app_obj.ffmpeg_fail_msg,
                 )
@@ -4431,7 +4565,9 @@ class VideoDownloader(object):
         #   etc, but not 'keep_description', etc
         if update_results_flag:
 
-            app_obj.announce_video_download(
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
                 # No call to self.compile_mini_options_dict, because this
@@ -4491,6 +4627,17 @@ class VideoDownloader(object):
         #   required
         if update_results_flag:
             self.download_manager_obj.register_video('sim')
+
+        if video_obj:
+
+            # If no errors/warnings were received during this operation,
+            #   errors/warnings that already exist (from previous operations)
+            #   can now be cleared
+            if not video_obj.dbid in self.video_error_warning_dict:
+                video_obj.reset_error_warning()
+
+            # This confirmation clears a video marked as blocked
+            video_obj.set_block_flag(False)
 
         # Stop checking videos in this channel/playlist, if a limit has been
         #   reached
@@ -4577,7 +4724,8 @@ class VideoDownloader(object):
             # New channel/playlist could not be created (for some reason), so
             #   stop downloading from this URL
             self.stop()
-            media_data_obj.set_error(
+            self.set_error(
+                media_data_obj,
                 '\'' + media_data_obj.name + '\' ' + _(
                     'This video has a URL that points to a channel or a' \
                     + ' playlist, not a video',
@@ -4993,8 +5141,9 @@ class VideoDownloader(object):
                     json_dict = json.loads(stdout)
 
                 except:
-
-                    self.download_manager_obj.app_obj.system_error(
+                    GObject.timeout_add(
+                        0,
+                        self.download_manager_obj.app_obj.system_error,
                         306,
                         'Invalid JSON data received from server',
                     )
@@ -5473,8 +5622,7 @@ class VideoDownloader(object):
 
         The error/warning is stored temporarily in self.video_msg_buffer_dict()
         until it can be passed on to the media.Video. (If the media.Video still
-        does not exist, pass it on to the parent channel/playlist/folder
-        instead).
+        does not exist, pass it on to the parent channel/playlist instead.)
 
         Args:
 
@@ -5484,7 +5632,9 @@ class VideoDownloader(object):
 
         if not vid in self.video_msg_buffer_dict:
 
-            app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
                 999,
                 'Missing VID in video error/warning buffer',
             )
@@ -5519,31 +5669,36 @@ class VideoDownloader(object):
             if video_obj is None:
 
                 # No matching media.Video found; assign the error/warning to
-                #   the parent channel/playlist/folder instead
+                #   the parent channel/playlist instead
                 if mini_list[0] == 'warning':
-                    self.download_item_obj.media_data_obj.set_warning(
+                    self.set_warning(
+                        self.download_item_obj.media_data_obj,
                         mini_list[1],
                     )
 
                 else:
-                    self.download_item_obj.media_data_obj.set_error(
+                    self.set_error(
+                        self.download_item_obj.media_data_obj,
                         mini_list[1],
                     )
 
             else:
 
                 if mini_list[0] == 'warning':
-                    video_obj.set_warning(mini_list[1])
+                    self.set_warning(video_obj, mini_list[1])
                 else:
-                    video_obj.set_error(mini_list[1])
+                    self.set_error(video_obj, mini_list[1])
 
                 # Code in downloads.DownloadWorker.run_video_downloader()
-                #   calls mainwin.MainWin.errors_list_add_row() for the
-                #   main downloads.DownloadItem and its errors/warnings; but
-                #   for a child video, we have to call it directly
+                #   calls mainwin.MainWin.errors_list_add_operation_msg() for
+                #   the main downloads.DownloadItem and its errors/warnings;
+                #   but for a child video, we have to call it directly
                 # The True argument means 'display the last error/warning only'
                 #   in case the same video generates several errors
-                app_obj.main_win_obj.errors_list_add_row(video_obj, True)
+                app_obj.main_win_obj.errors_list_add_operation_msg(
+                    video_obj,
+                    True,
+                )
 
                 GObject.timeout_add(
                     0,
@@ -5581,7 +5736,9 @@ class VideoDownloader(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -5703,7 +5860,7 @@ class VideoDownloader(object):
 
         When youtube-dl produces an error or warning (in its STDERR), pass that
         error/warning on to the appropriate media data object: the video
-        responsible, if possible, or the parent channel/playlist/folder if not.
+        responsible, if possible, or the parent channel/playlist if not.
 
         Args:
 
@@ -5817,26 +5974,35 @@ class VideoDownloader(object):
                 #   errors/warnings to dummy media.Video objects in a channel/
                 #   playlist
                 if msg_type == 'warning':
-                    self.download_item_obj.media_data_obj.set_warning(data)
+                    self.set_warning(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
                 else:
-                    self.download_item_obj.media_data_obj.set_error(data)
+                    self.set_error(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
 
             elif new_obj:
 
                 # We created a new media.Video object just a moment ago, so
                 #   assign the error/warning to it directly
                 if msg_type == 'warning':
-                    new_obj.set_warning(data)
+                    self.set_warning(new_obj, data)
                 else:
-                    new_obj.set_error(data)
+                    self.set_error(new_obj, data)
 
                 # Code in downloads.DownloadWorker.run_video_downloader()
-                #   calls mainwin.MainWin.errors_list_add_row() for the
-                #   main downloads.DownloadItem and its errors/warnings; but
-                #   for a child video, we have to call it directly
+                #   calls mainwin.MainWin.errors_list_add_operation_msg() for
+                #   the main downloads.DownloadItem and its errors/warnings;
+                #   but for a child video, we have to call it directly
                 # The True argument means 'display the last error/warning only'
                 #   in case the same video generates several errors
-                app_obj.main_win_obj.errors_list_add_row(new_obj, True)
+                app_obj.main_win_obj.errors_list_add_operation_msg(
+                    new_obj,
+                    True,
+                )
 
                 GObject.timeout_add(
                     0,
@@ -5852,9 +6018,15 @@ class VideoDownloader(object):
                 #   ID (in which case, the error/warning can be assigned to it
                 #   directly)
                 if msg_type == 'warning':
-                    self.download_item_obj.media_data_obj.set_warning(data)
+                    self.set_warning(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
                 else:
-                    self.download_item_obj.media_data_obj.set_error(data)
+                    self.set_error(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
 
                 GObject.timeout_add(
                     0,
@@ -5864,13 +6036,18 @@ class VideoDownloader(object):
 
             elif vid is None:
 
-                # We are downloading a channel/playlist/folder and the video ID
-                #   is not known, so assign the error/warning to the channel/
-                #   playlist/folder
+                # We are downloading a channel/playlist and the video ID is not
+                #   known, so assign the error/warning to the channel/playlist
                 if msg_type == 'warning':
-                    self.download_item_obj.media_data_obj.set_warning(data)
+                    self.set_warning(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
                 else:
-                    self.download_item_obj.media_data_obj.set_error(data)
+                    self.set_error(
+                        self.download_item_obj.media_data_obj,
+                        data,
+                    )
 
             else:
 
@@ -5881,6 +6058,62 @@ class VideoDownloader(object):
                     self.video_msg_buffer_dict[vid].append( [msg_type, data] )
                 else:
                     self.video_msg_buffer_dict[vid] = [ [msg_type, data] ]
+
+
+    def set_error(self, media_data_obj, msg):
+
+        """Wrapper for media.Video.set_error().
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel or media.Playlist):
+                The media data object to update. Only videos are updated by
+                this function
+
+            msg (str): The error message for this video
+
+        """
+
+        if isinstance(media_data_obj, media.Video):
+
+            if not media_data_obj.dbid in self.video_error_warning_dict:
+
+                # The new error is the first error/warning generated during
+                #   this operation; remove any errors/warnings from previuos
+                #   operations
+                media_data_obj.reset_error_warning()
+                self.video_error_warning_dict[media_data_obj.dbid] = True
+
+            # Set the new error
+            media_data_obj.set_error(msg)
+
+
+    def set_warning(self, media_data_obj, msg):
+
+        """Wrapper for media.Video.set_warning().
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel or media.Playlist):
+                The media data object to update. Only videos are updated by
+                this function
+
+            msg (str): The warning message for this video
+
+        """
+
+        if isinstance(media_data_obj, media.Video):
+
+            if not media_data_obj.dbid in self.video_error_warning_dict:
+
+                # The new warning is the first error/warning generated during
+                #   this operation; remove any errors/warnings from previuos
+                #   operations
+                media_data_obj.reset_error_warning()
+                self.video_error_warning_dict[media_data_obj.dbid] = True
+
+            # Set the new warning
+            media_data_obj.set_warning(msg)
 
 
     def set_return_code(self, code):
@@ -6854,7 +7087,9 @@ class ClipDownloader(object):
 
                 except:
 
-                    app_obj.system_error(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.system_error,
                         307,
                         _(
                             'Failed to copy the original video\'s' \
@@ -6908,14 +7143,18 @@ class ClipDownloader(object):
         elif not orig_video_obj.dl_flag:
 
             # Mark the video as downloaded
-            app_obj.mark_video_downloaded(
+            GObject.timeout_add(
+                0,
+                app_obj.mark_video_downloaded,
                 orig_video_obj,
                 True,               # Video is downloaded
             )
 
             # Do add an entry to the Results List (as well as updating the
             #   Video Catalogue, as normal)
-            app_obj.announce_video_download(
+            GObject.timeout_add(
+                0,
+                app_obj.announce_video_download,
                 self.download_item_obj,
                 orig_video_obj,
                 # No call to self.compile_mini_options_dict, because this
@@ -7372,7 +7611,9 @@ class ClipDownloader(object):
                         convert_path,
                     ):
                         app_obj.set_ffmpeg_fail_flag(True)
-                        app_obj.system_error(
+                        GObject.timeout_add(
+                            0,
+                            app_obj.system_error,
                             308,
                             app_obj.ffmpeg_fail_msg,
                         )
@@ -7415,7 +7656,9 @@ class ClipDownloader(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -8232,7 +8475,9 @@ class StreamDownloader(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -8364,7 +8609,9 @@ class StreamDownloader(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -8809,7 +9056,9 @@ class JSONFetcher(object):
                     local_thumb_path
                 ):
                     app_obj.set_ffmpeg_fail_flag(True)
-                    app_obj.system_error(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.system_error,
                         309,
                         app_obj.ffmpeg_fail_msg,
                     )
@@ -8926,7 +9175,9 @@ class JSONFetcher(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -8943,7 +9194,9 @@ class JSONFetcher(object):
 
                 # Broadcasting livestream detected; create a new media.Video
                 #   object
-                app_obj.create_livestream_from_download(
+                GObject.timeout_add(
+                    0,
+                    app_obj.create_livestream_from_download,
                     self.container_obj,
                     2,                      # Livestream has started
                     self.video_name,
@@ -8958,9 +9211,10 @@ class JSONFetcher(object):
             live_data_dict = utils.extract_livestream_data(data)
             if live_data_dict:
 
-                # Waiting livestream detected; create a new media.Video
-                #   object
-                app_obj.create_livestream_from_download(
+                # Waiting livestream detected; create a new media.Video object
+                GObject.timeout_add(
+                    0,
+                    app_obj.create_livestream_from_download,
                     self.container_obj,
                     1,                  # Livestream waiting to start
                     self.video_name,
@@ -9411,7 +9665,9 @@ class MiniJSONFetcher(object):
             return json.loads(stdout)
 
         except:
-            app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
                 310,
                 'Invalid JSON data received from server',
             )
@@ -9448,7 +9704,9 @@ class MiniJSONFetcher(object):
         or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
             # Just in case...
-            self.download_manager_obj.app_obj.system_error(
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
                 999,
                 'Malformed STDOUT or STDERR data',
             )
@@ -9468,7 +9726,9 @@ class MiniJSONFetcher(object):
                 if self.video_obj.live_mode == 1:
 
                     # Waiting livestream has gone live
-                    app_obj.mark_video_live(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_live,
                         self.video_obj,
                         2,              # Livestream is broadcasting
                         {},             # No livestream data
@@ -9486,7 +9746,9 @@ class MiniJSONFetcher(object):
                 and not json_dict['is_live']:
 
                     # Broadcasting livestream has finished
-                    app_obj.mark_video_live(
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_live,
                         self.video_obj,
                         0,                  # Livestream has finished
                         {},             # Reset any livestream data
@@ -9654,6 +9916,7 @@ class CustomDLManager(object):
         #   of time between this value and self.delay_max. Ignored if
         #   self.delay_flag is False
         self.delay_min = 0
+
         # During a custom download, any videos whose source URL is YouTube can
         #   be diverted to another website. This IV uses the values:
         #       'default' - Use the original YouTube URL
@@ -9668,6 +9931,21 @@ class CustomDLManager(object):
         # Ignored if it does not contain at least 3 characters. Ignored for any
         #   other value of self.divert_mode
         self.divert_website = ''
+
+        # If True, don't download broadcasting livestreams. Ignored if
+        #   self.dl_by_video_flag is False
+        self.ignore_stream_flag = False
+        # If True, don't download finished livestreams. Ignored if
+        #   self.dl_by_video_flag is False
+        self.ignore_old_stream_flag = False
+        # If True, only download broadcasting livestreams. Ignored if
+        #   self.dl_by_video_flag is False. Mutually incompatible with
+        #   self.ignore_stream_flag
+        self.dl_if_stream_flag = False
+        # If True, only download finished livestreams. Ignored if
+        #   self.dl_by_video_flag is False. Mutually incompatible with
+        #   self.ignore_old_stream_flag
+        self.dl_if_old_stream_flag = False
 
 
     # Public class methods

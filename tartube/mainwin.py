@@ -163,6 +163,10 @@ class MainWin(Gtk.ApplicationWindow):
         self.videos_label = None                # Gtk.Label
         self.progress_tab = None                # Gtk.Box
         self.progress_label = None              # Gtk.Label
+        self.classic_tab = None                 # Gtk.Box
+        self.classic_label = None               # Gtk.Label
+        self.drag_drop_tab = None               # Gtk.Box
+        self.drag_drop_label = None             # Gtk.Label
         self.output_tab = None                  # Gtk.Box
         self.output_label = None                # Gtk.Label
         self.errors_tab = None                  # Gtk.Box
@@ -248,25 +252,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_res_combobox = None          # Gtk.ComboBox
         self.hide_finished_checkbutton = None   # Gtk.CheckButton
         self.reverse_results_checkbutton = None # Gtk.CheckButton
-        # (from self.setup_output_tab)
-        self.output_notebook = None             # Gtk.Notebook
-        self.output_size_checkbutton = None     # Gtk.CheckButton
-        self.output_size_spinbutton = None      # Gtk.SpinButton
-        # (from self.setup_errors_tab)
-        self.errors_list_scrolled = None        # Gtk.ScrolledWindow
-        self.errors_list_treeview = None        # Gtk.TreeView
-        self.errors_list_liststore = None       # Gtk.ListStore
-        self.show_system_error_checkbutton = None
-                                                # Gtk.CheckButton
-        self.show_system_warning_checkbutton = None
-                                                # Gtk.CheckButton
-        self.show_operation_error_checkbutton = None
-                                                # Gtk.CheckButton
-        self.show_operation_warning_checkbutton = None
-                                                # Gtk.CheckButton
-        self.show_system_dates_checkbutton = None
-                                                # Gtk.CheckButton
-        self.error_list_button = None           # Gtk.Button
         # (from self.setup_classic_mode_tab)
         self.classic_paned = None               # Gtk.VPaned
         self.classic_banner_img = None          # Gtk.Image
@@ -304,6 +289,46 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_download_button = None     # Gtk.Button
         self.classic_clear_button = None        # Gtk.Button
         self.classic_clear_dl_button = None     # Gtk.Button
+        # (from self.setup_drag_drop_tab)
+        self.drag_drop_menu_button = None       # Gtk.Button
+        self.drag_drop_frame = None             # Gtk.Frame
+        self.drag_drop_grid = None              # Gtk.Grid
+        # (from self.setup_output_tab)
+        self.output_notebook = None             # Gtk.Notebook
+        self.output_size_checkbutton = None     # Gtk.CheckButton
+        self.output_size_spinbutton = None      # Gtk.SpinButton
+        # (from self.setup_errors_tab)
+        self.errors_list_frame = None           # Gtk.Frame
+        self.errors_list_scrolled = None        # Gtk.ScrolledWindow
+        self.errors_list_treeview = None        # Gtk.TreeView
+        self.errors_list_liststore = None       # Gtk.ListStore
+        self.show_system_error_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_warning_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_operation_error_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_operation_warning_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_date_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_container_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_video_checkbutton = None
+                                                # Gtk.CheckButton
+        self.show_system_multi_line_checkbutton = None
+                                                # Gtk.CheckButton
+        self.error_list_entry = None            # Gtk Entry
+        self.error_list_togglebutton = None     # Gtk.ToggleButton
+        self.error_list_container_checkbutton = None
+                                                # Gtk.CheckButton
+        self.error_list_video_checkbutton = None
+                                                # Gtk.CheckButton
+        self.error_list_msg_checkbutton = None  # Gtk.CheckButton
+        self.error_list_filter_toolbutton = None
+                                                # Gtk.ToolButton
+        self.error_list_cancel_toolbutton    = None
+        self.error_list_button = None           # Gtk.Button
 
 
         # IV list - other
@@ -383,10 +408,14 @@ class MainWin(Gtk.ApplicationWindow):
         #   set, the Classic Mode tab is not visible, so page numbers will
         #   differ
         # Dictionary in the form
-        #   key - the string 'videos', 'progress', 'classic', 'output' or
-        #           'error'
-        #   value - The tab number, in the range 0-4
+        #   key - the string 'videos', 'progress', 'classic', 'drag_drop',
+        #       'output' or 'error'
+        #   value - The tab number, in the range 0-5
         self.notebook_tab_dict = {}                # Set below
+        # The number of the tab in self.notebook that is currently visible
+        #   (only required to test whether the Errors/Warnings tab is the
+        #   visible one)
+        self.visible_tab_num = 0
 
         # Videos tab IVs
         # The Video Index is the left-hand side of the main window, and
@@ -653,6 +682,20 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_clipboard_timer_id = None
         self.classic_clipboard_timer_time = 250
 
+        # Drag and Drop tab IVs
+        # Dictionary of mainwin.DropZoneBox objects that currently exist in
+        #   the tab (ignoring any blank ones used to fill space)
+        # Dictionary in the form
+        #   key = the .uid of the equivalent options.OptionsManager object
+        #   value = the mainwin.DropZoneBox object
+        self.drag_drop_dict = {}
+        # The maximum number of dropzones (minimum value = 1; must not be a
+        #   prime number)
+        self.drag_drop_max = 16
+        # The time (in seconds) after which confirmation messages in each
+        #   dropzone should be reset
+        self.drag_drop_reset_time = 5
+
         # Output tab IVs
         # Flag set to True when the summary tab is added, during the first call
         #   to self.output_tab_setup_pages() (might not be added at all, if
@@ -679,19 +722,43 @@ class MainWin(Gtk.ApplicationWindow):
         self.output_tab_system_cmd_colour = 'yellow'
 
         # Errors / Warnings tab IVs
-        # The number of errors added to the Error List, since this tab was the
-        #   visible one (updated by self.errors_list_add_row() or
-        #   self.errors_list_add_system_error(), and reset back to zero by
-        #   self.on_notebook_switch_page() when the tab becomes the visible one
-        #   again)
-        self.tab_error_count = 0
-        # The number of warnings added to the Error List, since this tab was
-        #   the visible one
-        self.tab_warning_count = 0
-        # The number of the tab in self.notebook that is currently visible
-        #   (only required to test whether the Errors/Warnings tab is the
-        #   visible one)
-        self.visible_tab_num = 0
+        # List of error/warning messages available to be shown in the Errors/
+        #   Warnings tab (so they can be made visible, or not, as required)
+        # Every item in the list is a dictionary of key/value pairs. We don't
+        #   store and .dbids, in case the media data object gets deleted in the
+        #   meantime (in which case, the error/warning isn't automatically
+        #   deleted)
+        # The dictionary contains the keys
+        #   dict['msg_type'] - 'system_error', 'system_warning',
+        #       'operation_error', 'operation_warning'
+        #   dict['media_type'] - 'video', 'channel', 'playlist'
+        #   dict['date_time'] - date and time at which the message was
+        #       generated (a string)
+        #   dict['time'] - time at which the message was generated (a string)
+        #   dict['container_name'] - name of the parent channel/playlist/folder
+        #       (if generated by a video, the name of the parent container)
+        #   dict['video_name'] - name of the video. If generated by a channel/
+        #       playlist, an empty string
+        #   dict['msg'] - The message, formatted into multiple lines with a
+        #       maximum line length
+        #   dict['short_msg'] - The first line of the formatted message, with
+        #       an ellipsis appended if the message is too big for a single
+        #       line
+        #   dict['orig_msg'] - The original message with no formatting
+        #   dict['count_flag'] - True if this message should count towards the
+        #       totals displayed in the Errors/Warnings tab label; False if not
+        #   dict['drag_path']
+        #   dict['drag_source']
+        #   dict['drag_name'] - Data for drag and drop operations
+        self.error_list_buffer_list = []
+        # Settings set when the Error List filter is applied, and reset when
+        #   it is cancelled
+        self.error_list_filter_flag = False
+        self.error_list_filter_text = None
+        self.error_list_filter_regex_flag = False
+        self.error_list_filter_container_flag = False
+        self.error_list_filter_video_flag = False
+        self.error_list_filter_msg_flag = False
 
         # List of configuration windows (anything inheriting from
         #   config.GenericConfigWin) and wizard windows (anything inheriting
@@ -739,10 +806,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.notebook_tab_dict['progress'] = 1
         if not __main__.__pkg_no_download_flag__:
             self.notebook_tab_dict['classic'] = 2
-            self.notebook_tab_dict['output'] = 3
-            self.notebook_tab_dict['errors'] = 4
+            self.notebook_tab_dict['drag_drop'] = 3
+            self.notebook_tab_dict['output'] = 4
+            self.notebook_tab_dict['errors'] = 5
         else:
             self.notebook_tab_dict['classic'] = None
+            self.notebook_tab_dict['drag_drop'] = None
             self.notebook_tab_dict['output'] = 2
             self.notebook_tab_dict['errors'] = 3
 
@@ -1139,6 +1208,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.setup_videos_tab()
         self.setup_progress_tab()
         self.setup_classic_mode_tab()
+        self.setup_drag_drop_tab()
         self.setup_output_tab()
         self.setup_errors_tab()
 
@@ -1835,6 +1905,15 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_tab.set_hexpand(True)
         self.classic_tab.set_vexpand(True)
         self.classic_tab.set_border_width(self.spacing_size)
+
+        # Drag and Drop tab
+        self.drag_drop_tab = Gtk.Box()
+        self.drag_drop_label = Gtk.Label.new_with_mnemonic(_('_Drag and Drop'))
+        if not __main__.__pkg_no_download_flag__:
+            self.notebook.append_page(self.drag_drop_tab, self.drag_drop_label)
+        self.drag_drop_tab.set_hexpand(True)
+        self.drag_drop_tab.set_vexpand(True)
+        self.drag_drop_tab.set_border_width(self.spacing_size)
 
         # Output tab
         self.output_tab = Gtk.Box()
@@ -2791,11 +2870,8 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Classic Mode tab.
         """
 
-        vbox = Gtk.VBox()
-        self.classic_tab.pack_start(vbox, True, True, 0)
-
         self.classic_paned = Gtk.VPaned()
-        vbox.pack_start(self.classic_paned, True, True, 0)
+        self.classic_tab.pack_start(self.classic_paned, True, True, 0)
         self.classic_paned.set_position(
             self.app_obj.main_win_classic_slider_posn,
         )
@@ -3389,6 +3465,107 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
+    def setup_drag_drop_tab(self):
+
+        """Called by self.setup_win().
+
+        Creates widgets for the Drag and Drop tab.
+        """
+
+        grid = Gtk.Grid()
+        self.drag_drop_tab.pack_start(grid, True, True, 0)
+        grid.set_column_spacing(self.spacing_size)
+        grid.set_row_spacing(self.spacing_size)
+
+        # Upper strip
+        # -----------
+
+        hbox = Gtk.HBox()
+        grid.attach(hbox, 0, 0, 1, 1)
+
+        frame = Gtk.Frame()
+        hbox.pack_start(frame, False, False, 0)
+        frame.set_hexpand(False)
+
+        hbox2 = Gtk.HBox()
+        frame.add(hbox2)
+        hbox2.set_border_width(self.spacing_size)
+
+        img = Gtk.Image()
+        hbox2.pack_start(img, False, False, 0)
+        img.set_from_pixbuf(self.pixbuf_dict['cursor_large'])
+
+        frame2 = Gtk.Frame()
+        hbox.pack_start(frame2, True, True, self.spacing_size)
+        frame2.set_hexpand(True)
+
+        vbox2 = Gtk.VBox()
+        frame2.add(vbox2)
+        vbox2.set_border_width(self.spacing_size)
+
+        label = Gtk.Label()
+        vbox2.pack_start(label, True, True, 0)
+        label.set_markup(
+            '<b>' + _(
+                'When you drag a video here, it is added to the Classic Mode' \
+                 + ' tab',
+            ) + '</b>',
+        )
+
+        label2 = Gtk.Label()
+        vbox2.pack_start(label2, True, True, 0)
+        label2.set_markup(
+            '<b>' + _(
+                'Each zone represents a set of download options',
+            ) + '</b>',
+        )
+
+        if os.name == 'nt':
+
+            label3 = Gtk.Label()
+            vbox2.pack_start(label3, True, True, 0)
+            label3.set_markup(
+                '<b><i>' + _(
+                    'Warning: Drag and drop does not work well on MS Windows',
+                ) + '</i></b>',
+            )
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.drag_drop_add_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_ADD,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.drag_drop_add_button = Gtk.Button.new()
+            self.drag_drop_add_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_add'],
+                ),
+            )
+        hbox.pack_start(self.drag_drop_add_button, False, False, 0)
+        self.drag_drop_add_button.set_action_name(
+            'app.drag_drop_add_button',
+        )
+        self.drag_drop_add_button.set_tooltip_text(
+            _('Add a new dropzone'),
+        )
+
+        # Drag and Drop Grid
+        # ------------------
+
+        # Use a frame, containing a grid. The frame is more convenient, because
+        #   its border can be made invisible, and we can use .get_child() and
+        #   .remove()
+        self.drag_drop_frame = Gtk.Frame()
+        grid.attach(self.drag_drop_frame, 0, 1, 1, 1)
+        self.drag_drop_frame.set_border_width(0)
+        self.drag_drop_frame.set_hexpand(True)
+        self.drag_drop_frame.set_vexpand(True)
+        self.drag_drop_frame.set_shadow_type(Gtk.ShadowType.NONE)
+
+        self.drag_drop_grid_reset()
+
+
     def setup_output_tab(self):
 
         """Called by self.setup_win().
@@ -3464,78 +3641,16 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Errors List. Use a modified Gtk.TreeView which permits drag-and-drop
         #   for multiple rows
-        frame = Gtk.Frame()
-        vbox.pack_start(frame, True, True, 0)
+        self.errors_list_frame = Gtk.Frame()
+        vbox.pack_start(self.errors_list_frame, True, True, 0)
 
-        self.errors_list_scrolled = Gtk.ScrolledWindow()
-        frame.add(self.errors_list_scrolled)
-        self.errors_list_scrolled.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC,
-        )
+        self.errors_list_reset()
 
-        self.errors_list_treeview = MultiDragDropTreeView()
-        self.errors_list_scrolled.add(self.errors_list_treeview)
-        # Allow multiple selection...
-        self.errors_list_treeview.set_can_focus(True)
-        selection = self.errors_list_treeview.get_selection()
-        selection.set_mode(Gtk.SelectionMode.MULTIPLE)
-        # ...and then set up drag and drop from the treeview to an external
-        #   application (for example, an FFmpeg batch converter)
-        self.errors_list_treeview.enable_model_drag_source(
-            Gdk.ModifierType.BUTTON1_MASK,
-            [],
-            Gdk.DragAction.COPY,
-        )
-        self.errors_list_treeview.drag_source_add_text_targets()
-        self.errors_list_treeview.connect(
-            'drag-data-get',
-            self.on_errors_list_drag_data_get,
-        )
+        # Strips of widgets at the bottom
 
-        # Use three hidden columns, storing a video's full file path, source
-        #   URL and name (left empty if the error/warning isn't generated by a
-        #   media.Video)
-        # We don't use the media data object's .dbid, because the media data
-        #   object may have been deleted (but the error message will still be
-        #   visible)
-        for i, column_title in enumerate(
-            [
-                'hide', 'hide', 'hide', '', '', _('Time'), _('Name'),
-                _('Message')
-
-            ],
-        ):
-            if not column_title:
-                renderer_pixbuf = Gtk.CellRendererPixbuf()
-                column_pixbuf = Gtk.TreeViewColumn(
-                    '',
-                    renderer_pixbuf,
-                    pixbuf=i,
-                )
-                self.errors_list_treeview.append_column(column_pixbuf)
-
-            else:
-                renderer_text = Gtk.CellRendererText()
-                column_text = Gtk.TreeViewColumn(
-                    column_title,
-                    renderer_text,
-                    text=i,
-                )
-                self.errors_list_treeview.append_column(column_text)
-                if column_title == 'hide':
-                    column_text.set_visible(False)
-
-        self.errors_list_liststore = Gtk.ListStore(
-            str, str, str,
-            GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf,
-            str, str, str,
-        )
-        self.errors_list_treeview.set_model(self.errors_list_liststore)
-
-        # Strip of widgets at the bottom
+        # (First row)
         hbox = Gtk.HBox()
-        vbox.pack_start(hbox, False, False, self.spacing_size)
+        vbox.pack_start(hbox, False, False, 0)
         hbox.set_border_width(self.spacing_size)
 
         self.show_system_error_checkbutton = Gtk.CheckButton()
@@ -3567,7 +3682,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_operation_error_checkbutton = Gtk.CheckButton()
         hbox.pack_start(self.show_operation_error_checkbutton, False, False, 0)
         self.show_operation_error_checkbutton.set_label(
-            _('Show server errors'),
+            _('Show operation errors'),
         )
         self.show_operation_error_checkbutton.set_active(
             self.app_obj.operation_error_show_flag,
@@ -3585,7 +3700,7 @@ class MainWin(Gtk.ApplicationWindow):
             0,
         )
         self.show_operation_warning_checkbutton.set_label(
-            _('Show server warnings'),
+            _('Show operation warnings'),
         )
         self.show_operation_warning_checkbutton.set_active(
             self.app_obj.operation_warning_show_flag,
@@ -3595,30 +3710,165 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_operation_warning_checkbutton_changed,
         )
 
-        self.show_system_dates_checkbutton = Gtk.CheckButton()
-        hbox.pack_start(
-            self.show_system_dates_checkbutton,
+        # (Second row)
+        hbox2 = Gtk.HBox()
+        vbox.pack_start(hbox2, False, False, 0)
+        hbox2.set_border_width(self.spacing_size)
+
+        self.show_system_date_checkbutton = Gtk.CheckButton()
+        hbox2.pack_start(
+            self.show_system_date_checkbutton,
             False,
             False,
             0,
         )
-        self.show_system_dates_checkbutton.set_label(
+        self.show_system_date_checkbutton.set_label(
             _('Show dates'),
         )
-        self.show_system_dates_checkbutton.set_active(
+        self.show_system_date_checkbutton.set_active(
             self.app_obj.system_msg_show_date_flag,
         )
-        self.show_system_dates_checkbutton.connect(
+        self.show_system_date_checkbutton.connect(
             'toggled',
-            self.on_system_dates_checkbutton_changed,
+            self.on_system_date_checkbutton_changed,
+        )
+
+        self.show_system_container_checkbutton = Gtk.CheckButton()
+        hbox2.pack_start(
+            self.show_system_container_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.show_system_container_checkbutton.set_label(
+            _('Show channel/playlist/folder names'),
+        )
+        self.show_system_container_checkbutton.set_active(
+            self.app_obj.system_msg_show_container_flag,
+        )
+        self.show_system_container_checkbutton.connect(
+            'toggled',
+            self.on_system_container_checkbutton_changed,
+        )
+
+        self.show_system_video_checkbutton = Gtk.CheckButton()
+        hbox2.pack_start(
+            self.show_system_video_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.show_system_video_checkbutton.set_label(
+            _('Show video names'),
+        )
+        self.show_system_video_checkbutton.set_active(
+            self.app_obj.system_msg_show_video_flag,
+        )
+        self.show_system_video_checkbutton.connect(
+            'toggled',
+            self.on_system_video_checkbutton_changed,
+        )
+
+        self.show_system_multi_line_checkbutton = Gtk.CheckButton()
+        hbox2.pack_start(
+            self.show_system_multi_line_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.show_system_multi_line_checkbutton.set_label(
+            _('Show full messages'),
+        )
+        self.show_system_multi_line_checkbutton.set_active(
+            self.app_obj.system_msg_show_multi_line_flag,
+        )
+        self.show_system_multi_line_checkbutton.connect(
+            'toggled',
+            self.on_system_multi_line_checkbutton_changed,
+        )
+
+        # (Third row)
+        hbox3 = Gtk.HBox()
+        vbox.pack_start(hbox3, False, False, 0)
+        hbox3.set_border_width(self.spacing_size)
+
+        label = Gtk.Label(_('Filter') + '  ')
+        hbox3.pack_start(label, False, False, 0)
+
+        self.error_list_entry = Gtk.Entry()
+        hbox3.pack_start(self.error_list_entry, False, False, 0)
+        self.error_list_entry.set_width_chars(16)
+        self.error_list_entry.set_tooltip_text(_('Enter search text'))
+
+        self.error_list_togglebutton = Gtk.ToggleButton(_('Regex'))
+        hbox3.pack_start(self.error_list_togglebutton, False, False, 0)
+        self.error_list_togglebutton.set_tooltip_text(
+            _('Select if search text is a regex'),
+        )
+
+        # (Empty label for spacing)
+        label2 = Gtk.Label('   ')
+        hbox3.pack_start(label2, False, False, 0)
+
+        self.error_list_container_checkbutton = Gtk.CheckButton()
+        hbox3.pack_start(
+            self.error_list_container_checkbutton,
+            False,
+            False,
+            0,
+        )
+        self.error_list_container_checkbutton.set_label('Container names')
+        self.error_list_container_checkbutton.set_active(True)
+
+        self.error_list_video_checkbutton = Gtk.CheckButton()
+        hbox3.pack_start(self.error_list_video_checkbutton, False, False, 0)
+        self.error_list_video_checkbutton.set_label('Video names')
+        self.error_list_video_checkbutton.set_active(True)
+
+        self.error_list_msg_checkbutton = Gtk.CheckButton()
+        hbox3.pack_start(self.error_list_msg_checkbutton, False, False, 0)
+        self.error_list_msg_checkbutton.set_label('Messages')
+        self.error_list_msg_checkbutton.set_active(True)
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.error_list_filter_toolbutton \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
+        else:
+            self.error_list_filter_toolbutton = Gtk.ToolButton.new()
+            self.error_list_filter_toolbutton.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
+            )
+        hbox3.pack_start(self.error_list_filter_toolbutton, False, False, 0)
+        self.error_list_filter_toolbutton.set_tooltip_text(
+            _('Filter messages'),
+        )
+        self.error_list_filter_toolbutton.set_action_name(
+            'app.apply_error_filter_toolbutton',
+        )
+
+        if not self.app_obj.show_custom_icons_flag:
+            self.error_list_cancel_toolbutton \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_CANCEL)
+        else:
+            self.error_list_cancel_toolbutton = Gtk.ToolButton.new()
+            self.error_list_cancel_toolbutton.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_cancel']),
+            )
+        hbox3.pack_start(self.error_list_cancel_toolbutton, False, False, 0)
+        self.error_list_cancel_toolbutton.set_sensitive(False)
+        self.error_list_cancel_toolbutton.set_tooltip_text(
+            _('Cancel filter'),
         )
 
         self.error_list_button = Gtk.Button()
-        hbox.pack_end(self.error_list_button, False, False, 0)
+        hbox3.pack_end(self.error_list_button, False, False, 0)
         self.error_list_button.set_label(_('Clear list'))
         self.error_list_button.connect(
             'clicked',
             self.on_errors_list_clear,
+        )
+        self.error_list_cancel_toolbutton.set_action_name(
+            'app.cancel_error_filter_toolbutton',
         )
 
 
@@ -3689,8 +3939,23 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.set_visible(True)
-            if self.app_obj.restore_posn_from_tray_flag:
+            if self.app_obj.restore_posn_from_tray_flag \
+            and self.win_last_xpos is not None:
                 self.move(self.win_last_xpos, self.win_last_ypos)
+
+
+    def force_invisible(self):
+
+        """Called by mainapp.TartubeApp.start_continue().
+
+        An alternative to self.toggle_visibility(), in which the window is
+        made invisible (during startup).
+
+        The calling code must check that Tartube is visible in the system tray,
+        or the user will be in big trouble.
+        """
+
+        self.set_visible(False)
 
 
     def update_menu(self):
@@ -3927,6 +4192,21 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_system_warning_checkbutton.set_sensitive(sens_flag)
         self.show_operation_error_checkbutton.set_sensitive(sens_flag)
         self.show_operation_warning_checkbutton.set_sensitive(sens_flag)
+        self.show_system_date_checkbutton.set_sensitive(sens_flag)
+        self.show_system_container_checkbutton.set_sensitive(sens_flag)
+        self.show_system_video_checkbutton.set_sensitive(sens_flag)
+        self.show_system_multi_line_checkbutton.set_sensitive(sens_flag)
+        self.error_list_entry.set_sensitive(sens_flag)
+        self.error_list_togglebutton.set_sensitive(sens_flag)
+        self.error_list_container_checkbutton.set_sensitive(sens_flag)
+        self.error_list_video_checkbutton.set_sensitive(sens_flag)
+        self.error_list_msg_checkbutton.set_sensitive(sens_flag)
+        if self.error_list_filter_flag:
+            self.error_list_filter_toolbutton.set_sensitive(False)
+            self.error_list_cancel_toolbutton.set_sensitive(sens_flag)
+        else:
+            self.error_list_filter_toolbutton.set_sensitive(sens_flag)
+            self.error_list_cancel_toolbutton.set_sensitive(False)
 
 
     def desensitise_test_widgets(self):
@@ -11774,7 +12054,64 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_textbuffer.set_text('')
 
 
-    def classic_mode_tab_create_dummy_video(self, url, dest_dir, format_str):
+    def classic_mode_tab_insert_url(self, url, options_obj):
+
+        """Called by mainwin.DropZoneBox.on_drag_data_received().
+
+        A modified version of self.classic_mode_tab_add_urls().
+
+        Inserts a single URL into the Classic Progress List, creating a dummy
+        media.Video object for it. The URL is downloaded using the specified
+        options.OptionsManager object.
+
+        The contents of the 'Destination' box is used, but the contents of
+        the 'Format' boxes are ignored.
+
+        Args:
+
+            url (str): The URL to download. This function assumes the calling
+                code has already stripped leading/trailing whitespace
+
+            options_obj (options.OptionsManager): Download options for this URL
+
+        Return values:
+
+            True on success, False on failure
+
+        """
+
+        # Sanity check
+        if url is None \
+        or not utils.check_url(url) \
+        or options_obj is None:
+            self.app_obj.system_error(
+                999,
+                'Invalid insert URL into Classic Progress List request',
+            )
+
+            return False
+
+        # Get the specified download destination
+        tree_iter = self.classic_dest_dir_combo.get_active_iter()
+        model = self.classic_dest_dir_combo.get_model()
+        dest_dir = model[tree_iter][0]
+
+        # Create the dummy media.Video object, which has a negative .dbid, and
+        #   is not added to the media data registry
+        dummy_obj = self.classic_mode_tab_create_dummy_video(
+            url,
+            dest_dir,
+        )
+
+        if not dummy_obj:
+            return False
+        else:
+            dummy_obj.set_options_obj(options_obj)
+            return True
+
+
+    def classic_mode_tab_create_dummy_video(self, url, dest_dir, \
+    format_str=None):
 
         """Called by self.classic_mode_tab_add_urls() or
         mainapp.TartubeApp.download_manager_finished().
@@ -12111,6 +12448,176 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Return 1 to keep the timer going
         return 1
+
+
+    # (Drag and Drop tab)
+
+
+    def drag_drop_grid_reset(self):
+
+        """Can be called by anything.
+
+        Draws a grid of mainwin.DropZoneBox in the Drag and Drop tab
+        (replacing any grid that already exists). Each mainwin.DropZoneBox is
+        associated with a set of download options (options.OptionsManager).
+
+        The code for the Drag and Drop tab is fairly simple.
+        self.drag_drop_add_dropzone() can be called to add a new dropzone, but
+        for everything else, we just call this function to reset the grid.
+        """
+
+        # If not called by self.setup_videos_tab()...
+        if self.drag_drop_frame.get_child():
+            self.drag_drop_frame.remove(self.drag_drop_frame.get_child())
+
+        # (Temporarily retain the old dropzones, so we can preserve their
+        #   confirmation messages and reset times)
+        old_dict = self.drag_drop_dict
+        self.drag_drop_dict = {}
+
+        # Replace the grid
+        self.drag_drop_grid = Gtk.Grid()
+        self.drag_drop_frame.add(self.drag_drop_grid)
+        self.drag_drop_grid.set_column_spacing(self.spacing_size)
+        self.drag_drop_grid.set_row_spacing(self.spacing_size)
+        self.drag_drop_grid.set_column_homogeneous(True)
+        self.drag_drop_grid.set_row_homogeneous(True)
+
+        # Set up dropzones on the grid. The minimum size is 1x1, maximum is
+        #   self.drag_drop_max (we assume it is not a prime number, as
+        #   discussed in the comments in self.__init__() )
+        # If there aren't enough options.OptionsManager objects to fill a grid,
+        #   then we use an empty dropzone (one whose .options_obj IV is set to
+        #   None)
+        actual_size = grid_size = len(self.app_obj.classic_dropzone_list)
+        if grid_size > self.drag_drop_max:
+            grid_size = self.drag_drop_max
+
+        # Create the smallest grid possible, checking for the suitability of
+        #   grid sizes in the order 1x1, 2x1, 2x2, 3x2, 3x3...
+        w = None
+        h = None
+        dim = 0
+        while w is None and h is None:
+
+            dim += 1
+
+            if grid_size <= dim * dim:
+                w = dim
+                h = dim
+            elif grid_size <= dim * (dim + 1):
+                w = dim + 1
+                h = dim
+
+        # Add drop zones at every location in the grid
+        index = -1
+        for y_pos in range(h):
+            for x_pos in range(w):
+
+                index += 1
+                if index < actual_size:
+                    uid = self.app_obj.classic_dropzone_list[index]
+                    options_obj = self.app_obj.options_reg_dict[uid]
+                else:
+                    options_obj = None
+
+                # Instead of using Gtk.Frame directly, use a wrapper class so
+                #   we can quickly retrieve the options.OptionsManager object
+                #   displayed in each dropzone
+                if not options_obj \
+                or not options_obj.uid in self.app_obj.options_reg_dict \
+                or not options_obj.uid in old_dict:
+                    wrapper_obj = DropZoneBox(self, options_obj)
+
+                else:
+                    # Preserve the previous confirmation message
+                    old_wrapper_obj = old_dict[options_obj.uid]
+                    wrapper_obj = DropZoneBox(
+                        self,
+                        options_obj,
+                        old_wrapper_obj.update_text,
+                        old_wrapper_obj.reset_time,
+                    )
+
+                if wrapper_obj:
+                    self.drag_drop_grid.attach(wrapper_obj, x_pos, y_pos, 1, 1)
+                    if options_obj:
+                        self.drag_drop_dict[options_obj.uid] = wrapper_obj
+
+        # (De)sensitie the add button, as appropriate
+        if actual_size >= self.drag_drop_max:
+            self.drag_drop_add_button.set_sensitive(False)
+        else:
+            self.drag_drop_add_button.set_sensitive(True)
+
+        # Procedure complete
+        self.drag_drop_grid.show_all()
+
+
+    def drag_drop_add_dropzone(self):
+
+        """Called by mainapp.TartubeApp.on_button_drag_drop_add() or by any
+        other code.
+
+        Prompts the user to create a new set of download options, or to use
+        an existing set.
+
+        Adds a new dropzone to the Drag and Drop tab's grid to accommodate it.
+        """
+
+        if len(self.drag_drop_dict) >= self.drag_drop_max:
+            return self.app_obj.system_error(
+                999,
+                'Drag and Drop tab out of space',
+            )
+
+        # Prompt the user to select one of existing options.OptionsManager
+        #   objects, or to create a new one
+        dialogue_win = AddDropZoneDialogue(self)
+        response = dialogue_win.run()
+        # Get the specified options.OptionsManager object, before
+        #   destroying the window
+        options_name = dialogue_win.options_name
+        options_obj = dialogue_win.options_obj
+        clone_flag = dialogue_win.clone_flag
+        dialogue_win.destroy()
+
+        edit_win_flag = False
+
+        if response == Gtk.ResponseType.OK \
+        and (
+            options_name is not None \
+            or options_obj is not None \
+            or clone_flag
+        ):
+            if options_name is not None:
+
+                options_obj = self.app_obj.create_download_options(
+                    options_name,
+                )
+
+                edit_win_flag = True
+
+            elif clone_flag:
+
+                options_obj = self.app_obj.clone_download_options(
+                    options_obj,
+                )
+
+                edit_win_flag = True
+
+            # Add the new dropzone
+            self.app_obj.add_classic_dropzone_list(options_obj.uid)
+            # Redraw the grid
+            self.drag_drop_grid_reset()
+
+            if edit_win_flag:
+                # Open an edit window to show the new/cloned options
+                #   immediately
+                config.OptionsEditWin(
+                    self.app_obj,
+                    options_obj,
+                )
 
 
     # (Output tab)
@@ -12569,29 +13076,123 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Can be called by anything.
 
-        Empties the Gtk.TreeView in the Errors List, ready for it to be
-        refilled. (There are no IVs to reset.)
+        On the first call, sets up the widgets for the Errors List. On
+        subsequent calls, replaces those widgets and re-populates the list,
+        making error/warning messages visible or not, depending on settings.
         """
+
+        # Import the main application (for convenience)
+        app_obj = self.app_obj
+
+        # If not called by self.setup_errors_tab()...
+        if self.errors_list_frame.get_child():
+            self.errors_list_frame.remove(self.errors_list_frame.get_child())
+
+        # Set up the widgets
+        self.errors_list_scrolled = Gtk.ScrolledWindow()
+        self.errors_list_frame.add(self.errors_list_scrolled)
+        self.errors_list_scrolled.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC,
+        )
+
+        self.errors_list_treeview = MultiDragDropTreeView()
+        self.errors_list_scrolled.add(self.errors_list_treeview)
+        # Allow multiple selection...
+        self.errors_list_treeview.set_can_focus(True)
+        selection = self.errors_list_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.MULTIPLE)
+        # ...and then set up drag and drop from the treeview to an external
+        #   application (for example, an FFmpeg batch converter)
+        self.errors_list_treeview.enable_model_drag_source(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [],
+            Gdk.DragAction.COPY,
+        )
+        self.errors_list_treeview.drag_source_add_text_targets()
+        self.errors_list_treeview.connect(
+            'drag-data-get',
+            self.on_errors_list_drag_data_get,
+        )
+
+        # Column list:
+        #   0:  [str] [hide] Video's full file path (used for drag and drop)
+        #   1:  [str] [hide] Media data object's URL (used for drag and drop)
+        #   2:  [str] [hide] Media data object's name (used for drag and drop)
+        #   3:  [pibxuf] Message type icon
+        #   4:  [pixbuf] Media type icon
+        #   5:  [str] [switch] Date and time string
+        #   6:  [str] [switch] Date string
+        #   7:  [str] [switch] Container name
+        #   8:  [str] [switch] Video name
+        #   9:  [str] [switch] Full message, formatted across several lines
+        #   10: [str] [switch] Shortened (one-line) message
+        # We don't use the media data object's .dbid, because the media data
+        #   object may have been deleted (but the error message will still be
+        #   visible)
+        # N.B. If this layout changes, then
+        #   self.on_system_container_checkbutton_changed(), etc, must also be
+        #   updated
+        for i, column_title in enumerate(
+            [
+                'hide', 'hide', 'hide',
+                '', '',
+                _('Time'), _('Time'), _('Container'), _('Video'), _('Message'),
+                _('Message')
+            ],
+        ):
+            if not column_title:
+                renderer_pixbuf = Gtk.CellRendererPixbuf()
+                column_pixbuf = Gtk.TreeViewColumn(
+                    '',
+                    renderer_pixbuf,
+                    pixbuf=i,
+                )
+                self.errors_list_treeview.append_column(column_pixbuf)
+
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                self.errors_list_treeview.append_column(column_text)
+                if i < 3 \
+                or i == 5 and not app_obj.system_msg_show_date_flag \
+                or i == 6 and app_obj.system_msg_show_date_flag \
+                or i == 7 and not app_obj.system_msg_show_container_flag \
+                or i == 8 and not app_obj.system_msg_show_video_flag \
+                or i == 9 and not app_obj.system_msg_show_multi_line_flag \
+                or i == 10 and app_obj.system_msg_show_multi_line_flag:
+                    column_text.set_visible(False)
 
         # Reset widgets
         self.errors_list_liststore = Gtk.ListStore(
             str, str, str,
             GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf,
-            str, str, str,
+            str, str, str, str, str, str,
         )
         self.errors_list_treeview.set_model(self.errors_list_liststore)
 
-        self.tab_error_count = 0
-        self.tab_warning_count = 0
+        # Populate the list with any errors/warnings already added
+        for mini_dict in self.error_list_buffer_list:
+            self.errors_list_insert_row(mini_dict)
+
+        # Update the Errors/Warnings tab label with message counts
         self.errors_list_refresh_label()
 
+        # Make the changes visible
+        self.errors_list_frame.show_all()
 
-    def errors_list_add_row(self, media_data_obj, last_flag=False):
 
-        """Called by downloads.DownloadWorker.run_video_downloader().
+    def errors_list_add_operation_msg(self, media_data_obj, last_flag=False):
 
-        When a download job generates error and/or warning messages, this
-        function is called to display them in the Errors List.
+        """Can be called by any operation.
+
+        When an operation generates error and/or warning messages, this
+        function is called to display them in the Errors List (if settings
+        permit), and to update IVs.
 
         Args:
 
@@ -12617,103 +13218,137 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Create a new row for every error and warning message
         # Use the same time on each
-        if self.app_obj.system_msg_show_date_flag:
-            time_string = datetime.datetime.today().strftime('%x %X')
-        else:
-            local = utils.get_local_time()
-            time_string = str(local.strftime('%H:%M:%S'))
+        time_str = datetime.datetime.today().strftime('%x %X')
+        local = utils.get_local_time()
+        short_time_str = str(local.strftime('%H:%M:%S'))
 
-        if self.app_obj.operation_error_show_flag:
+        for msg in error_list:
+            mini_dict = self.errors_list_prepare_operation_row(
+                media_data_obj,
+                'error',
+                msg,
+                time_str,
+                short_time_str,
+            )
 
-            for msg in error_list:
+            # Add the row to the treeview
+            self.errors_list_insert_row(mini_dict)
 
-                # Prepare the icons
-                pixbuf = self.pixbuf_dict['error_small']
+        for msg in warning_list:
+            mini_dict = self.errors_list_prepare_operation_row(
+                media_data_obj,
+                'warning',
+                msg,
+                time_str,
+                short_time_str,
+            )
 
-                if isinstance(media_data_obj, media.Video):
-                    pixbuf2 = self.pixbuf_dict['video_small']
-                elif isinstance(media_data_obj, media.Channel):
-                    pixbuf2 = self.pixbuf_dict['channel_small']
-                elif isinstance(media_data_obj, media.Playlist):
-                    pixbuf2 = self.pixbuf_dict['playlist_small']
-                else:
-                    return self.app_obj.system_error(
-                        222,
-                        'Errors List add row request failed sanity check',
-                    )
-
-                # Prepare the new row in the treeview, starting with the three
-                #   hidden columns
-                row_list = self.get_media_drag_data_as_list(media_data_obj)
-                row_list.append(pixbuf)
-                row_list.append(pixbuf2)
-                row_list.append(time_string)
-                row_list.append(
-                    utils.shorten_string(
-                        media_data_obj.name,
-                        self.medium_string_max_len,
-                    ),
-                )
-                row_list.append(utils.tidy_up_long_string(msg))
-
-                # Create a new row in the treeview. Doing the .show_all() first
-                #   prevents a Gtk error (for unknown reasons)
-                self.errors_list_treeview.show_all()
-                self.errors_list_liststore.append(row_list)
-
-                # (Don't update the Errors/Warnings tab label if it's the
-                #   visible tab)
-                if self.visible_tab_num != 4:
-                    self.tab_error_count += 1
-
-        if self.app_obj.operation_warning_show_flag:
-
-            for msg in warning_list:
-
-                # Prepare the icons
-                pixbuf = self.pixbuf_dict['warning_small']
-
-                if isinstance(media_data_obj, media.Video):
-                    pixbuf2 = self.pixbuf_dict['video_small']
-                elif isinstance(media_data_obj, media.Channel):
-                    pixbuf2 = self.pixbuf_dict['channel_small']
-                elif isinstance(media_data_obj, media.Playlist):
-                    pixbuf2 = self.pixbuf_dict['playlist_small']
-                else:
-                    return self.app_obj.system_error(
-                        223,
-                        'Errors List add row request failed sanity check',
-                    )
-                # Prepare the new row in the treeview, starting with the three
-                #   hidden columns
-                row_list = self.get_media_drag_data_as_list(media_data_obj)
-                row_list.append(pixbuf)
-                row_list.append(pixbuf2)
-                row_list.append(time_string)
-                row_list.append(
-                    utils.shorten_string(
-                        media_data_obj.name,
-                        self.medium_string_max_len,
-                    ),
-                )
-                row_list.append(utils.tidy_up_long_string(msg))
-
-                # Create a new row in the treeview. Doing the .show_all() first
-                #   prevents a Gtk error (for unknown reasons)
-                self.errors_list_treeview.show_all()
-                self.errors_list_liststore.append(row_list)
-
-                # (Don't update the Errors/Warnings tab label if it's the
-                #   visible tab)
-                if self.visible_tab_num != 4:
-                    self.tab_warning_count += 1
+            # Add the row to the treeview
+            self.errors_list_insert_row(mini_dict)
 
         # Update the tab's label to show the number of warnings/errors visible
-        if self.visible_tab_num != 4:
+        if self.visible_tab_num != self.notebook_tab_dict['errors']:
             self.errors_list_refresh_label()
 
 
-    def errors_list_add_system_error(self, error_code, msg):
+    def errors_list_prepare_operation_row(self, media_data_obj, msg_type, msg,
+    time_str, short_time_str):
+
+        """Called by self.errors_list_add_operation_msg() (only).
+
+        Errors/Warnings sent for display in the Error List are stored in an IV,
+        so the list can be filtered as required.
+
+        Prepares a dictionary of values for this error/warning message, then
+        adds it to the IV.
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel or media.Playlist): The
+                media data object whose download (real or simulated) generated
+                the error/warning messages
+
+            msg_type (str): 'error' or 'warning'
+
+            msg (str): The text of the message itself
+
+            time_str (str): The current date and time, as a string
+
+            short_time_str (str): The current time, as a string
+
+        Return values:
+
+            The dictionary created
+
+        """
+
+        # Prepare the mini-dictionary to be added to the IV
+        mini_dict = {}
+
+        if msg_type == 'error':
+            mini_dict['msg_type'] = 'operation_error'
+        else:
+            mini_dict['msg_type'] = 'operation_warning'
+
+        mini_dict['date_time'] = time_str
+        mini_dict['time'] = short_time_str
+
+        if isinstance(media_data_obj, media.Video):
+            mini_dict['media_type'] = 'video'
+            mini_dict['container_name'] = utils.shorten_string(
+                media_data_obj.parent_obj.name,
+                self.long_string_max_len,
+            )
+            mini_dict['video_name'] = utils.shorten_string(
+                media_data_obj.name,
+                self.long_string_max_len,
+            )
+        elif isinstance(media_data_obj, media.Channel):
+            mini_dict['media_type'] = 'channel'
+            mini_dict['container_name'] = utils.shorten_string(
+                media_data_obj.name,
+                self.long_string_max_len,
+            )
+            mini_dict['video_name'] = ''
+        else:
+            mini_dict['media_type'] = 'playlist'
+            mini_dict['container_name'] = utils.shorten_string(
+                media_data_obj.name,
+                self.long_string_max_len,
+            )
+            mini_dict['video_name'] = ''
+
+        mini_dict['msg'] = utils.tidy_up_long_string(msg)
+        mini_dict['short_msg'] = utils.shorten_string(
+            msg,
+            self.long_string_max_len,
+        )
+        mini_dict['orig_msg'] = msg
+
+        if self.visible_tab_num != self.notebook_tab_dict['errors']:
+            mini_dict['count_flag'] = True
+        else:
+            mini_dict['count_flag'] = False
+
+        drag_path, drag_source, drag_name = self.get_media_drag_data_as_list(
+            media_data_obj,
+        )
+        mini_dict['drag_path'] = drag_path
+        mini_dict['drag_source'] = drag_source
+        mini_dict['drag_name'] = drag_name
+
+        # Sanity check: the treeview will not accept None values
+        for key in mini_dict.keys():
+            if mini_dict[key] is None:
+                mini_dict[key] = ''
+
+        # Update the IV
+        self.error_list_buffer_list.append(mini_dict)
+
+        return mini_dict
+
+
+    def errors_list_add_system_msg(self, error_type, error_code, msg):
 
         """Can be called by anything. The quickest way is to call
         mainapp.TartubeApp.system_error(), which acts as a wrapper for this
@@ -12726,6 +13361,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
+            error_type (str): 'error' or 'warning'
+
             error_code (int): An error code in the range 100-999 (see the
                 .system_error() function)
 
@@ -12733,126 +13370,305 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        if not self.app_obj.system_error_show_flag:
-            # Do nothing
-            return False
+        # Create a new row for every error and warning message
+        # Use the same time on each
+        time_str = datetime.datetime.today().strftime('%x %X')
+        local = utils.get_local_time()
+        short_time_str = str(local.strftime('%H:%M:%S'))
 
-        # Prepare the icons
-        pixbuf = self.pixbuf_dict['error_small']
-        pixbuf2 = self.pixbuf_dict['system_error_small']
+        # Prepare the mini-dictionary to be added to the IV
+        mini_dict = {}
 
-        # Prepare the new row in the treeview
-        row_list = []
-        if self.app_obj.system_msg_show_date_flag:
-            time_string = datetime.datetime.today().strftime('%x %X')
+        if error_type == 'error':
+            mini_dict['msg_type'] = 'system_error'
+            mini_dict['container_name'] = _('Tartube error')
+            mini_dict['video_name'] = ''
+        elif error_type == 'warning':
+            mini_dict['msg_type'] = 'system_warning'
+            mini_dict['container_name'] = _('Tartube warning')
+            mini_dict['video_name'] = ''
         else:
-            local = utils.get_local_time()
-            time_string = str(local.strftime('%H:%M:%S'))
+            # Failsafe
+            return
 
-        for i in range(3):
-            row_list.append('')     # Hidden columns
-
-        row_list.append(pixbuf)
-        row_list.append(pixbuf2)
-        row_list.append(time_string)
-        row_list.append(_('Tartube error'))
-        row_list.append(
-            utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg),
+        mini_dict['media_type'] = ''
+        mini_dict['date_time'] = time_str
+        mini_dict['time'] = short_time_str
+        mini_dict['msg'] = utils.tidy_up_long_string(
+            '#' + str(error_code) + ': ' + msg,
         )
+        mini_dict['short_msg'] = utils.shorten_string(
+            '#' + str(error_code) + ': ' + msg,
+            self.long_string_max_len,
+        )
+        mini_dict['orig_msg'] = msg
 
-        # Create a new row in the treeview. Doing the .show_all() first
-        #   prevents a Gtk error (for unknown reasons)
-        self.errors_list_treeview.show_all()
-        self.errors_list_liststore.append(row_list)
+        if self.visible_tab_num != self.notebook_tab_dict['errors']:
+            mini_dict['count_flag'] = True
+        else:
+            mini_dict['count_flag'] = False
 
-        # (Don't update the Errors/Warnings tab label if it's the visible
-        #   tab)
-        if self.visible_tab_num != 4:
-            self.tab_error_count += 1
-            self.errors_list_refresh_label()
+        mini_dict['drag_path'] = ''
+        mini_dict['drag_source'] = ''
+        mini_dict['drag_name'] = ''
+
+        # Update the IV
+        self.error_list_buffer_list.append(mini_dict)
+
+        # Add the row to the treeview
+        self.errors_list_insert_row(mini_dict)
 
 
-    def errors_list_add_system_warning(self, error_code, msg):
+    def errors_list_insert_row(self, mini_dict):
 
-        """Can be called by anything. The quickest way is to call
-        mainapp.TartubeApp.system_warning(), which acts as a wrapper for this
-        function.
+        """Called by self.errors_list_reset(),
+        self.errors_list_add_operation_msg() and
+        self.errors_list_add_system_msg().
 
-        Display a system warning message in the Errors List.
+        Called with an error/warning message to be displayed in the Errors
+        List.
 
-        N.B. Because Gtk is not thread safe, this function must always be
-        called from within GObject.timeout_add().
+        Decided whether the message should be filitered out or not, depending
+        on settings. If not, adds the message to the treeview.
 
         Args:
 
-            error_code (int): An error code in the range 100-999 (see the
-                .system_error() function)
-
-            msg (str): The system warning message to display
+            mini_dict (dict): Dictionary of values (retrieved from
+                self.error_list_buffer_list) representing a single error or
+                warning message
 
         """
 
-        if not self.app_obj.system_warning_show_flag:
-            # Do nothing
-            return False
+        # Depending on settings, this row should be visible, or not
+        if (
+            mini_dict['msg_type'] == 'system_error' \
+            and not self.app_obj.system_error_show_flag
+        ) or (
+            mini_dict['msg_type'] == 'system_warning' \
+            and not self.app_obj.system_warning_show_flag
+        ) or (
+            mini_dict['msg_type'] == 'operation_error' \
+            and not self.app_obj.operation_error_show_flag
+        ) or (
+            mini_dict['msg_type'] == 'operation_warning' \
+            and not self.app_obj.operation_warning_show_flag
+        ):
+            # Not visible
+            return
+
+        if self.error_list_filter_flag:
+
+            if self.error_list_filter_text == '':
+                # Empty search pattern doesn't match anything
+                return
+
+            lower_text = self.error_list_filter_text.lower()
+            if not (
+                (
+                    self.error_list_filter_container_flag \
+                    and (
+                        (
+                            not self.error_list_filter_regex_flag \
+                            and mini_dict['container_name'].lower().find(
+                                lower_text,
+                            ) > -1
+                        ) or (
+                            self.error_list_filter_regex_flag \
+                            and re.search(
+                                self.error_list_filter_text,
+                                mini_dict['container_name'],
+                                re.IGNORECASE,
+                            )
+                        )
+                    )
+                ) or (
+                    self.error_list_filter_video_flag \
+                    and (
+                        (
+                            not self.error_list_filter_regex_flag \
+                            and mini_dict['video_name'].lower().find(
+                                lower_text,
+                            ) > -1
+                        ) or (
+                            self.error_list_filter_regex_flag \
+                            and re.search(
+                                self.error_list_filter_text,
+                                mini_dict['video_name'],
+                                re.IGNORECASE,
+                            )
+                        )
+                    )
+                ) or (
+                    self.error_list_filter_msg_flag \
+                    and (
+                        (
+                            not self.error_list_filter_regex_flag \
+                            and mini_dict['orig_msg'].lower().find(
+                                lower_text,
+                            ) > -1
+                        ) or (
+                            self.error_list_filter_regex_flag \
+                            and re.search(
+                                self.error_list_filter_text,
+                                mini_dict['orig_msg'],
+                                re.IGNORECASE,
+                            )
+                        )
+                    )
+                )
+            ):
+                return
 
         # Prepare the icons
-        pixbuf = self.pixbuf_dict['warning_small']
-        pixbuf2 = self.pixbuf_dict['system_warning_small']
+        if mini_dict['msg_type'] == 'system_error':
+            pixbuf = self.pixbuf_dict['error_small']
+            pixbuf2 = self.pixbuf_dict['system_error_small']
 
-        # Prepare the new row in the treeview
-        row_list = []
-        if self.app_obj.system_msg_show_date_flag:
-            time_string = datetime.datetime.today().strftime('%x %X')
+        elif mini_dict['msg_type'] == 'system_warning':
+            pixbuf = self.pixbuf_dict['warning_small']
+            pixbuf2 = self.pixbuf_dict['system_warning_small']
+
         else:
-            local = utils.get_local_time()
-            time_string = str(local.strftime('%H:%M:%S'))
+            if mini_dict['msg_type'] == 'operation_error':
+                pixbuf = self.pixbuf_dict['error_small']
+            elif mini_dict['msg_type'] == 'operation_warning':
+                pixbuf = self.pixbuf_dict['warning_small']
+            else:
+                # Failsafe
+                return
 
-        for i in range(3):
-            row_list.append('')     # Hidden columns
+            if mini_dict['media_type'] == 'video':
+                pixbuf2 = self.pixbuf_dict['video_small']
+            elif mini_dict['media_type'] == 'channel':
+                pixbuf2 = self.pixbuf_dict['channel_small']
+            elif mini_dict['media_type'] == 'playlist':
+                pixbuf2 = self.pixbuf_dict['playlist_small']
+            else:
+                # Failsafe
+                return
 
-        row_list.append(pixbuf)
-        row_list.append(pixbuf2)
-        row_list.append(time_string)
-        row_list.append(_('Tartube warning'))
-        row_list.append(
-            utils.tidy_up_long_string('#' + str(error_code) + ': ' + msg),
-        )
+        # Prepare the new row in the treeview, starting with the three
+        #   hidden columns
+        row_list = [
+            mini_dict['drag_path'],
+            mini_dict['drag_source'],
+            mini_dict['drag_name'],
+            pixbuf,
+            pixbuf2,
+            mini_dict['date_time'],
+            mini_dict['time'],
+            mini_dict['container_name'],
+            mini_dict['video_name'],
+            mini_dict['msg'],
+            mini_dict['short_msg'],
+        ]
 
         # Create a new row in the treeview. Doing the .show_all() first
         #   prevents a Gtk error (for unknown reasons)
         self.errors_list_treeview.show_all()
         self.errors_list_liststore.append(row_list)
 
-        # (Don't update the Errors/Warnings tab label if it's the visible
-        #   tab)
-        if self.visible_tab_num != 4:
-            self.tab_warning_count += 1
+        # (Don't update the Errors/Warnings tab label if it's the
+        #   visible tab)
+        if self.visible_tab_num != self.notebook_tab_dict['errors']:
             self.errors_list_refresh_label()
 
 
-    def errors_list_refresh_label(self):
+    def errors_list_refresh_label(self, reset_flag=False):
 
-        """Called by self.errors_list_reset(), .errors_list_add_row(),
-        .errors_list_add_system_error(), .errors_list_add_system_warning()
-         and .on_notebook_switch_page().
+        """Called by self.errors_list_reset(),
+        .errors_list_add_operation_msg(), .errors_list_insert_row() and
+        .on_notebook_switch_page().
 
-        When the Errors / Warnings tab becomes the visible one, reset the
-        tab's label (to show 'Errors / Warnings')
+        The label for the Errors/Warnings tab can show the number of errors/
+        warnings currently visible in the tab, or not, depending on conditions.
 
-        When an error or warning is added to the Error List, refresh the tab's
-        label (to show something like 'Errors (4) / Warnings (1)' )
+        Args:
+
+            reset_flag (bool): True when all errors/warnings should be marked
+                as old (so, when counting the number of errors/warnings to
+                display in the tab label, they are not counted)
+
         """
 
+        error_count = 0
+        warning_count = 0
+
+        for mini_dict in self.error_list_buffer_list:
+
+            if reset_flag:
+                mini_dict['count_flag'] = False
+
+            elif mini_dict['count_flag']:
+
+                if (
+                    mini_dict['msg_type'] == 'system_error' \
+                    or mini_dict['msg_type'] == 'operation_error'
+                ):
+                    error_count += 1
+                else:
+                    warning_count += 1
+
         text = _('_Errors')
-        if self.tab_error_count:
-            text += ' (' + str(self.tab_error_count) + ')'
+        if error_count:
+            text += ' (' + str(error_count) + ')'
 
         text += ' / ' + _('Warnings')
-        if self.tab_warning_count:
-            text += ' (' + str(self.tab_warning_count) + ')'
+        if warning_count:
+            text += ' (' + str(warning_count) + ')'
 
         self.errors_label.set_text_with_mnemonic(text)
+
+
+    def errors_list_apply_filter(self):
+
+        """Called by mainapp.TartubeApp.on_button_apply_error_filter().
+
+        Applies the filter.
+        """
+
+        # Set IVs once, so that multiple calls to self.errors_list_insert_row()
+        #   can use them
+        self.error_list_filter_flag = True
+        self.error_list_filter_text = self.error_list_entry.get_text()
+        self.error_list_filter_regex_flag \
+        = self.error_list_togglebutton.get_active()
+        self.error_list_filter_container_flag \
+        = self.error_list_container_checkbutton.get_active()
+        self.error_list_filter_video_flag \
+        = self.error_list_video_checkbutton.get_active()
+        self.error_list_filter_msg_flag \
+        = self.error_list_msg_checkbutton.get_active()
+
+        # ... and update the Error List
+        self.errors_list_reset()
+
+        # Sensitise widgets, as appropriate
+        self.error_list_filter_toolbutton.set_sensitive(False)
+        self.error_list_cancel_toolbutton.set_sensitive(True)
+
+
+    def errors_list_cancel_filter(self):
+
+        """Called by mainapp.TartubeApp.on_button_apply_error_filter().
+
+        Applies the filter.
+        """
+
+        # Reset IVs...
+        self.error_list_filter_flag = False
+        self.error_list_filter_text = None
+        self.error_list_filter_regex_flag = False
+        self.error_list_filter_container_flag = False
+        self.error_list_filter_video_flag = False
+        self.error_list_filter_msg_flag = False
+
+        # ... and update the Error List
+        self.errors_list_reset()
+
+        # Sensitise widgets, as appropriate
+        self.error_list_filter_toolbutton.set_sensitive(True)
+        self.error_list_cancel_toolbutton.set_sensitive(False)
 
 
     # Callback class methods
@@ -13025,11 +13841,12 @@ class MainWin(Gtk.ApplicationWindow):
                     options_obj,
                 )
 
-                # Open an edit window to show the options immediately
-                config.OptionsEditWin(
-                    self.app_obj,
-                    media_data_obj.options_obj,
-                )
+                # Open an edit window to show (new) options immediately
+                if not options_obj or clone_flag:
+                    config.OptionsEditWin(
+                        self.app_obj,
+                        media_data_obj.options_obj,
+                    )
 
 
     def on_video_index_check(self, menu_item, media_data_obj):
@@ -17106,13 +17923,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        self.error_list_buffer_list = []
         self.errors_list_reset()
 
 
     def on_errors_list_drag_data_get(self, treeview, drag_context, data, info,
     time):
 
-        """Called from callback in self.setup_errors_tab().
+        """Called from callback in self.errors_list_reset().
 
         Set the data to be used when the user drags and drops rows from the
         Errors List to an external application (for example, an FFmpeg batch
@@ -18042,7 +18860,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.visible_tab_num = page_num
 
-        if page_num == 3:
+        if page_num == self.notebook_tab_dict['output']:
 
             # Switching between tabs causes pages in the Output tab to scroll
             #   to the top. Make sure they're all scrolled back to the bottom
@@ -18056,12 +18874,13 @@ class MainWin(Gtk.ApplicationWindow):
             for page_num in range(1, page_count):
                 self.output_tab_scroll_visible_page(page_num)
 
-        elif page_num == 4 and not self.app_obj.system_msg_keep_totals_flag:
+        elif page_num == self.notebook_tab_dict['errors'] \
+        and not self.app_obj.system_msg_keep_totals_flag:
 
-            # Update the tab's label
-            self.tab_error_count = 0
-            self.tab_warning_count = 0
-            self.errors_list_refresh_label()
+            # Update the tab's label, marking all messages as not counting
+            #   towards the total number of errors/warnings displayed in the
+            #   future
+            self.errors_list_refresh_label(True)
 
 
     def on_notify_desktop_clicked(self, notification, action_name, notify_id, \
@@ -18171,6 +18990,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_operation_error_show_flag(checkbutton.get_active())
+        self.errors_list_reset()
 
 
     def on_operation_warning_checkbutton_changed(self, checkbutton):
@@ -18186,6 +19006,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_operation_warning_show_flag(checkbutton.get_active())
+        self.errors_list_reset()
 
 
     def on_output_notebook_switch_page(self, notebook, box, page_num):
@@ -18301,7 +19122,30 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.set_results_list_reverse_flag(checkbutton.get_active())
 
 
-    def on_system_dates_checkbutton_changed(self, checkbutton):
+    def on_system_container_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of container names in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_system_msg_show_container_flag(
+            checkbutton.get_active(),
+        )
+
+        name_column = self.errors_list_treeview.get_column(7)
+        if not self.app_obj.system_msg_show_container_flag:
+            name_column.set_visible(False)
+        else:
+            name_column.set_visible(True)
+
+
+    def on_system_date_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_errors_tab().
 
@@ -18314,6 +19158,64 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_system_msg_show_date_flag(checkbutton.get_active())
+
+        long_column = self.errors_list_treeview.get_column(5)
+        short_column = self.errors_list_treeview.get_column(6)
+
+        if not self.app_obj.system_msg_show_date_flag:
+            long_column.set_visible(False)
+            short_column.set_visible(True)
+        else:
+            long_column.set_visible(True)
+            short_column.set_visible(False)
+
+
+    def on_system_multi_line_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of multi-line error/warning messages in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_system_msg_show_multi_line_flag(
+            checkbutton.get_active(),
+        )
+
+        long_column = self.errors_list_treeview.get_column(9)
+        short_column = self.errors_list_treeview.get_column(10)
+
+        if not self.app_obj.system_msg_show_multi_line_flag:
+            long_column.set_visible(False)
+            short_column.set_visible(True)
+        else:
+            long_column.set_visible(True)
+            short_column.set_visible(False)
+
+
+    def on_system_video_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of video names in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_system_msg_show_video_flag(checkbutton.get_active())
+
+        name_column = self.errors_list_treeview.get_column(8)
+        if not self.app_obj.system_msg_show_video_flag:
+            name_column.set_visible(False)
+        else:
+            name_column.set_visible(True)
 
 
     def on_system_error_checkbutton_changed(self, checkbutton):
@@ -18329,6 +19231,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_system_error_show_flag(checkbutton.get_active())
+        self.errors_list_reset()
 
 
     def on_system_warning_checkbutton_changed(self, checkbutton):
@@ -18344,6 +19247,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_system_warning_show_flag(checkbutton.get_active())
+        self.errors_list_reset()
 
 
     def on_video_res_combobox_changed(self, combo):
@@ -18774,7 +19678,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def get_media_drag_data_as_list(self, media_data_obj):
 
-        """Called by self.errors_list_add_row().
+        """Called by self.errors_list_add_operation_msg().
 
         When a media data object (video, channel or playlist) generates an
         error, that error can be displayed in the Errors List.
@@ -19242,11 +20146,23 @@ class SimpleCatalogueItem(object):
                     self.main_win_obj.pixbuf_dict['split_file_small'],
                 )
 
+            elif self.video_obj.was_live_flag:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['live_old_small'],
+                )
+
             else:
 
                 self.status_image.set_from_pixbuf(
                     self.main_win_obj.pixbuf_dict['have_file_small'],
                 )
+
+        elif self.video_obj.was_live_flag:
+
+            self.status_image.set_from_pixbuf(
+                self.main_win_obj.pixbuf_dict['live_old_no_file_small'],
+            )
 
         else:
 
@@ -20278,11 +21194,23 @@ class ComplexCatalogueItem(object):
                         self.main_win_obj.pixbuf_dict['split_file_small'],
                     )
 
+                elif self.video_obj.was_live_flag:
+
+                    self.status_image.set_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['live_old_small'],
+                    )
+
                 else:
 
                     self.status_image.set_from_pixbuf(
                         self.main_win_obj.pixbuf_dict['have_file_small'],
                     )
+
+            elif self.video_obj.was_live_flag:
+
+                self.status_image.set_from_pixbuf(
+                    self.main_win_obj.pixbuf_dict['live_old_no_file_small'],
+                )
 
             else:
 
@@ -23846,6 +24774,315 @@ class CatalogueGridBox(Gtk.Frame):
             self.set_hexpand(True)
 
 
+class DropZoneBox(Gtk.Frame):
+
+    """Called by MainWin.drag_drop_grid_reset().
+
+    Python class acting as a wrapper for Gtk.Frame, so that we can retrieve the
+    options.OptionsManager object displayed in each dropzone.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The main window
+
+        options_obj (options.OptionsManager or None): The download options
+            associated with this dropzone, or None for an empty dropzone
+
+        update_text (str or None): When the grid is re-drawn, any messages
+            displayed inside the dropzone are copied across to each
+            replacment dropzone
+
+        reset_time (int or None): The same applies to the time at which those
+            messages are to be removed
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, options_obj, update_text=None,
+    reset_time=None):
+
+        super(Gtk.Frame, self).__init__()
+
+        # IV list - class objects
+        # -----------------------
+        self.main_win_obj = main_win_obj
+        # (If this is a blank dropzone, then 'options_obj' is None)
+        self.options_obj = options_obj
+
+
+        # IV list - other
+        # ---------------
+        # This dropzone's own Gtk.Grid, on which widgets are drawn
+        self.grid = None
+
+        # Current messages displayed in the update label (in case this box is
+        #   replaced by a new one, before the message is reset)
+        self.update_text = update_text
+        # The time (matches time.time() at which those messages are due to be
+        #   reset (None if no messages are visible)
+        self.reset_time = reset_time
+
+        # Code
+        # ----
+
+        # Set up widgets
+        self.draw_widgets()
+        # Set up drag and drop into this frame
+        if self.options_obj:
+            self.connect('drag-data-received', self.on_drag_data_received)
+            self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+            self.drag_dest_set_target_list(None)
+            self.drag_dest_add_text_targets()
+
+
+    # Public class methods
+
+
+    def draw_widgets(self):
+
+        """Called by self.__init__().
+
+        Populate the dropzone with widgets.
+        """
+
+        self.grid = Gtk.Grid()
+        self.add(self.grid)
+        self.grid.set_column_spacing(self.main_win_obj.spacing_size)
+        self.grid.set_row_spacing(self.main_win_obj.spacing_size * 2)
+        self.grid.set_border_width(self.main_win_obj.spacing_size)
+
+        self.name_label = Gtk.Label()
+        self.grid.attach(self.name_label, 0, 0, 1, 1)
+        self.name_label.set_hexpand(True)
+
+        self.descrip_label = Gtk.Label()
+        self.grid.attach(self.descrip_label, 0, 1, 1, 1)
+        self.descrip_label.set_hexpand(True)
+
+        self.update_label = Gtk.Label()
+        self.grid.attach(self.update_label, 0, 2, 1, 1)
+        self.update_label.set_hexpand(True)
+
+        # (Empty label for spacing)
+        label3 = Gtk.Label()
+        self.grid.attach(label3, 0, 3, 1, 1)
+        label3.set_markup(' ')
+        label3.set_vexpand(True)
+
+        # Strip of buttons at the bottom
+        hbox = Gtk.HBox()
+        self.grid.attach(hbox, 0, 4, 1, 1)
+
+        if self.options_obj:
+
+            if not self.main_win_obj.app_obj.show_custom_icons_flag:
+                button = Gtk.Button.new_from_icon_name(
+                    Gtk.STOCK_DELETE,
+                    Gtk.IconSize.BUTTON,
+                )
+            else:
+                button = Gtk.Button.new()
+                button.set_image(
+                    Gtk.Image.new_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['stock_delete'],
+                    ),
+                )
+            hbox.pack_end(button, False, False, 0)
+            button.connect('clicked', self.on_delete_button_clicked)
+
+            if not self.main_win_obj.app_obj.show_custom_icons_flag:
+                button2 = Gtk.Button.new_from_icon_name(
+                    Gtk.STOCK_INDEX,
+                    Gtk.IconSize.BUTTON,
+                )
+            else:
+                button2 = Gtk.Button.new()
+                button2.set_image(
+                    Gtk.Image.new_from_pixbuf(
+                        self.main_win_obj.pixbuf_dict['stock_properties'],
+                    ),
+                )
+            hbox.pack_end(
+                button2,
+                False,
+                False,
+                self.main_win_obj.spacing_size,
+            )
+            button2.connect('clicked', self.on_edit_button_clicked)
+
+        # Draw text on labels, as necessary
+        self.update_widgets()
+
+
+    def update_widgets(self):
+
+        """Can be called by anything.
+
+        Update the text displayed in the widgets created in the earlier call to
+        self.draw_widgets().
+        """
+
+        size = len(self.main_win_obj.app_obj.classic_dropzone_list)
+        if size <= 1:
+            length = self.main_win_obj.exceedingly_long_string_max_len
+        elif size <= 4:
+            length = self.main_win_obj.very_long_string_max_len
+        elif size <= 9:
+            length = self.main_win_obj.long_string_max_len
+        else:
+            length = self.main_win_obj.medium_string_max_len
+
+        if not self.options_obj:
+
+            self.name_label.set_markup('')
+            self.descrip_label.set_markup('')
+            self.update_label.set_markup('')
+
+        else:
+
+            self.name_label.set_markup(
+                '<b><span font_size="large">' + self.options_obj.name \
+                + '</span></b>',
+            )
+            self.descrip_label.set_markup(
+                html.escape(
+                    utils.shorten_string_two_lines(
+                        self.options_obj.descrip,
+                        length,
+                    ),
+                ),
+            )
+
+            if self.update_text is None:
+                self.update_label.set_markup('')
+            else:
+                self.update_label.set_markup(
+                    '<i>' + html.escape(
+                        utils.shorten_string_two_lines(
+                            self.update_text,
+                            length,
+                        ),
+                    ) + '</i>',
+                )
+
+
+    def check_reset(self):
+
+        """Called (several times a second) by
+        mainapp.TartubeApp.script_fast_timer_callback().
+
+        If it's time to remove the message displayed in the dropzone, then
+        remove it and update IVs.
+        """
+
+        if self.reset_time is not None \
+        and self.reset_time < time.time():
+            self.update_text = None
+            self.reset_time = None
+            self.update_widgets()
+
+
+    # Callback class methods
+
+
+    def on_delete_button_clicked(self, button):
+
+        """Called a from callback in self.__init__().
+
+        Prompts the user to delete this dropzone and/or its associated
+        options.OptionsManager object.
+        """
+
+        app_obj = self.main_win_obj.app_obj
+
+        dialogue_win = DeleteDropZoneDialogue(
+            self.main_win_obj,
+            self.options_obj,
+        )
+        response = dialogue_win.run()
+
+        # Get the clicked button, before destroying the window
+        del_dropzone_flag = dialogue_win.del_dropzone_flag
+        del_both_flag = dialogue_win.del_both_flag
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.CANCEL \
+        and response != Gtk.ResponseType.DELETE_EVENT:
+
+            if del_dropzone_flag:
+                app_obj.del_classic_dropzone_list(self.options_obj.uid)
+
+            elif del_both_flag:
+                options_obj = app_obj.options_reg_dict[self.options_obj.uid]
+                app_obj.delete_download_options(options_obj)
+
+
+            # Update the Drag and Drop tab
+            self.main_win_obj.drag_drop_grid_reset()
+
+
+    def on_edit_button_clicked(self, button):
+
+        """Called a from callback in self.__init__().
+
+        Opens an edit window for this dropzone's options.OptionsManager object.
+        """
+
+        config.OptionsEditWin(
+            self.main_win_obj.app_obj,
+            self.options_obj,
+        )
+
+
+    def on_drag_data_received(self, window, context, x, y, data, info,
+    this_time):
+
+        """Called a from callback in self.__init__().
+
+        Handles drag-and-drop anywhere in the dropzone, adding a valid and
+        non-duplicate URL to the Classic Progress List.
+        """
+
+        # Sanity check
+        if not self.options_obj:
+            return
+
+        else:
+
+            url = utils.strip_whitespace(data.get_text())
+
+            # Show a confirmation inside the dropzone
+            if not utils.check_url(url):
+                self.update_text = _('Invalid URL')
+
+            else:
+
+                duplicate_flag = False
+                for other_obj in self.main_win_obj.classic_media_dict.values():
+                    if other_obj.source == url:
+                        duplicate_flag = True
+                        break
+
+                if duplicate_flag:
+                    self.update_text = _('Duplicate URL')
+
+                elif not self.main_win_obj.classic_mode_tab_insert_url(
+                    url,
+                    self.options_obj,
+                ):
+                    self.update_text = _('Failed to add URL')
+
+                else:
+                    self.update_text = url
+
+            self.reset_time = time.time() \
+            + self.main_win_obj.drag_drop_reset_time
+            self.update_widgets()
+
+
 class StatusIcon(Gtk.StatusIcon):
 
     """Called by mainapp.TartubeApp.start().
@@ -24546,6 +25783,43 @@ class AddBulkDialogue(Gtk.Dialog):
     # Public class methods
 
 
+    def get_channel_name(self):
+
+        """Called by self.on_add_urls_clicked().
+
+        Generates an initial channel name that isn't already used by a channel/
+        playlist/folder in the media data registry.
+        """
+
+        while 1:
+
+            self.channel_count += 1
+            name = 'channel_' + str(self.channel_count)
+
+            if not name in self.main_win_obj.app_obj.media_name_dict:
+                return name
+
+
+    def get_playlist_name(self):
+
+        """Called by self.on_add_urls_clicked().
+
+        Generates an initial playlist name that isn't already used by a
+        channel/playlist/folder in the media data registry.
+        """
+
+        while 1:
+
+            self.playlist_count += 1
+            name = 'playlist_' + str(self.playlist_count)
+
+            if not name in self.main_win_obj.app_obj.media_name_dict:
+                return name
+
+
+    # Callback class methods
+
+
     def on_checkbutton_toggled(self, checkbutton):
 
         """Called from a callback in self.__init__().
@@ -24730,9 +26004,6 @@ class AddBulkDialogue(Gtk.Dialog):
         )
 
 
-    # (Callbacks)
-
-
     def clipboard_timer_callback(self):
 
         """Called from a callback in self.on_checkbutton_toggled().
@@ -24750,43 +26021,6 @@ class AddBulkDialogue(Gtk.Dialog):
 
         # Return 1 to keep the timer going
         return 1
-
-
-    # (Support functions)
-
-
-    def get_channel_name(self):
-
-        """Called by self.on_add_urls_clicked().
-
-        Generates an initial channel name that isn't already used by a channel/
-        playlist/folder in the media data registry.
-        """
-
-        while 1:
-
-            self.channel_count += 1
-            name = 'channel_' + str(self.channel_count)
-
-            if not name in self.main_win_obj.app_obj.media_name_dict:
-                return name
-
-
-    def get_playlist_name(self):
-
-        """Called by self.on_add_urls_clicked().
-
-        Generates an initial playlist name that isn't already used by a
-        channel/playlist/folder in the media data registry.
-        """
-
-        while 1:
-
-            self.playlist_count += 1
-            name = 'playlist_' + str(self.playlist_count)
-
-            if not name in self.main_win_obj.app_obj.media_name_dict:
-                return name
 
 
 class AddChannelDialogue(Gtk.Dialog):
@@ -25030,7 +26264,7 @@ class AddChannelDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton):
@@ -25129,9 +26363,6 @@ class AddChannelDialogue(Gtk.Dialog):
         )
 
 
-    # (Callbacks)
-
-
     def clipboard_timer_callback(self):
 
         """Called from a callback in self.on_checkbutton_toggled().
@@ -25148,6 +26379,333 @@ class AddChannelDialogue(Gtk.Dialog):
 
         # Return 1 to keep the timer going
         return 1
+
+
+class AddDropZoneDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.drag_drop_add_dropzone().
+
+    Prompt the user to select an existing options.OptionsManager object or to
+    create a new one. The choice, if any, is added to the Drag and Drop tab as
+    a mainwin.DropZoneBox.
+
+    Based on code from mainwin.ApplyOptionsDialogue.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        # Store the user's choices as IVs, so the calling function can retrieve
+        #   them
+        self.options_name = None
+        self.options_obj = None
+        self.clone_flag = False
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Add dropzone'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Create new download options called'),
+        )
+        grid.attach(radiobutton, 0, 0, 1, 1)
+        # (Signal connect appears below)
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 1, 1, 1)
+        entry.grab_focus()
+        # (Signal connect appears below)
+
+        radiobutton2 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton,
+            _('Use these download options'),
+        )
+        grid.attach(radiobutton2, 0, 2, 1, 1)
+        radiobutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # Add a combo, containing any options.OptionsManager objects that are
+        #   not already assigned to a mainwin.DropZoneBox
+        store = Gtk.ListStore(str, int)
+
+        for uid in sorted(app_obj.options_reg_dict):
+            options_obj = app_obj.options_reg_dict[uid]
+
+            if not options_obj.uid in app_obj.classic_dropzone_list:
+
+                store.append([
+                    '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                    options_obj.uid,
+                ])
+                radiobutton2.set_sensitive(True)
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 0, 3, 1, 1)
+        combo.set_hexpand(True)
+        combo.set_sensitive(False)
+        # (Signal connect appears below)
+
+        cell = Gtk.CellRendererText()
+        combo.pack_start(cell, False)
+        combo.add_attribute(cell, 'text', 0)
+        combo.set_active(0)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 4, 1, 1)
+
+        radiobutton3 = Gtk.RadioButton.new_with_label_from_widget(
+            radiobutton2,
+            _('Clone these download options'),
+        )
+        grid.attach(radiobutton3, 0, 5, 1, 1)
+        # (Signal connect appears below)
+
+        # Add a combo, containing all options.OptionsManager objects
+        store2 = Gtk.ListStore(str, int)
+
+        for uid in sorted(app_obj.options_reg_dict):
+
+            options_obj = app_obj.options_reg_dict[uid]
+            store2.append([
+                '#' + str(options_obj.uid) + ': ' + options_obj.name,
+                options_obj.uid,
+            ])
+
+        combo2 = Gtk.ComboBox.new_with_model(store2)
+        grid.attach(combo2, 0, 6, 1, 1)
+        combo2.set_hexpand(True)
+        combo2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        cell = Gtk.CellRendererText()
+        combo2.pack_start(cell, False)
+        combo2.add_attribute(cell, 'text', 0)
+        combo2.set_active(0)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_radiobutton_toggled,
+            entry,
+            combo,
+            combo2,
+        )
+        entry.connect('changed', self.on_entry_changed)
+        radiobutton2.connect(
+            'toggled',
+            self.on_radiobutton2_toggled,
+            entry,
+            combo,
+            combo2,
+        )
+        combo.connect('changed', self.on_combo_changed)
+        radiobutton3.connect(
+            'toggled',
+            self.on_radiobutton3_toggled,
+            entry,
+            combo,
+            combo2,
+        )
+        combo2.connect('changed', self.on_combo2_changed)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Callback class methods
+
+
+    def on_combo_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        uid = model[tree_iter][1]
+
+        self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+        self.clone_flag = False
+
+
+    def on_combo2_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        uid = model[tree_iter][1]
+
+        self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+        self.clone_flag = True
+
+
+    def on_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Store the entry's text, so the calling function can retrieve it.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        name = entry.get_text()
+        if name != '':
+            self.options_name = name
+        else:
+            self.options_name = None
+
+
+    def on_radiobutton_toggled(self, button, entry, combo, combo2):
+
+        """Called from a callback in self.__init__().
+
+        User has selected to create a new options manager.
+
+        Args:
+
+            button (Gtk.RadioButton): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
+
+        """
+
+        if button.get_active():
+
+            self.options_obj = None
+            self.clone_flag = False
+
+            entry.set_sensitive(True)
+            combo.set_sensitive(False)
+            combo2.set_sensitive(False)
+
+
+    def on_radiobutton2_toggled(self, button, entry, combo, combo2):
+
+        """Called from a callback in self.__init__().
+
+        User wants to select an existing options manager.
+
+        Args:
+
+            button (Gtk.RadioButton): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
+
+        """
+
+        if button.get_active():
+
+            tree_iter = combo.get_active_iter()
+            model = combo.get_model()
+            uid = model[tree_iter][1]
+
+            self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.clone_flag = False
+
+            entry.set_text('')
+            entry.set_sensitive(False)
+            combo.set_sensitive(True)
+            combo2.set_sensitive(False)
+
+
+    def on_radiobutton3_toggled(self, button, entry, combo, combo2):
+
+        """Called from a callback in self.__init__().
+
+        User wants to clone an existing options manager.
+
+        Args:
+
+            button (Gtk.RadioButton): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+            combo, combo2 (Gtk.ComboBox): Other widgets to update
+
+        """
+
+        if button.get_active():
+
+            tree_iter = combo2.get_active_iter()
+            model = combo2.get_model()
+            uid = model[tree_iter][1]
+
+            self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
+            self.clone_flag = True
+
+            entry.set_text('')
+            entry.set_sensitive(False)
+            combo.set_sensitive(False)
+            combo2.set_sensitive(True)
 
 
 class AddFolderDialogue(Gtk.Dialog):
@@ -25306,7 +26864,7 @@ class AddFolderDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_combo_changed(self, combo):
@@ -25539,7 +27097,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton):
@@ -25602,9 +27160,6 @@ class AddPlaylistDialogue(Gtk.Dialog):
             #   rather than the clipboard text
             data.get_text(),
         )
-
-
-    # (Callbacks)
 
 
     def clipboard_timer_callback(self):
@@ -25868,7 +27423,7 @@ class AddVideoDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton):
@@ -25932,9 +27487,6 @@ class AddVideoDialogue(Gtk.Dialog):
             #   rather than the clipboard text
             data.get_text(),
         )
-
-
-    # (Callbacks)
 
 
     def clipboard_timer_callback(self):
@@ -26122,7 +27674,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_combo_changed(self, combo):
@@ -26146,7 +27698,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         self.clone_flag = False
 
 
-    def on_combo2_changed(self, combo):
+    def on_combo2_changed(self, combo2):
 
         """Called from callback in self.__init__().
 
@@ -26155,12 +27707,12 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         Args:
 
-            combo (Gtk.ComboBox): The clicked widget
+            combo2 (Gtk.ComboBox): The clicked widget
 
         """
 
-        tree_iter = combo.get_active_iter()
-        model = combo.get_model()
+        tree_iter = combo2.get_active_iter()
+        model = combo2.get_model()
         uid = model[tree_iter][1]
 
         self.options_obj = self.main_win_obj.app_obj.options_reg_dict[uid]
@@ -26586,6 +28138,123 @@ class DeleteContainerDialogue(Gtk.Dialog):
         self.show_all()
 
 
+class DeleteDropZoneDialogue(Gtk.Dialog):
+
+    """Called by mainwin.DropZoneBox.on_delete_button_clicked().
+
+    Prompt the user to choose whether to delete just the dropzone, or its
+    associated options.OptionsManager object too.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        options_obj (options.OptionsManager): The download options whose
+            dropzone is to be deleted
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, options_obj):
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+        self.options_obj = options_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        #   (none)
+
+
+        # IV list - other
+        # ---------------
+        self.del_dropzone_flag = False
+        self.del_both_flag = False
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Delete dropzone'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+            )
+        )
+
+        self.set_modal(True)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        button = Gtk.Button.new_with_label(_('Just delete the dropzone'))
+        grid.attach(button, 0, 0, 1, 1)
+        button.set_hexpand(True)
+        button.connect('clicked', self.on_dropzone_button_clicked)
+
+        button2 = Gtk.Button.new_with_label(_('Also delete download options'))
+        grid.attach(button2, 0, 1, 1, 1)
+        button2.set_hexpand(True)
+        button2.connect('clicked', self.on_both_button_clicked)
+        # Don't delete download options in the middle of a download operation,
+        #   or if the options have been applied to a media data object
+        if self.main_win_obj.app_obj.current_manager_obj \
+        or options_obj.dbid is not None:
+            button2.set_sensitive(False)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Callback class methods
+
+
+    def on_dropzone_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Deletes the dropzone, but not the options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.del_dropzone_flag = True
+        self.destroy()
+
+
+    def on_both_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Deletes the dropzone and the options.OptionsManager object.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.del_both_flag = True
+        self.destroy()
+
+
 class DuplicateVideoDialogue(Gtk.Dialog):
 
     """Called by mainapp.TartubeApp.on_menu_add_video().
@@ -26854,6 +28523,9 @@ class ExportDialogue(Gtk.Dialog):
         self.show_all()
 
 
+    # Callback class methods
+
+
     def on_combo_changed(self, combo):
 
         """Called a from callback in self.__init__().
@@ -26987,6 +28659,9 @@ class ExtractorCodeDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    # Callback class methods
 
 
     def on_entry_activated(self, entry):
@@ -27136,7 +28811,7 @@ class FormatsSubsDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_apply_button_clicked(self, button):
@@ -27521,6 +29196,9 @@ class ImportDialogue(Gtk.Dialog):
         return converted_list
 
 
+    # Callback class methods
+
+
     def on_checkbutton_toggled(self, checkbutton, path):
 
         """Called from a callback in self.__init__().
@@ -27752,7 +29430,52 @@ class MountDriveDialogue(Gtk.Dialog):
     # Public class methods
 
 
-    # (Callbacks)
+    def do_try_again(self):
+
+        """Called by self.on_ok_button_clicked().
+
+        The user has selected 'I have mounted the drive, please try again'.
+        """
+
+        app_obj = self.main_win_obj.app_obj
+
+        if os.path.exists(app_obj.data_dir):
+
+            # Data directory exists
+            self.available_flag = True
+            self.destroy()
+
+        else:
+
+            # Data directory still does not exist. Inform the user
+            mini_win = app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'The folder still doesn\'t exist. Please try a' \
+                + ' different option',
+                ),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+            mini_win.set_modal(True)
+
+
+    def do_select_dir(self):
+
+        """Called by self.on_ok_button_clicked().
+
+        The user has selected 'Select a different data directory'.
+        """
+
+        if self.main_win_obj.app_obj.prompt_user_for_data_dir():
+
+            # New data directory selected
+            self.available_flag = True
+            self.destroy()
+
+
+    # Callback class methods
 
 
     def on_ok_button_clicked(self, button):
@@ -27826,54 +29549,6 @@ class MountDriveDialogue(Gtk.Dialog):
             self.combo.set_sensitive(True)
         else:
             self.combo.set_sensitive(False)
-
-
-    # (Callback support functions)
-
-
-    def do_try_again(self):
-
-        """Called by self.on_ok_button_clicked().
-
-        The user has selected 'I have mounted the drive, please try again'.
-        """
-
-        app_obj = self.main_win_obj.app_obj
-
-        if os.path.exists(app_obj.data_dir):
-
-            # Data directory exists
-            self.available_flag = True
-            self.destroy()
-
-        else:
-
-            # Data directory still does not exist. Inform the user
-            mini_win = app_obj.dialogue_manager_obj.show_msg_dialogue(
-                _(
-                'The folder still doesn\'t exist. Please try a' \
-                + ' different option',
-                ),
-                'error',
-                'ok',
-                self,           # Parent window is this window
-            )
-
-            mini_win.set_modal(True)
-
-
-    def do_select_dir(self):
-
-        """Called by self.on_ok_button_clicked().
-
-        The user has selected 'Select a different data directory'.
-        """
-
-        if self.main_win_obj.app_obj.prompt_user_for_data_dir():
-
-            # New data directory selected
-            self.available_flag = True
-            self.destroy()
 
 
 class MSYS2Dialogue(Gtk.Dialog):
@@ -27965,7 +29640,7 @@ class MSYS2Dialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton):
@@ -28169,7 +29844,7 @@ class NewbieDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_change_button_clicked(self, button):
@@ -28405,7 +30080,7 @@ class PrepareClipDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_all_button_clicked(self, button):
@@ -28646,7 +30321,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_all_button_clicked(self, button):
@@ -28852,7 +30527,7 @@ class RecentVideosDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_radiobutton_toggled(self, radiobutton):
@@ -28996,7 +30671,7 @@ class RemoveLockFileDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_yes_button_clicked(self, button):
@@ -29325,7 +31000,7 @@ class ResetContainerDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton, path):
@@ -29523,7 +31198,7 @@ class ScheduledDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_combo_changed(self, combo):
@@ -29883,7 +31558,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         self.show_all()
 
 
-    # Public class methods
+    # Callback class methods
 
 
     def on_button_clicked(self, button, entry):
@@ -30434,7 +32109,7 @@ class SystemCmdDialogue(Gtk.Dialog):
         return system_cmd
 
 
-    # (Callbacks)
+    # Callback class methods
 
 
     def on_copy_clicked(self, button, media_data_obj):
@@ -30776,6 +32451,9 @@ class TidyDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    # Callback class methods
 
 
     def on_checkbutton_toggled(self, checkbutton):
