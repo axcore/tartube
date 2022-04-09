@@ -4646,15 +4646,22 @@ class OptionsEditWin(GenericEditWin):
             else:
                 entry4.set_text(_('These options are not applied to anything'))
 
-        self.add_label(grid,
-            _(
-            'Additional download options, e.g. --write-subs (do not use -o' \
-            + ' or --output)',
-            ),
-            0, 3, grid_width, 1,
-        )
+        if self.app_obj.simple_options_flag:
+
+            self.add_label(grid,
+                _(
+                'Additional download options, e.g. --write-subs (do not use' \
+                + ' -o or --output)',
+                ),
+                0, 3, grid_width, 1,
+            )
 
         if not self.app_obj.simple_options_flag:
+
+            self.add_label(grid,
+                _('Additional download options'),
+                0, 3, 1, 1,
+            )
 
             if os.name == 'nt':
 
@@ -4663,7 +4670,7 @@ class OptionsEditWin(GenericEditWin):
                     'Use ONLY these options (Tartube adds the output folder)',
                     ),
                     None,
-                    0, 4, grid_width, 1,
+                    1, 3, (grid_width - 1), 1,
                 )
                 # (Signal connect appears below)
 
@@ -4675,16 +4682,16 @@ class OptionsEditWin(GenericEditWin):
                     + ' directory)',
                     ),
                     None,
-                    0, 4, grid_width, 1,
+                    1, 3, (grid_width - 1), 1,
                 )
                 # (Signal connect appears below)
 
             checkbutton.set_active(self.retrieve_val('direct_cmd_flag'))
 
             checkbutton2 = self.add_checkbutton(grid,
-                _('Use only the URL specified below'),
+                _('If URLs are specified below, use only those URLs'),
                 'direct_url_flag',
-                0, 5, grid_width, 1,
+                1, 4, (grid_width - 1), 1,
             )
 
             # (Signal connects from above)
@@ -4696,25 +4703,25 @@ class OptionsEditWin(GenericEditWin):
 
         self.add_textview(grid,
             'extra_cmd_string',
-            0, 6, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
         if self.app_obj.simple_options_flag:
             frame = self.add_pixbuf(grid,
                 'hand_right_large',
-                0, 7, 1, 1,
+                0, 6, 1, 1,
             )
             frame.set_hexpand(False)
 
         else:
             frame = self.add_pixbuf(grid,
                 'hand_left_large',
-                0, 7, 1, 1,
+                0, 6, 1, 1,
             )
             frame.set_hexpand(False)
 
         button2 = Gtk.Button()
-        grid.attach(button2, 1, 7, (grid_width - 1), 1)
+        grid.attach(button2, 1, 6, (grid_width - 1), 1)
         if not self.app_obj.simple_options_flag:
             button2.set_label(_('Hide advanced download options'))
         else:
@@ -4723,14 +4730,14 @@ class OptionsEditWin(GenericEditWin):
 
         frame2 = self.add_pixbuf(grid,
             'copy_large',
-            0, 8, 1, 1,
+            0, 7, 1, 1,
         )
         frame2.set_hexpand(False)
 
         button3 = Gtk.Button(
             _('Import general download options into this window'),
         )
-        grid.attach(button3, 1, 8, (grid_width - 1), 1)
+        grid.attach(button3, 1, 7, (grid_width - 1), 1)
         button3.connect('clicked', self.on_clone_options_clicked)
         if self.edit_obj == self.app_obj.general_options_obj:
             # No point cloning the General Options Manager onto itself
@@ -4738,14 +4745,14 @@ class OptionsEditWin(GenericEditWin):
 
         frame3 = self.add_pixbuf(grid,
             'warning_large',
-            0, 9, 1, 1,
+            0, 8, 1, 1,
         )
         frame3.set_hexpand(False)
 
         button4 = Gtk.Button(
             _('Completely reset all download options to their default values'),
         )
-        grid.attach(button4, 1, 9, (grid_width - 1), 1)
+        grid.attach(button4, 1, 8, (grid_width - 1), 1)
         button4.connect('clicked', self.on_reset_options_clicked)
 
 
@@ -4780,7 +4787,7 @@ class OptionsEditWin(GenericEditWin):
             self.setup_downloads_videos_tab(inner_notebook)
             self.setup_downloads_playlists_tab(inner_notebook)
             self.setup_downloads_limits_tab(inner_notebook)
-            self.setup_downloads_formats_tab(inner_notebook)
+            self.setup_downloads_merge_tab(inner_notebook)
             self.setup_downloads_extractor_tab(inner_notebook)
             self.setup_downloads_filtering_tab(inner_notebook)
             self.setup_downloads_external_tab(inner_notebook)
@@ -4970,11 +4977,11 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_views_widgets(grid, row_count)
 
 
-    def setup_downloads_formats_tab(self, inner_notebook):
+    def setup_downloads_merge_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
-        Sets up the 'Formats' inner notebook tab.
+        Sets up the 'Merge' inner notebook tab.
 
         Args:
 
@@ -4983,13 +4990,14 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Formats'),
+            _('_Merge'),
             inner_notebook,
         )
 
-        # Video format options (yt-dlp only)
+        # Video/audio merge options (yt-dlp only)
         self.add_label(grid,
-            '<u>' + _('Video format options') + '</u>' + self.ytdlp_only(),
+            '<u>' + _('Video/audio merge options') + '</u>' \
+            + self.ytdlp_only(),
             0, 0, 1, 1,
         )
 
@@ -5006,26 +5014,6 @@ class OptionsEditWin(GenericEditWin):
             0, 2, 1, 1,
         )
         self.add_tooltip('--audio-multistreams', checkbutton2)
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _(
-                'Check formats selected are actually downloadable' \
-                + ' (Experimental)',
-            ),
-            'check_formats',
-            0, 3, 1, 1,
-        )
-        self.add_tooltip('--check-formats', checkbutton3)
-
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Allow unplayable formats to be listed and downloaded (also' \
-                + ' disables post-processing)',
-            ),
-            'allow_unplayable_formats',
-            0, 4, 1, 1,
-        )
-        self.add_tooltip('--allow-unplayable-formats', checkbutton4)
 
 
     def setup_downloads_extractor_tab(self, inner_notebook):
@@ -5118,7 +5106,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('F_iltering'),
+            _('_Filtering'),
             inner_notebook,
         )
 
@@ -6751,6 +6739,33 @@ class OptionsEditWin(GenericEditWin):
             0, (7 + extra_row), grid_width, 1,
         )
         self.add_tooltip('--youtube-skip-dash-manifest', checkbutton2)
+
+        # Other format options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Other format options') + '</u>' \
+            + self.ytdlp_only(),
+            0, (8 + extra_row), grid_width, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+                'Check formats selected are actually downloadable' \
+                + ' (Experimental)',
+            ),
+            'check_formats',
+            0, (9 + extra_row), grid_width, 1,
+        )
+        self.add_tooltip('--check-formats', checkbutton3)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+                'Allow unplayable formats to be listed and downloaded (also' \
+                + ' disables post-processing)',
+            ),
+            'allow_unplayable_formats',
+            0, (10 + extra_row), grid_width, 1,
+        )
+        self.add_tooltip('--allow-unplayable-formats', checkbutton4)
 
 
     def setup_convert_tab(self):
@@ -14421,10 +14436,18 @@ class VideoEditWin(GenericEditWin):
             self.on_clear_stamp_button_clicked,
         )
 
-        button5 = Gtk.Button(_('Reset list using video description'))
-        grid2.attach(button5, 2, 1, 2, 1)
+        button5 = Gtk.Button(_('Reset list using copied text'))
+        grid2.attach(button5, 0, 1, 2, 1)
         button5.set_hexpand(True)
         button5.connect(
+            'clicked',
+            self.on_copy_stamp_button_clicked,
+        )
+
+        button6 = Gtk.Button(_('Reset list using video description'))
+        grid2.attach(button6, 2, 1, 2, 1)
+        button6.set_hexpand(True)
+        button6.connect(
             'clicked',
             self.on_extract_stamp_button_clicked,
         )
@@ -14452,7 +14475,7 @@ class VideoEditWin(GenericEditWin):
             if mini_list[2] is None:
                 clip_title = ''
             else:
-                clip_title = mini_list[1]
+                clip_title = mini_list[2]
 
             self.timestamp_liststore.append(
                 [ start_stamp, stop_stamp, clip_title ],
@@ -15614,6 +15637,50 @@ class VideoEditWin(GenericEditWin):
         """
 
         SystemPrefWin(self.app_obj, 'clips')
+
+
+    def on_copy_stamp_button_clicked(self, button):
+
+        """Called from a callback in self.setup_timestamps_tab().
+
+        Updates the video's timestamp list using text the user has copied and
+        pasted into a dialogue window.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        # Open the dialogue window
+        dialogue_win = mainwin.AddStampDialogue(
+            self,
+            self.app_obj.main_win_obj,
+        )
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window
+        if response == Gtk.ResponseType.OK:
+
+            text = dialogue_win.textbuffer.get_text(
+                dialogue_win.textbuffer.get_start_iter(),
+                dialogue_win.textbuffer.get_end_iter(),
+                # Don't include hidden characters
+                False,
+            )
+
+            # (Do not modify the existing list of timestampes, if no text was
+            #   added to the dialogue window)
+            if text != '':
+                self.edit_obj.extract_timestamps_from_descrip(
+                    self.app_obj,
+                    text,
+                )
+
+                self.setup_timestamps_tab_update_treeview()
+
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
 
 
     def on_delete_slice_button_clicked(self, button, treeview):
@@ -20579,69 +20646,59 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton9 = self.add_checkbutton(grid,
             _(
-            'Show a \'Custom download all\' button in the Videos tab',
-            ),
-            self.app_obj.show_custom_dl_button_flag,
-            True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
-        )
-        checkbutton9.connect('toggled', self.on_show_custom_dl_button_toggled)
-
-        checkbutton10 = self.add_checkbutton(grid,
-            _(
             'In the Progress tab, hide finished downloads',
             ),
             self.app_obj.progress_list_hide_flag,
             True,                   # Can be toggled by user
-            0, 8, 1, 1,
+            0, 7, 1, 1,
         )
-        checkbutton10.connect('toggled', self.on_hide_button_toggled)
+        checkbutton9.connect('toggled', self.on_hide_button_toggled)
 
-        checkbutton11 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _('Show downloads in reverse order'),
             self.app_obj.results_list_reverse_flag,
             True,                   # Can be toggled by user
-            1, 8, 2, 1,
+            1, 7, 2, 1,
         )
-        checkbutton11.connect('toggled', self.on_reverse_button_toggled)
+        checkbutton10.connect('toggled', self.on_reverse_button_toggled)
 
-        checkbutton12 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _('When Tartube starts, automatically open the Classic Mode tab'),
             self.app_obj.show_classic_tab_on_startup_flag,
             True,               # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 8, grid_width, 1,
         )
-        checkbutton12.connect(
+        checkbutton11.connect(
             'toggled',
             self.on_show_classic_mode_button_toggled,
         )
         if __main__.__pkg_no_download_flag__:
-            checkbutton12.set_sensitive(False)
+            checkbutton11.set_sensitive(False)
 
-        checkbutton13 = self.add_checkbutton(grid,
+        checkbutton12 = self.add_checkbutton(grid,
             _(
             'In the Classic Mode tab, when adding URLs, remove duplicates' \
             + ' rather than retaining them',
             ),
             self.app_obj.classic_duplicate_remove_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton13.connect(
+        checkbutton12.connect(
             'toggled',
             self.on_remove_duplicate_button_toggled,
         )
 
-        checkbutton14 = self.add_checkbutton(grid,
+        checkbutton13 = self.add_checkbutton(grid,
             _(
             'In the Errors/Warnings tab, don\'t reset the tab text when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 10, grid_width, 1,
         )
-        checkbutton14.connect('toggled', self.on_system_keep_button_toggled)
+        checkbutton13.connect('toggled', self.on_system_keep_button_toggled)
 
 
     def setup_windows_videos_tab(self, inner_notebook):
@@ -20666,113 +20723,123 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _(
-            'Show smaller icons in the Video Index',
-            ),
-            self.app_obj.show_small_icons_in_index_flag,
+            _('Show a \'Custom download all\' button'),
+            self.app_obj.show_custom_dl_button_flag,
+            True,                   # Can be toggled by user
+            0, 1, grid_width, 1,
+        )
+        checkbutton.connect('toggled', self.on_show_custom_dl_button_toggled)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Allow each row to be marked for checking/downloading'),
+            self.app_obj.show_marker_in_index_flag,
             True,                   # Can be toggled by user
             0, 2, grid_width, 1,
         )
-        checkbutton.connect('toggled', self.on_show_small_icons_toggled)
+        checkbutton2.connect('toggled', self.on_show_selector_button_toggled)
 
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Show smaller icons'),
+            self.app_obj.show_small_icons_in_index_flag,
+            True,                   # Can be toggled by user
+            0, 3, grid_width, 1,
+        )
+        checkbutton3.connect('toggled', self.on_show_small_icons_toggled)
+
+        checkbutton4 = self.add_checkbutton(grid,
             _(
-            'In the Video Index, show detailed statistics about the videos' \
-            + ' in each channel / playlist / folder',
+            'Show detailed statistics about the videos in each channel' \
+            + ' / playlist / folder',
             ),
             self.app_obj.complex_index_flag,
             True,               # Can be toggled by user
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
-        checkbutton2.connect('toggled', self.on_complex_button_toggled)
+        checkbutton4.connect('toggled', self.on_complex_button_toggled)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'After clicking on a folder, automatically expand/collapse the' \
             + ' tree around it',
             ),
             self.app_obj.auto_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
         # (Signal connect appears below)
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _(
             'Expand the whole tree, not just the level beneath the clicked' \
             + ' folder',
             ),
             self.app_obj.full_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         if not self.app_obj.auto_expand_video_index_flag:
-            checkbutton4.set_sensitive(False)
+            checkbutton6.set_sensitive(False)
         # (Signal connect appears below)
 
         # (Signal connects from above)
-        checkbutton3.connect(
+        checkbutton5.connect(
             'toggled',
             self.on_expand_tree_toggled,
-            checkbutton4,
+            checkbutton6,
         )
-        checkbutton4.connect('toggled', self.on_expand_full_tree_toggled)
+        checkbutton6.connect('toggled', self.on_expand_full_tree_toggled)
 
         # Video Catalogue (right side of the Videos tab)
         self.add_label(grid,
             '<u>' + _('Video Catalogue (right side of the Videos tab)') \
             + '</u>',
-            0, 6, grid_width, 1,
-        )
-
-        checkbutton5 = self.add_checkbutton(grid,
-            _(
-            'Show \'today\' and \'yesterday\' as the date, when possible',
-            ),
-            self.app_obj.show_pretty_dates_flag,
-            True,                   # Can be toggled by user
             0, 7, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_pretty_date_button_toggled)
 
-        checkbutton6 = self.add_checkbutton(grid,
-            _('Show livestreams with a different background colour'),
-            self.app_obj.livestream_use_colour_flag,
+        checkbutton7 = self.add_checkbutton(grid,
+            _('Show \'today\' and \'yesterday\' as the date, when possible'),
+            self.app_obj.show_pretty_dates_flag,
             True,                   # Can be toggled by user
             0, 8, grid_width, 1,
         )
-        # (Signal connect appears below)
+        checkbutton7.connect('toggled', self.on_pretty_date_button_toggled)
 
-        checkbutton7 = self.add_checkbutton(grid,
-            _('Use same background colours for livestream and debut videos'),
-            self.app_obj.livestream_simple_colour_flag,
+        checkbutton8 = self.add_checkbutton(grid,
+            _('Show livestreams with a different background colour'),
+            self.app_obj.livestream_use_colour_flag,
             True,                   # Can be toggled by user
             0, 9, grid_width, 1,
         )
+        # (Signal connect appears below)
+
+        checkbutton9 = self.add_checkbutton(grid,
+            _('Use same background colours for livestream and debut videos'),
+            self.app_obj.livestream_simple_colour_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
         if not self.app_obj.livestream_use_colour_flag:
-            checkbutton7.set_sensitive(False)
+            checkbutton9.set_sensitive(False)
         # (Signal connect appears below)
 
         # (Signal connects from above)
-        checkbutton6.connect(
+        checkbutton8.connect(
             'toggled',
             self.on_livestream_colour_button_toggled,
-            checkbutton7,
+            checkbutton9,
         )
-        checkbutton7.connect(
+        checkbutton9.connect(
             'toggled',
             self.on_livestream_simple_button_toggled,
         )
 
-        checkbutton8 = self.add_checkbutton(grid,
-            _(
-            'Channel and playlist names are clickable (grid mode only)',
-            ),
+        checkbutton10 = self.add_checkbutton(grid,
+            _('Channel and playlist names are clickable (grid mode only)'),
             self.app_obj.catalogue_clickable_container_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
-        checkbutton8.connect('toggled', self.on_clickable_button_toggled)
+        checkbutton10.connect('toggled', self.on_clickable_button_toggled)
 
 
     def setup_windows_drag_tab(self, inner_notebook):
@@ -21070,6 +21137,24 @@ class SystemPrefWin(GenericPrefWin):
             7,
             'select_live',
             _('Selected broadcasting videos'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            8,
+            'drag_drop_notify',
+            _('Drag and Drop notification'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            9,
+            'drag_drop_odd',
+            _('Drag and Drop background 1'),
+        )
+
+        self.setup_windows_colours_tab_add_row(grid,
+            10,
+            'drag_drop_even',
+            _('Drag and Drop background 2'),
         )
 
 
@@ -22729,14 +22814,22 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton2 = self.add_checkbutton(grid,
             _(
-            'Create an archive file when downloading from the Classic' \
-            + ' Mode tab (not recommended)',
+            'Create an archive file when downloading from the Classic Mode' \
+            + ' tab',
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
             0, 8, grid_width, 1,
         )
         checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'This setting should only be enabled when downloading' \
+                + ' channels and playlists',
+            ) + '</i>',
+            0, 9, grid_width, 1,
+        )
 
 
     def setup_operations_livestreams_tab(self, inner_notebook):
@@ -24337,11 +24430,11 @@ class SystemPrefWin(GenericPrefWin):
 
         for i, column_title in enumerate(
             [
-                '#', _('Name'), _('Videos tab'), _('Classic Mode tab'),
-                _('Applied to media'),
+                '#', _('Name'), _('Videos tab'), _('Classic Mode'),
+                _('Dropzone'), _('Applied to media'),
             ]
         ):
-            if i == 2 or i == 3:
+            if i >= 2 and i <= 4:
                 renderer_toggle = Gtk.CellRendererToggle()
                 column_toggle = Gtk.TreeViewColumn(
                     column_title,
@@ -24360,7 +24453,7 @@ class SystemPrefWin(GenericPrefWin):
                 treeview.append_column(column_text)
                 column_text.set_resizable(True)
 
-        self.options_liststore = Gtk.ListStore(int, str, bool, bool, str)
+        self.options_liststore = Gtk.ListStore(int, str, bool, bool, bool, str)
         treeview.set_model(self.options_liststore)
 
         # Initialise the list
@@ -24507,6 +24600,11 @@ class SystemPrefWin(GenericPrefWin):
 
         if self.app_obj.classic_options_obj \
         and self.app_obj.classic_options_obj == options_obj:
+            row_list.append(True)
+        else:
+            row_list.append(False)
+
+        if options_obj.uid in self.app_obj.classic_dropzone_list:
             row_list.append(True)
         else:
             row_list.append(False)
@@ -25290,7 +25388,9 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_operations_archive_tab().
 
         Enables/disables creation of youtube-dl's archive file,
-        ytdl-archive.txt, when downloading from the Classic Mode tab.
+        ytdl-archive.txt, when downloading from the Classic Mode tab. Toggling
+        the corresponding Gtk.ToggleButton in the Classic Mode tab sets the IV
+        (and makes sure the two buttons have the same status).
 
         Args:
 
@@ -25298,12 +25398,13 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if checkbutton.get_active() \
-        and not self.app_obj.classic_ytdl_archive_flag:
-            self.app_obj.set_classic_ytdl_archive_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.classic_ytdl_archive_flag:
-            self.app_obj.set_classic_ytdl_archive_flag(False)
+        main_win_obj = self.app_obj.main_win_obj
+
+        other_flag = main_win_obj.classic_archive_button.get_active()
+        if (checkbutton.get_active() and not other_flag):
+            main_win_obj.classic_archive_button.set_active(True)
+        elif (not checkbutton.get_active() and other_flag):
+            main_win_obj.classic_archive_button.set_active(False)
 
 
     def on_archive_radiobutton_toggled(self, widget, radiobutton, \
@@ -30664,6 +30765,27 @@ class SystemPrefWin(GenericPrefWin):
             'ok',
             self,           # Parent window is this window
         )
+
+
+    def on_show_selector_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables showing the selector button in each row of the Video
+        Index.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_marker_in_index_flag:
+            self.app_obj.set_show_marker_in_index_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_marker_in_index_flag:
+            self.app_obj.set_show_marker_in_index_flag(False)
 
 
     def on_show_small_icons_toggled(self, checkbutton):

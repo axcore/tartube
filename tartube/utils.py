@@ -21,7 +21,7 @@
 
 
 # Import Gtk modules
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GObject
 
 
 # Import other modules
@@ -1968,11 +1968,8 @@ custom_dl_obj=None, divert_mode=None):
     # We don't use an archive file when downloading into a system folder,
     #   unless a non-default location for the file has been specified
     if (
-        not app_obj.block_ytdl_archive_flag \
-        and (
-            not dl_classic_flag and app_obj.allow_ytdl_archive_flag \
-            or dl_classic_flag and app_obj.classic_ytdl_archive_flag
-        )
+        (not dl_classic_flag and app_obj.allow_ytdl_archive_flag) \
+        or (dl_classic_flag and app_obj.classic_ytdl_archive_flag)
     ):
         if not dl_classic_flag \
         and (
@@ -3198,7 +3195,7 @@ def tidy_up_container_name(app_obj, string, max_length):
                 return ''
 
             for illegal in app_obj.illegal_name_mswin_list:
-                if re.search('^' + illegal + '\.'):
+                if re.search('^' + illegal + '\.', string):
                     return ''
 
             # Forbidden characters on MS Windows: < > : " / \ | ? *

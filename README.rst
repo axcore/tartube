@@ -59,16 +59,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.3.484 (31 Mar 2022)**
+Stable release: **v2.3.549 (9 Apr 2022)**
 
-Development release: **v2.3.518 (5 Apr 2022)**
+Development release: **v2.3.549 (9 Apr 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.484/install-tartube-2.3.484-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.484/tartube-2.3.484-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.549/install-tartube-2.3.549-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.3.549/tartube-2.3.549-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.484/python3-tartube_2.3.484.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.484/tartube-2.3.484.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.3.549/python3-tartube_2.3.549.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.3.549/tartube-2.3.549.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -649,7 +649,7 @@ Secondly, you could import a text file contaiing a list of channels/playlists. Y
 
 ... where **<url>** is the web address of the channel/playlist. (Leave out the diamond brackets.)
 
-When you're ready, click **Media > Import into database > Plain text export file...**
+When you're ready, click **Media > Export/import > Import into database > Plain text export file...**
 
 6.8.2 Replacing generic channel/playlist names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1301,7 +1301,7 @@ You can export the contents of **Tartube**'s database and, at any time in the fu
 
 It is important to note that *only a list of videos, channels, playlists and folders are exported*. The videos themselves are not exported, and neither are any thumbnail, description or metadata files.
 
-- Click **Media > Export from database...**
+- Click **Media > Export/import > Export from database...**
 - In the dialogue window, choose what you want to export
 - If you want a list that you can edit in an ordinary text editor, select the **Export as plain text** option
 - If you want a list that yuu can edit in a spreadsheet, select the **Export as CSV** option
@@ -1312,7 +1312,7 @@ It is safe to share this export file with other people. It doesn't contain any p
 
 This is how to import the data into a different **Tartube** database.
 
-- Click **Media > Import into database...**
+- Click **Media > Export/import > Import into database...**
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
@@ -1992,7 +1992,7 @@ The export can then be re-imported into your current database in the normal way 
 
 A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist, despite the best efforts of the authors. If you really want to rebuild the database from scratch, this is how to do it.
 
-Firstly, click **Media > Export from database...**. In the dialogue window, it's not necessary to select the button **Include lists of videos**. Click the **OK** button. Let Tartube create the backup file. You now have a backup of the names and URLs for every channel/playlist you've added.
+Firstly, click **Media > Export/import > Export from database...**. In the dialogue window, it's not necessary to select the button **Include lists of videos**. Click the **OK** button. Let Tartube create the backup file. You now have a backup of the names and URLs for every channel/playlist you've added.
 
 Next, shut down **Tartube**.
 
@@ -2000,7 +2000,7 @@ Next, shut down **Tartube**.
 
 Now you can restart **Tartube**. **Tartube** will create a brand new database file.
 
-Click **Media > Import into database > JSON export file...**. Import the file you created moments ago.
+Click **Media > Export/import > Import into database > JSON export file...**. Import the file you created moments ago.
 
 All the channels/playlists should now be visible in the main window. Click the **Check All** button in the bottom-left corner and wait for it to finish.
 
@@ -2117,9 +2117,9 @@ Tartube can merge a video and audio file together, long after they have been dow
 
 A: In the main window's toolbar, click the **Hide (most) system folders** button (a red folder)
 
-A: In the main menu, click **Media > Hide (most) system folders**
+A: In the main menu, click **Media > Show/hide > Hide (most) system folders**
 
-A: Right-click the folders you don't want to see, and select **Folder actions > Hide folder**. To reverse this step, in the main menu click **Media > Show hidden folders**
+A: Right-click the folders you don't want to see, and select **Folder actions > Hide folder**. To reverse this step, in the main menu click **Media > Show/hide > Show hidden folders**
 
 A: In the main menu, click **Edit > System preferences... > Windows > Videos**, and click **Show smaller icons in the Video Index** to select it
 

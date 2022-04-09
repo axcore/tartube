@@ -391,6 +391,9 @@ class TartubeApp(Gtk.Application):
         #   should be replaced by a custom set of icons (in case the stock
         #   icons are not visible, for some reason)
         self.show_custom_icons_flag = False
+        # Flag set to True if a marker should be visible on each row in the
+        #   Video Index, false if not
+        self.show_marker_in_index_flag = True
         # Flag set to True if small icons should be used in the Video Index,
         #   False if large icons should be used
         self.show_small_icons_in_index_flag = False
@@ -1769,9 +1772,6 @@ class TartubeApp(Gtk.Application):
         #   downloading from the Classic Mode tab (this is marked 'not
         #   recommended' in the edit window)
         self.classic_ytdl_archive_flag = False
-        # Flag set to True when re-downloading video(s), so that the archive
-        #   file is not used at all (otherwise, the re-download will fail)
-        self.block_ytdl_archive_flag = False
 
         # Flag set to True if, when checking videos/channels/playlists, we
         #   should timeout after 60 seconds (in case youtube-dl gets stuck
@@ -2145,14 +2145,18 @@ class TartubeApp(Gtk.Application):
         # Dictionary of default background colours
         self.default_bg_table = {
             # Not selected
-            'live_wait': [1, 0, 0, 0.1],    # Red
-            'live_now': [0, 1, 0, 0.2],     # Green
-            'debut_wait': [1, 1, 0, 0.2],   # Yellow
-            'debut_now': [0, 1, 1, 0.2],    # Cyan
+            'live_wait': [1, 0, 0, 0.1],            # Red
+            'live_now': [0, 1, 0, 0.2],             # Green
+            'debut_wait': [1, 1, 0, 0.2],           # Yellow
+            'debut_now': [0, 1, 1, 0.2],            # Cyan
             # Selected
-            'select': [0, 0, 1, 0.1],       # Blue
-            'select_wait': [1, 0, 1, 0.1],  # Purple
-            'select_live': [1, 0, 1, 0.1],  # Purple
+            'select': [0, 0, 1, 0.1],               # Blue
+            'select_wait': [1, 0, 1, 0.1],          # Purple
+            'select_live': [1, 0, 1, 0.1],          # Purple
+            # Drag and drop tab
+            'drag_drop_notify': [1, 0, 1, 0.1],     # Purple
+            'drag_drop_odd': [1, 1, 0, 0.1],        # Orange
+            'drag_drop_even': [1, 1, 0, 0.05],      # Pale orange
         }
         # Dictionary of customisable colours
         self.custom_bg_table = self.default_bg_table.copy()
@@ -2412,6 +2416,13 @@ class TartubeApp(Gtk.Application):
         )
         show_hidden_menu_action.connect('activate', self.on_menu_show_hidden)
         self.add_action(show_hidden_menu_action)
+
+        unmark_all_menu_action = Gio.SimpleAction.new(
+            'unmark_all_menu',
+            None,
+        )
+        unmark_all_menu_action.connect('activate', self.on_menu_unmark_all)
+        self.add_action(unmark_all_menu_action)
 
         if self.debug_test_media_menu_flag:
             test_menu_action = Gio.SimpleAction.new('test_menu', None)
@@ -2791,7 +2802,7 @@ class TartubeApp(Gtk.Application):
             'check_all_button',
             None,
         )
-        check_all_button_action.connect('activate', self.on_menu_check_all)
+        check_all_button_action.connect('activate', self.on_button_check_all)
         self.add_action(check_all_button_action)
 
         download_all_button_action = Gio.SimpleAction.new(
@@ -2800,7 +2811,7 @@ class TartubeApp(Gtk.Application):
         )
         download_all_button_action.connect(
             'activate',
-            self.on_menu_download_all,
+            self.on_button_download_all,
         )
         self.add_action(download_all_button_action)
 
@@ -2810,7 +2821,7 @@ class TartubeApp(Gtk.Application):
         )
         custom_dl_all_button_action.connect(
             'activate',
-            self.on_menu_custom_dl_all,
+            self.on_button_custom_dl_all,
         )
         self.add_action(custom_dl_all_button_action)
 
@@ -2908,6 +2919,16 @@ class TartubeApp(Gtk.Application):
             self.on_button_classic_stop,
         )
         self.add_action(classic_stop_button_action)
+
+        classic_archive_button_action = Gio.SimpleAction.new(
+            'classic_archive_button',
+            None,
+        )
+        classic_archive_button_action.connect(
+            'activate',
+            self.on_button_classic_archive,
+        )
+        self.add_action(classic_archive_button_action)
 
         classic_ffmpeg_button_action = Gio.SimpleAction.new(
             'classic_ffmpeg_button',
@@ -3974,6 +3995,9 @@ class TartubeApp(Gtk.Application):
         if version >= 2001036:  # v2.1.036
             self.show_custom_icons_flag \
             = json_dict['show_custom_icons_flag']
+        if version >= 2003541:  # v2.3.541
+            self.show_marker_in_index_flag \
+            = json_dict['show_marker_in_index_flag']
         if version >= 2001036:  # v2.1.036
             self.show_small_icons_in_index_flag \
             = json_dict['show_small_icons_in_index_flag']
@@ -4591,6 +4615,12 @@ class TartubeApp(Gtk.Application):
 
         if version >= 2003195:  # v2.3.195
             self.custom_bg_table = json_dict['custom_bg_table']
+            if version < 2003537:   # v2.3.537
+                # (New key-value pairs added)
+                for key in [
+                    'drag_drop_notify', 'drag_drop_odd', 'drag_drop_even',
+                ]:
+                    self.custom_bg_table[key] = self.default_bg_table[key]
 
         if version >= 2003230:  # v2.3.230
             self.ytdlp_filter_options_flag \
@@ -5080,6 +5110,7 @@ class TartubeApp(Gtk.Application):
             'show_tooltips_flag': self.show_tooltips_flag,
             'show_tooltips_extra_flag': self.show_tooltips_extra_flag,
             'show_custom_icons_flag': self.show_custom_icons_flag,
+            'show_marker_in_index_flag': self.show_marker_in_index_flag,
             'show_small_icons_in_index_flag': \
             self.show_small_icons_in_index_flag,
             'auto_expand_video_index_flag': self.auto_expand_video_index_flag,
@@ -5561,6 +5592,7 @@ class TartubeApp(Gtk.Application):
         # (Don't reset the Errors/Warnings tab, as failed attempts to load a
         #   database generate messages there)
         if self.main_win_obj:
+            self.main_win_obj.video_index_reset_marker()
             self.main_win_obj.video_index_reset()
             self.main_win_obj.video_catalogue_reset()
             self.main_win_obj.progress_list_reset()
@@ -7077,6 +7109,13 @@ class TartubeApp(Gtk.Application):
                 custom_dl_obj.ignore_old_stream_flag = False
                 custom_dl_obj.dl_if_stream_flag = False
                 custom_dl_obj.dl_if_old_stream_flag = False
+
+        if version < 2003536:       # v2.3.536
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.dummy_dl_flag = False
 
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
@@ -10363,10 +10402,6 @@ class TartubeApp(Gtk.Application):
         if self.main_win_obj.is_visible():
             self.main_win_obj.show_all()
 
-        # If the youtube-dl archive file(s) were temporarily blocked for a
-        #   video re-download, re-enable them
-        self.block_ytdl_archive_flag = True
-
         # If Tartube is due to shut down, then shut it down
         show_newbie_dialogue_flag = False
 
@@ -11376,7 +11411,7 @@ class TartubeApp(Gtk.Application):
                 del_corrupt_flag: True if corrupted video files should be
                     deleted
 
-                exist_Flag: True if video files that should exist should be
+                exist_flag: True if video files that should exist should be
                     checked, in case they don't (and vice-versa)
 
                 del_video_flag: True if downloaded video files should be
@@ -11385,6 +11420,16 @@ class TartubeApp(Gtk.Application):
                 del_others_flag: True if all video/audio files with the same
                     name should be deleted (as artefacts of post-processing
                     with FFmpeg or AVConv)
+
+                remove_no_url_flag: True if any media.Video objects whose URL
+                    is not set should be removed from the database (no files
+                    are deleted)
+
+                remove_dupe_flag: True if any media.Video objects, which are
+                    not marked as downloaded and which share a URL with
+                    another media.Video object with the same parent and which
+                    is marked as downloaded, should be removed from the
+                    database (no files are deleted)
 
                 del_archive_flag: True if all youtube-dl archive files should
                     be deleted
@@ -12023,6 +12068,11 @@ class TartubeApp(Gtk.Application):
                         no_sort_flag,
                     )
 
+        # Update the video name/nickname, if it is not set
+        if video_obj.name == self.default_video_name:
+            video_obj.set_name(filename)
+            video_obj.set_nickname(filename)
+
         # Update the filepath. Even if it is already known, the extension may
         #   have changed (for example, after checking a video, then downloading
         #   it)
@@ -12218,7 +12268,7 @@ class TartubeApp(Gtk.Application):
         if video_obj.name == self.default_video_name:
             video_obj.set_name(video_obj.file_name)
             # (The video's title, stored in the .nickname IV, will be updated
-            #   from the JSON data in a momemnt)
+            #   from the JSON data in a moment)
             video_obj.set_nickname(video_obj.file_name)
 
         # Set the file size
@@ -14124,7 +14174,7 @@ class TartubeApp(Gtk.Application):
             if response != Gtk.ResponseType.OK:
                 return
 
-        # Get a second confirmation, if required to delete files
+        # Get a second confirmation
         if delete_file_flag:
 
             self.dialogue_manager_obj.show_msg_dialogue(
@@ -14138,44 +14188,60 @@ class TartubeApp(Gtk.Application):
                 # Arguments passed directly to .delete_container_continue()
                 {
                     'yes': 'delete_container_continue',
-                    'data': [media_data_obj, empty_flag],
+                    'data': [media_data_obj, empty_flag, delete_file_flag],
                 }
             )
 
-        # No second confirmation required, so we can proceed directly to the
-        #   call to self.delete_container_complete()
         else:
-            self.delete_container_complete(media_data_obj, empty_flag)
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                'Are you SURE you want to remove these items from your' \
+                + ' database? This procedure cannot be reversed!',
+                ),
+                'question',
+                'yes-no',
+                None,                   # Parent window is main window
+                # Arguments passed directly to .delete_container_continue()
+                {
+                    'yes': 'delete_container_continue',
+                    'data': [media_data_obj, empty_flag, delete_file_flag],
+                }
+            )
 
 
     def delete_container_continue(self, data_list):
 
         """Called by self.delete_container().
 
-        When deleting a container, after the user has specified that files
-        should be deleted too, this function is called to delete those files.
+        After getting a confirmation from the user, continue with the
+        deletion process.
 
         Args:
 
-            data_list (list): A list of two items. The first is the container
+            data_list (list): A list of three items. The first is the container
                 media data object; the second is a flag set to True if the
-                container should be emptied, rather than being deleted
+                container should be emptied, rather than being deleted; the
+                third is True if files should be deleted from the user's
+                filesystem
 
         """
 
         # Unpack the arguments
         media_data_obj = data_list[0]
         empty_flag = data_list[1]
+        delete_file_flag = data_list[2]
 
-        # Confirmation obtained, so delete the files
-        container_dir = media_data_obj.get_default_dir(self)
-        if os.path.isdir(container_dir):
-            self.remove_directory(container_dir)
+        if delete_file_flag:
 
-        # If emptying the container rather than deleting it, just create a
-        #   replacement (empty) directory on the filesystem
-        if empty_flag:
-            self.make_directory(container_dir)
+            container_dir = media_data_obj.get_default_dir(self)
+            if os.path.isdir(container_dir):
+                self.remove_directory(container_dir)
+
+            # If emptying the container rather than deleting it, just create a
+            #   replacement (empty) directory on the filesystem
+            if empty_flag:
+                self.make_directory(container_dir)
 
         # Now call self.delete_container_complete() to handle the media data
         #   registry
@@ -14185,8 +14251,8 @@ class TartubeApp(Gtk.Application):
     def delete_container_complete(self, media_data_obj, empty_flag,
     recursive_flag=False):
 
-        """Called by self.delete_container() and .delete_container_continue().
-        Subsequently called by this function recursively.
+        """Called by self.delete_container_continue(). Subsequently called by
+        this function recursively.
 
         Deletes a channel, playlist or folder object from the media data
         registry.
@@ -16482,6 +16548,10 @@ class TartubeApp(Gtk.Application):
                 del self.media_unavailable_dict[old_name]
                 self.media_unavailable_dict[new_name] = media_data_obj.dbid
 
+            # Update the IV which keeps track of Video Index markers, as it
+            #   stores the container's name as a key
+            self.main_win_obj.video_index_update_marker(old_name, new_name)
+
             # Reset the Video Index and the Video Catalogue (this prevents a
             #   lot of problems)
             self.main_win_obj.video_index_catalogue_reset()
@@ -16549,6 +16619,10 @@ class TartubeApp(Gtk.Application):
         if old_name in self.media_unavailable_dict:
             del self.media_unavailable_dict[old_name]
             self.media_unavailable_dict[new_name] = media_data_obj.dbid
+
+        # Update the IV which keeps track of Video Index markers, as it stores
+        #   the container's name as a key
+        self.main_win_obj.video_index_update_marker(old_name, new_name)
 
         return True
 
@@ -20656,6 +20730,24 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_catalogue_apply_filter()
 
 
+    def on_button_cancel_date(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Changes the Video Catalogue page to the first one, after showing a page
+        matching a particular date.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.main_win_obj.video_catalogue_unshow_date()
+
+
     def on_button_cancel_error_filter(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -20699,6 +20791,37 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_catalogue_cancel_filter()
 
 
+    def on_button_check_all(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Call a function to start a new download operation (if allowed).
+
+        Unlike the corresponding self.on_menu_check_all button, this function
+        will check only the marked items, if any.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        media_list = []
+        for name in self.main_win_obj.video_index_marker_dict.keys():
+            if name in self.media_name_dict:
+                dbid = self.media_name_dict[name]
+                if dbid in self.media_reg_dict:
+                    media_list.append(self.media_reg_dict[dbid])
+
+        self.download_manager_start(
+            'sim',
+            False,      # Not called from self.script_slow_timer_callback()
+            media_list, # May be empty, in which case everything is checked
+        )
+
+
     def on_button_classic_add_urls(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -20716,6 +20839,27 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.classic_mode_tab_add_urls()
+
+
+    def on_button_classic_archive(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Enables/disables the youtube-dl archive file in downloads from the
+        Classic Mode tab.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if self.main_win_obj.classic_archive_button.get_active():
+            self.classic_ytdl_archive_flag = True
+        else:
+            self.classic_ytdl_archive_flag = False
 
 
     def on_button_classic_dest_dir(self, action, par):
@@ -21146,13 +21290,6 @@ class TartubeApp(Gtk.Application):
                 # Delete the files associated with the video
                 self.delete_video_files(video_obj)
 
-                # If mainapp.TartubeApp.allow_ytdl_archive_flag is set,
-                #   youtube-dl will have created a ytdl_archive.txt, recording
-                #   every video ever downloaded in the parent directory. This
-                #   will prevent a successful re-downloading of the video
-                # Temporarily block usage of the archive file
-                self.block_ytdl_archive_flag = True
-
             # Start the download operation
             if not self.classic_custom_dl_flag:
                 self.download_manager_start('classic_real', False, video_list)
@@ -21287,12 +21424,15 @@ class TartubeApp(Gtk.Application):
                     worker_obj.downloader_obj.stop()
 
 
-    def on_button_cancel_date(self, action, par):
+    def on_button_custom_dl_all(self, action, par):
 
         """Called from a callback in self.do_startup().
 
-        Changes the Video Catalogue page to the first one, after showing a page
-        matching a particular date.
+        Call a function to start a new (custom) download operation (if
+        allowed).
+
+        Unlike the corresponding self.on_menu_custom_dl_all button, this
+        function will custom download only the marked items, if any.
 
         Args:
 
@@ -21302,7 +21442,62 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        self.main_win_obj.video_catalogue_unshow_date()
+        media_list = []
+        for name in self.main_win_obj.video_index_marker_dict.keys():
+            if name in self.media_name_dict:
+                dbid = self.media_name_dict[name]
+                if dbid in self.media_reg_dict:
+                    media_list.append(self.media_reg_dict[dbid])
+
+        if not self.general_custom_dl_obj.dl_by_video_flag \
+        or not self.general_custom_dl_obj.dl_precede_flag:
+
+            self.download_manager_start(
+                'custom_real',
+                False,          # Not called by the timer
+                media_list,     # Download all media data objects
+                self.general_custom_dl_obj,
+            )
+
+        else:
+
+            self.download_manager_start(
+                'custom_sim',
+                False,          # Not called by the timer
+                media_list,     # Download all media data objects
+                self.general_custom_dl_obj,
+            )
+
+
+    def on_button_download_all(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Call a function to start a new download operation (if allowed).
+
+        Unlike the corresponding self.on_menu_download_all button, this
+        function will download only the marked items, if any.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        media_list = []
+        for name in self.main_win_obj.video_index_marker_dict.keys():
+            if name in self.media_name_dict:
+                dbid = self.media_name_dict[name]
+                if dbid in self.media_reg_dict:
+                    media_list.append(self.media_reg_dict[dbid])
+
+        self.download_manager_start(
+            'real',
+            False,      # Not called from self.script_slow_timer_callback()
+            media_list, # May be empty, in which case everything is downloaded
+        )
 
 
     def on_button_drag_drop_add(self, action, par):
@@ -22604,6 +22799,23 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.custom_dl_popup_menu()
 
 
+    def on_menu_unmark_all(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Unmarks all markers in the Video Index.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.main_win_obj.video_index_reset_marker()
+
+
     def on_menu_download_all(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23211,14 +23423,16 @@ class TartubeApp(Gtk.Application):
                 'exist_flag': dialogue_win.checkbutton3.get_active(),
                 'del_video_flag': dialogue_win.checkbutton4.get_active(),
                 'del_others_flag': dialogue_win.checkbutton5.get_active(),
-                'del_archive_flag': dialogue_win.checkbutton6.get_active(),
-                'move_thumb_flag': dialogue_win.checkbutton7.get_active(),
-                'del_thumb_flag': dialogue_win.checkbutton8.get_active(),
-                'convert_webp_flag': dialogue_win.checkbutton9.get_active(),
-                'move_data_flag': dialogue_win.checkbutton10.get_active(),
-                'del_descrip_flag': dialogue_win.checkbutton11.get_active(),
-                'del_json_flag': dialogue_win.checkbutton12.get_active(),
-                'del_xml_flag': dialogue_win.checkbutton13.get_active(),
+                'remove_no_url_flag': dialogue_win.checkbutton6.get_active(),
+                'remove_dupe_flag': dialogue_win.checkbutton7.get_active(),
+                'del_archive_flag': dialogue_win.checkbutton8.get_active(),
+                'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
+                'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
+                'convert_webp_flag': dialogue_win.checkbutton11.get_active(),
+                'move_data_flag': dialogue_win.checkbutton12.get_active(),
+                'del_descrip_flag': dialogue_win.checkbutton13.get_active(),
+                'del_json_flag': dialogue_win.checkbutton14.get_active(),
+                'del_xml_flag': dialogue_win.checkbutton15.get_active(),
             }
 
         # Now destroy the window
@@ -23227,28 +23441,23 @@ class TartubeApp(Gtk.Application):
         if response == Gtk.ResponseType.OK:
 
             # If nothing was selected, then there is nothing to do
-            # (Don't need to check 'del_others_flag' here)
-            if not choices_dict['corrupt_flag'] \
-            and not choices_dict['exist_flag'] \
-            and not choices_dict['del_video_flag'] \
-            and not choices_dict['del_thumb_flag'] \
-            and not choices_dict['convert_webp_flag'] \
-            and not choices_dict['del_descrip_flag'] \
-            and not choices_dict['del_json_flag'] \
-            and not choices_dict['del_xml_flag'] \
-            and not choices_dict['del_archive_flag'] \
-            and not choices_dict['move_thumb_flag'] \
-            and not choices_dict['move_data_flag']:
+            selected_flag = False
+            for key in choices_dict.keys():
+                if choices_dict[key]:
+                    selected_flag = True
+                    break
+
+            if not selected_flag:
                 return
 
             # Prompt the user for confirmation, before deleting any files
             if choices_dict['del_corrupt_flag'] \
             or choices_dict['del_video_flag'] \
+            or choices_dict['del_archive_flag'] \
             or choices_dict['del_thumb_flag'] \
             or choices_dict['del_descrip_flag'] \
             or choices_dict['del_json_flag'] \
-            or choices_dict['del_xml_flag'] \
-            or choices_dict['del_archive_flag']:
+            or choices_dict['del_xml_flag']:
 
                 self.dialogue_manager_obj.show_msg_dialogue(
                     _(
@@ -23652,14 +23861,6 @@ class TartubeApp(Gtk.Application):
             )
 
         self.bandwidth_default = value
-
-
-    def set_block_ytdl_archive_flag(self, flag):
-
-        if not flag:
-            self.block_ytdl_archive_flag = False
-        else:
-            self.block_ytdl_archive_flag = True
 
 
     def set_catalogue_draw_blocked_flag(self, flag):
@@ -24787,6 +24988,19 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_current,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
+
+
+    def set_show_marker_in_index_flag(self, flag):
+
+        if not flag:
+            self.show_marker_in_index_flag = False
+        else:
+            self.show_marker_in_index_flag = True
+
+        # Reset all markers in the Video Index
+        self.main_win_obj.video_index_reset_marker()
+        # Redraw the Video Index and Video Catalogue
+        self.main_win_obj.video_index_catalogue_reset()
 
 
     def set_show_small_icons_in_index_flag(self, flag):

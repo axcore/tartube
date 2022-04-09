@@ -1381,6 +1381,14 @@ class DownloadWorker(threading.Thread):
             for vid in self.downloader_obj.video_msg_buffer_dict.keys():
                 self.downloader_obj.process_error_warning(vid)
 
+            # Unless the download was stopped manually (return code 5), any
+            #   'dummy' media.Video objects can be set, so that their URLs are
+            #   not remembered in the next Tartube session
+            if isinstance(media_data_obj, media.Video) \
+            and media_data_obj.dummy_flag \
+            and return_code < 5:
+                media_data_obj.set_dummy_dl_flag(True)
+
             # If the download stalled, -1 is returned. If we're allowed to
             #   restart a stalled download, do that; otherwise give up
             if return_code > -1 \
@@ -1498,7 +1506,7 @@ class DownloadWorker(threading.Thread):
             and custom_dl_obj.split_flag \
             and media_data_obj.stamp_list
         ) or app_obj.temp_stamp_list:
-            return_code = self.downloader_obj.do_download_clip()
+            return_code = self.downloader_obj.do_download_clips()
         else:
             return_code = self.downloader_obj.do_download_remove_slices()
 
@@ -1645,6 +1653,7 @@ class DownloadWorker(threading.Thread):
         #   the whole RSS feed)
         time_limit_video_obj = None
         check_source_list = []
+        check_name_list = []
 
         if app_obj.livestream_max_days:
 
@@ -1656,15 +1665,16 @@ class DownloadWorker(threading.Thread):
             )
 
             for child_obj in container_obj.child_list:
-                if child_obj.source:
 
-                    # An entry in the RSS feed is a new livestream, if it
-                    #   doesn't match one of the videos in this list
-                    # (We don't need to check each RSS entry against the
-                    #   entire contents of the channel/playlist - which might
-                    #   be thousands of videos - just those up to the time
-                    #   limit)
+                # An entry in the RSS feed is a new livestream, if it doesn't
+                #   match one of the videos in these lists
+                # (We don't need to check each RSS entry against the entire
+                #   contents of the channel/playlist - which might be thousands
+                #   of videos - just those up to the time limit)
+                if child_obj.source:
                     check_source_list.append(child_obj.source)
+                if child_obj.name != app_obj.default_video_name:
+                    check_name_list.append(child_obj.name)
 
             # The time limit will apply to this video, when found
             for child_obj in container_obj.child_list:
@@ -1682,6 +1692,8 @@ class DownloadWorker(threading.Thread):
             for child_obj in container_obj.child_list:
                 if child_obj.source:
                     check_source_list.append(child_obj.source)
+                if child_obj.name != app_obj.default_video_name:
+                    check_name_list.append(child_obj.name)
 
             for child_obj in container_obj.child_list:
                 if child_obj.source \
@@ -1707,7 +1719,8 @@ class DownloadWorker(threading.Thread):
                 #   for livestreams now
                 break
 
-            elif not entry_dict['link'] in check_source_list:
+            elif not entry_dict['link'] in check_source_list \
+            and not entry_dict['title'] in check_name_list:
 
                 # New livestream detected. Create a new JSONFetcher object to
                 #   fetch its JSON data
@@ -3889,6 +3902,10 @@ class VideoDownloader(object):
 
                 else:
 
+                    # Register the download with DownloadManager, so that
+                    #   download limits can be applied, if required
+                    self.download_manager_obj.register_video('old')
+
                     # This video applies towards the limit (if any) specified
                     #   by mainapp.TartubeApp.operation_download_limit
                     self.video_limit_count += 1
@@ -3946,6 +3963,10 @@ class VideoDownloader(object):
                             self.download_worker_obj.options_manager_obj,
                         ),
                     )
+
+                    # Register the download with DownloadManager, so that
+                    #   download limits can be applied, if required
+                    self.download_manager_obj.register_video('new')
 
         # The probable video ID, if captured, can now be reset
         self.probable_video_id = None
@@ -4905,6 +4926,14 @@ class VideoDownloader(object):
 
         # (Flag set to True when self.confirm_new_video(), etc, are called)
         confirm_flag = False
+
+        # The '[download] XXX has already been recorded in the archive'
+        #   message does not cause a call to self.confirm_new_video(), etc,
+        #   so we must handle it here
+        # (Note that the first word might be '[download]', or '[Youtube]', etc)
+        if re.search('^.*has already been recorded in the archive$', stdout):
+            self.download_manager_obj.register_video('other')
+            return dl_stat_dict
 
         # Extract the data
         stdout_list[0] = stdout_list[0].lstrip('\r')

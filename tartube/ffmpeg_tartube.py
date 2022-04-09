@@ -735,7 +735,7 @@ class FFmpegOptionsManager(object):
                 source file is used (so that a specimen system command can be
                 displayed in the edit window)
 
-            start_point, stop_points, clip_title, clip_dir (str):
+            start_point, stop_point, clip_title, clip_dir (str):
                 When splitting a video, the points at which to start/stop
                 (timestamps or values in seconds), the clip title, and the
                 destination directory for sections (if not the same as the
@@ -1142,11 +1142,8 @@ class FFmpegOptionsManager(object):
                     return_list.append(str(start_point))
 
                 # (If no timestamp is specified, the end of the video is used)
-                return_list.append('-to')
-                if stop_point is None:
-                    # (A specimen time, in seconds)
-                    return_list.append('100')
-                else:
+                if stop_point is not None:
+                    return_list.append('-to')
                     return_list.append(str(stop_point))
 
             if clip_title is None or clip_title == "":
@@ -1179,3 +1176,11 @@ class FFmpegOptionsManager(object):
             return source_thumb_path, output_path, return_list
         else:
             return source_video_path, output_path, return_list
+
+
+
+
+
+
+
+

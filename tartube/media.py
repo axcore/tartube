@@ -1975,6 +1975,18 @@ class Video(GenericMedia):
         # Valid values are those specified by formats.VIDEO_FORMAT_LIST,
         #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
         self.dummy_format = None
+        # Flag set to True if the download was completed, in which case
+        #   self.source is not added to mainapp.TartubeApp.classic_pending_list
+        #   (remembering it for the next session)
+        # Specifically, it remains False when the download is waiting to start,
+        #   or if the VideoDownloader returns a return value of STOPPED, or
+        #   if (during a download) self.dummy_path is still None, meaning no
+        #   videos have been downloaded
+        # Once set to True, it is never set back to False. So, if the user
+        #   tries to re-download a channel/playlist and no new videos are
+        #   found, the flag remains set to True
+        self.dummy_dl_flag = False
+
 
         # Code
         # ----
@@ -2179,7 +2191,7 @@ class Video(GenericMedia):
                 self.set_video_descrip(app_obj, text, max_length)
 
 
-    def extract_timestamps_from_descrip(self, app_obj):
+    def extract_timestamps_from_descrip(self, app_obj, override_descrip=None):
 
         """Can be called by anything. Often called by
         self.set_video_descrip().
@@ -2200,16 +2212,24 @@ class Video(GenericMedia):
 
             app_obj (mainapp.TartubeApp): The main application
 
+            override_descrip (str or None): If specified, extract timestamps
+                from this string, rather than from self.descrip
+
         """
 
-        if self.descrip is None or self.descrip == '':
+        if (self.descrip is None or self.descrip == '') \
+        and (override_descrip is None or override_descrip == ''):
             return
 
         regex = r'^\s*(' + app_obj.timestamp_regex + r')(\s.*)'
         rev_regex = r'^(.*\s)(' + app_obj.timestamp_regex + r')\s*$'
         digit_count = 0
 
-        line_list = self.descrip.split('\n')
+        if override_descrip is not None and override_descrip != '':
+            line_list = override_descrip.split('\n')
+        else:
+            line_list = self.descrip.split('\n')
+
         temp_list = []
         stamp_list = []
 
@@ -2675,6 +2695,14 @@ class Video(GenericMedia):
         self.dummy_format = format_str
 
         self.source = url
+
+
+    def set_dummy_dl_flag(self, flag):
+
+        if flag:
+            self.dummy_dl_flag = True
+        else:
+            self.dummy_dl_flag = False
 
 
     def set_dummy_path(self, path):

@@ -83,6 +83,16 @@ class TidyManager(threading.Thread):
                 should be deleted (as artefacts of post-processing with FFmpeg
                 or AVConv)
 
+            remove_no_url_flag: True if any media.Video objects whose URL is
+                not set should be removed from the database (no files are
+                deleted)
+
+            remove_dupe_flag: True if any media.Video objects, which are not
+                marked as downloaded and which share a URL with another
+                media.Video object with the same parent and which is marked as
+                downloaded, should be removed from the database (no files are
+                deleted)
+
             del_archive_flag: True if all youtube-dl archive files should be
                 deleted
 
@@ -151,6 +161,14 @@ class TidyManager(threading.Thread):
         # True if all video/audio files with the same name should be deleted
         #   (as artefacts of post-processing with FFmpeg or AVConv)
         self.del_others_flag = choices_dict['del_others_flag']
+        # True if any media.Video objects whose URL is not set should be
+        #   removed from the database (no files are deleted)
+        self.remove_no_url_flag = choices_dict['remove_no_url_flag']
+        # True if any media.Video objects, which are not marked as downloaded
+        #   and which share a URL with another media.Video object with the same
+        #   parent and which is marked as downloaded, should be removed from
+        #   the database (no files are deleted)
+        self.remove_dupe_flag = choices_dict['remove_dupe_flag']
         # True if all youtube-dl archive files should be deleted
         self.del_archive_flag = choices_dict['del_archive_flag']
         # True if all thumbnail files should be moved into a subdirectory
@@ -184,6 +202,8 @@ class TidyManager(threading.Thread):
         self.video_no_exist_count = 0
         self.video_deleted_count = 0
         self.other_deleted_count = 0
+        self.remove_no_url_count = 0
+        self.remove_dupe_count = 0
         self.archive_deleted_count = 0
         self.thumb_moved_count = 0
         self.thumb_deleted_count = 0
@@ -294,6 +314,27 @@ class TidyManager(threading.Thread):
                 1,
                 '   ' + _('Delete other video/audio files:') + ' ' + text,
             )
+
+        if self.remove_no_url_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Remove no_URL videos from database:') + ' ' + text,
+        )
+
+        if self.remove_dupe_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Remove undownloaded duplicate videos from database:') \
+            + ' ' + text,
+        )
 
         if self.del_archive_flag:
             text = _('YES')
@@ -454,6 +495,23 @@ class TidyManager(threading.Thread):
                 + str(self.other_deleted_count),
             )
 
+        if self.remove_no_url_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('No-URL videos removed from database:') + ' ' \
+                + str(self.remove_no_url_count),
+            )
+
+        if self.remove_dupe_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' \
+                + _('Undownloaded duplicate videos removed from database:') \
+                + ' ' + str(self.remove_dupe_count),
+            )
+
         if self.del_archive_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -563,6 +621,12 @@ class TidyManager(threading.Thread):
 
         if self.del_video_flag:
             self.delete_video(media_data_obj)
+
+        if self.remove_no_url_flag:
+            self.remove_no_url(media_data_obj)
+
+        if self.remove_dupe_flag:
+            self.remove_dupe(media_data_obj)
 
         if self.del_archive_flag:
             self.delete_archive(media_data_obj)
@@ -824,6 +888,81 @@ class TidyManager(threading.Thread):
                 if os.path.isfile(full_path) \
                 and self.app_obj.remove_file(full_path):
                     self.other_deleted_count += 1
+
+
+    def remove_no_url(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        video has no URL, remove it from the database (but don't delete any
+        files).
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.source is None:
+                GObject.timeout_add(
+                    0,
+                    self.app_obj.delete_video,
+                    video_obj,
+                )
+
+                self.remove_no_url_count += 1
+
+
+    def remove_dupe(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        video is not marked as downloaded, and has the same URL as another
+        child video (of the same specified media data object) which IS marked
+        as downloaded, remove the undownloaded one from the database (but
+        don't delete any files).
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        # Compile dictionaries of downloaded and undownloaded URLs
+        dl_dict = {}
+        not_dl_dict = {}
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.source is not None:
+                if video_obj.dl_flag:
+                    dl_dict[video_obj.source] = video_obj.dbid
+                else:
+                    not_dl_dict[video_obj.source] = video_obj.dbid
+
+        # Check undownloaded videos, looking for a matching downloaded video
+        for url in not_dl_dict.keys():
+
+            if url in dl_dict:
+
+                # Duplicate found
+                dbid = not_dl_dict[url]
+                if dbid in self.app_obj.media_reg_dict:
+
+                    duplicate_obj = self.app_obj.media_reg_dict[dbid]
+                    GObject.timeout_add(
+                        0,
+                        self.app_obj.delete_video,
+                        duplicate_obj,
+                    )
+
+                    self.remove_dupe_count += 1
 
 
     def delete_archive(self, media_data_obj):

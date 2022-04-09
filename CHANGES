@@ -1,3 +1,100 @@
+v2.3.549 (9 Apr 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Each channel/playlist/folder in the Videos tab now has a checkbutton. You
+    can select one or more items, if you want to check/download just those
+    items. Click the buttons in the bottom-left corner to do that. Even when
+    items are selected, you can still download everything using the main menu
+    or from the toolbar. The checkbuttons can be hidden, if you don't want
+    them: click Edit > System preferences... > Videos, and de-select 'Allow
+    each row to be marked for checking/downloading' (Git #379)
+- New Drag and Drop tab. The tab is divided into a grid. Each zone represents a
+    set of download options. Drag and drop a video from your browser (or a
+    text URL) onto one of these zones, and it is added to the Classic Mode tab,
+    ready for download using the specified download options. Because of Gtk
+    issues, drag and drop from a browser does not work well on MS Windows.
+    All users will receive a new set of download options called 'mp3', unless
+    they already have one with that name
+- The layout of the Errors/Warnings tab has been redesigned. It is now fully
+    searchable. All the checkbuttons like 'Show Tartube errors' are now
+    applied immediately, and are reversible. (Previously, they only applied to
+    errors/warnings received in the future)
+
+MINOR NEW FEATURES
+- The Classic Mode tab has a new button at the bottom of the tab. When
+    selected, youtube-dl creates an archive file. This is not recommended in
+    most cases; it might be useful for downloading large channels/playlists, if
+    the download might need to be resumed after an interruption (Git #285)
+- In the download options windows (e.g. Edit > General download options...),
+    when advanced options are visible, the options were previously in a
+    separate yt-dlp tab have been merged into the other tabs. This is because
+    yt-dlp is now the default downloader for nearly all users
+- The layouts in the preferences window and several other edit windows have
+    been improved (includes Git #360)
+- Custom downloads can now skip broadcasting livestreams, or livestreams that
+    have already finished. They can also skip all videos EXCEPT current/former
+    livestreams. New icons in the Videos tab highlights which videos are
+    former livestreams; one for downloaded videos, one for checked videos
+    (Git #358)
+- Tartube can now open in the system tray. See the new setting in Edit >
+    System preferences > Windows > Tray (Git #365)
+- Tidy operations can now remove videos without URLs, or duplicate videos, from
+    the Tartube database
+- In the video properties window, Timestamps tab, you can now update the list
+    of timestamps manually by clicking the new 'Reset list using copied text'
+    button, and then copy-pasting text into the dialogue window (for example,
+    from the video's description) (Git #330)
+- Minor changes to the layout of the main window's menu
+
+MAJOR FIXES
+- The dialogue windows for adding channels, playlists and folder dialogues
+    accepted invalid characters and names. Fixed to prevent illegel directory/
+    folder names on MS Windows, Linux and MacOS (Git #335)
+- A 'blocked' video (e.g. an age-restricted video from YouTube) remains
+    invisible in the Videos tab, by default, even after it is successfully
+    checked or downloaded (for example, after the user has supplied login
+    credentials). Fixed
+- Errors/warnings assigned by Tartube to an individual video were not cleared
+    when the video was checked/downloaded without further errors/warnings.
+    Fixed
+- Fixed more crashes due to Gtk issues
+- The download options window could not be opened, when the
+    '--cookies-from-browser' option was set with KEYRING and PROFILE
+    components. Fixed (Git #394)
+- Fix python error when starting Tartube (Git #366)
+- Fixed video duplication error when downloading videos that already exist on
+    the filesystem
+- After right-clicking a video and selecting 'Special > Download video clips'
+    or 'Special > Remove video slices', the dialogue windows had several
+    serious issues. Fixed them
+- In the Classic Mode tab, when a channel/playlist download is interrupted
+    before the download is complete, the URL is not remembered for the next
+    session. Fixed (Git #285)
+
+MINOR FIXES
+- When checking/downloading produces no new videos, a 'newbie' dialogue is
+    displayed pointing the user to possible solutions. The dialogue was
+    displayed even when youtube-dl encountered videos that had already been
+    downloaded, or that were registered in youtube-dl's archive file. This no
+    longer happens (Git #368)
+- In the preferences window, Windows > Videos tab, the 'Show today and
+    yesterday as the date, when possible' setting could not be disabled, once
+    enabled. Fixed
+- In the edit window for custom downloads, in the Slices tab, the toggle
+    buttons were all broken. Fixed them
+- After right-clicking a folder and selecting 'Folder contents > All contents >
+    Empty folder', the text of the dialogue window was gibberish. For this
+    procedure and related ones, improved the dialogue layout and tightened up
+    the code. When emptying videos/channels/playlists/folders from the
+    database (but not removing files on the filesystem), added a new
+    confirmation dialogue (Git #332)
+- The video properties window did not show clip/chapter titles. Fixed
+    (Git #330)
+- Improved wording in the 'Add channel' dialogue, specifically to remove the
+    word 'automatically'. Updated the video/playlist/folder dialogues too
+    (Git #277)
+
 v2.3.484 (31 Mar 2022)
 -------------------------------------------------------------------------------
 

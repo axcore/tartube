@@ -167,24 +167,42 @@ class ProcessManager(threading.Thread):
                 + str(self.job_total) + ': ' + video_obj.name,
             )
 
-            if self.options_obj.options_dict['output_mode'] == 'split':
+            default_flag = False
+            if self.app_obj.temp_stamp_list:
 
-                # Split the video into video clips
+                # Split the video into video clips, using the .stamp_list
+                #   specified directly by the user (instead of the one
+                #   specified by the media.Video object)
                 dest_dir = self.split_video(video_obj)
-                if self.fatal_error_flag:
-                    break
 
-                else:
-                    # Add the returned destination directory to a list,
-                    #   first checking for duplicates
-                    if not dest_dir in check_dict:
-                        dest_dir_list.append(dest_dir)
-                        check_dict[dest_dir] = None
+            elif self.app_obj.temp_slice_list:
+
+                # Produce a single output video with slices removed, using the
+                #   .slice_list specified directly by the user (instead of the
+                #   one specified by the media.Video object)
+                dest_dir = self.slice_video(video_obj)
+
+            elif self.options_obj.options_dict['output_mode'] == 'split':
+
+                # Split the video into video clips, using the .stamp_list
+                #   specified by the media.Video object
+                dest_dir = self.split_video(video_obj)
 
             elif self.options_obj.options_dict['output_mode'] == 'slice':
 
-                # Produce a single output video with slices removed
+                # Produce a single output video with slices removed, using the
+                #   .slice_list specified by the media.Video object
                 dest_dir = self.slice_video(video_obj)
+
+            else:
+
+                # Process the video with FFmpeg. One source video produces one
+                #   output video
+                self.process_video(video_obj)
+                default_flag = True
+
+            if not default_flag:
+
                 if self.fatal_error_flag:
                     # This is a fatal error
                     break
@@ -195,12 +213,6 @@ class ProcessManager(threading.Thread):
                     if not dest_dir in check_dict:
                         dest_dir_list.append(dest_dir)
                         check_dict[dest_dir] = None
-
-            else:
-
-                # Process the video with FFmpeg. One source video produces one
-                #   output video
-                self.process_video(video_obj)
 
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
@@ -333,7 +345,7 @@ class ProcessManager(threading.Thread):
 
 
     def process_video(self, orig_video_obj, dest_dir=None, start_point=None, \
-    stop_point=None, clip_title=None):
+    stop_point=None, clip_title=None, override_output_mode=None):
 
         """Called by self.run(), .slice_video() and .split_video().
 
@@ -358,6 +370,12 @@ class ProcessManager(threading.Thread):
 
             clip_title (str): When splitting a video, the title of this video
                 clip (if specified)
+
+            override_output_mode (str): When splitting/slicing a video, and the
+                user has specified their own .stamp_list or .slice_list, then
+                this value is set to 'split' or 'slice', overriding the
+                'output_mode' of the FFmpegOptionsManager. Otherwise set to
+                None
 
         Return values:
 
@@ -386,14 +404,30 @@ class ProcessManager(threading.Thread):
 
         # Get the source/output files, ahd the full FFmpeg system command (as a
         #   list, and including the source/output files)
-        source_path, output_path, cmd_list = self.options_obj.get_system_cmd(
-            self.app_obj,
-            orig_video_obj,
-            start_point,
-            stop_point,
-            clip_title,
-            dest_dir,
-        )
+        if override_output_mode is None:
+
+            source_path, output_path, cmd_list \
+            = self.options_obj.get_system_cmd(
+                self.app_obj,
+                orig_video_obj,
+                start_point,
+                stop_point,
+                clip_title,
+                dest_dir,
+            )
+
+        else:
+
+            source_path, output_path, cmd_list \
+            = self.options_obj.get_system_cmd(
+                self.app_obj,
+                orig_video_obj,
+                start_point,
+                stop_point,
+                clip_title,
+                dest_dir,
+                { 'output_mode': override_output_mode },
+            )
 
         if source_path is None:
 
@@ -567,7 +601,10 @@ class ProcessManager(threading.Thread):
                 )
 
         # Import the correct slice list
+        override_output_mode = None
         if self.app_obj.temp_slice_list:
+
+            override_output_mode = 'slice'
 
             # Use the temporary buffer
             slice_list = self.app_obj.temp_slice_list.copy()
@@ -661,6 +698,7 @@ class ProcessManager(threading.Thread):
                 start_time,
                 stop_time,
                 'clip_' + str(i + 1),       # Clip title
+                override_output_mode,
             ):
                 # Don't continue creating more clips after an error
                 self.fatal_error_flag = True
@@ -825,7 +863,10 @@ class ProcessManager(threading.Thread):
             return None
 
         # Import the correct timestamp list
+        override_output_mode = None
         if self.app_obj.temp_stamp_list:
+
+            override_output_mode = 'split'
 
             # Use the temporary buffer
             stamp_list = self.app_obj.temp_stamp_list.copy()
@@ -899,6 +940,7 @@ class ProcessManager(threading.Thread):
                     start_stamp,
                     stop_stamp,
                     clip_title,
+                    override_output_mode,
                 ):
                     # Don't continue creating more clips after an error
                     self.fatal_error_flag = True
