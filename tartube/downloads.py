@@ -3085,9 +3085,9 @@ class VideoDownloader(object):
         # This IV is set whenever self.confirm_sim_video() is called. After
         #   being set, if a certain time has passed without another call to
         #   self.confirm_sim_video, self.do_download() halts the child process
+        # The time to wait is specified by mainapp.TartubeApp IVs
+        #   .json_timeout_no_comments_time and .json_timeout_with_comments_time
         self.last_sim_video_check_time = None
-        # The time to wait, in seconds
-        self.last_sim_video_wait_time = 60
 
         # If mainapp.TartubeApp.operation_convert_mode is set to any value
         #   other than 'disable', then a media.Video object whose URL
@@ -4011,8 +4011,15 @@ class VideoDownloader(object):
 
         # Set the time at which a JSON timeout should be applied, if no more
         #   calls to this function have been made
-        self.last_sim_video_check_time \
-        = int(time.time()) + self.last_sim_video_wait_time
+        if app_obj.apply_json_timeout_flag:
+
+            if (self.dl_sim_flag and app_obj.check_comment_fetch_flag) \
+            or (not self.dl_sim_flag and app_obj.dl_comment_fetch_flag):
+                wait_secs = app_obj.json_timeout_with_comments_time * 60
+            else:
+                wait_secs = app_obj.json_timeout_no_comments_time * 60
+
+            self.last_sim_video_check_time = int(time.time()) + wait_secs
 
         # From the JSON dictionary, extract the data we need
         # Git #177 reports that this value might be 'None', so check for that
@@ -4382,7 +4389,9 @@ class VideoDownloader(object):
             if was_live_flag:
                 video_obj.set_was_live_flag(True)
 
-            if not video_obj.comment_list and comment_list:
+            if not video_obj.comment_list \
+            and comment_list \
+            and app_obj.comment_store_flag:
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \

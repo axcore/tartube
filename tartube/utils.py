@@ -1166,12 +1166,12 @@ def disk_get_free_space(path, bytes_flag=False):
         path (str): Path to a file/directory on the disk, typically Tartube's
             data directory
 
-        bytes_flag (bool): True to return an integer value in MB, false to
-            return a value in bytes
+        bytes_flag (bool): False to return an integer value in GB (reduced to
+            3 decimal places), True to return a value in bytes
 
     Returns:
 
-        The free space in MB (or in bytes, if the flag is specified), or 0 if
+        The free space in GB (or in bytes, if the flag is specified), or 0 if
             the size can't be calculated for any reason
 
     """
@@ -1182,7 +1182,7 @@ def disk_get_free_space(path, bytes_flag=False):
         )
 
         if not bytes_flag:
-            return int(free_bytes / 1000000)
+            return round( (free_bytes / 1000000000), 3)
         else:
             return free_bytes
 
@@ -1201,12 +1201,12 @@ def disk_get_total_space(path=None, bytes_flag=False):
         path (str): Path to a file/directory on the disk, typically Tartube's
             data directory
 
-        bytes_flag (bool): True to return an integer value in MB, false to
-            return a value in bytes
+        bytes_flag (bool): False to return an integer value in GB (reduced to
+            3 decimal places), True to return a value in bytes
 
     Returns:
 
-        The total size in MB (or in bytes, if the flag is specified). If no
+        The total size in GB (or in bytes, if the flag is specified). If no
             path or an invalid path is specified, returns 0
 
     """
@@ -1224,7 +1224,7 @@ def disk_get_total_space(path=None, bytes_flag=False):
         )
 
         if not bytes_flag:
-            return int(total_bytes / 1000000)
+            return round( (total_bytes / 1000000000), 3)
         else:
             return total_bytes
 
@@ -1241,12 +1241,12 @@ def disk_get_used_space(path=None, bytes_flag=False):
         path (str): Path to a file/directory on the disk, typically Tartube's
             data directory
 
-        bytes_flag (bool): True to return an integer value in MB, false to
-            return a value in bytes
+        bytes_flag (bool): False to return an integer value in GB (reduced to
+            3 decimal places), True to return a value in bytes
 
     Returns:
 
-        The used space in MB (or in bytes, if the flag is specified). If no
+        The used space in GB (or in bytes, if the flag is specified). If no
             path or an invalid path is specified, returns 0
 
     """
@@ -1264,7 +1264,7 @@ def disk_get_used_space(path=None, bytes_flag=False):
         )
 
         if not bytes_flag:
-            return int(used_bytes / 1000000)
+            return round( (used_bytes / 1000000000), 3)
         else:
             return used_bytes
 
@@ -2026,14 +2026,9 @@ custom_dl_obj=None, divert_mode=None):
     if app_obj.ytdl_fork is not None and app_obj.ytdl_fork == 'yt-dlp':
 
         # Fetch video comments, if required
-        if app_obj.comment_fetch_flag:
+        if (dl_sim_flag and app_obj.check_comment_fetch_flag) \
+        or (not dl_sim_flag and app_obj.dl_comment_fetch_flag):
             options_list.append('--write-comments')
-
-        # On MS Windows, if --restrict-filenames is not specified, then insert
-        #   --windows-filenames. (I can't be sure that yt-dlp knows it is
-        #   running on MS Windows, when running inside MSYS2)
-        if os.name == 'nt' and not '--restrict-filenames' in options_list:
-            options_list.append('--windows-filenames')
 
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:

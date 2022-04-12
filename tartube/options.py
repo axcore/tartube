@@ -371,6 +371,8 @@ class OptionsManager(object):
         trim_filenames (int): Limit the filename length (excluding extension)
             to the specified number of characters
 
+        no_overwrites (bool): If True, does not overwrite any files
+
         force_overwrites (bool): If True, overwrites all video and metadata
             files. This option includes '--no-continue' (for which there is no
             Tartube download option)
@@ -709,6 +711,11 @@ class OptionsManager(object):
         Resets (or initialises) self.options_dict to its default state.
         """
 
+        if os.name != 'nt':
+            windows_filenames_flag = True
+        else:
+            windows_filenames_flag = False
+
         self.options_dict = {
             # OPTIONS
             'ignore_errors': True,
@@ -815,8 +822,9 @@ class OptionsManager(object):
             'concurrent_fragments': 1,
             'throttled_rate': 0,
             # (Filesystem Options)
-            'windows_filenames': False,
+            'windows_filenames': windows_filenames_flag,
             'trim_filenames': 0,
+            'no_overwrites': False,
             'force_overwrites': False,
             'write_playlist_metafiles': False,
             'no_clean_info_json': False,
@@ -1220,6 +1228,8 @@ class OptionsParser(object):
             OptionHolder('windows_filenames', '--windows-filenames', False),
             # --trim-filenames LENGTH
             OptionHolder('trim_filenames', '--trim-filenames', 0),
+            # --no-overwrites
+            OptionHolder('no_overwrites', '--no-overwrites', False),
             # --force-overwrites
             OptionHolder('force_overwrites', '--force-overwrites', False),
             # --write-playlist-metafiles

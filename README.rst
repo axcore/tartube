@@ -61,7 +61,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.3.549 (9 Apr 2022)**
 
-Development release: **v2.3.549 (9 Apr 2022)**
+Development release: **v2.3.562 (12 Apr 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -1885,7 +1885,8 @@ Alternatively, you can update the entire database at once. (This may take a long
 * `7.31 Tartube is not visible in the system tray`_
 * `7.32 Tartube is not portable`_
 * `7.33 Run out of disk space`_
-* `7.34 No puedo hablar inglés`_
+* `7.34 Japanese/Korean videos won't download`_
+* `7.35 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2349,7 +2350,16 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.34 No puedo hablar inglés
+7.34 Japanese/Korean videos won't download
+------------------------------------------
+
+*Q: On MS Windows, I can't download my favourite anime/K-pop video!*
+
+A: This is an `unresolved bug <https://github.com/axcore/tartube/issues/320>`__ that affects some users on MS Windows. Videos whose names contain Japanese, Korean or other non-ASCII characters can be downloaded, but Tartube cannot find the resulting videos (and their thumbnails and metadata) and does not add them to the database.
+
+As a workaround, click **Edit > General download options... > Files > Filesystem**, and then select **Restrict filenames to ASCII characters**. The videos should be downloaded and added to Tartube's database, but with garbled names (which is better than nothing.)
+
+7.35 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar YouTube porque no hablo inglés!*

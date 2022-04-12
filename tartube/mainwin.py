@@ -4458,19 +4458,31 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_media_button = None
             self.custom_dl_select_button = None
 
-        # Display a holding message in the replaement buttons, and initially
+        # Display a holding message in the replacement buttons, and initially
         #   in the progress bar (the latter is replaced after a very short
         #   interval)
+        free_msg = ' [' \
+        + str(round(utils.disk_get_free_space(self.app_obj.data_dir), 1)) \
+        + ' GiB]'
+
         if operation_type == 'check':
-            msg = _('Checking...')
+            temp_msg = msg = _('Checking...')
+            if self.app_obj.show_free_space_flag:
+                msg = _('Checking')  + free_msg
+
         elif operation_type == 'download':
-            msg = _('Downloading...')
+            temp_msg = msg = _('Downloading...')
+            if self.app_obj.show_free_space_flag:
+                msg = _('Downloading')  + free_msg
+
         elif operation_type == 'refresh':
-            msg = _('Refreshing...')
+            temp_msg = msg = _('Refreshing...')
+
         elif operation_type == 'tidy':
-            msg = _('Tidying...')
+            temp_msg = msg = _('Tidying...')
+
         else:
-            msg = _('FFmpeg processing...')
+            temp_msg = msg = _('FFmpeg processing...')
 
         # Add replacement widgets
         self.check_media_button = Gtk.Button()
@@ -4493,7 +4505,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.progress_bar.set_fraction(0)
         self.progress_bar.set_show_text(True)
-        self.progress_bar.set_text(msg)
+        self.progress_bar.set_text(temp_msg)
 
         # (The 'Custom download all' buttons, if they were visible, are
         #   replaced by empty buttons)
@@ -4509,7 +4521,7 @@ class MainWin(Gtk.ApplicationWindow):
                 True,
                 0
             )
-            self.custom_dl_media_button.set_label(msg)
+            self.custom_dl_media_button.set_label(temp_msg)
             self.custom_dl_media_button.set_sensitive(False)
 
             self.custom_dl_select_button = Gtk.Button()
@@ -4748,6 +4760,35 @@ class MainWin(Gtk.ApplicationWindow):
             utils.shorten_string(text, self.short_string_max_len) \
             + ' ' + str(count) + '/' + str(total)
         )
+
+
+    def update_free_space_msg(self, disk_space):
+
+        """Called by mainapp.TartubeApp.dl_timer_callback() during a download
+        operation to update the amount of free disk space visible in the
+        Videos tab.
+
+        Args:
+
+            disk_space (float): The amount of free disk space on the drive
+                containing Tartube's data directory
+
+        """
+
+        msg = ' [' + str(round(disk_space, 1)) + ' GiB]'
+
+        if self.app_obj.download_manager_obj \
+        and self.app_obj.show_free_space_flag \
+        and self.check_media_button is not None:
+
+            operation_type = self.app_obj.download_manager_obj.operation_type
+
+            if operation_type == 'sim' \
+            or operation_type == 'custom_sim' \
+            or operation_type == 'classic_sim':
+                self.check_media_button.set_label(_('Checking') + msg)
+            else:
+                self.check_media_button.set_label(_('Downloading') + msg)
 
 
     def sensitise_check_dl_buttons(self, finish_flag, operation_type=None):

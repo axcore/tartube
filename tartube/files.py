@@ -32,7 +32,7 @@ import threading
 
 
 # Import our modules
-#   ...
+import utils
 
 
 # Classes
@@ -80,7 +80,12 @@ class FileManager(threading.Thread):
         if not os.path.isfile(full_path):
             return empty_dict
 
-        with open(full_path, 'r') as json_file:
+        with open(
+            full_path,
+            'r',
+            encoding=utils.get_encoding(),
+            errors='ignore',
+        ) as json_file:
 
             try:
                 json_dict = json.load(json_file)
@@ -110,7 +115,12 @@ class FileManager(threading.Thread):
         if not os.path.isfile(full_path):
             return None
 
-        with open(full_path, 'r') as text_file:
+        with open(
+            full_path,
+            'r',
+            encoding=utils.get_encoding(),
+            errors='ignore',
+        ) as text_file:
 
             try:
                 text = text_file.read()

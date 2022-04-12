@@ -5639,19 +5639,19 @@ class OptionsEditWin(GenericEditWin):
         grid_width = 2
 
         # Filesystem options
+        self.add_label(grid,
+            '<u>' + _('Filesystem options') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Restrict filenames to ASCII characters'),
+            'restrict_filenames',
+            0, 1, grid_width, 1,
+        )
+        self.add_tooltip('--restrict-filenames', checkbutton)
+
         if not self.app_obj.simple_options_flag:
-
-            self.add_label(grid,
-                '<u>' + _('Filesystem options') + '</u>',
-                0, 0, grid_width, 1,
-            )
-
-            checkbutton = self.add_checkbutton(grid,
-                _('Restrict filenames to ASCII characters'),
-                'restrict_filenames',
-                0, 1, grid_width, 1,
-            )
-            self.add_tooltip('--restrict-filenames', checkbutton)
 
             checkbutton2 = self.add_checkbutton(grid,
                 _('Use the server\'s file modification time'),
@@ -5660,7 +5660,7 @@ class OptionsEditWin(GenericEditWin):
             )
             self.add_tooltip('--no-mtime', checkbutton2)
 
-        checkbutton = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _('Download all videos into this folder'),
             None,
             0, 3, 1, 1,
@@ -5698,11 +5698,11 @@ class OptionsEditWin(GenericEditWin):
 
         current_override = self.edit_obj.options_dict['use_fixed_folder']
         if current_override is None:
-            checkbutton.set_active(False)
+            checkbutton3.set_active(False)
             combo.set_sensitive(False)
             combo.set_active(0)
         else:
-            checkbutton.set_active(True)
+            checkbutton3.set_active(True)
             combo.set_sensitive(True)
             if current_override == self.app_obj.fixed_temp_folder.name:
                 combo.set_active(1)
@@ -5713,69 +5713,76 @@ class OptionsEditWin(GenericEditWin):
                 combo.set_active(0)
 
         # (Signal connects from above)
-        checkbutton.connect('toggled', self.on_fixed_folder_toggled, combo)
+        checkbutton3.connect('toggled', self.on_fixed_folder_toggled, combo)
         combo.connect('changed', self.on_fixed_folder_changed)
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
+
+        # Filesystem options (yt-dlp only)
+        self.add_label(grid2,
+            '<u>' + _('Filesystem options') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid2,
+            _('Force filenames to be MS Windows compatible'),
+            'windows_filenames',
+            0, 1, grid_width, 1,
+        )
+        self.add_tooltip('--windows-filenames', checkbutton4)
+
+        label = self.add_label(grid2,
+            _(
+                'Limit filename length (excluding extension) to this' \
+                + ' many characters',
+            ),
+            0, 2, 1, 1
+        )
+
+        spinbutton = self.add_spinbutton(grid2,
+            0, None, 1,
+            'trim_filenames',
+            1, 2, 1, 1
+        )
+        self.add_tooltip('--trim-filenames', label, spinbutton)
 
         if not self.app_obj.simple_options_flag:
 
-            # (To avoid messing up the neat format of the rows above, add a
-            #   secondary grid, and put the next set of widgets inside it)
-            grid2 = self.add_secondary_grid(grid, 0, 4, grid_width, 1)
-
-            # Filesystem options (yt-dlp only)
-            self.add_label(grid2,
-                '<u>' + _('Filesystem options') + '</u>' + self.ytdlp_only(),
-                0, 0, grid_width, 1,
+            checkbutton5 = self.add_checkbutton(grid2,
+                _('Do not overwrite any files'),
+                'no_overwrites',
+                0, 3, grid_width, 1,
             )
+            self.add_tooltip('--no-overwrites', checkbutton5)
 
-            checkbutton2 = self.add_checkbutton(grid2,
-                _('Force filenames to be MS Windows compatible'),
-                'windows_filenames',
-                0, 1, grid_width, 1,
-            )
-            self.add_tooltip('--windows-filenames', checkbutton2)
-
-            label = self.add_label(grid2,
-                _(
-                    'Limit filename length (excluding extension) to this' \
-                    + ' many characters',
-                ),
-                0, 2, 1, 1
-            )
-
-            spinbutton = self.add_spinbutton(grid2,
-                0, None, 1,
-                'trim_filenames',
-                1, 2, 1, 1
-            )
-            self.add_tooltip('--trim-filenames', label, spinbutton)
-
-            checkbutton3 = self.add_checkbutton(grid2,
+            checkbutton6 = self.add_checkbutton(grid2,
                 _(
                     'Overwrite all video and metadata files (includes' \
                     + ' \'--no-continue\')',
                 ),
                 'force_overwrites',
-                0, 3, grid_width, 1,
-            )
-            self.add_tooltip('--force-overwrites', checkbutton3)
-
-            checkbutton4 = self.add_checkbutton(grid2,
-                _('Write playlist metadata in addition to video metadata'),
-                'write_playlist_metafiles',
                 0, 4, grid_width, 1,
             )
-            self.add_tooltip('--write-playlist-metafiles', checkbutton4)
+            self.add_tooltip('--force-overwrites', checkbutton6)
 
-            checkbutton5 = self.add_checkbutton(grid2,
+            checkbutton7 = self.add_checkbutton(grid2,
+                _('Write playlist metadata in addition to video metadata'),
+                'write_playlist_metafiles',
+                0, 5, grid_width, 1,
+            )
+            self.add_tooltip('--write-playlist-metafiles', checkbutton7)
+
+            checkbutton8 = self.add_checkbutton(grid2,
                 _(
                     'Write all fields, including private fields, to the' \
                     + ' .info.json file',
                 ),
                 'no_clean_info_json',
-                0, 5, grid_width, 1,
+                0, 6, grid_width, 1,
             )
-            self.add_tooltip('--no-clean-infojson', checkbutton5)
+            self.add_tooltip('--no-clean-infojson', checkbutton8)
 
 
     def setup_files_cookies_tab(self, inner_notebook):
@@ -19221,34 +19228,47 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         self.add_label(grid,
-            _('Size of device (in Mb)'),
+            _('Size of device'),
             0, 3, 1, 1,
         )
 
         self.entry = self.add_entry(grid,
             str(utils.disk_get_total_space(self.app_obj.data_dir)),
             False,
-            1, 3, 2, 1,
+            1, 3, 1, 1,
         )
         self.entry.set_sensitive(False)
 
         self.add_label(grid,
-            _('Free space on device (in Mb)'),
+            'GiB',
+            2, 3, 1, 1,
+        )
+
+        self.add_label(grid,
+            _('Free space on device'),
             0, 4, 1, 1,
         )
 
         self.entry2 = self.add_entry(grid,
             str(utils.disk_get_free_space(self.app_obj.data_dir)),
             False,
-            1, 4, 2, 1,
+            1, 4, 1, 1,
         )
         self.entry2.set_sensitive(False)
 
+        self.add_label(grid,
+            'GiB',
+            2, 4, 1, 1,
+        )
+
         checkbutton = self.add_checkbutton(grid,
-            _('Warn user if disk space is less than'),
+            _(
+                'Before checking/downloading videos, warn user if disk space' \
+                + ' is less than',
+            ),
             self.app_obj.disk_space_warn_flag,
             True,                   # Can be toggled by user
-            0, 5, 1, 1,
+            0, 5, grid_width, 1,
         )
         # (Signal connect appears below)
 
@@ -19256,17 +19276,22 @@ class SystemPrefWin(GenericPrefWin):
             0, None,
             self.app_obj.disk_space_increment,
             self.app_obj.disk_space_warn_limit,
-            1, 5, 2, 1,
+            1, 6, 1, 1,
         )
         if not self.app_obj.disk_space_warn_flag:
             spinbutton.set_sensitive(False)
         # (Signal connect appears below)
 
+        self.add_label(grid,
+            'GiB',
+            2, 6, 1, 1,
+        )
+
         checkbutton2 = self.add_checkbutton(grid,
             _('Halt downloads if disk space is less than'),
             self.app_obj.disk_space_stop_flag,
             True,                   # Can be toggled by user
-            0, 6, 1, 1,
+            0, 7, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -19274,11 +19299,16 @@ class SystemPrefWin(GenericPrefWin):
             0, None,
             self.app_obj.disk_space_increment,
             self.app_obj.disk_space_stop_limit,
-            1, 6, 2, 1,
+            1, 7, 1, 1,
         )
         if not self.app_obj.disk_space_stop_flag:
             spinbutton2.set_sensitive(False)
         # (Signal connect appears below)
+
+        self.add_label(grid,
+            'GiB',
+            2, 7, 1, 1,
+        )
 
         # (Signal connects from above)
         checkbutton.connect(
@@ -20691,7 +20721,7 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton13 = self.add_checkbutton(grid,
             _(
-            'In the Errors/Warnings tab, don\'t reset the tab text when' \
+            'In the Errors/Warnings tab, don\'t reset the tab title when' \
             + ' it is clicked',
             ),
             self.app_obj.system_msg_keep_totals_flag,
@@ -20731,115 +20761,123 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_show_custom_dl_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Allow each row to be marked for checking/downloading'),
-            self.app_obj.show_marker_in_index_flag,
+            _('While checking/downloading videos, show free disk space'),
+            self.app_obj.show_free_space_flag,
             True,                   # Can be toggled by user
             0, 2, grid_width, 1,
         )
-        checkbutton2.connect('toggled', self.on_show_selector_button_toggled)
+        checkbutton2.connect('toggled', self.on_show_free_space_button_toggled)
 
         checkbutton3 = self.add_checkbutton(grid,
-            _('Show smaller icons'),
-            self.app_obj.show_small_icons_in_index_flag,
+            _('Allow each row to be marked for checking/downloading'),
+            self.app_obj.show_marker_in_index_flag,
             True,                   # Can be toggled by user
             0, 3, grid_width, 1,
         )
-        checkbutton3.connect('toggled', self.on_show_small_icons_toggled)
+        checkbutton3.connect('toggled', self.on_show_selector_button_toggled)
 
         checkbutton4 = self.add_checkbutton(grid,
+            _('Show smaller icons'),
+            self.app_obj.show_small_icons_in_index_flag,
+            True,                   # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton4.connect('toggled', self.on_show_small_icons_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'Show detailed statistics about the videos in each channel' \
             + ' / playlist / folder',
             ),
             self.app_obj.complex_index_flag,
             True,               # Can be toggled by user
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
-        checkbutton4.connect('toggled', self.on_complex_button_toggled)
+        checkbutton5.connect('toggled', self.on_complex_button_toggled)
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _(
             'After clicking on a folder, automatically expand/collapse the' \
             + ' tree around it',
             ),
             self.app_obj.auto_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
         # (Signal connect appears below)
 
-        checkbutton6 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Expand the whole tree, not just the level beneath the clicked' \
             + ' folder',
             ),
             self.app_obj.full_expand_video_index_flag,
             True,                   # Can be toggled by user
-            0, 6, grid_width, 1,
+            0, 7, grid_width, 1,
         )
         if not self.app_obj.auto_expand_video_index_flag:
-            checkbutton6.set_sensitive(False)
+            checkbutton7.set_sensitive(False)
         # (Signal connect appears below)
 
         # (Signal connects from above)
-        checkbutton5.connect(
+        checkbutton6.connect(
             'toggled',
             self.on_expand_tree_toggled,
-            checkbutton6,
+            checkbutton7,
         )
-        checkbutton6.connect('toggled', self.on_expand_full_tree_toggled)
+        checkbutton7.connect('toggled', self.on_expand_full_tree_toggled)
 
         # Video Catalogue (right side of the Videos tab)
         self.add_label(grid,
             '<u>' + _('Video Catalogue (right side of the Videos tab)') \
             + '</u>',
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
 
-        checkbutton7 = self.add_checkbutton(grid,
+        checkbutton8 = self.add_checkbutton(grid,
             _('Show \'today\' and \'yesterday\' as the date, when possible'),
             self.app_obj.show_pretty_dates_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
-        checkbutton7.connect('toggled', self.on_pretty_date_button_toggled)
+        checkbutton8.connect('toggled', self.on_pretty_date_button_toggled)
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             _('Show livestreams with a different background colour'),
             self.app_obj.livestream_use_colour_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         # (Signal connect appears below)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _('Use same background colours for livestream and debut videos'),
             self.app_obj.livestream_simple_colour_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
         if not self.app_obj.livestream_use_colour_flag:
-            checkbutton9.set_sensitive(False)
+            checkbutton10.set_sensitive(False)
         # (Signal connect appears below)
 
         # (Signal connects from above)
-        checkbutton8.connect(
+        checkbutton9.connect(
             'toggled',
             self.on_livestream_colour_button_toggled,
-            checkbutton9,
+            checkbutton10,
         )
-        checkbutton9.connect(
+        checkbutton10.connect(
             'toggled',
             self.on_livestream_simple_button_toggled,
         )
 
-        checkbutton10 = self.add_checkbutton(grid,
+        checkbutton11 = self.add_checkbutton(grid,
             _('Channel and playlist names are clickable (grid mode only)'),
             self.app_obj.catalogue_clickable_container_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 12, grid_width, 1,
         )
-        checkbutton10.connect('toggled', self.on_clickable_button_toggled)
+        checkbutton11.connect('toggled', self.on_clickable_button_toggled)
 
 
     def setup_windows_drag_tab(self, inner_notebook):
@@ -22214,10 +22252,12 @@ class SystemPrefWin(GenericPrefWin):
             _(
             'If a download stalls, restart it after this many minutes',
             ),
-            self.app_obj.operation_auto_restart_flag,
+            None,
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
+        if self.app_obj.operation_auto_restart_flag:
+            checkbutton4.set_active(True)
         # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
@@ -22267,12 +22307,66 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('When checking videos, apply a 60-second timeout'),
-            self.app_obj.apply_json_timeout_flag,
+            _('Apply a timeout (in minutes) when checking a video'),
+            None,
             True,                   # Can be toggled by user
             0, 6, grid_width, 1,
         )
-        checkbutton5.connect('toggled', self.on_json_button_toggled)
+        if self.app_obj.apply_json_timeout_flag:
+            checkbutton5.set_active(True)
+        # (Signal connect appears below)
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
+
+        label = self.add_label(grid2,
+            _('Without comments'),
+            0, 0, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid2,
+            1,
+            None,
+            1,                     # Step
+            self.app_obj.json_timeout_no_comments_time,
+            1, 0, 1, 1,
+        )
+        # (Signal connect appears below)
+        if not self.app_obj.apply_json_timeout_flag:
+            spinbutton3.set_sensitive(False)
+
+        label2 = self.add_label(grid2,
+            _('With comments'),
+            2, 0, 1, 1,
+        )
+
+        spinbutton4 = self.add_spinbutton(grid2,
+            1,
+            None,
+            1,                     # Step
+            self.app_obj.json_timeout_with_comments_time,
+            3, 0, 1, 1,
+        )
+        # (Signal connect appears below)
+        if not self.app_obj.apply_json_timeout_flag:
+            spinbutton4.set_sensitive(False)
+
+        # (Signal connects from above)
+        checkbutton5.connect(
+            'toggled',
+            self.on_json_button_toggled,
+            spinbutton3,
+            spinbutton4,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_timeout_no_comments_spinbutton_changed,
+        )
+        spinbutton4.connect(
+            'value-changed',
+            self.on_timeout_with_comments_spinbutton_changed,
+        )
 
         checkbutton6 = self.add_checkbutton(grid,
             _(
@@ -22281,7 +22375,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.auto_assign_errors_warnings_flag,
             True,                   # Can be toggled by user
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton6.connect('toggled', self.on_auto_assign_button_toggled)
 
@@ -22292,7 +22386,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.add_blocked_videos_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton7.connect('toggled', self.on_add_blocked_button_toggled)
 
@@ -22303,7 +22397,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.store_playlist_id_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         checkbutton8.connect('toggled', self.on_store_playlist_id_toggled)
 
@@ -22314,7 +22408,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.ffmpeg_convert_webp_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
         checkbutton9.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
 
@@ -23511,44 +23605,57 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _(
-            'When checking/downloading videos, store comments in the' \
-            + ' metadata file',
-            ),
-            self.app_obj.comment_fetch_flag,
+            _('When checking videos, store comments in the metadata file'),
+            self.app_obj.check_comment_fetch_flag,
             True,               # Can be toggled by user
             0, 1, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('When downloading videos, store comments in the metadata file'),
+            self.app_obj.dl_comment_fetch_flag,
+            True,               # Can be toggled by user
+            0, 2, grid_width, 1,
         )
         # (Signal connect appears below)
 
         self.add_label(grid,
             '<i>' + _('Warning: fetching comments will increase the download' \
             + ' time, perhaps by a lot!') + '</i>',
-            0, 2, grid_width, 1,
+            0, 3, grid_width, 1,
         )
 
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _('Also store comments in the Tartube database'),
             self.app_obj.comment_store_flag,
             True,               # Can be toggled by user
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
         # (Signal connect appears below)
+        if not self.app_obj.check_comment_fetch_flag \
+        and not self.app_obj.dl_comment_fetch_flag:
+            checkbutton3.set_sensitive(False)
 
         # (Signal connects from above)
         checkbutton.connect(
             'toggled',
-            self.on_comment_fetch_button_toggled,
-            checkbutton2,
+            self.on_check_comment_fetch_button_toggled,
+            checkbutton3,
         )
-        checkbutton2.connect('toggled', self.on_comment_store_button_toggled)
+        checkbutton2.connect(
+            'toggled',
+            self.on_dl_comment_fetch_button_toggled,
+            checkbutton3,
+        )
+        checkbutton3.connect('toggled', self.on_comment_store_button_toggled)
 
         self.add_label(grid,
             '<i>' + _(
                 'Warning: storing comments will increase the size of' \
                 + ' Tartube\'s datbase, perhaps by a lot!',
             ) + '</i>',
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
 
@@ -25919,6 +26026,36 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_alt_bandwidth(int(spinbutton.get_value()))
 
 
+    def on_check_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called from callback in self.setup_operations_comments_tab().
+
+        Enables/disables fetching video comments while checking videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.check_comment_fetch_flag:
+            self.app_obj.set_check_comment_fetch_flag(True)
+            checkbutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.check_comment_fetch_flag:
+            self.app_obj.set_check_comment_fetch_flag(False)
+
+            if not self.app_obj.dl_comment_fetch_flag:
+                checkbutton2.set_active(False)
+                checkbutton2.set_sensitive(False)
+            else:
+                checkbutton2.set_sensitive(True)
+
+
     def on_check_limit_changed(self, entry):
 
         """Called from callback in self.setup_operations_block_tab().
@@ -26079,31 +26216,6 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.close_to_tray_flag:
             self.app_obj.set_close_to_tray_flag(False)
-            checkbutton2.set_active(False)
-            checkbutton2.set_sensitive(False)
-
-
-    def on_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
-
-        """Called from callback in self.setup_operations_comments_tab().
-
-        Enables/disables fetching video comments.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            checkbutton2 (Gtk.CheckButton): Another widget to modify
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.comment_fetch_flag:
-            self.app_obj.set_comment_fetch_flag(True)
-            checkbutton2.set_sensitive(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.comment_fetch_flag:
-            self.app_obj.set_comment_fetch_flag(False)
             checkbutton2.set_active(False)
             checkbutton2.set_sensitive(False)
 
@@ -27555,6 +27667,36 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_disk_space_warn_limit(spinbutton.get_value())
 
 
+    def on_dl_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called from callback in self.setup_operations_comments_tab().
+
+        Enables/disables fetching video comments while downloading videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to modify
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dl_comment_fetch_flag:
+            self.app_obj.set_dl_comment_fetch_flag(True)
+            checkbutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.dl_comment_fetch_flag:
+            self.app_obj.set_dl_comment_fetch_flag(False)
+
+            if not self.app_obj.check_comment_fetch_flag:
+                checkbutton2.set_active(False)
+                checkbutton2.set_sensitive(False)
+            else:
+                checkbutton2.set_sensitive(True)
+
+
     def on_dl_limit_changed(self, entry):
 
         """Called from callback in self.setup_operations_block_tab().
@@ -28405,25 +28547,31 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_custom_invidious_mirror(entry.get_text())
 
 
-    def on_json_button_toggled(self, checkbutton):
+    def on_json_button_toggled(self, checkbutton, spinbutton, spinbutton2):
 
         """Called from callback in self.setup_operations_downloads_tab().
 
-        Enables/disables applying a 60-second timeout when fetching a video's
-        JSON data.
+        Enables/disables applying a timeout when fetching a video's JSON data.
 
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton, spinbutton2 (Gtk.SpinButton): Other widgets to modify
 
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.apply_json_timeout_flag:
             self.app_obj.set_apply_json_timeout_flag(True)
+            spinbutton.set_sensitive(True)
+            spinbutton2.set_sensitive(True)
+
         elif not checkbutton.get_active() \
         and self.app_obj.apply_json_timeout_flag:
             self.app_obj.set_apply_json_timeout_flag(False)
+            spinbutton.set_sensitive(False)
+            spinbutton2.set_sensitive(False)
 
 
     def on_keep_open_button_toggled(self, checkbutton, checkbutton2):
@@ -30767,6 +30915,26 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def on_show_free_space_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables showing free disk space in the Videos tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_free_space_flag:
+            self.app_obj.set_show_free_space_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_free_space_flag:
+            self.app_obj.set_show_free_space_flag(False)
+
+
     def on_show_selector_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_main_window_tab().
@@ -31302,6 +31470,38 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ignore_thumb_404_flag:
             self.app_obj.set_ignore_thumb_404_flag(False)
+
+
+    def on_timeout_no_comments_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Sets the JSON timeout when not fetching comments.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_json_timeout_no_comments_time(spinbutton.get_value())
+
+
+    def on_timeout_with_comments_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Sets the JSON timeout when fetching comments.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_json_timeout_with_comments_time(
+            spinbutton.get_value(),
+        )
 
 
     def on_update_combo_changed(self, combo):
@@ -32060,4 +32260,3 @@ class SystemPrefWin(GenericPrefWin):
                 1,
                 descrip,
             )
-

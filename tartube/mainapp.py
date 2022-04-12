@@ -414,6 +414,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if a 'Custom download all' button should be visible
         #   in the Videos tab
         self.show_custom_dl_button_flag = False
+        # Flag set to True if free disk space should be visible in the Videos
+        #   tab during a download operation
+        self.show_free_space_flag = True
         # Flag set to True if we should use 'Today' and 'Yesterday' in the
         #   Video Index, rather than a date
         self.show_pretty_dates_flag = True
@@ -732,7 +735,13 @@ class TartubeApp(Gtk.Application):
         # If loading/saving of a config or database file fails, this flag is
         #   set to True, which disables all loading/saving for the rest of the
         #   session
+        # Exception: as of v2.3.555, a failure to save the database file no
+        #   longer sets this flag to True
         self.disable_load_save_flag = False
+        # ...but it does set this flag to True, preventing scheduled downloads
+        #   from starting until the database has been successfully saved (or
+        #   loaded)
+        self.disable_scheduled_dl_flag = False
         # Optional error message generated when self.disable_load_save_flag
         #   was set to True
         self.disable_load_save_msg = None
@@ -743,7 +752,7 @@ class TartubeApp(Gtk.Application):
         self.disable_load_save_lock_flag = False
         # Users have reported that the Tartube database file was corrupted. On
         #   inspection, it was almost completely empty, presumably because
-        #   self.save_db had been called before .load_db
+        #   self.save_db() had been called before .load_db()
         # As the corruption was catastrophic, make sure that can never happen
         #   again with this flag, set to False until the code has either
         #   loaded a database file, or wants to call .save_db to create one
@@ -1066,28 +1075,28 @@ class TartubeApp(Gtk.Application):
         #   of disk space (on the drive containing self.data_dir), False if
         #   not. The warning is issued at the start of a download operation
         self.disk_space_warn_flag = True
-        # The amount of free disk space (in Mb) below which the warning is
+        # The amount of free disk space (in Gb) below which the warning is
         #   issued. If 0, no warning is issued. Ignored if
         #   self.disk_space_warn_flag is False
-        self.disk_space_warn_limit = 1000
+        self.disk_space_warn_limit = 1
         # Flag set to True if Tartube should refuse to start a download
         #   operation, and halt an existing download operation, if the system
         #   is running out of disk space (on the drive containing
         #   self.data_dir), False if not
         self.disk_space_stop_flag = True
-        # The amount of free disk space (in Mb) below which the refusal/halt
+        # The amount of free disk space (in Gb) below which the refusal/halt
         #   is enacted. If 0, a download operation will continue downloading
         #   files until the device actually runs out of space. Ignored if
         #   self.disk_space_stop_flag is False
-        self.disk_space_stop_limit = 500
+        self.disk_space_stop_limit = 0.5
         # The IVs above can be set to any number (0 or above), but the
         #   Gtk.SpinButtons in the system preferences window increment/
-        #   decrement the value by this many Mb at a time
-        self.disk_space_increment = 100
+        #   decrement the value by this many Gb at a time
+        self.disk_space_increment = 0.1
         # An absolute minimum of disk space, below which a download operation
         #   will not start, or will halt, regardless of the values of the IVs
-        #   above (in Mb)
-        self.disk_space_abs_limit = 50
+        #   above (in Gb)
+        self.disk_space_abs_limit = 0.05
 
         # Default invidio.us mirror to use (the original site closed in
         #   September 2020); this value never changes
@@ -1774,9 +1783,17 @@ class TartubeApp(Gtk.Application):
         self.classic_ytdl_archive_flag = False
 
         # Flag set to True if, when checking videos/channels/playlists, we
-        #   should timeout after 60 seconds (in case youtube-dl gets stuck
-        #   downloading the JSON data)
+        #   should apply a timeout (in case youtube-dl gets stuck downloading
+        #   the JSON data)
         self.apply_json_timeout_flag = True
+        # The length of the timeouts to apply, in minutes, when not fetching
+        #   comments (self.check_comment_fetch_flag and
+        #   self.dl_comment_fetch_flag are both False)
+        self.json_timeout_no_comments_time = 2
+        # The length of the timeouts to apply, in minutes, when fetching
+        #   comments (self.check_comment_fetch_flag and/or
+        #   self.dl_comment_fetch_flag are True)
+        self.json_timeout_with_comments_time = 5
         # Flag set to True if, when checking/downloading channels/playlists,
         #   we should look out for previously-downloaded videos (that the
         #   creator has since removed from their channel/playlist), and add
@@ -1896,7 +1913,10 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if download operations with yt-dlp should add the
         #   '--write-comments' option, downloading comments to the .info.json
         #   file
-        self.comment_fetch_flag = False
+        # Flag used in simulated downloads (checking videos)
+        self.check_comment_fetch_flag = False
+        # Flag used in real downloads
+        self.dl_comment_fetch_flag = False
         # Flag set to True if the comments should also be stored in the Tartube
         #   database, in each media.Vidoe object
         self.comment_store_flag = False
@@ -2232,7 +2252,7 @@ class TartubeApp(Gtk.Application):
         self.ytdlp_exclusive_options_dict = {
             # not passed to yt-dlp directly
             '--paths': True,
-            '-P': True,
+            '-P': True,                     # Alias of --paths
             '--extractor-args': True,
             # Video Selection Options
             '--break-on-existing': False,
@@ -2240,14 +2260,18 @@ class TartubeApp(Gtk.Application):
             '--skip-playlist-after-errors': True,
             # Download Options
             '--concurrent-fragments': True,
-            '-N': True,
+            '-N': True,                     # Alias of --concurrent-fragments
             '--throttled-rate': True,
             # Filesystem Options
             '--windows-filenames': False,
             '--trim-filenames': True,
+            '--no-overwrites': False,
             '--force-overwrites': False,
             '--write-playlist-metafiles': False,
             '--no-clean-infojson': False,
+            '--no-cookies': False,
+            '--cookies-from-browser': '',
+            '--no-cookies-from-browser': True,
             # Internet Shortcut Options
             '--write-link': False,
             '--write-url-link': False,
@@ -2271,7 +2295,7 @@ class TartubeApp(Gtk.Application):
             '--split-chapters': False,
             # Extractor Options
             '--extractor-retries': True,
-            '--allow-dynamic-mpd': False,
+            '--no_allow_dynamic_mpd': False,
             '--hls-split-discontinuity': False,
         }
 
@@ -4015,6 +4039,8 @@ class TartubeApp(Gtk.Application):
         if version >= 2003192:  # v2.3.192
             self.show_custom_dl_button_flag \
             = json_dict['show_custom_dl_button_flag']
+        if version >= 2003560:  # v2.3.560
+            self.show_free_space_flag = json_dict['show_free_space_flag']
         if version >= 1004011:  # v1.4.011
             self.show_pretty_dates_flag = json_dict['show_pretty_dates_flag']
 
@@ -4194,6 +4220,12 @@ class TartubeApp(Gtk.Application):
             self.disk_space_warn_limit = json_dict['disk_space_warn_limit']
             self.disk_space_stop_flag = json_dict['disk_space_stop_flag']
             self.disk_space_stop_limit = json_dict['disk_space_stop_limit']
+            if version < 2003556:   # v2.3.556
+                # (In this version, values changed from MB to GB)
+                self.disk_space_warn_limit \
+                = round((self.disk_space_warn_limit / 1000), 3)
+                self.disk_space_stop_limit \
+                = round((self.disk_space_stop_limit / 1000), 3)
 
         if version >= 2001094:  # v2.1.094
             self.custom_invidious_mirror = json_dict['custom_invidious_mirror']
@@ -4445,6 +4477,11 @@ class TartubeApp(Gtk.Application):
         if version >= 5004:     # v0.5.004
             self.apply_json_timeout_flag \
             = json_dict['apply_json_timeout_flag']
+        if version >= 2003551:  # v2.3.551
+            self.json_timeout_no_comments_time \
+            = json_dict['json_timeout_no_comments_time']
+            self.json_timeout_with_comments_time \
+            = json_dict['json_timeout_with_comments_time']
         if version >= 2001060:  # v2.1.060
             self.track_missing_videos_flag \
             = json_dict['track_missing_videos_flag']
@@ -4492,8 +4529,14 @@ class TartubeApp(Gtk.Application):
             self.slice_video_cleanup_flag \
             = json_dict['slice_video_cleanup_flag']
 
+        if version < 2003552:  # v2.3.552
+            self.check_comment_fetch_flag = json_dict['comment_fetch_flag']
+            self.dl_comment_fetch_flag = json_dict['comment_fetch_flag']
+        else:
+            self.check_comment_fetch_flag \
+            = json_dict['check_comment_fetch_flag']
+            self.dl_comment_fetch_flag = json_dict['dl_comment_fetch_flag']
         if version >= 2003316:  # v2.3.316
-            self.comment_fetch_flag = json_dict['comment_fetch_flag']
             self.comment_store_flag = json_dict['comment_store_flag']
         if version >= 2003318:  # v2.3.318
             self.comment_show_text_time_flag \
@@ -5117,6 +5160,7 @@ class TartubeApp(Gtk.Application):
             'full_expand_video_index_flag': self.full_expand_video_index_flag,
             'disable_dl_all_flag': self.disable_dl_all_flag,
             'show_custom_dl_button_flag': self.show_custom_dl_button_flag,
+            'show_free_space_flag': self.show_free_space_flag,
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
 
             'catalogue_filter_name_flag': self.catalogue_filter_name_flag,
@@ -5309,6 +5353,10 @@ class TartubeApp(Gtk.Application):
             self.classic_ytdl_archive_flag,
 
             'apply_json_timeout_flag': self.apply_json_timeout_flag,
+            'json_timeout_no_comments_time': \
+            self.json_timeout_no_comments_time,
+            'json_timeout_with_comments_time': \
+            self.json_timeout_with_comments_time,
             'track_missing_videos_flag': self.track_missing_videos_flag,
             'track_missing_time_flag': self.track_missing_time_flag,
             'track_missing_time_days': self.track_missing_time_days,
@@ -5338,7 +5386,8 @@ class TartubeApp(Gtk.Application):
             'sblock_re_extract_flag': self.sblock_re_extract_flag,
             'slice_video_cleanup_flag': self.slice_video_cleanup_flag,
 
-            'comment_fetch_flag': self.comment_fetch_flag,
+            'check_comment_fetch_flag': self.check_comment_fetch_flag,
+            'dl_comment_fetch_flag': self.dl_comment_fetch_flag,
             'comment_store_flag': self.comment_store_flag,
             'comment_show_text_time_flag': self.comment_show_text_time_flag,
             'comment_show_formatted_flag': self.comment_show_formatted_flag,
@@ -5812,6 +5861,10 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_catalogue_reset()
             # Repopulate the Drag and Drop tab
             self.main_win_obj.drag_drop_grid_reset()
+
+        # Load succeeded. Permit scheduled downloads again, if they were
+        #   disabled in an earlier unsuccessful call to self.save_db()
+        self.disable_scheduled_dl_flag = False
 
         return True
 
@@ -7117,6 +7170,23 @@ class TartubeApp(Gtk.Application):
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.dummy_dl_flag = False
 
+        if version < 2003553:       # v2.3.553
+
+            # This version adds a new option to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['no_overwrites'] = False
+
+        if version < 2003554:       # v2.3.554
+
+            # Fix for Git #399, remove invalid options.OptionsManager objects
+            #   from the dropzone list
+            dropzone_list = []
+            for uid in self.classic_dropzone_list:
+                if uid in self.options_reg_dict:
+                    dropzone_list.append(uid)
+
+            self.classic_dropzone_list = dropzone_list
+
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -7146,8 +7216,11 @@ class TartubeApp(Gtk.Application):
         .move_container_to_top_continue(), .move_container_continue(),
         .rename_container(), .on_menu_save_all() and .on_menu_save_db().
 
-        Saves the Tartube database file. If saving fails, disables all file
-        loading/saving.
+        Saves the Tartube database file.
+
+        Since v2.3.555 (Git #400), file loading/saving is no longer disabled if
+        saving the database fails (so the user can correct a problem like a
+        full hard drive, before trying again).
 
         Returns:
 
@@ -7236,7 +7309,8 @@ class TartubeApp(Gtk.Application):
                 shutil.copyfile(path, temp_bu_path)
 
             except:
-                self.disable_load_save()
+#               self.disable_load_save()
+                self.disable_scheduled_dl()
                 self.file_error_dialogue(
                     _('Failed to save the Tartube database file') \
                     + '\n\n' \
@@ -7260,7 +7334,7 @@ class TartubeApp(Gtk.Application):
 
                     self.system_error(
                         101,
-                        'Database file \'' + lock_path + '\' already exists,' \
+                        'Database file \'' + path + '\' already exists,' \
                         + ' and is locked',
                     )
 
@@ -7274,8 +7348,14 @@ class TartubeApp(Gtk.Application):
                         self.db_lock_file_path = lock_path
 
                     except:
-
-                        self.disable_load_save(
+#                        self.disable_load_save(
+#                            _(
+#                            'Failed to save the Tartube database file (file' \
+#                            + ' already in use)',
+#                            ),
+#                        )
+                        self.disable_scheduled_dl()
+                        self.file_error_dialogue(
                             _(
                             'Failed to save the Tartube database file (file' \
                             + ' already in use)',
@@ -7292,7 +7372,8 @@ class TartubeApp(Gtk.Application):
 
         except:
 
-            self.disable_load_save()
+#           self.disable_load_save()
+            self.disable_scheduled_dl()
 
             if os.path.isfile(temp_bu_path):
                 self.file_error_dialogue(
@@ -7355,7 +7436,10 @@ class TartubeApp(Gtk.Application):
         #   loading one: main window widgets can now be sensitised
         self.main_win_obj.sensitise_widgets_if_database(True)
 
-        # Save succeeded
+        # Save succeeded. Permit scheduled downloads again, if they were
+        #   disabled in an earlier unsuccessful call to this function
+        self.disable_scheduled_dl_flag = False
+
         return True
 
 
@@ -9232,6 +9316,25 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.sensitise_widgets_if_database(False)
 
 
+    def disable_scheduled_dl(self):
+
+        """Called by self.save_db() only.
+
+        After a failure to save a database file, file load/save is not
+        disabled altogether, but scheduled downloads are.
+
+        Set the flag to do that, and also show a message in the Errors/
+        Warnings tab.
+        """
+
+        self.disable_scheduled_dl_flag = True
+        self.system_error(
+            999,
+            'After failing to save the database file, scheduled downloads' \
+            + ' have been disabled',
+        )
+
+
     def remove_db_lock_file(self):
 
         """Called by self.do_shutdown(), .stop_continue(), .load_db() and
@@ -10014,7 +10117,7 @@ class TartubeApp(Gtk.Application):
             if not automatic_flag:
                 self.dialogue_manager_obj.show_msg_dialogue(
                     _(
-                    'You only have {0} / {1} Mb remaining on your device',
+                    'You only have {0} / {1} Gb remaining on your device',
                     ).format(str(disk_space), str(total_space)),
                     'error',
                     'ok',
@@ -10039,7 +10142,7 @@ class TartubeApp(Gtk.Application):
                 #   get confirmation before starting the download operation
                 self.dialogue_manager_obj.show_msg_dialogue(
                     _(
-                    'You only have {0} / {1} Mb remaining on your device',
+                    'You only have {0} / {1} Gb remaining on your device',
                     ).format(str(disk_space), str(total_space)) \
                     + '\n\n' \
                     + _('Are you sure you want to continue?'),
@@ -19112,7 +19215,10 @@ class TartubeApp(Gtk.Application):
 
         # Destroy the options.OptionsManager object itself
         if media_data_obj.options_obj is not None:
-            del self.options_reg_dict[media_data_obj.options_obj.uid]
+            uid = media_data_obj.options_obj.uid
+            del self.options_reg_dict[uid]
+        else:
+            uid = None
 
         # Remove download options from the media data object
         media_data_obj.reset_options_obj()
@@ -19135,6 +19241,11 @@ class TartubeApp(Gtk.Application):
         for config_win_obj in self.main_win_obj.config_win_list:
             if isinstance(config_win_obj, config.SystemPrefWin):
                 config_win_obj.setup_options_dl_list_tab_update_treeview()
+
+        # Remove any associated dropzone, and update the Drag and Drop tab
+        if uid in self.classic_dropzone_list:
+            self.classic_dropzone_list.remove(uid)
+            self.main_win_obj.drag_drop_grid_reset()
 
 
     def delete_download_options(self, options_obj):
@@ -20039,6 +20150,15 @@ class TartubeApp(Gtk.Application):
         if self.disable_load_save_flag:
             return None
 
+        # Scheduled downloads do not take place after a failed call to
+        #   self.save_db(), but can resume on a successful call to that
+        #   function, or a successful call to self.load_db()
+        if self.disable_scheduled_dl_flag:
+
+            # Return 1 to keep the timer going (or 0 to halt the once-only
+            #   timer)
+            return self.script_slow_timer_get_return_value()
+
         # Depending on settings, one or several scheduled downloads may be
         #   started at the same time
         # Compile a list of media.Scheduled objects, each one representing a
@@ -20455,6 +20575,11 @@ class TartubeApp(Gtk.Application):
         else:
             classic_mode_flag = True
 
+        # Update the disk space visible in the Videos tab
+        disk_space = utils.disk_get_free_space(self.data_dir)
+        if self.download_manager_obj:
+            self.main_win_obj.update_free_space_msg(disk_space)
+
         # Periodically check (if required) whether the device is running out of
         #   disk space
         if self.dl_timer_disk_space_check_time is None:
@@ -20466,8 +20591,6 @@ class TartubeApp(Gtk.Application):
 
             self.dl_timer_disk_space_check_time \
             = time.time() + self.dl_timer_disk_space_time
-
-            disk_space = utils.disk_get_free_space(self.data_dir)
 
             if (
                 self.disk_space_stop_flag \
@@ -23964,6 +24087,14 @@ class TartubeApp(Gtk.Application):
         self.catalogue_sort_mode = mode
 
 
+    def set_check_comment_fetch_flag(self, flag):
+
+        if not flag:
+            self.check_comment_fetch_flag = False
+        else:
+            self.check_comment_fetch_flag = True
+
+
     def add_classic_dropzone_list(self, value):
 
         self.classic_dropzone_list.append(value)
@@ -24006,14 +24137,6 @@ class TartubeApp(Gtk.Application):
             self.close_to_tray_flag = False
         else:
             self.close_to_tray_flag = True
-
-
-    def set_comment_fetch_flag(self, flag):
-
-        if not flag:
-            self.comment_fetch_flag = False
-        else:
-            self.comment_fetch_flag = True
 
 
     def set_comment_show_formatted_flag(self, flag):
@@ -24244,6 +24367,14 @@ class TartubeApp(Gtk.Application):
     def set_disk_space_warn_limit(self, value):
 
         self.disk_space_warn_limit = value
+
+
+    def set_dl_comment_fetch_flag(self, flag):
+
+        if not flag:
+            self.dl_comment_fetch_flag = False
+        else:
+            self.dl_comment_fetch_flag = True
 
 
     def set_dl_proxy_list(self, proxy_list):
@@ -24477,6 +24608,16 @@ class TartubeApp(Gtk.Application):
             self.ignore_yt_uploader_deleted_flag = False
         else:
             self.ignore_yt_uploader_deleted_flag = True
+
+
+    def set_json_timeout_no_comments_time(self, value):
+
+        self.json_timeout_no_comments_time = value
+
+
+    def set_json_timeout_with_comments_time(self, value):
+
+        self.json_timeout_with_comments_time = value
 
 
     def set_livestream_max_days(self, value):
@@ -24956,6 +25097,14 @@ class TartubeApp(Gtk.Application):
             self.show_custom_icons_flag = False
         else:
             self.show_custom_icons_flag = True
+
+
+    def set_show_free_space_flag(self, flag):
+
+        if not flag:
+            self.show_free_space_flag = False
+        else:
+            self.show_free_space_flag = True
 
 
     def set_show_msys2_dialogue_flag(self, flag):
