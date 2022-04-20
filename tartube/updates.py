@@ -55,7 +55,7 @@ class UpdateManager(threading.Thread):
 
     Python class to create a system child process, to do one of two jobs:
 
-    1. Install FFmpeg or matplotlib (on MS Windows only)
+    1. Install FFmpeg, matplotlib or streamlink (on MS Windows only)
 
     2. Install youtube-dl, or update it to its most recent version.
 
@@ -67,8 +67,9 @@ class UpdateManager(threading.Thread):
         app_obj (mainapp.TartubeApp): The main application
 
         update_type (str): 'ffmpeg' to install FFmpeg (on MS Windows only),
-            'matplotlib' to install matplotlib (on MS Windows only), or 'ytdl'
-            to install/update youtube-dl
+            'matplotlib' to install matplotlib (on MS Windows only),
+            'streamlink' to install streamlink (on MS Windows onlY), or 'ytdl'
+            to install/update youtube-dl (or a fork of it)
 
         wiz_win_obj (wizwin.SetupWizWin or None): The calling setup wizard
             window (if set, the main window doesn't exist yet)
@@ -105,12 +106,14 @@ class UpdateManager(threading.Thread):
         # IV list - other
         # ---------------
         # The time (in seconds) between iterations of the loop in
-        #   self.install_ffmpeg(), .install_matplotlib() and .install_ytdl()
+        #   self.install_ffmpeg(), .install_matplotlib(), .install_streamlink()
+        #   and .install_ytdl()
         self.sleep_time = 0.1
 
         # 'ffmpeg' to install FFmpeg (on MS Windows only), 'matplotlib' to
-        #   install matplotlib (on MS Windows only), or 'ytdl' to install/
-        #   update youtube-dl
+        #   install matplotlib (on MS Windows only), 'streamlink' to install
+        #   streamlink (on MS Windows only) or 'ytdl' to install/update
+        #   youtube-dl (or a fork of it)
         self.update_type = update_type
         # Flag set to True if the update operation succeeds, False if it fails
         self.success_flag = False
@@ -147,14 +150,16 @@ class UpdateManager(threading.Thread):
             self.install_ffmpeg()
         elif self.update_type == 'matplotlib':
             self.install_matplotlib()
+        elif self.update_type == 'streamlink':
+            self.install_streamlink()
         else:
             self.install_ytdl()
 
 
     def create_child_process(self, cmd_list):
 
-        """Called by self.install_ffmpeg(), .install_matplotlib() or
-        .install_ytdl().
+        """Called by self.install_ffmpeg(), .install_matplotlib(),
+        .install_streamlink() or .install_ytdl().
 
         Based on code from downloads.VideoDownloader.create_child_process().
 
@@ -259,7 +264,7 @@ class UpdateManager(threading.Thread):
             )
 
         # Operation complete. self.success_flag is checked by
-        #   mainapp.TartubeApp.update_manager_finished
+        #   mainapp.TartubeApp.update_manager_finished()
         if not self.stderr_list:
             self.success_flag = True
 
@@ -371,7 +376,7 @@ class UpdateManager(threading.Thread):
             )
 
         # Operation complete. self.success_flag is checked by
-        #   mainapp.TartubeApp.update_manager_finished
+        #   mainapp.TartubeApp.update_manager_finished()
         if not self.stderr_list:
             self.success_flag = True
 
@@ -388,6 +393,119 @@ class UpdateManager(threading.Thread):
     def install_matplotlib_write_output(self, msg, system_cmd_flag=False):
 
         """Called by self.install_matplotlib().
+
+        Writes a message to the Output tab (or to the setup wizard window, if
+        called from there).
+
+        Args:
+
+            msg (str): The message to display
+
+            system_cmd_flag (bool): If True, display system commands in a
+                different colour in the Output tab (ignored when writing in
+                the setup wizard window)
+
+        """
+
+        if not system_cmd_flag:
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.output_tab_write_stdout,
+                1,
+                msg,
+            )
+
+        else:
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.output_tab_write_system_cmd,
+                1,
+                msg,
+            )
+
+
+    def install_streamlink(self):
+
+        """Called by self.run().
+
+        A modified version of self.install_ytdl, that installs streamlink on an
+        MS Windows system.
+
+        Creates a child process to run the installation process.
+
+        Reads from the child process STDOUT and STDERR, and calls the main
+        application with the result of the update (success or failure).
+        """
+
+        # Show information about the update operation in the Output tab
+        self.install_streamlink_write_output(
+            _('Starting update operation, installing streamlink'),
+        )
+
+        # Create a new child process to install either the 64-bit or 32-bit
+        #   version of streamlink, as appropriate
+        if sys.maxsize <= 2147483647:
+            binary = 'mingw-w64-i686-streamlink'
+        else:
+            binary = 'mingw-w64-x86_64-streamlink'
+
+        # Prepare a system command...
+        cmd_list = ['pacman', '-S', binary, '--noconfirm']
+        # ...and display it in the Output tab (if required)
+        self.install_streamlink_write_output(
+            ' '.join(cmd_list),
+            True,                   # A system command, not a message
+        )
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
+        if self.child_process is not None:
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
+
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_streamlink_child_process():
+                pass
+
+        # (Generate our own error messages for debugging purposes, in certain
+        #   situations)
+        if self.child_process is None:
+            self.stderr_list.append(_('streamlink installation did not start'))
+
+        elif self.child_process.returncode > 0:
+            self.stderr_list.append(
+                _('Child process exited with non-zero code: {}').format(
+                    self.child_process.returncode,
+                )
+            )
+
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.update_manager_finished()
+        if not self.stderr_list:
+            self.success_flag = True
+
+        # Show a confirmation in the the Output tab (or wizard window textview)
+        self.install_streamlink_write_output(_('Update operation finished'))
+
+        # Let the timer run for a few more seconds to prevent Gtk errors
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
+
+
+    def install_streamlink_write_output(self, msg, system_cmd_flag=False):
+
+        """Called by self.install_streamlink().
 
         Writes a message to the Output tab (or to the setup wizard window, if
         called from there).
@@ -625,7 +743,7 @@ class UpdateManager(threading.Thread):
     def is_child_process_alive(self):
 
         """Called by self.install_ffmpeg(), .install_matplotlib(),
-        .install_ytdl() and .stop_update_operation().
+        .install_streamlink(), .install_ytdl() and .stop_update_operation().
 
         Based on code from downloads.VideoDownloader.is_child_process_alive().
 
@@ -766,6 +884,70 @@ class UpdateManager(threading.Thread):
                 # Show command line output in the Output tab (or wizard window
                 #   textview)
                 self.install_matplotlib_write_output(data)
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
+
+
+    def read_streamlink_child_process(self):
+
+        """Called by self.install_matplotlib().
+
+        Reads from the child process STDOUT and STDERR, in the correct order.
+
+        Return values:
+
+            True if either STDOUT or STDERR were read, None if both queues were
+                empty
+
+        """
+
+        # mini_list is in the form [time, pipe_type, data]
+        try:
+            mini_list = self.queue.get_nowait()
+
+        except:
+            # Nothing left to read
+            return None
+
+        # Failsafe check
+        if not mini_list \
+        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
+
+            # Just in case...
+            GObject.timeout_add(
+                0,
+                self.app_obj.system_error,
+                701,
+                'Malformed STDOUT or STDERR data',
+            )
+
+        # STDOUT or STDERR has been read
+        data = mini_list[2].rstrip()
+        # On MS Windows we use cp1252, so that Tartube can communicate with the
+        #   Windows console
+        data = data.decode(utils.get_encoding(), 'replace')
+
+        # STDOUT
+        if mini_list[1] == 'stdout':
+
+            # Show command line output in the Output tab (or wizard window
+            #   textview)
+            self.install_streamlink_write_output(data)
+
+        # STDERR
+        else:
+
+            # Ignore pacman warning messages, e.g. 'warning: dependency cycle
+            #   detected:'
+            if data and not re.search('^warning\:', data):
+
+                self.stderr_list.append(data)
+
+                # Show command line output in the Output tab (or wizard window
+                #   textview)
+                self.install_streamlink_write_output(data)
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()

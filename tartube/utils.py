@@ -788,6 +788,199 @@ def clip_set_destination(app_obj, video_obj):
         return parent_obj, parent_dir, dest_obj, dest_dir
 
 
+def compile_mini_options_dict(options_manager_obj):
+
+    """Called by downloads.VideoDownloader.confirm_new_video() and
+    .confirm_old_video().
+
+    Also called by downloads.StreamDownloader.do_download().
+
+    Compiles a dictionary containing a subset of download options from the
+    specified options.OptionsManager object, to be passed on to
+    mainapp.TartubeApp.announce_video_download().
+
+    Args:
+
+        options_manager_obj (options.OptionsManager): The options manager
+            for this download
+
+    """
+
+    mini_options_dict = {
+        'keep_description': \
+            options_manager_obj.options_dict['keep_description'],
+        'keep_info': \
+            options_manager_obj.options_dict['keep_info'],
+        'keep_annotations': \
+            options_manager_obj.options_dict['keep_annotations'],
+        'keep_thumbnail': \
+            options_manager_obj.options_dict['keep_thumbnail'],
+        'move_description': \
+            options_manager_obj.options_dict['move_description'],
+        'move_info': \
+            options_manager_obj.options_dict['move_info'],
+        'move_annotations': \
+            options_manager_obj.options_dict['move_annotations'],
+        'move_thumbnail': \
+            options_manager_obj.options_dict['move_thumbnail'],
+    }
+
+    return mini_options_dict
+
+
+def convert_enhanced_template_from_json(convert_type, enhanced_name, \
+json_dict):
+
+    """Can be called by anything.
+
+    Typically called by media.Channel.update_rss_from_json() and
+    media.Playlist.update_rss_from_json().
+
+    'convert_type' is one of the keys in formats.ENHANCED_SITE_DICT. Its
+    corresponding value is a list of templates for a URL for a video, channel,
+    playlist or RSS feed.
+
+    The values in the list typically contain any of a set of four-letter
+    strings (e.g. ' ci '), which can be substituted for values provided by a
+    JSON dictionary, which was itself obtained from a video's metadata. See the
+    comments in formats.py for the full set of four-letter strings.
+
+    Args:
+
+        convert_type (str): 'convert_video_list', 'convert_channel_list',
+            'convert_playlist_list', 'rss_channel_list' or 'rss_playlist_list'
+
+        enhanced_name (str): A key in formats.ENHANCED_SITE_DICT, representing
+            a single website
+
+        url (str): A URL from which video/channel/playlist names/IDs can be
+            extracted
+
+    Return values:
+
+        Returns the first template whose four-letter strings have all been
+            substituted out, or None if no such template is found
+
+    """
+
+    if not enhanced_name in formats.ENHANCED_SITE_DICT:
+        return None
+
+    mini_dict = formats.ENHANCED_SITE_DICT[enhanced_name]
+    if not convert_type in mini_dict or not mini_dict[convert_type]:
+        return None
+
+    for template in mini_dict[convert_type]:
+
+        if 'id' in json_dict \
+        and json_dict['id'] \
+        and template.find(' vi '):
+            template = re.sub(' vi ', json_dict['id'], template)
+
+        if 'title' in json_dict \
+        and json_dict['title'] \
+        and template.find(' vn '):
+            template = re.sub(' vn ', json_dict['title'], template)
+
+        if 'channel_id' in json_dict \
+        and json_dict['channel_id'] \
+        and template.find(' ci '):
+            template = re.sub(' ci ', json_dict['channel_id'], template)
+
+        if 'channel' in json_dict \
+        and json_dict['channel'] \
+        and template.find(' cn '):
+            template = re.sub(' cn ', json_dict['channel'], template)
+        # (BitChute doesn't provide a 'channel' in its JSON)
+        elif enhanced_name == 'bitchute' \
+        and 'uploader' in json_dict \
+        and json_dict['uploader'] \
+        and template.find(' cn '):
+            template = re.sub(' cn ', json_dict['uploader'], template)
+
+        if 'playlist_id' in json_dict \
+        and json_dict['playlist_id'] \
+        and template.find(' pi '):
+            template = re.sub(' pi ', json_dict['playlist_id'], template)
+
+        if 'playlist_title' in json_dict \
+        and json_dict['playlist_title'] \
+        and template.find(' pn '):
+            template = re.sub(' pn ', json_dict['playlist_title'], template)
+
+        if template.find(' ') == -1:
+            return template
+
+    return None
+
+
+def convert_enhanced_template_from_url(convert_type, enhanced_name, url):
+
+    """Can be called by anything.
+
+    Typically called by media.Channel.update_rss_from_url() and
+    media.Playlist.update_rss_from_url().
+
+    'convert_type' is one of the keys in formats.ENHANCED_SITE_DICT. Its
+    corresponding value is a list of templates for a URL for a video, channel,
+    playlist or RSS feed.
+
+    The values in the list typically contain any of a set of four-letter
+    strings (e.g. ' ci '), which can be substituted for values extracted from
+    the 'url' argument. See the comments in formats.py for the full set of
+    four-letter strings.
+
+    Args:
+
+        convert_type (str): 'convert_video_list', 'convert_channel_list',
+            'convert_playlist_list', 'rss_channel_list' or 'rss_playlist_list'
+
+        enhanced_name (str): A key in formats.ENHANCED_SITE_DICT, representing
+            a single website
+
+        url (str): A URL from which video/channel/playlist names/IDs can be
+            extracted
+
+    Return values:
+
+        Returns the first template whose four-letter strings have all been
+            substituted out, or None if no such template is found
+
+    """
+
+    if not enhanced_name in formats.ENHANCED_SITE_DICT:
+        return None
+
+    mini_dict = formats.ENHANCED_SITE_DICT[enhanced_name]
+    if not convert_type in mini_dict or not mini_dict[convert_type]:
+        return None
+
+    vid, vname, cid, cname, pid, pname = extract_enhanced_template_components(
+        enhanced_name,
+        url,
+    )
+
+    for template in mini_dict[convert_type]:
+
+        if vid is not None and template.find(' vi '):
+            template = re.sub(' vi ', vid, template)
+        if vname is not None and template.find(' vn '):
+            template = re.sub(' vn ', vname, template)
+        if cid is not None and template.find(' ci '):
+            template = re.sub(' ci ', cid, template)
+        if cname is not None and template.find(' cn '):
+            template = re.sub(' cn ', cname, template)
+        if pid is not None and template.find(' pi '):
+            template = re.sub(' pi ', pid, template)
+        if pname is not None and template.find(' pn '):
+            template = re.sub(' pn ', pname, template)
+
+        if template.find(' ') == -1:
+            return template
+
+    return None
+
+
 def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     """Can be called by anything.
@@ -990,68 +1183,6 @@ def convert_slices_to_clips(app_obj, custom_dl_obj, slice_list, temp_flag):
         clip_list.append([ previous_time, None ])
 
     return clip_list
-
-
-def convert_youtube_id_to_playlist(youtube_id):
-
-    """Can be called by anything.
-
-    Converts an ID provided by YouTube into the full URL for a playlist.
-
-    Args:
-
-        youtube_id (str): The YouTube playlist ID
-
-    Returns:
-
-        The full URL for the playlist
-
-    """
-
-    return 'https://www.youtube.com/playlist?list=' + youtube_id
-
-
-def convert_youtube_id_to_rss(media_type, youtube_id):
-
-    """Can be called by anything; usually called by
-    media.GenericRemoteContainer.set_rss().
-
-    Convert the channel/playlist ID provided by YouTube into the full URL for
-    the channel/playlist RSS feed.
-
-    Args:
-
-        media_type (str): 'channel' or 'playlist'
-
-        youtube_id (str): The YouTube channel or playlist ID
-
-    Returns:
-
-        The full URL for the RSS feed
-
-    """
-
-    return 'https://www.youtube.com/feeds/videos.xml?' + media_type \
-    + '_id=' + youtube_id
-
-
-def convert_youtube_id_to_video(youtube_id):
-
-    """Can be called by anything.
-
-    Converts an ID provided by YouTube into the full URL for the video.
-
-    Args:
-
-        youtube_id (str): The YouTube video ID
-
-    Returns:
-
-        The full URL for the video
-
-    """
-
-    return 'https://www.youtube.com/watch?v=' + youtube_id
 
 
 def convert_youtube_to_hooktube(url):
@@ -1269,10 +1400,129 @@ def disk_get_used_space(path=None, bytes_flag=False):
             return used_bytes
 
 
+def extract_dummy_format(format_str):
+
+    """Called by options.OptionsParser.build_video_format() and
+    downloads.StreamDownloader.choose_path().
+
+    A media.Video's .dummy_format IV is made up of three optional components
+    in a fixed order.
+
+    Extract those components, and return them as a list.
+
+    Args:
+
+        format_str (str): The value of media.Video.dummy_format. The calling
+            code should have checked that the value is not None
+
+    Return values:
+
+        A list in the form (convert_flag, format, resolution), with any
+            unspecified values returned as None
+
+    """
+
+    convert_flag = False
+    this_format = None
+    this_res = None
+
+    split_list = format_str.split('_')
+    if split_list and split_list[0] == 'convert':
+        split_list.pop(0)
+        convert_flag = True
+
+    if split_list \
+    and (
+        split_list[0] in formats.VIDEO_FORMAT_LIST \
+        or split_list[0] in formats.AUDIO_FORMAT_LIST
+    ):
+        this_format = split_list.pop(0)
+
+    if split_list \
+    and split_list[0] in formats.VIDEO_RESOLUTION_LIST:
+        this_res = formats.VIDEO_RESOLUTION_DICT[split_list.pop(0)]
+
+    return [ convert_flag, this_format, this_res ]
+
+
+def extract_enhanced_template_components(enhanced_name, url):
+
+    """Can be called by anything.
+
+    Typically called by utils.convert_enhanced_template_from_url().
+
+    formats.ENHANCED_SITE_DICT provides a set of regexes which can be used to
+    extract video/channel/playlist names and IDs from a recognised URL.
+
+    Extracts the names and IDs, returning them as a list.
+
+    Args:
+
+        enhanced_name (str): A key in formats.ENHANCED_SITE_DICT, representing
+            a single website
+
+        url (str): A URL from which video/channel/playlist names/IDs can be
+            extracted
+
+    Return values:
+
+        A list in the form (vid, vname, cid, cname, pid, pname), any or all of
+            which may be None
+
+    """
+
+    if not enhanced_name in formats.ENHANCED_SITE_DICT:
+        return None
+
+    mini_dict = formats.ENHANCED_SITE_DICT[enhanced_name]
+
+    vid = None
+    for regex in mini_dict['extract_vid_list']:
+        match = re.search(regex, url)
+        if match:
+            # The first group is the optional 'www.' component; we are looking
+            #   for the second group
+            vid = match.groups()[1]
+
+    vname = None
+    for regex in mini_dict['extract_vname_list']:
+        match = re.search(regex, url)
+        if match:
+            vname = match.groups()[1]
+
+    cid = None
+    for regex in mini_dict['extract_cid_list']:
+        match = re.search(regex, url)
+        if match:
+            cid = match.groups()[1]
+
+    cname = None
+    for regex in mini_dict['extract_cname_list']:
+        match = re.search(regex, url)
+        if match:
+            cname = match.groups()[1]
+
+    pid = None
+    for regex in mini_dict['extract_pid_list']:
+        match = re.search(regex, url)
+        if match:
+            pid = match.groups()[1]
+
+    pname = None
+    for regex in mini_dict['extract_pname_list']:
+        match = re.search(regex, url)
+        if match:
+            pname = match.groups()[1]
+
+    return vid, vname, cid, cname, pid, pname
+
+
 def extract_livestream_data(stderr):
 
     """Called by downloads.JSONFetcher.do_fetch() and
     MiniJSONFetcher.do_fetch().
+
+    Also called by downloads.VideoDownloader.register_error_warning().
 
     For some reason, YouTube messages giving the (approximate) start time of a
     livestream are written to STDERR.
@@ -1429,6 +1679,31 @@ def extract_livestream_data(stderr):
 
     # Not a livestream, return an empty dictionary
     return {}
+
+
+def extract_path_components(path):
+
+    """Can be called by anything.
+
+    Based on the extract_data() function in youtube-dl-gui's downloaders.py.
+
+    Given a full path to a file, extracts the directory, filename and file
+    extension, returning them as a list.
+
+    Args:
+
+        path (str): Full path to a file
+
+    Return values:
+
+        A list if the form (directory, filename, extension)
+
+    """
+
+    directory, fullname = os.path.split(path)
+    filename, extension = os.path.splitext(fullname)
+
+    return directory, filename, extension
 
 
 def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
@@ -2066,7 +2341,7 @@ custom_dl_obj=None, divert_mode=None):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
     #   (Git #299)
     if app_obj.ytdl_path_custom_flag \
     and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
@@ -2115,7 +2390,7 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
     #   (Git #299)
     if app_obj.ytdl_path_custom_flag \
     and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
@@ -2285,7 +2560,7 @@ classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
     #   (Git #299)
     if app_obj.ytdl_path_custom_flag \
     and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
@@ -2442,7 +2717,7 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
         ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS WIndows when the custom path points at an .exe
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
     #   (Git #299)
     if app_obj.ytdl_path_custom_flag \
     and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
@@ -2451,6 +2726,82 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
         cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
+
+
+def generate_m3u_system_cmd(app_obj, media_data_obj):
+
+    """Called by downloads.StreamDownloader.do_download_m3u().
+
+    Prepare the system command that instructs youtube-dl to download the
+    .m3u manifest for the URL associated with the media data object.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        media_data_obj (media.Video): The media data object whose .m3u manifest
+            is to be downloaded
+
+    Returns:
+
+        A list that contains the system command to execute and its arguments
+
+    """
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + ['-g'] + [media_data_obj.source]
+    else:
+        cmd_list = [ytdl_path] + ['-g'] + [media_data_obj.source]
+
+    return cmd_list
+
+
+def generate_streamlink_system_cmd(app_obj, media_data_obj, path):
+
+    """Called by downloads.StreamDownloader.do_download_streamlink().
+
+    Prepare the system command that instructs streamlink to download the
+    media.Video object.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        media_data_obj (media.Video): The media data object whose URL is to be
+            downloaded
+
+        path (str): The full path to the output video
+
+    Returns:
+
+        A list that contains the system command to execute and its arguments
+
+    """
+
+    if app_obj.streamlink_path is None:
+        # (Assume the binary is in the user's PATH)
+        streamlink_path = 'streamlink'
+    else:
+        streamlink_path = app_obj.streamlink_path
+
+    return [
+        streamlink_path,
+        '--hls-live-restart',
+        '--force',          # Streamlink has no option to resume old stream
+        '-o',
+        path,
+        media_data_obj.source,
+        'best',
+    ]
 
 
 def get_encoding():
@@ -2568,62 +2919,6 @@ def get_options_manager(app_obj, media_data_obj):
         return app_obj.general_options_obj
 
 
-def get_ytsc_scripts(app_obj):
-
-    """Called by downloads.DownloadWorker.check_ytsc().
-
-    Returns a list of paths to the scripts comprising Youtube Stream Capture.
-
-    Args:
-
-        app_obj (mainapp.TartubeApp): The main application
-
-    Return values:
-
-        A list of three items, giving paths to the scripts
-            [ youtube_stream_capture.py, merge_v1.py, merge_v2.py ]
-
-        If the path to YTSC's directory is unknown, returns three None values
-            instead
-
-    """
-
-    if app_obj.ytsc_path is None:
-        return []
-
-    else:
-
-        script_dir, filename = os.path.split(app_obj.ytsc_path)
-
-        return [
-            app_obj.ytsc_path,
-            os.path.abspath(os.path.join(script_dir, 'merge_v1.py')),
-            os.path.abspath(os.path.join(script_dir, 'merge_v2.py')),
-        ]
-
-
-def is_youtube(url):
-
-    """Can be called by anything.
-
-    Checks whether a link is a YouTube link or not.
-
-    Args:
-
-        url (str): The weblink to check
-
-    Returns:
-
-        True if it's a YouTube link, False if not
-
-    """
-
-    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
-        return True
-    else:
-        return False
-
-
 def handle_files_after_download(app_obj, options_obj, dir_path, filename,
 dummy_obj=None):
 
@@ -2722,6 +3017,67 @@ dummy_obj=None):
     and dummy_obj:
 
         move_thumbnail_to_subdir(app_obj, dummy_obj)
+
+
+def is_enhanced(url):
+
+    """Can be called by anything, usually called by
+    media.GenericRemoteContainer.set_source().
+
+    Checks whether a URL matches one of the 'enhanced' websites specified by
+    formats.ENHANCED_SITE_DICT.
+
+    Args:
+
+        url (str or None): The URL to check
+
+    Returns:
+
+        Returns a key in formats.ENHANCED_SITE_DICT or, if the URL does not
+        match an 'enhanced' website, returns None. If no URL is specified,
+        returns None
+
+    """
+
+    if url is None:
+        return None
+
+    for key in formats.ENHANCED_SITE_LIST:
+
+        mini_dict = formats.ENHANCED_SITE_DICT[key]
+        for regex in mini_dict['detect_list']:
+            if re.search(regex, url):
+                return mini_dict['name']
+
+    return None
+
+
+def is_video_enhanced(video_obj):
+
+    """Can be called by anything.
+
+    Checks whether a video's parent channel or playlist matches one of the
+    'enhanced' websites specified by formats.ENHANCED_SITE_DICT.
+
+    If the video's parent is a media.Folder, do the check on the video's own
+    .source.
+
+    Args:
+
+        video_obj (media.Video): The media data object to check
+
+    Returns:
+
+        Returns a key in formats.ENHANCED_SITE_DICT or, if the video does not
+        originate from an 'enhanced' website, returns None. If no URL is
+        specified, returns None
+
+    """
+
+    if isinstance(video_obj.parent_obj, media.Folder):
+        return is_enhanced(video_obj.source)
+    else:
+        return is_enhanced(video_obj.parent_obj.source)
 
 
 def match_subs(custom_dl_obj, subs_list):
@@ -3085,6 +3441,48 @@ def shorten_string_two_lines(string, num_chars):
 
         # 'string' is empty or short, so there's no need to split it up at all
         return string
+
+
+def stream_output_is_ignorable(stderr):
+
+    """Called by downloads.StreamDownloader.read_child_process() and
+    downloads.VideoDownloader.read_child_process()
+
+    Special handling of messages received from STDERR during direct livestream
+    downloads (i.e. youtube-dl without .m3u).
+
+    From the text received, we strip out anything we don't want. The calling
+    code will use the modified text (if any remains) in its STDOUT stream.
+
+    Args:
+
+        stderr (str): The text received from STDERR
+
+    Return values:
+
+        A modified stderr, or None if the whole text should be ignored
+
+    """
+
+    match = re.search('^(frame.*speed\=\s*[\S]+x)', stderr)
+    if match:
+        return match.groups()[0]
+
+    # (All but the first two lines occur only near the beginning of the
+    #   output)
+    for regex in [
+        '^\[hls\s\@\s\w+\]\s',
+        '^\[https\s\@\s\w+\]\s',
+        '^Input\s\#\d+,\s',
+        '^Output\s\#\d+,\s',
+        '^Stream mapping\:',
+        '^Press \[q\] to stop,',
+        '^[\s]{2}',
+    ]:
+        if re.search(regex, stderr):
+            return None
+
+    return stderr
 
 
 def strip_whitespace(string):

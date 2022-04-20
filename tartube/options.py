@@ -711,7 +711,7 @@ class OptionsManager(object):
         Resets (or initialises) self.options_dict to its default state.
         """
 
-        if os.name != 'nt':
+        if os.name == 'nt':
             windows_filenames_flag = True
         else:
             windows_filenames_flag = False
@@ -1782,26 +1782,8 @@ class OptionsParser(object):
                 #   'mp4_720p', 'convert_mp4_720p'
                 # Valid values are those specified by formats.VIDEO_FORMAT_LIST
                 #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
-                format_str = media_data_obj.dummy_format
-                convert_flag = False
-                this_format = None
-                this_res = None
-
-                split_list = format_str.split('_')
-                if split_list and split_list[0] == 'convert':
-                    split_list.pop(0)
-                    convert_flag = True
-
-                if split_list \
-                and (
-                    split_list[0] in formats.VIDEO_FORMAT_LIST \
-                    or split_list[0] in formats.AUDIO_FORMAT_LIST
-                ):
-                    this_format = split_list.pop(0)
-
-                if split_list \
-                and split_list[0] in formats.VIDEO_RESOLUTION_LIST:
-                    this_res = formats.VIDEO_RESOLUTION_DICT[split_list.pop(0)]
+                convert_flag, this_format, this_res \
+                = utils.extract_dummy_format(media_data_obj.dummy_format)
 
                 if not convert_flag and this_res is None:
 
@@ -1867,25 +1849,13 @@ class OptionsParser(object):
                     copy_dict['video_format_mode'] = ''
                     copy_dict['recode_video'] = ''
 
-            # Special case: for broadcasting livestreams, use only HLS
-            # !!! DEBUG
-            # v2.0.067: Downloading livestreams doesn't work at all for me, so
-            #   I'm not sure whether this is appropriate, or not. Once it's
-            #   fixed, perhaps we can offer the user a choice of formats
-            if media_data_obj.live_mode:
-
-                copy_dict['video_format'] = '95'
-                copy_dict['all_formats'] = False
-                copy_dict['video_format_list'] = []
-                copy_dict['video_format_mode'] = ''
-
-                return
-
         # Special case: for simulated downloads, don't specify any video
         #   formats; if the format isn't available for some videos, we'll get
         #   an error for each of them (rather than the simulated download we
         #   were hoping for)
-        if operation_type == 'sim' or operation_type == 'classic_sim':
+        if operation_type == 'sim' \
+        or operation_type == 'classic_sim' \
+        or operation_type == 'custom_sim':
 
             copy_dict['video_format'] = '0'
             copy_dict['all_formats'] = False

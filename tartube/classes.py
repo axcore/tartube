@@ -44,10 +44,13 @@ class ModTextWrapper(textwrap.TextWrapper):
     forward slashes. In that way, we can break up long URLs in calls to
     utils.tidy_up_long_descrip() and utils.tidy_up_long_string().
 
+    v2.3.606: Modified the '_whitespace' field to allow wrapping after an
+    underline.
     """
 
     def _split(self, text):
 
+#       _whitespace = '\t\n\x0b\x0c\r\_ '
         _whitespace = '\t\n\x0b\x0c\r '
 
         word_punct = r'[\w!"\'&.,?]'

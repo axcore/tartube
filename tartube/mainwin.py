@@ -139,6 +139,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.install_ffmpeg_menu_item = None    # Gtk.MenuItem
         self.install_matplotlib_menu_item = None
                                                 # Gtk.MenuItem
+        self.install_streamlink_menu_item = None
+                                                # Gtk.MenuItem
         self.tidy_up_menu_item = None           # Gtk.MenuItem
         self.stop_operation_menu_item = None    # Gtk.MenuItem
         self.stop_soon_menu_item = None         # Gtk.MenuItem
@@ -274,6 +276,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_resolution_combo = None    # Gtk.ComboBox
         self.classic_format_radiobutton = None  # Gtk.RadioButton
         self.classic_format_radiobutton2 = None # Gtk.RadioButton
+        self.classic_livestream_checkbutton = None
+                                                # Gtk.CheckButton
         self.classic_add_urls_button = None     # Gtk.Button
         self.classic_progress_treeview = None   # Gtk.TreeView
         self.classic_progress_liststore = None  # Gtk.ListStore
@@ -1568,6 +1572,14 @@ class MainWin(Gtk.ApplicationWindow):
                 'app.install_matplotlib_menu',
             )
 
+            self.install_streamlink_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Install streamlink...'),
+            )
+            ops_sub_menu.append(self.install_streamlink_menu_item)
+            self.install_streamlink_menu_item.set_action_name(
+                'app.install_streamlink_menu',
+            )
+
             # Separator
             ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
@@ -2400,6 +2412,35 @@ class MainWin(Gtk.ApplicationWindow):
             'app.cancel_date_toolbutton',
         )
 
+        # Separator
+        toolitem = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem, -1)
+        toolitem.add(Gtk.Label('          '))
+
+        toolitem16 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem16, -1)
+        toolitem16.add(Gtk.Label(_('Thumbnail size') + '   '))
+
+        toolitem17 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem17, -1)
+
+        store2 = Gtk.ListStore(str, str)
+        thumb_size_list = self.app_obj.thumb_size_list.copy()
+        while thumb_size_list:
+            store2.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
+
+        self.catalogue_thumb_combo = Gtk.ComboBox.new_with_model(store2)
+        toolitem17.add(self.catalogue_thumb_combo)
+        renderer_text = Gtk.CellRendererText()
+        self.catalogue_thumb_combo.pack_start(renderer_text, True)
+        self.catalogue_thumb_combo.add_attribute(renderer_text, 'text', 0)
+        self.catalogue_thumb_combo.set_entry_text_column(0)
+        self.catalogue_thumb_combo.set_sensitive(False)
+        self.catalogue_thumb_combo.connect(
+            'changed',
+            self.on_video_catalogue_thumb_combo_changed,
+        )
+
         # Third toolbar, which is likewise not added to the VBox until the call
         #   to self.update_catalogue_filter_widgets()
         self.catalogue_toolbar3 = Gtk.Toolbar()
@@ -2520,43 +2561,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_toolbar4 = Gtk.Toolbar()
         self.catalogue_toolbar4.set_visible(False)
 
-        toolitem16 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem16, -1)
-        toolitem16.add(Gtk.Label(_('Thumbnail size') + '   '))
-
-        toolitem17 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem17, -1)
-
-        store2 = Gtk.ListStore(str, str)
-        thumb_size_list = self.app_obj.thumb_size_list.copy()
-        while thumb_size_list:
-            store2.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
-
-        self.catalogue_thumb_combo = Gtk.ComboBox.new_with_model(store2)
-        toolitem17.add(self.catalogue_thumb_combo)
-        renderer_text = Gtk.CellRendererText()
-        self.catalogue_thumb_combo.pack_start(renderer_text, True)
-        self.catalogue_thumb_combo.add_attribute(renderer_text, 'text', 0)
-        self.catalogue_thumb_combo.set_entry_text_column(0)
-        self.catalogue_thumb_combo.set_sensitive(False)
-        self.catalogue_thumb_combo.connect(
-            'changed',
-            self.on_video_catalogue_thumb_combo_changed,
-        )
-
-        # Separator
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('   '))
-
         toolitem18 = Gtk.ToolItem.new()
         self.catalogue_toolbar4.insert(toolitem18, -1)
 
         self.catalogue_frame_button = Gtk.CheckButton()
         toolitem18.add(self.catalogue_frame_button)
-        self.catalogue_frame_button.set_label(_('Show frames'))
+        self.catalogue_frame_button.set_label(_('Draw frames'))
         self.catalogue_frame_button.set_active(
-            self.app_obj.catalogue_draw_icons_flag,
+            self.app_obj.catalogue_draw_frame_flag,
         )
         self.catalogue_frame_button.connect(
             'toggled',
@@ -2568,9 +2580,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.catalogue_icons_button = Gtk.CheckButton()
         toolitem19.add(self.catalogue_icons_button)
-        self.catalogue_icons_button.set_label(_('Show icons'))
+        self.catalogue_icons_button.set_label(_('Draw icons'))
         self.catalogue_icons_button.set_active(
-            self.app_obj.catalogue_draw_frame_flag,
+            self.app_obj.catalogue_draw_icons_flag,
         )
         self.catalogue_icons_button.connect(
             'toggled',
@@ -2580,9 +2592,39 @@ class MainWin(Gtk.ApplicationWindow):
         toolitem20 = Gtk.ToolItem.new()
         self.catalogue_toolbar4.insert(toolitem20, -1)
 
+        self.catalogue_downloaded_button = Gtk.CheckButton()
+        toolitem20.add(self.catalogue_downloaded_button)
+        self.catalogue_downloaded_button.set_label(_('Show downloaded'))
+        self.catalogue_downloaded_button.set_active(
+            self.app_obj.catalogue_draw_downloaded_flag,
+        )
+        self.catalogue_downloaded_button.connect(
+            'toggled',
+            self.on_draw_downloaded_checkbutton_changed,
+        )
+
+        toolitem21 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem21, -1)
+
+        self.catalogue_undownloaded_button = Gtk.CheckButton()
+        toolitem21.add(self.catalogue_undownloaded_button)
+        self.catalogue_undownloaded_button.set_label(
+            _('Show undownloaded'),
+        )
+        self.catalogue_undownloaded_button.set_active(
+            self.app_obj.catalogue_draw_undownloaded_flag,
+        )
+        self.catalogue_undownloaded_button.connect(
+            'toggled',
+            self.on_draw_undownloaded_checkbutton_changed,
+        )
+
+        toolitem22 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem22, -1)
+
         self.catalogue_blocked_button = Gtk.CheckButton()
-        toolitem20.add(self.catalogue_blocked_button)
-        self.catalogue_blocked_button.set_label(_('Show blocked videos'))
+        toolitem22.add(self.catalogue_blocked_button)
+        self.catalogue_blocked_button.set_label(_('Show blocked'))
         self.catalogue_blocked_button.set_active(
             self.app_obj.catalogue_draw_blocked_flag,
         )
@@ -2931,7 +2973,7 @@ class MainWin(Gtk.ApplicationWindow):
         grid.set_column_spacing(self.spacing_size)
         grid.set_row_spacing(self.spacing_size * 2)
 
-        grid_width = 7
+        grid_width = 8
 
         # First row - some decoration, and a button to open a popup menu
         # --------------------------------------------------------------------
@@ -3046,7 +3088,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_dest_dir_combo = Gtk.ComboBox.new_with_model(
             self.classic_dest_dir_liststore,
         )
-        grid.attach(self.classic_dest_dir_combo, 1, 3, 4, 1)
+        grid.attach(self.classic_dest_dir_combo, 1, 3, 5, 1)
         renderer_text = Gtk.CellRendererText()
         self.classic_dest_dir_combo.pack_start(renderer_text, True)
         self.classic_dest_dir_combo.add_attribute(renderer_text, 'text', 0)
@@ -3068,7 +3110,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_add']),
             )
-        grid.attach(self.classic_dest_dir_button, 5, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_button, 6, 3, 1, 1)
         self.classic_dest_dir_button.set_action_name(
             'app.classic_dest_dir_button',
         )
@@ -3087,7 +3129,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_open_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_open']),
             )
-        grid.attach(self.classic_dest_dir_open_button, 6, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_open_button, 7, 3, 1, 1)
         self.classic_dest_dir_open_button.set_action_name(
             'app.classic_dest_dir_open_button',
         )
@@ -3165,7 +3207,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Clarifiers
         self.classic_format_radiobutton = Gtk.RadioButton.new_with_label(
             None,
-            _('Convert to this format (requires FFmpeg)'),
+            _('Convert to this format'),
         )
         grid.attach(self.classic_format_radiobutton, 3, 4, 1, 1)
         self.classic_format_radiobutton.set_hexpand(False)
@@ -3181,9 +3223,17 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not self.app_obj.classic_format_convert_flag:
             self.classic_format_radiobutton2.set_active(True)
-        if self.app_obj.classic_format_selection:
+        if not self.app_obj.classic_format_selection:
             self.classic_format_radiobutton.set_sensitive(False)
             self.classic_format_radiobutton2.set_sensitive(False)
+
+        self.classic_livestream_checkbutton = Gtk.CheckButton()
+        grid.attach(self.classic_livestream_checkbutton, 5, 4, 1, 1)
+        self.classic_livestream_checkbutton.set_label(_('Is a livestream'))
+        self.classic_livestream_checkbutton.set_hexpand(True)
+        if self.app_obj.classic_livestream_flag:
+            self.classic_livestream_checkbutton.set_active(True)
+        # (Signal connect appears below)
 
         # (Signal connects from above)
         # If the user selects the 'Default' item, desensitise the radiobuttons
@@ -3201,12 +3251,16 @@ class MainWin(Gtk.ApplicationWindow):
             'toggled',
             self.on_classic_format_radiobutton_toggled,
         )
+        self.classic_livestream_checkbutton.connect(
+            'toggled',
+            self.on_classic_livestream_checkbutton_toggled,
+        )
 
         # Add URLs button
         self.classic_add_urls_button = Gtk.Button(
             '     ' + _('Add URLs') + '     ',
         )
-        grid.attach(self.classic_add_urls_button, 5, 4, 2, 1)
+        grid.attach(self.classic_add_urls_button, 6, 4, 2, 1)
         self.classic_add_urls_button.set_action_name(
             'app.classic_add_urls_button',
         )
@@ -4186,6 +4240,7 @@ class MainWin(Gtk.ApplicationWindow):
         if os.name == 'nt':
             self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
             self.install_matplotlib_menu_item.set_sensitive(sens_flag)
+            self.install_streamlink_menu_item.set_sensitive(sens_flag)
 
         self.stop_operation_menu_item.set_sensitive(False)
         self.stop_soon_menu_item.set_sensitive(False)
@@ -4347,6 +4402,7 @@ class MainWin(Gtk.ApplicationWindow):
         if os.name == 'nt':
             self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
             self.install_matplotlib_menu_item.set_sensitive(sens_flag)
+            self.install_streamlink_menu_item.set_sensitive(sens_flag)
 
         if not_dl_operation_flag:
             self.update_live_menu_item.set_sensitive(sens_flag)
@@ -4762,7 +4818,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
-    def update_free_space_msg(self, disk_space):
+    def update_free_space_msg(self, disk_space=None):
 
         """Called by mainapp.TartubeApp.dl_timer_callback() during a download
         operation to update the amount of free disk space visible in the
@@ -4770,25 +4826,45 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
-            disk_space (float): The amount of free disk space on the drive
-                containing Tartube's data directory
+            disk_space (float or None): The amount of free disk space on the
+                drive containing Tartube's data directory. If None, the
+                button's label is reset to its default state
 
         """
 
-        msg = ' [' + str(round(disk_space, 1)) + ' GiB]'
+        if self.check_media_button is None:
+            return
 
-        if self.app_obj.download_manager_obj \
-        and self.app_obj.show_free_space_flag \
-        and self.check_media_button is not None:
+        elif disk_space is None:
 
-            operation_type = self.app_obj.download_manager_obj.operation_type
-
-            if operation_type == 'sim' \
-            or operation_type == 'custom_sim' \
-            or operation_type == 'classic_sim':
-                self.check_media_button.set_label(_('Checking') + msg)
+            if not self.video_index_marker_dict:
+                self.check_media_button.set_label(_('Check all'))
+                self.check_media_button.set_tooltip_text(
+                    _('Check all videos, channels, playlists and folders'),
+                )
             else:
-                self.check_media_button.set_label(_('Downloading') + msg)
+                self.check_media_button.set_label(_('Check marked items'))
+                self.check_media_button.set_tooltip_text(
+                    _('Check marked videos, channels, playlists and folders'),
+                )
+
+        else:
+
+            msg = ' [' + str(round(disk_space, 1)) + ' GiB]'
+
+            if self.app_obj.download_manager_obj \
+            and self.app_obj.show_free_space_flag:
+
+                operation_type \
+                = self.app_obj.download_manager_obj.operation_type
+
+                if operation_type == 'sim' \
+                or operation_type == 'custom_sim' \
+                or operation_type == 'classic_sim':
+                    self.check_media_button.set_label(_('Checking') + msg)
+                else:
+                    self.check_media_button.set_label(_('Downloading') + msg)
+                self.check_media_button.set_tooltip_text()
 
 
     def sensitise_check_dl_buttons(self, finish_flag, operation_type=None):
@@ -4806,7 +4882,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             operation_type (str): 'ffmpeg' for an update operation to install
                 FFmpeg, 'matplotlib' for an update operation to install
-                matplotlib, 'ytdl' for an update operation to install/update
+                matplotlib, 'streamlink' for an update operation to install
+                streamlink, 'ytdl' for an update operation to install/update
                 youtube-dl, 'formats' for an info operation to fetch available
                 video formats, 'subs' for an info operation to fetch
                 available subtitles, 'test_ytdl' for an info operation in which
@@ -4817,9 +4894,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         if operation_type is not None \
         and operation_type != 'ffmpeg' and operation_type != 'matplotlib' \
-        and operation_type != 'ytdl' and operation_type != 'formats' \
-        and operation_type != 'subs' and operation_type != 'test_ytdl' \
-        and operation_type != 'version':
+        and operation_type != 'streamlink' and operation_type != 'ytdl' \
+        and operation_type != 'formats' and operation_type != 'subs' \
+        and operation_type != 'test_ytdl' and operation_type != 'version':
             return self.app_obj.system_error(
                 205,
                 'Invalid update/info operation argument',
@@ -4893,6 +4970,8 @@ class MainWin(Gtk.ApplicationWindow):
                 msg = _('Installing FFmpeg')
             elif operation_type == 'matplotlib':
                 msg = _('Installing matplotlib')
+            elif operation_type == 'streamlink':
+                msg = _('Installing streamlink')
             elif operation_type == 'ytdl':
                 msg = _('Updating downloader')
             elif operation_type == 'formats':
@@ -6407,21 +6486,47 @@ class MainWin(Gtk.ApplicationWindow):
                 watch_player_menu_item.set_sensitive(False)
 
         # Watch video online. For YouTube URLs, offer alternative websites
+        enhanced = utils.is_video_enhanced(video_obj)
         if video_obj.source is None or video_obj.live_mode != 0:
 
-            watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Watch on _website'),
-            )
-            if video_obj.source is None:
-                watch_website_menu_item.set_sensitive(False)
-            popup_menu.append(watch_website_menu_item)
+            if not enhanced:
+
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on website'),
+                )
+                if video_obj.source is None:
+                    watch_website_menu_item.set_sensitive(False)
+                popup_menu.append(watch_website_menu_item)
+
+            else:
+
+                pretty = formats.ENHANCED_SITE_DICT[enhanced]['pretty_name']
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on {0}').format(pretty),
+                )
+                if video_obj.source is None:
+                    watch_website_menu_item.set_sensitive(False)
+                popup_menu.append(watch_website_menu_item)
 
         else:
 
-            if not utils.is_youtube(video_obj.source):
+            if not enhanced:
 
                 watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                    _('Watch on _website'),
+                    _('_Watch on website'),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_website,
+                    video_obj,
+                )
+                popup_menu.append(watch_website_menu_item)
+
+            elif enhanced != 'youtube':
+
+                pretty = formats.ENHANCED_SITE_DICT[enhanced]['pretty_name']
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on {0}').format(pretty),
                 )
                 watch_website_menu_item.connect(
                     'activate',
@@ -6651,6 +6756,25 @@ class MainWin(Gtk.ApplicationWindow):
                 video_obj,
             )
             livestream_submenu.append(not_live_menu_item)
+
+            finalise_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Finalise livestream'),
+            )
+            finalise_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_finalise_livestream,
+                video_obj,
+            )
+            livestream_submenu.append(finalise_menu_item)
+            if video_obj.dl_flag \
+            or video_obj.live_mode == 1 \
+            or (video_obj.live_mode == 0 and not video_obj.was_live_flag):
+                finalise_menu_item.set_sensitive(False)
+            else:
+                output_path = video_obj.get_actual_path(self.app_obj)
+                if os.path.isfile(output_path) \
+                or not os.path.isfile(output_path + '.part'):
+                    finalise_menu_item.set_sensitive(False)
 
             livestream_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('_Livestream'),
@@ -7485,10 +7609,36 @@ class MainWin(Gtk.ApplicationWindow):
             popup_menu.append(Gtk.SeparatorMenuItem())
 
             # For YouTube videos, offer three websites (as usual)
-            if utils.is_youtube(media_data_obj.source):
+            enhanced = utils.is_video_enhanced(media_data_obj)
+            if not enhanced:
+
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on Website'),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_progress_list_watch_website,
+                    media_data_obj,
+                )
+                popup_menu.append(watch_website_menu_item)
+
+            elif enhanced != 'youtube':
+
+                pretty = formats.ENHANCED_SITE_DICT[enhanced]['pretty_name']
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on {0}').format(pretty),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_progress_list_watch_website,
+                    media_data_obj,
+                )
+                popup_menu.append(watch_website_menu_item)
+
+            else:
 
                 watch_youtube_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                    _('Watch on _YouTube'),
+                    _('_Watch on YouTube'),
                 )
                 watch_youtube_menu_item.connect(
                     'activate',
@@ -7516,18 +7666,6 @@ class MainWin(Gtk.ApplicationWindow):
                     media_data_obj,
                 )
                 popup_menu.append(watch_invidious_menu_item)
-
-            else:
-
-                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                    _('Watch on _Website'),
-                )
-                watch_website_menu_item.connect(
-                    'activate',
-                    self.on_progress_list_watch_website,
-                    media_data_obj,
-                )
-                popup_menu.append(watch_website_menu_item)
 
         # Create the popup menu
         popup_menu.show_all()
@@ -8314,11 +8452,25 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             video_obj = video_list[0]
+            enhanced = utils.is_video_enhanced(video_obj)
 
-            if not utils.is_youtube(video_obj.source):
+            if not enhanced:
 
                 watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                    _('Watch on _website'),
+                    _('_Watch on website'),
+                )
+                watch_website_menu_item.connect(
+                    'activate',
+                    self.on_video_catalogue_watch_website,
+                    video_obj,
+                )
+                popup_menu.append(watch_website_menu_item)
+
+            elif enhanced != 'youtube':
+
+                pretty = formats.ENHANCED_SITE_DICT[enhanced]['pretty_name']
+                watch_website_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                    _('_Watch on {0}').format(pretty),
                 )
                 watch_website_menu_item.connect(
                     'activate',
@@ -8375,17 +8527,6 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
-        # Mark as not livestreams
-        not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _not livestreams'),
-        )
-        not_live_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_not_livestream_multi,
-            video_list,
-        )
-        popup_menu.append(not_live_menu_item)
-
         # Process with FFmpeg
         process_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Process with FFmpeg...'),
@@ -8413,9 +8554,30 @@ class MainWin(Gtk.ApplicationWindow):
         if __main__.__pkg_no_download_flag__:
             classic_dl_menu_item.set_sensitive(False)
 
+        # Mark as not livestreams
+        not_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _not livestreams'),
+        )
+        not_live_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_not_livestream_multi,
+            video_list,
+        )
+        popup_menu.append(not_live_menu_item)
+
+        # Finalise livestreams
+        finalise_live_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Finalise livestreams'),
+        )
+        finalise_live_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_finalise_livestream_multi,
+            video_list,
+        )
+        popup_menu.append(finalise_live_menu_item)
+
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
-
 
         # Download to Temporary Videos
         temp_submenu = Gtk.Menu()
@@ -8685,7 +8847,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_reset() ).
 
         After the call to this function, new rows can be added via a call to
-        self.self.video_index_add_row().
+        self.video_index_add_row().
         """
 
         for dbid in self.app_obj.media_top_level_list:
@@ -9645,13 +9807,13 @@ class MainWin(Gtk.ApplicationWindow):
         video_count = 0
         page_size = self.app_obj.catalogue_page_size
         # If the filter has been applied, use the prepared list of child videos
-        #   specified by the IV; otherwise, use all child videos
+        #   specified by the IV...
         if self.video_catalogue_filtered_flag:
             child_list = self.video_catalogue_filtered_list.copy()
-        elif not self.app_obj.catalogue_draw_blocked_flag:
-            child_list = container_obj.get_unblocked_videos()
+        # ...otherwise use all child videos that are downloaded/undownloaded/
+        #   blocked (according to current settings)
         else:
-            child_list = container_obj.child_list.copy()
+            child_list = container_obj.get_visible_videos(self.app_obj)
 
         for child_obj in child_list:
             if isinstance(child_obj, media.Video):
@@ -9830,15 +9992,23 @@ class MainWin(Gtk.ApplicationWindow):
         # At the same time, reduce the parent container's list of children,
         #   eliminating those which are media.Channel, media.Playlist and
         #   media.Folder objects
-        # Exclude any blocked videos, unless settings require us to show
-        #   blocked videos
+        # Exclude any downloaded/undownloaded/blocked videos, according to
+        #   current settings
         sibling_video_list = []
 
         for child_obj in container_obj.child_list:
             if isinstance(child_obj, media.Video) \
             and (
-                app_obj.catalogue_draw_blocked_flag \
-                or not child_obj.block_flag
+                (
+                    app_obj.catalogue_draw_downloaded_flag \
+                    and child_obj.dl_flag
+                ) or (
+                    app_obj.catalogue_draw_undownloaded_flag \
+                    and not child_obj.dl_flag
+                ) or (
+                    app_obj.catalogue_draw_blocked_flag \
+                    and child_obj.block_flag
+                )
             ):
                 sibling_video_list.append(child_obj)
 
@@ -10913,6 +11083,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_thumb_combo.set_sensitive(False)
         self.catalogue_frame_button.set_sensitive(False)
         self.catalogue_icons_button.set_sensitive(False)
+        self.catalogue_downloaded_button.set_sensitive(False)
+        self.catalogue_undownloaded_button.set_sensitive(False)
         self.catalogue_blocked_button.set_sensitive(False)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_regex_togglebutton.set_sensitive(False)
@@ -10985,6 +11157,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_thumb_combo.set_sensitive(False)
             self.catalogue_frame_button.set_sensitive(False)
             self.catalogue_icons_button.set_sensitive(False)
+            self.catalogue_downloaded_button.set_sensitive(False)
+            self.catalogue_undownloaded_button.set_sensitive(False)
             self.catalogue_blocked_button.set_sensitive(False)
             self.catalogue_filter_entry.set_sensitive(False)
             self.catalogue_regex_togglebutton.set_sensitive(False)
@@ -11005,13 +11179,22 @@ class MainWin(Gtk.ApplicationWindow):
 
                 self.catalogue_frame_button.set_sensitive(False)
                 self.catalogue_icons_button.set_sensitive(False)
+                self.catalogue_downloaded_button.set_sensitive(False)
+                self.catalogue_undownloaded_button.set_sensitive(False)
                 self.catalogue_blocked_button.set_sensitive(False)
 
             else:
 
                 self.catalogue_frame_button.set_sensitive(True)
                 self.catalogue_icons_button.set_sensitive(True)
-                self.catalogue_blocked_button.set_sensitive(True)
+                if self.video_catalogue_filtered_flag:
+                    self.catalogue_downloaded_button.set_sensitive(False)
+                    self.catalogue_undownloaded_button.set_sensitive(False)
+                    self.catalogue_blocked_button.set_sensitive(False)
+                else:
+                    self.catalogue_downloaded_button.set_sensitive(True)
+                    self.catalogue_undownloaded_button.set_sensitive(True)
+                    self.catalogue_blocked_button.set_sensitive(True)
 
             self.catalogue_filter_entry.set_sensitive(True)
             self.catalogue_regex_togglebutton.set_sensitive(True)
@@ -11032,9 +11215,10 @@ class MainWin(Gtk.ApplicationWindow):
         Applies a filter, so that all videos not matching the search text are
         hidden in the Video Catalogue.
 
-        Note that blocked videos matching the search text are always visible,
+        Note that when a filter is applied, all matching videos are visible,
         regardless of the value of
-        mainapp.TartubeApp.catalogue_draw_blocked_flag
+        mainapp.TartubeApp.catalogue_draw_downloaded_flag,
+        .catalogue_draw_undownloaded_flag and .catalogue_draw_blocked_flag.
         """
 
         # Sanity check - something must be selected in the Video Index
@@ -11120,6 +11304,11 @@ class MainWin(Gtk.ApplicationWindow):
         # Sensitise widgets, as appropriate
         self.catalogue_apply_filter_button.set_sensitive(False)
         self.catalogue_cancel_filter_button.set_sensitive(True)
+        # (Desensitise these widgets, to make it clear to the user that the
+        #   settings don't apply when the filter is applied)
+        self.catalogue_downloaded_button.set_sensitive(False)
+        self.catalogue_undownloaded_button.set_sensitive(False)
+        self.catalogue_blocked_button.set_sensitive(False)
 
 
     def video_catalogue_cancel_filter(self):
@@ -11141,6 +11330,9 @@ class MainWin(Gtk.ApplicationWindow):
         # Sensitise widgets, as appropriate
         self.catalogue_apply_filter_button.set_sensitive(True)
         self.catalogue_cancel_filter_button.set_sensitive(False)
+        self.catalogue_downloaded_button.set_sensitive(True)
+        self.catalogue_undownloaded_button.set_sensitive(True)
+        self.catalogue_blocked_button.set_sensitive(True)
 
 
     def video_catalogue_show_date(self, page_num):
@@ -12479,6 +12671,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         new_obj.set_dummy(url, dest_dir, format_str)
 
+        if self.app_obj.classic_livestream_flag:
+            new_obj.set_live_mode(2)
+
         # Add a line to the treeview
         self.classic_mode_tab_add_row(new_obj)
 
@@ -13478,6 +13673,7 @@ class MainWin(Gtk.ApplicationWindow):
                     pixbuf=i,
                 )
                 self.errors_list_treeview.append_column(column_pixbuf)
+                column_pixbuf.set_resizable(False)
 
             else:
                 renderer_text = Gtk.CellRendererText()
@@ -13495,6 +13691,8 @@ class MainWin(Gtk.ApplicationWindow):
                 or i == 9 and not app_obj.system_msg_show_multi_line_flag \
                 or i == 10 and app_obj.system_msg_show_multi_line_flag:
                     column_text.set_visible(False)
+                else:
+                    column_text.set_resizable(True)
 
         # Reset widgets
         self.errors_list_liststore = Gtk.ListStore(
@@ -15319,7 +15517,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        # (Using self.self.video_index_treestore)
+        # (Using self.video_index_treestore)
         tree_ref = self.video_index_row_dict[media_data_obj.name]
         tree_path = tree_ref.get_path()
         tree_iter = self.video_index_treestore.get_iter(tree_path)
@@ -15373,7 +15571,7 @@ class MainWin(Gtk.ApplicationWindow):
         ) or media_data_obj.dl_disable_flag:
             return
 
-        # (Using self.self.video_index_treestore)
+        # (Using self.video_index_treestore)
         tree_ref = self.video_index_row_dict[media_data_obj.name]
         tree_path = tree_ref.get_path()
         tree_iter = self.video_index_treestore.get_iter(tree_path)
@@ -16483,6 +16681,78 @@ class MainWin(Gtk.ApplicationWindow):
             # Automatically switch to the Output tab, for convenience
             if self.app_obj.auto_switch_output_flag:
                 self.output_tab_show_first_page()
+
+
+    def on_video_catalogue_finalise_livestream(self, menu_item, \
+    media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Marks the specified video, which is a livestream whose download was
+        not completed, as a downloaded livestream, removing the .part from the
+        end of the video file.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        expect_path = media_data_obj.get_actual_path(self.app_obj)
+        part_path = expect_path + '.part'
+        self.app_obj.move_file_or_directory(part_path, expect_path)
+
+        media_data_obj.set_file_from_path(expect_path)
+        self.app_obj.mark_video_downloaded(media_data_obj, True)
+        self.app_obj.mark_video_live(media_data_obj, 0)
+
+        # Update the catalogue item
+        GObject.timeout_add(
+            0,
+            self.video_catalogue_update_video,
+            media_data_obj,
+        )
+
+
+    def on_video_catalogue_finalise_livestream_multi(self, menu_item,
+    media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Marks the specified videos, which are livestreams whose download was
+        not completed, as a downloaded livestreaj, removing the .part from the
+        end of the video file.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_list (list): List of one or more media.Video objects
+
+        """
+
+        for media_data_obj in media_data_list:
+
+            expect_path = media_data_obj.get_actual_path(self.app_obj)
+            part_path = expect_path + '.part'
+
+            if not media_data_obj.dl_flag \
+            and (
+                media_data_obj.live_mode == 2 \
+                or (
+                    media_data_obj.live_mode == 0 \
+                    and media_data_obj.was_live_flag
+                )
+            ) and not os.path.isfile(expect_path) \
+            and os.path.isfile(part_path):
+
+                self.app_obj.move_file_or_directory(part_path, expect_path)
+
+                media_data_obj.set_file_from_path(expect_path)
+                self.app_obj.mark_video_downloaded(media_data_obj, True)
+                self.app_obj.mark_video_live(media_data_obj, 0)
 
 
     def on_video_catalogue_livestream_toggle(self, menu_item, media_data_obj,
@@ -18527,8 +18797,6 @@ class MainWin(Gtk.ApplicationWindow):
 
             radiobutton (Gtk.RadioButton): The widget clicked
 
-            prop (str): The attribute in self.edit_dict to modify
-
         """
 
         if radiobutton.get_active():
@@ -18539,6 +18807,21 @@ class MainWin(Gtk.ApplicationWindow):
         # (Update the banner at the top of the tab, according to current
         #   conditions)
         self.update_classic_mode_tab_update_banner()
+
+
+    def on_classic_livestream_checkbutton_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Updates IVs.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        self.app_obj.set_classic_livestream_flag(checkbutton.get_active())
 
 
     def on_classic_menu_custom_dl_prefs(self, menu_item):
@@ -19139,6 +19422,56 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_catalogue_draw_blocked_flag(checkbutton.get_active())
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            1,
+            True,           # Reset scrollbars
+            True,           # Don't cancel the filter, if applied
+        )
+
+
+    def on_draw_downloaded_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos tab, when the user toggles the checkbutton, enable/
+        disable drawing downloaded videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_catalogue_draw_downloaded_flag(
+            checkbutton.get_active(),
+        )
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            1,
+            True,           # Reset scrollbars
+            True,           # Don't cancel the filter, if applied
+        )
+
+
+    def on_draw_undownloaded_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos tab, when the user toggles the checkbutton, enable/
+        disable drawing undownloaded videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_catalogue_draw_undownloaded_flag(
+            checkbutton.get_active(),
+        )
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
             self.video_index_current,
@@ -22072,7 +22405,38 @@ class ComplexCatalogueItem(object):
 
             # For YouTube URLs, offer alternative links
             source = self.video_obj.source
-            if utils.is_youtube(source):
+            enhanced = utils.is_video_enhanced(self.video_obj)
+            if not enhanced:
+
+                # Link clickable
+                self.watch_web_label.set_markup(
+                    '<a href="' + html.escape(source, quote=True) \
+                    + '" title="' + _('Watch on website') + '">' \
+                    + _('Website') + '</a>',
+                )
+
+                # Links not clickable
+                self.watch_hooktube_label.set_text('')
+                self.watch_invidious_label.set_text('')
+                self.watch_other_label.set_text('')
+
+            elif enhanced != 'youtube':
+
+                pretty = formats.ENHANCED_SITE_DICT[enhanced]['pretty_name']
+
+                # Link clickable
+                self.watch_web_label.set_markup(
+                    '<a href="' + html.escape(source, quote=True) \
+                    + '" title="' + _('Watch on {0}').format(pretty) + '">' \
+                    + pretty + '</a>',
+                )
+
+                # Links not clickable
+                self.watch_hooktube_label.set_text('')
+                self.watch_invidious_label.set_text('')
+                self.watch_other_label.set_text('')
+
+            else:
 
                 # Link clickable
                 self.watch_web_label.set_markup(
@@ -22137,20 +22501,6 @@ class ComplexCatalogueItem(object):
                     self.watch_hooktube_label.set_text('')
                     self.watch_invidious_label.set_text('')
                     self.watch_other_label.set_text('')
-
-            else:
-
-                # Link clickable
-                self.watch_web_label.set_markup(
-                    '<a href="' + html.escape(source, quote=True) \
-                    + '" title="' + _('Watch on website') + '">' \
-                    + _('Website') + '</a>',
-                )
-
-                # Links not clickable
-                self.watch_hooktube_label.set_text('')
-                self.watch_invidious_label.set_text('')
-                self.watch_other_label.set_text('')
 
         else:
 
@@ -23348,10 +23698,13 @@ class ComplexCatalogueItem(object):
         #   this function returns. Workaround is to make the label unclickable,
         #   then use a Glib timer to restore it (after some small fraction of a
         #   second)
-        if utils.is_youtube(self.video_obj.source):
-            self.watch_web_label.set_markup(_('YouTube'))
-        else:
+        enhanced = utils.is_video_enhanced(self.video_obj)
+        if not enhanced:
             self.watch_web_label.set_markup(_('Website'))
+        else:
+            self.watch_web_label.set_markup(
+                formats.ENHANCED_SITE_DICT[enhanced]['pretty_name'],
+            )
 
         GObject.timeout_add(0, self.update_watch_web)
 
@@ -26815,8 +27168,10 @@ class AddChannelDialogue(Gtk.Dialog):
         """
 
         url = entry.get_text()
+        enhanced = utils.is_enhanced(url)
+
         if self.main_win_obj.app_obj.dialogue_yt_remind_flag \
-        and utils.is_youtube(url) \
+        and enhanced == 'youtube' \
         and not re.search(r'\/videos\s*$', url)\
         and not re.search(r'\/playlists\s*$', url):
             grid.attach(self.frame, 0, 5, 2, 1)

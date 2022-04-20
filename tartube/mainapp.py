@@ -432,10 +432,20 @@ class TartubeApp(Gtk.Application):
         # In the Video Catalogue, flag set to True if status icons should be
         #   drawn, False if not
         self.catalogue_draw_icons_flag = True
+        # In the Video Catalogue, flag set to True if downloaded videos should
+        #   be drawn, False if not. Note that when a filter is applied, any
+        #   matching videos are always visible, regardless of the value of this
+        #   IV
+        self.catalogue_draw_downloaded_flag = True
+        # In the Video Catalogue, flag set to True if undownloaded videos
+        #   should be drawn, False if not. Note that when a filter is applied,
+        #   any matching videos are always visible, regardless of the value of
+        #   this IV
+        self.catalogue_draw_undownloaded_flag = True
         # In the Video Catalogue, flag set to True if blocked videos should be
         #   drawn, False if not. Note that when a filter is applied, any
-        #   matching blocked videos are always visible, regardless of the
-        #   value of this IV
+        #   matching videos are always visible, regardless of the value of this
+        #   IV
         self.catalogue_draw_blocked_flag = False
         # In the Video Catalogue, flag set to True if channel/playlist names
         #   should be clickable (in grid mode only)
@@ -630,16 +640,6 @@ class TartubeApp(Gtk.Application):
                 'ytdl-test',
             ),
         )
-        # Inside the temporary directory, a folder for Youtube Stream Capture
-        #   downloads
-        self.temp_ytsc_dir = os.path.abspath(
-            os.path.join(
-                os.path.expanduser('~'),
-                __main__.__packagename__ + '-data',
-                '.temp',
-                'ytsc',
-            ),
-        )
 
         # When the user tries to switch databases (in a call to
         #   self.switch_db() ), we make backup copies of those IVs. If the
@@ -652,7 +652,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
-        self.backup_temp_ytsc_dir = None
         self.backup_data_dir_alt_list = None
 
         # The user can opt to move thumbnails to a '.thumbs' sub-directory, and
@@ -787,6 +786,9 @@ class TartubeApp(Gtk.Application):
         # The selected resolution. If 'Resolution' is selected in the Classic
         #   Mode tab's combo, set to None
         self.classic_resolution_selection = None
+        # Flag set to True, if the URL should be treated as a broadcasting
+        #   livestream
+        self.classic_livestream_flag = False
         # Flag set to True, if pending URLs (still visible in the top half of
         #   the Classic Mode tab, or not yet downloaded in the bottom half)
         #   should be saved when Tartube shuts down, and restored (to the top
@@ -960,10 +962,6 @@ class TartubeApp(Gtk.Application):
         #   --verbose option). The setting applies to both the Output tab and
         #   the terminal window
         self.ytdl_write_verbose_flag = False
-        # Flag set to True if Youtube Stream Capture should show verbose
-        #   output. This setting applies to both the Output tab and the
-        #   terminal window
-        self.ytsc_write_verbose_flag = False
 
         # Flag set to True if, during a refresh operation, videos should be
         #   displayed in the Output tab. Set to False if only channels,
@@ -1018,33 +1016,31 @@ class TartubeApp(Gtk.Application):
         # Ignored if self.ffmpeg_fail_flag is True
         self.ffmpeg_convert_webp_flag = True
 
-        # Paths to the Youtube Stream Capture (YTSC) binary. If not set, we
-        #   assume that YTSC is in the user's path
-        # (These values are used on all operating systems)
-        # Default path to the YTSC binary, included with the Tartube
-        #   distribution
-        self.default_ytsc_path = os.path.abspath(
-            os.path.join(
-                self.script_parent_dir,
-                'ytsc',
-                'youtube_stream_capture.py',
-            ),
-        )
-        # Path to the YTSC binary
-        self.ytsc_path = self.default_ytsc_path
-        # Flag set to True if Youtube Stream Capture should be used (when
-        #   available); False if youtube-dl should be used instead. Note that
-        #   youtube-dl probably cannot download broadcasting livestreams from
-        #   YouTube successfully
-        self.ytsc_priority_flag = False
-        # YTSC sometimes fails to commence downloading a stream, but succeeds
-        #   after a restart. The time to wait (in minutes) for the first
-        #   segment to be downloaded (minimum value 1, fractional values are
-        #   allowed) before giving up...
-        self.ytsc_wait_time = 1
-        # ...and the number of restarts allowed (minimum value 0 for no
-        #   restarts) before giving up entirely
-        self.ytsc_restart_max = 5
+        # Mode for downloading broadcasting livestreams:
+        #   'default' - use the current downloader alone. This normally works
+        #       with yt-dlp, probably not with youtube-dl
+        #   'default_m3u' - use the current downloader to fetch the .m3u
+        #       manifest, then FFmpeg to download the livestream. Requires
+        #       FFmpeg
+        #   'streamlink' - use streamlink (if installed on the user's system)
+        self.livestream_dl_mode = 'default_m3u'
+        # Settings for downloading broadcasting livestreams
+        # If True, resume an earlier download. If False, replace the earlier
+        #   download. When using streamlink, the earlier download is always
+        #   replaced
+        self.livestream_replace_flag = True
+        # When a download is stopped (for example, when the user clicks the
+        #   main window's 'Stop' button), mark the download as finished when
+        #   this flag is True
+        self.livestream_stop_is_final_flag = True
+        # If True, check the media.Video object before downloading the
+        #   livestream (which ensures the thumbnail and other metadata files
+        #   are downloaded)
+        self.livestream_force_check_flag = True
+
+        # Path to the streamlink binary. If not set, we assume that streamlink
+        #   is in the user's path
+        self.streamlink_path = None
 
         # During a download operation, a GObject timer runs, so that the
         #   Progress tab and Output tab can be updated at regular intervals
@@ -1132,7 +1128,7 @@ class TartubeApp(Gtk.Application):
         self.classic_custom_dl_obj = None
 
         # List of proxies. If set, a download operation cycles between them.
-        #   Does not apply to YTSC downloads
+        #   Does not apply to streamlink downloads
         self.dl_proxy_list = []
         # At the start of a download operation, the contents of
         #   self.dl_proxy_list are copied into this list. Whenever a proxy is
@@ -1821,8 +1817,10 @@ class TartubeApp(Gtk.Application):
         self.add_blocked_videos_flag = True
         # Flag set to True if Tartube should retrieve the playlist ID from each
         #   checked/downloaded video's metadata, and store it in the parent
-        #   channel/playlist. (The user can use the collected IDs to get a list
-        #   of playlists associated with a channel)
+        #   channel/playlist
+        # (For 'enhanced' websites specified by formats.ENHANCED_SITE_DICT,
+        #   the user can use the collected IDs to get a list of playlists
+        #   associated with a channel)
         self.store_playlist_id_flag = True
 
         # Flag set to True if a list of timestamps should be extracted from a
@@ -2067,19 +2065,34 @@ class TartubeApp(Gtk.Application):
         #   1-999
         self.match_ignore_chars = self.match_default_chars
 
-        # Automatic video deletion. Applies only to downloaded videos (not to
-        #   checked videos)
-        # Flag set to True if videos should be deleted after a certain time
+        # Automatic video deletion/removal. Applies only to downloaded videos
+        #   (not to checked videos)
+        # Flag set to True if videos (and all their associated files) should be
+        #   deleted after a certain time
+        # (Note that if both self.auto_delete_flag and self.auto_remove_flag
+        #   are True, and using the same time, then deletion not removal
+        #   occurs)
         self.auto_delete_flag = False
-        # Flag set to True if videos are automatically deleted after a certain
-        #   time, but only if they have been watched (media.Video.dl_flag is
-        #   True, media.Video.new_flag is False; ignored if
-        #   self.auto_delete_old_flag is False)
-        self.auto_delete_watched_flag = False
         # Videos are automatically deleted after this many days (must be an
-        #   integer, minimum value 1; ignored if self.auto_delete_old_flag is
+        #   integer, minimum value 0; ignored if self.auto_delete_flag is
         #   False)
         self.auto_delete_days = 30
+        # Flag set to True if videos should be removed from the Tartube
+        #   database after a certain time, but with no files deleted
+        self.auto_remove_flag = False
+        # Videos are automatically removed after this many days (must be an
+        #   integer, minimum value 0; ignored if self.auto_remove_flag is
+        #   False)
+        self.auto_remove_days = 30
+        # Flag set to True if videos should be automatically deleted/removed,
+        #   but only if they have been watched (media.Video.dl_flag is True,
+        #   media.Video.new_flag is False; ignored if
+        #   self.auto_delete_flag and/or self.auto_remove_flag are False)
+        self.auto_delete_watched_flag = False
+        # Flag set to True if the deletion/removal should take place after
+        #   every download operation. If False, it takes place when the
+        #   database is loaded
+        self.auto_delete_asap_flag = False
 
         # Temporary folder emptying (applies to all media.Folder objects whose
         #   .temp_flag is True)
@@ -2512,6 +2525,16 @@ class TartubeApp(Gtk.Application):
                 self.on_menu_install_matplotlib,
             )
             self.add_action(matplotlib_menu_action)
+
+            streamlink_menu_action = Gio.SimpleAction.new(
+                'install_streamlink_menu',
+                None,
+            )
+            streamlink_menu_action.connect(
+                'activate',
+                self.on_menu_install_streamlink,
+            )
+            self.add_action(streamlink_menu_action)
 
         tidy_up_menu_action = Gio.SimpleAction.new('tidy_up_menu', None)
         tidy_up_menu_action.connect('activate', self.on_menu_tidy_up)
@@ -3998,19 +4021,19 @@ class TartubeApp(Gtk.Application):
             self.main_win_videos_slider_posn \
             = json_dict['main_win_save_posn']
 
-        # Remove v2.3.434
-#        if version >= 1003122:  # v1.3.122
-#            self.gtk_emulate_broken_flag \
-#            = json_dict['gtk_emulate_broken_flag']
+        # Removed v2.3.434
+#       if version >= 1003122:  # v1.3.122
+#           self.gtk_emulate_broken_flag \
+#           = json_dict['gtk_emulate_broken_flag']
 
         if version >= 2001024:  # v2.1.024
             self.toolbar_hide_flag = json_dict['toolbar_hide_flag']
         if version >= 5024:     # v0.5.024
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
         # (Moved to database file)
-#        if version >= 2002109:  # v2.2.109
-#            self.toolbar_system_hide_flag \
-#            = json_dict['toolbar_system_hide_flag']
+#       if version >= 2002109:  # v2.2.109
+#           self.toolbar_system_hide_flag \
+#           = json_dict['toolbar_system_hide_flag']
         if version >= 1001064:  # v1.1.064
             self.show_tooltips_flag = json_dict['show_tooltips_flag']
         if version >= 2003047:  # v2.3.047
@@ -4056,6 +4079,11 @@ class TartubeApp(Gtk.Application):
             = json_dict['catalogue_draw_frame_flag']
             self.catalogue_draw_icons_flag \
             = json_dict['catalogue_draw_icons_flag']
+        if version >= 2003612:  # v2.3.612
+            self.catalogue_draw_downloaded_flag \
+            = json_dict['catalogue_draw_downloaded_flag']
+            self.catalogue_draw_undownloaded_flag \
+            = json_dict['catalogue_draw_undownloaded_flag']
         if version >= 2003481:  # v2.3.481
             self.catalogue_draw_blocked_flag \
             = json_dict['catalogue_draw_blocked_flag']
@@ -4146,6 +4174,8 @@ class TartubeApp(Gtk.Application):
         if version >= 2003473:  # v2.3.473
             self.classic_resolution_selection \
             = json_dict['classic_resolution_selection']
+        if version >= 2003586:  # v2.3.586
+            self.classic_livestream_flag = json_dict['classic_livestream_flag']
         if version >= 2002129:  # v2.2.129
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
@@ -4203,8 +4233,9 @@ class TartubeApp(Gtk.Application):
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
 
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
-        if version >= 2002179:  # v2.2.179
-            self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
+        # Removed v2.3.565
+#       if version >= 2002179:  # v2.2.179
+#           self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
 
         if version >= 1002024:  # v1.2.024
             self.refresh_output_videos_flag \
@@ -4233,27 +4264,27 @@ class TartubeApp(Gtk.Application):
             self.custom_sblock_mirror = json_dict['custom_sblock_mirror']
 
         # (Moved to database file)
-#        if version >= 1004024:  # v1.4.024
-#            self.custom_dl_by_video_flag \
-#            = json_dict['custom_dl_by_video_flag']
-#        if version >= 2003155:  # v2.3.155
-#            self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
-#        if version >= 2003240:  # v2.3.240
-#            self.custom_dl_slice_flag = json_dict['custom_dl_slice_flag']
-#            self.custom_dl_slice_dict = json_dict['custom_dl_slice_dict']
+#       if version >= 1004024:  # v1.4.024
+#           self.custom_dl_by_video_flag \
+#           = json_dict['custom_dl_by_video_flag']
+#       if version >= 2003155:  # v2.3.155
+#           self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
+#       if version >= 2003240:  # v2.3.240
+#           self.custom_dl_slice_flag = json_dict['custom_dl_slice_flag']
+#           self.custom_dl_slice_dict = json_dict['custom_dl_slice_dict']
         # (Moved to database file)
-#        if version >= 1004052:  # v1.4.052
-#            self.custom_dl_divert_mode = json_dict['custom_dl_divert_mode']
-#        elif version >= 1004024:  # v1.4.024
-#            if json_dict['custom_dl_divert_hooktube_flag']:
-#                self.custom_dl_divert_mode = 'hooktube'
-#        if version >= 2001047:  # v2.1.047
-#            self.custom_dl_divert_website \
-#            = json_dict['custom_dl_divert_website']
-#        if version >= 1004024:  # v1.4.024
-#            self.custom_dl_delay_flag = json_dict['custom_dl_delay_flag']
-#            self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
-#            self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
+#       if version >= 1004052:  # v1.4.052
+#           self.custom_dl_divert_mode = json_dict['custom_dl_divert_mode']
+#       elif version >= 1004024:  # v1.4.024
+#           if json_dict['custom_dl_divert_hooktube_flag']:
+#               self.custom_dl_divert_mode = 'hooktube'
+#       if version >= 2001047:  # v2.1.047
+#           self.custom_dl_divert_website \
+#           = json_dict['custom_dl_divert_website']
+#       if version >= 1004024:  # v1.4.024
+#           self.custom_dl_delay_flag = json_dict['custom_dl_delay_flag']
+#           self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
+#           self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
 
         if version >= 2003029:  # v2.3.029
             self.dl_proxy_list = json_dict['dl_proxy_list']
@@ -4273,24 +4304,37 @@ class TartubeApp(Gtk.Application):
             self.ffmpeg_convert_webp_flag \
             = json_dict['ffmpeg_convert_webp_flag']
 
-        if version >= 2002178:  # v2.2.178
-            self.ytsc_path = json_dict['ytsc_path']
-        if version >= 2002181:  # v2.2.181
-            self.ytsc_path = json_dict['ytsc_path']
-            self.ytsc_priority_flag = json_dict['ytsc_priority_flag']
-            self.ytsc_wait_time = json_dict['ytsc_wait_time']
-            self.ytsc_restart_max = json_dict['ytsc_restart_max']
+        if version >= 2003566:  # v2.3.566
+            self.livestream_dl_mode = json_dict['livestream_dl_mode']
+        if version >= 2003582:  # v2.3.582
+            self.livestream_replace_flag = json_dict['livestream_replace_flag']
+            self.livestream_stop_is_final_flag \
+            = json_dict['livestream_stop_is_final_flag']
+            self.livestream_force_check_flag \
+            = json_dict['livestream_force_check_flag']
 
-        # Remove v2.2.156
-#        if version >= 2001104:  # v2.1.104
-#            self.ffmpeg_add_string = json_dict['ffmpeg_add_string']
-#            self.ffmpeg_regex_string = json_dict['ffmpeg_regex_string']
-#            self.ffmpeg_substitute_string \
-#            = json_dict['ffmpeg_substitute_string']
-#            self.ffmpeg_ext_string = json_dict['ffmpeg_ext_string']
-#            self.ffmpeg_option_string = json_dict['ffmpeg_option_string']
-#            self.ffmpeg_delete_flag = json_dict['ffmpeg_delete_flag']
-#            self.ffmpeg_keep_flag = json_dict['ffmpeg_keep_flag']
+        # Removed v2.3.565
+#       if version >= 2002178:  # v2.2.178
+#           self.ytsc_path = json_dict['ytsc_path']
+#       if version >= 2002181:  # v2.2.181
+#           self.ytsc_path = json_dict['ytsc_path']
+#           self.ytsc_priority_flag = json_dict['ytsc_priority_flag']
+#           self.ytsc_wait_time = json_dict['ytsc_wait_time']
+#           self.ytsc_restart_max = json_dict['ytsc_restart_max']
+
+        if version >= 2003570:     # v2.3.570
+            self.streamlink_path = json_dict['streamlink_path']
+
+        # Removed v2.2.156
+#       if version >= 2001104:  # v2.1.104
+#           self.ffmpeg_add_string = json_dict['ffmpeg_add_string']
+#           self.ffmpeg_regex_string = json_dict['ffmpeg_regex_string']
+#           self.ffmpeg_substitute_string \
+#           = json_dict['ffmpeg_substitute_string']
+#           self.ffmpeg_ext_string = json_dict['ffmpeg_ext_string']
+#           self.ffmpeg_option_string = json_dict['ffmpeg_option_string']
+#           self.ffmpeg_delete_flag = json_dict['ffmpeg_delete_flag']
+#           self.ffmpeg_keep_flag = json_dict['ffmpeg_keep_flag']
 
         if version >= 2003067:     # v2.3.067
             self.graph_data_type = json_dict['graph_data_type']
@@ -4320,7 +4364,7 @@ class TartubeApp(Gtk.Application):
         if version >= 1002013:  # v1.2.013
             self.simple_options_flag = json_dict['simple_options_flag']
 
-#        # Removed  v2.2.015
+         # Removed  v2.2.015
 #        if version >= 1001067:  # v1.0.067
 #            self.scheduled_dl_mode = json_dict['scheduled_dl_mode']
 #            self.scheduled_check_mode = json_dict['scheduled_check_mode']
@@ -4428,33 +4472,33 @@ class TartubeApp(Gtk.Application):
             self.operation_auto_restart_time \
             = json_dict['operation_auto_restart_time']
         # Removed v2.3.461
-#        if version >= 2003012:  # v2.3.012
-#            self.operation_auto_restart_network_flag \
-#            = json_dict['operation_auto_restart_network_flag']
+#       if version >= 2003012:  # v2.3.012
+#           self.operation_auto_restart_network_flag \
+#           = json_dict['operation_auto_restart_network_flag']
         if version >= 2002169:  # v2.2.169
             self.operation_auto_restart_max \
             = json_dict['operation_auto_restart_max']
 
-#       # Removed v1.3.028
-#        self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
+        # Removed v1.3.028
+#       self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
         if version >= 1003028:  # v1.3.028
             self.operation_dialogue_mode = json_dict['operation_dialogue_mode']
         if version >= 1003060:  # v1.3.060
             self.operation_convert_mode = json_dict['operation_convert_mode']
 
         self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
-#       # Removed v0.5.003
-#        self.use_module_validators_flag \
-#        = json_dict['use_module_validators_flag']
+        # Removed v0.5.003
+#       self.use_module_validators_flag \
+#       = json_dict['use_module_validators_flag']
 
         if version >= 1000006:  # v1.0.006
             self.dialogue_copy_clipboard_flag \
             = json_dict['dialogue_copy_clipboard_flag']
             self.dialogue_keep_open_flag \
             = json_dict['dialogue_keep_open_flag']
-#            # Removed v1.3.022
-#            self.dialogue_keep_container_flag \
-#            = json_dict['dialogue_keep_container_flag']
+            # Removed v1.3.022
+#           self.dialogue_keep_container_flag \
+#           = json_dict['dialogue_keep_container_flag']
         if version >= 2003130:  # v2.3.130
             self.dialogue_yt_remind_flag = json_dict['dialogue_yt_remind_flag']
 
@@ -4619,9 +4663,15 @@ class TartubeApp(Gtk.Application):
 
         if version >= 1001029:  # v1.1.029
             self.auto_delete_flag = json_dict['auto_delete_flag']
+            self.auto_delete_days = json_dict['auto_delete_days']
+        if version >= 2003609:  # v2.3.609
+            self.auto_remove_flag = json_dict['auto_remove_flag']
+            self.auto_remove_days = json_dict['auto_remove_days']
+        if version >= 1001029:  # v1.1.029
             self.auto_delete_watched_flag \
             = json_dict['auto_delete_watched_flag']
-            self.auto_delete_days = json_dict['auto_delete_days']
+        if version >= 2003610:  # v2.3.610
+            self.auto_delete_asap_flag = json_dict['auto_delete_asap_flag']
 
         if version >= 1002041:  # v1.2.041
             self.delete_on_shutdown_flag = json_dict['delete_on_shutdown_flag']
@@ -5170,6 +5220,10 @@ class TartubeApp(Gtk.Application):
             self.catalogue_filter_comment_flag,
             'catalogue_draw_frame_flag': self.catalogue_draw_frame_flag,
             'catalogue_draw_icons_flag': self.catalogue_draw_icons_flag,
+            'catalogue_draw_downloaded_flag': \
+            self.catalogue_draw_downloaded_flag,
+            'catalogue_draw_undownloaded_flag': \
+            self.catalogue_draw_undownloaded_flag,
             'catalogue_draw_blocked_flag': self.catalogue_draw_blocked_flag,
             'catalogue_clickable_container_flag': \
             self.catalogue_clickable_container_flag,
@@ -5218,6 +5272,7 @@ class TartubeApp(Gtk.Application):
             'classic_format_selection': self.classic_format_selection,
             'classic_format_convert_flag': self.classic_format_convert_flag,
             'classic_resolution_selection': self.classic_resolution_selection,
+            'classic_livestream_flag': self.classic_livestream_flag,
             'classic_pending_flag': self.classic_pending_flag,
             'classic_pending_list': self.classic_pending_list,
             'classic_duplicate_remove_flag': \
@@ -5257,7 +5312,6 @@ class TartubeApp(Gtk.Application):
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
 
             'ytdl_write_verbose_flag': self.ytdl_write_verbose_flag,
-            'ytsc_write_verbose_flag': self.ytsc_write_verbose_flag,
 
             'refresh_output_videos_flag': self.refresh_output_videos_flag,
             'refresh_output_verbose_flag': self.refresh_output_verbose_flag,
@@ -5277,10 +5331,13 @@ class TartubeApp(Gtk.Application):
             'avconv_path': self.avconv_path,
             'ffmpeg_convert_webp_flag': self.ffmpeg_convert_webp_flag,
 
-            'ytsc_path': self.ytsc_path,
-            'ytsc_priority_flag': self.ytsc_priority_flag,
-            'ytsc_wait_time': self.ytsc_wait_time,
-            'ytsc_restart_max': self.ytsc_restart_max,
+            'livestream_dl_mode': self.livestream_dl_mode,
+            'livestream_replace_flag': self.livestream_replace_flag,
+            'livestream_stop_is_final_flag': \
+            self.livestream_stop_is_final_flag,
+            'livestream_force_check_flag': self.livestream_force_check_flag,
+
+            'streamlink_path': self.streamlink_path,
 
             'graph_data_type': self.graph_data_type,
             'graph_plot_type': self.graph_plot_type,
@@ -5437,8 +5494,11 @@ class TartubeApp(Gtk.Application):
             'match_ignore_chars': self.match_ignore_chars,
 
             'auto_delete_flag': self.auto_delete_flag,
-            'auto_delete_watched_flag': self.auto_delete_watched_flag,
             'auto_delete_days': self.auto_delete_days,
+            'auto_remove_flag': self.auto_remove_flag,
+            'auto_remove_days': self.auto_remove_days,
+            'auto_delete_watched_flag': self.auto_delete_watched_flag,
+            'auto_delete_asap_flag': self.auto_delete_asap_flag,
 
             'delete_on_shutdown_flag': self.delete_on_shutdown_flag,
             'open_temp_on_desktop_flag': self.open_temp_on_desktop_flag,
@@ -5815,8 +5875,9 @@ class TartubeApp(Gtk.Application):
         # Empty any temporary folders
         self.delete_temp_folders()
 
-        # Auto-delete old downloaded videos
+        # Auto-delete and auto-remove old downloaded videos
         self.auto_delete_old_videos()
+        self.auto_remove_old_videos()
 
         # Test any channels/playlists/folders which have external directories
         #   set. If we can't read/write to the external directory, then mark
@@ -7187,6 +7248,58 @@ class TartubeApp(Gtk.Application):
 
             self.classic_dropzone_list = dropzone_list
 
+        if version < 2003595:       # v2.3.595
+
+            # This version adds a new IV to media.Channel and media.Playlist
+            #   objects
+            for dbid in self.media_name_dict.values():
+                media_data_obj = self.media_reg_dict[dbid]
+                if not isinstance(media_data_obj, media.Folder):
+                    media_data_obj.enhanced \
+                    = utils.is_enhanced(media_data_obj.source)
+
+        if version < 2003607:       # v2.3.607
+
+            # Git #405: sticky plaster to repair this broken database
+
+            # options.OptionsManager objects have been applied to media data
+            #   objects, but are not in the registry
+            for media_data_obj in self.media_reg_dict.values():
+
+                if media_data_obj.options_obj \
+                and not media_data_obj.options_obj.uid \
+                in self.options_reg_dict:
+                    self.options_reg_dict[media_data_obj.options_obj.uid] \
+                    = media_data_obj.options_obj
+
+                    # (options.OptionsManager.dbid does not match its own
+                    #   media data object, so fix that as well)
+                    media_data_obj.options_obj.dbid = media_data_obj.dbid
+
+            # Because of that error, options.OptionsManager have not been
+            #   updated by this function
+            test_options_obj = options.OptionsManager(-1, 'test')
+            for real_options_obj in self.options_reg_dict.values():
+
+                if not hasattr(real_options_obj, 'descrip'):
+                    real_options_obj.descrip = real_options_obj.name
+
+                for option in test_options_obj.options_dict:
+                    if not option in real_options_obj.options_dict:
+
+                        if isinstance(
+                            test_options_obj.options_dict[option],
+                            list,
+                        ) or isinstance(
+                            test_options_obj.options_dict[option],
+                            dict,
+                        ):
+                            real_options_obj.options_dict[option] \
+                            = test_options_obj.options_dict[option].copy()
+                        else:
+                            real_options_obj.options_dict[option] \
+                            = test_options_obj.options_dict[option]
+
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -7621,7 +7734,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = self.temp_dir
         self.backup_temp_dl_dir = self.temp_dl_dir
         self.backup_temp_test_dir = self.temp_test_dir
-        self.backup_temp_ytsc_dir = self.temp_ytsc_dir
         self.backup_data_dir_alt_list = self.data_dir_alt_list.copy()
 
 
@@ -7640,7 +7752,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
-        self.backup_temp_ytsc_dir = None
         self.backup_data_dir_alt_list = None
 
 
@@ -7660,7 +7771,6 @@ class TartubeApp(Gtk.Application):
         self.temp_dir = self.backup_temp_dir
         self.temp_dl_dir = self.backup_temp_dl_dir
         self.temp_test_dir = self.backup_temp_test_dir
-        self.temp_ytsc_dir = self.backup_temp_ytsc_dir
         self.data_dir_alt_list = self.backup_data_dir_alt_list.copy()
 
 
@@ -8571,9 +8681,6 @@ class TartubeApp(Gtk.Application):
         self.temp_test_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'ytdl-test'),
         )
-        self.temp_ytsc_dir = os.path.abspath(
-            os.path.join(self.data_dir, '.temp', 'ytsc'),
-        )
 
 
     def setup_paths(self):
@@ -8765,12 +8872,20 @@ class TartubeApp(Gtk.Application):
                     self.ytdl_update_current = 'ytdl_update_local_path'
 
 
-    def auto_delete_old_videos(self):
+    def auto_delete_old_videos(self, update_flag=False):
 
-        """Called by self.load_db().
+        """Called by self.load_db and .download_manager_finished().
 
-        After loading the Tartube database, auto-delete any old downloaded
-        videos (if auto-deletion is enabled)
+        Auto-delete any old downloaded videos (if auto-deletion is enabled).
+
+        The video is removed from the database, and all files associated with
+        the video are deleted from the filesystem.
+
+        Args:
+
+            update_flag (bool): If True, the Video Catalogue is updated;
+                otherwise it is not
+
         """
 
         if not self.auto_delete_flag:
@@ -8796,7 +8911,59 @@ class TartubeApp(Gtk.Application):
                 or not media_data_obj.new_flag
             ):
                 # Ddelete this video
-                self.delete_video(media_data_obj, True, True, True)
+                self.delete_video(
+                    media_data_obj,
+                    True,
+                    not update_flag,
+                    not update_flag,
+                )
+
+
+    def auto_remove_old_videos(self, update_flag=False):
+
+        """Called by self.load_db and .download_manager_finished().
+
+        Auto-remove any old downloaded videos (if auto-removal is enabled).
+
+        The video is removed from the database, but no files associated with
+        the video are deleted from the filesystem.
+
+        Args:
+
+            update_flag (bool): If True, the Video Catalogue is updated;
+                otherwise it is not
+
+        """
+
+        if not self.auto_remove_flag:
+            return
+
+        # Calculate the system time before which any downloaded videos can be
+        #   removed
+        time_limit = int(time.time()) - (self.auto_remove_days * 24 * 60 * 60)
+
+        # Import a list of media data objects (as self.media_reg_dict will be
+        #   modified during this procedure)
+        media_list = list(self.media_reg_dict.values())
+
+        # Auto-remove any videos as required
+        for media_data_obj in media_list:
+
+            if isinstance(media_data_obj, media.Video) \
+            and media_data_obj.dl_flag \
+            and not media_data_obj.archive_flag \
+            and media_data_obj.receive_time < time_limit \
+            and (
+                not self.auto_delete_watched_flag \
+                or not media_data_obj.new_flag
+            ):
+                # Remove this video
+                self.delete_video(
+                    media_data_obj,
+                    False,
+                    not update_flag,
+                    not update_flag,
+                )
 
 
     def check_external(self):
@@ -10474,6 +10641,12 @@ class TartubeApp(Gtk.Application):
         #   empty this list)
         self.watch_after_dl_list = []
 
+        # Downloaded videos can be deleted/removed, if required. The True flag
+        #   updates the Video Catalogue
+        if self.auto_delete_asap_flag:
+            self.auto_delete_old_videos(True)
+            self.auto_remove_old_videos(True)
+
         # After a download operation, save files, if allowed (but don't bother
         #   when launched from the Classic Mode tab)
         if not classic_mode_flag and self.operation_save_flag:
@@ -10495,7 +10668,9 @@ class TartubeApp(Gtk.Application):
 
         else:
 
-            # No progress bar exists; just resensitise the existing buttons
+            # No progress bar exists; just reset the text on the existing
+            #   buttons, and then resensitise them
+            self.main_win_obj.update_free_space_msg()
             self.main_win_obj.sensitise_progress_bar(True)
 
         # (De)sensitise other widgets, as appropriate
@@ -10699,7 +10874,7 @@ class TartubeApp(Gtk.Application):
         1. Install youtube-dl (or a fork of it), or update it to its most
             recent version.
 
-        2. Install FFmpeg or matplotlib(on MS Windows only)
+        2. Install FFmpeg, matplotlib or streamlink (on MS Windows only)
 
         Creates a new updates.UpdateManager object to handle the update
         operation. When the operation is complete,
@@ -10708,7 +10883,8 @@ class TartubeApp(Gtk.Application):
         Args:
 
             update_type (str): 'ffmpeg' to install FFmpeg, 'matplotlib' to
-                install matplotlib, or 'ytdl' to install/update youtube-dl
+                install matplotlib, 'streamlink' to install streamlinkg, or
+                'ytdl' to install/update youtube-dl (or a fork of it)
 
         """
 
@@ -10766,6 +10942,14 @@ class TartubeApp(Gtk.Application):
                 + ' operating system',
             )
 
+        elif update_type == 'streamlink' and os.name != 'nt':
+            # The same applies to streamlink
+            return self.system_error(
+                999,
+                'Update operation cannot install streamlink on your' \
+                + ' operating system',
+            )
+
         # During an update operation, certain widgets are modified and/or
         #   desensitised
         self.main_win_obj.sensitise_check_dl_buttons(False, update_type)
@@ -10802,7 +10986,7 @@ class TartubeApp(Gtk.Application):
             recent version.
 
         2. Install FFmpeg (on MS Windows only; at the moment, the wizard
-            window does not try to install matplotlib)
+            window does not try to install matplotlib or streamlink)
 
         Creates a new updates.UpdateManager object to handle the update
         operation. When the operation is complete,
@@ -10851,8 +11035,8 @@ class TartubeApp(Gtk.Application):
     def update_manager_halt_timer(self):
 
         """Called by updates.UpdateManager.install_ffmpeg(),
-        .install_matplotlib or .install_ytdl() when those functions have
-        finished.
+        .install_matplotlib(), .install_streamlink or .install_ytdl() when
+        those functions have finished.
 
         During an update operation, a GObject timer was running. Let it
         continue running for a few seconds more.
@@ -10920,7 +11104,9 @@ class TartubeApp(Gtk.Application):
 
         # Then show a dialogue window/desktop notification, if allowed (and if
         #   a download operation is not waiting to start)
-        if update_type == 'ffmpeg' or update_type == 'matplotlib':
+        if update_type == 'ffmpeg' \
+        or update_type == 'matplotlib' \
+        or update_type == 'streamlink':
 
             if not success_flag:
                 msg = _('Installation failed')
@@ -12733,6 +12919,19 @@ class TartubeApp(Gtk.Application):
                     video_obj.reset_subs_list()
 
                 self.extract_parent_name_from_metadata(video_obj, json_dict)
+
+                if isinstance(video_obj.parent_obj, media.Channel) \
+                or isinstance(video_obj.parent_obj, media.Playlist):
+                    # 'Enhanced' websites only: set the channel/playlist RSS
+                    #   feed, if not already set
+                    video_obj.parent_obj.update_rss_from_json(json_dict)
+
+                    # If downloading from a channel/playlist, remember the
+                    #   video's index. (The server supplies an index even for a
+                    #   channel, and the user might want to convert a channel
+                    #   to a playlist)
+                    if 'playlist_index' in json_dict:
+                        video_obj.set_index(json_dict['playlist_index'])
 
             if (
                 (mode == 'default' and self.comment_store_flag) \
@@ -23100,6 +23299,23 @@ class TartubeApp(Gtk.Application):
         self.update_manager_start('matplotlib')
 
 
+    def on_menu_install_streamlink(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Start an update operation to install streamlink (on MS Windows only).
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.update_manager_start('streamlink')
+
+
     def on_menu_live_preferences(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23812,12 +24028,12 @@ class TartubeApp(Gtk.Application):
             self.auto_clone_options_flag = True
 
 
-    def set_auto_delete_options_flag(self, flag):
+    def set_auto_delete_asap_flag(self, flag):
 
         if not flag:
-            self.auto_delete_options_flag = False
+            self.auto_delete_asap_flag = False
         else:
-            self.auto_delete_options_flag = True
+            self.auto_delete_asap_flag = True
 
 
     def set_auto_delete_flag(self, flag):
@@ -23831,6 +24047,14 @@ class TartubeApp(Gtk.Application):
     def set_auto_delete_days(self, days):
 
         self.auto_delete_days = days
+
+
+    def set_auto_delete_options_flag(self, flag):
+
+        if not flag:
+            self.auto_delete_options_flag = False
+        else:
+            self.auto_delete_options_flag = True
 
 
     def set_auto_delete_watched_flag(self, flag):
@@ -23891,6 +24115,19 @@ class TartubeApp(Gtk.Application):
 
         if video_obj.dbid in self.media_reg_auto_open_dict:
             del self.media_reg_auto_open_dict[video_obj.dbid]
+
+
+    def set_auto_remove_flag(self, flag):
+
+        if not flag:
+            self.auto_remove_flag = False
+        else:
+            self.auto_remove_flag = True
+
+
+    def set_auto_remove_days(self, days):
+
+        self.auto_remove_days = days
 
 
     def set_auto_switch_output_flag(self, flag):
@@ -23994,6 +24231,14 @@ class TartubeApp(Gtk.Application):
             self.catalogue_draw_blocked_flag = True
 
 
+    def set_catalogue_draw_downloaded_flag(self, flag):
+
+        if not flag:
+            self.catalogue_draw_downloaded_flag = False
+        else:
+            self.catalogue_draw_downloaded_flag = True
+
+
     def set_catalogue_draw_frame_flag(self, flag):
 
         if not flag:
@@ -24008,6 +24253,14 @@ class TartubeApp(Gtk.Application):
             self.catalogue_draw_icons_flag = False
         else:
             self.catalogue_draw_icons_flag = True
+
+
+    def set_catalogue_draw_undownloaded_flag(self, flag):
+
+        if not flag:
+            self.catalogue_draw_undownloaded_flag = False
+        else:
+            self.catalogue_draw_undownloaded_flag = True
 
 
     def set_catalogue_filter_comment_flag(self, flag):
@@ -24116,6 +24369,14 @@ class TartubeApp(Gtk.Application):
     def set_classic_format_selection(self, value):
 
         self.classic_format_selection = value
+
+
+    def set_classic_livestream_flag(self, flag):
+
+        if not flag:
+            self.classic_livestream_flag = False
+        else:
+            self.classic_livestream_flag = True
 
 
     def set_classic_resolution_selection(self, value):
@@ -24665,12 +24926,41 @@ class TartubeApp(Gtk.Application):
             self.livestream_auto_open_flag = True
 
 
+    def set_livestream_dl_mode(self, value):
+
+        self.livestream_dl_mode = value
+
+
+    def set_livestream_force_check_flag(self, flag):
+
+        if not flag:
+            self.livestream_force_check_flag = False
+        else:
+            self.livestream_force_check_flag = True
+
+
+    def set_livestream_replace_flag(self, flag):
+
+        if not flag:
+            self.livestream_replace_flag = False
+        else:
+            self.livestream_replace_flag = True
+
+
     def set_livestream_simple_colour_flag(self, flag):
 
         if not flag:
             self.livestream_simple_colour_flag = False
         else:
             self.livestream_simple_colour_flag = True
+
+
+    def set_livestream_stop_is_final_flag(self, flag):
+
+        if not flag:
+            self.livestream_stop_is_final_flag = False
+        else:
+            self.livestream_stop_is_final_flag = True
 
 
     def set_livestream_use_colour_flag(self, flag):
@@ -25280,6 +25570,11 @@ class TartubeApp(Gtk.Application):
             self.store_playlist_id_flag = True
 
 
+    def set_streamlink_path(self, value):
+
+        self.streamlink_path = value
+
+
     def set_system_error_show_flag(self, flag):
 
         if not flag:
@@ -25632,34 +25927,3 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_verbose_flag = False
         else:
             self.ytdl_write_verbose_flag = True
-
-
-    def set_ytsc_path(self, path):
-
-        self.ytsc_path = path
-
-
-    def set_ytsc_priority_flag(self, flag):
-
-        if not flag:
-            self.ytsc_priority_flag = False
-        else:
-            self.ytsc_priority_flag = True
-
-
-    def set_ytsc_restart_max(self, value):
-
-        self.ytsc_restart_max = value
-
-
-    def set_ytsc_wait_time(self, value):
-
-        self.ytsc_wait_time = value
-
-
-    def set_ytsc_write_verbose_flag(self, flag):
-
-        if not flag:
-            self.ytsc_write_verbose_flag = False
-        else:
-            self.ytsc_write_verbose_flag = True

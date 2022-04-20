@@ -60,12 +60,381 @@ month = today.strftime("%m")
 
 xmas_flag = False
 eesti_flag = False
+anglo_flag = False
 if (int(month) == 12 and int(day) >= 24) \
 or (int(month) == 1 and int(day) <= 5):
     xmas_flag = True
 elif (int(month) == 2 and int(day) == 24) \
 or (int(month) == 8 and int(day) == 20):
     eesti_flag = True
+elif (int(month) == 4 and int(day) == 23):
+    anglo_flag = True
+
+language_setup_list = [
+    # ISO 639-1 Language Codes (with one extra key-value pair to handle live
+    #   chat)
+    # English is top of the list, because it's the default setting in
+    #   options.OptionsManager
+    # NB These values must not contain square brackets [...]
+    _('English'), 'en',
+    'YouTube live chat', 'live_chat',
+    'Abkhazian', 'ab',
+    'Afar', 'aa',
+    'Afrikaans', 'af',
+    'Akan', 'ak',
+    'Albanian', 'sq',
+    'Amharic', 'am',
+    'Arabic', 'ar',
+    'Aragonese', 'an',
+    'Armenian', 'hy',
+    'Assamese', 'as',
+    'Avaric', 'av',
+    'Avestan', 'ae',
+    'Aymara', 'ay',
+    'Azerbaijani', 'az',
+    'Bambara', 'bm',
+    'Bashkir', 'ba',
+    'Basque', 'eu',
+    'Belarusian', 'be',
+    'Bengali (Bangla)', 'bn',
+    'Bihari', 'bh',
+    'Bislama', 'bi',
+    'Bosnian', 'bs',
+    'Breton', 'br',
+    'Bulgarian', 'bg',
+    'Burmese', 'my',
+    'Catalan', 'ca',
+    'Chamorro', 'ch',
+    'Chechen', 'ce',
+    'Chichewa, Chewa, Nyanja', 'ny',
+    'Chinese', 'zh',
+    'Chinese (Simplified)', 'zh-Hans',
+    'Chinese (Traditional)', 'zh-Hant',
+    'Chuvash', 'cv',
+    'Cornish', 'kw',
+    'Corsican', 'co',
+    'Cree', 'cr',
+    'Croatian', 'hr',
+    'Czech', 'cs',
+    'Danish', 'da',
+    'Divehi, Dhivehi, Maldivian', 'dv',
+    _('Dutch'), 'nl',
+    'Dzongkha', 'dz',
+    'Esperanto', 'eo',
+    'Estonian', 'et',
+    'Ewe', 'ee',
+    'Faroese', 'fo',
+    'Fijian', 'fj',
+    'Finnish', 'fi',
+    'French', 'fr',
+    'Fula, Fulah, Pulaar, Pular', 'ff',
+    'Galician', 'gl',
+    'Gaelic (Scottish)', 'gd',
+    'Gaelic (Manx)', 'gv',
+    'Georgian', 'ka',
+    'German', 'de',
+    'Greek', 'el',
+    'Greenlandic, Kalaallisut', 'kl',
+    'Guarani', 'gn',
+    'Gujarati', 'gu',
+    'Haitian Creole', 'ht',
+    'Hausa', 'ha',
+    'Hebrew', 'he',
+    'Herero', 'hz',
+    'Hindi', 'hi',
+    'Hiri Motu', 'ho',
+    'Hungarian', 'hu',
+    'Icelandic', 'is',
+    'Ido', 'io',
+    'Igbo', 'ig',
+    'Indonesian', 'id',
+    'Interlingua', 'ia',
+    'Interlingue', 'ie',
+    'Inuktitut', 'iu',
+    'Inupiak', 'ik',
+    'Irish', 'ga',
+    'Italian', 'it',
+    'Japanese', 'ja',
+    'Javanese', 'jv',
+    'Kannada', 'kn',
+    'Kanuri', 'kr',
+    'Kashmiri', 'ks',
+    'Kazakh', 'kk',
+    'Khmer', 'km',
+    'Kikuyu', 'ki',
+    'Kinyarwanda (Rwanda)', 'rw',
+    'Kirundi', 'rn',
+    'Klingon', 'tlh',       # Actually ISO 639-2
+    'Kyrgyz', 'ky',
+    'Komi', 'kv',
+    'Kongo', 'kg',
+    _('Korean'), 'ko',
+    'Kurdish', 'ku',
+    'Kwanyama', 'kj',
+    'Lao', 'lo',
+    'Latin', 'la',
+    'Latvian (Lettish)', 'lv',
+    'Limburgish ( Limburger)', 'li',
+    'Lingala', 'ln',
+    'Lithuanian', 'lt',
+    'Luga-Katanga', 'lu',
+    'Luganda, Ganda', 'lg',
+    'Luxembourgish', 'lb',
+    'Macedonian', 'mk',
+    'Malagasy', 'mg',
+    'Malay', 'ms',
+    'Malayalam', 'ml',
+    'Maltese', 'mt',
+    'Maori', 'mi',
+    'Marathi', 'mr',
+    'Marshallese', 'mh',
+    'Moldavian', 'mo',
+    'Mongolian', 'mn',
+    'Nauru', 'na',
+    'Navajo', 'nv',
+    'Ndonga', 'ng',
+    'Northern Ndebele', 'nd',
+    'Nepali', 'ne',
+    'Norwegian', 'no',
+    'Norwegian bokmål', 'nb',
+    'Norwegian nynorsk', 'nn',
+    'Occitan', 'oc',
+    'Ojibwe', 'oj',
+    'Old Church Slavonic, Old Bulgarian', 'cu',
+    'Oriya', 'or',
+    'Oromo (Afaan Oromo)', 'om',
+    'Ossetian', 'os',
+    'Pāli', 'pi',
+    'Pashto, Pushto', 'ps',
+    'Persian (Farsi)', 'fa',
+    'Polish', 'pl',
+    'Portuguese', 'pt',
+    'Punjabi (Eastern)', 'pa',
+    'Quechua', 'qu',
+    'Romansh', 'rm',
+    'Romanian', 'ro',
+    'Russian', 'ru',
+    'Sami', 'se',
+    'Samoan', 'sm',
+    'Sango', 'sg',
+    'Sanskrit', 'sa',
+    'Serbian', 'sr',
+    'Serbo-Croatian', 'sh',
+    'Sesotho', 'st',
+    'Setswana', 'tn',
+    'Shona', 'sn',
+    'Sichuan Yi, Nuoso', 'ii',
+    'Sindhi', 'sd',
+    'Sinhalese', 'si',
+    'Swati, Siswati', 'ss',
+    'Slovak', 'sk',
+    'Slovenian', 'sl',
+    'Somali', 'so',
+    'Southern Ndebele', 'nr',
+    'Spanish', 'es',
+    'Sundanese', 'su',
+    'Swahili (Kiswahili)', 'sw',
+    'Swedish', 'sv',
+    'Tagalog', 'tl',
+    'Tahitian', 'ty',
+    'Tajik', 'tg',
+    'Tamil', 'ta',
+    'Tatar', 'tt',
+    'Telugu', 'te',
+    'Thai', 'th',
+    'Tibetan', 'bo',
+    'Tigrinya', 'ti',
+    'Tonga', 'to',
+    'Tsonga', 'ts',
+    'Turkish', 'tr',
+    'Turkmen', 'tk',
+    'Twi', 'tw',
+    'Uyghur', 'ug',
+    'Ukrainian', 'uk',
+    'Urdu', 'ur',
+    'Uzbek', 'uz',
+    'Venda', 've',
+    'Vietnamese', 'vi',
+    'Volapük', 'vo',
+    'Wallon', 'wa',
+    'Welsh', 'cy',
+    'Wolof', 'wo',
+    'Western Frisian', 'fy',
+    'Xhosa', 'xh',
+    'Yiddish', 'yi',
+    'Yoruba', 'yo',
+    'Zhuang, Chuang', 'za',
+    'Zulu', 'zu',
+]
+
+LANGUAGE_CODE_LIST = []
+LANGUAGE_CODE_DICT = {}
+
+while language_setup_list:
+    key = language_setup_list.pop(0)
+    value = language_setup_list.pop(0)
+
+    LANGUAGE_CODE_LIST.append(key)
+    LANGUAGE_CODE_DICT[key] = value
+
+# 'Enhanced' websites. As of v2.3.597, this data is only used to extract RSS
+#   feeds, but that functionality could be extended in the future
+# The 'convert' templates work like this: any four-character sequence beginning
+#   and ending with a space character is replaced:
+#       ' vi ' - replaced with video ID
+#       ' vn ' - replaced with video name
+#       ' ci ' - replaced with channel ID
+#       ' cn ' - replaced with channel name
+#       ' pi ' - replaced with playlist ID
+#       ' pn ' - replaced with playlist name
+# The IDs and/or names are those extracted from a full video/channel/playlist
+#   URL (or provided by a video's metadata file)
+# In each mini-dictionary, the keys 'name', 'pretty_name' must be set. The
+#   'detect_list' item must not be empty; all other values can be empty lists,
+#   if not applicable
+enhanced_setup_list = [
+    {
+        # Key in the dictionary below
+        'name': 'youtube',
+        # Name displayed in the Video Catalogue
+        'pretty_name': 'YouTube',
+        # Regexes to recognise the website (no groups used)
+        'detect_list': [
+            '^https?:\/\/(www\.)?youtube\.com\/',
+        ],
+        # Regexes to extract a video ID/name. The second group is used (so that
+        #   the optional www can be the first group)
+        'extract_vid_list': [
+            '^https?:\/\/(www\.)?youtube\.com\/watch\?v=([^\/]+)',
+        ],
+        'extract_vname_list': [],
+        # Regexes to extract a channel/playlist ID/name. The second group is
+        #   used
+        'extract_cid_list': [
+            '^https?:\/\/(www\.)?youtube\.com\/channel\/([^\/]+)',
+        ],
+        'extract_cname_list': [
+            '^https?:\/\/(www\.)?youtube\.com\/user\/([^\/]+)\/videos\/?',
+            '^https?:\/\/(www\.)?youtube\.com\/c\/([^\/]+)\/videos\/?',
+        ],
+        # Regexes to extract a playlist ID/name. The second group is used
+        'extract_pid_list': [
+            '^https?:\/\/(www\.)?youtube\.com\/channel\?list=([^\/]+)',
+            '^https?:\/\/(www\.)?youtube\.com\/playlist\?list=([^\/]+)',
+        ],
+        'extract_pname_list': [],
+        # Templates to convert video ID/name to URL
+        'convert_video_list': [
+            'https://www.youtube.com/watch?v= vi ',
+        ],
+        # Templates to convert channel ID/name to URL
+        'convert_channel_list': [
+            'https://www.youtube.com/c/ cn /videos',
+            'https://www.youtube.com/user/ cn /videos',
+            'https://www.youtube.com/channel/ ci ',
+        ],
+        # Templates to convert playlist ID/name to URL
+        'convert_playlist_list': [
+#           'https://www.youtube.com/channel?list= pi ',
+            'https://www.youtube.com/playlist?list= pi ',
+        ],
+        # Templates to convert channel ID/name to RSS feed
+        'rss_channel_list': [
+            'https://www.youtube.com/feeds/videos.xml?channel_id= ci ',
+        ],
+        # Templates to convert playlist ID/name to RSS feed
+        'rss_playlist_list': [
+            'https://www.youtube.com/feeds/videos.xml?playlist_id= pi ',
+        ],
+    },
+    {
+        'name': 'odysee',
+        'pretty_name': 'Odysee',
+        'detect_list': [
+            '^https?:\/\/(www\.)?odysee\.com\/',
+        ],
+        'extract_vid_list': [],
+        'extract_vname_list': [
+            '^https?:\/\/(www\.)?odysee\.com\/\@[^\/]+\/([^\:]+)\:',
+        ],
+        'extract_cid_list': [],
+        'extract_cname_list': [
+            '^https?:\/\/(www\.)?odysee\.com\/\@([^\:]+)\:',
+        ],
+        'extract_pid_list': [],
+        'extract_pname_list': [],
+        'convert_video_list': [],
+        'convert_channel_list': [],
+        'convert_playlist_list': [],
+        'rss_channel_list': [
+            'https://lbryfeed.melroy.org/channel/odysee/ cn ',
+        ],
+        'rss_playlist_list': [],
+    },
+    {
+        'name': 'bitchute',
+        'pretty_name': 'BitChute',
+        'detect_list': [
+            '^https?:\/\/(www\.)?bitchute\.com\/',
+        ],
+        'extract_vid_list': [
+            '^https?:\/\/(www\.)?bitchute\.com\/video\/([^\/]+)',
+        ],
+        'extract_vname_list': [],
+        'extract_cid_list': [
+            '^https?:\/\/(www\.)?bitchute\.com\/channel\/([^\/]+)',
+        ],
+        'extract_cname_list': [],
+        'extract_pid_list': [],
+        'extract_pname_list': [],
+        'convert_video_list': [
+            'https://www.bitchute.com/video/ vi ',
+        ],
+        'convert_channel_list': [
+            'https://www.bitchute.com/video/ ci ',
+        ],
+        'convert_playlist_list': [],
+        'rss_channel_list': [
+            'https://www.bitchute.com/feeds/rss/channel/ cn ',
+        ],
+        'rss_playlist_list': [],
+    },
+    {
+        'name': 'twitch',
+        'pretty_name': 'Twitch',
+        'detect_list': [
+            '^https?:\/\/(www\.)?twitch\.tv\/',
+        ],
+        'extract_vid_list': [
+            '^https?:\/\/(www\.)?twitch\.tv\/videos\/([^\/]+)',
+        ],
+        'extract_vname_list': [],
+        'extract_cid_list': [],
+        'extract_cname_list': [
+            '^https?:\/\/(www\.)?twitch\.tv\/([^\/]+)',
+        ],
+        'extract_pid_list': [],
+        'extract_pname_list': [],
+        'convert_video_list': [
+            'https://www.twitch.tv/video/ vi ',
+        ],
+        'convert_channel_list': [
+            'https://www.twitch.tv/ cn ',
+        ],
+        'convert_playlist_list': [],
+        'rss_channel_list': [
+            'https://twitchrss.appspot.com/vod/ cn ',
+        ],
+        'rss_playlist_list': [],
+    },
+]
+
+ENHANCED_SITE_LIST = []
+ENHANCED_SITE_DICT = {}
+
+for mini_dict in enhanced_setup_list:
+    ENHANCED_SITE_LIST.append(mini_dict['name'])
+    ENHANCED_SITE_DICT[mini_dict['name']] = mini_dict
 
 # Standard list and dictionaries
 time_metric_setup_list = [
@@ -416,213 +785,6 @@ FILE_SIZE_UNIT_LIST = [
     ['Yotta', 'y'],
 ]
 
-language_setup_list = [
-    # ISO 639-1 Language Codes (with one extra key-value pair to handle live
-    #   chat)
-    # English is top of the list, because it's the default setting in
-    #   options.OptionsManager
-    # NB These values must not contain square brackets [...]
-    _('English'), 'en',
-    'YouTube live chat', 'live_chat',
-    'Abkhazian', 'ab',
-    'Afar', 'aa',
-    'Afrikaans', 'af',
-    'Akan', 'ak',
-    'Albanian', 'sq',
-    'Amharic', 'am',
-    'Arabic', 'ar',
-    'Aragonese', 'an',
-    'Armenian', 'hy',
-    'Assamese', 'as',
-    'Avaric', 'av',
-    'Avestan', 'ae',
-    'Aymara', 'ay',
-    'Azerbaijani', 'az',
-    'Bambara', 'bm',
-    'Bashkir', 'ba',
-    'Basque', 'eu',
-    'Belarusian', 'be',
-    'Bengali (Bangla)', 'bn',
-    'Bihari', 'bh',
-    'Bislama', 'bi',
-    'Bosnian', 'bs',
-    'Breton', 'br',
-    'Bulgarian', 'bg',
-    'Burmese', 'my',
-    'Catalan', 'ca',
-    'Chamorro', 'ch',
-    'Chechen', 'ce',
-    'Chichewa, Chewa, Nyanja', 'ny',
-    'Chinese', 'zh',
-    'Chinese (Simplified)', 'zh-Hans',
-    'Chinese (Traditional)', 'zh-Hant',
-    'Chuvash', 'cv',
-    'Cornish', 'kw',
-    'Corsican', 'co',
-    'Cree', 'cr',
-    'Croatian', 'hr',
-    'Czech', 'cs',
-    'Danish', 'da',
-    'Divehi, Dhivehi, Maldivian', 'dv',
-    _('Dutch'), 'nl',
-    'Dzongkha', 'dz',
-    'Esperanto', 'eo',
-    'Estonian', 'et',
-    'Ewe', 'ee',
-    'Faroese', 'fo',
-    'Fijian', 'fj',
-    'Finnish', 'fi',
-    'French', 'fr',
-    'Fula, Fulah, Pulaar, Pular', 'ff',
-    'Galician', 'gl',
-    'Gaelic (Scottish)', 'gd',
-    'Gaelic (Manx)', 'gv',
-    'Georgian', 'ka',
-    'German', 'de',
-    'Greek', 'el',
-    'Greenlandic, Kalaallisut', 'kl',
-    'Guarani', 'gn',
-    'Gujarati', 'gu',
-    'Haitian Creole', 'ht',
-    'Hausa', 'ha',
-    'Hebrew', 'he',
-    'Herero', 'hz',
-    'Hindi', 'hi',
-    'Hiri Motu', 'ho',
-    'Hungarian', 'hu',
-    'Icelandic', 'is',
-    'Ido', 'io',
-    'Igbo', 'ig',
-    'Indonesian', 'id',
-    'Interlingua', 'ia',
-    'Interlingue', 'ie',
-    'Inuktitut', 'iu',
-    'Inupiak', 'ik',
-    'Irish', 'ga',
-    'Italian', 'it',
-    'Japanese', 'ja',
-    'Javanese', 'jv',
-    'Kannada', 'kn',
-    'Kanuri', 'kr',
-    'Kashmiri', 'ks',
-    'Kazakh', 'kk',
-    'Khmer', 'km',
-    'Kikuyu', 'ki',
-    'Kinyarwanda (Rwanda)', 'rw',
-    'Kirundi', 'rn',
-    'Klingon', 'tlh',       # Actually ISO 639-2
-    'Kyrgyz', 'ky',
-    'Komi', 'kv',
-    'Kongo', 'kg',
-    _('Korean'), 'ko',
-    'Kurdish', 'ku',
-    'Kwanyama', 'kj',
-    'Lao', 'lo',
-    'Latin', 'la',
-    'Latvian (Lettish)', 'lv',
-    'Limburgish ( Limburger)', 'li',
-    'Lingala', 'ln',
-    'Lithuanian', 'lt',
-    'Luga-Katanga', 'lu',
-    'Luganda, Ganda', 'lg',
-    'Luxembourgish', 'lb',
-    'Macedonian', 'mk',
-    'Malagasy', 'mg',
-    'Malay', 'ms',
-    'Malayalam', 'ml',
-    'Maltese', 'mt',
-    'Maori', 'mi',
-    'Marathi', 'mr',
-    'Marshallese', 'mh',
-    'Moldavian', 'mo',
-    'Mongolian', 'mn',
-    'Nauru', 'na',
-    'Navajo', 'nv',
-    'Ndonga', 'ng',
-    'Northern Ndebele', 'nd',
-    'Nepali', 'ne',
-    'Norwegian', 'no',
-    'Norwegian bokmål', 'nb',
-    'Norwegian nynorsk', 'nn',
-    'Occitan', 'oc',
-    'Ojibwe', 'oj',
-    'Old Church Slavonic, Old Bulgarian', 'cu',
-    'Oriya', 'or',
-    'Oromo (Afaan Oromo)', 'om',
-    'Ossetian', 'os',
-    'Pāli', 'pi',
-    'Pashto, Pushto', 'ps',
-    'Persian (Farsi)', 'fa',
-    'Polish', 'pl',
-    'Portuguese', 'pt',
-    'Punjabi (Eastern)', 'pa',
-    'Quechua', 'qu',
-    'Romansh', 'rm',
-    'Romanian', 'ro',
-    'Russian', 'ru',
-    'Sami', 'se',
-    'Samoan', 'sm',
-    'Sango', 'sg',
-    'Sanskrit', 'sa',
-    'Serbian', 'sr',
-    'Serbo-Croatian', 'sh',
-    'Sesotho', 'st',
-    'Setswana', 'tn',
-    'Shona', 'sn',
-    'Sichuan Yi, Nuoso', 'ii',
-    'Sindhi', 'sd',
-    'Sinhalese', 'si',
-    'Swati, Siswati', 'ss',
-    'Slovak', 'sk',
-    'Slovenian', 'sl',
-    'Somali', 'so',
-    'Southern Ndebele', 'nr',
-    'Spanish', 'es',
-    'Sundanese', 'su',
-    'Swahili (Kiswahili)', 'sw',
-    'Swedish', 'sv',
-    'Tagalog', 'tl',
-    'Tahitian', 'ty',
-    'Tajik', 'tg',
-    'Tamil', 'ta',
-    'Tatar', 'tt',
-    'Telugu', 'te',
-    'Thai', 'th',
-    'Tibetan', 'bo',
-    'Tigrinya', 'ti',
-    'Tonga', 'to',
-    'Tsonga', 'ts',
-    'Turkish', 'tr',
-    'Turkmen', 'tk',
-    'Twi', 'tw',
-    'Uyghur', 'ug',
-    'Ukrainian', 'uk',
-    'Urdu', 'ur',
-    'Uzbek', 'uz',
-    'Venda', 've',
-    'Vietnamese', 'vi',
-    'Volapük', 'vo',
-    'Wallon', 'wa',
-    'Welsh', 'cy',
-    'Wolof', 'wo',
-    'Western Frisian', 'fy',
-    'Xhosa', 'xh',
-    'Yiddish', 'yi',
-    'Yoruba', 'yo',
-    'Zhuang, Chuang', 'za',
-    'Zulu', 'zu',
-]
-
-LANGUAGE_CODE_LIST = []
-LANGUAGE_CODE_DICT = {}
-
-while language_setup_list:
-    key = language_setup_list.pop(0)
-    value = language_setup_list.pop(0)
-
-    LANGUAGE_CODE_LIST.append(key)
-    LANGUAGE_CODE_DICT[key] = value
-
 DIALOGUE_ICON_DICT = {
     'newbie_classic_icon': 'newbie_classic_icon.png',
     'newbie_icon': 'newbie_icon_64.png',
@@ -638,7 +800,8 @@ if xmas_flag:
     DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_xmas_64.png'
 elif eesti_flag:
     DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_eesti_64.png'
-
+elif anglo_flag:
+    DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_anglo_64.png'
 
 if xmas_flag:
     STATUS_ICON_DICT = {
@@ -667,6 +830,20 @@ elif eesti_flag:
         'tidy_icon': 'status_tidy_icon_eesti_64.png',
         'livestream_icon': 'status_livestream_icon_eesti_64.png',
         'process_icon': 'status_process_icon_eesti_64.png',
+    }
+elif anglo_flag:
+    STATUS_ICON_DICT = {
+        'default_icon': 'status_default_icon_anglo_64.png',
+        'check_icon': 'status_check_icon_anglo_64.png',
+        'check_live_icon': 'status_check_live_icon_anglo_64.png',
+        'download_icon': 'status_download_icon_anglo_64.png',
+        'download_live_icon': 'status_download_live_icon_anglo_64.png',
+        'update_icon': 'status_update_icon_anglo_64.png',
+        'refresh_icon': 'status_refresh_icon_anglo_64.png',
+        'info_icon': 'status_info_icon_anglo_64.png',
+        'tidy_icon': 'status_tidy_icon_anglo_64.png',
+        'livestream_icon': 'status_livestream_icon_anglo_64.png',
+        'process_icon': 'status_process_icon_anglo_64.png',
     }
 else:
     STATUS_ICON_DICT = {
@@ -871,6 +1048,17 @@ elif eesti_flag:
         'system_icon_eesti_256.png',
         'system_icon_eesti_512.png',
     ]
+elif anglo_flag:
+    WIN_ICON_LIST = [
+        'system_icon_anglo_16.png',
+        'system_icon_anglo_24.png',
+        'system_icon_anglo_32.png',
+        'system_icon_anglo_48.png',
+        'system_icon_anglo_64.png',
+        'system_icon_anglo_128.png',
+        'system_icon_anglo_256.png',
+        'system_icon_anglo_512.png',
+    ]
 else:
     WIN_ICON_LIST = [
         'system_icon_16.png',
@@ -992,8 +1180,6 @@ def do_translate(config_flag=False):
     ACTIVE_STAGE_DOWNLOAD = _('Downloading')
     ACTIVE_STAGE_CONCATENATE = _('Concatenating')
     ACTIVE_STAGE_POST_PROCESS = _('Post-processing')
-    ACTIVE_STAGE_CAPTURE = _('Capturing')               # Used by YTSC
-    ACTIVE_STAGE_MERGE = _('Merging')                   # Used by YTSC
     ACTIVE_STAGE_CHECKING = _('Checking')
     # Sub-stages of the 'Completed' stage
     COMPLETED_STAGE_FINISHED = _('Finished')

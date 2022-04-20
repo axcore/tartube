@@ -52,7 +52,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 - **Tartube** includes a new GUI for processing videos and thumbnails with FFmpeg, replacing the simple dialogue window in the previous release (see `6.25.2 Using FFmpeg directly`_)
 - You can now create as many sets of download options as you like, and as many sets of FFmpeg options as you like. They can now imported and exported between databases (see `6.11.3 Managing download options`_)
 - The new **Hide** button at the top of the main window is a convenient way to hide system folders you don't need
-- **Tartube** now supports `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__, which can be used to download a livestream while it is broadcasting. This feature is **experimental**. It only works on **YouTube**. It doesn't work on MS Windows. It can't download continuous 24/7 livestreams. It might not be able to download some other livestreams. The feature is disabled by default. If you want to try it, see see `6.23.5 Youtube Stream Capture`_
+- **Tartube** now supports `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__, which can be used to download a livestream while it is broadcasting. This feature is **experimental**. It only works on **YouTube**. It doesn't work on MS Windows. It can't download continuous 24/7 livestreams. It might not be able to download some other livestreams. The feature is disabled by default. If you want to try it, see see `6.23.4 Downloading livestreams`_
 
 For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
@@ -61,7 +61,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.3.549 (9 Apr 2022)**
 
-Development release: **v2.3.562 (12 Apr 2022)**
+Development release: **v2.3.613 (20 Apr 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -100,9 +100,9 @@ Source code:
 
 Tartube can store its videos in a database. If that's what you want, do this:
 
-- Go to a `video website <https://www.youtube.com/>`__, and find your favourite channel
+- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms/>`__, and find your favourite channel
 - In **Tartube**'s main window, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
-- In the dialogue window, add the name of the channel and a link to it (URL)
+- In the dialogue window, add the name of the channel and the URL (link) for it
 - Click the **OK** button to close the window
 - Click the **Check all** button. **Tartube** will fetch a list of videos in the channel
 - Click **All Videos** to see that list
@@ -110,7 +110,7 @@ Tartube can store its videos in a database. If that's what you want, do this:
 
 If you just want to download videos with a minimum of fuss, do this:
 
-- Go to a `video website <https://www.youtube.com/>`__, and find your favourite channel
+- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms/>`__, and find your favourite channel
 - In **Tartube**'s main window, click the **Classic Mode** tab
 - Copy the link to the channel (URL) into the box at the top of tab
 - Just below that, click the button to select a download destination and a video/audio format
@@ -129,12 +129,13 @@ There is also a portable edition; use this if you want to install **Tartube** on
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
+Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_.
+
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to perform a manual installation, you can follow this procedure, which will take about 10-30 minutes, depending on your network speed.
 
-- This section assumes you have a 64-bit computer
 - Download and install MSYS2 from `msys2.org <https://msys2.org>`__. You need the file that looks something like **msys2-x86_64-yyyymmdd.exe**
 - MSYS2 wants to install in **C:\\msys64**, so do that
 - Open the MINGW64 terminal, which is **C:\\msys64\\mingw64.exe**
@@ -164,8 +165,6 @@ If you want to perform a manual installation, you can follow this procedure, whi
         **pip3 install playsound**
 
         **pacman -S mingw-w64-x86_64-aria2**
-
-        **pacman -S mingw-w64-x86_64-python-matplotlib**
 
 - Download the **Tartube** source code from Sourceforge, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
@@ -329,21 +328,22 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 
 For any other method of installation on Linux/BSD, the following dependencies are required:
 
--  `Python 3 <https://www.python.org/downloads>`__
--  `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
--  `Python Requests module <https://3.python-requests.org/>`__
--  Either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
+- `Python 3 <https://www.python.org/downloads>`__
+- `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
+- `Python Requests module <https://3.python-requests.org/>`__
+- Either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
 
 These dependencies are optional, but recommended:
 
--  `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
--  `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
--  `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
--  `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
--  `FFmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
--  `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
--  `aria2 <https://aria2.github.io/>`__ - required for Youtube Stream Capture
--  `matplotlib <https://matplotlib.org/>`__ - required for drawing graphs
+- `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
+- `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
+- `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
+- `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
+- `FFmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
+- `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
+- `aria2 <https://aria2.github.io/>`__ - provides an external downloader for youtube-dl
+- `matplotlib <https://matplotlib.org/>`__ - required for drawing graphs
+- `streamlink <https://streamlink.github.io/>`__ - can be used to download livestreams
 
 5.3.9 Install from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -410,7 +410,6 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.11.2 Other download options`_
 * `6.11.3 Managing download options`_
 * `6.11.4 Setting download options`_
-* `6.11.5 Download options for yt-dlp`_
 * `6.12 Scheduled downloads`_
 * `6.13 Custom downloads`_
 * `6.13.1 Creating custom downloads`_
@@ -448,7 +447,8 @@ The procedure used to create the MS Windows installers is described in full in t
 * `6.23.1 Detecting livestreams`_
 * `6.23.2 Customising livestreams`_
 * `6.23.3 Livestream notifications`_
-* `6.23.4 Compatible websites`_
+* `6.23.4 Downloading livestreams`_
+* `6.23.5 Compatible websites`_
 * `6.24 Detecting missing videos`_
 * `6.25 More information about FFmpeg and AVConv`_
 * `6.25.1 Using FFmpeg / AVConv with youtube-dl`_
@@ -728,9 +728,9 @@ Tidying up the filesytem:
 
 Dealing with livestreams:
 
-- **Livestream** - Checks whether any livestreams have started (or stopped), without fetching the full list of videos
-- **Livestream capture** - When available, downloads a livestream that's broadcasting now; see `6.23.5 Youtube Stream Capture`_
-- A **Livestream** check happens every few minutes (if **Tartube** detected livestreams during a **Check** or a **Download**). To force a check now, click **Livestreams > Update existing livestreams**
+- **Livestream check** - Checks whether any livestreams have started (or stopped), without fetching the full list of videos from a channel/playlist
+- **Livestream download** - Downloads a livestream that's broadcasting now; see `6.23.4 Downloading livestreams`_
+- A **Livestream check** happens every few minutes (if **Tartube** detected livestreams during a **Check** or a **Download**). To force a check now, click **Livestreams > Update existing livestreams**
 
 Processing videos with **FFmpeg**:
 
@@ -853,11 +853,6 @@ If you want to download subtiles only in particular languages:
 - Repeat for as many languages as you want
 
 See also `6.13.6 Ignoring videos without subtitles`_.
-
-6.11.5 Download options for yt-dlp
-----------------------------------
-
-The **yt-dlp** tab contains download options that only work with `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ (or any fork based on it). If you try to use them with `youtube-dl <https://youtube-dl.org/>`__ you'll get an error.
 
 6.12 Scheduled downloads
 ------------------------
@@ -1444,9 +1439,11 @@ In the bottom half of the window, you can select one or more URLs by clicking th
 6.23 Livestreams
 ----------------
 
-**Tartube** can detect livestreams, and to notify you when they start.
+**Tartube** can detect livestreams, and to notify you when they start. This feature works on **YouTube**, **Odysee** and **Twitch**. It might work on other websites, after a little configuration - see `6.23.5 Compatible websites`_.
 
-At the moment, this feature only works on **YouTube**.
+**Tartube** can download livestreams while they are broadcasting. If `streamlink <https://streamlink.github.io/>`__ is installed on your system, Tartube can use it; otherwise it will download the livestream using its .m3u manifest.
+
+`Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ is deprecated, and **Tartube** no longer supports it.
 
 6.23.1 Detecting livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1455,7 +1452,7 @@ At the moment, this feature only works on **YouTube**.
 
 Livestreams are easy to spot. A livestream that hasn't started yet has a red background. A video that's streaming now has a green background. (Livestreams that have finished have a normal background.)
 
-**YouTube** sometimes 'streams' a pre-recorded video at an appointed time, as if were a livestream. These 'debut' or 'premiere' videos are shown in slightly different colours - orange before the stream starts, and cyan while it is in progress.
+**YouTube** sometimes 'streams' a pre-recorded video at an appointed time, as if it were a livestream. These 'debut' or 'premiere' videos are shown in slightly different colours - orange before the stream starts, and cyan while it is in progress.
 
 .. image:: screenshots/example26.png
   :alt: The main window with livestreams visible
@@ -1472,7 +1469,7 @@ You can modify how often livestreams are checked (and whether they are checked a
 
 For technical reasons, there are practical limits to what **Tartube** can detect. On busy channels, **Tartube** may not be able to detect livestreams that were announced some time ago. Even if you change the number of days from 7 to a very large number, there is no guarantee that **Tartube** will detect everything. (If you change the value to 0, **Tartube** will only detect livestreams that are listed before any ordinary videos.)
 
-By default, **Tartube** checks a livestream every three minutes, waiting for it to start (or stop). When a livestream is due to start, a check happens every minute. Making more frequent checks is probably not a good idea - the website might block you.
+By default, **Tartube** checks a livestream every three minutes, waiting for it to start (or stop). When a livestream is due to start, a check happens every minute. Making more frequent checks is probably not a good idea - the video website might block you.
 
 If you want to force a check, in the main window click **Livestreams > Update existing livestreams**. (Checks are silent, so don't worry if nothing seems to be happening).
 
@@ -1484,7 +1481,7 @@ It's really useful to be notified when a livestream is starting. In the same win
 .. image:: screenshots/example28.png
   :alt: Livestream actions
 
-**Desktop notifications** do not work on MS Windows yet.
+**Desktop notifications** do not work on MS Windows.
 
 **Tartube** provides a number of sound effects. You can choose the one you want to use as an alarm. If you want to add your own sound effects, find the directory (folder) where Tartube is installed, copy the new **.mp3** or **.wav** files into **../sounds**, and then restart **Tartube.**
 
@@ -1500,36 +1497,33 @@ Most users will prefer to leave all of these checkboxes unselected, and instead 
 
 To disable any of these actions, simply click the same label again.
 
-**NOTE:** At the time of writing (December 2020), **youtube-dl** often fails to download **YouTube** livestreams while they are broadcasting. For an alternative download method, see `6.23.5 Youtube Stream Capture`_. **youtube-dl** will often download livestreams from other websites successfully.
+6.23.4 Downloading livestreams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-6.23.4 Compatible websites
+**Tartube** can download a livestream while it is still broadcasting. (A livestream that has already finished is treated like any other video.)
+
+There are three different ways to download a livestream. The default method is to use **youtube-dl**, fetching the video's **.m3u** manifest before downloading it. 
+
+If `streamlink <https://streamlink.github.io/>`__ is installed on your system, you can use that, instead. MS Windows users can install streamlink from **Tartube**'s main menu (click **Operations > Install streamlink**).
+
+Direct downloads using **youtube-dl** alone are sometimes possible, but are not recommended.
+
+You can choose your preferred method by clicking **Edit > System preferences... > Operations > Livestreams**, and selecting one of the three options.
+
+Note that *none of these methods can download a livestream from the very beginning*.
+
+6.23.5 Compatible websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tartube**'s livestream detection has only been tested on **YouTube**. It's possible that it might work on other websites, if they behave in the same way. Here is how to set it up.
+Livestream downloads should work on most websites. `streamlink <https://streamlink.github.io/>`__ works on most popular websites, but not necessarily on all of them.
 
-Firstly, find the RSS feed for the channel or playlist. You may have to use a search engine to find out how to do that. (For **YouTube** channels/playlists, **Tartube** finds the feed for you automatically.)
+**Tartube**'s livestream detection works on **YouTube**, **Odysee** and **Twitch**. It might work on other websites, after a little configuration. Here is how to set it up.
+
+Firstly, find the RSS feed for the channel or playlist. You may have to use a search engine to find out how to do that, but first see `this site <https://fetchrss.com//>`__ and `this one <https://12bytes.org/articles/tech/how-to-access-rss-feeds/>`__. 
 
 Secondly, right-click the channel and select **Show > Channel properties...** (alternatively, right-click a playlist and select **Show > Playlist properties...**)
 
 Now click the **RSS feed** tab. Enter the link (URL) to the RSS feed in the box. Click the **OK** button to close the window.
-
-6.23.5 Youtube Stream Capture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Tartube** v2.3.0 adds support for `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ (YTSC), a script that can download livestreams from **YouTube** independently of **youtube-dl**.
-
-Support for YTSC is EXPERIMENTAL. It does not work at all on MS Windows (under MSYS2), or on any website besides **YouTube**. It does not work at all for livestreams that broadcast continuously, 24/7. It is not guaranteed to work with every livestream.
-Before using YTSC, you must install both `FFmpeg <https://ffmpeg.org/>`__ and `aria2 <https://aria2.github.io/>`__ on your system.
-
-**Tartube** includes a copy of YTSC. If YTSC has been updated, you use the updated version instead.  After `downloading it <https://github.com/mrwnwttk/youtube_stream_capture>`__, click **Edit > System preferences... > Downloaders > Stream Capture**, click the **Set** button, and select the path to the file **youtube_stream_capture.py**. Note that the original version of YTSC requires the `Python Colorama module <https://pypi.org/project/colorama/>`__, which you must install on your system.
-
-YTSC is disabled by default. To enable it, click **Edit > System preferences... > Operations > Live**, and select the box **Use Youtube Stream Capture to download broadcasting livestreams**.
-
-**Tartube** can make multiple attempts to download the livestream, if the first attempt fails. This behaviour can be modified in the preference window, if necessary. Even during a successful attempt, a download might not start immediately.  Reducing the restart time lower than a minute is not recommended.
-
-Likewise, the download might continue after the livestream has stopped broadcasting. This is normal; please be patient with very long livestreams.
-
-YTSC downloads a livestream in segments. At the end of the download, the segments must be merged into a single video. Again, this might take several minutes.
 
 6.24 Detecting missing videos
 -----------------------------

@@ -709,24 +709,39 @@ class GenericContainer(GenericMedia):
             return level
 
 
-    def get_unblocked_videos(self):
+    def get_visible_videos(self, app_obj):
 
         """Can be called by anything.
 
         Returns a list of everything in self.child_list() which is a
-        media.Video object whose .block_flag is False.
+        media.Video object that should be visible in the Video Catalogue,
+        according to current settings.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
 
         Returns:
 
-            The filtered list
+            A filtered list of videos
 
         """
 
         return_list = []
         for child_obj in self.child_list:
 
-            if isinstance(child_obj, Video) and not child_obj.block_flag:
-                return_list.append(child_obj)
+            if isinstance(child_obj, Video):
+                if (
+                    app_obj.catalogue_draw_downloaded_flag \
+                    and child_obj.dl_flag
+                ) or (
+                    app_obj.catalogue_draw_undownloaded_flag \
+                    and not child_obj.dl_flag
+                ) or (
+                    app_obj.catalogue_draw_blocked_flag \
+                    and child_obj.block_flag
+                ):
+                    return_list.append(child_obj)
 
         return return_list
 
@@ -1622,34 +1637,9 @@ class GenericRemoteContainer(GenericContainer):
         self.warning_list = other_obj.warning_list.copy()
 
 
-    def set_rss(self, youtube_id):
+    def reset_rss(self):
 
-        """Can be called by anything; called frequently by
-        downloads.VideoDownloader.extract_stdout_data().
-
-        Set the RSS feed, but only if it's not already set (to save time).
-
-        Args:
-
-            youtube_id (str): The YouTube channel or playlist ID
-
-        """
-
-        if not self.rss:
-
-            if isinstance(self, Channel):
-
-                self.rss = utils.convert_youtube_id_to_rss(
-                    'channel',
-                    youtube_id,
-                )
-
-            else:
-
-                self.rss = utils.convert_youtube_id_to_rss(
-                    'playlist',
-                    youtube_id,
-                )
+        self.rss = None
 
 
     def set_playlist_id(self, playlist_id, playlist_title):
@@ -1707,6 +1697,8 @@ class GenericRemoteContainer(GenericContainer):
     def set_source(self, source):
 
         self.source = source
+        self.enhanced = utils.is_enhanced(source)
+        self.update_rss_from_url(source)
 
 
 class Video(GenericMedia):
@@ -3447,6 +3439,9 @@ class Channel(GenericRemoteContainer):
         self.nickname = name
         # Download source (a URL)
         self.source = None
+        # If this channel belongs to an 'enhanced' website, the key in
+        #   formats.ENHANCED_SITE_DICT for that website; otherwise None
+        self.enhanced = None
         # RSS feed source (a URL), used by livestream operations on compatible
         #   websites. For YouTube channels, set automatically during a download
         #   operation. For channels on other websites, can be set manually
@@ -3585,6 +3580,119 @@ class Channel(GenericRemoteContainer):
 #   def sort_children():            # Inherited from GenericRemoteContainer
 
 
+    def update_rss_from_id(self, channel_id):
+
+        """Can be called by anything, for example from
+        downloads.VideoDownloader.extract_stdout_data().
+
+        Updates the value of the RSS feed for this channel, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for channels belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            channel_id (str): The channel ID
+
+        """
+
+        if self.rss:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_channel_list',
+            self.enhanced,
+            # Use a fake dictionary of JSON data, as if it had been extracted
+            #   from the video's metadata
+            { 'channel_id': channel_id },
+        )
+
+
+    def update_rss_from_json(self, json_dict):
+
+        """Can be called by anything, for example from
+        downloads.VideoDownloader.extract_stdout_data().
+
+        Updates the value of the RSS feed for this channel, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for channels belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            json_dict (dict): Dictionary of JSON data supplied by youtube-dl
+                for a video, hopefully containing items such as the channel ID
+
+        """
+
+        if self.rss or not self.source or not self.enhanced:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_channel_list',
+            self.enhanced,
+            json_dict,
+        )
+
+
+    def update_rss_from_name(self, name):
+
+        """Can be called by anything (currently not called by anything).
+
+        Updates the value of the RSS feed for this channel, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for channels belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            name (str): The channel name as it would appear in youtube-dl
+                output (e.g. 'youtube')
+
+        """
+
+        if self.rss:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_channel_list',
+            self.enhanced,
+            # Use a fake dictionary of JSON data, as if it had been extracted
+            #   from the video's metadata
+            { 'channel': name },
+        )
+
+
+    def update_rss_from_url(self, url):
+
+        """Can be called by anything, for example by self.set_source().
+
+        Updates the value of the RSS feed for this channel, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for channels belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            url (str): URL which hopefully matches one of the regexes
+                specified by formats.ENHANCED_SITE_DICT
+
+        """
+
+        if self.rss or not url or not self.enhanced:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_url(
+            'rss_channel_list',
+            self.enhanced,
+            url,
+        )
+
+
     # Set accessors
 
 
@@ -3674,6 +3782,9 @@ class Playlist(GenericRemoteContainer):
         self.nickname = name
         # Download source (a URL)
         self.source = None
+        # If this channel belongs to an 'enhanced' website, the key in
+        #   formats.ENHANCED_SITE_DICT for that website; otherwise None
+        self.enhanced = None
         # RSS feed source (a URL), used by livestream operations on compatible
         #   websites. Set automatically for YouTube videos, and can be set
         #   manually by the user for other websites
@@ -3812,6 +3923,119 @@ class Playlist(GenericRemoteContainer):
 
 
 #   def sort_children():            # Inherited from GenericRemoteContainer
+
+
+    def update_rss_from_id(self, playlist_id):
+
+        """Can be called by anything, for example from
+        downloads.VideoDownloader.extract_stdout_data().
+
+        Updates the value of the RSS feed for this playlist, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for playlists belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            playlist_id (str): The playlist ID
+
+        """
+
+        if self.rss:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_playlist_list',
+            self.enhanced,
+            # Use a fake dictionary of JSON data, as if it had been extracted
+            #   from the video's metadata
+            { 'playlist_id': playlist_id },
+        )
+
+
+    def update_rss_from_json(self, json_dict):
+
+        """Can be called by anything, for example from
+        downloads.VideoDownloader.extract_stdout_data().
+
+        Updates the value of the RSS feed for this playlist, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for playlists belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            json_dict (dict): Dictionary of JSON data supplied by youtube-dl
+                for a video, hopefully containing items such as the playlist ID
+
+        """
+
+        if self.rss or not self.source or not self.enhanced:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_playlist_list',
+            self.enhanced,
+            json_dict,
+        )
+
+
+    def update_rss_from_name(self, name):
+
+        """Can be called by anything (currently not called by anything).
+
+        Updates the value of the RSS feed for this playlist, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for playlists belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            name (str): The playlist name as it would appear in youtube-dl
+                output (e.g. 'youtube')
+
+        """
+
+        if self.rss:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_json(
+            'rss_playlist_list',
+            self.enhanced,
+            # Use a fake dictionary of JSON data, as if it had been extracted
+            #   from the video's metadata
+            { 'playlist_title': name },
+        )
+
+
+    def update_rss_from_url(self, url):
+
+        """Can be called by anything, for example by self.set_source().
+
+        Updates the value of the RSS feed for this channel, self.rss (unless
+        it has already been set).
+
+        Updates are only possible for channels belong to one of the 'enhanced'
+        websites specified by formats.ENHANCED_SITE_DICT.
+
+        Args:
+
+            url (str): URL which hopefully matches one of the regexes
+                specified by formats.ENHANCED_SITE_DICT
+
+        """
+
+        if self.rss or not url or not self.enhanced:
+            return
+
+        self.rss = utils.convert_enhanced_template_from_url(
+            'rss_playlist_list',
+            self.enhanced,
+            url,
+        )
 
 
     # Set accessors

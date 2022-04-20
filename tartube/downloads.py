@@ -1240,19 +1240,16 @@ class DownloadWorker(threading.Thread):
                         )
 
                 # When downloading a livestream that's broadcasting now, we
-                #   can use Youtube Stream Capture
+                #   call StreamDownloader rather than VideoDownloader
                 # When downloading video clips, use youtube-dl with FFmpeg as
                 #   its external downloader
                 # Otherwise, use youtube-dl with an argument list determined by
                 #   the download options applied
-                if app_obj.ytsc_priority_flag \
-                and isinstance(media_data_obj, media.Video) \
-                and not media_data_obj.dummy_flag \
+                if isinstance(media_data_obj, media.Video) \
+                and media_data_obj.live_mode == 2 \
                 and self.download_item_obj.operation_type != 'sim' \
                 and self.download_item_obj.operation_type != 'custom_sim' \
-                and self.download_item_obj.operation_type != 'classic_sim' \
-                and media_data_obj.live_mode == 2 \
-                and utils.is_youtube(media_data_obj.source):
+                and self.download_item_obj.operation_type != 'classic_sim':
                     self.run_stream_downloader(media_data_obj)
 
                 elif isinstance(media_data_obj, media.Video) \
@@ -1533,11 +1530,13 @@ class DownloadWorker(threading.Thread):
 
         A modified version of self.run_video_downloader(), used when
         downloading a media.Video object that's a livestream broadcasting now.
-        In that case, we can use Youtube Stream Capture, rather than
-        youtube-dl.
 
-        Creates a new downloads.StreamDownloader to handle the download for
-        this job, and destroys it when it's finished.
+        First creates a new downloads.VideoDownloader to check the video, if
+        it hasn't already been checked (which fetches the thumbnail,
+        description, annotations and metadata files).
+
+        Then creates a new downloads.StreamDownloader to handle the download
+        for this job.
 
         Args:
 
@@ -1549,7 +1548,84 @@ class DownloadWorker(threading.Thread):
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Set up the new downloads.StreamDownloader object
+        # Checking a livestream (simulated download), before downloading it
+        #   (real download) makes sure that the thumbnail and other metadata
+        #   files are downloaded, if required
+        # Assume that the video has not been checked if its path or name are
+        #   not set
+        # If mainapp.TartubeApp.livestream_dl_mode is 'default', meaning that
+        #   youtube-dl is downloading the livestream directly, then there is
+        #   no need to check the video first
+        if app_obj.livestream_dl_mode != 'default' \
+        and not self.download_manager_obj.operation_classic_flag \
+        and (
+            app_obj.livestream_force_check_flag \
+            or media_data_obj.file_name is None \
+            or media_data_obj.file_ext is None
+        ):
+            # Set up the new downloads.VideoDownloader object. The True
+            #   argument forces it to do a simulated download
+            self.downloader_obj = VideoDownloader(
+                self.download_manager_obj,
+                self,
+                self.download_item_obj,
+                True,
+            )
+
+            # Send a message to the Output tab's summary page
+            app_obj.main_win_obj.output_tab_write_stdout(
+                0,
+                _('Thread #') + str(self.worker_id) \
+                + ': ' + _('Assigned job:') + ' \'' \
+                + self.download_item_obj.media_data_obj.name \
+                + '\'',
+            )
+
+            # Execute the assigned job (but regardless of success or failure,
+            #   we press on with the livestream download below)
+            return_code = self.downloader_obj.do_download()
+
+            # Any youtube-dl error/warning messages which have not yet been
+            #   passed to their media.Video objects can now be processed
+            for vid in self.downloader_obj.video_msg_buffer_dict.keys():
+                self.downloader_obj.process_error_warning(vid)
+
+            # If the downloads.VideoDownloader object collected any youtube-dl
+            #   error/warning messages, display them in the Error List
+            if media_data_obj.error_list or media_data_obj.warning_list:
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.errors_list_add_operation_msg,
+                    media_data_obj,
+                )
+
+            # In the event of an error, nothing updates the video's row in the
+            #   Video Catalogue, and therefore the error icon won't be visible
+            # Do that now (but don't if mainwin.ComplexCatalogueItem objects
+            #   aren't being used in the Video Catalogue)
+            if not self.download_item_obj.operation_classic_flag \
+            and return_code == VideoDownloader.ERROR \
+            and isinstance(media_data_obj, media.Video) \
+            and app_obj.catalogue_mode_type != 'simple':
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.video_catalogue_update_video,
+                    media_data_obj,
+                )
+
+            # Call the destructor function of VideoDownloader object
+            self.downloader_obj.close()
+
+            # In the event of an error during the checking stage, don't
+            #   proceed with the download
+            if return_code >= VideoDownloader.ERROR:
+                return
+
+            # Reset our IVs, ready for the call to StreamDownloader
+            self.prepare_download(self.download_item_obj)
+
+        # Now proceed with the livestream download. Set up the new
+        #   downloads.StreamDownloader object
         self.downloader_obj = StreamDownloader(
             self.download_manager_obj,
             self,
@@ -1566,7 +1642,7 @@ class DownloadWorker(threading.Thread):
         )
 
         # Execute the assigned job
-        return_code = self.downloader_obj.do_capture()
+        return_code = self.downloader_obj.do_download()
 
         # In the event of an error, nothing updates the video's row in the
         #   Video Catalogue, and therefore the error icon won't be visible
@@ -1744,6 +1820,9 @@ class DownloadWorker(threading.Thread):
     def prepare_download(self, download_item_obj):
 
         """Called by downloads.DownloadManager.run().
+
+        Also called by self.run_stream_downloader() after the checking phase,
+        just before downloading the broadcasting livestream for real.
 
         Based on Worker.download().
 
@@ -2872,7 +2951,8 @@ class DownloadItem(object):
 
 class VideoDownloader(object):
 
-    """Called by downloads.DownloadWorker.run_video_downloader().
+    """Called by downloads.DownloadWorker.run_video_downloader() or
+    .run_stream_downloader().
 
     Based on the YoutubeDLDownloader class in youtube-dl-gui.
 
@@ -2904,6 +2984,10 @@ class VideoDownloader(object):
 
         download_item_obj (downloads.DownloadItem): The download item object
             describing the URL from which youtube-dl should download video(s)
+
+        force_sim_flag (bool): Set to True when called by
+            .run_stream_downloader(), in which case a simulated download rather
+            than a real download is performed, regardless of other settings
 
     Warnings:
 
@@ -2944,7 +3028,7 @@ class VideoDownloader(object):
 
 
     def __init__(self, download_manager_obj, download_worker_obj, \
-    download_item_obj):
+    download_item_obj, force_sim_flag=False):
 
         # IV list - class objects
         # -----------------------
@@ -2993,8 +3077,8 @@ class VideoDownloader(object):
         self.network_error_time = None
 
         # Flag set to True if we are simulating downloads for this media data
-        #   object, or False if we actually downloading videos (set below)
-        self.dl_sim_flag = False
+        #   object, or False if we actually downloading videos (updated below)
+        self.dl_sim_flag = force_sim_flag
         # Flag set to True if this download operation was launched from the
         #   Classic Mode tab, False if not (set below)
         self.dl_classic_flag = False
@@ -3144,8 +3228,11 @@ class VideoDownloader(object):
         #   descendants
         if not self.download_item_obj.operation_classic_flag:
 
-            if self.download_item_obj.operation_type == 'sim' \
-            or self.download_item_obj.operation_type == 'custom_sim':
+            if (
+                force_sim_flag \
+                or self.download_item_obj.operation_type == 'sim' \
+                or self.download_item_obj.operation_type == 'custom_sim'
+            ):
                 dl_sim_flag = True
             else:
                 dl_sim_flag = media_data_obj.dl_sim_flag
@@ -3160,6 +3247,7 @@ class VideoDownloader(object):
                 self.video_num = 0
                 self.video_total = 0
             else:
+
                 self.dl_sim_flag = False
                 self.video_num = 1
                 self.video_total = 1
@@ -3214,7 +3302,7 @@ class VideoDownloader(object):
 
         # Set the default return code. Everything is OK unless we encounter
         #   any problems
-        self.return_code = self.OK
+        self.set_return_code(self.OK)
 
         if not self.dl_classic_flag:
 
@@ -3538,43 +3626,6 @@ class VideoDownloader(object):
         self.stderr_reader.join()
 
 
-    def compile_mini_options_dict(self, options_manager_obj):
-
-        """Called by self.confirm_new_video() and .confirm_old_video().
-
-        Compiles a dictionary containing a subset of download options from the
-        specified options.OptionsManager object, to be passed on to
-        mainapp.TartubeApp.announce_video_download().
-
-        Args:
-
-            options_manager_obj (options.OptionsManager): The options manager
-                for this download
-
-        """
-
-        mini_options_dict = {
-            'keep_description': \
-                options_manager_obj.options_dict['keep_description'],
-            'keep_info': \
-                options_manager_obj.options_dict['keep_info'],
-            'keep_annotations': \
-                options_manager_obj.options_dict['keep_annotations'],
-            'keep_thumbnail': \
-                options_manager_obj.options_dict['keep_thumbnail'],
-            'move_description': \
-                options_manager_obj.options_dict['move_description'],
-            'move_info': \
-                options_manager_obj.options_dict['move_info'],
-            'move_annotations': \
-                options_manager_obj.options_dict['move_annotations'],
-            'move_thumbnail': \
-                options_manager_obj.options_dict['move_thumbnail'],
-        }
-
-        return mini_options_dict
-
-
     def confirm_archived_video(self, filename):
 
         """Called by self.extract_stdout_data().
@@ -3712,7 +3763,7 @@ class VideoDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
-                self.compile_mini_options_dict(
+                utils.compile_mini_options_dict(
                     self.download_worker_obj.options_manager_obj,
                 ),
             )
@@ -3959,7 +4010,7 @@ class VideoDownloader(object):
                         app_obj.announce_video_download,
                         self.download_item_obj,
                         video_obj,
-                        self.compile_mini_options_dict(
+                        utils.compile_mini_options_dict(
                             self.download_worker_obj.options_manager_obj,
                         ),
                     )
@@ -4283,11 +4334,15 @@ class VideoDownloader(object):
                 json_dict,
             )
 
-            # If downloading from a channel/playlist, remember the video's
-            #   index. (The server supplies an index even for a channel, and
-            #   the user might want to convert a channel to a playlist)
             if isinstance(video_obj.parent_obj, media.Channel) \
             or isinstance(video_obj.parent_obj, media.Playlist):
+                # 'Enhanced' websites only: set the channel/playlist RSS feed,
+                #   if not already set
+                video_obj.parent_obj.update_rss_from_json(json_dict)
+
+                # If downloading from a channel/playlist, remember the video's
+                #   index. (The server supplies an index even for a channel,
+                #   and the user might want to convert a channel to a playlist)
                 video_obj.set_index(playlist_index)
 
             # Now we can sort the parent containers
@@ -4410,11 +4465,15 @@ class VideoDownloader(object):
                 json_dict,
             )
 
-            # If downloading from a channel/playlist, remember the video's
-            #   index. (The server supplies an index even for a channel, and
-            #   the user might want to convert a channel to a playlist)
             if isinstance(video_obj.parent_obj, media.Channel) \
             or isinstance(video_obj.parent_obj, media.Playlist):
+                # 'Enhanced' websites only: set the channel/playlist RSS feed,
+                #   if not already set
+                video_obj.parent_obj.update_rss_from_json(json_dict)
+
+                # If downloading from a channel/playlist, remember the video's
+                #   index. (The server supplies an index even for a channel,
+                #   and the user might want to convert a channel to a playlist)
                 video_obj.set_index(playlist_index)
 
         # Deal with livestreams
@@ -4600,7 +4659,7 @@ class VideoDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
-                # No call to self.compile_mini_options_dict, because this
+                # No call to utils.compile_mini_options_dict(), because this
                 #   function deals with download options like
                 #   'move_description' by itself
                 {},
@@ -4804,7 +4863,7 @@ class VideoDownloader(object):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         Returns:
 
@@ -4942,6 +5001,16 @@ class VideoDownloader(object):
         # (Note that the first word might be '[download]', or '[Youtube]', etc)
         if re.search('^.*has already been recorded in the archive$', stdout):
             self.download_manager_obj.register_video('other')
+            return dl_stat_dict
+
+        # Likewise for the frame messages from youtube-dl direct downloads
+        match = re.search(
+            '^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
+            stdout,
+        )
+        if match:
+            dl_stat_dict['filesize'] = match.groups()[0]
+            dl_stat_dict['speed'] = match.groups()[1]
             return dl_stat_dict
 
         # Extract the data
@@ -5143,8 +5212,11 @@ class VideoDownloader(object):
         ):
             # YouTube only: set the channel/playlist RSS feed, if not already
             #   set, first removing the final colon that should be there
-            youtube_id = re.sub('\:*$', '', stdout_list[1])
-            media_data_obj.set_rss(youtube_id)
+            # (This is the old method of setting the RSS; no longer necessary
+            #   as of v2.3.602, but retained in case it is useful in the
+            #   future)
+            container_id = re.sub('\:*$', '', stdout_list[1])
+            media_data_obj.update_rss_from_id(container_id)
 
         elif (
             not self.dl_sim_flag \
@@ -5229,22 +5301,6 @@ class VideoDownloader(object):
                     dl_stat_dict['playlist_size'] = self.video_total
 
                     dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
-
-                    # YouTube only: set the channel/playlist RSS feed, if not
-                    #   already set
-                    if isinstance(media_data_obj, media.Channel) \
-                    and not media_data_obj.rss \
-                    and 'channel_id' in json_dict \
-                    and json_dict['channel_id'] \
-                    and utils.is_youtube(media_data_obj.source):
-                        media_data_obj.set_rss(json_dict['channel_id'])
-
-                    elif isinstance(media_data_obj, media.Playlist) \
-                    and not media_data_obj.rss \
-                    and 'playlist_id' in json_dict \
-                    and json_dict['playlist_id'] \
-                    and utils.is_youtube(media_data_obj.source):
-                        media_data_obj.set_rss(json_dict['playlist_id'])
 
         elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
 
@@ -5487,9 +5543,7 @@ class VideoDownloader(object):
                     stderr,
                 )
             )
-        ) or re.search(r'This live event will begin', stderr) \
-        or re.search(r'Premiere will begin', stderr) \
-        or re.search(r'Premieres in', stderr):
+        ):
             # This message is ignorable
             return True
 
@@ -5787,6 +5841,26 @@ class VideoDownloader(object):
         #   Windows console
         data = data.decode(utils.get_encoding(), 'replace')
 
+        # youtube-dl livestream downloads are normally handles by
+        #   downloads.StreamDownloader, but in certain circumstances this
+        #   VideoDownloader might be asked to handle them
+        # When youtube-dl is downloading the livestream directly (i.e. without
+        #   .m3u), it produces a lot of output in STDERR, most of which can be
+        #   ignored, but some of which should be converted to STDOUT
+        if mini_list[1] == 'stderr':
+            mod_data = utils.stream_output_is_ignorable(data)
+            if mod_data is None:
+                # Ignore whole line
+                self.queue.task_done()
+
+                return True
+            elif mod_data != data:
+                # Ignore the unmatched portion of the line, and convert STDERR
+                #   to STDOUT (so self.extract_stdout_data() can process it as
+                #   normal)
+                data = mod_data
+                mini_list[1] = 'stdout'
+
         # STDOUT
         if mini_list[1] == 'stdout':
 
@@ -5914,6 +5988,7 @@ class VideoDownloader(object):
         #   do not
         msg_type = None
         vid = None
+        site_name = None
 
         if self.is_warning(data):
 
@@ -5921,17 +5996,14 @@ class VideoDownloader(object):
             msg_type = 'warning'
 
             # e.g. WARNING: [youtube] abcdefgh: here are no annotations
-            if not isinstance(
-                self.download_item_obj.media_data_obj,
-                media.Video,
-            ):
-                match = re.search(
-                    '^WARNING\:\s*\[[^\]]+\]\s*(\S+)\s*\:',
-                    data,
-                )
+            match = re.search(
+                '^WARNING\:\s*\[([^\]]+)\]\s*(\S+)\s*\:',
+                data,
+            )
 
-                if match:
-                    vid = match.groups()[0]
+            if match:
+                site_name = match.groups()[0]
+                vid = match.groups()[1]
 
         elif not self.is_debug(data):
 
@@ -5939,17 +6011,14 @@ class VideoDownloader(object):
             msg_type = 'error'
 
             # e.g. ERROR: [youtube] abcdefgh: Sign in to confirm your age
-            if not isinstance(
-                self.download_item_obj.media_data_obj,
-                media.Video,
-            ):
-                match = re.search(
-                    '^ERROR\:\s*\[[^\]]+\]\s*(\S+)\s*\:',
-                    data,
-                )
+            match = re.search(
+                '^ERROR\:\s*\[([^\]]+)\]\s*(\S+)\s*\:',
+                data,
+            )
 
-                if match:
-                    vid = match.groups()[0]
+            if match:
+                site_name = match.groups()[0]
+                vid = match.groups()[1]
 
         if not msg_type:
             # Not an error/warning
@@ -5965,16 +6034,14 @@ class VideoDownloader(object):
             # Check this video is not already in the parent channel/playlist/
             #   folder
             media_data_obj = self.download_item_obj.media_data_obj
-            # !!! DEBUG: self.is_blocked() assumes that the STDERR messages
-            # !!!       are only generated by YouTube; nevertheless, generalise
-            # !!!       this for all websites
-            url = None
-            if re.search('^ERROR\: \[youtube\]', data):
-                url = utils.convert_youtube_id_to_video(vid)
+            url = utils.convert_enhanced_template_from_json(
+                'convert_video_list',
+                site_name,
+                { 'video_id': vid },
+            )
 
             if isinstance(media_data_obj, media.Video) \
             and self.match_vid_or_url(media_data_obj, vid, url):
-
                 media_data_obj.set_block_flag(True)
 
             else:
@@ -5993,6 +6060,58 @@ class VideoDownloader(object):
                     if new_obj:
                         new_obj.set_block_flag(True)
                         new_obj.set_vid(vid)
+
+        # For some reason, YouTube messages giving the (approximate) start time
+        #   of a livestream are written to STDERR
+        # If the video's ID is recognised, we can update the media.Video
+        #   object. However, we won't add a new video to the database;
+        #   JSONFetcher can do that
+        if new_obj is None \
+        and app_obj.enable_livestreams_flag \
+        and vid is not None:
+
+            live_data_dict = utils.extract_livestream_data(data)
+            if live_data_dict:
+
+                # Check this video is not already in the parent channel/
+                #   playlist/folder
+                media_data_obj = self.download_item_obj.media_data_obj
+                url = utils.convert_enhanced_template_from_json(
+                    'convert_video_list',
+                    site_name,
+                    { 'video_id': vid },
+                )
+
+                if isinstance(media_data_obj, media.Video) \
+                and self.match_vid_or_url(media_data_obj, vid, url):
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_live,
+                        media_data_obj,
+                        1,
+                        live_data_dict,
+                    )
+
+                    # (We don't want mainwin.NewbieDialogue to appear in this
+                    #   situation)
+                    self.download_manager_obj.register_video('other')
+
+                else:
+
+                    for child_obj in media_data_obj.child_list:
+
+                        if self.match_vid_or_url(child_obj, vid, url):
+                            GObject.timeout_add(
+                                0,
+                                app_obj.mark_video_live,
+                                child_obj,
+                                1,
+                                live_data_dict,
+                            )
+
+                            self.download_manager_obj.register_video('other')
+
+                            break
 
         # Assign the error/warning to a media data object
         if not self.is_ignorable(data):
@@ -6117,7 +6236,7 @@ class VideoDownloader(object):
             if not media_data_obj.dbid in self.video_error_warning_dict:
 
                 # The new error is the first error/warning generated during
-                #   this operation; remove any errors/warnings from previuos
+                #   this operation; remove any errors/warnings from previous
                 #   operations
                 media_data_obj.reset_error_warning()
                 self.video_error_warning_dict[media_data_obj.dbid] = True
@@ -6145,7 +6264,7 @@ class VideoDownloader(object):
             if not media_data_obj.dbid in self.video_error_warning_dict:
 
                 # The new warning is the first error/warning generated during
-                #   this operation; remove any errors/warnings from previuos
+                #   this operation; remove any errors/warnings from previous
                 #   operations
                 media_data_obj.reset_error_warning()
                 self.video_error_warning_dict[media_data_obj.dbid] = True
@@ -7195,7 +7314,7 @@ class ClipDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 orig_video_obj,
-                # No call to self.compile_mini_options_dict, because this
+                # No call to utils.compile_mini_options_dict(), because this
                 #   function deals with download options like
                 #   'move_description' by itself
                 {},
@@ -7224,7 +7343,7 @@ class ClipDownloader(object):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         Returns:
 
@@ -7845,13 +7964,11 @@ class StreamDownloader(object):
     """Called by downloads.DownloadWorker.run_stream_downloader().
 
     Python class to create a system child process. Uses the child process to
-    instruct Youtube Stream Capture (YTSC) to download the currently-
-    broadcasting livestream associated with the URL described by a
-    downloads.DownloadItem object (which is always an individual video).
+    download a currently broadcasting livestream, using the URL described by a
+    downloads.DownloadItem object.
 
-    Reads from the child process STDOUT, having set up a downloads.PipeReader
-    object to do so in an asynchronous way. (STDERR is available, but is
-    currently ignored).
+    Reads from the child process STDOUT and STDERR, having set up a
+    downloads.PipeReader object to do so in an asynchronous way.
 
     Sets self.return_code to a value in the range 0-5, described below. The
     parent downloads.DownloadWorker object checks that return code once this
@@ -7872,8 +7989,7 @@ class StreamDownloader(object):
             return code
 
         download_item_obj (downloads.DownloadItem): The download item object
-            describing the URL from which Youtube Stream Capture should
-            download a livestream video.
+            describing the URL with which the livestream must be downloaded
 
     Warnings:
 
@@ -7909,8 +8025,8 @@ class StreamDownloader(object):
         self.download_manager_obj = download_manager_obj
         # The parent downloads.DownloadWorker object
         self.download_worker_obj = download_worker_obj
-        # The downloads.DownloadItem object describing the URL from which
-        #   youtube-dl should download video(s)
+        # The downloads.DownloadItem object describing the URL of the
+        #   broadcasting livestream
         self.download_item_obj = download_item_obj
 
         # The child process created by self.create_child_process()
@@ -7934,62 +8050,56 @@ class StreamDownloader(object):
         #   overwrite higher in the hierarchy (with a bigger number)
         self.return_code = self.OK
         # The time (in seconds) between iterations of the loop in
-        #   self.do_child_process()
+        #   self.do_download()
         self.sleep_time = 0.1
+        # Flag set to true after the first error message processed
+        self.first_error_flag = False
 
-        # Name of the two YTSC scipts used
-        self.ytsc_capture_script = 'youtube_stream_capture.py'
-        self.ytsc_merge_script = 'merge.py'
-        # Actualy path to the YTSC script; used to find the merge script (which
-        #   should be in the same directory)
-        self.ytsc_capture_path = None
-        self.ytsc_merge_path = None
+        # Shortcut to the livestream download mode: 'default', 'default_mu3' or
+        #   'streamlink'
+        self.dl_mode = self.download_manager_obj.app_obj.livestream_dl_mode
 
-        # The directory in which YTSC stores video segments, before they are
-        #   merged into the eventual output video
-        self.segments_dir = None
-        # Full path to the temporary directory used for this download
-        self.temp_dir_path = None
-        # Full path to the output file
-        self.output_path = None
+        # Flag set to True when we're expecting the .m3u manifest in STDOUT,
+        #   set back to False when it is received
+        self.m3u_waiting_flag = False
+        # The text of the .m3u manifest, when received. Stored here so that
+        #   self.do_download_m3u() can retrieve it
+        self.m3u_manifest = None
 
-        # YTSC sometimes fails to commence downloading a stream, but succeeds
-        #   after a restart. The number of restarts attempted to far
-        self.restart_count = 0
-        # On the current attempt, the time (matches time.time()) at which we
-        #   should either restart, or give up
-        self.restart_time = None
-        # Flag set to True by self.do_child_process(), if the child process has
-        #   been halted, but a restart should be performed
-        self.do_restart_flag = False
-        # Flag set to True after a call to self.stop(), meaning that no more
-        #   restarts are allowed (for example, once the user has clicked the
-        #   main window's 'Stop' button
-        self.no_restart_flag = False
+        # The actual (video) output path, set when intercepted (and used to
+        #   update the Progress List)
+        # (YouTube and other sites add a date/time to the video title, which
+        #   chnages every minutes; so the output path may not be the one we
+        #   were expecting)
+        self.actual_output_path = None
+        # ...and its components (for quick lookup)
+        self.actual_output_dir = None
+        self.actual_output_filename = None
+        self.actual_output_ext = None
+        # The expected output path. In some modes, it is passed directly to the
+        #   downloader
+        self.expect_output_path = self.choose_path()
 
-        # YTSC splits a video into segments, downloaded individually and later
-        #   merged into an output video file. The highest segment number
-        #   downloaded so far
+        # Flag set to True for downloads in 'streamlink' mode, when the
+        #   download started message is detected. The actual output path is on
+        #   the next line of STDOU; when this flag is True, that output path
+        #   can be intercepted
+        self.streamlink_start_flag = False
+
+        # Number of segments downloaded so far
+        # !!! DEBUG: Currently only used in 'default' mode
         self.segment_count = 0
 
 
     # Public class methods
 
 
-    def do_capture(self):
+    def do_download(self):
 
         """Called by downloads.DownloadWorker.run_stream_downloader().
 
-        YTSC runs in two stages. First, it downloads the broadcasting
-        livestream in segments, and stores them in a segments directory (with
-        a custom name). That stage is handled by this function.
-
-        If the first stage is successful, the second stage is handled by a call
-        to self.do_merge(), in which the segments are merged into a video
-        output file.
-
-        This function returns the final return code, regardless of whether
-        the second stage is performed, or not.
+        Downloads a broadcasting livestream using the URL described by
+        self.download_item_obj.
 
         Returns:
 
@@ -7998,296 +8108,245 @@ class StreamDownloader(object):
 
         """
 
-        # Import the main app and the media.Video object (for convenience)
+        # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
         video_obj = self.download_item_obj.media_data_obj
 
-        # This object creates more messages for the Output tab and/or terminal,
-        #   than downloads.VideoDownloader would do, as the output generated by
-        #   Youtube Stream Capture is not easy for the user to interpret
-        self.show_msg(_('Tartube is starting the stream capture...'))
+        # Set the default return code. Everything is OK unless we encounter any
+        #   problems
+        self.set_return_code(self.OK)
 
-        # Create a temporary directory, in which the video segments (and the
-        #   merged output file) can be kept during the process
-        # For some reason, the system will not delete the sub-directory
-        #   containing the video segments, at the moment the proceeds
-        #   completes. However, Tartube's temporary directories are all
-        #   deleted on shutdown anyway
-        self.temp_dir_path = os.path.abspath(
-            os.path.join(app_obj.temp_ytsc_dir, 'dbid_' + str(video_obj.dbid)),
-        )
+        if not self.download_item_obj.operation_classic_flag:
 
-        try:
-            if not os.path.isdir(self.temp_dir_path):
-                app_obj.make_directory(self.temp_dir_path)
+            # Reset the errors/warnings stored in the media data object, the
+            #   last time it was checked/downloaded
+            video_obj.reset_error_warning()
+            video_obj.set_block_flag(False)
 
-        except:
-            self.download_item_obj.media_data_obj.set_error(
-                _('Could not create a destination directory, capture halted'),
+        # If the file already exists (indicating an incomplete livestream
+        #   download), we can replace it before re-starting the download, if
+        #   required
+        if app_obj.livestream_replace_flag \
+        and video_obj.file_name is not None:
+
+            if os.path.isfile(self.expect_output_path):
+                app_obj.remove_file(self.expect_output_path)
+
+            part_path = self.expect_output_path + '.part'
+            if os.path.isfile(part_path):
+                app_obj.remove_file(part_path)
+
+        # There are currently three download methods, specified by self.dl_mode
+        msg = _('Tartube is starting the livestream download')
+        if self.dl_mode == 'default':
+
+            self.show_msg(msg + ' (' + app_obj.get_downloader() + ')...')
+            self.do_download_basic()
+
+        elif self.dl_mode == 'default_m3u':
+
+            self.show_msg(
+                msg + ' (' + app_obj.get_downloader() + '/FFmpeg/.m3u)...',
             )
+            self.do_download_m3u()
 
-            self.set_return_code(self.ERROR)
-            # Pass a dictionary of values to downloads.DownloadWorker,
-            #   confirming the result of the job. The values are passed on to
-            #   the main window
-            self.last_data_callback()
+        elif self.dl_mode == 'streamlink':
 
-            return self.return_code
-
-        # Set the path to the capture script; if nont has been specified,
-        #   assume the file is in the user's path
-        if app_obj.ytsc_path is not None:
-            self.ytsc_capture_path = app_obj.ytsc_path
-        else:
-            self.ytsc_capture_path = self.ytsc_capture_script
-
-        if not os.path.isfile(self.ytsc_capture_path):
-
-            self.download_item_obj.media_data_obj.set_error(
-                _('Youtube Stream Capture script not found:') + ' ' \
-                + self.ytsc_capture_path,
-            )
-
-            self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
-
-        # Get the full paths to the merge script
-        if self.ytsc_capture_path == self.ytsc_capture_script:
-
-            self.ytsc_merge_path = self.ytsc_merge_script
+            self.show_msg(msg + ' (streamlink)...')
+            self.do_download_streamlink()
 
         else:
 
-            capture_dir, capture_file = os.path.split(self.ytsc_capture_path)
-            self.ytsc_merge_path = os.path.abspath(
-                os.path.join(
-                    capture_dir, self.ytsc_merge_script,
-                ),
-            )
-
-        if not os.path.isfile(self.ytsc_merge_path):
-
-            self.download_item_obj.media_data_obj.set_error(
-                _('Youtube Stream Capture script not found:') + ' ' \
-                + self.ytsc_merge_path,
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
+                999,
+                _('Invalid livestream download mode'),
             )
 
             self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
 
-        # Stream capture attempts sometimes fail without getting started, in
-        #   which case the capture can be restarted (if settings permit it;
-        #   otherwise only one attempt is made)
-        while not self.restart_count \
-        or (self.do_restart_flag and not self.no_restart_flag):
-
-            # Set the time after which we should stop waiting for the first
-            #   segment
-            self.restart_time \
-            = int(time.time() + (app_obj.ytsc_wait_time * 60))
-            # (The flag is set back to True later, if another restart is
-            #   required)
-            self.do_restart_flag = False
-            self.restart_count += 1
-
-            # Generate the system command; if none has been specified, assume
-            #   the file is in the user's path
-            cmd_list = ['python3'] + [self.ytsc_capture_path] \
-            + [video_obj.source] + ['--output-directory'] \
-            + [self.temp_dir_path]
-
-            # ...and display it in the Output tab/terminal, if required
-            self.show_cmd(' '.join(cmd_list))
-
-            # Create a new child process using that system command...
-            self.create_child_process(cmd_list)
-            # ...and let it run until it has finished
-            self.do_capture_child_process()
-
-        # YTSC produces a return code of 0 on success and -1 on failure
-        # Other values have been observed, commonly -9 (when self.stop() is
-        #   called, and sometimes for other unknown reasons). After that, the
-        #   video segments cannot be merged
-        # If 0, we can proceed to the next stage. Otherwise, we must stop now
-        msg = ''
-        if self.child_process is None:
-
-            msg = _('Download did not start')
-
-        elif self.child_process.returncode == -1:
-
-            msg = _('Failed to capture the livestream')
-
-        elif self.child_process.returncode == -9:
-
-            msg = _('Stream capture terminated')
-
-        elif self.child_process.returncode != 0:
-
-            msg = _('Child process exited with non-zero code: {}').format(
-                self.child_process.returncode,
-            )
-
-        elif not self.segment_count:
-
-            msg = _('Stream captured terminated without downloading any' \
-                + ' video segments (indicating an error with the stream)',
-            )
-
-        if msg != '':
-
-            self.show_msg(msg)
-            self.download_item_obj.media_data_obj.set_error(msg)
-
-            self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
+        # If the file described by the output path actually exists, we can mark
+        #   the video as downloaded
+        if self.return_code == self.ERROR \
+        or self.actual_output_path is None \
+        or (
+            not os.path.isfile(self.actual_output_path) \
+            and not os.path.isfile(self.actual_output_path + '.part')
+        ):
+            # Video is not marked as downloaded
+            self.show_error('Livestream download failed')
+            self.set_error(video_obj, 'Livestream download failed')
 
         else:
 
-            # Capture successful
-            self.show_msg(_('Stream capture successful'))
+            # Because of YouTube's delightful habit of appending the date/time
+            #   to a livestream video's title, the media.Video's .file_name
+            #   may be different to the name of the file actually downloaded
+            # Rectify the situation by renaming the video and/or the .part file
+            if not os.path.isfile(self.expect_output_path) \
+            and os.path.isfile(self.actual_output_path):
 
-            # Now start another system process to merge the segments together
-            #   into a single output video, and return the return code of that
-            #   process
-            return self.do_merge()
+                app_obj.move_file_or_directory(
+                    self.actual_output_path,
+                    self.expect_output_path,
+                )
 
+            if not os.path.isfile(self.expect_output_path + '.part') \
+            and os.path.isfile(self.actual_output_path + '.part'):
 
-    def do_merge(self):
+                app_obj.move_file_or_directory(
+                    self.actual_output_path + '.part',
+                    self.expect_output_path + '.part',
+                )
 
-        """Called by self.do_capture().
+            # If we have a .part file instead of a video file, we can
+            #   optionally salvage the download by converting it (e.g.
+            #   convert output.mp4.part to output.mp4, and hope it works)
+            if not os.path.isfile(self.expect_output_path) \
+            and os.path.isfile(self.expect_output_path + '.part'):
 
-        Having completed the download, locate the video segments and attempt to
-        merge them into a single video output file.
+                if app_obj.livestream_stop_is_final_flag:
 
-        Returns:
+                    self.show_msg(
+                        _(
+                            'Incomplete livestream download detected;' \
+                            + ' removing the .part component from the' \
+                            + ' output file',
+                        ),
+                    )
 
-            The final return code, a value in the range 0-5 (as described
-            above)
+                    app_obj.move_file_or_directory(
+                        part_path,
+                        self.expect_output_path,
+                    )
 
-        """
+                elif not self.download_item_obj.operation_classic_flag:
 
-        # Import the main app and the media.Video object (for convenience)
-        app_obj = self.download_manager_obj.app_obj
-        video_obj = self.download_item_obj.media_data_obj
+                    self.show_msg(
+                        _(
+                            'Incomplete livestream download detected;' \
+                            + ' to complete the download, right-click the' \
+                            + ' video and select \'Finalise livestream\'',
+                        ),
+                    )
 
-        # Show a confirmation message
-        self.show_msg(_('Merging file segments...'))
+            # Update IVs and the main window
+            if self.return_code == self.STOPPED \
+            and not app_obj.livestream_stop_is_final_flag:
 
-        # Generate the system command...
-        cmd_list = ['python3'] + [self.ytsc_merge_path] + [video_obj.source] \
-        + ['--output-directory'] + [self.temp_dir_path]
-        # ...and display it in the Output tab/terminal, if required
-        self.show_cmd(' '.join(cmd_list))
+                # Video is not marked as downloaded
+                self.show_msg('Livestream download stopped')
 
-        # Create a new child process using that system command...
-        self.create_child_process(cmd_list)
-        # ...and let it run until it has finished
-        self.do_merge_child_process()
+            else:
 
-        # We also set the return code to self.ERROR if the download didn't
-        #   start
-        # (At the moment, the merge scripts do not return non-zero return
-        #   codes)
-        if self.child_process is None:
+                # Video is marked as downloaded
+                if self.return_code == self.STOPPED:
+                    self.show_msg('Livestream download stopped')
+                else:
+                    self.show_msg('Livestream download complete')
 
-            self.download_item_obj.media_data_obj.set_error(
-                _('Segment merge did not start'),
-            )
+                if not self.download_item_obj.operation_classic_flag:
 
-            self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
+                    # Download from the Videos tab
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_downloaded,
+                        video_obj,
+                        True,               # Video is downloaded
+                    )
+                    GObject.timeout_add(
+                        0,
+                        app_obj.mark_video_live,
+                        video_obj,
+                        0,                  # Not live
+                    )
 
-        # Check that a merged file was detected, and that it exists
-        if self.output_path is None:
+                else:
 
-            self.download_item_obj.media_data_obj.set_error(
-                _('Segment merge completed, but path not detected'),
-            )
+                    # Download from the Classic Mode tab
+                    video_obj.set_dl_flag(True)
+                    if os.path.isfile(self.expect_output_path):
+                        video_obj.set_dummy_path(
+                            self.expect_output_path,
+                        )
+                    else:
+                        video_obj.set_dummy_path(
+                            self.expect_output_path + '.part',
+                        )
 
-            self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
+                # Update the main window
+                GObject.timeout_add(
+                    0,
+                    app_obj.announce_video_download,
+                    self.download_item_obj,
+                    video_obj,
+                    utils.compile_mini_options_dict(
+                        self.download_worker_obj.options_manager_obj,
+                    ),
+                )
 
-        elif not os.path.isfile(self.output_path):
-
-            self.download_item_obj.media_data_obj.set_error(
-                _('Segment merge completed, but output file not found'),
-            )
-
-            self.set_return_code(self.ERROR)
-            self.last_data_callback()
-            return self.return_code
-
-        # Move the merged file to its permanent location
-        container_dir = video_obj.parent_obj.get_actual_dir(app_obj)
-        output_file, output_ext = os.path.splitext(self.output_path)
-        new_path = os.path.abspath(
-            os.path.join(
-                container_dir,
-                video_obj.file_name + output_ext,
-            ),
-        )
-
-        utils.rename_file(app_obj, self.output_path, new_path)
-
-        if os.path.isfile(new_path):
-
-            self.show_msg(_('File moved to:') + ' ' + new_path)
-            video_obj.set_file_from_path(new_path)
-            app_obj.mark_video_downloaded(video_obj, True)
-            app_obj.mark_video_live(video_obj, 0)
-
-            self.show_msg(_('Livestream download is complete'))
-
-        else:
-
-            self.download_item_obj.media_data_obj.set_error(
-                _('Failed to move output file'),
-            )
-
-            self.set_return_code(self.ERROR)
+                # Register the download with DownloadManager, so that download
+                #   limits can be applied, if required
+                # (Use 'new' rather than 'old', even though the media.Video
+                #   object already exists; the download operation's
+                #   confirmation window will be less confusing that way)
+                self.download_manager_obj.register_video('new')
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main window
         self.last_data_callback()
 
-        # All done
+        # Pass the result back to the parent downloads.DownloadWorker object
         return self.return_code
 
 
-    def do_capture_child_process(self):
+    def do_download_basic(self):
 
-        """Called by self.do_capture().
+        """Called by self.do_download() when self.dl_mode is set to 'default'.
 
-        YTSC runs in two stages. First, it downloads the broadcasting
-        livestream in segments, and stores them in a segments directory (with
-        a custom name). Then, it merges the segments into a single video
-        output file.
+        Downloads a broadcasting livestream using youtube-dl alone.
 
-        This function is called at the first stage to create the child process
-        and to check YTSC's output to STDOUT.
-
-        The function returns after the child process stops.
+        This function is based on VideoDownload.do_download() (but simplified,
+        because self.download_item_obj.media_data_obj is always a media.Video).
         """
 
-        # Import the main app (for convenience)
+        # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Set up the PipeReader objects to read from the child process STDOUT
-        #   and STDERR
-        # (As described above, STDERR is currently ignored, but might be used
-        #   in the future)
+        # Prepare a system command
+        options_obj = self.download_worker_obj.options_manager_obj
+        if options_obj.options_dict['direct_cmd_flag']:
+
+            cmd_list = utils.generate_direct_system_cmd(
+                app_obj,
+                self.download_item_obj.media_data_obj,
+                options_obj,
+            )
+
+        else:
+
+            cmd_list = utils.generate_ytdl_system_cmd(
+                app_obj,
+                self.download_item_obj.media_data_obj,
+                self.download_worker_obj.options_list,
+            )
+
+        # Display the (modified) command in the Output tab and/or terminal (if
+        #   required)...
+        if app_obj.ytdl_output_system_cmd_flag:
+            self.show_cmd(' '.join(cmd_list))
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
             self.stdout_reader.attach_fh(self.child_process.stdout)
             self.stderr_reader.attach_fh(self.child_process.stderr)
 
-        # While capturing the stream or merging the video segments, update the
-        #   callback function with the status of the current job
+        # While downloading the media data object, update the callback function
+        #   with the status of the current job
         while self.is_child_process_alive():
 
             # Pause a moment between each iteration of the loop (we don't want
@@ -8296,66 +8355,81 @@ class StreamDownloader(object):
 
             # Read from the child process STDOUT and STDERR, in the correct
             #   order, until there is nothing left to read
-            while self.read_capture_child_process():
+            while self.read_child_process():
                 pass
 
-            # If no segments have been received and it's time to give up (or to
-            #   restart the child process), then do so
-            if not self.segment_count \
-            and self.restart_time < time.time():
+            # !!! DEBUG: Any stall/timeout code goes here
+            pass
 
-                # Halt the child process, but don't let it forbid restarts
-                self.stop(True)
+        # The child process has finished
+        # We also set the return code to self.ERROR if the download didn't
+        #   start or if the child process return code is greater than 0
+        # Original notes from youtube-dl-gui:
+        #   NOTE: In Linux if the called script is just empty Python exits
+        #       normally (ret=0), so we can't detect this or similar cases
+        #       using the code below
+        #   NOTE: In Unix a negative return code (-N) indicates that the child
+        #       was terminated by signal N (e.g. -9 = SIGKILL)
+        internal_msg = None
+        if self.child_process is None:
+            self.set_return_code(self.ERROR)
+            internal_msg = _('Download did not start')
 
-                if not self.no_restart_flag \
-                and self.restart_count <= app_obj.ytsc_restart_max:
+        elif self.child_process.returncode > 0:
+            self.set_return_code(self.ERROR)
+            if not app_obj.ignore_child_process_exit_flag:
+                internal_msg = _(
+                    'Child process exited with non-zero code: {}',
+                ).format(self.child_process.returncode)
 
-                    self.do_restart_flag = True
-                    self.show_msg(
-                        _(
-                            'Stream capture is frozen, trying again' \
-                            + ' (restart #{0})'.format(self.restart_count),
-                        ),
-                    )
+        if internal_msg:
 
-                else:
+            # (The message must be visible in the Errors/Warnings tab, the
+            #   Output tab and/or the terminal)
+            self.set_error(
+                self.download_item_obj.media_data_obj,
+                internal_msg,
+            )
 
-                    self.show_msg(_('Stream capture is frozen, giving up'))
+            self.show_error(internal_msg)
 
-                # (In both cases, self.is_child_process_alive() might return
-                #   True right now, so return control to the calling function
-                #   early)
-                break
+        return
 
 
-    def do_merge_child_process(self):
+    def do_download_m3u(self):
 
-        """Called by self.do_merge().
+        """Called by self.do_download() when self.dl_mode is set to
+        'default_m3u'.
 
-        YTSC runs in two stages. First, it downloads the broadcasting
-        livestream in segments, and stores them in a segments directory (with
-        a custom name). Then, it merges the segments into a single video
-        output file.
-
-        This function is called at the second stage to create the child process
-        and to check YTSC's output to STDOUT.
-
-        The function returns after the child process stops.
+        Downloads a broadcasting livestream, instructing youtube-dl to fetch
+        the .m3u manifest first.
         """
 
-        # Import the main app (for convenience)
+        # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
-        # Set up the PipeReader objects to read from the child process STDOUT
-        #   and STDERR
-        # (As described above, STDERR is currently ignored, but might be used
-        #   in the future)
+        # Prepare a system command to fetch the .m3u manifest...
+        cmd_list = utils.generate_m3u_system_cmd(
+            app_obj,
+            self.download_item_obj.media_data_obj,
+        )
+
+        # ...and display it in the Output tab and/or terminal, if required
+        self.show_cmd(' '.join(cmd_list))
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
         if self.child_process is not None:
             self.stdout_reader.attach_fh(self.child_process.stdout)
             self.stderr_reader.attach_fh(self.child_process.stderr)
 
-        # While capturing the stream or merging the video segments, update the
-        #   callback function with the status of the current job
+        # The first message in STDOUT should be the .m3u manifest
+        self.m3u_waiting_flag = True
+
+        # While downloading the media data object, update the callback function
+        #   with the status of the current job
         while self.is_child_process_alive():
 
             # Pause a moment between each iteration of the loop (we don't want
@@ -8364,8 +8438,162 @@ class StreamDownloader(object):
 
             # Read from the child process STDOUT and STDERR, in the correct
             #   order, until there is nothing left to read
-            while self.read_merge_child_process():
+            while self.read_child_process():
                 pass
+
+            # !!! DEBUG: Any stall/timeout code goes here
+            pass
+
+        # Reset the child process, ready for the next one
+        self.reset()
+
+        # Check the .m3u manifest was fetched
+        if self.m3u_manifest is None or self.m3u_manifest == '':
+
+            msg = _('Failed to download the .m3u manifest')
+
+            self.set_error(
+                self.download_item_obj.media_data_obj,
+                msg,
+            )
+            self.show_error(msg)
+
+            self.set_return_code(self.ERROR)
+            return
+
+        # Prepare a system command to download the livestream using the .m3u
+        #   manifest...
+        cmd_list = [
+            app_obj.ffmpeg_manager_obj.get_executable(),
+            '-i',
+            self.m3u_manifest,
+            '-c',
+            'copy',
+            self.expect_output_path,
+        ]
+
+        # ...and display it in the Output tab and/or terminal, if required
+        self.show_cmd(' '.join(cmd_list))
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
+        if self.child_process is not None:
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
+
+        # !!! DEBUG: Because STDOUT/STDERR messages are missing, artificially
+        # !!!   update the Progress List, as if the start of the download had
+        # !!!   been detected (in self.read_child_process() code)
+        self.set_actual_output_path(self.expect_output_path)
+
+        # While downloading the media data object, update the callback function
+        #   with the status of the current job
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_child_process():
+                pass
+
+            # !!! DEBUG: Any stall/timeout code goes here
+            pass
+
+
+    def do_download_streamlink(self):
+
+        """Called by self.do_download() when self.dl_mode is set to
+        'streamlink'.
+
+        Downloads a broadcasting livestream using streamlink.
+        """
+
+        # Import the main application (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Prepare a system command to download the livestream...
+        cmd_list = utils.generate_streamlink_system_cmd(
+            app_obj,
+            self.download_item_obj.media_data_obj,
+            self.expect_output_path,
+        )
+
+        # ...and display it in the Output tab and/or terminal, if required
+        self.show_cmd(' '.join(cmd_list))
+
+        # Create a new child process using that command...
+        self.create_child_process(cmd_list)
+        # ...and set up the PipeReader objects to read from the child process
+        #   STDOUT and STDERR
+        if self.child_process is not None:
+            self.stdout_reader.attach_fh(self.child_process.stdout)
+            self.stderr_reader.attach_fh(self.child_process.stderr)
+
+        # While downloading the media data object, update the callback function
+        #   with the status of the current job
+        while self.is_child_process_alive():
+
+            # Pause a moment between each iteration of the loop (we don't want
+            #   to hog system resources)
+            time.sleep(self.sleep_time)
+
+            # Read from the child process STDOUT and STDERR, in the correct
+            #   order, until there is nothing left to read
+            while self.read_child_process():
+                pass
+
+            # !!! DEBUG: Any stall/timeout code goes here
+            pass
+
+
+    def choose_path(self):
+
+        """Called by self.__init__().
+
+        When downloading from the Classic Mode tab, we don't know the video's
+        name, so we have to choose an arbitrary one.
+
+        Otherwise, the video's name (and file path) is already known, so we
+        can just use the normal media.Video function to get it.
+
+        Return values:
+
+            The new value of self.expect_output_path
+
+        """
+
+        video_obj = self.download_item_obj.media_data_obj
+        if not video_obj.dummy_flag:
+            return video_obj.get_actual_path(self.download_manager_obj.app_obj)
+
+        else:
+
+            # Retrieve the user's preferred file extension
+            if video_obj.dummy_format is not None:
+                convert_flag, file_ext, resolution \
+                = utils.extract_dummy_format(video_obj.dummy_format)
+
+            if file_ext is None:
+                file_ext = 'mp4'
+
+            # Use an arbitrary filename in the form 'livestream_N.EXT'
+            count = 0
+            while 1:
+                count += 1
+                path = os.path.abspath(
+                    os.path.join(
+                        video_obj.dummy_dir, 'livestream_' + str(count) \
+                        + '.' + file_ext,
+                    ),
+                )
+
+                if not os.path.isfile(path):
+                    return path
 
 
     def close(self):
@@ -8382,7 +8610,8 @@ class StreamDownloader(object):
 
     def create_child_process(self, cmd_list):
 
-        """Called by self.do_child_process().
+        """Called by self.do_download_basic(), .do_download_m3u() and
+        .do_download_streamlink().
 
         Based on YoutubeDLDownloader._create_process().
 
@@ -8391,7 +8620,7 @@ class StreamDownloader(object):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         Returns:
 
@@ -8426,9 +8655,44 @@ class StreamDownloader(object):
             return False
 
 
+    def download_data_callback(self, speed='', filesize=''):
+
+        """Called by self.read_child_process() and .set_actual_output_path().
+
+        Passes a dictionary of values to self.download_worker_obj so the main
+        window can be updated.
+
+        The dictionary is based on the one created by downloads.VideoDownloader
+        (but with far fewer values included).
+
+        This function is only called when a download is in progress;
+        self.last_data_callback() is called at the end of it.
+        """
+
+        if self.segment_count == 0:
+            percent = '?'
+        else:
+            percent = str(self.segment_count) + '/?'
+
+        dl_stat_dict = {
+            'status': formats.ACTIVE_STAGE_DOWNLOAD,
+            'path': self.actual_output_dir,
+            'filename': self.actual_output_filename,
+            'extension': self.actual_output_ext,
+            'percent': percent,
+            'speed': speed,
+            'filesize': filesize,
+            'playlist_index': 1,
+            'dl_sim_flag': False,
+        }
+
+        self.download_worker_obj.data_callback(dl_stat_dict)
+
+
     def is_child_process_alive(self):
 
-        """Called by self.do_child_process() and self.stop().
+        """Called by self.do_download_basic(), .do_download_m3u(),
+        .do_download_streamlink() and .stop().
 
         Based on YoutubeDLDownloader._proc_is_alive().
 
@@ -8449,12 +8713,13 @@ class StreamDownloader(object):
 
     def last_data_callback(self):
 
-        """Called by self.do_capture() or .do_merge().
+        """Called by self.do_download().
 
         Based on YoutubeDLDownloader._last_data_hook().
 
         After the child process has finished, creates a new Python dictionary
-        in the standard form described by self.extract_stdout_data().
+        in the standard form described by
+        downloads.VideoDownloader.extract_stdout_data().
 
         Sets key-value pairs in the dictonary, then passes it to the parent
         downloads.DownloadWorker object, confirming the result of the child
@@ -8473,27 +8738,32 @@ class StreamDownloader(object):
             dl_stat_dict['status'] = formats.ERROR_STAGE_STOPPED
 
         # Use some empty values in dl_stat_dict so that the Progress tab
-        #   doesn't show arbitrary data from the last file downloaded
-        dl_stat_dict['playlist_index'] = ''
-        dl_stat_dict['playlist_size'] = ''
-        dl_stat_dict['dl_sim_flag'] = ''
+        #   doesn't show arbitrary data from the most recent call to
+        #   self.download_data_callback()
+        dl_stat_dict['path'] = ''
+        dl_stat_dict['filename'] = ''
+        dl_stat_dict['extension'] = ''
+        dl_stat_dict['percent'] = ''
+        dl_stat_dict['speed'] = ''
+        dl_stat_dict['filesize'] = ''
+        dl_stat_dict['playlist_index'] = 1
+        dl_stat_dict['dl_sim_flag'] = False
 
         # The True argument shows that this function is the caller
         self.download_worker_obj.data_callback(dl_stat_dict, True)
 
 
-    def read_capture_child_process(self):
+    def read_child_process(self):
 
-        """Called by self.do_capture_child_process().
+        """Called by self.do_download_basic(), .do_download_m3u() and
+        .do_download_streamlink().
 
         Reads from the child process STDOUT and STDERR, in the correct order.
 
-        (As described above, STDERR is currently ignored, but might be used
-        in the future).
-
         Return values:
 
-            True if STDOUT was read, None otherwise
+            True if either STDOUT or STDERR were read. None if both queues were
+                empty, or if STDERR was read and a network error was detected
 
         """
 
@@ -8529,204 +8799,208 @@ class StreamDownloader(object):
         # STDOUT
         if mini_list[1] == 'stdout':
 
-            # Intercept various STDOUT messages
-            finished_flag = False
-            write_flag = False
+            if self.m3u_waiting_flag:
 
-            # Intercept the segment number, and update the IV (but don't
-            #   display that line in the Output tab)
-            match = re.search('^Segment number\: (\d+)', data)
-            if match:
+                # Assume the first line of text received in STDOUT is the .mu3
+                #   manifest
+                self.m3u_waiting_flag = False
+                self.m3u_manifest = data
+                # (The manifest will be visible in the next system command, so
+                #   don't show it here)
+                self.show_msg(
+                    _(
+                    'Downloaded the .m3u manifest, now downloading the' \
+                    + ' livestream...'),
+                )
 
-                segment_num = int(match.group(1))
-                if segment_num > self.segment_count:
-                    self.segment_count = segment_num
+                self.queue.task_done()
+                return True
 
-            # Intercept the segments directory, if we don't already have it
-            if not write_flag and self.segments_dir is None:
+            # Capture the actual output path provided by the downloader
+            if self.actual_output_path is None:
 
+                output_path = None
+                if self.dl_mode != 'streamlink':
+
+                    match = re.search(
+                        '^\[download\] Destination\: (.*)\s*$',
+                        data,
+                    )
+                    if match:
+                        output_path = match.groups()[0]
+
+                else:
+
+                    if self.streamlink_start_flag == False \
+                    and re.search(
+                        '^\[cli\]\[info\] Writing output to',
+                        data,
+                    ):
+                        # Next line contains the output path
+                        self.streamlink_start_flag = True
+
+                    elif self.streamlink_start_flag == True:
+                        # This line contains the output path
+                        output_path = data
+                        self.streamlink_start_flag = False
+
+                if output_path:
+                    self.set_actual_output_path(output_path)
+
+            # Download updates in 'streamlink' download mode
+            if self.dl_mode == 'streamlink':
+
+                # !!! DEBUG This has not been tested, as the message is
+                # !!!   currently not intercepted
+                # e.g.
+                # [download][output.mp4] Written 9.5 MB (36s @ 132.6 KB/s)
                 match = re.search(
-                    '^[INFO] Created directory (.*)',
+                    '^\[download\]\[[^\[\]]+\] Written (.*) \(\S+ \@ (.*)\)',
                     data,
                 )
 
                 if match:
-                    write_flag = True
-                    self.segments_dir = match.group(1)
+                    self.segment_count += 1
 
-            # Intercept other messages which can be displayed, even when
-            #   verbose output is turned off
-            # (Some of lines captured here, could also have been captured by
-            #   the code block above)
-            if not write_flag \
-            and (
-                re.search('^\w+\|OK\s+\|', data) \
-                or re.search('^\w+\|ERR\s+\|', data)
-            ):
-                write_flag = True
-
-            # Intercept the message, showing that the first stage is complete
-            if not write_flag:
-
-                match = re.search('Exceeded.*retries', data)
-                if match:
-                    finished_flag = True
-                    write_flag = True
-
-            # Pass a dictionary of values to self.download_worker_obj so the
-            #   main window can be updated
-            # The dictionary is based on the one created by
-            #   downloads.VideoDownloader (but with far fewer values included)
-            dl_stat_dict = {
-                'playlist_index': self.segment_count,
-                'playlist_size': '?',
-                'dl_sim_flag': False,
-                'status': formats.ACTIVE_STAGE_CAPTURE,
-            }
-
-            self.download_worker_obj.data_callback(dl_stat_dict)
-
-            # Show output in the Output tab (if required)
-            if app_obj.ytsc_write_verbose_flag \
-            or (app_obj.ytdl_output_stdout_flag and write_flag):
-                app_obj.main_win_obj.output_tab_write_stdout(
-                    self.download_worker_obj.worker_id,
-                    data,
-                )
-
-            # Show output in the terminal (if required)
-            if app_obj.ytsc_write_verbose_flag \
-            or (app_obj.ytdl_write_stdout_flag and write_flag):
-                # Git #175, Japanese text may produce a codec error
-                #   here, despite the .decode() call above
-                try:
-                    print(
-                        data.encode(utils.get_encoding(), 'replace'),
+                    # Pass a dictionary of values to
+                    #   self.download_worker_obj so the Progress List can be
+                    #   updated
+                    self.download_data_callback(
+                        match.groups()[1],      # Bitrate
+                        match.groups()[0],      # Filesize
                     )
-                except:
-                    print('STDOUT text with unprintable characters')
 
-            # If the download appears to be complete, stop the child
-            #   process
-            if finished_flag:
-                self.stop()
+            # Show output in the Output tab and/or terminal (if required)
+            self.show_msg(data)
 
-            # STDOUT was not empty
-            self.queue.task_done()
-            return True
+        # STDERR (downloads using youtube-dl, with or without .m3u)
+        elif self.dl_mode != 'streamlink':
+
+            mod_data = utils.stream_output_is_ignorable(data)
+            if mod_data is not None:
+
+                # Treat this as if it were a STDOUT message
+
+                # Download updates in 'default' and 'default_m3u' download
+                #   modes
+                match = re.search(
+                    '^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
+                    mod_data,
+                )
+                if match:
+                    self.segment_count += 1
+
+                    # Pass a dictionary of values to self.download_worker_obj
+                    #   so the Progress List can be updated
+                    self.download_data_callback(
+                        match.groups()[1],      # Bitrate
+                        match.groups()[0],      # Filesize
+                    )
+
+                # Show output in the Output tab and/or terminal (if required)
+                self.show_msg(mod_data)
+
+        # STDERR (downloads using youtube-dl/.m3u/FFmpeg; or using streamlink)
+        else:
+
+            # Check for recognised errors/warnings, and update the appropriate
+            #   media data object (immediately, if possible, or later
+            #   otherwise)
+            self.set_error(self.download_item_obj.media_data_obj, data)
+
+            # Show output in the Output tab and/or terminal (if required)
+            self.show_error(data)
+
+            # (An error fetching the .m3u manifest is fatal)
+            if self.m3u_waiting_flag:
+                self.show_error(_('Failed to download the .m3u manifest'))
+                self.set_return_code(self.ERROR)
+
+        # Either (or both) of STDOUT and STDERR were non-empty
+        self.queue.task_done()
+        return True
 
 
-    def read_merge_child_process(self):
+    def reset(self):
 
-        """Called by self.do_merge_child_process().
+        """Called by self.do_download_m3u().
 
-        Reads from the child process STDOUT and STDERR, in the correct order.
+        A modified version of self.close().
 
-        (As described above, STDERR is currently ignored, but might be used
-        in the future).
+        The calling code uses two sub-processes, one after the other. This
+        function is called when the first process is finished to reset
+        everything, ready for the second function.
+        """
 
-        Return values:
+        if self.child_process:
 
-            True if STDOUT was read, None otherwise
+            # Tell the PipeReader objects to shut down, thus joining their
+            #   threads
+            self.stdout_reader.join()
+            self.stderr_reader.join()
+
+        self.child_process = None
+        self.queue = queue.PriorityQueue()
+        self.stdout_reader = PipeReader(self.queue, 'stdout')
+        self.stderr_reader = PipeReader(self.queue, 'stderr')
+
+
+    def set_actual_output_path(self, output_path):
+
+        """Called by self.do_download_m3u() and .read_child_process().
+
+        The downloader's output path is captured, meaning that the download has
+        started.
+
+        Updates IVs and the Progress List.
+
+        Args:
+
+            output_path (str): Full path to the downloader's output file
 
         """
 
-        # mini_list is in the form [time, pipe_type, data]
-        try:
-            mini_list = self.queue.get_nowait()
+        # Update IVs
+        directory, filename, ext = utils.extract_path_components(output_path)
 
-        except:
-            # Nothing left to read
-            return None
+        self.actual_output_path = output_path
+        self.actual_output_dir = directory
+        self.actual_output_filename = filename
+        self.actual_output_ext = ext
 
-        # Import the main application (for convenience)
-        app_obj = self.download_manager_obj.app_obj
+        # Pass a dictionary of values to self.download_worker_obj so the main
+        #   window can be updated
+        self.download_data_callback()
 
-        # Failsafe check
-        if not mini_list \
-        or (mini_list[1] != 'stdout' and mini_list[1] != 'stderr'):
 
-            # Just in case...
-            GObject.timeout_add(
-                0,
-                self.download_manager_obj.app_obj.system_error,
-                999,
-                'Malformed STDOUT or STDERR data',
-            )
+    def set_error(self, media_data_obj, msg):
 
-        # STDOUT or STDERR has been read
-        data = mini_list[2].rstrip()
-        # On MS Windows we use cp1252, so that Tartube can communicate with the
-        #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        """Wrapper for media.Video.set_error().
 
-        # STDOUT
-        if mini_list[1] == 'stdout':
+        Args:
 
-            # Intercept various STDOUT messages, depending on whether the merge
-            #   has started yet, or not
-            finished_flag = False
-            write_flag = False
+            media_data_obj (media.Video): The media data object to update. Only
+                videos are updated by this function
 
-            # Intercept output file information
-            if re.search('^\[INFO\]', data) \
-            or re.search('^\[WARNING\]', data) \
-            or re.search('^\[ERROR\]', data):
-                write_flag = True
+            msg (str): The error message for this video
 
-            else:
+        """
 
-                match = re.search('^Output file\: (.*)', data)
-                if match:
-                    self.output_path = match.group(1)
-                    finished_flag = True
-                    write_flag = True
+        if not self.first_error_flag:
 
-            # Pass a dictionary of values to self.download_worker_obj so the
-            #   main window can be updated
-            # The dictionary is based on the one created by
-            #   downloads.VideoDownloader (but with far fewer values included)
-            dl_stat_dict = {
-                'playlist_index': self.segment_count,
-                'playlist_size': '?',
-                'dl_sim_flag': False,
-                'status': formats.ACTIVE_STAGE_MERGE,
-            }
+            self.first_error_flag = True
 
-            self.download_worker_obj.data_callback(dl_stat_dict)
+            # The new error is the first error/warning generated during this
+            #   operation; remove any errors/warnings from previous operations
+            media_data_obj.reset_error_warning()
 
-            # Show output in the Output tab (if required)
-            if app_obj.ytsc_write_verbose_flag \
-            or (app_obj.ytdl_output_stdout_flag and write_flag):
-                app_obj.main_win_obj.output_tab_write_stdout(
-                    self.download_worker_obj.worker_id,
-                    data,
-                )
-
-            # Show output in the terminal (if required)
-            if app_obj.ytsc_write_verbose_flag \
-            or (app_obj.ytdl_write_stdout_flag and write_flag):
-                # Git #175, Japanese text may produce a codec error here,
-                #   despite the .decode() call above
-                try:
-                    print(
-                        data.encode(utils.get_encoding(), 'replace'),
-                    )
-                except:
-                    print('STDOUT text with unprintable characters')
-
-            # If the download appears to be complete, stop the child process
-            if finished_flag:
-                self.stop()
-
-            # STDOUT was not empty
-            self.queue.task_done()
-            return True
+        # Set the new error
+        media_data_obj.set_error(msg)
 
 
     def set_return_code(self, code):
 
-        """Called by self.do_capture() and .do_merge().
+        """Can be called by anything.
 
         Based on YoutubeDLDownloader._set_returncode().
 
@@ -8746,7 +9020,7 @@ class StreamDownloader(object):
 
     def show_cmd(self, cmd):
 
-        """Called by self.do_capture() and .do_merge().
+        """Can be called by anything.
 
         Shows a system command in the Output tab and/or terminal window, if
         required.
@@ -8762,7 +9036,6 @@ class StreamDownloader(object):
 
         # Display the command in the Output tab, if allowed
         if app_obj.ytdl_output_system_cmd_flag:
-
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
                 cmd,
@@ -8778,7 +9051,7 @@ class StreamDownloader(object):
 
     def show_msg(self, msg):
 
-        """Called by self.do_capture() and .do_merge().
+        """Can be called by anything.
 
         Shows a message in the Output tab and/or terminal window, if required.
 
@@ -8793,7 +9066,6 @@ class StreamDownloader(object):
 
         # Display the message in the Output tab, if allowed
         if app_obj.ytdl_output_stdout_flag:
-
             app_obj.main_win_obj.output_tab_write_stdout(
                 self.download_worker_obj.worker_id,
                 msg,
@@ -8801,29 +9073,58 @@ class StreamDownloader(object):
 
         # Display the message in the terminal, if allowed
         if app_obj.ytdl_write_stdout_flag:
+            # Git #175, Japanese text may produce a codec error here,
+            #   despite the .decode() call above
             try:
-                print(msg)
+                print(
+                    msg.encode(utils.get_encoding(), 'replace'),
+                )
             except:
                 print('Message echoed in STDOUT with unprintable characters')
 
 
-    def stop(self, restart_flag=False):
+    def show_error(self, msg):
 
-        """Called by DownloadWorker.close() and self.do_child_process().
+        """Can be called by anything.
 
-        Terminates the child process.
+        Shows an error message in the Output tab and/or terminal window, if
+        required.
 
         Args:
 
-            restart_flag (bool): If False, no restarts are allowed (perhaps
-                because the user has clicked the 'Stop' button in the main
-                window's toolbar). If True, don't explicitly forbid restarts
-                yet
+            msg (str): The message to display
 
         """
 
-        if not restart_flag:
-            self.no_restart_flag = True
+        # Import the main app (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # Display the message in the Output tab, if allowed
+        if app_obj.ytdl_output_stdout_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(
+                self.download_worker_obj.worker_id,
+                msg,
+            )
+
+        # Display the message in the terminal, if allowed
+        if app_obj.ytdl_write_stderr_flag:
+            # Git #175, Japanese text may produce a codec error here,
+            #   despite the .decode() call above
+            try:
+                print(
+                    msg.encode(utils.get_encoding(), 'replace'),
+                )
+            except:
+                print('Message echoed in STDERR with unprintable characters')
+
+
+    def stop(self):
+
+        """Called by DownloadWorker.close().
+
+        Terminates the child process and sets this object's return code to
+        self.STOPPED.
+        """
 
         if self.is_child_process_alive():
 
@@ -8840,13 +9141,15 @@ class StreamDownloader(object):
             else:
                 os.killpg(self.child_process.pid, signal.SIGKILL)
 
+            self.set_return_code(self.STOPPED)
+
 
     def stop_soon(self):
 
         """Can be called by anything. Currently called by
         mainwin.MainWin.on_progress_list_stop_soon().
 
-        This object only downloads a single video, so we can ignore an
+        StreamDownloader only downloads a single video, so we can ignore an
         instruction to stop after that download has finished.
         """
 
@@ -9125,7 +9428,7 @@ class JSONFetcher(object):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         Returns:
 
@@ -9261,7 +9564,6 @@ class JSONFetcher(object):
                     self.video_upload_time,
                     live_data_dict,
                 )
-
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()
@@ -9622,7 +9924,7 @@ class MiniJSONFetcher(object):
 
         Args:
 
-            cmd_list (list): Python list that contains the command to execute.
+            cmd_list (list): Python list that contains the command to execute
 
         Returns:
 
@@ -10149,9 +10451,14 @@ class PipeReader(threading.Thread):
 
             if self.fh is not None:
 
+                # Read the filehandle until the sentinel line (matching '') is
+                #   found, marking the end of the file; see
+                #   https://stackoverflow.com/questions/52446415/
+                #   line-in-iterfp-readline-rather-than-line-in-fp
                 for line in iter(self.fh.readline, str('')):
 
                     if line == b'':
+                        # End of file
                         break
 
                     if str.encode('ffmpeg version') in line:
@@ -10169,6 +10476,7 @@ class PipeReader(threading.Thread):
                 self.fh = None
                 ignore_line = False
 
+            # This delay is required; see the comments in self.__init__()
             time.sleep(self.sleep_time)
 
 

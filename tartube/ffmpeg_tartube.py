@@ -373,10 +373,8 @@ class FFmpegManager(object):
                 stdin=subprocess.PIPE,
             )
 
-        except:
-            # If FFmpeg is not installed on the user's system, this is the
-            #   result
-            return [ False, 'Could not find FFmpeg' ]
+        except Exception as e:
+            return [ False, str(e) ]
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:
@@ -387,7 +385,7 @@ class FFmpegManager(object):
             return [ self.try_utime(out_path, oldest_mtime, oldest_mtime), '' ]
 
 
-    def run_ffmpeg_with_options(self, video_obj, source_path, cmd_list):
+    def run_ffmpeg_directly(self, video_obj, source_path, cmd_list):
 
         """Modified version of self.run_ffmpeg(), called by
         process.ProcessManager.process_video().
@@ -423,10 +421,8 @@ class FFmpegManager(object):
                 stdin=subprocess.PIPE,
             )
 
-        except:
-            # If FFmpeg is not installed on the user's system, this is the
-            #   result
-            return [ False, 'Could not find FFmpeg' ]
+        except Exception as e:
+            return [ False, str(e) ]
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:

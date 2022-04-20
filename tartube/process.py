@@ -457,7 +457,7 @@ class ProcessManager(threading.Thread):
 
         # Process the video
         success_flag, msg \
-        = self.app_obj.ffmpeg_manager_obj.run_ffmpeg_with_options(
+        = self.app_obj.ffmpeg_manager_obj.run_ffmpeg_directly(
             orig_video_obj,
             source_path,
             cmd_list,

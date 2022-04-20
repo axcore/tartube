@@ -16147,7 +16147,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         self.setup_general_tab()
         self.setup_download_options_tab()
-        self.setup_assoc_playlist_tab()
+        if self.edit_obj.enhanced:
+            self.setup_assoc_playlist_tab()
         if mainapp.HAVE_MATPLOTLIB_FLAG:
             self.setup_history_tab()
         self.setup_rss_feed_tab()
@@ -16475,39 +16476,64 @@ class ChannelPlaylistEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_RSS feed'))
+        grid_width = 3
 
-        # RSS feed
+        # RSS feed (used to detect livestreams)
         self.add_label(grid,
-            '<u>' + _('RSS feed') + '</u>',
-            0, 0, 1, 1,
+            '<u>' + _('RSS feed (used to detect livestreams)') + '</u>',
+            0, 0, grid_width, 1,
         )
 
         if self.media_type == 'channel':
-            string = _(
+            msg = _(
                 'If Tartube cannot detect the channel\'s RSS feed, you' \
                 + ' can enter the URL here',
             )
         else:
-            string = _(
+            msg = _(
                 'If Tartube cannot detect the playlist\'s RSS feed, you' \
                 + ' can enter the URL here',
             )
 
-        string2 = _(
-            '(The feed is used to detect livestreams on compatible websites)',
-        )
-
         self.add_label(grid,
-            '<i>' + string + '\n' + string2 + '</i>',
-            0, 1, 1, 1,
+            '<i>' + msg + '</i>',
+            0, 1, grid_width, 1,
         )
 
         entry = self.add_entry(grid,
-            'rss',
-            0, 2, 1, 1,
+            None,
+            0, 2, grid_width, 1,
         )
         entry.set_editable(True)
         entry.set_hexpand(True)
+        if self.edit_obj.rss:
+            entry.set_text(self.edit_obj.rss)
+        entry.connect('changed', self.on_rss_entry_changed)
+
+        button = Gtk.Button(_('Open in web browser'))
+        grid.attach(button, 0, 3, 1, 1)
+        button.set_hexpand(False)
+        button.connect('clicked', self.on_open_feed_button_clicked)
+
+        button2 = Gtk.Button(_('Set to default feed'))
+        grid.attach(button2, 1, 3, 1, 1)
+        button2.set_hexpand(False)
+        if not self.edit_obj.source or not self.edit_obj.enhanced:
+            button2.set_sensitive(False)
+        button2.connect('clicked', self.on_set_feed_button_clicked, entry)
+
+        button3 = Gtk.Button(_('Reset feed'))
+        grid.attach(button3, 2, 3, 1, 1)
+        button3.set_hexpand(False)
+        button3.connect('clicked', self.on_reset_feed_button_clicked, entry)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'N.B. The <b>Set to default feed</b> button won\'t work if' \
+                + ' the RSS feed was obtained from video metadata',
+            ) + '</i>',
+            0, 4, grid_width, 1,
+        )
 
 
     def setup_errors_warnings_tab(self):
@@ -16634,7 +16660,23 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 self,           # Parent window is this window
             )
 
-        url = utils.convert_youtube_id_to_playlist(playlist_id)
+        url = utils.convert_enhanced_template_from_json(
+            'convert_playlist_list',
+            self.edit_obj.enhanced,
+            {
+                'playlist_id': playlist_id,
+                'playlist_title': playlist_title,
+            },
+        )
+        if url is None:
+
+            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Unable to extrapolate the URL for this playlist'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
         for dbid in self.app_obj.media_name_dict.values():
 
             media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -16723,7 +16765,17 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 fail_count += 1
                 continue
 
-            url = utils.convert_youtube_id_to_playlist(playlist_id)
+            url = utils.convert_enhanced_template_from_json(
+                'convert_playlist_list',
+                self.edit_obj.enhanced,
+                {
+                    'playlist_id': playlist_id,
+                    'playlist_title': playlist_title,
+                },
+            )
+            if url is None:
+                continue
+
             match_flag = False
             for dbid in self.app_obj.media_name_dict.values():
 
@@ -16826,6 +16878,23 @@ class ChannelPlaylistEditWin(GenericEditWin):
         self.setup_assoc_playlist_tab_update_treeview()
 
 
+    def on_open_feed_button_clicked(self, button):
+
+        """Called from a callback in self.setup_rss_feed_tab().
+
+        Opens the RSS feed in a web browser.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        rss = self.retrieve_val('rss')
+        if rss:
+            utils.open_file(self.app_obj, rss)
+
+
     def on_reset_assoc_playlist_button_clicked(self, button):
 
         """Called from a callback in self.setup_assoc_playlist_tab().
@@ -16841,6 +16910,90 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         self.edit_obj.extract_playlist_id(self.app_obj)
         self.setup_assoc_playlist_tab_update_treeview()
+
+
+    def on_rss_entry_changed(self, entry):
+
+        """Called by callback in self.setup_rss_feed_tab().
+
+        Sets the RSS feed.
+
+        Args:
+            entry (Gtk.Entry): The entry box modified
+
+        """
+
+        rss = entry.get_text()
+        if rss == '':
+            self.edit_dict['rss'] = None
+        else:
+            self.edit_dict['rss'] = rss
+
+
+    def on_set_feed_button_clicked(self, button, entry):
+
+        """Called from a callback in self.setup_rss_feed_tab().
+
+        Sets the RSS feed to its expected value.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to modify
+
+        """
+
+        rss = self.retrieve_val('rss')
+        # Update code won't work if the .rss IV is set
+        self.edit_obj.reset_rss()
+
+        # Try to set the RSS feed using the channel/playlist URL
+        self.edit_obj.update_rss_from_url(self.retrieve_val('source'))
+        # Try to set the RSS feed using a child video, if any
+        if not self.edit_obj.rss and self.edit_obj.child_list:
+
+            # Look for the first video whose URL is set, then give up
+            for child_obj in self.edit_obj.child_list:
+                if child_obj.source:
+                    self.edit_obj.update_rss_from_url(child_obj.source)
+                    break
+
+        if not self.edit_obj.rss:
+
+            # Failed. Restore the previous value
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Could not set the RSS feed'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+            if rss:
+                entry.set_text(rss)
+
+        else:
+
+            # Succeeded
+            entry.set_text(self.edit_obj.rss)
+
+
+    def on_reset_feed_button_clicked(self, button, entry):
+
+        """Called from a callback in self.setup_rss_feed_tab().
+
+        Resets the RSS feed.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to modify
+
+        """
+
+        # (Updating the entry sets self.edit_dict)
+        entry.set_text('')
 
 
 class FolderEditWin(GenericEditWin):
@@ -18709,14 +18862,25 @@ class SystemPrefWin(GenericPrefWin):
         self.radiobutton = None                 # Gtk.RadioButton
         self.radiobutton2 = None                # Gtk.RadioButton
         self.radiobutton3 = None                # Gtk.RadioButton
+        self.radiobutton4 = None                # Gtk.RadioButton
+        self.radiobutton5 = None                # Gtk.RadioButton
         self.spinbutton = None                  # Gtk.SpinButton
         self.spinbutton2 = None                 # Gtk.SpinButton
+        self.spinbutton3 = None                 # Gtk.SpinButton
+        self.spinbutton4 = None                 # Gtk.SpinButton
         # (IVs used to handle widget changes in the 'Files' tab)
         self.entry = None                       # Gtk.Entry
         self.entry2 = None                      # Gtk.Entry
         self.url_liststore = None               # Gtk.ListStore
         # (IVs used to handle widget changes in the 'Custom' tab)
         self.custom_liststore = None            # Gtk.ListStore
+        # (IVs used to handle widget changes in the 'Livestream' tab)
+        self.livestream_label = None            # Gtk.Label
+        self.livestream_radiobutton = None      # Gtk.RadioButton
+        self.livestream_radiobutton2 = None     # Gtk.RadioButton
+        self.livestream_radiobutton3 = None     # Gtk.RadioButton
+        self.livestream_radiobutton4 = None     # Gtk.RadioButton
+        self.livestream_radiobutton5 = None     # Gtk.RadioButton
         # (IVs used to handle widget changes in the 'Downloaders' tab)
         self.path_liststore = None              # Gtk.ListStore
         self.cmd_liststore = None               # Gtk.ListStore
@@ -19751,118 +19915,202 @@ class SystemPrefWin(GenericPrefWin):
             _('_Videos'),
             inner_notebook,
         )
-        grid_width = 2
+        grid_width = 3
 
-        # Automatic video deletion preferences
+        # Automatic video deletion/removal preferences
         self.add_label(grid,
-            '<u>' + _('Automatic video deletion preferences') + '</u>',
+            '<u>' + _('Automatic video deletion/removal preferences') + '</u>',
             0, 0, grid_width, 1,
         )
 
+        self.add_label(grid,
+            '<i>' + _(
+                'Deleted videos are re-downloaded without an archive file.' \
+                + ' See the Operations > Archive tab',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
         checkbutton = self.add_checkbutton(grid,
-            _('Automatically delete downloaded videos after this many days'),
+            _('Automatically delete downloaded videos'),
             self.app_obj.auto_delete_flag,
             True,               # Can be toggled by user
-            0, 1, 1, 1,
-        )
-        # (Signal connect appears below)
-
-        spinbutton = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.auto_delete_days,
-            1, 1, 1, 1,
-        )
-        # (Signal connect appears below)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('...but only delete videos which have been watched'),
-            self.app_obj.auto_delete_watched_flag,
-            True,               # Can be toggled by user
-            0, 2, grid_width, 1,
-        )
-        # (Signal connect appears below)
-        if not self.app_obj.auto_delete_flag:
-            checkbutton2.set_sensitive(False)
-
-        # (Signal connects from above)
-        checkbutton.connect(
-            'toggled',
-            self.on_watched_videos_button_toggled,
-            spinbutton,
-            checkbutton2,
-        )
-        spinbutton.connect(
-            'value-changed',
-            self.on_auto_delete_spinbutton_changed,
-        )
-        checkbutton2.connect('toggled', self.on_delete_watched_button_toggled)
-
-        # Video matching preferences
-        self.add_label(grid,
-            '<u>' + _('Video matching preferences') + '</u>',
-            0, 3, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            _('When matching videos on the filesystem:'),
-            0, 4, grid_width, 1,
-        )
-
-        self.radiobutton = self.add_radiobutton(grid,
-            None,
-            _('The video names must match exactly'),
-            0, 5, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        self.radiobutton2 = self.add_radiobutton(grid,
-            self.radiobutton,
-            _('The first # characters must match exactly'),
-            0, 6, 1, 1,
+            0, 2, 1, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.match_first_chars,
-            1, 6, 1, 1,
+            0, 999, 1, self.app_obj.auto_delete_days,
+            1, 2, 1, 1,
         )
+        if not self.app_obj.auto_delete_flag:
+            self.spinbutton.set_sensitive(False)
         # (Signal connect appears below)
 
-        self.radiobutton3 = self.add_radiobutton(grid,
-            self.radiobutton2,
+        self.add_label(grid,
+            _('days'),
+            2, 2, 1, 1,
+        )
+
+        checkbutton2 = self.add_checkbutton(grid,
             _(
-            'Ignore the last # characters; the remaining name must match' \
-            + ' exactly',
+                'Remove downloaded videos from the database (but don\'t' \
+                + ' delete files)',
             ),
-            0, 7, 1, 1,
+            self.app_obj.auto_remove_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton2 = self.add_spinbutton(grid,
+            0, 999, 1, self.app_obj.auto_remove_days,
+            1, 3, 1, 1,
+        )
+        if not self.app_obj.auto_remove_flag:
+            self.spinbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            _('days'),
+            2, 3, 1, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Only delete/remove videos which have been watched'),
+            self.app_obj.auto_delete_watched_flag,
+            True,               # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
+
+        self.add_label(grid2,
+            _('Delete/remove files:'),
+            0, 0, 1, 1,
+        )
+
+        self.radiobutton = self.add_radiobutton(grid2,
+            None,
+            _('When the database is loaded'),
+            1, 0, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.radiobutton2 = self.add_radiobutton(grid2,
+            self.radiobutton,
+            _('After every download operation'),
+            2, 0, 1, 1,
+        )
+        if self.app_obj.auto_delete_asap_flag:
+            self.radiobutton2.set_active(True)
+
+        if not self.app_obj.auto_delete_flag \
+        and not self.app_obj.auto_remove_flag:
+            checkbutton3.set_sensitive(False)
+            self.radiobutton.set_sensitive(False)
+            self.radiobutton2.set_sensitive(False)
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_auto_delete_videos_button_toggled,
+            self.spinbutton,
+            checkbutton2,
+            checkbutton3,
+            self.radiobutton,
+            self.radiobutton2,
+        )
+        self.spinbutton.connect(
+            'value-changed',
+            self.on_auto_delete_videos_spinbutton_changed,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_auto_remove_videos_button_toggled,
+            self.spinbutton2,
+            checkbutton,
+            checkbutton3,
+            self.radiobutton,
+            self.radiobutton2,
+        )
+        self.spinbutton2.connect(
+            'value-changed',
+            self.on_auto_remove_videos_spinbutton_changed,
+        )
+        checkbutton3.connect('toggled', self.on_delete_watched_button_toggled)
+        self.radiobutton.connect('toggled', self.on_delete_asap_button_toggled)
+
+        # Video matching preferences
+        self.add_label(grid,
+            '<u>' + _('Video matching preferences') + '</u>',
+            0, 6, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('When matching videos on the filesystem:'),
+            0, 7, grid_width, 1,
+        )
+
+        self.radiobutton3 = self.add_radiobutton(grid,
+            None,
+            _('The video names must match exactly'),
+            0, 8, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.radiobutton4 = self.add_radiobutton(grid,
+            self.radiobutton3,
+            _('The first # characters must match exactly'),
+            0, 9, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.spinbutton3 = self.add_spinbutton(grid,
+            1, 999, 1, self.app_obj.match_first_chars,
+            1, 9, 2, 1,
+        )
+        # (Signal connect appears below)
+
+        self.radiobutton5 = self.add_radiobutton(grid,
+            self.radiobutton4,
+            _(
+            'Ignore the last # characters; the remaining name must match' \
+            + ' exactly',
+            ),
+            0, 10, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.spinbutton4 = self.add_spinbutton(grid,
             1, 999, 1, self.app_obj.match_ignore_chars,
-            1, 7, 1, 1,
+            1, 10, 2, 1,
         )
         # (Signal connect appears below)
 
         # (Widgets are sensitised/desensitised, based on the radiobutton)
         if self.app_obj.match_method == 'exact_match':
-            self.spinbutton.set_sensitive(False)
-            self.spinbutton2.set_sensitive(False)
+            self.spinbutton3.set_sensitive(False)
+            self.spinbutton4.set_sensitive(False)
         elif self.app_obj.match_method == 'match_first':
-            self.radiobutton2.set_active(True)
-            self.spinbutton2.set_sensitive(False)
+            self.radiobutton4.set_active(True)
+            self.spinbutton4.set_sensitive(False)
         else:
-            self.radiobutton3.set_active(True)
-            self.spinbutton.set_sensitive(False)
+            self.radiobutton5.set_active(True)
+            self.spinbutton3.set_sensitive(False)
 
         # (Signal connects from above)
-        self.radiobutton.connect('toggled', self.on_match_button_toggled)
-        self.radiobutton2.connect('toggled', self.on_match_button_toggled)
         self.radiobutton3.connect('toggled', self.on_match_button_toggled)
-        self.spinbutton.connect(
+        self.radiobutton4.connect('toggled', self.on_match_button_toggled)
+        self.radiobutton5.connect('toggled', self.on_match_button_toggled)
+        self.spinbutton3.connect(
             'value-changed',
             self.on_match_spinbutton_changed,
         )
-        self.spinbutton2.connect(
+        self.spinbutton4.connect(
             'value-changed',
             self.on_match_spinbutton_changed,
         )
@@ -23030,90 +23278,181 @@ class SystemPrefWin(GenericPrefWin):
         # Broadcast preferences (compatible websites only)
         self.add_label(grid,
             '<u>' + _(
-                'Broadcast preferences (compatible websites only)',
+                'Broadcasting livestream preferences (compatible websites' \
+                + ' only)',
             ) + '</u>',
             0, 4, grid_width, 1,
         )
 
-        checkbutton4 = self.add_checkbutton(grid,
-            _(
-                'Use Youtube Stream Capture to download broadcasting' \
-                + ' livestreams (requires aria2)',
-            ),
-            self.app_obj.ytsc_priority_flag,
-            True,                   # Can be toggled by user
-            0, 5, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
         self.add_label(grid,
             '<i>' + _(
-                'N.B. If this option is not selected, youtube-dl will still' \
-                + ' try to download livestreams',
+                'These settings apply when downloading videos individually,' \
+                + ' for example with a custom download',
             ) + '</i>',
+            0, 5, grid_width, 1,
+        )
+
+        self.livestream_label = self.add_label(grid,
+            '',
             0, 6, grid_width, 1,
         )
 
-        self.add_label(grid,
-            _('Timeout after this many minutes of inactivity'),
-            0, 7, 1, 1,
-        )
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
 
-        spinbutton3 = self.add_spinbutton(grid,
-            1, None, 0.2,
-            self.app_obj.ytsc_wait_time,
-            1, 7, 1, 1,
+        label = self.add_label(grid2,
+            _('Download using:'),
+            0, 0, 1, 1,
         )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton3.set_sensitive(False)
+        label.set_hexpand(False)
+
+        self.livestream_radiobutton = self.add_radiobutton(grid2,
+            None,
+            '',
+            1, 0, 1, 1,
+        )
+        self.livestream_radiobutton.set_hexpand(False)
         # (Signal connect appears below)
 
-        self.add_label(grid,
-            _('Number of restarts after a timeout'),
-            0, 8, 1, 1,
+        self.livestream_radiobutton2 = self.add_radiobutton(grid2,
+            self.livestream_radiobutton,
+            _('.m3u manifest'),
+            2, 0, 1, 1,
         )
-
-        spinbutton4 = self.add_spinbutton(grid,
-            0, None, 1,
-            self.app_obj.ytsc_restart_max,
-            1, 8, 1, 1,
-        )
-        if not self.app_obj.ytsc_priority_flag:
-            spinbutton4.set_sensitive(False)
+        self.livestream_radiobutton2.set_hexpand(False)
+        if self.app_obj.livestream_dl_mode == 'default_m3u':
+            self.livestream_radiobutton2.set_active(True)
         # (Signal connect appears below)
 
-        checkbutton5 = self.add_checkbutton(grid,
-            _(
-            'Bypass usual limits on simultaneous downloads, so that' \
-            + ' all broadcasts can be downloaded',
-            ),
-            self.app_obj.num_worker_bypass_flag,
-            True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+        self.livestream_radiobutton3 = self.add_radiobutton(grid2,
+            self.livestream_radiobutton2,
+            'streamlink',
+            3, 0, 1, 1,
         )
-        if not self.app_obj.ytsc_priority_flag:
-            checkbutton5.set_sensitive(False)
+        self.livestream_radiobutton3.set_hexpand(False)
+        if self.app_obj.livestream_dl_mode == 'streamlink':
+            self.livestream_radiobutton3.set_active(True)
+        # (Signal connect appears below)
+
+        # (Set labels for those widgets, and replace them every time the
+        #   downloader changes)
+        self.setup_operations_livestreams_tab_update()
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid3 = self.add_secondary_grid(grid, 0, 9, grid_width, 1)
+
+        self.livestream_radiobutton4 = self.add_radiobutton(grid3,
+            None,
+            _('Replace a partially-downloaded livestream'),
+            1, 0, 1, 1,
+        )
+        self.livestream_radiobutton4.set_hexpand(False)
+
+        self.livestream_radiobutton5 = self.add_radiobutton(grid3,
+            self.livestream_radiobutton4,
+            _('Resume a partially-downloaded livestream'),
+            2, 0, 1, 1,
+        )
+        self.livestream_radiobutton5.set_hexpand(False)
+        if not self.app_obj.livestream_replace_flag:
+            self.livestream_radiobutton5.set_active(True)
+        if self.app_obj.livestream_dl_mode == 'streamlink':
+            self.livestream_radiobutton5.set_sensitive(False)
         # (Signal connect appears below)
 
         # (Signal connects from above)
+        self.livestream_radiobutton.connect(
+            'toggled',
+            self.on_livestream_mode_button_toggled,
+            'default',
+        )
+        self.livestream_radiobutton2.connect(
+            'toggled',
+            self.on_livestream_mode_button_toggled,
+            'default_m3u',
+        )
+        self.livestream_radiobutton3.connect(
+            'toggled',
+            self.on_livestream_mode_button_toggled,
+            'streamlink',
+        )
+        self.livestream_radiobutton4.connect(
+            'toggled',
+            self.on_livestream_replace_button_toggled,
+        )
+
+        # (More widgets)
+        checkbutton3 = self.add_checkbutton(grid,
+            _(
+            'Bypass usual limits on simultaneous downloads, so that' \
+            + ' all livestreams can be downloaded',
+            ),
+            self.app_obj.num_worker_bypass_flag,
+            True,                   # Can be toggled by user
+            0, 8, grid_width, 1,
+        )
+        checkbutton3.connect(
+            'toggled',
+            self.on_worker_bypass_button_toggled,
+        )
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'When the livestream download is stopped manually, mark the' \
+            + ' video as downloaded',
+            ),
+            self.app_obj.livestream_stop_is_final_flag,
+            True,                   # Can be toggled by user
+            0, 10, grid_width, 1,
+        )
         checkbutton4.connect(
             'toggled',
-            self.on_ytsc_priority_button_toggled,
-            spinbutton3,
-            spinbutton4,
-            checkbutton5,
+            self.on_livestream_stop_button_toggled,
         )
-        spinbutton3.connect(
-            'value-changed',
-            self.on_ytsc_wait_time_spinbutton_changed,
-        )
-        spinbutton4.connect(
-            'value-changed',
-            self.on_ytsc_restart_max_spinbutton_changed,
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _(
+            'Check a video before the livestream download (ensures' \
+            + ' metadata is downloaded)',
+            ),
+            self.app_obj.livestream_force_check_flag,
+            True,                   # Can be toggled by user
+            0, 11, grid_width, 1,
         )
         checkbutton5.connect(
             'toggled',
-            self.on_worker_bypass_button_toggled,
+            self.on_livestream_force_check_button_toggled,
+        )
+
+        self.add_label(grid,
+            '   <i>' + _(
+                'N.B. This setting is ignored in the Classic Mode tab',
+            ) + '</i>',
+            0, 12, grid_width, 1,
+        )
+
+
+    def setup_operations_livestreams_tab_update(self):
+
+        """Called initially by self.setup_operations_livestreams_tab, and
+        subsequently by self.update_ytdl_combos().
+
+        Updates labels in that tab to show the current downloader.
+        """
+
+        downloader = self.app_obj.get_downloader()
+
+        self.livestream_label.set_markup(
+            '<i>' + _(
+                'N.B. To prevent {0} from downloading livestreams at all,' \
+                + ' use a custom download',
+            ).format(downloader) + '</i>',
+        )
+
+        self.livestream_radiobutton.set_label(
+            downloader + ' (' + _('not recommended') + ')',
         )
 
 
@@ -23935,7 +24274,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_downloader_forks_tab(self.downloader_inner_notebook)
         self.setup_downloader_paths_tab(self.downloader_inner_notebook)
         self.setup_downloader_ffmpeg_tab(self.downloader_inner_notebook)
-        self.setup_downloader_ytsc_tab(self.downloader_inner_notebook)
+        self.setup_downloader_streamlink_tab(self.downloader_inner_notebook)
 
 
     def setup_downloader_forks_tab(self, inner_notebook):
@@ -24415,11 +24754,11 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_downloader_ytsc_tab(self, inner_notebook):
+    def setup_downloader_streamlink_tab(self, inner_notebook):
 
         """Called by self.setup_downloader_tab().
 
-        Sets up the 'Stream Capture' inner notebook tab.
+        Sets up the 'streamlink' inner notebook tab.
 
         Args:
 
@@ -24428,54 +24767,56 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Stream Capture'),
+            _('_streamlink'),
             inner_notebook,
         )
-        grid_width = 4
+        grid_width = 3
 
-        # Youtube Stream Capture file path
+        # streamlink file path
         self.add_label(grid,
-            '<u>' + _('Youtube Stream Capture file path') + '</u>',
+            '<u>' + _('streamlink file path') + '</u>',
             0, 0, grid_width, 1,
         )
-        self.add_label(grid,
-            '<i>' + _(
-            'Tartube includes a copy of this script, but you can use a' \
-            + ' different copy, if you want',
-            ) + '</i>',
-            0, 1, grid_width, 1,
-        )
 
         self.add_label(grid,
-            _('Path to the YT Stream Capture executable'),
-            0, 2, 1, 1,
+            _('Path to the streamlink executable'),
+            0, 1, 1, 1,
         )
 
         button = Gtk.Button(_('Set'))
-        grid.attach(button, 1, 2, 1, 1)
+        grid.attach(button, 1, 1, 1, 1)
         # (Signal connect appears below)
 
         button2 = Gtk.Button(_('Reset'))
-        grid.attach(button2, 2, 2, 1, 1)
-        # (Signal connect appears below)
-
-        button3 = Gtk.Button(_('Use default path'))
-        grid.attach(button3, 3, 2, 1, 1)
+        grid.attach(button2, 2, 1, 1, 1)
         # (Signal connect appears below)
 
         entry = self.add_entry(grid,
-            self.app_obj.ytsc_path,
+            self.app_obj.streamlink_path,
             False,
-            0, 3, grid_width, 1,
+            0, 2, grid_width, 1,
         )
         entry.set_sensitive(False)
         entry.set_editable(False)
         entry.set_hexpand(True)
 
+        if os.name == 'nt':
+            entry.set_sensitive(False)
+            entry.set_text(_('Install from main menu'))
+            button.set_sensitive(False)
+            button2.set_sensitive(False)
+
         # (Signal connects from above)
-        button.connect('clicked', self.on_set_ytsc_button_clicked, entry)
-        button2.connect('clicked', self.on_reset_ytsc_button_clicked, entry)
-        button3.connect('clicked', self.on_default_ytsc_button_clicked, entry)
+        button.connect(
+            'clicked',
+            self.on_set_streamlink_button_clicked,
+            entry,
+        )
+        button2.connect(
+            'clicked',
+            self.on_reset_streamlink_button_clicked,
+            entry,
+        )
 
 
     def setup_options_tab(self):
@@ -25296,15 +25637,6 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.set_hexpand(False)
         checkbutton.connect('toggled', self.on_ytdl_verbose_button_toggled)
 
-        checkbutton = self.add_checkbutton(grid,
-            _('Youtube Stream Capture writes verbose output'),
-            self.app_obj.ytsc_write_verbose_flag,
-            True,               # Can be toggled by user
-            0, 2, 1, 1,
-        )
-        checkbutton.set_hexpand(False)
-        checkbutton.connect('toggled', self.on_ytsc_verbose_button_toggled)
-
 
     # Callback class methods
 
@@ -25617,22 +25949,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_auto_delete_options_flag(False)
 
 
-    def on_auto_delete_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_files_video_deletion_tab().
-
-        Sets the number of days after which downloaded videos should be
-        deleted.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The widget clicked
-
-        """
-
-        self.app_obj.set_auto_delete_days(spinbutton.get_value())
-
-
     def on_auto_delete_flag_toggled(self, checkbutton):
 
         """Called from callback in self.setup_operations_clips_tab().
@@ -25652,6 +25968,128 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.split_video_auto_delete_flag:
             self.app_obj.set_split_video_auto_delete_flag(False)
+
+
+    def on_auto_delete_videos_button_toggled(self, checkbutton, spinbutton,
+    checkbutton2, checkbutton3, radiobutton, radiobutton2):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Enables/disables automatic deletion of downloaded videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            checkbutton2, checkbutton3 (Gtk.CheckButton): Other widgets to be
+                (de)sensitised
+
+            radiobutton, radiobutton2 (Gtk.RadioButton): Other widgets to be
+                (de)sensitised
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(True)
+            spinbutton.set_sensitive(True)
+            checkbutton3.set_sensitive(True)
+            radiobutton.set_sensitive(True)
+            radiobutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_delete_flag:
+            self.app_obj.set_auto_delete_flag(False)
+            spinbutton.set_sensitive(False)
+            if checkbutton2.get_active():
+                checkbutton3.set_sensitive(True)
+                radiobutton.set_sensitive(True)
+                radiobutton2.set_sensitive(True)
+            else:
+                checkbutton3.set_active(False)
+                checkbutton3.set_sensitive(False)
+                radiobutton.set_active(True)
+                radiobutton.set_sensitive(False)
+                radiobutton2.set_sensitive(False)
+
+
+    def on_auto_delete_videos_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Sets the number of days after which downloaded videos should be
+        deleted.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_auto_delete_days(spinbutton.get_value())
+
+
+    def on_auto_remove_videos_button_toggled(self, checkbutton, spinbutton,
+    checkbutton2, checkbutton3, radiobutton, radiobutton2):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Enables/disables automatic removal of downloaded videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            checkbutton2, checkbutton3 (Gtk.CheckButton): Other widgets to be
+                (de)sensitised
+
+            radiobutton, radiobutton2 (Gtk.RadioButton): Other widgets to be
+                (de)sensitised
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.auto_remove_flag:
+            self.app_obj.set_auto_remove_flag(True)
+            spinbutton.set_sensitive(True)
+            checkbutton3.set_sensitive(True)
+            radiobutton.set_sensitive(True)
+            radiobutton2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.auto_remove_flag:
+            self.app_obj.set_auto_remove_flag(False)
+            spinbutton.set_sensitive(False)
+            if checkbutton2.get_active():
+                checkbutton3.set_sensitive(True)
+                radiobutton.set_sensitive(True)
+                radiobutton2.set_sensitive(True)
+            else:
+                checkbutton3.set_active(False)
+                checkbutton3.set_sensitive(False)
+                radiobutton.set_active(True)
+                radiobutton.set_sensitive(False)
+                radiobutton2.set_sensitive(False)
+
+
+    def on_auto_remove_videos_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Sets the number of days after which downloaded videos should be
+        removed.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_auto_remove_days(spinbutton.get_value())
 
 
     def on_auto_open_flag_toggled(self, checkbutton):
@@ -27380,6 +27818,27 @@ class SystemPrefWin(GenericPrefWin):
             self.try_switch_db(data_dir, button2)
 
 
+    def on_delete_asap_button_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_files_video_deletion_tab().
+
+        Enables/disables automatic deletion/removal of videos after every
+        download operation.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if not radiobutton.get_active() \
+        and not self.app_obj.auto_delete_asap_flag:
+            self.app_obj.set_auto_delete_asap_flag(True)
+        elif radiobutton.get_active() \
+        and self.app_obj.auto_delete_asap_flag:
+            self.app_obj.set_auto_delete_asap_flag(False)
+
+
     def on_default_avconv_button_clicked(self, button, entry):
 
         """Called from callback in self.setup_downloader_ffmpeg_tab().
@@ -27460,24 +27919,6 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text(self.app_obj.ffmpeg_path)
 
 
-    def on_default_ytsc_button_clicked(self, button, entry):
-
-        """Called from callback in self.setup_downloader_ytsc_tab().
-
-        Sets the path to the Youtube Stream Capture binary to the default path.
-
-        Args:
-
-            button (Gtk.Button): The widget clicked
-
-            entry (Gtk.Entry): Another widget to be modified by this function
-
-        """
-
-        self.app_obj.set_ytsc_path(self.app_obj.default_ytsc_path)
-        entry.set_text(self.app_obj.ytsc_path)
-
-
     def on_delete_shutdown_button_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_files_temp_folders_tab().
@@ -27507,8 +27948,8 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_files_video_deletion_tab().
 
-        Enables/disables automatic deletion of videos, but only those that have
-        been watched.
+        Enables/disables automatic deletion/removal of videos, but only those
+        that have been watched.
 
         Args:
 
@@ -28764,6 +29205,27 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def on_livestream_force_check_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables force check of a video, before downloading it as a
+        livestream.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.livestream_force_check_flag:
+            self.app_obj.set_livestream_force_check_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.livestream_force_check_flag:
+            self.app_obj.set_livestream_force_check_flag(False)
+
+
     def on_livestream_max_days_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_operations_livestreams_tab().
@@ -28779,6 +29241,51 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_livestream_max_days(
             spinbutton.get_value(),
         )
+
+
+    def on_livestream_mode_button_toggled(self, radiobutton, value):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Sets the livestream download mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+            radiobutton2, radiobutton3 (Gtk.RadioButton): Other widgets to
+                modify
+
+            value (str): The new value of the IV
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_livestream_dl_mode(value)
+
+            if self.app_obj.livestream_dl_mode == 'streamlink':
+                self.livestream_radiobutton4.set_active(True)
+                self.livestream_radiobutton5.set_sensitive(False)
+            else:
+                self.livestream_radiobutton5.set_sensitive(True)
+
+
+    def on_livestream_replace_button_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables replacing a previously-downloaded livestream.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_livestream_replace_flag(True)
+        else:
+            self.app_obj.set_livestream_replace_flag(False)
 
 
     def on_livestream_simple_button_toggled(self, checkbutton):
@@ -28808,6 +29315,26 @@ class SystemPrefWin(GenericPrefWin):
             main_win_obj.video_index_current,
             main_win_obj.catalogue_toolbar_current_page,
         )
+
+
+    def on_livestream_stop_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables marking a stopped livestream as downloaded.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.livestream_stop_is_final_flag:
+            self.app_obj.set_livestream_stop_is_final_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.livestream_stop_is_final_flag:
+            self.app_obj.set_livestream_stop_is_final_flag(False)
 
 
     def on_load_descrips_button_clicked(self, button, spinbutton):
@@ -28927,26 +29454,26 @@ class SystemPrefWin(GenericPrefWin):
 
         if radiobutton.get_active():
 
-            if radiobutton == self.radiobutton:
+            if radiobutton == self.radiobutton3:
                 self.app_obj.set_match_method('exact_match')
                 # (Changing the contents of the widgets automatically updates
                 #   mainapp.TartubeApp IVs)
-                self.spinbutton.set_value(default_val)
-                self.spinbutton.set_sensitive(False)
-                self.spinbutton2.set_value(default_val)
-                self.spinbutton2.set_sensitive(False)
+                self.spinbutton3.set_value(default_val)
+                self.spinbutton3.set_sensitive(False)
+                self.spinbutton4.set_value(default_val)
+                self.spinbutton4.set_sensitive(False)
 
-            elif radiobutton == self.radiobutton2:
+            elif radiobutton == self.radiobutton4:
                 self.app_obj.set_match_method('match_first')
-                self.spinbutton.set_sensitive(True)
-                self.spinbutton2.set_value(default_val)
-                self.spinbutton2.set_sensitive(False)
+                self.spinbutton3.set_sensitive(True)
+                self.spinbutton4.set_value(default_val)
+                self.spinbutton4.set_sensitive(False)
 
             else:
                 self.app_obj.set_match_method('ignore_last')
-                self.spinbutton.set_value(default_val)
-                self.spinbutton.set_sensitive(False)
-                self.spinbutton2.set_sensitive(True)
+                self.spinbutton3.set_value(default_val)
+                self.spinbutton3.set_sensitive(False)
+                self.spinbutton4.set_sensitive(True)
 
 
     def on_match_spinbutton_changed(self, spinbutton):
@@ -28961,7 +29488,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if spinbutton == self.spinbutton:
+        if spinbutton == self.spinbutton3:
             self.app_obj.set_match_first_chars(spinbutton.get_value())
         else:
             self.app_obj.set_match_ignore_chars(spinbutton.get_value())
@@ -30274,11 +30801,11 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_main_win_slider_reset_flag(True)
 
 
-    def on_reset_ytsc_button_clicked(self, button, entry):
+    def on_reset_streamlink_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_downloader_ytsc_tab().
+        """Called from callback in self.setup_downloader_streamlink_tab().
 
-        Resets the path to the Youtube Stream Capture binary.
+        Resets the path to the streamlink binary.
 
         Args:
 
@@ -30288,7 +30815,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        self.app_obj.set_ytsc_path(None)
+        self.app_obj.set_streamlink_path(None)
         entry.set_text('')
 
 
@@ -30811,12 +31338,12 @@ class SystemPrefWin(GenericPrefWin):
             entry.set_text(self.app_obj.ffmpeg_path)
 
 
-    def on_set_ytsc_button_clicked(self, button, entry):
+    def on_set_streamlink_button_clicked(self, button, entry):
 
-        """Called from callback in self.setup_downloader_ytsc_tab().
+        """Called from callback in self.setup_downloader_streamlink_tab().
 
-        Opens a window in which the user can select the Youtube Stream Capture
-        binary, if it is installed (and if the user wants it).
+        Opens a window in which the user can select the streamlink binary, if
+        it is installed (and if the user wants it).
 
         Args:
 
@@ -30827,7 +31354,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
-            _('Please select the Youtube Stream Capture executable'),
+            _('Please select the streamlink executable'),
             self,
             'open',
         )
@@ -30840,8 +31367,8 @@ class SystemPrefWin(GenericPrefWin):
 
         if response == Gtk.ResponseType.OK and new_path:
 
-            self.app_obj.set_ytsc_path(new_path)
-            entry.set_text(self.app_obj.ytsc_path)
+            self.app_obj.set_streamlink_path(new_path)
+            entry.set_text(self.app_obj.streamlink_path)
 
 
     def on_show_classic_mode_button_toggled(self, checkbutton):
@@ -31646,37 +32173,6 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.main_win_obj.set_video_res(model[tree_iter][0])
 
 
-    def on_watched_videos_button_toggled(self, checkbutton, spinbutton,
-    checkbutton2):
-
-        """Called from callback in self.setup_files_video_deletion_tab().
-
-        Enables/disables automatic deletion of downloaded videos.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
-
-            checkbutton2 (Gtk.CheckButton): Another widget to be
-                (de)sensitised
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.auto_delete_flag:
-            self.app_obj.set_auto_delete_flag(True)
-            spinbutton.set_sensitive(True)
-            checkbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.auto_delete_flag:
-            self.app_obj.set_auto_delete_flag(False)
-            spinbutton.set_sensitive(False)
-            checkbutton2.set_sensitive(False)
-
-
     def on_worker_button_toggled(self, checkbutton, alt_flag=False):
 
         """Called from callback in self.setup_operations_limits_tab().
@@ -32007,94 +32503,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_ytdl_fork_no_dependency_flag(False)
 
 
-    def on_ytsc_priority_button_toggled(self, checkbutton, spinbutton,
-    spinbutton2, checkbutton2):
-
-        """Called from callback in self.setup_operations_livestreams_tab().
-
-        Enables/disables desktop notifications when a livestream starts.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            spinbutton, spinbutton2 (Gtk.SpinButton): Other widgets to modify
-
-            checkbutton2 (Gtk.CheckButton): Another widget to modify
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.ytsc_priority_flag:
-
-            self.app_obj.set_ytsc_priority_flag(True)
-            spinbutton.set_sensitive(True)
-            spinbutton2.set_sensitive(True)
-            checkbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.ytsc_priority_flag:
-            self.app_obj.set_ytsc_priority_flag(False)
-            spinbutton.set_sensitive(False)
-            spinbutton2.set_sensitive(False)
-            checkbutton2.set_sensitive(False)
-            checkbutton2.set_active(False)
-
-
-    def on_ytsc_restart_max_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_operations_livestreams_tab().
-
-        Sets the maximum number of restarts for YTSC stream captures.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The widget clicked
-
-        """
-
-        self.app_obj.set_ytsc_restart_max(
-            spinbutton.get_value(),
-        )
-
-
-    def on_ytsc_verbose_button_toggled(self, checkbutton):
-
-        """Called from a callback in self.setup_output_both_tab().
-
-        Enables/disables writing verbose output for Youtube Stream Capture.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.ytsc_write_verbose_flag:
-            self.app_obj.set_ytsc_write_verbose_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.ytsc_write_verbose_flag:
-            self.app_obj.set_ytsc_write_verbose_flag(False)
-
-
-    def on_ytsc_wait_time_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_operations_livestreams_tab().
-
-        Sets the timeout (in minutes) for YTSC stream captures.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The widget clicked
-
-        """
-
-        self.app_obj.set_ytsc_wait_time(
-            spinbutton.get_value(),
-        )
-
-
     # (Callback support functions)
 
 
@@ -32204,6 +32612,7 @@ class SystemPrefWin(GenericPrefWin):
         youtube-dl fork is visible, rather than yotube-dl itself (if
         applicable).
 
+        Also updates labels in the Operations > Livestreams tab.
         """
 
         fork = standard = 'youtube-dl'
@@ -32260,3 +32669,7 @@ class SystemPrefWin(GenericPrefWin):
                 1,
                 descrip,
             )
+
+        # Update labels in the Operations > Livestreams tab
+        self.setup_operations_livestreams_tab_update()
+
