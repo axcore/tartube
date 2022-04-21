@@ -1300,7 +1300,7 @@ class MainWin(Gtk.ApplicationWindow):
         file_sub_menu.append(Gtk.SeparatorMenuItem())
 
         close_tray_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Close to tray'),
+            _('Close to _tray'),
         )
         file_sub_menu.append(close_tray_menu_item)
         close_tray_menu_item.set_action_name('app.close_tray_menu')
@@ -1339,7 +1339,7 @@ class MainWin(Gtk.ApplicationWindow):
             system_menu_column.set_submenu(system_sub_menu)
 
             self.open_msys2_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Open MSYS2 terminal...'),
+                _('Open _MSYS2 terminal...'),
             )
             system_sub_menu.append(self.open_msys2_menu_item)
             self.open_msys2_menu_item.set_action_name('app.open_msys2_menu')
@@ -1461,12 +1461,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.hide_system_menu_item.set_action_name('app.hide_system_menu')
 
         self.show_hidden_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic(_('Sh_ow hidden folders'))
+        Gtk.MenuItem.new_with_mnemonic(_('_Show hidden folders'))
         show_hide_submenu.append(self.show_hidden_menu_item)
         self.show_hidden_menu_item.set_action_name('app.show_hidden_menu')
 
         show_hide_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Show/hide'))
+            _('S_how/hide'))
         show_hide_menu_item.set_submenu(show_hide_submenu)
         media_sub_menu.append(show_hide_menu_item)
 
@@ -1488,7 +1488,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.debug_test_media_menu_flag:
 
             self.test_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Add test media'),
+                _('Ad_d test media'),
             )
             media_sub_menu.append(self.test_menu_item)
             self.test_menu_item.set_action_name('app.test_menu')
@@ -1496,7 +1496,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.debug_test_code_menu_flag:
 
             self.test_code_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Run test code'),
+                _('Run _test code'),
             )
             media_sub_menu.append(self.test_code_menu_item)
             self.test_code_menu_item.set_action_name('app.test_code_menu')
@@ -1557,7 +1557,7 @@ class MainWin(Gtk.ApplicationWindow):
         if os.name == 'nt':
 
             self.install_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Install FFmpeg...'),
+                _('Install _FFmpeg...'),
             )
             ops_sub_menu.append(self.install_ffmpeg_menu_item)
             self.install_ffmpeg_menu_item.set_action_name(
@@ -1565,7 +1565,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
             self.install_matplotlib_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Install matplotlib...'),
+                _('Install _matplotlib...'),
             )
             ops_sub_menu.append(self.install_matplotlib_menu_item)
             self.install_matplotlib_menu_item.set_action_name(
@@ -1573,7 +1573,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
             self.install_streamlink_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Install streamlink...'),
+                _('Install _streamlink...'),
             )
             ops_sub_menu.append(self.install_streamlink_menu_item)
             self.install_streamlink_menu_item.set_action_name(
@@ -1603,7 +1603,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.stop_operation_menu_item.set_sensitive(False)
 
         self.stop_soon_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic(_('_Stop after current videos'))
+        Gtk.MenuItem.new_with_mnemonic(_('Stop _after current videos'))
         ops_sub_menu.append(self.stop_soon_menu_item)
         self.stop_soon_menu_item.set_action_name(
             'app.stop_soon_menu',
@@ -5815,11 +5815,11 @@ class MainWin(Gtk.ApplicationWindow):
             contents_submenu.append(just_videos_menu_item)
 
         if media_type == 'channel':
-            string = _('Channel co_ntents')
+            string = _('Channel c_ontents')
         elif media_type == 'playlist':
-            string = _('Playlist co_ntents')
+            string = _('Playlist c_ontents')
         else:
-            string = _('Folder co_ntents')
+            string = _('Folder c_ontents')
 
         contents_menu_item = Gtk.MenuItem.new_with_mnemonic(string)
         contents_menu_item.set_submenu(contents_submenu)
@@ -6009,7 +6009,7 @@ class MainWin(Gtk.ApplicationWindow):
         actions_submenu.append(tidy_menu_item)
 
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Add to _Classic Mode tab'),
+            _('Add to C_lassic Mode tab'),
         )
         classic_dl_menu_item.connect(
             'activate',
@@ -6097,7 +6097,7 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_submenu.append(Gtk.SeparatorMenuItem())
 
         add_scheduled_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Add to s_cheduled download...'),
+            _('Add to _scheduled download...'),
         )
         add_scheduled_menu_item.connect(
             'activate',
@@ -6107,7 +6107,7 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_submenu.append(add_scheduled_menu_item)
 
         show_system_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Show system command...'),
+            _('Show system _command...'),
         )
         show_system_menu_item.connect(
             'activate',
@@ -6205,7 +6205,7 @@ class MainWin(Gtk.ApplicationWindow):
             disable_menu_item.set_sensitive(False)
             enforce_check_menu_item.set_sensitive(False)
 
-        downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(_('D_ownloads'))
+        downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Down_loads'))
         downloads_menu_item.set_submenu(downloads_submenu)
         popup_menu.append(downloads_menu_item)
         if __main__.__pkg_no_download_flag__ \
@@ -6285,7 +6285,8 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         if self.app_obj.current_manager_obj \
-        or (media_type == 'folder' and media_data_obj.fixed_flag):
+        or (media_type == 'folder' and media_data_obj.fixed_flag) \
+        or self.config_win_list:
             delete_menu_item.set_sensitive(False)
         popup_menu.append(delete_menu_item)
 
@@ -6589,13 +6590,13 @@ class MainWin(Gtk.ApplicationWindow):
         if video_obj.dl_flag:
 
             clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Create video cl_ip...'),
+                _('_Create video clip...'),
             )
 
         else:
 
             clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Download video cl_ip...'),
+                _('Download video clip...'),
             )
 
         clip_menu_item.connect(
@@ -6891,7 +6892,7 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_submenu.append(Gtk.SeparatorMenuItem())
 
         show_system_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Show system _command'),
+            _('_Show system command'),
         )
         show_system_menu_item.connect(
             'activate',
@@ -7059,7 +7060,7 @@ class MainWin(Gtk.ApplicationWindow):
             show_properties_menu_item.set_sensitive(False)
 
         show_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Show video'),
+            _('S_how video'),
         )
         show_menu_item.set_submenu(show_submenu)
         popup_menu.append(show_menu_item)
@@ -7106,6 +7107,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_obj,
         )
         popup_menu.append(delete_menu_item)
+        if self.config_win_list:
+            delete_menu_item.set_sensitive(False)
 
         # Create the popup menu
         popup_menu.show_all()
@@ -7460,6 +7463,8 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
         popup_menu.append(delete_menu_item)
+        if self.config_win_list:
+            delete_menu_item.set_sensitive(False)
 
         # Create the popup menu
         popup_menu.show_all()
@@ -7541,7 +7546,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   'custom_sim', 'classic_sim'), this menu option has a slightly
         #   different effect (so uses a diffirent label)
         if custom_sim_flag:
-            msg = _('Stop checking videos')
+            msg = _('Stop checking _videos')
         else:
             msg = _('Stop after this _video')
 
@@ -7941,7 +7946,7 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(default_menu_item)
 
         edit_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Edit download options'),
+            _('Edit download _options'),
         )
         edit_menu_item.connect(
             'activate',
@@ -8354,7 +8359,7 @@ class MainWin(Gtk.ApplicationWindow):
             mark_playlist_menu_item.set_sensitive(False)
 
         mark_not_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not in wai_ting list'),
+            _('Mark as not in waiting _list'),
         )
         mark_not_playlist_menu_item.connect(
             'activate',
@@ -8605,7 +8610,7 @@ class MainWin(Gtk.ApplicationWindow):
         temp_submenu.append(temp_dl_menu_item)
 
         temp_dl_watch_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Download and watch'),
+            _('Download and _watch'),
         )
         temp_dl_watch_menu_item.connect(
             'activate',

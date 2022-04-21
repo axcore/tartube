@@ -1384,9 +1384,17 @@ class OptionsParser(object):
         # Force youtube-dl's progress bar to be outputted as separate lines
         options_list = ['--newline']
 
-        # Create a copy of the dictionary...
+        # Create a copy of the dictionary
         copy_dict = options_manager_obj.options_dict.copy()
-        # ...then modify various values in the copy. Set the 'video_format' and
+
+        # Get the directory into which files are downloaded
+        dir_path = self.build_dir(
+            media_data_obj,
+            copy_dict,
+            operation_type,
+        )
+
+        # Modify various values in the copy. Set the 'video_format' and
         #   'all_formats' options
         self.build_video_format(media_data_obj, copy_dict, operation_type)
         # Set the 'min_filesize' and 'max_filesize' options
@@ -1465,6 +1473,16 @@ class OptionsParser(object):
                 else:
                     options_list.append(cookies_path)
 
+            elif option_holder_obj.name == 'trim_filenames':
+                length = copy_dict[option_holder_obj.name]
+                # The --trim-filenames option specifies a length that includes
+                #   the directory name. If the user has specified a length that
+                #   is shorter than the directory name, then ignore this
+                #   option
+                if length >= (len(dir_path) + 2):
+                    options_list.append('--trim-filenames')
+                    options_list.append(str(length))
+
             # For all other options, just check the value is valid
             elif option_holder_obj.check_requirements(copy_dict):
                 value = copy_dict[option_holder_obj.name]
@@ -1500,9 +1518,8 @@ class OptionsParser(object):
 
         # Parse the 'save_path_list' option
         options_list = self.build_paths(
-            media_data_obj,
+            dir_path,
             copy_dict,
-            operation_type,
             options_list,
         )
 
@@ -1645,13 +1662,11 @@ class OptionsParser(object):
                 copy_dict['proxy'] = proxy
 
 
-    def build_paths(self, media_data_obj, copy_dict, operation_type, \
-    options_list):
+    def build_dir(self, media_data_obj, copy_dict, operation_type):
 
         """Called by self.parse().
 
-        Build the value of the 'save_path_list' option, and add it directly to
-        the options list.
+        Finds the directory in which downloaded files are saved.
 
         Args:
 
@@ -1664,16 +1679,11 @@ class OptionsParser(object):
                 'classic_sim', 'classic_real', 'classic_custom' (matching
                 possible values of downloads.DownloadManager.operation_type)
 
-            options_list (list): List of download options compiled so far; this
-                function adds options directly to the list
-
         Return values:
 
-            The modified options_list
+            The output directory, as a string
 
         """
-
-        # First, set the download directory
 
         override_name = copy_dict['use_fixed_folder']
 
@@ -1700,8 +1710,30 @@ class OptionsParser(object):
         else:
             dir_path = media_data_obj.get_actual_dir(self.app_obj)
 
-        # Secondly, set the file output template, which may be preceded by the
-        #   download directory
+        return dir_path
+
+
+    def build_paths(self, dir_path, copy_dict, options_list):
+
+        """Called by self.parse().
+
+        Build the value of the 'save_path_list' option, and add it directly to
+        the options list.
+
+        Args:
+
+            dir_path (str): The directory into which files are to be downloaded
+
+            copy_dict (dict): Copy of the original options dictionary
+
+            options_list (list): List of download options compiled so far; this
+                function adds options directly to the list
+
+        Return values:
+
+            The modified options_list
+
+        """
 
         # (When 'output_format_list' is specified, then 'output_format' and
         #   'output_template' are ignored. However, 'output_format_list' is

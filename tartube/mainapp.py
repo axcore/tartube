@@ -390,7 +390,7 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if stock icons in the Videos/Classic Mode tabs
         #   should be replaced by a custom set of icons (in case the stock
         #   icons are not visible, for some reason)
-        self.show_custom_icons_flag = False
+        self.show_custom_icons_flag = True
         # Flag set to True if a marker should be visible on each row in the
         #   Video Index, false if not
         self.show_marker_in_index_flag = True
@@ -1025,6 +1025,9 @@ class TartubeApp(Gtk.Application):
         #   'streamlink' - use streamlink (if installed on the user's system)
         self.livestream_dl_mode = 'default_m3u'
         # Settings for downloading broadcasting livestreams
+        # Timeout (in minutes) during livestream downloads (minimum value 1,
+        #   fractional numbers are allowed)
+        self.livestream_dl_timeout = 3
         # If True, resume an earlier download. If False, replace the earlier
         #   download. When using streamlink, the earlier download is always
         #   replaced
@@ -1096,7 +1099,7 @@ class TartubeApp(Gtk.Application):
 
         # Default invidio.us mirror to use (the original site closed in
         #   September 2020); this value never changes
-        self.default_invidious_mirror = 'invidious.site'
+        self.default_invidious_mirror = 'yewtu.be'
         # Custom mirror to use (can be set by the user)
         self.custom_invidious_mirror = self.default_invidious_mirror
 
@@ -4306,6 +4309,8 @@ class TartubeApp(Gtk.Application):
 
         if version >= 2003566:  # v2.3.566
             self.livestream_dl_mode = json_dict['livestream_dl_mode']
+        if version >= 2003619:  # v2.3.619
+            self.livestream_dl_timeout = json_dict['livestream_dl_timeout']
         if version >= 2003582:  # v2.3.582
             self.livestream_replace_flag = json_dict['livestream_replace_flag']
             self.livestream_stop_is_final_flag \
@@ -5332,6 +5337,7 @@ class TartubeApp(Gtk.Application):
             'ffmpeg_convert_webp_flag': self.ffmpeg_convert_webp_flag,
 
             'livestream_dl_mode': self.livestream_dl_mode,
+            'livestream_dl_timeout': self.livestream_dl_timeout,
             'livestream_replace_flag': self.livestream_replace_flag,
             'livestream_stop_is_final_flag': \
             self.livestream_stop_is_final_flag,
@@ -8072,6 +8078,7 @@ class TartubeApp(Gtk.Application):
         #   options.OptionsManager objects)
         error_options_dict = {}
         error_options_media_dict = {}
+        error_options_media_reverse_dict = {}
         # (The number of media data objects which appear to have missing IVs,
         #   because of some failure or other in self.update_db() )
         broken_obj_count = 0
@@ -8274,6 +8281,13 @@ class TartubeApp(Gtk.Application):
                         error_options_media_dict[media_data_obj.dbid] \
                         = media_data_obj
 
+        for media_data_obj in self.media_reg_dict.values():
+
+            if media_data_obj.options_obj \
+            and not media_data_obj.options_obj.uid in self.options_reg_dict:
+                error_options_media_reverse_dict[media_data_obj.dbid] \
+                = media_data_obj.options_obj
+
         # .update_db() updates objects from earlier releases of Tartube with
         #   new IVs. Git #356 reports a database that has become broken due to
         #   missing IVs that .update_db() was not able to add
@@ -8287,6 +8301,7 @@ class TartubeApp(Gtk.Application):
         and not flag_error_count \
         and not error_options_dict \
         and not error_options_media_dict \
+        and not error_options_media_reverse_dict \
         and not broken_obj_count:
 
             if not no_prompt_flag:
@@ -8311,6 +8326,7 @@ class TartubeApp(Gtk.Application):
                     error_slave_dict,
                     error_options_dict,
                     error_options_media_dict,
+                    error_options_media_reverse_dict,
                     broken_obj_count,
                     no_prompt_flag,
                     parent_win_obj,
@@ -8321,7 +8337,8 @@ class TartubeApp(Gtk.Application):
 
             total = len(error_reg_dict) + len(error_master_dict) \
             + len(error_slave_dict) + flag_error_count \
-            + len(error_options_dict) + len(error_options_media_dict)
+            + len(error_options_dict) + len(error_options_media_dict) \
+            + len(error_options_media_reverse_dict)
 
             # Prompt the user before deleting stuff
             self.dialogue_manager_obj.show_msg_dialogue(
@@ -8343,6 +8360,7 @@ class TartubeApp(Gtk.Application):
                         error_slave_dict,
                         error_options_dict,
                         error_options_media_dict,
+                        error_options_media_reverse_dict,
                         broken_obj_count,
                         no_prompt_flag,
                         parent_win_obj,
@@ -8385,6 +8403,7 @@ class TartubeApp(Gtk.Application):
 
                 error_options_dict[uid] = options_obj
                 error_options_media_dict[dbid] = media_data_obj
+                error_options_media_reverse_dict[dbid] = options_obj
 
                     (Dictionaries of inconsistencies between media data objects
                         and options.OptionsManager objects. These
@@ -8410,6 +8429,7 @@ class TartubeApp(Gtk.Application):
         error_slave_dict = data_list.pop(0)
         error_options_dict = data_list.pop(0)
         error_options_media_dict = data_list.pop(0)
+        error_options_media_reverse_dict = data_list.pop(0)
         broken_obj_count = data_list.pop(0)
         no_prompt_flag = data_list.pop(0)
         parent_win_obj = data_list.pop(0)
@@ -8491,6 +8511,39 @@ class TartubeApp(Gtk.Application):
 
         for media_data_obj in error_options_media_dict.values():
             media_data_obj.reset_options_obj()
+
+        if error_options_media_reverse_dict:
+
+            # (In the case of options.OptionsManager objects missing from their
+            #   registry, they may not have been updated in self.update_db().
+            #   Check for that as well)
+            test_options_obj = options.OptionsManager(-1, 'test')
+
+            for dbid in error_options_media_reverse_dict.keys():
+                media_data_obj = self.media_reg_dict[dbid]
+                options_obj = error_options_media_reverse_dict[dbid]
+
+                self.options_reg_dict[options_obj.uid] = options_obj
+                media_data_obj.options_obj.dbid = media_data_obj.dbid
+
+                if not hasattr(options_obj, 'descrip'):
+                    options_obj.descrip = options_obj.name
+
+                for option in test_options_obj.options_dict:
+                    if not option in options_obj.options_dict:
+
+                        if isinstance(
+                            test_options_obj.options_dict[option],
+                            list,
+                        ) or isinstance(
+                            test_options_obj.options_dict[option],
+                            dict,
+                        ):
+                            options_obj.options_dict[option] \
+                            = test_options_obj.options_dict[option].copy()
+                        else:
+                            options_obj.options_dict[option] \
+                            = test_options_obj.options_dict[option]
 
         # Deal with broken objects due to failures in .update_db()
         if broken_obj_count:
@@ -13672,10 +13725,10 @@ class TartubeApp(Gtk.Application):
         #   directories don't exist)
         self.save_db()
 
-        # Remove the moving object from the Video Index, and put it back there
-        #   at its new location
-        self.main_win_obj.video_index_delete_row(media_data_obj)
-        self.main_win_obj.video_index_add_row(media_data_obj)
+        # Redraw the whole Video Index, which makes sure the moved container
+        #   has an expanding arrow button
+        self.main_win_obj.video_index_reset()
+        self.main_win_obj.video_index_populate()
 
         # Select the moving object, which redraws the Video Catalogue
         self.main_win_obj.video_index_select_row(media_data_obj)
@@ -13708,9 +13761,9 @@ class TartubeApp(Gtk.Application):
                 'Move container request failed sanity check',
             )
 
-        elif source_obj == dest_obj:
+        elif source_obj == dest_obj or source_obj.parent_obj == dest_obj:
             # No need for a system error message if the user drags a folder
-            #   onto itself; just do nothing
+            #   onto itself, or onto its own parent; just do nothing
             return
 
         # Ignore Video Index drag-and-drop during an operation
@@ -13883,10 +13936,11 @@ class TartubeApp(Gtk.Application):
         #   directories don't exist)
         self.save_db()
 
-        # Remove the moving object from the Video Index, and put it back there
-        #   at its new location
-        self.main_win_obj.video_index_delete_row(source_obj)
-        self.main_win_obj.video_index_add_row(source_obj)
+        # Redraw the whole Video Index, which makes sure the moved container
+        #   has an expanding arrow button
+        self.main_win_obj.video_index_reset()
+        self.main_win_obj.video_index_populate()
+
         # Select the moving object, which redraws the Video Catalogue
         self.main_win_obj.video_index_select_row(source_obj)
 
@@ -24929,6 +24983,11 @@ class TartubeApp(Gtk.Application):
     def set_livestream_dl_mode(self, value):
 
         self.livestream_dl_mode = value
+
+
+    def set_livestream_dl_timeout(self, value):
+
+        self.livestream_dl_timeout = value
 
 
     def set_livestream_force_check_flag(self, flag):

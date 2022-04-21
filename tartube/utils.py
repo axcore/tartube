@@ -828,6 +828,39 @@ def compile_mini_options_dict(options_manager_obj):
     return mini_options_dict
 
 
+def convert_bytes_to_string(num_bytes):
+
+    """Can be called by anything.
+
+    Uses formats.FILESIZE_METRIC_DICT to convert an arbitrary integer, in
+    bytes, into a readable string like '27.5 MiB'.
+
+    Based on code from https://stackoverflow.com/questions/12523586/
+    python-format-size-application-converting-b-to-kb-mb-gb-tb
+
+    Args:
+
+        num_bytes (int): An integer, 0 or above
+
+    Return values:
+
+        A string formatted to 1dp
+
+    """
+
+    unit_step = 1024
+    unit_step_thresh = unit_step - 0.05
+    last_label = formats.FILESIZE_METRIC_LIST[-1]
+
+    for unit in formats.FILESIZE_METRIC_LIST:
+        if num_bytes < unit_step_thresh:
+            break
+        if unit != last_label:
+            num_bytes /= unit_step
+
+    return '{:.1f} {}'.format(num_bytes, unit)
+
+
 def convert_enhanced_template_from_json(convert_type, enhanced_name, \
 json_dict):
 
@@ -2797,6 +2830,8 @@ def generate_streamlink_system_cmd(app_obj, media_data_obj, path):
         streamlink_path,
         '--hls-live-restart',
         '--force',          # Streamlink has no option to resume old stream
+        '--stream-timeout',
+        str(app_obj.livestream_dl_timeout * 60),
         '-o',
         path,
         media_data_obj.source,

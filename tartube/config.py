@@ -3498,7 +3498,7 @@ class CustomDLEditWin(GenericEditWin):
         Sets up the 'Mirrors' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('Mirrors'))
+        tab, grid = self.add_notebook_tab(_('_Mirrors'))
         grid_width = 2
 
         # Mirror settings
@@ -3576,7 +3576,7 @@ class CustomDLEditWin(GenericEditWin):
         Sets up the 'Livestreams' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('Li_vestreams'))
+        tab, grid = self.add_notebook_tab(_('L_ivestreams'))
 
         # Livestream settings
         self.add_label(grid,
@@ -5242,7 +5242,9 @@ class OptionsEditWin(GenericEditWin):
                 'license',          _('Video licence'),
                 'age_limit',        _('Age restriction (years)'),
                 'is_live',          _('Is a livestream'),
-                'autonumber',       _('Autonumber videos, starting at 0'),
+                'video_autonumber', _('Autonumber videos'),
+                'playlist_autonumber',
+                                    _('Autonumber videos (playlists)'),
             ],
             _('Creator/uploader'),
             [
@@ -5748,12 +5750,28 @@ class OptionsEditWin(GenericEditWin):
         )
         self.add_tooltip('--trim-filenames', label, spinbutton)
 
+        if os.name != 'nt':
+            msg = _(
+                'WARNING: The filename length includes the length of the' \
+                + ' folder name!',
+            )
+        else:
+            msg = _(
+                'WARNING: The filename length includes the length of the' \
+                + ' directory nam!e',
+            )
+
+        self.add_label(grid2,
+            '<i>' + msg + '</i>',
+            0, 3, grid_width, 1,
+        )
+
         if not self.app_obj.simple_options_flag:
 
             checkbutton5 = self.add_checkbutton(grid2,
                 _('Do not overwrite any files'),
                 'no_overwrites',
-                0, 3, grid_width, 1,
+                0, 4, grid_width, 1,
             )
             self.add_tooltip('--no-overwrites', checkbutton5)
 
@@ -5763,14 +5781,14 @@ class OptionsEditWin(GenericEditWin):
                     + ' \'--no-continue\')',
                 ),
                 'force_overwrites',
-                0, 4, grid_width, 1,
+                0, 5, grid_width, 1,
             )
             self.add_tooltip('--force-overwrites', checkbutton6)
 
             checkbutton7 = self.add_checkbutton(grid2,
                 _('Write playlist metadata in addition to video metadata'),
                 'write_playlist_metafiles',
-                0, 5, grid_width, 1,
+                0, 6, grid_width, 1,
             )
             self.add_tooltip('--write-playlist-metafiles', checkbutton7)
 
@@ -5780,7 +5798,7 @@ class OptionsEditWin(GenericEditWin):
                     + ' .info.json file',
                 ),
                 'no_clean_info_json',
-                0, 6, grid_width, 1,
+                0, 7, grid_width, 1,
             )
             self.add_tooltip('--no-clean-infojson', checkbutton8)
 
@@ -7130,7 +7148,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         # Add this tab...
-        tab, grid = self.add_notebook_tab(_('S_ubtitles'), 0)
+        tab, grid = self.add_notebook_tab(_('_Subtitles'), 0)
 
         # ...and an inner notebook...
         inner_notebook = self.add_inner_notebook(grid)
@@ -7186,7 +7204,7 @@ class OptionsEditWin(GenericEditWin):
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
-            _('Download all available subtitles files'),
+            _('Download all available subtitle files'),
             None,
             None,
             0, 3, 2, 1,
@@ -7199,7 +7217,7 @@ class OptionsEditWin(GenericEditWin):
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
-            _('Download subtitles file for these languages:'),
+            _('Download subtitle file for these languages:'),
             None,
             None,
             0, 4, 2, 1,
@@ -8865,21 +8883,35 @@ class OptionsEditWin(GenericEditWin):
         model = combo.get_model()
         label = trans_dict[model[tree_iter][0]]
 
-        # (Code adapted from youtube-dl-gui's GeneralTab._on_template)
-        if label == "ext":
+        # The new component should be inserted at the end of the filename, and
+        #   before the file extension (if possible)
+
+        output_template = file_name = self.retrieve_val('output_template')
+        file_ext = ''
+        if label != 'ext' and output_template:
+
+            match = re.search('(.*)(\.\%\(ext\)s)\s*$', output_template)
+            if match:
+
+                file_name = match.groups()[0]
+                file_ext = match.groups()[1]
+
+        if not output_template or output_template[-1] == os.sep:
+            prefix = ''
+        elif label == 'ext':
             prefix = '.'
         else:
             prefix = '-'
 
-        # If the output template is empty or ends with a file path separator,
-        #   remove the prefix
-        output_template = self.retrieve_val('output_template')
-        if not output_template or output_template[-1] == os.sep:
-            prefix = ''
-
-        formatted = '{0}%({1})s'.format(prefix, label)
+        if label == 'video_autonumber':
+            formatted = '{0}%({1})3d'.format(prefix, label)
+        else:
+            formatted = '{0}%({1})s'.format(prefix, label)
         # (Setting the entry updates self.edit_dict)
-        entry.set_text(output_template + formatted)
+        if label == 'ext':
+            entry.set_text(file_name + file_ext + formatted)
+        else:
+            entry.set_text(file_name + formatted + file_ext)
 
 
     def on_file_tab_combo_changed(self, combo, entry):
@@ -16290,7 +16322,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         Sets up the 'Associated Playlists' tab.
         """
 
-        tab, grid = self.add_notebook_tab(_('_Associated Playlists'))
+        tab, grid = self.add_notebook_tab(_('Associated _Playlists'))
         grid_width = 4
 
         # Associated playlists
@@ -20256,7 +20288,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_URLs'),
+            _('U_RLs'),
             inner_notebook,
         )
         grid_width = 2
@@ -22390,8 +22422,8 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton = self.add_checkbutton(grid,
             _(
-            'Stop checking/downloading a channel/playlist when it starts' \
-            + ' sending videos you already have',
+            'Stop checking/downloading a channel/playlist when it finds' \
+            + ' videos you already have',
             ),
             self.app_obj.operation_limit_flag,
             True,               # Can be toggled by user
@@ -23341,7 +23373,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid3 = self.add_secondary_grid(grid, 0, 9, grid_width, 1)
+        grid3 = self.add_secondary_grid(grid, 0, 8, grid_width, 1)
 
         self.livestream_radiobutton4 = self.add_radiobutton(grid3,
             None,
@@ -23391,11 +23423,26 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.num_worker_bypass_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton3.connect(
             'toggled',
             self.on_worker_bypass_button_toggled,
+        )
+
+        self.add_label(grid,
+            _('Timeout after this many minutes of inactivity'),
+            0, 10, 1, 1,
+        )
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 0.2,
+            self.app_obj.livestream_dl_timeout,
+            1, 10, 1, 1,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_livestream_timeout_spinbutton_changed,
         )
 
         checkbutton4 = self.add_checkbutton(grid,
@@ -23405,7 +23452,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.livestream_stop_is_final_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 11, grid_width, 1,
         )
         checkbutton4.connect(
             'toggled',
@@ -23419,7 +23466,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.livestream_force_check_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 12, grid_width, 1,
         )
         checkbutton5.connect(
             'toggled',
@@ -23430,7 +23477,7 @@ class SystemPrefWin(GenericPrefWin):
             '   <i>' + _(
                 'N.B. This setting is ignored in the Classic Mode tab',
             ) + '</i>',
-            0, 12, grid_width, 1,
+            0, 13, grid_width, 1,
         )
 
 
@@ -23638,7 +23685,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Clips'),
+            _('Cli_ps'),
             inner_notebook,
         )
         grid_width = 2
@@ -23841,7 +23888,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Slices'),
+            _('Slic_es'),
             inner_notebook,
         )
         grid_width = 1
@@ -23932,7 +23979,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Comments'),
+            _('C_omments'),
             inner_notebook,
         )
         grid_width = 1
@@ -24084,7 +24131,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Proxies'),
+            _('P_roxies'),
             inner_notebook,
         )
 
@@ -24123,7 +24170,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('P_references'),
+            _('Pre_ferences'),
             inner_notebook,
         )
         grid_width = 3
@@ -24494,7 +24541,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_File paths'),
+            _('File _paths'),
             inner_notebook,
         )
         grid_width = 3
@@ -24652,7 +24699,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_FFmpeg / AVConv'),
+            _('FF_mpeg / AVConv'),
             inner_notebook,
         )
         grid_width = 4
@@ -29335,6 +29382,23 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.livestream_stop_is_final_flag:
             self.app_obj.set_livestream_stop_is_final_flag(False)
+
+
+    def on_livestream_timeout_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Sets the timeout (in minutes) for livestream downloads.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.app_obj.set_livestream_dl_timeout(
+            spinbutton.get_value(),
+        )
 
 
     def on_load_descrips_button_clicked(self, button, spinbutton):

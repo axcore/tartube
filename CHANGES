@@ -1,3 +1,91 @@
+v2.4.0 (21 Apr 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- YouTube Stream Converter has been deprecated, so Tartube no longer supports
+    it. Instead, Tartube now offers livestream downloads using streamlink
+    (https://streamlink.github.io/) or with the video's .m3u manifest
+- Livestream detection now works on Odysee and Twitch, as well as on YouTube.
+    Detection should work on other websites, if you set the RSS feed for the
+    channel and playlist manually (see the README for details)
+- In the toolbar at the bottom of the Videos tab, you can now filter out
+    downloaded videos, or undownloaded videos. These settings are ignored when
+    a text search/filter is applied; in that situation, the buttons are now
+    greyed out for clarity (Git #402)
+    
+MINOR NEW FEATURES
+- When videos are being checked/downloaded, you can now see the amount of free
+    disk space in the bottom-left corner of the Videos tab
+- Added the youtube-dl download options '--no-overwrites', settable from the
+    edit window (Git #398)
+- Videos with enormous names, but without any space characters, created a
+    tooltip that was longer than the Tartube window itself. Updated line-
+    wrapping code generally, so that it will wrap on underline (underscore)
+    characters, as well as on whitespace
+- Column headers in the Errors/Warnings tab are now resizeable (Git #403)
+- There is now a setting to remove a video from Tartube's database after a
+    certain number of days, complementing the existing setting to delete the
+    video entirely from the user's filesystem. See Edit > System preferences...
+    > Files > Videos. The minimum value is now 0, so users can remove a
+    downloaded video from the database as soon as it has been downloaded, if
+    they want to (Git #404)
+- In the download options window, Files > File names tab, the 'autonumber'
+    component has been replaced with 'video_autonumber' and
+    'playlist_autonumber' components, on the advice of the yt-dlp developers
+    (Git #406)
+    
+MAJOR FIXES
+- JSON timeouts were causing havoc when checking a video with lots of comments.
+    Tartube now provides two timeout settings: one for checking videos with
+    comments, and one for checking videos without comments. To set them, click
+    Edit > System preferences... > Operations > Downloads. Also fixed an
+    error that failed to store comments in the database, under certain
+    circumstances. Also added a new setting, so that comments can be stored in
+    the database when checking videos, or when downloading videos (see Edit >
+    System preferences... > Operations > Comments) (Git #398)
+- Fixed problems with the Drag and Drop tab, causing python errors on startup
+    (Git #399)
+- On running out of disk space, load/save was disabled, so the user could not
+    free up space before saving the Tartube database. This no longer happens,
+    but after such an error, no scheduled downloads are started (this is
+    confirmed by a message in the Errors/Warnings tab). Updated the text in the
+    preferences window for clarity, and to show free space in GB rather than MB
+    (Git #400)
+- Fixed failure to extract a video's URL and duration on certain channels, on
+    MS Windows (Git #373)
+- Fix inability to load database from an (unspecified) earlier version of
+    Tartube. The error can also be fixed in the existing database integrity
+    check (Git #405)
+
+MINOR FIXES
+- On MS Windows, the download option '--windows-filenames' is automatically
+    added, but in the edit window, the same option is not selected. Fixed, so
+    that the option is no longer automatically added, but added only when
+    selected  (Git #373)
+- The download option '--trim-filenames' uses a file length that refers to the
+    absolute path, including the directory. Tartube will now ignore the setting
+    if the length is less than the absolute path of the directory itself, to
+    prevents files being downloaded into the wrong place. Added a warning about
+    the option's unexpected behaviour in the window
+- The installer for MS Windows now starts Tartube with an environment variable,
+    that prevents Gtk from hiding scrollbars (Git #401)
+- In the toolbar at the bottom of the Videos tab, the buttons to toggle
+    drawing frames and icons were set the wrong way around. Fixed
+- The YouTube 'This live event will begin in 11 minutes' was not recognised as
+    a livestream notification (in some circumstances). Fixed
+- On startup, in the Classic Mode tab, the 'Convert to this format' and
+    'Download in this format' buttons were not set or (de)sensitised correctly.
+    Fixed
+- In the download options window, Files > File names tab, the various 'Add'
+    buttons added components to the end of the file extension, rather than the
+    end of the filename. Fixed
+- Videos/channels/playlists/folders can no longer be deleted from the popup
+    menus, when preferences or edit windows are open. This should prevent
+    windows belonging to deleted items being visible
+- Fixed display problems when moving a channel/playlist/folder to the top
+    level, or dragging one onto another
+- All keyboard shortcuts have been checked and updated
+    
 v2.3.549 (9 Apr 2022)
 -------------------------------------------------------------------------------
 

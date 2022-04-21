@@ -6040,9 +6040,10 @@ class VideoDownloader(object):
                 { 'video_id': vid },
             )
 
-            if isinstance(media_data_obj, media.Video) \
-            and self.match_vid_or_url(media_data_obj, vid, url):
-                media_data_obj.set_block_flag(True)
+            if isinstance(media_data_obj, media.Video):
+
+                if self.match_vid_or_url(media_data_obj, vid, url):
+                    media_data_obj.set_block_flag(True)
 
             else:
 
@@ -6082,19 +6083,20 @@ class VideoDownloader(object):
                     { 'video_id': vid },
                 )
 
-                if isinstance(media_data_obj, media.Video) \
-                and self.match_vid_or_url(media_data_obj, vid, url):
-                    GObject.timeout_add(
-                        0,
-                        app_obj.mark_video_live,
-                        media_data_obj,
-                        1,
-                        live_data_dict,
-                    )
+                if isinstance(media_data_obj, media.Video):
 
-                    # (We don't want mainwin.NewbieDialogue to appear in this
-                    #   situation)
-                    self.download_manager_obj.register_video('other')
+                    if self.match_vid_or_url(media_data_obj, vid, url):
+                        GObject.timeout_add(
+                            0,
+                            app_obj.mark_video_live,
+                            media_data_obj,
+                            1,
+                            live_data_dict,
+                        )
+
+                        # (We don't want mainwin.NewbieDialogue to appear in
+                        #   this situation)
+                        self.download_manager_obj.register_video('other')
 
                 else:
 
@@ -8050,8 +8052,11 @@ class StreamDownloader(object):
         #   overwrite higher in the hierarchy (with a bigger number)
         self.return_code = self.OK
         # The time (in seconds) between iterations of the loop in
-        #   self.do_download()
-        self.sleep_time = 0.1
+        #   self.do_download_basic()
+        self.sleep_time = 0.5
+        # The time (in seconds) between iterations of the loop in
+        #   self.do_download_m3u() and .do_download_streamlink()
+        self.longer_sleep_time = 0.25
         # Flag set to true after the first error message processed
         self.first_error_flag = False
 
@@ -8087,8 +8092,15 @@ class StreamDownloader(object):
         self.streamlink_start_flag = False
 
         # Number of segments downloaded so far
-        # !!! DEBUG: Currently only used in 'default' mode
         self.segment_count = 0
+        # The time at which we should stop waiting for the next segment
+        #   (matches time.time())
+        self.check_time = 0
+        # Size of the output file, and the time (matches time.time()) at which
+        #   this value was set
+        # (These IVs are only use by 'default_m3u' and 'streamlink' modes
+        self.output_size = 0
+        self.output_size_time = 0
 
 
     # Public class methods
@@ -8358,8 +8370,13 @@ class StreamDownloader(object):
             while self.read_child_process():
                 pass
 
-            # !!! DEBUG: Any stall/timeout code goes here
-            pass
+            # Perform a timeout, if necessary
+            if self.check_time > 0 and self.check_time < time.time():
+
+                # Halt the child process
+                self.stop()
+                self.show_msg('Download timed out')
+                return
 
         # The child process has finished
         # We also set the return code to self.ERROR if the download didn't
@@ -8434,7 +8451,7 @@ class StreamDownloader(object):
 
             # Pause a moment between each iteration of the loop (we don't want
             #   to hog system resources)
-            time.sleep(self.sleep_time)
+            time.sleep(self.longer_sleep_time)
 
             # Read from the child process STDOUT and STDERR, in the correct
             #   order, until there is nothing left to read
@@ -8501,8 +8518,42 @@ class StreamDownloader(object):
             while self.read_child_process():
                 pass
 
-            # !!! DEBUG: Any stall/timeout code goes here
-            pass
+            # Check on our progress. As of v2.3.618, youtube-dl output on lines
+            #   without a newline character cannot be retrieved by
+            #   downloads.PipeReader; this is the next best thing
+            if self.actual_output_path \
+            and os.path.isfile(self.actual_output_path):
+
+                current_size = os.path.getsize(self.actual_output_path)
+                if current_size != self.output_size:
+
+                    self.output_size = current_size
+                    self.output_size_time = time.time()
+                    self.segment_count += 1
+
+                    # (Convert to, e.g. '27.5 MiB')
+                    converted_size = utils.convert_bytes_to_string(
+                        current_size,
+                    )
+
+                    self.download_data_callback('', str(converted_size))
+                    self.show_msg(
+                        ('Downloaded segment #{0}, size {1}').format(
+                            self.segment_count,
+                            converted_size,
+                        ),
+                    )
+
+                    self.check_time = (app_obj.livestream_dl_timeout * 60) \
+                    + time.time()
+
+            # Perform a timeout, if necessary
+            if self.check_time > 0 and self.check_time < time.time():
+
+                # Halt the child process
+                self.stop()
+                self.show_msg('Download timed out')
+                return
 
 
     def do_download_streamlink(self):
@@ -8540,15 +8591,52 @@ class StreamDownloader(object):
 
             # Pause a moment between each iteration of the loop (we don't want
             #   to hog system resources)
-            time.sleep(self.sleep_time)
+            time.sleep(self.longer_sleep_time)
 
             # Read from the child process STDOUT and STDERR, in the correct
             #   order, until there is nothing left to read
             while self.read_child_process():
                 pass
 
-            # !!! DEBUG: Any stall/timeout code goes here
-            pass
+            # Check on our progress. As of v2.3.618, youtube-dl output on lines
+            #   without a newline character cannot be retrieved by
+            #   downloads.PipeReader; this is the next best thing
+            if self.actual_output_path \
+            and os.path.isfile(self.actual_output_path):
+
+                current_size = os.path.getsize(self.actual_output_path)
+                if current_size != self.output_size:
+
+                    self.output_size = current_size
+                    self.output_size_time = time.time()
+                    self.segment_count += 1
+
+                    # (Convert to, e.g. '27.5 MiB')
+                    converted_size = utils.convert_bytes_to_string(
+                        current_size,
+                    )
+
+                    self.download_data_callback('', str(converted_size))
+                    self.show_msg(
+                        ('Downloaded segment #{0}, size {1}').format(
+                            self.segment_count,
+                            converted_size,
+                        ),
+                    )
+
+                    # Streamlink has been passed a --stream-timeout argument;
+                    #   so add a few seconds to the usual timeout value, hoping
+                    #   that streamlink's own timeout will happen first
+                    self.check_time = (app_obj.livestream_dl_timeout * 60) \
+                    + time.time() + 30
+
+            # Perform a timeout, if necessary
+            if self.check_time > 0 and self.check_time < time.time():
+
+                # Halt the child process
+                self.stop()
+                self.show_msg('Download timed out')
+                return
 
 
     def choose_path(self):
@@ -8889,6 +8977,9 @@ class StreamDownloader(object):
                 )
                 if match:
                     self.segment_count += 1
+
+                    self.check_time = (app_obj.livestream_dl_timeout * 60) \
+                    + time.time()
 
                     # Pass a dictionary of values to self.download_worker_obj
                     #   so the Progress List can be updated
