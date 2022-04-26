@@ -5727,7 +5727,7 @@ class VideoDownloader(object):
             GObject.timeout_add(
                 0,
                 app_obj.system_error,
-                999,
+                307,
                 'Missing VID in video error/warning buffer',
             )
 
@@ -5831,7 +5831,7 @@ class VideoDownloader(object):
             GObject.timeout_add(
                 0,
                 self.download_manager_obj.app_obj.system_error,
-                999,
+                308,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -7249,7 +7249,7 @@ class ClipDownloader(object):
                     GObject.timeout_add(
                         0,
                         app_obj.system_error,
-                        307,
+                        309,
                         _(
                             'Failed to copy the original video\'s' \
                             + ' thumbnail',
@@ -7773,7 +7773,7 @@ class ClipDownloader(object):
                         GObject.timeout_add(
                             0,
                             app_obj.system_error,
-                            308,
+                            310,
                             app_obj.ffmpeg_fail_msg,
                         )
 
@@ -7818,7 +7818,7 @@ class ClipDownloader(object):
             GObject.timeout_add(
                 0,
                 self.download_manager_obj.app_obj.system_error,
-                999,
+                311,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -8172,7 +8172,7 @@ class StreamDownloader(object):
             GObject.timeout_add(
                 0,
                 app_obj.system_error,
-                999,
+                312,
                 _('Invalid livestream download mode'),
             )
 
@@ -8874,7 +8874,7 @@ class StreamDownloader(object):
             GObject.timeout_add(
                 0,
                 self.download_manager_obj.app_obj.system_error,
-                999,
+                313,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -9491,7 +9491,7 @@ class JSONFetcher(object):
                     GObject.timeout_add(
                         0,
                         app_obj.system_error,
-                        309,
+                        314,
                         app_obj.ffmpeg_fail_msg,
                     )
 
@@ -9610,7 +9610,7 @@ class JSONFetcher(object):
             GObject.timeout_add(
                 0,
                 self.download_manager_obj.app_obj.system_error,
-                999,
+                315,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -10099,7 +10099,7 @@ class MiniJSONFetcher(object):
             GObject.timeout_add(
                 0,
                 app_obj.system_error,
-                310,
+                316,
                 'Invalid JSON data received from server',
             )
 
@@ -10138,7 +10138,7 @@ class MiniJSONFetcher(object):
             GObject.timeout_add(
                 0,
                 self.download_manager_obj.app_obj.system_error,
-                999,
+                317,
                 'Malformed STDOUT or STDERR data',
             )
 

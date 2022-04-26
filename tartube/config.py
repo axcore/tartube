@@ -14850,7 +14850,9 @@ class VideoEditWin(GenericEditWin):
         else:
             self.filter_apply_button = Gtk.ToolButton.new()
             self.filter_apply_button.set_icon_widget(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
+                Gtk.Image.new_from_pixbuf(
+                    self.app_obj.main_win_obj.pixbuf_dict['stock_find'],
+                ),
             )
         grid3.attach(self.filter_apply_button, 6, 0, 1, 1)
         self.filter_apply_button.connect(
@@ -14865,7 +14867,9 @@ class VideoEditWin(GenericEditWin):
         else:
             self.filter_cancel_button = Gtk.ToolButton.new()
             self.filter_cancel_button.set_icon_widget(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_cancel']),
+                Gtk.Image.new_from_pixbuf(
+                    self.app_obj.main_win_obj.pixbuf_dict['stock_cancel'],
+                ),
             )
         grid3.attach(self.filter_cancel_button, 7, 0, 1, 1)
         self.filter_cancel_button.set_sensitive(False)

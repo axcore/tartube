@@ -855,7 +855,7 @@ class UpdateManager(threading.Thread):
             GObject.timeout_add(
                 0,
                 self.app_obj.system_error,
-                701,
+                702,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -919,7 +919,7 @@ class UpdateManager(threading.Thread):
             GObject.timeout_add(
                 0,
                 self.app_obj.system_error,
-                701,
+                703,
                 'Malformed STDOUT or STDERR data',
             )
 
@@ -987,7 +987,7 @@ class UpdateManager(threading.Thread):
             GObject.timeout_add(
                 0,
                 self.app_obj.system_error,
-                702,
+                704,
                 'Malformed STDOUT or STDERR data',
             )
 

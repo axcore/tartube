@@ -3789,13 +3789,13 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-182)
-            200-299: mainwin.py     (in use: 201-265)
-            300-399: downloads.py   (in use: 301-310)
+            100-199: mainapp.py     (in use: 101-185)
+            200-299: mainwin.py     (in use: 201-266)
+            300-399: downloads.py   (in use: 301-317)
             400-499: config.py      (in use: 401-405)
             500-599: utils.py       (in use: 501-503)
             600-699: info.py        (in use: 601)
-            700-799: updates.py     (in use: 701-702)
+            700-799: updates.py     (in use: 701-704)
 
         """
 
@@ -9549,7 +9549,7 @@ class TartubeApp(Gtk.Application):
 
         self.disable_scheduled_dl_flag = True
         self.system_error(
-            999,
+            105,
             'After failing to save the database file, scheduled downloads' \
             + ' have been disabled',
         )
@@ -9646,7 +9646,7 @@ class TartubeApp(Gtk.Application):
 
             # Show a system error
             self.system_error(
-                105,
+                106,
                 'Failed to create directory \'' + dir_path + '\'',
             )
 
@@ -9681,7 +9681,7 @@ class TartubeApp(Gtk.Application):
 
             # Show a system error
             self.system_error(
-                106,
+                107,
                 'Failed to remove directory \'' + dir_path + '\'',
             )
 
@@ -9716,7 +9716,7 @@ class TartubeApp(Gtk.Application):
 
             # Show a system error
             self.system_error(
-                107,
+                108,
                 'Failed to remove file \'' + file_path + '\'',
             )
 
@@ -9752,7 +9752,7 @@ class TartubeApp(Gtk.Application):
 
             # Show a system error
             self.system_error(
-                108,
+                109,
                 'Failed to move file/directory \'' + old_path + '\' to \'' \
                 + new_path + '\'',
             )
@@ -9804,7 +9804,7 @@ class TartubeApp(Gtk.Application):
 
             # Show a system error
             self.system_error(
-                109,
+                110,
                 'Failed to write files to directory \'' + dir_path + '\'',
             )
 
@@ -10236,7 +10236,7 @@ class TartubeApp(Gtk.Application):
                 for scheduled_obj in media_data_list:
                     if not isinstance(scheduled_obj, media.Scheduled):
                         self.system_error(
-                            110,
+                            111,
                             'Unexpected item in scheduled download list',
                         )
 
@@ -10250,7 +10250,7 @@ class TartubeApp(Gtk.Application):
                 and len(media_data_list) > 1:
                     if not isinstance(scheduled_obj, media.Scheduled):
                         self.system_error(
-                            111,
+                            112,
                             'Unexpected item in scheduled download list',
                         )
 
@@ -10287,7 +10287,7 @@ class TartubeApp(Gtk.Application):
         and operation_type != 'classic_sim':
 
             self.system_error(
-                112,
+                113,
                 'This Tartube package cannot be used to download videos',
             )
 
@@ -10300,7 +10300,7 @@ class TartubeApp(Gtk.Application):
             # Operation already in progress
             if not automatic_flag:
                 self.system_error(
-                    113,
+                    114,
                     'An operation is already in progress',
                 )
 
@@ -10950,7 +10950,7 @@ class TartubeApp(Gtk.Application):
 
             # Operation already in progress
             return self.system_error(
-                114,
+                115,
                 'Operation already in progress',
             )
 
@@ -10973,7 +10973,7 @@ class TartubeApp(Gtk.Application):
             #   not be possible to call this function, but we'll show an error
             #   message anyway
             return self.system_error(
-                115,
+                116,
                 'Update operations are disabled in this version of Tartube',
             )
 
@@ -10982,7 +10982,7 @@ class TartubeApp(Gtk.Application):
             #   installation of Tartube. It should not be possible to call this
             #   function, but we'll show an error message anyway
             return self.system_error(
-                116,
+                117,
                 'Update operation cannot install FFmpeg on your operating' \
                 + ' system',
             )
@@ -10990,7 +10990,7 @@ class TartubeApp(Gtk.Application):
         elif update_type == 'matplotlib' and os.name != 'nt':
             # The same applies to matplotlib
             return self.system_error(
-                999,
+                118,
                 'Update operation cannot install matplotlib on your' \
                 + ' operating system',
             )
@@ -10998,7 +10998,7 @@ class TartubeApp(Gtk.Application):
         elif update_type == 'streamlink' and os.name != 'nt':
             # The same applies to streamlink
             return self.system_error(
-                999,
+                119,
                 'Update operation cannot install streamlink on your' \
                 + ' operating system',
             )
@@ -11246,7 +11246,7 @@ class TartubeApp(Gtk.Application):
 
             # Operation already in progress
             return self.system_error(
-                117,
+                120,
                 'Operation already in progress',
             )
 
@@ -11254,7 +11254,7 @@ class TartubeApp(Gtk.Application):
         and isinstance(media_data_obj, media.Video):
 
             return self.system_error(
-                118,
+                121,
                 'Refresh operation cannot be applied to an individual video',
             )
 
@@ -11512,7 +11512,7 @@ class TartubeApp(Gtk.Application):
 
             # Operation already in progress
             return self.system_error(
-                119,
+                122,
                 'Operation already in progress',
             )
 
@@ -11522,7 +11522,7 @@ class TartubeApp(Gtk.Application):
         and info_type != 'version':
             # Unrecognised argument
             return self.system_error(
-                120,
+                123,
                 'Invalid info operation argument',
             )
 
@@ -11533,7 +11533,7 @@ class TartubeApp(Gtk.Application):
         ):
             # Unusable media data object
             return self.system_error(
-                121,
+                124,
                 'Wrong media data object type or missing source',
             )
 
@@ -11806,7 +11806,7 @@ class TartubeApp(Gtk.Application):
 
             # Operation already in progress
             return self.system_error(
-                122,
+                125,
                 'Operation already in progress',
             )
 
@@ -12160,14 +12160,14 @@ class TartubeApp(Gtk.Application):
 
             # Operation already in progress
             return self.system_error(
-                123,
+                126,
                 'Operation already in progress',
             )
 
         elif not video_list:
 
             return self.system_error(
-                124,
+                127,
                 'Process operation requires at least one video',
             )
 
@@ -12783,7 +12783,7 @@ class TartubeApp(Gtk.Application):
         and not self.ffmpeg_manager_obj.convert_webp(thumb_path):
 
             self.ffmpeg_fail_flag = True
-            self.system_error(125, self.ffmpeg_fail_msg)
+            self.system_error(128, self.ffmpeg_fail_msg)
 
         # Discard the description, JSON, annotations and thumbnail files, if
         #   required to do so. The files are moved to Tartube's temporary
@@ -13088,7 +13088,7 @@ class TartubeApp(Gtk.Application):
                 this_thread.join(self.refresh_moviepy_timeout)
                 if this_thread.is_alive():
                     self.system_error(
-                        126,
+                        129,
                         '\'' + video_obj.parent_obj.name \
                         + '\': moviepy module failed to fetch duration' \
                         + ' of video \'' + video_obj.name + '\'',
@@ -13105,7 +13105,7 @@ class TartubeApp(Gtk.Application):
                 video_obj.set_file_size(os.path.getsize(video_path))
             except:
                 self.system_error(
-                    127,
+                    130,
                     '\'' + video_obj.parent_obj.name \
                     + '\': failed to set file size of video \'' \
                     + video_obj.name + '\'',
@@ -13135,7 +13135,7 @@ class TartubeApp(Gtk.Application):
             video_obj.set_duration(clip.duration)
         except:
             self.system_error(
-                128,
+                131,
                 '\'' + video_obj.parent_obj.name + '\': moviepy module' \
                 + ' failed to fetch duration of video \'' \
                 + video_obj.name + '\'',
@@ -13267,7 +13267,7 @@ class TartubeApp(Gtk.Application):
         # Videos can't be placed inside other videos
         if parent_obj and isinstance(parent_obj, media.Video):
             return self.system_error(
-                129,
+                132,
                 'Videos cannot be placed inside other videos',
             )
 
@@ -13275,7 +13275,7 @@ class TartubeApp(Gtk.Application):
         elif parent_obj and isinstance(parent_obj, media.Folder) \
         and parent_obj.priv_flag:
             return self.system_error(
-                130,
+                133,
                 'Videos cannot be placed inside a private folder',
             )
 
@@ -13363,7 +13363,7 @@ class TartubeApp(Gtk.Application):
             or parent_obj.restrict_mode != 'open'
         ):
             return self.system_error(
-                131,
+                134,
                 'Channels cannot be added to a restricted folder',
             )
 
@@ -13371,7 +13371,7 @@ class TartubeApp(Gtk.Application):
         #   registry
         if parent_obj and parent_obj.get_depth() >= self.media_max_level:
             return self.system_error(
-                132,
+                135,
                 'Channel exceeds maximum depth of media registry',
             )
 
@@ -13380,7 +13380,7 @@ class TartubeApp(Gtk.Application):
         or re.search('^\s*$', name) \
         or not self.check_container_name_is_legal(name):
             return self.system_error(
-                133,
+                136,
                 'Illegal channel name',
             )
 
@@ -13449,7 +13449,7 @@ class TartubeApp(Gtk.Application):
             or parent_obj.restrict_mode != 'open'
         ):
             return self.system_error(
-                134,
+                137,
                 'Playlists cannot be added to a restricted folder',
             )
 
@@ -13457,7 +13457,7 @@ class TartubeApp(Gtk.Application):
         #   registry
         if parent_obj and parent_obj.get_depth() >= self.media_max_level:
             return self.system_error(
-                135,
+                138,
                 'Playlist exceeds maximum depth of media registry',
             )
 
@@ -13466,7 +13466,7 @@ class TartubeApp(Gtk.Application):
         or re.search('^\s*$', name) \
         or not self.check_container_name_is_legal(name):
             return self.system_error(
-                136,
+                139,
                 'Illegal playlist name',
             )
 
@@ -13543,7 +13543,7 @@ class TartubeApp(Gtk.Application):
             or parent_obj.restrict_mode == 'full'
         ):
             return self.system_error(
-                137,
+                140,
                 'Folders cannot be added to another restricted folder',
             )
 
@@ -13551,7 +13551,7 @@ class TartubeApp(Gtk.Application):
         #   registry
         if parent_obj and parent_obj.get_depth() >= self.media_max_level:
             return self.system_error(
-                138,
+                141,
                 'Folder exceeds maximum depth of media registry',
             )
 
@@ -13560,7 +13560,7 @@ class TartubeApp(Gtk.Application):
         or re.search('^\s*$', name) \
         or not self.check_container_name_is_legal(name):
             return self.system_error(
-                139,
+                142,
                 'Illegal folder name',
             )
 
@@ -13622,7 +13622,7 @@ class TartubeApp(Gtk.Application):
         if media_data_obj is None or isinstance(media_data_obj, media.Video) \
         or self.current_manager_obj or not media_data_obj.parent_obj:
             return self.system_error(
-                140,
+                143,
                 'Move container to top request failed sanity check',
             )
 
@@ -13757,7 +13757,7 @@ class TartubeApp(Gtk.Application):
         if source_obj is None or isinstance(source_obj, media.Video) \
         or dest_obj is None or isinstance(dest_obj, media.Video):
             return self.system_error(
-                141,
+                144,
                 'Move container request failed sanity check',
             )
 
@@ -13963,14 +13963,14 @@ class TartubeApp(Gtk.Application):
 
         if isinstance(dest_obj, media.Video) or not video_list:
             return self.system_error(
-                142,
+                145,
                 'Move videos request failed sanity check',
             )
 
         for video_obj in video_list:
             if not isinstance(video_obj, media.Video):
                 return self.system_error(
-                    143,
+                    146,
                     'Move videos request failed sanity check',
                 )
 
@@ -14178,7 +14178,7 @@ class TartubeApp(Gtk.Application):
             and not isinstance(old_obj, media.Playlist)
         ) or self.current_manager_obj:
             return self.system_error(
-                144,
+                147,
                 'Convert container request failed sanity check',
             )
 
@@ -14265,7 +14265,7 @@ class TartubeApp(Gtk.Application):
 
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                145,
+                148,
                 'Delete video request failed sanity check',
             )
 
@@ -14485,7 +14485,7 @@ class TartubeApp(Gtk.Application):
             and self.check_fixed_folder(media_data_obj)
         ):
             return self.system_error(
-                146,
+                149,
                 'Delete container request failed sanity check',
             )
 
@@ -14921,7 +14921,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as bookmarked or not bookmarked
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                147,
+                150,
                 'Mark video as bookmarked request failed sanity check',
             )
 
@@ -15073,7 +15073,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as downloaded or not downloaded
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                148,
+                151,
                 'Mark video as downloaded request failed sanity check',
             )
 
@@ -15231,7 +15231,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as favourite or not favourite
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                149,
+                152,
                 'Mark video as favourite request failed sanity check',
             )
 
@@ -15416,7 +15416,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as a livestream or not a livestream
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                150,
+                153,
                 'Mark video as livestream request failed sanity check',
             )
 
@@ -15647,7 +15647,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as missing or not missing
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                151,
+                154,
                 'Mark video as missing request failed sanity check',
             )
 
@@ -15830,7 +15830,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as new or not new
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                152,
+                155,
                 'Mark video as new request failed sanity check',
             )
 
@@ -15997,7 +15997,7 @@ class TartubeApp(Gtk.Application):
         # Mark the video as in the waiting list or not in the waiting list
         if not isinstance(video_obj, media.Video):
             return self.system_error(
-                153,
+                156,
                 'Mark video as in waiting list request failed sanity check',
             )
 
@@ -16143,7 +16143,7 @@ class TartubeApp(Gtk.Application):
 
         if not isinstance(folder_obj, media.Folder):
             return self.system_error(
-                154,
+                157,
                 'Mark folder as hidden request failed sanity check',
             )
 
@@ -16202,7 +16202,7 @@ class TartubeApp(Gtk.Application):
 
         if isinstance(media_data_obj, media.Video):
             return self.system_error(
-                155,
+                158,
                 'Mark container as archived request failed sanity check',
             )
 
@@ -16339,7 +16339,7 @@ class TartubeApp(Gtk.Application):
 
         if isinstance(media_data_obj, media.Video):
             return self.system_error(
-                156,
+                159,
                 'Mark container as favourite request failed sanity check',
             )
 
@@ -16540,7 +16540,7 @@ class TartubeApp(Gtk.Application):
             and media_data_obj != self.fixed_missing_folder
         ):
             return self.system_error(
-                157,
+                160,
                 'Mark container as missing request failed sanity check',
             )
 
@@ -16665,7 +16665,7 @@ class TartubeApp(Gtk.Application):
 
         if isinstance(media_data_obj, media.Video):
             return self.system_error(
-                158,
+                161,
                 'Mark container as new request failed sanity check',
             )
 
@@ -16844,7 +16844,7 @@ class TartubeApp(Gtk.Application):
             and media_data_obj.fixed_flag
         ):
             return self.system_error(
-                159,
+                162,
                 'Rename container request failed sanity check',
             )
 
@@ -16948,7 +16948,7 @@ class TartubeApp(Gtk.Application):
         if not self.check_container_name_is_legal(new_name) \
         or new_name in self.media_name_dict:
             self.system_error(
-                160,
+                163,
                 'Illegal container name',
             )
 
@@ -18828,7 +18828,7 @@ class TartubeApp(Gtk.Application):
         for video_obj in video_list:
             if not isinstance(video_obj, media.Video):
                 return self.system_error(
-                    161,
+                    164,
                     'Download and watch video request failed sanity check',
                 )
 
@@ -18891,7 +18891,7 @@ class TartubeApp(Gtk.Application):
         if self.current_manager_obj \
         or self.general_custom_dl_obj == custom_dl_obj:
             return self.system_error(
-                162,
+                165,
                 'Delete custom download manager request failed sanity check',
             )
 
@@ -18932,7 +18932,7 @@ class TartubeApp(Gtk.Application):
 
         if self.current_manager_obj:
             return self.system_error(
-                163,
+                166,
                 'Apply custom download manager request failed sanity check',
             )
 
@@ -18961,7 +18961,7 @@ class TartubeApp(Gtk.Application):
 
         if self.current_manager_obj or not self.classic_custom_dl_obj:
             return self.system_error(
-                164,
+                167,
                 'Disapply custom download manager request failed sanity check',
             )
 
@@ -19389,7 +19389,7 @@ class TartubeApp(Gtk.Application):
             )
         ):
             return self.system_error(
-                165,
+                168,
                 'Apply download options request failed sanity check',
             )
 
@@ -19462,7 +19462,7 @@ class TartubeApp(Gtk.Application):
         ):
             if self.current_manager_obj or not media_data_obj.options_obj:
                 return self.system_error(
-                    166,
+                    169,
                     'Remove download options request failed sanity check',
                 )
 
@@ -19523,7 +19523,7 @@ class TartubeApp(Gtk.Application):
         if self.current_manager_obj \
         or self.general_options_obj == options_obj:
             return self.system_error(
-                167,
+                170,
                 'Delete download options request failed sanity check',
             )
 
@@ -19587,7 +19587,7 @@ class TartubeApp(Gtk.Application):
 
         if self.current_manager_obj:
             return self.system_error(
-                168,
+                171,
                 'Apply download options request failed sanity check',
             )
 
@@ -19611,7 +19611,7 @@ class TartubeApp(Gtk.Application):
 
         if self.current_manager_obj or not self.classic_options_obj:
             return self.system_error(
-                169,
+                172,
                 'Disapply download options request failed sanity check',
             )
 
@@ -20142,7 +20142,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if self.ffmpeg_options_obj == options_obj:
             return self.system_error(
-                170,
+                173,
                 'Delete FFmpeg options request failed sanity check',
             )
 
@@ -20370,7 +20370,7 @@ class TartubeApp(Gtk.Application):
                 playsound.playsound(path)
             except:
                 self.system_error(
-                    171,
+                    174,
                     'System tried to play sound effect, even though Python' \
                     + ' playsound module was not detected',
                 )
@@ -20559,7 +20559,7 @@ class TartubeApp(Gtk.Application):
                     if not name in self.media_name_dict:
 
                         self.system_error(
-                            172,
+                            175,
                             'Scheduled download contains a channel, playlist' \
                             + ' or folder which no longer exists: \'' \
                             + name + '\'',
@@ -20853,7 +20853,7 @@ class TartubeApp(Gtk.Application):
 
                 # Stop the download operation
                 self.system_error(
-                    173,
+                    176,
                     'Download operation halted because the device is running' \
                     + ' out of space',
                 )
@@ -21098,7 +21098,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if not self.main_win_obj.video_catalogue_dict:
             return self.system_error(
-                174,
+                177,
                 'Apply filter request failed sanity check',
             )
 
@@ -21159,7 +21159,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if not self.main_win_obj.video_catalogue_dict:
             return self.system_error(
-                175,
+                178,
                 'Cancel filter request failed sanity check',
             )
 
@@ -21913,7 +21913,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if not self.main_win_obj.video_catalogue_dict:
             return self.system_error(
-                176,
+                179,
                 'Find videos by date request failed sanity check',
             )
 
@@ -22276,7 +22276,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if not self.main_win_obj.video_catalogue_dict:
             return self.system_error(
-                177,
+                180,
                 'Use regex request failed sanity check',
             )
 
@@ -23661,7 +23661,7 @@ class TartubeApp(Gtk.Application):
         # Sanity check
         if not self.download_manager_obj:
             return self.system_error(
-                178,
+                181,
                 'Stop download operation soon request failed sanity check',
             )
 
@@ -24270,7 +24270,7 @@ class TartubeApp(Gtk.Application):
 
         if value < self.bandwidth_min or value > self.bandwidth_max:
             return self.system_error(
-                179,
+                182,
                 'Set bandwidth request failed sanity check',
             )
 
@@ -25111,7 +25111,7 @@ class TartubeApp(Gtk.Application):
 
         if value < self.num_worker_min or value > self.num_worker_max:
             return self.system_error(
-                180,
+                183,
                 'Set simultaneous downloads request failed sanity check',
             )
 
@@ -25155,7 +25155,7 @@ class TartubeApp(Gtk.Application):
 
         if value < self.output_size_min or value > self.output_size_max:
             return self.system_error(
-                181,
+                184,
                 'Set Output tab page size request failed sanity check',
             )
 
@@ -25811,7 +25811,7 @@ class TartubeApp(Gtk.Application):
 
         if not value in formats.VIDEO_RESOLUTION_DICT:
             return self.system_error(
-                182,
+                185,
                 'Set video resolution request failed sanity check',
             )
 
