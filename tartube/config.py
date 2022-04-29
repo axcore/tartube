@@ -3553,8 +3553,8 @@ class CustomDLEditWin(GenericEditWin):
         if not self.edit_obj.divert_mode == 'other':
             self.entry.set_sensitive(False)
 
-        msg = _('Type the exact text that replaces youtube.com e.g.')
-        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+        msg = _('Type the exact text that replaces www.youtube.com e.g.')
+        msg = re.sub('www.youtube.com', '   <b>www.youtube.com</b>   ', msg)
 
         self.add_label(grid,
             '<i>' + msg + '   <b>hooktube.com</b></i>',
@@ -24094,8 +24094,8 @@ class SystemPrefWin(GenericPrefWin):
         button.set_hexpand(False)
         button.connect('clicked', self.on_reset_invidious_clicked, entry)
 
-        msg = _('Type the exact text that replaces youtube.com e.g.')
-        msg = re.sub('youtube.com', '   <b>youtube.com</b>   ', msg)
+        msg = _('Type the exact text that replaces www.youtube.com e.g.')
+        msg = re.sub('www.youtube.com', '   <b>www.youtube.com</b>   ', msg)
 
         self.add_label(grid,
             '<i>' + msg + '   <b>' + self.app_obj.default_invidious_mirror \

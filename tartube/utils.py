@@ -1235,13 +1235,13 @@ def convert_youtube_to_hooktube(url):
 
     """
 
-    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+    if re.search(r'^https?:\/\/(www\.)+youtube\.com', url):
 
         url = re.sub(
-            r'youtube\.com',
+            r'(www\.)+youtube\.com',
             'hooktube.com',
             url,
-            # Substitute first occurence only
+            # Substitute first occurrence only
             1,
         )
 
@@ -1265,14 +1265,14 @@ def convert_youtube_to_invidious(app_obj, url):
 
     """
 
-    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url) \
+    if re.search(r'^https?:\/\/(www\.)+youtube\.com', url) \
     and re.search('\w+\.\w+', app_obj.custom_invidious_mirror):
 
         url = re.sub(
-            r'youtube\.com',
+            r'(www\.)+youtube\.com',
             app_obj.custom_invidious_mirror,
             url,
-            # Substitute first occurence only
+            # Substitute first occurrence only
             1,
         )
 
@@ -1305,13 +1305,13 @@ def convert_youtube_to_other(app_obj, url, custom_dl_obj=None):
     if custom_dl_obj is None:
         custom_dl_obj = app_obj.general_custom_dl_obj
 
-    if re.search(r'^https?:\/\/(www)+\.youtube\.com', url):
+    if re.search(r'^https?:\/\/(www\.)+youtube\.com', url):
 
         url = re.sub(
-            r'youtube\.com',
+            r'(www\.)+youtube\.com',
             custom_dl_obj.divert_website,
             url,
-            # Substitute first occurence only
+            # Substitute first occurrence only
             1,
         )
 
