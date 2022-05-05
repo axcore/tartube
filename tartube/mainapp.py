@@ -172,6 +172,8 @@ class TartubeApp(Gtk.Application):
         self.debug_hide_folders_flag = False
         # Disable showing mainwin.NewbieDialogue altogether
         self.debug_disable_newbie_flag = False
+        # Write the Gtk version to the terminal on startup
+        self.debug_write_gtk_flag = False
 
 
         # Instance variable (IV) list - class objects
@@ -1500,6 +1502,26 @@ class TartubeApp(Gtk.Application):
         #   scheduled download, the objects are checked in this order
         self.scheduled_list = []
 
+        # Profiles
+        # Items in the Video Index can be marked (using their checkboxes). When
+        #   at least one item is marked, the 'Check all' and 'Download all'
+        #   buttons become 'Check marked items' and 'Download marked items'
+        # A profile is a list of .dbids for marked items, so the user can
+        #   switch between them
+        # Dictionary in the form
+        #   key = unique name for the profile
+        #   value = list of .dbdis for media.Channel, media.Playlist and
+        #       media.Folder items
+        self.profile_dict = {}
+        # The profile which was most recently created, or to which the user
+        #   most recently switched. Reset when that profile is deleted
+        self.last_profile = None
+        # Flag set to True if Tartube should automatically switch to that
+        #   profile, when the database is loaded
+        self.auto_switch_profile_flag = False
+        # Maximum number of profiles (a constant value)
+        self.profile_max = 16 
+
         # Download Options and Options Managers
         # During a download operation, youtube-dl is supplied with a set of
         #   download options. Those options are specified by an
@@ -2457,6 +2479,33 @@ class TartubeApp(Gtk.Application):
         show_hidden_menu_action.connect('activate', self.on_menu_show_hidden)
         self.add_action(show_hidden_menu_action)
 
+        auto_switch_menu_action = Gio.SimpleAction.new(
+            'auto_switch_menu',
+            None,
+        )
+        auto_switch_menu_action.connect(
+            'activate',
+            self.on_menu_auto_switch,
+        )
+        self.add_action(auto_switch_menu_action)
+
+        create_profile_menu_action = Gio.SimpleAction.new(
+            'create_profile_menu',
+            None,
+        )
+        create_profile_menu_action.connect(
+            'activate',
+            self.on_menu_create_profile,
+        )
+        self.add_action(create_profile_menu_action)
+
+        mark_all_menu_action = Gio.SimpleAction.new(
+            'mark_all_menu',
+            None,
+        )
+        mark_all_menu_action.connect('activate', self.on_menu_mark_all)
+        self.add_action(mark_all_menu_action)
+
         unmark_all_menu_action = Gio.SimpleAction.new(
             'unmark_all_menu',
             None,
@@ -3105,14 +3154,25 @@ class TartubeApp(Gtk.Application):
 
             self.start()
 
-            # Open the system preferences window, if the debugging flag is set
-            if self.debug_open_pref_win_flag and self.main_win_obj:
-                config.SystemPrefWin(self)
+            # If debugging flags are set...
+            if self.main_win_obj:
 
-            # Open the general download options window, if the debugging flag
-            #   is set
-            if self.debug_open_options_win_flag and self.main_win_obj:
-                config.OptionsEditWin(self, self.general_options_obj)
+                # ...open the system preferences window
+                if self.debug_open_pref_win_flag:
+                    config.SystemPrefWin(self)
+
+                # ...open the general download options window
+                if self.debug_open_options_win_flag:
+                    config.OptionsEditWin(self, self.general_options_obj)
+
+                # ...write the Gtk version to the terminal
+                if self.debug_write_gtk_flag:
+                    print(
+                        'Tartube running on Gtk v' \
+                        + str(self.gtk_version_major) + '.' \
+                        + str(self.gtk_version_minor) + '.' \
+                        + str(self.gtk_version_micro)
+                    )
 
 
     def do_shutdown(self):
@@ -4361,6 +4421,10 @@ class TartubeApp(Gtk.Application):
             self.show_msys2_dialogue_flag \
             = json_dict['show_msys2_dialogue_flag']
 
+        if version >= 2004013:  # v2.4.013
+            self.auto_switch_profile_flag \
+            = json_dict['auto_switch_profile_flag']
+
         if version >= 1003032:  # v1.3.032
             self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
         if version >= 2002116:  # v2.2.116
@@ -5357,6 +5421,8 @@ class TartubeApp(Gtk.Application):
 
             'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
             'show_msys2_dialogue_flag': self.show_msys2_dialogue_flag,
+            
+            'auto_switch_profile_flag': self.auto_switch_profile_flag,
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
             'auto_delete_options_flag': self.auto_delete_options_flag,
@@ -5830,6 +5896,9 @@ class TartubeApp(Gtk.Application):
             = load_dict['fixed_recent_folder_days']
         if version >= 2002015:  # v2.2.015
             self.scheduled_list = load_dict['scheduled_list']
+        if version >= 2004013:  # v2.4.013
+            self.profile_dict = load_dict['profile_dict']
+            self.last_profile = load_dict['last_profile']
         if version >= 2002034:  # v2.2.034
             self.options_reg_count = load_dict['options_reg_count']
             self.options_reg_dict = load_dict['options_reg_dict']
@@ -5910,22 +5979,31 @@ class TartubeApp(Gtk.Application):
         # ...and saving the database file is now allowed
         self.allow_db_save_flag = True
 
-        # (Dis)activate the main window's menu item for showing/hiding system
-        #   folders, as required
-        if (
-            not self.main_win_obj.hide_system_menu_item.get_active() \
-            and self.toolbar_system_hide_flag
-        ):
-            self.main_win_obj.hide_system_menu_item.set_active(True)
-        elif (
-            self.main_win_obj.hide_system_menu_item.get_active() \
-            and not self.toolbar_system_hide_flag
-        ):
-            self.main_win_obj.hide_system_menu_item.set_active(False)
-
         if self.main_win_obj:
+
+            # (Dis)activate the main window's menu/toolbar items for showing/
+            #   hiding system folders, as required
+            if (
+                not self.main_win_obj.hide_system_menu_item.get_active() \
+                and self.toolbar_system_hide_flag
+            ):
+                self.main_win_obj.hide_system_menu_item.set_active(True)
+            elif (
+                self.main_win_obj.hide_system_menu_item.get_active() \
+                and not self.toolbar_system_hide_flag
+            ):
+                self.main_win_obj.hide_system_menu_item.set_active(False)
+
+            # Update other main menu items
+            self.main_win_obj.update_menu()
+
             # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_catalogue_reset()
+            # Automatically mark channels/playlists/folders for download, if
+            #   required
+            if self.auto_switch_profile_flag and self.last_profile is not None:
+                self.main_win_obj.switch_profile(self.last_profile)
+                            
             # Repopulate the Drag and Drop tab
             self.main_win_obj.drag_drop_grid_reset()
 
@@ -7407,6 +7485,9 @@ class TartubeApp(Gtk.Application):
             'fixed_recent_folder_days': self.fixed_recent_folder_days,
             # Scheduled downloads
             'scheduled_list': self.scheduled_list,
+            # Profiles
+            'profile_dict': self.profile_dict,
+            'last_profile': self.last_profile,
             # Download options
             'options_reg_count' : self.options_reg_count,
             'options_reg_dict' : self.options_reg_dict,
@@ -14690,6 +14771,21 @@ class TartubeApp(Gtk.Application):
             if other_obj.master_dbid == media_data_obj.dbid:
                 other_obj.reset_master_dbid()
 
+        # Update any profiles that depend on this container
+        delete_list = []
+        for profile_name in self.profile_dict.keys():
+            
+            dbid_list = self.profile_dict[profile_name]
+            if media_data_obj.dbid in dbid_list:
+                dbid_list.remove(media_data_obj.dbid)
+
+                if not dbid_list:
+                    # (Profiles cannot be empty)
+                    delete_list.append(profile_name)
+
+        for profile_name in delete_list:
+            self.delete_profile(profile_name)
+
         # During the initial call to this function, delete the container
         #   object from the Video Index (which automatically resets the Video
         #   Catalogue)
@@ -18914,6 +19010,9 @@ class TartubeApp(Gtk.Application):
             if isinstance(config_win_obj, config.SystemPrefWin):
                 config_win_obj.setup_operations_custom_dl_tab_update_treeview()
 
+        # Update the main menu (which lists custom downloads)
+        self.main_win_obj.update_menu()
+            
 
     def apply_classic_custom_dl_manager(self, custom_dl_obj):
 
@@ -19003,6 +19102,9 @@ class TartubeApp(Gtk.Application):
 
         self.custom_dl_reg_dict[custom_dl_obj.uid] = custom_dl_obj
 
+        # Update the main menu (which lists custom downloads)
+        self.main_win_obj.update_menu()
+	
         return custom_dl_obj
 
 
@@ -19088,6 +19190,9 @@ class TartubeApp(Gtk.Application):
             if isinstance(config_win_obj, config.SystemPrefWin):
                 config_win_obj.setup_operations_custom_dl_tab_update_treeview()
 
+        # Update the main menu (which lists custom downloads)
+        self.main_win_obj.update_menu()
+
         return new_custom_dl_obj
 
 
@@ -19122,6 +19227,9 @@ class TartubeApp(Gtk.Application):
         # Reset the edit window to display the new (default) values
         edit_win_obj.reset_with_new_edit_obj(new_custom_dl_obj)
 
+        # Update the main menu (which lists custom downloads)
+        self.main_win_obj.update_menu()
+	
 
     def export_custom_dl_manager(self, custom_dl_obj):
 
@@ -19348,6 +19456,74 @@ class TartubeApp(Gtk.Application):
         return manager_list
 
 
+    # (Profiles)
+
+
+    def add_profile(self, profile_name, dbid_list):
+
+        """Called by self.on_menu_create_profile().
+
+        Creates a profile.
+
+        Args:
+
+            profile_name (str): A name for the new profile
+
+            dbid_list (list): A list of .dbids for media.Channel,
+                media.Playlist and media.Folder objects. When this profile is
+                active, all of those items are marked for download
+
+        """
+
+        if profile_name in self.profile_dict:
+
+            return self.app_obj.system_error(
+                999,
+                'Duplicate profile name \'{1}\''.format(profile_name),
+            )
+
+        elif len(self.profile_dict) >= self.profile_max:
+
+            return self.app_obj.system_error(
+                999,
+                'Number of profiles exceeds maximum',
+            )            
+
+        self.profile_dict[profile_name] = dbid_list
+        self.last_profile = profile_name
+
+        # Update the main menu (which lists profiles)
+        self.main_win_obj.update_menu()            
+
+        
+    def delete_profile(self, profile_name):
+
+        """Called by mainwin.MainWin.on_delete_profile_menu_select().
+
+        Deletes the specified profile.
+        
+
+        Args:
+
+            profile_name (str): A key in self.profile_dict
+
+        """
+
+        if not profile_name in self.profile_dict:
+
+            return self.app_obj.system_error(
+                999,
+                'Unrecognised profile \'{1}\''.format(profile_name),
+            )
+
+        del self.profile_dict[profile_name]
+        if self.last_profile == profile_name:
+            self.last_profile = None
+
+        # Update the main menu (which lists profiles)
+        self.main_win_obj.update_menu()            
+
+        
     # (Download options manager objects)
 
 
@@ -22491,11 +22667,7 @@ class TartubeApp(Gtk.Application):
 
             # ...and find the name of the parent media data object (a
             #   media.Folder), if one was specified...
-            parent_name = None
-            if hasattr(dialogue_win, 'parent_name'):
-                parent_name = dialogue_win.parent_name
-            elif suggest_parent_name is not None:
-                parent_name = suggest_parent_name
+            parent_name = dialogue_win.parent_name
 
             # ...and halt the timer, if running
             if dialogue_win.clipboard_timer_id:
@@ -22645,9 +22817,7 @@ class TartubeApp(Gtk.Application):
 
         # ...and find the name of the parent media data object (a
         #   media.Folder), if one was specified...
-        parent_name = None
-        if hasattr(dialogue_win, 'parent_name'):
-            parent_name = dialogue_win.parent_name
+        parent_name = dialogue_win.parent_name
 
         # ...before destroying the dialogue window
         dialogue_win.destroy()
@@ -22770,11 +22940,7 @@ class TartubeApp(Gtk.Application):
 
             # ...and find the name of the parent media data object (a
             #   media.Folder), if one was specified...
-            parent_name = None
-            if hasattr(dialogue_win, 'parent_name'):
-                parent_name = dialogue_win.parent_name
-            elif suggest_parent_name is not None:
-                parent_name = suggest_parent_name
+            parent_name = dialogue_win.parent_name
 
             # ...and halt the timer, if running
             if dialogue_win.clipboard_timer_id:
@@ -22913,9 +23079,7 @@ class TartubeApp(Gtk.Application):
 
         # ...and find the parent media data object (a media.Channel,
         #   media.Playlist or media.Folder)...
-        parent_name = self.fixed_misc_folder.name
-        if hasattr(dialogue_win, 'parent_name'):
-            parent_name = dialogue_win.parent_name
+        parent_name = dialogue_win.parent_name
 
         dbid = self.media_name_dict[parent_name]
         parent_obj = self.media_reg_dict[dbid]
@@ -22964,6 +23128,108 @@ class TartubeApp(Gtk.Application):
                 dialogue_win.destroy()
 
 
+    def on_menu_auto_switch(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Sets the flag which switches to a profile on startup.
+        
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if not self.auto_switch_profile_flag:
+            self.auto_switch_profile_flag = True
+        else:
+            self.auto_switch_profile_flag = True
+
+        
+    def on_menu_create_profile(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Creates a profile to remember items marked in the Video Index.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        # Don't create profiles if nothing marked
+        if not self.main_win_obj.video_index_marker_dict:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'No channels, playlists or folders are marked for' \
+                    + ' download',
+                ),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # A maxmimum number of profiles applies
+        elif len(self.profile_dict) >= self.profile_max:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'The maximum number of profiles permitted is {0}',
+                ).format(self.profile_max),
+                'error',
+                'ok',
+            )
+
+            return            
+                        
+        # Prompt the user to choose a profile name
+        dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window...
+        profile_name = dialogue_win.profile_name
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.OK or profile_name is None:
+            return
+
+        # Check for duplicate names
+        if profile_name in self.profile_dict:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'A profile called \'{0}\' already exists',
+                ).format(profile_name),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Get a list of marked items in the Video Index
+        dbid_list = []
+        for this_name in self.main_win_obj.video_index_marker_dict.keys():
+            dbid_list.append(self.media_name_dict[this_name])
+
+        # Create the profile
+        self.add_profile(profile_name, dbid_list)
+
+        # Show confirmation dialogue
+        self.dialogue_manager_obj.show_msg_dialogue(
+            _('Created the profile \'{0}\'').format(profile_name),
+            'info',
+            'ok',
+        )
+        
+        
     def on_menu_cancel_live(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23121,6 +23387,88 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.toggle_visibility()
 
 
+    def on_menu_create_profile(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Creates a profile to remember items marked in the Video Index.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        # Don't create profiles if nothing marked
+        if not self.main_win_obj.video_index_marker_dict:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'No channels, playlists or folders are marked for' \
+                    + ' download',
+                ),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # A maxmimum number of profiles applies
+        elif len(self.profile_dict) >= self.profile_max:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'The maximum number of profiles permitted is {0}',
+                ).format(self.profile_max),
+                'error',
+                'ok',
+            )
+
+            return            
+                        
+        # Prompt the user to choose a profile name
+        dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window...
+        profile_name = dialogue_win.profile_name
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.OK or profile_name is None:
+            return
+
+        # Check for duplicate names
+        if profile_name in self.profile_dict:
+
+            dialogue_win = self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'A profile called \'{0}\' already exists',
+                ).format(profile_name),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Get a list of marked items in the Video Index
+        dbid_list = []
+        for this_name in self.main_win_obj.video_index_marker_dict.keys():
+            dbid_list.append(self.media_name_dict[this_name])
+
+        # Create the profile
+        self.add_profile(profile_name, dbid_list)
+
+        # Show confirmation dialogue
+        self.dialogue_manager_obj.show_msg_dialogue(
+            _('Created the profile \'{0}\'').format(profile_name),
+            'info',
+            'ok',
+        )
+                            
+        
     def on_menu_custom_dl_all(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23173,23 +23521,6 @@ class TartubeApp(Gtk.Application):
 
         # Open the popup menu
         self.main_win_obj.custom_dl_popup_menu()
-
-
-    def on_menu_unmark_all(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Unmarks all markers in the Video Index.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        self.main_win_obj.video_index_reset_marker()
 
 
     def on_menu_download_all(self, action, par):
@@ -23385,6 +23716,23 @@ class TartubeApp(Gtk.Application):
         """
 
         config.SystemPrefWin(self, 'live')
+
+
+    def on_menu_mark_all(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Marks all items in the Video Index.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.main_win_obj.video_index_set_marker()
 
 
     def on_menu_open_msys2(self, action, par):
@@ -23871,6 +24219,23 @@ class TartubeApp(Gtk.Application):
 
                 # Start the tidy operation now
                 self.tidy_manager_start(choices_dict)
+
+
+    def on_menu_unmark_all(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Unmarks all items in the Video Index.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.main_win_obj.video_index_reset_marker()
 
 
     def on_menu_update_live(self, action, par):
@@ -24933,6 +25298,11 @@ class TartubeApp(Gtk.Application):
     def set_json_timeout_with_comments_time(self, value):
 
         self.json_timeout_with_comments_time = value
+
+
+    def set_last_profile(self, value):
+
+        self.last_profile = value
 
 
     def set_livestream_max_days(self, value):

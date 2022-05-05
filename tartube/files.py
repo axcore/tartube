@@ -80,10 +80,11 @@ class FileManager(threading.Thread):
         if not os.path.isfile(full_path):
             return empty_dict
 
+        # RFC 7159: JSON should be represented by UTF-8
         with open(
             full_path,
             'r',
-            encoding="UTF-8", # was utils.get_encoding(), force reading as UTF-8 to fix issues with 2022 yt-dlp changes
+            encoding='UTF-8',
             errors='ignore',
         ) as json_file:
 
@@ -118,7 +119,7 @@ class FileManager(threading.Thread):
         with open(
             full_path,
             'r',
-            encoding="UTF-8", # was utils.get_encoding(), force reading as UTF-8 to fix issues with 2022 yt-dlp changes
+            encoding='UTF-8',
             errors='ignore',
         ) as text_file:
 

@@ -45,20 +45,20 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 2.1 What's new in version 2.4.0
 -------------------------------
 
-- Videos can be downloaded as a set of video clips, and you can split an existing video into clips (requires **FFmpeg**, see `6.26 Video clips`_). **Tartube** will read timestamps from a video's description, or you can specify your own timestamps
-- Added support for `SponsorBlock <https://streamlink.github.io/>`__. Videos can be downloaded with slices removed, or you can remove slices from an existing video (requires **FFmpeg**, see `6.27 Video slices`_)
-- **Tartube** can extract video comments, and optionally store them in its database (requires **yt-dlp**, see `6.29 Video comments`_)
-- **Tartube** now supports livestream downloads using `streamlink <https://streamlink.github.io/>`__ or with the video's .m3u manifest (see `6.23.4 Downloading livestreams`_). Support for the deprecated `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ has been removed
-- Livestream detection now works on **Twitch** and **Odysee**, as well as on **YouTube**. Detection may work on other sites, after you have set the RSS feed (see `6.23.5 Compatible websites`_)
+- Videos can be downloaded as a set of video clips, and you can split an existing video into clips (requires **FFmpeg**, see `6.27 Video clips`_). **Tartube** will read timestamps from a video's description, or you can specify your own timestamps
+- Added support for `SponsorBlock <https://streamlink.github.io/>`__. Videos can be downloaded with slices removed, or you can remove slices from an existing video (requires **FFmpeg**, see `6.28 Video slices`_)
+- **Tartube** can extract video comments, and optionally store them in its database (requires **yt-dlp**, see `6.30 Video comments`_)
+- **Tartube** now supports livestream downloads using `streamlink <https://streamlink.github.io/>`__ or with the video's .m3u manifest (see `6.24.4 Downloading livestreams`_). Support for the deprecated `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ has been removed
+- Livestream detection now works on **Twitch** and **Odysee**, as well as on **YouTube**. Detection may work on other sites, after you have set the RSS feed (see `6.24.5 Compatible websites`_)
 - The new **Recent videos** folder shows videos added to the database during the last check or download. Its modified can be customised, if you want, to show videos from today or the last few days
 - Channels, playlists and folders can now be selected. The buttons in the bottom-left corner of the **Videos** tab will check or download just the selected items
 - During a download, the **Videos** tab is now updated in real time, resolving an ancient problem with the Gtk library
 - The toolbar at the bottom of the **Videos** tab has been overhauled. You can now search comments and video descriptions, as well as hide (un)downloaded videos
 - The layout of the **Classic Mode** tab has been overhauled. You can now specify a resolution, as well as a video format
-- The new **Drag and Drop** tab is a quick way to download videos in **.mp3** format. Every zone corresponds to a set of download options (see `6.11 Download options`_), so you can customise the tab in any way you like. Drag and Drop does not work well on MS Windows (this is not a **Tartube** issue)
+- The new **Drag and Drop** tab is a quick way to download videos in **.mp3** format. Every zone corresponds to a set of download options (see `6.12 Download options`_), so you can customise the tab in any way you like. Drag and Drop does not work well on MS Windows (this is not a **Tartube** issue)
 - The **Errors/Warnings** tab is now fully searchable. Settings for that tab are now applied immediately, and are reversible
-- Custom downloads have been overhauled. You can now create as many custom downloads as you like, using as many of the new settings as you like (see `6.13 Custom downloads`_)
-- Channels and playlists in your database can now download videos to any location on your filesystem (see `6.17.5 Download all videos to an external folder`_)
+- Custom downloads have been overhauled. You can now create as many custom downloads as you like, using as many of the new settings as you like (see `6.14 Custom downloads`_)
+- Channels and playlists in your database can now download videos to any location on your filesystem (see `6.18.5 Download all videos to an external folder`_)
 - **Tartube** can now display statistics about the channels and playlists in your database, and the database as a whole (requires **matplotlib**; MS Windows users can install it from the main menu)
 
 For a full list of new features and fixes, see `recent changes <CHANGES>`__.
@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.0 (21 Apr 2022)**
 
-Development release: **v2.4.008 (29 Apr 2022)**
+Development release: **v2.4.021 (5 May 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -412,70 +412,71 @@ The procedure used to create the MS Windows installer is described in full in th
 * `6.8.3 Replacing channel/playlist URLs in bulk`_
 * `6.9 Adding folders`_
 * `6.10 Things you can do`_
-* `6.11 Download options`_
-* `6.11.1 Advanced download options`_
-* `6.11.2 Other download options`_
-* `6.11.3 Managing download options`_
-* `6.11.4 Setting download options`_
-* `6.12 Scheduled downloads`_
-* `6.13 Custom downloads`_
-* `6.13.1 Creating custom downloads`_
-* `6.13.2 Independent downloads`_
-* `6.13.3 Diverting to HookTube / Invidious`_
-* `6.13.4 Delays between downloads`_
-* `6.13.5 Splitting and slicing videos`_
-* `6.13.6 Ignoring videos without subtitles`_
-* `6.13.7 Launching custom downloads`_
-* `6.14 Watching videos`_
-* `6.15 Filtering and finding videos`_
-* `6.16 Marking videos`_
-* `6.16.1 Bookmarked videos`_
-* `6.16.2 Favourite channels, playlists and folders`_
-* `6.17 Combining channels, playlists and folders`_
-* `6.17.1 Combining one channel and many playlists`_
-* `6.17.2 Extracting playlists from a channel`_
-* `6.17.3 Combining channels from different websites`_
-* `6.17.4 Download all videos to a single folder`_
-* `6.17.5 Download all videos to an external folder`_
-* `6.17.6 External folders and yt-dlp`_
-* `6.18 Archiving videos`_
-* `6.19 Performance limits`_
-* `6.20 Managing databases`_
-* `6.20.1 Importing videos from other applications`_
-* `6.20.2 Multiple databases`_
-* `6.20.3 Multiple Tartubes`_
-* `6.20.4 Exporting/importing the database`_
-* `6.20.5 Importing from YouTube`_
-* `6.20.6 Old Export formats`_
-* `6.21 Converting to audio`_
-* `6.22 Classic Mode`_
-* `6.22.1 Customising Classic Mode`_
-* `6.23 Livestreams`_
-* `6.23.1 Detecting livestreams`_
-* `6.23.2 Customising livestreams`_
-* `6.23.3 Livestream notifications`_
-* `6.23.4 Downloading livestreams`_
-* `6.23.5 Compatible websites`_
-* `6.24 Detecting missing videos`_
-* `6.25 More information about FFmpeg and AVConv`_
-* `6.25.1 Using FFmpeg / AVConv with youtube-dl`_
-* `6.25.2 Using FFmpeg directly`_
-* `6.25.3 Using FFmpeg options`_
-* `6.25.4 Advanced FFmpeg options`_
-* `6.26 Video clips`_
-* `6.26.1 Video clip preferences`_
-* `6.26.2 Quick video clips`_
-* `6.26.3 Downloading video clips`_
-* `6.26.4 Extracting video clips`_
-* `6.26.5 Video clip shortcuts`_
-* `6.27 Video slices`_
-* `6.27.1 Video slice preferences`_
-* `6.27.2 Quick video slices`_
-* `6.27.3 Downloading sliced videos`_
-* `6.27.4 Removing video slices`_
-* `6.27.5 Video slice shortcuts`_
-* `6.28 Using youtube-dl forks`_
-* `6.29 Video comments`_
+* `6.11 Profiles`_
+* `6.12 Download options`_
+* `6.12.1 Advanced download options`_
+* `6.12.2 Other download options`_
+* `6.12.3 Managing download options`_
+* `6.12.4 Setting download options`_
+* `6.13 Scheduled downloads`_
+* `6.14 Custom downloads`_
+* `6.14.1 Creating custom downloads`_
+* `6.14.2 Independent downloads`_
+* `6.14.3 Diverting to HookTube / Invidious`_
+* `6.14.4 Delays between downloads`_
+* `6.14.5 Splitting and slicing videos`_
+* `6.14.6 Ignoring videos without subtitles`_
+* `6.14.7 Launching custom downloads`_
+* `6.15 Watching videos`_
+* `6.16 Filtering and finding videos`_
+* `6.17 Marking videos`_
+* `6.17.1 Bookmarked videos`_
+* `6.17.2 Favourite channels, playlists and folders`_
+* `6.18 Combining channels, playlists and folders`_
+* `6.18.1 Combining one channel and many playlists`_
+* `6.18.2 Extracting playlists from a channel`_
+* `6.18.3 Combining channels from different websites`_
+* `6.18.4 Download all videos to a single folder`_
+* `6.18.5 Download all videos to an external folder`_
+* `6.18.6 External folders and yt-dlp`_
+* `6.19 Archiving videos`_
+* `6.20 Performance limits`_
+* `6.21 Managing databases`_
+* `6.21.1 Importing videos from other applications`_
+* `6.21.2 Multiple databases`_
+* `6.21.3 Multiple Tartubes`_
+* `6.21.4 Exporting/importing the database`_
+* `6.21.5 Importing from YouTube`_
+* `6.21.6 Old Export formats`_
+* `6.22 Converting to audio`_
+* `6.23 Classic Mode`_
+* `6.23.1 Customising Classic Mode`_
+* `6.24 Livestreams`_
+* `6.24.1 Detecting livestreams`_
+* `6.24.2 Customising livestreams`_
+* `6.24.3 Livestream notifications`_
+* `6.24.4 Downloading livestreams`_
+* `6.24.5 Compatible websites`_
+* `6.25 Detecting missing videos`_
+* `6.26 More information about FFmpeg and AVConv`_
+* `6.26.1 Using FFmpeg / AVConv with youtube-dl`_
+* `6.26.2 Using FFmpeg directly`_
+* `6.26.3 Using FFmpeg options`_
+* `6.26.4 Advanced FFmpeg options`_
+* `6.27 Video clips`_
+* `6.27.1 Video clip preferences`_
+* `6.27.2 Quick video clips`_
+* `6.27.3 Downloading video clips`_
+* `6.27.4 Extracting video clips`_
+* `6.27.5 Video clip shortcuts`_
+* `6.28 Video slices`_
+* `6.28.1 Video slice preferences`_
+* `6.28.2 Quick video slices`_
+* `6.28.3 Downloading sliced videos`_
+* `6.28.4 Removing video slices`_
+* `6.28.5 Video slice shortcuts`_
+* `6.29 Using youtube-dl forks`_
+* `6.30 Video comments`_
 
 6.1 Setting up Tartube
 ----------------------
@@ -487,7 +488,7 @@ When you first start **Tartube**, you will be asked to choose a few settings.
 
 Most users can use this window to download and install some packages. If not, those packages must be installed separately.
 
-All of these settings can be changed later, if you want. For example, to change where **Tartube** stores its files, see `6.20 Managing databases`_.
+All of these settings can be changed later, if you want. For example, to change where **Tartube** stores its files, see `6.21 Managing databases`_.
 
 6.2 Updating the downloader
 ---------------------------
@@ -535,7 +536,7 @@ On other systems, users can customise the downloader's location. There are sever
 
 **youtube-dl** uses FFmpeg by default, but it can use AVConv for certain tasks.
 
-For more information about **Tartube**'s use of FFmpeg and AVConv, see `6.25 More information about FFmpeg and AVConv`_.
+For more information about **Tartube**'s use of FFmpeg and AVConv, see `6.26 More information about FFmpeg and AVConv`_.
 
 6.4.1 On MS Windows
 ~~~~~~~~~~~~~~~~~~~
@@ -572,21 +573,21 @@ When you start **Tartube** for the first time, there are several folders already
   :alt: Tartube's system folders
 
 - The **All Videos** folder shows every video in **Tartube**'s database, whether it has been downloaded or not
-- The **Bookmarks** folder shows videos you've bookmarked, because they're interesting or important (see `6.16.1 Bookmarked videos`_ )
-- The **Favourite Videos** folder shows videos in a channel, playlist or folder that you've marked as a favourite (see `6.16.2 Favourite channels, playlists and folders`_ )
+- The **Bookmarks** folder shows videos you've bookmarked, because they're interesting or important (see `6.17.1 Bookmarked videos`_ )
+- The **Favourite Videos** folder shows videos in a channel, playlist or folder that you've marked as a favourite (see `6.17.2 Favourite channels, playlists and folders`_ )
 - The **Livestreams** folder shows livestreams. Videos are automatically removed from this folder (but not from other folders) when the livestream is finished
-- The **Missing videos** folder (see `6.24 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
+- The **Missing videos** folder (see `6.25 Detecting missing videos`_ ) shows videos that you've downloaded, but which have since been removed from the website by their creator
 - The **New Videos** folder shows videos that have been downloaded, but not yet watched
 - The **Recent Videos** folder shows videos that were checked or downloaded, the last time you used **youtube-dl** (to change this behaviour, right-click the folder and select **Downloads > Set removal time...**)
 - The **Waiting Videos** folder shows videos that you want to watch soon. When you watch the video, it's automatically removed from the folder (but not from **Tartube**'s database)
 - Videos saved to the **Temporary Videos** folder will be deleted when **Tartube** next starts
 - The **Unsorted Videos** folder is a useful place to put videos that don't belong to a particular channel or playlist
-- The **Video Clips** folder is a useful place to put video clips  (see `6.26 Video clips`_)
+- The **Video Clips** folder is a useful place to put video clips  (see `6.27 Video clips`_)
 
 6.6 Adding videos
 -----------------
 
-*If you want a simpler way to download videos, see* `6.22 Classic Mode`_.
+*If you want a simpler way to download videos, see* `6.23 Classic Mode`_.
 
 You can add individual videos by clicking the **Add new video(s)** button near the top of the window. (On MS Windows, the text is not visible unless your mouse is hovering over the button, which is in the top-left corner.)
 
@@ -709,7 +710,7 @@ Checking/download videos:
 
 - **Check** - Fetches information about videos, but doesn't download them
 - **Download** - Actually downloads the videos. If you have disabled downloads for a particular item, **Tartube** will just fetch information about it instead
-- **Custom download** - Downloads videos in a non-standard way; see `6.13 Custom downloads`_
+- **Custom download** - Downloads videos in a non-standard way; see `6.14 Custom downloads`_
 - To **Check** or **Download** videos, channels and playlists, use the main menu, or the buttons near the top of the window, or the buttons in the bottom-left corner, or right-click an individual video, channel, playlist or folder
 - A **Custom Download** can be started from the main menu (**Operations > Custom download all**) or by right-clicking a video, channel, playlist or folder
 
@@ -721,7 +722,7 @@ Refreshing the database:
 
 Updating packages:
 
-- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. On MS Windows, also installs **FFmpeg** (see `6.4 Installing FFmpeg / AVConv`_), **matplotlib** (see `7.30 Graphs not visible`_) and `streamlink <https://streamlink.github.io/>`__ (see `6.23 Livestreams`_)
+- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. On MS Windows, also installs **FFmpeg** (see `6.4 Installing FFmpeg / AVConv`_), **matplotlib** (see `7.30 Graphs not visible`_) and `streamlink <https://streamlink.github.io/>`__ (see `6.24 Livestreams`_)
 - *Protip*: Do an **'Update'** operation before you do a **'Check'** or **'Download'** operation
 
 Fetching information:
@@ -737,15 +738,38 @@ Tidying up the filesytem:
 Dealing with livestreams:
 
 - **Livestream check** - Checks whether any livestreams have started (or stopped), without fetching the full list of videos from a channel/playlist
-- **Livestream download** - Downloads a livestream that's broadcasting now; see `6.23.4 Downloading livestreams`_
+- **Livestream download** - Downloads a livestream that's broadcasting now; see `6.24.4 Downloading livestreams`_
 - A **Livestream check** happens every few minutes (if **Tartube** detected livestreams during a **Check** or a **Download**). To force a check now, click **Livestreams > Update existing livestreams**
 
 Processing videos with **FFmpeg**:
 
-- **Process** - Processes videos and thumbnails with **FFmpeg** - see `6.25 More information about FFmpeg and AVConv`_
+- **Process** - Processes videos and thumbnails with **FFmpeg** - see `6.26 More information about FFmpeg and AVConv`_
 - To process video(s) and/or their thumbnails, right-click a video and select **Special > Process with FFmpeg...**
 
-6.11 Download options
+6.11 Profiles
+-------------
+
+Next to each channel, playlist and folder is a checkbox. Click one or more of the checkboxes, and the buttoms in the bottom-left corner of the **Videos** tab will change:
+
+.. image:: screenshots/example33.png
+  :alt: Marked channels, playlists and folders
+
+This is one way of checking or downloading just some of the channels, playlists and folders. Other methods include:
+
+- Right-click a channel, and select **Download channel** (and so on)
+- Move channels and playlists into a single folder, then right-click that folder and select **Download folder**
+
+If you frequently mark a group of channels, playlists and folders for download, then you can create a profile. A profile is just a list of items that have been marked for download.
+
+- Click **Media > Profiles > Create profile**
+- In the dialogue window, choose a profile name, then click **OK** to create the profile
+- Later, click **Media > Profiles > Switch profile** to mark the same items for download
+
+If you select **Media > Profiles > Remember last profile**, then **Tartube** will automatically switch to that profile, whenever the database is loaded.
+
+Note that the red system folders can't be marked for download.
+
+6.12 Download options
 ---------------------
 
 **youtube-dl** offers a large number of download options. This is how to set them.
@@ -757,7 +781,7 @@ Processing videos with **FFmpeg**:
 
 A new window opens. Any changes you make in this window aren't actually applied until you click the **'Apply'** or **'OK'** buttons.
 
-6.11.1 Advanced download options
+6.12.1 Advanced download options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some of the options are intended for advanced users, so they're hidden by default. To reveal them, click the button **Show advanced download options**.
@@ -767,7 +791,7 @@ Some of the options are intended for advanced users, so they're hidden by defaul
 
 After clicking the button, some new tabs will appear. The existing tabs will also have some new features.
 
-6.11.2 Other download options
+6.12.2 Other download options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you click **Edit > General download options...**, you are seeing the *default* download options. If you want to apply a *different* set of download options to a particular channel or particular playlist, you can do so.
@@ -798,7 +822,7 @@ The previous set of download options still applies to everything in the **Histor
 .. image:: screenshots/example16.png
   :alt: Download options applied to The Armchair Historian channel
 
-6.11.3 Managing download options
+6.12.3 Managing download options
 --------------------------------
 
 In fact, you can create as many sets of download options as you like.
@@ -808,14 +832,14 @@ In fact, you can create as many sets of download options as you like.
 .. image:: screenshots/example17.png
   :alt: The list of download options
 
-The first item in the list, **general**, is the default set of download options. The second item, **classic**, is the set of download options that apply in the **Classic Mode** tab (see `6.22 Classic Mode`_).
+The first item in the list, **general**, is the default set of download options. The second item, **classic**, is the set of download options that apply in the **Classic Mode** tab (see `6.23 Classic Mode`_).
 
-Download options are saved in the Tartube database, so if you switch databases (see `6.20.2 Multiple databases`_), a different selection of download options will apply. If you want to move a set of download options from one database to another, you can **Export** them, then switch databases, then **Import** them.
+Download options are saved in the Tartube database, so if you switch databases (see `6.21.2 Multiple databases`_), a different selection of download options will apply. If you want to move a set of download options from one database to another, you can **Export** them, then switch databases, then **Import** them.
 
-6.11.4 Setting download options
+6.12.4 Setting download options
 -------------------------------
 
-Here is a quick summary of the download options that are most useful, assuming that advanced download options are hidden (see `6.11.1 Advanced download options`_).
+Here is a quick summary of the download options that are most useful, assuming that advanced download options are hidden (see `6.12.1 Advanced download options`_).
 
 You can change the format of the filename for the downloaded video, so it includes useful information such as the playlist number or the video resolution.
 
@@ -860,9 +884,9 @@ If you want to download subtiles only in particular languages:
 - Click the **Add language** button
 - Repeat for as many languages as you want
 
-See also `6.13.6 Ignoring videos without subtitles`_.
+See also `6.14.6 Ignoring videos without subtitles`_.
 
-6.12 Scheduled downloads
+6.13 Scheduled downloads
 ------------------------
 
 **Tartube** can check and download videos, channels and playlists on a regular schedule. This is very useful if you want to leave **Tartube** running unattended.
@@ -879,7 +903,7 @@ See also `6.13.6 Ignoring videos without subtitles`_.
 
 A new window appears. You can use this window to congifure the scheduled download.
 
-- In the **Download mode** box, select whether **Tartube** should check videos, download them, or perform a custom download (see `6.13 Custom downloads`_)
+- In the **Download mode** box, select whether **Tartube** should check videos, download them, or perform a custom download (see `6.14 Custom downloads`_)
 - In the **Start** tab, select whether this download should be performed once, or when **Tartube** starts, or at regular intervals, or at specified times
 
 When you specify a start time like 'Mondays at 15:00', there is a five-minute window in which the scheduled download can begin. This means that, if you open Tartube at 15:02, the scheduled download will still start (but not if you open Tartube at 15:10).
@@ -894,7 +918,7 @@ There are several ways to add channels, playlists and folders to this list:
 
 You can create as many scheduled downloads as you like. Scheduled downloads are performed in order, from the top of the list to the bottom.
 
-6.13 Custom downloads
+6.14 Custom downloads
 ---------------------
 
 By default, **Tartube** downloads videos as quickly as possible, one URL (link) at a time. A URL might point to an individual video, or it might point to a whole channel or playlist. **Tartube** will try to download every video associated with the URL.
@@ -903,7 +927,7 @@ A **Custom download** enables you to modify this behaviour, if desired. You can 
 
 It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 
-6.13.1 Creating custom downloads
+6.14.1 Creating custom downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can create as many different custom downloads as you like.
@@ -923,7 +947,7 @@ If you use custom downloads a lot, you can add some extra buttons to the **Video
 
 The **Custom download all** button starts the custom download called **general**. The button next to it opens a list of custom downloads. Select one, and that custom download will start.
 
-6.13.2 Independent downloads
+6.14.2 Independent downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, **Tartube** instructs **youtube-dl** to download a channel or a playlist. **youtube-dl** only needs a link to the channel or playlist, so **Tartube** doesn't send it a link to every single video.
@@ -937,7 +961,7 @@ If you need to download each individual video, one URL at a time, you can do thi
 
 Many custom download settings only work when Tartube is downloading videos one at a time. If you enable this setting, you will be able to enable several other settings in the other tabs.
 
-6.13.3 Diverting to HookTube / Invidious
+6.14.3 Diverting to HookTube / Invidious
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If **Tartube** can't download a video from YouTube, it's sometimes possible to obtain it from an alternative website instead.
@@ -952,7 +976,7 @@ There are a number of alternative YouTube front-ends available, besides `HookTub
 
 When specifying an alternative website, it's very important that you type the *exact text* that replaces **youtube.com** in a video's URL. For example, you must type **hooktube.com**, not **www.hooktube.com** or **http://www.hooktube.com/**.
 
-6.13.4 Delays between downloads
+6.14.4 Delays between downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the video website is complaining that you're making too many requests (in other words, downloading too many videos too quickly), it's possible to add a delay betwen downloads. The delay can have a fixed or random duration.
@@ -967,16 +991,16 @@ If the video website is complaining that you're making too many requests (in oth
 
 The delay is applied after downloading a channel or a playlist. If you want to apply the delay after each video, you should enable individual video downloads as well (as described above).
 
-6.13.5 Splitting and slicing videos
+6.14.5 Splitting and slicing videos
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-During a custom download, you can automatically split a video into video clips *while it is being downloaded*. A list of clips can be grabbed from the video's description, or from its chapter list, or you can specify your own list of clips. For more information, see see `6.26 Video clips`_
+During a custom download, you can automatically split a video into video clips *while it is being downloaded*. A list of clips can be grabbed from the video's description, or from its chapter list, or you can specify your own list of clips. For more information, see see `6.27 Video clips`_
 
-You can also remove slices from a video *while it is being downloaded*. This is useful for removing adverts, intros and outros. A list of video slices is obtained from a `SponsorBlock server <https://sponsor.ajay.app/>`__. Alternatively, you can specify your own list of video slices. For more information, see see `6.27 Video slices`_
+You can also remove slices from a video *while it is being downloaded*. This is useful for removing adverts, intros and outros. A list of video slices is obtained from a `SponsorBlock server <https://sponsor.ajay.app/>`__. Alternatively, you can specify your own list of video slices. For more information, see see `6.28 Video slices`_
 
 Both of these features require **FFmpeg**.
 
-6.13.6 Ignoring videos without subtitles
+6.14.6 Ignoring videos without subtitles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can ask Tartube not to download videos without subtitles.
@@ -997,7 +1021,7 @@ Note that this setting *reduces the number of videos downloaded*. It isn't respo
 
 **youtube-dl** handles YouTube live chat in the same way as subtitles, so you can select that instead of (or as well as) the languages.
 
-6.13.7 Launching custom downloads
+6.14.7 Launching custom downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Besides the optional button described above, there are several ways to start a custom download.
@@ -1007,7 +1031,7 @@ Besides the optional button described above, there are several ways to start a c
 - In the **Classic Mode** tab, click the menu icon in the top-right corner, and select **Enable custom downloads**. When you're ready to begin, click the **Custom download all** button in the bottom-right corner
 - From the main menu, click **Operations > Custom download all**
 
-6.14 Watching videos
+6.15 Watching videos
 --------------------
 
 If you've downloaded a video, you can watch it by clicking the word **Player**.
@@ -1026,7 +1050,7 @@ As mentioned above, the original Invidious server has now closed. You can change
 - Click **OK** to close the window
 - You can now watch a video by clicking its **Invidious** label
 
-6.15 Filtering and finding videos
+6.16 Filtering and finding videos
 ---------------------------------
 
 Beneath the videos you'll find a toolbar. The buttons are self-explanatory, except for the one on the right.
@@ -1064,7 +1088,7 @@ Alternatively, you can find videos uploaded around a certain date.
 - Click the **Find date** button to select a date
 - If there are several pages of videos, **Tartube** will show the page containing the videos uploaded closest to this date
 
-6.16 Marking videos
+6.17 Marking videos
 -------------------
 
 You can mark videos, channels, playlists and folders that you find interesting, or which are important.
@@ -1072,9 +1096,9 @@ You can mark videos, channels, playlists and folders that you find interesting, 
 - You can **bookmark** a video
 - You can **favourite** a channel, playlist or folder
 
-Bookmarked and favourite videos shouldn't be confused with archived videos, which are protected from automatic deletion - see `6.18 Archiving videos`_.
+Bookmarked and favourite videos shouldn't be confused with archived videos, which are protected from automatic deletion - see `6.19 Archiving videos`_.
 
-6.16.1 Bookmarked videos
+6.17.1 Bookmarked videos
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are several ways to bookmark a video.
@@ -1086,7 +1110,7 @@ There are several ways to bookmark a video.
 
 A bookmarked video appears in **Tartube**'s own **Bookmarks** folder, as well as in its usual location.
 
-6.16.2 Favourite channels, playlists and folders
+6.17.2 Favourite channels, playlists and folders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you mark a channel, playlist or folder as a favourite, all of its videos will also be visible in **Tartube**'s own **Favourite Videos** folder.
@@ -1100,7 +1124,7 @@ If new videos are later added to the channel, playlist or folder, they will auto
 - Right-click a folder, and select **Folder contents > All contents > Mark as favourite**
 - If you just want to mark the videos in a folder as favourites, but not any channels or playlists it contains, select **Folder contents > Just folder videos > Mark as favourite**
 
-6.17 Combining channels, playlists and folders
+6.18 Combining channels, playlists and folders
 ----------------------------------------------
 
 **Tartube** can download videos from several channels and/or playlists into a single directory (folder) on your computer's filesystem. There are four situations in which this might be useful:
@@ -1109,8 +1133,8 @@ If new videos are later added to the channel, playlist or folder, they will auto
 - A creator releases their videos on **Odysee** as well as on **YouTube**. You have added both channels, but you don't want to download duplicate videos
 - You don't care about keeping videos in separate directories/folders on your filesystem. You just want to download all videos to one location
 - A separate application will process the videos, after Tartube has downloaded them
-- 
-6.17.1 Combining one channel and many playlists
+
+6.18.1 Combining one channel and many playlists
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might have a single channel, and several playlists. The playlists contain videos from that channel (but not necessarily *every* video).
@@ -1126,7 +1150,7 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 
 A quicker way to add multiple playlists is from Tartube's main menu. Click **Media > Add many channels/playlists...**.
 
-6.17.2 Extracting playlists from a channel
+6.18.2 Extracting playlists from a channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As described above, a creator might have a single channel, and several playlists. If there are a *lot* of playlists, it might take a long time to add them all to Tartube's database. However, there is a shortcut for YouTube channels.
@@ -1154,7 +1178,7 @@ Alternatively, if you don't want to keep the original channel, do this:
 - Click **OK** to close the window
 - When you're ready, delete the channel
 
-6.17.3 Combining channels from different websites
+6.18.3 Combining channels from different websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A creator might release their videos on **YouTube**, but also on a site like **Odysee**. Sometimes they will only release a particular video on **Odysee**.
@@ -1170,7 +1194,7 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
 
-6.17.4 Download all videos to a single folder
+6.18.4 Download all videos to a single folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don't care about keeping videos in separate directories/folders on your filesystem, you can download *all* videos into the **Unsorted videos** folder. Regardless of whether you have added one channel or a thousand, all the videos will be stored in that one location.
@@ -1181,7 +1205,7 @@ If you don't care about keeping videos in separate directories/folders on your f
 
 Alternatively, you could select **Temporary Videos**. If you do, videos will be deleted when you restart **Tartube**.
 
-6.17.5 Download all videos to an external folder
+6.18.5 Download all videos to an external folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, all files are downloaded into Tartube's data folder. Users often request that **Tartube** should be able to download videos to other locations in the filesystem, *while retaining those videos in Tartube's database.*
@@ -1203,7 +1227,7 @@ If one of these reasons applies, then you can do this:
 - Click the **Set** button, and choose an external folder
 - When you're ready, click the **OK** button to apply your changes
 
-6.17.6 External folders and yt-dlp
+6.18.6 External folders and yt-dlp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware of the download option **--paths**, which may be more convenient in some situations. See the **yt-dlp** documentation for more information about how it works. In Tartube, it can be configured like this:
@@ -1213,7 +1237,7 @@ Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware of the d
 - The option **--output** can be set in the **Files > Override** tab
 - The option **--paths** can be set in the **Files > Paths** tab
 
-6.18 Archiving videos
+6.19 Archiving videos
 ---------------------
 
 You can tell **Tartube** to automatically delete videos after some period of time. This is useful if hard drive is smaller than the size of the observable universe.
@@ -1234,7 +1258,7 @@ You can also archive all the videos in a channel, playlist or folder.
 - This action applies to *all* videos that are *currently* in the folder, including the contents of any channels and playlists in that folder
 - It doesn't apply to any videos you might download in the future
 
-6.19 Performance limits
+6.20 Performance limits
 -----------------------
 
 By default, **Tartube** downloads two video, channels or playlists at a time, as quickly as possible (in other words, without bandwidth limits).
@@ -1250,11 +1274,11 @@ These are the default settings. Many users might want lower download speeds duri
 - The settings in the top half of the tab are the ones visible in the **Progress** tab
 - The settings in the bottom half of the tab apply only during certain times of the day, and on certain days
 
-There is a third way to change **Tartube**'s behaviour. The maximum downloads and bandwidth limits can also be set for a scheduled download (see `6.12 Scheduled downloads`_).
+There is a third way to change **Tartube**'s behaviour. The maximum downloads and bandwidth limits can also be set for a scheduled download (see `6.13 Scheduled downloads`_).
 
 **Tartube** honours most requests to change the maximum downloads and the bandwidth limit, so it's not a good idea to set lots of different values.
 
-6.20 Managing databases
+6.21 Managing databases
 -----------------------
 
 **Tartube** downloads all of its videos into a single directory (folder) - the **Tartube data directory**. The contents of this directory comprise the **Tartube database**.
@@ -1265,7 +1289,7 @@ There is a third way to change **Tartube**'s behaviour. The maximum downloads an
 
 It's fine to add new videos to the database, or to remove them. Just be careful that you don't delete any sub-directories (folders), including those which are hidden, and don't modify the **Tartube** database file, **tartube.db**.
 
-6.20.1 Importing videos from other applications
+6.21.1 Importing videos from other applications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** is a GUI front-end for **youtube-dl**, but it is not the only one. If you've downloaded videos using another application, this is how to add them to **Tartube**'s database.
@@ -1277,7 +1301,7 @@ It's fine to add new videos to the database, or to remove them. Just be careful 
 - **Tartube** will search for video files, and try to match them with the list of videos you just compiled
 - The whole process might some time, so be patient
 
-6.20.2 Multiple databases
+6.21.2 Multiple databases
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can only use one database at a time, but you can create as many databases as you want.
@@ -1294,7 +1318,7 @@ For example, you could create a new database on an external hard drive.
 - In the list, click the original database to select it
 - Click the **Switch to this database** button
 
-6.20.3 Multiple Tartubes
+6.21.3 Multiple Tartubes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can't load more than one database, but you can run as many instances of **Tartube** as you want.
@@ -1303,7 +1327,7 @@ If you have added three databases to the list, and if you have three **Tartube**
 
 By default, the databases are loaded in the order they appear in the list.
 
-6.20.4 Exporting/importing the database
+6.21.4 Exporting/importing the database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can export the contents of **Tartube**'s database and, at any time in the future, import that information into a different **Tartube** database, perhaps on a different computer.
@@ -1325,7 +1349,7 @@ This is how to import the data into a different **Tartube** database.
 - Select the export file you created earlier
 - A dialogue window will appear. You can choose how much of the database you want to import
 
-6.20.5 Importing from YouTube
+6.21.5 Importing from YouTube
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also import your **YouTube** subscriptions directly.
@@ -1342,7 +1366,7 @@ If you have a lot of channels to import, you might want to import them into a fo
 - In the **Videos** tab, create a new folder, or select an existing folder
 - Click **Media > Import YouTube subscriptions**, and continue as above
 
-6.20.6 Old Export formats
+6.21.6 Old Export formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The format of exported plain text/CSV files changed in v2.3.208, and again in v2.3.307. If you try to import files from earlier versions, you may not get everything you were expecting.
@@ -1371,7 +1395,7 @@ Here are some notes for anyone who wants to edit the plain text export by hand:
 - For videos, line 5 is the video ID supplied by the website (or an empty line, if the ID is unknown)
 - For videos, line 6 is the video filename (e.g. **my video.mp4**, or an empty line, if the filename is unknown)
 
-6.21 Converting to audio
+6.22 Converting to audio
 ------------------------
 
 **Tartube** can automatically extract the audio from its downloaded videos, if that's what you want.
@@ -1386,7 +1410,7 @@ The remaining steps are simple:
 - In the boxes below, select an audio format and an audio quality
 - Click the **OK** button at the bottom of the window to apply your changes
 
-Alternatively, if you have enabled advanced options (see `6.11.1 Advanced download options`_) then the **Post-processing** tab will be visible, and you can do this:
+Alternatively, if you have enabled advanced options (see `6.12.1 Advanced download options`_) then the **Post-processing** tab will be visible, and you can do this:
 
 - Click on the **Post-processing** tab
 - Select the checkbox **Post-process video files to convert them to audio-only files**
@@ -1401,7 +1425,7 @@ Some websites, such as **YouTube**, allow you to download the audio (in **.m4a**
 - Click the **Add format** button to add it to the list on the right
 - Click the **OK** button at the bottom of the window to apply your changes
 
-6.22 Classic Mode
+6.23 Classic Mode
 -----------------
 
 **Tartube** compiles a database of the videos, channels and playlists it has downloaded.
@@ -1423,7 +1447,7 @@ If you want something simpler, then click the **Classic Mode** tab, which has an
 
 Because the videos aren't in a database, you can move them anywhere you want (once you've finished downloading them).
 
-6.22.1 Customising Classic Mode
+6.23.1 Customising Classic Mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you *only* use this tab, you can tell **Tartube** to open it automatically.
@@ -1437,26 +1461,26 @@ If you don't want **Tartube** to forget URLs when it restarts, you can do this:
 - Click **Remember URLs** to select it
 - **Tartube** will only remember URLs that haven't been downloaded yet
 
-A separate set of download options (see `6.11 Download options`_) usually applies to the **Classic Mode** tab. You can change this behaviour, if you like.
+A separate set of download options (see `6.12 Download options`_) usually applies to the **Classic Mode** tab. You can change this behaviour, if you like.
 
 - Click the menu button in the top-right corner of the tab
 - Click **Set download options** to see the complete list of download options
 - Alternatively, click **Use default download options** to use the download options called **general**
 
-In the same menu, custom downloads can be enabled (see `6.13 Custom downloads`_). Depending on the behaviour you've selected, **Tartube** may fetch a list of videos from each URL, before downloading them (so don't be alarmed if each URL is 'downloaded' twice).
+In the same menu, custom downloads can be enabled (see `6.14 Custom downloads`_). Depending on the behaviour you've selected, **Tartube** may fetch a list of videos from each URL, before downloading them (so don't be alarmed if each URL is 'downloaded' twice).
 
 In the bottom half of the window, you can select one or more URLs by clicking them. The buttons in the bottom-left apply to the selected URLs. Let your mouse hover over a button to see what it does.
 
-6.23 Livestreams
+6.24 Livestreams
 ----------------
 
-**Tartube** can detect livestreams, and to notify you when they start. This feature works on **YouTube**, **Odysee** and **Twitch**. It might work on other websites, after a little configuration - see `6.23.5 Compatible websites`_.
+**Tartube** can detect livestreams, and to notify you when they start. This feature works on **YouTube**, **Odysee** and **Twitch**. It might work on other websites, after a little configuration - see `6.24.5 Compatible websites`_.
 
 **Tartube** can download livestreams while they are broadcasting. If `streamlink <https://streamlink.github.io/>`__ is installed on your system, Tartube can use it; otherwise it will download the livestream using its .m3u manifest.
 
 `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ is deprecated, and **Tartube** no longer supports it.
 
-6.23.1 Detecting livestreams
+6.24.1 Detecting livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** searches for livestreams whenever you check or download channels and playlists.
@@ -1470,7 +1494,7 @@ Livestreams are easy to spot. A livestream that hasn't started yet has a red bac
 
 Every few minutes, **Tartube** checks whether a livestream (or debut) has started or stopped. This happens automatically in the background; there is no need for you to do anything.
 
-6.23.2 Customising livestreams
+6.24.2 Customising livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can modify how often livestreams are checked (and whether they are checked at all). Click **Livestreams > Livestream preferences...**.
@@ -1484,7 +1508,7 @@ By default, **Tartube** checks a livestream every three minutes, waiting for it 
 
 If you want to force a check, in the main window click **Livestreams > Update existing livestreams**. (Checks are silent, so don't worry if nothing seems to be happening).
 
-6.23.3 Livestream notifications
+6.24.3 Livestream notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It's really useful to be notified when a livestream is starting. In the same window, click the **Operations > Actions** tab.
@@ -1508,7 +1532,7 @@ Most users will prefer to leave all of these checkboxes unselected, and instead 
 
 To disable any of these actions, simply click the same label again.
 
-6.23.4 Downloading livestreams
+6.24.4 Downloading livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tartube** can download a livestream while it is still broadcasting. (A livestream that has already finished is treated like any other video.)
@@ -1523,7 +1547,7 @@ You can choose your preferred method by clicking **Edit > System preferences... 
 
 Note that *none of these methods can download a livestream from the very beginning*.
 
-6.23.5 Compatible websites
+6.24.5 Compatible websites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Livestream downloads should work on most websites. `streamlink <https://streamlink.github.io/>`__ works on most popular websites, but not necessarily on all of them.
@@ -1536,7 +1560,7 @@ Secondly, right-click the channel and select **Show > Channel properties...** (a
 
 Now click the **RSS feed** tab. Enter the link (URL) to the RSS feed in the box. Click the **OK** button to close the window.
 
-6.24 Detecting missing videos
+6.25 Detecting missing videos
 -----------------------------
 
 **Tartube** can detect videos you have downloaded, but which have been since deleted by the original uploader.
@@ -1548,10 +1572,10 @@ Having enabled detection, removed videos will appear in the **Missing Videos** f
 
 **Tartube** only detects missing videos when checking/downloading whole channels or playlists. If you interrupt a download, no detection occurs.
 
-6.25 More information about FFmpeg and AVConv
+6.26 More information about FFmpeg and AVConv
 ---------------------------------------------
 
-6.25.1 Using FFmpeg / AVConv with youtube-dl
+6.26.1 Using FFmpeg / AVConv with youtube-dl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you explicitly set the location of the **FFmpeg** and/or **AVConv** executables, then those locations are passed on to **youtube-dl** when you check or download videos.
@@ -1565,9 +1589,9 @@ If *both* locations are set, only one of them is passed on. Usually, that's the 
 - Make sure the **Prefer FFmpeg over AVConv (default)** button is not selected
 - Click **OK** to apply your changes
 
-For more information about download options, see `6.11 Download options`_.
+For more information about download options, see `6.12 Download options`_.
 
-6.25.2 Using FFmpeg directly
+6.26.2 Using FFmpeg directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can process videos and thumbnails with **FFmpeg** directly, if you need to. This is useful for converting a file from one format to another, and for many other tasks.
@@ -1590,7 +1614,7 @@ The box at the top allows you to add FFmpeg options directly. For example, to co
 
         **-r 24**
 
-6.25.3 Using FFmpeg options
+6.26.3 Using FFmpeg options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the options windows, click the **File** tab.
@@ -1601,7 +1625,7 @@ The **Videos** tab contains an optional list of videos. These are the videos tha
 
 You can add videos to this list by dragging and dropping them. Dragging from an external application is allowed, if the videos are also visible somewhere in **Tartube**'s main window (for example, in its database, or in the **Classic Mode** tab).
 
-6.25.4 Advanced FFmpeg options
+6.26.4 Advanced FFmpeg options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now click the **Name** tab again. One box shows the **FFmpeg** system command that will be used to process the videos.
@@ -1621,7 +1645,7 @@ When youtube-dl downloads a video, it often downloads the video and audio compon
 
 If the source file is a thumbnail, then the output file must also be a thumbnail.
 
-6.26 Video clips
+6.27 Video clips
 ----------------
 
 **Tartube** can download parts of a video. It can also split up a video it has already downloaded. This functionality requires **FFmpeg**.
@@ -1634,7 +1658,7 @@ It's important to be aware of the limitations of this feature.
 - Some video formats cannot be divided into clips accurately. **.mp4** is much better than **.webm**. If you want to download video clips, we recommend downloading in **.mp4** format
 - If you want clips that start and end at a particular frame, **Tartube** is not a suitable tool. Use a dedicated video editor instead
 
-6.26.1 Video clip preferences
+6.27.1 Video clip preferences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before you start, take a look at the video clip preferences (click **Edit > System preferences... > Operations > Clips**).
@@ -1651,7 +1675,7 @@ If your database already contains a lot of videos, you can ask **Tartube** to ex
 
 If you prefer to update videos one at a time, right-click the video and select **Show video > Properties... > Timestamps**. Then click the button **Reset list using video description**.
 
-6.26.2 Quick video clips
+6.27.2 Quick video clips
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the quickest way to create a video clip:
@@ -1673,10 +1697,10 @@ Timestamps must include both minutes and seconds. Hours are optional. Leading ze
 
 Click the **Download this clip** button to get started. Alternatively, if **Tartube** has already extracted a list of timestamps for this video, you can click the **Download all clips** button instead.
 
-6.26.3 Downloading video clips
+6.27.3 Downloading video clips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you frequently create video clips, then you should set up custom downloads (see `6.13 Custom downloads`_).
+If you frequently create video clips, then you should set up custom downloads (see `6.14 Custom downloads`_).
 
 - Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
 - Click **Download each video independently of its channel or playlist** to select it
@@ -1692,7 +1716,7 @@ Each video clip is represented by two timestamps: a start and a stop timestamp. 
 
 When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Videos will be downloaded as a series of video clips. (If no timestamps have been specified, then the video is downloaded whole.)
 
-6.26.4 Extracting video clips
+6.27.4 Extracting video clips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have already downloaded a video, then you can split it into video clips.
@@ -1705,14 +1729,14 @@ You can split a video using the timestamps already extracted. In the **Clips** t
 
 When you're ready to go, click the **Process files** button.
 
-6.26.5 Video clip shortcuts
+6.27.5 Video clip shortcuts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Video clips can be downloaded from the **Classic Mode** tab. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**. Don't forget that clips can be downloaded in other formats, such as **.mp3**.
 
 Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware that the download option **--split-chapters** exists, which may be more convenient in some situations.
 
-6.27 Video slices
+6.28 Video slices
 -----------------
 
 Unwanted parts of a video, such as adverts and intro/outro music, are called video **slices**.
@@ -1727,7 +1751,7 @@ It's important to be aware of the limitations of this feature.
 - Some video formats cannot be sliced accurately. **.mp4** is much better than **.webm**. If you want to remove slices, we recommend downloading videos in **.mp4** format
 - If you want to remove slices starting and ending at a particular frame, **Tartube** is not a suitable tool. Use a dedicated video editor instead
 
-6.27.1 Video slice preferences
+6.28.1 Video slice preferences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before you start, take a look at the video slice preferences (click **Edit > System preferences... > Operations > Slices**).
@@ -1737,7 +1761,7 @@ Before you start, take a look at the video slice preferences (click **Edit > Sys
 
 If you want to update a video, you can right-click it and select **Check video**, which will update the video and contact **SponsorBlock** for a second time.
 
-6.27.2 Quick video slices
+6.28.2 Quick video slices
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the quickest way to removes a slice from a video:
@@ -1764,10 +1788,10 @@ You can specify timestamps instead of seconds. Timestamps must include both minu
 
 Click the **Download this sliced video** button to get started. Alternatively, if **Tartube** has already obtained slice data from **SponsorBlock**, you can click the **Download video with all slices removed** button instead.
 
-6.27.3 Downloading sliced videos
+6.28.3 Downloading sliced videos
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you frequently remove slices from videos, then you should set up custom downloads (see `6.13 Custom downloads`_).
+If you frequently remove slices from videos, then you should set up custom downloads (see `6.14 Custom downloads`_).
 
 - Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
 - In the new window, click **Download each video independently of its channel or playlist** to select it
@@ -1789,7 +1813,7 @@ Each video slice is represented by four properties:
 
 When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Tartube will download the video as a sequence of video clips, before concatenating (joining) them together into a single video. (If no slices have been specified, then the video is downloaded whole.)
 
-6.27.4 Removing video slices
+6.28.4 Removing video slices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have already downloaded a video, then you can remove slices from it.
@@ -1802,14 +1826,14 @@ You can slice a video using SponsorBlock data already obtained. In the **Slices*
 
 When you're ready to go, click the **Process files** button.
 
-6.27.5 Video slice shortcuts
+6.28.5 Video slice shortcuts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sliced videos can be downloaded from the **Classic Mode** tab. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**. Don't forget that videos can be downloaded in other formats, such as **.mp3**.
 
 Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware that it provides support for SponsorBlock, independently of **Tartube**, using `SponSkrub <https://github.com/yt-dlp/SponSkrub>`__.  This may be more convenient in some situations.
 
-6.28 Using youtube-dl forks
+6.29 Using youtube-dl forks
 ---------------------------
 
 `youtube-dl <https://youtube-dl.org/>`__ is open-source software, and there are a number of forks available. Tartube officially supports both the original version and `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__.
@@ -1821,7 +1845,7 @@ If a **youtube-dl** fork is still compatible with the original, then **Tartube**
 - Click **OK** to close the preferences window
 - Now click **Operations > Update <fork>**, which will download (or update) the fork on your system
 
-6.29 Video comments
+6.30 Video comments
 -------------------
 
 **yt-dlp** can retrieve a video's comments (**youtube-dl** cannot, currently).
@@ -1995,7 +2019,7 @@ A: If the database file (**tartube.db**) is not actually corrupted, you can extr
 
 To create the export, click **File > Database preferences > Dump database to JSON**.
 
-The export can then be re-imported into your current database in the normal way (see `6.20.4 Exporting/importing the database`_).
+The export can then be re-imported into your current database in the normal way (see `6.21.4 Exporting/importing the database`_).
 
 A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist, despite the best efforts of the authors. If you really want to rebuild the database from scratch, this is how to do it.
 
@@ -2062,7 +2086,7 @@ You can download multiple videos from the same channel simultaneously, if you wa
 - In the list of videos, select every video (press **CTRL + A**)
 - Right-click one of the videos, and select **Download videos**
 
-Alternatively, you can use custom downloads (see `6.13 Custom downloads`_).
+Alternatively, you can use custom downloads (see `6.14 Custom downloads`_).
 
 7.10 Tartube database file is getting in the way
 ------------------------------------------------
@@ -2095,7 +2119,7 @@ A: Tartube can create files with names in different formats. The name of two vid
 
 *Q: I want to convert the video files to audio files!*
 
-A: See `6.21 Converting to audio`_
+A: See `6.22 Converting to audio`_
 
 7.13 Video is downloaded as separate video/audio files
 ------------------------------------------------------
@@ -2115,7 +2139,7 @@ For some reason, youtube-dl ignores the download option unless the format is spe
 .. image:: screenshots/example31.png
   :alt: The Download options window
 
-Tartube can merge a video and audio file together, long after they have been downloaded - see `6.25 More information about FFmpeg and AVConv`_.
+Tartube can merge a video and audio file together, long after they have been downloaded - see `6.26 More information about FFmpeg and AVConv`_.
 
 7.14 Too many folders in the main window
 ----------------------------------------
@@ -2208,7 +2232,7 @@ Unfortunately, it is not possible to switch between proxies while downloading a 
 
 A: If Tartube detects a video that has been age-restricted, censored or otherwise blocked, it is still added to the database. Unfortunately, Tartube doesn't know anything about the video, not even when it was uploaded, so videos like this appear at the top of the list.
 
-If you don't want to see blocked videos in the **Videos** tab, deselect the button in the toolbar. (If you're not sure how to use the toolbar, see see `6.15 Filtering and finding videos`_.)
+If you don't want to see blocked videos in the **Videos** tab, deselect the button in the toolbar. (If you're not sure how to use the toolbar, see see `6.16 Filtering and finding videos`_.)
 
 If you don't want the blocked videos added to your database at all, you can click **Edit > System preferences > Operations > Downloads**, and then de-select **Add censored, age-restricted and other blocked videos to the database**
 

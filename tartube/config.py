@@ -13929,11 +13929,12 @@ class VideoEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_General'))
+        grid_width = 3
 
         # General properties
         self.add_label(grid,
             '<u>' + _('General properties') + '</u>',
-            0, 0, 3, 1,
+            0, 0, grid_width, 1,
         )
 
         # The first sets of widgets are shared by multiple edit windows
@@ -13988,167 +13989,214 @@ class VideoEditWin(GenericEditWin):
             button.set_sensitive(False)
         # (Signal connect appears below)
 
+        # (Back to the main grid)
+        label2 = self.add_label(grid,
+            _('Metadata file'),
+            0, 6, 2, 1,
+        )
+        label2.set_hexpand(False)
+
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid3 = self.add_secondary_grid(grid, 0, 6, 3, 1)
+        grid3 = self.add_secondary_grid(grid, 2, 6, 1, 1)
 
-        checkbutton = self.add_checkbutton(grid3,
+        entry2 = self.add_entry(grid3,
+            None,
+            0, 0, 1, 1,
+        )
+        entry2.set_editable(False)
+        metadata_path = self.edit_obj.get_actual_path_by_ext(
+            self.app_obj,
+            '.info.json',
+        )
+        if metadata_path:
+            entry2.set_text(metadata_path)
+
+        if not self.app_obj.show_custom_icons_flag:
+            button2 = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_OPEN,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            button2 = Gtk.Button.new()
+            button2.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.app_obj.main_win_obj.pixbuf_dict['stock_open'],
+                ),
+            )
+
+        grid3.attach(button2, 1, 0, 1, 1)
+        button2.set_tooltip_text(
+            _('Update database using the video\'s metadata file'),
+        )
+        if not metadata_path:
+            button2.set_sensitive(False)
+        # (Signal connect appears below)
+                                
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid4 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
+
+        checkbutton = self.add_checkbutton(grid4,
             _('Video downloaded'),
             'dl_flag',
             0, 0, 1, 1,
         )
         checkbutton.set_sensitive(False)
 
-        checkbutton2 = self.add_checkbutton(grid3,
+        checkbutton2 = self.add_checkbutton(grid4,
             _('Video unwatched'),
             'new_flag',
             1, 0, 1, 1,
         )
         checkbutton2.set_sensitive(False)
 
-        checkbutton3 = self.add_checkbutton(grid3,
+        checkbutton3 = self.add_checkbutton(grid4,
             _('Video has been split from an original'),
             'split_flag',
             0, 1, 2, 1,
         )
         checkbutton3.set_sensitive(False)
 
-        checkbutton4 = self.add_checkbutton(grid3,
+        checkbutton4 = self.add_checkbutton(grid4,
             _('Video is archived'),
             'archive_flag',
             0, 2, 1, 1,
         )
         checkbutton4.set_sensitive(False)
 
-        checkbutton5 = self.add_checkbutton(grid3,
+        checkbutton5 = self.add_checkbutton(grid4,
             _('Video is bookmarked'),
             'bookmark_flag',
             1, 2, 1, 1,
         )
         checkbutton5.set_sensitive(False)
 
-        checkbutton6 = self.add_checkbutton(grid3,
+        checkbutton6 = self.add_checkbutton(grid4,
             _('Video is favourite'),
             'fav_flag',
             0, 3, 1, 1,
         )
         checkbutton6.set_sensitive(False)
 
-        checkbutton7 = self.add_checkbutton(grid3,
+        checkbutton7 = self.add_checkbutton(grid4,
             _('Video is in waiting list'),
             'waiting_flag',
             1, 3, 1, 1,
         )
         checkbutton7.set_sensitive(False)
 
-        checkbutton8 = self.add_checkbutton(grid3,
+        checkbutton8 = self.add_checkbutton(grid4,
             _('Video is blocked/censored/age-restricted'),
             'block_flag',
             0, 4, 2, 1,
         )
         checkbutton8.set_sensitive(False)
 
-        checkbutton9 = self.add_checkbutton(grid3,
+        checkbutton9 = self.add_checkbutton(grid4,
             _('Always simulate download of this video'),
             'dl_sim_flag',
             0, 5, 2, 1,
         )
         checkbutton9.set_sensitive(False)
 
-        label2 = self.add_label(grid3,
+        label3 = self.add_label(grid4,
             _('Video ID'),
             2, 0, 1, 1,
         )
-        label2.set_hexpand(False)
+        label3.set_hexpand(False)
 
-        entry2 = self.add_entry(grid3,
+        entry3 = self.add_entry(grid4,
             None,
             3, 0, 1, 1,
         )
-        entry2.set_editable(False)
+        entry3.set_editable(False)
         if self.edit_obj.vid is not None:
-            entry2.set_text(self.edit_obj.vid)
+            entry3.set_text(self.edit_obj.vid)
 
-        label3 = self.add_label(grid3,
+        label4 = self.add_label(grid4,
             _('Duration'),
             2, 1, 1, 1,
         )
-        label3.set_hexpand(False)
+        label4.set_hexpand(False)
 
-        entry3 = self.add_entry(grid3,
+        entry4 = self.add_entry(grid4,
             None,
             3, 1, 1, 1,
         )
-        entry3.set_editable(False)
+        entry4.set_editable(False)
         if self.edit_obj.duration is not None:
-            entry3.set_text(
+            entry4.set_text(
                 utils.convert_seconds_to_string(self.edit_obj.duration),
             )
 
-        label4 = self.add_label(grid3,
+        label5 = self.add_label(grid4,
             _('File size'),
             2, 2, 1, 1,
         )
-        label4.set_hexpand(False)
+        label5.set_hexpand(False)
 
-        entry4 = self.add_entry(grid3,
+        entry5 = self.add_entry(grid4,
             None,
             3, 2, 1, 1,
         )
-        entry4.set_editable(False)
+        entry5.set_editable(False)
         if self.edit_obj.file_size is not None:
-            entry4.set_text(self.edit_obj.get_file_size_string())
+            entry5.set_text(self.edit_obj.get_file_size_string())
 
-        label5 = self.add_label(grid3,
+        label6 = self.add_label(grid4,
             _('Upload time'),
             2, 3, 1, 1,
         )
-        label5.set_hexpand(False)
+        label6.set_hexpand(False)
 
-        entry5 = self.add_entry(grid3,
+        entry6 = self.add_entry(grid4,
             None,
             3, 3, 1, 1,
         )
-        entry5.set_editable(False)
+        entry6.set_editable(False)
         if self.edit_obj.upload_time is not None:
-            entry5.set_text(self.edit_obj.get_upload_time_string())
+            entry6.set_text(self.edit_obj.get_upload_time_string())
 
-        label6 = self.add_label(grid3,
+        label7 = self.add_label(grid4,
             _('Receive time'),
             2, 4, 1, 1,
         )
-        label6.set_hexpand(False)
+        label7.set_hexpand(False)
 
-        entry6 = self.add_entry(grid3,
+        entry7 = self.add_entry(grid4,
             None,
             3, 4, 1, 1,
         )
-        entry6.set_editable(False)
+        entry7.set_editable(False)
         if self.edit_obj.receive_time is not None:
-            entry6.set_text(self.edit_obj.get_receive_time_string())
+            entry7.set_text(self.edit_obj.get_receive_time_string())
 
-        label7 = self.add_label(grid3,
+        label8 = self.add_label(grid4,
             _('Subtitles'),
             2, 5, 1, 1,
         )
-        label7.set_hexpand(False)
+        label8.set_hexpand(False)
 
-        entry7 = self.add_entry(grid3,
+        entry8 = self.add_entry(grid4,
             None,
             3, 5, 1, 1,
         )
-        entry7.set_editable(False)
-        entry7.set_text(' '.join(self.edit_obj.subs_list))
+        entry8.set_editable(False)
+        entry8.set_text(' '.join(self.edit_obj.subs_list))
 
         # (Signal connect from above)
         button.connect(
             'clicked',
             self.on_file_button_clicked,
+            button2,
             entry,
             entry2,
             entry3,
             entry4,
+            entry5,
         )
+        button2.connect('clicked', self.on_metadata_button_clicked)
 
 
 #   def setup_download_options_tab():   # Inherited from GenericConfigWin
@@ -15853,7 +15901,8 @@ class VideoEditWin(GenericEditWin):
         self.setup_timestamps_tab_update_treeview()
 
 
-    def on_file_button_clicked(self, button, entry, entry2, entry3, entry4):
+    def on_file_button_clicked(self, button, button2, entry, entry2, entry3, \
+    entry4, entry5):
 
         """Called from a callback in self.setup_general_tab().
 
@@ -15864,7 +15913,10 @@ class VideoEditWin(GenericEditWin):
 
             button (Gtk.Button): The widget clicked
 
-            entry, entry2, entry3, entry4 (Gtk.Entry): Other widgets to update
+            button2 (Gtk.Button): Another widget to update
+
+            entry, entry2, entry3, entry4, entry5 (Gtk.Entry): Other widgets to
+                update
 
         """
 
@@ -15925,6 +15977,9 @@ class VideoEditWin(GenericEditWin):
             # Set the new file path
             self.edit_obj.set_file_from_path(new_path)
 
+            # Extract video statistics from the metadata file
+            self.app_obj.update_video_from_json(self.edit_obj)
+            
             # Set the new file's size, duration, and so on. The True argument
             #   instructs the function to override existing values
             self.app_obj.update_video_from_filesystem(
@@ -15936,23 +15991,34 @@ class VideoEditWin(GenericEditWin):
             # Update the entry boxes
             entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
 
-            if self.edit_obj.vid is not None:
-                entry2.set_text(self.edit_obj.vid)
+            metadata_path = self.edit_obj.get_actual_path_by_ext(
+                self.app_obj,
+                '.info.json',
+            )
+            if metadata_path:
+                entry2.set_text(metadata_path)
+                button2.set_sensitive(True)
             else:
                 entry2.set_text('')
+                button2.set_sensitive(False)
+            
+            if self.edit_obj.vid is not None:
+                entry3.set_text(self.edit_obj.vid)
+            else:
+                entry3.set_text('')
 
             if self.edit_obj.duration is not None:
-                entry3.set_text(
+                entry4.set_text(
                     utils.convert_seconds_to_string(self.edit_obj.duration),
                 )
 
             else:
-                entry3.set_text('')
+                entry4.set_text('')
 
             if self.edit_obj.file_size is not None:
-                entry4.set_text(self.edit_obj.get_file_size_string())
+                entry5.set_text(self.edit_obj.get_file_size_string())
             else:
-                entry4.set_text('')
+                entry5.set_text('')
 
             # If the video exists, then we can mark it as downloaded
             if not self.edit_obj.dl_flag:
@@ -16028,6 +16094,40 @@ class VideoEditWin(GenericEditWin):
         )
 
         textbuffer.set_text(self.edit_obj.descrip)
+
+
+    def on_metadata_button_clicked(self, button):
+
+        """Called from a callback in self.setup_general_tab().
+
+        Prompts the user to choose a new metadata file. If a valid one is
+        selected, update the media.Video object to use it
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        metadata_path = self.edit_obj.get_actual_path_by_ext(
+            self.app_obj,
+            '.info.json',
+        )
+        if metadata_path is not None:
+
+            # Extract video statistics from the metadata file
+            self.app_obj.update_video_from_json(self.edit_obj)
+
+            # Set the new file's size, duration, and so on. The True argument
+            #   instructs the function to override existing values
+            self.app_obj.update_video_from_filesystem(
+                self.edit_obj,
+                self.edit_obj.get_actual_path(self.app_obj),
+                True,
+            )
+
+            # Reset this window by abusing the generic code
+            self.reset_with_new_edit_obj(self.edit_obj)
 
 
     def on_time_radiobutton_toggled(self, radiobutton):
@@ -19259,30 +19359,10 @@ class SystemPrefWin(GenericPrefWin):
         tab, grid = self.add_inner_notebook_tab(_('_Modules'), inner_notebook)
         grid_width = 2
 
-        # Gtk library
-        self.add_label(grid,
-            '<u>' + _('Gtk library') + '</u>',
-            0, 0, grid_width, 1,
-        )
-
-        self.add_label(grid,
-            _('Current version of the system\'s Gtk library'),
-            0, 1, 1, 1
-        )
-
-        entry = self.add_entry(grid,
-            'v' + str(self.app_obj.gtk_version_major) + '.' \
-            + str(self.app_obj.gtk_version_minor) + '.' \
-            + str(self.app_obj.gtk_version_micro),
-            False,
-            1, 1, 1, 1,
-        )
-        entry.set_sensitive(False)
-
         # Module availability
         self.add_label(grid,
             '<u>' + _('Module availability') + '</u>',
-            0, 2, grid_width, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -19292,14 +19372,14 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_FEEDPARSER_FLAG,
             False,                      # Can't be toggled by user
-            0, 3, grid_width, 1,
+            0, 1, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
             _('matplotlib module is available (draws graphs)'),
             mainapp.HAVE_MATPLOTLIB_FLAG,
             False,                      # Can't be toggled by user
-            0, 4, grid_width, 1,
+            0, 2, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -19309,7 +19389,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_MOVIEPY_FLAG,
             False,                      # Can't be toggled by user
-            0, 5, grid_width, 1,
+            0, 3, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -19319,7 +19399,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_PLAYSOUND_FLAG,
             False,                      # Can't be toggled by user
-            0, 6, grid_width, 1,
+            0, 4, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -19329,7 +19409,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_XDG_FLAG,
             False,                      # Can't be toggled by user
-            0, 7, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
         self.add_checkbutton(grid,
@@ -19339,13 +19419,13 @@ class SystemPrefWin(GenericPrefWin):
             ),
             mainapp.HAVE_NOTIFY_FLAG,
             False,                      # Can't be toggled by user
-            0, 8, grid_width, 1,
+            0, 6, grid_width, 1,
         )
 
         # Module preferences
         self.add_label(grid,
             '<u>' + _('Module preferences') + '</u>',
-            0, 9, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -19355,7 +19435,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.use_module_moviepy_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 8, grid_width, 1,
         )
         checkbutton.connect('toggled', self.on_moviepy_button_toggled)
         if not mainapp.HAVE_MOVIEPY_FLAG:
@@ -19363,7 +19443,7 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Timeout applied when moviepy checks a video file'),
-            0, 11, 1, 1,
+            0, 9, 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
@@ -19371,7 +19451,7 @@ class SystemPrefWin(GenericPrefWin):
             60,
             1,                  # Step
             self.app_obj.refresh_moviepy_timeout,
-            1, 11, 1, 1,
+            1, 9, 1, 1,
         )
         spinbutton.connect(
             'value-changed',

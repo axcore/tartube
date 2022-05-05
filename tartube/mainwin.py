@@ -128,6 +128,14 @@ class MainWin(Gtk.ApplicationWindow):
         self.switch_view_menu_item = None       # Gtk.MenuItem
         self.hide_system_menu_item = None       # Gtk.MenuItem
         self.show_hidden_menu_item = None       # Gtk.MenuItem
+        self.show_hide_menu_item = None         # Gtk.MenuItem
+        self.switch_profile_menu_item = None    # Gtk.MenuItem
+        self.auto_switch_menu_item = None       # Gtk.MenuItem
+        self.create_profile_menu_item = None    # Gtk.MenuItem
+        self.delete_profile_menu_item = None    # Gtk.MenuItem
+        self.profile_menu_item = None           # Gtk.MenuItem
+        self.mark_containers_menu_item = None   # Gtk.MenuItem
+        self.unmark_containers_menu_item = None # Gtk.MenuItem
         self.test_menu_item = None              # Gtk.MenuItem
         self.test_code_menu_item = None         # Gtk.MenuItem
         self.check_all_menu_item = None         # Gtk.MenuItem
@@ -1452,32 +1460,91 @@ class MainWin(Gtk.ApplicationWindow):
 
         show_hide_submenu = Gtk.Menu()
 
-        self.hide_system_menu_item = \
-        Gtk.CheckMenuItem.new_with_mnemonic(_('_Hide (most) system folders'))
+        self.hide_system_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+            _('_Hide (most) system folders'),
+        )
         show_hide_submenu.append(self.hide_system_menu_item)
         self.hide_system_menu_item.set_active(
             self.app_obj.toolbar_system_hide_flag,
         )
         self.hide_system_menu_item.set_action_name('app.hide_system_menu')
 
-        self.show_hidden_menu_item = \
-        Gtk.MenuItem.new_with_mnemonic(_('_Show hidden folders'))
+        self.show_hidden_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Show hidden folders'),
+        )
         show_hide_submenu.append(self.show_hidden_menu_item)
         self.show_hidden_menu_item.set_action_name('app.show_hidden_menu')
 
-        show_hide_menu_item = Gtk.MenuItem.new_with_mnemonic(
+        self.show_hide_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('S_how/hide'))
-        show_hide_menu_item.set_submenu(show_hide_submenu)
-        media_sub_menu.append(show_hide_menu_item)
+        self.show_hide_menu_item.set_submenu(show_hide_submenu)
+        media_sub_menu.append(self.show_hide_menu_item)
+
+        profile_submenu = Gtk.Menu()
+
+        self.switch_profile_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Switch profile'),
+        )
+        profile_submenu.append(self.switch_profile_menu_item)
+        self.switch_profile_menu_item.set_submenu(
+            self.switch_profile_popup_submenu(),
+        )
+
+        self.auto_switch_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+            _('_Remember last profile'))
+        profile_submenu.append(self.auto_switch_menu_item)
+        self.auto_switch_menu_item.set_active(
+            self.app_obj.auto_switch_profile_flag,
+        )
+        self.auto_switch_menu_item.set_action_name(
+            'app.auto_switch_menu',
+        )
+
+        # Separator
+        profile_submenu.append(Gtk.SeparatorMenuItem())
+
+        self.create_profile_menu_item = \
+        Gtk.MenuItem.new_with_mnemonic(
+            _('_Create profile'),
+        )
+        profile_submenu.append(self.create_profile_menu_item)
+        self.create_profile_menu_item.set_action_name(
+            'app.create_profile_menu',
+        )
+
+        self.delete_profile_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Delete profile'),
+        )
+        profile_submenu.append(self.delete_profile_menu_item)
+        self.delete_profile_menu_item.set_submenu(
+            self.delete_profile_popup_submenu(),
+        )
+        
+        # Separator
+        profile_submenu.append(Gtk.SeparatorMenuItem())
+
+        self.mark_containers_menu_item = \
+        Gtk.MenuItem.new_with_mnemonic(
+            _('_Mark all for download'),
+        )
+        profile_submenu.append(self.mark_containers_menu_item)
+        self.mark_containers_menu_item.set_action_name(
+            'app.mark_all_menu',
+        )
 
         self.unmark_containers_menu_item = \
         Gtk.MenuItem.new_with_mnemonic(
-            _('_Unmark channels/playlists/folders'),
+            _('_Unmark all for download'),
         )
-        media_sub_menu.append(self.unmark_containers_menu_item)
+        profile_submenu.append(self.unmark_containers_menu_item)
         self.unmark_containers_menu_item.set_action_name(
             'app.unmark_all_menu',
         )
+
+        self.profile_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Pr_ofiles'))
+        self.profile_menu_item.set_submenu(profile_submenu)
+        media_sub_menu.append(self.profile_menu_item)
 
         if self.app_obj.debug_test_media_menu_flag \
         or self.app_obj.debug_test_code_menu_flag:
@@ -1519,12 +1586,12 @@ class MainWin(Gtk.ApplicationWindow):
         ops_sub_menu.append(self.download_all_menu_item)
         self.download_all_menu_item.set_action_name('app.download_all_menu')
 
-        custom_dl_submenu = self.custom_dl_popup_submenu()
-
         self.custom_dl_all_menu_item = \
         Gtk.MenuItem.new_with_mnemonic(_('C_ustom download all'))
         ops_sub_menu.append(self.custom_dl_all_menu_item)
-        self.custom_dl_all_menu_item.set_submenu(custom_dl_submenu)
+        self.custom_dl_all_menu_item.set_submenu(
+            self.custom_dl_popup_submenu(),
+        )
 
         # Separator
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
@@ -3019,7 +3086,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_menu_button = Gtk.Button.new()
             self.classic_menu_button.set_image(
                 Gtk.Image.new_from_pixbuf(
-                    self.pixbuf_dict['stock_properties'],
+                    self.pixbuf_dict['stock_properties_large'],
                 ),
             )
         hbox.pack_start(self.classic_menu_button, False, False, 0)
@@ -3996,342 +4063,6 @@ class MainWin(Gtk.ApplicationWindow):
     # (Moodify main window widgets)
 
 
-    def resize_self(self, width, height):
-
-        """Can be called by anything.
-
-        Resizes the main window.
-
-        Args:
-
-            width, height (int): The new size in pixels of the main window.
-                If either (or both) values are lower than 100, then 100 is
-                used instead
-
-        """
-
-        if width < 100:
-            width = 100
-        if height < 100:
-            height = 100
-
-        self.resize(width, height)
-
-
-    def reset_sliders(self):
-
-        """Called by config.SystemPrefWin.setup_windows_main_window_tab().
-
-        Resets paned sliders in various tabs to their default positions.
-        """
-
-        self.videos_paned.set_position(
-            self.app_obj.paned_default_size,
-        )
-
-        self.progress_paned.set_position(
-            self.app_obj.paned_default_size,
-        )
-
-        self.classic_paned.set_position(
-            self.app_obj.paned_default_size + 50,
-        )
-
-
-    def toggle_visibility(self):
-
-        """Called by self.on_delete_event, StatusIcon.on_button_press_event and
-        mainapp.TartubeApp.on_menu_close_tray().
-
-        Toggles the main window's visibility (usually after the user has left-
-        clicked the status icon in the system tray).
-        """
-
-        if self.is_visible():
-
-            # Record the window's position, so its position can be restored
-            #   when the window is made visible again
-            posn = self.get_position()
-            self.win_last_xpos = posn.root_x
-            self.win_last_ypos = posn.root_y
-            # Close the window to the tray
-            self.set_visible(False)
-
-        else:
-
-            self.set_visible(True)
-            if self.app_obj.restore_posn_from_tray_flag \
-            and self.win_last_xpos is not None:
-                self.move(self.win_last_xpos, self.win_last_ypos)
-
-
-    def force_invisible(self):
-
-        """Called by mainapp.TartubeApp.start_continue().
-
-        An alternative to self.toggle_visibility(), in which the window is
-        made invisible (during startup).
-
-        The calling code must check that Tartube is visible in the system tray,
-        or the user will be in big trouble.
-        """
-
-        self.set_visible(False)
-
-
-    def update_menu(self):
-
-        """Called by mainapp.TartubeApp.set_ytdl_fork().
-
-        Updates the text of the two menu items that show the name of the
-        youtube-dl fork.
-        """
-
-        if self.update_ytdl_menu_item is not None:
-
-            downloader = self.app_obj.get_downloader()
-
-            self.update_ytdl_menu_item.set_label(
-                ('U_pdate') + ' ' + downloader,
-            )
-
-            self.test_ytdl_menu_item.set_label(
-                _('_Test') + ' ' + downloader,
-            )
-
-
-    def redraw_main_toolbar(self):
-
-        """Called by mainapp.TartubeApp.set_toolbar_squeeze_flag().
-
-        Redraws the main toolbar, with or without labels, depending on the
-        value of the flag.
-        """
-
-        if self.app_obj.toolbar_hide_flag:
-            # Toolbar is not visible
-            return
-
-        else:
-
-            self.setup_main_toolbar()
-
-            if __main__.__pkg_no_download_flag__ \
-            or self.app_obj.disable_dl_all_flag:
-                self.download_all_menu_item.set_sensitive(False)
-                self.custom_dl_all_menu_item.set_sensitive(False)
-
-            self.show_all()
-
-
-    def update_window_after_show_hide(self):
-
-        """Called by mainapp.TartubeApp.on_menu_hide_system().
-
-        Shows or hides system folders, as required.
-
-        Updates the appearance of the main window's toolbutton, depending on
-        the current setting of mainapp.TartubeApp.toolbar_system_hide_flag.
-        """
-
-        # Update the appearance of the toolbar button
-        if not self.app_obj.toolbar_system_hide_flag:
-
-            self.hide_system_toolbutton.set_label(_('Hide'))
-            self.hide_system_toolbutton.set_tooltip_text(
-                _('Hide (most) system folders'),
-            )
-
-        else:
-
-            self.hide_system_toolbutton.set_label(_('Show'))
-            self.hide_system_toolbutton.set_tooltip_text(
-                _('Show all system folders'),
-            )
-
-        # After system folders are revealed/hidden, Gtk helpfully selects a
-        #   new channel/playlist/folder in the Video Index for us
-        # Not sure how to stop it, other than by temporarily preventing
-        #   selections altogether (temporarily)
-        selection = self.video_index_treeview.get_selection()
-        selection.set_mode(Gtk.SelectionMode.NONE)
-
-        # Show/hide system folders
-        for name in self.app_obj.media_name_dict:
-
-            dbid = self.app_obj.media_name_dict[name]
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
-
-            if isinstance(media_data_obj, media.Folder) \
-            and media_data_obj.priv_flag \
-            and media_data_obj != self.app_obj.fixed_all_folder:
-                self.app_obj.mark_folder_hidden(
-                    media_data_obj,
-                    self.app_obj.toolbar_system_hide_flag,
-                )
-
-        # Re-enable selections, and select the previously-selected channel/
-        #   playlist/folder (if any)
-        selection = self.video_index_treeview.get_selection()
-        selection.set_mode(Gtk.SelectionMode.SINGLE)
-
-        if self.video_index_current is not None:
-
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
-            self.video_index_select_row(media_data_obj)
-
-
-    def sensitise_widgets_if_database(self, sens_flag):
-
-        """Called by mainapp.TartubeApp.start(), .load_db(), .save_db() and
-        .disable_load_save().
-
-        When no database file has been loaded into memory, most main window
-        widgets should be desensitised. This function is called to sensitise
-        or desensitise the widgets after a change in state.
-
-        Args:
-
-            sens_flag (bool): True to sensitise most widgets, False to
-                desensitise most widgets
-
-        """
-
-        # Menu items
-        self.change_db_menu_item.set_sensitive(sens_flag)
-        self.save_db_menu_item.set_sensitive(sens_flag)
-        self.save_all_menu_item.set_sensitive(sens_flag)
-
-        self.system_prefs_menu_item.set_sensitive(sens_flag)
-        self.gen_options_menu_item.set_sensitive(sens_flag)
-
-        self.add_video_menu_item.set_sensitive(sens_flag)
-        self.add_channel_menu_item.set_sensitive(sens_flag)
-        self.add_playlist_menu_item.set_sensitive(sens_flag)
-        self.add_folder_menu_item.set_sensitive(sens_flag)
-
-        self.add_bulk_menu_item.set_sensitive(sens_flag)
-        self.reset_container_menu_item.set_sensitive(sens_flag)
-
-        self.export_db_menu_item.set_sensitive(sens_flag)
-        self.import_db_menu_item.set_sensitive(sens_flag)
-        self.import_yt_menu_item.set_sensitive(sens_flag)
-        self.switch_view_menu_item.set_sensitive(sens_flag)
-        self.show_hidden_menu_item.set_sensitive(sens_flag)
-
-        self.check_all_menu_item.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
-            self.download_all_menu_item.set_sensitive(False)
-            self.custom_dl_all_menu_item.set_sensitive(False)
-        else:
-            self.download_all_menu_item.set_sensitive(sens_flag)
-            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
-        self.refresh_db_menu_item.set_sensitive(sens_flag)
-
-        if __main__.__pkg_strict_install_flag__:
-            self.update_ytdl_menu_item.set_sensitive(False)
-        else:
-            self.update_ytdl_menu_item.set_sensitive(sens_flag)
-
-        self.test_ytdl_menu_item.set_sensitive(sens_flag)
-
-        if os.name == 'nt':
-            self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
-            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
-            self.install_streamlink_menu_item.set_sensitive(sens_flag)
-
-        self.stop_operation_menu_item.set_sensitive(False)
-        self.stop_soon_menu_item.set_sensitive(False)
-
-        if self.test_menu_item:
-            self.test_menu_item.set_sensitive(sens_flag)
-
-        # Toolbuttons
-        self.add_video_toolbutton.set_sensitive(sens_flag)
-        self.add_channel_toolbutton.set_sensitive(sens_flag)
-        self.add_playlist_toolbutton.set_sensitive(sens_flag)
-        self.add_folder_toolbutton.set_sensitive(sens_flag)
-
-        self.check_all_toolbutton.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
-            self.download_all_toolbutton.set_sensitive(False)
-        else:
-            self.download_all_toolbutton.set_sensitive(sens_flag)
-        self.stop_operation_toolbutton.set_sensitive(False)
-        self.switch_view_toolbutton.set_sensitive(sens_flag)
-
-        if self.test_toolbutton:
-            self.test_toolbutton.set_sensitive(sens_flag)
-
-        # Videos tab
-        if self.check_media_button:
-            self.check_media_button.set_sensitive(sens_flag)
-        if self.download_media_button:
-            if __main__.__pkg_no_download_flag__ \
-            or self.app_obj.disable_dl_all_flag:
-                self.download_media_button.set_sensitive(False)
-            else:
-                self.download_media_button.set_sensitive(sens_flag)
-        if self.custom_dl_box:
-            if __main__.__pkg_no_download_flag__ \
-            or self.app_obj.disable_dl_all_flag:
-                self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
-            else:
-                self.custom_dl_media_button.set_sensitive(sens_flag)
-                self.custom_dl_select_button.set_sensitive(sens_flag)
-
-        # Progress tab
-        self.num_worker_checkbutton.set_sensitive(sens_flag)
-        self.num_worker_spinbutton.set_sensitive(sens_flag)
-        self.bandwidth_checkbutton.set_sensitive(sens_flag)
-        self.bandwidth_spinbutton.set_sensitive(sens_flag)
-        self.video_res_checkbutton.set_sensitive(sens_flag)
-        self.video_res_combobox.set_sensitive(sens_flag)
-
-        # Classic Mode tab
-        self.classic_menu_button.set_sensitive(sens_flag)
-        self.classic_stop_button.set_sensitive(False)
-        self.classic_archive_button.set_sensitive(sens_flag)
-        self.classic_ffmpeg_button.set_sensitive(sens_flag)
-        self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_clear_dl_button.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__:
-            self.classic_redownload_button.set_sensitive(False)
-            self.classic_download_button.set_sensitive(False)
-        else:
-            self.classic_redownload_button.set_sensitive(sens_flag)
-            self.classic_download_button.set_sensitive(sens_flag)
-
-        # Output tab
-        self.output_size_checkbutton.set_sensitive(sens_flag)
-        self.output_size_spinbutton.set_sensitive(sens_flag)
-
-        # Errors/Warnings tab
-        self.show_system_error_checkbutton.set_sensitive(sens_flag)
-        self.show_system_warning_checkbutton.set_sensitive(sens_flag)
-        self.show_operation_error_checkbutton.set_sensitive(sens_flag)
-        self.show_operation_warning_checkbutton.set_sensitive(sens_flag)
-        self.show_system_date_checkbutton.set_sensitive(sens_flag)
-        self.show_system_container_checkbutton.set_sensitive(sens_flag)
-        self.show_system_video_checkbutton.set_sensitive(sens_flag)
-        self.show_system_multi_line_checkbutton.set_sensitive(sens_flag)
-        self.error_list_entry.set_sensitive(sens_flag)
-        self.error_list_togglebutton.set_sensitive(sens_flag)
-        self.error_list_container_checkbutton.set_sensitive(sens_flag)
-        self.error_list_video_checkbutton.set_sensitive(sens_flag)
-        self.error_list_msg_checkbutton.set_sensitive(sens_flag)
-        if self.error_list_filter_flag:
-            self.error_list_filter_toolbutton.set_sensitive(False)
-            self.error_list_cancel_toolbutton.set_sensitive(sens_flag)
-        else:
-            self.error_list_filter_toolbutton.set_sensitive(sens_flag)
-            self.error_list_cancel_toolbutton.set_sensitive(False)
-
-
     def desensitise_test_widgets(self):
 
         """Called by mainapp.TartubeApp.on_menu_test().
@@ -4347,253 +4078,141 @@ class MainWin(Gtk.ApplicationWindow):
             self.test_toolbutton.set_sensitive(False)
 
 
-    def sensitise_operation_widgets(self, sens_flag, \
-    not_dl_operation_flag=False):
+    def disable_dl_all_buttons(self):
 
-        """Can by called by anything.
+        """Called by mainapp.TartubeApp.start() and
+        set_disable_dl_all_flag().
 
-        (De)sensitises widgets that must not be sensitised during a download/
-        update/refresh/info/tidy operation.
-
-        Args:
-
-            sens_flag (bool): False to desensitise widget at the start of an
-                operation, True to re-sensitise widgets at the end of the
-                operation
-
-            not_dl_operation_flag (True, False or None): False when called by
-                download operation functions, True when called by everything
-                else
-
+        Disables (desensitises) the 'Download all' buttons and menu items.
         """
 
-        self.system_prefs_menu_item.set_sensitive(sens_flag)
-        self.gen_options_menu_item.set_sensitive(sens_flag)
-        self.reset_container_menu_item.set_sensitive(sens_flag)
-        self.export_db_menu_item.set_sensitive(sens_flag)
-        self.import_db_menu_item.set_sensitive(sens_flag)
-        self.import_yt_menu_item.set_sensitive(sens_flag)
-        self.check_all_menu_item.set_sensitive(sens_flag)
-
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
+        # This setting doesn't apply during an operation. The calling code
+        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
+        #   True
+        if not self.app_obj.current_manager_obj \
+        or __main__.__pkg_no_download_flag__:
             self.download_all_menu_item.set_sensitive(False)
             self.custom_dl_all_menu_item.set_sensitive(False)
-        else:
-            self.download_all_menu_item.set_sensitive(sens_flag)
-            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
-
-        self.refresh_db_menu_item.set_sensitive(sens_flag)
-        self.check_all_toolbutton.set_sensitive(sens_flag)
-
-        if __main__.__pkg_no_download_flag__ \
-        or self.app_obj.disable_dl_all_flag:
             self.download_all_toolbutton.set_sensitive(False)
-        else:
-            self.download_all_toolbutton.set_sensitive(sens_flag)
-
-        if __main__.__pkg_strict_install_flag__:
-            self.update_ytdl_menu_item.set_sensitive(False)
-        else:
-            self.update_ytdl_menu_item.set_sensitive(sens_flag)
-
-        self.test_ytdl_menu_item.set_sensitive(sens_flag)
-
-        if os.name == 'nt':
-            self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
-            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
-            self.install_streamlink_menu_item.set_sensitive(sens_flag)
-
-        if not_dl_operation_flag:
-            self.update_live_menu_item.set_sensitive(sens_flag)
-        else:
-            self.update_live_menu_item.set_sensitive(True)
-
-        # (The 'Add videos', 'Add channel' etc menu items/buttons are
-        #   sensitised during a download operation, but desensitised during
-        #   other operations)
-        if not_dl_operation_flag:
-            self.add_video_menu_item.set_sensitive(sens_flag)
-            self.add_channel_menu_item.set_sensitive(sens_flag)
-            self.add_playlist_menu_item.set_sensitive(sens_flag)
-            self.add_folder_menu_item.set_sensitive(sens_flag)
-            self.add_video_toolbutton.set_sensitive(sens_flag)
-            self.add_channel_toolbutton.set_sensitive(sens_flag)
-            self.add_playlist_toolbutton.set_sensitive(sens_flag)
-            self.add_folder_toolbutton.set_sensitive(sens_flag)
-
-        # (The 'Change database', etc menu items must remain desensitised if
-        #   file load/save is disabled)
-        if not self.app_obj.disable_load_save_flag:
-            self.change_db_menu_item.set_sensitive(sens_flag)
-            self.save_db_menu_item.set_sensitive(sens_flag)
-            self.save_all_menu_item.set_sensitive(sens_flag)
-
-        # (The 'Stop' button/menu item are only sensitised during a download/
-        #   update/refresh/info/tidy operation)
-        if not sens_flag:
-            self.stop_operation_menu_item.set_sensitive(True)
-            self.stop_operation_toolbutton.set_sensitive(True)
-        else:
-            self.stop_operation_menu_item.set_sensitive(False)
-            self.stop_operation_toolbutton.set_sensitive(False)
-
-        if not not_dl_operation_flag and not sens_flag:
-            self.stop_soon_menu_item.set_sensitive(True)
-        else:
-            self.stop_soon_menu_item.set_sensitive(False)
-
-        # The corresponding buttons in the Classic Mode tab must also be
-        #   updated
-        self.classic_stop_button.set_sensitive(not sens_flag)
-        self.classic_ffmpeg_button.set_sensitive(sens_flag)
-        self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_clear_dl_button.set_sensitive(sens_flag)
-        if __main__.__pkg_no_download_flag__:
-            self.classic_redownload_button.set_sensitive(False)
-            self.classic_download_button.set_sensitive(False)
-        elif not not_dl_operation_flag:
-            self.classic_redownload_button.set_sensitive(True)
-            self.classic_download_button.set_sensitive(sens_flag)
-        else:
-            self.classic_redownload_button.set_sensitive(sens_flag)
-            self.classic_download_button.set_sensitive(sens_flag)
+            self.download_media_button.set_sensitive(False)
+            if self.custom_dl_box:
+                self.custom_dl_media_button.set_sensitive(False)
+                self.custom_dl_select_button.set_sensitive(False)
 
 
-    def show_progress_bar(self, operation_type):
+    def disable_tooltips(self, update_catalogue_flag=False):
 
-        """Called by mainapp.TartubeApp.download_manager_continue(),
-        .refresh_manager_continue(), .tidy_manager_start(),
-        .process_manager_start().
+        """Called by mainapp.TartubeApp.load_config() and
+        .set_show_tooltips_flag().
 
-        At the start of a download/refresh/tidy/process operation, replace
-        self.download_media_button with a progress bar (and a label just above
-        it).
+        Disables tooltips in the Video Index, Video Catalogue, Progress List,
+        Results List and Classic Mode tab (only).
 
         Args:
 
-            operation_type (str): The type of operation: 'download' for a
-                download operation, 'check' for a download operation with
-                simulated downloads, 'refresh' for a refresh operation, 'tidy'
-                for a tidy operation, or 'process' for a process operation
+            update_catalogue_flag (bool): True when called by
+                .set_show_tooltips_flag(), in which case the Video Catalogue
+                must be redrawn
 
         """
 
-        if self.progress_bar:
-            return self.app_obj.system_error(
-                201,
-                'Videos tab progress bar is already visible',
+        # Update the Video Index. Using a dummy column makes the tooltips
+        #   invisible
+        self.video_index_treeview.set_tooltip_column(-1)
+
+        # Update the Video Catalogue, if a playlist/channel/folder is selected
+        if update_catalogue_flag and self.video_index_current:
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                self.catalogue_toolbar_current_page,
             )
 
-        elif operation_type != 'check' \
-        and operation_type != 'download' \
-        and operation_type != 'refresh' \
-        and operation_type != 'tidy' \
-        and operation_type != 'process':
-            return self.app_obj.system_error(
-                202,
-                'Invalid operation type supplied to progress bar',
-            )
+        # Update the Progress List
+        self.progress_list_treeview.set_tooltip_column(-1)
 
-        # Remove existing widgets. In previous code, we simply changed the
-        #   label on on self.check_media_button, but this causes frequent
-        #   crashes
-        # Get around the crashes by destroying the old widgets and creating new
-        #   ones
-        if self.check_media_button:
-            self.button_box.remove(self.check_media_button)
-            self.check_media_button = None
+        # Update the Results List
+        self.results_list_treeview.set_tooltip_column(-1)
 
-        if self.download_media_button:
-            self.button_box.remove(self.download_media_button)
-            self.download_media_button = None
+        # Update the Classic Mode tab
+        self.classic_progress_treeview.set_tooltip_column(-1)
 
-        if self.custom_dl_box:
-            self.button_box.remove(self.custom_dl_box)
-            self.custom_dl_box = None
-            self.custom_dl_media_button = None
-            self.custom_dl_select_button = None
 
-        # Display a holding message in the replacement buttons, and initially
-        #   in the progress bar (the latter is replaced after a very short
-        #   interval)
-        free_msg = ' [' \
-        + str(round(utils.disk_get_free_space(self.app_obj.data_dir), 1)) \
-        + ' GiB]'
+    def enable_dl_all_buttons(self):
 
-        if operation_type == 'check':
-            temp_msg = msg = _('Checking...')
-            if self.app_obj.show_free_space_flag:
-                msg = _('Checking')  + free_msg
+        """Called by mainapp.TartubeApp.set_disable_dl_all_flag().
 
-        elif operation_type == 'download':
-            temp_msg = msg = _('Downloading...')
-            if self.app_obj.show_free_space_flag:
-                msg = _('Downloading')  + free_msg
+        Enables (sensitises) the 'Download all' buttons and menu items.
+        """
 
-        elif operation_type == 'refresh':
-            temp_msg = msg = _('Refreshing...')
+        # This setting doesn't apply during an operation. The calling code
+        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
+        #   False
+        if not self.app_obj.current_manager_obj \
+        and not __main__.__pkg_no_download_flag__:
+            self.download_all_menu_item.set_sensitive(True)
+            self.custom_dl_all_menu_item.set_sensitive(True)
+            self.download_all_toolbutton.set_sensitive(True)
+            self.download_media_button.set_sensitive(True)
+            if self.custom_dl_box:
+                self.custom_dl_media_button.set_sensitive(True)
+                self.custom_dl_select_button.set_sensitive(True)
 
-        elif operation_type == 'tidy':
-            temp_msg = msg = _('Tidying...')
 
-        else:
-            temp_msg = msg = _('FFmpeg processing...')
+    def enable_tooltips(self, update_catalogue_flag=False):
 
-        # Add replacement widgets
-        self.check_media_button = Gtk.Button()
-        self.button_box.pack_start(self.check_media_button, True, True, 0)
-        self.check_media_button.set_action_name('app.check_all_button')
-        self.check_media_button.set_sensitive(False)
-        self.check_media_button.set_label(msg)
+        """Called by mainapp.TartubeApp.set_show_tooltips_flag().
 
-        # (Put the progress bar inside a box, so it doesn't touch the divider,
-        #   because that doesn't look nice)
-        self.progress_box = Gtk.HBox()
-        self.button_box.pack_start(self.progress_box, True, True, 0)
+        Enables tooltips in the Video Index, Video Catalogue, Progress List,
+        Results List and Classic Mode tab (only).
 
-        self.progress_bar = Gtk.ProgressBar()
-        self.progress_box.pack_start(
-            self.progress_bar,
-            True,
-            True,
-            (self.spacing_size * 2),
+        Args:
+
+            update_catalogue_flag (bool): True when called by
+                .set_show_tooltips_flag(), in which case the Video Catalogue
+                must be redrawn
+
+        """
+
+        # Update the Video Index
+        self.video_index_treeview.set_tooltip_column(
+            self.video_index_tooltip_column,
         )
-        self.progress_bar.set_fraction(0)
-        self.progress_bar.set_show_text(True)
-        self.progress_bar.set_text(temp_msg)
 
-        # (The 'Custom download all' buttons, if they were visible, are
-        #   replaced by empty buttons)
-        if self.app_obj.show_custom_dl_button_flag:
-
-            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
-            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
-
-            self.custom_dl_media_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
-                self.custom_dl_media_button,
-                True,
-                True,
-                0
+        # Update the Video Catalogue, if a playlist/channel/folder is selected
+        if update_catalogue_flag and self.video_index_current:
+            self.video_catalogue_redraw_all(
+                self.video_index_current,
+                self.catalogue_toolbar_current_page,
             )
-            self.custom_dl_media_button.set_label(temp_msg)
-            self.custom_dl_media_button.set_sensitive(False)
 
-            self.custom_dl_select_button = Gtk.Button()
-            # (Aesthetics are better, when the '+' button is not visible at
-            #   all)
-#            self.custom_dl_box.pack_start(
-#                self.custom_dl_select_button,
-#                False,
-#                True,
-#                0
-#            )
-            self.custom_dl_select_button.set_label('+')
-            self.custom_dl_select_button.set_sensitive(False)
+        # Update the Progress List
+        self.progress_list_treeview.set_tooltip_column(
+             self.progress_list_tooltip_column,
+        )
 
-        # Make the changes visible
-        self.button_box.show_all()
+        # Update the Results List
+        self.results_list_treeview.set_tooltip_column(
+            self.results_list_tooltip_column,
+        )
+
+        # Update the Classic Mode tab
+        self.classic_progress_treeview.set_tooltip_column(
+            self.classic_progress_tooltip_column,
+        )
+
+
+    def force_invisible(self):
+
+        """Called by mainapp.TartubeApp.start_continue().
+
+        An alternative to self.toggle_visibility(), in which the window is
+        made invisible (during startup).
+
+        The calling code must check that Tartube is visible in the system tray,
+        or the user will be in big trouble.
+        """
+
+        self.set_visible(False)
 
 
     def hide_progress_bar(self, skip_check_flag=False):
@@ -4733,138 +4352,138 @@ class MainWin(Gtk.ApplicationWindow):
         self.button_box.show_all()
 
 
-    def sensitise_progress_bar(self, sens_flag):
+    def notify_desktop(self, title=None, msg=None, icon_path=None, url=None):
 
-        """Called by mainapp.TartubeApp.download_manager_continue().
+        """Can be called by anything.
 
-        When a download operation is launched from the Classic Mode tab, we
-        don't replace the main Check all/Download all buttons with a progress
-        bar; instead, we just (de)sensitise the existing buttons.
+        Creates a desktop notification (but not on MS Windows / MacOS)
 
         Args:
 
-            sens_flag (bool): True to sensitise the buttons, False to
-                desensitise them
+            title (str): The notification title. If None, 'Tartube' is used
+                used
+
+            msg (str): The message to show. If None, 'Tartube' is used
+
+            icon_path (str): The absolute path to the icon file to use. If
+                None, a default icon is used
+
+            url (str): If specified, a 'Click to open' button is added to the
+                desktop notification. Clicking the button opens the URL
 
         """
 
-        self.check_media_button.set_sensitive(sens_flag)
-        self.classic_clear_button.set_sensitive(sens_flag)
-        self.classic_clear_dl_button.set_sensitive(sens_flag)
+        # Desktop notifications don't work on MS Windows/MacOS
+        if mainapp.HAVE_NOTIFY_FLAG:
 
-        if __main__.__pkg_no_download_flag__:
-            self.download_media_button.set_sensitive(False)
-            self.classic_download_button.set_sensitive(False)
-            self.classic_redownload_button.set_sensitive(False)
-            if self.custom_dl_box:
-                self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
+            if title is None:
+                title = 'Tartube'
 
-        elif self.app_obj.disable_dl_all_flag:
-            self.download_media_button.set_sensitive(False)
-            self.classic_download_button.set_sensitive(False)
-            self.classic_redownload_button.set_sensitive(sens_flag)
-            if self.custom_dl_box:
-                self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
+            if msg is None:
+                # Emergency fallback - better than an empty message
+                msg = 'Tartube'
+
+            if icon_path is None:
+                icon_path = os.path.abspath(
+                    os.path.join(
+                        self.icon_dir_path,
+                        'dialogue',
+                        formats.DIALOGUE_ICON_DICT['system_icon'],
+                    ),
+                )
+
+            notify_obj = Notify.Notification.new(title, msg, icon_path)
+
+            if url is not None:
+
+                # We need to retain a reference to the Notify.Notification, or
+                #   the callback won't work
+                self.notify_desktop_count += 1
+                self.notify_desktop_dict[self.notify_desktop_count] \
+                = notify_obj
+
+                notify_obj.add_action(
+                    'action_click',
+                    'Watch',
+                    self.on_notify_desktop_clicked,
+                    self.notify_desktop_count,
+                    url,
+                )
+
+                notify_obj.connect(
+                    'closed',
+                    self.on_notify_desktop_closed,
+                    self.notify_desktop_count,
+                )
+
+            # Notification is ready; show it
+            notify_obj.show()
+
+
+    def redraw_main_toolbar(self):
+
+        """Called by mainapp.TartubeApp.set_toolbar_squeeze_flag().
+
+        Redraws the main toolbar, with or without labels, depending on the
+        value of the flag.
+        """
+
+        if self.app_obj.toolbar_hide_flag:
+            # Toolbar is not visible
+            return
 
         else:
-            self.download_media_button.set_sensitive(sens_flag)
-            self.classic_download_button.set_sensitive(sens_flag)
-            self.classic_redownload_button.set_sensitive(sens_flag)
-            if self.custom_dl_box:
-                self.custom_dl_media_button.set_sensitive(sens_flag)
-                self.custom_dl_select_button.set_sensitive(sens_flag)
+
+            self.setup_main_toolbar()
+
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
+                self.download_all_menu_item.set_sensitive(False)
+                self.custom_dl_all_menu_item.set_sensitive(False)
+
+            self.show_all()
 
 
-    def update_progress_bar(self, text, count, total):
+    def reset_sliders(self):
 
-        """Called by downloads.DownloadManager.run(),
-        refresh.RefreshManager.refresh_from_default_destination(),
-        .refresh_from_actual_destination(), tidy.TidyManager.tidy_directory()
-        and process.Processmanager.process_video().
+        """Called by config.SystemPrefWin.setup_windows_main_window_tab().
 
-        During a download/refresh/tidy/process operation, updates the progress
-        bar just below the Video Index.
-
-        Args:
-
-            text (str): The text of the progress bar's label, matching the name
-                of the media data object which has just been passed to
-                youtube-dl
-
-            count (int): The number of media data objects passed to youtube-dl
-                so far. Note that a channel or a playlist counts as one media
-                data object, as far as youtube-dl is concerned
-
-            total (int): The total number of media data objects to be passed
-                to youtube-dl
-
+        Resets paned sliders in various tabs to their default positions.
         """
 
-        if not self.progress_bar:
-            return self.app_obj.system_error(
-                204,
-                'Videos tab progress bar is missing and cannot be updated',
-            )
+        self.videos_paned.set_position(
+            self.app_obj.paned_default_size,
+        )
 
-        # (The 0.5 guarantees that the progress bar is never empty. If
-        #   downloading a single video, the progress bar is half full. If
-        #   downloading the first out of 3 videos, it is 16% full, and so on)
-        self.progress_bar.set_fraction(float(count - 0.5) / total)
-        self.progress_bar.set_text(
-            utils.shorten_string(text, self.short_string_max_len) \
-            + ' ' + str(count) + '/' + str(total)
+        self.progress_paned.set_position(
+            self.app_obj.paned_default_size,
+        )
+
+        self.classic_paned.set_position(
+            self.app_obj.paned_default_size + 50,
         )
 
 
-    def update_free_space_msg(self, disk_space=None):
+    def resize_self(self, width, height):
 
-        """Called by mainapp.TartubeApp.dl_timer_callback() during a download
-        operation to update the amount of free disk space visible in the
-        Videos tab.
+        """Can be called by anything.
+
+        Resizes the main window.
 
         Args:
 
-            disk_space (float or None): The amount of free disk space on the
-                drive containing Tartube's data directory. If None, the
-                button's label is reset to its default state
+            width, height (int): The new size in pixels of the main window.
+                If either (or both) values are lower than 100, then 100 is
+                used instead
 
         """
 
-        if self.check_media_button is None:
-            return
+        if width < 100:
+            width = 100
+        if height < 100:
+            height = 100
 
-        elif disk_space is None:
-
-            if not self.video_index_marker_dict:
-                self.check_media_button.set_label(_('Check all'))
-                self.check_media_button.set_tooltip_text(
-                    _('Check all videos, channels, playlists and folders'),
-                )
-            else:
-                self.check_media_button.set_label(_('Check marked items'))
-                self.check_media_button.set_tooltip_text(
-                    _('Check marked videos, channels, playlists and folders'),
-                )
-
-        else:
-
-            msg = ' [' + str(round(disk_space, 1)) + ' GiB]'
-
-            if self.app_obj.download_manager_obj \
-            and self.app_obj.show_free_space_flag:
-
-                operation_type \
-                = self.app_obj.download_manager_obj.operation_type
-
-                if operation_type == 'sim' \
-                or operation_type == 'custom_sim' \
-                or operation_type == 'classic_sim':
-                    self.check_media_button.set_label(_('Checking') + msg)
-                else:
-                    self.check_media_button.set_label(_('Downloading') + msg)
-                self.check_media_button.set_tooltip_text()
+        self.resize(width, height)
 
 
     def sensitise_check_dl_buttons(self, finish_flag, operation_type=None):
@@ -5074,127 +4693,547 @@ class MainWin(Gtk.ApplicationWindow):
         self.show_all()
 
 
-    def enable_tooltips(self, update_catalogue_flag=False):
+    def sensitise_operation_widgets(self, sens_flag, \
+    not_dl_operation_flag=False):
 
-        """Called by mainapp.TartubeApp.set_show_tooltips_flag().
+        """Can by called by anything.
 
-        Enables tooltips in the Video Index, Video Catalogue, Progress List,
-        Results List and Classic Mode tab (only).
-
-        Args:
-
-            update_catalogue_flag (bool): True when called by
-                .set_show_tooltips_flag(), in which case the Video Catalogue
-                must be redrawn
-
-        """
-
-        # Update the Video Index
-        self.video_index_treeview.set_tooltip_column(
-            self.video_index_tooltip_column,
-        )
-
-        # Update the Video Catalogue, if a playlist/channel/folder is selected
-        if update_catalogue_flag and self.video_index_current:
-            self.video_catalogue_redraw_all(
-                self.video_index_current,
-                self.catalogue_toolbar_current_page,
-            )
-
-        # Update the Progress List
-        self.progress_list_treeview.set_tooltip_column(
-             self.progress_list_tooltip_column,
-        )
-
-        # Update the Results List
-        self.results_list_treeview.set_tooltip_column(
-            self.results_list_tooltip_column,
-        )
-
-        # Update the Classic Mode tab
-        self.classic_progress_treeview.set_tooltip_column(
-            self.classic_progress_tooltip_column,
-        )
-
-
-    def disable_tooltips(self, update_catalogue_flag=False):
-
-        """Called by mainapp.TartubeApp.load_config() and
-        .set_show_tooltips_flag().
-
-        Disables tooltips in the Video Index, Video Catalogue, Progress List,
-        Results List and Classic Mode tab (only).
+        (De)sensitises widgets that must not be sensitised during a download/
+        update/refresh/info/tidy operation.
 
         Args:
 
-            update_catalogue_flag (bool): True when called by
-                .set_show_tooltips_flag(), in which case the Video Catalogue
-                must be redrawn
+            sens_flag (bool): False to desensitise widget at the start of an
+                operation, True to re-sensitise widgets at the end of the
+                operation
+
+            not_dl_operation_flag (True, False or None): False when called by
+                download operation functions, True when called by everything
+                else
 
         """
 
-        # Update the Video Index. Using a dummy column makes the tooltips
-        #   invisible
-        self.video_index_treeview.set_tooltip_column(-1)
+        self.system_prefs_menu_item.set_sensitive(sens_flag)
+        self.gen_options_menu_item.set_sensitive(sens_flag)
+        self.reset_container_menu_item.set_sensitive(sens_flag)
+        self.export_db_menu_item.set_sensitive(sens_flag)
+        self.import_db_menu_item.set_sensitive(sens_flag)
+        self.import_yt_menu_item.set_sensitive(sens_flag)
+        self.check_all_menu_item.set_sensitive(sens_flag)
 
-        # Update the Video Catalogue, if a playlist/channel/folder is selected
-        if update_catalogue_flag and self.video_index_current:
-            self.video_catalogue_redraw_all(
-                self.video_index_current,
-                self.catalogue_toolbar_current_page,
-            )
-
-        # Update the Progress List
-        self.progress_list_treeview.set_tooltip_column(-1)
-
-        # Update the Results List
-        self.results_list_treeview.set_tooltip_column(-1)
-
-        # Update the Classic Mode tab
-        self.classic_progress_treeview.set_tooltip_column(-1)
-
-
-    def enable_dl_all_buttons(self):
-
-        """Called by mainapp.TartubeApp.set_disable_dl_all_flag().
-
-        Enables (sensitises) the 'Download all' buttons and menu items.
-        """
-
-        # This setting doesn't apply during an operation. The calling code
-        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
-        #   False
-        if not self.app_obj.current_manager_obj \
-        and not __main__.__pkg_no_download_flag__:
-            self.download_all_menu_item.set_sensitive(True)
-            self.custom_dl_all_menu_item.set_sensitive(True)
-            self.download_all_toolbutton.set_sensitive(True)
-            self.download_media_button.set_sensitive(True)
-            if self.custom_dl_box:
-                self.custom_dl_media_button.set_sensitive(True)
-                self.custom_dl_select_button.set_sensitive(True)
-
-
-    def disable_dl_all_buttons(self):
-
-        """Called by mainapp.TartubeApp.start() and
-        set_disable_dl_all_flag().
-
-        Disables (desensitises) the 'Download all' buttons and menu items.
-        """
-
-        # This setting doesn't apply during an operation. The calling code
-        #   should have checked that mainapp.TartubeApp.disable_dl_all_flag is
-        #   True
-        if not self.app_obj.current_manager_obj \
-        or __main__.__pkg_no_download_flag__:
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
             self.download_all_menu_item.set_sensitive(False)
             self.custom_dl_all_menu_item.set_sensitive(False)
+        else:
+            self.download_all_menu_item.set_sensitive(sens_flag)
+            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
+
+        self.refresh_db_menu_item.set_sensitive(sens_flag)
+        self.check_all_toolbutton.set_sensitive(sens_flag)
+
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
             self.download_all_toolbutton.set_sensitive(False)
+        else:
+            self.download_all_toolbutton.set_sensitive(sens_flag)
+
+        if __main__.__pkg_strict_install_flag__:
+            self.update_ytdl_menu_item.set_sensitive(False)
+        else:
+            self.update_ytdl_menu_item.set_sensitive(sens_flag)
+
+        self.test_ytdl_menu_item.set_sensitive(sens_flag)
+
+        if os.name == 'nt':
+            self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
+            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
+            self.install_streamlink_menu_item.set_sensitive(sens_flag)
+
+        if not_dl_operation_flag:
+            self.update_live_menu_item.set_sensitive(sens_flag)
+        else:
+            self.update_live_menu_item.set_sensitive(True)
+
+        # (The 'Add videos', 'Add channel' etc menu items/buttons are
+        #   sensitised during a download operation, but desensitised during
+        #   other operations)
+        if not_dl_operation_flag:
+            self.add_video_menu_item.set_sensitive(sens_flag)
+            self.add_channel_menu_item.set_sensitive(sens_flag)
+            self.add_playlist_menu_item.set_sensitive(sens_flag)
+            self.add_folder_menu_item.set_sensitive(sens_flag)
+            self.add_video_toolbutton.set_sensitive(sens_flag)
+            self.add_channel_toolbutton.set_sensitive(sens_flag)
+            self.add_playlist_toolbutton.set_sensitive(sens_flag)
+            self.add_folder_toolbutton.set_sensitive(sens_flag)
+
+        # (The 'Change database', etc menu items must remain desensitised if
+        #   file load/save is disabled)
+        if not self.app_obj.disable_load_save_flag:
+            self.change_db_menu_item.set_sensitive(sens_flag)
+            self.save_db_menu_item.set_sensitive(sens_flag)
+            self.save_all_menu_item.set_sensitive(sens_flag)
+
+        # (The 'Stop' button/menu item are only sensitised during a download/
+        #   update/refresh/info/tidy operation)
+        if not sens_flag:
+            self.stop_operation_menu_item.set_sensitive(True)
+            self.stop_operation_toolbutton.set_sensitive(True)
+        else:
+            self.stop_operation_menu_item.set_sensitive(False)
+            self.stop_operation_toolbutton.set_sensitive(False)
+
+        if not not_dl_operation_flag and not sens_flag:
+            self.stop_soon_menu_item.set_sensitive(True)
+        else:
+            self.stop_soon_menu_item.set_sensitive(False)
+
+        # The corresponding buttons in the Classic Mode tab must also be
+        #   updated
+        self.classic_stop_button.set_sensitive(not sens_flag)
+        self.classic_ffmpeg_button.set_sensitive(sens_flag)
+        self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__:
+            self.classic_redownload_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+        elif not not_dl_operation_flag:
+            self.classic_redownload_button.set_sensitive(True)
+            self.classic_download_button.set_sensitive(sens_flag)
+        else:
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
+
+
+    def sensitise_progress_bar(self, sens_flag):
+
+        """Called by mainapp.TartubeApp.download_manager_continue().
+
+        When a download operation is launched from the Classic Mode tab, we
+        don't replace the main Check all/Download all buttons with a progress
+        bar; instead, we just (de)sensitise the existing buttons.
+
+        Args:
+
+            sens_flag (bool): True to sensitise the buttons, False to
+                desensitise them
+
+        """
+
+        self.check_media_button.set_sensitive(sens_flag)
+        self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
+
+        if __main__.__pkg_no_download_flag__:
             self.download_media_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+            self.classic_redownload_button.set_sensitive(False)
             if self.custom_dl_box:
                 self.custom_dl_media_button.set_sensitive(False)
                 self.custom_dl_select_button.set_sensitive(False)
+
+        elif self.app_obj.disable_dl_all_flag:
+            self.download_media_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            if self.custom_dl_box:
+                self.custom_dl_media_button.set_sensitive(False)
+                self.custom_dl_select_button.set_sensitive(False)
+
+        else:
+            self.download_media_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            if self.custom_dl_box:
+                self.custom_dl_media_button.set_sensitive(sens_flag)
+                self.custom_dl_select_button.set_sensitive(sens_flag)
+
+
+    def sensitise_widgets_if_database(self, sens_flag):
+
+        """Called by mainapp.TartubeApp.start(), .load_db(), .save_db() and
+        .disable_load_save().
+
+        When no database file has been loaded into memory, most main window
+        widgets should be desensitised. This function is called to sensitise
+        or desensitise the widgets after a change in state.
+
+        Args:
+
+            sens_flag (bool): True to sensitise most widgets, False to
+                desensitise most widgets
+
+        """
+
+        # Menu items
+        self.change_db_menu_item.set_sensitive(sens_flag)
+        self.save_db_menu_item.set_sensitive(sens_flag)
+        self.save_all_menu_item.set_sensitive(sens_flag)
+
+        self.system_prefs_menu_item.set_sensitive(sens_flag)
+        self.gen_options_menu_item.set_sensitive(sens_flag)
+
+        self.add_video_menu_item.set_sensitive(sens_flag)
+        self.add_channel_menu_item.set_sensitive(sens_flag)
+        self.add_playlist_menu_item.set_sensitive(sens_flag)
+        self.add_folder_menu_item.set_sensitive(sens_flag)
+
+        self.add_bulk_menu_item.set_sensitive(sens_flag)
+        self.reset_container_menu_item.set_sensitive(sens_flag)
+
+        self.export_db_menu_item.set_sensitive(sens_flag)
+        self.import_db_menu_item.set_sensitive(sens_flag)
+        self.import_yt_menu_item.set_sensitive(sens_flag)
+        self.show_hide_menu_item.set_sensitive(sens_flag)
+        self.profile_menu_item.set_sensitive(sens_flag)
+
+        self.check_all_menu_item.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.download_all_menu_item.set_sensitive(False)
+            self.custom_dl_all_menu_item.set_sensitive(False)
+        else:
+            self.download_all_menu_item.set_sensitive(sens_flag)
+            self.custom_dl_all_menu_item.set_sensitive(sens_flag)
+        self.refresh_db_menu_item.set_sensitive(sens_flag)
+
+        if __main__.__pkg_strict_install_flag__:
+            self.update_ytdl_menu_item.set_sensitive(False)
+        else:
+            self.update_ytdl_menu_item.set_sensitive(sens_flag)
+
+        self.test_ytdl_menu_item.set_sensitive(sens_flag)
+
+        if os.name == 'nt':
+            self.install_ffmpeg_menu_item.set_sensitive(sens_flag)
+            self.install_matplotlib_menu_item.set_sensitive(sens_flag)
+            self.install_streamlink_menu_item.set_sensitive(sens_flag)
+
+        self.stop_operation_menu_item.set_sensitive(False)
+        self.stop_soon_menu_item.set_sensitive(False)
+
+        if self.test_menu_item:
+            self.test_menu_item.set_sensitive(sens_flag)
+
+        # Toolbuttons
+        self.add_video_toolbutton.set_sensitive(sens_flag)
+        self.add_channel_toolbutton.set_sensitive(sens_flag)
+        self.add_playlist_toolbutton.set_sensitive(sens_flag)
+        self.add_folder_toolbutton.set_sensitive(sens_flag)
+
+        self.check_all_toolbutton.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__ \
+        or self.app_obj.disable_dl_all_flag:
+            self.download_all_toolbutton.set_sensitive(False)
+        else:
+            self.download_all_toolbutton.set_sensitive(sens_flag)
+        self.stop_operation_toolbutton.set_sensitive(False)
+        self.switch_view_toolbutton.set_sensitive(sens_flag)
+        self.hide_system_toolbutton.set_sensitive(sens_flag)
+
+        if self.test_toolbutton:
+            self.test_toolbutton.set_sensitive(sens_flag)
+
+        # Videos tab
+        if self.check_media_button:
+            self.check_media_button.set_sensitive(sens_flag)
+        if self.download_media_button:
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
+                self.download_media_button.set_sensitive(False)
+            else:
+                self.download_media_button.set_sensitive(sens_flag)
+        if self.custom_dl_box:
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.disable_dl_all_flag:
+                self.custom_dl_media_button.set_sensitive(False)
+                self.custom_dl_select_button.set_sensitive(False)
+            else:
+                self.custom_dl_media_button.set_sensitive(sens_flag)
+                self.custom_dl_select_button.set_sensitive(sens_flag)
+
+        # Progress tab
+        self.num_worker_checkbutton.set_sensitive(sens_flag)
+        self.num_worker_spinbutton.set_sensitive(sens_flag)
+        self.bandwidth_checkbutton.set_sensitive(sens_flag)
+        self.bandwidth_spinbutton.set_sensitive(sens_flag)
+        self.video_res_checkbutton.set_sensitive(sens_flag)
+        self.video_res_combobox.set_sensitive(sens_flag)
+
+        # Classic Mode tab
+        self.classic_menu_button.set_sensitive(sens_flag)
+        self.classic_stop_button.set_sensitive(False)
+        self.classic_archive_button.set_sensitive(sens_flag)
+        self.classic_ffmpeg_button.set_sensitive(sens_flag)
+        self.classic_clear_button.set_sensitive(sens_flag)
+        self.classic_clear_dl_button.set_sensitive(sens_flag)
+        if __main__.__pkg_no_download_flag__:
+            self.classic_redownload_button.set_sensitive(False)
+            self.classic_download_button.set_sensitive(False)
+        else:
+            self.classic_redownload_button.set_sensitive(sens_flag)
+            self.classic_download_button.set_sensitive(sens_flag)
+
+        # Output tab
+        self.output_size_checkbutton.set_sensitive(sens_flag)
+        self.output_size_spinbutton.set_sensitive(sens_flag)
+
+        # Errors/Warnings tab
+        self.show_system_error_checkbutton.set_sensitive(sens_flag)
+        self.show_system_warning_checkbutton.set_sensitive(sens_flag)
+        self.show_operation_error_checkbutton.set_sensitive(sens_flag)
+        self.show_operation_warning_checkbutton.set_sensitive(sens_flag)
+        self.show_system_date_checkbutton.set_sensitive(sens_flag)
+        self.show_system_container_checkbutton.set_sensitive(sens_flag)
+        self.show_system_video_checkbutton.set_sensitive(sens_flag)
+        self.show_system_multi_line_checkbutton.set_sensitive(sens_flag)
+        self.error_list_entry.set_sensitive(sens_flag)
+        self.error_list_togglebutton.set_sensitive(sens_flag)
+        self.error_list_container_checkbutton.set_sensitive(sens_flag)
+        self.error_list_video_checkbutton.set_sensitive(sens_flag)
+        self.error_list_msg_checkbutton.set_sensitive(sens_flag)
+        if self.error_list_filter_flag:
+            self.error_list_filter_toolbutton.set_sensitive(False)
+            self.error_list_cancel_toolbutton.set_sensitive(sens_flag)
+        else:
+            self.error_list_filter_toolbutton.set_sensitive(sens_flag)
+            self.error_list_cancel_toolbutton.set_sensitive(False)
+
+
+    def show_progress_bar(self, operation_type):
+
+        """Called by mainapp.TartubeApp.download_manager_continue(),
+        .refresh_manager_continue(), .tidy_manager_start(),
+        .process_manager_start().
+
+        At the start of a download/refresh/tidy/process operation, replace
+        self.download_media_button with a progress bar (and a label just above
+        it).
+
+        Args:
+
+            operation_type (str): The type of operation: 'download' for a
+                download operation, 'check' for a download operation with
+                simulated downloads, 'refresh' for a refresh operation, 'tidy'
+                for a tidy operation, or 'process' for a process operation
+
+        """
+
+        if self.progress_bar:
+            return self.app_obj.system_error(
+                201,
+                'Videos tab progress bar is already visible',
+            )
+
+        elif operation_type != 'check' \
+        and operation_type != 'download' \
+        and operation_type != 'refresh' \
+        and operation_type != 'tidy' \
+        and operation_type != 'process':
+            return self.app_obj.system_error(
+                202,
+                'Invalid operation type supplied to progress bar',
+            )
+
+        # Remove existing widgets. In previous code, we simply changed the
+        #   label on on self.check_media_button, but this causes frequent
+        #   crashes
+        # Get around the crashes by destroying the old widgets and creating new
+        #   ones
+        if self.check_media_button:
+            self.button_box.remove(self.check_media_button)
+            self.check_media_button = None
+
+        if self.download_media_button:
+            self.button_box.remove(self.download_media_button)
+            self.download_media_button = None
+
+        if self.custom_dl_box:
+            self.button_box.remove(self.custom_dl_box)
+            self.custom_dl_box = None
+            self.custom_dl_media_button = None
+            self.custom_dl_select_button = None
+
+        # Display a holding message in the replacement buttons, and initially
+        #   in the progress bar (the latter is replaced after a very short
+        #   interval)
+        free_msg = ' [' \
+        + str(round(utils.disk_get_free_space(self.app_obj.data_dir), 1)) \
+        + ' GiB]'
+
+        if operation_type == 'check':
+            temp_msg = msg = _('Checking...')
+            if self.app_obj.show_free_space_flag:
+                msg = _('Checking')  + free_msg
+
+        elif operation_type == 'download':
+            temp_msg = msg = _('Downloading...')
+            if self.app_obj.show_free_space_flag:
+                msg = _('Downloading')  + free_msg
+
+        elif operation_type == 'refresh':
+            temp_msg = msg = _('Refreshing...')
+
+        elif operation_type == 'tidy':
+            temp_msg = msg = _('Tidying...')
+
+        else:
+            temp_msg = msg = _('FFmpeg processing...')
+
+        # Add replacement widgets
+        self.check_media_button = Gtk.Button()
+        self.button_box.pack_start(self.check_media_button, True, True, 0)
+        self.check_media_button.set_action_name('app.check_all_button')
+        self.check_media_button.set_sensitive(False)
+        self.check_media_button.set_label(msg)
+
+        # (Put the progress bar inside a box, so it doesn't touch the divider,
+        #   because that doesn't look nice)
+        self.progress_box = Gtk.HBox()
+        self.button_box.pack_start(self.progress_box, True, True, 0)
+
+        self.progress_bar = Gtk.ProgressBar()
+        self.progress_box.pack_start(
+            self.progress_bar,
+            True,
+            True,
+            (self.spacing_size * 2),
+        )
+        self.progress_bar.set_fraction(0)
+        self.progress_bar.set_show_text(True)
+        self.progress_bar.set_text(temp_msg)
+
+        # (The 'Custom download all' buttons, if they were visible, are
+        #   replaced by empty buttons)
+        if self.app_obj.show_custom_dl_button_flag:
+
+            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
+            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
+
+            self.custom_dl_media_button = Gtk.Button()
+            self.custom_dl_box.pack_start(
+                self.custom_dl_media_button,
+                True,
+                True,
+                0
+            )
+            self.custom_dl_media_button.set_label(temp_msg)
+            self.custom_dl_media_button.set_sensitive(False)
+
+            self.custom_dl_select_button = Gtk.Button()
+            # (Aesthetics are better, when the '+' button is not visible at
+            #   all)
+#            self.custom_dl_box.pack_start(
+#                self.custom_dl_select_button,
+#                False,
+#                True,
+#                0
+#            )
+            self.custom_dl_select_button.set_label('+')
+            self.custom_dl_select_button.set_sensitive(False)
+
+        # Make the changes visible
+        self.button_box.show_all()
+
+
+    def switch_profile(self,  profile_name):
+
+        """Called from a callback in self.on_switch_profile_menu_select() and
+        mainapp.TartubeApp.load_db().
+
+        Switches to the specified profile.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            profile_name (str): The specified profile (a key in
+                mainapp.TartubeApp.profile_dict).
+                
+        """
+
+        if not profile_name in self.app_obj.profile_dict:
+
+            return self.app_obj.system_error(
+                999,
+                'Unrecognised profile \'{0}\''.format(profile_name),
+            )
+
+        this_dict = self.app_obj.profile_dict[profile_name]
+
+        # Add or remove markers from everything in the Video Index
+        for media_name in self.app_obj.media_name_dict.keys():
+
+            dbid = self.app_obj.media_name_dict[media_name]
+            if dbid in this_dict:
+                self.video_index_set_marker(media_name)
+            else:
+                self.video_index_reset_marker(media_name)
+
+        self.app_obj.set_last_profile(profile_name)
+
+
+    def toggle_alt_limits_image(self, on_flag):
+
+        """Can be called by anything.
+
+        Toggles the icon in the Progress tab.
+
+        Args:
+
+            on_flag (bool): True for a normal image (signifying that
+                alternative performance limits currently apply), False for a
+                greyed-out image
+
+        """
+
+        if on_flag:
+
+            self.alt_limits_image.set_from_pixbuf(
+                self.pixbuf_dict['limits_on_large'],
+            )
+
+            self.alt_limits_frame.set_tooltip_text(
+                _('Alternative limits currently apply'),
+            )
+
+        else:
+
+            self.alt_limits_image.set_from_pixbuf(
+                self.pixbuf_dict['limits_off_large'],
+            )
+
+            self.alt_limits_frame.set_tooltip_text(
+                _('Alternative limits do not currently apply'),
+            )
+
+
+    def toggle_visibility(self):
+
+        """Called by self.on_delete_event, StatusIcon.on_button_press_event and
+        mainapp.TartubeApp.on_menu_close_tray().
+
+        Toggles the main window's visibility (usually after the user has left-
+        clicked the status icon in the system tray).
+        """
+
+        if self.is_visible():
+
+            # Record the window's position, so its position can be restored
+            #   when the window is made visible again
+            posn = self.get_position()
+            self.win_last_xpos = posn.root_x
+            self.win_last_ypos = posn.root_y
+            # Close the window to the tray
+            self.set_visible(False)
+
+        else:
+
+            self.set_visible(True)
+            if self.app_obj.restore_posn_from_tray_flag \
+            and self.win_last_xpos is not None:
+                self.move(self.win_last_xpos, self.win_last_ypos)
 
 
     def update_catalogue_filter_widgets(self):
@@ -5327,109 +5366,6 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
-    def notify_desktop(self, title=None, msg=None, icon_path=None, url=None):
-
-        """Can be called by anything.
-
-        Creates a desktop notification (but not on MS Windows / MacOS)
-
-        Args:
-
-            title (str): The notification title. If None, 'Tartube' is used
-                used
-
-            msg (str): The message to show. If None, 'Tartube' is used
-
-            icon_path (str): The absolute path to the icon file to use. If
-                None, a default icon is used
-
-            url (str): If specified, a 'Click to open' button is added to the
-                desktop notification. Clicking the button opens the URL
-
-        """
-
-        # Desktop notifications don't work on MS Windows/MacOS
-        if mainapp.HAVE_NOTIFY_FLAG:
-
-            if title is None:
-                title = 'Tartube'
-
-            if msg is None:
-                # Emergency fallback - better than an empty message
-                msg = 'Tartube'
-
-            if icon_path is None:
-                icon_path = os.path.abspath(
-                    os.path.join(
-                        self.icon_dir_path,
-                        'dialogue',
-                        formats.DIALOGUE_ICON_DICT['system_icon'],
-                    ),
-                )
-
-            notify_obj = Notify.Notification.new(title, msg, icon_path)
-
-            if url is not None:
-
-                # We need to retain a reference to the Notify.Notification, or
-                #   the callback won't work
-                self.notify_desktop_count += 1
-                self.notify_desktop_dict[self.notify_desktop_count] \
-                = notify_obj
-
-                notify_obj.add_action(
-                    'action_click',
-                    'Watch',
-                    self.on_notify_desktop_clicked,
-                    self.notify_desktop_count,
-                    url,
-                )
-
-                notify_obj.connect(
-                    'closed',
-                    self.on_notify_desktop_closed,
-                    self.notify_desktop_count,
-                )
-
-            # Notification is ready; show it
-            notify_obj.show()
-
-
-    def toggle_alt_limits_image(self, on_flag):
-
-        """Can be called by anything.
-
-        Toggles the icon in the Progress tab.
-
-        Args:
-
-            on_flag (bool): True for a normal image (signifying that
-                alternative performance limits currently apply), False for a
-                greyed-out image
-
-        """
-
-        if on_flag:
-
-            self.alt_limits_image.set_from_pixbuf(
-                self.pixbuf_dict['limits_on_large'],
-            )
-
-            self.alt_limits_frame.set_tooltip_text(
-                _('Alternative limits currently apply'),
-            )
-
-        else:
-
-            self.alt_limits_image.set_from_pixbuf(
-                self.pixbuf_dict['limits_off_large'],
-            )
-
-            self.alt_limits_frame.set_tooltip_text(
-                _('Alternative limits do not currently apply'),
-            )
-
-
     def update_classic_mode_tab_update_banner(self):
 
         """Called initially by self.setup_classic_mode_tab(), and then by
@@ -5474,6 +5410,199 @@ class MainWin(Gtk.ApplicationWindow):
                     + ' select \'Convert to this format\'!',
                 ) + '</b>',
             )
+
+
+    def update_menu(self):
+
+        """Can be called by anything.
+
+        Updates several main menu items after a change in conditions.
+
+        Note that other code modifies the state of the main menu and toolbar;
+        for example, see the code in mainapp.TartubeApp.load_db().
+        """
+
+        if self.update_ytdl_menu_item is not None:
+
+            downloader = self.app_obj.get_downloader()
+
+            self.update_ytdl_menu_item.set_label(
+                ('U_pdate') + ' ' + downloader,
+            )
+
+            self.test_ytdl_menu_item.set_label(
+                _('_Test') + ' ' + downloader,
+            )
+
+        if self.custom_dl_all_menu_item is not None:
+
+            self.custom_dl_all_menu_item.set_submenu(
+                self.custom_dl_popup_submenu(),
+            )            
+
+        if self.switch_profile_menu_item is not None:
+            
+            self.switch_profile_menu_item.set_submenu(
+                self.switch_profile_popup_submenu(),
+            )
+
+        if self.delete_profile_menu_item is not None:
+            
+            self.delete_profile_menu_item.set_submenu(
+                self.delete_profile_popup_submenu(),
+            )
+
+        # Make the changes visible
+        if self.menubar:
+            self.menubar.show_all()
+        
+    
+    def update_window_after_show_hide(self):
+
+        """Called by mainapp.TartubeApp.on_menu_hide_system().
+
+        Shows or hides system folders, as required.
+
+        Updates the appearance of the main window's toolbutton, depending on
+        the current setting of mainapp.TartubeApp.toolbar_system_hide_flag.
+        """
+
+        # Update the appearance of the toolbar button
+        if not self.app_obj.toolbar_system_hide_flag:
+
+            self.hide_system_toolbutton.set_label(_('Hide'))
+            self.hide_system_toolbutton.set_tooltip_text(
+                _('Hide (most) system folders'),
+            )
+
+        else:
+
+            self.hide_system_toolbutton.set_label(_('Show'))
+            self.hide_system_toolbutton.set_tooltip_text(
+                _('Show all system folders'),
+            )
+
+        # After system folders are revealed/hidden, Gtk helpfully selects a
+        #   new channel/playlist/folder in the Video Index for us
+        # Not sure how to stop it, other than by temporarily preventing
+        #   selections altogether (temporarily)
+        selection = self.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.NONE)
+
+        # Show/hide system folders
+        for name in self.app_obj.media_name_dict:
+
+            dbid = self.app_obj.media_name_dict[name]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.priv_flag \
+            and media_data_obj != self.app_obj.fixed_all_folder:
+                self.app_obj.mark_folder_hidden(
+                    media_data_obj,
+                    self.app_obj.toolbar_system_hide_flag,
+                )
+
+        # Re-enable selections, and select the previously-selected channel/
+        #   playlist/folder (if any)
+        selection = self.video_index_treeview.get_selection()
+        selection.set_mode(Gtk.SelectionMode.SINGLE)
+
+        if self.video_index_current is not None:
+
+            dbid = self.app_obj.media_name_dict[self.video_index_current]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            self.video_index_select_row(media_data_obj)
+
+        
+    def update_progress_bar(self, text, count, total):
+
+        """Called by downloads.DownloadManager.run(),
+        refresh.RefreshManager.refresh_from_default_destination(),
+        .refresh_from_actual_destination(), tidy.TidyManager.tidy_directory()
+        and process.Processmanager.process_video().
+
+        During a download/refresh/tidy/process operation, updates the progress
+        bar just below the Video Index.
+
+        Args:
+
+            text (str): The text of the progress bar's label, matching the name
+                of the media data object which has just been passed to
+                youtube-dl
+
+            count (int): The number of media data objects passed to youtube-dl
+                so far. Note that a channel or a playlist counts as one media
+                data object, as far as youtube-dl is concerned
+
+            total (int): The total number of media data objects to be passed
+                to youtube-dl
+
+        """
+
+        if not self.progress_bar:
+            return self.app_obj.system_error(
+                204,
+                'Videos tab progress bar is missing and cannot be updated',
+            )
+
+        # (The 0.5 guarantees that the progress bar is never empty. If
+        #   downloading a single video, the progress bar is half full. If
+        #   downloading the first out of 3 videos, it is 16% full, and so on)
+        self.progress_bar.set_fraction(float(count - 0.5) / total)
+        self.progress_bar.set_text(
+            utils.shorten_string(text, self.short_string_max_len) \
+            + ' ' + str(count) + '/' + str(total)
+        )
+
+
+    def update_free_space_msg(self, disk_space=None):
+
+        """Called by mainapp.TartubeApp.dl_timer_callback() during a download
+        operation to update the amount of free disk space visible in the
+        Videos tab.
+
+        Args:
+
+            disk_space (float or None): The amount of free disk space on the
+                drive containing Tartube's data directory. If None, the
+                button's label is reset to its default state
+
+        """
+
+        if self.check_media_button is None:
+            return
+
+        elif disk_space is None:
+
+            if not self.video_index_marker_dict:
+                self.check_media_button.set_label(_('Check all'))
+                self.check_media_button.set_tooltip_text(
+                    _('Check all videos, channels, playlists and folders'),
+                )
+            else:
+                self.check_media_button.set_label(_('Check marked items'))
+                self.check_media_button.set_tooltip_text(
+                    _('Check marked videos, channels, playlists and folders'),
+                )
+
+        else:
+
+            msg = ' [' + str(round(disk_space, 1)) + ' GiB]'
+
+            if self.app_obj.download_manager_obj \
+            and self.app_obj.show_free_space_flag:
+
+                operation_type \
+                = self.app_obj.download_manager_obj.operation_type
+
+                if operation_type == 'sim' \
+                or operation_type == 'custom_sim' \
+                or operation_type == 'classic_sim':
+                    self.check_media_button.set_label(_('Checking') + msg)
+                else:
+                    self.check_media_button.set_label(_('Downloading') + msg)
+                self.check_media_button.set_tooltip_text()
 
 
     # (Auto-sort functions for main window widgets)
@@ -7775,114 +7904,6 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.popup(None, None, None, None, event.button, event.time)
 
 
-    def custom_dl_popup_menu(self):
-
-        """Called by mainapp.TartubeApp.on_menu_custom_dl_select().
-
-        When the user right-clicks the custom download manager selection button
-        in the Videos tab, shows a context-sensitive popup menu.
-        """
-
-        # Set up the popup menu
-        popup_menu = self.custom_dl_popup_submenu()
-
-        # Create the popup menu
-        popup_menu.show_all()
-        popup_menu.popup(
-            None,
-            None,
-            None,
-            None,
-            1,
-            Gtk.get_current_event_time(),
-        )
-
-
-    def custom_dl_popup_submenu(self, media_data_list=[]):
-
-        """Called by several functions to create a sub-menu, within a parent
-        popup menu.
-
-        The sub-menu contains a list of downloads.CustomDLManager objects. If
-        the user selects one, a custom download is started using settings from
-        that object.
-
-        Args:
-
-            media_data_list (list): List of media data objects to custom
-                download (may be an empty list)
-
-        Return values:
-
-            The sub-menu created
-
-        """
-
-        # Set up the popup menu
-        popup_menu = Gtk.Menu()
-
-        # Title
-        choose_menu_item = Gtk.MenuItem.new_with_label(
-             _('Choose a custom download:'),
-        )
-        popup_menu.append(choose_menu_item)
-        choose_menu_item.set_sensitive(False)
-
-        # Separator
-        popup_menu.append(Gtk.SeparatorMenuItem())
-
-        # General Custom Download Manager
-        general_menu_item = Gtk.MenuItem.new_with_label(
-            self.app_obj.general_custom_dl_obj.name,
-        )
-        popup_menu.append(general_menu_item)
-        general_menu_item.connect(
-            'activate',
-            self.on_custom_dl_menu_select,
-            media_data_list,
-            self.app_obj.general_custom_dl_obj.uid,
-        )
-
-        # The custom download manager usually used in the Classic Mode tab
-        #   (but don't use it if it's the same as the previous one)
-        if self.app_obj.classic_custom_dl_obj is not None \
-        and self.app_obj.classic_custom_dl_obj \
-        != self.app_obj.general_custom_dl_obj:
-
-            classic_menu_item = Gtk.MenuItem.new_with_label(
-                self.app_obj.classic_custom_dl_obj.name,
-            )
-            popup_menu.append(classic_menu_item)
-            classic_menu_item.connect(
-                'activate',
-                self.on_custom_dl_menu_select,
-                media_data_list,
-                self.app_obj.classic_custom_dl_obj.uid,
-            )
-
-        # (Get a sorted list of custom download managers, excluding the default
-        #   ones)
-        manager_list = self.app_obj.compile_custom_dl_manager_list()
-        if manager_list:
-
-            # Separator
-            popup_menu.append(Gtk.SeparatorMenuItem())
-
-            # Other custom download managers
-            for this_obj in manager_list:
-
-                this_menu_item = Gtk.MenuItem.new_with_label(this_obj.name)
-                popup_menu.append(this_menu_item)
-                this_menu_item.connect(
-                    'activate',
-                    self.on_custom_dl_menu_select,
-                    media_data_list,
-                    this_obj.uid,
-                )
-
-        return popup_menu
-
-
     def classic_popup_menu(self):
 
         """Called by mainapp.TartubeApp.on_button_classic_menu().
@@ -8190,185 +8211,6 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.popup(None, None, None, None, event.button, event.time)
 
 
-    def video_index_setup_contents_submenu(self, submenu, media_data_obj,
-    only_child_videos_flag=False):
-
-        """Called by self.video_index_popup_menu().
-
-        Sets up a submenu for handling the contents of a channel, playlist
-        or folder.
-
-        Args:
-
-            submenu (Gtk.Menu): The submenu to set up, currently empty
-
-            media_data_obj (media.Channel, media.Playlist, media.Folder): The
-                channel, playlist or folder whose contents should be modified
-                by items in the sub-menu
-
-            only_child_videos_flag (bool): Set to True when only a folder's
-                child videos (not anything in its child channels, playlists or
-                folders) should be modified by items in the sub-menu; False if
-                all child objects should be modified
-
-        """
-
-        mark_archived_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _archived'),
-        )
-        mark_archived_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_archived,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_archived_menu_item)
-
-        mark_not_archive_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not a_rchived'),
-        )
-        mark_not_archive_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_archived,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_not_archive_menu_item)
-
-        # Separator
-        submenu.append(Gtk.SeparatorMenuItem())
-
-        mark_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _bookmarked'),
-        )
-        mark_bookmark_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_bookmark,
-            media_data_obj,
-        )
-        submenu.append(mark_bookmark_menu_item)
-        if media_data_obj == self.app_obj.fixed_bookmark_folder:
-            mark_bookmark_menu_item.set_sensitive(False)
-
-        mark_not_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not b_ookmarked'),
-        )
-        mark_not_bookmark_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_bookmark,
-            media_data_obj,
-        )
-        submenu.append(mark_not_bookmark_menu_item)
-
-        # Separator
-        submenu.append(Gtk.SeparatorMenuItem())
-
-        mark_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _favourite'),
-        )
-        mark_fav_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_favourite,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_fav_menu_item)
-        if media_data_obj == self.app_obj.fixed_fav_folder:
-            mark_fav_menu_item.set_sensitive(False)
-
-        mark_not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not fa_vourite'),
-        )
-        mark_not_fav_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_favourite,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_not_fav_menu_item)
-
-        # Separator
-        submenu.append(Gtk.SeparatorMenuItem())
-
-        mark_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as _missing'),
-        )
-        mark_missing_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_missing,
-            media_data_obj,
-        )
-        submenu.append(mark_missing_menu_item)
-        # Only videos in channels/playlists can be marked as missing
-        if isinstance(media_data_obj, media.Folder):
-            mark_missing_menu_item.set_sensitive(False)
-
-        mark_not_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not m_issing'),
-        )
-        mark_not_missing_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_missing,
-            media_data_obj,
-        )
-        submenu.append(mark_not_missing_menu_item)
-        # Only videos in channels/playlists can be marked as not missing
-        #   (exception: the 'Missing Videos' folder)
-        if isinstance(media_data_obj, media.Folder) \
-        and media_data_obj != self.app_obj.fixed_missing_folder:
-            mark_not_missing_menu_item.set_sensitive(False)
-
-        # Separator
-        submenu.append(Gtk.SeparatorMenuItem())
-
-        mark_new_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Mark as _new'))
-        mark_new_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_new,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_new_menu_item)
-        if media_data_obj == self.app_obj.fixed_new_folder:
-            mark_new_menu_item.set_sensitive(False)
-
-        mark_old_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not n_ew'),
-        )
-        mark_old_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_new,
-            media_data_obj,
-            only_child_videos_flag,
-        )
-        submenu.append(mark_old_menu_item)
-
-        # Separator
-        submenu.append(Gtk.SeparatorMenuItem())
-
-        mark_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as in _waiting list'),
-        )
-        mark_playlist_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_waiting,
-            media_data_obj,
-        )
-        submenu.append(mark_playlist_menu_item)
-        if media_data_obj == self.app_obj.fixed_waiting_folder:
-            mark_playlist_menu_item.set_sensitive(False)
-
-        mark_not_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Mark as not in waiting _list'),
-        )
-        mark_not_playlist_menu_item.connect(
-            'activate',
-            self.on_video_index_mark_not_waiting,
-            media_data_obj,
-        )
-        submenu.append(mark_not_playlist_menu_item)
-
-
     def add_watch_video_menu_items(self, popup_menu, dl_flag, \
     not_dl_flag, source_flag, temp_folder_flag, live_flag, unavailable_flag, \
     video_list):
@@ -8634,6 +8476,380 @@ class MainWin(Gtk.ApplicationWindow):
         or live_flag \
         or unavailable_flag:
             temp_menu_item.set_sensitive(False)
+
+
+    def custom_dl_popup_menu(self):
+
+        """Called by mainapp.TartubeApp.on_menu_custom_dl_select().
+
+        When the user right-clicks the custom download manager selection button
+        in the Videos tab, shows a context-sensitive popup menu.
+        """
+
+        # Set up the popup menu
+        popup_menu = self.custom_dl_popup_submenu()
+
+        # Create the popup menu
+        popup_menu.show_all()
+        popup_menu.popup(
+            None,
+            None,
+            None,
+            None,
+            1,
+            Gtk.get_current_event_time(),
+        )
+
+
+    def custom_dl_popup_submenu(self, media_data_list=[]):
+
+        """Called by several functions to create a sub-menu, within a parent
+        popup menu.
+
+        The sub-menu contains a list of downloads.CustomDLManager objects. If
+        the user selects one, a custom download is started using settings from
+        that object.
+
+        Args:
+
+            media_data_list (list): List of media data objects to custom
+                download (may be an empty list)
+
+        Return values:
+
+            The sub-menu created
+
+        """
+
+        # Set up the popup menu
+        popup_menu = Gtk.Menu()
+
+        # Title
+        choose_menu_item = Gtk.MenuItem.new_with_label(
+             _('Choose a custom download:'),
+        )
+        popup_menu.append(choose_menu_item)
+        choose_menu_item.set_sensitive(False)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # General Custom Download Manager
+        general_menu_item = Gtk.MenuItem.new_with_label(
+            self.app_obj.general_custom_dl_obj.name,
+        )
+        popup_menu.append(general_menu_item)
+        general_menu_item.connect(
+            'activate',
+            self.on_custom_dl_menu_select,
+            media_data_list,
+            self.app_obj.general_custom_dl_obj.uid,
+        )
+
+        # The custom download manager usually used in the Classic Mode tab
+        #   (but don't use it if it's the same as the previous one)
+        if self.app_obj.classic_custom_dl_obj is not None \
+        and self.app_obj.classic_custom_dl_obj \
+        != self.app_obj.general_custom_dl_obj:
+
+            classic_menu_item = Gtk.MenuItem.new_with_label(
+                self.app_obj.classic_custom_dl_obj.name,
+            )
+            popup_menu.append(classic_menu_item)
+            classic_menu_item.connect(
+                'activate',
+                self.on_custom_dl_menu_select,
+                media_data_list,
+                self.app_obj.classic_custom_dl_obj.uid,
+            )
+
+        # (Get a sorted list of custom download managers, excluding the default
+        #   ones)
+        manager_list = self.app_obj.compile_custom_dl_manager_list()
+        if manager_list:
+
+            # Separator
+            popup_menu.append(Gtk.SeparatorMenuItem())
+
+            # Other custom download managers
+            for this_obj in manager_list:
+
+                this_menu_item = Gtk.MenuItem.new_with_label(this_obj.name)
+                popup_menu.append(this_menu_item)
+                this_menu_item.connect(
+                    'activate',
+                    self.on_custom_dl_menu_select,
+                    media_data_list,
+                    this_obj.uid,
+                )
+
+        return popup_menu
+
+
+    def delete_profile_popup_submenu(self):
+
+        """Called by several functions to create a sub-menu, within a parent
+        popup menu.
+
+        The sub-menu contains a list of profile names (keys in
+        mainapp.TartubeApp.profile_dict), If the user selects one, the profile
+        is deleted
+
+        Return values:
+
+            The sub-menu created
+
+        """
+
+        # Set up the popup menu
+        popup_menu = Gtk.Menu()
+
+        # Title
+        choose_menu_item = Gtk.MenuItem.new_with_label(
+             _('Choose a profile:'),
+        )
+        popup_menu.append(choose_menu_item)
+        choose_menu_item.set_sensitive(False)
+
+        if self.app_obj.profile_dict:
+            
+            # Separator
+            popup_menu.append(Gtk.SeparatorMenuItem())
+
+            for profile_name in sorted(self.app_obj.profile_dict):
+
+                this_menu_item = Gtk.MenuItem.new_with_label(profile_name)
+                popup_menu.append(this_menu_item)
+                this_menu_item.connect(
+                    'activate',
+                    self.on_delete_profile_menu_select,
+                    profile_name,
+                )
+
+        return popup_menu
+
+
+    def switch_profile_popup_submenu(self):
+
+        """Called by several functions to create a sub-menu, within a parent
+        popup menu.
+
+        The sub-menu contains a list of profile names (keys in
+        mainapp.TartubeApp.profile_dict), If the user selects one, we switch
+        to that profile, marking or unmarking items in the Video Index
+        accordingly.
+
+        Return values:
+
+            The sub-menu created
+
+        """
+
+        # Set up the popup menu
+        popup_menu = Gtk.Menu()
+
+        # Title
+        choose_menu_item = Gtk.MenuItem.new_with_label(
+             _('Choose a profile:'),
+        )
+        popup_menu.append(choose_menu_item)
+        choose_menu_item.set_sensitive(False)
+
+        if self.app_obj.profile_dict:
+            
+            # Separator
+            popup_menu.append(Gtk.SeparatorMenuItem())
+
+            for profile_name in sorted(self.app_obj.profile_dict):
+
+                this_menu_item = Gtk.MenuItem.new_with_label(profile_name)
+                popup_menu.append(this_menu_item)
+                this_menu_item.connect(
+                    'activate',
+                    self.on_switch_profile_menu_select,
+                    profile_name,
+                )
+
+        return popup_menu
+
+
+    def video_index_setup_contents_submenu(self, submenu, media_data_obj,
+    only_child_videos_flag=False):
+
+        """Called by self.video_index_popup_menu().
+
+        Sets up a submenu for handling the contents of a channel, playlist
+        or folder.
+
+        Args:
+
+            submenu (Gtk.Menu): The submenu to set up, currently empty
+
+            media_data_obj (media.Channel, media.Playlist, media.Folder): The
+                channel, playlist or folder whose contents should be modified
+                by items in the sub-menu
+
+            only_child_videos_flag (bool): Set to True when only a folder's
+                child videos (not anything in its child channels, playlists or
+                folders) should be modified by items in the sub-menu; False if
+                all child objects should be modified
+
+        """
+
+        mark_archived_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _archived'),
+        )
+        mark_archived_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_archived,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_archived_menu_item)
+
+        mark_not_archive_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not a_rchived'),
+        )
+        mark_not_archive_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_archived,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_not_archive_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _bookmarked'),
+        )
+        mark_bookmark_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_bookmark,
+            media_data_obj,
+        )
+        submenu.append(mark_bookmark_menu_item)
+        if media_data_obj == self.app_obj.fixed_bookmark_folder:
+            mark_bookmark_menu_item.set_sensitive(False)
+
+        mark_not_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not b_ookmarked'),
+        )
+        mark_not_bookmark_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_bookmark,
+            media_data_obj,
+        )
+        submenu.append(mark_not_bookmark_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _favourite'),
+        )
+        mark_fav_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_favourite,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_fav_menu_item)
+        if media_data_obj == self.app_obj.fixed_fav_folder:
+            mark_fav_menu_item.set_sensitive(False)
+
+        mark_not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not fa_vourite'),
+        )
+        mark_not_fav_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_favourite,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_not_fav_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _missing'),
+        )
+        mark_missing_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_missing,
+            media_data_obj,
+        )
+        submenu.append(mark_missing_menu_item)
+        # Only videos in channels/playlists can be marked as missing
+        if isinstance(media_data_obj, media.Folder):
+            mark_missing_menu_item.set_sensitive(False)
+
+        mark_not_missing_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not m_issing'),
+        )
+        mark_not_missing_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_missing,
+            media_data_obj,
+        )
+        submenu.append(mark_not_missing_menu_item)
+        # Only videos in channels/playlists can be marked as not missing
+        #   (exception: the 'Missing Videos' folder)
+        if isinstance(media_data_obj, media.Folder) \
+        and media_data_obj != self.app_obj.fixed_missing_folder:
+            mark_not_missing_menu_item.set_sensitive(False)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_new_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Mark as _new'))
+        mark_new_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_new,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_new_menu_item)
+        if media_data_obj == self.app_obj.fixed_new_folder:
+            mark_new_menu_item.set_sensitive(False)
+
+        mark_old_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not n_ew'),
+        )
+        mark_old_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_new,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_old_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as in _waiting list'),
+        )
+        mark_playlist_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_waiting,
+            media_data_obj,
+        )
+        submenu.append(mark_playlist_menu_item)
+        if media_data_obj == self.app_obj.fixed_waiting_folder:
+            mark_playlist_menu_item.set_sensitive(False)
+
+        mark_not_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as not in waiting _list'),
+        )
+        mark_not_playlist_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_waiting,
+            media_data_obj,
+        )
+        submenu.append(mark_not_playlist_menu_item)
 
 
     # (Video Index)
@@ -9543,6 +9759,62 @@ class MainWin(Gtk.ApplicationWindow):
         return style, weight, underline, strike
 
 
+    def video_index_set_marker(self, name=None):
+
+        """Can be called by anything.
+
+        Sets the marker on a specified row of the Video Index (or on all of
+        them for which the markes are allowed to be set).
+
+        Args:
+
+            name (str): The name of a media.Channel, media.Playlist or
+                media.Folder; a key in mainapp.TartubeApp.media_name_dict
+
+        """
+
+        old_size = len(self.video_index_marker_dict)
+
+        container_list = []
+        if name is None:
+
+            # Set all markers in the Video Index
+            container_list = self.video_index_row_dict.keys()
+
+        else:
+
+            # Set the marker on the row for the specified channel/playlist/
+            #   folder
+            container_list = [ name ]
+
+        for this_name in container_list:
+
+            # System folders cannot be marked
+            # Channels/playlists/folders for which checking and downloading is
+            #   disabled can't be marked
+            dbid = self.app_obj.media_name_dict[this_name]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            if (
+                not isinstance(media_data_obj, media.Folder) \
+                or not media_data_obj.priv_flag
+            ) and not media_data_obj.dl_disable_flag:
+                                            
+                tree_ref = self.video_index_row_dict[this_name]
+                model = tree_ref.get_model()
+                tree_path = tree_ref.get_path()
+                tree_iter = model.get_iter(tree_path)
+
+                model.set(tree_iter, 4, True)
+
+                self.video_index_marker_dict[this_name] = tree_ref
+
+        if not old_size and self.video_index_marker_dict:
+            # Update labels on the 'Check all' button, etc
+            # The True argument skips the check for the existence of a progress
+            #   bar
+            self.hide_progress_bar(True)
+
+
     def video_index_reset_marker(self, name=None):
 
         """Can be called by anything.
@@ -9575,7 +9847,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Reset the marker on the row for the specified channel/playlist/
             #   folder
-            tree_ref = elf.video_index_row_dict[name]
+            tree_ref = self.video_index_row_dict[name]
             model = tree_ref.get_model()
             tree_path = tree_ref.get_path()
             tree_iter = model.get_iter(tree_path)
@@ -9586,6 +9858,7 @@ class MainWin(Gtk.ApplicationWindow):
                 del self.video_index_marker_dict[name]
 
         if old_size and not self.video_index_marker_dict:
+            
             # Update labels on the 'Check all' button, etc
             # The True argument skips the check for the existence of a progress
             #   bar
@@ -10001,7 +10274,16 @@ class MainWin(Gtk.ApplicationWindow):
         #   current settings
         sibling_video_list = []
 
-        for child_obj in container_obj.child_list:
+        # If the filter has been applied, use the prepared list of child videos
+        #   specified by the IV...
+        if self.video_catalogue_filtered_flag:
+            child_list = self.video_catalogue_filtered_list.copy()
+        # ...otherwise use all child videos that are downloaded/undownloaded/
+        #   blocked (according to current settings)
+        else:
+            child_list = container_obj.get_visible_videos(self.app_obj)
+            
+        for child_obj in child_list:
             if isinstance(child_obj, media.Video) \
             and (
                 (
@@ -19238,32 +19520,6 @@ class MainWin(Gtk.ApplicationWindow):
                 self.classic_progress_list_popup_menu(event, path)
 
 
-    def on_classic_resolution_combo_changed(self, combo):
-
-        """Called from callback in self.setup_classic_mode_tab().
-
-        Update IVs.
-
-        Args:
-
-            combo (Gtk.ComboBox): The clicked widget
-
-        """
-
-        tree_iter = self.classic_resolution_combo.get_active_iter()
-        model = self.classic_resolution_combo.get_model()
-        text = utils.strip_whitespace(model[tree_iter][0])
-
-        # (Dummy items in the combo)
-        default_item = _('Highest')
-
-        # (Update the IV)
-        if text != default_item:
-            self.app_obj.set_classic_resolution_selection(text)
-        else:
-            self.app_obj.set_classic_resolution_selection(None)
-
-
     def on_bandwidth_spinbutton_changed(self, spinbutton):
 
         """Called from callback in self.setup_progress_tab().
@@ -19308,6 +19564,32 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.app_obj.set_bandwidth_apply_flag(False)
+
+
+    def on_classic_resolution_combo_changed(self, combo):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Update IVs.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = self.classic_resolution_combo.get_active_iter()
+        model = self.classic_resolution_combo.get_model()
+        text = utils.strip_whitespace(model[tree_iter][0])
+
+        # (Dummy items in the combo)
+        default_item = _('Highest')
+
+        # (Update the IV)
+        if text != default_item:
+            self.app_obj.set_classic_resolution_selection(text)
+        else:
+            self.app_obj.set_classic_resolution_selection(None)
 
 
     def on_custom_dl_menu_select(self, menu_item, media_data_list, uid):
@@ -19386,19 +19668,35 @@ class MainWin(Gtk.ApplicationWindow):
             return False
 
 
-    def on_hide_finished_checkbutton_changed(self, checkbutton):
+    def on_delete_profile_menu_select(self, menu_item, profile_name):
 
-        """Called from callback in self.setup_progress_tab().
+        """Called from a callback in self.delete_profile_popup_submenu().
 
-        Toggles hiding finished rows in the Progress List.
+        Deletes the specified profile
 
         Args:
 
-            checkbutton (Gtk.CheckButton): The clicked widget
+            menu_item (Gtk.MenuItem): The clicked menu item
 
+            profile_name (str): The specified profile (a key in
+                mainapp.TartubeApp.profile_dict).
+                
         """
 
-        self.app_obj.set_progress_list_hide_flag(checkbutton.get_active())
+        # Prompt for confirmation, before deleting
+        self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            _(
+                'Are you sure you want to delete the profile \'{0}\'',
+            ).format(profile_name),
+            'question',
+            'yes-no',
+            None,                   # Parent window is main window
+            {
+                'yes': 'delete_profile',
+                # Specified options
+                'data': profile_name,
+            },
+        )
 
 
     def on_draw_blocked_checkbutton_changed(self, checkbutton):
@@ -19438,31 +19736,6 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.set_catalogue_draw_downloaded_flag(
-            checkbutton.get_active(),
-        )
-        # Redraw the Video Catalogue
-        self.video_catalogue_redraw_all(
-            self.video_index_current,
-            1,
-            True,           # Reset scrollbars
-            True,           # Don't cancel the filter, if applied
-        )
-
-
-    def on_draw_undownloaded_checkbutton_changed(self, checkbutton):
-
-        """Called from callback in self.setup_videos_tab().
-
-        In the Videos tab, when the user toggles the checkbutton, enable/
-        disable drawing undownloaded videos.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The clicked widget
-
-        """
-
-        self.app_obj.set_catalogue_draw_undownloaded_flag(
             checkbutton.get_active(),
         )
         # Redraw the Video Catalogue
@@ -19526,12 +19799,12 @@ class MainWin(Gtk.ApplicationWindow):
                 catalogue_obj.update_status_images()
 
 
-    def on_filter_name_checkbutton_changed(self, checkbutton):
+    def on_draw_undownloaded_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
 
         In the Videos tab, when the user toggles the checkbutton, enable/
-        disable filtering by video name.
+        disable drawing undownloaded videos.
 
         Args:
 
@@ -19539,7 +19812,34 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        self.app_obj.set_catalogue_filter_name_flag(checkbutton.get_active())
+        self.app_obj.set_catalogue_draw_undownloaded_flag(
+            checkbutton.get_active(),
+        )
+        # Redraw the Video Catalogue
+        self.video_catalogue_redraw_all(
+            self.video_index_current,
+            1,
+            True,           # Reset scrollbars
+            True,           # Don't cancel the filter, if applied
+        )
+
+
+    def on_filter_comment_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos tab, when the user toggles the checkbutton, enable/
+        disable filtering by video comments.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_catalogue_filter_comment_flag(
+            checkbutton.get_active(),
+        )
         # (No need to redraw the Video Catalogue, just to make the status icons
         #   visible/invisible
         if self.app_obj.catalogue_mode_type != 'simple':
@@ -19570,12 +19870,12 @@ class MainWin(Gtk.ApplicationWindow):
                 catalogue_obj.update_status_images()
 
 
-    def on_filter_comment_checkbutton_changed(self, checkbutton):
+    def on_filter_name_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
 
         In the Videos tab, when the user toggles the checkbutton, enable/
-        disable filtering by video comments.
+        disable filtering by video name.
 
         Args:
 
@@ -19583,14 +19883,27 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        self.app_obj.set_catalogue_filter_comment_flag(
-            checkbutton.get_active(),
-        )
+        self.app_obj.set_catalogue_filter_name_flag(checkbutton.get_active())
         # (No need to redraw the Video Catalogue, just to make the status icons
         #   visible/invisible
         if self.app_obj.catalogue_mode_type != 'simple':
             for catalogue_obj in self.video_catalogue_dict.values():
                 catalogue_obj.update_status_images()
+
+
+    def on_hide_finished_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_progress_tab().
+
+        Toggles hiding finished rows in the Progress List.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_progress_list_hide_flag(checkbutton.get_active())
 
 
     def on_notebook_switch_page(self, notebook, box, page_num):
@@ -19685,26 +19998,6 @@ class MainWin(Gtk.ApplicationWindow):
             del self.notify_desktop_dict[notify_id]
 
 
-    def on_num_worker_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_progress_tab().
-
-        In the Progress tab, when the user sets the number of simultaneous
-        downloads allowed, inform mainapp.TartubeApp, which in turn informs the
-        downloads.DownloadManager object.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The clicked widget
-
-        """
-
-        if self.num_worker_checkbutton.get_active():
-            self.app_obj.set_num_worker_default(
-                int(self.num_worker_spinbutton.get_value())
-            )
-
-
     def on_num_worker_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_progress_tab().
@@ -19729,6 +20022,26 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.app_obj.set_num_worker_apply_flag(False)
+
+
+    def on_num_worker_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_progress_tab().
+
+        In the Progress tab, when the user sets the number of simultaneous
+        downloads allowed, inform mainapp.TartubeApp, which in turn informs the
+        downloads.DownloadManager object.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The clicked widget
+
+        """
+
+        if self.num_worker_checkbutton.get_active():
+            self.app_obj.set_num_worker_default(
+                int(self.num_worker_spinbutton.get_value())
+            )
 
 
     def on_operation_error_checkbutton_changed(self, checkbutton):
@@ -19786,25 +20099,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.output_tab_scroll_visible_page(page_num + 1)
 
 
-    def on_output_size_spinbutton_changed(self, spinbutton):
-
-        """Called from callback in self.setup_output_tab().
-
-        In the Output tab, when the user sets the maximum page size, inform
-        mainapp.TartubeApp.
-
-        Args:
-
-            spinbutton (Gtk.SpinButton): The clicked widget
-
-        """
-
-        if self.output_size_checkbutton.get_active():
-            self.app_obj.set_output_size_default(
-                int(self.output_size_spinbutton.get_value())
-            )
-
-
     def on_output_size_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_output_tab().
@@ -19828,6 +20122,25 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.app_obj.set_output_size_apply_flag(False)
+
+
+    def on_output_size_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_output_tab().
+
+        In the Output tab, when the user sets the maximum page size, inform
+        mainapp.TartubeApp.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The clicked widget
+
+        """
+
+        if self.output_size_checkbutton.get_active():
+            self.app_obj.set_output_size_default(
+                int(self.output_size_spinbutton.get_value())
+            )
 
 
     def on_paned_size_allocate(self, widget, rect):
@@ -19875,6 +20188,24 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.app_obj.set_results_list_reverse_flag(checkbutton.get_active())
 
+
+    def on_switch_profile_menu_select(self, menu_item, profile_name):
+
+        """Called from a callback in self.switch_profile_popup_submenu().
+
+        Switches to the specified profile.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            profile_name (str): The specified profile (a key in
+                mainapp.TartubeApp.profile_dict).
+                
+        """
+
+        self.switch_profile(profile_name)
+        
 
     def on_system_container_checkbutton_changed(self, checkbutton):
 
@@ -19924,6 +20255,22 @@ class MainWin(Gtk.ApplicationWindow):
             short_column.set_visible(False)
 
 
+    def on_system_error_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_errors_tab().
+
+        Toggles display of system error messages in the tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        self.app_obj.set_system_error_show_flag(checkbutton.get_active())
+        self.errors_list_reset()
+
+
     def on_system_multi_line_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_errors_tab().
@@ -19970,22 +20317,6 @@ class MainWin(Gtk.ApplicationWindow):
             name_column.set_visible(False)
         else:
             name_column.set_visible(True)
-
-
-    def on_system_error_checkbutton_changed(self, checkbutton):
-
-        """Called from callback in self.setup_errors_tab().
-
-        Toggles display of system error messages in the tab.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The clicked widget
-
-        """
-
-        self.app_obj.set_system_error_show_flag(checkbutton.get_active())
-        self.errors_list_reset()
 
 
     def on_system_warning_checkbutton_changed(self, checkbutton):
@@ -20239,6 +20570,83 @@ class MainWin(Gtk.ApplicationWindow):
     # (Callback support functions)
 
 
+    def get_media_drag_data_as_list(self, media_data_obj):
+
+        """Called by self.errors_list_add_operation_msg().
+
+        When a media data object (video, channel or playlist) generates an
+        error, that error can be displayed in the Errors List.
+
+        The user may want to drag-and-drop the error messages to an external
+        application, revealing information about the media data object that
+        generated the error (e.g. the URL of a video). However, the error
+        might still be visible after the media data object has been deleted.
+
+        Therefore, we store any data that we might later want to drag-and-drop
+        in three hidden columns of the errors list.
+
+        This function returns a list of three values, one for each column. Each
+        value may be an empty string or a useable value.
+
+        Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist):
+                The media data object that generated an error
+
+        Return values:
+
+            A list of three values, one for each hidden column. Each value is
+                a string (which might be empty):
+
+                1. Full file path for a video, or the full path to the
+                    directory for a channel/playlist
+                2. The media data object's source URL
+                3. The media data object's name
+
+        """
+
+        return_list = []
+
+        # Full file path
+        if not self.app_obj.drag_video_path_flag:
+
+            return_list.append('')
+
+        elif isinstance(media_data_obj, media.Video):
+
+            if not media_data_obj.dummy_flag \
+            and media_data_obj.file_name is not None:
+
+                return_list.append(
+                    media_data_obj.get_actual_path(self.app_obj),
+                )
+
+            elif media_data_obj.dummy_flag \
+            and media_data_obj.dummy_path is not None:
+                return_list.append(media_data_obj.dummy_path)
+
+            else:
+
+                return_list.append('')
+
+        else:
+
+            return_list.append(media_data_obj.get_actual_dir(self.app_obj))
+
+        # Source URL. This function should not receive a media.Folder, but
+        #   check for that possibility anyway
+        if isinstance(media_data_obj, media.Folder) \
+        or media_data_obj.source is None:
+            return_list.append('')
+        else:
+            return_list.append(media_data_obj.source)
+
+        # Name
+        return_list.append(media_data_obj.name)
+
+        return return_list
+
+
     def get_selected_videos_in_treeview(self, treeview, column):
 
         """Called by self.on_results_list_drag_data_get() and
@@ -20430,83 +20838,6 @@ class MainWin(Gtk.ApplicationWindow):
         return text
 
 
-    def get_media_drag_data_as_list(self, media_data_obj):
-
-        """Called by self.errors_list_add_operation_msg().
-
-        When a media data object (video, channel or playlist) generates an
-        error, that error can be displayed in the Errors List.
-
-        The user may want to drag-and-drop the error messages to an external
-        application, revealing information about the media data object that
-        generated the error (e.g. the URL of a video). However, the error
-        might still be visible after the media data object has been deleted.
-
-        Therefore, we store any data that we might later want to drag-and-drop
-        in three hidden columns of the errors list.
-
-        This function returns a list of three values, one for each column. Each
-        value may be an empty string or a useable value.
-
-        Args:
-
-            media_data_obj (media.Video, media.Channel, media.Playlist):
-                The media data object that generated an error
-
-        Return values:
-
-            A list of three values, one for each hidden column. Each value is
-                a string (which might be empty):
-
-                1. Full file path for a video, or the full path to the
-                    directory for a channel/playlist
-                2. The media data object's source URL
-                3. The media data object's name
-
-        """
-
-        return_list = []
-
-        # Full file path
-        if not self.app_obj.drag_video_path_flag:
-
-            return_list.append('')
-
-        elif isinstance(media_data_obj, media.Video):
-
-            if not media_data_obj.dummy_flag \
-            and media_data_obj.file_name is not None:
-
-                return_list.append(
-                    media_data_obj.get_actual_path(self.app_obj),
-                )
-
-            elif media_data_obj.dummy_flag \
-            and media_data_obj.dummy_path is not None:
-                return_list.append(media_data_obj.dummy_path)
-
-            else:
-
-                return_list.append('')
-
-        else:
-
-            return_list.append(media_data_obj.get_actual_dir(self.app_obj))
-
-        # Source URL. This function should not receive a media.Folder, but
-        #   check for that possibility anyway
-        if isinstance(media_data_obj, media.Folder) \
-        or media_data_obj.source is None:
-            return_list.append('')
-        else:
-            return_list.append(media_data_obj.source)
-
-        # Name
-        return_list.append(media_data_obj.name)
-
-        return return_list
-
-
     # Set accessors
 
 
@@ -20562,6 +20893,18 @@ class MainWin(Gtk.ApplicationWindow):
                 self.wiz_win_obj = None
 
 
+    def reset_video_catalogue_drag_list(self):
+
+        """Can be called by anything.
+
+        Dragging from the Video Catalogue into the Video Index is handled by
+        storing a list of videos involved, at the start of the drag. The list
+        is no longer required, so reset it.
+        """
+
+        self.video_catalogue_drag_list = []
+
+
     def set_previous_alt_dest_dbid(self, value):
 
         """Called by functions in SetDestinationDialogue.
@@ -20597,18 +20940,6 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.video_catalogue_drag_list = video_list.copy()
-
-
-    def reset_video_catalogue_drag_list(self):
-
-        """Can be called by anything.
-
-        Dragging from the Video Catalogue into the Video Index is handled by
-        storing a list of videos involved, at the start of the drag. The list
-        is no longer required, so reset it.
-        """
-
-        self.video_catalogue_drag_list = []
 
 
 class SimpleCatalogueItem(object):
@@ -26903,6 +27234,8 @@ class AddChannelDialogue(Gtk.Dialog):
         # ---------------
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
+        # The media.Folder selected in the combobox (if any)
+        self.parent_name = None        
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -26934,23 +27267,23 @@ class AddChannelDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label(_('Enter the channel name'))
-        grid.attach(label, 0, 0, 2, 1)
+        grid.attach(label, 0, 0, 1, 1)
         label2 = Gtk.Label()
-        grid.attach(label2, 0, 1, 2, 1)
+        grid.attach(label2, 0, 1, 1, 1)
         label2.set_markup(
             '<i>' + _('(Use the channel\'s real name or a customised name)') \
             + '</i>',
         )
 
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 2, 2, 1)
+        grid.attach(self.entry, 0, 2, 1, 1)
         self.entry.set_hexpand(True)
 
         label3 = Gtk.Label(_('Copy and paste a link to the channel'))
-        grid.attach(label3, 0, 3, 2, 1)
+        grid.attach(label3, 0, 3, 1, 1)
 
         self.entry2 = Gtk.Entry()
-        grid.attach(self.entry2, 0, 4, 2, 1)
+        grid.attach(self.entry2, 0, 4, 1, 1)
         self.entry2.set_hexpand(True)
         self.entry2.connect('changed', self.on_entry2_changed, grid)
 
@@ -26991,12 +27324,12 @@ class AddChannelDialogue(Gtk.Dialog):
             )
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 6, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 6, 1, 1)
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
         # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'Temporary Videos' is the first one in the
+        #   in the list. If not, 'No parent videos' is the first one in the
         #   list
         for name, dbid in main_win_obj.app_obj.media_name_dict.items():
             media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
@@ -27019,42 +27352,54 @@ class AddChannelDialogue(Gtk.Dialog):
         if suggest_parent_name is not None:
             self.folder_list.insert(0, suggest_parent_name)
 
+        # Store the combobox's selected item, so the calling function can
+        #   retrieve it.
+        self.parent_name = self.folder_list[0]
+
         label4 = Gtk.Label(_('(Optional) Add this channel inside a folder'))
-        grid.attach(label4, 0, 7, 2, 1)
+        grid.attach(label4, 0, 7, 1, 1)
 
-        box2 = Gtk.Box()
-        grid.attach(box2, 0, 8, 1, 1)
-        box2.set_border_width(main_win_obj.spacing_size)
-
-        image2 = Gtk.Image()
-        box2.add(image2)
-        image2.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
-
-        listmodel = Gtk.ListStore(str)
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         for item in self.folder_list:
-            listmodel.append([item])
+
+            if item == '':
+                pixbuf = main_win_obj.pixbuf_dict['slice_small']
+                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+
+            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+                pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
+                listmodel.append( [pixbuf, '  ' + item] )
+                
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+                listmodel.append( [pixbuf, '  ' + item] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 1, 8, 1, 1)
+        grid.attach(combo, 0, 8, 1, 1)
         combo.set_hexpand(True)
 
-        cell = Gtk.CellRendererText()
-        combo.pack_start(cell, False)
-        combo.add_attribute(cell, 'text', 0)
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 1)
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 9, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 9, 1, 1)
 
         self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
             None,
             _('Enable video downloads for this channel'),
         )
-        grid.attach(self.radiobutton, 0, 10, 2, 1)
+        grid.attach(self.radiobutton, 0, 10, 1, 1)
 
         self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
-        grid.attach(self.radiobutton2, 0, 11, 2, 1)
+        grid.attach(self.radiobutton2, 0, 11, 1, 1)
         self.radiobutton2.set_label(
             _('Don\'t download the videos, just check them'),
         )
@@ -27062,10 +27407,10 @@ class AddChannelDialogue(Gtk.Dialog):
             self.radiobutton2.set_active(True)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 12, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 12, 1, 1)
 
         self.checkbutton = Gtk.CheckButton()
-        grid.attach(self.checkbutton, 0, 13, 2, 1)
+        grid.attach(self.checkbutton, 0, 13, 1, 1)
         self.checkbutton.set_label(_('Enable automatic copy/paste'))
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
         if monitor_flag:
@@ -27583,7 +27928,7 @@ class AddFolderDialogue(Gtk.Dialog):
         # ---------------
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
-        # The media.Folder selected in the combobox
+        # The media.Folder selected in the combobox (if any)
         self.parent_name = None
 
 
@@ -27612,21 +27957,21 @@ class AddFolderDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label(_('Enter the folder name'))
-        grid.attach(label, 0, 0, 2, 1)
+        grid.attach(label, 0, 0, 1, 1)
 
         # (Store various widgets as IVs, so the calling function can retrieve
         #   their contents)
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 1, 2, 1)
+        grid.attach(self.entry, 0, 1, 1, 1)
         self.entry.set_hexpand(True)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 2, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 2, 1, 1)
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
         # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'Temporary Videos' is the first one in the
+        #   in the list. If not, 'No parent videos' is the first one in the
         #   list
         for name, dbid in main_win_obj.app_obj.media_name_dict.items():
             media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
@@ -27656,44 +28001,52 @@ class AddFolderDialogue(Gtk.Dialog):
         label4 = Gtk.Label(
             _('(Optional) Add this folder inside another folder'),
         )
-        grid.attach(label4, 0, 3, 2, 1)
+        grid.attach(label4, 0, 3, 1, 1)
 
-        box = Gtk.Box()
-        grid.attach(box, 0, 4, 1, 1)
-        box.set_border_width(main_win_obj.spacing_size)
-
-        image = Gtk.Image()
-        box.add(image)
-        image.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
-
-        listmodel = Gtk.ListStore(str)
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         for item in self.folder_list:
-            listmodel.append([item])
+
+            if item == '':
+                pixbuf = main_win_obj.pixbuf_dict['slice_small']
+                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+
+            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+                pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
+                listmodel.append( [pixbuf, '  ' + item] )
+                
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+                listmodel.append( [pixbuf, '  ' + item] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 1, 4, 1, 1)
+        grid.attach(combo, 0, 4, 1, 1)
         combo.set_hexpand(True)
 
-        cell = Gtk.CellRendererText()
-        combo.pack_start(cell, False)
-        combo.add_attribute(cell, 'text', 0)
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 1)
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 5, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 5, 1, 1)
 
         self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
             None,
             _('Enable video downloads for this folder'),
         )
-        grid.attach(self.radiobutton, 0, 6, 2, 1)
+        grid.attach(self.radiobutton, 0, 6, 1, 1)
 
         self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
         self.radiobutton2.set_label(
             _('Don\'t download the videos, just check them'),
         )
-        grid.attach(self.radiobutton2, 0, 7, 2, 1)
+        grid.attach(self.radiobutton2, 0, 7, 1, 1)
 
         # Display the dialogue window
         self.show_all()
@@ -27767,6 +28120,8 @@ class AddPlaylistDialogue(Gtk.Dialog):
         # ---------------
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
+        # The media.Folder selected in the combobox (if any)
+        self.parent_name = None        
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -27798,23 +28153,23 @@ class AddPlaylistDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label(_('Enter the playlist name'))
-        grid.attach(label, 0, 0, 2, 1)
+        grid.attach(label, 0, 0, 1, 1)
         label2 = Gtk.Label()
-        grid.attach(label2, 0, 1, 2, 1)
+        grid.attach(label2, 0, 1, 1, 1)
         label2.set_markup(
             '<i>' + _('(Use the playlist\'s real name or a customised name)') \
             + '</i>',
         )
 
         self.entry = Gtk.Entry()
-        grid.attach(self.entry, 0, 2, 2, 1)
+        grid.attach(self.entry, 0, 2, 1, 1)
         self.entry.set_hexpand(True)
 
         label3 = Gtk.Label(_('Copy and paste a link to the playlist'))
-        grid.attach(label3, 0, 3, 2, 1)
+        grid.attach(label3, 0, 3, 1, 1)
 
         self.entry2 = Gtk.Entry()
-        grid.attach(self.entry2, 0, 4, 2, 1)
+        grid.attach(self.entry2, 0, 4, 1, 1)
         self.entry2.set_hexpand(True)
 
         # Drag-and-drop onto the entry inevitably inserts a URL in the
@@ -27829,12 +28184,12 @@ class AddPlaylistDialogue(Gtk.Dialog):
         self.drag_dest_add_text_targets()
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 5, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 5, 1, 1)
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
         # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'Temporary Videos' is the first one in the
+        #   in the list. If not, 'No parent videos' is the first one in the
         #   list
         for name, dbid in main_win_obj.app_obj.media_name_dict.items():
             media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
@@ -27857,42 +28212,54 @@ class AddPlaylistDialogue(Gtk.Dialog):
         if suggest_parent_name is not None:
             self.folder_list.insert(0, suggest_parent_name)
 
+        # Store the combobox's selected item, so the calling function can
+        #   retrieve it.
+        self.parent_name = self.folder_list[0]
+
         label4 = Gtk.Label(_('(Optional) Add this playlist inside a folder'))
-        grid.attach(label4, 0, 6, 2, 1)
+        grid.attach(label4, 0, 6, 1, 1)
 
-        box = Gtk.Box()
-        grid.attach(box, 0, 7, 1, 1)
-        box.set_border_width(main_win_obj.spacing_size)
-
-        image = Gtk.Image()
-        box.add(image)
-        image.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
-
-        listmodel = Gtk.ListStore(str)
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         for item in self.folder_list:
-            listmodel.append([item])
+
+            if item == '':
+                pixbuf = main_win_obj.pixbuf_dict['slice_small']
+                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+
+            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+                pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
+                listmodel.append( [pixbuf, '  ' + item] )
+                
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+                listmodel.append( [pixbuf, '  ' + item] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 1, 7, 1, 1)
+        grid.attach(combo, 0, 7, 1, 1)
         combo.set_hexpand(True)
 
-        cell = Gtk.CellRendererText()
-        combo.pack_start(cell, False)
-        combo.add_attribute(cell, 'text', 0)
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 1)
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 8, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 8, 1, 1)
 
         self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
             None,
             _('Enable video downloads for this playlist'),
         )
-        grid.attach(self.radiobutton, 0, 9, 2, 1)
+        grid.attach(self.radiobutton, 0, 9, 1, 1)
 
         self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
-        grid.attach(self.radiobutton2, 0, 10, 2, 1)
+        grid.attach(self.radiobutton2, 0, 10, 1, 1)
         self.radiobutton2.set_label(
             _('Don\'t download the videos, just check them'),
         )
@@ -27900,10 +28267,10 @@ class AddPlaylistDialogue(Gtk.Dialog):
             self.radiobutton2.set_active(True)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 11, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 11, 1, 1)
 
         self.checkbutton = Gtk.CheckButton()
-        grid.attach(self.checkbutton, 0, 12, 2, 1)
+        grid.attach(self.checkbutton, 0, 12, 1, 1)
         self.checkbutton.set_label(_('Enable automatic copy/paste'))
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
         if monitor_flag:
@@ -28234,7 +28601,7 @@ class AddVideoDialogue(Gtk.Dialog):
         grid.set_row_spacing(main_win_obj.spacing_size)
 
         label = Gtk.Label(_('Copy and paste the links to one or more videos'))
-        grid.attach(label, 0, 0, 2, 1)
+        grid.attach(label, 0, 0, 1, 1)
 
         if main_win_obj.app_obj.operation_convert_mode == 'channel':
 
@@ -28266,10 +28633,10 @@ class AddVideoDialogue(Gtk.Dialog):
 
         label = Gtk.Label()
         label.set_markup('<i>' + text + '</i>')
-        grid.attach(label, 0, 1, 2, 1)
+        grid.attach(label, 0, 1, 1, 1)
 
         frame = Gtk.Frame()
-        grid.attach(frame, 0, 2, 2, 1)
+        grid.attach(frame, 0, 2, 1, 1)
 
         scrolledwindow = Gtk.ScrolledWindow()
         frame.add(scrolledwindow)
@@ -28305,7 +28672,7 @@ class AddVideoDialogue(Gtk.Dialog):
         self.drag_dest_add_text_targets()
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 3, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 3, 1, 1)
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folders 'Unsorted Videos' and 'Temporary
@@ -28349,50 +28716,62 @@ class AddVideoDialogue(Gtk.Dialog):
         self.parent_name = self.folder_list[0]
 
         label2 = Gtk.Label(_('Add the videos to this folder'))
-        grid.attach(label2, 0, 4, 2, 1)
+        grid.attach(label2, 0, 4, 1, 1)
 
-        box = Gtk.Box()
-        grid.attach(box, 0, 5, 1, 1)
-        box.set_border_width(main_win_obj.spacing_size)
-
-        image = Gtk.Image()
-        box.add(image)
-        image.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
-
-        listmodel = Gtk.ListStore(str)
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         for item in self.folder_list:
-            listmodel.append([item])
+            
+            if item == '':
+                pixbuf = main_win_obj.pixbuf_dict['slice_small']
+                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+
+            elif item == main_win_obj.app_obj.fixed_misc_folder.name:
+                pixbuf = main_win_obj.pixbuf_dict['folder_green_small']
+                listmodel.append( [pixbuf, '  ' + item] )
+
+            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+                pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
+                listmodel.append( [pixbuf, '  ' + item] )
+                
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+                listmodel.append( [pixbuf, '  ' + item] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
-        grid.attach(combo, 1, 5, 1, 1)
+        grid.attach(combo, 0, 5, 1, 1)
         combo.set_hexpand(True)
+                        
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
 
-        cell = Gtk.CellRendererText()
-        combo.pack_start(cell, False)
-        combo.add_attribute(cell, 'text', 0)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 1)
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 6, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 6, 1, 1)
 
         self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
             None,
             _('I want to download these videos'),
         )
-        grid.attach(self.radiobutton, 0, 7, 2, 1)
+        grid.attach(self.radiobutton, 0, 7, 1, 1)
 
         self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
         self.radiobutton2.set_label(
             _('Don\'t download the videos, just check them'),
         )
-        grid.attach(self.radiobutton2, 0, 8, 2, 1)
+        grid.attach(self.radiobutton2, 0, 8, 1, 1)
 
         # Separator
-        grid.attach(Gtk.HSeparator(), 0, 9, 2, 1)
+        grid.attach(Gtk.HSeparator(), 0, 9, 1, 1)
 
         self.checkbutton = Gtk.CheckButton()
-        grid.attach(self.checkbutton, 0, 10, 2, 1)
+        grid.attach(self.checkbutton, 0, 10, 1, 1)
         self.checkbutton.set_label(_('Enable automatic copy/paste'))
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
 
@@ -28859,6 +29238,150 @@ class CalendarDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+class CreateProfileDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.on_menu_create_profile().
+
+    Python class handling a dialogue window that prompts the user to create a
+    profile, remembering which media.Channel, media.Playlist and media.Folder
+    objects are currently marked.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj):
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - other
+        # ---------------
+        # The user's choice of name. Set to None when the entry box is empty
+        self.profile_name = None
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Create profile'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(True)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        grid.attach(label, 0, 1, 1, 1)
+        label.set_markup(_('Items currently marked:'))
+        label.set_alignment(0, 0.5)
+        
+        scrolled = Gtk.ScrolledWindow()
+        grid.attach(scrolled, 0, 2, 1, 1)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_hexpand(True)
+        scrolled.set_vexpand(True)
+        scrolled.set_size_request(-1, 150)
+
+        frame = Gtk.Frame()
+        scrolled.add_with_viewport(frame)
+
+        treeview = Gtk.TreeView()
+        frame.add(treeview)
+        treeview.set_can_focus(False)
+
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        column_pixbuf = Gtk.TreeViewColumn(
+            _('Type'),
+            renderer_pixbuf,
+            pixbuf=0,
+        )
+        treeview.append_column(column_pixbuf)
+
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn(
+            _('Name'),
+            renderer_text,
+            text=1,
+        )
+        treeview.append_column(column_text)
+
+        liststore = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
+        treeview.set_model(liststore)
+
+        for name in sorted(main_win_obj.video_index_marker_dict):
+            dbid = main_win_obj.app_obj.media_name_dict[name]
+            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
+
+            if isinstance(media_data_obj, media.Channel):
+                pixbuf = main_win_obj.pixbuf_dict['channel_small']
+            elif isinstance(media_data_obj, media.Playlist):
+                pixbuf = main_win_obj.pixbuf_dict['playlist_small']
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+
+            liststore.append( [pixbuf, name] )
+
+        label2 = Gtk.Label()
+        grid.attach(label2, 0, 3, 1, 1)
+        label2.set_markup(_('Remember these items with a profile named:'))
+        label2.set_alignment(0, 0.5)
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 4, 1, 1)
+        entry.set_hexpand(True)
+        entry.grab_focus()
+        entry.connect('changed', self.on_entry_changed)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Callback class methods
+
+
+    def on_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Updates IVs.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        name = entry.get_text()
+        if name == '':
+            self.profile_name = None
+        else:
+            self.profile_name = name
 
 
 class DeleteContainerDialogue(Gtk.Dialog):

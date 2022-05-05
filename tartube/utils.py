@@ -307,6 +307,8 @@ def check_url(url):
 
     """
 
+    url = strip_whitespace(url)
+
     # Based on various methods suggested by
     # https://stackoverflow.com/questions/25259134/
     #   how-can-i-check-whether-a-url-is-valid-using-urlparse
@@ -320,6 +322,7 @@ def check_url(url):
         is_valid = (
             all([final_url.scheme, final_url.netloc, final_url.path])
             and len(final_url.netloc.split(".")) > 1
+            and not re.search(r'\s', url)
         )
 
         return is_valid

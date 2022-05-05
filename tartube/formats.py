@@ -1019,11 +1019,11 @@ STOCK_ICON_DICT = {
     'stock_media_play': 'media_play_small.png',
     'stock_media_stop': 'media_stop_small.png',
     'stock_open': 'open_small.png',
-    'stock_properties': 'properties_large.png',
+    'stock_properties': 'properties.png',
+    'stock_properties_large': 'properties_large.png',
     'stock_redo': 'resort_small.png',           # Used for a sorting button
     'stock_refresh': 'refresh_small.png',
     'stock_show_filter': 'show_filter_small.png',
-    'stock_spell_check': 'spell_check_small.png',
 }
 
 if xmas_flag:

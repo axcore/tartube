@@ -454,9 +454,9 @@ class RefreshManager(threading.Thread):
                     ),
                 )
 
-                # If the video's JSON file exists downloaded, we can extract
+                # If the video's JSON file has been downloaded, we can extract
                 #   video statistics from it
-                self.app_obj.update_video_from_json(video_obj, 'chapters')
+                self.app_obj.update_video_from_json(video_obj)
 
                 # For any of those statistics that haven't been set (because
                 #   the JSON file was missing or didn't contain the right
