@@ -83,7 +83,7 @@ class FileManager(threading.Thread):
         with open(
             full_path,
             'r',
-            encoding=utils.get_encoding(),
+            encoding="UTF-8", # was utils.get_encoding(), force reading as UTF-8 to fix issues with 2022 yt-dlp changes
             errors='ignore',
         ) as json_file:
 
@@ -118,7 +118,7 @@ class FileManager(threading.Thread):
         with open(
             full_path,
             'r',
-            encoding=utils.get_encoding(),
+            encoding="UTF-8", # was utils.get_encoding(), force reading as UTF-8 to fix issues with 2022 yt-dlp changes
             errors='ignore',
         ) as text_file:
 
