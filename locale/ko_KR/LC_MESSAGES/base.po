@@ -4757,7 +4757,7 @@ msgid "Release time (UNIX timestamp)"
 msgstr "릴리즈 날짜 (UNIX 타임스탬프)"
 
 #: .././config.py:5264
-msgid "Upload data (YYYYMMDD)"
+msgid "Upload date (YYYYMMDD)"
 msgstr "업로드 날짜 (YYYYMMDD)"
 
 #: .././config.py:5265

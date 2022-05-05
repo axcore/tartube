@@ -4708,7 +4708,7 @@ msgid "Release time (UNIX timestamp)"
 msgstr ""
 
 #: .././config.py:5264
-msgid "Upload data (YYYYMMDD)"
+msgid "Upload date (YYYYMMDD)"
 msgstr ""
 
 #: .././config.py:5265

@@ -5261,7 +5261,7 @@ class OptionsEditWin(GenericEditWin):
             [
                 'release_date',     _('Release date (YYYYMMDD)'),
                 'timestamp',        _('Release time (UNIX timestamp)'),
-                'upload_date',      _('Upload data (YYYYMMDD)'),
+                'upload_date',      _('Upload date (YYYYMMDD)'),
                 'duration',         _('Video length (seconds)'),
                 'location',         _('Filming location'),
             ],

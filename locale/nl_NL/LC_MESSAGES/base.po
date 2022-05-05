@@ -4810,7 +4810,7 @@ msgid "Release time (UNIX timestamp)"
 msgstr "Uitgebracht om (UNIX-tijdstempel)"
 
 #: .././config.py:5264
-msgid "Upload data (YYYYMMDD)"
+msgid "Upload date (YYYYMMDD)"
 msgstr "Uploaddatums (JJJJMMDD)"
 
 #: .././config.py:5265
