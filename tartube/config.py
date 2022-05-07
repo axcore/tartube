@@ -14005,11 +14005,16 @@ class VideoEditWin(GenericEditWin):
             0, 0, 1, 1,
         )
         entry2.set_editable(False)
-        metadata_path = self.edit_obj.get_actual_path_by_ext(
-            self.app_obj,
-            '.info.json',
-        )
-        if metadata_path:
+        # Handle exception if the video object doesn't have a video file associated with it
+        try:
+            metadata_path = self.edit_obj.get_actual_path_by_ext(
+                self.app_obj,
+                '.info.json',
+            )
+        except TypeError:
+            print("TypeError getting metadata_path in setup_general_tab")
+            metadata_path = "" # Needs to be empty to avoid reference before assigned error later
+        else:
             entry2.set_text(metadata_path)
 
         if not self.app_obj.show_custom_icons_flag:
