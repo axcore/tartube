@@ -452,6 +452,10 @@ class TartubeApp(Gtk.Application):
         # In the Video Catalogue, flag set to True if channel/playlist names
         #   should be clickable (in grid mode only)
         self.catalogue_clickable_container_flag = True
+        # In the Video Catalogue, flag set to True if the video .nickname
+        #   should be displayed, or False if the video .name should be
+        #   displayed
+        self.catalogue_show_nickname_flag = True
 
         # Flags specifying what data should be transferred to an external
         #   application, if videos are dragged there from the Video Catalogue
@@ -1520,7 +1524,7 @@ class TartubeApp(Gtk.Application):
         #   profile, when the database is loaded
         self.auto_switch_profile_flag = False
         # Maximum number of profiles (a constant value)
-        self.profile_max = 16 
+        self.profile_max = 16
 
         # Download Options and Options Managers
         # During a download operation, youtube-dl is supplied with a set of
@@ -4153,6 +4157,9 @@ class TartubeApp(Gtk.Application):
         if version >= 2003232:  # v2.3.232
             self.catalogue_clickable_container_flag \
             = json_dict['catalogue_clickable_container_flag']
+        if version >= 2004025:  # v2.4.025
+            self.catalogue_show_nickname_flag \
+            = json_dict['catalogue_show_nickname_flag']
 
         if version >= 2002028:  # v2.2.128
             self.drag_video_path_flag = json_dict['drag_video_path_flag']
@@ -5296,6 +5303,7 @@ class TartubeApp(Gtk.Application):
             'catalogue_draw_blocked_flag': self.catalogue_draw_blocked_flag,
             'catalogue_clickable_container_flag': \
             self.catalogue_clickable_container_flag,
+            'catalogue_show_nickname_flag': self.catalogue_show_nickname_flag,
 
             'drag_video_path_flag': self.drag_video_path_flag,
             'drag_video_source_flag': self.drag_video_source_flag,
@@ -5421,7 +5429,7 @@ class TartubeApp(Gtk.Application):
 
             'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
             'show_msys2_dialogue_flag': self.show_msys2_dialogue_flag,
-            
+
             'auto_switch_profile_flag': self.auto_switch_profile_flag,
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
@@ -6003,7 +6011,7 @@ class TartubeApp(Gtk.Application):
             #   required
             if self.auto_switch_profile_flag and self.last_profile is not None:
                 self.main_win_obj.switch_profile(self.last_profile)
-                            
+
             # Repopulate the Drag and Drop tab
             self.main_win_obj.drag_drop_grid_reset()
 
@@ -14774,7 +14782,7 @@ class TartubeApp(Gtk.Application):
         # Update any profiles that depend on this container
         delete_list = []
         for profile_name in self.profile_dict.keys():
-            
+
             dbid_list = self.profile_dict[profile_name]
             if media_data_obj.dbid in dbid_list:
                 dbid_list.remove(media_data_obj.dbid)
@@ -19012,7 +19020,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-            
+
 
     def apply_classic_custom_dl_manager(self, custom_dl_obj):
 
@@ -19104,7 +19112,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-	
+
         return custom_dl_obj
 
 
@@ -19229,7 +19237,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-	
+
 
     def export_custom_dl_manager(self, custom_dl_obj):
 
@@ -19487,21 +19495,21 @@ class TartubeApp(Gtk.Application):
             return self.app_obj.system_error(
                 999,
                 'Number of profiles exceeds maximum',
-            )            
+            )
 
         self.profile_dict[profile_name] = dbid_list
         self.last_profile = profile_name
 
         # Update the main menu (which lists profiles)
-        self.main_win_obj.update_menu()            
+        self.main_win_obj.update_menu()
 
-        
+
     def delete_profile(self, profile_name):
 
         """Called by mainwin.MainWin.on_delete_profile_menu_select().
 
         Deletes the specified profile.
-        
+
 
         Args:
 
@@ -19521,9 +19529,9 @@ class TartubeApp(Gtk.Application):
             self.last_profile = None
 
         # Update the main menu (which lists profiles)
-        self.main_win_obj.update_menu()            
+        self.main_win_obj.update_menu()
 
-        
+
     # (Download options manager objects)
 
 
@@ -23133,7 +23141,7 @@ class TartubeApp(Gtk.Application):
         """Called from a callback in self.do_startup().
 
         Sets the flag which switches to a profile on startup.
-        
+
         Args:
 
             action (Gio.SimpleAction): Object generated by Gio
@@ -23147,7 +23155,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.auto_switch_profile_flag = True
 
-        
+
     def on_menu_create_profile(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23187,8 +23195,8 @@ class TartubeApp(Gtk.Application):
                 'ok',
             )
 
-            return            
-                        
+            return
+
         # Prompt the user to choose a profile name
         dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -23228,8 +23236,8 @@ class TartubeApp(Gtk.Application):
             'info',
             'ok',
         )
-        
-        
+
+
     def on_menu_cancel_live(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23426,8 +23434,8 @@ class TartubeApp(Gtk.Application):
                 'ok',
             )
 
-            return            
-                        
+            return
+
         # Prompt the user to choose a profile name
         dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -23467,8 +23475,8 @@ class TartubeApp(Gtk.Application):
             'info',
             'ok',
         )
-                            
-        
+
+
     def on_menu_custom_dl_all(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -24746,6 +24754,20 @@ class TartubeApp(Gtk.Application):
             self.catalogue_clickable_container_flag = False
         else:
             self.catalogue_clickable_container_flag = True
+
+        # Re-draw the Video Catalogue to implement the new setting
+        if self.main_win_obj.video_index_current is not None:
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current,
+            )
+
+
+    def set_catalogue_show_nickname_flag(self, flag):
+
+        if not flag:
+            self.catalogue_show_nickname_flag = False
+        else:
+            self.catalogue_show_nickname_flag = True
 
         # Re-draw the Video Catalogue to implement the new setting
         if self.main_win_obj.video_index_current is not None:

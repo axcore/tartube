@@ -14005,23 +14005,26 @@ class VideoEditWin(GenericEditWin):
             0, 0, 1, 1,
         )
         entry2.set_editable(False)
-        metadata_path = self.edit_obj.get_actual_path_by_ext(
-            self.app_obj,
-            '.info.json',
-        )
-        if metadata_path:
-            entry2.set_text(metadata_path)
+
+        metadata_path = None
+        if self.retrieve_val('file_name') is not None:
+            metadata_path = self.edit_obj.get_actual_path_by_ext(
+                self.app_obj,
+                '.info.json',
+            )
+            if metadata_path:
+                entry2.set_text(metadata_path)
 
         if not self.app_obj.show_custom_icons_flag:
             button2 = Gtk.Button.new_from_icon_name(
-                Gtk.STOCK_OPEN,
+                Gtk.STOCK_FILE,
                 Gtk.IconSize.BUTTON,
             )
         else:
             button2 = Gtk.Button.new()
             button2.set_image(
                 Gtk.Image.new_from_pixbuf(
-                    self.app_obj.main_win_obj.pixbuf_dict['stock_open'],
+                    self.app_obj.main_win_obj.pixbuf_dict['stock_file'],
                 ),
             )
 
@@ -14032,7 +14035,7 @@ class VideoEditWin(GenericEditWin):
         if not metadata_path:
             button2.set_sensitive(False)
         # (Signal connect appears below)
-                                
+
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
         grid4 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
@@ -14186,16 +14189,7 @@ class VideoEditWin(GenericEditWin):
         entry8.set_text(' '.join(self.edit_obj.subs_list))
 
         # (Signal connect from above)
-        button.connect(
-            'clicked',
-            self.on_file_button_clicked,
-            button2,
-            entry,
-            entry2,
-            entry3,
-            entry4,
-            entry5,
-        )
+        button.connect('clicked', self.on_file_button_clicked)
         button2.connect('clicked', self.on_metadata_button_clicked)
 
 
@@ -15901,8 +15895,7 @@ class VideoEditWin(GenericEditWin):
         self.setup_timestamps_tab_update_treeview()
 
 
-    def on_file_button_clicked(self, button, button2, entry, entry2, entry3, \
-    entry4, entry5):
+    def on_file_button_clicked(self, button):
 
         """Called from a callback in self.setup_general_tab().
 
@@ -15912,11 +15905,6 @@ class VideoEditWin(GenericEditWin):
         Args:
 
             button (Gtk.Button): The widget clicked
-
-            button2 (Gtk.Button): Another widget to update
-
-            entry, entry2, entry3, entry4, entry5 (Gtk.Entry): Other widgets to
-                update
 
         """
 
@@ -15979,46 +15967,15 @@ class VideoEditWin(GenericEditWin):
 
             # Extract video statistics from the metadata file
             self.app_obj.update_video_from_json(self.edit_obj)
-            
+
             # Set the new file's size, duration, and so on. The True argument
             #   instructs the function to override existing values
-            self.app_obj.update_video_from_filesystem(
-                self.edit_obj,
-                new_path,
-                True,
-            )
-
-            # Update the entry boxes
-            entry.set_text(self.edit_obj.get_actual_path(self.app_obj))
-
-            metadata_path = self.edit_obj.get_actual_path_by_ext(
-                self.app_obj,
-                '.info.json',
-            )
-            if metadata_path:
-                entry2.set_text(metadata_path)
-                button2.set_sensitive(True)
-            else:
-                entry2.set_text('')
-                button2.set_sensitive(False)
-            
-            if self.edit_obj.vid is not None:
-                entry3.set_text(self.edit_obj.vid)
-            else:
-                entry3.set_text('')
-
-            if self.edit_obj.duration is not None:
-                entry4.set_text(
-                    utils.convert_seconds_to_string(self.edit_obj.duration),
+            if self.edit_obj.dl_flag:
+                self.app_obj.update_video_from_filesystem(
+                    self.edit_obj,
+                    new_path,
+                    True,
                 )
-
-            else:
-                entry4.set_text('')
-
-            if self.edit_obj.file_size is not None:
-                entry5.set_text(self.edit_obj.get_file_size_string())
-            else:
-                entry5.set_text('')
 
             # If the video exists, then we can mark it as downloaded
             if not self.edit_obj.dl_flag:
@@ -16030,6 +15987,9 @@ class VideoEditWin(GenericEditWin):
                 self.app_obj.main_win_obj.video_catalogue_update_video,
                 self.edit_obj,
             )
+
+            # Reset this window by abusing the generic code
+            self.reset_with_new_edit_obj(self.edit_obj)
 
 
     def on_format_checkbutton_toggled(self, checkbutton):
@@ -16120,10 +16080,18 @@ class VideoEditWin(GenericEditWin):
 
             # Set the new file's size, duration, and so on. The True argument
             #   instructs the function to override existing values
-            self.app_obj.update_video_from_filesystem(
+            if self.edit_obj.dl_flag:
+                self.app_obj.update_video_from_filesystem(
+                    self.edit_obj,
+                    self.edit_obj.get_actual_path(self.app_obj),
+                    True,
+                )
+
+            # Redraw the video in the Video Catalogue straight away
+            GObject.timeout_add(
+                0,
+                self.app_obj.main_win_obj.video_catalogue_update_video,
                 self.edit_obj,
-                self.edit_obj.get_actual_path(self.app_obj),
-                True,
             )
 
             # Reset this window by abusing the generic code
@@ -21242,6 +21210,14 @@ class SystemPrefWin(GenericPrefWin):
             0, 12, grid_width, 1,
         )
         checkbutton11.connect('toggled', self.on_clickable_button_toggled)
+
+        checkbutton12 = self.add_checkbutton(grid,
+            _('Show nicknames (not video file names)'),
+            self.app_obj.catalogue_show_nickname_flag,
+            True,                   # Can be toggled by user
+            0, 13, grid_width, 1,
+        )
+        checkbutton12.connect('toggled', self.on_nickname_button_toggled)
 
 
     def setup_windows_drag_tab(self, inner_notebook):
@@ -29795,6 +29771,26 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_refresh_moviepy_timeout(
             spinbutton.get_value(),
         )
+
+
+    def on_nickname_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_videos_tab().
+
+        Enables/disables showing video nicknames in the Video Catalogue.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.catalogue_show_nickname_flag:
+            self.app_obj.set_catalogue_show_nickname_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.catalogue_show_nickname_flag:
+            self.app_obj.set_catalogue_show_nickname_flag(False)
 
 
     def on_no_annotations_button_toggled(self, checkbutton):
