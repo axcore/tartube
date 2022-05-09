@@ -155,6 +155,12 @@ if pkg_flag:
     param_list.append(('share/applications', ['pack/tartube.desktop']))
     param_list.append(('share/pixmaps', ['pack/tartube.png']))
     param_list.append(('share/pixmaps', ['pack/tartube.xpm']))
+    # Add flatpak files
+    param_list.append(('share/appdata', ['pack/io.sourceforge.tartube.json']))
+    param_list.append(
+        ('share/metainfo',
+        ['pack/io.sourceforge.tartube.metainfo.xml']),
+    )    
     # Add a manpage
     param_list.append(('share/man/man1', ['pack/tartube.1']))
 
@@ -185,7 +191,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name='tartube',
-    version='2.4.031',
+    version='2.4.035',
     description='GUI front-end for youtube-dl',
     long_description=long_description,
     long_description_content_type='text/plain',

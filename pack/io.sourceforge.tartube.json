@@ -1,5 +1,5 @@
 {
-    "app-id" : "com.github.axcore.tartube",
+    "app-id" : "io.sourceforge.tartube",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "42",
     "sdk" : "org.gnome.Sdk",
@@ -92,7 +92,7 @@
             "name" : "tartube",
             "builddir" : true,
             "buildsystem" : "simple",
-            "build-commands": [],
+            "build-commands": ["TARTUBE_PKG=1 pip3 install --prefix=/app --no-deps ."],
             "sources" : [
                 {
                     "type" : "git",

@@ -14035,7 +14035,7 @@ class VideoEditWin(GenericEditWin):
         if not metadata_path:
             button2.set_sensitive(False)
         # (Signal connect appears below)
-
+                                
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
         grid4 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
@@ -15967,7 +15967,7 @@ class VideoEditWin(GenericEditWin):
 
             # Extract video statistics from the metadata file
             self.app_obj.update_video_from_json(self.edit_obj)
-
+            
             # Set the new file's size, duration, and so on. The True argument
             #   instructs the function to override existing values
             if self.edit_obj.dl_flag:
@@ -15990,7 +15990,7 @@ class VideoEditWin(GenericEditWin):
 
             # Reset this window by abusing the generic code
             self.reset_with_new_edit_obj(self.edit_obj)
-
+            
 
     def on_format_checkbutton_toggled(self, checkbutton):
 
@@ -16093,7 +16093,7 @@ class VideoEditWin(GenericEditWin):
                 self.app_obj.main_win_obj.video_catalogue_update_video,
                 self.edit_obj,
             )
-
+            
             # Reset this window by abusing the generic code
             self.reset_with_new_edit_obj(self.edit_obj)
 

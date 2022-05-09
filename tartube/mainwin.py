@@ -1519,7 +1519,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.delete_profile_menu_item.set_submenu(
             self.delete_profile_popup_submenu(),
         )
-
+        
         # Separator
         profile_submenu.append(Gtk.SeparatorMenuItem())
 
@@ -5150,7 +5150,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             profile_name (str): The specified profile (a key in
                 mainapp.TartubeApp.profile_dict).
-
+                
         """
 
         if not profile_name in self.app_obj.profile_dict:
@@ -5438,16 +5438,16 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.custom_dl_all_menu_item.set_submenu(
                 self.custom_dl_popup_submenu(),
-            )
+            )            
 
         if self.switch_profile_menu_item is not None:
-
+            
             self.switch_profile_menu_item.set_submenu(
                 self.switch_profile_popup_submenu(),
             )
 
         if self.delete_profile_menu_item is not None:
-
+            
             self.delete_profile_menu_item.set_submenu(
                 self.delete_profile_popup_submenu(),
             )
@@ -5455,8 +5455,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Make the changes visible
         if self.menubar:
             self.menubar.show_all()
-
-
+        
+    
     def update_window_after_show_hide(self):
 
         """Called by mainapp.TartubeApp.on_menu_hide_system().
@@ -5514,7 +5514,7 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj = self.app_obj.media_reg_dict[dbid]
             self.video_index_select_row(media_data_obj)
 
-
+        
     def update_progress_bar(self, text, count, total):
 
         """Called by downloads.DownloadManager.run(),
@@ -6783,7 +6783,7 @@ class MainWin(Gtk.ApplicationWindow):
         special_submenu.append(reload_metadata_menu_item)
         if self.app_obj.current_manager_obj or self.config_win_list:
             reload_metadata_menu_item.set_sensitive(False)
-
+            
         special_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Special'),
         )
@@ -7056,7 +7056,7 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_submenu.append(test_dl_menu_item)
         if self.app_obj.current_manager_obj:
             test_dl_menu_item.set_sensitive(False)
-
+            
         # Separator
         downloads_submenu.append(Gtk.SeparatorMenuItem())
 
@@ -7421,7 +7421,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Special
         special_submenu = Gtk.Menu()
-
+        
         process_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Process with FFmpeg...'),
         )
@@ -7437,7 +7437,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Separator
         special_submenu.append(Gtk.SeparatorMenuItem())
-
+        
         reload_metadata_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Reload metadata'),
         )
@@ -7458,7 +7458,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj \
         or unavailable_flag:
             special_menu_item.set_sensitive(False)
-
+            
         # Add to Classic Mode tab
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Add to C_lassic Mode tab'),
@@ -7476,7 +7476,7 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(Gtk.SeparatorMenuItem())
 
         if live_flag or live_wait_flag or live_broadcast_flag:
-
+        
             # Livestream
             livestream_submenu = Gtk.Menu()
 
@@ -7507,7 +7507,7 @@ class MainWin(Gtk.ApplicationWindow):
             popup_menu.append(livestream_menu_item)
             if unavailable_flag:
                 livestream_menu_item.set_sensitive(False)
-
+                
         # Download to Temporary Videos
         temp_submenu = Gtk.Menu()
 
@@ -7558,7 +7558,7 @@ class MainWin(Gtk.ApplicationWindow):
         or live_flag \
         or unavailable_flag:
             temp_menu_item.set_sensitive(False)
-
+                        
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8094,7 +8094,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         livestream_menu_item.set_submenu(livestream_submenu)
         popup_menu.append(livestream_menu_item)
-
+                
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8147,7 +8147,7 @@ class MainWin(Gtk.ApplicationWindow):
         or temp_folder_flag \
         or live_flag:
             temp_menu_item.set_sensitive(False)
-
+            
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8763,7 +8763,7 @@ class MainWin(Gtk.ApplicationWindow):
         choose_menu_item.set_sensitive(False)
 
         if self.app_obj.profile_dict:
-
+            
             # Separator
             popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8807,7 +8807,7 @@ class MainWin(Gtk.ApplicationWindow):
         choose_menu_item.set_sensitive(False)
 
         if self.app_obj.profile_dict:
-
+            
             # Separator
             popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -9949,7 +9949,7 @@ class MainWin(Gtk.ApplicationWindow):
                 not isinstance(media_data_obj, media.Folder) \
                 or not media_data_obj.priv_flag
             ) and not media_data_obj.dl_disable_flag:
-
+                                            
                 tree_ref = self.video_index_row_dict[this_name]
                 model = tree_ref.get_model()
                 tree_path = tree_ref.get_path()
@@ -10009,7 +10009,7 @@ class MainWin(Gtk.ApplicationWindow):
                 del self.video_index_marker_dict[name]
 
         if old_size and not self.video_index_marker_dict:
-
+            
             # Update labels on the 'Check all' button, etc
             # The True argument skips the check for the existence of a progress
             #   bar
@@ -10433,7 +10433,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   blocked (according to current settings)
         else:
             child_list = container_obj.get_visible_videos(self.app_obj)
-
+            
         for child_obj in child_list:
             if isinstance(child_obj, media.Video) \
             and (
@@ -11593,7 +11593,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_downloaded_button.set_sensitive(True)
             self.catalogue_undownloaded_button.set_sensitive(True)
             self.catalogue_blocked_button.set_sensitive(True)
-
+                
         # These widgets are sensitised when the filter is applied even if
         #   there are no matching videos
         # (If not, the user would not be able to click the 'Cancel filter'
@@ -17793,7 +17793,7 @@ class MainWin(Gtk.ApplicationWindow):
                 999,
                 'Callback request denied due to current conditions',
             )
-
+            
         # (Use a confirmation dialogue in the same format as used by
         #   self.on_video_catalogue_reload_metadata_multi)
         success_count = 0
@@ -17810,7 +17810,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # (Just assume success, if the metadata file exists)
             success_count = 1
-
+            
             # Extract video statistics from the metadata file
             self.app_obj.update_video_from_json(media_data_obj)
 
@@ -17835,7 +17835,7 @@ class MainWin(Gtk.ApplicationWindow):
             'ok',
             None,                   # Parent window is main window
         )
-
+        
 
     def on_video_catalogue_reload_metadata_multi(self, menu_item, \
     media_data_list):
@@ -17861,7 +17861,7 @@ class MainWin(Gtk.ApplicationWindow):
         success_count = 0
         fail_count = 0
         for video_obj in media_data_list:
-
+                
             if video_obj.file_name is None \
             or not video_obj.check_actual_path_by_ext(
                 self.app_obj,
@@ -19959,7 +19959,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             profile_name (str): The specified profile (a key in
                 mainapp.TartubeApp.profile_dict).
-
+                
         """
 
         # Prompt for confirmation, before deleting
@@ -20480,11 +20480,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             profile_name (str): The specified profile (a key in
                 mainapp.TartubeApp.profile_dict).
-
+                
         """
 
         self.switch_profile(profile_name)
-
+        
 
     def on_system_container_checkbutton_changed(self, checkbutton):
 
@@ -21614,7 +21614,7 @@ class SimpleCatalogueItem(object):
             name = self.video_obj.name
         else:
             name = self.video_obj.nickname
-
+            
         if name is None \
         or name == self.main_win_obj.app_obj.default_video_name:
 
@@ -22460,7 +22460,7 @@ class ComplexCatalogueItem(object):
             name = self.video_obj.name
         else:
             name = self.video_obj.nickname
-
+            
         if name is None \
         or name == self.main_win_obj.app_obj.default_video_name:
 
@@ -25010,7 +25010,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
             name = self.video_obj.name
         else:
             name = self.video_obj.nickname
-
+            
         if name is None or name == app_obj.default_video_name:
 
             if self.video_obj.source is not None:
@@ -27526,7 +27526,7 @@ class AddChannelDialogue(Gtk.Dialog):
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
         # The media.Folder selected in the combobox (if any)
-        self.parent_name = None
+        self.parent_name = None        
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -27660,7 +27660,7 @@ class AddChannelDialogue(Gtk.Dialog):
             elif item == main_win_obj.app_obj.fixed_temp_folder.name:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
                 listmodel.append( [pixbuf, '  ' + item] )
-
+                
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
                 listmodel.append( [pixbuf, '  ' + item] )
@@ -27676,7 +27676,7 @@ class AddChannelDialogue(Gtk.Dialog):
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
         combo.add_attribute(renderer_text, 'text', 1)
-
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
@@ -28304,7 +28304,7 @@ class AddFolderDialogue(Gtk.Dialog):
             elif item == main_win_obj.app_obj.fixed_temp_folder.name:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
                 listmodel.append( [pixbuf, '  ' + item] )
-
+                
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
                 listmodel.append( [pixbuf, '  ' + item] )
@@ -28320,7 +28320,7 @@ class AddFolderDialogue(Gtk.Dialog):
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
         combo.add_attribute(renderer_text, 'text', 1)
-
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
@@ -28412,7 +28412,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
         # The media.Folder selected in the combobox (if any)
-        self.parent_name = None
+        self.parent_name = None        
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -28520,7 +28520,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
             elif item == main_win_obj.app_obj.fixed_temp_folder.name:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
                 listmodel.append( [pixbuf, '  ' + item] )
-
+                
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
                 listmodel.append( [pixbuf, '  ' + item] )
@@ -28536,7 +28536,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
         combo.add_attribute(renderer_text, 'text', 1)
-
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
@@ -29011,7 +29011,7 @@ class AddVideoDialogue(Gtk.Dialog):
 
         listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         for item in self.folder_list:
-
+            
             if item == '':
                 pixbuf = main_win_obj.pixbuf_dict['slice_small']
                 listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
@@ -29023,7 +29023,7 @@ class AddVideoDialogue(Gtk.Dialog):
             elif item == main_win_obj.app_obj.fixed_temp_folder.name:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
                 listmodel.append( [pixbuf, '  ' + item] )
-
+                
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
                 listmodel.append( [pixbuf, '  ' + item] )
@@ -29031,7 +29031,7 @@ class AddVideoDialogue(Gtk.Dialog):
         combo = Gtk.ComboBox.new_with_model(listmodel)
         grid.attach(combo, 0, 5, 1, 1)
         combo.set_hexpand(True)
-
+                        
         renderer_pixbuf = Gtk.CellRendererPixbuf()
         combo.pack_start(renderer_pixbuf, False)
         combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
@@ -29039,7 +29039,7 @@ class AddVideoDialogue(Gtk.Dialog):
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
         combo.add_attribute(renderer_text, 'text', 1)
-
+        
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
@@ -29591,7 +29591,7 @@ class CreateProfileDialogue(Gtk.Dialog):
         grid.attach(label, 0, 1, 1, 1)
         label.set_markup(_('Items currently marked:'))
         label.set_alignment(0, 0.5)
-
+        
         scrolled = Gtk.ScrolledWindow()
         grid.attach(scrolled, 0, 2, 1, 1)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
