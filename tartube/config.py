@@ -5172,18 +5172,19 @@ class OptionsEditWin(GenericEditWin):
             _('File _names'),
             inner_notebook,
         )
-        grid_width = 4
+        grid_width = 2
 
         # File name options
         self.add_label(grid,
             '<u>' + _('File name options') + '</u>',
-            0, 0, grid_width, 1,
+            0, 0, 2, 1,
         )
 
-        self.add_label(grid,
+        label = self.add_label(grid,
             _('Format for video file names'),
-            0, 1, grid_width, 1,
+            0, 1, 1, 1,
         )
+        label.set_hexpand(False)
 
         store = Gtk.ListStore(int, str)
         num_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -5196,38 +5197,41 @@ class OptionsEditWin(GenericEditWin):
             current_template = self.edit_obj.options_dict['output_template']
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 0, 2, grid_width, 1)
+        grid.attach(combo, 0, 2, 1, 1)
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, "text", 1)
         combo.set_entry_text_column(1)
         combo.set_active(num_list.index(current_format))
+        combo.set_hexpand(False)
         # (Signal connect appears below)
         self.add_tooltip('-o, --output TEMPLATE', combo)
 
-        self.add_label(grid,
+        label2 = self.add_label(grid,
             _('File output template'),
-            0, 3, grid_width, 1,
+            1, 1, 1, 1,
         )
+        label2.set_hexpand(True)
 
         entry = self.add_entry(grid,
             None,
-            0, 4, grid_width, 1,
+            1, 2, 1, 1,
         )
         entry.set_text(current_template)
+        entry.set_hexpand(True)
         # (Signal connect appears below)
 
-        # (Signal connects from above)
-        combo.connect('changed', self.on_file_tab_combo_changed, entry)
-        entry.connect('changed', self.on_file_tab_entry_changed)
-
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
+        
         # Add widgets to a list, so we can sensitise them when a custom
         #   template is selected, and desensitise them the rest of the time
         self.template_widget_list = [entry]
 
-        self.add_label(grid,
+        self.add_label(grid2,
             _('Add to template:'),
-            0, 5, 1, 1,
+            0, 0, 1, 1,
         )
 
         master_list = [
@@ -5260,11 +5264,19 @@ class OptionsEditWin(GenericEditWin):
             _('Date/time/location'),
             [
                 'release_date',     _('Release date (YYYYMMDD)'),
+                'release_date_custom',
+                                    _('Release date (custom format)'),
                 'timestamp',        _('Release time (UNIX timestamp)'),
+                'timestamp_custom', _('Release time (custom format)'),
                 'upload_date',      _('Upload date (YYYYMMDD)'),
+                'upload_date_custom',
+                                    _('Upload date (custom format)'),
                 'duration',         _('Video length (seconds)'),
+                'duration_custom',  _('Video length (custom format)'),
                 'location',         _('Filming location'),
             ],
+            _('Time format'),
+            [],
             _('Video format'),
             [
                 'format',           _('Video format'),
@@ -5288,7 +5300,16 @@ class OptionsEditWin(GenericEditWin):
             ],
         ]
 
-        row_num = 4
+        # (Create the entry and its button first, so they are available to the
+        #   callbacks)
+        entry2 = Gtk.Entry()
+        entry2.set_hexpand(True)
+
+        button = Gtk.Button(_('Reset'))
+        button.set_sensitive(False)
+        # (Signal connect appears below)
+
+        row_num = -1
         while master_list:
 
             row_num += 1
@@ -5296,43 +5317,84 @@ class OptionsEditWin(GenericEditWin):
             this_title = master_list.pop(0)
             this_store_list = master_list.pop(0)
 
-            this_store = Gtk.ListStore(str)
-            # (The dictionary is used by self.on_file_tab_button_clicked() to
-            #   translate the visible string into the string youtube-dl uses)
-            this_store_dict = {}
-            while this_store_list:
-                item = this_store_list.pop(0)
-                mod_item = this_store_list.pop(0)
-
-                this_store_dict[mod_item] = item
-                this_store.append( [mod_item] )
-
-            self.add_label(grid,
+            self.add_label(grid2,
                 this_title,
                 1, row_num, 1, 1,
             )
+                
+            if this_title == _('Time format'):
 
-            this_combo = Gtk.ComboBox.new_with_model(this_store)
-            grid.attach(this_combo, 2, row_num, 1, 1)
-            this_renderer_text = Gtk.CellRendererText()
-            this_combo.pack_start(this_renderer_text, True)
-            this_combo.add_attribute(this_renderer_text, "text", 0)
-            this_combo.set_entry_text_column(0)
-            this_combo.set_active(0)
+                grid2.attach(entry2, 2, row_num, 1, 1)
+                grid2.attach(button, 3, row_num, 1, 1)
 
-            this_button = Gtk.Button(_('Add'))
-            grid.attach(this_button, 3, row_num, 1, 1)
-            this_button.connect(
-                'clicked',
-                self.on_file_tab_button_clicked,
-                entry,
-                this_combo,
-                this_store_dict,
-            )
+                self.template_widget_list.append(entry2)
+                self.template_widget_list.append(button)
+                
+            else:
+                
+                this_store = Gtk.ListStore(str)
+                # (The dictionary is used by
+                #   self.on_file_tab_add_button_clicked() to translate the
+                #   visible string into the string youtube-dl uses)
+                this_store_dict = {}
+                while this_store_list:
+                    item = this_store_list.pop(0)
+                    mod_item = this_store_list.pop(0)
 
-            self.template_widget_list.append(this_combo)
-            self.template_widget_list.append(this_button)
+                    this_store_dict[mod_item] = item
+                    this_store.append( [mod_item] )
 
+                this_combo = Gtk.ComboBox.new_with_model(this_store)
+                grid2.attach(this_combo, 2, row_num, 1, 1)
+                this_renderer_text = Gtk.CellRendererText()
+                this_combo.pack_start(this_renderer_text, True)
+                this_combo.add_attribute(this_renderer_text, "text", 0)
+                this_combo.set_entry_text_column(0)
+                this_combo.set_active(0)
+
+                this_button = Gtk.Button(_('Add'))
+                grid2.attach(this_button, 3, row_num, 1, 1)
+                this_button.connect(
+                    'clicked',
+                    self.on_file_tab_add_button_clicked,
+                    entry,
+                    entry2,
+                    this_combo,
+                    this_store_dict,
+                )
+
+                self.template_widget_list.append(this_combo)
+                self.template_widget_list.append(this_button)                
+
+            if this_title == _('Date/time/location'):
+                
+                # (Signal connects from above)
+                this_combo.connect(
+                    'changed',
+                    self.on_date_time_combo_changed,
+                    entry2,
+                    button,
+                    this_store_dict,
+                )
+
+                button.connect(
+                    'clicked',
+                    self.on_file_tab_reset_button_clicked,
+                    entry2,
+                    this_combo,
+                    this_store_dict,
+                )
+
+        # (Signal connects from above)
+        combo.connect(
+            'changed',
+            self.on_file_tab_main_combo_changed,
+            entry,
+            entry2,
+            button,
+        )
+        entry.connect('changed', self.on_file_tab_main_entry_changed)
+                
         # (De)sensitise widgets in self.template_widget_list
         if current_format == 0:
             self.file_tab_sensitise_widgets(True)
@@ -7964,6 +8026,8 @@ class OptionsEditWin(GenericEditWin):
         Sensitises or desensitises a list of widgets in response to the user's
         interactions with widgets on that tab.
 
+        Also resets comboboxes to show their first items.
+
         Args:
 
             flag (bool): True to sensitise the widgets, False to desensitise
@@ -7973,9 +8037,55 @@ class OptionsEditWin(GenericEditWin):
 
         self.template_flag = flag
         for widget in self.template_widget_list:
+            
             widget.set_sensitive(flag)
 
+            # All combos in this tab (except for the one in the top-left
+            #   corner, which is not in self.template_widget_list) must be
+            #   reset to show their first item
+            if isinstance(widget, Gtk.ComboBox):
+                widget.set_active(0)
 
+
+    def file_tab_update_time_format(self, value, entry, button):
+
+        """Called by self.on_date_time_combo_changed() and
+        .on_file_tab_reset_button_clicked().
+
+        Updates the contents of the 'Time format' entry box, and (de)sensitises
+        widgets.
+
+        Args:
+
+            value (str): A component used in youtube-dl's output template
+
+            entry (Gtk.Entry): A widget to update
+
+            button (Gtk.Button): Another widget to update
+            
+        """
+
+        if value == 'release_date_custom' \
+        or value == 'upload_date_custom':
+
+            entry.set_text('%Y-%m-%d')
+            entry.set_sensitive(True)
+            button.set_sensitive(True)
+
+        elif value == 'timestamp_custom' \
+        or value == 'duration_custom':
+        
+            entry.set_text('%H-%M-%S')
+            entry.set_sensitive(True)
+            button.set_sensitive(True)
+            
+        else:
+
+            entry.set_text('')
+            entry.set_sensitive(False)
+            button.set_sensitive(False)
+                    
+    
     def formats_tab_count_formats(self):
 
         """Called by several parts of self.setup_formats_tab().
@@ -8686,6 +8796,33 @@ class OptionsEditWin(GenericEditWin):
         )
 
 
+    def on_date_time_combo_changed(self, combo, entry, button, trans_dict):
+
+        """Called by callback in self.setup_files_filesystem_tab().
+
+        The 'Date/time/location' combo sets or resets the entry just beneath
+        it, every time the user selects a new combo item.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+            button (Gtk.Button): Another widget to update
+
+            trans_dict (dict): Converts a translated string into the string
+                used by youtube-dl
+                
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        value = trans_dict[model[tree_iter][0]]
+
+        self.file_tab_update_time_format(value, entry, button)
+
+
     def on_direct_cmd_toggled(self, checkbutton, checkbutton2):
 
         """Called by callback in self.setup_name_tab().
@@ -8861,7 +8998,76 @@ class OptionsEditWin(GenericEditWin):
             combo.set_sensitive(True)
 
 
-    def on_file_tab_button_clicked(self, button, entry, combo, trans_dict):
+    def on_file_tab_add_button_clicked(self, button, entry, entry2, combo, \
+    trans_dict):
+
+        """Called by callback in self.setup_files_names_tab().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2 (Gtk.Entry): Other widgets to be modified by this
+                function
+
+            combo (Gtk.ComboBox): Another widget to be modified by this
+                function
+
+            trans_dict (dict): Converts a translated string into the string
+                used by youtube-dl
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        value = trans_dict[model[tree_iter][0]]
+
+        # The new component should be inserted at the end of the filename, and
+        #   before the file extension (if possible)
+        output_template = file_name = self.retrieve_val('output_template')
+        file_ext = ''
+        if value != 'ext' and output_template:
+
+            match = re.search('(.*)(\.\%\(ext\)s)\s*$', output_template)
+            if match:
+
+                file_name = match.groups()[0]
+                file_ext = match.groups()[1]
+
+        if not output_template or output_template[-1] == os.sep:
+            prefix = ''
+        elif value == 'ext':
+            prefix = '.'
+        else:
+            prefix = '-'
+
+        # e.g. to generate '(upload_date>%Y-%m-%d)s'
+        time_format = entry2.get_text()
+        if time_format != '':
+            
+            if value == 'release_date_custom':
+                value = 'release_date>' + time_format
+            elif value == 'upload_date_custom':
+                value = 'upload_date>' + time_format
+            elif value == 'timestamp_custom':
+                value = 'timestamp>' + time_format
+            elif value == 'duration_custom':
+                value = 'duration>' + time_format
+                
+        if value == 'video_autonumber':
+            formatted = '{0}%({1})3d'.format(prefix, value)
+        else:
+            formatted = '{0}%({1})s'.format(prefix, value)
+            
+        # (Setting the entry updates self.edit_dict)
+        if value == 'ext':
+            entry.set_text(file_name + file_ext + formatted)
+        else:
+            entry.set_text(file_name + formatted + file_ext)
+
+
+    def on_file_tab_reset_button_clicked(self, button, entry, combo, \
+    trans_dict):
 
         """Called by callback in self.setup_files_names_tab().
 
@@ -8881,40 +9087,12 @@ class OptionsEditWin(GenericEditWin):
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
-        label = trans_dict[model[tree_iter][0]]
+        value = trans_dict[model[tree_iter][0]]
 
-        # The new component should be inserted at the end of the filename, and
-        #   before the file extension (if possible)
-
-        output_template = file_name = self.retrieve_val('output_template')
-        file_ext = ''
-        if label != 'ext' and output_template:
-
-            match = re.search('(.*)(\.\%\(ext\)s)\s*$', output_template)
-            if match:
-
-                file_name = match.groups()[0]
-                file_ext = match.groups()[1]
-
-        if not output_template or output_template[-1] == os.sep:
-            prefix = ''
-        elif label == 'ext':
-            prefix = '.'
-        else:
-            prefix = '-'
-
-        if label == 'video_autonumber':
-            formatted = '{0}%({1})3d'.format(prefix, label)
-        else:
-            formatted = '{0}%({1})s'.format(prefix, label)
-        # (Setting the entry updates self.edit_dict)
-        if label == 'ext':
-            entry.set_text(file_name + file_ext + formatted)
-        else:
-            entry.set_text(file_name + formatted + file_ext)
+        self.file_tab_update_time_format(value, entry, button)
 
 
-    def on_file_tab_combo_changed(self, combo, entry):
+    def on_file_tab_main_combo_changed(self, combo, entry, entry2, button):
 
         """Called by callback in self.setup_files_names_tab().
 
@@ -8922,8 +9100,10 @@ class OptionsEditWin(GenericEditWin):
 
             combo (Gtk.ComboBox): The widget clicked
 
-            entry (Gtk.Entry): Another widget to be modified by this function
+            entry, entry2 (Gtk.Entry): Other widgets to be modified
 
+            button (Gtk.Button): Another widget to be modified
+            
         """
 
         tree_iter = combo.get_active_iter()
@@ -8934,15 +9114,23 @@ class OptionsEditWin(GenericEditWin):
 
         # The custom template is associated with the index 0
         if row_id == 0:
+            
             self.file_tab_sensitise_widgets(True)
+            # (The call to that function sensitises the 'Time format' widgets,
+            #   but they must be desensitised when a custom format is not
+            #   selected)
+            entry2.set_sensitive(False)
+            button.set_sensitive(False)
+            
             entry.set_text(self.retrieve_val('output_template'))
 
         else:
+            
             self.file_tab_sensitise_widgets(False)
             entry.set_text(formats.FILE_OUTPUT_CONVERT_DICT[row_id])
 
 
-    def on_file_tab_entry_changed(self, entry):
+    def on_file_tab_main_entry_changed(self, entry):
 
         """Called by callback in self.setup_files_names_tab().
 
@@ -16837,7 +17025,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
             )
 
 
-    def on_all_assoc_playlist_button_clicked(self, button):
+    def on_all_assoc_playlist_button_clicked(self, button, checkbutton):
 
         """Called from a callback in self.setup_assoc_playlist_tab().
 
@@ -16847,6 +17035,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
         Args:
 
             button (Gtk.Button): The widget clicked
+
+            checkbutton (Gtk.CheckButton): Another widget to check
 
         """
 

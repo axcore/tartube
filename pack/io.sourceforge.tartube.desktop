@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Tartube
-Version=2.4.044
+Version=2.4.050
 Exec=tartube
-Icon=tartube
+Icon=io.sourceforge.tartube
 Type=Application
 Categories=Network
 Comment=GUI front-end for youtube-dl
