@@ -98,7 +98,7 @@
                     "type" : "git",
                     "url" : "https://github.com/axcore/tartube.git",
                     "tag": "v2.4.050",
-                    "commit": "8d897acbb26714d9d6137247687d9d8c8f906615"                    
+                    "commit": "77c218fd796a3571df1d315368e308f2e2c6d558"                    
                 }
             ]
         }
