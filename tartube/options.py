@@ -65,6 +65,12 @@ class OptionsManager(object):
         abort_on_error (bool): If True, youtube-dl will abord downloading
             further playlist videos if an error occurs
 
+        live_from_start (bool): If True, downloads livestreams from the start.
+            Currently only supported for YouTube (and marked experimental)
+
+        wait_for_video_min (int): Minimum number of seconds to wait between
+            retries for scheduled livestreams to become available (in seconds)
+
     NETWORK OPTIONS
 
         proxy (str): Use the specified HTTP/HTTPS proxy. If none is specified,
@@ -476,7 +482,7 @@ class OptionsManager(object):
 
     YOUTUBE-DL-GUI OPTIONS (not passed to youtube-dl directly)
 
-        [used to build the 'save_path_list' option]
+        [used to build parameters of --output and --paths]
 
         output_format (int): Option in the range 0-9, which is converted into
             a youtube-dl output template using
@@ -486,7 +492,7 @@ class OptionsManager(object):
         output_template (str): Can be any output template supported by
             youtube-dl. Ignored if 'output_format' is not 0
 
-        [used in conjunction with the 'min_filesize' and 'max_filesize' options
+        [used in conjunction with the 'min_filesize' & 'max_filesize' options]
 
             max_filesize_unit (str): Maximum file size unit. Available values:
                 '' (for bytes), 'k' (for kilobytes, etc), 'm', 'g', 't', 'p',
@@ -594,13 +600,6 @@ class OptionsManager(object):
             user-wide configuration file is used
             ('~/.config/youtube-dl/config'). On MS Windows, a file in the
             Tartube directory is used (youtube-dl.conf)
-
-        save_path_list (list): List of arguments used with the '--output'
-            parameter. Contains the output template. If the 'output_path_list'
-            option is not specified, then the template is preceded by the
-            output directory. Arguments are constructed in a call to
-            OptionsParser.build_save_path(), and cannot be set directly by the
-            user
 
     """
 
@@ -720,6 +719,8 @@ class OptionsManager(object):
             # OPTIONS
             'ignore_errors': True,
             'abort_on_error': False,
+            'live_from_start': False,
+            'wait_for_video_min': 0,
             # NETWORK OPTIONS
             'proxy': '',
             'socket_timeout': '',
@@ -884,7 +885,6 @@ class OptionsManager(object):
             'video_format_mode': 'single',
             'subs_lang_list': [ 'en' ],
             'downloader_config': False,
-            'save_path_list': [],
         }
 
 
@@ -1007,6 +1007,10 @@ class OptionsParser(object):
             OptionHolder('ignore_errors', '-i', False),
             # --abort-on-error
             OptionHolder('abort_on_error', '--abort-on-error', False),
+            # --live-from-start
+            OptionHolder('live_from_start', '--live-from-start', False),
+            # --wait-for-video MIN (N.B. the MAX value is not supported)
+            OptionHolder('wait_for_video_min', '--wait-for-video', 0),
             # NETWORK OPTIONS
             # --proxy URL
             OptionHolder('proxy', '--proxy', ''),
@@ -1342,7 +1346,6 @@ class OptionsParser(object):
 #           OptionHolder('video_format_mode', '', 'single'),
 #           OptionHolder('subs_lang_list', '', []),
 #           OptionHolder('downloader_config', '', False),
-#           OptionHolder('save_path_list', '', []),
         ]
 
 
@@ -1516,7 +1519,7 @@ class OptionsParser(object):
             options_list.append('--extractor-args')
             options_list.append(item)
 
-        # Parse the 'save_path_list' option
+        # Build the --output and --paths options
         options_list = self.build_paths(
             dir_path,
             copy_dict,
@@ -1717,8 +1720,8 @@ class OptionsParser(object):
 
         """Called by self.parse().
 
-        Build the value of the 'save_path_list' option, and add it directly to
-        the options list.
+        Build the --output and --paths options, adding them directly to the
+        options list.
 
         Args:
 

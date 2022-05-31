@@ -627,6 +627,8 @@ class SetupWizWin(GenericWizWin):
         #   self.apply_changes() is called)
         # Path to Tartube's data directory
         self.data_dir = None
+        # The new value of mainapp.TartubeApp.db_backup_mode, if any
+        self.db_backup_mode = None
         # The name of the youtube-dl fork to use, by default ('None' when
         #   youtube-dl itself should be used)
         self.ytdl_fork = 'yt-dlp'
@@ -636,10 +638,10 @@ class SetupWizWin(GenericWizWin):
             self.ytdl_fork_no_dependency_flag = True
         else:
             self.ytdl_fork_no_dependency_flag = False
-        # The new value of mainapp.TartubeApp.ytdl_update_current(), if any
+        # The new value of mainapp.TartubeApp.ytdl_update_current, if any
         self.ytdl_update_current = None
         # The new value of
-        #   mainapp.TartubeApp.show_classic_tab_on_startup_flag(), if any
+        #   mainapp.TartubeApp.show_classic_tab_on_startup_flag, if any
         self.show_classic_tab_on_startup_flag = None
 
         # Flag set to True, once the 'More options' button has been clicked,
@@ -661,6 +663,7 @@ class SetupWizWin(GenericWizWin):
         self.page_list = [
             'setup_start_page',
             'setup_db_page',
+            'setup_backup_page',
             'setup_set_downloader_page',
         ]
 
@@ -724,6 +727,9 @@ class SetupWizWin(GenericWizWin):
         )
 
         # (A None value, only if they haven't been changed)
+        if self.db_backup_mode is not None:
+            self.app_obj.set_db_backup_mode(self.db_backup_mode)
+
         if self.ytdl_update_current is not None:
             self.app_obj.set_ytdl_update_current(self.ytdl_update_current)
 
@@ -951,6 +957,92 @@ class SetupWizWin(GenericWizWin):
         # Disable the Next button until a folder has been created/selected
         if self.data_dir is None:
             self.next_button.set_sensitive(False)
+
+
+    def setup_backup_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        grid_width = 3
+
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(
+                _(
+                    'When saving the database, Tartube makes a backup' \
+                    + ' copy of its database file (in case something goes' \
+                    + ' wrong).',
+                ),
+                self.text_len,
+            ) + '</span>',
+            0, 0, grid_width, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, grid_width, 1)
+
+        radiobutton = self.add_radiobutton(
+            None,
+            _('Delete the backup as soon as the database has been saved'),
+            1, 2, 1, 1,
+        )
+        radiobutton.set_hexpand(False)
+        # (Signal connect appears below)
+
+        radiobutton2 = self.add_radiobutton(
+            radiobutton,
+            _('Keep the backup file, replacing any previous backup file'),
+            1, 3, 1, 1,
+        )
+        # (Signal connect appears below)
+        radiobutton2.set_hexpand(False)
+
+        radiobutton3 = self.add_radiobutton(
+            radiobutton2,
+            _('Make a new backup file once per day'),
+            1, 4, 1, 1,
+        )
+        radiobutton3.set_hexpand(False)
+        # (Signal connect appears below)
+
+        radiobutton4 = self.add_radiobutton(
+            radiobutton3,
+            _('Make a new backup file every time the database is saved'),
+            1, 5, 1, 1,
+        )
+        radiobutton4.set_active(True)
+        radiobutton4.set_hexpand(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_button_backup_mode_toggled,
+            'default',
+        )
+        radiobutton2.connect(
+            'toggled',
+            self.on_button_backup_mode_toggled,
+            'single',
+        )
+        radiobutton3.connect(
+            'toggled',
+            self.on_button_backup_mode_toggled,
+            'daily',
+        )
+        radiobutton4.connect(
+            'toggled',
+            self.on_button_backup_mode_toggled,
+            'always',
+        )
+
+        # (Empty labels either side of the radio buttons, so they appear in
+        #   the middle)
+        self.add_empty_label(0, 2, 1, 1)
+        self.add_empty_label(2, 2, 1, 1)
 
 
     def setup_set_downloader_page(self):
@@ -1743,6 +1835,24 @@ class SetupWizWin(GenericWizWin):
             button.set_label(_('Always open Tartube at this tab'))
 
 
+    def on_button_backup_mode_toggled(self, radiobutton, mode):
+
+        """Called from callback in self.setup_backup_page().
+
+        Sets the database file's backup mode.
+
+        Args:
+
+            radiobutton (Gtk.Radiobutton): The widget clicked
+
+            mode (str): The new value of mainapp.TartubeApp.db_backup_mode
+
+        """
+
+        if radiobutton.get_active():
+            self.db_backup_mode = mode
+
+
     def on_button_cancel_clicked(self, button):
 
         """Modified version of the standard function, called from a callback in
@@ -1905,7 +2015,7 @@ class SetupWizWin(GenericWizWin):
         self.more_options_flag = True
 
 
-    def on_button_ytdl_fork_toggled(self, radiobutton,  checkbutton, entry, \
+    def on_button_ytdl_fork_toggled(self, radiobutton, checkbutton, entry, \
     fork_type=None):
 
         """Called from callback in self.setup_set_downloader_page().

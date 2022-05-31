@@ -736,7 +736,7 @@ class TartubeApp(Gtk.Application):
         #       overwritten
         #   'always' - always make a backup file, labelled with the date and
         #       time, so that no backup file is ever overwritten
-        self.db_backup_mode = 'single'
+        self.db_backup_mode = 'always'
         # If loading/saving of a config or database file fails, this flag is
         #   set to True, which disables all loading/saving for the rest of the
         #   session
@@ -1266,6 +1266,18 @@ class TartubeApp(Gtk.Application):
         #   MSYS2 terminal from the main menu (on MS Windows only; ignored on
         #   other systems)
         self.show_msys2_dialogue_flag = True
+        # Flag set to True if a dialogue should appear when deleting video(s)
+        #   from within the Video Catalogue's popup menu
+        self.show_delete_video_dialogue_flag = True
+        # Default setting for this dialogue: True to delete files, False to
+        #   just remove the video(s) from the database
+        self.delete_video_files_flag = False
+        # Flag set to True if a dialogue should appear when deleting a channel,
+        #   playlist or folder from withint the Video Index's popup menu
+        self.show_delete_container_dialogue_flag = True
+        # Default setting for this dialogue: True to delete files, False to
+        #   just remove the container and its videos from the database
+        self.delete_container_files_flag = False
 
         # Media data classes are those specified in media.py. Those class
         #   objects are media.Video (for individual videos), media.Channel,
@@ -1524,7 +1536,7 @@ class TartubeApp(Gtk.Application):
         #   profile, when the database is loaded
         self.auto_switch_profile_flag = False
         # Maximum number of profiles (a constant value)
-        self.profile_max = 16 
+        self.profile_max = 16
 
         # Download Options and Options Managers
         # During a download operation, youtube-dl is supplied with a set of
@@ -2238,7 +2250,7 @@ class TartubeApp(Gtk.Application):
             # external_arg_string
             '--external-downloader-args': True,
             # FILESYSTEM OPTIONS
-            # save_path_list
+            # (builds --output and --paths)
             '-o': True,
             '--output': True,
             '-p': True,
@@ -2296,6 +2308,9 @@ class TartubeApp(Gtk.Application):
             '--paths': True,
             '-P': True,                     # Alias of --paths
             '--extractor-args': True,
+            # Options
+            'live_from_start': False,
+            'wait_for_video_min': 0,
             # Video Selection Options
             '--break-on-existing': False,
             '--break-on-reject': False,
@@ -3688,7 +3703,7 @@ class TartubeApp(Gtk.Application):
 
         # Part 14 - Any debug stuff can go here
         # -------------------------------------
-        
+
         pass
 
 
@@ -3961,7 +3976,7 @@ class TartubeApp(Gtk.Application):
             if os.path.isfile(lock_path):
 
                 check_time = time.time() + self.config_lock_time
-                while time.time < check_time and os.path.isfile(lock_path):
+                while time.time() < check_time and os.path.isfile(lock_path):
                     time.sleep(0.1)
 
                 if os.path.isfile(lock_path):
@@ -4427,6 +4442,15 @@ class TartubeApp(Gtk.Application):
         if version >= 2003376:  # v2.3.376
             self.show_msys2_dialogue_flag \
             = json_dict['show_msys2_dialogue_flag']
+        if version >= 2004062:  # v2.4.062
+            self.show_delete_video_dialogue_flag \
+            = json_dict['show_delete_video_dialogue_flag']
+            self.delete_video_files_flag \
+            = json_dict['delete_video_files_flag']
+            self.show_delete_container_dialogue_flag \
+            = json_dict['show_delete_container_dialogue_flag']
+            self.delete_container_files_flag \
+            = json_dict['delete_container_files_flag']
 
         if version >= 2004013:  # v2.4.013
             self.auto_switch_profile_flag \
@@ -5429,7 +5453,13 @@ class TartubeApp(Gtk.Application):
 
             'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
             'show_msys2_dialogue_flag': self.show_msys2_dialogue_flag,
-            
+            'show_delete_video_dialogue_flag': \
+            self.show_delete_video_dialogue_flag,
+            'delete_video_files_flag': self.delete_video_files_flag,
+            'show_delete_container_dialogue_flag': \
+            self.show_delete_container_dialogue_flag,
+            'delete_container_files_flag': self.delete_container_files_flag,
+
             'auto_switch_profile_flag': self.auto_switch_profile_flag,
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
@@ -5608,7 +5638,7 @@ class TartubeApp(Gtk.Application):
             if os.path.isfile(lock_path):
 
                 check_time = time.time() + self.config_lock_time
-                while time.time < check_time and os.path.isfile(lock_path):
+                while time.time() < check_time and os.path.isfile(lock_path):
                     time.sleep(0.1)
 
                 if os.path.isfile(lock_path):
@@ -6011,7 +6041,7 @@ class TartubeApp(Gtk.Application):
             #   required
             if self.auto_switch_profile_flag and self.last_profile is not None:
                 self.main_win_obj.switch_profile(self.last_profile)
-                            
+
             # Repopulate the Drag and Drop tab
             self.main_win_obj.drag_drop_grid_reset()
 
@@ -7093,7 +7123,8 @@ class TartubeApp(Gtk.Application):
             for options_obj in options_obj_list:
                 options_obj.options_dict['output_format_list'] = []
                 options_obj.options_dict['output_path_list'] = []
-                options_obj.options_dict['save_path_list'] = []
+                # Removed v2.4.059
+#               options_obj.options_dict['save_path_list'] = []
                 if 'save_path' in options_obj.options_dict:
                     del options_obj.options_dict['save_path']
 
@@ -7391,6 +7422,21 @@ class TartubeApp(Gtk.Application):
                         else:
                             real_options_obj.options_dict[option] \
                             = test_options_obj.options_dict[option]
+
+        if version < 2004056:       # v2.4.056
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['live_from_start'] = False
+                options_obj.options_dict['wait_for_video_min'] = 0
+
+        if version < 2004059:       # v2.4.059
+
+            # This version removes an obsolete download option from
+            #   options.OptionsManager
+            for options_obj in options_obj_list:
+                if 'save_path_list' in options_obj.options_dict:
+                    del options_obj.options_dict['save_path_list']
 
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
@@ -14582,9 +14628,10 @@ class TartubeApp(Gtk.Application):
         #   children
         # (Even though there are no children, we can't guarantee that the
         #   sub-directories in Tartube's data directory are empty)
-        # Exception: don't prompt for confirmation if media_data_obj is
-        #   somewhere inside a temporary folder
-        confirm_flag = True
+        # Exceptions: don't prompt for confirmation if media_data_obj is
+        #   somewhere inside a temporary folder, or if the user has disabled
+        #   these dialogue windows)
+        confirm_flag = self.show_delete_container_dialogue_flag
         delete_file_flag = False
         parent_obj = media_data_obj.parent_obj
 
@@ -14613,11 +14660,20 @@ class TartubeApp(Gtk.Application):
             else:
                 delete_file_flag = False
 
+            if dialogue_win.button3.get_active():
+                show_win_flag = True
+            else:
+                show_win_flag = False
+
             # ...before destroying it
             dialogue_win.destroy()
 
             if response != Gtk.ResponseType.OK:
                 return
+
+            # Update IVs
+            self.delete_container_files_flag = delete_file_flag
+            self.show_delete_container_dialogue_flag = show_win_flag
 
         # Get a second confirmation
         if delete_file_flag:
@@ -14782,7 +14838,7 @@ class TartubeApp(Gtk.Application):
         # Update any profiles that depend on this container
         delete_list = []
         for profile_name in self.profile_dict.keys():
-            
+
             dbid_list = self.profile_dict[profile_name]
             if media_data_obj.dbid in dbid_list:
                 dbid_list.remove(media_data_obj.dbid)
@@ -19020,7 +19076,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-            
+
 
     def apply_classic_custom_dl_manager(self, custom_dl_obj):
 
@@ -19112,7 +19168,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-	
+
         return custom_dl_obj
 
 
@@ -19237,7 +19293,7 @@ class TartubeApp(Gtk.Application):
 
         # Update the main menu (which lists custom downloads)
         self.main_win_obj.update_menu()
-	
+
 
     def export_custom_dl_manager(self, custom_dl_obj):
 
@@ -19495,21 +19551,21 @@ class TartubeApp(Gtk.Application):
             return self.app_obj.system_error(
                 999,
                 'Number of profiles exceeds maximum',
-            )            
+            )
 
         self.profile_dict[profile_name] = dbid_list
         self.last_profile = profile_name
 
         # Update the main menu (which lists profiles)
-        self.main_win_obj.update_menu()            
+        self.main_win_obj.update_menu()
 
-        
+
     def delete_profile(self, profile_name):
 
         """Called by mainwin.MainWin.on_delete_profile_menu_select().
 
         Deletes the specified profile.
-        
+
 
         Args:
 
@@ -19529,9 +19585,9 @@ class TartubeApp(Gtk.Application):
             self.last_profile = None
 
         # Update the main menu (which lists profiles)
-        self.main_win_obj.update_menu()            
+        self.main_win_obj.update_menu()
 
-        
+
     # (Download options manager objects)
 
 
@@ -23141,7 +23197,7 @@ class TartubeApp(Gtk.Application):
         """Called from a callback in self.do_startup().
 
         Sets the flag which switches to a profile on startup.
-        
+
         Args:
 
             action (Gio.SimpleAction): Object generated by Gio
@@ -23155,7 +23211,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.auto_switch_profile_flag = True
 
-        
+
     def on_menu_create_profile(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23195,8 +23251,8 @@ class TartubeApp(Gtk.Application):
                 'ok',
             )
 
-            return            
-                        
+            return
+
         # Prompt the user to choose a profile name
         dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -23236,8 +23292,8 @@ class TartubeApp(Gtk.Application):
             'info',
             'ok',
         )
-        
-        
+
+
     def on_menu_cancel_live(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -23434,8 +23490,8 @@ class TartubeApp(Gtk.Application):
                 'ok',
             )
 
-            return            
-                        
+            return
+
         # Prompt the user to choose a profile name
         dialogue_win = mainwin.CreateProfileDialogue(self.main_win_obj)
         response = dialogue_win.run()
@@ -23475,8 +23531,8 @@ class TartubeApp(Gtk.Application):
             'info',
             'ok',
         )
-                            
-        
+
+
     def on_menu_custom_dl_all(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -24774,8 +24830,8 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_catalogue_redraw_all(
                 self.main_win_obj.video_index_current,
             )
-            
-            
+
+
     def set_catalogue_sort_mode(self, mode):
 
         self.catalogue_sort_mode = mode
@@ -24994,12 +25050,28 @@ class TartubeApp(Gtk.Application):
         self.db_backup_mode = value
 
 
+    def set_delete_container_files_flag(self, flag):
+
+        if not flag:
+            self.delete_container_files_flag = False
+        else:
+            self.delete_container_files_flag = True
+
+
     def set_delete_on_shutdown_flag(self, flag):
 
         if not flag:
             self.delete_on_shutdown_flag = False
         else:
             self.delete_on_shutdown_flag = True
+
+
+    def set_delete_video_files_flag(self, flag):
+
+        if not flag:
+            self.delete_video_files_flag = False
+        else:
+            self.delete_video_files_flag = True
 
 
     def set_dialogue_copy_clipboard_flag(self, flag):
@@ -25838,6 +25910,22 @@ class TartubeApp(Gtk.Application):
             self.show_custom_icons_flag = False
         else:
             self.show_custom_icons_flag = True
+
+
+    def set_show_delete_container_dialogue_flag(self, flag):
+
+        if not flag:
+            self.show_delete_container_dialogue_flag = False
+        else:
+            self.show_delete_container_dialogue_flag = True
+
+
+    def set_show_delete_video_dialogue_flag(self, flag):
+
+        if not flag:
+            self.show_delete_video_dialogue_flag = False
+        else:
+            self.show_delete_video_dialogue_flag = True
 
 
     def set_show_free_space_flag(self, flag):

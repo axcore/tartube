@@ -4568,25 +4568,25 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_notebook_tab(_('_Name'))
-        grid_width = 4
+        grid_width = 3
 
         if self.media_data_obj:
             media_type = self.media_data_obj.get_type()
 
         label = self.add_label(grid,
             _('Name for these download options'),
-            0, 0, 2, 1,
+            0, 0, 1, 1,
         )
 
         entry = self.add_entry(grid,
             'name',
-            2, 0, 1, 1,
+            1, 0, 1, 1,
         )
         entry.set_hexpand(True)
 
         entry2 = self.add_entry(grid,
             None,
-            3, 0, 1, 1,
+            2, 0, 1, 1,
         )
         entry2.set_text('#' + str(self.edit_obj.uid))
         entry2.set_hexpand(False)
@@ -4594,25 +4594,25 @@ class OptionsEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _('Description'),
-            0, 1, 2, 1,
+            0, 1, 1, 1,
         )
 
         entry3 = self.add_entry(grid,
             'descrip',
-            2, 1, 2, 1,
+            1, 1, 2, 1,
         )
         entry3.set_hexpand(True)
 
         label2 = self.add_label(grid,
             _('Download options applied to'),
-            0, 2, 2, 1,
+            0, 2, 1, 1,
         )
 
         if self.media_data_obj:
 
             entry4 = self.add_entry(grid,
                 None,
-                2, 2, 1, 1,
+                1, 2, 1, 1,
             )
             entry4.set_editable(False)
             entry4.set_hexpand(False)
@@ -4621,7 +4621,7 @@ class OptionsEditWin(GenericEditWin):
 
             entry5 = self.add_entry(grid,
                 None,
-                3, 2, 1, 1,
+                2, 2, 1, 1,
             )
             entry5.set_editable(False)
             entry5.set_hexpand(True)
@@ -4635,7 +4635,7 @@ class OptionsEditWin(GenericEditWin):
 
             entry4 = self.add_entry(grid,
                 None,
-                2, 2, 2, 1,
+                1, 2, 2, 1,
             )
             entry4.set_editable(False)
 
@@ -4656,7 +4656,7 @@ class OptionsEditWin(GenericEditWin):
                 0, 3, grid_width, 1,
             )
 
-        if not self.app_obj.simple_options_flag:
+        else:
 
             self.add_label(grid,
                 _('Additional download options'),
@@ -4670,7 +4670,7 @@ class OptionsEditWin(GenericEditWin):
                     'Use ONLY these options (Tartube adds the output folder)',
                     ),
                     None,
-                    1, 3, (grid_width - 1), 1,
+                    1, 3, 2, 1,
                 )
                 # (Signal connect appears below)
 
@@ -4682,7 +4682,7 @@ class OptionsEditWin(GenericEditWin):
                     + ' directory)',
                     ),
                     None,
-                    1, 3, (grid_width - 1), 1,
+                    1, 3, 2, 1,
                 )
                 # (Signal connect appears below)
 
@@ -4691,7 +4691,7 @@ class OptionsEditWin(GenericEditWin):
             checkbutton2 = self.add_checkbutton(grid,
                 _('If URLs are specified below, use only those URLs'),
                 'direct_url_flag',
-                1, 4, (grid_width - 1), 1,
+                1, 4, 2, 1,
             )
 
             # (Signal connects from above)
@@ -4706,54 +4706,63 @@ class OptionsEditWin(GenericEditWin):
             0, 5, grid_width, 1,
         )
 
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 6, grid_width, 1)
+
         if self.app_obj.simple_options_flag:
-            frame = self.add_pixbuf(grid,
+            frame = self.add_pixbuf(grid2,
                 'hand_right_large',
-                0, 6, 1, 1,
+                0, 0, 1, 1,
             )
             frame.set_hexpand(False)
+            frame.set_size_request(75, -1)
 
         else:
-            frame = self.add_pixbuf(grid,
+            frame = self.add_pixbuf(grid2,
                 'hand_left_large',
-                0, 6, 1, 1,
+                0, 0, 1, 1,
             )
             frame.set_hexpand(False)
+            frame.set_size_request(75, -1)
 
-        button2 = Gtk.Button()
-        grid.attach(button2, 1, 6, (grid_width - 1), 1)
+        button = Gtk.Button()
+        grid2.attach(button, 1, 0, 1, 1)
         if not self.app_obj.simple_options_flag:
-            button2.set_label(_('Hide advanced download options'))
+            button.set_label(_('Hide advanced download options'))
         else:
-            button2.set_label(_('Show advanced download options'))
-        button2.connect('clicked', self.on_simple_options_clicked)
+            button.set_label(_('Show advanced download options'))
+        button.set_hexpand(True)
+        button.connect('clicked', self.on_simple_options_clicked)
 
-        frame2 = self.add_pixbuf(grid,
+        frame2 = self.add_pixbuf(grid2,
             'copy_large',
-            0, 7, 1, 1,
+            0, 1, 1, 1,
         )
         frame2.set_hexpand(False)
 
-        button3 = Gtk.Button(
+        button2 = Gtk.Button(
             _('Import general download options into this window'),
         )
-        grid.attach(button3, 1, 7, (grid_width - 1), 1)
-        button3.connect('clicked', self.on_clone_options_clicked)
+        grid2.attach(button2, 1, 1, 1, 1)
+        button2.set_hexpand(True)
+        button2.connect('clicked', self.on_clone_options_clicked)
         if self.edit_obj == self.app_obj.general_options_obj:
             # No point cloning the General Options Manager onto itself
-            button3.set_sensitive(False)
+            button2.set_sensitive(False)
 
-        frame3 = self.add_pixbuf(grid,
+        frame3 = self.add_pixbuf(grid2,
             'warning_large',
-            0, 8, 1, 1,
+            0, 2, 1, 1,
         )
         frame3.set_hexpand(False)
 
-        button4 = Gtk.Button(
+        button3 = Gtk.Button(
             _('Completely reset all download options to their default values'),
         )
-        grid.attach(button4, 1, 8, (grid_width - 1), 1)
-        button4.connect('clicked', self.on_reset_options_clicked)
+        grid2.attach(button3, 1, 2, 1, 1)
+        button3.set_hexpand(True)
+        button3.connect('clicked', self.on_reset_options_clicked)
 
 
     def setup_downloads_tab(self):
@@ -4785,6 +4794,7 @@ class OptionsEditWin(GenericEditWin):
             # ...with its own tabs
             self.setup_downloads_general_tab(inner_notebook)
             self.setup_downloads_videos_tab(inner_notebook)
+            self.setup_downloads_live_tab(inner_notebook)
             self.setup_downloads_playlists_tab(inner_notebook)
             self.setup_downloads_limits_tab(inner_notebook)
             self.setup_downloads_merge_tab(inner_notebook)
@@ -4934,6 +4944,50 @@ class OptionsEditWin(GenericEditWin):
         self.add_tooltip('--force-write-archive', checkbutton2)
 
 
+    def setup_downloads_live_tab(self, inner_notebook):
+
+        """Called by self.setup_downloads_tab().
+
+        Sets up the 'Live' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Live'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Livestream options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Livestream options') + '</u>' + self.ytdlp_only(),
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Download livestreams from start (experimental, YouTube only)'),
+            'live_from_start',
+            0, 1, grid_width, 1,
+        )
+        self.add_tooltip('--live-from-start', checkbutton)
+
+        label = self.add_label(grid,
+            _('Minimum seconds to wait for scheduled streams'),
+            0, 2, 1, 1
+        )
+
+        spinbutton = self.add_spinbutton(grid,
+            0, None, 1,
+            'wait_for_video_min',
+            1, 2, 1, 1
+        )
+        self.add_tooltip('--wait-for-video MIN', label, spinbutton)
+
+
     def setup_downloads_playlists_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
@@ -4967,7 +5021,7 @@ class OptionsEditWin(GenericEditWin):
         """
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Limits'),
+            _('L_imits'),
             inner_notebook,
         )
 
@@ -5224,7 +5278,7 @@ class OptionsEditWin(GenericEditWin):
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
         grid2 = self.add_secondary_grid(grid, 0, 3, grid_width, 1)
-        
+
         # Add widgets to a list, so we can sensitise them when a custom
         #   template is selected, and desensitise them the rest of the time
         self.template_widget_list = [entry]
@@ -5321,7 +5375,7 @@ class OptionsEditWin(GenericEditWin):
                 this_title,
                 1, row_num, 1, 1,
             )
-                
+
             if this_title == _('Time format'):
 
                 grid2.attach(entry2, 2, row_num, 1, 1)
@@ -5329,9 +5383,9 @@ class OptionsEditWin(GenericEditWin):
 
                 self.template_widget_list.append(entry2)
                 self.template_widget_list.append(button)
-                
+
             else:
-                
+
                 this_store = Gtk.ListStore(str)
                 # (The dictionary is used by
                 #   self.on_file_tab_add_button_clicked() to translate the
@@ -5364,10 +5418,10 @@ class OptionsEditWin(GenericEditWin):
                 )
 
                 self.template_widget_list.append(this_combo)
-                self.template_widget_list.append(this_button)                
+                self.template_widget_list.append(this_button)
 
             if this_title == _('Date/time/location'):
-                
+
                 # (Signal connects from above)
                 this_combo.connect(
                     'changed',
@@ -5394,7 +5448,7 @@ class OptionsEditWin(GenericEditWin):
             button,
         )
         entry.connect('changed', self.on_file_tab_main_entry_changed)
-                
+
         # (De)sensitise widgets in self.template_widget_list
         if current_format == 0:
             self.file_tab_sensitise_widgets(True)
@@ -8037,7 +8091,7 @@ class OptionsEditWin(GenericEditWin):
 
         self.template_flag = flag
         for widget in self.template_widget_list:
-            
+
             widget.set_sensitive(flag)
 
             # All combos in this tab (except for the one in the top-left
@@ -8062,7 +8116,7 @@ class OptionsEditWin(GenericEditWin):
             entry (Gtk.Entry): A widget to update
 
             button (Gtk.Button): Another widget to update
-            
+
         """
 
         if value == 'release_date_custom' \
@@ -8074,18 +8128,18 @@ class OptionsEditWin(GenericEditWin):
 
         elif value == 'timestamp_custom' \
         or value == 'duration_custom':
-        
+
             entry.set_text('%H-%M-%S')
             entry.set_sensitive(True)
             button.set_sensitive(True)
-            
+
         else:
 
             entry.set_text('')
             entry.set_sensitive(False)
             button.set_sensitive(False)
-                    
-    
+
+
     def formats_tab_count_formats(self):
 
         """Called by several parts of self.setup_formats_tab().
@@ -8813,7 +8867,7 @@ class OptionsEditWin(GenericEditWin):
 
             trans_dict (dict): Converts a translated string into the string
                 used by youtube-dl
-                
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -9044,7 +9098,7 @@ class OptionsEditWin(GenericEditWin):
         # e.g. to generate '(upload_date>%Y-%m-%d)s'
         time_format = entry2.get_text()
         if time_format != '':
-            
+
             if value == 'release_date_custom':
                 value = 'release_date>' + time_format
             elif value == 'upload_date_custom':
@@ -9053,12 +9107,12 @@ class OptionsEditWin(GenericEditWin):
                 value = 'timestamp>' + time_format
             elif value == 'duration_custom':
                 value = 'duration>' + time_format
-                
+
         if value == 'video_autonumber':
             formatted = '{0}%({1})3d'.format(prefix, value)
         else:
             formatted = '{0}%({1})s'.format(prefix, value)
-            
+
         # (Setting the entry updates self.edit_dict)
         if value == 'ext':
             entry.set_text(file_name + file_ext + formatted)
@@ -9103,7 +9157,7 @@ class OptionsEditWin(GenericEditWin):
             entry, entry2 (Gtk.Entry): Other widgets to be modified
 
             button (Gtk.Button): Another widget to be modified
-            
+
         """
 
         tree_iter = combo.get_active_iter()
@@ -9114,18 +9168,18 @@ class OptionsEditWin(GenericEditWin):
 
         # The custom template is associated with the index 0
         if row_id == 0:
-            
+
             self.file_tab_sensitise_widgets(True)
             # (The call to that function sensitises the 'Time format' widgets,
             #   but they must be desensitised when a custom format is not
             #   selected)
             entry2.set_sensitive(False)
             button.set_sensitive(False)
-            
+
             entry.set_text(self.retrieve_val('output_template'))
 
         else:
-            
+
             self.file_tab_sensitise_widgets(False)
             entry.set_text(formats.FILE_OUTPUT_CONVERT_DICT[row_id])
 
@@ -14223,7 +14277,7 @@ class VideoEditWin(GenericEditWin):
         if not metadata_path:
             button2.set_sensitive(False)
         # (Signal connect appears below)
-                                
+
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
         grid4 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
@@ -16155,7 +16209,7 @@ class VideoEditWin(GenericEditWin):
 
             # Extract video statistics from the metadata file
             self.app_obj.update_video_from_json(self.edit_obj)
-            
+
             # Set the new file's size, duration, and so on. The True argument
             #   instructs the function to override existing values
             if self.edit_obj.dl_flag:
@@ -16178,7 +16232,7 @@ class VideoEditWin(GenericEditWin):
 
             # Reset this window by abusing the generic code
             self.reset_with_new_edit_obj(self.edit_obj)
-            
+
 
     def on_format_checkbutton_toggled(self, checkbutton):
 
@@ -16281,7 +16335,7 @@ class VideoEditWin(GenericEditWin):
                 self.app_obj.main_win_obj.video_catalogue_update_video,
                 self.edit_obj,
             )
-            
+
             # Reset this window by abusing the generic code
             self.reset_with_new_edit_obj(self.edit_obj)
 
@@ -19636,6 +19690,7 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_files_database_tab(self.files_inner_notebook)
         self.setup_files_backups_tab(self.files_inner_notebook)
         self.setup_files_videos_tab(self.files_inner_notebook)
+        self.setup_files_delete_tab(self.files_inner_notebook)
         self.setup_files_update_tab(self.files_inner_notebook)
         self.setup_files_urls_tab(self.files_inner_notebook)
         self.setup_files_temp_folders_tab(self.files_inner_notebook)
@@ -20071,27 +20126,22 @@ class SystemPrefWin(GenericPrefWin):
         )
         self.add_label(grid,
             '<i>' + _(
-                'When saving a database file, Tartube makes a backup copy of' \
-                + ' it (in case something goes wrong)',
+                'When saving the database, Tartube makes a backup copy of' \
+                + ' its database file',
             ) + '</i>',
             0, 1, grid_width, 1,
         )
 
         radiobutton = self.add_radiobutton(grid,
             None,
-            _(
-            'Delete the backup file as soon as the save procedure is' \
-            + ' finished',
-            ),
+            _('Delete the backup as soon as the database has been saved'),
             0, 2, grid_width, 1,
         )
         # (Signal connect appears below)
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
-            _(
-            'Keep the backup file, replacing any previous backup file',
-            ),
+            _('Keep the backup file, replacing any previous backup file'),
             0, 3, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'single':
@@ -20100,10 +20150,7 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton3 = self.add_radiobutton(grid,
             radiobutton2,
-            _(
-            'Make a new backup file once per day, after the day\'s first' \
-            + ' save procedure',
-            ),
+            _('Make a new backup file once per day'),
             0, 4, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'daily':
@@ -20112,7 +20159,7 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton4 = self.add_radiobutton(grid,
             radiobutton3,
-            _('Make a new backup file for every save procedure'),
+            _('Make a new backup file every time the database is saved'),
             0, 5, grid_width, 1,
         )
         if self.app_obj.db_backup_mode == 'always':
@@ -20125,19 +20172,16 @@ class SystemPrefWin(GenericPrefWin):
             self.on_backup_button_toggled,
             'default',
         )
-
         radiobutton2.connect(
             'toggled',
             self.on_backup_button_toggled,
             'single',
         )
-
         radiobutton3.connect(
             'toggled',
             self.on_backup_button_toggled,
             'daily',
         )
-
         radiobutton4.connect(
             'toggled',
             self.on_backup_button_toggled,
@@ -20187,6 +20231,96 @@ class SystemPrefWin(GenericPrefWin):
 
         tab, grid = self.add_inner_notebook_tab(
             _('_Videos'),
+            inner_notebook,
+        )
+        grid_width = 2
+
+        # Video matching preferences
+        self.add_label(grid,
+            '<u>' + _('Video matching preferences') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            _('When matching videos on the filesystem:'),
+            0, 1, grid_width, 1,
+        )
+
+        self.radiobutton3 = self.add_radiobutton(grid,
+            None,
+            _('The video names must match exactly'),
+            0, 2, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.radiobutton4 = self.add_radiobutton(grid,
+            self.radiobutton3,
+            _('The first # characters must match exactly'),
+            0, 3, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.spinbutton3 = self.add_spinbutton(grid,
+            1, 999, 1, self.app_obj.match_first_chars,
+            1, 3, 2, 1,
+        )
+        # (Signal connect appears below)
+
+        self.radiobutton5 = self.add_radiobutton(grid,
+            self.radiobutton4,
+            _(
+            'Ignore the last # characters; the remaining name must match' \
+            + ' exactly',
+            ),
+            0, 4, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        self.spinbutton4 = self.add_spinbutton(grid,
+            1, 999, 1, self.app_obj.match_ignore_chars,
+            1, 4, 2, 1,
+        )
+        # (Signal connect appears below)
+
+        # (Widgets are sensitised/desensitised, based on the radiobutton)
+        if self.app_obj.match_method == 'exact_match':
+            self.spinbutton3.set_sensitive(False)
+            self.spinbutton4.set_sensitive(False)
+        elif self.app_obj.match_method == 'match_first':
+            self.radiobutton4.set_active(True)
+            self.spinbutton4.set_sensitive(False)
+        else:
+            self.radiobutton5.set_active(True)
+            self.spinbutton3.set_sensitive(False)
+
+        # (Signal connects from above)
+        self.radiobutton3.connect('toggled', self.on_match_button_toggled)
+        self.radiobutton4.connect('toggled', self.on_match_button_toggled)
+        self.radiobutton5.connect('toggled', self.on_match_button_toggled)
+        self.spinbutton3.connect(
+            'value-changed',
+            self.on_match_spinbutton_changed,
+        )
+        self.spinbutton4.connect(
+            'value-changed',
+            self.on_match_spinbutton_changed,
+        )
+
+
+    def setup_files_delete_tab(self, inner_notebook):
+
+        """Called by self.setup_files_tab().
+
+        Sets up the 'Delete' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('D_elete'),
             inner_notebook,
         )
         grid_width = 3
@@ -20318,75 +20452,60 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.connect('toggled', self.on_delete_watched_button_toggled)
         self.radiobutton.connect('toggled', self.on_delete_asap_button_toggled)
 
-        # Video matching preferences
+        # Manual video deletion/removal preferences
         self.add_label(grid,
-            '<u>' + _('Video matching preferences') + '</u>',
+            '<u>' + _('Manual video deletion/removal preferences') + '</u>',
             0, 6, grid_width, 1,
         )
 
-        self.add_label(grid,
-            _('When matching videos on the filesystem:'),
+        checkbutton4 = self.add_checkbutton(grid,
+            _('Show dialogue window before removing video(s)'),
+            self.app_obj.show_delete_video_dialogue_flag,
+            True,               # Can be toggled by user
             0, 7, grid_width, 1,
         )
+        checkbutton4.connect(
+            'toggled',
+            self.on_show_delete_video_button_toggled,
+        )
 
-        self.radiobutton3 = self.add_radiobutton(grid,
-            None,
-            _('The video names must match exactly'),
+        checkbutton5 = self.add_checkbutton(grid,
+            _('When removing videos, remove all files from the filesystem'),
+            self.app_obj.delete_video_files_flag,
+            True,               # Can be toggled by user
             0, 8, grid_width, 1,
         )
-        # (Signal connect appears below)
-
-        self.radiobutton4 = self.add_radiobutton(grid,
-            self.radiobutton3,
-            _('The first # characters must match exactly'),
-            0, 9, 1, 1,
+        checkbutton5.connect(
+            'toggled',
+            self.on_remove_video_file_button_toggled,
         )
-        # (Signal connect appears below)
 
-        self.spinbutton3 = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.match_first_chars,
-            1, 9, 2, 1,
-        )
-        # (Signal connect appears below)
-
-        self.radiobutton5 = self.add_radiobutton(grid,
-            self.radiobutton4,
+        checkbutton6 = self.add_checkbutton(grid,
             _(
-            'Ignore the last # characters; the remaining name must match' \
-            + ' exactly',
+                'Show dialogue window before removing channels/playlists' \
+                + '/folders',
             ),
-            0, 10, 1, 1,
+            self.app_obj.show_delete_container_dialogue_flag,
+            True,               # Can be toggled by user
+            0, 9, grid_width, 1,
         )
-        # (Signal connect appears below)
-
-        self.spinbutton4 = self.add_spinbutton(grid,
-            1, 999, 1, self.app_obj.match_ignore_chars,
-            1, 10, 2, 1,
+        checkbutton6.connect(
+            'toggled',
+            self.on_show_delete_container_button_toggled,
         )
-        # (Signal connect appears below)
 
-        # (Widgets are sensitised/desensitised, based on the radiobutton)
-        if self.app_obj.match_method == 'exact_match':
-            self.spinbutton3.set_sensitive(False)
-            self.spinbutton4.set_sensitive(False)
-        elif self.app_obj.match_method == 'match_first':
-            self.radiobutton4.set_active(True)
-            self.spinbutton4.set_sensitive(False)
-        else:
-            self.radiobutton5.set_active(True)
-            self.spinbutton3.set_sensitive(False)
-
-        # (Signal connects from above)
-        self.radiobutton3.connect('toggled', self.on_match_button_toggled)
-        self.radiobutton4.connect('toggled', self.on_match_button_toggled)
-        self.radiobutton5.connect('toggled', self.on_match_button_toggled)
-        self.spinbutton3.connect(
-            'value-changed',
-            self.on_match_spinbutton_changed,
+        checkbutton7 = self.add_checkbutton(grid,
+            _(
+                'When removing containers, remove all files from the' \
+                + ' filesystem',
+            ),
+            self.app_obj.delete_container_files_flag,
+            True,               # Can be toggled by user
+            0, 10, grid_width, 1,
         )
-        self.spinbutton4.connect(
-            'value-changed',
-            self.on_match_spinbutton_changed,
+        checkbutton7.connect(
+            'toggled',
+            self.on_remove_container_file_button_toggled,
         )
 
 
@@ -26270,7 +26389,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_auto_delete_videos_button_toggled(self, checkbutton, spinbutton,
     checkbutton2, checkbutton3, radiobutton, radiobutton2):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Enables/disables automatic deletion of downloaded videos.
 
@@ -26314,7 +26433,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_delete_videos_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Sets the number of days after which downloaded videos should be
         deleted.
@@ -26331,7 +26450,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_auto_remove_videos_button_toggled(self, checkbutton, spinbutton,
     checkbutton2, checkbutton3, radiobutton, radiobutton2):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Enables/disables automatic removal of downloaded videos.
 
@@ -26375,7 +26494,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_auto_remove_videos_spinbutton_changed(self, spinbutton):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Sets the number of days after which downloaded videos should be
         removed.
@@ -28117,7 +28236,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_delete_asap_button_toggled(self, radiobutton):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Enables/disables automatic deletion/removal of videos after every
         download operation.
@@ -28243,7 +28362,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_delete_watched_button_toggled(self, checkbutton):
 
-        """Called from callback in self.setup_files_video_deletion_tab().
+        """Called from callback in self.setup_files_delete_tab().
 
         Enables/disables automatic deletion/removal of videos, but only those
         that have been watched.
@@ -30889,27 +31008,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_main_win_save_slider_flag(False)
 
 
-    def on_remove_duplicate_button_toggled(self, checkbutton):
-
-        """Called from callback in self.setup_windows_main_window_tab().
-
-        Enables/disables removeing duplicate URLs from the Classic Mode tab,
-        after the 'Add URLs' button is clicked.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.classic_duplicate_remove_flag:
-            self.app_obj.set_classic_duplicate_remove_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.classic_duplicate_remove_flag:
-            self.app_obj.set_classic_duplicate_remove_flag(False)
-
-
     def on_remove_comments_button_clicked(self, button):
 
         """Called from callback in self.setup_files_update_tab().
@@ -30955,6 +31053,48 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def on_remove_container_file_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_files_delete_tab().
+
+        Enables/disables removing all files from the filesystem when deleting
+        containers manually.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.delete_container_files_flag:
+            self.app_obj.set_delete_container_files_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.delete_container_files_flag:
+            self.app_obj.set_delete_container_files_flag(False)
+
+
+    def on_remove_duplicate_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_main_window_tab().
+
+        Enables/disables removeing duplicate URLs from the Classic Mode tab,
+        after the 'Add URLs' button is clicked.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.classic_duplicate_remove_flag:
+            self.app_obj.set_classic_duplicate_remove_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.classic_duplicate_remove_flag:
+            self.app_obj.set_classic_duplicate_remove_flag(False)
+
+
     def on_remove_stamps_button_clicked(self, button):
 
         """Called from callback in self.setup_files_update_tab().
@@ -30998,6 +31138,27 @@ class SystemPrefWin(GenericPrefWin):
             'ok',
             self,           # Parent window is this window
         )
+
+
+    def on_remove_video_file_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_files_delete_tab().
+
+        Enables/disables removing all files from the filesystem when deleting
+        videos manually.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.delete_video_files_flag:
+            self.app_obj.set_delete_video_files_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.delete_video_files_flag:
+            self.app_obj.set_delete_video_files_flag(False)
 
 
     def on_replace_stamps_flag_toggled(self, checkbutton):
@@ -31774,6 +31935,46 @@ class SystemPrefWin(GenericPrefWin):
             'ok',
             self,           # Parent window is this window
         )
+
+
+    def on_show_delete_container_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_files_delete_tab().
+
+        Enables/disables prompting the user before deleting containers.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_delete_container_dialogue_flag:
+            self.app_obj.set_show_delete_container_dialogue_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_delete_container_dialogue_flag:
+            self.app_obj.set_show_delete_container_dialogue_flag(False)
+
+
+    def on_show_delete_video_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_files_delete_tab().
+
+        Enables/disables prompting the user before deleting videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.show_delete_video_dialogue_flag:
+            self.app_obj.set_show_delete_video_dialogue_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.show_delete_video_dialogue_flag:
+            self.app_obj.set_show_delete_video_dialogue_flag(False)
 
 
     def on_show_free_space_button_toggled(self, checkbutton):

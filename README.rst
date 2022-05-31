@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.0 (21 Apr 2022)**
+Stable release: **v2.4.065 (31 May 2022)**
 
-Development release: **v2.4.053 (13 May 2022)**
+Development release: **v2.4.065 (31 May 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.0/install-tartube-2.4.0-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.0/tartube-2.4.0-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.065/install-tartube-2.4.065-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.065/tartube-2.4.065-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.0/python3-tartube_2.4.0.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.0/tartube-2.4.0.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.065/python3-tartube_2.4.065.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.065/tartube-2.4.065.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -1242,7 +1242,7 @@ Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware of the d
 
 You can tell **Tartube** to automatically delete videos after some period of time. This is useful if hard drive is smaller than the size of the observable universe.
 
-- Click **Edit > System preferences... > Files > Videos**
+- Click **Edit > System preferences... > Files > Delete**
 - Click the **Automatically delete downloaded videos** button to select it
 - If you want to, change the number of days from **30** to some other value
 

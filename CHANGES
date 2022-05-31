@@ -1,3 +1,87 @@
+v2.4.065 (31 May 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- In the Videos tab, you can mark one or more channels/playlists/folders to
+    be downloaded by clicking the checkbuttons next to their names. Tartube can
+    now remember which items have been marked, storing them in a profile: in
+    the main menu, click Media > Profiles > Create profile. You can create as
+    many profiles as you like, and switch between them whenever you like. See
+    the README for more information (Git #409)
+- During a download, you can now right-click a channel, playlist or folder to
+    add it to the download; previously, the menu item was greyed out (Git #430)
+
+MINOR NEW FEATURES
+- During Tartube installation, the user is now prompted to choose how often
+    their database file should be backed up. The default setting has also been
+    changed to 'every time' (Git #427)
+- When the user deletes videos, they will now see a prompt asking for
+    confirmation. The user can choose between removing the video from the
+    database, and deleting the video from the filesystem completely. A
+    comparable prompt already appeared when deleting channels, playlists and
+    folders. In all cases, there is now an 'Always show this window' button
+    which can be de-selected, if convenient (Git #427)
+- The dropdown box in the 'Add channel' window has been improved to add an
+    explicit item for 'No parent folder', instead of using an empty space. The
+    windows for adding playlists and folders have been updated in the same way.
+    The 'Add video' window has been tweaked to show icons inside the dropdown
+    box, as the other three windows already do
+- In each video's properties window, there is a new button which updates the
+    video's data from its metadata file. Also, when the video's file path is
+    changed (manually by the user), the corresponding metadata is now
+    automatically loaded, updating the video in Tartube's database (Git #414)
+- You can update multiple videos from their metadata by right-clicking them
+    and selecting Special > Reload metadata (Git #420)
+- The detail of some icons were difficult to make out. They have been replaced
+    with sharper icons
+- The list of videos in the Videos tab shows each video's name (which we call a
+    'nickname'), which is not necessarily identical to the video's file name.
+    You can now switch to displaying video file names instead: Edit >
+    System preferences... > Windows > Videos > Show nicknames (not video file
+    names) (Git #417)
+- Tidied up the layout of the popup menu for videos
+- In the download options window, in the Files > File names tab, you can now
+    set an output template with a date/time in several different formats
+    (Git #424)
+- In the same window, added new options for '--live-from-start' and
+    '--wait-for-video' (Git #431, yt-dlp only)
+
+MAJOR FIXES
+- In the Videos tab toolbar, when the 'Show downloaded' button is toggled and,
+    as a result, no videos are visible, many of the toolbar icons were greyed
+    out. Fixed (Git #410)
+- The video's edit window was unable to open under certain circumstances. Fixed
+- In a separate issue, the video's edit window was unable to open when the
+    video didn't have a file associated with it. Fixed (Git #421/422)
+- The list of custom downloads in Tartube's main menu (Operations >
+    Custom download all) was not updated when profiles were added or removed;
+    the list could only be updated by restarting Tartube. Fixed
+- In the channel/playlist properties window, in the Associated Playlists tab,
+    the 'Add all playlists' button was broken. Fixed it
+
+MINOR FIXES
+- When setting a custom redirect for Invidious, Tartube added an initial 'www.'
+    which does not always resolve to a valid web address. This no longer
+    happens. Text in the preferences window (Operations > Mirrors) has been
+    updated to reflect this change (Git #412)
+- Fixed an error in the code that resets channel/playlist/folder markers
+    (selection buttons) in the Video Index
+- During a refresh operation, a video's URL, ID and duration were not set, if
+    they had not already been set (Git #414)
+- When closing a video's properties window, the list of videos in the Video tab
+    was not properly updated when a filter was applied. Fixed (Git #413)
+- In a video's properties window, in the General tab, when the video file is
+    changed, the entry boxes at the top of the window were not updated. Fixed
+    (Git #420)
+- In the Drag and Drop tab, two icons of different sizes were used beside each
+    other; this has been fixed
+- Fixed missing apostrophes (Git #411 and #416), and typos in the download
+    options window (Git #418)
+- Tweaked the detection of invalid URLs, for example in the 'Add channel'
+    window
+- In the download options window, in the Name tab, fixed inconsistent widget
+    layout when switching between simple and advanced options
+
 v2.4.0 (21 Apr 2022)
 -------------------------------------------------------------------------------
 
@@ -12,7 +96,7 @@ MAJOR NEW FEATURES
     downloaded videos, or undownloaded videos. These settings are ignored when
     a text search/filter is applied; in that situation, the buttons are now
     greyed out for clarity (Git #402)
-    
+
 MINOR NEW FEATURES
 - When videos are being checked/downloaded, you can now see the amount of free
     disk space in the bottom-left corner of the Videos tab
@@ -33,7 +117,7 @@ MINOR NEW FEATURES
     component has been replaced with 'video_autonumber' and
     'playlist_autonumber' components, on the advice of the yt-dlp developers
     (Git #406)
-    
+
 MAJOR FIXES
 - JSON timeouts were causing havoc when checking a video with lots of comments.
     Tartube now provides two timeout settings: one for checking videos with
@@ -85,7 +169,7 @@ MINOR FIXES
 - Fixed display problems when moving a channel/playlist/folder to the top
     level, or dragging one onto another
 - All keyboard shortcuts have been checked and updated
-    
+
 v2.3.549 (9 Apr 2022)
 -------------------------------------------------------------------------------
 
