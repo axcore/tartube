@@ -22904,7 +22904,7 @@ class ComplexCatalogueItem(object):
                 string += '</i>: ' + html.escape(
                     utils.shorten_string(
                         self.video_obj.parent_obj.name,
-                        self.main_win_obj.very_long_string_max_len,
+                        self.main_win_obj.long_string_max_len,
                     ),
                     quote=True,
                 )
@@ -25257,7 +25257,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         string2 = html.escape(
             utils.shorten_string(
                 parent_obj.name,
-                self.main_win_obj.very_long_string_max_len,
+                self.main_win_obj.long_string_max_len,
             ),
             quote=True,
         )

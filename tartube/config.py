@@ -22901,7 +22901,7 @@ class SystemPrefWin(GenericPrefWin):
             _(
             'If a download stalls, restart it after this many minutes',
             ),
-            None,
+            self.app_obj.operation_auto_restart_flag,
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
