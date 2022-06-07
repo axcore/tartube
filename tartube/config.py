@@ -22905,8 +22905,6 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
-        if self.app_obj.operation_auto_restart_flag:
-            checkbutton4.set_active(True)
         # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
@@ -22957,12 +22955,10 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton5 = self.add_checkbutton(grid,
             _('Apply a timeout (in minutes) when checking a video'),
-            None,
+            self.app_obj.apply_json_timeout_flag,
             True,                   # Can be toggled by user
             0, 6, grid_width, 1,
         )
-        if self.app_obj.apply_json_timeout_flag:
-            checkbutton5.set_active(True)
         # (Signal connect appears below)
 
         # (To avoid messing up the neat format of the rows above, add a
