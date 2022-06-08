@@ -2408,6 +2408,8 @@ A: Necesitamos más traductores.
 
 If you would like to contribute a translation of this project, please read `this document <docs/translate.rst>`__.
 
+Contributions can be made using Tartube's `Weblate page <https://hosted.weblate.org/projects/tartube/>`__, if that is convenient.
+
 8 Contributing
 ==============
 
