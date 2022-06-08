@@ -4234,7 +4234,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not self.progress_bar and not skip_check_flag:
             return self.app_obj.system_error(
-                203,
+                201,
                 'Videos tab progress bar is not already visible',
             )
 
@@ -4517,7 +4517,7 @@ class MainWin(Gtk.ApplicationWindow):
         and operation_type != 'formats' and operation_type != 'subs' \
         and operation_type != 'test_ytdl' and operation_type != 'version':
             return self.app_obj.system_error(
-                205,
+                202,
                 'Invalid update/info operation argument',
             )
 
@@ -5022,7 +5022,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.progress_bar:
             return self.app_obj.system_error(
-                201,
+                203,
                 'Videos tab progress bar is already visible',
             )
 
@@ -5032,7 +5032,7 @@ class MainWin(Gtk.ApplicationWindow):
         and operation_type != 'tidy' \
         and operation_type != 'process':
             return self.app_obj.system_error(
-                202,
+                204,
                 'Invalid operation type supplied to progress bar',
             )
 
@@ -5156,7 +5156,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not profile_name in self.app_obj.profile_dict:
 
             return self.app_obj.system_error(
-                999,
+                205,
                 'Unrecognised profile \'{0}\''.format(profile_name),
             )
 
@@ -5542,7 +5542,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not self.progress_bar:
             return self.app_obj.system_error(
-                204,
+                206,
                 'Videos tab progress bar is missing and cannot be updated',
             )
 
@@ -9237,7 +9237,7 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj = self.app_obj.media_reg_dict[dbid]
             if not media_data_obj:
                 return self.app_obj.system_error(
-                    206,
+                    207,
                     'Video Index initialisation failure',
                 )
 
@@ -9279,7 +9279,7 @@ class MainWin(Gtk.ApplicationWindow):
         pixbuf = self.video_index_get_icon(media_data_obj)
         if not pixbuf:
             return self.app_obj.system_error(
-                207,
+                208,
                 'Video index setup row request failed sanity check',
             )
 
@@ -9360,7 +9360,7 @@ class MainWin(Gtk.ApplicationWindow):
         pixbuf = self.video_index_get_icon(media_data_obj)
         if not pixbuf:
             return self.app_obj.system_error(
-                208,
+                209,
                 'Video index setup row request failed sanity check',
             )
 
@@ -9482,7 +9482,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                209,
+                210,
                 'Video index delete row request failed sanity check',
             )
 
@@ -9537,7 +9537,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video) \
         or media_data_obj.is_hidden():
             return self.app_obj.system_error(
-                210,
+                211,
                 'Video Index select row request failed sanity check',
             )
 
@@ -9589,7 +9589,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                211,
+                212,
                 'Video index update row request failed sanity check',
             )
 
@@ -9632,7 +9632,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                212,
+                213,
                 'Video index update row request failed sanity check',
             )
 
@@ -9682,7 +9682,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Videos can't be shown in the Video Index
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                213,
+                214,
                 'Video index update row request failed sanity check',
             )
 
@@ -10202,7 +10202,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not name in self.app_obj.media_name_dict:
 
             return self.app_obj.system_error(
-                214,
+                215,
                 'Cannot redraw Video Catalogue because container is missing' \
                 + ' from database',
             )
@@ -10213,7 +10213,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Sanity check - the selected item should not be a media.Video object
         if not container_obj or (isinstance(container_obj, media.Video)):
             return self.app_obj.system_error(
-                215,
+                216,
                 'Videos should not appear in the Video Index',
             )
 
@@ -10909,7 +10909,7 @@ class MainWin(Gtk.ApplicationWindow):
         thumb_size = self.app_obj.thumb_size_custom
         if self.catalogue_grid_width_dict[thumb_size] is not None:
             return self.app_obj.system_error(
-                216,
+                217,
                 'Redundant setting of minimum gridbox width',
             )
 
@@ -11230,7 +11230,7 @@ class MainWin(Gtk.ApplicationWindow):
             if specified_posn is None:
 
                 return self.app_obj.system_error(
-                    217,
+                    218,
                     'Gridbox not fouind in Video Catalogue',
                 )
 
@@ -11665,7 +11665,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
-                218,
+                219,
                 'Tried to apply filter, but no channel/playlist/folder' \
                 + ' selected in the Video Index',
             )
@@ -11797,7 +11797,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
-                219,
+                220,
                 'Tried to apply find videos by date, but no channel/' \
                 + ' playlist/folder selected in the Video Index',
             )
@@ -11834,7 +11834,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
-                220,
+                221,
                 'Tried to cancel find videos by date, but no channel/' \
                 + ' playlist/folder selected in the Video Index',
             )
@@ -12023,7 +12023,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   downloads.DownloadItem object
         if not download_item_obj.item_id in self.progress_list_row_dict:
             return self.app_obj.system_error(
-                221,
+                222,
                 'Missing row in Progress List',
             )
 
@@ -12374,7 +12374,7 @@ class MainWin(Gtk.ApplicationWindow):
             pixbuf2 = self.pixbuf_dict['folder_small']
         else:
             return self.app_obj.system_error(
-                222,
+                223,
                 'Results List add row request failed sanity check',
             )
 
@@ -13037,7 +13037,7 @@ class MainWin(Gtk.ApplicationWindow):
         or not utils.check_url(url) \
         or options_obj is None:
             self.app_obj.system_error(
-                223,
+                224,
                 'Invalid insert URL into Classic Progress List request',
             )
 
@@ -13527,7 +13527,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if len(self.drag_drop_dict) >= self.drag_drop_max:
             return self.app_obj.system_error(
-                224,
+                225,
                 'Drag and Drop tab out of space',
             )
 
@@ -14659,7 +14659,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Folder) \
         or not media_data_obj.source:
             return self.app_obj.system_error(
-                225,
+                226,
                 'Callback request denied due to current conditions',
             )
 
@@ -14755,7 +14755,7 @@ class MainWin(Gtk.ApplicationWindow):
             and media_data_obj.priv_flag
         ):
             return self.app_obj.system_error(
-                226,
+                227,
                 'Callback request denied due to current conditions',
             )
 
@@ -14841,7 +14841,7 @@ class MainWin(Gtk.ApplicationWindow):
             and self.app_obj.download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                227,
+                228,
                 'Callback request denied due to current conditions',
             )
 
@@ -14903,7 +14903,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                228,
+                229,
                 'Callback request denied due to current conditions',
             )
 
@@ -14927,7 +14927,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                229,
+                230,
                 'Callback request denied due to current conditions',
             )
 
@@ -14988,7 +14988,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                230,
+                231,
                 'Callback request denied due to current conditions',
             )
 
@@ -15026,7 +15026,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                231,
+                232,
                 'Callback request denied due to current conditions',
             )
 
@@ -15065,7 +15065,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                232,
+                233,
                 'Callback request denied due to current conditions',
             )
 
@@ -15112,7 +15112,7 @@ class MainWin(Gtk.ApplicationWindow):
             and self.app_obj.download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                233,
+                234,
                 'Callback request denied due to current conditions',
             )
 
@@ -15295,7 +15295,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                234,
+                235,
                 'Callback request denied due to current conditions',
             )
 
@@ -15592,7 +15592,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video) \
         or isinstance(media_data_obj, media.Folder):
             return self.app_obj.system_error(
-                235,
+                236,
                 'Callback request denied due to current conditions',
             )
 
@@ -15622,7 +15622,7 @@ class MainWin(Gtk.ApplicationWindow):
             and media_data_obj != self.app_obj.fixed_missing_folder
         ):
             return self.app_obj.system_error(
-                236,
+                237,
                 'Callback request denied due to current conditions',
             )
 
@@ -15853,7 +15853,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                237,
+                238,
                 'Callback request denied due to current conditions',
             )
 
@@ -15880,7 +15880,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj \
         or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                238,
+                239,
                 'Callback request denied due to current conditions',
             )
 
@@ -16149,7 +16149,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                239,
+                240,
                 'Cannot set the download destination of a video',
             )
 
@@ -16232,7 +16232,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                240,
+                241,
                 'Cannot set the nickname of a video',
             )
 
@@ -16274,13 +16274,13 @@ class MainWin(Gtk.ApplicationWindow):
 
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
-                241,
+                242,
                 'Cannot modify the URL of a video',
             )
 
         elif isinstance(media_data_obj, media.Folder):
             return self.app_obj.system_error(
-                242,
+                243,
                 'Cannot set the URL of a folder',
             )
 
@@ -16374,7 +16374,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                243,
+                244,
                 'Callback request denied due to current conditions',
             )
 
@@ -16423,7 +16423,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                244,
+                245,
                 'Callback request denied due to current conditions',
             )
 
@@ -16574,7 +16574,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj or media_data_obj.options_obj:
             return self.app_obj.system_error(
-                245,
+                246,
                 'Callback request denied due to current conditions',
             )
 
@@ -16658,7 +16658,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                246,
+                247,
                 'Callback request denied due to current conditions',
             )
 
@@ -16720,7 +16720,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ):
             return self.app_obj.system_error(
-                247,
+                248,
                 'Callback request denied due to current conditions',
             )
 
@@ -16778,7 +16778,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                248,
+                249,
                 'Callback request denied due to current conditions',
             )
 
@@ -16819,7 +16819,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                249,
+                250,
                 'Callback request denied due to current conditions',
             )
 
@@ -17052,7 +17052,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ) or media_data_obj.live_mode == 1:
             return self.app_obj.system_error(
-                250,
+                251,
                 'Callback request denied due to current conditions',
             )
 
@@ -17118,7 +17118,7 @@ class MainWin(Gtk.ApplicationWindow):
             and download_manager_obj.operation_classic_flag
         ) or live_wait_flag:
             return self.app_obj.system_error(
-                251,
+                252,
                 'Callback request denied due to current conditions',
             )
 
@@ -17177,7 +17177,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                252,
+                253,
                 'Callback request denied due to current conditions',
             )
 
@@ -17210,7 +17210,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj \
         or not isinstance(media_data_obj.parent_obj, media.Folder):
             return self.app_obj.system_error(
-                253,
+                254,
                 'Callback request denied due to current conditions',
             )
 
@@ -17929,7 +17929,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                254,
+                255,
                 'Callback request denied due to current conditions',
             )
 
@@ -17961,7 +17961,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                999,
+                256,
                 'Callback request denied due to current conditions',
             )
 
@@ -18089,7 +18089,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj or not media_data_obj.options_obj:
             return self.app_obj.system_error(
-                255,
+                257,
                 'Callback request denied due to current conditions',
             )
 
@@ -18163,7 +18163,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                256,
+                258,
                 'Callback request denied due to current conditions',
             )
 
@@ -18188,7 +18188,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                257,
+                259,
                 'Callback request denied due to current conditions',
             )
 
@@ -19565,7 +19565,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                258,
+                260,
                 'Callback request denied due to current conditions',
             )
 
@@ -19589,7 +19589,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                259,
+                261,
                 'Callback request denied due to current conditions',
             )
 
@@ -19623,7 +19623,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                260,
+                262,
                 'Callback request denied due to current conditions',
             )
 
@@ -19648,7 +19648,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                261,
+                263,
                 'Callback request denied due to current conditions',
             )
 
@@ -19703,7 +19703,7 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
-                262,
+                264,
                 'Callback request denied due to current conditions',
             )
 
@@ -19756,7 +19756,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
-                263,
+                265,
                 'Callback request denied due to current conditions',
             )
 
@@ -21307,7 +21307,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   anyway)
         if config_win_obj in self.config_win_list:
             return self.app_obj.system_error(
-                264,
+                266,
                 'Callback request denied due to current conditions',
             )
 
@@ -23554,7 +23554,7 @@ class ComplexCatalogueItem(object):
         #   around the mainwin.CatalogueGridBox object
         if not isinstance(self, ComplexCatalogueItem):
             return self.main_win_obj.app_obj.system_error(
-                265,
+                267,
                 'CatalogueGridBox has no frame to toggle',
             )
 
@@ -29901,7 +29901,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         if media_type == 'video':
 
             return main_win_obj.app_obj.system_error(
-                266,
+                268,
                 'Dialogue window setup failed sanity check',
             )
 
@@ -30289,7 +30289,7 @@ class DeleteVideoDialogue(Gtk.Dialog):
         if parent_obj is None or not media_list:
 
             return main_win_obj.app_obj.system_error(
-                999,
+                269,
                 'Dialogue window setup failed sanity check',
             )
 
@@ -30297,7 +30297,7 @@ class DeleteVideoDialogue(Gtk.Dialog):
             if media_data_obj.get_type() != 'video':
 
                 return main_win_obj.app_obj.system_error(
-                    999,
+                    270,
                     'Dialogue window setup failed sanity check',
                 )
 

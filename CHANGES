@@ -1,3 +1,20 @@
+v2.4.077 (8 Jun 2022)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- In the download options window, the "Completely reset all download options to
+    their default values" button caused problems with the Drag and Drop tab,
+    which in turn prevented Tartube from finishing loading a database. Fixed,
+    and added some safeguards that would make a similar bug easier to detect,
+    if it were to happen again (Git #436)
+- Fixed broken check buttons in the preferences window which could prevent it
+    from opening (Git #435)
+
+MINOR FIXES
+- In the Video Catalogue (in grid mode), adjusted the maximum length of the
+    channel/playlist/folder name to prevent the right-hand column being only
+    partially visible, under certain circumstances (Git #433)
+
 v2.4.065 (31 May 2022)
 -------------------------------------------------------------------------------
 
