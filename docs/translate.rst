@@ -7,6 +7,11 @@ You want to contribute a translation to this project? Well, that's just great!
 The simple way
 --------------
 
+Contributions can be made using Tartube's `Weblate page <https://hosted.weblate.org/projects/tartube/>`__, if that is convenient.
+
+The not-so-simple way
+---------------------
+
 1. Get a copy of the file `../tartube/po/messages.pot <tartube/po/messages.pot>`__ 
 2. Open it in a text editor
 3. Read the notes below
