@@ -2402,7 +2402,7 @@ As a workaround, click **Edit > General download options... > Files > Filesystem
 7.35 No puedo hablar inglés
 ---------------------------
 
-*Q: ¡No puedo usar YouTube porque no hablo inglés!*
+*Q: ¡No puedo usar Tartube porque no hablo inglés!*
 
 A: Necesitamos más traductores.
 
