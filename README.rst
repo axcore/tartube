@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.3.008/tartube_v2.3.008.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.077/tartube_v2.4.077.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
