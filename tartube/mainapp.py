@@ -1622,6 +1622,9 @@ class TartubeApp(Gtk.Application):
         #   command line options manually
         self.ffmpeg_simple_options_flag = True
 
+        # Flag set to True if checking/downloading livestreams should be
+        #   blocked by yt-dlp (does not work with other downloaders)
+        self.block_livestreams_flag = False
         # Flag set to True if Tartube should try to detect livestreams (on
         #   compatible websites only)
         # This feature is only tested on YouTube. It might work on other
@@ -2322,6 +2325,8 @@ class TartubeApp(Gtk.Application):
             'live_from_start': False,
             'wait_for_video_min': 0,
             # Video Selection Options
+            '--playlist-items': True,
+            '-I': True,                     # Alias of --playlist-items
             '--break-on-existing': False,
             '--break-on-reject': False,
             '--skip-playlist-after-errors': True,
@@ -4524,9 +4529,10 @@ class TartubeApp(Gtk.Application):
         if version < 2002015:   # v2.2.015
             self.load_config_import_scheduled(version, json_dict)
 
+        if version >= 2004085:  # v2.4.085
+            self.block_livestreams_flag = json_dict['block_livestreams_flag']
         if version >= 2000037:  # v2.0.037
-            self.enable_livestreams_flag \
-            = json_dict['enable_livestreams_flag']
+            self.enable_livestreams_flag = json_dict['enable_livestreams_flag']
         if version >= 2000047:  # v2.0.047
             self.livestream_max_days = json_dict['livestream_max_days']
             self.livestream_use_colour_flag \
@@ -5476,8 +5482,8 @@ class TartubeApp(Gtk.Application):
             'auto_delete_options_flag': self.auto_delete_options_flag,
             'simple_options_flag': self.simple_options_flag,
 
-            'enable_livestreams_flag': \
-            self.enable_livestreams_flag,
+            'block_livestreams_flag': self.block_livestreams_flag,
+            'enable_livestreams_flag': self.enable_livestreams_flag,
             'livestream_max_days': self.livestream_max_days,
             'livestream_use_colour_flag': self.livestream_use_colour_flag,
             'livestream_simple_colour_flag': \
@@ -7471,6 +7477,11 @@ class TartubeApp(Gtk.Application):
 
             self.classic_dropzone_list = mod_list
 
+        if version < 2004084:       # v2.4.084
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['playlist_items'] = ''
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -21778,36 +21789,7 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        # Start the download operation
-        if not self.classic_custom_dl_flag:
-
-            self.download_manager_start('classic_real')
-
-        elif self.classic_custom_dl_obj.dl_by_video_flag:
-
-            # If the user has opted to download each video independently of its
-            #   channel or playlist, then we have to do a simulated download
-            #   first, in order to collect the URLs of each invidual video
-            #   ('classic_sim')
-            # When that download operation has finished, we can do a (real)
-            #   custom download for each video ('classic_custom')
-            self.download_manager_start(
-                'classic_sim',
-                False,          # Not called by slow timer
-                [],             # Download all URLs
-                self.classic_custom_dl_obj,
-            )
-
-        else:
-
-            # Otherwise, a full custom download can proceed immediately,
-            #   without performing the simulated download first
-            self.download_manager_start(
-                'classic_custom',
-                False,          # Not called by slow timer
-                [],             # Download all URLs
-                self.classic_custom_dl_obj,
-            )
+        self.main_win_obj.classic_mode_tab_start_download()
 
 
     def on_button_classic_ffmpeg(self, action, par):
@@ -24848,6 +24830,14 @@ class TartubeApp(Gtk.Application):
             )
 
         self.bandwidth_default = value
+
+
+    def set_block_livestreams_flag(self, flag):
+
+        if not flag:
+            self.block_livestreams_flag = False
+        else:
+            self.block_livestreams_flag = True
 
 
     def set_catalogue_draw_blocked_flag(self, flag):

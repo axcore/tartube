@@ -647,6 +647,9 @@ class SetupWizWin(GenericWizWin):
         # Flag set to True, once the 'More options' button has been clicked,
         #   so that it is never visible again
         self.more_options_flag = False
+        # Flag set to True after the user has tried install FFmpeg at least
+        #   once (even if the attempt failed)
+        self.try_install_ffmpeg_flag = False
 
         # Standard length of text in the wizard window
         self.text_len = 60
@@ -1427,11 +1430,17 @@ class SetupWizWin(GenericWizWin):
 
             self.add_label(
                 '<span font_size="large" style="italic">' \
-                + _('Estimated install size') + ': <b>1.5 GB</b></span>',
+                + _('Download size') + ': <b>0.3 GB</b> - ' \
+                + _('Install size') + ': <b>1.5 GB</b></span>',
                 0, (5 + extra_rows), grid_width, 1,
             )
 
-        self.ffmpeg_button = Gtk.Button(_('Install FFmpeg'))
+        if not self.try_install_ffmpeg_flag:
+            msg = _('Install FFmpeg')
+        else:
+            msg = _('Reinstall FFmpeg')
+        self.ffmpeg_button = Gtk.Button(msg)
+
         self.inner_grid.attach(self.ffmpeg_button, 1, (6 + extra_rows), 1, 1)
         self.ffmpeg_button.set_hexpand(False)
         # (Signal connect appears below)
@@ -1782,9 +1791,12 @@ class SetupWizWin(GenericWizWin):
             msg,
         )
 
+        self.ffmpeg_button.set_label(_('Reinstall FFmpeg'))
         self.ffmpeg_button.set_sensitive(True)
         self.next_button.set_sensitive(True)
         self.prev_button.set_sensitive(True)
+
+        self.try_install_ffmpeg_flag = True
 
 
     def refresh_update_combo(self):

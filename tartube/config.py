@@ -8474,39 +8474,51 @@ class OptionsEditWin(GenericEditWin):
         self.add_tooltip('--playlist-end NUMBER', label2, spinbutton2)
 
         label3 = self.add_label(grid,
-            _('Abort operation after downloading this many videos'),
+            _('Download playlist range, in form START:STOP:STEP'),
             0, (row_count + 4), 1, 1,
+        )
+
+        entry = self.add_entry(grid,
+            'playlist_items',
+            1, (row_count + 4), 1, 1,
+        )
+        entry.set_hexpand(True)
+        self.add_tooltip('--playlist-items ITEM_SPEC', label3, entry)
+
+        label4 = self.add_label(grid,
+            _('Abort operation after downloading this many videos'),
+            0, (row_count + 5), 1, 1,
         )
 
         spinbutton3 = self.add_spinbutton(grid,
             0, None, 1,
             'max_downloads',
-            1, (row_count + 4), 1, 1,
+            1, (row_count + 5), 1, 1,
         )
-        self.add_tooltip('--max-downloads NUMBER', label3, spinbutton3)
+        self.add_tooltip('--max-downloads NUMBER', label4, spinbutton3)
 
         checkbutton = self.add_checkbutton(grid,
             _('Abort downloading the playlist if an error occurs'),
             'abort_on_error',
-            0, (row_count + 5), grid_width, 1,
+            0, (row_count + 6), grid_width, 1,
         )
         self.add_tooltip('--abort-on-error', checkbutton)
 
         checkbutton2 = self.add_checkbutton(grid,
             _('Download playlist in reverse order'),
             'playlist_reverse',
-            0, (row_count + 6), grid_width, 1,
+            0, (row_count + 7), grid_width, 1,
         )
         self.add_tooltip('--playlist-reverse', checkbutton2)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Download playlist in random order'),
             'playlist_random',
-            0, (row_count + 7), grid_width, 1,
+            0, (row_count + 8), grid_width, 1,
         )
         self.add_tooltip('--playlist-random', checkbutton3)
 
-        return row_count + 7
+        return row_count + 8
 
 
     def downloads_size_limit_widgets(self, grid, row_count):
@@ -19223,7 +19235,6 @@ class SystemPrefWin(GenericPrefWin):
         # (IVs used to handle widget changes in the 'Custom' tab)
         self.custom_liststore = None            # Gtk.ListStore
         # (IVs used to handle widget changes in the 'Livestream' tab)
-        self.livestream_label = None            # Gtk.Label
         self.livestream_radiobutton = None      # Gtk.RadioButton
         self.livestream_radiobutton2 = None     # Gtk.RadioButton
         self.livestream_radiobutton3 = None     # Gtk.RadioButton
@@ -23598,59 +23609,70 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton = self.add_checkbutton(grid,
+            _('Do not check/download any livestream [yt-dlp only]'),
+            self.app_obj.block_livestreams_flag,
+            True,                   # Can be toggled by user
+            0, 1, 1, 1,
+        )
+        checkbutton.connect(
+            'toggled',
+            self.on_block_livestreams_button_toggled,
+        )
+
+        checkbutton2 = self.add_checkbutton(grid,
             _('Detect livestreams announced within this many days'),
             self.app_obj.enable_livestreams_flag,
             True,                   # Can be toggled by user
-            0, 1, 1, 1,
+            0, 2, 1, 1,
         )
         # (Signal connect appears below)
         spinbutton = self.add_spinbutton(grid,
             0, None, 1, self.app_obj.livestream_max_days,
-            1, 1, 1, 1,
+            1, 2, 1, 1,
         )
         if not self.app_obj.enable_livestreams_flag:
             spinbutton.set_sensitive(False)
         # (Signal connect appears below)
 
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _('How often to check the status of livestreams (in minutes)'),
             self.app_obj.scheduled_livestream_flag,
             True,                   # Can be toggled by user
-            0, 2, 1, 1,
+            0, 3, 1, 1,
         )
         if not self.app_obj.enable_livestreams_flag:
-            checkbutton2.set_sensitive(False)
+            checkbutton3.set_sensitive(False)
         # (Signal connect appears below)
 
         spinbutton2 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.scheduled_livestream_wait_mins,
-            1, 2, 1, 1,
+            1, 3, 1, 1,
         )
         if not self.app_obj.enable_livestreams_flag \
         or not self.app_obj.scheduled_livestream_flag:
             spinbutton2.set_sensitive(False)
         # (Signal connect appears below)
 
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             _('Check more frequently when a livestream is due to start'),
             self.app_obj.scheduled_livestream_extra_flag,
             True,                   # Can be toggled by user
-            0, 3, grid_width, 1,
+            0, 4, grid_width, 1,
         )
         if not self.app_obj.enable_livestreams_flag \
         or not self.app_obj.scheduled_livestream_flag:
-            checkbutton3.set_sensitive(False)
-        checkbutton3.connect(
+            checkbutton4.set_sensitive(False)
+        checkbutton4.connect(
             'toggled',
             self.on_extra_livestreams_button_toggled,
         )
 
         # (Signal connects from above)
-        checkbutton.connect(
+        checkbutton2.connect(
             'toggled',
             self.on_enable_livestreams_button_toggled,
-            checkbutton2,
             checkbutton3,
+            checkbutton4,
             spinbutton,
             spinbutton2,
         )
@@ -23660,10 +23682,10 @@ class SystemPrefWin(GenericPrefWin):
             self.on_livestream_max_days_spinbutton_changed,
         )
 
-        checkbutton2.connect(
+        checkbutton3.connect(
             'toggled',
             self.on_scheduled_livestreams_button_toggled,
-            checkbutton3,
+            checkbutton4,
             spinbutton2,
         )
 
@@ -23678,7 +23700,7 @@ class SystemPrefWin(GenericPrefWin):
                 'Broadcasting livestream preferences (compatible websites' \
                 + ' only)',
             ) + '</u>',
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
         self.add_label(grid,
@@ -23686,11 +23708,6 @@ class SystemPrefWin(GenericPrefWin):
                 'These settings apply when downloading videos individually,' \
                 + ' for example with a custom download',
             ) + '</i>',
-            0, 5, grid_width, 1,
-        )
-
-        self.livestream_label = self.add_label(grid,
-            '',
             0, 6, grid_width, 1,
         )
 
@@ -23781,7 +23798,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # (More widgets)
-        checkbutton3 = self.add_checkbutton(grid,
+        checkbutton5 = self.add_checkbutton(grid,
             _(
             'Bypass usual limits on simultaneous downloads, so that' \
             + ' all livestreams can be downloaded',
@@ -23790,7 +23807,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 9, grid_width, 1,
         )
-        checkbutton3.connect(
+        checkbutton5.connect(
             'toggled',
             self.on_worker_bypass_button_toggled,
         )
@@ -23810,7 +23827,7 @@ class SystemPrefWin(GenericPrefWin):
             self.on_livestream_timeout_spinbutton_changed,
         )
 
-        checkbutton4 = self.add_checkbutton(grid,
+        checkbutton6 = self.add_checkbutton(grid,
             _(
             'When the livestream download is stopped manually, mark the' \
             + ' video as downloaded',
@@ -23819,12 +23836,12 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 11, grid_width, 1,
         )
-        checkbutton4.connect(
+        checkbutton6.connect(
             'toggled',
             self.on_livestream_stop_button_toggled,
         )
 
-        checkbutton5 = self.add_checkbutton(grid,
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Check a video before the livestream download (ensures' \
             + ' metadata is downloaded)',
@@ -23833,7 +23850,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 12, grid_width, 1,
         )
-        checkbutton5.connect(
+        checkbutton7.connect(
             'toggled',
             self.on_livestream_force_check_button_toggled,
         )
@@ -23855,13 +23872,6 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         downloader = self.app_obj.get_downloader()
-
-        self.livestream_label.set_markup(
-            '<i>' + _(
-                'N.B. To prevent {0} from downloading livestreams at all,' \
-                + ' use a custom download',
-            ).format(downloader) + '</i>',
-        )
 
         self.livestream_radiobutton.set_label(
             downloader + ' (' + _('not recommended') + ')',
@@ -26874,6 +26884,26 @@ class SystemPrefWin(GenericPrefWin):
 
             # Alternative limits. There is no second widget to toggle
             self.app_obj.set_alt_bandwidth(int(spinbutton.get_value()))
+
+
+    def on_block_livestreams_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_livestreams_tab().
+
+        Enables/disables checking/downloading livestreams by yt-dlp
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.block_livestreams_flag:
+            self.app_obj.set_block_livestreams_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.block_livestreams_flag:
+            self.app_obj.set_block_livestreams_flag(False)
 
 
     def on_check_comment_fetch_button_toggled(self, checkbutton, checkbutton2):

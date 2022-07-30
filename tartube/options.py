@@ -108,6 +108,12 @@ class OptionsManager(object):
 
         playlist_end (int): Playlist index to stop downloading
 
+        playlist_items (str): Comma-separated playlist index of the videos to
+            download, in the form '[START]:[STOP][:STEP]' or 'START-STOP'. Use
+            negative indices to count from the right and negative STEP to
+            download in reverse order, e.g. on a playhlist of 15 videos,
+            '1:3,7,-5::2' downloads the videos at index '1,2,3,7,11,13,15'
+
         max_downloads (int): Maximum number of video files to download from the
             given playlist
 
@@ -736,6 +742,7 @@ class OptionsManager(object):
             # VIDEO SELECTION
             'playlist_start': 1,
             'playlist_end': 0,
+            'playlist_items': '',
             'max_downloads': 0,
             'min_filesize': 0,
             'max_filesize': 0,
@@ -1042,6 +1049,8 @@ class OptionsParser(object):
             OptionHolder('playlist_start', '--playlist-start', 1),
             # --playlist-end NUMBER
             OptionHolder('playlist_end', '--playlist-end', 0),
+            # --playlist-items ITEM_SPEC
+            OptionHolder('playlist_items', '--playlist-items', ''),
             # --max-downloads NUMBER
             OptionHolder('max_downloads', '--max-downloads', 0),
             # --min-filesize SIZE
@@ -1450,8 +1459,20 @@ class OptionsParser(object):
                             options_list.append(option_holder_obj.switch)
                             options_list.append(utils.to_string(value))
 
-            elif option_holder_obj.name == 'match_filter' \
-            or option_holder_obj.name == 'external_arg_string' \
+            elif option_holder_obj.name == 'match_filter':
+                value = utils.to_string(copy_dict[option_holder_obj.name])
+                if self.app_obj.block_livestreams_flag:
+
+                    if value == '':
+                        value = '!is_live'
+                    else:
+                        value += ' \& !is_live'
+
+                if value != '':
+                    options_list.append(option_holder_obj.switch)
+                    options_list.append(value)
+
+            elif option_holder_obj.name == 'external_arg_string' \
             or option_holder_obj.name == 'pp_args':
                 value = copy_dict[option_holder_obj.name]
                 if value != '':

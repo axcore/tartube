@@ -703,11 +703,19 @@ class MainWin(Gtk.ApplicationWindow):
         # Flag set to True when automatic copy/paste has been enabled (always
         #   disabled on startup)
         self.classic_auto_copy_flag = False
+        # Flag set to True when one-click downloads have been enabled (always
+        #   disabled on startup)
+        self.classic_one_click_dl_flag = False
         # The last text that was copy/pasted from the clipboard. Storing it
         #   here prevents self.classic_mode_tab_timer_callback() from
         #   continually re-pasting the same text (for example, when the user
         #   manually empties the textview)
         self.classic_auto_copy_text = None
+        # Temporary flag set to prevent a second call to
+        #   self.classic_mode_tab_add_urls() before the first one has finished
+        self.classic_auto_copy_check_flag = False
+        # Flag set to True just before a call to
+        #   self.classic_mode_tab_add_urls() so that it can't call itself
         # IVs for clipboard monitoring, when required
         self.classic_clipboard_timer_id = None
         self.classic_clipboard_timer_time = 250
@@ -3136,6 +3144,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_textview.connect(
             'paste-clipboard',
             self.on_classic_textview_paste,
+        )
+        # (If the setting is enabled, start a download operation for any valid
+        #   URL(s), or add the URL(s) to an existing download operation)
+        self.classic_textbuffer.connect(
+            'changed',
+            self.on_classic_textbuffer_changed,
         )
 
         # Third row - widgets to set the download destination and video/audio
@@ -5986,30 +6000,6 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         actions_submenu.append(Gtk.SeparatorMenuItem())
 
-        convert_text = None
-        if media_type == 'channel':
-            msg = _('_Convert to playlist')
-        elif media_type == 'playlist':
-            msg = _('_Convert to channel')
-        else:
-            msg = None
-
-        if msg:
-
-            convert_menu_item = Gtk.MenuItem.new_with_mnemonic(msg)
-            convert_menu_item.connect(
-                'activate',
-                self.on_video_index_convert_container,
-                media_data_obj,
-            )
-            actions_submenu.append(convert_menu_item)
-            if self.app_obj.current_manager_obj \
-            or unavailable_flag:
-                convert_menu_item.set_sensitive(False)
-
-            # Separator
-            actions_submenu.append(Gtk.SeparatorMenuItem())
-
         if isinstance(media_data_obj, media.Folder):
 
             hide_folder_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -6089,6 +6079,23 @@ class MainWin(Gtk.ApplicationWindow):
         actions_submenu.append(Gtk.SeparatorMenuItem())
 
         if media_type == 'channel':
+
+            insert_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Insert videos...'),
+            )
+            insert_menu_item.connect(
+                'activate',
+                self.on_video_index_insert_videos,
+                media_data_obj,
+            )
+            actions_submenu.append(insert_menu_item)
+            if self.app_obj.current_manager_obj:
+                insert_menu_item.set_sensitive(False)
+
+            # Separator
+            actions_submenu.append(Gtk.SeparatorMenuItem())
+
+        if media_type == 'channel':
             msg = _('_Export channel...')
         elif media_type == 'playlist':
             msg = _('_Export playlist...')
@@ -6146,6 +6153,30 @@ class MainWin(Gtk.ApplicationWindow):
         ):
             tidy_menu_item.set_sensitive(False)
         actions_submenu.append(tidy_menu_item)
+
+        # Separator
+        actions_submenu.append(Gtk.SeparatorMenuItem())
+
+        convert_text = None
+        if media_type == 'channel':
+            msg = _('_Convert to playlist')
+        elif media_type == 'playlist':
+            msg = _('_Convert to channel')
+        else:
+            msg = None
+
+        if msg:
+
+            convert_menu_item = Gtk.MenuItem.new_with_mnemonic(msg)
+            convert_menu_item.connect(
+                'activate',
+                self.on_video_index_convert_container,
+                media_data_obj,
+            )
+            actions_submenu.append(convert_menu_item)
+            if self.app_obj.current_manager_obj \
+            or unavailable_flag:
+                convert_menu_item.set_sensitive(False)
 
         classic_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Add to C_lassic Mode tab'),
@@ -8202,9 +8233,21 @@ class MainWin(Gtk.ApplicationWindow):
         )
         popup_menu.append(automatic_menu_item)
 
+        # One-click downloads
+        one_click_dl_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+             _('E_nable one-click downloads'),
+        )
+        if self.classic_one_click_dl_flag:
+            one_click_dl_menu_item.set_active(True)
+        one_click_dl_menu_item.connect(
+            'toggled',
+            self.on_classic_menu_toggle_one_click_dl,
+        )
+        popup_menu.append(one_click_dl_menu_item)
+
         # Remember undownloaded URLs
         remember_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-            _('_Remember URLs'),
+            _('_Remember un-downloaded URLs'),
         )
         if self.app_obj.classic_pending_flag:
             remember_menu_item.set_active(True)
@@ -12220,30 +12263,41 @@ class MainWin(Gtk.ApplicationWindow):
 
         row_num = self.progress_list_row_dict[item_id]
 
-        # Prepare new values for Progress List IVs. Everything after this row
-        #   must have its row number decremented by one
-        row_dict = {}
-        for this_item_id in self.progress_list_row_dict.keys():
-            this_row_num = self.progress_list_row_dict[this_item_id]
+        # Remove the row. Very rarely this generates a Python error (for
+        #   unknown reasons)
+        try:
 
-            if this_row_num > row_num:
-                row_dict[this_item_id] = this_row_num - 1
-            elif this_row_num < row_num:
-                row_dict[this_item_id] = this_row_num
+            path = Gtk.TreePath(row_num)
+            tree_iter = self.progress_list_liststore.get_iter(path)
+            self.progress_list_liststore.remove(tree_iter)
 
-        row_count = self.progress_list_row_count - 1
+            # Prepare new values for Progress List IVs. Everything after this
+            #   row must have its row number decremented by one
+            row_dict = {}
+            for this_item_id in self.progress_list_row_dict.keys():
+                this_row_num = self.progress_list_row_dict[this_item_id]
 
-        # Remove the row
-        path = Gtk.TreePath(row_num)
-        tree_iter = self.progress_list_liststore.get_iter(path)
-        self.progress_list_liststore.remove(tree_iter)
+                if this_row_num > row_num:
+                    row_dict[this_item_id] = this_row_num - 1
+                elif this_row_num < row_num:
+                    row_dict[this_item_id] = this_row_num
 
-        # Apply updated IVs
-        self.progress_list_row_dict = row_dict.copy()
-        if item_id in self.progress_list_temp_dict:
-            del self.progress_list_temp_dict[item_id]
-        if item_id in self.progress_list_finish_dict:
-            del self.progress_list_finish_dict[item_id]
+            row_count = self.progress_list_row_count - 1
+
+
+            # Apply updated IVs
+            self.progress_list_row_dict = row_dict.copy()
+            if item_id in self.progress_list_temp_dict:
+                del self.progress_list_temp_dict[item_id]
+            if item_id in self.progress_list_finish_dict:
+                del self.progress_list_finish_dict[item_id]
+
+        except:
+
+            return self.app_obj.system_error(
+                999,
+                'Cannot remove row in Progress List (row does not exist)',
+            )
 
 
     def progress_list_update_video_name(self, download_item_obj, video_obj):
@@ -12891,9 +12945,17 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called by mainapp.TartubeApp.on_button_classic_add_urls().
 
+        Also called by self.on_classic_textbuffer_changed().
+
         In the Classic Mode tab, transfers URLs from the textview into the
         Classic Progress List (a treeview), creating a new dummy media.Video
         object for each URL, and updating IVs.
+
+        Return values:
+
+            Returns a list of URLs added to the Classic Progress List (which
+                may be empty)
+
         """
 
         # Get the specified download destination
@@ -12946,8 +13008,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Extract a list of URLs from the textview
         url_string = self.classic_textbuffer.get_text(
-            self.classic_textbuffer.get_start_iter(),
-            self.classic_textbuffer.get_end_iter(),
+            self.classic_textbuffer.get_iter_at_mark(self.classic_mark_start),
+            self.classic_textbuffer.get_iter_at_mark(self.classic_mark_end),
             False,
         )
 
@@ -13000,10 +13062,18 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Unless the flag is set, any invalid links remain in the textview (but
         #   in all cases, all valid links are removed from it)
+        # When this function is called by self.on_classic_textbuffer_changed(),
+        #   Gtk generates a warning when we try to .set_text()
+        # The only way I can find to get around this is to replace the old
+        #   textbuffer with a new one
+        self.classic_mode_tab_replace_textbuffer()
+
         if not self.app_obj.classic_duplicate_remove_flag:
             self.classic_textbuffer.set_text(invalid_url_string)
         else:
             self.classic_textbuffer.set_text('')
+
+        return mod_list
 
 
     def classic_mode_tab_insert_url(self, url, options_obj):
@@ -13060,6 +13130,32 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             dummy_obj.set_options_obj(options_obj)
             return True
+
+
+    def classic_mode_tab_replace_textbuffer(self):
+
+        """Called by self.classic_mode_tab_add_urls(), just before replacing
+        the contents of the Gtk.TextView at the top of the tab.
+
+        When that function is called by self.on_classic_textbuffer_changed(),
+        Gtk generates a warning when we try to .set_text().
+
+        The only way I can find to get around this is to replace the old
+        textbuffer with a new one
+        """
+
+        self.classic_textbuffer = Gtk.TextBuffer()
+        self.classic_textview.set_buffer(self.classic_textbuffer)
+        self.classic_mark_start = self.classic_textbuffer.create_mark(
+            'mark_start',
+            self.classic_textbuffer.get_start_iter(),
+            True,               # Left gravity
+        )
+        self.classic_mark_end = self.classic_textbuffer.create_mark(
+            'mark_end',
+            self.classic_textbuffer.get_end_iter(),
+            False,              # Not left gravity
+        )
 
 
     def classic_mode_tab_create_dummy_video(self, url, dest_dir, \
@@ -13146,8 +13242,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Extract a list of URLs from the textview
         url_string = self.classic_textbuffer.get_text(
-            self.classic_textbuffer.get_start_iter(),
-            self.classic_textbuffer.get_end_iter(),
+            self.classic_textbuffer.get_iter_at_mark(self.classic_mark_start),
+            self.classic_textbuffer.get_iter_at_mark(self.classic_mark_end),
             False,
         )
 
@@ -13189,9 +13285,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        self.classic_textbuffer.set_text(
-            '\n'.join(url_list),
-        )
+        self.classic_textbuffer.set_text('\n'.join(url_list))
 
 
     def classic_mode_tab_find_row_iter(self, dbid):
@@ -13402,6 +13496,52 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Return 1 to keep the timer going
         return 1
+
+
+    def classic_mode_tab_start_download(self):
+
+        """Called by mainapp.TartubeApp.on_button_classic_download() and
+        self.on_classic_textbuffer_changed().
+
+        Starts a download operation for the URLs added to the Classic Progress
+        List.
+        """
+
+        if self.app_obj.download_manager_obj:
+
+            # Download already in progress
+            return
+
+        elif not self.app_obj.classic_custom_dl_flag:
+
+            # Start an (ordinary) download operation
+            self.app_obj.download_manager_start('classic_real')
+
+        elif self.app_obj.classic_custom_dl_obj.dl_by_video_flag:
+
+            # If the user has opted to download each video independently of its
+            #   channel or playlist, then we have to do a simulated download
+            #   first, in order to collect the URLs of each invidual video
+            #   ('classic_sim')
+            # When that download operation has finished, we can do a (real)
+            #   custom download for each video ('classic_custom')
+            self.app_obj.download_manager_start(
+                'classic_sim',
+                False,          # Not called by slow timer
+                [],             # Download all URLs
+                self.app_obj.classic_custom_dl_obj,
+            )
+
+        else:
+
+            # Otherwise, a full custom download can proceed immediately,
+            #   without performing the simulated download first
+            self.app_obj.download_manager_start(
+                'classic_custom',
+                False,          # Not called by slow timer
+                [],             # Download all URLs
+                self.app_obj.classic_custom_dl_obj,
+            )
 
 
     # (Drag and Drop tab)
@@ -15360,6 +15500,80 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         self.app_obj.mark_folder_hidden(media_data_obj, True)
+
+
+    def on_video_index_insert_videos(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Creates a dialogue window to insert one or more videos into a channel.
+
+        This is useful when the new videos are unlisted. Videos can be added to
+        a folder in the usual way.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist):
+                The clicked media data object
+
+        """
+
+        # (Code adapated from mainapp.TartubeApp.on_menu_add_video() )
+
+        dialogue_win = InsertVideoDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window...
+        text = dialogue_win.textbuffer.get_text(
+            dialogue_win.textbuffer.get_start_iter(),
+            dialogue_win.textbuffer.get_end_iter(),
+            False,
+        )
+
+        # ...and halt the timer, if running
+        if dialogue_win.clipboard_timer_id:
+            GObject.source_remove(dialogue_win.clipboard_timer_id)
+
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            # Split text into a list of lines and filter out invalid URLs
+            video_list = []
+            duplicate_list = []
+            for line in text.split('\n'):
+
+                # Remove leading/trailing whitespace
+                line = utils.strip_whitespace(line)
+
+                # Perform checks on the URL. If it passes, remove leading/
+                #   trailing whitespace
+                if utils.check_url(line):
+                    video_list.append(utils.strip_whitespace(line))
+
+            # Check everything in the list against other media.Video objects
+            #   with the same parent folder
+            for line in video_list:
+                if media_data_obj.check_duplicate_video(line):
+                    duplicate_list.append(line)
+                else:
+                    self.app_obj.add_video(media_data_obj, line)
+
+            # In the Video Index, select the parent media data object, which
+            #   updates both the Video Index and the Video Catalogue
+            self.video_index_select_row(media_data_obj)
+
+            # If any duplicates were found, inform the user
+            if duplicate_list:
+                dialogue_win = mainwin.DuplicateVideoDialogue(
+                    self,
+                    duplicate_list,
+                )
+                dialogue_win.run()
+                dialogue_win.destroy()
 
 
     def on_video_index_mark_archived(self, menu_item, media_data_obj,
@@ -19403,32 +19617,6 @@ class MainWin(Gtk.ApplicationWindow):
             data.set_text(string, -1)
 
 
-    def on_classic_textview_paste(self, textview):
-
-        """Called from callback in self.setup_classic_mode_tab().
-
-        When the user copy-pastes URLs into the textview, insert an initial
-        newline character, so they don't have to continuously do that
-        themselves.
-
-        Args:
-
-            textview (Gtk.TextView): The clicked widget
-
-        """
-
-        text = self.classic_textbuffer.get_text(
-            self.classic_textbuffer.get_start_iter(),
-            self.classic_textbuffer.get_end_iter(),
-            # Don't include hidden characters
-            False,
-        )
-
-        if not (re.search('^\S*$', text)) \
-        and not (re.search('\n+\s*$', text)):
-            self.classic_textbuffer.set_text(text + '\n')
-
-
     def on_classic_dest_dir_combo_changed(self, combo):
 
         """Called from callback in self.setup_classic_mode_tab().
@@ -19726,6 +19914,25 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_classic_menu_toggle_one_click_dl(self, menu_item):
+
+        """Called from a callback in self.classic_popup_menu().
+
+        Toggles the one-click download button in the Classic Mode tab.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+        """
+
+        # Update IVs
+        if not self.classic_one_click_dl_flag:
+            self.classic_one_click_dl_flag = True
+        else:
+            self.classic_one_click_dl_flag = False
+
+
     def on_classic_menu_toggle_remember_urls(self, menu_item):
 
         """Called from a callback in self.classic_popup_menu().
@@ -19968,6 +20175,70 @@ class MainWin(Gtk.ApplicationWindow):
             tree_iter = self.classic_progress_liststore.get_iter(path)
             if tree_iter is not None:
                 self.classic_progress_list_popup_menu(event, path)
+
+
+    def on_classic_textbuffer_changed(self, textbuffer):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        If the setting is enabled, start a download operation for any valid
+        URL(s), or add the URL(s) to an existing download operation.
+
+        Args:
+
+            textbuffer (Gtk.TextBuffer): The textbuffer for the modified
+                Gtk.TextView
+
+        """
+
+        if self.classic_one_click_dl_flag \
+        and not self.classic_auto_copy_check_flag:
+
+            # (A second signal is received by this function, when the call to
+            #   self.classic_mode_tab_add_urls() resets the textview. Setting
+            #   this flag prevents a second call to that function, before the
+            #   first one has finished)
+            self.classic_auto_copy_check_flag = True
+            url_list = self.classic_mode_tab_add_urls()
+            self.classic_auto_copy_check_flag = False
+
+            if url_list and not self.app_obj.download_manager_obj:
+                self.classic_mode_tab_start_download()
+
+
+    def on_classic_textview_paste(self, textview):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        When the user copy-pastes URLs into the textview, insert an initial
+        newline character, so they don't have to continuously do that
+        themselves.
+
+        Args:
+
+            textview (Gtk.TextView): The clicked widget
+
+        """
+
+        # (Don't bother, if the URLs are going to be downloaded immediately)
+        if not self.classic_one_click_dl_flag:
+
+            text = self.classic_textbuffer.get_text(
+                self.classic_textbuffer.get_iter_at_mark(
+                    self.classic_mark_start,
+                ),
+                self.classic_textbuffer.get_iter_at_mark(
+                    self.classic_mark_end,
+                ),
+                # Don't include hidden characters
+                False,
+            )
+
+            # (Don't bother inserting the newline if the URLs are going to be
+            #   sent straight to the download manager)
+            if not (re.search('^\S*$', text)) \
+            and not (re.search('\n+\s*$', text)):
+                self.classic_textbuffer.set_text(text + '\n')
 
 
     def on_bandwidth_spinbutton_changed(self, spinbutton):
@@ -31399,6 +31670,274 @@ class ImportDialogue(Gtk.Dialog):
 
         for mini_dict in self.flat_db_dict.values():
             mini_dict['import_flag'] = False
+
+
+class InsertVideoDialogue(Gtk.Dialog):
+
+    """Called by mainwin.MainWin.on_video_index_insert_videos().
+
+    Python class handling a dialogue window that inserts invidual video(s)
+    into a channel.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        parent_obj (media.Channel, media.Playlist or media.Folder): Name of
+            the container into which videos are to be inserted. At the moment,
+            no calling code specifies a playlist or folder, but such a call is
+            nevertheless permitted
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, parent_obj):
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.textbuffer = None                  # Gtk.TextBuffer
+        self.mark_start = None                  # Gtk.TextMark
+        self.mark_end = None                    # Gtk.TextMark
+        self.checkbutton = None                 # Gtk.CheckButton
+
+
+        # IV list - other
+        # ---------------
+        # The media.Channel or media.Playlist into which videos are to be
+        #   inserted
+        self.parent_obj = parent_obj
+        # Set up IVs for clipboard monitoring, if required
+        self.clipboard_timer_id = None
+        self.clipboard_timer_time = 250
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Insert videos'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label(_('Copy and paste the links to one or more videos'))
+        grid.attach(label, 0, 0, 1, 1)
+
+        if main_win_obj.app_obj.operation_convert_mode == 'channel':
+
+            text = _(
+                'Links containing multiple videos will be converted to' \
+                + ' a channel',
+            )
+
+        elif main_win_obj.app_obj.operation_convert_mode == 'playlist':
+
+            text = _(
+                'Links containing multiple videos will be converted to a' \
+                + ' playlist',
+            )
+
+        elif main_win_obj.app_obj.operation_convert_mode == 'multi':
+
+            text = _(
+                'Links containing multiple videos will be downloaded' \
+                + ' separately',
+            )
+
+        elif main_win_obj.app_obj.operation_convert_mode == 'disable':
+
+            text = _(
+                'Links containing multiple videos will not be downloaded'
+                + ' at all',
+            )
+
+        label = Gtk.Label()
+        label.set_markup('<i>' + text + '</i>')
+        grid.attach(label, 0, 1, 1, 1)
+
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 2, 1, 1)
+
+        scrolledwindow = Gtk.ScrolledWindow()
+        frame.add(scrolledwindow)
+        # (Set enough vertical room for at several URLs)
+        scrolledwindow.set_size_request(-1, 150)
+
+        textview = Gtk.TextView()
+        scrolledwindow.add(textview)
+        textview.set_hexpand(True)
+        self.textbuffer = textview.get_buffer()
+
+        # Some callbacks will complain about invalid iterators, if we try to
+        #   use Gtk.TextIters, so use Gtk.TextMarks instead
+        self.mark_start = self.textbuffer.create_mark(
+            'mark_start',
+            self.textbuffer.get_start_iter(),
+            True,               # Left gravity
+        )
+        self.mark_end = self.textbuffer.create_mark(
+            'mark_end',
+            self.textbuffer.get_end_iter(),
+            False,              # Not left gravity
+        )
+
+        # Drag-and-drop onto the textview inevitably inserts a URL in the
+        #   middle of another URL. No way to prevent that, but we can disable
+        #   drag-and-drop in the textview altogether, and instead handle it
+        #   from the dialogue window itself
+#        textview.drag_dest_unset()
+        self.connect('drag-data-received', self.on_window_drag_data_received)
+        self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+        self.drag_dest_set_target_list(None)
+        self.drag_dest_add_text_targets()
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 3, 1, 1)
+
+        # Display the parent channel/playlist in a combo (so the layout of this
+        #   window is the same as that for AddVideoDialogue)
+        label2 = Gtk.Label()
+        grid.attach(label2, 0, 4, 1, 1)
+
+        if isinstance(parent_obj, media.Channel):
+            label2.set_text(_('Insert the videos into this channel:'))
+            pixbuf = main_win_obj.pixbuf_dict['channel_small']
+        elif isinstance(parent_obj, media.Playlist):
+            label2.set_text(_('Insert the videos into this playlist:'))
+            pixbuf = main_win_obj.pixbuf_dict['playlist_small']
+        else:
+            label2.set_text(_('Insert the videos into this folder:'))
+            pixbuf = main_win_obj.pixbuf_dict['folder_small']
+
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
+        listmodel.append( [pixbuf, '  ' + self.parent_obj.name] )
+        combo = Gtk.ComboBox.new_with_model(listmodel)
+        grid.attach(combo, 0, 5, 1, 1)
+        combo.set_hexpand(True)
+
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 1)
+
+        combo.set_active(0)
+#       combo.connect('changed', self.on_combo_changed)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 6, 1, 1)
+
+        self.checkbutton = Gtk.CheckButton()
+        grid.attach(self.checkbutton, 0, 7, 1, 1)
+        self.checkbutton.set_label(_('Enable automatic copy/paste'))
+        self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
+
+        # Paste in the contents of the clipboard (if it contains valid URLs)
+        if main_win_obj.app_obj.dialogue_copy_clipboard_flag:
+            utils.add_links_to_textview_from_clipboard(
+                main_win_obj.app_obj,
+                self.textbuffer,
+                self.mark_start,
+                self.mark_end,
+            )
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Callback class methods
+
+
+    def on_checkbutton_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        Enables/disables clipboard monitoring.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if not checkbutton.get_active() \
+        and self.clipboard_timer_id is not None:
+
+            # Stop the timer
+            GObject.source_remove(self.clipboard_timer_id)
+            self.clipboard_timer_id = None
+
+        elif checkbutton.get_active() and self.clipboard_timer_id is None:
+
+            # Start the timer
+            self.clipboard_timer_id = GObject.timeout_add(
+                self.clipboard_timer_time,
+                self.clipboard_timer_callback,
+            )
+
+
+    def on_window_drag_data_received(self, window, context, x, y, data, info,
+    time):
+
+        """Called a from callback in self.__init__().
+
+        Handles drag-and-drop anywhere in the dialogue window.
+        """
+
+        utils.add_links_to_textview_from_clipboard(
+            self.main_win_obj.app_obj,
+            self.textbuffer,
+            self.mark_start,
+            self.mark_end,
+            # Specify the drag-and-drop text, so the called function uses that,
+            #   rather than the clipboard text
+            data.get_text(),
+        )
+
+
+    def clipboard_timer_callback(self):
+
+        """Called from a callback in self.on_checkbutton_toggled().
+
+        Periodically checks the system's clipboard, and adds any new URLs to
+        the dialogue window's textview.
+        """
+
+        utils.add_links_to_textview_from_clipboard(
+            self.main_win_obj.app_obj,
+            self.textbuffer,
+            self.mark_start,
+            self.mark_end,
+        )
+
+        # Return 1 to keep the timer going
+        return 1
 
 
 class MountDriveDialogue(Gtk.Dialog):

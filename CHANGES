@@ -1,3 +1,38 @@
+v2.4.093 (31 Jul 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- In the menu button in the top-right corner of the Classic Mode tab, there is
+    a new 'Enable one-click downloads' setting. Any valid URLs copied into the
+    box are downloaded automatically (or added to the existing download)
+- Unlisted videos, which youtube-dl can't normally detecT, can now be inserted
+    into a channel. Right-click the channel and select 'Channel actions >
+    Insert videos...'. In order to check or download these unlisted videos,
+    you should either select them, right-click and choose 'Download videos'; or
+    alternatively, set up custom downloads to download each video individually
+    (Git #445)
+    
+MINOR NEW FEATURES
+- In the preferences window, Operations > Livestreams, you can now block all
+    livestreams from being checked/downloaded. This only works when yt-dlp is
+    the downloader (Reddit thread)
+- In the download options window, you can now use the option '--playlist-items'
+    (Git #438)
+- In the setup wizard window, the text of the 'Install FFmpeg' button now
+    changes to 'Re-install FFmpeg' after the first installation attempt,
+    successful or not (for clarity). Both the download and install sizes are
+    now visible
+- Tartube translations can now be prepared using Weblate. See
+    https://hosted.weblate.org/projects/tartube/ (Git #428)
+    
+MAJOR FIXES
+- Updated to latest version of MSYS2, with which FFmpeg can be installed
+    correctly (Git #371, #444)
+
+MINOR FIXES
+- Fixed rare Python errors after right-clicking videos in the Progress List
+    and selecting 'Stop now', 'Stop after this video', etc
+    
 v2.4.077 (8 Jun 2022)
 -------------------------------------------------------------------------------
 

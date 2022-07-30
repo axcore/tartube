@@ -156,6 +156,71 @@ class GenericContainer(GenericMedia):
     # Public class methods
 
 
+    def check_duplicate_video(self, source):
+
+        """Can be called by anything.
+
+        Before adding a video to a parent channel/playlist/folder, this
+        function can be called to check for videos with a duplicate URL.
+
+        Args:
+
+            source (str): The video URL to check
+
+        Returns:
+
+            True if any of the child media.Video objects in this folder have
+                the same source URL; False otherwise
+
+        """
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video) \
+            and child_obj.source is not None \
+            and child_obj.source == source:
+                # Duplicate found
+                return True
+
+        # No duplicate found
+        return False
+
+
+    def check_duplicate_video_by_path(self, app_obj, path):
+
+        """Can be called by anything.
+
+        A modified version of self.check_duplicate_video(), which checks for
+        media.Video objects with duplicate paths, instead of dupliate URLs.
+
+        Args:
+
+            app_obj (mainapp.TartubeApp): The main application
+
+            path (str): The full file path to check
+
+        Returns:
+
+            True if any of the child media.Video objects in this folder have
+                the same source URL; False otherwise
+
+        """
+
+        for child_obj in self.child_list:
+
+            if isinstance(child_obj, Video) \
+            and child_obj.file_name is not None:
+
+                child_path = child_obj.get_actual_path(app_obj)
+                if child_path is not None and child_path == path:
+
+                    # Duplicate found
+                    return True
+
+        # No duplicate found
+        return False
+
+
     def compile_all_containers(self, container_list):
 
         """Can be called by anything. Subsequently called by this function
@@ -3574,6 +3639,12 @@ class Channel(GenericRemoteContainer):
 #   def add_child():                # Inherited from GenericRemoteContainer
 
 
+#   def check_duplicate_video():            # Inherited from GenericContainer
+
+
+#   def check_duplicate_video_by_path():    # Inherited from GenericContainer
+
+
 #   def del_child():                # Inherited from GenericContainer
 
 
@@ -3917,6 +3988,12 @@ class Playlist(GenericRemoteContainer):
 
 
 #   def add_child():                # Inherited from GenericRemoteContainer
+
+
+#   def check_duplicate_video():            # Inherited from GenericContainer
+
+
+#   def check_duplicate_video_by_path():    # Inherited from GenericContainer
 
 
 #   def del_child():                # Inherited from GenericContainer
@@ -4312,72 +4389,10 @@ class Folder(GenericContainer):
                 self.vid_count += 1
 
 
-    def check_duplicate_video(self, source):
-
-        """Called by mainapp.TartubeApp.on_menu_add_video() and
-        mainwin.MainWin.on_window_drag_data_received().
-
-        When the user adds new videos using the 'Add Videos' dialogue window,
-        the calling function calls this function to check that the folder
-        doesn't contain a duplicate video (i.e., one whose source URL is the
-        same).
-
-        Args:
-
-            source (str): The video URL to check
-
-        Returns:
-
-            True if any of the child media.Video objects in this folder have
-                the same source URL; False otherwise
-
-        """
-
-        for child_obj in self.child_list:
-
-            if isinstance(child_obj, Video) \
-            and child_obj.source is not None \
-            and child_obj.source == source:
-                # Duplicate found
-                return True
-
-        # No duplicate found
-        return False
+#   def check_duplicate_video():            # Inherited from GenericContainer
 
 
-    def check_duplicate_video_by_path(self, app_obj, path):
-
-        """Called by mainwin.MainWin.on_window_drag_data_received().
-
-        A modified version of self.check_duplicate_video(), which checks for
-        media.Video objects with duplicate paths, instead of dupliate URLs.
-
-        Args:
-
-            app_obj (mainapp.TartubeApp): The main application
-
-            path (str): The full file path to check
-
-        Returns:
-
-            True if any of the child media.Video objects in this folder have
-                the same source URL; False otherwise
-
-        """
-
-        for child_obj in self.child_list:
-
-            if isinstance(child_obj, Video) \
-            and child_obj.file_name is not None:
-
-                child_path = child_obj.get_actual_path(app_obj)
-                if child_path is not None and child_path == path:
-
-                    # Duplicate found
-                    return True
-
-        # No duplicate found
-        return False
+#   def check_duplicate_video_by_path():    # Inherited from GenericContainer
 
 
 #   def del_child():                # Inherited from GenericContainer

@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.077 (8 Jun 2022)**
+Stable release: **v2.4.093 (31 Jul 2022)**
 
-Development release: **v2.4.077 (8 Jun 2022)**
+Development release: **v2.4.093 (31 Jul 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.077/install-tartube-2.4.077-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.077/tartube-2.4.077-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.093/install-tartube-2.4.093-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube-2.4.093-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.077/python3-tartube_2.4.077.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.077/tartube-2.4.077.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.093/python3-tartube_2.4.093.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube-2.4.093.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.077/tartube_v2.4.077.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube_v2.4.093.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -1497,7 +1497,7 @@ Every few minutes, **Tartube** checks whether a livestream (or debut) has starte
 6.24.2 Customising livestreams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can modify how often livestreams are checked (and whether they are checked at all). Click **Livestreams > Livestream preferences...**.
+You can modify how often livestreams are detected. If you are using **yt-dlp**, you can also prevent livestreams from being downloaded at all. Click **Livestreams > Livestream preferences...**.
 
 .. image:: screenshots/example26.png
   :alt: Livestream preferences
