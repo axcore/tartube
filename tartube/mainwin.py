@@ -282,8 +282,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_resolution_liststore = None
                                                 # Gtk.ListStore
         self.classic_resolution_combo = None    # Gtk.ComboBox
-        self.classic_format_radiobutton = None  # Gtk.RadioButton
-        self.classic_format_radiobutton2 = None # Gtk.RadioButton
+        self.classic_convert_liststore = None   # Gtk.ListStore
+        self.classic_convert_combo = None       # Gtk.ComboBox
         self.classic_livestream_checkbutton = None
                                                 # Gtk.CheckButton
         self.classic_add_urls_button = None     # Gtk.Button
@@ -3048,7 +3048,7 @@ class MainWin(Gtk.ApplicationWindow):
         grid.set_column_spacing(self.spacing_size)
         grid.set_row_spacing(self.spacing_size * 2)
 
-        grid_width = 8
+        grid_width = 7
 
         # First row - some decoration, and a button to open a popup menu
         # --------------------------------------------------------------------
@@ -3169,7 +3169,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_dest_dir_combo = Gtk.ComboBox.new_with_model(
             self.classic_dest_dir_liststore,
         )
-        grid.attach(self.classic_dest_dir_combo, 1, 3, 5, 1)
+        grid.attach(self.classic_dest_dir_combo, 1, 3, 4, 1)
         renderer_text = Gtk.CellRendererText()
         self.classic_dest_dir_combo.pack_start(renderer_text, True)
         self.classic_dest_dir_combo.add_attribute(renderer_text, 'text', 0)
@@ -3191,7 +3191,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_add']),
             )
-        grid.attach(self.classic_dest_dir_button, 6, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_button, 5, 3, 1, 1)
         self.classic_dest_dir_button.set_action_name(
             'app.classic_dest_dir_button',
         )
@@ -3210,7 +3210,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_dest_dir_open_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_open']),
             )
-        grid.attach(self.classic_dest_dir_open_button, 7, 3, 1, 1)
+        grid.attach(self.classic_dest_dir_open_button, 6, 3, 1, 1)
         self.classic_dest_dir_open_button.set_action_name(
             'app.classic_dest_dir_open_button',
         )
@@ -3286,30 +3286,34 @@ class MainWin(Gtk.ApplicationWindow):
                     break
 
         # Clarifiers
-        self.classic_format_radiobutton = Gtk.RadioButton.new_with_label(
-            None,
+        combo_list3 = [
             _('Convert to this format'),
-        )
-        grid.attach(self.classic_format_radiobutton, 3, 4, 1, 1)
-        self.classic_format_radiobutton.set_hexpand(False)
-        # (Signal connect appears below)
-
-        self.classic_format_radiobutton2 \
-        = Gtk.RadioButton.new_with_label_from_widget(
-            self.classic_format_radiobutton,
             _('Download in this format'),
+        ]
+
+        self.classic_convert_liststore = Gtk.ListStore(str)
+        for string in combo_list3:
+            self.classic_convert_liststore.append( [string] )
+
+        self.classic_convert_combo = Gtk.ComboBox.new_with_model(
+            self.classic_convert_liststore,
         )
-        grid.attach(self.classic_format_radiobutton2, 4, 4, 1, 1)
-        self.classic_format_radiobutton2.set_hexpand(True)
-
-        if not self.app_obj.classic_format_convert_flag:
-            self.classic_format_radiobutton2.set_active(True)
+        grid.attach(self.classic_convert_combo, 3, 4, 1, 1)
+        renderer_text = Gtk.CellRendererText()
+        self.classic_convert_combo.pack_start(renderer_text, True)
+        self.classic_convert_combo.add_attribute(renderer_text, 'text', 0)
+        self.classic_convert_combo.set_entry_text_column(0)
+        # (Signal connect appears below)
+        if self.app_obj.classic_format_convert_flag:
+            self.classic_convert_combo.set_active(0)
+        else:
+            self.classic_convert_combo.set_active(1)
+            
         if not self.app_obj.classic_format_selection:
-            self.classic_format_radiobutton.set_sensitive(False)
-            self.classic_format_radiobutton2.set_sensitive(False)
-
+            self.classic_convert_combo.set_sensitive(False)
+                    
         self.classic_livestream_checkbutton = Gtk.CheckButton()
-        grid.attach(self.classic_livestream_checkbutton, 5, 4, 1, 1)
+        grid.attach(self.classic_livestream_checkbutton, 4, 4, 1, 1)
         self.classic_livestream_checkbutton.set_label(_('Is a livestream'))
         self.classic_livestream_checkbutton.set_hexpand(True)
         if self.app_obj.classic_livestream_flag:
@@ -3328,20 +3332,16 @@ class MainWin(Gtk.ApplicationWindow):
             'changed',
             self.on_classic_resolution_combo_changed,
         )
-        self.classic_format_radiobutton.connect(
-            'toggled',
-            self.on_classic_format_radiobutton_toggled,
-        )
-        self.classic_livestream_checkbutton.connect(
-            'toggled',
-            self.on_classic_livestream_checkbutton_toggled,
+        self.classic_convert_combo.connect(
+            'changed',
+            self.on_classic_convert_combo_changed,
         )
 
         # Add URLs button
         self.classic_add_urls_button = Gtk.Button(
             '     ' + _('Add URLs') + '     ',
         )
-        grid.attach(self.classic_add_urls_button, 6, 4, 2, 1)
+        grid.attach(self.classic_add_urls_button, 5, 4, 2, 1)
         self.classic_add_urls_button.set_action_name(
             'app.classic_add_urls_button',
         )
@@ -12992,11 +12992,14 @@ class MainWin(Gtk.ApplicationWindow):
             if not resolution_str in formats.VIDEO_RESOLUTION_LIST:
                 resolution_str = None
 
-        # If the radiobutton is selected, we convert a downloaded video to
+        # If the combobox item is selected, we convert a downloaded video to
         #   the specified format with FFmpeg/AVConv. This is signified by
         #   adding 'convert_' to the beginning of the format string
+        tree_iter4 = self.classic_convert_combo.get_active_iter()
+        model4 = self.classic_convert_combo.get_model()
+        convert_str = model4[tree_iter3][0]        
         if format_str is not None \
-        and self.classic_format_radiobutton.get_active():
+        and convert_str == _('Convert to this format'):
             format_str = 'convert_' + format_str
         # The resolution, if specified, is added to the end of the format
         #   string
@@ -14501,9 +14504,16 @@ class MainWin(Gtk.ApplicationWindow):
         mini_dict['media_type'] = ''
         mini_dict['date_time'] = time_str
         mini_dict['time'] = short_time_str
-        mini_dict['msg'] = utils.tidy_up_long_string(
-            '#' + str(error_code) + ': ' + msg,
-        )
+
+        # (When called by mainapp.TartubeApp.system_exception(), preserve the
+        #   formatting of the raised exception; otherwise tidy it up)
+        if error_code == 901:
+            mini_dict['msg'] = msg
+        else:
+            mini_dict['msg'] = utils.tidy_up_long_string(
+                '#' + str(error_code) + ': ' + msg,
+            )
+
         mini_dict['short_msg'] = utils.shorten_string(
             '#' + str(error_code) + ': ' + msg,
             self.long_string_max_len,
@@ -14545,6 +14555,12 @@ class MainWin(Gtk.ApplicationWindow):
                 warning message
 
         """
+
+        # Emergency fallback - if the error is generated before the
+        #   Errors/Warnings tab has been set up, do nothing (this will avoid
+        #   an infinite cycle of raised exceptions)
+        if self.errors_list_treeview is None:
+            return
 
         # Depending on settings, this row should be visible, or not
         if (
@@ -19617,6 +19633,33 @@ class MainWin(Gtk.ApplicationWindow):
             data.set_text(string, -1)
 
 
+    def on_classic_convert_combo_changed(self, combo):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Update IVs.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = self.classic_convert_combo.get_active_iter()
+        model = self.classic_convert_combo.get_model()
+        text = utils.strip_whitespace(model[tree_iter][0])
+
+        # (Update the IV)
+        if text == _('Convert to this format'):
+            self.app_obj.set_classic_format_convert_flag(True)
+        else:
+            self.app_obj.set_classic_format_convert_flag(False)
+
+        # (Update the banner at the top of the tab, according to current
+        #   conditions)
+        self.update_classic_mode_tab_update_banner()
+
+            
     def on_classic_dest_dir_combo_changed(self, combo):
 
         """Called from callback in self.setup_classic_mode_tab().
@@ -19665,13 +19708,11 @@ class MainWin(Gtk.ApplicationWindow):
         audio_item = _('Audio:')
 
         if text == default_item:
-            self.classic_format_radiobutton.set_sensitive(False)
-            self.classic_format_radiobutton2.set_sensitive(False)
-
+            self.classic_convert_combo.set_active(0)
+            self.classic_convert_combo.set_sensitive(False)
+            
         else:
-
-            self.classic_format_radiobutton.set_sensitive(True)
-            self.classic_format_radiobutton2.set_sensitive(True)
+            self.classic_convert_combo.set_sensitive(True)
 
             if text == video_item or text == audio_item:
                 self.classic_format_combo.set_active(
@@ -19694,28 +19735,6 @@ class MainWin(Gtk.ApplicationWindow):
         if self.app_obj.classic_format_selection is not None \
         and self.app_obj.classic_format_selection in formats.AUDIO_FORMAT_DICT:
             self.classic_resolution_combo.set_active(0)
-
-        # (Update the banner at the top of the tab, according to current
-        #   conditions)
-        self.update_classic_mode_tab_update_banner()
-
-
-    def on_classic_format_radiobutton_toggled(self, radiobutton):
-
-        """Called from callback in self.setup_classic_mode_tab().
-
-        (De)sensitises radiobuttons, and updates IVs.
-
-        Args:
-
-            radiobutton (Gtk.RadioButton): The widget clicked
-
-        """
-
-        if radiobutton.get_active():
-            self.app_obj.set_classic_format_convert_flag(True)
-        else:
-            self.app_obj.set_classic_format_convert_flag(False)
 
         # (Update the banner at the top of the tab, according to current
         #   conditions)
@@ -20177,6 +20196,32 @@ class MainWin(Gtk.ApplicationWindow):
                 self.classic_progress_list_popup_menu(event, path)
 
 
+    def on_classic_resolution_combo_changed(self, combo):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Update IVs.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = self.classic_resolution_combo.get_active_iter()
+        model = self.classic_resolution_combo.get_model()
+        text = utils.strip_whitespace(model[tree_iter][0])
+
+        # (Dummy items in the combo)
+        default_item = _('Highest')
+
+        # (Update the IV)
+        if text != default_item:
+            self.app_obj.set_classic_resolution_selection(text)
+        else:
+            self.app_obj.set_classic_resolution_selection(None)
+
+
     def on_classic_textbuffer_changed(self, textbuffer):
 
         """Called from callback in self.setup_classic_mode_tab().
@@ -20285,32 +20330,6 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             self.app_obj.set_bandwidth_apply_flag(False)
-
-
-    def on_classic_resolution_combo_changed(self, combo):
-
-        """Called from callback in self.setup_classic_mode_tab().
-
-        Update IVs.
-
-        Args:
-
-            combo (Gtk.ComboBox): The clicked widget
-
-        """
-
-        tree_iter = self.classic_resolution_combo.get_active_iter()
-        model = self.classic_resolution_combo.get_model()
-        text = utils.strip_whitespace(model[tree_iter][0])
-
-        # (Dummy items in the combo)
-        default_item = _('Highest')
-
-        # (Update the IV)
-        if text != default_item:
-            self.app_obj.set_classic_resolution_selection(text)
-        else:
-            self.app_obj.set_classic_resolution_selection(None)
 
 
     def on_custom_dl_menu_select(self, menu_item, media_data_list, uid):
@@ -28043,13 +28062,29 @@ class AddChannelDialogue(Gtk.Dialog):
 
         image = Gtk.Image()
         self.frame.add(image)
-        if main_win_obj.app_obj.custom_locale == 'ko_KR':
+        if main_win_obj.app_obj.current_locale == 'es':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_es'],
+            )
+        elif main_win_obj.app_obj.current_locale == 'fr':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_fr'],
+            )
+        elif main_win_obj.app_obj.current_locale == 'ko_KR':
             image.set_from_pixbuf(
                 main_win_obj.pixbuf_dict['yt_remind_icon_kr'],
             )
-        elif main_win_obj.app_obj.custom_locale == 'nl_NL':
+        elif main_win_obj.app_obj.current_locale == 'nl_NL':
             image.set_from_pixbuf(
                 main_win_obj.pixbuf_dict['yt_remind_icon_nl'],
+            )
+        elif main_win_obj.app_obj.current_locale == 'ru':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_ru'],
+            )
+        elif main_win_obj.app_obj.current_locale == 'vi':
+            image.set_from_pixbuf(
+                main_win_obj.pixbuf_dict['yt_remind_icon_vi'],
             )
         else:
             image.set_from_pixbuf(

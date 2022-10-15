@@ -38,8 +38,12 @@ from mainapp import _
 locale_setup_list = [
     'en_GB',    'English',
     'en_US',    'English (American)',
+    'es',       'Español',
+    'fr',       'Français',
     'ko_KR',    '한국어',
     'nl_NL',    'Nederlands',
+    'ru',       'русский',
+    'vi',       'Tiếng Việt',
 ]
 
 LOCALE_DEFAULT = locale_setup_list[0]
@@ -126,7 +130,7 @@ language_setup_list = [
     'Faroese', 'fo',
     'Fijian', 'fj',
     'Finnish', 'fi',
-    'French', 'fr',
+    _('French'), 'fr',
     'Fula, Fulah, Pulaar, Pular', 'ff',
     'Galician', 'gl',
     'Gaelic (Scottish)', 'gd',
@@ -213,7 +217,7 @@ language_setup_list = [
     'Quechua', 'qu',
     'Romansh', 'rm',
     'Romanian', 'ro',
-    'Russian', 'ru',
+    _('Russian'), 'ru',
     'Sami', 'se',
     'Samoan', 'sm',
     'Sango', 'sg',
@@ -231,7 +235,7 @@ language_setup_list = [
     'Slovenian', 'sl',
     'Somali', 'so',
     'Southern Ndebele', 'nr',
-    'Spanish', 'es',
+    _('Spanish'), 'es',
     'Sundanese', 'su',
     'Swahili (Kiswahili)', 'sw',
     'Swedish', 'sv',
@@ -254,7 +258,7 @@ language_setup_list = [
     'Urdu', 'ur',
     'Uzbek', 'uz',
     'Venda', 've',
-    'Vietnamese', 'vi',
+    _('Vietnamese'), 'vi',
     'Volapük', 'vo',
     'Wallon', 'wa',
     'Welsh', 'cy',
@@ -793,8 +797,12 @@ DIALOGUE_ICON_DICT = {
     'system_icon': 'system_icon_64.png',
     'yt_icon': 'yt_icon_32.png',
     'yt_remind_icon_en': 'yt_remind_icon_en.png',
+    'yt_remind_icon_es': 'yt_remind_icon_es.png',
+    'yt_remind_icon_fr': 'yt_remind_icon_fr.png',
     'yt_remind_icon_kr': 'yt_remind_icon_kr.png',
     'yt_remind_icon_nl': 'yt_remind_icon_nl.png',
+    'yt_remind_icon_ru': 'yt_remind_icon_ru.png',
+    'yt_remind_icon_vi': 'yt_remind_icon_vi.png',
 }
 if xmas_flag:
     DIALOGUE_ICON_DICT['system_icon'] = 'system_icon_xmas_64.png'

@@ -264,8 +264,8 @@ class TartubeApp(Gtk.Application):
         #   line of code in self.start_continue()
         self.startup_complete_flag = False
 
-        # Custom locale (can match one of the values in formats.LOCALE_LIST)
-        self.custom_locale = locale.getdefaultlocale()[0]
+        # Current locale (e.g. en_GB)
+        self.current_locale = locale.getdefaultlocale()[0]
 
         # Default regex for handling video timestamps (a string in the form
         #   'mm:ss' or 'h:mm:ss'. Leading zeroes are optional for all
@@ -1484,9 +1484,10 @@ class TartubeApp(Gtk.Application):
         self.fixed_clips_folder = None
 
         # The locale for which the fixed folders are named. When the database
-        #   file is loaded, if this value no longer matches self.custom_locale,
-        #   then the folder names are all updated for the new locale
-        self.fixed_folder_locale = self.custom_locale
+        #   file is loaded, if this value no longer matches
+        #   self.current_locale, then the folder names are all updated for the
+        #   new locale
+        self.fixed_folder_locale = self.current_locale
         # For the Recent Videos folder (self.fixed_recent_folder), the time
         #   (in days) after which videos should be removed. If 0, videos are
         #   removed at the start of every download operation
@@ -3277,6 +3278,9 @@ class TartubeApp(Gtk.Application):
         # Part 1 - Give mainapp.TartubeApp IVs their initial values
         # ---------------------------------------------------------
 
+        # Load translations, if available
+        self.apply_locale()
+                
         # Set youtube-dl path IVs
         self.setup_paths()
 
@@ -3378,12 +3382,6 @@ class TartubeApp(Gtk.Application):
             new_config_flag = self.load_config()
 
         else:
-
-            # The system locale is applied in the call to self.load_config().
-            #   Since we aren't calling that now, we must apply the locale
-            #   directly
-            if self.custom_locale != formats.LOCALE_DEFAULT:
-                self.apply_locale()
 
             # Now respond to the missing config file
             if self.debug_no_dialogue_flag:
@@ -3883,13 +3881,16 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-195)
+            100-199: mainapp.py     (in use: 101-196)
             200-299: mainwin.py     (in use: 201-270)
             300-399: downloads.py   (in use: 301-317)
             400-499: config.py      (in use: 401-405)
             500-599: utils.py       (in use: 501-503)
             600-699: info.py        (in use: 601)
             700-799: updates.py     (in use: 701-704)
+            901:     Uncaught exceptions, handled by a call to
+                        self.system_exception()
+                                    (in use: 901)
 
         """
 
@@ -3937,6 +3938,29 @@ class TartubeApp(Gtk.Application):
             print('SYSTEM WARNING ' + str(error_code) + ': ' + msg)
 
 
+    def system_exception(self, except_type, value, details):
+    
+        """Called after an uncaught exception is handled.
+
+        Displays a message in the Errors/Warnings tab, so ordinary users can
+        actually see it and (hopefully) report it.
+
+        Args:
+            except_type (type): Exception type
+            value (TypeError): Exception value
+            details (str): Exception traceback message
+
+        """
+
+        self.system_error(
+            901,
+            "Uncaught exception:\n" \
+            f"Type: {except_type}\n" \
+            f"Value: {value}\n" \
+            f"Traceback: {details}",
+        )
+        
+    
     # (Config/database files load/save)
 
 
@@ -4086,14 +4110,12 @@ class TartubeApp(Gtk.Application):
             # Return False to mark this as not a new installation
             return False
 
-        # Set the locale
-        if version >= 2000081:  # v2.0.081
-            self.custom_locale = json_dict['custom_locale']
-
-        if self.custom_locale != formats.LOCALE_DEFAULT:
-            self.apply_locale()
-
         # Set IVs to their new values
+        
+        # Removed v2.4.103
+#       if version >= 2000081:  # v2.0.081
+#           self.custom_locale = json_dict['custom_locale']
+        
         if version >= 2002075:  # v2.2.075
             self.thumb_size_custom = json_dict['thumb_size_custom']
 
@@ -5301,8 +5323,6 @@ class TartubeApp(Gtk.Application):
             'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'config',
             # Data
-            'custom_locale': self.custom_locale,
-
             'thumb_size_custom': self.thumb_size_custom,
 
             'main_win_save_size_flag': self.main_win_save_size_flag,
@@ -6005,10 +6025,10 @@ class TartubeApp(Gtk.Application):
 
         # If the locale has changed since the loaded database file was last
         #   saved, update the names of fixed folders
-        if self.fixed_folder_locale != self.custom_locale:
+        if self.fixed_folder_locale != self.current_locale:
 
             self.rename_fixed_folders()
-            self.fixed_folder_locale = self.custom_locale
+            self.fixed_folder_locale = self.current_locale
 
         # Empty any temporary folders
         self.delete_temp_folders()
@@ -8175,7 +8195,7 @@ class TartubeApp(Gtk.Application):
         self.fixed_temp_folder = None
         self.fixed_misc_folder = None
         self.fixed_clips_folder = None
-        self.fixed_folder_locale = self.custom_locale
+        self.fixed_folder_locale = self.current_locale
         self.scheduled_list = []
         self.options_reg_count = 0
         self.options_reg_dict = {}
@@ -10297,57 +10317,41 @@ class TartubeApp(Gtk.Application):
 
     def apply_locale(self):
 
-        """Called by self.start() and .load_config().
+        """Called by self.start().
 
-        Calls the python gettext module to apply the locale specified by
-        self.custom_locale (which may have been selected by the user, but it
-        otherwise determined by the system).
+        Calls the python gettext module to apply the current system locale.
         """
 
-        # Git #245. #247, crash when the gettext.translation() call fails
-        success_flag = False
+        try:
+            LOCALE = gettext.translation(
+                'base',
+                localedir = 'locale',
+                languages = [self.current_locale],
+            )
+            LOCALE.install()
 
-        if self.custom_locale in formats.LOCALE_LIST:
+            # (Apply to this file)
+            _ = LOCALE.gettext
+            # (Apply to other files)
+            config._ = _
+            downloads._ = _
+            formats._ = _
+            info._ = _
+            mainwin._ = _
+            media._ = _
+            process._ = _
+            refresh._ = _
+            tidy._ = _
+            updates._ = _
+            utils._ = _
+            wizwin._ = _
+            # (Update download operation stages, e.g.
+            #   formats.MAIN_STAGE_QUEUED
+            formats.do_translate(True)
 
-            try:
-
-                LOCALE = gettext.translation(
-                    'base',
-                    localedir='locale',
-                    languages=[self.custom_locale],
-                )
-                LOCALE.install()
-
-                # (Apply to this file)
-                _ = LOCALE.gettext
-                # (Apply to other files)
-                config._ = _
-                downloads._ = _
-                formats._ = _
-                info._ = _
-                mainwin._ = _
-                media._ = _
-                process._ = _
-                refresh._ = _
-                tidy._ = _
-                updates._ = _
-                utils._ = _
-                wizwin._ = _
-                # (Update download operation stages, e.g.
-                #   formats.MAIN_STAGE_QUEUED
-                formats.do_translate(True)
-
-                success_flag = True
-
-            except:
-                pass
-
-        if not success_flag:
-
-            # Locale is invalid, or Tartube does not provide translations for
-            #   it; so use the default locale instead
-            self.custom_locale = formats.LOCALE_DEFAULT
-
+        except:
+            self.current_locale = formats.LOCALE_DEFAULT
+            
 
     # (Operations)
 
@@ -25107,12 +25111,6 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_current,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
-
-
-    def set_custom_locale(self, value):
-
-        self.custom_locale = value
-        self.update_locale_flag = True
 
 
     def set_custom_sblock_mirror(self, value):

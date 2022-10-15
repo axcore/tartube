@@ -19513,15 +19513,15 @@ class SystemPrefWin(GenericPrefWin):
         inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
-        self.setup_general_language_tab(inner_notebook)
+        self.setup_general_application_tab(inner_notebook)
         self.setup_general_modules_tab(inner_notebook)
 
 
-    def setup_general_language_tab(self, inner_notebook):
+    def setup_general_application_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
 
-        Sets up the 'Language' inner notebook tab.
+        Sets up the 'Application' inner notebook tab.
 
         Args:
 
@@ -19529,30 +19529,61 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(_('_Language'), inner_notebook)
-        grid_width = 2
+        # Import the main window (for convenience)
+        main_win_obj = self.app_obj.main_win_obj
+        
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Application'),
+            inner_notebook,
+        )
+        grid_width = 3
 
-        # Language preferences
+        # Application details
         self.add_label(grid,
-            '<u>' + _('Language preferences') + '</u>',
+            '<u>' + _('Application details') + '</u>',
             0, 0, grid_width, 1,
         )
-
+        
         label = self.add_label(grid,
-            _('Language'),
+            _('Version'),
             0, 1, 1, 1,
         )
         label.set_hexpand(False)
 
-        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        for locale in formats.LOCALE_LIST:
-            pixbuf = self.app_obj.main_win_obj.pixbuf_dict['flag_' + locale]
-            store.append(
-                [ pixbuf, formats.LOCALE_DICT[locale] ],
-            )
+        self.entry = self.add_entry(grid,
+            __main__.__version__,
+            False,
+            1, 1, 1, 1,
+        )
 
+        self.entry = self.add_entry(grid,
+            __main__.__date__,
+            False,
+            2, 1, 1, 1,
+        )
+
+        label = self.add_label(grid,
+            _('System locale'),
+            0, 2, 1, 1,
+        )
+        label.set_hexpand(False)
+
+        # Earlier version of the code featured a combo, inherited from
+        #   youtube-dl-gui, in which the user could switch between locales;
+        #   however it was fairly useless
+        # It has been replaced with a combo with a single entry (because it
+        #   looks nice)
+        locale = self.app_obj.current_locale
+        # (Some locales are in format "en_GB", some in format "fr")
+        if not 'flag_' + locale in self.app_obj.main_win_obj.pixbuf_dict:
+            locale = locale[:2]
+        
+        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
+        pixbuf = main_win_obj.pixbuf_dict['flag_' + locale]
+        store.append([ pixbuf, formats.LOCALE_DICT[locale] ])
+            
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 1, (grid_width - 1), 1)
+        grid.attach(combo, 1, 2, 1, 1)
         combo.set_hexpand(False)
 
         renderer_pixbuf = Gtk.CellRendererPixbuf()
@@ -19563,8 +19594,7 @@ class SystemPrefWin(GenericPrefWin):
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 1)
 
-        combo.set_active(formats.LOCALE_LIST.index(self.app_obj.custom_locale))
-        combo.connect('changed', self.on_locale_combo_changed, grid)
+        combo.set_active(0)
 
 
     def setup_general_modules_tab(self, inner_notebook):
@@ -29841,60 +29871,6 @@ class SystemPrefWin(GenericPrefWin):
             'ok',
             self,           # Parent window is this window
         )
-
-
-    def on_locale_combo_changed(self, combo, grid):
-
-        """Called from a callback in self.setup_general_language_tab().
-
-        Sets the custom locale for Tartube.
-
-        Args:
-
-            combo (Gtk.ComboBox): The widget clicked
-
-            grid (Gtk.Grid): The grid on which this tab's widgets are
-                arranged
-
-        """
-
-        tree_iter = combo.get_active_iter()
-        model = combo.get_model()
-        language = model[tree_iter][1]
-
-        for key in formats.LOCALE_DICT:
-            if formats.LOCALE_DICT[key] == language:
-
-                self.app_obj.set_custom_locale(key)
-
-                # Add some more widgets to tell the user to restart Tartube.
-                #   As the user might not know the language, show an icon as
-                #   well as some text
-                # Use an extra grid to avoid messing up the layout of widgets
-                #   above
-                grid2 = self.add_secondary_grid(grid, 0, 2, 2, 1)
-                grid2.set_border_width(self.spacing_size * 2)
-
-                frame = self.add_image(grid2,
-                    self.app_obj.main_win_obj.icon_dict['warning_large'],
-                    0, 2, 1, 1,
-                )
-                # (The frame looks cramped without this. The icon itself is
-                #   32x32)
-                frame.set_size_request(
-                    32 + (self.spacing_size * 2),
-                    32 + (self.spacing_size * 2),
-                )
-
-                self.add_label(grid2,
-                    '<i>' + _(
-                        'The new setting will be applied when Tartube' \
-                        + ' restarts',
-                    ) + '</i>',
-                    1, 2, 1, 1,
-                )
-
-                self.show_all()
 
 
     def on_match_button_toggled(self, radiobutton):

@@ -3,39 +3,41 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-10-15 13:53+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2022-06-10 05:19+0000\n"
+"Last-Translator: Zeref <nguyentestf1@gmail.com>\n"
+"Language-Team: Vietnamese <https://hosted.weblate.org/projects/tartube/"
+"language-names/vi/>\n"
+"Language: vi\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.13-dev\n"
 
 #: .././mainapp.py:299
 msgid "Tiny"
-msgstr ""
+msgstr "Nhỏ xíu"
 
 #: .././mainapp.py:300
 msgid "Small"
-msgstr ""
+msgstr "Nhỏ"
 
 #: .././mainapp.py:301 .././config.py:6988 .././config.py:7087
 msgid "Medium"
-msgstr ""
+msgstr "Trung bình"
 
 #: .././mainapp.py:302
 msgid "Large"
-msgstr ""
+msgstr "Lớn"
 
 #: .././mainapp.py:303
 msgid "Enormous"
-msgstr ""
+msgstr "Khổng lồ"
 
 #: .././mainapp.py:1023
 msgid ""
@@ -45,193 +47,205 @@ msgid ""
 "conversions, restart Tartube. To stop these messages, disable thumbnail "
 "conversions"
 msgstr ""
+"Không thể chuyển đổi hình thu nhỏ từ .webp sang .jpg. Sẽ không có chuyển đổi "
+"nào được thực hiện cho đến khi bạn cài đặt FFmpeg trên hệ thống của mình "
+"hoặc (nếu FFmpeg đã được cài đặt) bạn đặt đúng đường dẫn FFmpeg. Để thử "
+"chuyển đổi nhiều hơn, hãy khởi động lại Tartube. Để dừng những thông báo "
+"này, hãy tắt chuyển đổi hình thu nhỏ"
 
 #: .././mainapp.py:3367
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
-msgstr ""
+msgstr "Tartube không thể tạo thư mục lưu tệp cấu hình của nó"
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
 #: .././mainapp.py:3408
 msgid "Tartube failed to start because:"
-msgstr ""
+msgstr "Tartube không khởi động được vì:"
 
 #: .././mainapp.py:3416
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr ""
+"Nếu bạn không biết cách giải quyết lỗi này, vui lòng liên hệ với nhóm tác giả"
 
 #: .././mainapp.py:3642
 msgid "Because of an error, file load/save has been disabled"
-msgstr ""
+msgstr "Do có lỗi, quá trình tải/lưu tệp đã bị vô hiệu hóa"
 
 #: .././mainapp.py:3651
 msgid "Because of the error, file load/save has been disabled"
-msgstr ""
+msgstr "Do có lỗi, quá trình tải/lưu tệp đã bị vô hiệu hóa"
 
 #: .././mainapp.py:3753
 msgid "There is a download operation in progress."
-msgstr ""
+msgstr "Đang có một hoạt động tải xuống."
 
 #: .././mainapp.py:3755
 msgid "There is an update operation in progress."
-msgstr ""
+msgstr "Đang có một hoạt động cập nhật."
 
 #: .././mainapp.py:3757
 msgid "There is a refresh operation in progress."
-msgstr ""
+msgstr "Đang có một hoạt động làm mới."
 
 #: .././mainapp.py:3759
 msgid "There is an info operation in progress."
-msgstr ""
+msgstr "Có một hoạt động thông tin đang được tiến hành."
 
 #: .././mainapp.py:3761
 msgid "There is a tidy operation in progress."
-msgstr ""
+msgstr "Có một hoạt động ngăn nắp đang được tiến hành."
 
 #: .././mainapp.py:3763
 msgid "There is a process operation in progress."
-msgstr ""
+msgstr "Có một quy trình hoạt động đang diễn ra."
 
 #: .././mainapp.py:3768
 msgid "Are you sure you want to quit Tartube?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn thoát khỏi Tartube không?"
 
 #: .././mainapp.py:4003
 msgid "Failed to load the Tartube config file (failed sanity check)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (failed sanity check)"
 
 #: .././mainapp.py:4026
 msgid "Failed to load the Tartube config file (file is locked)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (tệp bị khóa)"
 
 #: .././mainapp.py:4056
 msgid "Failed to load the Tartube config file (JSON load failure)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (không tải được JSON)"
 
 #: .././mainapp.py:4074
 msgid "Failed to load the Tartube config file (file is invalid)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (tệp không hợp lệ)"
 
 #: .././mainapp.py:4092
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (phiên bản này không thể đọc tệp)"
 
 #: .././mainapp.py:4107
 msgid "Failed to load the Tartube config file (missing file type)"
-msgstr ""
+msgstr "Không tải được tệp cấu hình Tartube (loại tệp bị thiếu)"
 
 #: .././mainapp.py:5268
 msgid "Failed to save the Tartube config file (failed sanity check)"
-msgstr ""
+msgstr "Không thể lưu tệp cấu hình Tartube (failed sanity check)"
 
 #: .././mainapp.py:5684
 msgid "Failed to save the Tartube config file (file is locked)"
-msgstr ""
+msgstr "Không thể lưu tệp cấu hình Tartube (tệp bị khóa)"
 
 #: .././mainapp.py:5686 .././mainapp.py:7640 .././mainapp.py:7703
 #: .././mainapp.py:7709
 msgid "File load/save has been disabled"
-msgstr ""
+msgstr "Tải/lưu tệp đã bị tắt"
 
 #: .././mainapp.py:5705
 msgid "Failed to save the Tartube config file (file already in use)"
-msgstr ""
+msgstr "Không thể lưu tệp cấu hình Tartube (tệp đã được sử dụng)"
 
 #: .././mainapp.py:5724
 msgid "Failed to save the Tartube config file"
-msgstr ""
+msgstr "Không lưu được tệp cấu hình Tartube"
 
 #: .././mainapp.py:5834 .././mainapp.py:5849 .././mainapp.py:5881
 msgid "Failed to load the Tartube database file"
-msgstr ""
+msgstr "Không tải được tệp cơ sở dữ liệu Tartube"
 
 #: .././mainapp.py:5897
 msgid "The Tartube database file is invalid"
-msgstr ""
+msgstr "Tệp cơ sở dữ liệu Tartube không hợp lệ"
 
 #: .././mainapp.py:5914
 msgid "Database file can't be read by this version of Tartube"
-msgstr ""
+msgstr "Không thể đọc tệp cơ sở dữ liệu bằng phiên bản Tartube này"
 
 #: .././mainapp.py:6302
 msgid "Tartube is applying an essential database update"
-msgstr ""
+msgstr "Tartube đang áp dụng một bản cập nhật cơ sở dữ liệu cần thiết"
 
 #: .././mainapp.py:6304
 msgid "This might take a few minutes, so please be patient"
-msgstr ""
+msgstr "Quá trình này có thể mất vài phút, vì vậy hãy kiên nhẫn"
 
 #: .././mainapp.py:7354
 msgid "General (default) download options"
-msgstr ""
+msgstr "Tùy chọn tải xuống chung (mặc định)"
 
 #: .././mainapp.py:7360
 msgid "Download options for the Classic Mode tab"
-msgstr ""
+msgstr "Tải xuống các tùy chọn cho tab Chế độ Cổ điển"
 
 #: .././mainapp.py:7634 .././mainapp.py:7699 .././mainapp.py:7708
 msgid "Failed to save the Tartube database file"
-msgstr ""
+msgstr "Không lưu được tệp cơ sở dữ liệu Tartube"
 
 #: .././mainapp.py:7637
 msgid "(Could not make a backup copy of the existing file)"
-msgstr ""
+msgstr "(Không thể tạo bản sao lưu của tệp hiện có)"
 
 #: .././mainapp.py:7679
 msgid "Failed to save the Tartube database file (file already in use)"
-msgstr ""
+msgstr "Không thể lưu tệp cơ sở dữ liệu Tartube (tệp đã được sử dụng)"
 
 #: .././mainapp.py:7701
 msgid "A backup of the previous file can be found at:"
-msgstr ""
+msgstr "Bản sao lưu của tệp trước đó có thể được tìm thấy tại:"
 
 #: .././mainapp.py:7879 .././mainapp.py:7889
 msgid "Database file created"
-msgstr ""
+msgstr "Tệp cơ sở dữ liệu đã được tạo"
 
 #: .././mainapp.py:8256
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr ""
+"Cơ sở dữ liệu của Tartube không thể được kiểm tra trong khi một hoạt động "
+"đang diễn ra"
 
 #: .././mainapp.py:8510
 msgid "Database check complete, no inconsistencies found"
-msgstr ""
+msgstr "Kiểm tra cơ sở dữ liệu hoàn tất, không tìm thấy mâu thuẫn"
 
 #: .././mainapp.py:8545
 msgid "Database check complete, problems found:"
-msgstr ""
+msgstr "Kiểm tra cơ sở dữ liệu hoàn tất, tìm thấy sự cố:"
 
 #: .././mainapp.py:8548
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
 msgstr ""
+"Bạn có muốn sửa chữa những vấn đề này? (Cơ sở dữ liệu sẽ được sửa, nhưng "
+"không có tệp nào bị xóa)"
 
 #: .././mainapp.py:8764
 msgid "Database inconsistencies repaired"
-msgstr ""
+msgstr "Đã sửa chữa mâu thuẫn cơ sở dữ liệu"
 
 #: .././mainapp.py:10108 .././config.py:27899
 msgid "Please select Tartube's data folder"
-msgstr ""
+msgstr "Vui lòng chọn thư mục dữ liệu của Tartube"
 
 #: .././mainapp.py:10520
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
+"Thao tác tải xuống không thể bắt đầu nếu một hoặc nhiều cửa sổ cấu hình vẫn "
+"đang mở"
 
 #: .././mainapp.py:10544 .././mainapp.py:10569
 #, python-brace-format
 msgid "You only have {0} / {1} Gb remaining on your device"
-msgstr ""
+msgstr "Bạn chỉ còn lại {0} / {1} Gb trên thiết bị của mình"
 
 #: .././mainapp.py:10572 .././mainapp.py:16805 .././mainapp.py:16926
 #: .././mainapp.py:17113 .././mainwin.py:21501
 msgid "Are you sure you want to continue?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn tiếp tục không?"
 
 #: .././mainapp.py:10664
 msgid ""
@@ -240,34 +254,38 @@ msgid ""
 "3. Click 'Add URLs'\n"
 "4. Click 'Download all'"
 msgstr ""
+"1. Sao chép URL vào hộp ở trên cùng\n"
+"2. Chọn điểm đến và định dạng\n"
+"3. Nhấp vào 'Thêm URL'\n"
+"4. Nhấp vào 'Tải xuống tất cả'"
 
 #: .././mainapp.py:10672
 msgid "There is nothing to check!"
-msgstr ""
+msgstr "Không có gì để kiểm tra!"
 
 #: .././mainapp.py:10676
 msgid "There is nothing to download!"
-msgstr ""
+msgstr "Không có gì để tải xuống!"
 
 #: .././mainapp.py:10965
 msgid "Download operation complete"
-msgstr ""
+msgstr "Hoàn tất thao tác tải xuống"
 
 #: .././mainapp.py:10967
 msgid "Download operation halted"
-msgstr ""
+msgstr "Hoạt động tải xuống đã tạm dừng"
 
 #: .././mainapp.py:10971
 msgid "Videos downloaded:"
-msgstr ""
+msgstr "Các video đã tải xuống:"
 
 #: .././mainapp.py:10972 .././config.py:29009 .././config.py:29066
 msgid "Videos checked:"
-msgstr ""
+msgstr "Các video đã kiểm tra:"
 
 #: .././mainapp.py:10979
 msgid "Clips downloaded:"
-msgstr ""
+msgstr "Các clip đã tải xuống:"
 
 #: .././mainapp.py:10982
 msgid "Video slices removed:"
@@ -276,625 +294,668 @@ msgstr ""
 #: .././mainapp.py:10986 .././mainapp.py:11674 .././mainapp.py:12178
 #: .././mainapp.py:12581
 msgid "Time taken:"
-msgstr ""
+msgstr "Mất thời gian:"
 
 #: .././mainapp.py:11178
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
+"Thao tác cập nhật không thể bắt đầu nếu một hoặc nhiều cửa sổ cấu hình vẫn "
+"đang mở"
 
 #: .././mainapp.py:11381
 msgid "Installation failed"
-msgstr ""
+msgstr "Cài đặt thất bại"
 
 #: .././mainapp.py:11383
 msgid "Installation complete"
-msgstr ""
+msgstr "Cài đặt hoàn tất"
 
 #: .././mainapp.py:11387
 msgid "Update operation failed"
-msgstr ""
+msgstr "Thao tác cập nhật không thành công"
 
 #: .././mainapp.py:11389
 msgid "Update operation halted"
-msgstr ""
+msgstr "Hoạt động cập nhật đã tạm dừng"
 
 #: .././mainapp.py:11391
 msgid "Update operation complete"
-msgstr ""
+msgstr "Hoạt động cập nhật hoàn tất"
 
 #: .././mainapp.py:11393
 msgid "version:"
-msgstr ""
+msgstr "phiên bản:"
 
 #: .././mainapp.py:11397
 msgid "(unknown)"
-msgstr ""
+msgstr "(không xác định)"
 
 #: .././mainapp.py:11495
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
+"Thao tác làm mới không thể bắt đầu nếu một hoặc nhiều cửa sổ cấu hình vẫn "
+"đang mở"
 
 #: .././mainapp.py:11508
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
 msgstr ""
+"Trong quá trình làm mới, Tartube phân tích thư mục dữ liệu của nó, tìm kiếm "
+"các video chưa được thêm vào cơ sở dữ liệu của nó"
 
 #: .././mainapp.py:11512
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
 msgstr ""
+"Bạn chỉ cần thực hiện thao tác làm mới nếu đã sao chép thủ công video vào "
+"thư mục dữ liệu của Tartube"
 
 #: .././mainapp.py:11519
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr ""
+"Trước khi bắt đầu thao tác làm mới, bạn nên nhấp vào nút 'Kiểm tra tất cả' "
+"trong cửa sổ chính"
 
 #: .././mainapp.py:11526
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr ""
+"Trước khi bắt đầu thao tác làm mới, bạn nên nhấp chuột phải vào kênh và chọn "
+"'Kiểm tra kênh'"
 
 #: .././mainapp.py:11533
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
 msgstr ""
+"Trước khi bắt đầu thao tác làm mới, bạn nên nhấp chuột phải vào danh sách "
+"phát và chọn 'Kiểm tra danh sách phát'"
 
 #: .././mainapp.py:11540
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr ""
+"Trước khi bắt đầu thao tác làm mới, bạn nên nhấp chuột phải vào thư mục và "
+"chọn 'Kiểm tra thư mục'"
 
 #: .././mainapp.py:11545
 msgid "Are you sure you want to proceed with the refresh operation?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn tiếp tục thao tác làm mới không?"
 
 #: .././mainapp.py:11669
 msgid "Refresh operation complete"
-msgstr ""
+msgstr "Làm mới hoạt động hoàn tất"
 
 #: .././mainapp.py:11671
 msgid "Refresh operation halted"
-msgstr ""
+msgstr "Hoạt động làm mới đã tạm dừng"
 
 #: .././mainapp.py:11785
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
 msgstr ""
+"Thao tác thông tin không thể bắt đầu nếu một hoặc nhiều cửa sổ cấu hình vẫn "
+"đang mở"
 
 #: .././mainapp.py:11910
 msgid "Operation failed"
-msgstr ""
+msgstr "Lỗi hệ thống"
 
 #: .././mainapp.py:11912 .././mainwin.py:31187 .././downloads.py:508
 msgid "Operation complete"
-msgstr ""
+msgstr "Hoạt động hoàn thành"
 
 #: .././mainapp.py:11914
 msgid "Click the Output tab to see the results"
-msgstr ""
+msgstr "Nhấp vào tab Đầu ra để xem kết quả"
 
 #: .././mainapp.py:11927
 msgid "A new release is available!"
-msgstr ""
+msgstr "Đã có bản phát hành mới!"
 
 #: .././mainapp.py:11929
 msgid "Your installation is up to date!"
-msgstr ""
+msgstr "Cài đặt của bạn đã được cập nhật!"
 
 #: .././mainapp.py:11931
 msgid "Installed version:"
-msgstr ""
+msgstr "Phiên bản đã cài đặt:"
 
 #: .././mainapp.py:11936
 msgid "Stable release:"
-msgstr ""
+msgstr "Phiên bản ổn định:"
 
 #: .././mainapp.py:11941
 msgid "Stable release: not found"
-msgstr ""
+msgstr "Bản phát hành ổn định: không tìm thấy"
 
 #: .././mainapp.py:11944
 msgid "Development release:"
-msgstr ""
+msgstr "Phát hành phát triển:"
 
 #: .././mainapp.py:11946
 msgid "Development release: not found"
-msgstr ""
+msgstr "Phát hành phát triển: không tìm thấy"
 
 #: .././mainapp.py:12071
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
 msgstr ""
+"Một hoạt động gọn gàng không thể bắt đầu nếu một hoặc nhiều cửa sổ cấu hình "
+"vẫn đang mở"
 
 #: .././mainapp.py:12173
 msgid "Tidy operation complete"
-msgstr ""
+msgstr "Hoàn thành hoạt động gọn gàng"
 
 #: .././mainapp.py:12175
 msgid "Tidy operation halted"
-msgstr ""
+msgstr "Hoạt động ngăn nắp tạm dừng"
 
 #: .././mainapp.py:12330 .././mainwin.py:22169 .././config.py:14483
 msgid "Livestream has started"
-msgstr ""
+msgstr "Livestream đã bắt đầu"
 
 #: .././mainapp.py:12570
 msgid "Process operation complete"
-msgstr ""
+msgstr "Quá trình hoạt động hoàn thành"
 
 #: .././mainapp.py:12572
 msgid "Process operation halted"
-msgstr ""
+msgstr "Quá trình hoạt động tạm dừng"
 
 #: .././mainapp.py:12576
 msgid "Files processed:"
-msgstr ""
+msgstr "Các tệp đã xử lý:"
 
 #: .././mainapp.py:12577
 msgid "Errors:"
-msgstr ""
+msgstr "Các lỗi:"
 
 #: .././mainapp.py:13920 .././mainapp.py:14113
 msgid "Cannot move anything to:"
-msgstr ""
+msgstr "Không thể di chuyển bất kỳ thứ gì đến:"
 
 #: .././mainapp.py:13922 .././mainapp.py:14115
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
 msgstr ""
+"bởi vì một tệp hoặc thư mục có cùng tên đã tồn tại (mặc dù cơ sở dữ liệu của "
+"Tartube không biết gì về nó)"
 
 #: .././mainapp.py:13926
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
 msgstr ""
+"Có thể bạn đã vô tình tạo tệp/thư mục đó, trong trường hợp đó, bạn nên xóa "
+"tệp/thư mục đó theo cách thủ công trước khi thử lại"
 
 #: .././mainapp.py:13940 .././mainapp.py:14133
 msgid "Are you sure you want to move this channel:"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn chuyển kênh này không:"
 
 #: .././mainapp.py:13942 .././mainapp.py:14135
 msgid "Are you sure you want to move this playlist:"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn di chuyển danh sách phát này không:"
 
 #: .././mainapp.py:13944 .././mainapp.py:14137
 msgid "Are you sure you want to move this folder:"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn di chuyển thư mục này không:"
 
 #: .././mainapp.py:13949
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
 msgstr ""
+"Quy trình này sẽ di chuyển tất cả các tệp đã tải xuống lên cấp cao nhất của "
+"thư mục dữ liệu của Tartube"
 
 #: .././mainapp.py:13987 .././mainapp.py:14192
 #, python-brace-format
 msgid "Could not move '{0}' (filesystem error)"
-msgstr ""
+msgstr "Không thể di chuyển '{0}' (lỗi hệ thống tệp)"
 
 #: .././mainapp.py:14055
 msgid "Channels, playlists and folders can only be dragged into a folder"
-msgstr ""
+msgstr "Kênh, danh sách phát và thư mục chỉ có thể được kéo vào một thư mục"
 
 #: .././mainapp.py:14068
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
-msgstr ""
+msgstr "Không thể di chuyển thư mục cố định '{0}' (nhưng nó vẫn có thể bị ẩn)"
 
 #: .././mainapp.py:14081
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
-msgstr ""
+msgstr "Thư mục '{0}' chỉ có thể chứa video"
 
 #: .././mainapp.py:14093
 #, python-brace-format
 msgid "The folder '{0}' can only contain other folders and videos"
-msgstr ""
+msgstr "Thư mục '{0}' chỉ có thể chứa các thư mục và video khác"
 
 #: .././mainapp.py:14120
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
 msgstr ""
+"Có thể bạn đã vô tình tạo tệp/thư mục đó, trong trường hợp đó, bạn nên xóa "
+"nó theo cách thủ công trước khi thử lại"
 
 #: .././mainapp.py:14139
 msgid "into this folder:"
-msgstr ""
+msgstr "vào thư mục này:"
 
 #: .././mainapp.py:14143
 msgid "This procedure will move all downloaded files to the new location"
-msgstr ""
+msgstr "Quy trình này sẽ di chuyển tất cả các tệp đã tải xuống đến vị trí mới"
 
 #: .././mainapp.py:14149 .././mainapp.py:14282
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
 msgstr ""
+"CẢNH BÁO: Thư mục đích được đánh dấu là tạm thời, vì vậy mọi thứ bên trong "
+"nó sẽ bị XÓA khi Tartube khởi động lại!"
 
 #: .././mainapp.py:14260
 msgid "Videos cannot be dragged into this folder"
-msgstr ""
+msgstr "Không thể kéo video vào thư mục này"
 
 #: .././mainapp.py:14270
 #, python-brace-format
 msgid "Are you sure you want to move the video to '{0}'?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn chuyển video sang '{0}' không?"
 
 #: .././mainapp.py:14276
 #, python-brace-format
 msgid "Are you sure you want to move '{0}' videos to '{1}'?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn chuyển video '{0}' sang '{1}' không?"
 
 #. Show confirmation dialogue
 #: .././mainapp.py:14417
 msgid "Videos moved"
-msgstr ""
+msgstr "Video đã di chuyển"
 
 #: .././mainapp.py:14418
 msgid "Videos not moved:"
-msgstr ""
+msgstr "Video không được di chuyển:"
 
 #: .././mainapp.py:14826
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr ""
+"Bạn có CHẮC CHẮN muốn xóa tệp không? Quy trình này không thể được đảo ngược!"
 
 #: .././mainapp.py:14843
 msgid ""
 "Are you SURE you want to remove these items from your database? This "
 "procedure cannot be reversed!"
 msgstr ""
+"Bạn có CHẮC CHẮN muốn xóa các mục này khỏi cơ sở dữ liệu của mình không? Quy "
+"trình này không thể được đảo ngược!"
 
 #: .././mainapp.py:16789 .././mainapp.py:16910 .././mainapp.py:17097
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
-msgstr ""
+msgstr "Kênh chứa {0} (các) mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainapp.py:16795 .././mainapp.py:16916 .././mainapp.py:17103
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr ""
+"Danh sách phát chứa {0} (các) mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainapp.py:16801 .././mainapp.py:16922 .././mainapp.py:17109
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
-msgstr ""
+msgstr "Thư mục chứa {0} (các) mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainapp.py:17174 .././mainapp.py:22893 .././mainapp.py:23033
 #: .././mainapp.py:23166 .././config.py:27238
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
-msgstr ""
+msgstr "Tên '{0}' không được phép"
 
 #: .././mainapp.py:17183 .././config.py:17015 .././config.py:27229
 #, python-brace-format
 msgid "The name '{0}' is already in use"
-msgstr ""
+msgstr "Tên '{0}' đã được sử dụng"
 
 #: .././mainapp.py:17193
 #, python-brace-format
 msgid "Failed to rename '{0}'"
-msgstr ""
+msgstr "Không đổi được tên '{0}'"
 
 #. Confirm the result
 #: .././mainapp.py:17393
 msgid "Search/replace complete"
-msgstr ""
+msgstr "Tìm kiếm/thay thế hoàn tất"
 
 #: .././mainapp.py:17394
 #, python-brace-format
 msgid "Updated URLs: {0}"
-msgstr ""
+msgstr "URL được cập nhật: {0}"
 
 #: .././mainapp.py:17395
 #, python-brace-format
 msgid "Errors: {0}"
-msgstr ""
+msgstr "Lỗi: {0}"
 
 #: .././mainapp.py:17658
 msgid "Select where to save the database export"
-msgstr ""
+msgstr "Chọn nơi lưu xuất cơ sở dữ liệu"
 
 #: .././mainapp.py:17788
 msgid "There is nothing to export!"
-msgstr ""
+msgstr "Không có gì để xuất!"
 
 #: .././mainapp.py:17828 .././mainapp.py:17873 .././mainapp.py:17926
 #: .././config.py:28852
 msgid "Failed to save the database export file:"
-msgstr ""
+msgstr "Không thể lưu tệp xuất cơ sở dữ liệu:"
 
 #: .././mainapp.py:17934 .././config.py:28842
 msgid "Database export file saved to:"
-msgstr ""
+msgstr "Tệp xuất cơ sở dữ liệu được lưu vào:"
 
 #: .././mainapp.py:18199
 msgid "Select the database export"
-msgstr ""
+msgstr "Chọn xuất cơ sở dữ liệu"
 
 #: .././mainapp.py:18217 .././mainapp.py:18228 .././mainapp.py:18262
 msgid "Failed to load the database export file"
-msgstr ""
+msgstr "Không tải được tệp xuất cơ sở dữ liệu"
 
 #: .././mainapp.py:18245
 msgid "The database export file is invalid"
-msgstr ""
+msgstr "Tệp xuất cơ sở dữ liệu không hợp lệ"
 
 #: .././mainapp.py:18276
 msgid "The database export file is invalid (or empty)"
-msgstr ""
+msgstr "Tệp xuất cơ sở dữ liệu không hợp lệ (hoặc trống)"
 
 #: .././mainapp.py:18321
 msgid "Nothing was imported from the database export file"
-msgstr ""
+msgstr "Không có gì được nhập từ tệp xuất cơ sở dữ liệu"
 
 #. Show a confirmation
 #: .././mainapp.py:18335
 msgid "Imported into database"
-msgstr ""
+msgstr "Đã nhập vào cơ sở dữ liệu"
 
 #: .././mainapp.py:18336 .././mainwin.py:1778 .././config.py:962
 #: .././config.py:17611 .././config.py:21003
 msgid "Videos"
-msgstr ""
+msgstr "Video"
 
 #: .././mainapp.py:18337 .././config.py:17644 .././config.py:21036
 msgid "Channels"
-msgstr ""
+msgstr "Kênh"
 
 #: .././mainapp.py:18338 .././config.py:17655 .././config.py:21047
 msgid "Playlists"
-msgstr ""
+msgstr "Danh sách phát"
 
 #: .././mainapp.py:18339
 msgid "Folders"
-msgstr ""
+msgstr "Thư mục"
 
 #: .././mainapp.py:19105
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
 msgstr ""
+"Tệp video bị thiếu trong thư mục dữ liệu của Tartube (hãy thử tải xuống lại "
+"video!)"
 
 #: .././mainapp.py:19460
 msgid "Select where to save the custom download export"
-msgstr ""
+msgstr "Chọn nơi lưu bản xuất tải xuống tùy chỉnh"
 
 #: .././mainapp.py:19517
 msgid "Failed to save the custom download export file:"
-msgstr ""
+msgstr "Không lưu được tệp xuất tải xuống tùy chỉnh:"
 
 #: .././mainapp.py:19525
 msgid "Custom download exported to:"
-msgstr ""
+msgstr "Tải xuống tùy chỉnh được xuất sang:"
 
 #: .././mainapp.py:19553
 msgid "Select the custom download export file"
-msgstr ""
+msgstr "Chọn tệp xuất tải xuống tùy chỉnh"
 
 #: .././mainapp.py:19572
 msgid "Failed to load the custom download export file"
-msgstr ""
+msgstr "Không tải được tệp xuất tải xuống tùy chỉnh"
 
 #: .././mainapp.py:19589
 msgid "The custom download export file is invalid"
-msgstr ""
+msgstr "Tệp xuất tải xuống tùy chỉnh không hợp lệ"
 
 #: .././mainapp.py:19600
 msgid "The custom download export file is invalid (or empty)"
-msgstr ""
+msgstr "Tệp xuất tải xuống tùy chỉnh không hợp lệ (hoặc trống)"
 
 #: .././mainapp.py:20216 .././mainapp.py:20577
 msgid "Select where to save the options export"
-msgstr ""
+msgstr "Chọn nơi lưu các tùy chọn xuất"
 
 #: .././mainapp.py:20264 .././mainapp.py:20625
 msgid "Failed to save the options export file:"
-msgstr ""
+msgstr "Không thể lưu tệp xuất tùy chọn:"
 
 #: .././mainapp.py:20272
 msgid "Download options exported to to:"
-msgstr ""
+msgstr "Các tùy chọn tải xuống được xuất sang:"
 
 #: .././mainapp.py:20300 .././mainapp.py:20661
 msgid "Select the options export file"
-msgstr ""
+msgstr "Chọn tệp xuất tùy chọn"
 
 #: .././mainapp.py:20319 .././mainapp.py:20680
 msgid "Failed to load the options export file"
-msgstr ""
+msgstr "Không tải được tệp xuất tùy chọn"
 
 #: .././mainapp.py:20336 .././mainapp.py:20697
 msgid "The options export file is invalid"
-msgstr ""
+msgstr "Tệp xuất tùy chọn không hợp lệ"
 
 #: .././mainapp.py:20347 .././mainapp.py:20708
 msgid "The options export file is invalid (or empty)"
-msgstr ""
+msgstr "Tệp xuất tùy chọn không hợp lệ (hoặc trống)"
 
 #: .././mainapp.py:20633
 msgid "FFmpeg options exported to to:"
-msgstr ""
+msgstr "Tùy chọn FFmpeg được xuất sang:"
 
 #: .././mainapp.py:21657
 msgid "Please select a destination folder"
-msgstr ""
+msgstr "Vui lòng chọn một thư mục đích"
 
 #. Prompt for confirmation
 #: .././mainapp.py:21723
 msgid "Are you sure you want to clear this list?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn xóa danh sách này không?"
 
 #. Prompt for confirmation
 #: .././mainapp.py:21767
 msgid "Are you sure you want to clear downloaded videos?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn xóa các video đã tải xuống không?"
 
 #: .././mainapp.py:21835 .././mainwin.py:17971
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
-msgstr ""
+msgstr "FFmpeg chỉ có thể xử lý các video đã chọn/tải xuống"
 
 #: .././mainapp.py:21942
 msgid "No destination(s) to show"
-msgstr ""
+msgstr "Không có (các) điểm đến để hiển thị"
 
 #: .././mainapp.py:21989
 msgid "No video(s) have been downloaded"
-msgstr ""
+msgstr "Không có (các) video nào được tải xuống"
 
 #. Prompt for confirmation
 #: .././mainapp.py:22116
 msgid "Are you sure you want to remove the selected item(s)?"
-msgstr ""
+msgstr "Bạn có chắc chắn muốn xóa (các) mục đã chọn không?"
 
 #: .././mainapp.py:22884
 msgid "You must give the channel a name"
-msgstr ""
+msgstr "Bạn phải đặt tên cho kênh"
 
 #: .././mainapp.py:22902 .././mainapp.py:23175
 msgid "You must enter a valid URL"
-msgstr ""
+msgstr "Bạn phải nhập một URL hợp lệ"
 
 #: .././mainapp.py:22929 .././mainapp.py:23055 .././mainapp.py:23201
 msgid "That name is not permitted on your system"
-msgstr ""
+msgstr "Tên đó không được phép trên hệ thống của bạn"
 
 #: .././mainapp.py:23025
 msgid "You must give the folder a name"
-msgstr ""
+msgstr "Bạn phải đặt tên cho thư mục"
 
 #: .././mainapp.py:23157
 msgid "You must give the playlist a name"
-msgstr ""
+msgstr "Bạn phải đặt tên cho danh sách phát"
 
 #: .././mainapp.py:23365 .././mainapp.py:23604
 msgid "No channels, playlists or folders are marked for download"
 msgstr ""
+"Không có kênh, danh sách phát hoặc thư mục nào được đánh dấu để tải xuống"
 
 #: .././mainapp.py:23379 .././mainapp.py:23618
 #, python-brace-format
 msgid "The maximum number of profiles permitted is {0}"
-msgstr ""
+msgstr "Số lượng cấu hình tối đa được phép là {0}"
 
 #: .././mainapp.py:23404 .././mainapp.py:23643
 #, python-brace-format
 msgid "A profile called '{0}' already exists"
-msgstr ""
+msgstr "Tiểu sử có tên '{0}' đã tồn tại"
 
 #: .././mainapp.py:23422 .././mainapp.py:23661
 #, python-brace-format
 msgid "Created the profile '{0}'"
-msgstr ""
+msgstr "Đã tạo tiểu sử '{0}'"
 
 #: .././mainapp.py:23482
 msgid "There were no livestream alerts to cancel"
-msgstr ""
+msgstr "Không có thông báo phát trực tiếp nào để hủy"
 
 #: .././mainapp.py:23484
 msgid "Livestream alerts for 1 video were cancelled"
-msgstr ""
+msgstr "Thông báo phát trực tiếp cho 1 video đã bị hủy"
 
 #: .././mainapp.py:23487
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
-msgstr ""
+msgstr "Thông báo phát trực tiếp cho {0} video đã bị hủy"
 
 #: .././mainapp.py:23999
 msgid ""
 "Before trying to reset channel/playlist names, you must check or download at "
 "one least one video from each!"
 msgstr ""
+"Trước khi cố gắng đặt lại tên kênh/danh sách phát, bạn phải kiểm tra hoặc "
+"tải xuống ít nhất một video từ mỗi tên!"
 
 #: .././mainapp.py:24076
 msgid "All Tartube data has been saved"
-msgstr ""
+msgstr "Tất cả dữ liệu Tartube đã được lưu"
 
 #: .././mainapp.py:24103
 msgid "Database saved"
-msgstr ""
+msgstr "Đã lưu cơ sở dữ liệu"
 
 #: .././mainapp.py:24400 .././mainwin.py:16713
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
 msgstr ""
+"Không thể khôi phục các tệp sau khi bị xóa. Bạn có chắc chắn muốn tiếp tục "
+"không?"
 
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
 #: .././mainapp.py:24454
 msgid "Cannot update existing livestreams because"
-msgstr ""
+msgstr "Không thể cập nhật các buổi phát trực tiếp hiện có vì"
 
 #: .././mainapp.py:24456
 msgid "there is another operation running"
-msgstr ""
+msgstr "có một hoạt động khác đang chạy"
 
 #: .././mainapp.py:24458
 msgid "they are currently being updated"
-msgstr ""
+msgstr "chúng hiện đang được cập nhật"
 
 #: .././mainapp.py:24460
 msgid "one or more configuration windows are open"
-msgstr ""
+msgstr "một hoặc nhiều cửa sổ cấu hình đang mở"
 
 #: .././mainapp.py:24462
 msgid "there are no livestreams to update"
-msgstr ""
+msgstr "không có buổi phát trực tiếp nào để cập nhật"
 
 #: .././mainapp.py:24527
 msgid "There is already a channel with that name"
-msgstr ""
+msgstr "Đã có một kênh với tên đó"
 
 #: .././mainapp.py:24529
 msgid "There is already a playlist with that name"
-msgstr ""
+msgstr "Đã có một danh sách phát với tên đó"
 
 #: .././mainapp.py:24531
 msgid "There is already a folder with that name"
-msgstr ""
+msgstr "Đã có một thư mục với tên đó"
 
 #: .././mainapp.py:24534
 msgid "(so please choose a different name)"
-msgstr ""
+msgstr "(vì vậy vui lòng chọn một tên khác)"
 
 #: .././mainwin.py:1004
 msgid "Tartube cannot start because it cannot find its icons folder"
 msgstr ""
+"Tartube không thể khởi động vì nó không thể tìm thấy thư mục biểu tượng của "
+"nó"
 
 #. File column
 #: .././mainwin.py:1282 .././config.py:10644
 msgid "_File"
-msgstr ""
+msgstr "Tập tin"
 
 #: .././mainwin.py:1289
 msgid "_Database preferences..."
-msgstr ""
+msgstr "Tùy chọn cơ sở dữ liệu..."
 
 #: .././mainwin.py:1295
 msgid "_Check database integrity"
-msgstr ""
+msgstr "Kiểm tra tính toàn vẹn của cơ sở dữ liệu"
 
 #: .././mainwin.py:1304
 msgid "_Save database"
-msgstr ""
+msgstr "Lưu cơ sở dữ liệu"
 
 #: .././mainwin.py:1310
 msgid "Save _all"
-msgstr ""
+msgstr "Lưu tất cả"
 
 #: .././mainwin.py:1319
 msgid "Close to _tray"
@@ -903,130 +964,130 @@ msgstr ""
 #. Quit
 #: .././mainwin.py:1324 .././mainwin.py:27207
 msgid "_Quit"
-msgstr ""
+msgstr "Thoát"
 
 #. Edit column
 #: .././mainwin.py:1329
 msgid "_Edit"
-msgstr ""
+msgstr "Chỉnh sửa"
 
 #: .././mainwin.py:1336
 msgid "_System preferences..."
-msgstr ""
+msgstr "Tùy chọn hệ thống..."
 
 #: .././mainwin.py:1342
 msgid "_General download options..."
-msgstr ""
+msgstr "Tùy chọn tải xuống chung..."
 
 #. Separator
 #: .././mainwin.py:1351
 msgid "_System"
-msgstr ""
+msgstr "Hệ thống"
 
 #: .././mainwin.py:1358
 msgid "Open _MSYS2 terminal..."
-msgstr ""
+msgstr "Mở MSYS2 terminal..."
 
 #: .././mainwin.py:1367
 msgid "Show Tartube _install folder"
-msgstr ""
+msgstr "Hiển thị thư mục cài đặt Tartube"
 
 #: .././mainwin.py:1375
 msgid "Show Tartube _script folder"
-msgstr ""
+msgstr "Hiển thị thư mục script Tartube"
 
 #. Media column
 #: .././mainwin.py:1381 .././config.py:18553
 msgid "_Media"
-msgstr ""
+msgstr "Phương tiện"
 
 #: .././mainwin.py:1388
 msgid "Add _videos..."
-msgstr ""
+msgstr "Thêm video..."
 
 #: .././mainwin.py:1394
 msgid "Add _channel..."
-msgstr ""
+msgstr "Thêm kênh..."
 
 #: .././mainwin.py:1400
 msgid "Add _playlist..."
-msgstr ""
+msgstr "Thêm danh sách phát..."
 
 #: .././mainwin.py:1406
 msgid "Add _folder..."
-msgstr ""
+msgstr "Thêm thư mục..."
 
 #: .././mainwin.py:1415
 msgid "_Add many channels/playlists..."
-msgstr ""
+msgstr "Thêm nhiều kênh/danh sách phát..."
 
 #: .././mainwin.py:1421
 msgid "_Reset channel/playlist names..."
-msgstr ""
+msgstr "Đặt lại tên kênh/danh sách phát..."
 
 #: .././mainwin.py:1434
 msgid "_Export from database..."
-msgstr ""
+msgstr "Xuất từ cơ sở dữ liệu..."
 
 #: .././mainwin.py:1440
 msgid "_Import into database..."
-msgstr ""
+msgstr "Nhập vào cơ sở dữ liệu..."
 
 #: .././mainwin.py:1446
 msgid "Import _YouTube subscriptions..."
-msgstr ""
+msgstr "Nhập đăng ký YouTube..."
 
 #: .././mainwin.py:1454
 msgid "_Export/import"
-msgstr ""
+msgstr "Xuất/nhập"
 
 #: .././mainwin.py:1462
 msgid "_Switch between views"
-msgstr ""
+msgstr "Chuyển đổi giữa các chế độ xem"
 
 #: .././mainwin.py:1472
 msgid "_Hide (most) system folders"
-msgstr ""
+msgstr "Ẩn (hầu hết) thư mục hệ thống"
 
 #: .././mainwin.py:1481
 msgid "_Show hidden folders"
-msgstr ""
+msgstr "Hiển thị các thư mục ẩn"
 
 #: .././mainwin.py:1487
 msgid "S_how/hide"
-msgstr ""
+msgstr "Hiện/ẩn"
 
 #: .././mainwin.py:1494
 msgid "_Switch profile"
-msgstr ""
+msgstr "Chuyển đổi hồ sơ"
 
 #: .././mainwin.py:1502
 msgid "_Remember last profile"
-msgstr ""
+msgstr "Nhớ hồ sơ cuối cùng"
 
 #: .././mainwin.py:1516
 msgid "_Create profile"
-msgstr ""
+msgstr "Tạo hồ sơ"
 
 #: .././mainwin.py:1524
 msgid "_Delete profile"
-msgstr ""
+msgstr "Xóa hồ sơ"
 
 #: .././mainwin.py:1536
 msgid "_Mark all for download"
-msgstr ""
+msgstr "Đánh dấu tất cả để tải xuống"
 
 #: .././mainwin.py:1545
 msgid "_Unmark all for download"
-msgstr ""
+msgstr "Bỏ đánh dấu tất cả để tải xuống"
 
 #: .././mainwin.py:1553
 msgid "Pr_ofiles"
-msgstr ""
+msgstr "Hồ sơ"
 
 #: .././mainwin.py:1566
 msgid "Ad_d test media"
-msgstr ""
+msgstr "Thêm phương tiện thử nghiệm"
 
 #: .././mainwin.py:1574
 msgid "Run _test code"
@@ -1036,132 +1097,132 @@ msgstr ""
 #. Add this tab...
 #: .././mainwin.py:1580 .././config.py:22541
 msgid "_Operations"
-msgstr ""
+msgstr "Hoạt động"
 
 #. Check all
 #: .././mainwin.py:1587 .././mainwin.py:27178
 msgid "_Check all"
-msgstr ""
+msgstr "Rà soát tất cả"
 
 #. Download all
 #: .././mainwin.py:1593 .././mainwin.py:27185
 msgid "_Download all"
-msgstr ""
+msgstr "Tải xuống tất cả"
 
 #: .././mainwin.py:1598
 msgid "C_ustom download all"
-msgstr ""
+msgstr "Tải xuống tùy chỉnh tất cả"
 
 #: .././mainwin.py:1608
 msgid "_Refresh database..."
-msgstr ""
+msgstr "Làm mới cơ sở dữ liệu..."
 
 #: .././mainwin.py:1618
 msgid "U_pdate"
-msgstr ""
+msgstr "Cập nhật"
 
 #: .././mainwin.py:1624 .././mainwin.py:5448
 msgid "_Test"
-msgstr ""
+msgstr "Kiểm tra"
 
 #: .././mainwin.py:1635
 msgid "Install _FFmpeg..."
-msgstr ""
+msgstr "Cài đặt FFmpeg..."
 
 #: .././mainwin.py:1643
 msgid "Install _matplotlib..."
-msgstr ""
+msgstr "Cài đặt matplotlib..."
 
 #: .././mainwin.py:1651
 msgid "Install _streamlink..."
-msgstr ""
+msgstr "Cài đặt streamlink..."
 
 #: .././mainwin.py:1662
 msgid "Tidy up _files..."
-msgstr ""
+msgstr "Thu dọn hồ sơ..."
 
 #: .././mainwin.py:1673 .././mainwin.py:27196
 msgid "_Stop current operation"
-msgstr ""
+msgstr "Dừng hoạt động hiện tại"
 
 #: .././mainwin.py:1681
 msgid "Stop _after current videos"
-msgstr ""
+msgstr "Dừng lại sau các video hiện tại"
 
 #. Livestreams column
 #: .././mainwin.py:1689
 msgid "_Livestreams"
-msgstr ""
+msgstr "Phát trực tiếp"
 
 #: .././mainwin.py:1696
 msgid "_Livestream preferences..."
-msgstr ""
+msgstr "Tùy chọn phát trực tiếp..."
 
 #: .././mainwin.py:1705
 msgid "_Update existing livestreams"
-msgstr ""
+msgstr "Cập nhật các buổi phát trực tiếp hiện có"
 
 #: .././mainwin.py:1710
 msgid "_Cancel all livestream alerts"
-msgstr ""
+msgstr "Hủy tất cả thông báo phát trực tiếp"
 
 #. Help column
 #: .././mainwin.py:1715
 msgid "_Help"
-msgstr ""
+msgstr "Giúp đỡ"
 
 #: .././mainwin.py:1721
 msgid "_About..."
-msgstr ""
+msgstr "Thông tin..."
 
 #: .././mainwin.py:1729
 msgid "Check for _updates"
-msgstr ""
+msgstr "Kiểm tra cập nhật"
 
 #: .././mainwin.py:1735
 msgid "Go to _website"
-msgstr ""
+msgstr "Đi đến trang web"
 
 #: .././mainwin.py:1744
 msgid "Send _feedback"
-msgstr ""
+msgstr "Gửi phản hồi"
 
 #: .././mainwin.py:1788
 msgid "Add new video(s)"
-msgstr ""
+msgstr "Thêm (các) video mới"
 
 #: .././mainwin.py:1797 .././mainwin.py:25535 .././media.py:82
 msgid "Channel"
-msgstr ""
+msgstr "Kênh"
 
 #: .././mainwin.py:1807
 msgid "Add a new channel"
-msgstr ""
+msgstr "Thêm một kênh mới"
 
 #: .././mainwin.py:1818 .././mainwin.py:25537 .././media.py:84
 msgid "Playlist"
-msgstr ""
+msgstr "Danh sách phát"
 
 #: .././mainwin.py:1828
 msgid "Add a new playlist"
-msgstr ""
+msgstr "Thêm danh sách phát mới"
 
 #: .././mainwin.py:1839 .././mainwin.py:25539 .././media.py:86
 msgid "Folder"
-msgstr ""
+msgstr "Thư mục"
 
 #: .././mainwin.py:1849
 msgid "Add a new folder"
-msgstr ""
+msgstr "Thêm một thư mục mới"
 
 #: .././mainwin.py:1863 .././config.py:22351
 msgid "Check"
-msgstr ""
+msgstr "Kiểm tra"
 
 #: .././mainwin.py:1874 .././mainwin.py:2121 .././mainwin.py:4285
 #: .././mainwin.py:4635 .././mainwin.py:5595
 msgid "Check all videos, channels, playlists and folders"
-msgstr ""
+msgstr "Kiểm tra tất cả video, kênh, danh sách phát và thư mục"
 
 #. Link not clickable
 #. Because of an unexplained Gtk problem, there is usually a crash after
@@ -1175,171 +1236,172 @@ msgstr ""
 #: .././mainwin.py:25730 .././mainwin.py:25756 .././config.py:22227
 #: .././config.py:22353
 msgid "Download"
-msgstr ""
+msgstr "Tải xuống"
 
 #: .././mainwin.py:1895 .././mainwin.py:2129 .././mainwin.py:4299
 #: .././mainwin.py:4651
 msgid "Download all videos, channels, playlists and folders"
-msgstr ""
+msgstr "Tải xuống tất cả video, kênh, danh sách phát và thư mục"
 
 #: .././mainwin.py:1910 .././config.py:11329 .././config.py:11514
 #: .././config.py:11969 .././config.py:12176 .././config.py:14678
 #: .././config.py:14859
 msgid "Stop"
-msgstr ""
+msgstr "Dừng lại"
 
 #: .././mainwin.py:1922
 msgid "Stop the current operation"
-msgstr ""
+msgstr "Dừng hoạt động hiện tại"
 
 #: .././mainwin.py:1934
 msgid "Switch"
-msgstr ""
+msgstr "Công tắc"
 
 #: .././mainwin.py:1945
 msgid "Switch between simple and complex views"
-msgstr ""
+msgstr "Chuyển đổi giữa các chế độ xem đơn giản và phức tạp"
 
 #: .././mainwin.py:1958 .././mainwin.py:5487
 msgid "Hide"
-msgstr ""
+msgstr "Ẩn giấu"
 
 #: .././mainwin.py:1960 .././mainwin.py:5494
 msgid "Show"
-msgstr ""
+msgstr "Hiện thị"
 
 #: .././mainwin.py:1972 .././mainwin.py:5489
 msgid "Hide (most) system folders"
-msgstr ""
+msgstr "Ẩn (hầu hết) các thư mục hệ thống"
 
 #: .././mainwin.py:1976 .././mainwin.py:5496
 msgid "Show all system folders"
-msgstr ""
+msgstr "Hiển thị tất cả các thư mục hệ thống"
 
 #: .././mainwin.py:1991
 msgid "Quit"
-msgstr ""
+msgstr "Thoát"
 
 #: .././mainwin.py:2001
 msgid "Close Tartube"
-msgstr ""
+msgstr "Đóng Tartube"
 
 #: .././mainwin.py:2020 .././config.py:4879 .././config.py:12390
 #: .././config.py:20271 .././config.py:21425
 msgid "_Videos"
-msgstr ""
+msgstr "Video"
 
 #: .././mainwin.py:2028
 msgid "_Progress"
-msgstr ""
+msgstr "Tiến triển"
 
 #: .././mainwin.py:2036
 msgid "_Classic Mode"
-msgstr ""
+msgstr "Chế độ Cổ điển"
 
 #: .././mainwin.py:2045
 msgid "_Drag and Drop"
-msgstr ""
+msgstr "Kéo và Thả"
 
 #: .././mainwin.py:2054
 msgid "_Output"
-msgstr ""
+msgstr "Đầu ra"
 
 #: .././mainwin.py:2063 .././config.py:15630 .././config.py:16904
 msgid "_Errors / Warnings"
-msgstr ""
+msgstr "Lỗi / Cảnh báo"
 
 #: .././mainwin.py:2119 .././mainwin.py:4283 .././mainwin.py:4633
 #: .././mainwin.py:5593
 msgid "Check all"
-msgstr ""
+msgstr "Rà soát tất cả"
 
 #: .././mainwin.py:2127 .././mainwin.py:3623 .././mainwin.py:4297
 #: .././mainwin.py:19923
 msgid "Download all"
-msgstr ""
+msgstr "Tải xuống tất cả"
 
 #: .././mainwin.py:2145 .././mainwin.py:3627 .././mainwin.py:4321
 #: .././mainwin.py:19914
 msgid "Custom download all"
-msgstr ""
+msgstr "Tải xuống tùy chỉnh tất cả"
 
 #: .././mainwin.py:2148 .././mainwin.py:4324 .././mainwin.py:4676
 msgid ""
 "Perform a custom download of all videos, channels, playlists and folders"
 msgstr ""
+"Thực hiện tải xuống tùy chỉnh tất cả video, kênh, danh sách phát và thư mục"
 
 #: .././mainwin.py:2165 .././mainwin.py:4351 .././mainwin.py:4693
 msgid "Select the custom download to use"
-msgstr ""
+msgstr "Chọn tải xuống tùy chỉnh để sử dụng"
 
 #: .././mainwin.py:2222
 msgid "Page"
-msgstr ""
+msgstr "Trang"
 
 #: .././mainwin.py:2233
 msgid "Set visible page"
-msgstr ""
+msgstr "Đặt trang hiển thị"
 
 #: .././mainwin.py:2263 .././mainwin.py:2766 .././mainwin.py:2852
 #: .././mainwin.py:3408
 msgid "Size"
-msgstr ""
+msgstr "Kích thước"
 
 #: .././mainwin.py:2273
 msgid "Set page size"
-msgstr ""
+msgstr "Đặt kích thước trang"
 
 #: .././mainwin.py:2296
 msgid "Go to first page"
-msgstr ""
+msgstr "Đi đến trang đầu tiên"
 
 #: .././mainwin.py:2311
 msgid "Go to previous page"
-msgstr ""
+msgstr "Chuyển đến trang trước"
 
 #: .././mainwin.py:2328
 msgid "Go to next page"
-msgstr ""
+msgstr "Đi đến trang tiếp theo"
 
 #: .././mainwin.py:2343
 msgid "Go to last page"
-msgstr ""
+msgstr "Đi đến trang cuối cùng"
 
 #: .././mainwin.py:2358
 msgid "Scroll up"
-msgstr ""
+msgstr "Cuộn lên"
 
 #: .././mainwin.py:2373
 msgid "Scroll down"
-msgstr ""
+msgstr "Cuộn xuống"
 
 #: .././mainwin.py:2392 .././mainwin.py:5277
 msgid "Show more settings"
-msgstr ""
+msgstr "Hiển thị thêm cài đặt"
 
 #: .././mainwin.py:2405
 msgid "Sort"
-msgstr ""
+msgstr "Loại"
 
 #: .././mainwin.py:2411 .././config.py:14405
 msgid "Upload time"
-msgstr ""
+msgstr "Thời gian tải lên"
 
 #: .././mainwin.py:2412 .././mainwin.py:27587 .././mainwin.py:30078
 #: .././mainwin.py:31461 .././config.py:3009 .././config.py:12414
 #: .././config.py:20732 .././config.py:22227 .././config.py:23254
 #: .././config.py:25330 .././config.py:25610
 msgid "Name"
-msgstr ""
+msgstr "Tên"
 
 #: .././mainwin.py:2413
 msgid "Download time"
-msgstr ""
+msgstr "Thời gian tải xuống"
 
 #: .././mainwin.py:2414
 msgid "Database ID"
-msgstr ""
+msgstr "ID cơ sở dữ liệu"
 
 #: .././mainwin.py:2441
 msgid "Resort videos"
@@ -1347,91 +1409,93 @@ msgstr ""
 
 #: .././mainwin.py:2454
 msgid "Find date"
-msgstr ""
+msgstr "Tìm ngày"
 
 #: .././mainwin.py:2467
 msgid "Find videos by date"
-msgstr ""
+msgstr "Tìm video theo ngày"
 
 #: .././mainwin.py:2484
 msgid "Cancel find videos by date"
-msgstr ""
+msgstr "Hủy tìm video theo ngày"
 
 #: .././mainwin.py:2497
 msgid "Thumbnail size"
-msgstr ""
+msgstr "Kích thước thu nhỏ"
 
 #: .././mainwin.py:2526 .././mainwin.py:3997 .././config.py:15104
 msgid "Filter"
-msgstr ""
+msgstr "Lọc"
 
 #: .././mainwin.py:2534 .././mainwin.py:4003 .././config.py:15114
 msgid "Enter search text"
-msgstr ""
+msgstr "Nhập văn bản tìm kiếm"
 
 #: .././mainwin.py:2539 .././mainwin.py:4005 .././config.py:15117
+#, fuzzy
 msgid "Regex"
-msgstr ""
+msgstr "Regex"
 
 #: .././mainwin.py:2547 .././mainwin.py:4008
 msgid "Select if search text is a regex"
-msgstr ""
+msgstr "Chọn xem văn bản tìm kiếm có phải là regex không"
 
 #: .././mainwin.py:2563
 msgid "Names"
-msgstr ""
+msgstr "Tên"
 
 #: .././mainwin.py:2577
 msgid "Descriptions"
-msgstr ""
+msgstr "Mô tả"
 
 #: .././mainwin.py:2591 .././config.py:15017
 msgid "Comments"
-msgstr ""
+msgstr "Bình luận"
 
 #: .././mainwin.py:2611
 msgid "Filter videos"
-msgstr ""
+msgstr "Lọc video"
 
 #: .././mainwin.py:2628 .././mainwin.py:4062
 msgid "Cancel filter"
-msgstr ""
+msgstr "Hủy bộ lọc"
 
 #: .././mainwin.py:2644
 msgid "Draw frames"
-msgstr ""
+msgstr "Vẽ khung"
 
 #: .././mainwin.py:2658
 msgid "Draw icons"
-msgstr ""
+msgstr "Vẽ biểu tượng"
 
 #: .././mainwin.py:2672
 msgid "Show downloaded"
-msgstr ""
+msgstr "Hiển thị đã tải xuống"
 
 #: .././mainwin.py:2687
 msgid "Show undownloaded"
-msgstr ""
+msgstr "Hiển thị chưa tải xuống"
 
 #: .././mainwin.py:2702
 msgid "Show blocked"
-msgstr ""
+msgstr "Hiển thị bị chặn"
 
 #: .././mainwin.py:2759
 msgid "TRANSLATOR'S NOTE: Ext is short for a file extension, e.g. .EXE"
 msgstr ""
+"LƯU Ý CỦA NGƯỜI DỊCH: Ext là viết tắt của phần mở rộng tệp, ví dụ: .EXE"
 
 #: .././mainwin.py:2764 .././mainwin.py:3406 .././config.py:10786
 msgid "Source"
-msgstr ""
+msgstr "Nguồn"
 
 #: .././mainwin.py:2764 .././mainwin.py:3406
 msgid "Status"
-msgstr ""
+msgstr "Trạng thái"
 
 #: .././mainwin.py:2765 .././mainwin.py:3407
 msgid "Incoming file"
-msgstr ""
+msgstr "Tệp đến"
 
 #: .././mainwin.py:2765 .././mainwin.py:3407
 msgid "Ext"
@@ -1439,35 +1503,35 @@ msgstr ""
 
 #: .././mainwin.py:2765 .././mainwin.py:3407
 msgid "Speed"
-msgstr ""
+msgstr "Tốc độ"
 
 #: .././mainwin.py:2765 .././mainwin.py:3407
 msgid "ETA"
-msgstr ""
+msgstr "ETA"
 
 #: .././mainwin.py:2852 .././config.py:16605
 msgid "New videos"
-msgstr ""
+msgstr "Video mới"
 
 #: .././mainwin.py:2852 .././config.py:440 .././config.py:14375
 msgid "Duration"
-msgstr ""
+msgstr "Khoảng thời gian"
 
 #: .././mainwin.py:2853
 msgid "Date"
-msgstr ""
+msgstr "Ngày"
 
 #: .././mainwin.py:2853 .././config.py:14199
 msgid "File"
-msgstr ""
+msgstr "Tập tin"
 
 #: .././mainwin.py:2853
 msgid "Downloaded to"
-msgstr ""
+msgstr "Đã tải xuống"
 
 #: .././mainwin.py:2914
 msgid "Max downloads"
-msgstr ""
+msgstr "Số lượt tải xuống tối đa"
 
 #: .././mainwin.py:2937
 msgid "D/L speed (KiB/s)"
@@ -1475,23 +1539,23 @@ msgstr ""
 
 #: .././mainwin.py:2961 .././mainwin.py:5222
 msgid "Alternative limits do not currently apply"
-msgstr ""
+msgstr "Các giới hạn thay thế hiện không áp dụng"
 
 #: .././mainwin.py:2972 .././config.py:5340
 msgid "Video resolution"
-msgstr ""
+msgstr "Độ phân giải video"
 
 #: .././mainwin.py:3007
 msgid "Hide rows when they are finished"
-msgstr ""
+msgstr "Ẩn các hàng khi chúng hoàn thành"
 
 #: .././mainwin.py:3020
 msgid "Add newest videos to the top of the list"
-msgstr ""
+msgstr "Thêm video mới nhất vào đầu danh sách"
 
 #: .././mainwin.py:3105
 msgid "Open the Classic Mode menu"
-msgstr ""
+msgstr "Mở menu Chế độ Cổ điển"
 
 #. Second row - a textview for entering URLs. If automatic copy/paste is
 #. enabled, URLs are automatically copied into this textview
@@ -1499,7 +1563,7 @@ msgstr ""
 #. Initial widgets
 #: .././mainwin.py:3112 .././mainwin.py:27475
 msgid "Enter URLs below"
-msgstr ""
+msgstr "Nhập các URL bên dưới"
 
 #. Third row - widgets to set the download destination and video/audio
 #. format. The user clicks the 'Add URLs' button to create dummy
@@ -1509,395 +1573,406 @@ msgstr ""
 #. Destination directory
 #: .././mainwin.py:3162
 msgid "Destination:"
-msgstr ""
+msgstr "Điểm đến:"
 
 #: .././mainwin.py:3199
 msgid "Add a new destination folder"
-msgstr ""
+msgstr "Thêm một thư mục đích mới"
 
 #: .././mainwin.py:3218
 msgid "Open the destination folder"
-msgstr ""
+msgstr "Mở thư mục đích"
 
 #. Video/audio format
 #: .././mainwin.py:3223
 msgid "Format:"
-msgstr ""
+msgstr "Định dạng:"
 
 #. (Dummy items in the combo)
 #: .././mainwin.py:3227 .././mainwin.py:19676 .././config.py:23254
 msgid "Default"
-msgstr ""
+msgstr "Mặc định"
 
 #: .././mainwin.py:3227 .././mainwin.py:19677
 msgid "Video:"
-msgstr ""
+msgstr "Video:"
 
 #: .././mainwin.py:3231 .././mainwin.py:19678
 msgid "Audio:"
-msgstr ""
+msgstr "Âm thanh:"
 
 #. Video resolution
 #. (Dummy items in the combo)
 #: .././mainwin.py:3260 .././mainwin.py:20320
 msgid "Highest"
-msgstr ""
+msgstr "Cao nhất"
 
 #: .././mainwin.py:3291
 msgid "Convert to this format"
-msgstr ""
+msgstr "Chuyển đổi sang định dạng này"
 
 #: .././mainwin.py:3300
 msgid "Download in this format"
-msgstr ""
+msgstr "Tải xuống ở định dạng này"
 
 #: .././mainwin.py:3313 .././config.py:5302
 msgid "Is a livestream"
-msgstr ""
+msgstr "Là một buổi phát trực tiếp"
 
 #: .././mainwin.py:3342
 msgid "Add URLs"
-msgstr ""
+msgstr "Thêm URL"
 
 #: .././mainwin.py:3348
 msgid "Add these URLs"
-msgstr ""
+msgstr "Thêm URL này"
 
 #: .././mainwin.py:3461
 msgid "Play video"
-msgstr ""
+msgstr "Phát video"
 
 #: .././mainwin.py:3484
 msgid "Open destination(s)"
-msgstr ""
+msgstr "Mở (các) điểm đến"
 
 #: .././mainwin.py:3502
 msgid "Stop download"
-msgstr ""
+msgstr "Dừng tải xuống"
 
 #: .././mainwin.py:3523
 msgid "Re-download"
-msgstr ""
+msgstr "Tải xuống lại"
 
 #: .././mainwin.py:3536
 msgid ""
 "Allow downloader to create an archive file (enable this only when "
 "downloading channels and playlists)"
 msgstr ""
+"Cho phép người tải xuống tạo tệp lưu trữ (chỉ bật tính năng này khi tải "
+"xuống các kênh và danh sách phát)"
 
 #: .././mainwin.py:3566
 msgid "Process with FFmpeg"
-msgstr ""
+msgstr "Xử lý với FFmpeg"
 
 #. (Signal connect appears below)
 #: .././mainwin.py:3582 .././config.py:6647 .././config.py:20054
 #: .././config.py:22292
 msgid "Move up"
-msgstr ""
+msgstr "Đi lên"
 
 #. (Signal connect appears below)
 #: .././mainwin.py:3603 .././config.py:6651 .././config.py:20063
 #: .././config.py:22301
 msgid "Move down"
-msgstr ""
+msgstr "Đi xuống"
 
 #: .././mainwin.py:3619
 msgid "Remove from list"
-msgstr ""
+msgstr "Xóa từ danh sách"
 
 #: .././mainwin.py:3635 .././mainwin.py:19926
 msgid "Download the URLs above"
-msgstr ""
+msgstr "Tải xuống các URL ở trên"
 
 #: .././mainwin.py:3639 .././mainwin.py:19917
 msgid "Perform a custom download on the URLs above"
-msgstr ""
+msgstr "Thực hiện tải xuống tùy chỉnh trên các URL ở trên"
 
 #: .././mainwin.py:3643
 msgid "Clear all"
-msgstr ""
+msgstr "Làm sạch tất cả"
 
 #: .././mainwin.py:3655 .././mainwin.py:3666
 msgid "Clear the URLs above"
-msgstr ""
+msgstr "Xóa các URL ở trên"
 
 #: .././mainwin.py:3659
 msgid "Clear downloaded"
-msgstr ""
+msgstr "Xóa đã tải xuống"
 
 #: .././mainwin.py:3712
 msgid "When you drag a video here, it is added to the Classic Mode tab"
 msgstr ""
+"Khi bạn kéo video vào đây, video đó sẽ được thêm vào tab Chế độ Cổ điển"
 
 #: .././mainwin.py:3721
 msgid "Each zone represents a set of download options"
-msgstr ""
+msgstr "Mỗi khu vực đại diện cho một tập hợp các tùy chọn tải xuống"
 
 #: .././mainwin.py:3731
 msgid "Warning: Drag and drop does not work well on MS Windows"
-msgstr ""
+msgstr "Cảnh báo: Kéo và thả không hoạt động tốt trên MS Windows"
 
 #: .././mainwin.py:3752
 msgid "Add a new dropzone"
-msgstr ""
+msgstr "Thêm một dropzone mới"
 
 #: .././mainwin.py:3805
 msgid "Maximum page size"
-msgstr ""
+msgstr "Kích thước trang tối đa"
 
 #: .././mainwin.py:3861 .././config.py:21984
 msgid "Show Tartube errors"
-msgstr ""
+msgstr "Hiển thị lỗi Tartube"
 
 #: .././mainwin.py:3874 .././config.py:21992
 msgid "Show Tartube warnings"
-msgstr ""
+msgstr "Hiển thị cảnh báo Tartube"
 
 #: .././mainwin.py:3887 .././config.py:22000
 msgid "Show operation errors"
-msgstr ""
+msgstr "Hiển thị lỗi hoạt động"
 
 #: .././mainwin.py:3905 .././config.py:22011
 msgid "Show operation warnings"
-msgstr ""
+msgstr "Hiển thị cảnh báo hoạt động"
 
 #: .././mainwin.py:3928 .././config.py:22022
 msgid "Show dates"
-msgstr ""
+msgstr "Hiển thị ngày tháng"
 
 #: .././mainwin.py:3946 .././config.py:22033
 msgid "Show channel/playlist/folder names"
-msgstr ""
+msgstr "Hiển thị tên kênh/danh sách phát/thư mục"
 
 #: .././mainwin.py:3964 .././config.py:22044
 msgid "Show video names"
-msgstr ""
+msgstr "Hiển thị tên video"
 
 #: .././mainwin.py:3982 .././config.py:22055
 msgid "Show full messages"
-msgstr ""
+msgstr "Hiển thị toàn bộ tin nhắn"
 
 #: .././mainwin.py:4045
 msgid "Filter messages"
-msgstr ""
+msgstr "Lọc tin nhắn"
 
 #: .././mainwin.py:4067 .././config.py:11426 .././config.py:11630
 #: .././config.py:12066 .././config.py:12293 .././config.py:14766
 #: .././config.py:14958 .././config.py:16733 .././config.py:18655
 msgid "Clear list"
-msgstr ""
+msgstr "Làm sạch danh sách"
 
 #: .././mainwin.py:4288 .././mainwin.py:4638 .././mainwin.py:5598
 msgid "Check marked items"
-msgstr ""
+msgstr "Kiểm tra các mục đã đánh dấu"
 
 #: .././mainwin.py:4290 .././mainwin.py:4641 .././mainwin.py:5600
 msgid "Check marked videos, channels, playlists and folders"
-msgstr ""
+msgstr "Kiểm tra các video, kênh, danh sách phát và thư mục đã đánh dấu"
 
 #: .././mainwin.py:4302
 msgid "Download marked items"
-msgstr ""
+msgstr "Tải xuống các mục đã đánh dấu"
 
 #: .././mainwin.py:4304 .././mainwin.py:4657
 msgid "Download marked videos, channels, playlists and folders"
-msgstr ""
+msgstr "Tải xuống các video, kênh, danh sách phát và thư mục đã đánh dấu"
 
 #: .././mainwin.py:4330
 msgid "Custom download marked items"
-msgstr ""
+msgstr "Tải xuống tùy chỉnh các mục được đánh dấu"
 
 #: .././mainwin.py:4334
 msgid ""
 "Perform a custom download of marked videos, channels, playlists and folders"
 msgstr ""
+"Thực hiện tải xuống tùy chỉnh các video, kênh, danh sách phát và thư mục đã "
+"đánh dấu"
 
 #: .././mainwin.py:4603
 msgid "Installing FFmpeg"
-msgstr ""
+msgstr "Cài đặt FFmpeg"
 
 #: .././mainwin.py:4605
 msgid "Installing matplotlib"
-msgstr ""
+msgstr "Cài đặt matplotlib"
 
 #: .././mainwin.py:4607
 msgid "Installing streamlink"
-msgstr ""
+msgstr "Cài đặt streamlink"
 
 #: .././mainwin.py:4609
 msgid "Updating downloader"
-msgstr ""
+msgstr "Đang cập nhật trình tải xuống"
 
 #: .././mainwin.py:4611
 msgid "Fetching formats"
-msgstr ""
+msgstr "Tìm nạp các định dạng"
 
 #: .././mainwin.py:4613
 msgid "Fetching subtitles"
-msgstr ""
+msgstr "Tìm nạp phụ đề"
 
 #: .././mainwin.py:4615
 msgid "Testing downloader"
-msgstr ""
+msgstr "Đang kiểm tra trình tải xuống"
 
 #: .././mainwin.py:4617
 msgid "Contacting website"
-msgstr ""
+msgstr "Liên hệ với trang web"
 
 #: .././mainwin.py:4686
 msgid ""
 "Perform a custom download of marked videos,  channels, playlists and folders"
 msgstr ""
+"Thực hiện tải xuống tùy chỉnh các video, kênh, danh sách phát và thư mục đã "
+"đánh dấu"
 
 #: .././mainwin.py:5080
 msgid "Checking..."
-msgstr ""
+msgstr "Đang kiểm tra..."
 
 #: .././mainwin.py:5082 .././mainwin.py:5616 .././formats.py:1185
 msgid "Checking"
-msgstr ""
+msgstr "Đang kiểm tra"
 
 #: .././mainwin.py:5085
 msgid "Downloading..."
-msgstr ""
+msgstr "Đang tải xuống..."
 
 #: .././mainwin.py:5087 .././mainwin.py:5618 .././formats.py:1182
 msgid "Downloading"
-msgstr ""
+msgstr "Đang tải xuống"
 
 #: .././mainwin.py:5090
 msgid "Refreshing..."
-msgstr ""
+msgstr "Đang làm mới..."
 
 #: .././mainwin.py:5093
 msgid "Tidying..."
-msgstr ""
+msgstr "Đang thu dọn..."
 
 #: .././mainwin.py:5096
 msgid "FFmpeg processing..."
-msgstr ""
+msgstr "Xử lý FFmpeg..."
 
 #: .././mainwin.py:5212
 msgid "Alternative limits currently apply"
-msgstr ""
+msgstr "Các giới hạn thay thế hiện đang áp dụng"
 
 #: .././mainwin.py:5307
 msgid "Show fewer settings"
-msgstr ""
+msgstr "Hiển thị ít cài đặt hơn"
 
 #: .././mainwin.py:5400
 msgid "This tab emulates the classic youtube-dl-gui interface"
-msgstr ""
+msgstr "Tab này mô phỏng giao diện youtube-dl-gui cổ điển"
 
 #: .././mainwin.py:5405
 msgid "Videos downloaded here are not added to Tartube's database"
-msgstr ""
+msgstr "Video tải xuống ở đây không được thêm vào cơ sở dữ liệu của Tartube"
 
 #: .././mainwin.py:5417 .././config.py:6581
 msgid "If your preferred formats are not available, the download will fail!"
 msgstr ""
+"Nếu các định dạng ưa thích của bạn không có sẵn, quá trình tải xuống sẽ "
+"không thành công!"
 
 #: .././mainwin.py:5423
 msgid ""
 "If you want a specific format, install FFMpeg and select 'Convert to this "
 "format'!"
 msgstr ""
+"Nếu bạn muốn một định dạng cụ thể, hãy cài đặt FFMpeg và chọn 'Chuyển đổi "
+"sang định dạng này'!"
 
 #: .././mainwin.py:5812
 msgid "_Check channel"
-msgstr ""
+msgstr "Kiểm tra kênh"
 
 #: .././mainwin.py:5814
 msgid "_Check playlist"
-msgstr ""
+msgstr "Kiểm tra danh sách phát"
 
 #: .././mainwin.py:5816
 msgid "_Check folder"
-msgstr ""
+msgstr "Kiểm tra thư mục"
 
 #: .././mainwin.py:5842
 msgid "_Download channel"
-msgstr ""
+msgstr "Tải xuống kênh"
 
 #: .././mainwin.py:5844
 msgid "_Download playlist"
-msgstr ""
+msgstr "Tải xuống danh sách phát"
 
 #: .././mainwin.py:5846
 msgid "_Download folder"
-msgstr ""
+msgstr "Thư mục tải về"
 
 #: .././mainwin.py:5872
 msgid "C_ustom download channel"
-msgstr ""
+msgstr "Kênh tải xuống tùy chỉnh"
 
 #: .././mainwin.py:5874
 msgid "C_ustom download playlist"
-msgstr ""
+msgstr "Danh sách phát tải xuống tùy chỉnh"
 
 #: .././mainwin.py:5876
 msgid "C_ustom download folder"
-msgstr ""
+msgstr "Thư mục tải xuống tùy chỉnh"
 
 #: .././mainwin.py:5923
 msgid "_Empty folder"
-msgstr ""
+msgstr "Thư mục trống"
 
 #: .././mainwin.py:5935
 msgid "_All contents"
-msgstr ""
+msgstr "Tất cả nội dung"
 
 #: .././mainwin.py:5953
 msgid "_Remove videos"
-msgstr ""
+msgstr "Xóa video"
 
 #: .././mainwin.py:5965
 msgid "_Just folder videos"
-msgstr ""
+msgstr "Chỉ thư mục video"
 
 #: .././mainwin.py:5971
 msgid "Channel c_ontents"
-msgstr ""
+msgstr "Nội dung kênh"
 
 #: .././mainwin.py:5973
 msgid "Playlist c_ontents"
-msgstr ""
+msgstr "Nội dung danh sách phát"
 
 #: .././mainwin.py:5975
 msgid "Folder c_ontents"
-msgstr ""
+msgstr "Nội dung thư mục"
 
 #: .././mainwin.py:5987
 msgid "_Move to top level"
-msgstr ""
+msgstr "Chuyển lên cấp cao nhất"
 
 #: .././mainwin.py:6006
 msgid "_Hide folder"
-msgstr ""
+msgstr "Ẩn thư mục"
 
 #: .././mainwin.py:6016
 msgid "_Rename channel..."
-msgstr ""
+msgstr "Đổi tên kênh..."
 
 #: .././mainwin.py:6018
 msgid "_Rename playlist..."
-msgstr ""
+msgstr "Đổi tên danh sách phát..."
 
 #: .././mainwin.py:6020
 msgid "_Rename folder..."
-msgstr ""
+msgstr "Đổi tên thư mục..."
 
 #: .././mainwin.py:6037
 msgid "Set _nickname..."
-msgstr ""
+msgstr "Đặt biệt hiệu..."
 
 #: .././mainwin.py:6052
 msgid "Set _URL..."
-msgstr ""
+msgstr "Đặt URL..."
 
 #: .././mainwin.py:6064
 msgid "Set _download destination..."
-msgstr ""
+msgstr "Đặt đích tải xuống..."
 
 #: .././mainwin.py:6084
 msgid "_Insert videos..."
@@ -1905,243 +1980,243 @@ msgstr ""
 
 #: .././mainwin.py:6099
 msgid "_Export channel..."
-msgstr ""
+msgstr "Xuất kênh..."
 
 #: .././mainwin.py:6101
 msgid "_Export playlist..."
-msgstr ""
+msgstr "Xuất danh sách phát..."
 
 #: .././mainwin.py:6103
 msgid "_Export folder..."
-msgstr ""
+msgstr "Xuất thư mục..."
 
 #: .././mainwin.py:6116
 msgid "Re_fresh channel"
-msgstr ""
+msgstr "Làm mới kênh"
 
 #: .././mainwin.py:6118
 msgid "Re_fresh playlist"
-msgstr ""
+msgstr "Làm mới danh sách phát"
 
 #: .././mainwin.py:6120
 msgid "Re_fresh folder"
-msgstr ""
+msgstr "Làm mới thư mục"
 
 #: .././mainwin.py:6137
 msgid "_Tidy up channel"
-msgstr ""
+msgstr "Thu dọn kênh"
 
 #: .././mainwin.py:6139
 msgid "_Tidy up playlist"
-msgstr ""
+msgstr "Thu dọn danh sách phát"
 
 #: .././mainwin.py:6141
 msgid "_Tidy up folder"
-msgstr ""
+msgstr "Thu dọn thư mục"
 
 #: .././mainwin.py:6162
 msgid "_Convert to playlist"
-msgstr ""
+msgstr "Chuyển đổi thành danh sách phát"
 
 #: .././mainwin.py:6164
 msgid "_Convert to channel"
-msgstr ""
+msgstr "Chuyển đổi sang kênh"
 
 #: .././mainwin.py:6182 .././mainwin.py:6839 .././mainwin.py:7505
 #: .././mainwin.py:8099
 msgid "Add to C_lassic Mode tab"
-msgstr ""
+msgstr "Thêm vào tab Chế độ Cổ điển"
 
 #: .././mainwin.py:6196
 msgid "Channel _actions"
-msgstr ""
+msgstr "Hành động kênh"
 
 #: .././mainwin.py:6198
 msgid "Playlist _actions"
-msgstr ""
+msgstr "Hành động danh sách phát"
 
 #: .././mainwin.py:6200
 msgid "Folder _actions"
-msgstr ""
+msgstr "Hành động thư mục"
 
 #: .././mainwin.py:6220 .././mainwin.py:7038
 msgid "_Apply download options..."
-msgstr ""
+msgstr "Áp dụng các tùy chọn tải xuống..."
 
 #: .././mainwin.py:6238 .././mainwin.py:7052
 msgid "_Remove download options"
-msgstr ""
+msgstr "Xóa các tùy chọn tải xuống"
 
 #: .././mainwin.py:6254 .././mainwin.py:7064
 msgid "_Edit download options..."
-msgstr ""
+msgstr "Chỉnh sửa các tùy chọn tải xuống..."
 
 #: .././mainwin.py:6270
 msgid "Add to _scheduled download..."
-msgstr ""
+msgstr "Thêm vào tải xuống theo lịch trình..."
 
 #: .././mainwin.py:6280
 msgid "Show system _command..."
-msgstr ""
+msgstr "Hiển thị lệnh hệ thống..."
 
 #: .././mainwin.py:6299
 msgid "Set _removal time..."
-msgstr ""
+msgstr "Đặt thời gian xóa..."
 
 #: .././mainwin.py:6312
 msgid "_Mark for checking/downloading"
-msgstr ""
+msgstr "Đánh dấu để kiểm tra/tải xuống"
 
 #: .././mainwin.py:6333
 msgid "_Don't add videos to Tartube's database"
-msgstr ""
+msgstr "Không thêm video vào cơ sở dữ liệu của Tartube"
 
 #: .././mainwin.py:6345
 msgid "D_isable checking/downloading"
-msgstr ""
+msgstr "Tắt kiểm tra/tải xuống"
 
 #: .././mainwin.py:6357
 msgid "_Just disable downloading"
-msgstr ""
+msgstr "Chỉ cần tắt tải xuống"
 
 #: .././mainwin.py:6378
 msgid "Down_loads"
-msgstr ""
+msgstr "Tải xuống"
 
 #: .././mainwin.py:6389
 msgid "Channel _properties..."
-msgstr ""
+msgstr "Thuộc tính kênh..."
 
 #: .././mainwin.py:6391
 msgid "Playlist _properties..."
-msgstr ""
+msgstr "Thuộc tính danh sách phát..."
 
 #: .././mainwin.py:6393
 msgid "Folder _properties..."
-msgstr ""
+msgstr "Thuộc tính thư mục..."
 
 #: .././mainwin.py:6409
 msgid "_Default location"
-msgstr ""
+msgstr "Vị trí mặc định"
 
 #: .././mainwin.py:6422
 msgid "_Actual location"
-msgstr ""
+msgstr "Vị trí thực tế"
 
 #: .././mainwin.py:6436
 msgid "_Show"
-msgstr ""
+msgstr "Hiển thị"
 
 #: .././mainwin.py:6445
 msgid "D_elete channel"
-msgstr ""
+msgstr "Xóa kênh"
 
 #: .././mainwin.py:6447
 msgid "D_elete playlist"
-msgstr ""
+msgstr "Xóa danh sách phát"
 
 #: .././mainwin.py:6449
 msgid "D_elete folder"
-msgstr ""
+msgstr "Xóa thư mục"
 
 #: .././mainwin.py:6545
 msgid "_Check video"
-msgstr ""
+msgstr "Kiểm tra video"
 
 #: .././mainwin.py:6569
 msgid "_Download video"
-msgstr ""
+msgstr "Tải xuống video"
 
 #: .././mainwin.py:6592
 msgid "Re-_download this video"
-msgstr ""
+msgstr "Tải xuống lại video này"
 
 #: .././mainwin.py:6610
 msgid "C_ustom download video"
-msgstr ""
+msgstr "Video tải xuống tùy chỉnh"
 
 #: .././mainwin.py:6628 .././mainwin.py:7000 .././mainwin.py:7578
 #: .././mainwin.py:8168
 msgid "Download and _watch"
-msgstr ""
+msgstr "Tải xuống và xem"
 
 #: .././mainwin.py:6648 .././mainwin.py:8586
 msgid "Watch in _player"
-msgstr ""
+msgstr "Xem trong trình phát"
 
 #: .././mainwin.py:6666 .././mainwin.py:6687 .././mainwin.py:8617
 msgid "_Watch on website"
-msgstr ""
+msgstr "Xem trên trang web"
 
 #: .././mainwin.py:6676 .././mainwin.py:6700 .././mainwin.py:7960
 #: .././mainwin.py:8630
 #, python-brace-format
 msgid "_Watch on {0}"
-msgstr ""
+msgstr "Xem trên {0}"
 
 #: .././mainwin.py:6714 .././mainwin.py:8644
 msgid "_YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: .././mainwin.py:6724 .././mainwin.py:8654
 msgid "_HookTube"
-msgstr ""
+msgstr "HookTube"
 
 #: .././mainwin.py:6734 .././mainwin.py:8664
 msgid "_Invidious"
-msgstr ""
+msgstr "Invidious"
 
 #: .././mainwin.py:6744 .././mainwin.py:8674
 msgid "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
-msgstr ""
+msgstr "LƯU Ý CỦA NGƯỜI DỊCH: Xem trên YouTube, Xem trên HookTube, v.v"
 
 #: .././mainwin.py:6749 .././mainwin.py:8679
 msgid "W_atch on"
-msgstr ""
+msgstr "Xem trên"
 
 #: .././mainwin.py:6763
 msgid "_Create video clip..."
-msgstr ""
+msgstr "Tạo video clip..."
 
 #: .././mainwin.py:6769
 msgid "Download video clip..."
-msgstr ""
+msgstr "Tải video clip..."
 
 #: .././mainwin.py:6785
 msgid "_Remove video slices..."
-msgstr ""
+msgstr "Xóa các lát video..."
 
 #: .././mainwin.py:6800 .././mainwin.py:7467 .././mainwin.py:8086
 msgid "_Process with FFmpeg..."
-msgstr ""
+msgstr "Xử lý với FFmpeg..."
 
 #: .././mainwin.py:6817 .././mainwin.py:7483
 msgid "_Reload metadata"
-msgstr ""
+msgstr "Tải lại siêu dữ liệu"
 
 #: .././mainwin.py:6829 .././mainwin.py:7495
 msgid "_Special"
-msgstr ""
+msgstr "Đặc biệt"
 
 #: .././mainwin.py:6860
 msgid "Auto _notify"
-msgstr ""
+msgstr "Thông báo tự động"
 
 #: .././mainwin.py:6876
 msgid "Auto _sound alarm"
-msgstr ""
+msgstr "Tự động báo động bằng âm thanh"
 
 #: .././mainwin.py:6891
 msgid "Auto _open"
-msgstr ""
+msgstr "Tự động mở"
 
 #: .././mainwin.py:6904
 msgid "_Download on start"
-msgstr ""
+msgstr "Tải xuống khi bắt đầu"
 
 #: .././mainwin.py:6919
 msgid "Download on _stop"
-msgstr ""
+msgstr "Tải xuống khi dừng"
 
 #: .././mainwin.py:6937
 msgid "Not a _livestream"
@@ -2611,96 +2686,98 @@ msgstr ""
 
 #: .././mainwin.py:14736
 msgid "Warnings"
-msgstr ""
+msgstr "Cảnh báo"
 
 #: .././mainwin.py:14853
 msgid ""
 "There are not scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
+"Không có các bản tải xuống theo lịch trình chưa chứa kênh/danh sách phát/thư "
+"mục"
 
 #: .././mainwin.py:16425
 msgid "The external folder is not available"
-msgstr ""
+msgstr "Thư mục bên ngoài không khả dụng"
 
 #: .././mainwin.py:16427
 msgid "The external directory is not available"
-msgstr ""
+msgstr "Thư mục bên ngoài không có sẵn"
 
 #: .././mainwin.py:16527
 msgid "The URL is not valid"
-msgstr ""
+msgstr "URL không hợp lệ"
 
 #: .././mainwin.py:17866 .././config.py:12814 .././config.py:15834
 msgid "Invalid timestamp(s)"
-msgstr ""
+msgstr "(Các) dấu thời gian không hợp lệ"
 
 #: .././mainwin.py:18039 .././mainwin.py:18048 .././config.py:12665
 #: .././config.py:12673 .././config.py:15730 .././config.py:15738
 msgid "Invalid start/stop times"
-msgstr ""
+msgstr "Thời gian bắt đầu/dừng không hợp lệ"
 
 #: .././mainwin.py:18230 .././mainwin.py:18294
 #, python-brace-format
 msgid "Files reloaded: {0}, not reloaded: {1}"
-msgstr ""
+msgstr "Các tệp được tải lại: {0}, chưa được tải lại: {1}"
 
 #: .././mainwin.py:20423
 #, python-brace-format
 msgid "Are you sure you want to delete the profile '{0}'"
-msgstr ""
+msgstr "bạn có chắc chắn muốn xóa tiểu sử '{0}' không"
 
 #: .././mainwin.py:21256
 msgid "The following items are duplicates:"
-msgstr ""
+msgstr "Các mục sau đây là bản sao:"
 
 #: .././mainwin.py:21483
 #, python-brace-format
 msgid "The channel contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "Kênh chứa {0} mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainwin.py:21490
 #, python-brace-format
 msgid "The playlist contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "Danh sách phát chứa {0} mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainwin.py:21497
 #, python-brace-format
 msgid "The folder contains {0} items, so this action may take a while"
-msgstr ""
+msgstr "Thư mục chứa {0} mục, vì vậy hành động này có thể mất một lúc"
 
 #: .././mainwin.py:22126 .././mainwin.py:23168
 msgid "Originally from:"
-msgstr ""
+msgstr "Ban đầu từ:"
 
 #: .././mainwin.py:22139 .././mainwin.py:23182
 msgid "From channel"
-msgstr ""
+msgstr "Từ kênh"
 
 #: .././mainwin.py:22141 .././mainwin.py:23184
 msgid "From playlist"
-msgstr ""
+msgstr "Từ danh sách phát"
 
 #: .././mainwin.py:22143 .././mainwin.py:23186
 msgid "From folder"
-msgstr ""
+msgstr "Từ thư mục"
 
 #: .././mainwin.py:22171
 msgid "Livestream has not started yet"
-msgstr ""
+msgstr "Livestream chưa bắt đầu"
 
 #: .././mainwin.py:22178
 msgid "Debut has started"
-msgstr ""
+msgstr "Ra mắt đã bắt đầu"
 
 #: .././mainwin.py:22180
 msgid "Debut has not started yet"
-msgstr ""
+msgstr "Ra mắt vẫn chưa bắt đầu"
 
 #: .././mainwin.py:22187 .././mainwin.py:22193 .././mainwin.py:23233
 #: .././mainwin.py:23240
 msgid "Duration:"
-msgstr ""
+msgstr "Khoảng thời gian:"
 
 #: .././mainwin.py:22193 .././mainwin.py:22199 .././mainwin.py:22210
 #: .././mainwin.py:23240 .././mainwin.py:23247 .././mainwin.py:23263
@@ -2708,64 +2785,64 @@ msgstr ""
 #: .././media.py:620 .././media.py:630 .././media.py:2185 .././media.py:2191
 #: .././media.py:2201
 msgid "unknown"
-msgstr ""
+msgstr "không xác định"
 
 #: .././mainwin.py:22197 .././mainwin.py:22199 .././mainwin.py:23244
 #: .././mainwin.py:23246
 msgid "Size:"
-msgstr ""
+msgstr "Kích thước:"
 
 #: .././mainwin.py:22208 .././mainwin.py:22210 .././mainwin.py:23258
 msgid "Date:"
-msgstr ""
+msgstr "Ngày:"
 
 #: .././mainwin.py:22549
 msgid "Watch:"
-msgstr ""
+msgstr "Đồng hồ:"
 
 #: .././mainwin.py:22618
 msgid "Temporary:"
-msgstr ""
+msgstr "Tạm thời:"
 
 #: .././mainwin.py:22661
 msgid "Marked:"
-msgstr ""
+msgstr "Đã đánh dấu:"
 
 #: .././mainwin.py:23140 .././mainwin.py:23203
 msgid "Show the full description"
-msgstr ""
+msgstr "Hiển thị mô tả đầy đủ"
 
 #: .././mainwin.py:23141 .././mainwin.py:23204
 msgid "More"
-msgstr ""
+msgstr "Hơn"
 
 #: .././mainwin.py:23153 .././mainwin.py:23212
 msgid "Show the short description"
-msgstr ""
+msgstr "Hiển thị mô tả ngắn"
 
 #: .././mainwin.py:23154 .././mainwin.py:23213
 msgid "Less"
-msgstr ""
+msgstr "Ít hơn"
 
 #: .././mainwin.py:23253
 msgid "Received:"
-msgstr ""
+msgstr "Nhận:"
 
 #: .././mainwin.py:23282
 msgid "Live now:"
-msgstr ""
+msgstr "Đang trực tiếp:"
 
 #: .././mainwin.py:23284 .././mainwin.py:25738
 msgid "Live soon:"
-msgstr ""
+msgstr "Trực tiếp sớm:"
 
 #: .././mainwin.py:23293
 msgid "Debut now:"
-msgstr ""
+msgstr "Ra mắt ngay bây giờ:"
 
 #: .././mainwin.py:23295 .././mainwin.py:25740
 msgid "Debut soon:"
-msgstr ""
+msgstr "Ra mắt sớm:"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2776,11 +2853,11 @@ msgstr ""
 #: .././mainwin.py:24079 .././mainwin.py:25619 .././mainwin.py:25621
 #: .././mainwin.py:25625
 msgid "Notify"
-msgstr ""
+msgstr "Thông báo"
 
 #: .././mainwin.py:23312 .././mainwin.py:23611 .././mainwin.py:25629
 msgid "When the livestream starts, notify the user"
-msgstr ""
+msgstr "Khi buổi phát trực tiếp bắt đầu, hãy thông báo cho người dùng"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2790,11 +2867,11 @@ msgstr ""
 #: .././mainwin.py:23619 .././mainwin.py:23622 .././mainwin.py:23970
 #: .././mainwin.py:25640 .././mainwin.py:25642
 msgid "Alarm"
-msgstr ""
+msgstr "Báo thức"
 
 #: .././mainwin.py:23329 .././mainwin.py:23626 .././mainwin.py:25646
 msgid "When the livestream starts, sound an alarm"
-msgstr ""
+msgstr "Khi buổi phát trực tiếp bắt đầu, hãy phát ra âm báo"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2804,11 +2881,11 @@ msgstr ""
 #: .././mainwin.py:23634 .././mainwin.py:23637 .././mainwin.py:24116
 #: .././mainwin.py:25651 .././mainwin.py:25653
 msgid "Open"
-msgstr ""
+msgstr "Mở"
 
 #: .././mainwin.py:23340 .././mainwin.py:23641 .././mainwin.py:25657
 msgid "When the livestream starts, open it"
-msgstr ""
+msgstr "Khi buổi phát trực tiếp bắt đầu, hãy mở nó"
 
 #. (Livestream already broadcasting)
 #. Because of an unexplained Gtk problem, there is usually a crash after
@@ -2825,7 +2902,7 @@ msgstr ""
 
 #: .././mainwin.py:23359 .././mainwin.py:23656 .././mainwin.py:25676
 msgid "When the livestream starts, download it"
-msgstr ""
+msgstr "Khi buổi phát trực tiếp bắt đầu, hãy tải xuống"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2840,11 +2917,11 @@ msgstr ""
 
 #: .././mainwin.py:23376 .././mainwin.py:23671 .././mainwin.py:25693
 msgid "When the livestream stops, download it"
-msgstr ""
+msgstr "Khi quá trình phát trực tiếp dừng lại, hãy tải xuống"
 
 #: .././mainwin.py:23392 .././mainwin.py:25709
 msgid "Watch in your media player"
-msgstr ""
+msgstr "Xem trong trình phát đa phương tiện của bạn"
 
 #. Because of an unexplained Gtk problem, there is usually a crash after
 #. this function returns. Workaround is to make the label unclickable,
@@ -2852,11 +2929,11 @@ msgstr ""
 #. second)
 #: .././mainwin.py:23393 .././mainwin.py:24726 .././mainwin.py:25710
 msgid "Player"
-msgstr ""
+msgstr "Trình phát"
 
 #: .././mainwin.py:23425 .././mainwin.py:25755
 msgid "Download this video"
-msgstr ""
+msgstr "Tải video này"
 
 #: .././mainwin.py:23440 .././mainwin.py:25770
 msgid ""
@@ -2866,7 +2943,7 @@ msgstr ""
 
 #: .././mainwin.py:23448 .././mainwin.py:25778
 msgid "Download and watch in your media player"
-msgstr ""
+msgstr "Tải xuống và xem trong trình phát đa phương tiện của bạn"
 
 #: .././mainwin.py:23449
 msgid "Download &amp; watch"

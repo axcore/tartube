@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.093 (31 Jul 2022)**
 
-Development release: **v2.4.093 (31 Jul 2022)**
+Development release: **v2.4.108 (15 Oct 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -184,9 +184,51 @@ If you want to perform a manual installation, you can follow this procedure, whi
 5.2 Installation - MacOS
 ------------------------
 
-*Several users have reported problems installing Tartube on MacOS. The authors do not use MacOS and don't know how to fix these problems. Apologies in advance.*
+Installation on MacOS can sometimes be tricky. See the `GitHub <https://github.com/axcore/tartube/issues/393>`__ thread for the latest information.
 
-MacOS users should use the following procedure (with thanks to JeremyShih):
+Here there are installation guides for new computers with Apple silicon, all other MacOS computers, and a troubleshooting section.
+
+5.2.1 Installation - MacOS (Apple silicon)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With thanks to m3lab-zzl:
+
+- Install `Python 3 <https://www.python.org/downloads>`__ with homebrew
+
+        **brew install cairo pkg-config python**
+
+- Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
+
+        **pip install pycairo**
+
+        **brew install gobject-introspection gtk+3**
+
+- Install `Python Requests module <https://3.python-requests.org/>`__, and either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
+
+        **pip install requests youtube-dl**
+
+        **pip install requests yt-dlp**
+
+- Install the Adwaita theme for icons used by Tartube (optional)
+
+        **brew install adwaita-icon-theme**
+
+- It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too
+
+        **brew install ffmpeg**
+
+- Download & extract the Tartube source code (see the links above)
+
+- Open a terminal inside the extracted **Tartube** directory
+
+- Now run Tartube
+
+        **python3 tartube/tartube**
+
+5.2.2 Installation - MacOS (other computers)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With thanks to JeremyShih:
 
 - Install `Python 3 <https://www.python.org/downloads>`__ by downloading an installer, or with homebrew
 
@@ -222,11 +264,40 @@ MacOS users should use the following procedure (with thanks to JeremyShih):
 
         **brew install ffmpeg**
 
-After installing dependencies (see above):
+- Download & extract the Tartube source code (see the links above)
 
-1. Download & extract the source code (see the links above)
-2. Change directory into the **Tartube** directory
-3. Type: ``python3 tartube/tartube``
+- Open a terminal inside the extracted **Tartube** directory
+
+- Now run Tartube
+
+        **python3 tartube/tartube**
+
+5.2.3 Troubleshooting on MacOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you see a **gi module not found** error, there are two possible solutions.
+
+- First, try typing this
+
+        **pip3 install PyGObject**
+
+If that does not work, try the following procedure.
+
+- Get homebrew's location
+
+        **which brew**
+
+- For example if the command above returned ** /opt/homebrew/bin/brew**, then change directory by typing this
+
+        **cd /opt/homebrew**
+
+- Now find the **gi** package location
+
+        **find . -name "gi"**
+
+- Add that location to the PYTHONPATH variable, for example by adding this line to your **~/.zshrc** file
+
+        **export PYTHONPATH=/opt/homebrew/lib/python3.9/site-packages:$PYTHONPATH**
 
 5.3 Installation - Linux/BSD
 ----------------------------
@@ -1937,7 +2008,9 @@ A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
 A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
 
-Error messages may only be visible inside a terminal window. On MS Windows, this is how to run **Tartube** from inside a terminal window:
+As of v2.4.108, most system errors should be visible in Tartube's main window (in the **Errors/Warnings** tab). If not, it may be necessary to run Tartube from inside a terminal window in order to see the errors
+
+On MS Windows, this is how to run **Tartube** from inside a terminal window:
 
 - In Tartube's main menu, select **System > Show Tartube install folder**
 - After the folder window opens, shut down Tartube
