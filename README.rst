@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.093 (31 Jul 2022)**
 
-Development release: **v2.4.108 (15 Oct 2022)**
+Development release: **v2.4.113 (28 Oct 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -2496,6 +2496,6 @@ See the `AUTHORS <AUTHORS>`__ file.
 10 License
 ==========
 
-**Tartube** is licensed under the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`__.
+**Tartube** is licensed under the `GNU Lesser General Public License v2.1 <https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html>`__.
 
 ✨🍰✨

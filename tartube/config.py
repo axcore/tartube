@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
+# This library is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 2.1 of the License, or (at your option)
+# any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# This library is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# this program. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public License
+# along with this library. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Configuration window classes."""
@@ -7083,9 +7083,14 @@ class OptionsEditWin(GenericEditWin):
         )
 
         combo2_list = [
-            [_('High'), '0'],
-            [_('Medium'), '5'],
-            [_('Low'), '9'],
+            [_('High VBR'), '0'],
+            [_('Medium VBR'), '5'],
+            [_('Low VBR'), '9'],
+            [_('320 kb/s'), '320k'],
+            [_('256 kb/s'), '256k'],
+            [_('192 kb/s'), '192k'],
+            [_('128 kb/s'), '128k'],
+            [_('96 kb/s'), '96k'],
         ]
 
         combo2 = self.add_combo_with_data(grid,
