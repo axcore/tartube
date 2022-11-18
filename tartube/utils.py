@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Utility functions used by code copied from youtube-dl-gui."""
@@ -147,6 +147,9 @@ mark_end=None, drag_drop_text=None):
 
         mark_start, mark_end (Gtk.TextMark): The marks at the start/end of the
             buffer (using marks rather than iters prevents Gtk errors)
+
+        drag_drop_text (str): If specified, use this text and ignore the
+            clipboard
 
     """
 
@@ -688,7 +691,7 @@ clip_num, clip_max):
 
 
 def clip_set_destination(app_obj, video_obj):
-
+    
     """Called by downloads.ClipDownloader.do_download() and
     process.ProcessManager.run().
 
@@ -728,7 +731,6 @@ def clip_set_destination(app_obj, video_obj):
     #   created/downloaded
     # Original and clip files in the same directory
     if not app_obj.split_video_subdir_flag:
-
         return parent_obj, parent_dir, parent_obj, parent_dir
 
     # Otherwise, video clips are in a sub-directory of 'parent_dir'
@@ -752,11 +754,10 @@ def clip_set_destination(app_obj, video_obj):
         return parent_obj, parent_dir, None, dest_dir
 
     # Otherwise, we can create a media.Folder inside another media.Folder
-    if video_obj.name in app_obj.media_name_dict:
+    if video_obj.dbid in app_obj.container_reg_dict:
 
         # A media.Folder with the right name already exists
-        dbid = app_obj.media_name_dict[video_obj.name]
-        dest_obj = app_obj.media_reg_dict[dbid]
+        dest_obj = app_obj.media_reg_dict[video_obj.dbid]
 
         if dest_obj.parent_obj != parent_obj:
 
@@ -1887,20 +1888,24 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
 
     """Can be called by anything.
 
-    mainapp.TartubeApp.media_name_dict stores the names of all media.Channel,
-    media.Playlist and media.Folder objects as keys.
+    Finds a new name for a media.Channel, media.Playlist or media.Folder object
+    which is currently named 'old_name'.
 
-    old_name is the name of an existing media data object. This function
-    slightly modifies the name, converting 'my_name' into 'my_name_N', where N
-    is the smallest positive integer for which the name is available.
+    This function slightly modifies the name, converting 'my_name' into
+    'my_name_N', where N is the smallest positive integer for which the name is
+    available.
 
-    If the specified old_name is already in that format (for example,
-    'Channel_4'), then the old number is stripped away, and this function
-    starts looking from the first integer after that (for example,
-    'Channel_5').
+    For this function, 'available' means that the name is not illegal (see the
+    comments in mainapp.TartubeApp.__init__() for a definition of illegal),
+    and is not in use by any other channel, playlist or folder (anywhere in
+    the database).
+
+    If the specified 'old_name' is already in a format like 'Channel_4', then
+    the old number is stripped away, and this function starts looking from the
+    first integer after that (for example, 'Channel_5').
 
     To preclude any possibility of infinite loops, the function will give up
-    after max_value attempts.
+    after 'max_value' attempts.
 
     Args:
 
@@ -1933,13 +1938,18 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
             old_name = mod_name
             min_value = number + 1
 
+    # Compile a dictionary of unavailable names
+    check_dict = {}
+    for this_obj in app_obj.container_reg_dict.values():
+        check_dict[this_obj.name] = None
+        
     # Find an available name
     if max_value != -1:
 
         for n in range (min_value, max_value):
 
             new_name = old_name + '_'  + str(n)
-            if not new_name in app_obj.media_name_dict:
+            if not new_name in check_dict:
                 return new_name
 
         # Failure
@@ -1955,7 +1965,7 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
             n += 1
 
             new_name = old_name + '_'  + str(n)
-            if not new_name in app_obj.media_name_dict:
+            if not new_name in check_dict:
                 return new_name
 
 
@@ -3840,7 +3850,7 @@ def timestamp_compare(app_obj, start_stamp, stop_stamp):
     """Can be called by anything, after the user has manually entered a start
     and stop timestamp.
 
-    Checks that either of the following is true:
+    Checks that either of the following is True:
 
         1. 'stop_stamp' is None
         2. 'start_stamp' occurs earlier than 'stop_stamp'

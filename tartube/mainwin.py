@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Main window class and related classes."""
@@ -438,7 +438,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   keeps track of which row in the Gtk.TreeView is displaying which
         #   media data object
         # Dictionary in the form
-        #   key = name of the media data object (stored in its .name IV)
+        #   key = .dbid of the media data object
         #   value = Gtk.TreeRowReference
         self.video_index_row_dict = {}
         # Dictionary keeping track of which rows have their markers activated
@@ -459,10 +459,10 @@ class MainWin(Gtk.ApplicationWindow):
         # Temporary solution is to disable auto-sorting during calls to that
         #   function
         self.video_index_no_sort_flag = False
-        # The name of the channel, playlist or folder currently visible in the
+        # The .dbid of the channel, playlist or folder currently visible in the
         #   Video Catalogue (None if no channel, playlist or folder is
         #   selected)
-        self.video_index_current = None
+        self.video_index_current_dbid = None
         # Don't update the Video Catalogue during certain procedures, such as
         #   removing a row from the Video Index (in which case, this flag will
         #   be set to True
@@ -479,7 +479,7 @@ class MainWin(Gtk.ApplicationWindow):
         # There is one catalogue item object for each row that's currently
         #   visible in the Video Catalogue
         # Dictionary in the form
-        #   key = dbid (of the mainwin.SimpleCatalogueItem,
+        #   key = .dbid (of the mainwin.SimpleCatalogueItem,
         #       mainwin.ComplexCatalogueItem or mainwin.GridCatalogueItem which
         #       matches the dbid of its media.Video object)
         #   value = the catalogue item itself
@@ -3308,10 +3308,10 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_convert_combo.set_active(0)
         else:
             self.classic_convert_combo.set_active(1)
-            
+
         if not self.app_obj.classic_format_selection:
             self.classic_convert_combo.set_sensitive(False)
-                    
+
         self.classic_livestream_checkbutton = Gtk.CheckButton()
         grid.attach(self.classic_livestream_checkbutton, 4, 4, 1, 1)
         self.classic_livestream_checkbutton.set_label(_('Is a livestream'))
@@ -4135,9 +4135,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_treeview.set_tooltip_column(-1)
 
         # Update the Video Catalogue, if a playlist/channel/folder is selected
-        if update_catalogue_flag and self.video_index_current:
+        if update_catalogue_flag and self.video_index_current_dbid:
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 self.catalogue_toolbar_current_page,
             )
 
@@ -4193,9 +4193,9 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Update the Video Catalogue, if a playlist/channel/folder is selected
-        if update_catalogue_flag and self.video_index_current:
+        if update_catalogue_flag and self.video_index_current_dbid:
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 self.catalogue_toolbar_current_page,
             )
 
@@ -5177,13 +5177,12 @@ class MainWin(Gtk.ApplicationWindow):
         this_dict = self.app_obj.profile_dict[profile_name]
 
         # Add or remove markers from everything in the Video Index
-        for media_name in self.app_obj.media_name_dict.keys():
+        for dbid in self.app_obj.container_reg_dict.keys():
 
-            dbid = self.app_obj.media_name_dict[media_name]
             if dbid in this_dict:
-                self.video_index_set_marker(media_name)
+                self.video_index_set_marker(dbid)
             else:
-                self.video_index_reset_marker(media_name)
+                self.video_index_reset_marker(dbid)
 
         self.app_obj.set_last_profile(profile_name)
 
@@ -5286,7 +5285,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # If nothing has been selected in the Video Index, then we can
             #   hide rows, but not reveal them again
-            if self.video_index_current is None:
+            if self.video_index_current_dbid is None:
                 self.catalogue_show_filter_button.set_sensitive(False)
 
         else:
@@ -5337,7 +5336,7 @@ class MainWin(Gtk.ApplicationWindow):
                 #   VBox, the 'Regex' button is not desensitised correctly
                 #   (for reasons unknown)
                 # Desensitise it, if it should be desensitised
-                if self.video_index_current is None \
+                if self.video_index_current_dbid is None \
                 or not self.video_catalogue_dict:
                     self.catalogue_regex_togglebutton.set_sensitive(False)
 
@@ -5499,14 +5498,13 @@ class MainWin(Gtk.ApplicationWindow):
         # After system folders are revealed/hidden, Gtk helpfully selects a
         #   new channel/playlist/folder in the Video Index for us
         # Not sure how to stop it, other than by temporarily preventing
-        #   selections altogether (temporarily)
+        #   selections altogether
         selection = self.video_index_treeview.get_selection()
         selection.set_mode(Gtk.SelectionMode.NONE)
 
         # Show/hide system folders
-        for name in self.app_obj.media_name_dict:
+        for dbid in self.app_obj.container_reg_dict:
 
-            dbid = self.app_obj.media_name_dict[name]
             media_data_obj = self.app_obj.media_reg_dict[dbid]
 
             if isinstance(media_data_obj, media.Folder) \
@@ -5522,10 +5520,10 @@ class MainWin(Gtk.ApplicationWindow):
         selection = self.video_index_treeview.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
 
-        if self.video_index_current is not None:
+        if self.video_index_current_dbid is not None:
 
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            media_data_obj \
+            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
             self.video_index_select_row(media_data_obj)
 
 
@@ -5626,7 +5624,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Sorting function created by self.video_index_reset().
 
-        Automatically sorts rows in the Video Index.
+        Automatically sorts rows in the Video Index, two at a time.
 
         Args:
 
@@ -5650,23 +5648,14 @@ class MainWin(Gtk.ApplicationWindow):
         if self.video_index_no_sort_flag:
             return -1
 
-        # Get the names of the media data objects on each row
-        sort_column, sort_type \
-        = self.video_index_sortmodel.get_sort_column_id()
-        name1 = treestore.get_value(row_iter1, sort_column)
-        name2 = treestore.get_value(row_iter2, sort_column)
+        # Get the media data objects on both rows
+        obj1 = self.app_obj.media_reg_dict[treestore.get_value(row_iter1, 0)]
+        obj2 = self.app_obj.media_reg_dict[treestore.get_value(row_iter2, 0)]
 
-        # Get corresponding media data objects
-        id1 = self.app_obj.media_name_dict[name1]
-        obj1 = self.app_obj.media_reg_dict[id1]
-
-        id2 = self.app_obj.media_name_dict[name2]
-        obj2 = self.app_obj.media_reg_dict[id2]
-
-        # Do sort. Treat media.Channel and media.Playlist objects as the same
-        #   type of thing, so that all folders appear first (sorted
-        #   alphabetically), followed by all channels/playlists (sorted
-        #   alphabetically)
+        # Perform the sort
+        # Treat media.Channel and media.Playlist objects as the same type of
+        #   thing, so that all folders appear first (sorted alphabetically),
+        #   followed by all channels/playlists (sorted alphabetically)
         if str(obj1.__class__) == str(obj2.__class__) \
         or (
             isinstance(obj1, media.GenericRemoteContainer) \
@@ -5777,7 +5766,7 @@ class MainWin(Gtk.ApplicationWindow):
     # (Popup menu functions for main window widgets)
 
 
-    def video_index_popup_menu(self, event, name):
+    def video_index_popup_menu(self, event, dbid):
 
         """Called by self.on_video_index_right_click().
 
@@ -5788,18 +5777,17 @@ class MainWin(Gtk.ApplicationWindow):
 
             event (Gdk.EventButton): The mouse click event
 
-            name (str): The name of the clicked media data object
+            dbid (int): The .dbid of the clicked media data object
 
         """
 
         # Find the right-clicked media data object (and a string to describe
         #   its type)
-        dbid = self.app_obj.media_name_dict[name]
         media_data_obj = self.app_obj.media_reg_dict[dbid]
         media_type = media_data_obj.get_type()
         # (If an external directory is set, but is not available, many items
         #   must be desensitised)
-        if media_data_obj.name in self.app_obj.media_unavailable_dict:
+        if media_data_obj.dbid in self.app_obj.container_unavailable_dict:
             unavailable_flag = True
         else:
             unavailable_flag = False
@@ -6312,7 +6300,7 @@ class MainWin(Gtk.ApplicationWindow):
             _('_Mark for checking/downloading'),
         )
         marker_menu_item.set_active(
-            media_data_obj.name in self.video_index_marker_dict,
+            media_data_obj.dbid in self.video_index_marker_dict,
         )
         marker_menu_item.connect(
             'activate',
@@ -6532,7 +6520,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (If the parent channel/playlist/folder has external directory is set,
         #   but which is not available, many items must be desensitised)
-        if video_obj.parent_obj.name in self.app_obj.media_unavailable_dict:
+        if video_obj.parent_obj.dbid \
+        in self.app_obj.container_unavailable_dict:
             unavailable_flag = True
         else:
             unavailable_flag = False
@@ -7378,8 +7367,8 @@ class MainWin(Gtk.ApplicationWindow):
         # (If the parent channel/playlist/folder has external directory is set,
         #   but which is not available, many items must be desensitised)
         for video_obj in video_list:
-            if video_obj.parent_obj.name \
-            in self.app_obj.media_unavailable_dict:
+            if video_obj.parent_obj.dbid \
+            in self.app_obj.container_unavailable_dict:
                 unavailable_flag = True
             else:
                 unavailable_flag = False
@@ -9074,17 +9063,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        video_index_current = self.video_index_current
-
         # Reset the Video Index and Video Catalogue
         self.video_index_reset()
         self.video_catalogue_reset()
         self.video_index_populate()
 
         # Re-select the old selection, if required
-        if reselect_flag and video_index_current is not None:
+        if reselect_flag and self.video_index_current_dbid is not None:
 
-            dbid = self.app_obj.media_name_dict[video_index_current]
+            dbid = self.video_index_current_dbid
             self.video_index_select_row(self.app_obj.media_reg_dict[dbid])
 
 
@@ -9099,7 +9086,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         # Reset IVs
-        self.video_index_current = None
+        self.video_index_current_dbid = None
         if self.video_index_treeview:
             self.video_index_row_dict = {}
             # (Temporarily move key/value pairs in the 'current' IV into an
@@ -9179,6 +9166,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.video_index_treeview.set_model(self.video_index_sortmodel)
         self.video_index_sortmodel.set_sort_column_id(1, 0)
+        # (Sort by name, by default)
         self.video_index_sortmodel.set_sort_func(
             1,
             self.video_index_auto_sort,
@@ -9275,7 +9263,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_add_row().
         """
 
-        for dbid in self.app_obj.media_top_level_list:
+        for dbid in self.app_obj.container_top_level_list:
 
             media_data_obj = self.app_obj.media_reg_dict[dbid]
             if not media_data_obj:
@@ -9331,8 +9319,8 @@ class MainWin(Gtk.ApplicationWindow):
         = self.video_index_get_text_properties(media_data_obj)
 
         # Prepare the marker
-        if not media_data_obj.name in self.video_index_marker_dict \
-        and not media_data_obj.name in self.video_index_old_marker_dict:
+        if not media_data_obj.dbid in self.video_index_marker_dict \
+        and not media_data_obj.dbid in self.video_index_old_marker_dict:
             marker_flag = False
         else:
             marker_flag = True
@@ -9364,11 +9352,11 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Update IVs
-        self.video_index_row_dict[media_data_obj.name] = tree_ref
-        if media_data_obj.name in self.video_index_marker_dict:
-            self.video_index_marker_dict[media_data_obj.name] = tree_ref
-        if media_data_obj.name in self.video_index_old_marker_dict:
-            del self.video_index_old_marker_dict[media_data_obj.name]
+        self.video_index_row_dict[media_data_obj.dbid] = tree_ref
+        if media_data_obj.dbid in self.video_index_marker_dict:
+            self.video_index_marker_dict[media_data_obj.dbid] = tree_ref
+        if media_data_obj.dbid in self.video_index_old_marker_dict:
+            del self.video_index_old_marker_dict[media_data_obj.dbid]
 
         # Call this function recursively for any child objects that are
         #   channels, playlists or folders (videos are not displayed in the
@@ -9412,8 +9400,8 @@ class MainWin(Gtk.ApplicationWindow):
         = self.video_index_get_text_properties(media_data_obj)
 
         # Prepare the marker
-        if not media_data_obj.name in self.video_index_marker_dict \
-        and not media_data_obj.name in self.video_index_old_marker_dict:
+        if not media_data_obj.dbid in self.video_index_marker_dict \
+        and not media_data_obj.dbid in self.video_index_old_marker_dict:
             marker_flag = False
         else:
             marker_flag = True
@@ -9426,7 +9414,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Fetch the treeview reference to the parent media data object...
             parent_ref \
-            = self.video_index_row_dict[media_data_obj.parent_obj.name]
+            = self.video_index_row_dict[media_data_obj.parent_obj.dbid]
             # ...and add the new object inside its parent
             tree_iter = self.video_index_treestore.get_iter(
                 parent_ref.get_path(),
@@ -9481,11 +9469,11 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Update IVs
-        self.video_index_row_dict[media_data_obj.name] = tree_ref
-        if media_data_obj.name in self.video_index_marker_dict:
-            self.video_index_marker_dict[media_data_obj.name] = tree_ref
-        if media_data_obj.name in self.video_index_old_marker_dict:
-            del self.video_index_old_marker_dict[media_data_obj.name]
+        self.video_index_row_dict[media_data_obj.dbid] = tree_ref
+        if media_data_obj.dbid in self.video_index_marker_dict:
+            self.video_index_marker_dict[media_data_obj.dbid] = tree_ref
+        if media_data_obj.dbid in self.video_index_old_marker_dict:
+            del self.video_index_old_marker_dict[media_data_obj.dbid]
 
         if media_data_obj.parent_obj:
 
@@ -9535,7 +9523,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.ignore_video_index_select_flag = True
 
         # Remove the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         tree_path = tree_ref.get_path()
         tree_iter = self.video_index_treestore.get_iter(tree_path)
         self.video_index_treestore.remove(tree_iter)
@@ -9546,18 +9534,18 @@ class MainWin(Gtk.ApplicationWindow):
         #   row is the one just above/below that
         # In this situation, unselect the row and then redraw the Video
         #   Catalogue
-        if self.video_index_current is not None \
-        and self.video_index_current == media_data_obj.name:
+        if self.video_index_current_dbid is not None \
+        and self.video_index_current_dbid == media_data_obj.dbid:
 
             selection = self.video_index_treeview.get_selection()
             selection.unselect_all()
 
-            self.video_index_current = None
+            self.video_index_current_dbid = None
             self.video_catalogue_reset()
 
         # Update IVs
-        if media_data_obj.name in self.video_index_marker_dict:
-            del self.video_index_marker_dict[media_data_obj.name]
+        if media_data_obj.dbid in self.video_index_marker_dict:
+            del self.video_index_marker_dict[media_data_obj.dbid]
 
         # Make the changes visible
         self.video_index_treeview.show_all()
@@ -9590,7 +9578,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Expand rows to make the new media data object visible...
             parent_ref \
-            = self.video_index_row_dict[media_data_obj.parent_obj.name]
+            = self.video_index_row_dict[media_data_obj.parent_obj.dbid]
 
             self.video_index_treeview.expand_to_path(
                 self.video_index_sortmodel.convert_child_path_to_path(
@@ -9599,7 +9587,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Select the row
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
 
         selection = self.video_index_treeview.get_selection()
         selection.select_path(
@@ -9642,7 +9630,7 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         model = tree_ref.get_model()
         tree_path = tree_ref.get_path()
         tree_iter = model.get_iter(tree_path)
@@ -9685,7 +9673,7 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         model = tree_ref.get_model()
         tree_path = tree_ref.get_path()
         tree_iter = model.get_iter(tree_path)
@@ -9735,7 +9723,7 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         model = tree_ref.get_model()
         tree_path = tree_ref.get_path()
         tree_iter = model.get_iter(tree_path)
@@ -9798,7 +9786,7 @@ class MainWin(Gtk.ApplicationWindow):
                     icon = 'folder_large'
 
             # (Apply overlays)
-            if media_data_obj.name in self.app_obj.media_unavailable_dict:
+            if media_data_obj.dbid in self.app_obj.container_unavailable_dict:
                 icon += '_tl'
             if media_data_obj.dl_no_db_flag \
             or media_data_obj.dl_disable_flag \
@@ -9940,7 +9928,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             # If an external directory is disabled, show as strikethrough
-            if media_data_obj.name in self.app_obj.media_unavailable_dict:
+            if media_data_obj.dbid in self.app_obj.container_unavailable_dict:
                 strike = True
 
             else:
@@ -9963,7 +9951,7 @@ class MainWin(Gtk.ApplicationWindow):
         return style, weight, underline, strike
 
 
-    def video_index_set_marker(self, name=None):
+    def video_index_set_marker(self, dbid=None):
 
         """Can be called by anything.
 
@@ -9972,15 +9960,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
-            name (str): The name of a media.Channel, media.Playlist or
-                media.Folder; a key in mainapp.TartubeApp.media_name_dict
+            dbid (str): The .dbid of a media.Channel, media.Playlist or
+                media.Folder; a key in mainapp.TartubeApp.container_reg_dict
 
         """
 
         old_size = len(self.video_index_marker_dict)
 
         container_list = []
-        if name is None:
+        if dbid is None:
 
             # Set all markers in the Video Index
             container_list = self.video_index_row_dict.keys()
@@ -9989,28 +9977,27 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Set the marker on the row for the specified channel/playlist/
             #   folder
-            container_list = [ name ]
+            container_list = [ dbid ]
 
-        for this_name in container_list:
+        for this_dbid in container_list:
 
             # System folders cannot be marked
             # Channels/playlists/folders for which checking and downloading is
             #   disabled can't be marked
-            dbid = self.app_obj.media_name_dict[this_name]
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            media_data_obj = self.app_obj.media_reg_dict[this_dbid]
             if (
                 not isinstance(media_data_obj, media.Folder) \
                 or not media_data_obj.priv_flag
             ) and not media_data_obj.dl_disable_flag:
 
-                tree_ref = self.video_index_row_dict[this_name]
+                tree_ref = self.video_index_row_dict[this_dbid]
                 model = tree_ref.get_model()
                 tree_path = tree_ref.get_path()
                 tree_iter = model.get_iter(tree_path)
 
                 model.set(tree_iter, 4, True)
 
-                self.video_index_marker_dict[this_name] = tree_ref
+                self.video_index_marker_dict[this_dbid] = tree_ref
 
         if not old_size and self.video_index_marker_dict:
             # Update labels on the 'Check all' button, etc
@@ -10019,7 +10006,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.hide_progress_bar(True)
 
 
-    def video_index_reset_marker(self, name=None):
+    def video_index_reset_marker(self, dbid=None):
 
         """Can be called by anything.
 
@@ -10028,14 +10015,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
-            name (str): The name of a media.Channel, media.Playlist or
-                media.Folder; a key in mainapp.TartubeApp.media_name_dict
+            dbid (str): The .dbid of a media.Channel, media.Playlist or
+                media.Folder; a key in mainapp.TartubeApp.container_reg_dict
 
         """
 
         old_size = len(self.video_index_marker_dict)
 
-        if name is None:
+        if dbid is None:
 
             # Reset all markers in the Video Index
             for tree_ref in self.video_index_row_dict.values():
@@ -10047,19 +10034,19 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.video_index_marker_dict = {}
 
-        elif name in self.app_obj.media_name_dict:
+        elif dbid in self.app_obj.container_reg_dict:
 
             # Reset the marker on the row for the specified channel/playlist/
             #   folder
-            tree_ref = self.video_index_row_dict[name]
+            tree_ref = self.video_index_row_dict[dbid]
             model = tree_ref.get_model()
             tree_path = tree_ref.get_path()
             tree_iter = model.get_iter(tree_path)
 
             model.set(tree_iter, 4, False)
 
-            if name in self.video_index_marker_dict:
-                del self.video_index_marker_dict[name]
+            if dbid in self.video_index_marker_dict:
+                del self.video_index_marker_dict[dbid]
 
         if old_size and not self.video_index_marker_dict:
 
@@ -10067,35 +10054,6 @@ class MainWin(Gtk.ApplicationWindow):
             # The True argument skips the check for the existence of a progress
             #   bar
             self.hide_progress_bar(True)
-
-
-    def video_index_update_marker(self, old_name, new_name):
-
-        """Called my mainapp.TartubeApp.rename_container() and
-        .rename_container_silently().
-
-        When a container is renamed, update the IV which keeps track of Video
-        Index markers, as it stores the container's name as a key.
-
-        Args:
-
-            old_name, new_name (str): The names of the container
-
-        """
-
-        if old_name in self.video_index_marker_dict:
-
-            old_size = len(self.video_index_marker_dict)
-
-            self.video_index_marker_dict[new_name] = \
-            self.video_index_marker_dict[old_name]
-            del self.video_index_marker_dict[old_name]
-
-            if old_size and not self.video_index_marker_dict:
-                # Update labels on the 'Check all' button, etc
-                # The True argument skips the check for the existence of a
-                #   progress bar
-                self.hide_progress_bar(True)
 
 
     # (Video Catalogue)
@@ -10179,7 +10137,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_frame.show_all()
 
 
-    def video_catalogue_redraw_all(self, name, page_num=1,
+    def video_catalogue_redraw_all(self, dbid, page_num=1,
     reset_scroll_flag=False, no_cancel_filter_flag=False):
 
         """Can be called by anything.
@@ -10214,8 +10172,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
-            name (str): The selected media data object's name; one of the keys
-                in self.media_name_dict
+            dbid (str): The selected media data object's .dbid; one of the keys
+                in mainapp.TartubeApp.container_reg_dict
 
             page_num (int): The number of the page to be drawn (a value in the
                 range 1 to self.catalogue_toolbar_last_page)
@@ -10235,14 +10193,14 @@ class MainWin(Gtk.ApplicationWindow):
         #   different page on the same channel/playlist/folder, must reset the
         #   scrollbars later in the function
         if not reset_scroll_flag:
-            if self.video_index_current is None \
-            or self.video_index_current != name \
+            if self.video_index_current_dbid is None \
+            or self.video_index_current_dbid != dbid \
             or self.catalogue_toolbar_current_page != page_num:
                 reset_scroll_flag = True
 
         # The item selected in the Video Index is a media.Channel,
         #   media.playlist or media.Folder object
-        if not name in self.app_obj.media_name_dict:
+        if not dbid in self.app_obj.container_reg_dict:
 
             return self.app_obj.system_error(
                 215,
@@ -10250,7 +10208,6 @@ class MainWin(Gtk.ApplicationWindow):
                 + ' from database',
             )
 
-        dbid = self.app_obj.media_name_dict[name]
         container_obj = self.app_obj.media_reg_dict[dbid]
 
         # Sanity check - the selected item should not be a media.Video object
@@ -10419,31 +10376,36 @@ class MainWin(Gtk.ApplicationWindow):
         # Is the video's parent channel, playlist or folder the one that is
         #   currently selected in the Video Index? If not, the video is not
         #   currently displayed in the Video Catalogue
-        if self.video_index_current is None \
+        if self.video_index_current_dbid is None \
         or not (
-            self.video_index_current == video_obj.parent_obj.name
-            or self.video_index_current == app_obj.fixed_all_folder.name
+            self.video_index_current_dbid == video_obj.parent_obj.dbid
+            or self.video_index_current_dbid == app_obj.fixed_all_folder.dbid
             or (
-                self.video_index_current \
-                == app_obj.fixed_bookmark_folder.name \
+                self.video_index_current_dbid \
+                == app_obj.fixed_bookmark_folder.dbid \
                 and video_obj.bookmark_flag
             ) or (
-                self.video_index_current == app_obj.fixed_fav_folder.name \
+                self.video_index_current_dbid \
+                == app_obj.fixed_fav_folder.dbid \
                 and video_obj.fav_flag
             ) or (
-                self.video_index_current == app_obj.fixed_live_folder.name \
+                self.video_index_current_dbid \
+                == app_obj.fixed_live_folder.dbid \
                 and video_obj.live_mode
             ) or (
-                self.video_index_current == app_obj.fixed_missing_folder.name
+                self.video_index_current_dbid \
+                == app_obj.fixed_missing_folder.dbid
                 and video_obj.missing_flag
             ) or (
-                self.video_index_current == app_obj.fixed_new_folder.name
+                self.video_index_current_dbid == app_obj.fixed_new_folder.dbid
                 and video_obj.new_flag
             ) or (
-                self.video_index_current == app_obj.fixed_recent_folder.name
+                self.video_index_current_dbid \
+                == app_obj.fixed_recent_folder.dbid
                 and video_obj in app_obj.fixed_recent_folder.child_list
             ) or (
-                self.video_index_current == app_obj.fixed_waiting_folder.name \
+                self.video_index_current_dbid \
+                == app_obj.fixed_waiting_folder.dbid \
                 and video_obj.waiting_flag
             )
         ):
@@ -10464,8 +10426,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Now, deal with the video's position in the catalogue. If a catalogue
         #   item object already existed, its position may have changed
         #   (perhaps staying on the current page, perhaps moving to another)
-        container_dbid = app_obj.media_name_dict[self.video_index_current]
-        container_obj = app_obj.media_reg_dict[container_dbid]
+        container_obj = app_obj.media_reg_dict[self.video_index_current_dbid]
 
         # Find the Video Catalogue page on which this video should be shown
         page_num = 1
@@ -10734,31 +10695,34 @@ class MainWin(Gtk.ApplicationWindow):
         #   displayed in the Video Catalogue
         app_obj = self.app_obj
 
-        if self.video_index_current is None:
+        if self.video_index_current_dbid is None:
             return
 
-        elif self.video_index_current != video_obj.parent_obj.name \
-        and self.video_index_current != app_obj.fixed_all_folder.name \
+        elif self.video_index_current_dbid != video_obj.parent_obj.dbid \
+        and self.video_index_current_dbid != app_obj.fixed_all_folder.dbid \
         and (
-            self.video_index_current != app_obj.fixed_bookmark_folder.name \
+            self.video_index_current_dbid \
+            != app_obj.fixed_bookmark_folder.dbid \
             or not video_obj.bookmark_flag
         ) and (
-            self.video_index_current != app_obj.fixed_fav_folder.name \
+            self.video_index_current_dbid != app_obj.fixed_fav_folder.dbid \
             or not video_obj.fav_flag
         ) and (
-            self.video_index_current != app_obj.fixed_live_folder.name \
+            self.video_index_current_dbid != app_obj.fixed_live_folder.dbid \
             or not video_obj.live_mode
         ) and (
-            self.video_index_current != app_obj.fixed_missing_folder.name \
+            self.video_index_current_dbid \
+            != app_obj.fixed_missing_folder.dbid \
             or not video_obj.missing_flag
         ) and (
-            self.video_index_current != app_obj.fixed_new_folder.name \
+            self.video_index_current_dbid != app_obj.fixed_new_folder.dbid \
             or not video_obj.new_flag
         ) and (
-            self.video_index_current != app_obj.fixed_recent_folder.name \
+            self.video_index_current_dbid != app_obj.fixed_recent_folder.dbid \
             or video_obj in app_obj.fixed_recent_folder.child_list
         ) and (
-            self.video_index_current != app_obj.fixed_waiting_folder.name \
+            self.video_index_current_dbid \
+            != app_obj.fixed_waiting_folder.dbid \
             or not video_obj.waiting_flag
         ):
             return
@@ -10791,8 +10755,8 @@ class MainWin(Gtk.ApplicationWindow):
             # If the current page is not the last one, we can create a new
             #   catalogue item to replace the removed one
             move_obj = None
-            dbid = app_obj.media_name_dict[self.video_index_current]
-            container_obj = app_obj.media_reg_dict[dbid]
+            container_obj \
+            = app_obj.media_reg_dict[self.video_index_current_dbid]
             video_count = 0
 
             if self.video_catalogue_dict \
@@ -10897,19 +10861,19 @@ class MainWin(Gtk.ApplicationWindow):
         are resorted, then the Video Catalogue is redrawn.
         """
 
-        if self.video_index_current is None:
+        if self.video_index_current_dbid is None:
             return
 
         else:
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            container_obj = self.app_obj.media_reg_dict[dbid]
+            container_obj \
+            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
 
             # Force the resort
             container_obj.sort_children(self.app_obj)
 
             # Redraw the Video Catalogue, switching to the first page
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 1,
                 True,           # Reset scrollbars
                 True,           # Don't cancel the filter, if applied
@@ -11702,9 +11666,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
-        if self.video_index_current is not None:
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            parent_obj = self.app_obj.media_reg_dict[dbid]
+        if self.video_index_current_dbid is not None:
+            parent_obj \
+            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
@@ -11774,7 +11738,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_filtered_list = video_list.copy()
         # ...and redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             1,          # Display the first page
             True,       # Reset scrollbars
             True,       # Do not cancel the filter we've just applied
@@ -11804,7 +11768,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_filtered_flag = False
         self.video_catalogue_filtered_list = []
         # ...and redraw the Video Catalogue
-        self.video_catalogue_redraw_all(self.video_index_current)
+        self.video_catalogue_redraw_all(self.video_index_current_dbid)
 
         # Sensitise widgets, as appropriate
         self.catalogue_apply_filter_button.set_sensitive(True)
@@ -11834,9 +11798,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
-        if self.video_index_current is not None:
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            parent_obj = self.app_obj.media_reg_dict[dbid]
+        if self.video_index_current_dbid is not None:
+            parent_obj \
+            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
@@ -11847,7 +11811,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             page_num,
             True,       # Reset scrollbars
             True,       # Do not cancel the filter, if one has been applied
@@ -11871,9 +11835,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Sanity check - something must be selected in the Video Index
         parent_obj = None
-        if self.video_index_current is not None:
-            dbid = self.app_obj.media_name_dict[self.video_index_current]
-            parent_obj = self.app_obj.media_reg_dict[dbid]
+        if self.video_index_current_dbid is not None:
+            parent_obj \
+            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
 
         if not parent_obj or (isinstance(parent_obj, media.Video)):
             return self.app_obj.system_error(
@@ -11884,7 +11848,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             1,
             True,       # Reset scrollbars
             True,       # Do not cancel the filter, if one has been applied
@@ -12997,7 +12961,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   adding 'convert_' to the beginning of the format string
         tree_iter4 = self.classic_convert_combo.get_active_iter()
         model4 = self.classic_convert_combo.get_model()
-        convert_str = model4[tree_iter4][0]        
+        convert_str = model4[tree_iter4][0]
         if format_str is not None \
         and convert_str == _('Convert to this format'):
             format_str = 'convert_' + format_str
@@ -14847,7 +14811,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   already contain the specified media data object
         available_list = []
         for scheduled_obj in self.app_obj.scheduled_list:
-            if not media_data_obj.name in scheduled_obj.media_list:
+            if not media_data_obj.dbid in scheduled_obj.media_list:
                 available_list.append(scheduled_obj.name)
 
         if not available_list:
@@ -14872,10 +14836,10 @@ class MainWin(Gtk.ApplicationWindow):
         dialogue_win.destroy()
 
         # Check for the possibility that the media data object and/or
-        #   scheduled download may have been deleted, since the dialouge window
+        #   scheduled download may have been deleted, since the dialogue window
         #   opened
         if choice is not None \
-        and media_data_obj.name in self.app_obj.media_name_dict:
+        and media_data_obj.dbid in self.app_obj.container_reg_dict:
 
             # Find the selected scheduled download
             match_obj = None
@@ -14885,7 +14849,7 @@ class MainWin(Gtk.ApplicationWindow):
                     break
 
             if match_obj:
-                match_obj.add_media(media_data_obj.name)
+                match_obj.add_media(media_data_obj.dbid)
 
 
     def on_video_index_apply_options(self, menu_item, media_data_obj):
@@ -15350,11 +15314,9 @@ class MainWin(Gtk.ApplicationWindow):
         # Get the destination media data object
         drop_path, drop_posn = drop_info[0], drop_info[1]
         drop_iter = model.get_iter(drop_path)
-        dest_name = model[drop_iter][1]
-        if dest_name is None or dest_name == '':
+        dest_id = model[drop_iter][0]
+        if dest_id is None or dest_id == '':
             return
-        else:
-            dest_id = self.app_obj.media_name_dict[dest_name]
 
         if self.video_catalogue_drag_list:
 
@@ -15366,8 +15328,6 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_catalogue_drag_list = []
 
             # Move the video(s)
-            dest_id = self.app_obj.media_name_dict[dest_name]
-
             self.app_obj.move_videos(
                 self.app_obj.media_reg_dict[dest_id],
                 video_list,
@@ -15380,9 +15340,8 @@ class MainWin(Gtk.ApplicationWindow):
             # Get the dragged media data object
             old_selection = self.video_index_treeview.get_selection()
             (model, start_iter) = old_selection.get_selected()
-            drag_name = model[start_iter][1]
-
-            if drag_name is None or drag_name == '':
+            drag_id = model[start_iter][0]
+            if drag_id is None or drag_id == '':
                 return
 
             # On MS Windows, the system helpfully deletes the dragged row
@@ -15396,8 +15355,6 @@ class MainWin(Gtk.ApplicationWindow):
                 self.video_index_catalogue_reset(True)
 
             # Now proceed with the drag
-            drag_id = self.app_obj.media_name_dict[drag_name]
-
             self.app_obj.move_container(
                 self.app_obj.media_reg_dict[drag_id],
                 self.app_obj.media_reg_dict[dest_id],
@@ -16189,9 +16146,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             tree_iter = self.video_index_sortmodel.get_iter(path)
             if tree_iter is not None:
+
+                # Pass the container's .dbid to the popup menu code
                 self.video_index_popup_menu(
                     event,
-                    self.video_index_sortmodel[tree_iter][1],
+                    self.video_index_sortmodel[tree_iter][0],
                 )
 
 
@@ -16216,7 +16175,7 @@ class MainWin(Gtk.ApplicationWindow):
             if not model.iter_is_valid(tree_iter):
                 tree_iter = None
             else:
-                name = model[tree_iter][1]
+                dbid = model[tree_iter][0]
 
         # Don't update the Video Catalogue during certain procedures, such as
         #   removing a row from the Video Index (in which case, the flag will
@@ -16224,15 +16183,12 @@ class MainWin(Gtk.ApplicationWindow):
         if not self.ignore_video_index_select_flag:
 
             if tree_iter is None:
-                self.video_index_current = None
+                self.video_index_current_dbid = None
                 self.video_catalogue_reset()
 
             else:
-
                 # Update IVs
-                self.video_index_current = name
-
-                dbid = self.app_obj.media_name_dict[name]
+                self.video_index_current_dbid = dbid
                 media_data_obj = self.app_obj.media_reg_dict[dbid]
 
                 # Expand the tree beneath the selected line, if allowed
@@ -16253,7 +16209,7 @@ class MainWin(Gtk.ApplicationWindow):
                 # Redraw the Video Catalogue, on the first page, and reset its
                 #   scrollbars back to the top
                 self.video_catalogue_redraw_all(
-                    name,
+                    dbid,
                     1,              # Display the first page
                     True,           # Reset scrollbars
                 )
@@ -16275,7 +16231,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         # (Using self.video_index_treestore)
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         tree_path = tree_ref.get_path()
         tree_iter = self.video_index_treestore.get_iter(tree_path)
 
@@ -16289,13 +16245,13 @@ class MainWin(Gtk.ApplicationWindow):
 
         if not self.video_index_treestore[tree_path][4]:
 
-            if media_data_obj.name in self.video_index_marker_dict:
-                del self.video_index_marker_dict[media_data_obj.name]
+            if media_data_obj.dbid in self.video_index_marker_dict:
+                del self.video_index_marker_dict[media_data_obj.dbid]
 
         else:
 
-            self.video_index_marker_dict[media_data_obj.name] \
-            = self.video_index_row_dict[media_data_obj.name]
+            self.video_index_marker_dict[media_data_obj.dbid] \
+            = self.video_index_row_dict[media_data_obj.dbid]
 
 
     def on_video_index_marker_toggled(self, renderer_toggle, sorted_path):
@@ -16329,7 +16285,7 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         # (Using self.video_index_treestore)
-        tree_ref = self.video_index_row_dict[media_data_obj.name]
+        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
         tree_path = tree_ref.get_path()
         tree_iter = self.video_index_treestore.get_iter(tree_path)
 
@@ -16345,13 +16301,13 @@ class MainWin(Gtk.ApplicationWindow):
         old_size = len(self.video_index_marker_dict)
         if not self.video_index_treestore[tree_path][4]:
 
-            if media_data_obj.name in self.video_index_marker_dict:
-                del self.video_index_marker_dict[media_data_obj.name]
+            if media_data_obj.dbid in self.video_index_marker_dict:
+                del self.video_index_marker_dict[media_data_obj.dbid]
 
         else:
 
-            self.video_index_marker_dict[media_data_obj.name] \
-            = self.video_index_row_dict[media_data_obj.name]
+            self.video_index_marker_dict[media_data_obj.dbid] \
+            = self.video_index_row_dict[media_data_obj.dbid]
 
         if (old_size and not self.video_index_marker_dict) \
         or (not old_size and self.video_index_marker_dict):
@@ -16399,10 +16355,10 @@ class MainWin(Gtk.ApplicationWindow):
                     media_data_obj.set_master_dbid(self.app_obj, choice)
 
                 media_data_obj.set_external_dir(self.app_obj, None)
-                if media_data_obj.name \
-                in self.app_obj.media_unavailable_dict:
-                    self.app_obj.del_media_unavailable_dict(
-                        media_data_obj.name,
+                if media_data_obj.dbid \
+                in self.app_obj.container_unavailable_dict:
+                    self.app_obj.del_container_unavailable_dict(
+                        media_data_obj.dbid,
                     )
 
             else:
@@ -16416,10 +16372,10 @@ class MainWin(Gtk.ApplicationWindow):
                         media_data_obj.dbid,
                     )
 
-                    if media_data_obj.name \
-                    in self.app_obj.media_unavailable_dict:
-                        self.app_obj.del_media_unavailable_dict(
-                            media_data_obj.name,
+                    if media_data_obj.dbid \
+                    in self.app_obj.container_unavailable_dict:
+                        self.app_obj.del_container_unavailable_dict(
+                            media_data_obj.dbid,
                         )
 
                 else:
@@ -17799,7 +17755,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         page_num = utils.strip_whitespace(entry.get_text())
 
-        if self.video_index_current is None \
+        if self.video_index_current_dbid is None \
         or not page_num.isdigit() \
         or int(page_num) < 1 \
         or int(page_num) > self.catalogue_toolbar_last_page:
@@ -17810,7 +17766,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             # Switch to a different page
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 int(page_num),
             )
 
@@ -18347,8 +18303,12 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Need to completely redraw the video catalogue to take account of
             #   the new page size
-            if self.video_index_current is not None:
-                self.video_catalogue_redraw_all(self.video_index_current, 1)
+            if self.video_index_current_dbid is not None:
+
+                self.video_catalogue_redraw_all(
+                    self.video_index_current_dbid,
+                    1,
+                )
 
         else:
             # Invalid page size, so reinsert the size that's already visible
@@ -18468,10 +18428,10 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.set_catalogue_sort_mode(model[tree_iter][1])
 
         # Redraw the Video Catalogue, switching to the first page
-        if self.video_index_current is not None:
+        if self.video_index_current_dbid is not None:
 
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 1,
                 True,           # Reset scrollbars
                 True,           # Don't cancel the filter, if applied
@@ -18497,12 +18457,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Redraw the Video Catalogue, retaining the current page (but only when
         #   in grid mode)
-        if self.video_index_current is not None \
+        if self.video_index_current_dbid is not None \
         and self.app_obj.catalogue_mode_type == 'grid':
 
             self.video_catalogue_grid_check_size()
             self.video_catalogue_redraw_all(
-                self.video_index_current,
+                self.video_index_current_dbid,
                 self.catalogue_toolbar_current_page,
                 True,           # Reset scrollbars
                 True,           # Don't cancel the filter, if applied
@@ -19659,7 +19619,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   conditions)
         self.update_classic_mode_tab_update_banner()
 
-            
+
     def on_classic_dest_dir_combo_changed(self, combo):
 
         """Called from callback in self.setup_classic_mode_tab().
@@ -19710,7 +19670,7 @@ class MainWin(Gtk.ApplicationWindow):
         if text == default_item:
             self.classic_convert_combo.set_active(0)
             self.classic_convert_combo.set_sensitive(False)
-            
+
         else:
             self.classic_convert_combo.set_sensitive(True)
 
@@ -20455,7 +20415,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.app_obj.set_catalogue_draw_blocked_flag(checkbutton.get_active())
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -20480,7 +20440,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -20557,7 +20517,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         # Redraw the Video Catalogue
         self.video_catalogue_redraw_all(
-            self.video_index_current,
+            self.video_index_current_dbid,
             1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -20906,7 +20866,7 @@ class MainWin(Gtk.ApplicationWindow):
             # Slider position has actually changed
             self.paned_last_width = rect.width
 
-            if self.video_index_current \
+            if self.video_index_current_dbid \
             and self.app_obj.catalogue_mode_type == 'grid':
 
                 # Check whether the grid should be resized and, if so, resize
@@ -21149,7 +21109,7 @@ class MainWin(Gtk.ApplicationWindow):
             #   video/audio files
 
             # On MS Windows, drag and drop from an external application doesn't
-            #   work at all, so we don't have to worry about it
+            #   seem to work at all, so we don't have to worry about it
             # On Linux, URLs are received as expected, but paths to media
             #   data files are received as 'file://PATH'
 
@@ -21191,14 +21151,14 @@ class MainWin(Gtk.ApplicationWindow):
             # Decide where to add the video(s)
             # If a suitable folder is selected in the Video Index, use
             #   that; otherwise, use 'Unsorted Videos'
-            # However, if the Classic Mode tab is visible, copy URL(s) into its
-            #   textview (and ignore any file paths)
+            # However, if the Classic Mode tab is selected, copy URL(s) into
+            #   its textview (and ignore any file paths)
             classic_tab = self.notebook_tab_dict['classic']
             if classic_tab is not None \
             and self.notebook.get_current_page == classic_tab \
             and url_list:
 
-                # Classic Mode tab is visible. The final argument tells the
+                # Classic Mode tab is selected. The final argument tells the
                 #   called function to use that argument, instead of the
                 #   clipboard
                 utils.add_links_to_textview_from_clipboard(
@@ -21214,14 +21174,13 @@ class MainWin(Gtk.ApplicationWindow):
                 or self.notebook.get_current_page != classic_tab
             ) and (path_list or url_list):
 
-                # Classic Mode tab is not visible
+                # Classic Mode tab is not selected, so behave as if the
+                #   Videos tab is selected
                 parent_obj = None
-                if self.video_index_current is not None:
+                current_dbid = self.video_index_current_dbid
+                if current_dbid is not None:
 
-                    dbid \
-                    = self.app_obj.media_name_dict[self.video_index_current]
-                    parent_obj = self.app_obj.media_reg_dict[dbid]
-
+                    parent_obj = self.app_obj.media_reg_dict[current_dbid]
                     if parent_obj.priv_flag:
                         parent_obj = None
 
@@ -21299,7 +21258,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.win_last_width = rect.width
             self.win_last_height = rect.height
 
-            if self.video_index_current \
+            if self.video_index_current_dbid \
             and self.app_obj.catalogue_mode_type == 'grid':
 
                 # Check whether the grid should be resized and, if so, resize
@@ -23400,8 +23359,8 @@ class ComplexCatalogueItem(object):
 
         # (Many labels are not clickable when a channel/playlist/folder's
         #   external directory is marked disabled)
-        if self.video_obj.parent_obj.name \
-        in self.main_win_obj.app_obj.media_unavailable_dict:
+        if self.video_obj.parent_obj.dbid \
+        in self.main_win_obj.app_obj.container_unavailable_dict:
 
             # Link not clickable
             self.watch_player_label.set_markup(_('Download'))
@@ -23596,8 +23555,8 @@ class ComplexCatalogueItem(object):
 
         # (Many labels are not clickable when a channel/playlist/folder's
         #   external directory is marked disabled)
-        if self.video_obj.parent_obj.name \
-        in self.main_win_obj.app_obj.media_unavailable_dict:
+        if self.video_obj.parent_obj.dbid \
+        in self.main_win_obj.app_obj.container_unavailable_dict:
             unavailable_flag = True
         else:
             unavailable_flag = False
@@ -23688,8 +23647,8 @@ class ComplexCatalogueItem(object):
 
         # (Many labels are not clickable when a channel/playlist/folder's
         #   external directory is marked disabled)
-        if self.video_obj.parent_obj.name \
-        in self.main_win_obj.app_obj.media_unavailable_dict:
+        if self.video_obj.parent_obj.dbid \
+        in self.main_win_obj.app_obj.container_unavailable_dict:
             unavailable_flag = True
         else:
             unavailable_flag = False
@@ -25717,8 +25676,8 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
         # (Many labels are not clickable when a channel/playlist/folder's
         #   external directory is marked disabled)
-        if self.video_obj.parent_obj.name \
-        in self.main_win_obj.app_obj.media_unavailable_dict:
+        if self.video_obj.parent_obj.dbid \
+        in self.main_win_obj.app_obj.container_unavailable_dict:
 
             # Link not clickable
             self.watch_player_label.set_markup(_('Download'))
@@ -27400,8 +27359,8 @@ class AddBulkDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        suggest_parent_name (str): The name of the parent folder, or None if
-            the channels/playlists shouldn't be added inside a media.Folder
+        suggest_parent_dbid (int): The .dbid of the parent media.Folder, or
+            None if the channels/playlists shouldn't be added inside a folder
 
     """
 
@@ -27409,7 +27368,7 @@ class AddBulkDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, suggest_parent_name=None):
+    def __init__(self, main_win_obj, suggest_parent_dbid=None):
 
         # IV list - class objects
         # -----------------------
@@ -27434,17 +27393,18 @@ class AddBulkDialogue(Gtk.Dialog):
         # ---------------
         # List of URLs added so far, for checking duplicates
         self.url_list = []
-        # Number of channels/playlsits added so far, used to give channels/
+        # Number of channels/playlists added so far, used to give channels/
         #   playlists an initial name
         # In order to eliminate duplicate names, these counts may be larger
         #   than the actual number added
         self.channel_count = 0
         self.playlist_count = 0
 
-        # A list of media.Folders to display in the Gtk.ComboBox
+        # A list of media.Folder (.dbid values ) whose names should be
+        #   displayed in the Gtk.ComboBox
         self.folder_list = []
         # The media.Folder selected in the combobox
-        self.parent_name = None
+        self.parent_dbid = None
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -27613,7 +27573,18 @@ class AddBulkDialogue(Gtk.Dialog):
                 else:
                     self.treeview.append_column(column_text)
                     column_text.set_resizable(True)
-                    renderer_text.set_property("editable", True)
+                    if i == 2:
+                        renderer_text.set_property("editable", True)
+                        renderer_text.connect(
+                            'edited',
+                            self.on_container_name_edited,
+                        )
+                    elif i == 3:
+                        renderer_text.set_property("editable", True)
+                        renderer_text.connect(
+                            'edited',
+                            self.on_container_url_edited,
+                        )
 
         self.liststore = Gtk.ListStore(
             str, GdkPixbuf.Pixbuf, str, str,
@@ -27634,30 +27605,31 @@ class AddBulkDialogue(Gtk.Dialog):
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
-        # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'Temporary Videos' is the first one in the
+        # If a folder is selected in the Video Index, then it is the first item
+        #   in the list. If not, 'Temporary Videos' is the first item in the
         #   list
-        for name, dbid in main_win_obj.app_obj.media_name_dict.items():
-            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
-
+        for media_data_obj in main_win_obj.app_obj.container_reg_dict.values():
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
             and media_data_obj.restrict_mode == 'open' \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level \
+            < main_win_obj.app_obj.container_max_level \
             and (
-                suggest_parent_name is None
-                or suggest_parent_name != media_data_obj.name
+                suggest_parent_dbid is None
+                or suggest_parent_dbid != media_data_obj.dbid
             ):
-                self.folder_list.append(media_data_obj.name)
+                self.folder_list.append(media_data_obj.dbid)
 
         self.folder_list.sort()
-        self.folder_list.insert(0, '')
-        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(0, None)
+        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.dbid)
+
+        if suggest_parent_dbid is not None:
+            self.folder_list.insert(0, suggest_parent_dbid)
 
         # Store the combobox's selected item, so the calling function can
-        #   retrieve it.
-        self.parent_name = self.folder_list[0]
+        #   retrieve it
+        self.parent_dbid = self.folder_list[0]
 
         # (Second grid, to avoid messing up the format of the previous one)
         self.grid2 = Gtk.Grid()
@@ -27667,25 +27639,37 @@ class AddBulkDialogue(Gtk.Dialog):
         label4 = Gtk.Label(_('Add to this folder:'))
         self.grid2.attach(label4, 0, 0, 1, 1)
 
-        box2 = Gtk.Box()
-        self.grid2.attach(box2, 1, 0, 1, 1)
-        box2.set_border_width(main_win_obj.spacing_size)
+        self.liststore2 = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
+        for dbid in self.folder_list:
 
-        image = Gtk.Image()
-        box2.add(image)
-        image.set_from_pixbuf(main_win_obj.pixbuf_dict['folder_small'])
+            if dbid is None:
+                pixbuf = main_win_obj.pixbuf_dict['slice_small']
+                self.liststore2.append(
+                    [pixbuf, dbid, '  ' + _('No parent folder')]
+                )
 
-        self.liststore2 = Gtk.ListStore(str)
-        for item in self.folder_list:
-            self.liststore2.append([item])
+            elif dbid == main_win_obj.app_obj.fixed_temp_folder.dbid:
+                pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
+                this_obj = main_win_obj.app_obj.fixed_temp_folder
+                self.liststore2.append( [pixbuf, dbid, '  ' + this_obj.name] )
+
+            else:
+                pixbuf = main_win_obj.pixbuf_dict['folder_small']
+                this_obj = main_win_obj.app_obj.container_reg_dict[dbid]
+                self.liststore2.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
         combo = Gtk.ComboBox.new_with_model(self.liststore2)
-        self.grid2.attach(combo, 2, 0, 1, 1)
+        self.grid2.attach(combo, 1, 0, 1, 1)
         combo.set_hexpand(True)
 
-        cell = Gtk.CellRendererText()
-        combo.pack_start(cell, False)
-        combo.add_attribute(cell, 'text', 0)
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, False)
+        combo.add_attribute(renderer_text, 'text', 2)
+
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
 
@@ -27709,7 +27693,7 @@ class AddBulkDialogue(Gtk.Dialog):
             self.channel_count += 1
             name = 'channel_' + str(self.channel_count)
 
-            if not name in self.main_win_obj.app_obj.media_name_dict:
+            if not self.main_win_obj.app_obj.is_container(name):
                 return name
 
 
@@ -27726,39 +27710,11 @@ class AddBulkDialogue(Gtk.Dialog):
             self.playlist_count += 1
             name = 'playlist_' + str(self.playlist_count)
 
-            if not name in self.main_win_obj.app_obj.media_name_dict:
+            if not self.main_win_obj.app_obj.is_container(name):
                 return name
 
 
     # Callback class methods
-
-
-    def on_checkbutton_toggled(self, checkbutton):
-
-        """Called from a callback in self.__init__().
-
-        Enables/disables clipboard monitoring.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The clicked widget
-
-        """
-
-        if not checkbutton.get_active() \
-        and self.clipboard_timer_id is not None:
-
-            # Stop the timer
-            GObject.source_remove(self.clipboard_timer_id)
-            self.clipboard_timer_id = None
-
-        elif checkbutton.get_active() and self.clipboard_timer_id is None:
-
-            # Start the timer
-            self.clipboard_timer_id = GObject.timeout_add(
-                self.clipboard_timer_time,
-                self.clipboard_timer_callback,
-            )
 
 
     def on_add_urls_clicked(self, button, add_type):
@@ -27827,6 +27783,34 @@ class AddBulkDialogue(Gtk.Dialog):
                 ])
 
 
+    def on_checkbutton_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        Enables/disables clipboard monitoring.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if not checkbutton.get_active() \
+        and self.clipboard_timer_id is not None:
+
+            # Stop the timer
+            GObject.source_remove(self.clipboard_timer_id)
+            self.clipboard_timer_id = None
+
+        elif checkbutton.get_active() and self.clipboard_timer_id is None:
+
+            # Start the timer
+            self.clipboard_timer_id = GObject.timeout_add(
+                self.clipboard_timer_time,
+                self.clipboard_timer_callback,
+            )
+
+
     def on_combo_changed(self, combo):
 
         """Called a from callback in self.__init__().
@@ -27840,7 +27824,81 @@ class AddBulkDialogue(Gtk.Dialog):
 
         """
 
-        self.parent_name = self.folder_list[combo.get_active()]
+        self.parent_dbid = self.folder_list[combo.get_active()]
+
+
+    def on_container_name_edited(self, widget, path, text):
+
+        """Called a from callback in self.__init__().
+
+        Updates the name of a channel/playlist.
+
+        Args:
+
+            widget (Gtk.CellRendererText): The widget clicked
+
+            path (int): Path to the treeview line that was edited
+
+            text (str): The new contents of the cell
+
+        """
+
+        app_obj = self.main_win_obj.app_obj
+
+        # Check the entered text is a valid name
+        if text == '' \
+        or re.search('^\s*$', text) \
+        or not app_obj.check_container_name_is_legal(text):
+            return
+
+        # Get the dbid for the selected line's channel/playlist
+        model = self.treeview.get_model()
+        tree_iter = model.get_iter(path)
+        if tree_iter is not None and model[tree_iter][2] != text:
+
+            # Check that the parent folder doesn't already have a container
+            #   with the same name
+            if (
+                self.parent_dbid is not None \
+                and app_obj.find_duplicate_name_in_container(
+                    app_obj.media_reg_dict[self.parent_dbid],
+                    text,
+                )
+            ) or (
+                self.parent_dbid is None \
+                and app_obj.find_duplicate_name_in_container(None, text)
+            ):
+                return
+
+            # Otherwise, we can update the channel/playlist name
+            model[tree_iter][2] = text
+
+
+    def on_container_url_edited(self, widget, path, text):
+
+        """Called a from callback in self.__init__().
+
+        Updates the URL of a channel/playlist.
+
+        Args:
+
+            widget (Gtk.CellRendererText): The widget clicked
+
+            path (int): Path to the treeview line that was edited
+
+            text (str): The new contents of the cell
+
+        """
+
+        # Check the entered text is a valid URL
+        if not utils.check_url(text):
+            return
+
+        # Get the dbid for the selected line's channel/playlist
+        model = self.treeview.get_model()
+        tree_iter = model.get_iter(path)
+        if tree_iter is not None and model[tree_iter][3] != text:
+            model[tree_iter][3] = text
 
 
     def on_convert_line_clicked(self, button):
@@ -27947,7 +28005,7 @@ class AddChannelDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        suggest_parent_name (str): The name of the new channel's suggested
+        suggest_parent_dbid (int): The .dbid of the new channel's suggested
             parent folder (which the user can change, if required), or None if
             this dialogue window shouldn't suggest a parent folder
 
@@ -27963,7 +28021,7 @@ class AddChannelDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, suggest_parent_name=None,
+    def __init__(self, main_win_obj, suggest_parent_dbid=None,
     dl_sim_flag=False, monitor_flag=False):
 
         # IV list - class objects
@@ -27984,10 +28042,11 @@ class AddChannelDialogue(Gtk.Dialog):
 
         # IV list - other
         # ---------------
-        # A list of media.Folders to display in the Gtk.ComboBox
+        # A list of media.Folders (.dbid values) whose names should be
+        #   displayed in the Gtk.ComboBox
         self.folder_list = []
-        # The media.Folder selected in the combobox (if any)
-        self.parent_name = None
+        # The media.Folder .dbid selected in the combobox (if any)
+        self.parent_dbid = None
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -28096,51 +28155,53 @@ class AddChannelDialogue(Gtk.Dialog):
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
-        # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'No parent videos' is the first one in the
+        # If a folder is selected in the Video Index, then it is the first item
+        #   in the list. If not, 'No parent videos' is the first item in the
         #   list
-        for name, dbid in main_win_obj.app_obj.media_name_dict.items():
-            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
-
+        for media_data_obj in main_win_obj.app_obj.container_reg_dict.values():
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
             and media_data_obj.restrict_mode == 'open' \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level \
+            < main_win_obj.app_obj.container_max_level \
             and (
-                suggest_parent_name is None
-                or suggest_parent_name != media_data_obj.name
+                suggest_parent_dbid is None
+                or suggest_parent_dbid != media_data_obj.dbid
             ):
-                self.folder_list.append(media_data_obj.name)
+                self.folder_list.append(media_data_obj.dbid)
 
         self.folder_list.sort()
-        self.folder_list.insert(0, '')
-        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(0, None)
+        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.dbid)
 
-        if suggest_parent_name is not None:
-            self.folder_list.insert(0, suggest_parent_name)
+        if suggest_parent_dbid is not None:
+            self.folder_list.insert(0, suggest_parent_dbid)
 
         # Store the combobox's selected item, so the calling function can
-        #   retrieve it.
-        self.parent_name = self.folder_list[0]
+        #   retrieve it
+        self.parent_dbid = self.folder_list[0]
 
         label4 = Gtk.Label(_('(Optional) Add this channel inside a folder'))
         grid.attach(label4, 0, 7, 1, 1)
 
-        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        for item in self.folder_list:
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
+        for dbid in self.folder_list:
 
-            if item == '':
+            if dbid is None:
                 pixbuf = main_win_obj.pixbuf_dict['slice_small']
-                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+                listmodel.append(
+                    [pixbuf, dbid, '  ' + _('No parent folder')]
+                )
 
-            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+            elif dbid == main_win_obj.app_obj.fixed_temp_folder.dbid:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.fixed_temp_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.container_reg_dict[dbid]
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
         grid.attach(combo, 0, 8, 1, 1)
@@ -28152,7 +28213,7 @@ class AddChannelDialogue(Gtk.Dialog):
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
-        combo.add_attribute(renderer_text, 'text', 1)
+        combo.add_attribute(renderer_text, 'text', 2)
 
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
@@ -28254,7 +28315,7 @@ class AddChannelDialogue(Gtk.Dialog):
 
         """
 
-        self.parent_name = self.folder_list[combo.get_active()]
+        self.parent_dbid = self.folder_list[combo.get_active()]
 
 
     def on_entry2_changed(self, entry, grid):
@@ -28667,7 +28728,7 @@ class AddFolderDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        suggest_parent_name (str): The name of the new folder's suggested
+        suggest_parent_dbid (int): The .dbid of the new folder's suggested
             parent folder (which the user can change, if required), or None if
             this dialogue window shouldn't suggest a parent folder
 
@@ -28677,7 +28738,7 @@ class AddFolderDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, suggest_parent_name=None):
+    def __init__(self, main_win_obj, suggest_parent_dbid=None):
 
         # IV list - class objects
         # -----------------------
@@ -28694,10 +28755,11 @@ class AddFolderDialogue(Gtk.Dialog):
 
         # IV list - other
         # ---------------
-        # A list of media.Folders to display in the Gtk.ComboBox
+        # A list of media.Folders (.dbid values) whose names should be
+        #   displayed in the Gtk.ComboBox
         self.folder_list = []
-        # The media.Folder selected in the combobox (if any)
-        self.parent_name = None
+        # The media.Folder .dbid selected in the combobox (if any)
+        self.parent_dbid = None
 
 
         # Code
@@ -28741,50 +28803,52 @@ class AddFolderDialogue(Gtk.Dialog):
         # If a folder is selected in the Video Index, then it is the first one
         #   in the list. If not, 'No parent videos' is the first one in the
         #   list
-        for name, dbid in main_win_obj.app_obj.media_name_dict.items():
-            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
-
+        for media_data_obj in main_win_obj.app_obj.container_reg_dict.values():
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
             and media_data_obj.restrict_mode != 'full' \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level \
+            < main_win_obj.app_obj.container_max_level \
             and (
-                suggest_parent_name is None
-                or suggest_parent_name != media_data_obj.name
+                suggest_parent_dbid is None
+                or suggest_parent_dbid != media_data_obj.dbid
             ):
-                self.folder_list.append(media_data_obj.name)
+                self.folder_list.append(media_data_obj.dbid)
 
         self.folder_list.sort()
-        self.folder_list.insert(0, '')
-        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(0, None)
+        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.dbid)
 
-        if suggest_parent_name is not None:
-            self.folder_list.insert(0, suggest_parent_name)
+        if suggest_parent_dbid is not None:
+            self.folder_list.insert(0, suggest_parent_dbid)
 
         # Store the combobox's selected item, so the calling function can
-        #   retrieve it.
-        self.parent_name = self.folder_list[0]
+        #   retrieve it
+        self.parent_dbid = self.folder_list[0]
 
         label4 = Gtk.Label(
             _('(Optional) Add this folder inside another folder'),
         )
         grid.attach(label4, 0, 3, 1, 1)
 
-        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        for item in self.folder_list:
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
+        for dbid in self.folder_list:
 
-            if item == '':
+            if dbid is None:
                 pixbuf = main_win_obj.pixbuf_dict['slice_small']
-                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+                listmodel.append(
+                    [pixbuf, dbid, '  ' + _('No parent folder')]
+                )
 
-            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+            elif dbid == main_win_obj.app_obj.fixed_temp_folder.dbid:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.fixed_temp_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.container_reg_dict[dbid]
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
         grid.attach(combo, 0, 4, 1, 1)
@@ -28796,7 +28860,7 @@ class AddFolderDialogue(Gtk.Dialog):
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
-        combo.add_attribute(renderer_text, 'text', 1)
+        combo.add_attribute(renderer_text, 'text', 2)
 
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
@@ -28836,7 +28900,7 @@ class AddFolderDialogue(Gtk.Dialog):
 
         """
 
-        self.parent_name = self.folder_list[combo.get_active()]
+        self.parent_dbid = self.folder_list[combo.get_active()]
 
 
 class AddPlaylistDialogue(Gtk.Dialog):
@@ -28850,7 +28914,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        suggest_parent_name (str): The name of the new playlist's suggested
+        suggest_parent_dbid (int): The .dbid of the new playlist's suggested
             parent folder (which the user can change, if required), or None if
             this dialogue window shouldn't suggest a parent folder
 
@@ -28866,7 +28930,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, suggest_parent_name=None,
+    def __init__(self, main_win_obj, suggest_parent_dbid=None,
     dl_sim_flag=False, monitor_flag=False):
 
         # IV list - class objects
@@ -28888,8 +28952,8 @@ class AddPlaylistDialogue(Gtk.Dialog):
         # ---------------
         # A list of media.Folders to display in the Gtk.ComboBox
         self.folder_list = []
-        # The media.Folder selected in the combobox (if any)
-        self.parent_name = None
+        # The media.Folder .dbid selected in the combobox (if any)
+        self.parent_dbid = None
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -28956,51 +29020,53 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         # Prepare a list of folders to display in a combo. The list always
         #   includes the system folder 'Temporary Videos'
-        # If a folder is selected in the Video Index, then it is the first one
-        #   in the list. If not, 'No parent videos' is the first one in the
+        # If a folder is selected in the Video Index, then it is the first item
+        #   in the list. If not, 'No parent videos' is the first item in the
         #   list
-        for name, dbid in main_win_obj.app_obj.media_name_dict.items():
-            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
-
+        for media_data_obj in main_win_obj.app_obj.container_reg_dict.values():
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
             and media_data_obj.restrict_mode == 'open' \
             and media_data_obj.get_depth() \
-            < main_win_obj.app_obj.media_max_level \
+            < main_win_obj.app_obj.container_max_level \
             and (
-                suggest_parent_name is None
-                or suggest_parent_name != media_data_obj.name
+                suggest_parent_dbid is None
+                or suggest_parent_dbid != media_data_obj.dbid
             ):
-                self.folder_list.append(media_data_obj.name)
+                self.folder_list.append(media_data_obj.dbid)
 
         self.folder_list.sort()
-        self.folder_list.insert(0, '')
-        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(0, None)
+        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.dbid)
 
-        if suggest_parent_name is not None:
-            self.folder_list.insert(0, suggest_parent_name)
+        if suggest_parent_dbid is not None:
+            self.folder_list.insert(0, suggest_parent_dbid)
 
         # Store the combobox's selected item, so the calling function can
-        #   retrieve it.
+        #   retrieve it
         self.parent_name = self.folder_list[0]
 
         label4 = Gtk.Label(_('(Optional) Add this playlist inside a folder'))
         grid.attach(label4, 0, 6, 1, 1)
 
-        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        for item in self.folder_list:
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
+        for dbid in self.folder_list:
 
-            if item == '':
+            if dbid is None:
                 pixbuf = main_win_obj.pixbuf_dict['slice_small']
-                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+                listmodel.append(
+                    [pixbuf, dbid, '  ' + _('No parent folder')]
+                )
 
-            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+            elif dbid == main_win_obj.app_obj.fixed_temp_folder.dbid:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.fixed_temp_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.container_reg_dict[dbid]
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
         grid.attach(combo, 0, 7, 1, 1)
@@ -29012,7 +29078,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
-        combo.add_attribute(renderer_text, 'text', 1)
+        combo.add_attribute(renderer_text, 'text', 2)
 
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
@@ -29114,7 +29180,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         """
 
-        self.parent_name = self.folder_list[combo.get_active()]
+        self.parent_dbid = self.folder_list[combo.get_active()]
 
 
     def on_window_drag_data_received(self, window, context, x, y, data, info,
@@ -29335,10 +29401,11 @@ class AddVideoDialogue(Gtk.Dialog):
 
         # IV list - other
         # ---------------
-        # A list of media.Folders to display in the Gtk.ComboBox
+        # A list of media.Folders (.dbid values) whose names should be
+        #   displayed in the Gtk.ComboBox
         self.folder_list = []
-        # The media.Folder selected in the combobox
-        self.parent_name = None
+        # The media.Folder .dbid selected in the combobox (if any)
+        self.parent_dbid = None
         # Set up IVs for clipboard monitoring, if required
         self.clipboard_timer_id = None
         self.clipboard_timer_time = 250
@@ -29443,67 +29510,74 @@ class AddVideoDialogue(Gtk.Dialog):
         grid.attach(Gtk.HSeparator(), 0, 3, 1, 1)
 
         # Prepare a list of folders to display in a combo. The list always
-        #   includes the system folders 'Unsorted Videos' and 'Temporary
-        #   Videos'
+        #   includes the system folders 'Unsorted Videos', 'Video Clips' and
+        #   'Temporary Videos'
         # If a folder is selected in the Video Index, then it is the first one
         #   in the list. If not, 'Unsorted Videos' is the first one in the
         #   list
         folder_obj = None
         # The selected item in the Video Index could be a channel, playlist or
         #   folder, but here we only pay attention to folders
-        selected = main_win_obj.video_index_current
-        if selected:
-            dbid = main_win_obj.app_obj.media_name_dict[selected]
-            container_obj = main_win_obj.app_obj.media_reg_dict[dbid]
+        selected_dbid = main_win_obj.video_index_current_dbid
+        if selected_dbid:
+            container_obj = main_win_obj.app_obj.media_reg_dict[selected_dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.priv_flag:
                 folder_obj = container_obj
 
-        for name, dbid in main_win_obj.app_obj.media_name_dict.items():
-            media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
-
+        for media_data_obj in main_win_obj.app_obj.container_reg_dict.values():
             if isinstance(media_data_obj, media.Folder) \
             and not media_data_obj.fixed_flag \
             and media_data_obj.restrict_mode == 'open' \
             and (folder_obj is None or media_data_obj != folder_obj):
-                self.folder_list.append(media_data_obj.name)
+                self.folder_list.append(media_data_obj.dbid)
 
         self.folder_list.sort()
-        self.folder_list.insert(0, main_win_obj.app_obj.fixed_misc_folder.name)
-        self.folder_list.insert(1, main_win_obj.app_obj.fixed_temp_folder.name)
+        self.folder_list.insert(0, main_win_obj.app_obj.fixed_misc_folder.dbid)
         self.folder_list.insert(
             1,
-            main_win_obj.app_obj.fixed_clips_folder.name,
+            main_win_obj.app_obj.fixed_clips_folder.dbid,
         )
+        self.folder_list.insert(2, main_win_obj.app_obj.fixed_temp_folder.dbid)
 
         if folder_obj:
-            self.folder_list.insert(0, folder_obj.name)
+            self.folder_list.insert(0, folder_obj.dbid)
 
         # Store the combobox's selected item, so the calling function can
-        #   retrieve it.
-        self.parent_name = self.folder_list[0]
+        #   retrieve it
+        self.parent_dbid = self.folder_list[0]
 
         label2 = Gtk.Label(_('Add the videos to this folder'))
         grid.attach(label2, 0, 4, 1, 1)
 
-        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        for item in self.folder_list:
+        listmodel = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
+        for dbid in self.folder_list:
 
-            if item == '':
+            if dbid is None:
                 pixbuf = main_win_obj.pixbuf_dict['slice_small']
-                listmodel.append( [pixbuf, '  ' + _('No parent folder')] )
+                listmodel.append(
+                    [pixbuf, dbid, '  ' + _('No parent folder')]
+                )
 
-            elif item == main_win_obj.app_obj.fixed_misc_folder.name:
+            elif dbid == main_win_obj.app_obj.fixed_misc_folder.dbid:
                 pixbuf = main_win_obj.pixbuf_dict['folder_green_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.fixed_misc_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
-            elif item == main_win_obj.app_obj.fixed_temp_folder.name:
+            elif dbid == main_win_obj.app_obj.fixed_clips_folder.dbid:
+                pixbuf = main_win_obj.pixbuf_dict['folder_green_small']
+                this_obj = main_win_obj.app_obj.fixed_clips_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
+
+            elif dbid == main_win_obj.app_obj.fixed_temp_folder.dbid:
                 pixbuf = main_win_obj.pixbuf_dict['folder_blue_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.fixed_temp_folder
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
-                listmodel.append( [pixbuf, '  ' + item] )
+                this_obj = main_win_obj.app_obj.container_reg_dict[dbid]
+                listmodel.append( [pixbuf, dbid, '  ' + this_obj.name] )
 
         combo = Gtk.ComboBox.new_with_model(listmodel)
         grid.attach(combo, 0, 5, 1, 1)
@@ -29515,7 +29589,7 @@ class AddVideoDialogue(Gtk.Dialog):
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, False)
-        combo.add_attribute(renderer_text, 'text', 1)
+        combo.add_attribute(renderer_text, 'text', 2)
 
         combo.set_active(0)
         combo.connect('changed', self.on_combo_changed)
@@ -29600,7 +29674,7 @@ class AddVideoDialogue(Gtk.Dialog):
 
         """
 
-        self.parent_name = self.folder_list[combo.get_active()]
+        self.parent_dbid = self.folder_list[combo.get_active()]
 
 
     def on_window_drag_data_received(self, window, context, x, y, data, info,
@@ -30102,8 +30176,7 @@ class CreateProfileDialogue(Gtk.Dialog):
         liststore = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         treeview.set_model(liststore)
 
-        for name in sorted(main_win_obj.video_index_marker_dict):
-            dbid = main_win_obj.app_obj.media_name_dict[name]
+        for dbid in sorted(main_win_obj.video_index_marker_dict):
             media_data_obj = main_win_obj.app_obj.media_reg_dict[dbid]
 
             if isinstance(media_data_obj, media.Channel):
@@ -30583,12 +30656,11 @@ class DeleteVideoDialogue(Gtk.Dialog):
         # Prepare variables
         spacing_size = self.main_win_obj.spacing_size
         label_length = self.main_win_obj.long_string_max_len
-        current = main_win_obj.video_index_current
+        current_dbid = main_win_obj.video_index_current_dbid
 
         parent_obj = None
         try:
-            parent_dbid = main_win_obj.app_obj.media_name_dict[current]
-            parent_obj = main_win_obj.app_obj.media_reg_dict[parent_dbid]
+            parent_obj = main_win_obj.app_obj.media_reg_dict[current_dbid]
         except:
             pass
 
@@ -33760,16 +33832,29 @@ class ResetContainerDialogue(Gtk.Dialog):
 
         """
 
+        app_obj = self.main_win_obj.app_obj
+
         # Check the entered text is a valid name
         if text == '' \
         or re.search('^\s*$', text) \
-        or not self.main_win_obj.app_obj.check_container_name_is_legal(text):
+        or not app_obj.check_container_name_is_legal(text):
             return
 
-        # Check the entered text is not a duplicate
-        if text in self.main_win_obj.app_obj.media_name_dict:
+        # Check the container still exists
+        container_dbid = self.liststore[path][4]
+        if not container_dbid in app_obj.container_reg_dict:
             return
 
+        # Check that the parent folder doesn't already have a container
+        #   with the same name
+        container_obj = app_obj.container_reg_dict[container_dbid]
+        if app_obj.find_duplicate_name_in_container(
+            container_obj.parent_obj,
+            text,
+        ):
+            return
+
+        # Check that the name is unique within this dialogue window
         for other_text in self.custom_dict.values():
             if other_text == text:
                 return
@@ -33779,7 +33864,7 @@ class ResetContainerDialogue(Gtk.Dialog):
 
         # Update the data to be returned (eventually) to the calling
         #   mainapp.TartubeApp.on_menu_reset_container() function
-        self.custom_dict[self.liststore[path][4]] = text
+        self.custom_dict[container_dbid] = text
 
 
     def on_select_all_clicked(self, button):
@@ -34015,8 +34100,9 @@ class SetDestinationDialogue(Gtk.Dialog):
         if prev_dbid is not None and not prev_dbid in app_obj.media_reg_dict:
             prev_dbid = None
             main_win_obj.set_previous_alt_dest_dbid(None)
+
         # Likewise, if the previous external directory no longer exists, then
-        #   forget it
+        #   reset the IV that stores it
         prev_external_dir = main_win_obj.previous_external_dir
         if prev_external_dir is not None \
         and not os.path.isdir(prev_external_dir):
@@ -34027,37 +34113,38 @@ class SetDestinationDialogue(Gtk.Dialog):
         media_type = media_data_obj.get_type()
         if os.name == 'nt':
             if media_type == 'channel':
-                string = _(
+                msg = _(
                     'This channel normally downloads videos into its own' \
                     + ' folder',
                 )
             elif media_type == 'playlist':
-                string = _(
+                msg = _(
                     'This playlist normally downloads videos into its own' \
                     + ' folder',
                 )
             else:
-                string = _(
+                msg = _(
                     'This folder normally downloads videos into itself',
                 )
+
         else:
             if media_type == 'channel':
-                string = _(
+                msg = _(
                     'This channel normally downloads videos into its own' \
                     + ' directory',
                 )
             elif media_type == 'playlist':
-                string = _(
+                msg = _(
                     'This playlist normally downloads videos into its own' \
                     + ' directory',
                 )
             else:
-                string = _(
+                msg = _(
                     'This folder normally downloads videos into its own' \
                     + ' directory',
                 )
 
-        label = Gtk.Label(utils.tidy_up_long_string(string, label_length))
+        label = Gtk.Label(utils.tidy_up_long_string(msg, label_length))
         grid.attach(label, 0, 0, grid_width, 1)
         label.set_xalign(0)
 
@@ -34071,7 +34158,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         # Separator
         grid.attach(Gtk.HSeparator(), 0, 2, grid_width, 1)
 
-        string = _('Choose a different location if:') \
+        msg = _('Choose a different location if:') \
         + '\n\n • ' + utils.tidy_up_long_string(
             _(
                 'You want to add a channel and its playlists, without' \
@@ -34087,7 +34174,7 @@ class SetDestinationDialogue(Gtk.Dialog):
             label_length,
         )
 
-        label2 = Gtk.Label(string)
+        label2 = Gtk.Label(msg)
         grid.attach(label2, 0, 3, grid_width, 1)
         label2.set_xalign(0)
 
@@ -34098,7 +34185,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         # (Signal connect appears below)
 
         # Get a list of channels/playlists/folders
-        dbid_list = list(app_obj.media_name_dict.values())
+        dbid_list = list(app_obj.container_reg_dict.keys())
 
         # From this list, filter out:
         #   - Any channel/playlist/folder which has an alternative download
@@ -34109,7 +34196,7 @@ class SetDestinationDialogue(Gtk.Dialog):
         #   - The most recently-selected alternative download destination, if
         #       any
         #   - media_data_obj itself
-        mod_dbid_list = []
+        obj_list = []
         for this_dbid in dbid_list:
 
             this_obj = app_obj.media_reg_dict[this_dbid]
@@ -34120,44 +34207,42 @@ class SetDestinationDialogue(Gtk.Dialog):
                 or media_data_obj.master_dbid != this_dbid
             ) and (prev_dbid is None or prev_dbid != this_dbid) \
             and this_obj.dbid == this_obj.master_dbid:
-                mod_dbid_list.append(this_dbid)
+                obj_list.append(this_obj)
 
         # Sort the modified list...
-        name_list = []
-        for this_dbid in mod_dbid_list:
-            this_obj = app_obj.media_reg_dict[this_dbid]
-            name_list.append(this_obj.name)
-
-        name_list.sort(key=lambda x: x.lower())
+        obj_list.sort(key=lambda x: x.name.lower())
 
         # ...and then add, at the top of the list, possible destinations that
         #   were filtered out
-        name_list.insert(0, media_data_obj.name)
+        obj_list.insert(0, media_data_obj)
 
         if media_data_obj.master_dbid != media_data_obj.dbid:
-            current_obj = app_obj.media_reg_dict[media_data_obj.master_dbid]
-            name_list.insert(0, current_obj.name)
+            obj_list.insert(
+                0,
+                app_obj.media_reg_dict[media_data_obj.master_dbid],
+            )
+
         elif prev_dbid is not None:
             prev_obj = app_obj.media_reg_dict[prev_dbid]
-            name_list.insert(0, prev_obj.name)
+            obj_list.insert(0, prev_obj)
 
         # Add a combo
-        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-
+        store = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
         count = -1
 
-        for name in name_list:
-            dbid = app_obj.media_name_dict[name]
-            obj = app_obj.media_reg_dict[dbid]
-
-            if isinstance(obj, media.Channel):
+        for this_obj in obj_list:
+            if isinstance(this_obj, media.Channel):
                 icon_name = 'channel_small'
-            elif isinstance(obj, media.Playlist):
+            elif isinstance(this_obj, media.Playlist):
                 icon_name = 'playlist_small'
             else:
                 icon_name = 'folder_small'
 
-            store.append( [main_win_obj.pixbuf_dict[icon_name], name] )
+            store.append([
+                main_win_obj.pixbuf_dict[icon_name],
+                this_obj.dbid,
+                this_obj.name,
+            ])
 
             count += 1
 
@@ -34171,7 +34256,7 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
-        combo.add_attribute(renderer_text, 'text', 1)
+        combo.add_attribute(renderer_text, 'text', 2)
         combo.set_active(0)
         # (Signal connect appears below)
 
@@ -34361,16 +34446,13 @@ class SetDestinationDialogue(Gtk.Dialog):
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
-        pixbuf, name = model[tree_iter][:2]
+        dbid = model[tree_iter][1]
 
         # (Allow for the possibility that the media data object might have
         #   been deleted, since the dialogue window opened)
-        if name in self.main_win_obj.app_obj.media_name_dict:
-            dbid = self.main_win_obj.app_obj.media_name_dict[name]
-            obj = self.main_win_obj.app_obj.media_reg_dict[dbid]
-            self.choice = obj.dbid
-
-            self.main_win_obj.set_previous_alt_dest_dbid(obj.dbid)
+        if dbid in self.main_win_obj.app_obj.container_reg_dict:
+            self.choice = dbid
+            self.main_win_obj.set_previous_alt_dest_dbid(dbid)
 
 
     def on_radiobutton_toggled(self, radiobutton, combo, button, entry):
@@ -34427,15 +34509,12 @@ class SetDestinationDialogue(Gtk.Dialog):
 
             tree_iter = combo.get_active_iter()
             model = combo.get_model()
-            pixbuf, name = model[tree_iter][:2]
+            dbid = model[tree_iter][1]
 
             # (Allow for the possibility that the media data object might have
             #   been deleted, since the dialogue window opened)
-            if name in self.main_win_obj.app_obj.media_name_dict:
-                dbid = self.main_win_obj.app_obj.media_name_dict[name]
-                obj = self.main_win_obj.app_obj.media_reg_dict[dbid]
-                self.choice = obj.dbid
-
+            if dbid in self.main_win_obj.app_obj.container_reg_dict:
+                self.choice = dbid
                 self.main_win_obj.set_previous_alt_dest_dbid(dbid)
 
 

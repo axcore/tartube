@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Tidy operation classes."""
@@ -424,9 +424,10 @@ class TidyManager(threading.Thread):
             # Add this channel/playlist/folder, and any child channels/
             #   playlists/folders (but not videos, obviously)
             obj_list = self.init_obj.compile_all_containers(obj_list)
+            
         else:
             # Add all channels/playlists/folders in the database
-            for dbid in list(self.app_obj.media_name_dict.values()):
+            for dbid in list(self.app_obj.container_reg_dict.keys()):
 
                 obj = self.app_obj.media_reg_dict[dbid]
                 # Don't add private folders

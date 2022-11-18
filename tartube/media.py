@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Media data classes."""
@@ -634,7 +634,7 @@ class GenericContainer(GenericMedia):
         if self.external_dir is not None:
 
             text += '\n\n' + _('Download destination:') + ' '
-            if self.name in app_obj.media_unavailable_dict:
+            if self.dbid in app_obj.container_unavailable_dict:
                 text += '(' + _('unavailable') + ')'
             else:
                 text += self.external_dir
@@ -4590,13 +4590,13 @@ class Scheduled(object):
         self.scheduled_bandwidth = 500
         self.scheduled_bandwidth_apply_flag = False
 
-        # Flag set to True if the download operation should encompass all
-        #   media data objects
+        # Flag set to True if the download operation should encompass all media
+        #   data objects
         self.all_flag = True
-        # List of names of media.Channel, media.Playlist and media.Folder
-        #   objects to add to the download operation (not the objects
-        #   themselves). All of their children are also added). Ignored if
-        #   self.all_flag is True
+        # List of .dbid values for media.Channel, media.Playlist and
+        #   media.Folder objects to add to each download operation (not the
+        #   objects themselves. All of their children are also added). Ignored
+        #   if self.all_flag is True
         self.media_list = []
 
 
@@ -4700,9 +4700,9 @@ class Scheduled(object):
         self.last_time = time
 
 
-    def add_media(self, name):
+    def add_media(self, dbid):
 
-        self.media_list.append(name)
+        self.media_list.append(dbid)
         self.all_flag = False
 
 

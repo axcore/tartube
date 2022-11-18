@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Module that contains a class storing download options."""
@@ -404,7 +404,7 @@ class OptionsManager(object):
             the name/path of the profile to load cookies from; a string in the
             from BROWSER[+KEYRING][:PROFILE]
 
-        no_cookies_from_browser (bool): If true, does not load cookies from the
+        no_cookies_from_browser (bool): If True, does not load cookies from the
             browser (default)
 
         [Internet Shortcut Options]
@@ -560,11 +560,11 @@ class OptionsManager(object):
             the 'Check all' button), the video's JSON file is always loaded
             into memory
 
-            If 'write_description' and 'sim_keep_description' are both true,
+            If 'write_description' and 'sim_keep_description' are both True,
             the description file is written directly to the sub-directory in
             which Tartube would store the video
 
-            If 'write_description' is true but 'sim_keep_description' not, the
+            If 'write_description' is True but 'sim_keep_description' not, the
             description file is written to the equivalent location in Tartube's
             temporary directories.
 
@@ -573,9 +573,12 @@ class OptionsManager(object):
         use_fixed_folder (str or None): If not None, then all videos are
             downloaded to one of Tartube's fixed folders (not including private
             folders) - currently, that group consists of only 'Temporary
-            Videos' and 'Unsorted Videos'. The value should match the name of
-            the folder
-
+            Videos', 'Unsorted Videos' and 'Video Clips' (or their translated
+            equivalents). The value, if not None, should be 'temp' (matches
+            mainapp.TartubeApp.fixed_temp_folder), 'misc'
+            (matches mainapp.TartubeApp.fixed_misc_folder) or 'clips'
+            (matches mainapp.TartubeApp.fixed_clips_folder)
+            
         match_title_list (list): Download only matching titles (regex or
             caseless sub-string). Each item in the list is passed to youtube-dl
             as a separate --match-title argument
@@ -602,7 +605,7 @@ class OptionsManager(object):
         subs_lang_list (list): List of language tags which are used to set
             the 'subs_lang' option
 
-        downloader_config (bool): If true, a youtube-dl configuration is
+        downloader_config (bool): If True, a youtube-dl configuration is
             specified with the '--config-location' option. On Linux/MacOS, the
             user-wide configuration file is used
             ('~/.config/youtube-dl/config'). On MS Windows, a file in the
@@ -1710,8 +1713,12 @@ class OptionsParser(object):
 
         """
 
-        override_name = copy_dict['use_fixed_folder']
-
+        # Fetch the equivalent fixed folder 'Temporary Videos', 'Unsorted
+        #   Videos' or 'Video Clips', if specified
+        override_obj = self.app_obj.get_fixed_folder(
+            copy_dict['use_fixed_folder']
+        )
+        
         if operation_type == 'classic_sim' \
         or operation_type == 'classic_real' \
         or operation_type == 'classic_custom':
@@ -1721,13 +1728,10 @@ class OptionsParser(object):
             dir_path = media_data_obj.dummy_dir
 
         elif not isinstance(media_data_obj, media.Video) \
-        and override_name is not None \
-        and override_name in self.app_obj.media_name_dict:
+        and override_obj is not None:
 
             # Because of the override, save all videos to a system folder
-            other_dbid = self.app_obj.media_name_dict[override_name]
-            other_obj = self.app_obj.media_reg_dict[other_dbid]
-            dir_path = other_obj.get_default_dir(self.app_obj)
+            override_obj = other_obj.get_default_dir(self.app_obj)
 
         elif isinstance(media_data_obj, media.Video):
             dir_path = media_data_obj.parent_obj.get_actual_dir(self.app_obj)

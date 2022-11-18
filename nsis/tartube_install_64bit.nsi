@@ -1,19 +1,19 @@
-# Tartube v2.4.113 installer script for MS Windows
+# Tartube v2.4.134 installer script for MS Windows
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 #
 # Build instructions:
@@ -294,7 +294,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.4.113-64bit.exe"
+    OutFile "install-tartube-2.4.134-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -397,7 +397,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.4.113"
+#        "DisplayVersion" "2.4.134"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

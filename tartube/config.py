@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Configuration window classes."""
@@ -867,7 +867,7 @@ class GenericConfigWin(Gtk.Window):
 
             frequency_dict = {}
 
-            for dbid in self.app_obj.media_name_dict.values():
+            for dbid in self.app_obj.container_reg_dict.keys():
 
                 media_data_obj = self.app_obj.media_reg_dict[dbid]
                 # Ignore private (system) folders, because they contain
@@ -2040,7 +2040,7 @@ class GenericEditWin(GenericConfigWin):
         dest_obj = self.app_obj.media_reg_dict[self.edit_obj.master_dbid]
 
         if self.edit_obj.external_dir is not None:
-            if self.edit_obj.name in self.app_obj.media_unavailable_dict:
+            if self.edit_obj.dbid in self.app_obj.container_unavailable_dict:
                 icon_path = main_win_obj.icon_dict['unavailable_small']
             else:
                 icon_path = main_win_obj.icon_dict['external_small']
@@ -2141,10 +2141,10 @@ class GenericEditWin(GenericConfigWin):
         #   external directory is marked unavailable)
         unavailable_flag = False
         if isinstance(self.edit_obj, media.Video):
-            if self.edit_obj.parent_obj.name \
-            in self.app_obj.media_unavailable_dict:
+            if self.edit_obj.parent_obj.dbid \
+            in self.app_obj.container_unavailable_dict:
                 unavailable_flag = True
-        elif self.edit_obj.name in self.app_obj.media_unavailable_dict:
+        elif self.edit_obj.dbid in self.app_obj.container_unavailable_dict:
             unavailable_flag = True
 
         # Download options
@@ -2877,10 +2877,10 @@ class CustomDLEditWin(GenericEditWin):
         # If 'divert_mode' has changed, the Video Catalogue must be redrawn
         if 'divert_mode' in self.edit_dict \
         and self.app_obj.catalogue_mode_type != 'simple' \
-        and main_win_obj.video_index_current is not None:
+        and main_win_obj.video_index_current_dbid is not None:
 
             main_win_obj.video_catalogue_redraw_all(
-                main_win_obj.video_index_current,
+                main_win_obj.video_index_current_dbid,
                 main_win_obj.catalogue_toolbar_current_page,
             )
 
@@ -5787,48 +5787,71 @@ class OptionsEditWin(GenericEditWin):
 
         # (Currently, only three fixed folders are elligible for this mode, so
         #   we'll just add them individually)
-        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
+        store = Gtk.ListStore(GdkPixbuf.Pixbuf, int, str)
         # (Guard against mainapp.TartubeApp.debug_open_options_win_flag being
         #   set...)
+        count = 0
         if self.app_obj.fixed_misc_folder:
-            pixbuf \
-            = self.app_obj.main_win_obj.pixbuf_dict['folder_green_small']
-            store.append( [pixbuf, self.app_obj.fixed_misc_folder.name] )
+            store.append([
+                self.app_obj.main_win_obj.pixbuf_dict['folder_green_small'],
+                self.app_obj.fixed_misc_folder.dbid,
+                self.app_obj.fixed_misc_folder.name,
+            ])
+            misc_index = count
+            count += 1
+            
         if self.app_obj.fixed_clips_folder:
-            pixbuf \
-            = self.app_obj.main_win_obj.pixbuf_dict['folder_green_small']
-            store.append( [pixbuf, self.app_obj.fixed_clips_folder.name] )
+            store.append([
+                self.app_obj.main_win_obj.pixbuf_dict['folder_green_small'],
+                self.app_obj.fixed_clips_folder.dbid,
+                self.app_obj.fixed_clips_folder.name,
+            ])
+            clips_index = count
+            count += 1
+                        
         if self.app_obj.fixed_temp_folder:
-            pixbuf = self.app_obj.main_win_obj.pixbuf_dict['folder_blue_small']
-            store.append( [pixbuf, self.app_obj.fixed_temp_folder.name] )
+            store.append([
+                self.app_obj.main_win_obj.pixbuf_dict['folder_blue_small'],
+                self.app_obj.fixed_temp_folder.dbid,
+                self.app_obj.fixed_temp_folder.name,
+            ])
+            temp_index = count
+            count += 1
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 3, 1, 1)
-        renderer_pixbuf5 = Gtk.CellRendererPixbuf()
-        combo.pack_start(renderer_pixbuf5, False)
-        combo.add_attribute(renderer_pixbuf5, 'pixbuf', 0)
-        renderer_text5 = Gtk.CellRendererText()
-        combo.pack_start(renderer_text5, True)
-        combo.add_attribute(renderer_text5, 'text', 1)
-        combo.set_entry_text_column(1)
+        
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo.pack_start(renderer_pixbuf, False)
+        combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 2)
+
+        combo.set_entry_text_column(0) 
         combo.set_hexpand(True)
         # (Signal connect appears below)
 
+        # (Acceptable values are 'temp', 'misc', 'clips'
         current_override = self.edit_obj.options_dict['use_fixed_folder']
         if current_override is None:
             checkbutton3.set_active(False)
             combo.set_sensitive(False)
             combo.set_active(0)
+            
         else:
             checkbutton3.set_active(True)
             combo.set_sensitive(True)
-            if current_override == self.app_obj.fixed_temp_folder.name:
-                combo.set_active(1)
+            if current_override == 'temp':
+                combo.set_active(temp_index)
+            elif current_override == 'misc':
+                combo.set_active(misc_index)
+            elif current_override == 'clips':
+                combo.set_active(clips_index)
             else:
-                # The value should be either None, 'Unsorted Videos' or
-                #   'Temporary Videos'. In case the value is anything else,
-                #   use 'Unsorted Videos'
-                combo.set_active(0)
+                # Default to the 'Unsorted Videos' folder
+                combo.set_active(misc_index)
 
         # (Signal connects from above)
         checkbutton3.connect('toggled', self.on_fixed_folder_toggled, combo)
@@ -9039,9 +9062,17 @@ class OptionsEditWin(GenericEditWin):
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
-        pixbuf, name = model[tree_iter][:2]
-        self.edit_dict['use_fixed_folder'] = name
-
+        dbid = model[tree_iter][1]
+        if dbid == self.app_obj.fixed_temp_folder.dbid:  
+            self.edit_dict['use_fixed_folder'] = 'temp'
+        elif dbid == self.app_obj.fixed_misc_folder.dbid:  
+            self.edit_dict['use_fixed_folder'] = 'misc'
+        elif dbid == self.app_obj.fixed_clips_folder.dbid:  
+            self.edit_dict['use_fixed_folder'] = 'clips'
+        else:
+            # Failsafe
+            self.edit_dict['use_fixed_folder'] = None
+        
 
     def on_fixed_folder_toggled(self, checkbutton, combo):
 
@@ -9064,8 +9095,17 @@ class OptionsEditWin(GenericEditWin):
 
             tree_iter = combo.get_active_iter()
             model = combo.get_model()
-            pixbuf, name = model[tree_iter][:2]
-            self.edit_dict['use_fixed_folder'] = name
+            dbid = model[tree_iter][1]
+            if dbid == self.app_obj.fixed_temp_folder.dbid:  
+                self.edit_dict['use_fixed_folder'] = 'temp'
+            elif dbid == self.app_obj.fixed_misc_folder.dbid:  
+                self.edit_dict['use_fixed_folder'] = 'misc'
+            elif dbid == self.app_obj.fixed_clips_folder.dbid:  
+                self.edit_dict['use_fixed_folder'] = 'clips'
+            else:
+                # Failsafe
+                self.edit_dict['use_fixed_folder'] = None
+                
             combo.set_sensitive(True)
 
 
@@ -14244,7 +14284,7 @@ class VideoEditWin(GenericEditWin):
         grid2.attach(button, 1, 0, 1, 1)
         button.set_tooltip_text(_('Set the file (if this is the wrong one)'))
         if self.edit_obj.parent_obj.name \
-        in self.app_obj.media_unavailable_dict:
+        in self.app_obj.container_unavailable_dict:
             button.set_sensitive(False)
         # (Signal connect appears below)
 
@@ -14513,10 +14553,10 @@ class VideoEditWin(GenericEditWin):
             checkbutton.set_active(True)
         checkbutton.set_sensitive(False)
 
-        if self.edit_obj.live_mode \
-        and not self.edit_obj.parent_obj.name \
-        in self.app_obj.media_unavailable_dict:
-
+        if self.edit_obj.live_mode and not (
+            self.edit_obj.parent_obj.dbid \
+            in self.app_obj.container_unavailable_dict
+        ):
             # Livestream actions
             self.add_label(grid,
                 '<u>' + _('Livestream actions') + '</u>',
@@ -17014,8 +17054,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
         # If 'playlist_title' is not specified, the just check for duplicate
         #   URLs; if a new playlist is created, create an artificial title
         if playlist_title != '' \
-        and playlist_title in self.app_obj.media_name_dict:
-
+        and not self.app_obj.is_container(playlist_title):
+            
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The name \'{0}\' is already in use').format(playlist_title),
                 'error',
@@ -17040,7 +17080,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 self,           # Parent window is this window
             )
 
-        for dbid in self.app_obj.media_name_dict.values():
+        for dbid in self.app_obj.container_reg_dict.keys():
 
             media_data_obj = self.app_obj.media_reg_dict[dbid]
             if not isinstance(media_data_obj, media.Folder) \
@@ -17126,7 +17166,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
             playlist_title = self.edit_obj.playlist_id_dict[playlist_id]
 
             if playlist_title != '' \
-            and playlist_title in self.app_obj.media_name_dict:
+            and not self.app_obj.is_container(playlist_title):
                 fail_count += 1
                 continue
 
@@ -17142,7 +17182,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 continue
 
             match_flag = False
-            for dbid in self.app_obj.media_name_dict.values():
+            for dbid in self.app_obj.container_reg_dict.keys():
 
                 media_data_obj = self.app_obj.media_reg_dict[dbid]
                 if not isinstance(media_data_obj, media.Folder) \
@@ -17957,7 +17997,7 @@ class FolderEditWin(GenericEditWin):
 
 
 class ScheduledEditWin(GenericEditWin):
-
+    
     """Python class for an 'edit window' to modify values in a media.Scheduled
     object.
 
@@ -18079,16 +18119,15 @@ class ScheduledEditWin(GenericEditWin):
         # Since the edit window opened, channels/playlists/folders may have
         #   been deleted. Check that any items in the .media_list IV still
         #   exist
-        for name in self.edit_obj.media_list:
+        for dbid in self.edit_obj.media_list:
 
-            if not name in self.app_obj.media_name_dict:
-                self.edit_obj.media_list.remove(name)
+            if not dbid in self.app_obj.container_reg_dict:
+                self.edit_obj.media_list.remove(dbid)
 
         # Update the parent preference window's list of scheduled downloads
         for win_obj in self.app_obj.main_win_obj.config_win_list:
 
             if isinstance(win_obj, SystemPrefWin):
-
                 win_obj.setup_scheduling_start_tab_update_treeview()
 
 
@@ -18594,23 +18633,45 @@ class ScheduledEditWin(GenericEditWin):
             0, 3, grid_width, 1,
         )
 
-        treeview, liststore = self.add_treeview(grid,
-            0, 4, grid_width, 1,
-        )
+        # Create a treeview, containing the .dbid (invisible) and .name
+        #   (visible) for each media data object added
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 4, grid_width, 1)
+
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+
+        treestore = Gtk.ListStore(int, str)
+
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_model(treestore)
+        treeview.set_headers_visible(False)
         treeview.set_hexpand(True)
 
+        renderer_text = Gtk.CellRendererText()
+        column_text = Gtk.TreeViewColumn(
+            '',
+            renderer_text,
+            text=1,
+        )
+        treeview.append_column(column_text)
+
         # Initialise the treeview
-        self.setup_media_tab_update_treeview(liststore)
+        self.setup_media_tab_update_treeview(treestore)
 
         # Set up drag and drop into the treeview
-        drag_target_list = [('video index', 0, 0)]
+        drag_target_list = [('text/plain', 0, 0)]
         treeview.enable_model_drag_dest(
             # Table of targets the drag procedure supports, and array length
             drag_target_list,
             # Bitmask of possible actions for a drag from this widget
             Gdk.DragAction.DEFAULT,
         )
-        treeview.connect('drag-drop',
+        treeview.connect(
+            'drag-drop',
             self.on_video_index_drag_drop,
         )
         treeview.connect(
@@ -18619,20 +18680,27 @@ class ScheduledEditWin(GenericEditWin):
         )
 
         # Editing widgets
-        combo_list = []
-        for dbid in self.app_obj.media_name_dict.values():
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
+        obj_list = []
+        for media_data_obj in self.app_obj.container_reg_dict.values():
 
             if not isinstance(media_data_obj, media.Folder) \
             or not media_data_obj.fixed_flag:
-                combo_list.append(media_data_obj.name)
+                obj_list.append(media_data_obj)
 
-        combo_list.sort()
-        combo = self.add_combo(grid,
-            combo_list,
-            None,
-            0, 5, 1, 1,
-        )
+        obj_list.sort(key=lambda x: x.name.lower())
+
+        combostore = Gtk.ListStore(int, str)
+        for media_data_obj in obj_list:
+            combostore.append( [media_data_obj.dbid, media_data_obj.name] )
+            
+        combo = Gtk.ComboBox.new_with_model(combostore)
+        grid.attach(combo, 0, 5, 1, 1)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 1)
+
+        combo.set_entry_text_column(1)
         combo.set_active(0)
 
         button = Gtk.Button()
@@ -18642,7 +18710,7 @@ class ScheduledEditWin(GenericEditWin):
             'clicked',
             self.on_add_media_button_clicked,
             combo,
-            liststore,
+            treestore,
         )
 
         button2 = Gtk.Button()
@@ -18651,7 +18719,6 @@ class ScheduledEditWin(GenericEditWin):
         button2.connect(
             'clicked',
             self.on_remove_media_button_clicked,
-            combo,
             treeview,
         )
 
@@ -18661,7 +18728,7 @@ class ScheduledEditWin(GenericEditWin):
         button3.connect(
             'clicked',
             self.on_clear_media_button_clicked,
-            liststore,
+            treestore,
         )
 
 
@@ -18682,13 +18749,14 @@ class ScheduledEditWin(GenericEditWin):
         liststore.clear()
 
         media_list = self.retrieve_val('media_list')
-        for name in media_list:
+        for dbid in media_list:
 
             # This media data object may be deleted while the window is open
             #   (but the .media_list IV is checked, when the 'Save' or 'Apply'
             #   buttons are clicked)
-            if name in self.app_obj.media_name_dict:
-                liststore.append([name])
+            if dbid in self.app_obj.container_reg_dict:
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+                liststore.append([media_data_obj.dbid, media_data_obj.name])
 
 
     def setup_limits_tab(self):
@@ -18815,16 +18883,16 @@ class ScheduledEditWin(GenericEditWin):
 
         combo_iter = combo.get_active_iter()
         combo_model = combo.get_model()
-        name = combo_model[combo_iter][0]
+        dbid = combo_model[combo_iter][0]
 
         # Check the media data object hasn't already been added to the list,
         #   and that is still exists in the media data registry
         media_list = self.retrieve_val('media_list')
 
-        if not (name in media_list) \
-        and name in self.app_obj.media_name_dict:
+        if not dbid in media_list \
+        and dbid in self.app_obj.container_reg_dict:
 
-            media_list.append(name)
+            media_list.append(dbid)
             self.edit_dict['media_list'] = media_list
 
             self.radiobutton2.set_active(True)
@@ -18959,16 +19027,13 @@ class ScheduledEditWin(GenericEditWin):
             combo2.set_sensitive(False)
 
 
-    def on_remove_media_button_clicked(self, button, combo, treeview):
+    def on_remove_media_button_clicked(self, button, treeview):
 
         """Called by callback in self.setup_media_tab().
 
         Args:
 
             button (Gtk.Button): The widget clicked
-
-            combo (Gtk.ComboBox): A combo in which the user has selected a new
-                media data object
 
             treeview (Gtk.TreeView): The list of media data objects
 
@@ -18983,16 +19048,14 @@ class ScheduledEditWin(GenericEditWin):
 
         else:
 
-            name = model[tree_iter][0]
+            dbid = model[tree_iter][0]
 
         # Check the media data object exists in the list and in the media data
         #   registry
         media_list = self.retrieve_val('media_list')
+        if dbid in media_list:
 
-        if name in media_list \
-        and name in self.app_obj.media_name_dict:
-
-            media_list.remove(name)
+            media_list.remove(dbid)
             self.edit_dict['media_list'] = media_list
 
             # Update widgets
@@ -19150,7 +19213,7 @@ class ScheduledEditWin(GenericEditWin):
             timestamp (int): Ignored
 
         """
-
+        
         # Must override the usual Gtk handler
         treeview.stop_emission('drag_data_received')
 
@@ -19160,22 +19223,21 @@ class ScheduledEditWin(GenericEditWin):
         (model, start_iter) = old_selection.get_selected()
         if start_iter is not None:
 
-            drag_name = model[start_iter][1]
+            drag_dbid = model[start_iter][0]
 
             # Check the media data object hasn't already been added to the
             #   list, and that is still exists in the media data registry
             media_list = self.retrieve_val('media_list')
-            if not (drag_name in media_list) \
-            and drag_name in self.app_obj.media_name_dict:
-
+            if not drag_dbid in media_list \
+            and drag_dbid in self.app_obj.container_reg_dict:
+                
                 # (System folders can't be dragged here)
-                dbid = self.app_obj.media_name_dict[drag_name]
-                media_data_obj = self.app_obj.media_reg_dict[dbid]
+                media_data_obj = self.app_obj.media_reg_dict[drag_dbid]
 
                 if not isinstance(media_data_obj, media.Folder) \
                 or not media_data_obj.fixed_flag:
 
-                    media_list.append(drag_name)
+                    media_list.append(drag_dbid)
                     self.edit_dict['media_list'] = media_list
 
                     self.radiobutton2.set_active(True)
@@ -20857,7 +20919,7 @@ class SystemPrefWin(GenericPrefWin):
 
 
     def setup_files_urls_tab_update_treeview(self, button=None):
-
+        
         """ Called by self.setup_files_urls_tab().
 
         Fills or updates the treeview.
@@ -20872,22 +20934,17 @@ class SystemPrefWin(GenericPrefWin):
 
         # Prepare a sorted list of channels/playlists to display in the
         #   treeview
-        name_list = []
-        for dbid in self.app_obj.media_name_dict.values():
-
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
+        obj_list = []
+        for media_data_obj in self.app_obj.container_reg_dict.values():
 
             if isinstance(media_data_obj, media.Channel) \
             or isinstance(media_data_obj, media.Playlist):
-                name_list.append(media_data_obj.name)
+                obj_list.append(media_data_obj)
 
-        name_list.sort()
+        obj_list.sort(key=lambda x: x.name.lower())
 
         # Add each channel/playlist to the treeview, one row at a time
-        for name in name_list:
-
-            dbid = self.app_obj.media_name_dict[name]
-            media_data_obj = self.app_obj.media_reg_dict[dbid]
+        for media_data_obj in obj_list:
             self.setup_files_urls_tab_add_row(media_data_obj)
 
 
@@ -27227,21 +27284,8 @@ class SystemPrefWin(GenericPrefWin):
 
         # Check the entered text is a valid name
         if text == '' \
-        or re.search('^\s*$', test) \
+        or re.search('^\s*$', text) \
         or not self.app_obj.check_container_name_is_legal(text):
-            return
-
-        elif text in self.app_obj.media_name_dict:
-
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                _('The name \'{0}\' is already in use').format(text),
-                'error',
-                'ok',
-                self,           # Parent window is this window
-            )
-
-        elif not self.app_obj.check_container_name_is_legal(text):
-
             return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The name \'{0}\' is not allowed').format(text),
                 'error',
@@ -27261,8 +27305,31 @@ class SystemPrefWin(GenericPrefWin):
                 # No change
                 return
 
+            # Check that the parent folder doesn't already have a container
+            #   with the same name
+            if (
+                media_data_obj.parent_obj is not None \
+                and self.app_obj.find_duplicate_name_in_container(
+                    media_data_obj.parent_obj,
+                    text,
+                )
+            ) or (
+                media_data_obj.parent_obj is None \
+                and self.app_obj.find_duplicate_name_in_container(None, text)
+            ):
+                return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _(
+                        'There is already a channel, playlist or folder' \
+                        + ' called \'{0}\'',
+                    ).format(text),
+                    'error',
+                    'ok',
+                    self,           # Parent window is this window
+                )
+                
             if not checkbutton.get_active():
 
+                # Rename without confirmation
                 if self.app_obj.rename_container_silently(
                     media_data_obj,
                     text,
@@ -27271,6 +27338,7 @@ class SystemPrefWin(GenericPrefWin):
 
             else:
 
+                # Seek confirmation before renaming
                 if isinstance(media_data_obj, media.Channel):
                     msg = _('Are you sure you want to rename this channel?')
                 elif isinstance(media_data_obj, media.Playlist):
@@ -27551,9 +27619,9 @@ class SystemPrefWin(GenericPrefWin):
         colorbutton.set_rgba(custom_rgba_obj)
 
         # Update the Video Catalogue to show the new colour
-        if self.app_obj.main_win_obj.video_index_current is not None:
+        if self.app_obj.main_win_obj.video_index_current_dbid is not None:
             self.app_obj.main_win_obj.video_catalogue_redraw_all(
-                self.app_obj.main_win_obj.video_index_current,
+                self.app_obj.main_win_obj.video_index_current_dbid,
             )
 
 
@@ -28369,9 +28437,9 @@ class SystemPrefWin(GenericPrefWin):
         colorbutton2.set_rgba(custom_rgba_obj)
 
         # Update the Video Catalogue to show the new colour
-        if self.app_obj.main_win_obj.video_index_current is not None:
+        if self.app_obj.main_win_obj.video_index_current_dbid is not None:
             self.app_obj.main_win_obj.video_catalogue_redraw_all(
-                self.app_obj.main_win_obj.video_index_current,
+                self.app_obj.main_win_obj.video_index_current_dbid,
             )
 
         # Return True so the colour selection dialogue is not opened
@@ -28766,7 +28834,7 @@ class SystemPrefWin(GenericPrefWin):
 
             return
 
-        if not 'media_name_dict' in load_dict \
+        if not 'container_reg_dict' in load_dict \
         or not 'media_reg_dict' in load_dict:
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('This file does is not compatible with Tartube'),
@@ -28777,7 +28845,7 @@ class SystemPrefWin(GenericPrefWin):
 
             return
 
-        elif len(load_dict['media_name_dict']) == 0:
+        elif len(load_dict['container_reg_dict']) == 0:
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('This file was loaded, but is empty'),
                 'error',
@@ -28787,14 +28855,14 @@ class SystemPrefWin(GenericPrefWin):
 
             return
 
-        # Prepare a dictionary in the same form exporeted by
+        # Prepare a dictionary in the same form exported by
         #   mainapp.TartubeApp.export_from_db()
-        media_name_dict = load_dict['media_name_dict']
+        container_reg_dict = load_dict['container_reg_dict']
         local = utils.get_local_time()
         db_dict = {}
         count = 0
 
-        for dbid in media_name_dict.values():
+        for dbid in self.app_obj.container_reg_dict.keys():
 
             if not dbid in load_dict['media_reg_dict']:
                 continue
@@ -29008,7 +29076,7 @@ class SystemPrefWin(GenericPrefWin):
         # Redraw the Video Catalogue, at its current page
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 
@@ -29065,7 +29133,7 @@ class SystemPrefWin(GenericPrefWin):
         # Redraw the Video Catalogue, at its current page
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 
@@ -29677,7 +29745,7 @@ class SystemPrefWin(GenericPrefWin):
         #   backgrounds
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 
@@ -29789,7 +29857,7 @@ class SystemPrefWin(GenericPrefWin):
         #   backgrounds
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 
@@ -31044,7 +31112,7 @@ class SystemPrefWin(GenericPrefWin):
         # Redraw the Video Catalogue, at its current page
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 
@@ -31131,7 +31199,7 @@ class SystemPrefWin(GenericPrefWin):
         # Redraw the Video Catalogue, at its current page
         main_win_obj = self.app_obj.main_win_obj
         main_win_obj.video_catalogue_redraw_all(
-            main_win_obj.video_index_current,
+            main_win_obj.video_index_current_dbid,
             main_win_obj.catalogue_toolbar_current_page,
         )
 

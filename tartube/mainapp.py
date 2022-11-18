@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Main application class."""
@@ -351,7 +351,7 @@ class TartubeApp(Gtk.Application):
         #   back to False when it stops
         # If the code crashes because of a python error, it won't be obvious
         #   to the user that the load has failed. Instead, before starting an
-        #   operation, this flag is checked and, if true, the operation does
+        #   operation, this flag is checked and, if True, the operation does
         #   not start and load/save is disabled as normal
         # N.B. This is a failsafe; in most cases, an interrupted database load
         #   leaves widgets such as the 'Check all' and 'Download all' buttons
@@ -404,7 +404,7 @@ class TartubeApp(Gtk.Application):
         #   icons are not visible, for some reason)
         self.show_custom_icons_flag = True
         # Flag set to True if a marker should be visible on each row in the
-        #   Video Index, false if not
+        #   Video Index, False if not
         self.show_marker_in_index_flag = True
         # Flag set to True if small icons should be used in the Video Index,
         #   False if large icons should be used
@@ -1301,10 +1301,37 @@ class TartubeApp(Gtk.Application):
         #   media.Playlist objects can have media.Video objects as their
         #   children. media.Video objects don't have any children
         #
-        # The media data registry
-        # Every media data object has a unique .dbid (which is an integer). The
-        #   number of media data objects ever created (including any that have
-        #   been deleted), used to give new media data objects their .dbid
+        # Every media data object has a unique .dbid (which is an integer)
+        # Every media data object has a non-unique .name (which is a string)
+        #
+        # media.Video objects may use any value as their .name, subject to the
+        #   following restrictions:
+        #   1. The name must not be longer than the filesystem's maximum file
+        #       length
+        #   2. On MS Windows, some filenames are illegal (see
+        #       self.illegal_name_mswin_list below)
+        #
+        # media.Channel, media.Playlist and media.Folder objects may use any
+        #   value as their .name, subject to the following restrictions:
+        #   1. The name must not be longer than self.container_name_max_len
+        #       (set below)
+        #   2. On MS Windows, some filenames are illegal (see
+        #       self.illegal_name_mswin_list below)
+        #   3. The name "downloads" (all lower-case) is not allowed. (This is
+        #       to prevent problems caused by Tartube's old database directoy
+        #       structure, which had a sub-directory called "downloads". A
+        #       couple of other names are not allowed (see
+        #       self.illegal_name_regex_list below)
+        #   4. A media.Folder may not contain more than one child channel/
+        #       playlist/folder with the same name. Likewise, the top-level
+        #       container list may not contain channels/playlist/folders with
+        #       the same name. Otherwise, duplicate containers are allowed
+        #       (for example, two channels both called "Test", one inside a
+        #       folder called "Folder 1", the other inside a folder called
+        #       "Folder 2"
+        #
+        # The number of media data objects ever created (including any that
+        #   have been deleted), used to give new media data objects their .dbid
         self.media_reg_count = 0
         # A dictionary containing all media data objects (but not those which
         #   have been deleted)
@@ -1312,18 +1339,21 @@ class TartubeApp(Gtk.Application):
         #   key = media data object's unique .dbid
         #   value = the media data object itself
         self.media_reg_dict = {}
-        # media.Channel, media.Playlist and media.Folder objects must have
-        #   unique .name IVs
-        # (A channel and a playlist can't have the same name. Videos within a
-        #   single channel, playlist or folder can't have the same name.
-        #   Videos with different parent objects CAN have the same name)
-        # A dictionary used to check that media.Channel, media.Playlist and
-        #   media.Folder objects have unique .name IVs (and to look up names
-        #   quickly)
+        # A subset of the media data registry, containing only media.Channel,
+        #   media.Playlist and media.Folder objects
+        # Dictionary in the form
+        #   key = media data object's unique .dbid
+        #   value = the media data object itself
+        self.container_reg_dict = {}
+        # For backwards compatibility (versions before v2.4.117), a temporary
+        #   copy of the old container dictionary in its old format
+        # It is populated when the database is loaded, then the data is
+        #   converted to the new format and moved to
+        #   self.container_reg_dict during the call to self.update_db()
         # Dictionary in the form
         #   key = media data object's .name
         #   value = media data object's unique .dbid
-        self.media_name_dict = {}
+        self.old_container_reg_dict = {}
         # media.Channel, media.Playlist and media.Folder objects can have an
         #   external directory set (i.e. videos are downloaded outside of
         #   Tartube's data directory)
@@ -1336,10 +1366,12 @@ class TartubeApp(Gtk.Application):
         #   is loaded
         # Channels/playlists/folders added to this dictionary cannot be
         #   checked/downloaded/custom downloaded
+        # A subset of the media data registry, containing only media.Channel,
+        #   media.Playlist and media.Folder objects
         # Dictionary in the form
-        #   key = media data object's .name
-        #   value = media data object's unique .dbid
-        self.media_unavailable_dict = {}
+        #   key = media data object's unique .dbid
+        #   value = the media data object itself
+        self.container_unavailable_dict = {}
         # An ordered list of media.Channel, media.Playlist and media.Folder
         #   objects which have no parents (in the order they're displayed)
         # This list, combined with each media data object's child list, is
@@ -1366,17 +1398,17 @@ class TartubeApp(Gtk.Application):
         #               Video
         # A list of .dbid IVs for all top-level media.Channel, media.Playlist
         #   and media.Folder objects
-        self.media_top_level_list = []
+        self.container_top_level_list = []
         # The maximum depth of the media registry. The diagram above shows
         #   channels on the 2nd level and playlists on the third level.
         #   Container objects cannot be added beyond the following level
-        self.media_max_level = 8
-        # Standard name for a media.Video object, when the actual name of the
-        #   video is not yet known
-        self.default_video_name = '(video with no name)'
+        self.container_max_level = 8
         # The maximum length of channel, playlist and folder names (does not
         #   apply to video names)
         self.container_name_max_len = 64
+        # Standard name for a media.Video object, when the actual name of the
+        #   video is not yet known
+        self.default_video_name = '(video with no name)'
         # Forbidden names for channels, playlists and folders. This is to
         #   prevent the user overwriting directories in self.data_dir, that
         #   Tartube uses for its own purposes, and to prevent the user fooling
@@ -1495,8 +1527,8 @@ class TartubeApp(Gtk.Application):
 
         # A list of media.Video objects the user wants to watch, as soon as
         #   they have been downloaded. Videos are added by a call to
-        #   self.watch_after_dl_list(), and removed by a call to
-        #   self.announce_video_download()
+        #   self.download_watch_videos(), and removed by a call to
+        #   self.announce_video_download(), etc
         self.watch_after_dl_list = []
 
         # The edit/preference windows can draw graphs. The format of the graphs
@@ -1537,7 +1569,7 @@ class TartubeApp(Gtk.Application):
         #   switch between them
         # Dictionary in the form
         #   key = unique name for the profile
-        #   value = list of .dbdis for media.Channel, media.Playlist and
+        #   value = list of .dbid values for media.Channel, media.Playlist and
         #       media.Folder items
         self.profile_dict = {}
         # The profile which was most recently created, or to which the user
@@ -3280,7 +3312,7 @@ class TartubeApp(Gtk.Application):
 
         # Load translations, if available
         self.apply_locale()
-                
+
         # Set youtube-dl path IVs
         self.setup_paths()
 
@@ -3939,7 +3971,7 @@ class TartubeApp(Gtk.Application):
 
 
     def system_exception(self, except_type, value, details):
-    
+
         """Called after an uncaught exception is handled.
 
         Displays a message in the Errors/Warnings tab, so ordinary users can
@@ -3959,8 +3991,8 @@ class TartubeApp(Gtk.Application):
             f"Value: {value}\n" \
             f"Traceback: {details}",
         )
-        
-    
+
+
     # (Config/database files load/save)
 
 
@@ -4111,11 +4143,11 @@ class TartubeApp(Gtk.Application):
             return False
 
         # Set IVs to their new values
-        
+
         # Removed v2.4.103
 #       if version >= 2000081:  # v2.0.081
 #           self.custom_locale = json_dict['custom_locale']
-        
+
         if version >= 2002075:  # v2.2.075
             self.thumb_size_custom = json_dict['thumb_size_custom']
 
@@ -5915,14 +5947,13 @@ class TartubeApp(Gtk.Application):
 
             return False
 
-        # Before v1.3.099, self.data_dir and self.downloads_dir were different
+        # Before v1.3.099, self.data_dir and self.downloads_dir had different
+        #   values
         # If a /downloads directory exists, then the data directory is using
         #   the old structure
-        old_flag = False
         if os.path.isdir(self.alt_downloads_dir):
 
             # Use the old location of self.downloads_dir
-            old_flag = True
             self.downloads_dir = self.alt_downloads_dir
             # Move any database backup files to their new location
             self.move_backup_files()
@@ -5940,8 +5971,15 @@ class TartubeApp(Gtk.Application):
             self.classic_custom_dl_obj = load_dict['classic_custom_dl_obj']
         self.media_reg_count = load_dict['media_reg_count']
         self.media_reg_dict = load_dict['media_reg_dict']
-        self.media_name_dict = load_dict['media_name_dict']
-        self.media_top_level_list = load_dict['media_top_level_list']
+        if version >= 2004132:   # v2.4.132
+            self.container_reg_dict = load_dict['container_reg_dict']
+            self.old_container_reg_dict = {}
+            self.container_top_level_list \
+            = load_dict['container_top_level_list']
+        else:
+            self.container_reg_dict = {}
+            self.old_container_reg_dict = load_dict['media_name_dict']
+            self.container_top_level_list = load_dict['media_top_level_list']
         if version >= 2000048:  # v2.0.048
             self.media_reg_live_dict = load_dict['media_reg_live_dict']
         if version >= 2000052:  # v2.0.052
@@ -6013,15 +6051,15 @@ class TartubeApp(Gtk.Application):
         #   directory above
         # To prevent problems when that happens, preemptively rename any media
         #   data object called 'downloads'
-        if old_flag and 'downloads' in self.media_name_dict:
-
-            dbid = self.media_name_dict['downloads']
-            media_data_obj = self.media_reg_dict[dbid]
+        # N.B. As of v2.4.132, 'downloads' is an illegal container name, so we
+        #   now perform the check regardless of whether the old directory
+        #   structure was detected above
+        for container_obj in self.get_container_list('downloads'):
 
             # Generate a new name; the function returns None on failure
             new_name = utils.find_available_name(self, 'downloads')
             if new_name is not None:
-                self.rename_container_silently(media_data_obj, new_name)
+                self.rename_container_silently(container_obj, new_name)
 
         # If the locale has changed since the loaded database file was last
         #   saved, update the names of fixed folders
@@ -6136,7 +6174,6 @@ class TartubeApp(Gtk.Application):
         for media_data_obj in self.media_reg_dict.values():
             if media_data_obj.options_obj is not None \
             and not media_data_obj.options_obj in options_obj_list:
-#                options_obj_list.append(media_data_obj.options_obj)
                 options_media_list.append(media_data_obj)
 
         if version < 3012:          # v0.3.012
@@ -6233,7 +6270,7 @@ class TartubeApp(Gtk.Application):
                 self.fixed_temp_folder,
             ]
 
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_list.append(self.media_reg_dict[dbid])
 
             for container_obj in container_list:
@@ -6255,7 +6292,7 @@ class TartubeApp(Gtk.Application):
             #   and then re-adding the same video, downloading it then deleting
             #   it a second time, messes up the parent container's count IVs
             # Nothing for it but to recalculate them all, just in case
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_obj = self.media_reg_dict[dbid]
 
                 vid_count = new_count = fav_count = dl_count = 0
@@ -6287,7 +6324,7 @@ class TartubeApp(Gtk.Application):
         if version < 1000013:       # v1.0.013
 
             # This version adds nicknames to channels, playlists and folders
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_obj = self.media_reg_dict[dbid]
                 container_obj.nickname = container_obj.name
 
@@ -6329,7 +6366,7 @@ class TartubeApp(Gtk.Application):
 
             # This version adds the ability to disable checking/downloading for
             #   media data objects
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 media_data_obj = self.media_reg_dict[dbid]
                 media_data_obj.dl_disable_flag = False
 
@@ -6345,7 +6382,7 @@ class TartubeApp(Gtk.Application):
 
             # This version adds alternative destination directories for a
             #   channel's/playlist's/folder's videos, thumbnails (etc)
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 media_data_obj = self.media_reg_dict[dbid]
                 media_data_obj.master_dbid = media_data_obj.dbid
                 media_data_obj.slave_dbid_list = []
@@ -6499,10 +6536,10 @@ class TartubeApp(Gtk.Application):
 
             # In this version, some container names have become illegal.
             #   Replace any illegal names with legal ones
-            for old_name in self.media_name_dict.keys():
+            for old_name in self.old_container_reg_dict.keys():
                 if not self.check_container_name_is_legal(old_name):
 
-                    dbid = self.media_name_dict[old_name]
+                    dbid = self.old_container_reg_dict[old_name]
                     media_data_obj = self.media_reg_dict[dbid]
 
                     # Generate a new name. The -1 argument means to keep going
@@ -6557,9 +6594,9 @@ class TartubeApp(Gtk.Application):
             = [formats.FOLDER_BOOKMARKS, formats.FOLDER_WAITING_VIDEOS]
             for old_name in old_list:
 
-                if old_name in self.media_name_dict:
+                if old_name in self.old_container_reg_dict:
 
-                    dbid = self.media_name_dict[old_name]
+                    dbid = self.old_container_reg_dict[old_name]
                     media_data_obj = self.media_reg_dict[dbid]
 
                     # Generate a new name. The -1 argument means to keep going
@@ -6594,7 +6631,7 @@ class TartubeApp(Gtk.Application):
 
             # Having added new fixed folders, add corresponding new IVs for
             #   each media.Video object
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_obj = self.media_reg_dict[dbid]
 
                 for child_obj in container_obj.child_list:
@@ -6605,7 +6642,7 @@ class TartubeApp(Gtk.Application):
         if version < 1004037:       # v1.4.037
 
             # This version adds new IVs to channels, playlists and folders
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_obj = self.media_reg_dict[dbid]
 
                 container_obj.bookmark_count = 0
@@ -6673,16 +6710,16 @@ class TartubeApp(Gtk.Application):
         if version < 2000042:       # v2.0.042
 
             # This version adds new IVs to channels, playlists and folders
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 container_obj = self.media_reg_dict[dbid]
 
                 container_obj.live_count = 0
 
             # This version also creates a new fixed folder. If there are
             #   existing folders with the same name, they must be renamed
-            if formats.FOLDER_LIVESTREAMS in self.media_name_dict:
+            if formats.FOLDER_LIVESTREAMS in self.old_container_reg_dict:
 
-                dbid = self.media_name_dict[formats.FOLDER_LIVESTREAMS]
+                dbid = self.old_container_reg_dict[formats.FOLDER_LIVESTREAMS]
                 media_data_obj = self.media_reg_dict[dbid]
 
                 # Generate a new name. The -1 argument means to keep going
@@ -6765,9 +6802,10 @@ class TartubeApp(Gtk.Application):
 
             # This version adds a new fixed folder. If there is an existing
             #   folder with the same name, it must be renamed
-            if formats.FOLDER_MISSING_VIDEOS in self.media_name_dict:
+            if formats.FOLDER_MISSING_VIDEOS in self.old_container_reg_dict:
 
-                dbid = self.media_name_dict[formats.FOLDER_MISSING_VIDEOS]
+                dbid \
+                = self.old_container_reg_dict[formats.FOLDER_MISSING_VIDEOS]
                 media_data_obj = self.media_reg_dict[dbid]
 
                 # Generate a new name. The -1 argument means to keep going
@@ -6790,7 +6828,7 @@ class TartubeApp(Gtk.Application):
 
             # Having added new the fixed folder, add a corresponding new IV for
             #   each media.Video object
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
 
                 container_obj = self.media_reg_dict[dbid]
                 container_obj.missing_count = 0
@@ -6982,9 +7020,10 @@ class TartubeApp(Gtk.Application):
 
             # This version adds a new fixed folder. If there is an existing
             #   folder with the same name, it must be renamed
-            if formats.FOLDER_RECENT_VIDEOS in self.media_name_dict:
+            if formats.FOLDER_RECENT_VIDEOS in self.old_container_reg_dict:
 
-                dbid = self.media_name_dict[formats.FOLDER_RECENT_VIDEOS]
+                dbid \
+                = self.old_container_reg_dict[formats.FOLDER_RECENT_VIDEOS]
                 media_data_obj = self.media_reg_dict[dbid]
 
                 # Generate a new name. The -1 argument means to keep going
@@ -7071,9 +7110,9 @@ class TartubeApp(Gtk.Application):
 
             # This version adds a new fixed folder. If there is an existing
             #   folder with the same name, it must be renamed
-            if formats.FOLDER_VIDEO_CLIPS in self.media_name_dict:
+            if formats.FOLDER_VIDEO_CLIPS in self.old_container_reg_dict:
 
-                dbid = self.media_name_dict[formats.FOLDER_VIDEO_CLIPS]
+                dbid = self.old_container_reg_dict[formats.FOLDER_VIDEO_CLIPS]
                 media_data_obj = self.media_reg_dict[dbid]
 
                 # Generate a new name. The -1 argument means to keep going
@@ -7139,7 +7178,7 @@ class TartubeApp(Gtk.Application):
             # In order to avoid any nasty surprises, update the IV for all
             #   descendants of any channel/playlist/folder whose
             #   .dl_disable_flag is True
-            check_list = self.media_top_level_list.copy()
+            check_list = self.container_top_level_list.copy()
 
             while check_list:
 
@@ -7422,7 +7461,7 @@ class TartubeApp(Gtk.Application):
 
             # This version adds a new IV to media.Channel and media.Playlist
             #   objects
-            for dbid in self.media_name_dict.values():
+            for dbid in self.old_container_reg_dict.values():
                 media_data_obj = self.media_reg_dict[dbid]
                 if not isinstance(media_data_obj, media.Folder):
                     media_data_obj.enhanced \
@@ -7503,6 +7542,47 @@ class TartubeApp(Gtk.Application):
             for options_obj in options_obj_list:
                 options_obj.options_dict['playlist_items'] = ''
 
+        if version < 2004132:       # 2.4.132
+
+            # This version changes the format of media.Scheduled objects'
+            #   media lists
+            for scheduled_obj in self.scheduled_list:
+
+                media_list = []
+                for name in scheduled_obj.media_list:
+                    media_list.append(self.old_container_reg_dict[name])
+
+                scheduled_obj.media_list = media_list
+
+            # This version changes the format of the old container registry,
+            #   temporarily stored in self.old_container_reg_dict
+            for dbid in self.old_container_reg_dict.values():
+
+                # (One can never be certain...)
+                if dbid in self.media_reg_dict:
+                    self.container_reg_dict[dbid] = self.media_reg_dict[dbid]
+
+            self.old_container_reg_dict = []
+
+            # This version modifies the value stored in the 'use_fixed_folder'
+            #   download option, replacing a literal folder name with one of
+            #   three permanent values
+            for options_obj in options_obj_list:
+
+                folder_name = options_obj.options_dict['use_fixed_folder']
+                if folder_name == formats.FOLDER_TEMPORARY_VIDEOS \
+                or folder_name == self.fixed_temp_folder.name:
+                    options_obj.options_dict['use_fixed_folder'] = 'temp'
+                elif folder_name == formats.FOLDER_UNSORTED_VIDEOS \
+                or folder_name == self.fixed_misc_folder.name:
+                    options_obj.options_dict['use_fixed_folder'] = 'misc'
+                elif folder_name == formats.FOLDER_VIDEO_CLIPS \
+                or folder_name == self.fixed_clips_folder.name:
+                    options_obj.options_dict['use_fixed_folder'] = 'clips'
+                else:
+                    # Failsafe
+                    options_obj.options_dict['use_fixed_folder'] = None
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -7580,8 +7660,8 @@ class TartubeApp(Gtk.Application):
             # Media data objects
             'media_reg_count': self.media_reg_count,
             'media_reg_dict': self.media_reg_dict,
-            'media_name_dict': self.media_name_dict,
-            'media_top_level_list': self.media_top_level_list,
+            'container_reg_dict': self.container_reg_dict,
+            'container_top_level_list': self.container_top_level_list,
             'media_reg_live_dict': self.media_reg_live_dict,
             'media_reg_auto_notify_dict': self.media_reg_auto_notify_dict,
             'media_reg_auto_alarm_dict': self.media_reg_auto_alarm_dict,
@@ -8176,8 +8256,9 @@ class TartubeApp(Gtk.Application):
         self.classic_custom_dl_obj = self.create_custom_dl_manager('classic')
         self.media_reg_count = 0
         self.media_reg_dict = {}
-        self.media_name_dict = {}
-        self.media_top_level_list = []
+        self.container_reg_dict = {}
+        self.old_container_reg_dict = []
+        self.container_top_level_list = []
         self.media_reg_live_dict = {}
         self.media_reg_auto_notify_dict = {}
         self.media_reg_auto_alarm_dict = {}
@@ -8282,15 +8363,16 @@ class TartubeApp(Gtk.Application):
         #   because of some failure or other in self.update_db() )
         broken_obj_count = 0
 
-        # Check that entries in self.media_name_dict appear in
+        # Check that entries in self.container_reg_dict appear in
         #   self.media_reg_dict
-        for dbid in self.media_name_dict.values():
-            if not dbid in self.media_reg_dict:
+        for dbid in self.container_reg_dict.keys():
+            if not dbid in self.media_reg_dict \
+            or self.container_reg_dict[dbid] != self.media_reg_dict[dbid]:
                 error_reg_dict[dbid] = None
 
-        # Check that entries in self.media_top_level_list appear in
+        # Check that entries in self.container_top_level_list appear in
         #   self.media_reg_dict
-        for dbid in self.media_top_level_list:
+        for dbid in self.container_top_level_list:
             if not dbid in self.media_reg_dict:
                 error_reg_dict[dbid] = None
 
@@ -8322,10 +8404,10 @@ class TartubeApp(Gtk.Application):
 
         # self.media_reg_dict contains, in theory, every video/channel/
         #   playlist/folder object
-        # Walk the tree whose top level is self.media_top_level_list to get a
-        #   list of all containers
+        # Walk the tree whose top level is self.container_top_level_list to get
+        #   a list of all containers
         toplevel_container_obj_list = []
-        for dbid in self.media_top_level_list:
+        for dbid in self.container_top_level_list:
             if not dbid in error_reg_dict:
                 toplevel_container_obj_list.append(self.media_reg_dict[dbid])
 
@@ -8437,7 +8519,7 @@ class TartubeApp(Gtk.Application):
                             error_reg_dict[child_obj.dbid] = child_obj
 
         # Check that container counts are correct
-        for dbid in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
 
             # (Don't bother checking broken media data objects, since all
             #   counts for all channels/playlists/folders will be recalculated
@@ -8636,19 +8718,14 @@ class TartubeApp(Gtk.Application):
         # Update mainapp.TartubeApp IVs
         for dbid in error_reg_dict.keys():
 
-            # (The corresponding media.Video, media.Channel, media.Playlist or
-            #   media.Folder may be known, or not)
-            error_obj = error_reg_dict[dbid]
-
             if dbid in self.media_reg_dict:
                 del self.media_reg_dict[dbid]
 
-            if error_obj is not None \
-            and error_obj.name in self.media_name_dict:
-                del self.media_name_dict[error_obj.name]
+            if dbid in self.container_reg_dict:
+                del self.container_reg_dict[dbid]
 
-            if dbid in self.media_top_level_list:
-                self.media_top_level_list.remove(dbid)
+            if dbid in self.container_top_level_list:
+                self.container_top_level_list.remove(dbid)
 
             if dbid in self.media_reg_live_dict:
                 del self.media_reg_live_dict[dbid]
@@ -8683,7 +8760,7 @@ class TartubeApp(Gtk.Application):
                     media_data_obj.child_list.remove(child_obj)
 
         # Recalculate counts for all channels/playlists/folders
-        for dbid in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
             media_data_obj = self.media_reg_dict[dbid]
             media_data_obj.recalculate_counts()
 
@@ -8882,7 +8959,9 @@ class TartubeApp(Gtk.Application):
         playlist_obj = None
         folder_obj = None
 
-        for media_data_obj in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
+
+            media_data_obj = self.media_reg_dict[dbid]
 
             if isinstance(media_data_obj, media.Channel) and not channel_obj:
 
@@ -9232,14 +9311,14 @@ class TartubeApp(Gtk.Application):
 
         # After loading a new database, clear any existing unavailable
         #   containers
-        self.media_unavailable_dict = {}
+        self.container_unavailable_dict = {}
 
         # (If multiple channels/playlists/folders use a shared external
         #   directory, we don't need to test the directory more than once)
         check_dict = {}
 
         # Now check every container which has an external directory set
-        for dbid in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
 
             media_data_obj = self.media_reg_dict[dbid]
             if media_data_obj.external_dir is not None:
@@ -9247,7 +9326,7 @@ class TartubeApp(Gtk.Application):
                 if media_data_obj.external_dir in check_dict \
                 or not self.check_external_dir(media_data_obj.external_dir):
 
-                    self.media_unavailable_dict[media_data_obj.name] = dbid
+                    self.container_unavailable_dict[dbid] = media_data_obj
                     check_dict[media_data_obj.external_dir] = None
 
 
@@ -9589,10 +9668,7 @@ class TartubeApp(Gtk.Application):
 
         # If there is (by chance) a folder with the same name, it must be
         #   renamed
-        if new_name in self.media_name_dict:
-
-            other_dbid = self.media_name_dict[new_name]
-            other_obj = self.media_reg_dict[other_dbid]
+        for other_obj in self.get_container_list(new_name):
 
             # Sanity check: don't rename another fixed folder
             if isinstance(other_obj, media.Folder) and other_obj.fixed_flag:
@@ -9658,7 +9734,7 @@ class TartubeApp(Gtk.Application):
         # (Must compile a list of top-level container objects first, or Python
         #   will complain about the dictionary changing size)
         obj_list = []
-        for dbid in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
             obj_list.append(self.media_reg_dict[dbid])
 
         for media_data_obj in obj_list:
@@ -9686,11 +9762,11 @@ class TartubeApp(Gtk.Application):
         """Called by self.stop_continue().
 
         Checks all folders marked temporary. Any of them that contain videos
-        are opened on the desktop (so the user can more conveniently copy
+        are opened on the desktop (so it's more convenient for the user to copy
         things out of them, before they are deleted.)
         """
 
-        for dbid in self.media_name_dict.values():
+        for dbid in self.container_reg_dict.keys():
             media_data_obj = self.media_reg_dict[dbid]
 
             if isinstance(media_data_obj, media.Folder) \
@@ -10351,7 +10427,7 @@ class TartubeApp(Gtk.Application):
 
         except:
             self.current_locale = formats.LOCALE_DEFAULT
-            
+
 
     # (Operations)
 
@@ -10736,10 +10812,10 @@ class TartubeApp(Gtk.Application):
                 self.fixed_recent_folder,
             )
 
-            if self.main_win_obj.video_index_current \
-            == self.fixed_recent_folder.name:
+            if self.main_win_obj.video_index_current_dbid \
+            == self.fixed_recent_folder.dbid:
                 self.main_win_obj.video_catalogue_redraw_all(
-                    self.main_win_obj.video_index_current,
+                    self.main_win_obj.video_index_current_dbid,
                 )
 
         # Reset the dictionary of channel/playlist names extracted from video
@@ -12162,7 +12238,7 @@ class TartubeApp(Gtk.Application):
 
         # The Video Catalogue must be redrawn
         self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
+            self.main_win_obj.video_index_current_dbid,
         )
 
         # Show a dialogue window/desktop notification, if allowed
@@ -12283,14 +12359,14 @@ class TartubeApp(Gtk.Application):
         #   the Video catalogue
         # (This function is called from the downloads.StreamManager object, so
         #   to prevent a crash, its calls must be wrapped in a timer)
-        if self.main_win_obj.video_index_current \
-        == self.fixed_live_folder.name:
+        if self.main_win_obj.video_index_current_dbid \
+        == self.fixed_live_folder.dbid:
 
             # Livestreams folder visible; just redraw it
             GObject.timeout_add(
                 0,
                 self.main_win_obj.video_catalogue_redraw_all,
-                self.fixed_live_folder.name,
+                self.fixed_live_folder.dbid,
             )
 
         else:
@@ -12664,16 +12740,15 @@ class TartubeApp(Gtk.Application):
 
                 # Create a new media data object for the video
                 options_manager_obj = download_item_obj.options_manager_obj
-                override_name \
+                fixed_folder_obj \
                 = options_manager_obj.options_dict['use_fixed_folder']
-                if override_name is not None \
-                and override_name in self.media_name_dict:
 
-                    other_dbid = self.media_name_dict[override_name]
-                    other_parent_obj = self.media_reg_dict[other_dbid]
-
+                if fixed_folder_obj:
+                    # Download options specify that the parent is the fixed
+                    #   'Temporary Videos', 'Unsorted Videos' or 'Video Clips'
+                    #   folder
                     video_obj = self.add_video(
-                        other_parent_obj,
+                        fixed_folder_obj,
                         None,
                         False,
                         no_sort_flag,
@@ -12779,16 +12854,16 @@ class TartubeApp(Gtk.Application):
         if video_obj is None:
 
             # Create a new media data object for the video
-            override_name \
+            options_manager_obj = download_item_obj.options_manager_obj
+            fixed_folder_obj \
             = options_manager_obj.options_dict['use_fixed_folder']
-            if override_name is not None \
-            and override_name in self.media_name_dict:
 
-                other_dbid = self.media_name_dict[override_name]
-                other_container_obj = self.media_reg_dict[other_dbid]
-
+            if fixed_folder_obj:
+                # Download options specify that the parent is the fixed
+                #   'Temporary Videos', 'Unsorted Videos' or 'Video Clips'
+                #   folder
                 video_obj = self.add_video(
-                    other_container_obj,
+                    fixed_folder_obj,
                     None,
                     False,
                     no_sort_flag,
@@ -12951,11 +13026,11 @@ class TartubeApp(Gtk.Application):
         options_manager_obj = utils.get_options_manager(self, container_obj)
 
         # Create a new media data object for the video
-        override_name = options_manager_obj.options_dict['use_fixed_folder']
-        if override_name is not None and override_name in self.media_name_dict:
-
-            other_dbid = self.media_name_dict[override_name]
-            container_obj = self.media_reg_dict[other_dbid]
+        fixed_folder_obj = options_manager_obj.options_dict['use_fixed_folder']
+        if fixed_folder_obj:
+            # Download options specify that the parent is the fixed 'Temporary
+            #   Videos', 'Unsorted Videos' or 'Video Clips' folder
+            container_obj = fixed_folder_obj
 
         video_obj = self.add_video(
             container_obj,
@@ -13646,7 +13721,7 @@ class TartubeApp(Gtk.Application):
 
         # There is a limit to the number of levels allowed in the media
         #   registry
-        if parent_obj and parent_obj.get_depth() >= self.media_max_level:
+        if parent_obj and parent_obj.get_depth() >= self.container_max_level:
             return self.system_error(
                 142,
                 'Channel exceeds maximum depth of media registry',
@@ -13679,9 +13754,9 @@ class TartubeApp(Gtk.Application):
         # Update IVs
         self.media_reg_count += 1
         self.media_reg_dict[channel_obj.dbid] = channel_obj
-        self.media_name_dict[channel_obj.name] = channel_obj.dbid
+        self.container_reg_dict[channel_obj.dbid] = channel_obj
         if not parent_obj:
-            self.media_top_level_list.append(channel_obj.dbid)
+            self.container_top_level_list.append(channel_obj.dbid)
 
         # Create the directory used by this channel (if it doesn't already
         #   exist)
@@ -13732,7 +13807,7 @@ class TartubeApp(Gtk.Application):
 
         # There is a limit to the number of levels allowed in the media
         #   registry
-        if parent_obj and parent_obj.get_depth() >= self.media_max_level:
+        if parent_obj and parent_obj.get_depth() >= self.container_max_level:
             return self.system_error(
                 145,
                 'Playlist exceeds maximum depth of media registry',
@@ -13765,9 +13840,9 @@ class TartubeApp(Gtk.Application):
         # Update IVs
         self.media_reg_count += 1
         self.media_reg_dict[playlist_obj.dbid] = playlist_obj
-        self.media_name_dict[playlist_obj.name] = playlist_obj.dbid
+        self.container_reg_dict[playlist_obj.dbid] = playlist_obj
         if not parent_obj:
-            self.media_top_level_list.append(playlist_obj.dbid)
+            self.container_top_level_list.append(playlist_obj.dbid)
 
         # Create the directory used by this playlist (if it doesn't already
         #   exist)
@@ -13826,7 +13901,7 @@ class TartubeApp(Gtk.Application):
 
         # There is a limit to the number of levels allowed in the media
         #   registry
-        if parent_obj and parent_obj.get_depth() >= self.media_max_level:
+        if parent_obj and parent_obj.get_depth() >= self.container_max_level:
             return self.system_error(
                 148,
                 'Folder exceeds maximum depth of media registry',
@@ -13859,9 +13934,9 @@ class TartubeApp(Gtk.Application):
         # Update IVs
         self.media_reg_count += 1
         self.media_reg_dict[folder_obj.dbid] = folder_obj
-        self.media_name_dict[folder_obj.name] = folder_obj.dbid
+        self.container_reg_dict[folder_obj.dbid] = folder_obj
         if not parent_obj:
-            self.media_top_level_list.append(folder_obj.dbid)
+            self.container_top_level_list.append(folder_obj.dbid)
 
         # Create the directory used by this folder (if it doesn't already
         #   exist)
@@ -13902,6 +13977,22 @@ class TartubeApp(Gtk.Application):
                 150,
                 'Move container to top request failed sanity check',
             )
+
+        # Check that the top-level list doesn't already contain a channel/
+        #   playlist/folder with the same name
+        if self.find_duplicate_name_in_container(None, media_data_obj.name):
+
+            # (The same error message appears in self.move_container() )
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'Cannot move the channel/playlist/folder because a' \
+                    + ' container with the same name already exists',
+                ),
+                'error',
+                'ok',
+            )
+
+            return
 
         # Check that the target directory doesn't already exist (unlikely, but
         #   possible if the user has been copying files manually)
@@ -13994,7 +14085,7 @@ class TartubeApp(Gtk.Application):
         # Update IVs
         media_data_obj.parent_obj.del_child(media_data_obj)
         media_data_obj.set_parent_obj(None)
-        self.media_top_level_list.append(media_data_obj.dbid)
+        self.container_top_level_list.append(media_data_obj.dbid)
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -14091,6 +14182,21 @@ class TartubeApp(Gtk.Application):
                 _(
                 'The folder \'{0}\' can only contain other folders and videos',
                 ).format(dest_obj.name),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Check that the parent folder (or top-level list) doesn't already
+        #   contain a channel/playlist/folder with the same name
+        if self.find_duplicate_name_in_container(dest_obj, source_obj.name):
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _(
+                    'Cannot move the channel/playlist/folder because a' \
+                    + ' container with the same name already exists',
+                ),
                 'error',
                 'ok',
             )
@@ -14203,9 +14309,9 @@ class TartubeApp(Gtk.Application):
         dest_obj.add_child(self, source_obj)
         source_obj.set_parent_obj(dest_obj)
 
-        if source_obj.dbid in self.media_top_level_list:
-            index = self.media_top_level_list.index(source_obj.dbid)
-            del self.media_top_level_list[index]
+        if source_obj.dbid in self.container_top_level_list:
+            index = self.container_top_level_list.index(source_obj.dbid)
+            del self.container_top_level_list[index]
 
         # Save the database (because, if the user terminates Tartube and then
         #   restarts it, then tries to perform a download operation, a load of
@@ -14414,10 +14520,10 @@ class TartubeApp(Gtk.Application):
 
         # Show confirmation dialogue
         msg = _('Videos moved') + ': ' + str(success_count) \
-        + '\n' + _('Videos not moved:') + ': ' \
+        + '\n' + _('Videos not moved') + ': ' \
         + str(fail_count + already_count)
 
-        self.dialogue_manager_obj.show_msg_dialogue(
+        self.dialogue_manager_obj.show_simple_msg_dialogue(
             msg,
             'info',
             'ok',
@@ -14499,11 +14605,11 @@ class TartubeApp(Gtk.Application):
         # Copy remaining properties from the old object to the new one
         new_obj.clone_properties(old_obj)
 
-        # Remove the old object from the media data registry.
-        #   self.media_name_dict should already be updated
+        # Remove the old object from the media data registry
+        #   (self.container_reg_dict should already be updated)
         del self.media_reg_dict[old_obj.dbid]
-        if old_obj.dbid in self.media_top_level_list:
-            self.media_top_level_list.remove(old_obj.dbid)
+        if old_obj.dbid in self.container_top_level_list:
+            self.container_top_level_list.remove(old_obj.dbid)
 
         # Remove the old object from the Video Index...
         self.main_win_obj.video_index_delete_row(old_obj)
@@ -14630,6 +14736,10 @@ class TartubeApp(Gtk.Application):
         and video_obj.parent_obj.dbid == video_obj.parent_obj.master_dbid:
             self.delete_video_files(video_obj)
 
+        # Remove the video from the list of watchable videos
+        if video_obj in self.watch_after_dl_list:
+            self.watch_after_dl_list.remove(video_obj)
+
         # Remove the video from the catalogue, if present
         if not no_update_catalogue_flag:
             self.main_win_obj.video_catalogue_delete_video(video_obj)
@@ -14640,7 +14750,7 @@ class TartubeApp(Gtk.Application):
         if not no_update_index_flag:
             for container_obj in update_list:
 
-                if container_obj.name \
+                if container_obj.dbid \
                 in self.main_win_obj.video_index_row_dict:
                     GObject.timeout_add(
                         0,
@@ -14962,12 +15072,14 @@ class TartubeApp(Gtk.Application):
 
             # Remove the media data object from our IVs
             del self.media_reg_dict[media_data_obj.dbid]
-            del self.media_name_dict[media_data_obj.name]
-            if media_data_obj.name in self.media_unavailable_dict:
-                del self.media_unavailable_dict[media_data_obj.name]
-            if media_data_obj.dbid in self.media_top_level_list:
-                index = self.media_top_level_list.index(media_data_obj.dbid)
-                del self.media_top_level_list[index]
+            del self.container_reg_dict[media_data_obj.dbid]
+            if media_data_obj.dbid in self.container_unavailable_dict:
+                del self.container_unavailable_dict[media_data_obj.dbid]
+            if media_data_obj.dbid in self.container_top_level_list:
+                index = self.container_top_level_list.index(
+                    media_data_obj.dbid
+                )
+                del self.container_top_level_list[index]
 
         # If this container is the alternative download destination for any
         #   other container(s), then update the other container(s)
@@ -14999,7 +15111,7 @@ class TartubeApp(Gtk.Application):
         #   Tartube database, the Video Index may not yet have been drawn, so
         #   we have to check for that)
         if not recursive_flag and not empty_flag \
-        and media_data_obj.name in self.main_win_obj.video_index_row_dict:
+        and media_data_obj.dbid in self.main_win_obj.video_index_row_dict:
 
             self.main_win_obj.video_index_delete_row(media_data_obj)
 
@@ -15058,6 +15170,200 @@ class TartubeApp(Gtk.Application):
             # When emptying the container, the quickest way to update the Video
             #   Index is just to redraw it from scratch
             self.main_win_obj.video_index_catalogue_reset()
+
+
+    # (Check media data objects)
+
+
+    def get_container_list(self, name):
+
+        """Can be called by anything.
+
+        Returns a list of all media.Channel, media.Playlist and media.Folder
+        objects (ignoring media.Videos) with a matching name.
+
+        Args:
+
+            name (str): The name to check
+
+        Return values:
+
+            A list of channel, playlist and/or folder objects (may be empty)
+
+        """
+
+        return_list = []
+
+        for container_obj in self.container_reg_dict.values():
+            if container_obj.name == name:
+                return_list.append(container_obj)
+
+        return return_list
+
+
+    def get_first_container(self, name):
+
+        """Can be called by anything.
+
+        Compiles a list of all media.Channel, media.Playlist and media.Folder
+        objects (ignoring all media.Videos) with a matching name.
+
+        Then walks the list, looking for the object with the lowest .dbid
+        (representing the one that was created first), and returns that object.
+
+        However, if any of Tartube's system folders have a matching name, then
+        that folder is returned (regardless of when it was created).
+
+        Args:
+
+            name (str): The name to check
+
+        Return values:
+
+            The oldest media.Channel, media.Playlist or media.Folder found, or
+                'None' if no objects with a matching name are found
+
+        """
+
+        earliest_obj = None
+        earliest_dbid = 0
+
+        for container_obj in self.get_container_list(name):
+
+            if isinstance(container_obj, media.Folder) \
+            and container_obj.fixed_flag:
+                return container_obj
+
+            if earliest_dbid == 0 or container_obj.dbid < earliest_dbid:
+                earliest_obj = container_obj
+                earliest_dbid = container_obj.dbid
+
+        return earliest_obj
+
+
+    def find_duplicate_name_in_container(self, parent_obj, name):
+
+        """Can be called by anything.
+
+        'parent_obj' is either a media.Folder, or None.
+
+        If 'parent_obj' is specified, we look for a child media.Channel,
+        media.Playlist or media.Folder object matching the specified name.
+        media.Video objects are ignored.
+
+        If 'parent_obj' is not specified, we look in the top-level list for a
+        channel/playlist/folder matching the specified name.
+
+        Args:
+
+            parent_obj (media.Folder or None): The parent folder to check
+
+            name (str): The name of a child channel/playlist/folder to find
+
+        Return values:
+
+            Returns the matching media.Channel, media.Playlist or media.Folder
+                object, or None if no matching object is found
+
+        """
+
+        if parent_obj is None:
+
+            for dbid in self.container_top_level_list:
+                media_data_obj = self.media_reg_dict[dbid]
+                if not isinstance(media_data_obj, media.Video) \
+                and media_data_obj.name == name:
+                    return media_data_obj
+
+        else:
+
+            for media_data_obj in parent_obj.child_list:
+                if not isinstance(media_data_obj, media.Video) \
+                and media_data_obj.name == name:
+                    return media_data_obj
+
+        # No matching object
+        return None
+
+
+    def is_container(self, name):
+
+        """Can be called by anything.
+
+        An alternative to self.get_container_list(), when we only want a yes/no
+        answer to the question "is there any media.Channel, media.Playlist or
+        media.Folder object with the same name, anywhere in the database?"
+
+        Args:
+
+            name (str): The name to check
+
+        Return values:
+
+            True if at least one matching object is found, False if no matching
+                objects are found
+
+        """
+
+        for container_obj in self.container_reg_dict.values():
+            if container_obj.name == name:
+                return True
+
+        return False
+
+
+    def get_fixed_folder(self, fixed_type):
+
+        """Can be called by anything.
+
+        Returns one of Tartube's system media.Folder objects, identified by a
+        short string (whose value matches the identifiers used in an
+        options.OptionsManager object).
+
+        Args:
+
+            fixed_type (str): One of the strings 'all', 'bookmark', 'fav',
+                'live', 'missing', 'new', 'recent', 'waiting', 'temp',
+                'misc' or 'clips'
+
+        Returns values:
+
+            The system media.Folder object, or None if fixed_type is
+                unrecognised
+
+
+        """
+
+        # These values are used by options.OptionsManager
+        if fixed_type == 'temp':
+            return self.fixed_temp_folder
+        elif fixed_type == 'misc':
+            return self.fixed_misc_folder
+        elif fixed_type == 'clips':
+            return self.fixed_clips_folder
+
+        # These values are currently not used by anything, but might be used
+        #   in the future (in which case, this function could be made much
+        #   more efficient)
+        elif fixed_type == 'all':
+            return self.fixed_all_folder
+        elif fixed_type == 'bookmark':
+            return self.fixed_bookmark_folder
+        elif fixed_type == 'fav':
+            return self.fixed_fav_folder
+        elif fixed_type == 'live':
+            return self.fixed_live_folder
+        elif fixed_type == 'missing':
+            return self.fixed_missing_folder
+        elif fixed_type == 'new':
+            return self.fixed_new_folder
+        elif fixed_type == 'recent':
+            return self.fixed_recent_folder
+        elif fixed_type == 'waiting':
+            return self.fixed_waiting_folder
+
+        else:
+            return None
 
 
     # (Change media data object settings, updating all related things)
@@ -15249,9 +15555,9 @@ class TartubeApp(Gtk.Application):
                 #    (deleting the row, if the 'Bookmarks' folder is visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_bookmark_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_bookmark_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -15560,9 +15866,9 @@ class TartubeApp(Gtk.Application):
                 #   visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_fav_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_fav_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -15758,9 +16064,9 @@ class TartubeApp(Gtk.Application):
                 #    (deleting the row, if the 'Livestreams' folder is visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_live_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_live_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -15976,9 +16282,9 @@ class TartubeApp(Gtk.Application):
                 #   visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_missing_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_missing_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -16159,9 +16465,9 @@ class TartubeApp(Gtk.Application):
                 #    (deleting the row, if the 'New Videos' folder is visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_new_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_new_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -16326,9 +16632,9 @@ class TartubeApp(Gtk.Application):
                 #   visible)
                 if not no_update_catalogue_flag:
 
-                    if self.main_win_obj.video_index_current is not None \
-                    and self.main_win_obj.video_index_current \
-                    == self.fixed_waiting_folder.name:
+                    if self.main_win_obj.video_index_current_dbid is not None \
+                    and self.main_win_obj.video_index_current_dbid \
+                    == self.fixed_waiting_folder.dbid:
                         self.main_win_obj.video_catalogue_delete_video(
                             video_obj,
                         )
@@ -16609,9 +16915,9 @@ class TartubeApp(Gtk.Application):
         )
         # If this container is the one visible in the Video Catalogue, redraw
         #   the Video Catalogue
-        if self.main_win_obj.video_index_current == media_data_obj.name:
+        if self.main_win_obj.video_index_current_dbid == media_data_obj.dbid:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
             )
 
 
@@ -17139,8 +17445,10 @@ class TartubeApp(Gtk.Application):
         """
 
         # Do some basic checks
-        if media_data_obj is None or isinstance(media_data_obj, media.Video) \
-        or self.current_manager_obj or self.main_win_obj.config_win_list \
+        if media_data_obj is None \
+        or isinstance(media_data_obj, media.Video) \
+        or self.current_manager_obj \
+        or self.main_win_obj.config_win_list \
         or (
             isinstance(media_data_obj, media.Folder) \
             and media_data_obj.fixed_flag
@@ -17166,25 +17474,60 @@ class TartubeApp(Gtk.Application):
         and new_name != media_data_obj.name:
 
             # Check that the name is legal
-            if new_name is None \
-            or re.search('^\s*$', new_name) \
-            or not self.check_container_name_is_legal(new_name):
+            if new_name is None or re.search('^\s*$', new_name):
+
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('You did not give the folder a new name'),
+                    'error',
+                    'ok',
+                )
+
+                return
+
+
+            elif not self.check_container_name_is_legal(new_name):
+
                 return self.dialogue_manager_obj.show_msg_dialogue(
                     _('The name \'{0}\' is not allowed').format(new_name),
                     'error',
                     'ok',
                 )
 
-            # Check that an existing channel/playlist/folder isn't already
-            #   using this name
-            if new_name in self.media_name_dict:
-                return self.dialogue_manager_obj.show_msg_dialogue(
-                    _('The name \'{0}\' is already in use').format(new_name),
+            # Remove leading/trailing whitespace from the name; make sure the
+            #   name is not excessively long; reject illegal names
+            new_name = utils.tidy_up_container_name(
+                self,
+                new_name,
+                self.container_name_max_len,
+            )
+            if new_name == '':
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('That name is not permitted on your system'),
                     'error',
                     'ok',
                 )
 
-            # Attempt to rename the sub-directory itself
+                return
+
+            # If there is no parent folder, there must be no containers in the
+            #   top-level list with the same name
+            # If there is a parent folder, it must not contain a container with
+            #   the same name
+            duplicate_obj = self.find_duplicate_name_in_container(
+                media_data_obj.parent_obj,
+                new_name,
+            )
+            if duplicate_obj:
+                self.reject_container_name(
+                    new_name,
+                    media_data_obj.parent_obj,
+                    duplicate_obj,
+                )
+
+                return
+
+            # The new name is acceptable. Attempt to rename the sub-directory
+            #   itself
             old_dir = media_data_obj.get_default_dir(self)
             new_dir = media_data_obj.get_default_dir(self, new_name)
             if not self.move_file_or_directory(old_dir, new_dir):
@@ -17198,17 +17541,6 @@ class TartubeApp(Gtk.Application):
             #   This call also updates the object's .nickname IV
             old_name = media_data_obj.name
             media_data_obj.set_name(new_name)
-            # Update the media data registries
-            del self.media_name_dict[old_name]
-            self.media_name_dict[new_name] = media_data_obj.dbid
-
-            if old_name in self.media_unavailable_dict:
-                del self.media_unavailable_dict[old_name]
-                self.media_unavailable_dict[new_name] = media_data_obj.dbid
-
-            # Update the IV which keeps track of Video Index markers, as it
-            #   stores the container's name as a key
-            self.main_win_obj.video_index_update_marker(old_name, new_name)
 
             # Reset the Video Index and the Video Catalogue (this prevents a
             #   lot of problems)
@@ -17222,12 +17554,14 @@ class TartubeApp(Gtk.Application):
 
         """Called by self.load_db() and .rename_fixed_folder().
 
-        A modified form of self.rename_container. No dialogue windows are used,
-        no widgets are updated or desensitised, and the Tartube database file
-        is not saved.
+        A modified form of self.rename_container(). No dialogue windows are
+        used, no widgets are updated or desensitised, and the Tartube database
+        file is not saved.
 
-        No checks are carried out; it's up to the calling function to check
-        this function's return value, and respond appropriately.
+        This function does the usual checks that the specified name is legal,
+        but it does not check for duplicate container names (in the same
+        parent folder). It's up to the calling code to check this function's
+        return value and respond appropriately.
 
         Renames a channel, playlist or folder. Also renames the corresponding
         directory in Tartube's data directory.
@@ -17247,8 +17581,24 @@ class TartubeApp(Gtk.Application):
 
         # Nothing in the Tartube code should be capable of calling this
         #   function with an illegal name, but we'll still check
-        if not self.check_container_name_is_legal(new_name) \
-        or new_name in self.media_name_dict:
+        if new_name is None \
+        or re.search('^\s*$', new_name) \
+        or not self.check_container_name_is_legal(new_name):
+
+            self.system_error(
+                170,
+                'Illegal container name',
+            )
+
+            return False
+
+        new_name = utils.tidy_up_container_name(
+            self,
+            new_name,
+            self.container_name_max_len,
+        )
+        if new_name == '':
+
             self.system_error(
                 170,
                 'Illegal container name',
@@ -17270,17 +17620,6 @@ class TartubeApp(Gtk.Application):
         #   call also updates the object's .nickname IV
         old_name = media_data_obj.name
         media_data_obj.set_name(new_name)
-        # Update the media data registry
-        del self.media_name_dict[old_name]
-        self.media_name_dict[new_name] = media_data_obj.dbid
-
-        if old_name in self.media_unavailable_dict:
-            del self.media_unavailable_dict[old_name]
-            self.media_unavailable_dict[new_name] = media_data_obj.dbid
-
-        # Update the IV which keeps track of Video Index markers, as it stores
-        #   the container's name as a key
-        self.main_win_obj.video_index_update_marker(old_name, new_name)
 
         return True
 
@@ -17739,7 +18078,7 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                for dbid in self.media_top_level_list:
+                for dbid in self.container_top_level_list:
 
                     media_data_obj = self.media_reg_dict[dbid]
 
@@ -17769,7 +18108,7 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                for dbid in self.media_top_level_list:
+                for dbid in self.container_top_level_list:
 
                     media_data_obj = self.media_reg_dict[dbid]
 
@@ -18327,7 +18666,7 @@ class TartubeApp(Gtk.Application):
             # Update the Video Catalogue, in case any new videos have been
             #   imported into it
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
             )
 
             # Show a confirmation
@@ -18855,14 +19194,14 @@ class TartubeApp(Gtk.Application):
                     url_check_dict[child_obj.source] = None
 
         elif selected_is_parent_flag \
-        and self.main_win_obj.video_index_current is not None:
+        and self.main_win_obj.video_index_current_dbid is not None:
 
             # When called from the 'Import YouTube subscriptions' wizard
             #   window, import everything into a non-system folder, if one is
             #   selected
-            selected_dbid \
-            = self.media_name_dict[self.main_win_obj.video_index_current]
-            selected_obj = self.media_reg_dict[selected_dbid]
+            selected_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
+
             if isinstance(selected_obj, media.Folder) \
             and not selected_obj.fixed_flag:
 
@@ -18927,42 +19266,44 @@ class TartubeApp(Gtk.Application):
 
             else:
 
-                if mini_dict['name'] in self.media_name_dict:
+                # Check for existing containers with the same name in the
+                #   same parent folder
+                duplicate_obj = self.find_duplicate_name_in_container(
+                    parent_obj,
+                    mini_dict['name'],
+                )
 
-                    # ('old_dbid' is the real .dbid of an item in the media
-                    #   data registry)
-                    old_dbid = self.media_name_dict[mini_dict['name']]
-                    old_obj = self.media_reg_dict[old_dbid]
+                if duplicate_obj:
 
                     # A channel/playlist/folder with the same name already
-                    #   exists in our database. Rename it if the user wants
-                    #   that, or if the two have different source URLs
+                    #   exists in the same parent folder
+                    # Rename the imported container if the user has specified
+                    #   that, or if the existing container and the imported
+                    #   container have different source URLs
                     # Exception: 'Unsorted Videos' and 'Video Clips' is always
                     #   merged with itself
-                    if old_obj != self.fixed_misc_folder \
-                    and old_obj != self.fixed_clips_folder \
+                    if duplicate_obj != self.fixed_misc_folder \
+                    and duplicate_obj != self.fixed_clips_folder \
                     and (
                         not merge_duplicates_flag \
                         or (
-                            not isinstance(old_obj, media.Folder) \
-                            and old_obj.source != mini_dict['source']
+                            not isinstance(duplicate_obj, media.Folder) \
+                            and duplicate_obj.source != mini_dict['source']
                         )
                     ):
                         # Rename the imported channel/playlist/folder
                         mini_dict['name'] = self.rename_imported_container(
+                            parent_obj,
                             mini_dict['name'],
                         )
 
-                        mini_dict['nickname'] = self.rename_imported_container(
-                            mini_dict['nickname'],
-                        )
+                        mini_dict['nickname'] = mini_dict['name']
 
                     else:
 
                         # Use the existing channel/playlist/folder of the same
                         #   name, thereby merging the two
-                        old_dbid = self.media_name_dict[mini_dict['name']]
-                        media_data_obj = self.media_reg_dict[old_dbid]
+                        media_data_obj = duplicate_obj
                         merge_flag = True
 
                 # Import the channel/playlist/folder
@@ -19028,19 +19369,23 @@ class TartubeApp(Gtk.Application):
         return video_count, channel_count, playlist_count, folder_count
 
 
-    def rename_imported_container(self, name):
+    def rename_imported_container(self, parent_obj, name):
 
         """Called by self.process_import().
 
         When importing a channel/playlist/folder whose name is the same as an
-        existing channel/playlist/folder, this function is called to rename
-        the imported one (when necessary).
+        existing container in the same parent folder (or in the top level
+        list), this function is called to rename the imported one (when
+        necessary).
 
         For example, converts 'Comedy' to 'Comedy (2)'.
 
         Args:
 
-            name (str): The name of the imported channel/playlist/folder
+            parent_obj (media.Folder or None): The parent folder, or None if
+                the imported container is being added to the top-level list
+
+            name (str): The name of the imported container
 
         Returns:
 
@@ -19054,7 +19399,7 @@ class TartubeApp(Gtk.Application):
             count += 1
             new_name = name + ' (' + str(count) + ')'
 
-            if not new_name in self.media_name_dict:
+            if not find_duplicate_name_in_container(self, parent_obj, name):
                 return new_name
 
 
@@ -20113,7 +20458,7 @@ class TartubeApp(Gtk.Application):
             index += 1
 
             test_name = base_name + ' ' + str(index)
-            if not test_name in self.media_name_dict:
+            if not self.is_container(test_name):
 
                 for this_obj in self.options_reg_dict.values():
 
@@ -20921,7 +21266,7 @@ class TartubeApp(Gtk.Application):
             #   children are downloaded too)
             elif self.download_manager_obj and join_mode != 'skip':
 
-                for dbid in self.media_top_level_list:
+                for dbid in self.container_top_level_list:
 
                     media_data_obj = self.media_reg_dict[dbid]
                     # (Don't try to download the 'All Videos' folder, etc)
@@ -20953,20 +21298,18 @@ class TartubeApp(Gtk.Application):
 
             for scheduled_obj in start_list:
 
-                for name in scheduled_obj.media_list:
+                for dbid in scheduled_obj.media_list:
 
-                    if not name in self.media_name_dict:
+                    if not dbid in self.container_reg_dict:
 
                         self.system_error(
                             185,
                             'Scheduled download contains a channel, playlist' \
-                            + ' or folder which no longer exists: \'' \
-                            + name + '\'',
+                            + ' or folder which no longer exists: #' + dbid,
                         )
 
                     else:
 
-                        dbid = self.media_name_dict[name]
                         media_data_obj = self.media_reg_dict[dbid]
                         self.script_slow_timer_insert_download(
                             media_data_obj,
@@ -21584,11 +21927,9 @@ class TartubeApp(Gtk.Application):
         """
 
         media_list = []
-        for name in self.main_win_obj.video_index_marker_dict.keys():
-            if name in self.media_name_dict:
-                dbid = self.media_name_dict[name]
-                if dbid in self.media_reg_dict:
-                    media_list.append(self.media_reg_dict[dbid])
+        for dbid in self.main_win_obj.video_index_marker_dict.keys():
+            if dbid in self.container_reg_dict:
+                media_list.append(self.container_reg_dict[dbid])
 
         self.download_manager_start(
             'sim',
@@ -22189,11 +22530,9 @@ class TartubeApp(Gtk.Application):
         """
 
         media_list = []
-        for name in self.main_win_obj.video_index_marker_dict.keys():
-            if name in self.media_name_dict:
-                dbid = self.media_name_dict[name]
-                if dbid in self.media_reg_dict:
-                    media_list.append(self.media_reg_dict[dbid])
+        for dbid in self.main_win_obj.video_index_marker_dict.keys():
+            if dbid in self.container_reg_dict:
+                media_list.append(self.media_reg_dict[dbid])
 
         if not self.general_custom_dl_obj.dl_by_video_flag \
         or not self.general_custom_dl_obj.dl_precede_flag:
@@ -22233,11 +22572,9 @@ class TartubeApp(Gtk.Application):
         """
 
         media_list = []
-        for name in self.main_win_obj.video_index_marker_dict.keys():
-            if name in self.media_name_dict:
-                dbid = self.media_name_dict[name]
-                if dbid in self.media_reg_dict:
-                    media_list.append(self.media_reg_dict[dbid])
+        for dbid in self.main_win_obj.video_index_marker_dict.keys():
+            if dbid in self.container_reg_dict:
+                media_list.append(self.media_reg_dict[dbid])
 
         self.download_manager_start(
             'real',
@@ -22309,8 +22646,8 @@ class TartubeApp(Gtk.Application):
 
             # Get the channel, playlist or folder currently visible in the
             #   Video Catalogue
-            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
-            container_obj = self.media_reg_dict[dbid]
+            container_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
 
             count = 0
 
@@ -22366,7 +22703,7 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
+            self.main_win_obj.video_index_current_dbid,
             1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -22411,7 +22748,7 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
+            self.main_win_obj.video_index_current_dbid,
             self.main_win_obj.catalogue_toolbar_last_page,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -22433,7 +22770,7 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
+            self.main_win_obj.video_index_current_dbid,
             self.main_win_obj.catalogue_toolbar_current_page + 1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -22455,7 +22792,7 @@ class TartubeApp(Gtk.Application):
         """
 
         self.main_win_obj.video_catalogue_redraw_all(
-            self.main_win_obj.video_index_current,
+            self.main_win_obj.video_index_current_dbid,
             self.main_win_obj.catalogue_toolbar_current_page - 1,
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
@@ -22477,7 +22814,7 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_force_resort()
 
 
@@ -22621,9 +22958,9 @@ class TartubeApp(Gtk.Application):
 
         # Redraw the Video Catalogue, but only if something was already drawn
         #   there (and keep the current page number)
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
 
@@ -22729,19 +23066,19 @@ class TartubeApp(Gtk.Application):
 
         # If a folder is selected in the Video Index, the dialogue window
         #   should suggest that as the new folder's parent folder
-        suggest_parent_name = None
-        if self.main_win_obj.video_index_current:
-            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
-            container_obj = self.media_reg_dict[dbid]
+        suggest_parent_dbid = None
+        if self.main_win_obj.video_index_current_dbid:
+            container_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
             and container_obj.restrict_mode != 'full':
-                suggest_parent_name = container_obj.name
+                suggest_parent_dbid = container_obj.dbid
 
         # Open the dialogue window
         dialogue_win = mainwin.AddBulkDialogue(
             self.main_win_obj,
-            suggest_parent_name,
+            suggest_parent_dbid,
         )
 
         response = dialogue_win.run()
@@ -22753,19 +23090,19 @@ class TartubeApp(Gtk.Application):
         # Retrieve user choices from the dialogue window
         if response == Gtk.ResponseType.OK:
 
-            # Find the name of the parent media data object (a media.Folder),
+            # Find the parent media data object (a media.Folder), if one was
+            #   specified...
             #   if one was specified...
-            parent_name = None
-            if hasattr(dialogue_win, 'parent_name'):
-                parent_name = dialogue_win.parent_name
-            elif suggest_parent_name is not None:
-                parent_name = suggest_parent_name
+            parent_dbid = None
+            if hasattr(dialogue_win, 'parent_dbid'):
+                parent_dbid = dialogue_win.parent_dbid
+            elif suggest_parent_dbid is not None:
+                parent_dbid = suggest_parent_dbid
 
             # Find the parent media data object (a media.Folder), if specified
             parent_obj = None
-            if parent_name and parent_name in self.media_name_dict:
-                dbid = self.media_name_dict[parent_name]
-                parent_obj = self.media_reg_dict[dbid]
+            if parent_dbid and parent_dbid in self.container_reg_dict:
+                parent_obj = self.media_reg_dict[parent_dbid]
 
             # Create each new channel/playlist
             for row in dialogue_win.liststore:
@@ -22793,9 +23130,9 @@ class TartubeApp(Gtk.Application):
                 # Add the channel/playlist to Video Index
                 if container_obj:
 
-                    if suggest_parent_name is not None \
-                    and suggest_parent_name \
-                    == self.main_win_obj.video_index_current:
+                    if suggest_parent_dbid is not None \
+                    and suggest_parent_dbid \
+                    == self.main_win_obj.video_index_current_dbid:
                         # The container has been added to the currently
                         #   selected folder; the True argument tells the
                         #   function not to select the container
@@ -22827,26 +23164,27 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        keep_open_flag = True
         dl_sim_flag = False
         monitor_flag = False
+        # (The while loop below must be run at least once)
+        keep_open_flag = True
 
         # If a folder (but not a channel/playlist) is selected in the Video
         #   Index, use that as the dialogue window's suggested parent folder
-        suggest_parent_name = None
-        if self.main_win_obj.video_index_current:
-            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
-            container_obj = self.media_reg_dict[dbid]
+        suggest_parent_dbid = None
+        if self.main_win_obj.video_index_current_dbid:
+            container_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
             and container_obj.restrict_mode == 'open':
-                suggest_parent_name = container_obj.name
+                suggest_parent_dbid = container_obj.dbid
 
         while keep_open_flag:
 
             dialogue_win = mainwin.AddChannelDialogue(
                 self.main_win_obj,
-                suggest_parent_name,
+                suggest_parent_dbid,
                 dl_sim_flag,
                 monitor_flag,
             )
@@ -22859,9 +23197,9 @@ class TartubeApp(Gtk.Application):
             dl_sim_flag = dialogue_win.radiobutton2.get_active()
             monitor_flag = dialogue_win.checkbutton.get_active()
 
-            # ...and find the name of the parent media data object (a
+            # ...and find the .dbid of the parent media data object (a
             #   media.Folder), if one was specified...
-            parent_name = dialogue_win.parent_name
+            parent_dbid = dialogue_win.parent_dbid
 
             # ...and halt the timer, if running
             if dialogue_win.clipboard_timer_id:
@@ -22871,105 +23209,102 @@ class TartubeApp(Gtk.Application):
             dialogue_win.destroy()
 
             if response != Gtk.ResponseType.OK:
+                return
 
-                keep_open_flag = False
+            elif name is None or re.search('^\s*$', name):
 
-            else:
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('You must give the channel a name'),
+                    'error',
+                    'ok',
+                )
 
-                if name is None or re.search('^\s*$', name):
+                return
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('You must give the channel a name'),
-                        'error',
-                        'ok',
-                    )
+            elif not self.check_container_name_is_legal(name):
 
-                elif not self.check_container_name_is_legal(name):
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('The name \'{0}\' is not allowed').format(name),
+                    'error',
+                    'ok',
+                )
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('The name \'{0}\' is not allowed').format(name),
-                        'error',
-                        'ok',
-                    )
+                return
 
-                elif not source or not utils.check_url(source):
+            elif not source or not utils.check_url(source):
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('You must enter a valid URL'),
-                        'error',
-                        'ok',
-                    )
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('You must enter a valid URL'),
+                    'error',
+                    'ok',
+                )
 
-                elif name in self.media_name_dict:
+                return
 
-                    # Another channel, playlist or folder is already using this
-                    #   name
-                    keep_open_flag = False
-                    self.reject_container_name(name)
+            # (Re-open the window for further additions, if required)
+            keep_open_flag = self.dialogue_keep_open_flag
+
+            # Remove leading/trailing whitespace from the name; make sure the
+            #   name is not excessively long; reject illegal names
+            name = utils.tidy_up_container_name(
+                self,
+                name,
+                self.container_name_max_len,
+            )
+            if name == '':
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('That name is not permitted on your system'),
+                    'error',
+                    'ok',
+                )
+
+                return
+
+            # Find the parent media data object (a media.Folder), if specified
+            parent_obj = None
+            if parent_dbid and parent_dbid in self.container_reg_dict:
+                parent_obj = self.container_reg_dict[parent_dbid]
+
+                if self.dialogue_keep_open_flag \
+                and self.dialogue_keep_container_flag:
+                    suggest_parent_dbid = parent_dbid
+
+            # If there is no parent folder, there must be no containers in the
+            #   top-level list with the same name
+            # If there is a parent folder, it must not contain a container with
+            #   the same name
+            duplicate_obj = self.find_duplicate_name_in_container(
+                parent_obj,
+                name,
+            )
+            if duplicate_obj:
+                self.reject_container_name(name, parent_obj, duplicate_obj)
+                return
+
+            # Otherwise, create the new channel
+            channel_obj = self.add_channel(
+                name,
+                parent_obj,
+                source,
+                dl_sim_flag,
+            )
+
+            # Add the channel to Video Index
+            if channel_obj:
+
+                if suggest_parent_dbid is not None \
+                and suggest_parent_dbid \
+                == self.main_win_obj.video_index_current_dbid:
+
+                    # The channel has been added to the currently selected
+                    #   folder; the True argument tells the function not to
+                    #   select the channel
+                    self.main_win_obj.video_index_add_row(channel_obj, True)
 
                 else:
 
-                    keep_open_flag = self.dialogue_keep_open_flag
-
-                    # Remove leading/trailing whitespace from the name; make
-                    #   sure the name is not excessively long; reject system
-                    #   illegal names
-                    name = utils.tidy_up_container_name(
-                        self,
-                        name,
-                        self.container_name_max_len,
-                    )
-                    if name == '':
-                        keep_open_flag = False
-                        self.dialogue_manager_obj.show_msg_dialogue(
-                            _('That name is not permitted on your system'),
-                            'error',
-                            'ok',
-                        )
-
-                    else:
-
-                        # Find the parent media data object (a media.Folder),
-                        #   if specified
-                        parent_obj = None
-                        if parent_name and parent_name in self.media_name_dict:
-                            dbid = self.media_name_dict[parent_name]
-                            parent_obj = self.media_reg_dict[dbid]
-
-                            if self.dialogue_keep_open_flag \
-                            and self.dialogue_keep_container_flag:
-                                suggest_parent_name = parent_name
-
-                        # Create the new channel
-                        channel_obj = self.add_channel(
-                            name,
-                            parent_obj,
-                            source,
-                            dl_sim_flag,
-                        )
-
-                        # Add the channel to Video Index
-                        if channel_obj:
-
-                            if suggest_parent_name is not None \
-                            and suggest_parent_name \
-                            == self.main_win_obj.video_index_current:
-                                # The channel has been added to the currently
-                                #   selected folder; the True argument tells
-                                #   the function not to select the channel
-                                self.main_win_obj.video_index_add_row(
-                                    channel_obj,
-                                    True,
-                                )
-
-                            else:
-                                # Do select the new channel
-                                self.main_win_obj.video_index_add_row(
-                                    channel_obj,
-                                )
+                    # Do select the new channel
+                    self.main_win_obj.video_index_add_row(channel_obj)
 
 
     def on_menu_add_folder(self, action, par):
@@ -22987,20 +23322,20 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        # If a folder is selected in the Video Index, the dialogue window
-        #   should suggest that as the new folder's parent folder
-        suggest_parent_name = None
-        if self.main_win_obj.video_index_current:
-            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
-            container_obj = self.media_reg_dict[dbid]
+        # If a folder (but not a channel/playlist) is selected in the Video
+        #   Index, use that as the dialogue window's suggested parent folder
+        suggest_parent_dbid = None
+        if self.main_win_obj.video_index_current_dbid:
+            container_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
-            and container_obj.restrict_mode != 'full':
-                suggest_parent_name = container_obj.name
+            and container_obj.restrict_mode == 'open':
+                suggest_parent_dbid = container_obj.dbid
 
         dialogue_win = mainwin.AddFolderDialogue(
             self.main_win_obj,
-            suggest_parent_name,
+            suggest_parent_dbid,
         )
 
         response = dialogue_win.run()
@@ -23009,80 +23344,88 @@ class TartubeApp(Gtk.Application):
         name = dialogue_win.entry.get_text()
         dl_sim_flag = dialogue_win.radiobutton2.get_active()
 
-        # ...and find the name of the parent media data object (a
+        # ...and find the .dbid of the parent media data object (a
         #   media.Folder), if one was specified...
-        parent_name = dialogue_win.parent_name
+        parent_dbid = dialogue_win.parent_dbid
 
         # ...before destroying the dialogue window
         dialogue_win.destroy()
 
-        if response == Gtk.ResponseType.OK:
+        if response != Gtk.ResponseType.OK:
+            return
 
-            if name is None or re.search('^\s*$', name):
+        elif name is None or re.search('^\s*$', name):
 
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    _('You must give the folder a name'),
-                    'error',
-                    'ok',
-                )
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('You must give the folder a name'),
+                'error',
+                'ok',
+            )
 
-            elif not self.check_container_name_is_legal(name):
+            return
 
-                self.dialogue_manager_obj.show_msg_dialogue(
-                    _('The name \'{0}\' is not allowed').format(name),
-                    'error',
-                    'ok',
-                )
+        elif not self.check_container_name_is_legal(name):
 
-            elif name in self.media_name_dict:
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('The name \'{0}\' is not allowed').format(name),
+                'error',
+                'ok',
+            )
 
-                # Another channel, playlist or folder is already using this
-                #   name
-                self.reject_container_name(name)
+            return
+
+        # Remove leading/trailing whitespace from the name; make sure the name
+        #   is not excessively long; reject illegal names
+        name = utils.tidy_up_container_name(
+            self,
+            name,
+            self.container_name_max_len,
+        )
+        if name == '':
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('That name is not permitted on your system'),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Find the parent media data object (a media.Folder), if specified
+        parent_obj = None
+        if parent_dbid and parent_dbid in self.container_reg_dict:
+            parent_obj = self.container_reg_dict[parent_dbid]
+
+        # If there is no parent folder, there must be no containers in the
+        #   top-level list with the same name
+        # If there is a parent folder, it must not contain a container with the
+        #   same name
+        duplicate_obj = self.find_duplicate_name_in_container(
+            parent_obj,
+            name,
+        )
+        if duplicate_obj:
+            self.reject_container_name(name, parent_obj, duplicate_obj)
+            return
+
+        # Otherwise, create the new folder
+        folder_obj = self.add_folder(name, parent_obj, dl_sim_flag)
+
+        # Add the folder to the Video Index
+        if folder_obj:
+
+            if suggest_parent_dbid is not None \
+            and suggest_parent_dbid \
+            == self.main_win_obj.video_index_current_dbid:
+
+                # The new folder has been added to the currently selected
+                #   folder; the True argument tells the function not to
+                #   select the new folder
+                self.main_win_obj.video_index_add_row(folder_obj, True)
 
             else:
 
-                # Remove leading/trailing whitespace from the name; make sure
-                #   the name is not excessively long
-                name = utils.tidy_up_container_name(
-                    self,
-                    name,
-                    self.container_name_max_len,
-                )
-                if name == '':
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('That name is not permitted on your system'),
-                        'error',
-                        'ok',
-                    )
-
-                else:
-
-                    # Find the parent media data object (a media.Folder), if
-                    #   specified
-                    parent_obj = None
-                    if parent_name and parent_name in self.media_name_dict:
-                        dbid = self.media_name_dict[parent_name]
-                        parent_obj = self.media_reg_dict[dbid]
-
-                    # Create the new folder
-                    folder_obj = self.add_folder(name, parent_obj, dl_sim_flag)
-
-                    # Add the folder to the Video Index
-                    if folder_obj:
-
-                        if self.main_win_obj.video_index_current:
-                            # The new folder has been added inside the
-                            #   currently selected folder; the True argument
-                            #   tells the function not to select the new folder
-                            self.main_win_obj.video_index_add_row(
-                                folder_obj,
-                                True,
-                            )
-
-                        else:
-                            # Do select the new folder
-                            self.main_win_obj.video_index_add_row(folder_obj)
+                # Do select the new folder
+                self.main_win_obj.video_index_add_row(folder_obj)
 
 
     def on_menu_add_playlist(self, action, par):
@@ -23090,7 +23433,7 @@ class TartubeApp(Gtk.Application):
         """Called from a callback in self.do_startup().
 
         Creates a dialogue window to allow the user to specify a new playlist.
-        If the user specifies a playlist, creates a media.PLaylist object.
+        If the user specifies a playlist, creates a media.Playlist object.
 
         Args:
 
@@ -23100,26 +23443,27 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        keep_open_flag = True
         dl_sim_flag = False
         monitor_flag = False
+        # (The while loop below must be run at least once)
+        keep_open_flag = True
 
         # If a folder (but not a channel/playlist) is selected in the Video
         #   Index, use that as the dialogue window's suggested parent folder
-        suggest_parent_name = None
-        if self.main_win_obj.video_index_current:
-            dbid = self.media_name_dict[self.main_win_obj.video_index_current]
-            container_obj = self.media_reg_dict[dbid]
+        suggest_parent_dbid = None
+        if self.main_win_obj.video_index_current_dbid:
+            container_obj \
+            = self.media_reg_dict[self.main_win_obj.video_index_current_dbid]
             if isinstance(container_obj, media.Folder) \
             and not container_obj.fixed_flag \
             and container_obj.restrict_mode == 'open':
-                suggest_parent_name = container_obj.name
+                suggest_parent_dbid = container_obj.dbid
 
         while keep_open_flag:
 
             dialogue_win = mainwin.AddPlaylistDialogue(
                 self.main_win_obj,
-                suggest_parent_name,
+                suggest_parent_dbid,
                 dl_sim_flag,
                 monitor_flag,
             )
@@ -23132,9 +23476,9 @@ class TartubeApp(Gtk.Application):
             dl_sim_flag = dialogue_win.radiobutton2.get_active()
             monitor_flag = dialogue_win.checkbutton.get_active()
 
-            # ...and find the name of the parent media data object (a
+            # ...and find the .dbid of the parent media data object (a
             #   media.Folder), if one was specified...
-            parent_name = dialogue_win.parent_name
+            parent_dbid = dialogue_win.parent_dbid
 
             # ...and halt the timer, if running
             if dialogue_win.clipboard_timer_id:
@@ -23144,104 +23488,102 @@ class TartubeApp(Gtk.Application):
             dialogue_win.destroy()
 
             if response != Gtk.ResponseType.OK:
+                return
 
-                keep_open_flag = False
+            elif name is None or re.search('^\s*$', name):
 
-            else:
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('You must give the playlist a name'),
+                    'error',
+                    'ok',
+                )
 
-                if name is None or re.search('^\s*$', name):
+                return
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('You must give the playlist a name'),
-                        'error',
-                        'ok',
-                    )
+            elif not self.check_container_name_is_legal(name):
 
-                elif not self.check_container_name_is_legal(name):
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('The name \'{0}\' is not allowed').format(name),
+                    'error',
+                    'ok',
+                )
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('The name \'{0}\' is not allowed').format(name),
-                        'error',
-                        'ok',
-                    )
+                return
 
-                elif not source or not utils.check_url(source):
+            elif not source or not utils.check_url(source):
 
-                    keep_open_flag = False
-                    self.dialogue_manager_obj.show_msg_dialogue(
-                        _('You must enter a valid URL'),
-                        'error',
-                        'ok',
-                    )
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('You must enter a valid URL'),
+                    'error',
+                    'ok',
+                )
 
-                elif name in self.media_name_dict:
+                return
 
-                    # Another channel, playlist or folder is already using this
-                    #   name
-                    keep_open_flag = False
-                    self.reject_container_name(name)
+            # (Re-open the window for further additions, if required)
+            keep_open_flag = self.dialogue_keep_open_flag
+
+            # Remove leading/trailing whitespace from the name; make sure the
+            #   name is not excessively long; reject illegal names
+            name = utils.tidy_up_container_name(
+                self,
+                name,
+                self.container_name_max_len,
+            )
+            if name == '':
+                self.dialogue_manager_obj.show_msg_dialogue(
+                    _('That name is not permitted on your system'),
+                    'error',
+                    'ok',
+                )
+
+                return
+
+            # Find the parent media data object (a media.Folder), if specified
+            parent_obj = None
+            if parent_dbid and parent_dbid in self.container_reg_dict:
+                parent_obj = self.container_reg_dict[parent_dbid]
+
+                if self.dialogue_keep_open_flag \
+                and self.dialogue_keep_container_flag:
+                    suggest_parent_dbid = parent_dbid
+
+            # If there is no parent folder, there must be no containers in the
+            #   top-level list with the same name
+            # If there is a parent folder, it must not contain a container with
+            #   the same name
+            duplicate_obj = self.find_duplicate_name_in_container(
+                parent_obj,
+                name,
+            )
+            if duplicate_obj:
+                self.reject_container_name(name, parent_obj, duplicate_obj)
+                return
+
+            # Otherwise, create the new playlist
+            playlist_obj = self.add_playlist(
+                name,
+                parent_obj,
+                source,
+                dl_sim_flag,
+            )
+
+            # Add the playlist to Video Index
+            if playlist_obj:
+
+                if suggest_parent_dbid is not None \
+                and suggest_parent_dbid \
+                == self.main_win_obj.video_index_current_dbid:
+
+                    # The playlist has been added to the currently selected
+                    #   folder; the True argument tells the function not to
+                    #   select the playlist
+                    self.main_win_obj.video_index_add_row(playlist_obj, True)
 
                 else:
 
-                    keep_open_flag = self.dialogue_keep_open_flag
-
-                    # Remove leading/trailing whitespace from the name; make
-                    #   sure the name is not excessively long
-                    name = utils.tidy_up_container_name(
-                        self,
-                        name,
-                        self.container_name_max_len,
-                    )
-                    if name == '':
-                        keep_open_flag = False
-                        self.dialogue_manager_obj.show_msg_dialogue(
-                            _('That name is not permitted on your system'),
-                            'error',
-                            'ok',
-                        )
-
-                    else:
-
-                        # Find the parent media data object (a media.Folder),
-                        #   if specified
-                        parent_obj = None
-                        if parent_name and parent_name in self.media_name_dict:
-                            dbid = self.media_name_dict[parent_name]
-                            parent_obj = self.media_reg_dict[dbid]
-
-                            if self.dialogue_keep_open_flag \
-                            and self.dialogue_keep_container_flag:
-                                suggest_parent_name = parent_name
-
-                        # Create the playlist
-                        playlist_obj = self.add_playlist(
-                            name,
-                            parent_obj,
-                            source,
-                            dl_sim_flag,
-                        )
-
-                        # Add the playlist to the Video Index
-                        if playlist_obj:
-
-                            if suggest_parent_name is not None \
-                            and suggest_parent_name \
-                            == self.main_win_obj.video_index_current:
-                                # The playlist has been added to the currently
-                                #   selected folder; the True argument tells
-                                #   the function not to select the playlist
-                                self.main_win_obj.video_index_add_row(
-                                    playlist_obj,
-                                    True,
-                                )
-
-                            else:
-                                # Do select the new playlist
-                                self.main_win_obj.video_index_add_row(
-                                    playlist_obj,
-                                )
+                    # Do select the new playlist
+                    self.main_win_obj.video_index_add_row(playlist_obj)
 
 
     def on_menu_add_video(self, action, par):
@@ -23271,12 +23613,10 @@ class TartubeApp(Gtk.Application):
 
         dl_sim_flag = dialogue_win.radiobutton2.get_active()
 
-        # ...and find the parent media data object (a media.Channel,
-        #   media.Playlist or media.Folder)...
-        parent_name = dialogue_win.parent_name
-
-        dbid = self.media_name_dict[parent_name]
-        parent_obj = self.media_reg_dict[dbid]
+        # ...and find the .dbid of the parent media data object (a
+        #   media.Channel, media.Playlist or media.Folder)...
+        parent_dbid = dialogue_win.parent_dbid
+        parent_obj = self.media_reg_dict[parent_dbid]
 
         # ...and halt the timer, if running
         if dialogue_win.clipboard_timer_id:
@@ -23301,7 +23641,7 @@ class TartubeApp(Gtk.Application):
                     video_list.append(utils.strip_whitespace(line))
 
             # Check everything in the list against other media.Video objects
-            #   with the same parent folder
+            #   within the same parent folder
             for line in video_list:
                 if parent_obj.check_duplicate_video(line):
                     duplicate_list.append(line)
@@ -23410,8 +23750,8 @@ class TartubeApp(Gtk.Application):
 
         # Get a list of marked items in the Video Index
         dbid_list = []
-        for this_name in self.main_win_obj.video_index_marker_dict.keys():
-            dbid_list.append(self.media_name_dict[this_name])
+        for this_dbid in self.main_win_obj.video_index_marker_dict.keys():
+            dbid_list.append(dbid)
 
         # Create the profile
         self.add_profile(profile_name, dbid_list)
@@ -23649,8 +23989,8 @@ class TartubeApp(Gtk.Application):
 
         # Get a list of marked items in the Video Index
         dbid_list = []
-        for this_name in self.main_win_obj.video_index_marker_dict.keys():
-            dbid_list.append(self.media_name_dict[this_name])
+        for this_dbid in self.main_win_obj.video_index_marker_dict.keys():
+            dbid_list.append(dbid)
 
         # Create the profile
         self.add_profile(profile_name, dbid_list)
@@ -24136,10 +24476,7 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        for name in self.media_name_dict:
-
-            dbid = self.media_name_dict[name]
-            media_data_obj = self.media_reg_dict[dbid]
+        for media_data_obg in self.container_reg_dict.values():
 
             if isinstance(media_data_obj, media.Folder) \
             and media_data_obj.hidden_flag:
@@ -24254,9 +24591,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.desensitise_test_widgets()
 
         # Redraw the video catalogue, if a Video Index row is selected
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
             )
 
 
@@ -24503,31 +24840,53 @@ class TartubeApp(Gtk.Application):
     # (Callback support functions)
 
 
-    def reject_container_name(self, name):
+    def reject_container_name(self, name, parent_obj, duplicate_obj):
 
         """Called by self.on_menu_add_channel(), .on_menu_add_playlist()
         and .on_menu_add_folder().
 
         If the user specifies a name for a channel, playlist or folder that's
-        already in use by a channel, playlist or folder, tell them why they
-        can't use it.
+        already in use by another container in the same parent folder (or in
+        the top level list), tell them why they can't use that name.
 
         Args:
 
             name (str): The name specified by the user
 
+            parent_obj (media.Folder or None): The parent folder, or None if
+                duplicate_obj is in the top-level list
+
+            duplicate_obj (media.Channel, media.Playlist, media.Folder): A
+                container with the same name, and in the same parent folder (or
+                top-level list)
+
         """
 
-        # Get the existing media data object with this name
-        dbid = self.media_name_dict[name]
-        media_data_obj = self.media_reg_dict[dbid]
-        media_type = media_data_obj.get_type()
-        if media_type == 'channel':
-            msg = _('There is already a channel with that name')
-        elif media_type == 'playlist':
-            msg = _('There is already a playlist with that name')
+        media_type = duplicate_obj.get_type()
+
+        if not parent_obj:
+
+            if media_type == 'channel':
+                msg = _('There is already a channel with that name')
+            elif media_type == 'playlist':
+                msg = _('There is already a playlist with that name')
+            else:
+                msg = _('There is already a folder with that name')
+
         else:
-            msg = _('There is already a folder with that name')
+
+            if media_type == 'channel':
+                msg = _('The folder already contains a channel with that name')
+
+            elif media_type == 'playlist':
+                msg = _(
+                    'The folder already contains a playlist with that name'
+                )
+
+            else:
+                msg = _(
+                    'The folder already contains another folder with that name'
+                )
 
         self.dialogue_manager_obj.show_msg_dialogue(
             msg + ' ' + _('(so please choose a different name)'),
@@ -24950,9 +25309,9 @@ class TartubeApp(Gtk.Application):
             self.catalogue_clickable_container_flag = True
 
         # Re-draw the Video Catalogue to implement the new setting
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
             )
 
 
@@ -24964,9 +25323,9 @@ class TartubeApp(Gtk.Application):
             self.catalogue_show_nickname_flag = True
 
         # Re-draw the Video Catalogue to implement the new setting
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
             )
 
 
@@ -25090,10 +25449,10 @@ class TartubeApp(Gtk.Application):
         # The Video Catalogue must be redrawn to reset labels (but not when
         #   SimpleCatalogueItem are visible)
         if self.catalogue_mode_type != 'simple' \
-        and self.main_win_obj.video_index_current is not None:
+        and self.main_win_obj.video_index_current_dbid is not None:
 
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
 
@@ -25105,10 +25464,10 @@ class TartubeApp(Gtk.Application):
         # The Video Catalogue must be redrawn to reset labels (but not when
         #   SimpleCatalogueItems are visible)
         if self.catalogue_mode_type != 'simple' \
-        and self.main_win_obj.video_index_current is not None:
+        and self.main_win_obj.video_index_current_dbid is not None:
 
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
 
@@ -25674,9 +26033,9 @@ class TartubeApp(Gtk.Application):
         self.match_method = method
 
 
-    def del_media_unavailable_dict(self, name):
+    def del_container_unavailable_dict(self, name):
 
-        del self.media_unavailable_dict[name]
+        del self.container_unavailable_dict[name]
 
 
     def set_num_worker_apply_flag(self, flag):
@@ -26093,9 +26452,9 @@ class TartubeApp(Gtk.Application):
 
         # Redraw the Video Catalogue, but only if something was already drawn
         #   there (and keep the current page number)
-        if self.main_win_obj.video_index_current is not None:
+        if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_redraw_all(
-                self.main_win_obj.video_index_current,
+                self.main_win_obj.video_index_current_dbid,
                 self.main_win_obj.catalogue_toolbar_current_page,
             )
 

@@ -3,18 +3,18 @@
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
-# This library is free software; you can redistribute it and/or modify it under
+# This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# This library is distributed in the hope that it will be useful, but WITHOUT
+# This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with this library. If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 """Download and livestream operation classes."""
@@ -2072,7 +2072,8 @@ class DownloadList(object):
         # Scheduled downloads
         if media_data_list and isinstance(media_data_list[0], media.Scheduled):
 
-            # media_data_list is a list of scheduled downloads
+            # media_data_list is a list of media.Scheduled objects, each one
+            #   handling a scheduled download
             all_obj = False
             ignore_limits_flag = False
 
@@ -2088,7 +2089,7 @@ class DownloadList(object):
             if all_obj:
 
                 # Use all media data objects
-                for dbid in self.app_obj.media_top_level_list:
+                for dbid in self.app_obj.container_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
                     self.create_item(
                         obj,
@@ -2099,9 +2100,10 @@ class DownloadList(object):
                     )
 
             else:
-
+                
                 # Use only media data objects specified by the media.Scheduled
-                #   objects. Don't add the same media data object twice
+                #   objects
+                # Don't add the same media data object twice
                 check_dict = {}
 
                 for scheduled_obj in media_data_list:
@@ -2111,10 +2113,9 @@ class DownloadList(object):
                     else:
                         priority_flag = False
 
-                    for name in scheduled_obj.media_list:
-                        if not name in check_dict:
+                    for dbid in scheduled_obj.media_list:
+                        if not dbid in check_dict:
 
-                            dbid = self.app_obj.media_name_dict[name]
                             obj = self.app_obj.media_reg_dict[dbid]
 
                             self.create_item(
@@ -2125,7 +2126,7 @@ class DownloadList(object):
                                 scheduled_obj.ignore_limits_flag,
                             )
 
-                            check_dict[name] = None
+                            check_dict[dbid] = None
 
         # Normal downloads
         elif not self.operation_classic_flag:
@@ -2135,7 +2136,7 @@ class DownloadList(object):
             if not media_data_list:
 
                 # Use all media data objects
-                for dbid in self.app_obj.media_top_level_list:
+                for dbid in self.app_obj.container_top_level_list:
                     obj = self.app_obj.media_reg_dict[dbid]
                     self.create_item(
                         obj,
@@ -2537,12 +2538,12 @@ class DownloadList(object):
         #   marked unavailable, because their external directory is not
         #   accessible
         if isinstance(media_data_obj, media.Video):
-            if media_data_obj.parent_obj.name \
-            in self.app_obj.media_unavailable_dict:
+            if media_data_obj.parent_obj.dbid \
+            in self.app_obj.container_unavailable_dict:
                 return None
 
         elif not isinstance(media_data_obj, media.Video) \
-        and media_data_obj.name in self.app_obj.media_unavailable_dict:
+        and media_data_obj.dbid in self.app_obj.container_unavailable_dict:
             return None
 
         # Don't simulated downloads of video in channels/playlists/folders
@@ -3211,7 +3212,7 @@ class VideoDownloader(object):
         # For channels/playlists, a list of child media.Video objects, used to
         #   track missing videos (when required)
         self.missing_video_check_list = []
-        # Flag set to true (for convenience) if the list is populated
+        # Flag set to True (for convenience) if the list is populated
         self.missing_video_check_flag = False
 
 
@@ -4774,14 +4775,14 @@ class VideoDownloader(object):
             1,
         )
 
-        # (Prevent any possibility of an infinite loop by giving up after
+        # (Prevent any possibility of an infinite loop by giving up after some
         #   thousands of attempts)
         name = None
         new_container_obj = None
 
         for n in range (1, 9999):
             test_name = app_obj.operation_convert_mode + '_'  + str(n)
-            if not test_name in app_obj.media_name_dict:
+            if not app_obj.is_container(test_name):
                 name = test_name
                 break
 
@@ -8057,7 +8058,7 @@ class StreamDownloader(object):
         # The time (in seconds) between iterations of the loop in
         #   self.do_download_m3u() and .do_download_streamlink()
         self.longer_sleep_time = 0.25
-        # Flag set to true after the first error message processed
+        # Flag set to True after the first error message processed
         self.first_error_flag = False
 
         # Shortcut to the livestream download mode: 'default', 'default_mu3' or
