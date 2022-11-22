@@ -1219,8 +1219,8 @@ msgid "Send _feedback"
 msgstr "Enviar comentarios"
 
 #: .././mainwin.py:1788
-msgid "Add new video(s)"
-msgstr "Añadir nuevo(s) video(s)"
+msgid "Add new videos"
+msgstr "Añadir nuevos videos"
 
 #: .././mainwin.py:1797 .././mainwin.py:25535 .././media.py:82
 msgid "Channel"

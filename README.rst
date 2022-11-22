@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.093 (31 Jul 2022)**
 
-Development release: **v2.4.134 (18 Nov 2022)**
+Development release: **v2.4.149 (22 Nov 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -660,7 +660,7 @@ When you start **Tartube** for the first time, there are several folders already
 
 *If you want a simpler way to download videos, see* `6.23 Classic Mode`_.
 
-You can add individual videos by clicking the **Add new video(s)** button near the top of the window. (On MS Windows, the text is not visible unless your mouse is hovering over the button, which is in the top-left corner.)
+You can add individual videos by clicking the **Add new videos** button near the top of the window. (On MS Windows, the text is not visible unless your mouse is hovering over the button, which is in the top-left corner.)
 
 A dialogue window will appear.
 
@@ -691,7 +691,7 @@ Copy and paste the channel's URL into the dialogue window. You should also give 
 6.8 Adding videos, channels and playlists together
 --------------------------------------------------
 
-When adding a long list of URLs, containing a mixture of channels, playlists and individual videos, it's quicker to add them all at the same time. Click the **Add new video(s)** button near the top of the window, and paste all the links into the dialogue window.
+When adding a long list of URLs, containing a mixture of channels, playlists and individual videos, it's quicker to add them all at the same time. Click the **Add new videos** button near the top of the window, and paste all the links into the dialogue window.
 
 **Tartube** doesn't know anything about these links until you actually download them (or check them). If it's expecting an individual video, but receives a channel or a playlist, **Tartube** will the handle the conversion for you.
 
@@ -1216,7 +1216,7 @@ The solution is to tell **Tartube** to store all the videos from the channel and
 
 - Click **Media > Add channel**..., and then enter the channel's details
 - Click **Media > Add playlist**... for each playlist
-- Now, right-click on each playlist in turn, and then select **Playlist actions > Set download destination...**
+- Now, right-click on each playlist in turn, and then select **Downloads > Set download destination...**
 - In the dialogue window, click **Use a different location**, select the name of the channel, then click the **OK** button.
 
 A quicker way to add multiple playlists is from Tartube's main menu. Click **Media > Add many channels/playlists...**.
@@ -1260,7 +1260,7 @@ The solution is to tell **Tartube** to store videos from both channels in a sing
 
 - Click **Media > Add channel**..., and then enter the **YouTube** channel's details
 - Click **Media > Add channel**..., and then enter the **Odysee** channel's details
-- Right-click the **Odysee** channel and select **Channel actions > Set download destination...**
+- Right-click the **Odysee** channel and select **Downloads > Set download destination...**
 - In the dialogue window, click **Use a different location**, select the name of the **YouTube** channel, then click the **OK** button
 
 It doesn't matter which of the two channels you use as the download destination. There is also no limit to the number of parallel channels, so if a creator uploads videos to a dozen different websites, you can add them all.
@@ -1293,7 +1293,7 @@ Nevertheless, since v2.4.0 it has been possible to download videos to any locati
 
 If one of these reasons applies, then you can do this:
 
-- Right-click a channel, playlist or folder, and select **Channel actions > Set download destination...** (etc)
+- Right-click a channel, playlist or folder, and select **Downloads > Set download destination...** (etc)
 - Select **Use an external location**
 - Click the **Set** button, and choose an external folder
 - When you're ready, click the **OK** button to apply your changes

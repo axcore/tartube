@@ -1188,8 +1188,8 @@ msgid "Send _feedback"
 msgstr "Gửi phản hồi"
 
 #: .././mainwin.py:1788
-msgid "Add new video(s)"
-msgstr "Thêm (các) video mới"
+msgid "Add new videos"
+msgstr "Thêm các video mới"
 
 #: .././mainwin.py:1797 .././mainwin.py:25535 .././media.py:82
 msgid "Channel"

@@ -1202,7 +1202,7 @@ msgid "Send _feedback"
 msgstr "Отправить _отзыв"
 
 #: .././mainwin.py:1788
-msgid "Add new video(s)"
+msgid "Add new videos"
 msgstr "Добавить новое видео"
 
 #: .././mainwin.py:1797 .././mainwin.py:25605 .././media.py:82

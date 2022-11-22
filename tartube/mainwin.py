@@ -964,6 +964,16 @@ class MainWin(Gtk.ApplicationWindow):
                     )
                     self.icon_dict['flag_' + locale] = full_path
 
+                for i in range (27):
+                    full_path = os.path.abspath(
+                        os.path.join(
+                            icon_dir_path,
+                            'tutorial',
+                            'tutorial' + str(i) + '.png',
+                        ),
+                    )
+                    self.icon_dict['tutorial' + str(i)] = full_path
+
                 # Now create the pixbufs themselves
                 for key in self.icon_dict:
                     full_path = self.icon_dict[key]
@@ -1725,6 +1735,15 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         help_sub_menu.append(Gtk.SeparatorMenuItem())
 
+        tutorial_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Show _tutorial...')
+        )
+        help_sub_menu.append(tutorial_menu_item)
+        tutorial_menu_item.set_action_name('app.tutorial_menu')
+
+        # Separator
+        help_sub_menu.append(Gtk.SeparatorMenuItem())
+
         check_version_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Check for _updates'),
         )
@@ -1785,7 +1804,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         self.main_toolbar.insert(self.add_video_toolbutton, -1)
-        self.add_video_toolbutton.set_tooltip_text(_('Add new video(s)'))
+        self.add_video_toolbutton.set_tooltip_text(_('Add new videos'))
         self.add_video_toolbutton.set_action_name('app.add_video_toolbutton')
 
         if not squeeze_flag:
@@ -6048,21 +6067,6 @@ class MainWin(Gtk.ApplicationWindow):
             if self.app_obj.current_manager_obj:
                 set_url_menu_item.set_sensitive(False)
 
-        set_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Set _download destination...'),
-        )
-        set_destination_menu_item.connect(
-            'activate',
-            self.on_video_index_set_destination,
-            media_data_obj,
-        )
-        actions_submenu.append(set_destination_menu_item)
-        if (
-            isinstance(media_data_obj, media.Folder) \
-            and media_data_obj.fixed_flag
-        ):
-            set_destination_menu_item.set_sensitive(False)
-
         # Separator
         actions_submenu.append(Gtk.SeparatorMenuItem())
 
@@ -6264,6 +6268,21 @@ class MainWin(Gtk.ApplicationWindow):
         )
         downloads_submenu.append(add_scheduled_menu_item)
 
+        set_destination_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Set _download destination...'),
+        )
+        set_destination_menu_item.connect(
+            'activate',
+            self.on_video_index_set_destination,
+            media_data_obj,
+        )
+        downloads_submenu.append(set_destination_menu_item)
+        if (
+            isinstance(media_data_obj, media.Folder) \
+            and media_data_obj.fixed_flag
+        ):
+            set_destination_menu_item.set_sensitive(False)
+
         show_system_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Show system _command...'),
         )
@@ -6313,9 +6332,6 @@ class MainWin(Gtk.ApplicationWindow):
             and media_data_obj.priv_flag
         ) or media_data_obj.dl_disable_flag:
             marker_menu_item.set_sensitive(False)
-
-        # Separator
-        downloads_submenu.append(Gtk.SeparatorMenuItem())
 
         no_db_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
             _('_Don\'t add videos to Tartube\'s database'),
@@ -9971,7 +9987,7 @@ class MainWin(Gtk.ApplicationWindow):
         if dbid is None:
 
             # Set all markers in the Video Index
-            container_list = self.video_index_row_dict.keys()
+            container_list = list(self.video_index_row_dict.keys())
 
         else:
 
@@ -14879,21 +14895,23 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # If there are any options manager objects that are not already
-        #   attached to a media data object, then we need to prompt the user
-        #   to select one
+        # If there are any options manager objects besides the General Options
+        #   Manager, and the manager attached to the Classic Mode tab, then we
+        #   need to prompt the user to select one
         prompt_flag = False
         for options_obj in self.app_obj.options_reg_dict.values():
 
             if options_obj != self.app_obj.general_options_obj \
-            and options_obj.dbid is None:
-
+            and (
+                self.app_obj.classic_options_obj == None \
+                or options_obj != self.app_obj.classic_options_obj
+            ):
                 prompt_flag = True
                 break
 
         if not prompt_flag:
 
-            # Apply download options to the media data object
+            # Apply (new) download options to the media data object
             self.app_obj.apply_download_options(media_data_obj)
 
             # Open an edit window to show the options immediately
@@ -15642,7 +15660,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # This might take a few tens of seconds, so prompt the user for
             #   confirmation first
-            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                 self.get_take_a_while_msg(media_data_obj, count),
                 'question',
                 'yes-no',
@@ -15692,7 +15710,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # This might take a few tens of seconds, so prompt the user for
             #   confirmation first
-            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                 self.get_take_a_while_msg(media_data_obj, count),
                 'question',
                 'yes-no',
@@ -15910,7 +15928,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # This might take a few tens of seconds, so prompt the user for
             #   confirmation first
-            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                 self.get_take_a_while_msg(media_data_obj, count),
                 'question',
                 'yes-no',
@@ -15960,7 +15978,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # This might take a few tens of seconds, so prompt the user for
             #   confirmation first
-            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                 self.get_take_a_while_msg(media_data_obj, count),
                 'question',
                 'yes-no',
@@ -16628,14 +16646,16 @@ class MainWin(Gtk.ApplicationWindow):
                 'exist_flag': dialogue_win.checkbutton3.get_active(),
                 'del_video_flag': dialogue_win.checkbutton4.get_active(),
                 'del_others_flag': dialogue_win.checkbutton5.get_active(),
-                'del_archive_flag': dialogue_win.checkbutton6.get_active(),
-                'move_thumb_flag': dialogue_win.checkbutton7.get_active(),
-                'del_thumb_flag': dialogue_win.checkbutton8.get_active(),
-                'convert_webp_flag': dialogue_win.checkbutton9.get_active(),
-                'move_data_flag': dialogue_win.checkbutton10.get_active(),
-                'del_descrip_flag': dialogue_win.checkbutton11.get_active(),
-                'del_json_flag': dialogue_win.checkbutton12.get_active(),
-                'del_xml_flag': dialogue_win.checkbutton13.get_active(),
+                'remove_no_url_flag': dialogue_win.checkbutton6.get_active(),
+                'remove_dupe_flag': dialogue_win.checkbutton7.get_active(),
+                'del_archive_flag': dialogue_win.checkbutton8.get_active(),
+                'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
+                'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
+                'convert_webp_flag': dialogue_win.checkbutton11.get_active(),
+                'move_data_flag': dialogue_win.checkbutton12.get_active(),
+                'del_descrip_flag': dialogue_win.checkbutton13.get_active(),
+                'del_json_flag': dialogue_win.checkbutton14.get_active(),
+                'del_xml_flag': dialogue_win.checkbutton15.get_active(),
             }
 
         # Now destroy the window
@@ -16644,28 +16664,23 @@ class MainWin(Gtk.ApplicationWindow):
         if response == Gtk.ResponseType.OK:
 
             # If nothing was selected, then there is nothing to do
-            # (Don't need to check 'del_others_flag' here)
-            if not choices_dict['corrupt_flag'] \
-            and not choices_dict['exist_flag'] \
-            and not choices_dict['del_video_flag'] \
-            and not choices_dict['del_thumb_flag'] \
-            and not choices_dict['convert_webp_flag'] \
-            and not choices_dict['del_descrip_flag'] \
-            and not choices_dict['del_json_flag'] \
-            and not choices_dict['del_xml_flag'] \
-            and not choices_dict['del_archive_flag'] \
-            and not choices_dict['move_thumb_flag'] \
-            and not choices_dict['move_data_flag']:
+            selected_flag = False
+            for key in choices_dict.keys():
+                if choices_dict[key]:
+                    selected_flag = True
+                    break
+
+            if not selected_flag:
                 return
 
             # Prompt the user for confirmation, before deleting any files
             if choices_dict['del_corrupt_flag'] \
             or choices_dict['del_video_flag'] \
+            or choices_dict['del_archive_flag'] \
             or choices_dict['del_thumb_flag'] \
             or choices_dict['del_descrip_flag'] \
             or choices_dict['del_json_flag'] \
-            or choices_dict['del_xml_flag'] \
-            or choices_dict['del_archive_flag']:
+            or choices_dict['del_xml_flag']:
 
                 self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _(
@@ -16764,15 +16779,17 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # If there are any options manager objects that are not already
-        #   attached to a media data object, then we need to prompt the user
-        #   to select one
+        # If there are any options manager objects besides the General Options
+        #   Manager, and the manager attached to the Classic Mode tab, then we
+        #   need to prompt the user to select one
         prompt_flag = False
         for options_obj in self.app_obj.options_reg_dict.values():
 
             if options_obj != self.app_obj.general_options_obj \
-            and options_obj.dbid is None:
-
+            and (
+                self.app_obj.classic_options_obj == None \
+                or options_obj != self.app_obj.classic_options_obj
+            ):
                 prompt_flag = True
                 break
 
@@ -18280,7 +18297,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         # Remove download options from the media data object
-        media_data_obj.set_options_obj(None)
+        media_data_obj.reset_options_obj()
 
 
     def on_video_catalogue_size_entry_activated(self, entry):
@@ -19819,7 +19836,7 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        self.app_obj.disapply_classic_download_options()
+        self.app_obj.remove_classic_download_options()
 
 
     def on_classic_menu_toggle_auto_copy(self, menu_item):
@@ -21222,7 +21239,7 @@ class MainWin(Gtk.ApplicationWindow):
                     for line in duplicate_list:
                         msg += '\n\n' + line
 
-                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                         msg,
                         'warning',
                         'ok',
@@ -27400,7 +27417,7 @@ class AddBulkDialogue(Gtk.Dialog):
         self.channel_count = 0
         self.playlist_count = 0
 
-        # A list of media.Folder (.dbid values ) whose names should be
+        # A list of media.Folder (.dbid values) whose names should be
         #   displayed in the Gtk.ComboBox
         self.folder_list = []
         # The media.Folder selected in the combobox
@@ -27574,13 +27591,13 @@ class AddBulkDialogue(Gtk.Dialog):
                     self.treeview.append_column(column_text)
                     column_text.set_resizable(True)
                     if i == 2:
-                        renderer_text.set_property("editable", True)
+                        renderer_text.set_property('editable', True)
                         renderer_text.connect(
                             'edited',
                             self.on_container_name_edited,
                         )
                     elif i == 3:
-                        renderer_text.set_property("editable", True)
+                        renderer_text.set_property('editable', True)
                         renderer_text.connect(
                             'edited',
                             self.on_container_url_edited,
@@ -29796,16 +29813,13 @@ class ApplyOptionsDialogue(Gtk.Dialog):
         grid.attach(radiobutton2, 0, 2, 1, 1)
         # (Signal connect appears below)
 
-        # Add a combo, containing any options.OptionsManager objects (besides
-        #   the General Options Manager) that are not already attached to a
-        #   media data object
+        # Add a combo, containing all options.OptionsManager objects (besides
+        #   the General Options Manager)
         store = Gtk.ListStore(str, int)
-
         for uid in sorted(app_obj.options_reg_dict):
-            options_obj = app_obj.options_reg_dict[uid]
 
-            if options_obj != app_obj.general_options_obj \
-            and options_obj.dbid is None:
+            options_obj = app_obj.options_reg_dict[uid]
+            if options_obj != app_obj.general_options_obj:
 
                 store.append([
                     '#' + str(options_obj.uid) + ': ' + options_obj.name,
@@ -29835,7 +29849,6 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
         # Add a combo, containing all options.OptionsManager objects
         store2 = Gtk.ListStore(str, int)
-
         for uid in sorted(app_obj.options_reg_dict):
 
             options_obj = app_obj.options_reg_dict[uid]
@@ -30566,8 +30579,10 @@ class DeleteDropZoneDialogue(Gtk.Dialog):
         button2.connect('clicked', self.on_both_button_clicked)
         # Don't delete download options in the middle of a download operation,
         #   or if the options have been applied to a media data object
+        # Don't delete general download options
         if self.main_win_obj.app_obj.current_manager_obj \
-        or options_obj.dbid is not None:
+        or options_obj.dbid_list \
+        or options_obj == self.main_win_obj.app_obj.general_options_obj:
             button2.set_sensitive(False)
 
         # Display the dialogue window
@@ -35096,6 +35111,8 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton11 = None               # Gtk.CheckButton
         self.checkbutton12 = None               # Gtk.CheckButton
         self.checkbutton13 = None               # Gtk.CheckButton
+        self.checkbutton14 = None               # Gtk.CheckButton
+        self.checkbutton15 = None               # Gtk.CheckButton
 
 
         # Code

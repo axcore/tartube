@@ -604,6 +604,7 @@ class SetupWizWin(GenericWizWin):
         self.ffmpeg_scrolled = None             # Gtk.ScrolledWindow
         self.ffmpeg_textview = None             # Gtk.TextView
         self.ffmpeg_textbuffer = None           # Gtk.TextBuffer
+        self.tutorial_button = None             # Gtk.Button
         self.auto_open_button = None            # Gtk.Button
 
 
@@ -650,6 +651,10 @@ class SetupWizWin(GenericWizWin):
         # Flag set to True after the user has tried install FFmpeg at least
         #   once (even if the attempt failed)
         self.try_install_ffmpeg_flag = False
+
+        # Flag set to True if the tutorial wizard window should be opened,
+        #   after this one closes
+        self.open_tutorial_flag = False
 
         # Standard length of text in the wizard window
         self.text_len = 60
@@ -716,7 +721,7 @@ class SetupWizWin(GenericWizWin):
 
         Apply the settings the user has specified.
         """
-
+        
         if self.data_dir is not None:
             self.app_obj.set_data_dir(self.data_dir)
             self.app_obj.set_data_dir_alt_list( [ self.data_dir ] )
@@ -742,7 +747,7 @@ class SetupWizWin(GenericWizWin):
             )
 
         # Continue with general initialisation
-        self.app_obj.open_wiz_win_continue()
+        self.app_obj.open_wiz_win_continue(self)
 
 
     def cancel_changes(self):
@@ -804,7 +809,7 @@ class SetupWizWin(GenericWizWin):
         elif __main__.__pkg_strict_install_flag__:
 
             edition = _(
-                'For this package, youtube-dl(c) and FFmpeg must be' \
+                'For this package, youtube-dl and FFmpeg must be' \
                 + ' installed separately',
             )
 
@@ -1516,19 +1521,21 @@ class SetupWizWin(GenericWizWin):
         Sets up the widget layout for a page, shown only on MS Windows.
         """
 
+        grid_width = 3
+
         self.add_image(
             self.app_obj.main_win_obj.icon_dict['ready_icon'],
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_label(
             '<span font_size="large" font_weight="bold">' \
             + _('All done!') + '</span>',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, 1, 1)
+        self.add_empty_label(0, 2, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1539,19 +1546,33 @@ class SetupWizWin(GenericWizWin):
                 ),
                 self.text_len,
             ) + '</span>',
-            0, 3, 1, 1,
+            0, 3, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 4, 1, 1)
+        self.add_empty_label(0, 4, grid_width, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + utils.tidy_up_long_string(
-                _('Click the <b>OK</b> button to start Tartube!'),
+                _(
+                    'Click this button below to see a short tutorial, or' \
+                    + ' click the OK button to start Tartube!',
+                ),
                 self.text_len,
             ) + '</span>',
-            0, 5, 1, 1,
+            0, 5, grid_width, 1,
+        )
+
+        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
+        self.inner_grid.attach(
+            self.tutorial_button,
+            1, 6, 1, 1,
+        )
+        self.tutorial_button.set_hexpand(False)
+        self.tutorial_button.connect(
+            'clicked',
+            self.on_button_tutorial_clicked,
         )
 
 
@@ -1563,19 +1584,21 @@ class SetupWizWin(GenericWizWin):
         from a DEB/RPM package.
         """
 
+        grid_width = 3
+
         self.add_image(
             self.app_obj.main_win_obj.icon_dict['ready_icon'],
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_label(
             '<span font_size="large" font_weight="bold">' \
             + _('All done!') + '</span>',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, 1, 1)
+        self.add_empty_label(0, 2, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1586,11 +1609,11 @@ class SetupWizWin(GenericWizWin):
                 ),
                 self.text_len,
             ) + '</span>',
-            0, 3, 1, 1,
+            0, 3, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 4, 1, 1)
+        self.add_empty_label(0, 4, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1598,11 +1621,11 @@ class SetupWizWin(GenericWizWin):
                 _('It is strongly recommended that you install FFmpeg.'),
                 self.text_len,
             ) + '</span>',
-            0, 5, 1, 1,
+            0, 5, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 6, 1, 1)
+        self.add_empty_label(0, 6, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1614,19 +1637,33 @@ class SetupWizWin(GenericWizWin):
                 ),
                 self.text_len,
             ) + '</span>',
-            0, 7, 1, 1,
+            0, 7, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 8, 1, 1)
+        self.add_empty_label(0, 8, grid_width, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + utils.tidy_up_long_string(
-                _('Click the <b>OK</b> button to start Tartube!'),
+                _(
+                    'Click this button below to see a short tutorial, or' \
+                    + ' click the OK button to start Tartube!',
+                ),
                 self.text_len,
             ) + '</span>',
-            0, 9, 1, 1,
+            0, 9, grid_width, 1,
+        )
+
+        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
+        self.inner_grid.attach(
+            self.tutorial_button,
+            1, 10, 1, 1,
+        )
+        self.tutorial_button.set_hexpand(False)
+        self.tutorial_button.connect(
+            'clicked',
+            self.on_button_tutorial_clicked,
         )
 
 
@@ -1638,19 +1675,21 @@ class SetupWizWin(GenericWizWin):
         MS Windows.
         """
 
+        grid_width = 3
+
         self.add_image(
             self.app_obj.main_win_obj.icon_dict['ready_icon'],
-            0, 0, 1, 1,
+            0, 0, grid_width, 1,
         )
 
         self.add_label(
             '<span font_size="large" font_weight="bold">' \
             + _('All done!') + '</span>',
-            0, 1, 1, 1,
+            0, 1, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 2, 1, 1)
+        self.add_empty_label(0, 2, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1658,11 +1697,11 @@ class SetupWizWin(GenericWizWin):
                 _('It is strongly recommended that you install FFmpeg.'),
                 self.text_len,
             ) + '</span>',
-            0, 3, 1, 1,
+            0, 3, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 4, 1, 1)
+        self.add_empty_label(0, 4, grid_width, 1)
 
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -1674,19 +1713,33 @@ class SetupWizWin(GenericWizWin):
                 ),
                 self.text_len,
             ) + '</span>',
-            0, 5, 1, 1,
+            0, 5, grid_width, 1,
         )
 
         # (Empty label for spacing)
-        self.add_empty_label(0, 6, 1, 1)
+        self.add_empty_label(0, 6, grid_width, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + utils.tidy_up_long_string(
-                _('Click the <b>OK</b> button to start Tartube!'),
+                _(
+                    'Click this button below to see a short tutorial, or' \
+                    + ' click the OK button to start Tartube!',
+                ),
                 self.text_len,
             ) + '</span>',
-            0, 7, 1, 1,
+            0, 7, grid_width, 1,
+        )
+
+        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
+        self.inner_grid.attach(
+            self.tutorial_button,
+            1, 8, 1, 1,
+        )
+        self.tutorial_button.set_hexpand(False)
+        self.tutorial_button.connect(
+            'clicked',
+            self.on_button_tutorial_clicked,
         )
 
 
@@ -2004,6 +2057,23 @@ class SetupWizWin(GenericWizWin):
             button.set_sensitive(True)
             self.next_button.set_sensitive(True)
             self.prev_button.set_sensitive(True)
+
+
+    def on_button_tutorial_clicked(self, button):
+
+        """Called from a callback in self.setup_fetch_page().
+
+        Closes this window, and marks the tutorial wizard window to be opened.
+        
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.open_tutorial_flag = True
+        self.apply_changes()
+        self.destroy()
 
 
     def on_button_update_path_clicked(self, button):
@@ -2927,3 +2997,867 @@ class ImportYTWizWin(GenericWizWin):
         # Update IVs
         mini_dict = self.db_dict[self.liststore[path][4]]
         mini_dict['source'] = text
+
+
+class TutorialWizWin(GenericWizWin):
+
+    """Python class for a 'wizard window' used to show a short tutorial.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application object
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, app_obj):
+
+        Gtk.Window.__init__(self, title=_('Tartube Tutorial'))
+
+        if self.is_duplicate(app_obj):
+           return
+
+        # IV list - class objects
+        # -----------------------
+        # The mainapp.TartubeApp object
+        self.app_obj = app_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.grid = None                        # Gtk.Grid
+        self.vbox = None                        # Gtk.VBox
+        self.inner_grid = None                  # Gtk.Grid
+        self.cancel_button = None               # Gtk.Button
+        self.next_button = None                 # Gtk.Button
+        self.prev_button = None                 # Gtk.Button
+
+
+        # IV list - other
+        # ---------------
+        # Size (in pixels) of gaps between preference window widgets
+        self.spacing_size = self.app_obj.default_spacing_size
+
+        # List of 'pages' (widget layouts on self.inner_grid). Each item in the
+        #   list is the function to call
+        self.page_list = []                     # Set below
+        # The number of the current page (the first is 0), matching an index in
+        #   self.page_list
+        self.current_page = 0
+
+        # Standard length of text in the wizard window
+        self.text_len = 70
+
+
+        # Code
+        # ----
+
+        # Set the page list
+        self.page_list = [
+            'setup_start_page',
+            'setup_page_1',
+            'setup_page_2',
+            'setup_page_3',
+            'setup_page_4',
+            'setup_page_5',
+            'setup_page_6',
+            'setup_page_7',
+            'setup_page_8',
+            'setup_page_9',
+            'setup_page_10',
+            'setup_page_11',
+            'setup_page_12',
+            'setup_page_13',
+            'setup_page_14',
+            'setup_page_15',
+            'setup_page_16',
+            'setup_page_17',
+            'setup_page_18',
+            'setup_page_19',
+            'setup_page_20',
+            'setup_page_21',
+            'setup_page_22',
+            'setup_page_23',
+            'setup_page_24',
+            'setup_page_25',
+            'setup_page_26',
+            'setup_finish_page',
+        ]
+
+        # Set up the wizard window
+        self.setup()
+
+
+    # Public class methods
+
+
+#   def is_duplicate():         # Inherited from GenericWizWin
+
+
+#   def setup():                # Inherited from GenericWizWin
+
+
+#   def setup_grid():           # Inherited from GenericWizWin
+
+
+#   def setup_button_strip():   # Inherited from GenericWizWin
+
+
+#   def setup_page():           # Inherited from GenericWizWin
+
+
+#   def convert_next_button():  # Inherited from GenericWizWin
+
+
+#   def apply_changes():        # Inherited from GenericWizWin
+
+
+#   def cancel_changes():       # Inherited from GenericWizWin
+
+
+#   def close():                # Inherited from GenericWizWin
+
+
+    # (Setup pages)
+
+
+    def setup_start_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['system_icon'],
+            0, 0, 1, 1,
+        )
+
+        self.add_label(
+            '<span font_size="large" font_weight="bold">' \
+            + _('Tartube Tutorial') + '</span>',
+            0, 1, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 2, 1, 1)
+        
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(
+                _('This tutorial will take about five minutes.'),
+                self.text_len,
+            ) + '</span>',
+            0, 4, 1, 1,
+        )
+
+        self.add_label(
+            '<span font_size="large"  style="italic">' \
+            + utils.tidy_up_long_string(
+                _('Click the <b>Next</b> button to get started.'),
+                self.text_len,
+            ) + '</span>',
+            0, 5, 1, 1,
+        )
+
+
+    def setup_page_1(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+        
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial1'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Click the \'Add a new channel\' button.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_2(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial2'],
+            0, 0, 1, 1,
+        )
+
+        msg = _(
+            'In the first box, give the channel a name. In the second box,' \
+            + ' paste the channel\'s URL.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 1, 1, 1,
+        )
+
+
+    def setup_page_3(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial3'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Your new channel is added to Tartube\'s database.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_4(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial4'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'Click \'Check all\' to fetch a list of videos. Click \'Download' \
+            + ' all\' to download the videos.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_5(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial5'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('As well as adding channels, you can add playlists.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_6(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial6'],
+            0, 0, 1, 1,
+        )
+
+#        # (Empty label for spacing)
+#        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'If you want to add videos individually, click the \'Add new' \
+            + ' videos\' button. They will be downloaded to the' \
+            + ' \'Unsorted Videos\' folder.' \
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 1, 1, 1,
+        )
+
+
+    def setup_page_7(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial7'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'You can organise your videos into folders. Click the \'Add a' \
+            + ' new folder\' button.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_8(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial8'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'You can drag-and-drop channels and playlists into the right' \
+            + ' folder.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_9(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial9'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'You can check the progress of your downloads in the' \
+            + ' \'Progress\' tab.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_10(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial10'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Advanced users can see more detail in the \'Output\' tab.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_11(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial11'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'A summary of any problems will appear in the' \
+            + ' \'Errors / Warnings\' tab.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_12(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial12'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'If you don\'t want to build a database of videos, then you' \
+            + ' can use the \'Classic Mode\' tab.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_13(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial13'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'In the box at the top, paste the URLs of videos, channels' \
+            + ' and playlists.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_14(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial14'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Set the download folder.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_15(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial15'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Choose the video or audio format.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_16(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial16'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('Click the \'Add URLs\' button.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_17(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial17'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'If you like, you can now set up more downloads using' \
+            + ' a different download folder and/or format.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_18(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial18'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _('When you\'re ready, click the \'Download all\' button.')
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_19(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial19'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'Download options changes the way your videos are downloaded.' \
+            + ' To see them, click \'Edit > General download options...\'',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_20(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial20'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'A completely different set of download options is used in the ' \
+            + ' the \'Classic Mode\' tab. Click the menu button in the' \
+            + ' top-right corner.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_21(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial21'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'The new window has many options you can try. For example, to' \
+            + ' download videos as .mp3 files, click the \'Convert\' tab.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_22(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial22'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'You can apply a separate set of download options to a channel.' \
+            + ' Right-click it, and select \'Downloads > Apply download' \
+            + ' options...\'',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_23(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial23'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'The icon changes to remind you that the channel has its own' \
+            + ' set of download options.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_24(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial24'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'If you add download options to a folder, they apply to all' \
+            + ' videos, channels and playlists inside that folder.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_25(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial25'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'yt-dlp is updated frequently, so don\'t forget to download' \
+            + ' the updates. Click \'Operations > Update yt-dlp\'.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+        
+        
+    def setup_page_26(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial26'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+        
+        msg = _(
+            'More help is available on our website. Click \'Help >' \
+            + ' Go to website\'.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+        
+    def setup_finish_page(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['system_icon'],
+            0, 0, 1, 1,
+        )
+
+        self.add_label(
+            '<span font_size="large" font_weight="bold">' \
+            + _('Tartube Tutorial') + '</span>',
+            0, 1, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 2, 1, 1)
+        
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(
+                _('That\'s the end of the tutorial.'),
+                self.text_len,
+            ) + '</span>',
+            0, 3, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 4, 1, 1)
+        
+        self.add_label(
+            '<span font_size="large"  style="italic">' \
+            + utils.tidy_up_long_string(
+                _(
+                    'You can read it again at any time by clicking' \
+                    + ' \'Help > Show tutorial...\' in Tartube\'s menu.',
+                ),
+                self.text_len,
+            ) + '</span>',
+            0, 5, 1, 1,
+        )

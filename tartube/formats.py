@@ -59,8 +59,8 @@ while locale_setup_list:
 
 # Some icons are different at Christmas/on national holidays
 today = datetime.date.today()
-day = today.strftime("%d")
-month = today.strftime("%m")
+day = today.strftime('%d')
+month = today.strftime('%m')
 
 xmas_flag = False
 eesti_flag = False

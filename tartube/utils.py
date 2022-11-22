@@ -324,7 +324,7 @@ def check_url(url):
         final_url = urlparse(urljoin(url, '/'))
         is_valid = (
             all([final_url.scheme, final_url.netloc, final_url.path])
-            and len(final_url.netloc.split(".")) > 1
+            and len(final_url.netloc.split('.')) > 1
             and not re.search(r'\s', url)
         )
 
@@ -3333,7 +3333,7 @@ def parse_options(options_string):
             if quote_flag and item[-1] == "\"":
 
                 # Special case mode is over
-                return_list.append(" ".join(quote_list)[1:-1])
+                return_list.append(' '.join(quote_list)[1:-1])
 
                 quote_flag = False
                 quote_list = []

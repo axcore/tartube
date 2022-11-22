@@ -54,9 +54,23 @@ class OptionsManager(object):
     Tartube's options.OptionsManager implements a subset of options implemented
     by the equivalent class in youtube-dl-gui.
 
+    Args:
+
+        uid (int): Unique ID for this options manager
+
+        name (str): A non-unique name for this options manager. Options
+            managers that, on creation, are attached to a particular media data
+            object have the same name as that object
+
+        dbid (int or None): If this options manager, on create, is attached to
+            a particular media data object, the .dbid of that object; otherwise
+            None
+
+    Canonical list of options:
+    
     Options are listed here in the same order in which they appear in
     youtube-dl's documentation.
-
+            
     OPTIONS
 
         ignore_errors (bool): If True, youtube-dl will ignore the errors and
@@ -633,9 +647,12 @@ class OptionsManager(object):
         # A short description, intended for use in the Drag and Drop tab
         # Empty strings are valid as descriptions
         self.descrip = name
-        # If this object is attached to a media data object, the .dbid of that
-        #   object; otherwise None
-        self.dbid = dbid
+        # A list of .dbid value for any media data objects to which this
+        #   options manager is attached. (When attached to a media.Folder,
+        #   this options manager applies to any child video, channel, playlist
+        #   or sub-folder)
+        # An empty list if not attached to a media data object
+        self.dbid_list = []
 
         # Dictionary of download options for youtube-dl, set by a call to
         #   self.reset_options
@@ -645,6 +662,9 @@ class OptionsManager(object):
         # Code
         # ----
 
+        if dbid is not None:
+            self.dbid_list = [dbid]
+            
         # Initialise youtube-dl options
         self.reset_options()
 
@@ -970,15 +990,23 @@ class OptionsManager(object):
     # Set accessors
 
 
-    def set_dbid(self, dbid):
+    def add_dbid(self, dbid):
 
-        self.dbid = dbid
+        # (Don't add duplicates. This might be a concern, when called from
+        #   mainapp.TartubeApp.fix_integrity_db() )
+        if not dbid in self.dbid_list:
+            self.dbid_list.append(dbid)
+        
 
+    def del_dbid(self, dbid):
 
+        self.dbid_list.remove(dbid)
+
+        
     def reset_dbid(self):
 
-        self.dbid = None
-
+        self.dbid_list = []
+        
 
 class OptionsParser(object):
 
@@ -1487,7 +1515,7 @@ class OptionsParser(object):
                 cookies_path = copy_dict[option_holder_obj.name]
                 options_list.append('--cookies')
                 # If no path is specified, use a standard location for the
-                #   cookie jar (otherwise youtube-dl(c) will write it to
+                #   cookie jar (otherwise youtube-dl will write it to
                 #   ../tartube/tartube)
                 if cookies_path == '':
                     options_list.append(

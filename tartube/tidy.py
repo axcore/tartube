@@ -427,7 +427,7 @@ class TidyManager(threading.Thread):
             
         else:
             # Add all channels/playlists/folders in the database
-            for dbid in list(self.app_obj.container_reg_dict.keys()):
+            for dbid in self.app_obj.container_reg_dict.keys():
 
                 obj = self.app_obj.media_reg_dict[dbid]
                 # Don't add private folders

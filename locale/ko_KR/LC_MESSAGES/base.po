@@ -1156,8 +1156,8 @@ msgid "Send _feedback"
 msgstr "_피드백 보내기"
 
 #: .././mainwin.py:1788
-msgid "Add new video(s)"
-msgstr "새 비디오(들) 만들기"
+msgid "Add new videos"
+msgstr "새 비디오들 만들기"
 
 #: .././mainwin.py:1797 .././mainwin.py:25522 .././media.py:82
 msgid "Channel"

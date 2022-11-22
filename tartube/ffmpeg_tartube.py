@@ -27,6 +27,7 @@
 # Import other modules
 import os
 import re
+import shutil
 import subprocess
 
 
@@ -101,12 +102,19 @@ class FFmpegManager(object):
                 (including when no conversion is attempted)
 
         """
-
+        
         # Sanity check
         if not os.path.isfile(thumbnail_filename) \
         or self.app_obj.ffmpeg_fail_flag:
             return True
 
+        # Retain original thumbnails, if required
+        if self.app_obj.ffmpeg_convert_webp_flag \
+        and self.app_obj.ffmpeg_retain_webp_flag:
+            retain_flag = True
+        else:
+            retain_flag = False
+        
         # Correct extension for .webp files with the wrong extension
         #   (youtube-dl #25687, #25717)
         _, thumbnail_ext = os.path.splitext(thumbnail_filename)
@@ -123,7 +131,14 @@ class FFmpegManager(object):
                     'webp',
                 )
 
-                os.rename(thumbnail_filename, thumbnail_webp_filename)
+                if not retain_flag:
+                    os.rename(thumbnail_filename, thumbnail_webp_filename)
+                else:
+                    shutil.copyfile(
+                        thumbnail_filename,
+                        thumbnail_webp_filename,
+                    )
+                    
                 thumbnail_filename = thumbnail_webp_filename
                 thumbnail_ext = 'webp'
 
@@ -134,18 +149,47 @@ class FFmpegManager(object):
             # NB: % is supposed to be escaped with %% but this does not work
             # for input files so working around with standard substitution
             escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
-            os.rename(thumbnail_filename, escaped_thumbnail_filename)
             escaped_thumbnail_jpg_filename = self.replace_extension(
                 escaped_thumbnail_filename,
                 'jpg',
             )
 
-            # Run FFmpeg to convert the thumbnail(s)
-            success_flag, msg = self.run_ffmpeg(
-                escaped_thumbnail_filename,
-                escaped_thumbnail_jpg_filename,
-                ['-bsf:v', 'mjpeg2jpeg'],
-            )
+            if not retain_flag:
+                
+                # Handle special characters
+                os.rename(thumbnail_filename, escaped_thumbnail_filename)
+
+                # Run FFmpeg to convert the thumbnail(s)
+                success_flag, msg = self.run_ffmpeg(
+                    escaped_thumbnail_filename,
+                    escaped_thumbnail_jpg_filename,
+                    ['-bsf:v', 'mjpeg2jpeg'],
+                )
+
+            else:
+
+                # (Copy the original to a temporary directory, and let FFmpeg
+                #   manipulate the copy)
+                directory, filename = os.path.split(thumbnail_filename)
+                temp_filename = os.path.abspath(
+                    os.path.join(
+                        self.app_obj.temp_ffmpeg_dir, filename,
+                    ),
+                )
+                shutil.copyfile(thumbnail_filename, temp_filename)
+
+                # Handle special characters
+                os.rename(thumbnail_filename, escaped_thumbnail_filename)
+
+                # Run FFmpeg to convert the thumbnail(s)
+                success_flag, msg = self.run_ffmpeg(
+                    escaped_thumbnail_filename,
+                    escaped_thumbnail_jpg_filename,
+                    ['-bsf:v', 'mjpeg2jpeg'],
+                )
+
+                # Restore the original file
+                shutil.copyfile(temp_filename, thumbnail_filename)
 
             if not success_flag:
 

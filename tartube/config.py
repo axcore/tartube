@@ -641,6 +641,70 @@ class GenericConfigWin(Gtk.Window):
         return combo, combo2, combo3, combo4, combo5
 
 
+    def get_options_applied_text(self, options_obj):
+
+        """ Called by OptionsEditWin.setup_name_tab() and
+        SystemPrefWin.setup_options_dl_list_tab_add_row().
+
+        Generates text displaying the media data object(s) to which a
+        download options manager has been applied.
+
+        Args:
+
+            options_obj (options.OptionsManager): The download options manager
+
+        Return values:
+
+            A single line of displayable text
+
+        """
+
+        if not options_obj.dbid_list:
+
+            # Failsafe; calling code has already checked that
+            return ''
+            
+        if len(options_obj.dbid_list) == 1:
+        
+            dbid = options_obj.dbid_list[0]
+            media_data_obj = self.app_obj.media_reg_dict[dbid]
+            return media_data_obj.get_translated_type(True) \
+            + ': ' + media_data_obj.name
+                        
+        else:
+
+            video_count = 0
+            channel_count = 0
+            playlist_count = 0
+            folder_count = 0
+            
+            for dbid in options_obj.dbid_list:
+                media_data_obj = self.app_obj.media_reg_dict[dbid]
+                if isinstance(media_data_obj, media.Video):
+                    video_count += 1
+                elif isinstance(media_data_obj, media.Channel):
+                    channel_count += 1
+                elif isinstance(media_data_obj, media.Playlist):
+                    playlist_count += 1
+                elif isinstance(media_data_obj, media.Folder):
+                    folder_count += 1
+
+            msg = ''
+            if video_count:
+                msg = _('Videos') + ': ' + str(video_count) + ' '
+
+            if channel_count:
+                msg = msg + _('Channels') + ': ' + str(channel_count) + ' '
+
+            if playlist_count:
+                msg = msg + _('Playlists') + ': ' + str(playlist_count) + ' '
+
+            if folder_count:
+                msg = msg + _('Folders') + ': ' + str(folder_count) + ' '
+
+            return msg
+
+        
     def plot_graph(self, hbox, plot_type, data_type, ink_colour, x_label,
     y_label, x_list, y_list):
 
@@ -4229,10 +4293,6 @@ class OptionsEditWin(GenericEditWin):
         self.app_obj = app_obj
         # The options.OptionManager object being edited
         self.edit_obj = edit_obj
-        # The media data object which is the parent of the options manager
-        #   object (None, if the object isn't attached to a media data object;
-        #   set below)
-        self.media_data_obj = None
 
 
         # IV list - Gtk widgets
@@ -4283,11 +4343,6 @@ class OptionsEditWin(GenericEditWin):
 
         # Code
         # ----
-
-        # Set the parent media data object, if any
-        if edit_obj.dbid is not None \
-        and edit_obj.dbid in self.app_obj.media_reg_dict:
-            self.media_data_obj = self.app_obj.media_reg_dict[edit_obj.dbid]
 
         # Set up the edit window
         self.setup()
@@ -4390,7 +4445,7 @@ class OptionsEditWin(GenericEditWin):
         displayed.
         """
 
-        self.notebook.set_current_page(2)
+        self.notebook.set_current_page(3)
 
 
     def select_subs_tab(self):
@@ -4487,7 +4542,7 @@ class OptionsEditWin(GenericEditWin):
         elif name == 'uid' \
         or name == 'name' \
         or name == 'descrip' \
-        or name == 'dbid':
+        or name == 'dbid_list':
 
             return getattr(self.edit_obj, name)
 
@@ -4570,9 +4625,6 @@ class OptionsEditWin(GenericEditWin):
         tab, grid = self.add_notebook_tab(_('_Name'))
         grid_width = 3
 
-        if self.media_data_obj:
-            media_type = self.media_data_obj.get_type()
-
         label = self.add_label(grid,
             _('Name for these download options'),
             0, 0, 1, 1,
@@ -4608,43 +4660,20 @@ class OptionsEditWin(GenericEditWin):
             0, 2, 1, 1,
         )
 
-        if self.media_data_obj:
-
-            entry4 = self.add_entry(grid,
-                None,
-                1, 2, 1, 1,
-            )
-            entry4.set_editable(False)
-            entry4.set_hexpand(False)
-            entry4.set_width_chars(8)
-            entry4.set_text('#' + str(self.media_data_obj.dbid))
-
-            entry5 = self.add_entry(grid,
-                None,
-                2, 2, 1, 1,
-            )
-            entry5.set_editable(False)
-            entry5.set_hexpand(True)
-
-            entry5.set_text(
-                self.media_data_obj.get_translated_type(True) \
-                + ': ' + self.media_data_obj.name,
-            )
-
+        entry4 = self.add_entry(grid,
+            None,
+            1, 2, 2, 1,
+        )
+        entry4.set_editable(False)
+                
+        if self.edit_obj == self.app_obj.general_options_obj:
+            entry4.set_text(_('All channels, playlists and folders'))
+        elif self.edit_obj == self.app_obj.classic_options_obj:
+            entry4.set_text(_('Downloads in the Classic Mode tab'))
+        elif self.edit_obj.dbid_list:
+            entry4.set_text(self.get_options_applied_text(self.edit_obj))
         else:
-
-            entry4 = self.add_entry(grid,
-                None,
-                1, 2, 2, 1,
-            )
-            entry4.set_editable(False)
-
-            if self.edit_obj == self.app_obj.general_options_obj:
-                entry4.set_text(_('All channels, playlists and folders'))
-            elif self.edit_obj == self.app_obj.classic_options_obj:
-                entry4.set_text(_('Downloads in the Classic Mode tab'))
-            else:
-                entry4.set_text(_('These options are not applied to anything'))
+            entry4.set_text(_('These options are not applied to anything'))
 
         if self.app_obj.simple_options_flag:
 
@@ -12706,20 +12735,24 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 ignore = float(stop_time)
 
         except:
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
 
+            return
+
         if stop_time is not None and stop_time <= start_time:
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Compile the mini-dictionary in the format described by
         #   media.Video.__init__()
@@ -15771,20 +15804,24 @@ class VideoEditWin(GenericEditWin):
                 ignore = float(stop_time)
 
         except:
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
 
+            return
+
         if stop_time is not None and stop_time <= start_time:
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Invalid start/stop times'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Compile the mini-dictionary in the format returned by SponsorBlock
         mini_dict = {
@@ -17056,12 +17093,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
         if playlist_title != '' \
         and not self.app_obj.is_container(playlist_title):
             
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The name \'{0}\' is already in use').format(playlist_title),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         url = utils.convert_enhanced_template_from_json(
             'convert_playlist_list',
@@ -17073,12 +17112,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
         )
         if url is None:
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Unable to extrapolate the URL for this playlist'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         for dbid in self.app_obj.container_reg_dict.keys():
 
@@ -17086,13 +17127,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
             if not isinstance(media_data_obj, media.Folder) \
             and media_data_obj.source == url:
 
-                return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _('The playlist is already in Tartube\'s database'),
                     'error',
                     'ok',
                     self,           # Parent window is this window
                 )
 
+                return
 
         # Name an unnamed playlist
         if playlist_title == '':
@@ -17108,12 +17150,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
         )
         if not playlist_obj:
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('Unable to create new playlist'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         else:
 
@@ -17126,7 +17170,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
             #   to select the new playlist
             self.app_obj.main_win_obj.video_index_add_row(playlist_obj, True)
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _(
                 'Added playlist \'{0}\' to Tartube\'s database',
                 ).format(playlist_title),
@@ -17134,6 +17178,8 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
 
     def on_all_assoc_playlist_button_clicked(self, button, checkbutton):
@@ -17235,12 +17281,14 @@ class ChannelPlaylistEditWin(GenericEditWin):
         msg = _('Playlists added: {0}').format(success_count) \
         + '\n' + _('Playlists not added: {0}').format(fail_count)
 
-        return self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
             msg,
            'info',
            'ok',
             self,           # Parent window is this window
         )
+
+        return
 
 
     def on_assoc_playlist_prefs_button_clicked(self, button):
@@ -23158,7 +23206,27 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 11, grid_width, 1,
         )
-        checkbutton9.connect('toggled', self.on_ffmpeg_convert_flag_toggled)
+        # (Signal connect appears below)
+        
+        checkbutton10 = self.add_checkbutton(grid,
+            _(
+            '...but don\'t delete the original thumbnails (disable if' \
+            + ' you want to embed thumbnails in videos)',
+            ),
+            self.app_obj.ffmpeg_retain_webp_flag,
+            True,                   # Can be toggled by user
+            0, 12, grid_width, 1,
+        )
+        if not self.app_obj.ffmpeg_convert_webp_flag:
+            checkbutton.set_sensitive(False)
+        checkbutton10.connect('toggled', self.on_ffmpeg_retain_flag_toggled)
+
+        # (Signal connects from above)
+        checkbutton9.connect(
+            'toggled',
+            self.on_ffmpeg_convert_flag_toggled,
+            checkbutton10,
+        )
 
 
     def setup_operations_ignore_tab(self, inner_notebook):
@@ -24906,7 +24974,7 @@ class SystemPrefWin(GenericPrefWin):
 
         radiobutton3 = self.add_radiobutton(grid4,
             radiobutton2,
-            '   ' + _('Use this fork:'),
+            '   ' + _('Use this fork (e.g. youtube-dlc):'),
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
@@ -24918,7 +24986,9 @@ class SystemPrefWin(GenericPrefWin):
             1, 1, 1, 1,
         )
         entry.set_sensitive(True)
-        entry.set_hexpand(True)
+        entry.set_max_length(32)
+        entry.set_hexpand(False)
+        entry.set_icon_from_stock(Gtk.EntryIconPosition.PRIMARY, 'gtk-yes')
         # (Signal connect appears below)
 
         # Set widgets' initial states
@@ -25042,9 +25112,13 @@ class SystemPrefWin(GenericPrefWin):
                 ],
             )
 
+        if os.name == 'nt':     
+            msg = _('Use custom path (not recommended on MS Windows)')
+        else:
+            msg = _('Use custom path')
         combo_list.append(
             [
-                _('Use custom path'),
+                msg,
                 None,       # Set by the callback
             ],
         )
@@ -25507,6 +25581,8 @@ class SystemPrefWin(GenericPrefWin):
         )
         label.set_hexpand(True)
 
+        # !!! DEBUG: Clicking the button creates a positional argument error
+        # !!!       for no obvious reason
         button8 = Gtk.Button()
         grid2.attach(button8, 6, 0, 1, 1)
         button8.set_label(_('Refresh list'))
@@ -25571,17 +25647,10 @@ class SystemPrefWin(GenericPrefWin):
         else:
             row_list.append(False)
 
-        if options_obj.dbid is None:
-
+        if not options_obj.dbid_list:
             row_list.append('')
-
         else:
-
-            media_data_obj = self.app_obj.media_reg_dict[options_obj.dbid]
-            row_list.append(
-                media_data_obj.get_translated_type(True) \
-                + ': ' + media_data_obj.name,
-            )
+            row_list.append(self.get_options_applied_text(options_obj))
 
         self.options_liststore.append(row_list)
 
@@ -27286,12 +27355,14 @@ class SystemPrefWin(GenericPrefWin):
         if text == '' \
         or re.search('^\s*$', text) \
         or not self.app_obj.check_container_name_is_legal(text):
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The name \'{0}\' is not allowed').format(text),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Get the dbid for the selected line's channel/playlist
         model = treeview.get_model()
@@ -27317,7 +27388,7 @@ class SystemPrefWin(GenericPrefWin):
                 media_data_obj.parent_obj is None \
                 and self.app_obj.find_duplicate_name_in_container(None, text)
             ):
-                return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _(
                         'There is already a channel, playlist or folder' \
                         + ' called \'{0}\'',
@@ -27326,6 +27397,8 @@ class SystemPrefWin(GenericPrefWin):
                     'ok',
                     self,           # Parent window is this window
                 )
+
+                return
                 
             if not checkbutton.get_active():
 
@@ -27383,12 +27456,14 @@ class SystemPrefWin(GenericPrefWin):
 
         # Check the entered text is a valid URL
         if not utils.check_url(text):
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('That is not a valid URL'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Get the dbid for the selected line's channel/playlist
         model = treeview.get_model()
@@ -27451,12 +27526,14 @@ class SystemPrefWin(GenericPrefWin):
                 re.compile(pattern)
 
             except re.error():
-                return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                     _('The regex is invalid'),
                     'error',
                     'ok',
                     self,           # Parent window is this window
                 )
+
+                return
 
         # Get the media data objects for each selected line
         media_list = []
@@ -27719,12 +27796,14 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.general_custom_dl_obj \
         and self.app_obj.general_custom_dl_obj == custom_dl_obj:
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The default custom download manager cannot be deleted'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Prompt for confirmation
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -27886,7 +27965,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Filter out empty lines
-        line_list = text.split("\n")
+        line_list = text.split('\n')
         mod_list = []
         for line in line_list:
             if re.search(r'\S', line):
@@ -28342,7 +28421,7 @@ class SystemPrefWin(GenericPrefWin):
 
         if not os.path.isfile(db_path):
 
-            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
                 _(
                     'No database exists at this location:',
                 ) + '\n\n' + data_dir + '\n\n' + _(
@@ -29255,7 +29334,7 @@ class SystemPrefWin(GenericPrefWin):
                     FFmpegOptionsEditWin(self.app_obj, new_obj)
 
 
-    def on_ffmpeg_convert_flag_toggled(self, checkbutton):
+    def on_ffmpeg_convert_flag_toggled(self, checkbutton, checkbutton2):
 
         """Called from callback in self.setup_operations_downloads_tab().
 
@@ -29264,15 +29343,21 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
+            
+            checkbutton2 (Gtk.CheckButton): Another widget to be updated
 
         """
 
         if checkbutton.get_active() \
         and not self.app_obj.ffmpeg_convert_webp_flag:
             self.app_obj.set_ffmpeg_convert_webp_flag(True)
+            checkbutton2.set_sensitive(True)
+            
         elif not checkbutton.get_active() \
         and self.app_obj.ffmpeg_convert_webp_flag:
             self.app_obj.set_ffmpeg_convert_webp_flag(False)
+            checkbutton2.set_active(False)
+            checkbutton2.set_sensitive(False)
 
 
     def on_ffmpeg_delete_button_clicked(self, button, treeview):
@@ -29308,12 +29393,14 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.ffmpeg_options_obj \
         and self.app_obj.ffmpeg_options_obj == options_obj:
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The current options manager cannot be deleted'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Prompt for confirmation
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -29413,6 +29500,26 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text('')
 
 
+    def on_ffmpeg_retain_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_downloads_tab().
+
+        Enables/disables conversion of .webp thumbnails into .jpg thumbnails.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ffmpeg_retain_webp_flag:
+            self.app_obj.set_ffmpeg_retain_webp_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ffmpeg_retain_webp_flag:
+            self.app_obj.set_ffmpeg_retain_webp_flag(False)
+
+            
     def on_ffmpeg_use_button_clicked(self, button, treeview):
 
         """Called from callback in self.setup_options_ffmpeg_list_tab().
@@ -30485,12 +30592,14 @@ class SystemPrefWin(GenericPrefWin):
         if self.app_obj.general_options_obj \
         and self.app_obj.general_options_obj == options_obj:
 
-            return self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The default options manager cannot be deleted'),
                 'error',
                 'ok',
                 self,           # Parent window is this window
             )
+
+            return
 
         # Prompt for confirmation
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
@@ -30619,7 +30728,7 @@ class SystemPrefWin(GenericPrefWin):
                     if self.app_obj.classic_options_obj \
                     and self.app_obj.classic_options_obj == options_obj:
 
-                        self.app_obj.disapply_classic_download_options()
+                        self.app_obj.remove_classic_download_options()
 
                     else:
 
@@ -30911,7 +31020,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Filter out empty lines
-        line_list = text.split("\n")
+        line_list = text.split('\n')
         mod_list = []
         for line in line_list:
             if re.search(r'\S', line):
@@ -32960,9 +33069,31 @@ class SystemPrefWin(GenericPrefWin):
 
             text = utils.strip_whitespace(entry.get_text())
             if text == '':
+
                 self.app_obj.set_ytdl_fork(None)
+                entry.set_icon_from_stock(
+                    Gtk.EntryIconPosition.PRIMARY,
+                    'gtk-yes',
+                )
+
             else:
-                self.app_obj.set_ytdl_fork(text)
+
+                # Git 466 - prevent the user from adding an absolute path;
+                #   the value we're expecting is omething like 'youtube-dlc'
+                if re.search('[^\w\-]', text):
+
+                    entry.set_icon_from_stock(
+                        Gtk.EntryIconPosition.PRIMARY,
+                        'gtk-no',
+                    )
+
+                else:
+
+                    self.app_obj.set_ytdl_fork(text)
+                    entry.set_icon_from_stock(
+                        Gtk.EntryIconPosition.PRIMARY,
+                        'gtk-yes',
+                    )                                    
 
             self.update_ytdl_combos()
 
@@ -32993,7 +33124,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_downloader_paths_tab().
 
-        Sets a custom path to the youtube-dl(c) executable.
+        Sets a custom path to the youtube-dl executable.
 
         Args:
 
@@ -33003,16 +33134,16 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        # Prompt the user for the new youtube-dl(c) executable
+        # Prompt the user for the new youtube-dl executable
         dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
             _('Select the youtube-dl-compatible executable'),
             self,
             'open',
         )
 
-        # (When the user first selects a custom path, using the combobox, the
-        #   default youtube-dl(c) path is used until they have selected a new
-        #   path)
+        # (When the user first selects 'Use custom path', using the combobox,
+        #   the default youtube-dl path continues to be used until they have
+        #   specified a new path)
         if self.app_obj.ytdl_path != self.app_obj.ytdl_path_default:
             dialogue_win.set_current_folder(self.app_obj.ytdl_path)
 
@@ -33061,7 +33192,7 @@ class SystemPrefWin(GenericPrefWin):
 
         else:
 
-            # Custom youtube-dl(c) path, set by the entry/button
+            # Custom youtube-dl path, set by the entry/button
             # Until the user has selected their own executable, use the default
             #   one
             self.app_obj.set_ytdl_path(self.app_obj.ytdl_path_default)
