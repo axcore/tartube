@@ -9,7 +9,7 @@ assignees: ''
 
 Thanks for taking the time to ask a question! 
 
-### Please read the README
+### Please check the README
 Perhaps your question is answered there
 
 ### The authors are not experts in python, security, youtube-dl, FFmpeg, Debian/RPM packaging or Windows programming
