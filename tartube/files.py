@@ -69,7 +69,7 @@ class FileManager(threading.Thread):
 
             full_path (str): The full path to the JSON file
 
-        Returns:
+        Return values:
 
             The JSON data, converted to a Python dictionary (an empty
                 dictionary if the file is missing or can't be loaded)
@@ -106,7 +106,7 @@ class FileManager(threading.Thread):
 
             full_path (str): The full path to the text file
 
-        Returns:
+        Return values:
 
             The contents of the text file as a string, or or None if the file
                 is missing or can't be loaded
@@ -145,7 +145,7 @@ class FileManager(threading.Thread):
             width, height (int or None): If both are specified, the icon is
                 scaled to that size
 
-        Returns:
+        Return values:
 
             A GdkPixbuf (as a tuple), or None if the file is missing or can't
                 be loaded

@@ -589,7 +589,7 @@ class DownloadManager(threading.Thread):
 
         Checks whether alternative performance limits apply right now, or not.
 
-        Returns:
+        Return values:
 
             True if alternative limits apply, False if not
 
@@ -744,7 +744,7 @@ class DownloadManager(threading.Thread):
                 The media data object that the calling function wants to
                 download
 
-        Returns:
+        Return values:
 
             True or False, as described above
 
@@ -781,7 +781,7 @@ class DownloadManager(threading.Thread):
 
         Based on DownloadManager._jobs_done().
 
-        Returns:
+        Return values:
 
             True if all downloads.DownloadWorker objects have finished their
                 jobs, otherwise returns False
@@ -842,7 +842,7 @@ class DownloadManager(threading.Thread):
                 media.Folder): The media data object which is the next to be
                 downloaded
 
-        Returns:
+        Return values:
 
             The first available downloads.DownloadWorker, or None if there are
                 no available workers
@@ -2100,7 +2100,7 @@ class DownloadList(object):
                     )
 
             else:
-                
+
                 # Use only media data objects specified by the media.Scheduled
                 #   objects
                 # Don't add the same media data object twice
@@ -2390,7 +2390,7 @@ class DownloadList(object):
                 else. If False and media_data_obj is a media.Video object, we
                 download it even if its parent is a channel or a playlist
 
-        Returns:
+        Return values:
 
             The downloads.DownloadItem object created (or None if no object is
                 created; only required by calls from
@@ -2682,7 +2682,7 @@ class DownloadList(object):
 
             media_data_obj (media.Video): A media data object
 
-        Returns:
+        Return values:
 
             The downloads.DownloadItem object created
 
@@ -2723,7 +2723,7 @@ class DownloadList(object):
 
         Based on DownloadList.fetch_next().
 
-        Returns:
+        Return values:
 
             The next downloads.DownloadItem object, or None if there are none
                 left
@@ -3125,9 +3125,9 @@ class VideoDownloader(object):
         #   single video)
         # There is one exception: in calls to self.confirm_new_video, a
         #   subsequent call to self.confirm_new_video() updates the file
-        #   extension of the media.Video. (FFmpeg may send several completion
-        #   messages as it converts one file format to another; the final one
-        #   is the one we want)
+        #   extension of the media.Video. (yt-dlp and/or FFmpeg may send
+        #   several completion messages as it converts one file format to
+        #   another; the final one is the one we want)
         # Dictionary of videos, used to check for the first completion message
         #   for each unique video
         # Dictionary in the form
@@ -3291,7 +3291,7 @@ class VideoDownloader(object):
 
         Downloads video(s) from a URL described by self.download_item_obj.
 
-        Returns:
+        Return values:
 
             The final return code, a value in the range 0-5 (as described
                 above)
@@ -3543,7 +3543,7 @@ class VideoDownloader(object):
         The action taken depends on the value of
         mainapp.TartubeApp.operation_convert_mode.
 
-        Returns:
+        Return values:
 
             False if a channel/playlist was about to be downloaded into a
                 media.Video object, which has since been replaced by a new
@@ -3665,7 +3665,7 @@ class VideoDownloader(object):
 
         When an announcement is detected, this function is called. Use the
         first announcement to update self.video_check_dict. For subsequent
-        announcments, only a media.Video's file extension is updated (see the
+        announcements, only a media.Video's file extension is updated (see the
         comments in self.__init__() ).
 
         Args:
@@ -4862,18 +4862,23 @@ class VideoDownloader(object):
         Executes the system command, creating a new child process which
         executes youtube-dl.
 
+        Sets self.return_code in the event of an error.
+
         Args:
 
             cmd_list (list): Python list that contains the command to execute
 
-        Returns:
-
-            None on success, or the new value of self.return_code if there's an
-                error
-
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -4914,7 +4919,7 @@ class VideoDownloader(object):
             input_data (str): Full path to a file which has been downloaded
                 and saved to the filesystem
 
-        Returns:
+        Return values:
 
             Returns the path, filename and extension components of the full
                 file path.
@@ -4941,7 +4946,7 @@ class VideoDownloader(object):
             stdout (str): String that contains a line from the child process
                 STDOUT (i.e., a message from youtube-dl)
 
-        Returns:
+        Return values:
 
             Python dictionary in a standard format also used by the main window
             code. Dictionaries in this format are generally called
@@ -5150,8 +5155,10 @@ class VideoDownloader(object):
                 percent = '{0:.1f}%'.format(current_segment / segment_no * 100)
                 dl_stat_dict['percent'] = percent
 
-        # youtube-dl uses [ffmpeg], yt-dlp uses [Merger]
-        elif stdout_list[0] == '[ffmpeg]' or stdout_list[0] == '[Merger]':
+        # youtube-dl uses [ffmpeg], yt-dlp uses [Merger] or [ExtractAudio]
+        elif stdout_list[0] == '[ffmpeg]' \
+        or stdout_list[0] == '[Merger]' \
+        or stdout_list[0] == '[ExtractAudio]':
 
             # Using FFmpeg, not the the native HLS extractor
             # A successful video download is announced in one of several ways.
@@ -5175,7 +5182,7 @@ class VideoDownloader(object):
 
             # Get the final file extension after simple FFmpeg post-processing
             #   (i.e. not after a file merge)
-            if stdout_list[1] == 'Destination:':
+            elif stdout_list[1] == 'Destination:':
                 path, filename, extension = self.extract_filename(
                     ' '.join(stdout_with_spaces_list[2:]),
                 )
@@ -5188,7 +5195,7 @@ class VideoDownloader(object):
                 self.confirm_new_video(path, filename, extension)
 
             # Get final file extension after the recoding process
-            if stdout_list[1] == 'Converting':
+            elif stdout_list[1] == 'Converting':
                 path, filename, extension = self.extract_filename(
                     ' '.join(stdout_with_spaces_list[8:]),
                 )
@@ -5357,7 +5364,7 @@ class VideoDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the video is blocked, False if not
 
@@ -5391,7 +5398,7 @@ class VideoDownloader(object):
         Called continuously during the self.do_download() loop to check whether
         the child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False
 
@@ -5417,7 +5424,7 @@ class VideoDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the STDERR message is a youtube-dl debug message, False if
                 it's an error
@@ -5438,7 +5445,7 @@ class VideoDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the STDERR message is ignorable, False if it should be
                 tested further
@@ -5576,7 +5583,7 @@ class VideoDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the STDERR message seems to be a network error, False if it
                 should be tested further
@@ -5606,7 +5613,7 @@ class VideoDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the STDERR message is a warning, False if it's an error
 
@@ -6525,7 +6532,7 @@ class ClipDownloader(object):
         'classic_custom' download operation), downloads a series of one or more
         clips, using the timestamps specified by the media.Video itself.
 
-        Returns:
+        Return values:
 
             The final return code, a value in the range 0-5 (as described
                 above)
@@ -6796,7 +6803,7 @@ class ClipDownloader(object):
         Then, we concatenate the clips back together, which has the effect of
         'downloading' a video with the specified slices removed.
 
-        Returns:
+        Return values:
 
             The final return code, a value in the range 0-5 (as described
                 above)
@@ -7344,18 +7351,23 @@ class ClipDownloader(object):
         Executes the system command, creating a new child process which
         executes youtube-dl.
 
+        Sets self.return_code in the event of an error.
+
         Args:
 
             cmd_list (list): Python list that contains the command to execute
 
-        Returns:
-
-            None on success, or the new value of self.return_code if there's an
-                error
-
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -7498,7 +7510,7 @@ class ClipDownloader(object):
         Called continuously during the loop to check whether the child process
         has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False
 
@@ -7524,7 +7536,7 @@ class ClipDownloader(object):
 
             stderr (str): A message from the child process STDERR
 
-        Returns:
+        Return values:
 
             True if the STDERR message seems to be a network error, False if it
                 should be tested further
@@ -8114,7 +8126,7 @@ class StreamDownloader(object):
         Downloads a broadcasting livestream using the URL described by
         self.download_item_obj.
 
-        Returns:
+        Return values:
 
             The final return code, a value in the range 0-5 (as described
                 above)
@@ -8711,13 +8723,21 @@ class StreamDownloader(object):
 
             cmd_list (list): Python list that contains the command to execute
 
-        Returns:
+        Return values:
 
             True on success, False on an error
 
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -8788,7 +8808,7 @@ class StreamDownloader(object):
         Called continuously during the self.do_fetch() loop to check whether
         the child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False
 
@@ -9522,13 +9542,21 @@ class JSONFetcher(object):
 
             cmd_list (list): Python list that contains the command to execute
 
-        Returns:
+        Return values:
 
             True on success, False on an error
 
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -9564,7 +9592,7 @@ class JSONFetcher(object):
         Called continuously during the self.do_fetch() loop to check whether
         the child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False.
 
@@ -10018,13 +10046,21 @@ class MiniJSONFetcher(object):
 
             cmd_list (list): Python list that contains the command to execute
 
-        Returns:
+        Return values:
 
             True on success, False on an error
 
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -10060,7 +10096,7 @@ class MiniJSONFetcher(object):
         Called continuously during the self.do_fetch() loop to check whether
         the child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False
 
@@ -10086,7 +10122,7 @@ class MiniJSONFetcher(object):
             stdout (str): A string of JSON data as it was received from
                 youtube-dl (and starting with the character { )
 
-        Returns:
+        Return values:
 
             The JSON data, converted into a Python dictionary
 

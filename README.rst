@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.093 (31 Jul 2022)**
+Stable release: **v2.4.165 (24 Nov 2022)**
 
-Development release: **v2.4.149 (22 Nov 2022)**
+Development release: **v2.4.165 (24 Nov 2022)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.093/install-tartube-2.4.093-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube-2.4.093-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.165/install-tartube-2.4.165-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube-2.4.165-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.093/python3-tartube_2.4.093.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube-2.4.093.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.165/python3-tartube_2.4.165.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube-2.4.165.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.093/tartube_v2.4.093.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube_v2.4.165.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -548,6 +548,7 @@ The procedure used to create the MS Windows installer is described in full in th
 * `6.28.5 Video slice shortcuts`_
 * `6.29 Using youtube-dl forks`_
 * `6.30 Video comments`_
+* `6.31 Dark themes on MS Windows`_
 
 6.1 Setting up Tartube
 ----------------------
@@ -1950,6 +1951,47 @@ Alternatively, you can update the entire database at once. (This may take a long
 - Click **Edit > System preferences... > Files > Update**
 - Click the button **Extract comments for all videos**
 
+6.31 Dark themes on MS Windows
+------------------------------
+
+On Linux and MacOS, Tartube will automatically assume the desktop theme (whatever it is). That isn't technically possible on MS Windows, but if you want a darker window to match your darker desktop theme, do this:
+
+- Click **System > Change theme...**
+- In the new window's drop-down box, select **dark**, and click the **OK** button
+- Restart Tartube to apply the darker theme
+
+If you really want to, it's possible to add more themes to the small selection included in the MS Windows installer.
+
+First, select a suitable theme pack. Tartube's installer includes `this one <https://github.com/B00merang-Project/Windows-10-Dark>`__. Let's imagine a future installer that *doesn't* include that particular theme pack; this is how you would add it.
+
+- Locate Tartube's script folder. In Tartube's menu, click **System > Show Tartube script folder**
+- Navigate to the **\\pack\\mswin_themes** folder
+- Each of these folders specifies the name of a theme. Create a new folder called **dark**
+- Inside that folder, create a file called **settings.ini**
+- Open the file in a text editor, and add these lines:
+
+        [Settings] 
+
+        gtk-theme-name=Windows10
+
+Note that **Windows10** is the name of the theme pack, not the name of your operating system.
+
+- Re-start Tartube
+- Click **System > Change theme...**
+- Your **dark** should be visible in the drop-down box
+
+Now you must install the theme pack itself at the correct location.
+
+- Download the theme pack from the link above
+- Extract it, and navigate to the **gtk-3.20** folder. The files inside this folder are the ones you need to copy 
+- Next, in Tartube's menu, click **System > Show Tartube install folder**
+- In the new window, navigate to **msys64\\mingw64\\share\\themes**
+- Create a folder called **Windows10**, matching the theme pack's name
+- Inside that folder, create a folder called **gtk-3.0**
+- Copy the files from the theme pack's **gtk-3.20** folder into this new **gtk-3.0** folder
+
+You can now set the theme from Tartube's menu.
+
 7 Frequently-Asked Questions
 ============================
 
@@ -1986,8 +2028,10 @@ Alternatively, you can update the entire database at once. (This may take a long
 * `7.31 Tartube is not visible in the system tray`_
 * `7.32 Tartube is not portable`_
 * `7.33 Run out of disk space`_
-* `7.34 Japanese/Korean videos won't download`_
-* `7.35 No puedo hablar inglés`_
+* `7.34 Cannot embed thumbnails in videos`_
+* `7.35 Cannot install FFmpeg`_
+* `7.36 Japanese/Korean videos won't download`_
+* `7.37 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2463,7 +2507,25 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Before checking/downloading videos, warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.34 Japanese/Korean videos won't download
+7.34 Cannot embed thumbnails in videos
+--------------------------------------
+
+*Q: In download options, I enabled embedding thumbnails in my downloaded videos, but it doesn't work!*
+
+A: Make sure you have installed FFmpeg.
+
+A: Make sure you have not disabled the setting to remove .webp thumbnails after converting them to another format. Open **Edit > System preferences > Operations > Downloads**. If **Convert .webp thumbnails into .jpg thumbnails** is enabled, then **...but don't delete the original thumbnails** should also be enabled.
+
+7.35 Cannot install FFmpeg
+--------------------------
+
+*Q: I'm trying to install Tartube on MS Windows. When Tartube prompts me to install FFmpeg, the installation fails!**
+
+A: The software library that makes FFmpeg available for download breaks frequently. The only solution is to wait for the library to be fixed (but please still report the problem to Tartube's authors in the usual way).
+
+This issue only affects users on MS Windows.
+
+7.36 Japanese/Korean videos won't download
 ------------------------------------------
 
 *Q: On MS Windows, I can't download my favourite anime/K-pop video!*
@@ -2472,7 +2534,7 @@ A: This is an `unresolved bug <https://github.com/axcore/tartube/issues/320>`__ 
 
 As a workaround, click **Edit > General download options... > Files > Filesystem**, and then select **Restrict filenames to ASCII characters**. The videos should be downloaded and added to Tartube's database, but with garbled names (which is better than nothing.)
 
-7.35 No puedo hablar inglés
+7.37 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*

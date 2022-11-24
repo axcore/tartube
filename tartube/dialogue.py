@@ -106,7 +106,7 @@ class DialogueManager(threading.Thread):
                 'data'. If it does, the corresponding value is passed to the
                 mainapp.TartubeApp function as an argument
 
-        Returns:
+        Return values:
 
             Gtk.MessageDialog window
 
@@ -181,7 +181,7 @@ class DialogueManager(threading.Thread):
                 'data'. If it does, the corresponding value is passed to the
                 mainapp.TartubeApp function as an argument
 
-        Returns:
+        Return values:
 
             Gtk.MessageDialog window
 
@@ -236,7 +236,7 @@ class DialogueManager(threading.Thread):
                 not specified, then the file chooser is opened in Tartube's
                 data directory
 
-        Returns:
+        Return values:
 
             Gtk.MessageDialog window
 

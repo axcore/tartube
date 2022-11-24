@@ -96,13 +96,13 @@ class FFmpegManager(object):
             thumbnail_filename (str): Full path to the webp file to be
                 converted to jpg
 
-        Returns:
+        Return values:
 
             False if an attempted conversion fails, or True otherwise
                 (including when no conversion is attempted)
 
         """
-        
+
         # Sanity check
         if not os.path.isfile(thumbnail_filename) \
         or self.app_obj.ffmpeg_fail_flag:
@@ -114,7 +114,7 @@ class FFmpegManager(object):
             retain_flag = True
         else:
             retain_flag = False
-        
+
         # Correct extension for .webp files with the wrong extension
         #   (youtube-dl #25687, #25717)
         _, thumbnail_ext = os.path.splitext(thumbnail_filename)
@@ -132,13 +132,19 @@ class FFmpegManager(object):
                 )
 
                 if not retain_flag:
-                    os.rename(thumbnail_filename, thumbnail_webp_filename)
+                    try:
+                        os.rename(thumbnail_filename, thumbnail_webp_filename)
+                    except:
+                        return False
                 else:
-                    shutil.copyfile(
-                        thumbnail_filename,
-                        thumbnail_webp_filename,
-                    )
-                    
+                    try:
+                        shutil.copyfile(
+                            thumbnail_filename,
+                            thumbnail_webp_filename,
+                        )
+                    except:
+                        return False
+
                 thumbnail_filename = thumbnail_webp_filename
                 thumbnail_ext = 'webp'
 
@@ -147,73 +153,60 @@ class FFmpegManager(object):
         if thumbnail_ext not in ['jpg', 'png']:
 
             # NB: % is supposed to be escaped with %% but this does not work
-            # for input files so working around with standard substitution
+            #   for input files so working around with standard substitution
             escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
             escaped_thumbnail_jpg_filename = self.replace_extension(
                 escaped_thumbnail_filename,
                 'jpg',
             )
 
-            if not retain_flag:
-                
-                # Handle special characters
+            # Handle special characters
+            try:
                 os.rename(thumbnail_filename, escaped_thumbnail_filename)
+            except:
+                return False
 
-                # Run FFmpeg to convert the thumbnail(s)
-                success_flag, msg = self.run_ffmpeg(
-                    escaped_thumbnail_filename,
-                    escaped_thumbnail_jpg_filename,
-                    ['-bsf:v', 'mjpeg2jpeg'],
-                )
-
-            else:
-
-                # (Copy the original to a temporary directory, and let FFmpeg
-                #   manipulate the copy)
-                directory, filename = os.path.split(thumbnail_filename)
-                temp_filename = os.path.abspath(
-                    os.path.join(
-                        self.app_obj.temp_ffmpeg_dir, filename,
-                    ),
-                )
-                shutil.copyfile(thumbnail_filename, temp_filename)
-
-                # Handle special characters
-                os.rename(thumbnail_filename, escaped_thumbnail_filename)
-
-                # Run FFmpeg to convert the thumbnail(s)
-                success_flag, msg = self.run_ffmpeg(
-                    escaped_thumbnail_filename,
-                    escaped_thumbnail_jpg_filename,
-                    ['-bsf:v', 'mjpeg2jpeg'],
-                )
-
-                # Restore the original file
-                shutil.copyfile(temp_filename, thumbnail_filename)
+            # Run FFmpeg to convert the thumbnail(s)
+            success_flag, msg = self.run_ffmpeg(
+                escaped_thumbnail_filename,
+                escaped_thumbnail_jpg_filename,
+                ['-bsf:v', 'mjpeg2jpeg'],
+            )
 
             if not success_flag:
 
                 # Conversion failed; most likely because FFmpeg is not
                 #   installed
                 # Rename back to unescaped
-                os.rename(escaped_thumbnail_filename, thumbnail_filename)
+                try:
+                    os.rename(escaped_thumbnail_filename, thumbnail_filename)
+                except:
+                    pass
 
                 return False
 
             else:
 
                 # Conversion succeeded
-                self.app_obj.remove_file(escaped_thumbnail_filename)
+                # Rename the (converted file) to unescaped for further
+                #   processing
                 thumbnail_jpg_filename = self.replace_extension(
                     thumbnail_filename,
                     'jpg',
                 )
 
-                # Rename back to unescaped for further processing
-                os.rename(
-                    escaped_thumbnail_jpg_filename,
-                    thumbnail_jpg_filename
-                )
+                try:
+                    os.rename(
+                        escaped_thumbnail_jpg_filename,
+                        thumbnail_jpg_filename
+                    )
+                except:
+                    return False
+
+                if not retain_flag:
+
+                    # The original .webp file is not retained
+                    self.app_obj.remove_file(escaped_thumbnail_filename)
 
         # Procedure complete
         return True
@@ -231,7 +224,7 @@ class FFmpegManager(object):
 
             path (str): The full path to a file to be processed by FFmpeg
 
-        Returns:
+        Return values:
 
             The modified string
 
@@ -254,7 +247,7 @@ class FFmpegManager(object):
         Returns the path to the FFmpeg executable, which the user may have
         specified themselves. If not, assume ffmpeg is in the system path.
 
-        Returns:
+        Return values:
 
             The path to the executable
 
@@ -304,7 +297,7 @@ class FFmpegManager(object):
 
             expected_real_ext (str): Not used by Tartube
 
-        Returns:
+        Return values:
 
             The modified path
 
@@ -1216,11 +1209,3 @@ class FFmpegOptionsManager(object):
             return source_thumb_path, output_path, return_list
         else:
             return source_video_path, output_path, return_list
-
-
-
-
-
-
-
-

@@ -322,7 +322,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The Gtk.Box containing the image
 
@@ -355,7 +355,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The label widget created
 
@@ -381,7 +381,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The label widget created
 
@@ -412,7 +412,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The checkbutton widget created
 
@@ -447,7 +447,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The radiobutton widget created
 
@@ -473,7 +473,7 @@ class GenericWizWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The scroller, textview and textbuffer widgets created
 
@@ -721,7 +721,7 @@ class SetupWizWin(GenericWizWin):
 
         Apply the settings the user has specified.
         """
-        
+
         if self.data_dir is not None:
             self.app_obj.set_data_dir(self.data_dir)
             self.app_obj.set_data_dir_alt_list( [ self.data_dir ] )
@@ -2064,7 +2064,7 @@ class SetupWizWin(GenericWizWin):
         """Called from a callback in self.setup_fetch_page().
 
         Closes this window, and marks the tutorial wizard window to be opened.
-        
+
         Args:
 
             button (Gtk.Button): The widget clicked
@@ -3144,7 +3144,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 2, 1, 1)
-        
+
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
@@ -3170,7 +3170,7 @@ class TutorialWizWin(GenericWizWin):
 
         Sets up the widget layout for a page.
         """
-        
+
         self.add_image(
             self.app_obj.main_win_obj.icon_dict['tutorial1'],
             0, 0, 1, 1,
@@ -3178,7 +3178,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Click the \'Add a new channel\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3224,7 +3224,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Your new channel is added to Tartube\'s database.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3247,7 +3247,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'Click \'Check all\' to fetch a list of videos. Click \'Download' \
             + ' all\' to download the videos.',
@@ -3273,7 +3273,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('As well as adding channels, you can add playlists.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3296,7 +3296,7 @@ class TutorialWizWin(GenericWizWin):
 
 #        # (Empty label for spacing)
 #        self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'If you want to add videos individually, click the \'Add new' \
             + ' videos\' button. They will be downloaded to the' \
@@ -3323,7 +3323,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'You can organise your videos into folders. Click the \'Add a' \
             + ' new folder\' button.',
@@ -3349,7 +3349,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'You can drag-and-drop channels and playlists into the right' \
             + ' folder.',
@@ -3375,7 +3375,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'You can check the progress of your downloads in the' \
             + ' \'Progress\' tab.',
@@ -3401,7 +3401,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Advanced users can see more detail in the \'Output\' tab.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3424,7 +3424,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'A summary of any problems will appear in the' \
             + ' \'Errors / Warnings\' tab.',
@@ -3450,7 +3450,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'If you don\'t want to build a database of videos, then you' \
             + ' can use the \'Classic Mode\' tab.',
@@ -3476,7 +3476,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'In the box at the top, paste the URLs of videos, channels' \
             + ' and playlists.',
@@ -3502,7 +3502,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Set the download folder.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3525,7 +3525,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Choose the video or audio format.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3548,7 +3548,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('Click the \'Add URLs\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3571,7 +3571,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'If you like, you can now set up more downloads using' \
             + ' a different download folder and/or format.',
@@ -3597,7 +3597,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _('When you\'re ready, click the \'Download all\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3620,7 +3620,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'Download options changes the way your videos are downloaded.' \
             + ' To see them, click \'Edit > General download options...\'',
@@ -3646,7 +3646,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'A completely different set of download options is used in the ' \
             + ' the \'Classic Mode\' tab. Click the menu button in the' \
@@ -3673,7 +3673,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'The new window has many options you can try. For example, to' \
             + ' download videos as .mp3 files, click the \'Convert\' tab.',
@@ -3699,7 +3699,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'You can apply a separate set of download options to a channel.' \
             + ' Right-click it, and select \'Downloads > Apply download' \
@@ -3726,7 +3726,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'The icon changes to remind you that the channel has its own' \
             + ' set of download options.',
@@ -3752,7 +3752,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'If you add download options to a folder, they apply to all' \
             + ' videos, channels and playlists inside that folder.',
@@ -3778,7 +3778,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'yt-dlp is updated frequently, so don\'t forget to download' \
             + ' the updates. Click \'Operations > Update yt-dlp\'.',
@@ -3788,8 +3788,8 @@ class TutorialWizWin(GenericWizWin):
             + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
-        
-        
+
+
     def setup_page_26(self):
 
         """Called by self.setup_page().
@@ -3804,7 +3804,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 1, 1, 1)
-        
+
         msg = _(
             'More help is available on our website. Click \'Help >' \
             + ' Go to website\'.',
@@ -3815,7 +3815,7 @@ class TutorialWizWin(GenericWizWin):
             0, 2, 1, 1,
         )
 
-        
+
     def setup_finish_page(self):
 
         """Called by self.setup_page().
@@ -3837,7 +3837,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 2, 1, 1)
-        
+
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
@@ -3849,7 +3849,7 @@ class TutorialWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 4, 1, 1)
-        
+
         self.add_label(
             '<span font_size="large"  style="italic">' \
             + utils.tidy_up_long_string(

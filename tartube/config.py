@@ -164,7 +164,7 @@ class GenericConfigWin(Gtk.Window):
                 Gtk.Notebook is to be added to this tab). If not specified, a
                 default width is used
 
-        Returns:
+        Return values:
 
             The tab created (in the form of a Gtk.Box) and its Gtk.Grid
 
@@ -203,7 +203,7 @@ class GenericConfigWin(Gtk.Window):
 
             grid (Gtk.Grid): The widget to which the notebook is added
 
-        Returns:
+        Return values:
 
             Returns the new Gtk.Notebook
 
@@ -234,7 +234,7 @@ class GenericConfigWin(Gtk.Window):
 
             notebook (Gtk.Notebook): The notebook to which the tab is added
 
-        Returns:
+        Return values:
 
             The tab created (in the form of a Gtk.Box) and its Gtk.Grid
 
@@ -338,7 +338,7 @@ class GenericConfigWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The Gtk.Frame containing the image
 
@@ -371,7 +371,7 @@ class GenericConfigWin(Gtk.Window):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             A list containing the treeview widget and liststore created
 
@@ -663,21 +663,24 @@ class GenericConfigWin(Gtk.Window):
 
             # Failsafe; calling code has already checked that
             return ''
-            
+
+        # Database auto-fix: see comments in the called function
+        self.get_options_applied_text_autofix(options_obj)
+
         if len(options_obj.dbid_list) == 1:
-        
+
             dbid = options_obj.dbid_list[0]
             media_data_obj = self.app_obj.media_reg_dict[dbid]
             return media_data_obj.get_translated_type(True) \
             + ': ' + media_data_obj.name
-                        
+
         else:
 
             video_count = 0
             channel_count = 0
             playlist_count = 0
             folder_count = 0
-            
+
             for dbid in options_obj.dbid_list:
                 media_data_obj = self.app_obj.media_reg_dict[dbid]
                 if isinstance(media_data_obj, media.Video):
@@ -704,7 +707,43 @@ class GenericConfigWin(Gtk.Window):
 
             return msg
 
-        
+
+    def get_options_applied_text_autofix(self, options_obj):
+
+        """Called by self.get_options_applied_text().
+
+        Git #456 - options.OptionsObj.dbid_list includes .dbid of non-existent
+        media data objects.
+
+        Since the cause of the issue is not known, do a quick auto-fix
+        whenever the prefwin opens. (The miniscule hit to performance is better
+        than a broken preferences window.)
+
+        Args:
+
+            options_obj (options.OptionsManager): The download options manager
+
+        """
+
+        dbid_list = []
+        fix_flag = False
+
+        for dbid in options_obj.dbid_list:
+            if not dbid in self.app_obj.media_reg_dict:
+                fix_flag = True
+            else:
+                dbid_list.append(dbid)
+
+        if fix_flag:
+            options_obj.dbid_list = dbid_list
+            self.app_obj.system_error(
+                406,
+                'Detected and auto-fixed download options applied to non-' \
+                + ' existent media. Please do a full database check: in' \
+                + ' Tartube\'s menu, click File > Check database integrity',
+            )
+
+
     def plot_graph(self, hbox, plot_type, data_type, ink_colour, x_label,
     y_label, x_list, y_list):
 
@@ -1270,7 +1309,7 @@ class GenericEditWin(GenericConfigWin):
 
             name (str): The name of the attribute in the object being edited
 
-        Returns:
+        Return values:
 
             The original or modified value of that attribute
 
@@ -1310,7 +1349,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The checkbutton widget created
 
@@ -1351,7 +1390,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The combobox widget created
 
@@ -1407,7 +1446,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The combobox widget created
 
@@ -1456,7 +1495,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The entry widget created
 
@@ -1494,7 +1533,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The label widget created
 
@@ -1528,7 +1567,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The Gtk.Frame containing the image
 
@@ -1584,7 +1623,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The radiobutton widget created
 
@@ -1636,7 +1675,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The spinbutton widget created
 
@@ -1683,7 +1722,7 @@ class GenericEditWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The textview and textbuffer widgets created
 
@@ -2460,7 +2499,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The checkbutton widget created
 
@@ -2497,7 +2536,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The combobox widget created
 
@@ -2549,7 +2588,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The combobox widget created
 
@@ -2594,7 +2633,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The entry widget created
 
@@ -2631,7 +2670,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The label widget created
 
@@ -2668,7 +2707,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The radiobutton widget created
 
@@ -2708,7 +2747,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The spinbutton widget created
 
@@ -2743,7 +2782,7 @@ class GenericPrefWin(GenericConfigWin):
             x, y, wid, hei (int): Position on the grid at which the widget is
                 placed
 
-        Returns:
+        Return values:
 
             The textview and textbuffer widgets created
 
@@ -4529,7 +4568,7 @@ class OptionsEditWin(GenericEditWin):
 
             name (str): The name of the attribute in the object being edited
 
-        Returns:
+        Return values:
 
             The original or modified value of that attribute
 
@@ -4665,7 +4704,7 @@ class OptionsEditWin(GenericEditWin):
             1, 2, 2, 1,
         )
         entry4.set_editable(False)
-                
+
         if self.edit_obj == self.app_obj.general_options_obj:
             entry4.set_text(_('All channels, playlists and folders'))
         elif self.edit_obj == self.app_obj.classic_options_obj:
@@ -5828,7 +5867,7 @@ class OptionsEditWin(GenericEditWin):
             ])
             misc_index = count
             count += 1
-            
+
         if self.app_obj.fixed_clips_folder:
             store.append([
                 self.app_obj.main_win_obj.pixbuf_dict['folder_green_small'],
@@ -5837,7 +5876,7 @@ class OptionsEditWin(GenericEditWin):
             ])
             clips_index = count
             count += 1
-                        
+
         if self.app_obj.fixed_temp_folder:
             store.append([
                 self.app_obj.main_win_obj.pixbuf_dict['folder_blue_small'],
@@ -5849,7 +5888,7 @@ class OptionsEditWin(GenericEditWin):
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 3, 1, 1)
-        
+
         renderer_pixbuf = Gtk.CellRendererPixbuf()
         combo.pack_start(renderer_pixbuf, False)
         combo.add_attribute(renderer_pixbuf, 'pixbuf', 0)
@@ -5858,7 +5897,7 @@ class OptionsEditWin(GenericEditWin):
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 2)
 
-        combo.set_entry_text_column(0) 
+        combo.set_entry_text_column(0)
         combo.set_hexpand(True)
         # (Signal connect appears below)
 
@@ -5868,7 +5907,7 @@ class OptionsEditWin(GenericEditWin):
             checkbutton3.set_active(False)
             combo.set_sensitive(False)
             combo.set_active(0)
-            
+
         else:
             checkbutton3.set_active(True)
             combo.set_sensitive(True)
@@ -8203,7 +8242,7 @@ class OptionsEditWin(GenericEditWin):
 
         Counts the number of video/audio formats that are set.
 
-        Returns:
+        Return values:
 
             An integer in the range 0-3
 
@@ -9092,16 +9131,16 @@ class OptionsEditWin(GenericEditWin):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         dbid = model[tree_iter][1]
-        if dbid == self.app_obj.fixed_temp_folder.dbid:  
+        if dbid == self.app_obj.fixed_temp_folder.dbid:
             self.edit_dict['use_fixed_folder'] = 'temp'
-        elif dbid == self.app_obj.fixed_misc_folder.dbid:  
+        elif dbid == self.app_obj.fixed_misc_folder.dbid:
             self.edit_dict['use_fixed_folder'] = 'misc'
-        elif dbid == self.app_obj.fixed_clips_folder.dbid:  
+        elif dbid == self.app_obj.fixed_clips_folder.dbid:
             self.edit_dict['use_fixed_folder'] = 'clips'
         else:
             # Failsafe
             self.edit_dict['use_fixed_folder'] = None
-        
+
 
     def on_fixed_folder_toggled(self, checkbutton, combo):
 
@@ -9125,16 +9164,16 @@ class OptionsEditWin(GenericEditWin):
             tree_iter = combo.get_active_iter()
             model = combo.get_model()
             dbid = model[tree_iter][1]
-            if dbid == self.app_obj.fixed_temp_folder.dbid:  
+            if dbid == self.app_obj.fixed_temp_folder.dbid:
                 self.edit_dict['use_fixed_folder'] = 'temp'
-            elif dbid == self.app_obj.fixed_misc_folder.dbid:  
+            elif dbid == self.app_obj.fixed_misc_folder.dbid:
                 self.edit_dict['use_fixed_folder'] = 'misc'
-            elif dbid == self.app_obj.fixed_clips_folder.dbid:  
+            elif dbid == self.app_obj.fixed_clips_folder.dbid:
                 self.edit_dict['use_fixed_folder'] = 'clips'
             else:
                 # Failsafe
                 self.edit_dict['use_fixed_folder'] = None
-                
+
             combo.set_sensitive(True)
 
 
@@ -10540,7 +10579,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             name (str): The name of the attribute in the object being edited
 
-        Returns:
+        Return values:
 
             The original or modified value of that attribute
 
@@ -17092,7 +17131,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         #   URLs; if a new playlist is created, create an artificial title
         if playlist_title != '' \
         and not self.app_obj.is_container(playlist_title):
-            
+
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('The name \'{0}\' is already in use').format(playlist_title),
                 'error',
@@ -18045,7 +18084,7 @@ class FolderEditWin(GenericEditWin):
 
 
 class ScheduledEditWin(GenericEditWin):
-    
+
     """Python class for an 'edit window' to modify values in a media.Scheduled
     object.
 
@@ -18740,7 +18779,7 @@ class ScheduledEditWin(GenericEditWin):
         combostore = Gtk.ListStore(int, str)
         for media_data_obj in obj_list:
             combostore.append( [media_data_obj.dbid, media_data_obj.name] )
-            
+
         combo = Gtk.ComboBox.new_with_model(combostore)
         grid.attach(combo, 0, 5, 1, 1)
 
@@ -19261,7 +19300,7 @@ class ScheduledEditWin(GenericEditWin):
             timestamp (int): Ignored
 
         """
-        
+
         # Must override the usual Gtk handler
         treeview.stop_emission('drag_data_received')
 
@@ -19278,7 +19317,7 @@ class ScheduledEditWin(GenericEditWin):
             media_list = self.retrieve_val('media_list')
             if not drag_dbid in media_list \
             and drag_dbid in self.app_obj.container_reg_dict:
-                
+
                 # (System folders can't be dragged here)
                 media_data_obj = self.app_obj.media_reg_dict[drag_dbid]
 
@@ -19355,6 +19394,13 @@ class SystemPrefWin(GenericPrefWin):
         self.livestream_radiobutton3 = None     # Gtk.RadioButton
         self.livestream_radiobutton4 = None     # Gtk.RadioButton
         self.livestream_radiobutton5 = None     # Gtk.RadioButton
+        # (IVs used to hanle widget changes in the 'Forks' tab)
+        self.forks_radiobutton = None           # Gtk.RadioButton
+        self.forks_radiobutton2 = None          # Gtk.RadioButton
+        self.forks_radiobutton3 = None          # Gtk.RadioButton
+        self.forks_entry = None                 # Gtk.RadioButton
+        # (IVs used to hanle widget changes in the 'File paths' tab)
+        self.filepaths_combo = None             # Gkt.ComboBox
         # (IVs used to handle widget changes in the 'Downloaders' tab)
         self.path_liststore = None              # Gtk.ListStore
         self.cmd_liststore = None               # Gtk.ListStore
@@ -19646,7 +19692,7 @@ class SystemPrefWin(GenericPrefWin):
 
         # Import the main window (for convenience)
         main_win_obj = self.app_obj.main_win_obj
-        
+
         tab, grid = self.add_inner_notebook_tab(
             _('_Application'),
             inner_notebook,
@@ -19658,7 +19704,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>' + _('Application details') + '</u>',
             0, 0, grid_width, 1,
         )
-        
+
         label = self.add_label(grid,
             _('Version'),
             0, 1, 1, 1,
@@ -19692,11 +19738,11 @@ class SystemPrefWin(GenericPrefWin):
         # (Some locales are in format "en_GB", some in format "fr")
         if not 'flag_' + locale in self.app_obj.main_win_obj.pixbuf_dict:
             locale = locale[:2]
-        
+
         store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         pixbuf = main_win_obj.pixbuf_dict['flag_' + locale]
         store.append([ pixbuf, formats.LOCALE_DICT[locale] ])
-            
+
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 2, 1, 1)
         combo.set_hexpand(False)
@@ -20967,7 +21013,7 @@ class SystemPrefWin(GenericPrefWin):
 
 
     def setup_files_urls_tab_update_treeview(self, button=None):
-        
+
         """ Called by self.setup_files_urls_tab().
 
         Fills or updates the treeview.
@@ -23207,11 +23253,11 @@ class SystemPrefWin(GenericPrefWin):
             0, 11, grid_width, 1,
         )
         # (Signal connect appears below)
-        
+
         checkbutton10 = self.add_checkbutton(grid,
             _(
-            '...but don\'t delete the original thumbnails (disable if' \
-            + ' you want to embed thumbnails in videos)',
+                '...but don\'t delete the original thumbnails (enable before' \
+                + ' embedding thumbnails in videos)',
             ),
             self.app_obj.ffmpeg_retain_webp_flag,
             True,                   # Can be toggled by user
@@ -24905,7 +24951,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 2, 1,
         )
 
-        radiobutton = self.add_radiobutton(grid2,
+        self.forks_radiobutton = self.add_radiobutton(grid2,
             None,
             '   ' + _('Use yt-dlp'),
             0, 1, 1, 1,
@@ -24943,8 +24989,8 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 1, 1,
         )
 
-        radiobutton2 = self.add_radiobutton(grid3,
-            radiobutton,
+        self.forks_radiobutton2 = self.add_radiobutton(grid3,
+            self.forks_radiobutton,
             '   ' + _('Use youtube-dl'),
             0, 1, 1, 1,
         )
@@ -24972,86 +25018,82 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, 2, 1,
         )
 
-        radiobutton3 = self.add_radiobutton(grid4,
-            radiobutton2,
+        self.forks_radiobutton3 = self.add_radiobutton(grid4,
+            self.forks_radiobutton2,
             '   ' + _('Use this fork (e.g. youtube-dlc):'),
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
-        radiobutton3.set_hexpand(False)
+        self.forks_radiobutton3.set_hexpand(False)
 
-        entry = self.add_entry(grid4,
+        self.forks_entry = self.add_entry(grid4,
             None,
             True,
             1, 1, 1, 1,
         )
-        entry.set_sensitive(True)
-        entry.set_max_length(32)
-        entry.set_hexpand(False)
-        entry.set_icon_from_stock(Gtk.EntryIconPosition.PRIMARY, 'gtk-yes')
+        self.forks_entry.set_sensitive(True)
+        self.forks_entry.set_max_length(32)
+        self.forks_entry.set_hexpand(False)
+        self.forks_entry.set_icon_from_stock(
+            Gtk.EntryIconPosition.PRIMARY,
+            'gtk-yes',
+        )
         # (Signal connect appears below)
 
         # Set widgets' initial states
         if self.app_obj.ytdl_fork is None \
         or self.app_obj.ytdl_fork == 'youtube-dl':
-            radiobutton2.set_active(True)
+            self.forks_radiobutton2.set_active(True)
             checkbutton.set_sensitive(False)
-            entry.set_sensitive(False)
+            self.forks_entry.set_sensitive(False)
         elif self.app_obj.ytdl_fork == 'yt-dlp':
-            radiobutton.set_active(True)
+            self.forks_radiobutton.set_active(True)
             checkbutton.set_sensitive(True)
-            entry.set_sensitive(False)
+            self.forks_entry.set_sensitive(False)
         else:
-            radiobutton3.set_active(True)
+            self.forks_radiobutton3.set_active(True)
             if self.app_obj.ytdl_fork is not None:
-                entry.set_text(self.app_obj.ytdl_fork)
+                self.forks_entry.set_text(self.app_obj.ytdl_fork)
             else:
-                entry.set_text('')
+                self.forks_entry.set_text('')
             checkbutton.set_sensitive(False)
-            entry.set_sensitive(True)
+            self.forks_entry.set_sensitive(True)
 
         # (Signal connects from above)
         event_box.connect(
             'button-press-event',
             self.on_ytdl_fork_frame_clicked,
-            radiobutton,
+            self.forks_radiobutton,
         )
         event_box2.connect(
             'button-press-event',
             self.on_ytdl_fork_frame_clicked,
-            radiobutton2,
+            self.forks_radiobutton2,
         )
         event_box3.connect(
             'button-press-event',
             self.on_ytdl_fork_frame_clicked,
-            radiobutton3,
+            self.forks_radiobutton3,
         )
-        radiobutton.connect(
+        self.forks_radiobutton.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
-            entry,
             'yt-dlp',
         )
         checkbutton.connect('toggled', self.on_ytdlp_install_button_toggled)
-        radiobutton2.connect(
+        self.forks_radiobutton2.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
-            entry,
             'youtube-dl',
         )
-        radiobutton3.connect(
+        self.forks_radiobutton3.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
-            entry,
         )
-        entry.connect(
-            'changed',
-            self.on_ytdl_fork_changed,
-            radiobutton3,
-        )
+        self.forks_entry.connect('changed', self.on_ytdl_fork_changed)
 
         # Bottom section (always sensitised)
         checkbutton2 = self.add_checkbutton(grid,
@@ -25112,7 +25154,7 @@ class SystemPrefWin(GenericPrefWin):
                 ],
             )
 
-        if os.name == 'nt':     
+        if os.name == 'nt':
             msg = _('Use custom path (not recommended on MS Windows)')
         else:
             msg = _('Use custom path')
@@ -25137,12 +25179,12 @@ class SystemPrefWin(GenericPrefWin):
         for mini_list in combo_list:
             self.path_liststore.append( [ mini_list[0], mini_list[1] ] )
 
-        combo = Gtk.ComboBox.new_with_model(self.path_liststore)
-        grid.attach(combo, 1, 1, (grid_width - 1), 1)
+        self.filepaths_combo = Gtk.ComboBox.new_with_model(self.path_liststore)
+        grid.attach(self.filepaths_combo, 1, 1, (grid_width - 1), 1)
         renderer_text = Gtk.CellRendererText()
-        combo.pack_start(renderer_text, True)
-        combo.add_attribute(renderer_text, 'text', 0)
-        combo.set_entry_text_column(0)
+        self.filepaths_combo.pack_start(renderer_text, True)
+        self.filepaths_combo.add_attribute(renderer_text, 'text', 0)
+        self.filepaths_combo.set_entry_text_column(0)
         # (Signal connect appears below)
 
         entry = self.add_entry(grid,
@@ -25159,20 +25201,20 @@ class SystemPrefWin(GenericPrefWin):
         if os.name == 'nt':
 
             if self.app_obj.ytdl_path_custom_flag:
-                combo.set_active(1)
+                self.filepaths_combo.set_active(1)
             else:
-                combo.set_active(0)
+                self.filepaths_combo.set_active(0)
 
         else:
 
             if self.app_obj.ytdl_path_custom_flag:
-                combo.set_active(2)
+                self.filepaths_combo.set_active(2)
             elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_default:
-                combo.set_active(0)
+                self.filepaths_combo.set_active(0)
             elif self.app_obj.ytdl_path == self.app_obj.ytdl_path_pypi:
-                combo.set_active(3)
+                self.filepaths_combo.set_active(3)
             else:
-                combo.set_active(1)
+                self.filepaths_combo.set_active(1)
 
         if self.app_obj.ytdl_path_custom_flag:
 
@@ -25217,7 +25259,7 @@ class SystemPrefWin(GenericPrefWin):
         self.update_ytdl_combos()
 
         # (Signal connects from above)
-        combo.connect(
+        self.filepaths_combo.connect(
             'changed',
             self.on_ytdl_path_combo_changed,
             entry,
@@ -27399,7 +27441,7 @@ class SystemPrefWin(GenericPrefWin):
                 )
 
                 return
-                
+
             if not checkbutton.get_active():
 
                 # Rename without confirmation
@@ -29343,7 +29385,7 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
-            
+
             checkbutton2 (Gtk.CheckButton): Another widget to be updated
 
         """
@@ -29352,7 +29394,7 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.ffmpeg_convert_webp_flag:
             self.app_obj.set_ffmpeg_convert_webp_flag(True)
             checkbutton2.set_sensitive(True)
-            
+
         elif not checkbutton.get_active() \
         and self.app_obj.ffmpeg_convert_webp_flag:
             self.app_obj.set_ffmpeg_convert_webp_flag(False)
@@ -29519,7 +29561,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.ffmpeg_retain_webp_flag:
             self.app_obj.set_ffmpeg_retain_webp_flag(False)
 
-            
+
     def on_ffmpeg_use_button_clicked(self, button, treeview):
 
         """Called from callback in self.setup_options_ffmpeg_list_tab().
@@ -33000,7 +33042,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_dialogue_yt_remind_flag(False)
 
 
-    def on_ytdl_fork_button_toggled(self, radiobutton, checkbutton, entry, \
+    def on_ytdl_fork_button_toggled(self, radiobutton, checkbutton, \
     fork_type=None):
 
         """Called from callback in self.setup_downloader_forks_tab().
@@ -33014,8 +33056,6 @@ class SystemPrefWin(GenericPrefWin):
 
             checkbutton (Gtk.CheckButton): Another widget to be updated
 
-            entry (Gtk.Entry): Another widget to be updated
-
             fork_type (str): 'yt-dlp', 'youtube-dl', or None for any other fork
 
         """
@@ -33024,7 +33064,7 @@ class SystemPrefWin(GenericPrefWin):
 
             if fork_type is None:
 
-                fork_name = entry.get_text()
+                fork_name = self.forks_entry.get_text()
                 # (If the 'other fork' option is selected, but nothing is
                 #   entered in the entry box, use youtube-dl as the downloader)
                 if fork_name == '':
@@ -33033,26 +33073,38 @@ class SystemPrefWin(GenericPrefWin):
                     self.app_obj.set_ytdl_fork(fork_name)
 
                 checkbutton.set_sensitive(False)
-                entry.set_sensitive(True)
+                self.forks_entry.set_sensitive(True)
 
             elif fork_type == 'youtube-dl':
 
+                fork_name = fork_type
                 self.app_obj.set_ytdl_fork(None)
                 checkbutton.set_sensitive(False)
-                entry.set_text('')
-                entry.set_sensitive(False)
+                self.forks_entry.set_text('')
+                self.forks_entry.set_sensitive(False)
 
             elif fork_type == 'yt-dlp':
 
+                fork_name = fork_type
                 self.app_obj.set_ytdl_fork(fork_type)
                 checkbutton.set_sensitive(True)
-                entry.set_text('')
-                entry.set_sensitive(False)
+                self.forks_entry.set_text('')
+                self.forks_entry.set_sensitive(False)
+
+            # If the user has set a custom path to the youtube-dl executable
+            #   that does not match 'fork_type', then the path must be reset
+            if self.app_obj.ytdl_path_custom_flag:
+
+                directory, fullname = os.path.split(self.app_obj.ytdl_path)
+                filename, extension = os.path.splitext(fullname)
+                if filename != fork_name:
+                    self.filepaths_combo.set_active(0)
+
 
         self.update_ytdl_combos()
 
 
-    def on_ytdl_fork_changed(self, entry, radiobutton):
+    def on_ytdl_fork_changed(self, entry):
 
         """Called from callback in self.setup_downloader_forks_tab().
 
@@ -33065,7 +33117,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """
 
-        if radiobutton.get_active():
+        if self.forks_radiobutton3.get_active():
 
             text = utils.strip_whitespace(entry.get_text())
             if text == '':
@@ -33093,7 +33145,7 @@ class SystemPrefWin(GenericPrefWin):
                     entry.set_icon_from_stock(
                         Gtk.EntryIconPosition.PRIMARY,
                         'gtk-yes',
-                    )                                    
+                    )
 
             self.update_ytdl_combos()
 
@@ -33155,11 +33207,27 @@ class SystemPrefWin(GenericPrefWin):
         dialogue_win.destroy()
         if response == Gtk.ResponseType.OK:
 
+            # Update the name of the fork to match the path
+            directory, fullname = os.path.split(new_path)
+            filename, extension = os.path.splitext(fullname)
+            self.app_obj.set_ytdl_fork(filename)
+
+            # Update widgets in the calling ('File paths') tab
+            entry.set_text(new_path)
+            # Update widgets in the 'Forks' tab
+            if filename == 'youtube-dl':
+                self.forks_radiobutton.set_active(True)
+            elif filename == 'yt-dlp':
+                self.forks_radiobutton2.set_active(True)
+            else:
+                self.forks_radiobutton3.set_active(True)
+                self.forks_entry.set_text(filename)
+
+            # Update the path to the executable (this must be done last,
+            #   otherwise widget updates will override each other)
             self.app_obj.set_ytdl_path(new_path)
             self.app_obj.ytdl_update_dict['ytdl_update_custom_path'] \
             = ['python3', self.app_obj.ytdl_path, '-U']
-
-            entry.set_text(new_path)
 
 
     def on_ytdl_path_combo_changed(self, combo, entry, button):

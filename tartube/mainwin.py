@@ -117,6 +117,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.open_msys2_menu_item = None        # Gtk.MenuItem
         self.show_install_menu_item = None      # Gtk.MenuItem
         self.show_script_menu_item = None       # Gtk.MenuItem
+        self.change_theme_menu_item = None      # Gtk.MenuItem
         self.add_video_menu_item = None         # Gtk.MenuItem
         self.add_channel_menu_item = None       # Gtk.MenuItem
         self.add_playlist_menu_item = None      # Gtk.MenuItem
@@ -1386,6 +1387,17 @@ class MainWin(Gtk.ApplicationWindow):
             )
             system_sub_menu.append(self.show_script_menu_item)
             self.show_script_menu_item.set_action_name('app.show_script_menu')
+
+            # Separator
+            system_sub_menu.append(Gtk.SeparatorMenuItem())
+
+            self.change_theme_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Change theme...'),
+            )
+            system_sub_menu.append(self.change_theme_menu_item)
+            self.change_theme_menu_item.set_action_name(
+                'app.change_theme_menu',
+            )
 
         # Media column
         media_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_Media'))
@@ -5655,7 +5667,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             data (None): Ignored
 
-        Returns:
+        Return values:
 
             -1 if row_iter1 comes before row_iter2, 1 if row_iter2 comes before
                 row_iter1, 0 if their order should not be changed
@@ -5742,7 +5754,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             notify (False): Ignored
 
-        Returns:
+        Return values:
 
             -1 if row1 comes before row2, 1 if row2 comes before row1 (the code
                 does not return 0)
@@ -5769,7 +5781,7 @@ class MainWin(Gtk.ApplicationWindow):
             gridbox1, gridbox2 (mainwin.CatalogueGridBox): Two gridboxes, one
                 of which must be sorted before the other
 
-        Returns:
+        Return values:
 
             -1 if gridbox1 comes before gridbox2, 1 if gridbox2 comes before
                 gridbox1 (the code does not return 0)
@@ -9773,7 +9785,7 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj (media.Channel, media.Playlist or media.Folder):
                 The media data object whose row should be updated
 
-        Returns:
+        Return values:
 
             A GdkPixbuf or None
 
@@ -9853,7 +9865,7 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj (media.Channel, media.Playlist or media.Folder):
                 A media data object visible in the Video Index
 
-        Returns:
+        Return values:
 
             A string
 
@@ -13170,7 +13182,7 @@ class MainWin(Gtk.ApplicationWindow):
                 formats.VIDEO_FORMAT_LIST, formats.AUDIO_FORMAT_LIST and
                 formats.VIDEO_RESOLUTION_LIST
 
-        Returns:
+        Return values:
 
             The dummy media.Video object created
 
@@ -13867,7 +13879,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             css_string (str): The CSS style to apply
 
-        Returns:
+        Return values:
 
             The Gtk.CssProvider created
 
@@ -16651,11 +16663,12 @@ class MainWin(Gtk.ApplicationWindow):
                 'del_archive_flag': dialogue_win.checkbutton8.get_active(),
                 'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
                 'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
-                'convert_webp_flag': dialogue_win.checkbutton11.get_active(),
-                'move_data_flag': dialogue_win.checkbutton12.get_active(),
-                'del_descrip_flag': dialogue_win.checkbutton13.get_active(),
-                'del_json_flag': dialogue_win.checkbutton14.get_active(),
-                'del_xml_flag': dialogue_win.checkbutton15.get_active(),
+                'del_webp_flag': dialogue_win.checkbutton11.get_active(),
+                'convert_webp_flag': dialogue_win.checkbutton12.get_active(),
+                'move_data_flag': dialogue_win.checkbutton13.get_active(),
+                'del_descrip_flag': dialogue_win.checkbutton14.get_active(),
+                'del_json_flag': dialogue_win.checkbutton15.get_active(),
+                'del_xml_flag': dialogue_win.checkbutton16.get_active(),
             }
 
         # Now destroy the window
@@ -16678,6 +16691,7 @@ class MainWin(Gtk.ApplicationWindow):
             or choices_dict['del_video_flag'] \
             or choices_dict['del_archive_flag'] \
             or choices_dict['del_thumb_flag'] \
+            or choices_dict['del_webp_flag'] \
             or choices_dict['del_descrip_flag'] \
             or choices_dict['del_json_flag'] \
             or choices_dict['del_xml_flag']:
@@ -23845,7 +23859,7 @@ class ComplexCatalogueItem(object):
         Checks whether the fifth row of labels (for temporary actions) should
         be visible, or not.
 
-        Returns:
+        Return values:
 
             True if the row should be visible, False if not
 
@@ -23872,7 +23886,7 @@ class ComplexCatalogueItem(object):
         Checks whether the sixth row of labels (for marked video actions)
         should be visible, or not.
 
-        Returns:
+        Return values:
 
             True if the row should be visible, False if not
 
@@ -23932,7 +23946,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -23968,7 +23982,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24005,7 +24019,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24041,7 +24055,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24078,7 +24092,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24114,7 +24128,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24149,7 +24163,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24191,7 +24205,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24233,7 +24247,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24275,7 +24289,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24310,7 +24324,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24352,7 +24366,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24405,7 +24419,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24457,7 +24471,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24498,7 +24512,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24539,7 +24553,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24581,7 +24595,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24623,7 +24637,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -24723,7 +24737,7 @@ class ComplexCatalogueItem(object):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -25875,7 +25889,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         Checks whether the fifth row of labels (for temporary actions) should
         be visible, or not.
 
-        Returns:
+        Return values:
 
             True if the row should be visible, False if not
 
@@ -25900,7 +25914,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         Checks whether the sixth row of labels (for marked video actions)
         should be visible, or not.
 
-        Returns:
+        Return values:
 
             True if the row should be visible, False if not
 
@@ -25985,7 +25999,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -26020,7 +26034,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -26062,7 +26076,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
             uri (str): Ignored
 
-        Returns:
+        Return values:
 
             True to show the action has been handled
 
@@ -26507,7 +26521,7 @@ class CatalogueGridBox(Gtk.Frame):
 
             event (Gdk.EventButton): The event emitting the Gtk signal
 
-        Returns:
+        Return values:
 
             True to show the action has been handled, or False if the action
                 has been ignored
@@ -27498,7 +27512,9 @@ class AddBulkDialogue(Gtk.Dialog):
         #   middle of another URL. No way to prevent that, but we can disable
         #   drag-and-drop in the textview altogether, and instead handle it
         #   from the dialogue window itself
-#        textview.drag_dest_unset()
+        textview.drag_dest_unset()
+        self.connect('destroy', self.close, textview)
+
         self.connect('drag-data-received', self.on_window_drag_data_received)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
         self.drag_dest_set_target_list(None)
@@ -27692,6 +27708,28 @@ class AddBulkDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    def close(self, also_self, textview):
+
+        """Called from callback in self.__init__().
+
+        We have disabled drag-and-drop directly into the textview, but this
+        generates a Gtk warning when the textview is destroyed.
+
+        Workaround is to re-enable drag-and-drop into the textview immediately
+        before it (and its window) are destroyed.
+
+        Args:
+
+            also_self (mainwin.AddBulkDialogue): Another copy of this window
+
+            textview (Gtk.TextView): The textview for which drag-and-drop has
+                been disabled
+
+        """
+
+        textview.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 
 
     # Public class methods
@@ -29310,7 +29348,6 @@ class AddStampDialogue(Gtk.Dialog):
             + '   <b>0:30 ' + _('Introduction') + '</b>',
         )
         label.set_xalign(0)
-        label = Gtk.Label()
 
         # Add a textview
         frame = Gtk.Frame()
@@ -29346,7 +29383,9 @@ class AddStampDialogue(Gtk.Dialog):
         #   existing text. No way to prevent that, but we can disable
         #   drag-and-drop in the textview altogether, and instead handle it
         #   from the dialogue window itself
-#        textview.drag_dest_unset()
+        textview.drag_dest_unset()
+        self.connect('destroy', self.close, textview)
+
         self.connect('drag-data-received', self.on_window_drag_data_received)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
         self.drag_dest_set_target_list(None)
@@ -29357,6 +29396,28 @@ class AddStampDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    def close(self, also_self, textview):
+
+        """Called from callback in self.__init__().
+
+        We have disabled drag-and-drop directly into the textview, but this
+        generates a Gtk warning when the textview is destroyed.
+
+        Workaround is to re-enable drag-and-drop into the textview immediately
+        before it (and its window) are destroyed.
+
+        Args:
+
+            also_self (mainwin.AddStampDialogue): Another copy of this window
+
+            textview (Gtk.TextView): The textview for which drag-and-drop has
+                been disabled
+
+        """
+
+        textview.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 
 
     # Callback class methods
@@ -29517,7 +29578,9 @@ class AddVideoDialogue(Gtk.Dialog):
         #   middle of another URL. No way to prevent that, but we can disable
         #   drag-and-drop in the textview altogether, and instead handle it
         #   from the dialogue window itself
-#        textview.drag_dest_unset()
+        textview.drag_dest_unset()
+        self.connect('destroy', self.close, textview)
+
         self.connect('drag-data-received', self.on_window_drag_data_received)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
         self.drag_dest_set_target_list(None)
@@ -29645,6 +29708,28 @@ class AddVideoDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    def close(self, also_self, textview):
+
+        """Called from callback in self.__init__().
+
+        We have disabled drag-and-drop directly into the textview, but this
+        generates a Gtk warning when the textview is destroyed.
+
+        Workaround is to re-enable drag-and-drop into the textview immediately
+        before it (and its window) are destroyed.
+
+        Args:
+
+            also_self (mainwin.AddVideoDialogue): Another copy of this window
+
+            textview (Gtk.TextView): The textview for which drag-and-drop has
+                been disabled
+
+        """
+
+        textview.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 
 
     # Callback class methods
@@ -30093,6 +30178,209 @@ class CalendarDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+class ChangeThemeDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.on_menu_change_theme().
+
+    Python class handling a dialogue window that allows a user on MS Windows to
+    change the Gtk theme.
+
+    Args:
+
+        parent_win_obj (mainwin.MainWin): The parent window
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, parent_win_obj):
+
+        # IV list - class objects
+        # -----------------------
+        self.parent_win_obj = parent_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.grid = None                        # Gtk.Grid
+        self.combo = None                       # Gtk.ComboBox
+
+
+        # IV list - other
+        # ---------------
+        # Theme name; the name of a sub-folder in ../pack/mswin_themes, e.g.
+        #   'basic'
+        self.theme_name = 'default'
+        # Full path to that folder. If the theme named 'default' is selected,
+        #   the path remains set to None (as we don't use a sub-folder with
+        #   that name)
+        self.theme_path = None
+
+
+        # Code
+        # ----
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Change window theme'),
+            parent_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        self.grid = Gtk.Grid()
+        box.add(self.grid)
+        self.grid.set_border_width(parent_win_obj.spacing_size)
+        self.grid.set_row_spacing(parent_win_obj.spacing_size)
+
+        label = Gtk.Label()
+        self.grid.attach(label, 0, 0, 1, 1)
+        label.set_markup(
+            utils.tidy_up_long_descrip(
+                _('Choose a new window theme for Tartube'),
+                parent_win_obj.quite_long_string_max_len,
+            ),
+        )
+
+        # Add a combo, containing all available themes. The 'default' theme
+        #   always appears at the top
+        store = Gtk.ListStore(str, str)
+        store.append([ 'default', '' ])
+
+        theme_dict = self.get_theme_dict()
+        for theme_name in sorted(theme_dict):
+            store.append([ theme_name, theme_dict[theme_name] ])
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        self.grid.attach(combo, 0, 1, 1, 1)
+        combo.set_hexpand(True)
+        # (Signal connect appears below)
+
+        cell = Gtk.CellRendererText()
+        combo.pack_start(cell, False)
+        combo.add_attribute(cell, 'text', 0)
+        combo.set_active(0)
+        combo.connect('changed', self.on_combo_changed)
+
+        label2 = Gtk.Label()
+        self.grid.attach(label2, 0, 2, 1, 1)
+        label2.set_markup(
+            '<i>' + utils.tidy_up_long_descrip(
+                _(
+                'Hint: choose \'default\' for the normal MS Windows theme',
+                ),
+                parent_win_obj.quite_long_string_max_len,
+            ) + '</i>',
+        )
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Support functions
+
+
+    def get_theme_dict(self):
+
+        """Called by self.__init__().
+
+        In the MSYS2 environment, GTK themes can be set using a settings.ini
+        file.
+
+        In ../pack/mswin_themes can be found several sub-folders, each one
+        named after a theme, and containing a settings.ini that will set that
+        theme.
+
+        Compile a dictionary of available themes for the dialogue window to
+        use.
+
+        Return values:
+
+            Dictionary whose keys are a theme name like 'dark', and whose
+                corresponding values are the full path to the sub-folder with
+                that name
+
+        """
+
+        app_obj = self.parent_win_obj.app_obj
+
+        themes_path = os.path.abspath(
+            os.path.join(
+                app_obj.script_parent_dir,
+                'pack',
+                'mswin_themes',
+            ),
+        )
+
+        try:
+            file_list = os.listdir(path=themes_path)
+        except:
+            file_list = []
+
+        theme_dict = {}
+        for filename in file_list:
+
+            # Ignore any folder called 'default'
+            if filename != 'default':
+
+                dir_path = os.path.abspath(
+                    os.path.join(
+                        app_obj.script_parent_dir,
+                        'pack',
+                        'mswin_themes',
+                        filename,
+                    ),
+                )
+                settings_path = os.path.abspath(
+                    os.path.join(dir_path, 'settings.ini'),
+                )
+
+                if os.path.isdir(dir_path) \
+                and not re.search('^\.', dir_path) \
+                and os.path.isfile(settings_path):
+                    theme_dict[filename] = dir_path
+
+        return theme_dict
+
+
+    # Callback class methods
+
+
+    def on_combo_changed(self, combo):
+
+        """Called from callback in self.__init__().
+
+        Store the combobox's selected item, so the calling function can
+        retrieve it.
+
+        Args:
+
+            combo (Gtk.ComboBox): The clicked widget
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        theme_name = model[tree_iter][0]
+        theme_path = model[tree_iter][1]
+
+        self.theme_name = theme_name
+        if theme_name == 'default':
+            self.theme_path = None
+        else:
+            self.theme_path = theme_path
 
 
 class CreateProfileDialogue(Gtk.Dialog):
@@ -31931,7 +32219,9 @@ class InsertVideoDialogue(Gtk.Dialog):
         #   middle of another URL. No way to prevent that, but we can disable
         #   drag-and-drop in the textview altogether, and instead handle it
         #   from the dialogue window itself
-#        textview.drag_dest_unset()
+        textview.drag_dest_unset()
+        self.connect('destroy', self.close, textview)
+
         self.connect('drag-data-received', self.on_window_drag_data_received)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
         self.drag_dest_set_target_list(None)
@@ -31991,6 +32281,29 @@ class InsertVideoDialogue(Gtk.Dialog):
 
         # Display the dialogue window
         self.show_all()
+
+
+    def close(self, also_self, textview):
+
+        """Called from callback in self.__init__().
+
+        We have disabled drag-and-drop directly into the textview, but this
+        generates a Gtk warning when the textview is destroyed.
+
+        Workaround is to re-enable drag-and-drop into the textview immediately
+        before it (and its window) are destroyed.
+
+        Args:
+
+            also_self (mainwin.InsertVideoDialogue): Another copy of this
+                window
+
+            textview (Gtk.TextView): The textview for which drag-and-drop has
+                been disabled
+
+        """
+
+        textview.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 
 
     # Callback class methods
@@ -34877,7 +35190,7 @@ class SystemCmdDialogue(Gtk.Dialog):
                 media.Folder): The media data object whose system command is
                 displayed in this dialogue window
 
-        Returns:
+        Return values:
 
             A string containing the system command displayed, or an empty
                 string if the system command could not be generated
@@ -35113,6 +35426,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton13 = None               # Gtk.CheckButton
         self.checkbutton14 = None               # Gtk.CheckButton
         self.checkbutton15 = None               # Gtk.CheckButton
+        self.checkbutton16 = None               # Gtk.CheckButton
 
 
         # Code
@@ -35204,30 +35518,36 @@ class TidyDialogue(Gtk.Dialog):
 
         # Right column
         self.checkbutton8 = Gtk.CheckButton()
-        grid.attach(self.checkbutton8, 1, 0, 1, 1)
+        grid.attach(self.checkbutton8, 0, 7, 1, 1)
         self.checkbutton8.set_label(_('Delete all archive files'))
 
         self.checkbutton9 = Gtk.CheckButton()
-        grid.attach(self.checkbutton9, 1, 1, 1, 1)
+        grid.attach(self.checkbutton9, 1, 0, 1, 1)
         self.checkbutton9.set_label(_('Move thumbnails into own folder'))
         # (Signal connect appears below)
 
         self.checkbutton10 = Gtk.CheckButton()
-        grid.attach(self.checkbutton10, 1, 2, 1, 1)
+        grid.attach(self.checkbutton10, 1, 1, 1, 1)
         self.checkbutton10.set_label(_('Delete all thumbnail files'))
+        # (Signal connect appears below)
 
         self.checkbutton11 = Gtk.CheckButton()
-        grid.attach(self.checkbutton11, 1, 3, 1, 1)
-        self.checkbutton11.set_label(
+        grid.attach(self.checkbutton11, 1, 2, 1, 1)
+        self.checkbutton11.set_label(_('Delete all .webp thumbnails'))
+        # (Signal connect appears below)
+
+        self.checkbutton12 = Gtk.CheckButton()
+        grid.attach(self.checkbutton12, 1, 3, 1, 1)
+        self.checkbutton12.set_label(
             utils.tidy_up_long_string(
                 _('Convert .webp thumbnails to .jpg using FFmpeg'),
                 label_length,
             ),
         )
 
-        self.checkbutton12 = Gtk.CheckButton()
-        grid.attach(self.checkbutton12, 1, 4, 1, 1)
-        self.checkbutton12.set_label(
+        self.checkbutton13 = Gtk.CheckButton()
+        grid.attach(self.checkbutton13, 1, 4, 1, 1)
+        self.checkbutton13.set_label(
             utils.tidy_up_long_string(
                 _('Move other metadata files into own folder'),
                 label_length,
@@ -35235,17 +35555,17 @@ class TidyDialogue(Gtk.Dialog):
         )
         # (Signal connect appears below)
 
-        self.checkbutton13 = Gtk.CheckButton()
-        grid.attach(self.checkbutton13, 1, 5, 1, 1)
-        self.checkbutton13.set_label(_('Delete all description files'))
-
         self.checkbutton14 = Gtk.CheckButton()
-        grid.attach(self.checkbutton14, 1, 6, 1, 1)
-        self.checkbutton14.set_label(_('Delete all metadata (JSON) files'))
+        grid.attach(self.checkbutton14, 1, 5, 1, 1)
+        self.checkbutton14.set_label(_('Delete all description files'))
 
         self.checkbutton15 = Gtk.CheckButton()
-        grid.attach(self.checkbutton15, 1, 7, 1, 1)
-        self.checkbutton15.set_label(_('Delete all annotation files'))
+        grid.attach(self.checkbutton15, 1, 6, 1, 1)
+        self.checkbutton15.set_label(_('Delete all metadata (JSON) files'))
+
+        self.checkbutton16 = Gtk.CheckButton()
+        grid.attach(self.checkbutton16, 1, 7, 1, 1)
+        self.checkbutton16.set_label(_('Delete all annotation files'))
 
         # Bottom strip
 
@@ -35262,8 +35582,10 @@ class TidyDialogue(Gtk.Dialog):
         # (Signal connects from above)
         self.checkbutton.connect('toggled', self.on_checkbutton_toggled)
         self.checkbutton4.connect('toggled', self.on_checkbutton4_toggled)
-        self.checkbutton9.connect('toggled', self.on_checkbutton14_toggled)
-        self.checkbutton12.connect('toggled', self.on_checkbutton15_toggled)
+        self.checkbutton9.connect('toggled', self.on_checkbutton9_toggled)
+        self.checkbutton10.connect('toggled', self.on_checkbutton10_toggled)
+        self.checkbutton11.connect('toggled', self.on_checkbutton11_toggled)
+        self.checkbutton13.connect('toggled', self.on_checkbutton13_toggled)
         button.connect('clicked', self.on_select_all_clicked)
         button2.connect('clicked', self.on_select_none_clicked)
 
@@ -35316,7 +35638,7 @@ class TidyDialogue(Gtk.Dialog):
             self.checkbutton5.set_sensitive(True)
 
 
-    def on_checkbutton14_toggled(self, checkbutton):
+    def on_checkbutton9_toggled(self, checkbutton):
 
         """Called from a callback in self.__init__().
 
@@ -35331,13 +35653,64 @@ class TidyDialogue(Gtk.Dialog):
 
         if not checkbutton.get_active():
             self.checkbutton10.set_sensitive(True)
+            self.checkbutton11.set_sensitive(True)
+            self.checkbutton12.set_sensitive(True)
 
         else:
             self.checkbutton10.set_active(False)
             self.checkbutton10.set_sensitive(False)
+            self.checkbutton11.set_active(False)
+            self.checkbutton11.set_sensitive(False)
+            self.checkbutton12.set_active(False)
+            self.checkbutton12.set_sensitive(False)
 
 
-    def on_checkbutton15_toggled(self, checkbutton):
+    def on_checkbutton10_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        When the 'Delete all thumbnail files' button is toggled, update other
+        widgets.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if not checkbutton.get_active():
+            self.checkbutton11.set_sensitive(True)
+            self.checkbutton12.set_sensitive(True)
+
+        else:
+            self.checkbutton11.set_active(False)
+            self.checkbutton11.set_sensitive(False)
+            self.checkbutton12.set_active(False)
+            self.checkbutton12.set_sensitive(False)
+
+
+    def on_checkbutton11_toggled(self, checkbutton):
+
+        """Called from a callback in self.__init__().
+
+        When the 'Delete all .webp thumbnails' button is toggled, update other
+        widgets.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if not checkbutton.get_active():
+            self.checkbutton12.set_sensitive(True)
+
+        else:
+            self.checkbutton12.set_active(False)
+            self.checkbutton12.set_sensitive(False)
+
+
+    def on_checkbutton13_toggled(self, checkbutton):
 
         """Called from a callback in self.__init__().
 
@@ -35352,19 +35725,19 @@ class TidyDialogue(Gtk.Dialog):
 
         if not checkbutton.get_active():
 
-            self.checkbutton13.set_sensitive(True)
             self.checkbutton14.set_sensitive(True)
             self.checkbutton15.set_sensitive(True)
+            self.checkbutton16.set_sensitive(True)
 
         else:
 
-            self.checkbutton13.set_active(False)
             self.checkbutton14.set_active(False)
             self.checkbutton15.set_active(False)
+            self.checkbutton16.set_active(False)
 
-            self.checkbutton13.set_sensitive(False)
             self.checkbutton14.set_sensitive(False)
             self.checkbutton15.set_sensitive(False)
+            self.checkbutton16.set_sensitive(False)
 
 
     def on_select_all_clicked(self, button):
@@ -35388,17 +35761,13 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton7.set_active(True)
         self.checkbutton8.set_active(True)
         self.checkbutton9.set_active(True)
-        self.checkbutton10.set_active(False)
-        self.checkbutton11.set_active(True)
-        self.checkbutton12.set_active(True)
-        self.checkbutton13.set_active(False)
-        self.checkbutton14.set_active(False)
-        self.checkbutton15.set_active(False)
-
-        self.checkbutton10.set_sensitive(False)
-        self.checkbutton13.set_sensitive(False)
-        self.checkbutton14.set_sensitive(False)
-        self.checkbutton15.set_sensitive(False)
+#        self.checkbutton10.set_active(False)
+#        self.checkbutton11.set_active(False)
+#        self.checkbutton12.set_active(False)
+        self.checkbutton13.set_active(True)
+#        self.checkbutton14.set_active(False)
+#        self.checkbutton15.set_active(False)
+#        self.checkbutton16.set_active(False)
 
 
     def on_select_none_clicked(self, button):
@@ -35423,18 +35792,13 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton8.set_active(False)
         self.checkbutton9.set_active(False)
         self.checkbutton10.set_active(False)
-        self.checkbutton11.set_active(False)
         self.checkbutton12.set_active(False)
         self.checkbutton13.set_active(False)
         self.checkbutton14.set_active(False)
         self.checkbutton15.set_active(False)
+        self.checkbutton16.set_active(False)
 
         if not mainapp.HAVE_MOVIEPY_FLAG \
         or self.main_win_obj.app_obj.refresh_moviepy_timeout == 0:
             self.checkbutton.set_sensitive(False)
             self.checkbutton2.set_sensitive(False)
-
-        self.checkbutton10.set_sensitive(True)
-        self.checkbutton13.set_sensitive(True)
-        self.checkbutton14.set_sensitive(True)
-        self.checkbutton15.set_sensitive(True)

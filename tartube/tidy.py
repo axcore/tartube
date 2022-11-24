@@ -101,6 +101,8 @@ class TidyManager(threading.Thread):
 
             del_thumb_flag: True if all thumbnail files should be deleted
 
+            del_webp_flag: True if all .webp thumbnail files should be deleted
+
             convert_webp_flag: True if all .webp thumbnail files should be
                 converted to .jpg
 
@@ -175,6 +177,8 @@ class TidyManager(threading.Thread):
         self.move_thumb_flag = choices_dict['move_thumb_flag']
         # True if all thumbnail files should be deleted
         self.del_thumb_flag = choices_dict['del_thumb_flag']
+        # True if all .webp thumbnail files should be deleted
+        self.del_webp_flag = choices_dict['del_webp_flag']
         # True if all .webp thumbnail files should be converted to .jpg.
         #   Requires mainapp.TartubeApp.ffmpeg_fail_flag set to False
         self.convert_webp_flag = choices_dict['convert_webp_flag']
@@ -207,6 +211,7 @@ class TidyManager(threading.Thread):
         self.archive_deleted_count = 0
         self.thumb_moved_count = 0
         self.thumb_deleted_count = 0
+        self.webp_deleted_count = 0
         self.webp_converted_count = 0
         self.data_moved_count = 0
         self.descrip_deleted_count = 0
@@ -366,6 +371,16 @@ class TidyManager(threading.Thread):
             '   ' + _('Delete all thumbnail files:') + ' ' + text,
         )
 
+        if self.del_webp_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Delete all .webp thumbnail files:') + ' ' + text,
+        )
+
         if self.convert_webp_flag:
             text = _('YES')
         else:
@@ -424,7 +439,7 @@ class TidyManager(threading.Thread):
             # Add this channel/playlist/folder, and any child channels/
             #   playlists/folders (but not videos, obviously)
             obj_list = self.init_obj.compile_all_containers(obj_list)
-            
+
         else:
             # Add all channels/playlists/folders in the database
             for dbid in self.app_obj.container_reg_dict.keys():
@@ -537,6 +552,14 @@ class TidyManager(threading.Thread):
                 + str(self.thumb_deleted_count),
             )
 
+        if self.del_webp_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('.webp thumbnail files deleted:') + ' ' \
+                + str(self.webp_deleted_count),
+            )
+
         if self.convert_webp_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -637,6 +660,9 @@ class TidyManager(threading.Thread):
 
         if self.del_thumb_flag:
             self.delete_thumb(media_data_obj)
+
+        if self.del_webp_flag:
+            self.delete_webp(media_data_obj)
 
         if self.convert_webp_flag:
             self.convert_webp(media_data_obj)
@@ -1096,6 +1122,47 @@ class TidyManager(threading.Thread):
                     self.thumb_deleted_count += 1
 
 
+    def delete_webp(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Checks all child videos of the specified media data object. If the
+        associated .webp thumbnail file exists, delete it.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        for video_obj in media_data_obj.compile_all_videos( [] ):
+
+            if video_obj.file_name is not None:
+
+                # Thumbnails might be in one of four locations
+                webp_path = utils.find_thumbnail_webp(self.app_obj, video_obj)
+
+                # If the video's parent container has an alternative download
+                #   destination set, we must check the corresponding media
+                #   data object. If the latter also has a media.Video object
+                #   matching this video, then this function returns None and
+                #   nothing is deleted
+                if webp_path is not None:
+
+                    webp_path = self.check_video_in_actual_dir(
+                        media_data_obj,
+                        video_obj,
+                        webp_path,
+                    )
+
+                # Delete the thumbnail file
+                if webp_path is not None \
+                and os.path.isfile(webp_path) \
+                and self.app_obj.remove_file(webp_path):
+                    self.webp_deleted_count += 1
+
+
     def convert_webp(self, media_data_obj):
 
         """Called by self.tidy_directory().
@@ -1434,7 +1501,7 @@ class TidyManager(threading.Thread):
             delete_path (str): The path to a file which the calling function
                 wants to delete
 
-        Returns:
+        Return values:
 
             The specified delete_path if it can be deleted, or None if it
                 should not be deleted

@@ -656,16 +656,6 @@ class TartubeApp(Gtk.Application):
                 'ytdl-test',
             ),
         )
-        # Inside the temporary directory, a folder for preserving original
-        #   thumbnails during FFmpeg conversions
-        self.temp_ffmpeg_dir = os.path.abspath(
-            os.path.join(
-                os.path.expanduser('~'),
-                __main__.__packagename__ + '-data',
-                '.temp',
-                'ffmpeg',
-            ),
-        )
 
         # When the user tries to switch databases (in a call to
         #   self.switch_db() ), we make backup copies of those IVs. If the
@@ -678,7 +668,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
-        self.backup_temp_ffmpeg_dir = None
         self.backup_data_dir_alt_list = None
 
         # The user can opt to move thumbnails to a '.thumbs' sub-directory, and
@@ -1046,7 +1035,7 @@ class TartubeApp(Gtk.Application):
         #   If False, they are deleted (assuming a successful conversion)
         # Ignored if self.ffmpeg_fail_flag is True or
         #   self.ffmpeg_convert_webp_flag is False
-        self.ffmpeg_retain_webp_flag = False
+        self.ffmpeg_retain_webp_flag = True
 
         # Mode for downloading broadcasting livestreams:
         #   'default' - use the current downloader alone. This normally works
@@ -2489,6 +2478,13 @@ class TartubeApp(Gtk.Application):
             show_script_action.connect('activate', self.on_menu_show_script)
             self.add_action(show_script_action)
 
+            change_theme_action = Gio.SimpleAction.new(
+                'change_theme_menu',
+                None,
+            )
+            change_theme_action.connect('activate', self.on_menu_change_theme)
+            self.add_action(change_theme_action)
+
         # 'Media' column
         add_video_menu_action = Gio.SimpleAction.new('add_video_menu', None)
         add_video_menu_action.connect('activate', self.on_menu_add_video)
@@ -3646,9 +3642,6 @@ class TartubeApp(Gtk.Application):
         if not os.path.isdir(self.temp_test_dir):
             self.make_directory(self.temp_test_dir)
 
-        if not os.path.isdir(self.temp_ffmpeg_dir):
-            self.make_directory(self.temp_ffmpeg_dir)
-
         # Part 8 - Load the database file
         # -------------------------------
 
@@ -3942,7 +3935,7 @@ class TartubeApp(Gtk.Application):
             100-199: mainapp.py     (in use: 101-196)
             200-299: mainwin.py     (in use: 201-270)
             300-399: downloads.py   (in use: 301-317)
-            400-499: config.py      (in use: 401-405)
+            400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
             600-699: info.py        (in use: 601)
             700-799: updates.py     (in use: 701-704)
@@ -4029,7 +4022,7 @@ class TartubeApp(Gtk.Application):
         Loads the Tartube config file. If loading fails, disables all file
         loading/saving.
 
-        Returns:
+        Return values:
 
             True if this appears to be a new Tartube installation, False
                 otherwise (regardless of whether loading the config file
@@ -5838,7 +5831,7 @@ class TartubeApp(Gtk.Application):
             switch_flag (bool): True when called by self.switch_db(), False
                 otherwise
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -7664,7 +7657,7 @@ class TartubeApp(Gtk.Application):
         saving the database fails (so the user can correct a problem like a
         full hard drive, before trying again).
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -7905,7 +7898,7 @@ class TartubeApp(Gtk.Application):
                 preferences window (config.SystemPrefWin) that the user has
                 open
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -8066,7 +8059,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = self.temp_dir
         self.backup_temp_dl_dir = self.temp_dl_dir
         self.backup_temp_test_dir = self.temp_test_dir
-        self.backup_temp_ffmpeg_dir = self.temp_ffmpeg_dir
         self.backup_data_dir_alt_list = self.data_dir_alt_list.copy()
 
 
@@ -8085,7 +8077,6 @@ class TartubeApp(Gtk.Application):
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
         self.backup_temp_test_dir = None
-        self.backup_temp_ffmpeg_dir = None
         self.backup_data_dir_alt_list = None
 
 
@@ -8105,7 +8096,6 @@ class TartubeApp(Gtk.Application):
         self.temp_dir = self.backup_temp_dir
         self.temp_dl_dir = self.backup_temp_dl_dir
         self.temp_test_dir = self.backup_temp_test_dir
-        self.temp_ffmpeg_dir = self.backup_ffmpeg_test_dir
         self.data_dir_alt_list = self.backup_data_dir_alt_list.copy()
 
 
@@ -8140,9 +8130,6 @@ class TartubeApp(Gtk.Application):
 
         if not os.path.isdir(self.temp_test_dir):
             self.make_directory(self.temp_test_dir)
-
-        if not os.path.isdir(self.temp_ffmpeg_dir):
-            self.make_directory(self.temp_ffmpeg_dir)
 
 
     def choose_alt_db(self):
@@ -8230,7 +8217,7 @@ class TartubeApp(Gtk.Application):
                 preferences window (config.SystemPrefWin) that the user has
                 open
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -8274,7 +8261,7 @@ class TartubeApp(Gtk.Application):
             pref_win_obj (config.SystemPrefWin): The system preferences window
                 that the user has open, if any
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -8909,7 +8896,7 @@ class TartubeApp(Gtk.Application):
         Check that all media data objects have the IVs they're supposed to
         have, and return the number of problems found.
 
-        Returns:
+        Return values:
 
             A number in the range 0-4
 
@@ -8991,7 +8978,7 @@ class TartubeApp(Gtk.Application):
         Returns a list of specimen media data objects: one media.Video,
         media.Channel, media.Playlist and media.Folder object.
 
-        Returns:
+        Return values:
 
             A list of objects, in the order (video, channel, playlist, folder).
                 If those objects haven't been created yet, the list contains
@@ -9066,9 +9053,6 @@ class TartubeApp(Gtk.Application):
         )
         self.temp_test_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'ytdl-test'),
-        )
-        self.temp_ffmpeg_dir = os.path.abspath(
-            os.path.join(self.data_dir, '.temp', 'ffmpeg'),
         )
 
 
@@ -9455,7 +9439,7 @@ class TartubeApp(Gtk.Application):
 
             version (str): A string in the form '1.234.567'
 
-        Returns:
+        Return values:
 
             The simple integer, or None if the 'version' argument was invalid
 
@@ -9754,7 +9738,7 @@ class TartubeApp(Gtk.Application):
 
             media_data_obj (media.Folder): The media data object to test
 
-        Returns:
+        Return values:
 
             True if it's one of the recognised fixed folders, False otherwise
 
@@ -9973,7 +9957,7 @@ class TartubeApp(Gtk.Application):
             dir_path (str): The full path to the directory to be created with a
                 call to os.makedirs()
 
-        Returns:
+        Return values:
 
             True if the directory was created, False if not
 
@@ -10008,7 +9992,7 @@ class TartubeApp(Gtk.Application):
             dir_path (str): The full path to the directory to be removed with a
                 call to shutil.rmtree()
 
-        Returns:
+        Return values:
 
             True if the directory was removed, False if not
 
@@ -10043,7 +10027,7 @@ class TartubeApp(Gtk.Application):
             file_path (str): The full path to the file to be removed with a
                 call to os.remove()
 
-        Returns:
+        Return values:
 
             True if the file was removed, False if not
 
@@ -10079,7 +10063,7 @@ class TartubeApp(Gtk.Application):
 
             new_path (str): The new full path of the file or directory
 
-        Returns:
+        Return values:
 
             True if the file/directory was moved, False if not
 
@@ -10117,7 +10101,7 @@ class TartubeApp(Gtk.Application):
             dir_path (str): The full path to the directory in which the
                 semaphore file should be created
 
-        Returns:
+        Return values:
 
             Full path to the semaphore file if it was created or already
                 exists, None if the specified directory doesn't exist, or if
@@ -10243,7 +10227,7 @@ class TartubeApp(Gtk.Application):
         When the user wants to specify a non-default location for Tartube's
         data directory, prompt the user to select/create a directory.
 
-        Returns:
+        Return values:
 
             True if the user selects a location, False if they do not
 
@@ -10300,7 +10284,7 @@ class TartubeApp(Gtk.Application):
             wiz_win_obj (wizwin.SetupWizWin or None): If called from the setup
                 wizard window, uses its IV, rathern than ours
 
-        Returns:
+        Return values:
 
             The modified (or original) value
 
@@ -10344,7 +10328,7 @@ class TartubeApp(Gtk.Application):
             wiz_win_obj (wizwin.SetupWizWin or None): If called from the setup
                 wizard window, uses its IV, rathern than ours
 
-        Returns:
+        Return values:
 
             The string described above
 
@@ -11258,9 +11242,9 @@ class TartubeApp(Gtk.Application):
             if newbie_update_flag:
                 self.update_manager_start('ytdl')
             elif newbie_config_flag:
-                config.SystemPrefWin(self.main_win_obj.app_obj, 'paths')
+                config.SystemPrefWin(self, 'paths')
             elif newbie_change_flag:
-                config.SystemPrefWin(self.main_win_obj.app_obj, 'forks')
+                config.SystemPrefWin(self, 'forks')
             elif newbie_website_flag:
                 utils.open_file(self, __main__.__website__)
             elif newbie_issues_flag:
@@ -12175,6 +12159,9 @@ class TartubeApp(Gtk.Application):
 
                 del_thumb_flag: True if all thumbnail files should be deleted
 
+                del_webp_flag: True if all .webp thumbnail files should be
+                    deleted
+
                 convert_webp_flag: True if all .webp thumbnail files should be
                     converted to .jpg
 
@@ -12781,7 +12768,7 @@ class TartubeApp(Gtk.Application):
                 should delay sorting their lists of child objects until that
                 calling function is ready. False when called by anything else
 
-        Returns:
+        Return values:
 
             video_obj (media.Video) - The video object created
 
@@ -12909,7 +12896,7 @@ class TartubeApp(Gtk.Application):
                 should delay sorting their lists of child objects until that
                 calling function is ready. False when called by anything else
 
-        Returns:
+        Return values:
 
             video_obj (media.Video) - The video object created
 
@@ -13689,7 +13676,7 @@ class TartubeApp(Gtk.Application):
                 should delay sorting their lists of child objects until that
                 calling function is ready. False when called by anything else
 
-        Returns:
+        Return values:
 
             The new media.Video object
 
@@ -13780,7 +13767,7 @@ class TartubeApp(Gtk.Application):
                 in this channel, False if we should actually download them
                 (when allowed)
 
-        Returns:
+        Return values:
 
             The new media.Channel object
 
@@ -13866,7 +13853,7 @@ class TartubeApp(Gtk.Application):
                 in this playlist, False if we should actually download them
                 (when allowed)
 
-        Returns:
+        Return values:
 
             The new media.Playlist object
 
@@ -13960,7 +13947,7 @@ class TartubeApp(Gtk.Application):
             fixed_flag, priv_flag, temp_flag (bool): Flags sent to the object's
                 .__init__() function
 
-        Returns:
+        Return values:
 
             The new media.Folder object
 
@@ -15377,7 +15364,7 @@ class TartubeApp(Gtk.Application):
                 'live', 'missing', 'new', 'recent', 'waiting', 'temp',
                 'misc' or 'clips'
 
-        Returns values:
+        Return values:
 
             The system media.Folder object, or None if fixed_type is
                 unrecognised
@@ -17632,7 +17619,7 @@ class TartubeApp(Gtk.Application):
 
             new_name (str): The object's new name
 
-        Returns:
+        Return values:
 
             True on success, False on failure
 
@@ -17703,7 +17690,7 @@ class TartubeApp(Gtk.Application):
             name (str): A proposed name for a media.Channel, media.Playlist or
                 media.Folder object
 
-        Returns:
+        Return values:
 
             True if the name is legal, False if it is illegal
 
@@ -17847,7 +17834,8 @@ class TartubeApp(Gtk.Application):
             obj1, obj2 (media.Video): Two media.Video objects, one of which
                 must be sorted before the other
 
-        Returns:
+        Return values:
+
             -1 if obj1 comes before obj2, 1 if obj2 comes before obj1 (the code
                 does not return 0)
 
@@ -18789,7 +18777,7 @@ class TartubeApp(Gtk.Application):
 
             text (str): The contents of the loaded CSV file
 
-        Returns:
+        Return values:
 
             db_dict (dict): The converted data in the form described in the
                 comments in self.export_from_db()
@@ -18965,7 +18953,7 @@ class TartubeApp(Gtk.Application):
 
             text (str): The contents of the loaded plain text file
 
-        Returns:
+        Return values:
 
             db_dict (dict): The converted data in the form described in the
                 comments in self.export_from_db()
@@ -19255,7 +19243,7 @@ class TartubeApp(Gtk.Application):
                 total number of videos/channels/playlists/folders imported so
                 far
 
-        Returns:
+        Return values:
 
             video_count, channel_count, playlist_count, folder_count (int): The
                 updated counts after importing videos/channels/playlists/
@@ -19468,7 +19456,7 @@ class TartubeApp(Gtk.Application):
 
             name (str): The name of the imported container
 
-        Returns:
+        Return values:
 
             The converted name
 
@@ -20117,14 +20105,14 @@ class TartubeApp(Gtk.Application):
 
         if profile_name in self.profile_dict:
 
-            return self.app_obj.system_error(
+            return self.system_error(
                 175,
                 'Duplicate profile name \'{1}\''.format(profile_name),
             )
 
         elif len(self.profile_dict) >= self.profile_max:
 
-            return self.app_obj.system_error(
+            return self.system_error(
                 176,
                 'Number of profiles exceeds maximum',
             )
@@ -20151,7 +20139,7 @@ class TartubeApp(Gtk.Application):
 
         if not profile_name in self.profile_dict:
 
-            return self.app_obj.system_error(
+            return self.system_error(
                 177,
                 'Unrecognised profile \'{1}\''.format(profile_name),
             )
@@ -21244,7 +21232,7 @@ class TartubeApp(Gtk.Application):
         Otherwise, check whether it's time to perform a scheduled livestream
         operation and, if so, perform it.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going, or None to halt it
 
@@ -21610,7 +21598,7 @@ class TartubeApp(Gtk.Application):
 
         Resets any confirmation messages in the Drag and Drop tab.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going, or None to halt it
 
@@ -21664,7 +21652,7 @@ class TartubeApp(Gtk.Application):
         containing self.data_dir is running out of space (and halts the
         operation, if so.)
 
-        Returns:
+        Return values:
 
             1 to keep the timer going, or None to halt it
 
@@ -21753,7 +21741,7 @@ class TartubeApp(Gtk.Application):
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the update operation.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going
 
@@ -21786,7 +21774,7 @@ class TartubeApp(Gtk.Application):
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the refresh operation.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going
 
@@ -21819,7 +21807,7 @@ class TartubeApp(Gtk.Application):
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the info operation.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going
 
@@ -21852,7 +21840,7 @@ class TartubeApp(Gtk.Application):
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the tidy operation.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going
 
@@ -21885,7 +21873,7 @@ class TartubeApp(Gtk.Application):
         For the benefit of systems with Gtk < 3.24, the timer continues running
         for a few seconds at the end of the process operation.
 
-        Returns:
+        Return values:
 
             1 to keep the timer going
 
@@ -23960,6 +23948,94 @@ class TartubeApp(Gtk.Application):
         config.SystemPrefWin(self, 'db')
 
 
+    def on_menu_change_theme(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        On MS Windows (only), changes the Gtk theme (requires a restart to take
+        effect).
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        dialogue_win = mainwin.ChangeThemeDialogue(self.main_win_obj)
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window...
+        theme_name = dialogue_win.theme_name
+        theme_path = dialogue_win.theme_path
+
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            success_msg = _('Restart Tartube to see the new theme!')
+            fail_msg = _('Tartube failed to set the new theme')
+
+            dest_folder = self.script_parent_dir \
+            + '/../../../mingw64/etc/gtk-3.0'
+            if not os.path.isdir(dest_folder):
+                self.make_directory(dest_folder)
+
+            dest_path = os.path.abspath(
+                os.path.join(dest_folder, 'settings.ini'),
+            )
+
+            if theme_name == 'default':
+
+                # The 'default' theme is characterised by a lack of a
+                #   settings.ini file
+                try:
+                    os.remove(dest_path)
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        success_msg,
+                        'info',
+                        'ok',
+                    )
+
+                except Exception as e:
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        fail_msg + ': ' + str(e),
+                        'error',
+                        'ok',
+                    )
+
+            else:
+
+                # The dialogue window has already checked that this source_path
+                #   exists
+                source_path = os.path.abspath(
+                    os.path.join(
+                        self.script_parent_dir,
+                        'pack',
+                        'mswin_themes',
+                        theme_path,
+                        'settings.ini',
+                    ),
+                )
+
+                try:
+                    shutil.copyfile(source_path, dest_path)
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        success_msg,
+                        'info',
+                        'ok',
+                    )
+
+                except Exception as e:
+                    self.dialogue_manager_obj.show_msg_dialogue(
+                        fail_msg + ': ' + str(e),
+                        'error',
+                        'ok',
+                    )
+
+
     def on_menu_check_db(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -24810,11 +24886,12 @@ class TartubeApp(Gtk.Application):
                 'del_archive_flag': dialogue_win.checkbutton8.get_active(),
                 'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
                 'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
-                'convert_webp_flag': dialogue_win.checkbutton11.get_active(),
-                'move_data_flag': dialogue_win.checkbutton12.get_active(),
-                'del_descrip_flag': dialogue_win.checkbutton13.get_active(),
-                'del_json_flag': dialogue_win.checkbutton14.get_active(),
-                'del_xml_flag': dialogue_win.checkbutton15.get_active(),
+                'del_webp_flag': dialogue_win.checkbutton11.get_active(),
+                'convert_webp_flag': dialogue_win.checkbutton12.get_active(),
+                'move_data_flag': dialogue_win.checkbutton13.get_active(),
+                'del_descrip_flag': dialogue_win.checkbutton14.get_active(),
+                'del_json_flag': dialogue_win.checkbutton15.get_active(),
+                'del_xml_flag': dialogue_win.checkbutton16.get_active(),
             }
 
         # Now destroy the window
@@ -24837,6 +24914,7 @@ class TartubeApp(Gtk.Application):
             or choices_dict['del_video_flag'] \
             or choices_dict['del_archive_flag'] \
             or choices_dict['del_thumb_flag'] \
+            or choices_dict['del_webp_flag'] \
             or choices_dict['del_descrip_flag'] \
             or choices_dict['del_json_flag'] \
             or choices_dict['del_xml_flag']:

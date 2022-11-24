@@ -67,10 +67,10 @@ class OptionsManager(object):
             None
 
     Canonical list of options:
-    
+
     Options are listed here in the same order in which they appear in
     youtube-dl's documentation.
-            
+
     OPTIONS
 
         ignore_errors (bool): If True, youtube-dl will ignore the errors and
@@ -592,7 +592,7 @@ class OptionsManager(object):
             mainapp.TartubeApp.fixed_temp_folder), 'misc'
             (matches mainapp.TartubeApp.fixed_misc_folder) or 'clips'
             (matches mainapp.TartubeApp.fixed_clips_folder)
-            
+
         match_title_list (list): Download only matching titles (regex or
             caseless sub-string). Each item in the list is passed to youtube-dl
             as a separate --match-title argument
@@ -664,7 +664,7 @@ class OptionsManager(object):
 
         if dbid is not None:
             self.dbid_list = [dbid]
-            
+
         # Initialise youtube-dl options
         self.reset_options()
 
@@ -996,17 +996,17 @@ class OptionsManager(object):
         #   mainapp.TartubeApp.fix_integrity_db() )
         if not dbid in self.dbid_list:
             self.dbid_list.append(dbid)
-        
+
 
     def del_dbid(self, dbid):
 
         self.dbid_list.remove(dbid)
 
-        
+
     def reset_dbid(self):
 
         self.dbid_list = []
-        
+
 
 class OptionsParser(object):
 
@@ -1419,7 +1419,7 @@ class OptionsParser(object):
                 involved, the corresponding object (so bandwidth limits can be
                 extracted)
 
-        Returns:
+        Return values:
 
             List of strings with all the youtube-dl command line options
 
@@ -1746,7 +1746,7 @@ class OptionsParser(object):
         override_obj = self.app_obj.get_fixed_folder(
             copy_dict['use_fixed_folder']
         )
-        
+
         if operation_type == 'classic_sim' \
         or operation_type == 'classic_real' \
         or operation_type == 'classic_custom':
@@ -2095,7 +2095,7 @@ class OptionHolder(object):
 
             copy_dict (dict): Copy of the original options dictionary.
 
-        Returns:
+        Return values:
 
             True if any of the required options is enabled, otherwise returns
                 False.
@@ -2112,7 +2112,7 @@ class OptionHolder(object):
 
         """Called by options.OptionsParser.parse().
 
-        Returns:
+        Return values:
 
             True if the option is a boolean switch, otherwise returns False
 

@@ -1,15 +1,11 @@
 ---
-name: "Ask Question \U0001F4A1"
+name: Ask Question 💡
 about: Ask a Tartube related question
-title: ''
 labels: question
-assignees: ''
-
 ---
-
 Thanks for taking the time to ask a question! 
 
-### Please check the README
+### Please read the README
 Perhaps your question is answered there
 
 ### The authors are not experts in python, security, youtube-dl, FFmpeg, Debian/RPM packaging or Windows programming

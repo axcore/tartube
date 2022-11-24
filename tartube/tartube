@@ -44,8 +44,8 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.4.149'
-__date__ = '22 Nov 2022'
+__version__ = '2.4.165'
+__date__ = '24 Nov 2022'
 __copyright__ = 'Copyright \xa9 2019-2022 A S Lewis'
 __license__ = """
 Copyright \xa9 2019-2022 A S Lewis.
@@ -139,7 +139,7 @@ def handle_uncaught_exception(except_type, value, tb):
     Adapted from
     https://dev.to/joshuaschlichting/
         catching-every-single-exception-with-python-40o3
-    
+
     Args:
         except_type (type): Exception type
         value (TypeError): Exception value
@@ -148,13 +148,13 @@ def handle_uncaught_exception(except_type, value, tb):
     """
 
     if app is not None:
-        
+
         app.system_exception(
             except_type,
             value,
             '\n'.join(traceback.extract_tb(tb).format())
         )
-    
+
     raise type(value)
 
 

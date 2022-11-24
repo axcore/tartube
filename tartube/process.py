@@ -244,8 +244,8 @@ class ProcessManager(threading.Thread):
     def create_child_process(self, cmd_list):
 
         """Called by self.slice_video() only, in order to concatenate video
-        clips into a single video file. All other child process are handled by
-        ffmpeg_tartube.FFmpegManager.
+        clips into a single video file. All other child processes are handled
+        by ffmpeg_tartube.FFmpegManager.
 
         Based on YoutubeDLDownloader._create_process().
 
@@ -258,7 +258,15 @@ class ProcessManager(threading.Thread):
 
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
+
         if os.name == 'nt':
             # Hide the child process window that MS Windows helpfully creates
             #   for us
@@ -332,7 +340,7 @@ class ProcessManager(threading.Thread):
         Called continuously during concatenation of video clips to check
         whether the child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False.
 

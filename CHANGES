@@ -1,3 +1,90 @@
+v2.4.165 (24 Nov 2022)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added a new tutorial. For new installations, it can be launched from the
+    setup window. For all users, it can be launched from Tartube's menu
+    (About > Show tutorial)
+- MS Windows users can now select a dark theme for Tartube windows. In
+    Tartube's menu, click 'System > Change theme...'. Advanced users may be
+    able to install additional themes; see the README for more details. Thanks
+    to Rukongai for finding the solution (Git #355)
+- Channels, playlists and folders can now have non-unique names; for example
+    you can have separate channels, both called 'Season 1', inside different
+    folders. However, you can't have two channels with the same name inside
+    the same folder (Git #439)
+- Download options can now be applied directly to more than one channel,
+    playlist or folder (Git #464)
+- Tartube has been re-licensed under LGPL 2.1
+
+MINOR NEW FEATURES
+- New translations available: French, Russian, Spanish and Vietnamese. Thanks
+    to everyone at Weblate who contributed to them, including Le Sharkoïste,
+    Tim Dewey, Equi and Zeref. In this release, your system's locale should be
+    applied automatically (no more messing around in the preferences window)
+- Python errors, which until now were hidden in a terminal window (and
+    therefore not visible to must users), are now redirected to Tartube's
+    Errors/Warnings tab where everyone can see them
+- In download options, Post-processing > General, the audio quality of the
+    post-processed audio file can now be set as a specific bitrate (e.g. 320
+    kb/s), as well as the 'high', 'medium' and 'low' settings that were already
+    available (Git #462)
+
+MAJOR FIXES
+- In the system preferences window, 'Downloaders' tab, tightened up the
+    behaviour of the buttons, entries and comboboxes so that the user cannot
+    specify contradictory settings or enter invalid values. On MS Windows, the
+    'Use custom path' setting is now marked as 'not recommended', because
+    Tartube code assumes that all users are using the official Tartube
+    installer. (It it apparently possible to install Tartube using WSL2, but
+    the authors have not been able to confirm that, so for the moment WSL2
+    installations are not 'officially' supported) (Git #466)
+- Fixed errors in the file-tidying operation (from Tartube's menu, Operations >
+    Tidy up files) (Git #423, #463)
+- .webp thumbnail images cannot be displayed in Tartube's window (because the
+    Gtk graphics libraries do not support them). By default, .webp thumbnails
+    are converted to .jpg (which are supported), but in some circumstances this
+    prevents users from embedding thumbnails into their videos. In this
+    version, when .webp thumbnails are converted to .jpg, the original .webp
+    files are not deleted (and so they are still available for embedding). You
+    can change this behaviour in Edit > System preferences... > Operations >
+    Downloads. You can use 'Operations > Tidy up files...' to remove multiple
+    .webp files at a later date, if you want to (Git #461)
+- Drag and drop into the 'Add new videos' window did not work as intended, if
+    videos were dropped directly onto the textview. Specifically, a newline
+    character was not inserted between existing and new URLs. This issue also
+    affected several similar windows, but is now fixed
+- When videos were downloaded as audio files (e.g. .m4a) and then converted to
+    another type of audio file (e.g. .mp3), Tartube's database was not updated
+    correctly. Due to some invisible magic in the operating system, most users
+    did not notice any problems, but some did. Fixed the issue, so that new
+    downloads will update the database correctly (Git #451)
+
+MINOR FIXES
+- In download options, Files > Filesystem, the 'Download all videos into this
+    folder' has been fixed so that it works correctly in non-English locales
+- Fixed drag-and-drop into the 'Media' tab of the 'Scheduled download' window
+- In the 'Add many channels/playlists' windows, names and URLs in the box at
+    the bottom were supposed to be editable, but were not. Fixed
+- Fixed a rare problem for videos that were marked to be watched as soon as
+    they are downloaded, in which it was possible (in principle) to delete the
+    video before the media player was launched, causing numerous problems
+- After fetching a list of video formats/subtitles, the dialogue window's
+    button opened the download options window at the wrong tab. Fixed
+- In the Drag and Drop tab, code did not impede the user's attempts to delete
+    the 'general' (default) set of download options (which cannot be deleted).
+    Fixed
+- Some youtube-dl commands surround download options with double quotes "...".
+    For technical reasons, these must be removed before Tartube can start a
+    youtube-dl download. Users were confused that the double quotes they had
+    specified were not visible in the Output tab; they are now visible there
+    (and also in the terminal window, when that is enabled) (Reddit)
+- The preferences window, when opened, will now auto-fix any problems with sets
+    of download options in the Tartube database. This is a temporary patch for
+    an unresolved issue. The authors suspect the unresolved issue has
+    resolved itself, given that code handling applied download options has been
+    completely re-written for this release (Git #456)
+
 v2.4.093 (31 Jul 2022)
 -------------------------------------------------------------------------------
 
@@ -11,7 +98,7 @@ MAJOR NEW FEATURES
     you should either select them, right-click and choose 'Download videos'; or
     alternatively, set up custom downloads to download each video individually
     (Git #445)
-    
+
 MINOR NEW FEATURES
 - In the preferences window, Operations > Livestreams, you can now block all
     livestreams from being checked/downloaded. This only works when yt-dlp is
@@ -24,7 +111,7 @@ MINOR NEW FEATURES
     now visible
 - Tartube translations can now be prepared using Weblate. See
     https://hosted.weblate.org/projects/tartube/ (Git #428)
-    
+
 MAJOR FIXES
 - Updated to latest version of MSYS2, with which FFmpeg can be installed
     correctly (Git #371, #444)
@@ -32,7 +119,7 @@ MAJOR FIXES
 MINOR FIXES
 - Fixed rare Python errors after right-clicking videos in the Progress List
     and selecting 'Stop now', 'Stop after this video', etc
-    
+
 v2.4.077 (8 Jun 2022)
 -------------------------------------------------------------------------------
 

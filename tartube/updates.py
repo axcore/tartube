@@ -166,12 +166,21 @@ class UpdateManager(threading.Thread):
         Executes the system command, creating a new child process which
         executes youtube-dl.
 
+        Updates self.stderr_list in the event of an error.
+
         Args:
 
             cmd_list (list): Python list that contains the command to execute
 
         """
 
+        # Strip double quotes from arguments
+        # (Since we're sending the system command one argument at a time, we
+        #   don't need to retain the double quotes around any single argument
+        #   and, in fact, doing so would cause an error)
+        cmd_list = utils.strip_double_quotes(cmd_list)
+
+        # Create the child process
         info = preexec = None
 
         if os.name == 'nt':
@@ -750,7 +759,7 @@ class UpdateManager(threading.Thread):
         Called continuously during the self.run() loop to check whether the
         child process has finished or not.
 
-        Returns:
+        Return values:
 
             True if the child process is alive, otherwise returns False.
 

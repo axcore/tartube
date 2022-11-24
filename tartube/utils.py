@@ -82,7 +82,7 @@ drag_drop_text=None, no_modify_flag=None):
         no_modify_flag (bool): If True, the entry is not updated, instead,
             the URL that would have been added to it is merely returned
 
-    Returns:
+    Return values:
 
         The URL added to the entry (or that would have been added to the entry)
             or None if no valid and non-duplicate URL was found in the
@@ -304,7 +304,7 @@ def check_url(url):
 
         url (str): The URL to check
 
-    Returns:
+    Return values:
 
         True if the URL is valid, False if invalid
 
@@ -691,7 +691,7 @@ clip_num, clip_max):
 
 
 def clip_set_destination(app_obj, video_obj):
-    
+
     """Called by downloads.ClipDownloader.do_download() and
     process.ProcessManager.run().
 
@@ -1041,7 +1041,7 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
         move_flag (bool): If True, the file is actually moved to the new
             location
 
-    Returns:
+    Return values:
 
         Returns the converted full file path, or None if a filesystem error
             occurs
@@ -1106,7 +1106,7 @@ def convert_seconds_to_string(seconds, short_flag=False):
 
         short_flag (bool): If True, show '05:15' rather than '0:05:15'
 
-    Returns:
+    Return values:
 
         The converted string, e.g. '05:12' or '16:05:12'
 
@@ -1233,7 +1233,7 @@ def convert_youtube_to_hooktube(url):
 
         url (str): The weblink to convert
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -1263,7 +1263,7 @@ def convert_youtube_to_invidious(app_obj, url):
 
         url (str): The weblink to convert
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -1300,7 +1300,7 @@ def convert_youtube_to_other(app_obj, url, custom_dl_obj=None):
             manager that provides the alternative front-end. If not specified,
             the General Custom Download Manager is used
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -1337,7 +1337,7 @@ def disk_get_free_space(path, bytes_flag=False):
         bytes_flag (bool): False to return an integer value in GB (reduced to
             3 decimal places), True to return a value in bytes
 
-    Returns:
+    Return values:
 
         The free space in GB (or in bytes, if the flag is specified), or 0 if
             the size can't be calculated for any reason
@@ -1372,7 +1372,7 @@ def disk_get_total_space(path=None, bytes_flag=False):
         bytes_flag (bool): False to return an integer value in GB (reduced to
             3 decimal places), True to return a value in bytes
 
-    Returns:
+    Return values:
 
         The total size in GB (or in bytes, if the flag is specified). If no
             path or an invalid path is specified, returns 0
@@ -1412,7 +1412,7 @@ def disk_get_used_space(path=None, bytes_flag=False):
         bytes_flag (bool): False to return an integer value in GB (reduced to
             3 decimal places), True to return a value in bytes
 
-    Returns:
+    Return values:
 
         The used space in GB (or in bytes, if the flag is specified). If no
             path or an invalid path is specified, returns 0
@@ -1920,7 +1920,7 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
             function will try everything up to 'my_name_9999' before giving up.
             If set to -1, this function never gives up
 
-    Returns:
+    Return values:
 
         None on failure, the new name on success
 
@@ -1942,7 +1942,7 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
     check_dict = {}
     for this_obj in app_obj.container_reg_dict.values():
         check_dict[this_obj.name] = None
-        
+
     # Find an available name
     if max_value != -1:
 
@@ -1987,7 +1987,7 @@ def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
             temporary data directory, if the thumbnail isn't found in the main
             data directory
 
-    Returns:
+    Return values:
 
         The full path to the thumbnail file, or None
 
@@ -2078,7 +2078,7 @@ def find_thumbnail_from_filename(app_obj, dir_path, filename):
 
         filename (str): The video's filename, e.g. 'My Video'
 
-    Returns:
+    Return values:
 
         The full path to the thumbnail file, or None
 
@@ -2113,7 +2113,7 @@ def find_thumbnail_restricted(app_obj, video_obj):
 
         video_obj (media.Video): The video object handling the downloaded video
 
-    Returns:
+    Return values:
 
         A list whose items, when combined, will be the full path to the
             thumbnail file. If no thumbnail file was found, an empty list is
@@ -2155,7 +2155,7 @@ def find_thumbnail_webp(app_obj, video_obj):
 
         video_obj (media.Video): The video object handling the downloaded video
 
-    Returns:
+    Return values:
 
         The full path to the thumbnail file, or None
 
@@ -2213,7 +2213,7 @@ def format_bytes(num_bytes):
 
         num_bytes (float): The number to convert
 
-    Returns:
+    Return values:
 
         The formatted string
 
@@ -2272,7 +2272,7 @@ custom_dl_obj=None, divert_mode=None):
             specified alternative YouTube front-end (no conversion takes place
             for channels/playlists/folders)
 
-    Returns:
+    Return values:
 
         A list that contains the system command to execute and its arguments
 
@@ -2420,7 +2420,7 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
 
         options_obj (options.OptionsManager): The options manager object itself
 
-    Returns:
+    Return values:
 
         A list that contains the system command to execute and its arguments
 
@@ -2788,7 +2788,7 @@ def generate_m3u_system_cmd(app_obj, media_data_obj):
         media_data_obj (media.Video): The media data object whose .m3u manifest
             is to be downloaded
 
-    Returns:
+    Return values:
 
         A list that contains the system command to execute and its arguments
 
@@ -2827,7 +2827,7 @@ def generate_streamlink_system_cmd(app_obj, media_data_obj, path):
 
         path (str): The full path to the output video
 
-    Returns:
+    Return values:
 
         A list that contains the system command to execute and its arguments
 
@@ -2858,7 +2858,7 @@ def get_encoding():
 
     Based on the get_encoding() function in youtube-dl-gui.
 
-    Returns:
+    Return values:
 
         The system encoding
 
@@ -2880,7 +2880,7 @@ def get_local_time():
     Returns a datetime object that has been converted from UTC to the local
     time zone.
 
-    Returns:
+    Return values:
 
         A datetime.datetime object, configured to the local time zone
 
@@ -3079,7 +3079,7 @@ def is_enhanced(url):
 
         url (str or None): The URL to check
 
-    Returns:
+    Return values:
 
         Returns a key in formats.ENHANCED_SITE_DICT or, if the URL does not
         match an 'enhanced' website, returns None. If no URL is specified,
@@ -3114,7 +3114,7 @@ def is_video_enhanced(video_obj):
 
         video_obj (media.Video): The media data object to check
 
-    Returns:
+    Return values:
 
         Returns a key in formats.ENHANCED_SITE_DICT or, if the video does not
         originate from an 'enhanced' website, returns None. If no URL is
@@ -3286,34 +3286,37 @@ def open_file(app_obj, uri):
             )
 
 
-def parse_options(options_string):
+def parse_options(text):
 
     """Called by options.OptionsParser.parse() or info.InfoManager.run().
 
     Also called by ffmpeg_tartube.FFmpegOptionsManager.get_system_cmd() to
     parse FFmpeg command-line options on the same basis.
 
-    Parses the 'extra_cmd_string' option, which can contain arguments inside
-    double quotes "..." (arguments that can therefore contain whitespace)
+    Parses a string containing one or more youtube-dl download options and
+    their arguments (or the FFmpeg equivalent).
 
-    If options_string contains newline characters, then it terminates an
-    argument, closing newline character or not.
+    Anything inside double quotes constitutes a single argument (which can
+    therefore contain whitespace characters).
+
+    If the string contains any newline characters, that characters terminates
+    the argument, closing newline character or not.
 
     Args:
 
-        options_string (str): A string containing various youtube-dl
-            download options, as described above
+        text (str): The string to parse, e.g. '--do-something "foo bar baz"'
 
-    Returns:
+    Return values:
 
-        A separated list of youtube-dl download options
+        A separated list of youtube-dl download options (or the FFmpeg
+            equivalent)
 
     """
 
     # Add options, one at a time, to a list
     return_list = []
 
-    for line in options_string.splitlines():
+    for line in text.splitlines():
 
         # Set a flag for an item beginning with double quotes, and reset it for
         #   an item ending in double quotes
@@ -3333,7 +3336,7 @@ def parse_options(options_string):
             if quote_flag and item[-1] == "\"":
 
                 # Special case mode is over
-                return_list.append(' '.join(quote_list)[1:-1])
+                return_list.append(' '.join(quote_list))
 
                 quote_flag = False
                 quote_list = []
@@ -3387,7 +3390,7 @@ def shorten_string(string, num_chars):
 
         num_chars (int): The maximum length of the desired string
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3415,7 +3418,7 @@ def shorten_string_two_lines(string, num_chars):
 
         num_chars (int): The maximum length of the desired string
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3533,6 +3536,30 @@ def stream_output_is_ignorable(stderr):
     return stderr
 
 
+def strip_double_quotes(input_list):
+
+    """Can be called by anything. Mostly called by code that creates a child
+    process to run a system command.
+
+    Strips leading and trailing double quotes from every string in a list.
+
+    Args:
+
+        string_list (list): A list of strings to modify
+
+    Return values:
+
+        The modified list
+
+    """
+
+    return_list = []
+    for item in input_list:
+        return_list.append(item.strip('"'))
+
+    return return_list
+
+
 def strip_whitespace(string):
 
     """Can be called by anything.
@@ -3543,7 +3570,7 @@ def strip_whitespace(string):
 
         string (str): The string to convert
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3569,7 +3596,7 @@ def strip_whitespace_multiline(string):
 
         string (str): The string to convert
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3610,7 +3637,7 @@ def tidy_up_container_name(app_obj, string, max_length):
         max_length (int): The maximum length of the converted string (should be
             mainapp.TartubeApp.container_name_max_len)
 
-    Returns:
+    Return values:
 
         The converted string, or an empty string for an irretrievable name
 
@@ -3675,7 +3702,7 @@ def tidy_up_long_descrip(string, max_length=80):
         max_length (int): The maximum length of lines, before they are
             recombined into a single string
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3746,7 +3773,7 @@ split_words_flag=False):
         split_words_flag(bool): If True, the function will break words
             (including hyphenated words) into smaller pieces, if necessary
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -3806,7 +3833,7 @@ def timestamp_add_second(app_obj, stamp=None):
             zeroes are optional for all components, and the 'h' component can
             contain any number of digits
 
-    Returns:
+    Return values:
 
         The converted string. If the supplied timestamp is invalid or not
             specified, its value is returned unmodified
@@ -3924,7 +3951,7 @@ def timestamp_convert_to_seconds(app_obj, stamp):
             zeroes are optional for all components, and the 'h' component can
             contain any number of digits
 
-    Returns:
+    Return values:
 
         The converted value, or the original value if 'stamp' is not a valid
             timestamp
@@ -3969,7 +3996,7 @@ def timestamp_format(app_obj, stamp):
             zeroes are optional for all components, and the 'h' component can
             contain any number of digits
 
-    Returns:
+    Return values:
 
         The converted string. If the supplied timestamp is invalid, it is
             returned unmodified
@@ -4062,7 +4089,7 @@ def to_string(data):
 
         data (-): The data type
 
-    Returns:
+    Return values:
 
         The converted string
 
@@ -4079,7 +4106,7 @@ def upper_case_first(string):
 
         string (str): The string to capitalise
 
-    Returns:
+    Return values:
 
         The converted string
 
