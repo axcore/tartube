@@ -2,7 +2,7 @@
 name: "Ask Question \U0001F4A1"
 about: Ask a Tartube related question
 title: ''
-labels: question
+labels: enhancement, question
 assignees: ''
 
 ---

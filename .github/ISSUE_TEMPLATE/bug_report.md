@@ -16,7 +16,7 @@ If using MS Windows, are you using Windows 10, Windows 7, or something else?
 In Tartube's main window, click Help > About
 
 ### What do you see in the Errors / Warnings tab?
-This will save a lot of time!
+If you don't see any errors or warnings, tell me that!
 
-###If your bug report is "I can't download this video", please provide a link to the video
+### If your bug report is "I can't download this video", please provide a link to the video
 This will save a lot of time!
