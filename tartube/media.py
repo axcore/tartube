@@ -693,49 +693,51 @@ class GenericContainer(GenericMedia):
         first = app_obj.match_first_chars
         ignore = app_obj.match_ignore_chars * -1
 
-        # Defend against two different of a name from the same video, one with
-        #   punctuation marks stripped away, and double quotes converted to
-        #   single quotes (thanks, YouTube!) by replacing those characters with
-        #   whitespace
-        # (After extensive testing, this is the only regex sequence I could
-        #   find that worked)
-        test_name = name[:]
+        # Defend against two different version of a name from the same video,
+        #   one with punctuation marks stripped away, and double quotes
+        #   converted to single quotes (thanks, YouTube!) by replacing those
+        #   characters with whitespace. Also strip leading/trailing whitespace,
+        #   etc
+        test_name = self.strip_video_name(name)
 
-        # Remove punctuation
-        test_name = re.sub(r'\W+', ' ', test_name, flags=re.UNICODE)
-        # Also need to replace underline characters
-        test_name = re.sub(r'[\_\s]+', ' ', test_name)
-        # Also need to remove leading/trailing whitespace, in case the original
-        #   video name started/ended with a question mark or something like
-        #   that
-        test_name = re.sub(r'^\s+', '', test_name)
-        test_name = re.sub(r'\s+$', '', test_name)
-
+        # Match the name against child media.Video objects
         for child_obj in self.child_list:
+
             if isinstance(child_obj, Video):
 
-                child_name = child_obj.name[:]
-                child_name = re.sub(
-                    r'\W+',
-                    ' ',
-                    child_name,
-                    flags=re.UNICODE,
-                )
-                child_name = re.sub(r'[\_\s]+', ' ', child_name)
-                child_name = re.sub(r'^\s+', '', child_name)
-                child_name = re.sub(r'\s+$', '', child_name)
-
+                child_name = self.strip_video_name(child_obj.name)
+                child_nickname = self.strip_video_name(child_obj.nickname)
+                
                 if (
                     method == 'exact_match' \
-                    and child_name == test_name
+                    and (
+                        child_name == test_name \
+                        or (
+                            app_obj.match_nickname_flag \
+                            and child_nickname == test_name
+                        )
+                    )
                 ) or (
                     method == 'match_first' \
-                    and child_name[:first] == test_name[:first]
+                    and (
+                        child_name[:first] == test_name[:first] \
+                        or (
+                            app_obj.match_nickname_flag \
+                            and child_nickname[:first] == test_name[:first]
+                        )
+                    )
                 ) or (
                     method == 'ignore_last' \
-                    and child_name[:ignore] == test_name[:ignore]
+                    and (
+                        child_name[:ignore] == test_name[:ignore] \
+                        or (
+                            app_obj.match_nickname_flag \
+                            and child_name[:ignore] == test_name[:ignore]
+                        )
+                    )                        
                 ):
                     return child_obj
+
 
         # No matches found
         return None
@@ -1114,6 +1116,44 @@ class GenericContainer(GenericMedia):
                     self.waiting_count += 1
 
 
+    def strip_video_name(self, name):
+
+        """Called by self.find_matching_video().
+
+        The specified name is the .name or .nickname of a child media.Video
+        object; or otherwise a string to be matched against the .name or
+        .nickname of a child media.Video object.
+
+        Defend against two different versions of a name from the same video,
+        one with punctuation marks stripped away, and double quotes converted
+        to single quotes (thanks, YouTube!) by replacing those characters with
+        whitespace.
+
+        Also remove punctuation, underlines and leading/trailing whitespace.
+
+        Args:
+
+            name (str): The name to strip
+        
+        """
+
+        # (After extensive testing, this is the only regex sequence I could
+        #   find that worked as inteded)        
+        test_name = name[:]
+
+        # Remove punctuation
+        test_name = re.sub(r'\W+', ' ', test_name, flags=re.UNICODE)
+        # Also need to replace underline characters
+        test_name = re.sub(r'[\_\s]+', ' ', test_name)
+        # Also need to remove leading/trailing whitespace, in case the original
+        #   video name started/ended with a question mark or something like
+        #   that
+        test_name = re.sub(r'^\s+', '', test_name)
+        test_name = re.sub(r'\s+$', '', test_name)
+
+        return test_name
+        
+        
     def test_counts(self):
 
         """Can be called by anything.

@@ -4998,17 +4998,23 @@ class VideoDownloader(object):
         stdout_with_spaces_list = stdout.split(' ')
         stdout_list = stdout.split()
 
-        # (Flag set to True when self.confirm_new_video(), etc, are called)
-        confirm_flag = False
-
         # The '[download] XXX has already been recorded in the archive'
         #   message does not cause a call to self.confirm_new_video(), etc,
         #   so we must handle it here
         # (Note that the first word might be '[download]', or '[Youtube]', etc)
-        if re.search('^.*has already been recorded in the archive$', stdout):
-            self.download_manager_obj.register_video('other')
-            return dl_stat_dict
+        if self.missing_video_check_flag:
 
+            match = re.search(
+                r'^\[\w+\]\s(.*)\shas already been recorded in (the )?' \
+                + 'archive$',
+                stdout,
+            )
+
+            if match:
+                self.confirm_archived_video(match.group(1))
+                self.download_manager_obj.register_video('other')
+                return dl_stat_dict
+        
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             '^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
@@ -5052,10 +5058,22 @@ class VideoDownloader(object):
             # Get progress information
             if '%' in stdout_list[1]:
                 if stdout_list[1] != '100%':
-                    dl_stat_dict['percent'] = stdout_list[1]
-                    dl_stat_dict['eta'] = stdout_list[7]
-                    dl_stat_dict['speed'] = stdout_list[5]
-                    dl_stat_dict['filesize'] = stdout_list[3]
+
+                    # Old format, e.g.
+                    #   [download]  27.0% of 7.55MiB at 73.63KiB/s ETA 01:16
+                    if stdout_list[3] != '~':
+                        dl_stat_dict['percent'] = stdout_list[1]
+                        dl_stat_dict['eta'] = stdout_list[7]
+                        dl_stat_dict['speed'] = stdout_list[5]
+                        dl_stat_dict['filesize'] = stdout_list[3]
+                    # New format (December 2022?), e.g.
+                    #   [download] 8.5% of ~ 19.87MiB at 2.35MiB/s ETA 00:07
+                    #       (frag 8/94)
+                    else:
+                        dl_stat_dict['percent'] = stdout_list[1]
+                        dl_stat_dict['eta'] = stdout_list[8]
+                        dl_stat_dict['speed'] = stdout_list[6]
+                        dl_stat_dict['filesize'] = stdout_list[4]
 
                 else:
                     dl_stat_dict['percent'] = '100%'
@@ -5078,7 +5096,6 @@ class VideoDownloader(object):
                         )
 
                         self.reset_temp_destination()
-                        confirm_flag = True
 
             # Get playlist information (when downloading a channel or a
             #   playlist, this line is received once per video)
@@ -5120,25 +5137,10 @@ class VideoDownloader(object):
                     self.reset_temp_destination()
 
                     self.confirm_old_video(path, filename, extension)
-                    confirm_flag = True
 
             # Get filesize abort status
             if stdout_list[-1] == 'Aborting.':
                 dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
-
-            # When checking for missing videos, respond to the 'has already
-            #   been recorded in archive' message (which is otherwise ignored)
-            if not confirm_flag \
-            and self.missing_video_check_list:
-
-                match = re.search(
-                    r'^\[download\]\s(.*)\shas already been recorded in' \
-                    + ' archive$',
-                    stdout,
-                )
-
-                if match:
-                    self.confirm_archived_video(match.group(1))
 
         elif stdout_list[0] == '[hlsnative]':
 

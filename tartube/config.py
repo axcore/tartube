@@ -19724,24 +19724,34 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         label = self.add_label(grid,
-            _('System locale'),
+            _('Locale override'),
             0, 2, 1, 1,
         )
         label.set_hexpand(False)
 
-        # Earlier version of the code featured a combo, inherited from
-        #   youtube-dl-gui, in which the user could switch between locales;
-        #   however it was fairly useless
-        # It has been replaced with a combo with a single entry (because it
-        #   looks nice)
-        locale = self.app_obj.current_locale
-        # (Some locales are in format "en_GB", some in format "fr")
-        if not 'flag_' + locale in self.app_obj.main_win_obj.pixbuf_dict:
-            locale = locale[:2]
+        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
+        store.append(
+            [
+                self.app_obj.main_win_obj.pixbuf_dict['slice_small'],
+                _('Use your system locale'),
+                ''
+            ]
+        )
 
-        store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        pixbuf = main_win_obj.pixbuf_dict['flag_' + locale]
-        store.append([ pixbuf, formats.LOCALE_DICT[locale] ])
+        for this_locale in formats.LOCALE_LIST:
+
+            # (Some locales are in format "en_GB", some in format "fr")
+            if not 'flag_' + this_locale in \
+            self.app_obj.main_win_obj.pixbuf_dict:
+                flag_locale = current_locale[:2]
+            else:
+                flag_locale = this_locale
+            
+            pixbuf = \
+            self.app_obj.main_win_obj.pixbuf_dict['flag_' + flag_locale]
+            store.append(
+                [ pixbuf, formats.LOCALE_DICT[this_locale], this_locale ],
+            )            
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 2, 1, 1)
@@ -19755,9 +19765,15 @@ class SystemPrefWin(GenericPrefWin):
         combo.pack_start(renderer_text, True)
         combo.add_attribute(renderer_text, 'text', 1)
 
-        combo.set_active(0)
+        if self.app_obj.override_locale is None:
+            combo.set_active(0)
+        else:
+            combo.set_active(
+                formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
+            )
+        combo.connect('changed', self.on_locale_combo_changed, grid)
 
-
+        
     def setup_general_modules_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
@@ -20435,7 +20451,7 @@ class SystemPrefWin(GenericPrefWin):
             _('_Videos'),
             inner_notebook,
         )
-        grid_width = 2
+        grid_width = 3
 
         # Video matching preferences
         self.add_label(grid,
@@ -20451,7 +20467,7 @@ class SystemPrefWin(GenericPrefWin):
         self.radiobutton3 = self.add_radiobutton(grid,
             None,
             _('The video names must match exactly'),
-            0, 2, grid_width, 1,
+            0, 2, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -20508,6 +20524,31 @@ class SystemPrefWin(GenericPrefWin):
             self.on_match_spinbutton_changed,
         )
 
+        self.add_label(grid,
+            '<u>' + _('Video matching recommended preferences') + '</u>',
+            0, 5, grid_width, 1,
+        )
+        
+        checkbutton = self.add_checkbutton(grid,
+            _(
+                'Check the video\'s original name and the downloaded file' \
+                + ' name',
+            ),
+            self.app_obj.match_nickname_flag,
+            True,               # Can be toggled by user
+            0, 6, grid_width, 1,
+        )
+        checkbutton.set_hexpand(False)
+        checkbutton.connect('toggled', self.on_match_nickname_button_toggled)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'N.B. If disabled, custom file templates will interfere' \
+                + ' with video matching'
+            ) + '</i>',
+            0, 7, grid_width, 1,
+        )
+                        
 
     def setup_files_delete_tab(self, inner_notebook):
 
@@ -30095,6 +30136,58 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
+    def on_locale_combo_changed(self, combo, grid):
+
+        """Called from a callback in self.setup_general_language_tab().
+
+        Sets the override locale for Tartube.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            grid (Gtk.Grid): The grid on which this tab's widgets are
+                arranged
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        locale = model[tree_iter][2]
+
+        if locale == '':
+            self.app_obj.reset_override_local()
+        else:
+            self.app_obj.set_override_local(locale)
+
+        # Add some more widgets to tell the user to restart Tartube
+        #   As the user might not know the language, show an icon as well as
+        #   some text
+        # Use an extra grid to avoid messing up the layout of widgets above
+        grid2 = self.add_secondary_grid(grid, 0, 3, 2, 1)
+        grid2.set_border_width(self.spacing_size * 2)
+
+        frame = self.add_image(grid2,
+            self.app_obj.main_win_obj.icon_dict['warning_large'],
+            0, 0, 1, 1,
+        )
+        # (The frame looks cramped without this. The icon itself is 32x32)
+        frame.set_size_request(
+            32 + (self.spacing_size * 2),
+            32 + (self.spacing_size * 2),
+        )
+
+        self.add_label(grid2,
+            '<i>' + _(
+                'The new setting will be applied when Tartube' \
+                + ' restarts',
+            ) + '</i>',
+            1, 0, 1, 1,
+        )
+
+        self.show_all()
+                
+
     def on_match_button_toggled(self, radiobutton):
 
         """Called from callback in self.setup_files_video_deletion_tab().
@@ -30131,6 +30224,29 @@ class SystemPrefWin(GenericPrefWin):
                 self.spinbutton3.set_value(default_val)
                 self.spinbutton3.set_sensitive(False)
                 self.spinbutton4.set_sensitive(True)
+
+
+    def on_match_nickname_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_files_videos_tab().
+
+        Enables/disables matching against both media.Video.name and
+        media.Video.nickname.
+        
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to be modified
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.match_nickname_flag:
+            self.app_obj.set_match_nickname_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.match_nickname_flag:
+            self.app_obj.set_match_nickname_flag(False)
 
 
     def on_match_spinbutton_changed(self, spinbutton):

@@ -264,8 +264,16 @@ class TartubeApp(Gtk.Application):
         #   line of code in self.start_continue()
         self.startup_complete_flag = False
 
-        # Current locale (e.g. en_GB)
-        self.current_locale = locale.getdefaultlocale()[0]
+        # N.B. Setting will not work if the current working directory is the
+        #   one containing this file. If running Tartube from source code, run
+        #   it from the directory containing setup.py!
+        # System locale (e.g. en_GB)
+        self.system_locale = locale.getdefaultlocale()[0]
+        # Override locale. If None, use the system locale
+        self.override_locale = None
+        # The current locale (self.override_locale if set; self.current_locale
+        #   otherwise)
+        self.current_locale = self.system_locale
 
         # Default regex for handling video timestamps (a string in the form
         #   'mm:ss' or 'h:mm:ss'. Leading zeroes are optional for all
@@ -2156,7 +2164,13 @@ class TartubeApp(Gtk.Application):
         #   default value of when self.match_method is not 'ignore_last'; range
         #   1-999
         self.match_ignore_chars = self.match_default_chars
-
+        # For all values of self.match_method, check against both
+        #   media.Video.name and media.Video.nickname
+        # (If custom file templates have been applied, media.Video.nickname
+        #   will preserve the video's original name, which is probably the one
+        #   the user expects to match)
+        self.match_nickname_flag = True
+        
         # Automatic video deletion/removal. Applies only to downloaded videos
         #   (not to checked videos)
         # Flag set to True if videos (and all their associated files) should be
@@ -3326,9 +3340,6 @@ class TartubeApp(Gtk.Application):
         # Part 1 - Give mainapp.TartubeApp IVs their initial values
         # ---------------------------------------------------------
 
-        # Load translations, if available
-        self.apply_locale()
-
         # Set youtube-dl path IVs
         self.setup_paths()
 
@@ -3431,6 +3442,12 @@ class TartubeApp(Gtk.Application):
 
         else:
 
+            # The system locale is applied in the call to self.load_config().
+            #   Since we aren't calling that now, we must apply the locale
+            #   directly
+            if self.current_locale != formats.LOCALE_DEFAULT:
+                self.apply_locale()
+                
             # Now respond to the missing config file
             if self.debug_no_dialogue_flag:
                 self.save_config()
@@ -3932,7 +3949,7 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-196)
+            100-199: mainapp.py     (in use: 101-197)
             200-299: mainwin.py     (in use: 201-270)
             300-399: downloads.py   (in use: 301-317)
             400-499: config.py      (in use: 401-406)
@@ -4161,11 +4178,23 @@ class TartubeApp(Gtk.Application):
             # Return False to mark this as not a new installation
             return False
 
-        # Set IVs to their new values
+        # Load and apply the locale
 
         # Removed v2.4.103
 #       if version >= 2000081:  # v2.0.081
 #           self.custom_locale = json_dict['custom_locale']
+#        if version >= 2004170:  # v2.4.170
+        if version >= 1004170:  # v2.4.170  # !!! restore pls
+            self.override_locale = json_dict['override_locale']
+            if self.override_locale is None:
+                self.current_locale = self.system_locale
+            else:
+                self.current_locale = self.override_locale
+
+        if self.current_locale != formats.LOCALE_DEFAULT:
+            self.apply_locale()
+            
+        # Set IVs to their new values
 
         if version >= 2002075:  # v2.2.075
             self.thumb_size_custom = json_dict['thumb_size_custom']
@@ -4852,7 +4881,9 @@ class TartubeApp(Gtk.Application):
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
         self.match_ignore_chars = json_dict['match_ignore_chars']
-
+        if version >= 2004169:  # v2.4.169
+            self.match_nickname_flag = json_dict['match_nickname_flag']
+            
         if version >= 1001029:  # v1.1.029
             self.auto_delete_flag = json_dict['auto_delete_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
@@ -5377,6 +5408,8 @@ class TartubeApp(Gtk.Application):
             'save_time': str(local.strftime('%H:%M:%S')),
             'file_type': 'config',
             # Data
+            'override_locale': self.override_locale,
+            
             'thumb_size_custom': self.thumb_size_custom,
 
             'main_win_save_size_flag': self.main_win_save_size_flag,
@@ -5693,6 +5726,7 @@ class TartubeApp(Gtk.Application):
             'match_method': self.match_method,
             'match_first_chars': self.match_first_chars,
             'match_ignore_chars': self.match_ignore_chars,
+            'match_nickname_flag': self.match_nickname_flag,
 
             'auto_delete_flag': self.auto_delete_flag,
             'auto_delete_days': self.auto_delete_days,
@@ -10479,7 +10513,13 @@ class TartubeApp(Gtk.Application):
             #   formats.MAIN_STAGE_QUEUED
             formats.do_translate(True)
 
-        except:
+        except Exception as e:
+            self.system_error(
+                197,
+                'Cannot use locale \'' + str(self.current_locale) + '\': ' \
+                + str(e)
+            )
+                        
             self.current_locale = formats.LOCALE_DEFAULT
 
 
@@ -26246,6 +26286,14 @@ class TartubeApp(Gtk.Application):
         self.match_method = method
 
 
+    def set_match_nickname_flag(self, flag):
+
+        if not flag:
+            self.match_nickname_flag = False
+        else:
+            self.match_nickname_flag = True
+
+            
     def del_container_unavailable_dict(self, name):
 
         del self.container_unavailable_dict[name]
@@ -26309,29 +26357,6 @@ class TartubeApp(Gtk.Application):
             self.open_temp_on_desktop_flag = False
         else:
             self.open_temp_on_desktop_flag = True
-
-
-    def set_output_size_apply_flag(self, flag):
-
-        if not flag:
-            self.output_size_apply_flag = False
-        else:
-            self.output_size_apply_flag = True
-
-
-    def set_output_size_default(self, value):
-
-        if value < self.output_size_min or value > self.output_size_max:
-            return self.system_error(
-                194,
-                'Set Output tab page size request failed sanity check',
-            )
-
-        old_value = self.output_size_default
-        self.output_size_default = value
-
-        if self.output_size_apply_flag:
-            self.main_win_obj.output_tab_update_page_size()
 
 
     def set_open_in_tray_flag(self, flag):
@@ -26438,6 +26463,39 @@ class TartubeApp(Gtk.Application):
         else:
             self.operation_warning_show_flag = True
 
+
+    def set_output_size_apply_flag(self, flag):
+
+        if not flag:
+            self.output_size_apply_flag = False
+        else:
+            self.output_size_apply_flag = True
+
+
+    def set_output_size_default(self, value):
+
+        if value < self.output_size_min or value > self.output_size_max:
+            return self.system_error(
+                194,
+                'Set Output tab page size request failed sanity check',
+            )
+
+        old_value = self.output_size_default
+        self.output_size_default = value
+
+        if self.output_size_apply_flag:
+            self.main_win_obj.output_tab_update_page_size()
+
+
+    def set_override_local(self, value):
+
+        self.override_locale = value
+
+
+    def reset_override_local(self):
+
+        self.override_locale = None
+        
 
     def set_progress_list_hide_flag(self, flag):
 

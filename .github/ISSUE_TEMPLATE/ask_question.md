@@ -1,12 +1,8 @@
 ---
-name: "Ask Question \U0001F4A1"
+name: Ask Question 💡
 about: Ask a Tartube related question
-title: ''
-labels: enhancement, question
-assignees: ''
-
+labels: question
 ---
-
 Thanks for taking the time to ask a question! 
 
 ### Please read the README

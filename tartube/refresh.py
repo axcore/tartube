@@ -399,6 +399,13 @@ class RefreshManager(threading.Thread):
                     if not child_relative_path in alt_list:
                         child_obj.set_file(filename, ext)
 
+                # Take this opportunity to update the video file size (etc),
+                #   in case they weren't set during the original download
+                self.app_obj.update_video_from_filesystem(
+                    child_obj,
+                    child_obj.get_actual_path(self.app_obj),
+                )
+                
                 # Eliminate this media.Video object; no other video file should
                 #   match it
                 del check_dict[filename]
