@@ -4183,8 +4183,7 @@ class TartubeApp(Gtk.Application):
         # Removed v2.4.103
 #       if version >= 2000081:  # v2.0.081
 #           self.custom_locale = json_dict['custom_locale']
-#        if version >= 2004170:  # v2.4.170
-        if version >= 1004170:  # v2.4.170  # !!! restore pls
+        if version >= 2004170:  # v2.4.170
             self.override_locale = json_dict['override_locale']
             if self.override_locale is None:
                 self.current_locale = self.system_locale
