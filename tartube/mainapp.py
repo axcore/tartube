@@ -105,7 +105,7 @@ import media
 import options
 import process
 import refresh
-#import testing
+import testing
 import tidy
 import updates
 import utils
@@ -3784,7 +3784,7 @@ class TartubeApp(Gtk.Application):
 
         # Part 14 - Any debug stuff can go here
         # -------------------------------------
-
+        
         pass
 
 
@@ -3950,7 +3950,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-270)
+            200-299: mainwin.py     (in use: 201-271)
             300-399: downloads.py   (in use: 301-317)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
@@ -7655,6 +7655,12 @@ class TartubeApp(Gtk.Application):
 
                     del options_obj.dbid
 
+        if version < 2004188:       # v2.4.188
+
+            # This version adds a new option to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['abort_on_unavailable_fragment'] \
+                = False                    
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -10485,12 +10491,58 @@ class TartubeApp(Gtk.Application):
         Calls the python gettext module to apply the current system locale.
         """
 
+        LOCALE = None
+        error_msg = None
+
+        # The current working directory should be the same one as
+        #   self.script_parent_dir, so this relative path should work
         try:
             LOCALE = gettext.translation(
                 'base',
                 localedir = 'locale',
                 languages = [self.current_locale],
             )
+
+        except Exception as e:
+            error_msg = str(e)
+
+        # If it isn't, then try an absolute path
+        if LOCALE is None:
+
+            try:
+                locale_path = os.path.abspath(
+                    os.path.join(
+                        self.script_parent_dir,
+                        'locale',
+                    ),
+                )
+
+                LOCALE = gettext.translation(
+                    'base',
+                    localedir = locale_path,
+                    languages = [self.current_locale],
+                )
+
+            except Exception as e:
+
+                # Use the first error message, as it's probably more useful
+                if error_msg is None:
+                    error_msg = str(e)
+
+        # The 
+        if LOCALE is None:
+
+            self.system_error(
+                197,
+                'Cannot use locale \'' + str(self.current_locale) + '\': ' \
+                + error_msg
+            )
+                        
+            self.current_locale = formats.LOCALE_DEFAULT
+
+            return
+
+        try:
             LOCALE.install()
 
             # (Apply to this file)
@@ -13233,7 +13285,10 @@ class TartubeApp(Gtk.Application):
         self.update_video_from_filesystem(video_obj, video_path)
 
         # If FFmpeg is installed, convert .webp thumbnail files to .jpg
-        thumb_path = utils.find_thumbnail_webp(self, video_obj)
+        thumb_path = utils.find_thumbnail_webp_intact_or_broken(
+            self,
+            video_obj,
+        )
         if thumb_path is not None \
         and not self.ffmpeg_fail_flag \
         and self.ffmpeg_convert_webp_flag \
@@ -17903,7 +17958,7 @@ class TartubeApp(Gtk.Application):
             and obj1.index is not None and obj2.index is not None:
                 if obj1.index < obj2.index:
                     return -1
-                else:
+                elif obj2.index < obj1.index:
                     return 1
 
             elif obj1.upload_time is not None and obj2.upload_time is not None:

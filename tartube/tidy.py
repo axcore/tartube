@@ -1140,8 +1140,11 @@ class TidyManager(threading.Thread):
 
             if video_obj.file_name is not None:
 
-                # Thumbnails might be in one of four locations
-                webp_path = utils.find_thumbnail_webp(self.app_obj, video_obj)
+                # Thumbnails might be in one of two locations
+                webp_path = utils.find_thumbnail_webp_strict(
+                    self.app_obj,
+                    video_obj
+                )
 
                 # If the video's parent container has an alternative download
                 #   destination set, we must check the corresponding media
@@ -1183,7 +1186,10 @@ class TidyManager(threading.Thread):
             if video_obj.file_name is not None:
 
                 # Thumbnails might be in one of four locations
-                thumb_path = utils.find_thumbnail_webp(self.app_obj, video_obj)
+                thumb_path = utils.find_thumbnail_webp_intact_or_broken(
+                    self.app_obj,
+                    video_obj,
+                )
 
                 # If the video's parent container has an alternative download
                 #   destination set, we must check the corresponding media

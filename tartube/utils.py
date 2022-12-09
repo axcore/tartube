@@ -2138,7 +2138,7 @@ def find_thumbnail_restricted(app_obj, video_obj):
     return []
 
 
-def find_thumbnail_webp(app_obj, video_obj):
+def find_thumbnail_webp_intact_or_broken(app_obj, video_obj):
 
     """Can be called by anything.
 
@@ -2165,7 +2165,10 @@ def find_thumbnail_webp(app_obj, video_obj):
 
         main_path = video_obj.get_actual_path_by_ext(app_obj, ext)
         if os.path.isfile(main_path) \
-        and app_obj.ffmpeg_manager_obj.is_webp(main_path):
+        and (
+            app_obj.ffmpeg_manager_obj.is_webp(main_path) \
+            or app_obj.ffmpeg_manager_obj.is_mislabelled_webp(main_path)
+        ):
             return main_path
 
         # The extension may be followed by additional characters, e.g.
@@ -2186,7 +2189,10 @@ def find_thumbnail_webp(app_obj, video_obj):
         )
 
         if os.path.isfile(subdir_path) \
-        and app_obj.ffmpeg_manager_obj.is_webp(subdir_path):
+        and (
+            app_obj.ffmpeg_manager_obj.is_webp(subdir_path) \
+            or app_obj.ffmpeg_manager_obj.is_mislabelled_webp(subdir_path)
+        ):
             return subdir_path
 
         try:
@@ -2196,6 +2202,43 @@ def find_thumbnail_webp(app_obj, video_obj):
                     return actual_path
         except:
             pass
+
+    # No webp thumbnail found
+    return None
+
+
+def find_thumbnail_webp_strict(app_obj, video_obj):
+
+    """Can be called by anything.
+
+    A modified version of utils.find_thumbnail_webp_intact_or_broken(), to be
+    called by any code which wants a path to a .webp thumbnail, not caring
+    whether it is a valid .webp image or not.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video object handling the downloaded video
+
+    Return values:
+
+        The full path to the thumbnail file, or None
+
+    """
+
+    ext = '.webp'
+    
+    main_path = video_obj.get_actual_path_by_ext(app_obj, ext)
+    if os.path.isfile(main_path):
+        return main_path
+
+    subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
+        app_obj,
+        ext,
+    )
+    if os.path.isfile(subdir_path):
+        return subdir_path
 
     # No webp thumbnail found
     return None

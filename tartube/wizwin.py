@@ -1520,7 +1520,7 @@ class SetupWizWin(GenericWizWin):
 
         Sets up the widget layout for a page, shown only on MS Windows.
         """
-
+        
         grid_width = 3
 
         self.add_image(
@@ -1564,16 +1564,7 @@ class SetupWizWin(GenericWizWin):
             0, 5, grid_width, 1,
         )
 
-        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
-        self.inner_grid.attach(
-            self.tutorial_button,
-            1, 6, 1, 1,
-        )
-        self.tutorial_button.set_hexpand(False)
-        self.tutorial_button.connect(
-            'clicked',
-            self.on_button_tutorial_clicked,
-        )
+        self.add_tutorial_button(6)
 
 
     def setup_finish_page_strict(self):
@@ -1583,7 +1574,7 @@ class SetupWizWin(GenericWizWin):
         Sets up the widget layout for a page, shown only after a STRICT install
         from a DEB/RPM package.
         """
-
+        
         grid_width = 3
 
         self.add_image(
@@ -1618,7 +1609,12 @@ class SetupWizWin(GenericWizWin):
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
-                _('It is strongly recommended that you install FFmpeg.'),
+                _(
+                    'It is strongly recommended that you install FFmpeg.' \
+                    + ' Without it, Tartube cannot download video clips or' \
+                    + ' high-resolution videos, and cannot display many' \
+                    + ' thumbnails.',
+                ),
                 self.text_len,
             ) + '</span>',
             0, 5, grid_width, 1,
@@ -1626,22 +1622,6 @@ class SetupWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 6, grid_width, 1)
-
-        self.add_label(
-            '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
-                _(
-                    'Without FFmpeg, Tartube cannot download video clips or' \
-                    + ' high-resolution videos, and cannot display many' \
-                    + ' video thumbnails.'
-                ),
-                self.text_len,
-            ) + '</span>',
-            0, 7, grid_width, 1,
-        )
-
-        # (Empty label for spacing)
-        self.add_empty_label(0, 8, grid_width, 1)
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
@@ -1652,19 +1632,10 @@ class SetupWizWin(GenericWizWin):
                 ),
                 self.text_len,
             ) + '</span>',
-            0, 9, grid_width, 1,
+            0, 7, grid_width, 1,
         )
 
-        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
-        self.inner_grid.attach(
-            self.tutorial_button,
-            1, 10, 1, 1,
-        )
-        self.tutorial_button.set_hexpand(False)
-        self.tutorial_button.connect(
-            'clicked',
-            self.on_button_tutorial_clicked,
-        )
+        self.add_tutorial_button(8)
 
 
     def setup_finish_page_default(self):
@@ -1674,7 +1645,7 @@ class SetupWizWin(GenericWizWin):
         Sets up the widget layout for a page, for all operating systems except
         MS Windows.
         """
-
+        
         grid_width = 3
 
         self.add_image(
@@ -1731,20 +1702,63 @@ class SetupWizWin(GenericWizWin):
             0, 7, grid_width, 1,
         )
 
-        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
+        self.add_tutorial_button(8)
+        
+
+    # (Support functions)
+
+
+    def add_tutorial_button(self, row):
+        
+        """Called by several (final) pages to show a button that opens the
+        tutorial wizard window.
+
+        Args:
+
+            row (int): The row on which the button is placed
+
+        """
+
+        grid2 = Gtk.Grid()
         self.inner_grid.attach(
-            self.tutorial_button,
-            1, 8, 1, 1,
+            grid2,
+            1, row, 1, 1,
         )
-        self.tutorial_button.set_hexpand(False)
+        grid2.set_hexpand(False)
+
+        box = Gtk.Box()
+        grid2.attach(box, 0, 0, 1, 3)
+        box.set_border_width(self.spacing_size * 2)
+
+        image = Gtk.Image()
+        box.add(image)
+        image.set_from_pixbuf(
+            self.app_obj.main_win_obj.pixbuf_dict['learn_left_large'],
+        )
+        image.set_hexpand(False)
+
+        self.tutorial_button = Gtk.Button(_('Read the tutorial'))
+        grid2.attach(
+            self.tutorial_button,
+            1, 1, 1, 1
+        )
+        self.tutorial_button.set_hexpand(True)
         self.tutorial_button.connect(
             'clicked',
             self.on_button_tutorial_clicked,
         )
 
+        box2 = Gtk.Box()
+        grid2.attach(box2, 2, 0, 1, 3)
+        box2.set_border_width(self.spacing_size * 2)
 
-    # (Support functions)
-
+        image2 = Gtk.Image()
+        box2.add(image2)
+        image2.set_from_pixbuf(
+            self.app_obj.main_win_obj.pixbuf_dict['learn_right_large'],
+        )
+        image2.set_hexpand(False)
+        
 
     def downloader_page_write(self, msg):
 
@@ -1875,7 +1889,7 @@ class SetupWizWin(GenericWizWin):
                 descrip,
             )
 
-
+    
     # (Callbacks)
 
 
@@ -3056,36 +3070,13 @@ class TutorialWizWin(GenericWizWin):
         # ----
 
         # Set the page list
-        self.page_list = [
-            'setup_start_page',
-            'setup_page_1',
-            'setup_page_2',
-            'setup_page_3',
-            'setup_page_4',
-            'setup_page_5',
-            'setup_page_6',
-            'setup_page_7',
-            'setup_page_8',
-            'setup_page_9',
-            'setup_page_10',
-            'setup_page_11',
-            'setup_page_12',
-            'setup_page_13',
-            'setup_page_14',
-            'setup_page_15',
-            'setup_page_16',
-            'setup_page_17',
-            'setup_page_18',
-            'setup_page_19',
-            'setup_page_20',
-            'setup_page_21',
-            'setup_page_22',
-            'setup_page_23',
-            'setup_page_24',
-            'setup_page_25',
-            'setup_page_26',
-            'setup_finish_page',
-        ]
+        # N.B. If more pages are added, mainwin.MainWin.tutorial_page_count
+        #   must be updated with the new page count!
+        self.page_list = ['setup_start_page']
+        for i in range(2, self.app_obj.main_win_obj.tutorial_page_count):
+            self.page_list.append('setup_page_' + str(i))
+
+        self.page_list.append('setup_finish_page')
 
         # Set up the wizard window
         self.setup()
@@ -3701,9 +3692,8 @@ class TutorialWizWin(GenericWizWin):
         self.add_empty_label(0, 1, 1, 1)
 
         msg = _(
-            'You can apply a separate set of download options to a channel.' \
-            + ' Right-click it, and select \'Downloads > Apply download' \
-            + ' options...\'',
+            'Advanced users can specify download options directly,' \
+            + ' overriding settings anywhere else in this window.',
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3728,8 +3718,9 @@ class TutorialWizWin(GenericWizWin):
         self.add_empty_label(0, 1, 1, 1)
 
         msg = _(
-            'The icon changes to remind you that the channel has its own' \
-            + ' set of download options.',
+            'You can apply a separate set of download options to a channel.' \
+            + ' Right-click it, and select \'Downloads > Apply download' \
+            + ' options...\'',
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3754,8 +3745,8 @@ class TutorialWizWin(GenericWizWin):
         self.add_empty_label(0, 1, 1, 1)
 
         msg = _(
-            'If you add download options to a folder, they apply to all' \
-            + ' videos, channels and playlists inside that folder.',
+            'The icon changes to remind you that the channel has its own' \
+            + ' set of download options.',
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3780,8 +3771,8 @@ class TutorialWizWin(GenericWizWin):
         self.add_empty_label(0, 1, 1, 1)
 
         msg = _(
-            'yt-dlp is updated frequently, so don\'t forget to download' \
-            + ' the updates. Click \'Operations > Update yt-dlp\'.',
+            'If you add download options to a folder, they apply to all' \
+            + ' videos, channels and playlists inside that folder.',
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
@@ -3799,6 +3790,32 @@ class TutorialWizWin(GenericWizWin):
 
         self.add_image(
             self.app_obj.main_win_obj.icon_dict['tutorial26'],
+            0, 0, 1, 1,
+        )
+
+        # (Empty label for spacing)
+        self.add_empty_label(0, 1, 1, 1)
+
+        msg = _(
+            'yt-dlp is updated frequently, so don\'t forget to download' \
+            + ' the updates. Click \'Operations > Update yt-dlp\'.',
+        )
+        self.add_label(
+            '<span font_size="large" style="italic">' \
+            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            0, 2, 1, 1,
+        )
+
+
+    def setup_page_27(self):
+
+        """Called by self.setup_page().
+
+        Sets up the widget layout for a page.
+        """
+
+        self.add_image(
+            self.app_obj.main_win_obj.icon_dict['tutorial27'],
             0, 0, 1, 1,
         )
 

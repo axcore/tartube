@@ -904,6 +904,8 @@ LARGE_ICON_DICT = {
     'folder_temp_large': 'folder_blue.png',
     'hand_left_large': 'hand_left.png',
     'hand_right_large': 'hand_right.png',
+    'learn_left_large': 'learn_left.png',
+    'learn_right_large': 'learn_right.png',
     'limits_off_large': 'limits_off.png',
     'limits_on_large': 'limits_on.png',
     'playlist_large': 'playlist.png',

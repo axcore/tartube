@@ -3102,10 +3102,12 @@ class VideoDownloader(object):
         #   video, a channel or a playlist
         # Assume it's an individual video unless youtube-dl reports a
         #   channel or playlist (in which case, we can update these IVs later)
+        # For real downloads, self.video_num is the current video number, and
+        #   self.video_total is the number of videos in the channel/playlist
         # For simulated downloads, both IVs are set to the number of
         #   videos actually found
-        self.video_num = None
-        self.video_total = None
+        self.video_num = 0
+        self.video_total = 0
         # When the 'Downloading webpage' message is detected, denoting the
         #   start of a real (not simulated) download, this IV is set to the
         #   video's ID. The value is reset when self.confirm_new_video() etc
@@ -3245,22 +3247,14 @@ class VideoDownloader(object):
 
             if dl_sim_flag:
                 self.dl_sim_flag = True
-                self.video_num = 0
-                self.video_total = 0
             else:
-
                 self.dl_sim_flag = False
-                self.video_num = 1
-                self.video_total = 1
 
         else:
 
             self.dl_classic_flag = True
             if self.download_item_obj.operation_type == 'classic_sim':
                 self.dl_sim_flag = True
-
-            self.video_num = 1
-            self.video_total = 1
 
         # If the user wants to detect missing videos in channels/playlists
         #   (those that have been downloaded by the user, but since removed
@@ -3487,7 +3481,8 @@ class VideoDownloader(object):
         and self.download_manager_obj.running_flag \
         and not self.stop_soon_flag \
         and not self.stop_now_flag \
-        and self.return_code <= self.WARNING:
+        and self.return_code <= self.WARNING \
+        and self.video_num > 0:
             for check_obj in self.missing_video_check_list:
                 if check_obj.dbid in app_obj.media_reg_dict \
                 and check_obj.dl_flag \
@@ -3742,8 +3737,10 @@ class VideoDownloader(object):
             # If downloading from a channel/playlist, remember the video's
             #   index. (The server supplies an index even for a channel, and
             #   the user might want to convert a channel to a playlist)
-            if isinstance(video_obj.parent_obj, media.Channel) \
-            or isinstance(video_obj.parent_obj, media.Playlist):
+            if self.video_num > 0 and (
+                isinstance(video_obj.parent_obj, media.Channel) \
+                or isinstance(video_obj.parent_obj, media.Playlist)
+            ):
                 video_obj.set_index(self.video_num)
 
             # Contact SponsorBlock server to fetch video slice data
@@ -3774,9 +3771,10 @@ class VideoDownloader(object):
             self.download_manager_obj.register_video('new')
 
             # Update the checklist
-            self.video_check_dict[self.video_num] = video_obj
+            if self.video_num > 0:
+                self.video_check_dict[self.video_num] = video_obj
 
-        else:
+        elif self.video_num > 0:
 
             # Update the video's file extension, in case one file format has
             #   been converted to another (with a new call to this function
@@ -3986,7 +3984,8 @@ class VideoDownloader(object):
                     extension,
                 )
 
-                self.video_check_dict[self.video_num] = video_obj
+                if self.video_num > 0:
+                    self.video_check_dict[self.video_num] = video_obj
 
                 # Update the main window
                 if media_data_obj.external_dir is not None \
@@ -4587,7 +4586,7 @@ class VideoDownloader(object):
             # Get the thumbnail's extension...
             remote_file, remote_ext = os.path.splitext(thumbnail)
             # Fix for Odysee videos, whose thumbnail extension is not specified
-            #   in the .info.json fiel
+            #   in the .info.json file
             if remote_ext == '':
                 remote_ext = '.webp'
 
@@ -4617,7 +4616,10 @@ class VideoDownloader(object):
                     pass
 
             # Convert .webp thumbnails to .jpg, if required
-            thumb_path = utils.find_thumbnail_webp(app_obj, video_obj)
+            thumb_path = utils.find_thumbnail_webp_intact_or_broken(
+                app_obj,
+                video_obj,
+            )
             if thumb_path is not None \
             and not app_obj.ffmpeg_fail_flag \
             and app_obj.ffmpeg_convert_webp_flag \
@@ -5101,9 +5103,9 @@ class VideoDownloader(object):
             #   playlist, this line is received once per video)
             if stdout_list[1] == 'Downloading' and stdout_list[2] == 'video':
                 dl_stat_dict['playlist_index'] = stdout_list[3]
-                self.video_num = stdout_list[3]
+                self.video_num = int(stdout_list[3])
                 dl_stat_dict['playlist_size'] = stdout_list[5]
-                self.video_total = stdout_list[5]
+                self.video_total = int(stdout_list[5])
 
                 # If youtube-dl is about to download a channel or playlist into
                 #   a media.Video object, decide what to do to prevent it
@@ -5298,9 +5300,9 @@ class VideoDownloader(object):
                     # The called function returns a True/False value,
                     #   specifically to allow this code block to call
                     #   self.confirm_sim_video when required
-                    # v1.3.063 At this point, self.video_num can be None or 0
-                    #   for a URL that's an individual video, but > 0 for a URL
-                    #   that's actually a channel/playlist
+                    # v1.3.063 At this point, self.video_num can be 0 for a URL
+                    #   that's an individual video, but > 0 for a URL that's
+                    #   actually a channel/playlist
                     elif not self.video_num \
                     or self.check_dl_is_correct_type():
                         self.confirm_sim_video(json_dict)
@@ -7774,7 +7776,7 @@ class ClipDownloader(object):
                     app_obj.move_file_or_directory(thumb_path, moved_path)
 
                     # Convert .webp thumbnails to .jpg, if required
-                    convert_path = utils.find_thumbnail_webp(
+                    convert_path = utils.find_thumbnail_webp_intact_or_broken(
                         app_obj,
                         orig_video_obj,
                     )

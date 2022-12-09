@@ -169,6 +169,9 @@ class OptionsManager(object):
 
         retries (int): Number of youtube-dl retries
 
+        abort_on_unavailable_fragment (bool): Abort download if a fragment is
+            unavailable (default is to skip unavailable fragments)
+            
         playlist_reverse (bool): When True, download playlist videos in reverse
             order
 
@@ -781,6 +784,7 @@ class OptionsManager(object):
             # DOWNLOAD OPTIONS
             'limit_rate': '',             # Can't be directly modified by user
             'retries': 10,
+            'abort_on_unavailable_fragment': False,
             'playlist_reverse': False,
             'playlist_random': False,
             'native_hls': True,
@@ -1110,6 +1114,12 @@ class OptionsParser(object):
             OptionHolder('limit_rate', '-r', ''),
             # -R, --retries RETRIES
             OptionHolder('retries', '-R', 10),
+            # --abort-on-unavailable-fragment
+            OptionHolder(
+                'abort_on_unavailable_fragment',
+                '--abort-on-unavailable-fragment',
+                False
+            ),
             # --playlist-reverse
             OptionHolder('playlist_reverse', '--playlist-reverse', False),
             # --playlist-random

@@ -8510,19 +8510,26 @@ class OptionsEditWin(GenericEditWin):
         )
         self.add_tooltip('-i, --ignore-errors', checkbutton4)
 
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Abort video download if fragments are unavailable'),
+            'abort_on_unavailable_fragment',
+            0, (row_count + 4), grid_width, 1,
+        )
+        self.add_tooltip('--abort-on-unavailable-fragment', checkbutton5)
+
         label = self.add_label(grid,
             _('Number of retries'),
-            0, (row_count + 4), 1, 1,
+            0, (row_count + 5), 1, 1,
         )
 
         spinbutton = self.add_spinbutton(grid,
             1, 99, 1,
             'retries',
-            1, (row_count + 4), 1, 1,
+            1, (row_count + 5), 1, 1,
         )
         self.add_tooltip('-R, --retries RETRIES', label, spinbutton)
 
-        return row_count + 5
+        return row_count + 6
 
 
     def downloads_playlist_widgets(self, grid, row_count):
@@ -19738,6 +19745,23 @@ class SystemPrefWin(GenericPrefWin):
             ]
         )
 
+        # (This list is for a second combo, using the same list as the one
+        #   above, but not clickable by the user)
+        label2 = self.add_label(grid,
+            _('Current locale'),
+            0, 3, 1, 1,
+        )
+        label2.set_hexpand(False)
+        
+        store2 = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
+        store2.append(
+            [
+                self.app_obj.main_win_obj.pixbuf_dict['slice_small'],
+                _('Unrecognised locale'),
+                ''
+            ]
+        )
+        
         for this_locale in formats.LOCALE_LIST:
 
             # (Some locales are in format "en_GB", some in format "fr")
@@ -19749,7 +19773,11 @@ class SystemPrefWin(GenericPrefWin):
             
             pixbuf = \
             self.app_obj.main_win_obj.pixbuf_dict['flag_' + flag_locale]
+            
             store.append(
+                [ pixbuf, formats.LOCALE_DICT[this_locale], this_locale ],
+            )            
+            store2.append(
                 [ pixbuf, formats.LOCALE_DICT[this_locale], this_locale ],
             )            
 
@@ -19769,10 +19797,30 @@ class SystemPrefWin(GenericPrefWin):
             combo.set_active(0)
         else:
             combo.set_active(
-                formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
+                formats.LOCALE_LIST.index(self.app_obj.override_locale) + 1
             )
         combo.connect('changed', self.on_locale_combo_changed, grid)
 
+        combo2 = Gtk.ComboBox.new_with_model(store2)
+        grid.attach(combo2, 1, 3, 1, 1)
+        combo2.set_hexpand(False)
+        combo2.set_sensitive(False)
+
+        renderer_pixbuf = Gtk.CellRendererPixbuf()
+        combo2.pack_start(renderer_pixbuf, False)
+        combo2.add_attribute(renderer_pixbuf, 'pixbuf', 0)
+
+        renderer_text = Gtk.CellRendererText()
+        combo2.pack_start(renderer_text, True)
+        combo2.add_attribute(renderer_text, 'text', 1)
+
+        if self.app_obj.current_locale is None:
+            combo2.set_active(0)
+        else:
+            combo2.set_active(
+                formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
+            )
+        
         
     def setup_general_modules_tab(self, inner_notebook):
 
@@ -30164,7 +30212,7 @@ class SystemPrefWin(GenericPrefWin):
         #   As the user might not know the language, show an icon as well as
         #   some text
         # Use an extra grid to avoid messing up the layout of widgets above
-        grid2 = self.add_secondary_grid(grid, 0, 3, 2, 1)
+        grid2 = self.add_secondary_grid(grid, 0, 4, 3, 1)
         grid2.set_border_width(self.spacing_size * 2)
 
         frame = self.add_image(grid2,

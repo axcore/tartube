@@ -148,6 +148,32 @@ class FFmpegManager(object):
                 thumbnail_filename = thumbnail_webp_filename
                 thumbnail_ext = 'webp'
 
+            elif thumbnail_ext == 'webp' and \
+            self.is_mislabelled_webp(thumbnail_filename):
+
+                # .jpg mislabelled as .webp (Git #478)
+                thumbnail_jpg_filename = self.replace_extension(
+                    thumbnail_filename,
+                    'jpg',
+                )
+
+                if not retain_flag:
+                    try:
+                        os.rename(thumbnail_filename, thumbnail_jpg_filename)
+                    except:
+                        return False
+                else:
+                    try:
+                        shutil.copyfile(
+                            thumbnail_filename,
+                            thumbnail_jpg_filename,
+                        )
+                    except:
+                        return False
+
+                thumbnail_filename = thumbnail_jpg_filename
+                thumbnail_ext = 'jpg'
+
         # Convert unsupported thumbnail formats to JPEG
         #   (youtube-dl #25687, #25717)
         if thumbnail_ext not in ['jpg', 'png']:
@@ -261,7 +287,8 @@ class FFmpegManager(object):
 
     def is_webp(self, path):
 
-        """Called by self.convert_webp() and utils.find_thumbnail_webp().
+        """Called by self.convert_webp() and
+        utils.find_thumbnail_webp_intact_or_broken().
 
         Adapted from youtube-dl/youtube-dl/postprocessor/embedthumbnail.py.
 
@@ -277,9 +304,32 @@ class FFmpegManager(object):
         with open(path, 'rb') as fh:
             data = fh.read(12)
 
+        # Test .webp magic number
         return data[0:4] == b'RIFF' and data[8:] == b'WEBP'
 
 
+    def is_mislabelled_webp(self, path):
+
+        """Called by self.convert_webp() and
+        utils.find_thumbnail_webp_intact_or_broken().
+
+        Adapted from self.is_webp().
+        
+        Tests whether a file is a .jpg file (perhaps mislabelled as a .webp
+        file), hoping to handle Git #478.
+
+        Args:
+
+            path (str): The full path to a file to be processed by FFmpeg
+
+        """
+
+        with open(path, 'rb') as fh:
+            data = fh.read(3)
+        
+        return data[0:3] == b'\xff\xd8\xff'
+
+        
     def replace_extension(self, path, ext, expected_real_ext=None):
 
         """Called by self.convert_webp().

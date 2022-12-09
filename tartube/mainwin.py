@@ -808,7 +808,9 @@ class MainWin(Gtk.ApplicationWindow):
         # In addition. only one wizard window (inheriting wizwin.GenericWizWin)
         #   can be open at a time. The currently-open wizard window, if any
         self.wiz_win_obj = None
-
+        # The number of pages in wizwin.TutorialWizWin
+        self.tutorial_page_count = 28
+        
         # Dialogue window IVs
         # The SetDestinationDialogue dialogue window displays a list of
         #   channels/playlists/folders, and an external directory. When opening
@@ -965,7 +967,7 @@ class MainWin(Gtk.ApplicationWindow):
                     )
                     self.icon_dict['flag_' + locale] = full_path
 
-                for i in range (27):
+                for i in range (self.tutorial_page_count):
                     full_path = os.path.abspath(
                         os.path.join(
                             icon_dir_path,
@@ -9142,16 +9144,19 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_index_scrolled.add(self.video_index_treeview)
         self.video_index_treeview.set_can_focus(False)
         self.video_index_treeview.set_headers_visible(False)
-        # (Tooltips are initially enabled, and if necessary are disabled by a
-        #   call to self.disable_tooltips() shortly afterwards)
-        self.video_index_treeview.set_tooltip_column(
-            self.video_index_tooltip_column,
-        )
+        if not self.app_obj.show_tooltips_flag:
+            self.video_index_treeview.set_tooltip_column(-1)
+        else:
+            self.video_index_treeview.set_tooltip_column(
+                self.video_index_tooltip_column,
+            )
+            
         # (Detect right-clicks on the treeview)
         self.video_index_treeview.connect(
             'button-press-event',
             self.on_video_index_right_click,
         )
+        
         # Setup up drag and drop. Drag and drop within the Video Index
         #   (dragging one channel/playlist/folder) is handled by spotting the
         #   selected row. Dragging videos from the Video Catalogue into a
@@ -12170,7 +12175,10 @@ class MainWin(Gtk.ApplicationWindow):
 
                     if key == 'playlist_index':
 
-                        if 'dl_sim_flag' in dl_stat_dict \
+                        if dl_stat_dict['playlist_index'] == 0:
+                            string = ''
+
+                        elif 'dl_sim_flag' in dl_stat_dict \
                         and dl_stat_dict['dl_sim_flag']:
                             # (Don't know how many videos there are in a
                             #   channel/playlist, so ignore value of
@@ -12179,7 +12187,8 @@ class MainWin(Gtk.ApplicationWindow):
 
                         else:
                             string = str(dl_stat_dict['playlist_index'])
-                            if 'playlist_size' in dl_stat_dict:
+                            if 'playlist_size' in dl_stat_dict \
+                            and dl_stat_dict['playlist_size'] > 0:
                                 string = string + '/' \
                                 + str(dl_stat_dict['playlist_size'])
                             else:
@@ -12287,7 +12296,7 @@ class MainWin(Gtk.ApplicationWindow):
         except:
 
             return self.app_obj.system_error(
-                999,
+                271,
                 'Cannot remove row in Progress List (row does not exist)',
             )
 
@@ -13141,6 +13150,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.classic_textbuffer = Gtk.TextBuffer()
         self.classic_textview.set_buffer(self.classic_textbuffer)
+        
         self.classic_mark_start = self.classic_textbuffer.create_mark(
             'mark_start',
             self.classic_textbuffer.get_start_iter(),
@@ -13150,6 +13160,11 @@ class MainWin(Gtk.ApplicationWindow):
             'mark_end',
             self.classic_textbuffer.get_end_iter(),
             False,              # Not left gravity
+        )
+
+        self.classic_textbuffer.connect(
+            'changed',
+            self.on_classic_textbuffer_changed,
         )
 
 
@@ -13418,7 +13433,10 @@ class MainWin(Gtk.ApplicationWindow):
 
                     if key == 'playlist_index':
 
-                        if 'dl_sim_flag' in dl_stat_dict \
+                        if dl_stat_dict['playlist_index'] == 0:
+                            string = ''
+                            
+                        elif 'dl_sim_flag' in dl_stat_dict \
                         and dl_stat_dict['dl_sim_flag']:
                             # (Don't know how many videos there are in a
                             #   channel/playlist, so ignore value of
@@ -13427,7 +13445,8 @@ class MainWin(Gtk.ApplicationWindow):
 
                         else:
                             string = str(dl_stat_dict['playlist_index'])
-                            if 'playlist_size' in dl_stat_dict:
+                            if 'playlist_size' in dl_stat_dict \
+                            and dl_stat_dict['playlist_size'] > 0:
                                 string = string + '/' \
                                 + str(dl_stat_dict['playlist_size'])
                             else:
@@ -18329,7 +18348,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         size = utils.strip_whitespace(entry.get_text())
 
-        if size.isdigit():
+        if size.isdigit() and int(size) > 0:
             self.app_obj.set_catalogue_page_size(int(size))
 
             # Need to completely redraw the video catalogue to take account of
@@ -18343,7 +18362,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
             # Invalid page size, so reinsert the size that's already visible
-            entry.set_text(str(self.catalogue_page_size))
+            entry.set_text(str(self.app_obj.catalogue_page_size))
 
 
     def on_video_catalogue_show_location(self, menu_item, media_data_obj):
@@ -19180,7 +19199,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.progress_list_liststore.set(
             self.progress_list_liststore.get_iter(tree_path),
-            2,
+            3,
             self.pixbuf_dict['arrow_down_small'],
         )
 
@@ -19221,7 +19240,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.progress_list_liststore.set(
             self.progress_list_liststore.get_iter(tree_path),
-            2,
+            3,
             self.pixbuf_dict['arrow_up_small'],
         )
 
