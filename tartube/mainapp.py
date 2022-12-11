@@ -105,7 +105,7 @@ import media
 import options
 import process
 import refresh
-import testing
+#import testing
 import tidy
 import updates
 import utils
@@ -2261,6 +2261,9 @@ class TartubeApp(Gtk.Application):
         # Note that YouTube and others only provide an upload date, which
         #   Tartube converts to a time (and is not, therefore, accurate)
         self.catalogue_sort_mode = 'default'
+        # Flag set to True to enable reverse sort (using the method specified
+        #   by self.catalogue_sort_mode)
+        self.catalogue_reverse_sort_flag = False
         # Flag set to True if the 'Regex' button is toggled on, meaning that
         #   when the searching the catalogue, we match videos using a regex,
         #   rather than a simple string
@@ -2830,6 +2833,26 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(stop_operation_button_action)
 
+        system_prefs_button_action = Gio.SimpleAction.new(
+            'system_prefs_toolbutton',
+            None,
+        )
+        system_prefs_button_action.connect(
+            'activate',
+            self.on_menu_system_preferences,
+        )
+        self.add_action(system_prefs_button_action)
+
+        gen_options_button_action = Gio.SimpleAction.new(
+            'gen_options_toolbutton',
+            None,
+        )
+        gen_options_button_action.connect(
+            'activate',
+            self.on_menu_general_options,
+        )
+        self.add_action(gen_options_button_action)
+
         switch_view_button_action = Gio.SimpleAction.new(
             'switch_view_toolbutton',
             None,
@@ -2928,6 +2951,16 @@ class TartubeApp(Gtk.Application):
         self.add_action(show_filter_toolbutton_action)
 
         # (Second/third rows)
+
+        reverse_sort_toolbutton_action = Gio.SimpleAction.new(
+            'reverse_sort_toolbutton',
+            None,
+        )
+        reverse_sort_toolbutton_action.connect(
+            'activate',
+            self.on_button_reverse_sort_catalogue,
+        )
+        self.add_action(reverse_sort_toolbutton_action)
 
         resort_toolbutton_action = Gio.SimpleAction.new(
             'resort_toolbutton',
@@ -3532,6 +3565,7 @@ class TartubeApp(Gtk.Application):
         # Set up widgets in the Video Catalogue toolbar
         self.main_win_obj.update_catalogue_filter_widgets()
         self.main_win_obj.update_catalogue_sort_widgets()
+        self.main_win_obj.update_catalogue_reverse_sort_widgets()
         self.main_win_obj.update_catalogue_thumb_widgets()
         # Add the right number of pages to the Output tab
         self.main_win_obj.output_tab_setup_pages()
@@ -3951,7 +3985,7 @@ class TartubeApp(Gtk.Application):
 
             100-199: mainapp.py     (in use: 101-197)
             200-299: mainwin.py     (in use: 201-271)
-            300-399: downloads.py   (in use: 301-317)
+            300-399: downloads.py   (in use: 301-318)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
             600-699: info.py        (in use: 601)
@@ -4911,15 +4945,15 @@ class TartubeApp(Gtk.Application):
         if version >= 1004005:  # v1.4.005
             self.catalogue_show_filter_flag \
             = json_dict['catalogue_show_filter_flag']
-        if version >= 1004005 and version < 2002159:  # v1.4.005, v2.2.159
-            catalogue_alpha_sort_flag = json_dict['catalogue_alpha_sort_flag']
-            if not catalogue_alpha_sort_flag:
-                self.catalogue_sort_mode = 'default'
-            else:
-                self.catalogue_sort_mode = 'alpha'
-        elif version >= 2002159:  # v2.2.159
-            self.catalogue_sort_mode \
-            = json_dict['catalogue_sort_mode']
+        # Removed v2.4.194; now stored in the database file            
+#       if version >= 1004005 and version < 2002159:  # v1.4.005, v2.2.159
+#           catalogue_alpha_sort_flag = json_dict['catalogue_alpha_sort_flag']
+#           if not catalogue_alpha_sort_flag:
+#               self.catalogue_sort_mode = 'default'
+#           else:
+#               self.catalogue_sort_mode = 'alpha'
+#       elif version >= 2002159:  # v2.2.159
+#           self.catalogue_sort_mode = json_dict['catalogue_sort_mode']
         if version >= 1004005:  # v1.4.005
             self.catologue_use_regex_flag \
             = json_dict['catologue_use_regex_flag']
@@ -5742,7 +5776,6 @@ class TartubeApp(Gtk.Application):
             'catalogue_mode_type': self.catalogue_mode_type,
             'catalogue_page_size': self.catalogue_page_size,
             'catalogue_show_filter_flag': self.catalogue_show_filter_flag,
-            'catalogue_sort_mode': self.catalogue_sort_mode,
             'catologue_use_regex_flag': self.catologue_use_regex_flag,
 
             'url_change_confirm_flag': self.url_change_confirm_flag,
@@ -5948,6 +5981,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_catalogue_reset()
             self.main_win_obj.progress_list_reset()
             self.main_win_obj.results_list_reset()
+            self.main_win_obj.drag_drop_grid_empty()
             # If opening Tartube in the system tray, we can't call .show_all()
             if self.startup_complete_flag or not self.open_in_tray_flag:
                 self.main_win_obj.show_all()
@@ -6098,6 +6132,10 @@ class TartubeApp(Gtk.Application):
             = load_dict['toolbar_system_hide_flag']
         if version >= 2003149:  # v2.3.149
             self.fixed_clips_folder = load_dict['fixed_clips_folder']
+        if version >= 2004194:  # v2.4.194
+            self.catalogue_sort_mode = load_dict['catalogue_sort_mode']
+            self.catalogue_reverse_sort_flag \
+            = load_dict['catalogue_reverse_sort_flag']
 
         # Update the loaded data for this version of Tartube
         self.update_db(version)
@@ -6174,6 +6212,10 @@ class TartubeApp(Gtk.Application):
             # Update other main menu items
             self.main_win_obj.update_menu()
 
+            # Update the Video Catalogue toolbar
+            self.main_win_obj.update_catalogue_sort_widgets()
+            self.main_win_obj.update_catalogue_reverse_sort_widgets()
+            
             # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_catalogue_reset()
             # Automatically mark channels/playlists/folders for download, if
@@ -7660,7 +7702,28 @@ class TartubeApp(Gtk.Application):
             # This version adds a new option to options.OptionsManager
             for options_obj in options_obj_list:
                 options_obj.options_dict['abort_on_unavailable_fragment'] \
-                = False                    
+                = False
+
+        if version < 2004195:       # v2.4.195
+
+            # This version fixes the dropzone list (in the Drag and Drop tab)
+            #   which was not reset correctly, when creating a new Tartube
+            #   database
+            new_list = []
+            for uid in self.classic_dropzone_list:
+                if uid in self.options_reg_dict:
+                    new_list.append(uid)
+
+            self.classic_dropzone_list = new_list
+
+        if version < 2004196:       # v2.4.196
+
+            # This version adds a new IV to all media data objects
+            for media_data_obj in self.media_reg_dict.values():
+                media_data_obj.natname = media_data_obj.get_natural_name(
+                    media_data_obj.nickname,
+                )
+                                            
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -7776,8 +7839,11 @@ class TartubeApp(Gtk.Application):
             'ffmpeg_reg_dict' : self.ffmpeg_reg_dict,
             'ffmpeg_options_obj' : self.ffmpeg_options_obj,
             'ffmpeg_simple_options_flag' : self.ffmpeg_simple_options_flag,
-            # Main window toolba
+            # Main window toolbar
             'toolbar_system_hide_flag' : self.toolbar_system_hide_flag,
+            # Video Catalogue toolbar
+            'catalogue_sort_mode' : self.catalogue_sort_mode,
+            'catalogue_reverse_sort_flag': self.catalogue_reverse_sort_flag,
         }
 
         # Back up any existing file
@@ -8012,6 +8078,7 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_catalogue_reset()
             self.main_win_obj.progress_list_reset()
             self.main_win_obj.results_list_reset()
+            self.main_win_obj.drag_drop_grid_empty()
 
             # Reset database IVs
             self.reset_db()
@@ -8025,6 +8092,8 @@ class TartubeApp(Gtk.Application):
 
             # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_populate()
+            # Reset the Drag and Drop tab
+            self.main_win_obj.drag_drop_grid_reset()
 
             # If the system preferences window is open, reset it to show the
             #   new data directory
@@ -8364,6 +8433,10 @@ class TartubeApp(Gtk.Application):
         self.options_reg_dict = {}
         self.general_options_obj = self.create_download_options('general')
         self.classic_options_obj = self.create_download_options('classic')
+        self.classic_dropzone_list = [
+            self.general_custom_dl_obj.uid,
+            self.classic_custom_dl_obj.uid,
+        ]
         self.ffmpeg_reg_count = 0
         self.ffmpeg_reg_dict = {}
         self.ffmpeg_options_obj = self.create_ffmpeg_options('default')
@@ -17920,8 +17993,8 @@ class TartubeApp(Gtk.Application):
         """Standard media.Video sorting function.
 
         The function occurs here, rather than in utils.py, so that it's
-        possible to retrieve self.catalogue_sort_mode when called by
-        functools.cmp_to_key().
+        possible to retrieve self.catalogue_sort_mode and
+        self.catalogue_reverse_sort_flag when called by functools.cmp_to_key().
 
         Args:
 
@@ -17934,6 +18007,9 @@ class TartubeApp(Gtk.Application):
                 does not return 0)
 
         """
+
+        if self.catalogue_reverse_sort_flag:
+            obj1, obj2 = obj2, obj1
 
         if self.catalogue_sort_mode == 'default':
 
@@ -18006,9 +18082,9 @@ class TartubeApp(Gtk.Application):
         # Fallback sorting method (including when self.catalogue_sort_mode is
         #   set to 'alpha'):
         # Sort alphabetically, then by .dbid
-        if obj1.name.lower() < obj2.name.lower():
+        if obj1.natname < obj2.natname:
             return -1
-        elif obj1.name.lower() > obj2.name.lower():
+        elif obj1.natname > obj2.natname:
             return 1
         elif obj1.dbid < obj2.dbid:
             return -1
@@ -18022,8 +18098,8 @@ class TartubeApp(Gtk.Application):
         media.Folder.sort_children().
 
         The function occurs here, rather than in utils.py, so that it's
-        possible to retrieve self.catalogue_sort_mode when called by
-        functools.cmp_to_key().
+        possible to retrieve self.catalogue_sort_mode and
+        self.catalogue_reverse_sort_flag when called by functools.cmp_to_key().
 
         Standard sorting function for the children of a container, which might
         be any combination of media.Video, media.Channel, media.Playlist and
@@ -18036,6 +18112,9 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        if self.catalogue_reverse_sort_flag:
+            obj1, obj2 = obj2, obj1
+            
         if str(obj1.__class__) == str(obj2.__class__) \
         or (
             isinstance(obj1, media.GenericRemoteContainer) \
@@ -18061,10 +18140,10 @@ class TartubeApp(Gtk.Application):
             or isinstance(obj2, media.Playlist):
                 return 1
 
-        # As a last restor, sort by name, and then by .dbid
-        if obj1.name.lower() < obj2.name.lower():
+        # As a last resort, sort by name, and then by .dbid
+        if obj1.natname < obj2.natname:
             return -1
-        elif obj1.name.lower() > obj2.name.lower():
+        elif obj1.natname > obj2.natname:
             return 1
         elif obj1.dbid < obj2.dbid:
             return -1
@@ -23008,6 +23087,31 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_catalogue_force_resort()
 
 
+    def on_button_reverse_sort_catalogue(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Enables or disables reverse sorting of the catalogue, and forces a
+        resort of the channel/playlist/folder visible in the Video Catalogue.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if not self.catalogue_reverse_sort_flag:
+            self.catalogue_reverse_sort_flag = True
+        else:
+            self.catalogue_reverse_sort_flag = False
+            
+        self.main_win_obj.update_catalogue_reverse_sort_widgets()
+        if self.main_win_obj.video_index_current_dbid is not None:
+            self.main_win_obj.video_catalogue_force_resort()
+
+
     def on_button_scroll_down(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -25613,7 +25717,7 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_current_dbid,
             )
 
-
+            
     def set_catalogue_show_nickname_flag(self, flag):
 
         if not flag:

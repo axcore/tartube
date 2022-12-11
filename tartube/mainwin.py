@@ -165,6 +165,9 @@ class MainWin(Gtk.ApplicationWindow):
         self.check_all_toolbutton = None        # Gtk.ToolButton
         self.download_all_toolbutton = None     # Gtk.ToolButton
         self.stop_operation_toolbutton = None   # Gtk.ToolButton
+        self.system_preferences_toolbutton = None
+                                                # Gtk.ToolButton
+        self.general_options_toolbutton = None  # Gtk.ToolButton        
         self.switch_view_toolbutton = None      # Gtk.ToolButton
         self.hide_system_toolbutton = None      # Gtk.ToolButton
         self.test_toolbutton = None             # Gtk.ToolButton
@@ -220,6 +223,8 @@ class MainWin(Gtk.ApplicationWindow):
                                                 # Gtk.ToolButton
         self.catalogue_toolbar2 = None          # Gtk.Toolbar
         self.catalogue_sort_combo = None        # Gtk.ComboBox
+        self.catalogue_reverse_toolbutton = None
+                                                # Gtk.ToolButton
         self.catalogue_resort_button = None     # Gtk.ToolButton
         self.catalogue_find_date_button = None  # Gtk.ToolButton
         self.catalogue_cancel_date_button = None
@@ -1882,10 +1887,10 @@ class MainWin(Gtk.ApplicationWindow):
         self.add_folder_toolbutton.set_tooltip_text(_('Add a new folder'))
         self.add_folder_toolbutton.set_action_name('app.add_folder_toolbutton')
 
-        # (Conversely, if there are no labels, then we have enough room for a
-        #   separator)
-        if squeeze_flag:
-            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+#       # (Conversely, if there are no labels, then we have enough room for a
+#       #   separator)
+#       if squeeze_flag:
+#           self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         if not squeeze_flag:
             self.check_all_toolbutton = Gtk.ToolButton.new(
@@ -1931,8 +1936,8 @@ class MainWin(Gtk.ApplicationWindow):
             'app.download_all_toolbutton',
         )
 
-        if squeeze_flag:
-            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+#       if squeeze_flag:
+#           self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         if not squeeze_flag:
             self.stop_operation_toolbutton = Gtk.ToolButton.new(
@@ -1957,6 +1962,44 @@ class MainWin(Gtk.ApplicationWindow):
         self.stop_operation_toolbutton.set_action_name(
             'app.stop_operation_toolbutton',
         )
+
+        if not squeeze_flag:
+
+            # (There's only enough room in the toolbar for buttons to open the
+            #   preferences window/download options window, when labels aren't
+            #   visible)
+            self.system_prefs_toolbutton = None
+            self.gen_options_toolbutton = None
+
+        else:
+
+            self.system_prefs_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_preferences_large'],
+                ),
+            )               
+
+            self.main_toolbar.insert(self.system_prefs_toolbutton, -1)
+            self.system_prefs_toolbutton.set_tooltip_text(
+                _('System preferences'),
+            )
+            self.system_prefs_toolbutton.set_action_name(
+                'app.system_prefs_toolbutton',
+            )
+            
+            self.gen_options_toolbutton = Gtk.ToolButton.new(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['tool_options_large'],
+                ),
+            )               
+
+            self.main_toolbar.insert(self.gen_options_toolbutton, -1)
+            self.gen_options_toolbutton.set_tooltip_text(
+                _('General download options'),
+            )
+            self.gen_options_toolbutton.set_action_name(
+                'app.gen_options_toolbutton',
+            )
 
         if not squeeze_flag:
             self.switch_view_toolbutton = Gtk.ToolButton.new(
@@ -2012,8 +2055,8 @@ class MainWin(Gtk.ApplicationWindow):
             'app.hide_system_toolbutton',
         )
 
-        if squeeze_flag:
-            self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
+#       if squeeze_flag:
+#           self.main_toolbar.insert(Gtk.SeparatorToolItem(), -1)
 
         if not squeeze_flag:
             quit_button = Gtk.ToolButton.new(
@@ -2388,7 +2431,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
         self.catalogue_toolbar.insert(self.catalogue_scroll_up_button, -1)
         self.catalogue_scroll_up_button.set_sensitive(False)
-        self.catalogue_scroll_up_button.set_tooltip_text(_('Scroll up'))
+        self.catalogue_scroll_up_button.set_tooltip_text(_('Scroll to top'))
         self.catalogue_scroll_up_button.set_action_name(
             'app.scroll_up_toolbutton',
         )
@@ -2403,7 +2446,9 @@ class MainWin(Gtk.ApplicationWindow):
             )
         self.catalogue_toolbar.insert(self.catalogue_scroll_down_button, -1)
         self.catalogue_scroll_down_button.set_sensitive(False)
-        self.catalogue_scroll_down_button.set_tooltip_text(_('Scroll down'))
+        self.catalogue_scroll_down_button.set_tooltip_text(
+            _('Scroll to bottom'),
+        )
         self.catalogue_scroll_down_button.set_action_name(
             'app.scroll_down_toolbutton',
         )
@@ -2460,6 +2505,40 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_video_catalogue_sort_combo_changed,
         )
 
+        if not self.app_obj.catalogue_reverse_sort_flag:
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_reverse_toolbutton \
+                = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)
+            else:
+                self.catalogue_reverse_toolbutton = Gtk.ToolButton.new()
+                self.catalogue_reverse_toolbutton.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_sort_ascending'],
+                    ),
+                )
+            self.catalogue_reverse_toolbutton.set_tooltip_text(
+                _('Reverse sort'),
+            )
+        else:
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_reverse_toolbutton \
+                = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SORT_DESCENDING)
+            else:
+                self.catalogue_reverse_toolbutton = Gtk.ToolButton.new()
+                self.catalogue_reverse_toolbutton.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_sort_descending'],
+                    ),
+                )                
+            self.catalogue_reverse_toolbutton.set_tooltip_text(
+                _('Undo reverse sort'),
+            )
+        self.catalogue_toolbar2.insert(self.catalogue_reverse_toolbutton, -1)
+        self.catalogue_reverse_toolbutton.set_sensitive(False)
+        self.catalogue_reverse_toolbutton.set_action_name(
+            'app.reverse_sort_toolbutton',
+        )
+
         if not self.app_obj.show_custom_icons_flag:
             self.catalogue_resort_button \
             = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REDO)
@@ -2480,7 +2559,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         toolitem = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('          '))
+#       toolitem.add(Gtk.Label('          '))
+        toolitem.add(Gtk.Label('   '))
 
         toolitem9 = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem9, -1)
@@ -2523,7 +2603,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         toolitem = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('          '))
+#       toolitem.add(Gtk.Label('          '))
+        toolitem.add(Gtk.Label('  '))
 
         toolitem16 = Gtk.ToolItem.new()
         self.catalogue_toolbar2.insert(toolitem16, -1)
@@ -4836,6 +4917,12 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.stop_soon_menu_item.set_sensitive(False)
 
+        # (The 'System preferences' and 'General download options' buttons are
+        #   only visible in the toolbar, when labels are not visibel)
+        if self.system_prefs_toolbutton:
+            self.system_prefs_toolbutton.set_sensitive(sens_flag)
+            self.gen_options_toolbutton.set_sensitive(sens_flag)
+
         # The corresponding buttons in the Classic Mode tab must also be
         #   updated
         self.classic_stop_button.set_sensitive(not sens_flag)
@@ -4976,6 +5063,11 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.download_all_toolbutton.set_sensitive(sens_flag)
         self.stop_operation_toolbutton.set_sensitive(False)
+
+        if self.system_prefs_toolbutton:
+            self.system_prefs_toolbutton.set_sensitive(sens_flag)
+            self.gen_options_toolbutton.set_sensitive(sens_flag)            
+        
         self.switch_view_toolbutton.set_sensitive(sens_flag)
         self.hide_system_toolbutton.set_sensitive(sens_flag)
 
@@ -5296,7 +5388,7 @@ class MainWin(Gtk.ApplicationWindow):
             # Hide the second/third rows
             if not self.app_obj.show_custom_icons_flag:
                 self.catalogue_show_filter_button.set_stock_id(
-                    Gtk.STOCK_SORT_ASCENDING,
+                    Gtk.STOCK_ADD,
                 )
             else:
                 self.catalogue_show_filter_button.set_icon_widget(
@@ -5326,7 +5418,7 @@ class MainWin(Gtk.ApplicationWindow):
             # Show the second/third rows
             if not self.app_obj.show_custom_icons_flag:
                 self.catalogue_show_filter_button.set_stock_id(
-                    Gtk.STOCK_SORT_DESCENDING,
+                    Gtk.STOCK_CLOSE,
                 )
             else:
                 self.catalogue_show_filter_button.set_icon_widget(
@@ -5378,8 +5470,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called by mainapp.TartubeApp.start().
 
-        Videos in the Video Catalogue can be sorted by upload time (default),
-        or alphabetically. On startup, set the correct value of the combobox.
+        Videos in the Video Catalogue can be sorted in various ways. When
+        required, set the combobox to its correct state.
         """
 
         mode = self.app_obj.catalogue_sort_mode
@@ -5392,6 +5484,52 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             self.catalogue_sort_combo.set_active(3)
 
+
+    def update_catalogue_reverse_sort_widgets(self):
+
+        """Called by mainapp.TartubeApp.start() and
+        .on_button_reverse_sort_catalogue()
+
+        Videos in the Video Catalogue can be sorted in various ways. When
+        required, set the reverse sort button to its correct state.        
+        """
+        
+        if not self.app_obj.catalogue_reverse_sort_flag:
+            
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_reverse_toolbutton.set_stock_id(
+                    Gtk.STOCK_SORT_ASCENDING,
+                )
+            else:
+                self.catalogue_reverse_toolbutton.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_sort_ascending']
+                    ),
+                )
+
+            self.catalogue_reverse_toolbutton.set_tooltip_text(
+                _('Reverse sort'),
+            )
+
+        else:
+
+            if not self.app_obj.show_custom_icons_flag:
+                self.catalogue_reverse_toolbutton.set_stock_id(
+                    Gtk.STOCK_SORT_DESCENDING,
+                )
+            else:
+                self.catalogue_reverse_toolbutton.set_icon_widget(
+                    Gtk.Image.new_from_pixbuf(
+                        self.pixbuf_dict['stock_sort_descending']
+                    ),
+                )
+
+            self.catalogue_reverse_toolbutton.set_tooltip_text(
+                _('Undo reverse sort'),
+            )
+
+        self.catalogue_reverse_toolbutton.show_all()
+            
 
     def update_catalogue_thumb_widgets(self):
 
@@ -7841,6 +7979,7 @@ class MainWin(Gtk.ApplicationWindow):
         download_item_obj = None
         worker_obj = None
         downloader_obj = None
+        queuing_flag = False
 
         if download_manager_obj:
 
@@ -7854,6 +7993,11 @@ class MainWin(Gtk.ApplicationWindow):
                     worker_obj = this_worker_obj
                     downloader_obj = this_worker_obj.downloader_obj
                     break
+
+            if not downloader_obj:
+                queuing_flag = download_list_obj.is_queuing(
+                    download_item_obj.item_id
+                )
 
         if download_manager_obj \
         and (
@@ -7892,6 +8036,8 @@ class MainWin(Gtk.ApplicationWindow):
         #   different effect (so uses a diffirent label)
         if custom_sim_flag:
             msg = _('Stop checking _videos')
+        elif queuing_flag:
+            msg = _('Completely stop after this _video')            
         else:
             msg = _('Stop after this _video')
 
@@ -7905,14 +8051,14 @@ class MainWin(Gtk.ApplicationWindow):
         )
         popup_menu.append(stop_soon_menu_item)
         if not download_manager_obj \
-        or downloader_obj is None:
+        or (downloader_obj is None and not queuing_flag):
             stop_soon_menu_item.set_sensitive(False)
 
         # N.B. During the checking stage of a custom download (operation types
         #   'custom_sim', 'classic_sim'), this menu option is redundant (same
         #   effect as the 'Stop now' menu option)
         stop_all_soon_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Stop after these v_ideos'),
+            _('Completely stop after these v_ideos'),
         )
         stop_all_soon_menu_item.connect(
             'activate',
@@ -11566,6 +11712,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.catalogue_show_filter_button.set_sensitive(False)
 
+        self.catalogue_reverse_toolbutton.set_sensitive(False)
         self.catalogue_sort_combo.set_sensitive(False)
         self.catalogue_resort_button.set_sensitive(False)
         self.catalogue_thumb_combo.set_sensitive(False)
@@ -11649,6 +11796,7 @@ class MainWin(Gtk.ApplicationWindow):
         # (If not, the user would not be able to click the 'Cancel filter'
         #   button)
         if not video_count and not self.video_catalogue_filtered_flag:
+            self.catalogue_reverse_toolbutton.set_sensitive(False)
             self.catalogue_sort_combo.set_sensitive(False)
             self.catalogue_resort_button.set_sensitive(False)
             self.catalogue_thumb_combo.set_sensitive(False)
@@ -11661,6 +11809,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_find_date_button.set_sensitive(False)
             self.catalogue_cancel_date_button.set_sensitive(False)
         else:
+            self.catalogue_reverse_toolbutton.set_sensitive(True)
             self.catalogue_sort_combo.set_sensitive(True)
             self.catalogue_resort_button.set_sensitive(True)
 
@@ -13561,11 +13710,35 @@ class MainWin(Gtk.ApplicationWindow):
     # (Drag and Drop tab)
 
 
+    def drag_drop_grid_empty(self):
+
+        """Can be called by anything.
+
+        Draws an empty grid in the Drag and Drop tab (replacing any grid that
+        already exists). 
+        """
+
+        # If not called by self.setup_videos_tab()...
+        if self.drag_drop_frame.get_child():
+            self.drag_drop_frame.remove(self.drag_drop_frame.get_child())
+
+        # Replace the grid
+        self.drag_drop_grid = Gtk.Grid()
+        self.drag_drop_frame.add(self.drag_drop_grid)
+        self.drag_drop_grid.set_column_spacing(self.spacing_size)
+        self.drag_drop_grid.set_row_spacing(self.spacing_size)
+        self.drag_drop_grid.set_column_homogeneous(True)
+        self.drag_drop_grid.set_row_homogeneous(True)
+
+        # Procedure complete
+        self.drag_drop_grid.show_all()
+
+
     def drag_drop_grid_reset(self):
 
         """Can be called by anything.
 
-        Draws a grid of mainwin.DropZoneBox in the Drag and Drop tab
+        Draws a grid of mainwin.DropZoneBox objects in the Drag and Drop tab
         (replacing any grid that already exists). Each mainwin.DropZoneBox is
         associated with a set of download options (options.OptionsManager).
 
@@ -19365,28 +19538,47 @@ class MainWin(Gtk.ApplicationWindow):
             download_item_obj (downloads.DownloadItem): The download item
                 object for the selected media data object
 
-            worker_obj (downloads.DownloadWorker): The worker currently
-                handling checking/downloading this media data object
+            worker_obj (downloads.DownloadWorker or None): The worker currently
+                handling checking/downloading this media data object (None if
+                the check/download hasn't started yet)
 
-            downloader_obj (downloads.VideoDownloader or
-                downloads.StreamDownloader): The downloader handling checking/
-                downloading this media data object
+            downloader_obj (downloads.VideoDownloader,
+                downloads.StreamDownloader or None): The downloader handling
+                checking/downloading this media data object (None if the check/
+                download hasn't started yet)
 
         """
 
+        download_manager_obj = self.app_obj.download_manager_obj
+        
         # Check that, since the popup menu was created, the video downloader
         #   hasn't already finished checking/downloading the selected media
         #   data object
-        if not self.app_obj.download_manager_obj \
-        or not worker_obj.running_flag \
-        or worker_obj.download_item_obj != download_item_obj \
-        or worker_obj.downloader_obj is None:
+        if not download_manager_obj or (
+            worker_obj and (
+                not worker_obj.running_flag \
+                or worker_obj.download_item_obj != download_item_obj \
+                or worker_obj.downloader_obj is None
+            )
+        ):
             # Do nothing
             return
 
-        # Tell the video downloader to stop after the current video check/
-        #   download has finished
-        downloader_obj.stop_soon()
+        if downloader_obj:
+
+            # Media data object is checking/downloading now. Tell the video
+            #   downloader to stop after the check/download has finished
+            # (If other workers are waiting to start, then they will)
+            downloader_obj.stop_soon()
+
+        else:
+
+            # Media data object is waiting to start checking/downloading
+            # Tell the download list to empty itself one the check/download
+            #   starts, so that no more checks/downloads start after that
+            download_manager_obj.download_list_obj.set_final_item(
+                download_item_obj.item_id
+            )
 
 
     def on_progress_list_watch_hooktube(self, menu_item, media_data_obj):

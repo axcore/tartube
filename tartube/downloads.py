@@ -474,6 +474,15 @@ class DownloadManager(threading.Thread):
                     if not self.operation_classic_flag:
                         self.nudge_progress_bar()
 
+                    # If this downloads.DownloadItem was marked (while it was
+                    #   still in the queue) as being the last one that should
+                    #   be checked/downloaded, we can prevent any more items
+                    #   being fetched from the downloads.DownloadList
+                    if self.download_list_obj.final_item_id is not None \
+                    and self.download_list_obj.final_item_id \
+                    == self.current_item_obj.item_id:
+                        self.download_list_obj.prevent_fetch_new_items()
+
             # Pause a moment, before the next iteration of the loop (don't want
             #   to hog resources)
             time.sleep(self.sleep_time)
@@ -2057,6 +2066,14 @@ class DownloadList(object):
         #   key = download.DownloadItem.item_id
         #   value = the download.DownloadItem object itself
         self.download_item_dict = {}
+        # The .item_id of a download.DownloadItem.item_id, which is set (if
+        #   required) by a call to self.set_final_item()
+        # When self.fetch_next_item() fetches this item, that item is the last
+        #   item to be fetched: self.download_item_list() and
+        #   self.temp_item_list() are emptied, and any items they contained are
+        #   not checked/downloaded
+        self.final_item_id = None
+
 
         # Code
         # ----
@@ -2751,6 +2768,29 @@ class DownloadList(object):
 
 
     @synchronise(_SYNC_LOCK)
+    def is_queuing(self, item_id):
+
+        """Called by mainwin.MainWin.progress_list_popup_menu(), etc.
+
+        Checks whether the specified DownloadItem object is waiting in the
+        queue (i.e. waiting to start checking/downloading).
+
+        Args:
+
+            item_id (int): The .item_id of a downloads.DownloadItem object;
+                should be a key in self.download_item_dict
+            
+        """
+
+        if item_id in self.download_item_dict:
+            item_obj = self.download_item_dict[item_id]
+            if item_obj.stage == formats.MAIN_STAGE_QUEUED:
+                return True
+
+        return False
+        
+
+    @synchronise(_SYNC_LOCK)
     def move_item_to_bottom(self, download_item_obj):
 
         """Called by mainwin.MainWin.on_progress_list_dl_last().
@@ -2818,6 +2858,28 @@ class DownloadList(object):
         """
 
         self.prevent_fetch_flag = True
+
+
+    @synchronise(_SYNC_LOCK)
+    def set_final_item(self, item_id):
+
+        """Called by mainwin.MainWin.on_progress_list_stop_soon(), etc.
+
+        After the specified DownloadItem object is assigned to a worker, no
+        more DownloadItem objects are assigned to a worker (i.e. do not start
+        to check/download).
+        """
+
+        if item_id in self.download_item_dict:
+            self.final_item_id = item_id
+            
+        else:
+            GObject.timeout_add(
+                0,
+                app_obj.system_error,
+                318,
+                _('Unrecognised download item ID'),
+            )            
 
 
     def reorder_master_slave(self):

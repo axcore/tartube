@@ -51,6 +51,28 @@ class GenericMedia(object):
 
     # Public class methods
 
+
+    def get_natural_name(self, name):
+
+        """Converts the specified name so it is suitable for so-called
+        'natural' sorting, adding leading zeroes and reducing to all-lower
+        case.
+
+        Based on the algorithm by Stephen Quan:
+            https://stackoverflow.com/questions/4836710/
+                is-there-a-built-in-function-for-string-natural-sort
+
+        Args:
+            name (str): The name to process
+
+        """
+
+        return re.sub(
+            r'\d+',
+            lambda m: m.group(0).rjust(10, '0'), name
+        ).lower()
+        
+    
     def get_type(self):
 
         if isinstance(self, Channel):
@@ -122,6 +144,8 @@ class GenericMedia(object):
             self.nickname = self.name
         else:
             self.nickname = nickname
+
+        self.natname = self.get_natural_name(self.nickname)
 
 
     def set_options_obj(self, options_obj):
@@ -1870,6 +1894,9 @@ class Video(GenericMedia):
         # If the video's JSON data has not been fetched, self.name and
         #   self.nickname are the same
         self.nickname = name
+        # Modified version of self.nickname, padded with leading zeroes and
+        #   reduced to lower case; used in so-called 'natural' sorting of names
+        self.natname = name
         # Download source (a URL)
         self.source = None
         # The website's video ID, if known (e.g. on YouTube, everything after
@@ -3542,6 +3569,9 @@ class Channel(GenericRemoteContainer):
         # Channel nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
         self.nickname = name
+        # Modified version of self.nickname, padded with leading zeroes and
+        #   reduced to lower case; used in so-called 'natural' sorting of names
+        self.natname = name
         # Download source (a URL)
         self.source = None
         # If this channel belongs to an 'enhanced' website, the key in
@@ -3891,6 +3921,9 @@ class Playlist(GenericRemoteContainer):
         # Playlist nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
         self.nickname = name
+        # Modified version of self.nickname, padded with leading zeroes and
+        #   reduced to lower case; used in so-called 'natural' sorting of names
+        self.natname = name
         # Download source (a URL)
         self.source = None
         # If this channel belongs to an 'enhanced' website, the key in
@@ -4260,7 +4293,10 @@ class Folder(GenericContainer):
         #   unless the user changes it). Note that the nickname of a fixed
         #   folder can't be changed
         self.nickname = name
-
+        # Modified version of self.nickname, padded with leading zeroes and
+        #   reduced to lower case; used in so-called 'natural' sorting of names
+        self.natname = name
+        
         # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
         #   self.sort_children() was called. (When the user changes the sort
         #   mode, we don't sort self.child_list() until we actually need to

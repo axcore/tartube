@@ -879,8 +879,12 @@ TOOLBAR_ICON_DICT = {
     'tool_folder_small': 'folder_small.png',
     'tool_hide_large': 'hide_large.png',
     'tool_hide_small': 'hide_small.png',
+    'tool_options_large': 'options_large.png',
+    'tool_options_small': 'options_small.png',
     'tool_playlist_large': 'playlist_large.png',
     'tool_playlist_small': 'playlist_small.png',
+    'tool_preferences_large': 'preferences_large.png',
+    'tool_preferences_small': 'preferences_small.png',
     'tool_quit_large': 'quit_large.png',
     'tool_quit_small': 'quit_small.png',
     'tool_stop_large': 'stop_large.png',
@@ -1034,6 +1038,8 @@ STOCK_ICON_DICT = {
     'stock_redo': 'resort_small.png',           # Used for a sorting button
     'stock_refresh': 'refresh_small.png',
     'stock_show_filter': 'show_filter_small.png',
+    'stock_sort_ascending': 'sort_ascending_small.png',
+    'stock_sort_descending': 'sort_descending_small.png',
 }
 
 if xmas_flag:
