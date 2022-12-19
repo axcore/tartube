@@ -1,4 +1,4 @@
-# Tartube v2.4.198 installer script for MS Windows
+# Tartube v2.4.201 installer script for MS Windows
 #
 # Copyright (C) 2019-2022 A S Lewis
 #
@@ -294,7 +294,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.4.198-64bit.exe"
+    OutFile "install-tartube-2.4.201-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -397,7 +397,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.4.198"
+#        "DisplayVersion" "2.4.201"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

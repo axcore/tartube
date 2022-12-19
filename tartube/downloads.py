@@ -5164,9 +5164,9 @@ class VideoDownloader(object):
             # Get playlist information (when downloading a channel or a
             #   playlist, this line is received once per video)
             if stdout_list[1] == 'Downloading' and stdout_list[2] == 'video':
-                dl_stat_dict['playlist_index'] = stdout_list[3]
+                dl_stat_dict['playlist_index'] = int(stdout_list[3])
                 self.video_num = int(stdout_list[3])
-                dl_stat_dict['playlist_size'] = stdout_list[5]
+                dl_stat_dict['playlist_size'] = int(stdout_list[5])
                 self.video_total = int(stdout_list[5])
 
                 # If youtube-dl is about to download a channel or playlist into
