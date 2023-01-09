@@ -1,9 +1,9 @@
 [Desktop Entry]
 Name=Tartube
-Version=2.4.201
+Version=2.4.221
 Exec=tartube
 Icon=tartube
 Type=Application
 Categories=Network
-Comment=GUI front-end for youtube-dl
+Comment=GUI front-end for youtube-dl and yt-dlp
 Terminal=false

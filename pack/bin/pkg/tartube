@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -44,11 +44,11 @@ import mainapp
 
 # 'Global' variables
 __packagename__ = 'tartube'
-__version__ = '2.4.201'
-__date__ = '19 Dec 2022'
-__copyright__ = 'Copyright \xa9 2019-2022 A S Lewis'
+__version__ = '2.4.221'
+__date__ = '9 Jan 2023'
+__copyright__ = 'Copyright \xa9 2019-2023 A S Lewis'
 __license__ = """
-Copyright \xa9 2019-2022 A S Lewis.
+Copyright \xa9 2019-2023 A S Lewis.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU Lesser General Public License as published by the Free
@@ -77,11 +77,11 @@ __credit_list__ = [
     'https://github.com/AndreKR/ffmpeg-command-line-wizard',
     'Upgraded Textview by Kevin Mehall',
     'https://kevinmehall.net/2010/pygtk_multi_select_drag_drop',
-    'Youtube Stream Capture by mrwnwttk',
-    'https://github.com/mrwnwttk',
+    'XDG support by Scott Stevenson',
+    'https://pypi.org/project/xdg/',
 ]
-__description__ = 'A front-end GUI for youtube-dl,\n' \
-+ 'written in Python 3 / Gtk 3'
+__description__ = 'GUI front-end for youtube-dl, yt-dlp and\nother' \
++ ' compatible video downloaders'
 __website__ = 'http://tartube.sourceforge.io'
 __app_id__ = 'io.sourceforge.tartube'
 __website_bugs__ = 'https://github.com/axcore/tartube'

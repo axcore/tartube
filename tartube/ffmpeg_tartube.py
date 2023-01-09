@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -314,7 +314,7 @@ class FFmpegManager(object):
         utils.find_thumbnail_webp_intact_or_broken().
 
         Adapted from self.is_webp().
-        
+
         Tests whether a file is a .jpg file (perhaps mislabelled as a .webp
         file), hoping to handle Git #478.
 
@@ -326,10 +326,10 @@ class FFmpegManager(object):
 
         with open(path, 'rb') as fh:
             data = fh.read(3)
-        
+
         return data[0:3] == b'\xff\xd8\xff'
 
-        
+
     def replace_extension(self, path, ext, expected_real_ext=None):
 
         """Called by self.convert_webp().

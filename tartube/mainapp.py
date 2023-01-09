@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -2170,7 +2170,7 @@ class TartubeApp(Gtk.Application):
         #   will preserve the video's original name, which is probably the one
         #   the user expects to match)
         self.match_nickname_flag = True
-        
+
         # Automatic video deletion/removal. Applies only to downloaded videos
         #   (not to checked videos)
         # Flag set to True if videos (and all their associated files) should be
@@ -2214,11 +2214,7 @@ class TartubeApp(Gtk.Application):
         # How much information to show in the Video Index. False to show
         #   minimal video stats, True to show full video stats
         self.complex_index_flag = False
-        # The Video Catalogue has two 'skins', a simple view (without
-        #   thumbnails) and a more complex view (with thumbnails)
-        # Each skin can be set to show the name of the parent channel/playlist/
-        #   folder, or not
-        # The current Video Catalogue mode:
+        # The Video Catalogue has several display modes. The current mode:
         #   'simple_hide_parent' - No thumbnail, show description
         #   'simple_show_parent' - No thumbnail, show parent
         #   'complex_hide_parent' - Thumbnail, show description
@@ -2232,16 +2228,48 @@ class TartubeApp(Gtk.Application):
         # The current Video Catalogue mode type: 'simple', 'complex' or 'grid'
         self.catalogue_mode_type = 'grid'
         # Ordered list of Video Catalogue modes, used for switching between
-        #   them
+        #   them (and for setting up Tartube's main menu)
         self.catalogue_mode_list = [
-            [ 'simple_hide_parent', 'simple' ],
-            [ 'simple_show_parent', 'simple' ],
-            [ 'complex_hide_parent', 'complex' ],
-            [ 'complex_hide_parent_ext', 'complex' ],
-            [ 'complex_show_parent', 'complex' ],
-            [ 'complex_show_parent_ext', 'complex' ],
-            [ 'grid_show_parent', 'grid' ],
-            [ 'grid_show_parent_ext', 'grid' ],
+            [
+                'simple_hide_parent',
+                'simple',
+                _('_Basic list'),
+            ],
+            [
+                'simple_show_parent',
+                'simple',
+                _('Basic list with _container names'),
+            ],
+            [
+                'complex_hide_parent',
+                'complex',
+                _('_Thumbnails'),
+            ],
+            [
+                'complex_hide_parent_ext',
+                'complex',
+                _('Thumbnails and _extra labels'),
+            ],
+            [
+                'complex_show_parent',
+                'complex',
+                _('T_humbnails and container names'),
+            ],
+            [
+                'complex_show_parent_ext',
+                'complex',
+                _('Th_umbnails, container names and extra labels'),
+            ],
+            [
+                'grid_show_parent',
+                'grid',
+                _('_Grid'),
+            ],
+            [
+                'grid_show_parent_ext',
+                'grid',
+                _('G_rid with extra labels'),
+            ],
         ]
         # The Video Catalogue splits its video list into pages (as Gtk
         #   struggles with a list of hundreds, or thousands, of videos)
@@ -2554,13 +2582,6 @@ class TartubeApp(Gtk.Application):
         import_yt_menu_action.connect('activate', self.on_menu_import_yt)
         self.add_action(import_yt_menu_action)
 
-        switch_view_menu_action = Gio.SimpleAction.new(
-            'switch_view_menu',
-            None,
-        )
-        switch_view_menu_action.connect('activate', self.on_button_switch_view)
-        self.add_action(switch_view_menu_action)
-
         hide_system_menu_action = Gio.SimpleAction.new(
             'hide_system_menu',
             None,
@@ -2639,6 +2660,16 @@ class TartubeApp(Gtk.Application):
             self.on_menu_download_all,
         )
         self.add_action(download_all_menu_action)
+
+        custom_dl_all_menu_action = Gio.SimpleAction.new(
+            'custom_dl_all_menu',
+            None,
+        )
+        custom_dl_all_menu_action.connect(
+            'activate',
+            self.on_menu_custom_dl_all,
+        )
+        self.add_action(custom_dl_all_menu_action)
 
         refresh_db_menu_action = Gio.SimpleAction.new('refresh_db_menu', None)
         refresh_db_menu_action.connect('activate', self.on_menu_refresh_db)
@@ -3053,16 +3084,6 @@ class TartubeApp(Gtk.Application):
             self.on_button_custom_dl_all,
         )
         self.add_action(custom_dl_all_button_action)
-
-        custom_dl_select_button_action = Gio.SimpleAction.new(
-            'custom_dl_select_button',
-            None,
-        )
-        custom_dl_select_button_action.connect(
-            'activate',
-            self.on_menu_custom_dl_select,
-        )
-        self.add_action(custom_dl_select_button_action)
 
         # Classic Mode tab actions
         # ------------------------
@@ -3480,7 +3501,7 @@ class TartubeApp(Gtk.Application):
             #   directly
             if self.current_locale != formats.LOCALE_DEFAULT:
                 self.apply_locale()
-                
+
             # Now respond to the missing config file
             if self.debug_no_dialogue_flag:
                 self.save_config()
@@ -3818,7 +3839,7 @@ class TartubeApp(Gtk.Application):
 
         # Part 14 - Any debug stuff can go here
         # -------------------------------------
-        
+
         pass
 
 
@@ -4226,7 +4247,7 @@ class TartubeApp(Gtk.Application):
 
         if self.current_locale != formats.LOCALE_DEFAULT:
             self.apply_locale()
-            
+
         # Set IVs to their new values
 
         if version >= 2002075:  # v2.2.075
@@ -4916,7 +4937,7 @@ class TartubeApp(Gtk.Application):
         self.match_ignore_chars = json_dict['match_ignore_chars']
         if version >= 2004169:  # v2.4.169
             self.match_nickname_flag = json_dict['match_nickname_flag']
-            
+
         if version >= 1001029:  # v1.1.029
             self.auto_delete_flag = json_dict['auto_delete_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
@@ -4945,7 +4966,7 @@ class TartubeApp(Gtk.Application):
         if version >= 1004005:  # v1.4.005
             self.catalogue_show_filter_flag \
             = json_dict['catalogue_show_filter_flag']
-        # Removed v2.4.194; now stored in the database file            
+        # Removed v2.4.194; now stored in the database file
 #       if version >= 1004005 and version < 2002159:  # v1.4.005, v2.2.159
 #           catalogue_alpha_sort_flag = json_dict['catalogue_alpha_sort_flag']
 #           if not catalogue_alpha_sort_flag:
@@ -5442,7 +5463,7 @@ class TartubeApp(Gtk.Application):
             'file_type': 'config',
             # Data
             'override_locale': self.override_locale,
-            
+
             'thumb_size_custom': self.thumb_size_custom,
 
             'main_win_save_size_flag': self.main_win_save_size_flag,
@@ -6215,7 +6236,7 @@ class TartubeApp(Gtk.Application):
             # Update the Video Catalogue toolbar
             self.main_win_obj.update_catalogue_sort_widgets()
             self.main_win_obj.update_catalogue_reverse_sort_widgets()
-            
+
             # Repopulate the Video Index, showing the new data
             self.main_win_obj.video_index_catalogue_reset()
             # Automatically mark channels/playlists/folders for download, if
@@ -7039,13 +7060,13 @@ class TartubeApp(Gtk.Application):
                 if 'name' in options_obj.options_dict:
                     del options_obj.options_dict['name']
 
-        if version < 2002160:       # v2.2.160
-
-            # This version adds a new IV to media.Channel, media.Playlist and
-            #   media.Folder objects
-            for media_data_obj in self.media_reg_dict.values():
-                if not isinstance(media_data_obj, media.Video):
-                    media_data_obj.last_sort_mode = 'default'
+#       if version < 2002160:       # v2.2.160
+#
+#           # This version adds a new IV to media.Channel, media.Playlist and
+#           #   media.Folder objects
+#           for media_data_obj in self.media_reg_dict.values():
+#               if not isinstance(media_data_obj, media.Video):
+#                   media_data_obj.last_sort_mode = 'default'
 
         if version < 2002175:       # v2.2.175
 
@@ -7723,7 +7744,13 @@ class TartubeApp(Gtk.Application):
                 media_data_obj.natname = media_data_obj.get_natural_name(
                     media_data_obj.nickname,
                 )
-                                            
+
+        if version < 2004213:       # v2.4.213
+
+            # This version removes an IV from media.Channel, media.Playlist and
+            #   media.Folder objects
+            for media_data_obj in self.container_reg_dict.values():
+                del media_data_obj.last_sort_mode
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -10579,7 +10606,7 @@ class TartubeApp(Gtk.Application):
         except Exception as e:
             error_msg = str(e)
 
-        # If it isn't, then try an absolute path
+        # If it dosen't work, then try an absolute path
         if LOCALE is None:
 
             try:
@@ -10602,7 +10629,6 @@ class TartubeApp(Gtk.Application):
                 if error_msg is None:
                     error_msg = str(e)
 
-        # The 
         if LOCALE is None:
 
             self.system_error(
@@ -10610,7 +10636,7 @@ class TartubeApp(Gtk.Application):
                 'Cannot use locale \'' + str(self.current_locale) + '\': ' \
                 + error_msg
             )
-                        
+
             self.current_locale = formats.LOCALE_DEFAULT
 
             return
@@ -10643,7 +10669,7 @@ class TartubeApp(Gtk.Application):
                 'Cannot use locale \'' + str(self.current_locale) + '\': ' \
                 + str(e)
             )
-                        
+
             self.current_locale = formats.LOCALE_DEFAULT
 
 
@@ -15247,7 +15273,27 @@ class TartubeApp(Gtk.Application):
         """
 
         # Confirmation has been obtained, and any files have been deleted (if
-        #   required), so now deal with the media data registry
+        #   required), so now deal with window widgets and with the media data
+        #   registry
+
+        # Update any profiles that depend on this container
+        delete_list = []
+        for profile_name in self.profile_dict.keys():
+
+            dbid_list = self.profile_dict[profile_name]
+            if media_data_obj.dbid in dbid_list:
+                dbid_list.remove(media_data_obj.dbid)
+
+                # (Profiles cannot be empty)
+                if not dbid_list:
+                    delete_list.append(profile_name)
+
+        for profile_name in delete_list:
+            self.delete_profile(profile_name)
+
+        # Remove the marker (if any) on the Video Index row
+        if media_data_obj.dbid in self.main_win_obj.video_index_marker_dict:
+            self.main_win_obj.video_index_reset_marker(media_data_obj.dbid)
 
         # Remove the options.OptionsManager object attached to this media data
         #   object (if any). The True argument tells the function not to update
@@ -15293,21 +15339,6 @@ class TartubeApp(Gtk.Application):
             # (No reason why this check should fail, but let's play safe)
             if other_obj.master_dbid == media_data_obj.dbid:
                 other_obj.reset_master_dbid()
-
-        # Update any profiles that depend on this container
-        delete_list = []
-        for profile_name in self.profile_dict.keys():
-
-            dbid_list = self.profile_dict[profile_name]
-            if media_data_obj.dbid in dbid_list:
-                dbid_list.remove(media_data_obj.dbid)
-
-                if not dbid_list:
-                    # (Profiles cannot be empty)
-                    delete_list.append(profile_name)
-
-        for profile_name in delete_list:
-            self.delete_profile(profile_name)
 
         # During the initial call to this function, delete the container
         #   object from the Video Index (which automatically resets the Video
@@ -18029,15 +18060,20 @@ class TartubeApp(Gtk.Application):
             elif obj1.live_time > obj2.live_time:
                 return 1
 
-            elif isinstance(obj1.parent_obj, media.Playlist) \
-            and obj1.parent_obj == obj2.parent_obj \
-            and obj1.index is not None and obj2.index is not None:
-                if obj1.index < obj2.index:
-                    return -1
-                elif obj2.index < obj1.index:
-                    return 1
+            if isinstance(obj1.parent_obj, media.Playlist) \
+            and obj1.parent_obj == obj2.parent_obj:
 
-            elif obj1.upload_time is not None and obj2.upload_time is not None:
+                if obj1.index is None and obj2.index is not None:
+                    return 1
+                elif obj2.index is None and obj1.index is not None:
+                    return -1
+                elif obj1.index is not None and obj2.index is not None:
+                    if obj1.index < obj2.index:
+                        return -1
+                    elif obj2.index < obj1.index:
+                        return 1
+
+            if obj1.upload_time is not None and obj2.upload_time is not None:
 
                 if obj1.upload_time > obj2.upload_time:
                     return -1
@@ -18114,7 +18150,7 @@ class TartubeApp(Gtk.Application):
 
         if self.catalogue_reverse_sort_flag:
             obj1, obj2 = obj2, obj1
-            
+
         if str(obj1.__class__) == str(obj2.__class__) \
         or (
             isinstance(obj1, media.GenericRemoteContainer) \
@@ -20255,6 +20291,32 @@ class TartubeApp(Gtk.Application):
         manager_list.sort(key=get_name)
 
         return manager_list
+
+
+    def check_custom_download_managers(self):
+
+        """Can be called by anything.
+
+        Checks whether any custom download managers besides the compulsory
+        General Custom Download Manager, and the optional one used in the
+        Classic Mode tab, have been created.
+
+        Return values:
+
+            True if any additional custom download managers have been created,
+            False otherwise
+
+        """
+
+        for custom_dl_obj in self.custom_dl_reg_dict.values():
+            if custom_dl_obj != self.general_custom_dl_obj \
+            and (
+                self.classic_custom_dl_obj is None \
+                or custom_dl_obj != self.classic_custom_dl_obj
+            ):
+                return True
+
+        return False
 
 
     # (Profiles)
@@ -22798,18 +22860,24 @@ class TartubeApp(Gtk.Application):
 
         """
 
-        media_list = []
+        media_data_list = []
         for dbid in self.main_win_obj.video_index_marker_dict.keys():
             if dbid in self.container_reg_dict:
-                media_list.append(self.media_reg_dict[dbid])
+                media_data_list.append(self.media_reg_dict[dbid])
 
+        # If additional custom download managers have been created, prompt the
+        #   user to choose one of them
+        if self.check_custom_download_managers():
+            return self.main_win_obj.custom_dl_popup_menu(media_data_list)
+
+        # Otherwise, use the General Custom Download Manager
         if not self.general_custom_dl_obj.dl_by_video_flag \
         or not self.general_custom_dl_obj.dl_precede_flag:
 
             self.download_manager_start(
                 'custom_real',
-                False,          # Not called by the timer
-                media_list,     # Download all media data objects
+                False,              # Not called by the timer
+                media_data_list,    # Download all media data objects
                 self.general_custom_dl_obj,
             )
 
@@ -22817,8 +22885,8 @@ class TartubeApp(Gtk.Application):
 
             self.download_manager_start(
                 'custom_sim',
-                False,          # Not called by the timer
-                media_list,     # Download all media data objects
+                False,              # Not called by the timer
+                media_data_list,    # Download all media data objects
                 self.general_custom_dl_obj,
             )
 
@@ -23106,7 +23174,7 @@ class TartubeApp(Gtk.Application):
             self.catalogue_reverse_sort_flag = True
         else:
             self.catalogue_reverse_sort_flag = False
-            
+
         self.main_win_obj.update_catalogue_reverse_sort_widgets()
         if self.main_win_obj.video_index_current_dbid is not None:
             self.main_win_obj.video_catalogue_force_resort()
@@ -24400,6 +24468,12 @@ class TartubeApp(Gtk.Application):
 
         """
 
+        # If additional custom download managers have been created, prompt the
+        #   user to choose one of them
+        if self.check_custom_download_managers():
+            return self.main_win_obj.custom_dl_popup_menu()
+
+        # Otherwise, use the General Custom Download Manager
         if not self.general_custom_dl_obj.dl_by_video_flag \
         or not self.general_custom_dl_obj.dl_precede_flag:
 
@@ -24418,25 +24492,6 @@ class TartubeApp(Gtk.Application):
                 [],             # Download all media data objects
                 self.general_custom_dl_obj,
             )
-
-
-    def on_menu_custom_dl_select(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Open a popup menu for the user to select a custom download manager,
-        before starting a custom download using that manager.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        # Open the popup menu
-        self.main_win_obj.custom_dl_popup_menu()
 
 
     def on_menu_download_all(self, action, par):
@@ -25717,7 +25772,24 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_index_current_dbid,
             )
 
-            
+
+    def set_catalogue_mode(self, catalogue_mode, catalogue_mode_type):
+
+        self.catalogue_mode = catalogue_mode
+        self.catalogue_mode_type = catalogue_mode_type
+
+        # In case we are switching between two settings for videos displayed on
+        #   a grid, reset the minimum gridbox sizes for each thumbnail size
+        self.main_win_obj.video_catalogue_grid_reset_sizes()
+        # Redraw the Video Catalogue, but only if something was already drawn
+        #   there (and keep the current page number)
+        if self.main_win_obj.video_index_current_dbid is not None:
+            self.main_win_obj.video_catalogue_redraw_all(
+                self.main_win_obj.video_index_current_dbid,
+                self.main_win_obj.catalogue_toolbar_current_page,
+            )
+
+
     def set_catalogue_show_nickname_flag(self, flag):
 
         if not flag:
@@ -26451,7 +26523,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.match_nickname_flag = True
 
-            
+
     def del_container_unavailable_dict(self, name):
 
         del self.container_unavailable_dict[name]
@@ -26653,7 +26725,7 @@ class TartubeApp(Gtk.Application):
     def reset_override_local(self):
 
         self.override_locale = None
-        
+
 
     def set_progress_list_hide_flag(self, flag):
 

@@ -13,6 +13,8 @@ Russian: Tim Dewey,
     https://hosted.weblate.org/projects/tartube/language-names/ru/
 Spanish: Equi,
     https://hosted.weblate.org/projects/tartube/language-names/es/
+Turkish: PUFF1N,
+    https://hosted.weblate.org/projects/tartube/language-names/tr/
 Vietnamese: Zeref,
     https://hosted.weblate.org/projects/tartube/language-names/vi/
 
@@ -30,5 +32,5 @@ FFmpeg options adapted from FFmpeg Command Line Wizard by AndreKR
     https://github.com/AndreKR/ffmpeg-command-line-wizard
 Upgraded Textview by Kevin Mehall
     https://kevinmehall.net/2010/pygtk_multi_select_drag_drop
-Youtube Stream Capture by mrwnwttk
-    https://github.com/mrwnwttk
+XDG support by Scott Stevenson
+    https://pypi.org/project/xdg/

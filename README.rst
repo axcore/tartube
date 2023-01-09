@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.165 (24 Nov 2022)**
+Stable release: **v2.4.221 (9 Jan 2023)**
 
-Development release: **v2.4.201 (19 Dec 2022)**
+Development release: **v2.4.221 (9 Jan 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.165/install-tartube-2.4.165-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube-2.4.165-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.221/install-tartube-2.4.221-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube-2.4.221-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.165/python3-tartube_2.4.165.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube-2.4.165.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.221/python3-tartube_2.4.221.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube-2.4.221.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.165/tartube_v2.4.165.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube_v2.4.221.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -491,13 +491,14 @@ The procedure used to create the MS Windows installer is described in full in th
 * `6.12.4 Setting download options`_
 * `6.13 Scheduled downloads`_
 * `6.14 Custom downloads`_
-* `6.14.1 Creating custom downloads`_
-* `6.14.2 Independent downloads`_
-* `6.14.3 Diverting to HookTube / Invidious`_
-* `6.14.4 Delays between downloads`_
-* `6.14.5 Splitting and slicing videos`_
-* `6.14.6 Ignoring videos without subtitles`_
-* `6.14.7 Launching custom downloads`_
+* `6.14.1 Default custom downloads`_
+* `6.14.2 Adding custom downloads`_
+* `6.14.3 Independent downloads`_
+* `6.14.4 Diverting to HookTube / Invidious`_
+* `6.14.5 Delays between downloads`_
+* `6.14.6 Splitting and slicing videos`_
+* `6.14.7 Ignoring videos without subtitles`_
+* `6.14.8 Launching custom downloads`_
 * `6.15 Watching videos`_
 * `6.16 Filtering and finding videos`_
 * `6.17 Marking videos`_
@@ -956,7 +957,7 @@ If you want to download subtiles only in particular languages:
 - Click the **Add language** button
 - Repeat for as many languages as you want
 
-See also `6.14.6 Ignoring videos without subtitles`_.
+See also `6.14.7 Ignoring videos without subtitles`_.
 
 6.13 Scheduled downloads
 ------------------------
@@ -999,17 +1000,14 @@ A **Custom download** enables you to modify this behaviour, if desired. You can 
 
 It's important to note that a custom download behaves exactly like a regular download until you specify the new behaviour.
 
-6.14.1 Creating custom downloads
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.14.1 Default custom downloads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can create as many different custom downloads as you like.
+By default, **Tartube** provides two custom downloads. 
 
-- Click **Edit > System preferences... > Operations > Custom**
-- In the **Name** box, type any name
-- Click the **Add** button
-- A new window opens, in which you can specify the new behaviour
+The custom download called **general** applies in the **Videos** tab. It is used, for example, when you right-click a channel and select **Custom download channel**.
 
-If you use custom downloads a lot, you can add some extra buttons to the **Videos** tab.
+If you use the **general** custom download a lot, you can add an extra button to the **Videos** tab.
 
 - Click **Edit > System preferences... > Windows > Videos**
 - Select the button **Show a 'Custom download all' button in the Videos tab**
@@ -1017,9 +1015,21 @@ If you use custom downloads a lot, you can add some extra buttons to the **Video
 .. image:: screenshots/example20.png
   :alt: The option custom download button
 
-The **Custom download all** button starts the custom download called **general**. The button next to it opens a list of custom downloads. Select one, and that custom download will start.
+The custom download called **classic** applies in the **Classic Mode** tab. To enable it, right-click the menu button in the top-right corner of the tab, and select **Enable custom downloads**.
 
-6.14.2 Independent downloads
+6.14.2 Adding custom downloads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the those, you can create as many new custom downloads as you want.
+
+- Click **Edit > System preferences... > Operations > Custom**
+- In the **Name** box, type any name
+- Click the **Add** button
+- A new window opens, in which you can specify the new behaviour
+
+Now, when you select a custom download in the **Videos** tab (for example, by right-clicking a channel and selecting **Custom download channel**, you'll be prompted to choose the custom download you want.
+
+6.14.3 Independent downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, **Tartube** instructs **youtube-dl** to download a channel or a playlist. **youtube-dl** only needs a link to the channel or playlist, so **Tartube** doesn't send it a link to every single video.
@@ -1033,7 +1043,7 @@ If you need to download each individual video, one URL at a time, you can do thi
 
 Many custom download settings only work when Tartube is downloading videos one at a time. If you enable this setting, you will be able to enable several other settings in the other tabs.
 
-6.14.3 Diverting to HookTube / Invidious
+6.14.4 Diverting to HookTube / Invidious
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If **Tartube** can't download a video from YouTube, it's sometimes possible to obtain it from an alternative website instead.
@@ -1048,7 +1058,7 @@ There are a number of alternative YouTube front-ends available, besides `HookTub
 
 When specifying an alternative website, it's very important that you type the *exact text* that replaces **youtube.com** in a video's URL. For example, you must type **hooktube.com**, not **www.hooktube.com** or **http://www.hooktube.com/**.
 
-6.14.4 Delays between downloads
+6.14.5 Delays between downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the video website is complaining that you're making too many requests (in other words, downloading too many videos too quickly), it's possible to add a delay betwen downloads. The delay can have a fixed or random duration.
@@ -1063,7 +1073,7 @@ If the video website is complaining that you're making too many requests (in oth
 
 The delay is applied after downloading a channel or a playlist. If you want to apply the delay after each video, you should enable individual video downloads as well (as described above).
 
-6.14.5 Splitting and slicing videos
+6.14.6 Splitting and slicing videos
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 During a custom download, you can automatically split a video into video clips *while it is being downloaded*. A list of clips can be grabbed from the video's description, or from its chapter list, or you can specify your own list of clips. For more information, see see `6.27 Video clips`_
@@ -1072,7 +1082,7 @@ You can also remove slices from a video *while it is being downloaded*. This is 
 
 Both of these features require **FFmpeg**.
 
-6.14.6 Ignoring videos without subtitles
+6.14.7 Ignoring videos without subtitles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can ask Tartube not to download videos without subtitles.
@@ -1093,7 +1103,7 @@ Note that this setting *reduces the number of videos downloaded*. It isn't respo
 
 **youtube-dl** handles YouTube live chat in the same way as subtitles, so you can select that instead of (or as well as) the languages.
 
-6.14.7 Launching custom downloads
+6.14.8 Launching custom downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Besides the optional button described above, there are several ways to start a custom download.

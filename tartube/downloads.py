@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -2779,7 +2779,7 @@ class DownloadList(object):
 
             item_id (int): The .item_id of a downloads.DownloadItem object;
                 should be a key in self.download_item_dict
-            
+
         """
 
         if item_id in self.download_item_dict:
@@ -2788,7 +2788,7 @@ class DownloadList(object):
                 return True
 
         return False
-        
+
 
     @synchronise(_SYNC_LOCK)
     def move_item_to_bottom(self, download_item_obj):
@@ -2872,14 +2872,14 @@ class DownloadList(object):
 
         if item_id in self.download_item_dict:
             self.final_item_id = item_id
-            
+
         else:
             GObject.timeout_add(
                 0,
                 app_obj.system_error,
                 318,
                 _('Unrecognised download item ID'),
-            )            
+            )
 
 
     def reorder_master_slave(self):
@@ -5078,7 +5078,7 @@ class VideoDownloader(object):
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict
-        
+
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             '^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
@@ -5130,7 +5130,7 @@ class VideoDownloader(object):
                         dl_stat_dict['eta'] = stdout_list[7]
                         dl_stat_dict['speed'] = stdout_list[5]
                         dl_stat_dict['filesize'] = stdout_list[3]
-                    # New format (December 2022?), e.g.
+                    # New format (approx December 2022), e.g.
                     #   [download] 8.5% of ~ 19.87MiB at 2.35MiB/s ETA 00:07
                     #       (frag 8/94)
                     else:

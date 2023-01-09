@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -4534,7 +4534,7 @@ class OptionsEditWin(GenericEditWin):
 
         # The user can specify multiple video/audio formats. If a mixture of
         #   both is specified, then video formats must be listed before audio
-        #   formats (or youtube-dl won't donwload them all)
+        #   formats (or youtube-dl won't download them all)
         # Tell the options.OptionManager object to rearrange them, if
         #   necessary
         self.edit_obj.rearrange_formats()
@@ -5840,7 +5840,7 @@ class OptionsEditWin(GenericEditWin):
         if not self.app_obj.simple_options_flag:
 
             checkbutton2 = self.add_checkbutton(grid,
-                _('Use the server\'s file modification time'),
+                _('Don\'t use the server\'s file modification time'),
                 'nomtime',
                 0, 2, grid_width, 1,
             )
@@ -19752,7 +19752,7 @@ class SystemPrefWin(GenericPrefWin):
             0, 3, 1, 1,
         )
         label2.set_hexpand(False)
-        
+
         store2 = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         store2.append(
             [
@@ -19761,7 +19761,7 @@ class SystemPrefWin(GenericPrefWin):
                 ''
             ]
         )
-        
+
         for this_locale in formats.LOCALE_LIST:
 
             # (Some locales are in format "en_GB", some in format "fr")
@@ -19770,16 +19770,16 @@ class SystemPrefWin(GenericPrefWin):
                 flag_locale = current_locale[:2]
             else:
                 flag_locale = this_locale
-            
+
             pixbuf = \
             self.app_obj.main_win_obj.pixbuf_dict['flag_' + flag_locale]
-            
+
             store.append(
                 [ pixbuf, formats.LOCALE_DICT[this_locale], this_locale ],
-            )            
+            )
             store2.append(
                 [ pixbuf, formats.LOCALE_DICT[this_locale], this_locale ],
-            )            
+            )
 
         combo = Gtk.ComboBox.new_with_model(store)
         grid.attach(combo, 1, 2, 1, 1)
@@ -19820,8 +19820,8 @@ class SystemPrefWin(GenericPrefWin):
             combo2.set_active(
                 formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
             )
-        
-        
+
+
     def setup_general_modules_tab(self, inner_notebook):
 
         """Called by self.setup_general_tab().
@@ -20576,7 +20576,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>' + _('Video matching recommended preferences') + '</u>',
             0, 5, grid_width, 1,
         )
-        
+
         checkbutton = self.add_checkbutton(grid,
             _(
                 'Check the video\'s original name and the downloaded file' \
@@ -20596,7 +20596,7 @@ class SystemPrefWin(GenericPrefWin):
             ) + '</i>',
             0, 7, grid_width, 1,
         )
-                        
+
 
     def setup_files_delete_tab(self, inner_notebook):
 
@@ -30234,7 +30234,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         self.show_all()
-                
+
 
     def on_match_button_toggled(self, radiobutton):
 
@@ -30280,7 +30280,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Enables/disables matching against both media.Video.name and
         media.Video.nickname.
-        
+
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked

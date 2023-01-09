@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -1520,7 +1520,7 @@ class SetupWizWin(GenericWizWin):
 
         Sets up the widget layout for a page, shown only on MS Windows.
         """
-        
+
         grid_width = 3
 
         self.add_image(
@@ -1574,7 +1574,7 @@ class SetupWizWin(GenericWizWin):
         Sets up the widget layout for a page, shown only after a STRICT install
         from a DEB/RPM package.
         """
-        
+
         grid_width = 3
 
         self.add_image(
@@ -1645,7 +1645,7 @@ class SetupWizWin(GenericWizWin):
         Sets up the widget layout for a page, for all operating systems except
         MS Windows.
         """
-        
+
         grid_width = 3
 
         self.add_image(
@@ -1703,13 +1703,13 @@ class SetupWizWin(GenericWizWin):
         )
 
         self.add_tutorial_button(8)
-        
+
 
     # (Support functions)
 
 
     def add_tutorial_button(self, row):
-        
+
         """Called by several (final) pages to show a button that opens the
         tutorial wizard window.
 
@@ -1758,7 +1758,7 @@ class SetupWizWin(GenericWizWin):
             self.app_obj.main_win_obj.pixbuf_dict['learn_right_large'],
         )
         image2.set_hexpand(False)
-        
+
 
     def downloader_page_write(self, msg):
 
@@ -1889,7 +1889,7 @@ class SetupWizWin(GenericWizWin):
                 descrip,
             )
 
-    
+
     # (Callbacks)
 
 

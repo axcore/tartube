@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -167,7 +167,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.stop_operation_toolbutton = None   # Gtk.ToolButton
         self.system_preferences_toolbutton = None
                                                 # Gtk.ToolButton
-        self.general_options_toolbutton = None  # Gtk.ToolButton        
+        self.general_options_toolbutton = None  # Gtk.ToolButton
         self.switch_view_toolbutton = None      # Gtk.ToolButton
         self.hide_system_toolbutton = None      # Gtk.ToolButton
         self.test_toolbutton = None             # Gtk.ToolButton
@@ -197,9 +197,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.button_box = None                  # Gtk.VBox
         self.check_media_button = None          # Gtk.Button
         self.download_media_button = None       # Gtk.Button
-        self.custom_dl_box = None               # Gkt.HBox
         self.custom_dl_media_button = None      # Gtk.Button
-        self.custom_dl_select_button = None     # Gtk.Button
         self.progress_box = None                # Gtk.HBox
         self.progress_bar = None                # Gtk.ProgressBar
         self.progress_label = None              # Gtk.Label
@@ -640,6 +638,18 @@ class MainWin(Gtk.ApplicationWindow):
         # (The code assumes it is at least twice the value of
         #   mainapp.TartubeApp.dl_timer_time)
         self.progress_list_hide_time = 3
+        # !!! DEBUG Git #479
+        # Dictionary recording system errors in
+        #   self.progress_list_receive_dl_stats() and
+        #   .progress_list_do_hide_row() (due to unresolved issues)
+        # Instead of repeating the same system error innumerable times, add an
+        #   entry to this dictionary so it can be shown only the first time.
+        #   The dictionary is reset every time the Progress List is reset
+        # Dictionary in the form
+        #   key = The downloads.DownloadItem.item_id for the download item
+        #       handling the media data object
+        #   value = False
+        self.progress_list_broken_dict = {}
 
         # Whenever a video is downloaded (in reality, or just in simulation),
         #   a row is added to Gtk.TreeView in the Results List
@@ -815,7 +825,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.wiz_win_obj = None
         # The number of pages in wizwin.TutorialWizWin
         self.tutorial_page_count = 28
-        
+
         # Dialogue window IVs
         # The SetDestinationDialogue dialogue window displays a list of
         #   channels/playlists/folders, and an external directory. When opening
@@ -1365,7 +1375,6 @@ class MainWin(Gtk.ApplicationWindow):
         # System column (MS Windows only)
         if os.name == 'nt':
 
-            # Separator
             system_menu_column = Gtk.MenuItem.new_with_mnemonic(_('_System'))
             self.menubar.add(system_menu_column)
 
@@ -1487,10 +1496,35 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         media_sub_menu.append(Gtk.SeparatorMenuItem())
 
+        switch_view_submenu = Gtk.Menu()
+
+        last_type = None
+        # (mainapp.TartubeApp.catalogue_mode_list specifies catalogues modes
+        #       in groups of three, in the form [mode, mode_type, description]
+        for mini_list in self.app_obj.catalogue_mode_list:
+
+            # Catalogue modes are already sorted by mode type. Place a
+            #   separator when we move from one mode type to the next
+            if last_type is not None and mini_list[1] != last_type:
+
+                # Separator
+                switch_view_submenu.append(Gtk.SeparatorMenuItem())
+
+            last_type = mini_list[1]
+
+            menu_item = Gtk.MenuItem.new_with_mnemonic(mini_list[2])
+            switch_view_submenu.append(menu_item)
+            menu_item.connect(
+                'activate',
+                self.on_switch_view,
+                mini_list[0],
+                mini_list[1],
+            )
+
         self.switch_view_menu_item = \
         Gtk.MenuItem.new_with_mnemonic(_('_Switch between views'))
+        self.switch_view_menu_item.set_submenu(switch_view_submenu)
         media_sub_menu.append(self.switch_view_menu_item)
-        self.switch_view_menu_item.set_action_name('app.switch_view_menu')
 
         # Separator
         media_sub_menu.append(Gtk.SeparatorMenuItem())
@@ -1977,7 +2011,7 @@ class MainWin(Gtk.ApplicationWindow):
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_preferences_large'],
                 ),
-            )               
+            )
 
             self.main_toolbar.insert(self.system_prefs_toolbutton, -1)
             self.system_prefs_toolbutton.set_tooltip_text(
@@ -1986,12 +2020,12 @@ class MainWin(Gtk.ApplicationWindow):
             self.system_prefs_toolbutton.set_action_name(
                 'app.system_prefs_toolbutton',
             )
-            
+
             self.gen_options_toolbutton = Gtk.ToolButton.new(
                 Gtk.Image.new_from_pixbuf(
                     self.pixbuf_dict['tool_options_large'],
                 ),
-            )               
+            )
 
             self.main_toolbar.insert(self.gen_options_toolbutton, -1)
             self.gen_options_toolbutton.set_tooltip_text(
@@ -2208,11 +2242,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.show_custom_dl_button_flag:
 
-            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
-            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
-
             self.custom_dl_media_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
+            self.button_box.pack_start(
                 self.custom_dl_media_button,
                 True,
                 True,
@@ -2227,21 +2258,6 @@ class MainWin(Gtk.ApplicationWindow):
             )
             self.custom_dl_media_button.set_action_name(
                 'app.custom_dl_all_button',
-            )
-
-            self.custom_dl_select_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
-                self.custom_dl_select_button,
-                False,
-                True,
-                0
-            )
-            self.custom_dl_select_button.set_label('+')
-            self.custom_dl_select_button.set_tooltip_text(
-                _('Select the custom download to use'),
-            )
-            self.custom_dl_select_button.set_action_name(
-                'app.custom_dl_select_button',
             )
 
         # Right-hand side
@@ -2529,7 +2545,7 @@ class MainWin(Gtk.ApplicationWindow):
                     Gtk.Image.new_from_pixbuf(
                         self.pixbuf_dict['stock_sort_descending'],
                     ),
-                )                
+                )
             self.catalogue_reverse_toolbutton.set_tooltip_text(
                 _('Undo reverse sort'),
             )
@@ -4223,9 +4239,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(False)
             self.download_all_toolbutton.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
 
 
     def disable_tooltips(self, update_catalogue_flag=False):
@@ -4281,9 +4296,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.custom_dl_all_menu_item.set_sensitive(True)
             self.download_all_toolbutton.set_sensitive(True)
             self.download_media_button.set_sensitive(True)
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_sensitive(True)
-                self.custom_dl_select_button.set_sensitive(True)
 
 
     def enable_tooltips(self, update_catalogue_flag=False):
@@ -4379,11 +4393,9 @@ class MainWin(Gtk.ApplicationWindow):
             self.button_box.remove(self.download_media_button)
             self.check_media_button = None
 
-        if self.custom_dl_box:
-            self.button_box.remove(self.custom_dl_box)
-            self.custom_dl_box = None
+        if self.custom_dl_media_button:
+            self.button_box.remove(self.custom_dl_media_button)
             self.custom_dl_media_button = None
-            self.custom_dl_select_button = None
 
         if self.progress_box:
             self.button_box.remove(self.progress_box)
@@ -4421,11 +4433,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.show_custom_dl_button_flag:
 
-            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
-            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
-
             self.custom_dl_media_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
+            self.button_box.pack_start(
                 self.custom_dl_media_button,
                 True,
                 True,
@@ -4451,21 +4460,6 @@ class MainWin(Gtk.ApplicationWindow):
                 )
             self.custom_dl_media_button.set_action_name(
                 'app.custom_dl_all_button',
-            )
-
-            self.custom_dl_select_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
-                self.custom_dl_select_button,
-                False,
-                True,
-                0
-            )
-            self.custom_dl_select_button.set_label('+')
-            self.custom_dl_select_button.set_tooltip_text(
-                _('Select the custom download to use'),
-            )
-            self.custom_dl_select_button.set_action_name(
-                'app.custom_dl_select_button',
             )
 
         # (For some reason, the button must be desensitised after setting the
@@ -4662,11 +4656,9 @@ class MainWin(Gtk.ApplicationWindow):
             self.button_box.remove(self.download_media_button)
             self.download_media_button = None
 
-        if self.custom_dl_box:
-            self.button_box.remove(self.custom_dl_box)
-            self.custom_dl_box = None
+        if self.custom_dl_media_button:
+            self.button_box.remove(self.custom_dl_media_button)
             self.custom_dl_media_button = None
-            self.custom_dl_select_button = None
 
         if self.progress_box:
             self.button_box.remove(self.progress_box)
@@ -4684,29 +4676,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.app_obj.show_custom_dl_button_flag:
 
-            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
-            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
-
             self.custom_dl_media_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
+            self.button_box.pack_start(
                 self.custom_dl_media_button,
                 True,
                 True,
                 0
             )
             self.custom_dl_media_button.set_sensitive(False)
-
-            self.custom_dl_select_button = Gtk.Button()
-            # (Aesthetics are better, when the '+' button is not visible at
-            #   all)
-            if finish_flag:
-                self.custom_dl_box.pack_start(
-                    self.custom_dl_select_button,
-                    False,
-                    True,
-                    0
-                )
-            self.custom_dl_select_button.set_sensitive(False)
 
         # Set labels on the replacement buttons
         if not finish_flag:
@@ -4732,9 +4709,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             self.check_media_button.set_label(msg)
             self.download_media_button.set_label('...')
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_label(msg)
-                self.custom_dl_select_button.set_label('+')
 
             self.check_media_button.set_sensitive(False)
             self.download_media_button.set_sensitive(False)
@@ -4779,7 +4755,7 @@ class MainWin(Gtk.ApplicationWindow):
             else:
                 self.download_media_button.set_sensitive(True)
 
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
 
                 if not self.video_index_marker_dict:
                     self.custom_dl_media_button.set_label(
@@ -4802,18 +4778,11 @@ class MainWin(Gtk.ApplicationWindow):
                         ),
                     )
 
-                self.custom_dl_select_button.set_label('+')
-                self.custom_dl_select_button.set_tooltip_text(
-                    _('Select the custom download to use'),
-                )
-
                 if __main__.__pkg_no_download_flag__ \
                 or self.app_obj.disable_dl_all_flag:
                     self.custom_dl_media_button.set_sensitive(False)
-                    self.custom_dl_select_button.set_sensitive(False)
                 else:
                     self.custom_dl_media_button.set_sensitive(True)
-                    self.custom_dl_select_button.set_sensitive(True)
 
             self.sensitise_operation_widgets(True, True)
 
@@ -4963,25 +4932,22 @@ class MainWin(Gtk.ApplicationWindow):
             self.download_media_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
             self.classic_redownload_button.set_sensitive(False)
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
 
         elif self.app_obj.disable_dl_all_flag:
             self.download_media_button.set_sensitive(False)
             self.classic_download_button.set_sensitive(False)
             self.classic_redownload_button.set_sensitive(sens_flag)
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
 
         else:
             self.download_media_button.set_sensitive(sens_flag)
             self.classic_download_button.set_sensitive(sens_flag)
             self.classic_redownload_button.set_sensitive(sens_flag)
-            if self.custom_dl_box:
+            if self.custom_dl_media_button:
                 self.custom_dl_media_button.set_sensitive(sens_flag)
-                self.custom_dl_select_button.set_sensitive(sens_flag)
 
 
     def sensitise_widgets_if_database(self, sens_flag):
@@ -5066,8 +5032,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         if self.system_prefs_toolbutton:
             self.system_prefs_toolbutton.set_sensitive(sens_flag)
-            self.gen_options_toolbutton.set_sensitive(sens_flag)            
-        
+            self.gen_options_toolbutton.set_sensitive(sens_flag)
+
         self.switch_view_toolbutton.set_sensitive(sens_flag)
         self.hide_system_toolbutton.set_sensitive(sens_flag)
 
@@ -5083,14 +5049,12 @@ class MainWin(Gtk.ApplicationWindow):
                 self.download_media_button.set_sensitive(False)
             else:
                 self.download_media_button.set_sensitive(sens_flag)
-        if self.custom_dl_box:
+        if self.custom_dl_media_button:
             if __main__.__pkg_no_download_flag__ \
             or self.app_obj.disable_dl_all_flag:
                 self.custom_dl_media_button.set_sensitive(False)
-                self.custom_dl_select_button.set_sensitive(False)
             else:
                 self.custom_dl_media_button.set_sensitive(sens_flag)
-                self.custom_dl_select_button.set_sensitive(sens_flag)
 
         # Progress tab
         self.num_worker_checkbutton.set_sensitive(sens_flag)
@@ -5188,11 +5152,9 @@ class MainWin(Gtk.ApplicationWindow):
             self.button_box.remove(self.download_media_button)
             self.download_media_button = None
 
-        if self.custom_dl_box:
-            self.button_box.remove(self.custom_dl_box)
-            self.custom_dl_box = None
+        if self.custom_dl_media_button:
+            self.button_box.remove(self.custom_dl_media_button)
             self.custom_dl_media_button = None
-            self.custom_dl_select_button = None
 
         # Display a holding message in the replacement buttons, and initially
         #   in the progress bar (the latter is replaced after a very short
@@ -5247,11 +5209,8 @@ class MainWin(Gtk.ApplicationWindow):
         #   replaced by empty buttons)
         if self.app_obj.show_custom_dl_button_flag:
 
-            self.custom_dl_box = Gtk.HBox.new(False, self.spacing_size)
-            self.button_box.pack_start(self.custom_dl_box, False, False, 0)
-
             self.custom_dl_media_button = Gtk.Button()
-            self.custom_dl_box.pack_start(
+            self.button_box.pack_start(
                 self.custom_dl_media_button,
                 True,
                 True,
@@ -5259,18 +5218,6 @@ class MainWin(Gtk.ApplicationWindow):
             )
             self.custom_dl_media_button.set_label(temp_msg)
             self.custom_dl_media_button.set_sensitive(False)
-
-            self.custom_dl_select_button = Gtk.Button()
-            # (Aesthetics are better, when the '+' button is not visible at
-            #   all)
-#            self.custom_dl_box.pack_start(
-#                self.custom_dl_select_button,
-#                False,
-#                True,
-#                0
-#            )
-            self.custom_dl_select_button.set_label('+')
-            self.custom_dl_select_button.set_sensitive(False)
 
         # Make the changes visible
         self.button_box.show_all()
@@ -5491,11 +5438,11 @@ class MainWin(Gtk.ApplicationWindow):
         .on_button_reverse_sort_catalogue()
 
         Videos in the Video Catalogue can be sorted in various ways. When
-        required, set the reverse sort button to its correct state.        
+        required, set the reverse sort button to its correct state.
         """
-        
+
         if not self.app_obj.catalogue_reverse_sort_flag:
-            
+
             if not self.app_obj.show_custom_icons_flag:
                 self.catalogue_reverse_toolbutton.set_stock_id(
                     Gtk.STOCK_SORT_ASCENDING,
@@ -5529,7 +5476,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
         self.catalogue_reverse_toolbutton.show_all()
-            
+
 
     def update_catalogue_thumb_widgets(self):
 
@@ -6034,10 +5981,20 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             msg = _('C_ustom download folder')
 
-        custom_dl_submenu = self.custom_dl_popup_submenu([ media_data_obj ])
-
         custom_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(msg)
-        custom_dl_menu_item.set_submenu(custom_dl_submenu)
+        if not self.app_obj.check_custom_download_managers():
+            custom_dl_menu_item.connect(
+                'activate',
+                self.on_video_index_custom_dl,
+                media_data_obj,
+            )
+
+        else:
+            custom_dl_submenu = self.custom_dl_popup_submenu([media_data_obj])
+            custom_dl_menu_item.set_submenu(
+                self.custom_dl_popup_submenu([media_data_obj]),
+            )
+
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.current_manager_obj \
         or (
@@ -6761,12 +6718,21 @@ class MainWin(Gtk.ApplicationWindow):
                 download_menu_item.set_sensitive(False)
             popup_menu.append(download_menu_item)
 
-        custom_dl_submenu = self.custom_dl_popup_submenu([ video_obj ])
-
         custom_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('C_ustom download video')
         )
-        custom_dl_menu_item.set_submenu(custom_dl_submenu)
+        if not self.app_obj.check_custom_download_managers():
+            custom_dl_menu_item.connect(
+                'activate',
+                self.on_video_index_custom_dl,
+                video_obj,
+            )
+
+        else:
+            custom_dl_menu_item.set_submenu(
+                self.custom_dl_popup_submenu([ video_obj ]),
+            )
+
         if __main__.__pkg_no_download_flag__ \
         or self.app_obj.current_manager_obj \
         or video_obj.source is None \
@@ -8037,7 +8003,7 @@ class MainWin(Gtk.ApplicationWindow):
         if custom_sim_flag:
             msg = _('Stop checking _videos')
         elif queuing_flag:
-            msg = _('Completely stop after this _video')            
+            msg = _('Completely stop after this _video')
         else:
             msg = _('Stop after this _video')
 
@@ -8847,16 +8813,22 @@ class MainWin(Gtk.ApplicationWindow):
                 popup_menu.append(alt_menu_item)
 
 
-    def custom_dl_popup_menu(self):
+    def custom_dl_popup_menu(self, media_data_list=[]):
 
-        """Called by mainapp.TartubeApp.on_menu_custom_dl_select().
+        """Called by mainapp.TartubeApp.on_button_custom_dl_all().
 
         When the user right-clicks the custom download manager selection button
         in the Videos tab, shows a context-sensitive popup menu.
+
+        Args:
+
+            media_data_list (list): List of media data objects to custom
+                download (may be an empty list)
+
         """
 
         # Set up the popup menu
-        popup_menu = self.custom_dl_popup_submenu()
+        popup_menu = self.custom_dl_popup_submenu(media_data_list)
 
         # Create the popup menu
         popup_menu.show_all()
@@ -9296,13 +9268,13 @@ class MainWin(Gtk.ApplicationWindow):
             self.video_index_treeview.set_tooltip_column(
                 self.video_index_tooltip_column,
             )
-            
+
         # (Detect right-clicks on the treeview)
         self.video_index_treeview.connect(
             'button-press-event',
             self.on_video_index_right_click,
         )
-        
+
         # Setup up drag and drop. Drag and drop within the Video Index
         #   (dragging one channel/playlist/folder) is handled by spotting the
         #   selected row. Dragging videos from the Video Catalogue into a
@@ -9490,7 +9462,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not pixbuf:
             return self.app_obj.system_error(
                 208,
-                'Video index setup row request failed sanity check',
+                'Video Index setup row request failed sanity check',
             )
 
         # Prepare the text style
@@ -9571,7 +9543,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not pixbuf:
             return self.app_obj.system_error(
                 209,
-                'Video index setup row request failed sanity check',
+                'Video Index setup row request failed sanity check',
             )
 
         # Prepare the text style
@@ -9693,7 +9665,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 210,
-                'Video index delete row request failed sanity check',
+                'Video Index delete row request failed sanity check',
             )
 
         # During this procedure, ignore any changes to the selected row (i.e.
@@ -9800,7 +9772,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 212,
-                'Video index update row request failed sanity check',
+                'Video Index update row request failed sanity check',
             )
 
         # If media_data_obj is a hidden folder, then there's nothing to update
@@ -9843,7 +9815,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 213,
-                'Video index update row request failed sanity check',
+                'Video Index update row request failed sanity check',
             )
 
         # If media_data_obj is a hidden folder, then there's nothing to update
@@ -9893,7 +9865,7 @@ class MainWin(Gtk.ApplicationWindow):
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 214,
-                'Video index update row request failed sanity check',
+                'Video Index update row request failed sanity check',
             )
 
         # If media_data_obj is a hidden folder, then there's nothing to update
@@ -10396,13 +10368,11 @@ class MainWin(Gtk.ApplicationWindow):
                 'Videos should not appear in the Video Index',
             )
 
-        # The Video Catalogue can be sorted in one of four modes. If the
-        #   selected container was last sorted when the mode was different,
-        #   then trigger a re-sort
-        # (Sorting only when we need to prevents the need to resort every
-        #   container in the database, whenever the user changes the mode)
-        if self.app_obj.catalogue_sort_mode != container_obj.last_sort_mode:
-            container_obj.sort_children(self.app_obj)
+        # Formerly, the selected container's children were only re-sorted when
+        #   the sort mode had changed
+        # Due to continuing and hard-to-diagnose sort problems, just sort each
+        #   container's children every time the Video Catalogue is redrawn
+        container_obj.sort_children(self.app_obj)
 
         # Reset the previous contents of the Video Catalogue, if any, and reset
         #   IVs
@@ -11044,13 +11014,9 @@ class MainWin(Gtk.ApplicationWindow):
             return
 
         else:
-            container_obj \
-            = self.app_obj.media_reg_dict[self.video_index_current_dbid]
-
-            # Force the resort
-            container_obj.sort_children(self.app_obj)
-
             # Redraw the Video Catalogue, switching to the first page
+            # (The container's children are automatically sorted during the
+            #   call to that function)
             self.video_catalogue_redraw_all(
                 self.video_index_current_dbid,
                 1,
@@ -11417,7 +11383,7 @@ class MainWin(Gtk.ApplicationWindow):
 
                 return self.app_obj.system_error(
                     218,
-                    'Gridbox not fouind in Video Catalogue',
+                    'Gridbox not found in Video Catalogue',
                 )
 
             # Select/deselect videos, as required
@@ -12067,6 +12033,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_row_count = 0
         self.progress_list_temp_dict = {}
         self.progress_list_finish_dict = {}
+        self.progress_list_broken_dict = {}
 
 
     def progress_list_init(self, download_list_obj):
@@ -12211,10 +12178,21 @@ class MainWin(Gtk.ApplicationWindow):
         # Check that the Progress List actually has a row for the specified
         #   downloads.DownloadItem object
         if not download_item_obj.item_id in self.progress_list_row_dict:
-            return self.app_obj.system_error(
-                222,
-                'Missing row in Progress List',
-            )
+
+            # !!! DEBUG Git #479
+            # Because of an unresolved issue, only show this message once for
+            #   each downloads.DownloadItem object
+            if not download_item_obj.item_id in self.progress_list_broken_dict:
+
+                self.app_obj.system_error(
+                    222,
+                    'Missing row in Progress List',
+                )
+
+                self.progress_list_broken_dict[download_item_obj.item_id] \
+                = False
+
+            return
 
         # Temporarily store the dictionary of download statistics
         if not download_item_obj.item_id in self.progress_list_temp_dict:
@@ -12444,10 +12422,18 @@ class MainWin(Gtk.ApplicationWindow):
 
         except:
 
-            return self.app_obj.system_error(
-                271,
-                'Cannot remove row in Progress List (row does not exist)',
-            )
+            # !!! DEBUG Git #479
+            # Because of an unresolved issue, only show this message once for
+            #   each downloads.DownloadItem object
+            if not item_id in self.progress_list_broken_dict:
+
+                self.app_obj.system_error(
+                    271,
+                    'Cannot remove row in Progress List (row does not exist)',
+                )
+
+                self.progress_list_broken_dict[download_item_obj.item_id] \
+                = False
 
 
     def progress_list_update_video_name(self, download_item_obj, video_obj):
@@ -13299,7 +13285,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.classic_textbuffer = Gtk.TextBuffer()
         self.classic_textview.set_buffer(self.classic_textbuffer)
-        
+
         self.classic_mark_start = self.classic_textbuffer.create_mark(
             'mark_start',
             self.classic_textbuffer.get_start_iter(),
@@ -13584,7 +13570,7 @@ class MainWin(Gtk.ApplicationWindow):
 
                         if dl_stat_dict['playlist_index'] == 0:
                             string = ''
-                            
+
                         elif 'dl_sim_flag' in dl_stat_dict \
                         and dl_stat_dict['dl_sim_flag']:
                             # (Don't know how many videos there are in a
@@ -13715,7 +13701,7 @@ class MainWin(Gtk.ApplicationWindow):
         """Can be called by anything.
 
         Draws an empty grid in the Drag and Drop tab (replacing any grid that
-        already exists). 
+        already exists).
         """
 
         # If not called by self.setup_videos_tab()...
@@ -19550,7 +19536,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         download_manager_obj = self.app_obj.download_manager_obj
-        
+
         # Check that, since the popup menu was created, the video downloader
         #   hasn't already finished checking/downloading the selected media
         #   data object
@@ -21149,6 +21135,28 @@ class MainWin(Gtk.ApplicationWindow):
         self.switch_profile(profile_name)
 
 
+    def on_switch_view(self, menu_item, catalogue_mode, catalogue_mode_type):
+
+        """Called from a callback in self.setup_main_menubar().
+
+        Switches to the new Video Catalogue mode.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            catalogue_mode (str): One of the recognised values for
+                mainapp.TartubeApp.catalogue_mode_list, e.g.
+                'simple_hide_parent'
+
+            catalogue_mode_type (str): The corresponding mode type, 'simple',
+                'complex' or 'grid'
+
+        """
+
+        self.app_obj.set_catalogue_mode(catalogue_mode, catalogue_mode_type)
+
+
     def on_system_container_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_errors_tab().
@@ -21423,7 +21431,8 @@ class MainWin(Gtk.ApplicationWindow):
                 if current_dbid is not None:
 
                     parent_obj = self.app_obj.media_reg_dict[current_dbid]
-                    if parent_obj.priv_flag:
+                    if isinstance(parent_obj, media.Folder) \
+                    and parent_obj.priv_flag:
                         parent_obj = None
 
                 if not parent_obj:
@@ -23401,7 +23410,7 @@ class ComplexCatalogueItem(object):
                 )
 
             if not self.video_obj.descrip:
-                self.descrip_label.set_text(string)
+                self.descrip_label.set_markup(string)
 
             elif not self.expand_descrip_flag:
 
@@ -25748,7 +25757,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         string2 = html.escape(
             utils.shorten_string(
                 parent_obj.name,
-                self.main_win_obj.long_string_max_len,
+                self.main_win_obj.quite_long_string_max_len,
             ),
             quote=True,
         )
@@ -32925,6 +32934,9 @@ class MSYS2Dialogue(Gtk.Dialog):
         )
 
         self.set_modal(True)
+        # Without this line, this dialogue window is partially obscured beneath
+        #   the MSYS2 window (the exact opposite of what we want)
+        self.set_keep_above(True)
 
         # Set up the dialogue window
         box = self.get_content_area()

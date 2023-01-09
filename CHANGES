@@ -1,3 +1,114 @@
+v2.4.221 (9 Jan 2023)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added complete French translation and partial Turkish translation. Thanks to
+    sydney and PUFF1N
+- In the toolbar at the bottom of the Videos tab, added the ability to reverse
+    sort and to sort by numbers in each video's title (for example, so that
+    'Alan's video 2' can appear before 'My video 1'; so-called 'natural'
+    sorting). Sort settings are now stored in Tartube's database, not in its
+    config file (so Tartube will remember which databases are currently reverse
+    sorted, and which are not, for example) (Git #477)
+
+MINOR NEW FEATURES
+- Handling of locales has been overhauled. Tartube will still switch to your
+    system's locale automatically (when translations are available for it) but,
+    if you prefer, you can force Tartube to use any of the available
+    translations. To do this, open Edit > System preferences (Git #471)
+- In the Progress/Classic Mode tabs, while checking/downloading videos,
+    improved the format of the column which usually displays '6/9' (meaning 6
+    out of 9 videos downloaded). In some situations, it displayed information
+    whose meaning was not clear (Git #474)
+- In the Progress/Classic Mode tabs, in the popup menus, enabled the 'Stop
+    after this video' option for videos that haven't started downloading yet
+    (Git #481)
+- Added the yt-dlp option '--abort-on-unavailable-fragment' to Tartube's
+    download options windows (Git #475)
+- Added a few new pages to the tutorial (Help > Show tutorial...). In Tartube's
+    setup window, added some emphasis to the button that opens the tutorial,
+    so that more new users notice it
+- In the toolbar at the top of Tartube's main window, added new buttons to
+    open preferences and download options
+- Updated the imported XDG code by Scott Stevenson to v5.1.1
+- Improved the way users start custom downloads, for example by clicking the
+    'Custom download all' button optionally visible in the bottom-left corner
+    of the Videos tab. Now, if only the standard "general" custom download
+    exists, that is the custom download that starts. If additional custom
+    downloads exist, the user is prompted to choose one. This replaces the old
+    system in which two buttons were visible. Popup menus have been modified in
+    the same way, but the main menu is unaffected
+- Videos are displayed in the Videos tab in a variety of styles (including
+    lists and grids). Users could already cycle through the styles using the
+    button in the main toolbar, but now it's possible to select one directly
+    through the main menu (Media > Switch between views) (Git #487)
+
+MAJOR FIXES
+- When the 'Add videos to the Missing folder' setting is enabled, downloading a
+    channel caused all of the channel's videos to be added to that folder.
+    Fixed, and fixed some related issues with yt-dlp custom templates
+    (Git #473)
+- While downloading videos, the format of yt-dlp's output has recently changed,
+    as a result Tartube could no longer extract the ETA (and other similar
+    values). Fixed (Git #472)
+- In the Classic Mode tab, one-click downloads worked once, then not again.
+    Fixed
+- Fixed a Python error which prevented switching between databases
+- Fixed a crash when downloading playlists (Git #485)
+- When a channel is marked for downloading (by selecting the checkbox next to
+    a channel's name), and the channel is then deleted, the text of the buttons
+    in the bottom-left corner of the Videos tab was not updated correctly.
+    Fixed
+- Due to an unresolved issue, in some situations Tartube generates the errors
+    'Cannot remove row in Progress List' or 'Missing row in Progress List'.
+    A very large number of these errors could be produced by a single video.
+    Tweaked the code, so the error is seen only once (Git #479)
+- Fixed a Python error when dragging and dropping videos from Firefox into
+    Tartube's main window
+
+MINOR FIXES
+- Tweaked detection of the file size for downloaded videos in some situations
+    in which it was not detected (Git #472)
+- While checking/downloading videos, in the Progress tab's popup menus, fixed
+    the broken 'Download last' and 'Download next' items. Also fixed some
+    icons being to the wrong column (Git #480)
+- Fixed inability to detect the system locale when Tartube is launched from a
+    text editor (in this case, Geany)
+- The preferences window no longer shows 'English' as the selected locale if
+    the user has selected a different locale (French, for example), when
+    Tartube was unable to load the latter
+- Added code to handle video thumbnails from VK, which frequently sends .jpeg
+    images mislabelled as .webp (Git #478)
+- In the tidy operation window, the option to 'Delete all .webp thumbnails'
+    did not work. Fixed it
+- When downloading from VK, Tartube was not able to produce a sorted playlist
+    that matched what a user would be expecting. Tweaked various bits of code
+    to improve the situation (Git #476 and others)
+- Tooltips were still visible in the Video Index (left-hand side of the Videos
+    tab), even after they had been disabled in preferences. Fixed (Git #476)
+- In the toolbar at the bottom of the Videos tab, the user was able to specify
+    all sorts of invalid values for the page size. Now, only page sizes of 1
+    or above can be specified. Because of technical issues, setting an
+    unlimited page size is not recommended, but you can use a very large value
+    like 9999 if you actually want many thousands of videos on one page
+    (Git #476)
+- In the toolbar at the bottom of the Videos tab, changed the labels for the
+    'scroll up' and 'scroll down' buttons to 'scroll to top' and 'scroll to
+    bottom', which is what the buttons actually do
+- On MS Windows, after selecting 'System > Open MSYS2 terminal', a dialogue
+    window with important information appears, but below the terminal window
+    itself. Swapped their positions so the user sees the important information
+    first
+- In the download options window, Files > Filesystem, the text for the
+    '--no-mtime' option incorrectly read 'Use the server's file modification
+    time' instead of 'Don't use...'. Fixed (Git #488)
+- For channel/playlist/folders with names about 45 characters long, tiles on
+    the grid in the Videos tab were sometimes partially outside the visible
+    window. Slightly decreased the maximum length of the name displayed, which
+    should resolve the problem in most cases
+- Removed some <i> tags which were visible in the Videos tab, for certain
+    viewing modes
+
 v2.4.165 (24 Nov 2022)
 -------------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -43,6 +43,7 @@ locale_setup_list = [
     'ko_KR',    '한국어',
     'nl_NL',    'Nederlands',
     'ru',       'русский',
+    'tr',       'Türkçe',
     'vi',       'Tiếng Việt',
 ]
 
@@ -250,7 +251,7 @@ language_setup_list = [
     'Tigrinya', 'ti',
     'Tonga', 'to',
     'Tsonga', 'ts',
-    'Turkish', 'tr',
+    _('Turkish'), 'tr',
     'Turkmen', 'tk',
     'Twi', 'tw',
     'Uyghur', 'ug',

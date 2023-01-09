@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -62,7 +62,8 @@ Note for PyPI users: Tartube should be installed with: pip3 install tartube
 """
 
 alt_description = """
-Tartube is a GUI front-end for youtube-dl, written in Python 3 / Gtk 3.
+Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
+downloaders.
 """
 
 # data_files for setuptools.setup are added here
@@ -184,17 +185,18 @@ for path in glob.glob('sounds/*'):
 
 # Setup
 setuptools.setup(
-    name='tartube',
-    version='2.4.201',
-    description='GUI front-end for youtube-dl',
-    long_description=long_description,
-    long_description_content_type='text/plain',
-    url='https://tartube.sourceforge.io',
-    author='A S Lewis',
-    author_email='aslewis@cpan.org',
-#    license=license,
-    license="""LGPLv2.1+""",
-    classifiers=[
+    name = 'tartube',
+    version = '2.4.221',
+    description = 'GUI front-end for youtube-dl, yt-dlp and other compatible' \
+    + ' video downloaders',
+    long_description = long_description,
+    long_description_content_type = 'text/plain',
+    url = 'https://tartube.sourceforge.io',
+    author = 'A S Lewis',
+    author_email = 'aslewis@cpan.org',
+#    license = license,
+    license = """LGPLv2.1+""",
+    classifiers = [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: End Users/Desktop',
         'Topic :: Multimedia :: Video',
@@ -206,13 +208,13 @@ setuptools.setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    keywords='tartube video download youtube',
-    packages=setuptools.find_packages(
-        exclude=('docs', 'icons', 'nsis', 'tests'),
+    keywords = 'tartube video download youtube',
+    packages = setuptools.find_packages(
+        exclude = ('docs', 'icons', 'nsis', 'tests'),
     ),
-    include_package_data=True,
-    python_requires='>=3.0, <4',
-    install_requires=[
+    include_package_data = True,
+    python_requires = '>=3.0, <4',
+    install_requires = [
         'feedparser',
 #        'pgi',
         'pygobject',
@@ -220,10 +222,10 @@ setuptools.setup(
         'playsound',
         'requests',
     ],
-    scripts=[script_exec],
-    project_urls={
+    scripts = [script_exec],
+    project_urls = {
         'Bug Reports': 'https://github.com/axcore/tartube/issues',
         'Source': 'https://github.com/axcore/tartube',
     },
-    data_files=param_list,
+    data_files = param_list,
 )

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2022 A S Lewis
+# Copyright (C) 2019-2023 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -71,8 +71,8 @@ class GenericMedia(object):
             r'\d+',
             lambda m: m.group(0).rjust(10, '0'), name
         ).lower()
-        
-    
+
+
     def get_type(self):
 
         if isinstance(self, Channel):
@@ -731,7 +731,7 @@ class GenericContainer(GenericMedia):
 
                 child_name = self.strip_video_name(child_obj.name)
                 child_nickname = self.strip_video_name(child_obj.nickname)
-                
+
                 if (
                     method == 'exact_match' \
                     and (
@@ -758,7 +758,7 @@ class GenericContainer(GenericMedia):
                             app_obj.match_nickname_flag \
                             and child_name[:ignore] == test_name[:ignore]
                         )
-                    )                        
+                    )
                 ):
                     return child_obj
 
@@ -1158,11 +1158,11 @@ class GenericContainer(GenericMedia):
         Args:
 
             name (str): The name to strip
-        
+
         """
 
         # (After extensive testing, this is the only regex sequence I could
-        #   find that worked as inteded)        
+        #   find that worked as inteded)
         test_name = name[:]
 
         # Remove punctuation
@@ -1176,8 +1176,8 @@ class GenericContainer(GenericMedia):
         test_name = re.sub(r'\s+$', '', test_name)
 
         return test_name
-        
-        
+
+
     def test_counts(self):
 
         """Can be called by anything.
@@ -1711,8 +1711,6 @@ class GenericRemoteContainer(GenericContainer):
             app_obj (mainapp.TartubeApp): The main application
 
         """
-
-        self.last_sort_mode = app_obj.catalogue_sort_mode
 
         # Sort a copy of the list to prevent 'list modified during sort'
         #   errors
@@ -3582,12 +3580,6 @@ class Channel(GenericRemoteContainer):
         #   operation. For channels on other websites, can be set manually
         self.rss = None
 
-        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
-        #   self.sort_children() was called. (When the user changes the sort
-        #   mode, we don't sort self.child_list() until we actually need to
-        #   display it)
-        self.last_sort_mode = 'default'
-
         # External download destination - a directory at a fixed position in
         #   the filesystem, outside Tartube's data directory. Use is not
         #   recommended because of potential file read/write problems, but is
@@ -3690,7 +3682,6 @@ class Channel(GenericRemoteContainer):
         return {
             'nickname': self.name,
             'rss': None,
-            'last_sort_mode': 'default',
             'external_dir': None,
             'master_dbid': self.dbid,
             'slave_dbid_list': [],
@@ -3934,12 +3925,6 @@ class Playlist(GenericRemoteContainer):
         #   manually by the user for other websites
         self.rss = None
 
-        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
-        #   self.sort_children() was called. (When the user changes the sort
-        #   mode, we don't sort self.child_list() until we actually need to
-        #   display it)
-        self.last_sort_mode = 'default'
-
         # External download destination - a directory at a fixed position in
         #   the filesystem, outside Tartube's data directory. Use is not
         #   recommended because of potential file read/write problems, but is
@@ -4044,7 +4029,6 @@ class Playlist(GenericRemoteContainer):
         return {
             'nickname': self.name,
             'rss': None,
-            'last_sort_mode': 'default',
             'external_dir': None,
             'master_dbid': self.dbid,
             'slave_dbid_list': [],
@@ -4296,12 +4280,6 @@ class Folder(GenericContainer):
         # Modified version of self.nickname, padded with leading zeroes and
         #   reduced to lower case; used in so-called 'natural' sorting of names
         self.natname = name
-        
-        # The value of mainapp.TartubeApp.catalogue_sort_mode, the last time
-        #   self.sort_children() was called. (When the user changes the sort
-        #   mode, we don't sort self.child_list() until we actually need to
-        #   display it)
-        self.last_sort_mode = 'default'
 
         # External download destination - a directory at a fixed position in
         #   the filesystem, outside Tartube's data directory. Use is not
@@ -4418,7 +4396,6 @@ class Folder(GenericContainer):
 
         return {
             'nickname': self.name,
-            'last_sort_mode': 'default',
             'external_dir': None,
             'master_dbid': self.dbid,
             'slave_dbid_list': [],
@@ -4481,8 +4458,6 @@ class Folder(GenericContainer):
         Sorts the child media.Video, media.Channel, media.Playlist and
         media.Folder objects.
         """
-
-        self.last_sort_mode = app_obj.catalogue_sort_mode
 
         # Sort a copy of the list to prevent 'list modified during sort'
         #   errors
