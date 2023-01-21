@@ -9365,13 +9365,13 @@ class MainWin(Gtk.ApplicationWindow):
                     renderer_text,
                     text=count,
                     style=6,                # Bind italics to column #6
-                    style_set=True,
+                    style-set=True,
                     weight=7,               # Bind bold text to column #7
-                    weight_set=True,
+                    weight-set=True,
                     underline=8,
-                    underline_set=True,     # Bind underline to column #8
+                    underline-set=True,     # Bind underline to column #8
                     strikethrough=9,
-                    strikethrough_set=True, # Bind strikethrough to column #9
+                    strikethrough-set=True, # Bind strikethrough to column #9
                 )
                 self.video_index_treeview.append_column(column_text)
 
