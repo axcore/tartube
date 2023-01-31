@@ -7750,7 +7750,8 @@ class TartubeApp(Gtk.Application):
             # This version removes an IV from media.Channel, media.Playlist and
             #   media.Folder objects
             for media_data_obj in self.container_reg_dict.values():
-                del media_data_obj.last_sort_mode
+                if hasattr(media_data_obj, 'last_sort_mode'):                  
+                    del media_data_obj.last_sort_mode
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------

@@ -22044,6 +22044,22 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton4.set_hexpand(False)
         checkbutton4.connect('toggled', self.on_dialogue_disable_toggled)
 
+        self.add_label(grid,
+            '<i>' + _(
+            'N.B. Tartube shows a dialogue window after checking or' \
+            + ' downloading videos',
+            ) + '</i>',
+            0, 7, 1, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+            'That dialogue window can be disabled in the Operations >' \
+            + ' Actions tab',
+            ) + '</i>',
+            0, 8, 1, 1,
+        )
+
 
     def setup_windows_colours_tab(self, inner_notebook):
 

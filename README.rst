@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.221 (9 Jan 2023)**
 
-Development release: **v2.4.221 (9 Jan 2023)**
+Development release: **v2.4.226 (31 Jan 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -2040,8 +2040,9 @@ You can now set the theme from Tartube's menu.
 * `7.33 Run out of disk space`_
 * `7.34 Cannot embed thumbnails in videos`_
 * `7.35 Cannot install FFmpeg`_
-* `7.36 Japanese/Korean videos won't download`_
-* `7.37 No puedo hablar inglés`_
+* `7.36 Annoying messages after downloads`_
+* `7.37 Japanese/Korean videos won't download`_
+* `7.38 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2535,7 +2536,14 @@ A: The software library that makes FFmpeg available for download breaks frequent
 
 This issue only affects users on MS Windows.
 
-7.36 Japanese/Korean videos won't download
+7.36 Annoying messages after downloads
+--------------------------------------
+
+*Q: Every time Tartube downloads videos, it shows an annoying dialogue window. Make it stop!*
+
+A: The dialogues can be disabled in **Edit > System preferences > Operations > Actions > Don't notify the user at the end of an operation**.
+
+7.37 Japanese/Korean videos won't download
 ------------------------------------------
 
 *Q: On MS Windows, I can't download my favourite anime/K-pop video!*
@@ -2544,7 +2552,7 @@ A: This is an `unresolved bug <https://github.com/axcore/tartube/issues/320>`__ 
 
 As a workaround, click **Edit > General download options... > Files > Filesystem**, and then select **Restrict filenames to ASCII characters**. The videos should be downloaded and added to Tartube's database, but with garbled names (which is better than nothing.)
 
-7.37 No puedo hablar inglés
+7.38 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*
