@@ -1900,7 +1900,10 @@ class OptionsParser(object):
                     # v2.1.009: Since the user doesn't have the possibility of
                     #   setting the -f and --merge-output-format options to the
                     #   same value (e.g. 'mp4'), we must do so artificially
-                    copy_dict['merge_output_format'] = this_format
+                    # yt-dlp supports: avi, flv, mkv, mov, mp4, webm
+                    if this_format in formats.VIDEO_FORMAT_DICT \
+                    and this_format != 'ogg':
+                        copy_dict['merge_output_format'] = this_format
 
                     return
 

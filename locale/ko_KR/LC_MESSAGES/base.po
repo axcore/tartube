@@ -2495,15 +2495,15 @@ msgid "_Remember un-downloaded URLs"
 msgstr ""
 
 #: .././mainwin.py:8396
-msgid "_Set download options"
-msgstr "_다운로드 설정 설정하기"
+msgid "_Set download options..."
+msgstr "_다운로드 설정 설정하기..."
 
 #: .././mainwin.py:8407
 msgid "Use _default download options"
 msgstr "_기본 다운로드 설정 사용"
 
 #: .././mainwin.py:8419
-msgid "Edit download _options"
+msgid "Edit download _options..."
 msgstr ""
 
 #: .././mainwin.py:8433

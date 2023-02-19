@@ -8393,7 +8393,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Download options
         set_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Set download options'),
+            _('_Set download options...'),
         )
         set_menu_item.connect(
             'activate',
@@ -8416,7 +8416,7 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(default_menu_item)
 
         edit_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Edit download _options'),
+            _('Edit download _options...'),
         )
         edit_menu_item.connect(
             'activate',

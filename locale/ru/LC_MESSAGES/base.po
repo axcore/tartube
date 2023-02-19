@@ -2554,16 +2554,16 @@ msgid "_Remember un-downloaded URLs"
 msgstr ""
 
 #: .././mainwin.py:8396
-msgid "_Set download options"
-msgstr "_Установить параметры загрузки"
+msgid "_Set download options..."
+msgstr "_Установить параметры загрузки..."
 
 #: .././mainwin.py:8407
 msgid "Use _default download options"
 msgstr "Использовать параметры _загрузки по умолчанию"
 
 #: .././mainwin.py:8419
-msgid "Edit download _options"
-msgstr "Изменить параметры _загрузки"
+msgid "Edit download _options..."
+msgstr "Изменить параметры _загрузки..."
 
 #: .././mainwin.py:8433
 msgid "Enable _custom downloads"

@@ -2599,16 +2599,16 @@ msgid "_Remember un-downloaded URLs"
 msgstr ""
 
 #: .././mainwin.py:8396
-msgid "_Set download options"
-msgstr "Définir les options de téléchargement"
+msgid "_Set download options..."
+msgstr "Définir les options de téléchargement..."
 
 #: .././mainwin.py:8407
 msgid "Use _default download options"
 msgstr "Utiliser les options de téléchargement par défaut"
 
 #: .././mainwin.py:8419
-msgid "Edit download _options"
-msgstr "Modifier les options de téléchargements"
+msgid "Edit download _options..."
+msgstr "Modifier les options de téléchargements..."
 
 #: .././mainwin.py:8433
 msgid "Enable _custom downloads"

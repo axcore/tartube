@@ -5163,7 +5163,11 @@ class VideoDownloader(object):
 
             # Get playlist information (when downloading a channel or a
             #   playlist, this line is received once per video)
-            if stdout_list[1] == 'Downloading' and stdout_list[2] == 'video':
+            # youtube-dl 'Downloading video n of n'
+            # yt-dlp: 'Downloading item n of n'
+            if stdout_list[1] == 'Downloading' \
+            and (stdout_list[2] == 'video' or stdout_list[2] == 'item') \
+            and stdout_list[4] == 'of':
                 dl_stat_dict['playlist_index'] = int(stdout_list[3])
                 self.video_num = int(stdout_list[3])
                 dl_stat_dict['playlist_size'] = int(stdout_list[5])
@@ -6002,8 +6006,8 @@ class VideoDownloader(object):
                 except:
                     print('STDOUT text with unprintable characters')
 
-        # STDERR
-        else:
+        # STDERR (ignoring any empty error messages)
+        elif data != '':
 
             # Look out for network errors that indicate a stalled download
             if app_obj.operation_auto_restart_flag \
@@ -7942,8 +7946,8 @@ class ClipDownloader(object):
                         'STDOUT text with unprintable characters'
                     )
 
-        # STDERR
-        else:
+        # STDERR (ignoring any empty error messages)
+        elif data != '':
 
             # v2.3.168 I'm not sure that any detectable errors are actually
             #   produced, but nevertheless this section can handle any such
@@ -9048,8 +9052,9 @@ class StreamDownloader(object):
             # Show output in the Output tab and/or terminal (if required)
             self.show_msg(data)
 
-        # STDERR (downloads using youtube-dl, with or without .m3u)
-        elif self.dl_mode != 'streamlink':
+        # STDERR (downloads using youtube-dl, with or without .m3u; ignoring
+        #   any empty error messages)
+        elif data != '' and self.dl_mode != 'streamlink':
 
             mod_data = utils.stream_output_is_ignorable(data)
             if mod_data is not None:
@@ -9078,8 +9083,9 @@ class StreamDownloader(object):
                 # Show output in the Output tab and/or terminal (if required)
                 self.show_msg(mod_data)
 
-        # STDERR (downloads using youtube-dl/.m3u/FFmpeg; or using streamlink)
-        else:
+        # STDERR (downloads using youtube-dl/.m3u/FFmpeg, or using streamlink;
+        #   ignoring any empty error messages)
+        elif data != '':
 
             # Check for recognised errors/warnings, and update the appropriate
             #   media data object (immediately, if possible, or later
@@ -9732,8 +9738,8 @@ class JSONFetcher(object):
                     self.video_upload_time,
                 )
 
-        # STDERR
-        else:
+        # STDERR (ignoring any empty error messages)
+        elif data != '':
 
             live_data_dict = utils.extract_livestream_data(data)
             if live_data_dict:
@@ -10309,8 +10315,8 @@ class MiniJSONFetcher(object):
                         app_obj.main_win_obj.descrip_line_max_len,
                     )
 
-        # STDERR
-        else:
+        # STDERR (ignoring any empty error messages)
+        elif data != '':
 
             # (v2.2.100: In approximately October 2020, YouTube started using a
             #   new error message for livestreams waiting to start)

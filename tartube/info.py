@@ -572,8 +572,8 @@ class InfoManager(threading.Thread):
                 data,
             )
 
-        # STDERR
-        else:
+        # STDERR (ignoring any empty error messages)
+        elif data != '':
 
             # While testing youtube-dl, don't treat anything as an error
             if self.info_type == 'test_ytdl':
