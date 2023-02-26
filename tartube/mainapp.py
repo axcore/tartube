@@ -512,7 +512,17 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if new rows should be added to the Results List
         #   at the top, False if they should be added at the bottom
         self.results_list_reverse_flag = False
-
+        # Flag set to True if the width of certain columns in the Progress
+        #   List, Results List and Classic Progress List should be remembered
+        #   for the next session
+        self.progress_list_remember_width_flag = False
+        # Remembered sizes of those columns, or None to use the default size
+        self.progress_list_width_source = None
+        self.progress_list_width_incoming = None
+        self.results_list_width_video = None
+        self.classic_progress_list_width_source = None
+        self.classic_progress_list_width_incoming = None
+        
         # Flag set to True if system error messages should be shown in the
         #   Errors/Warnings tab
         self.system_error_show_flag = True
@@ -925,12 +935,12 @@ class TartubeApp(Gtk.Application):
         self.ytdl_fork_descrip_dict = {
             'yt-dlp': \
                 'A popular fork of the original youtube-dl, created in 2020' \
-                + ' by pukkandan. Officially supported by Tartube.',
+                + ' by pukkandan. Recommended for all users.',
             'youtube-dl': \
                 'This is the original downloader, created by Ricardo Garcia' \
-                + ' Gonzalez in 2006. Officially supported by Tartube.',
+                + ' Gonzalez in 2006. NOT recommended for most users.',
             'custom': \
-                'Tartube may be compatible with other forks of youtube-dl.',
+                'Tartube may be compatible with other versions of youtube-dl.',
         }
         # v2.3.182: Currently, yt-dlp can't be installed on MS Windows under
         #   MSYS2, because the pycryptodome dependency can't be installed
@@ -2229,6 +2239,10 @@ class TartubeApp(Gtk.Application):
         self.catalogue_mode_type = 'grid'
         # Ordered list of Video Catalogue modes, used for switching between
         #   them (and for setting up Tartube's main menu)
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Videos in the Videos tab can be displayed' \
+            + ' in one of several formats'
+        )        
         self.catalogue_mode_list = [
             [
                 'simple_hide_parent',
@@ -3871,6 +3885,41 @@ class TartubeApp(Gtk.Application):
         # If an operation is in progress, get confirmation before stopping
         elif self.current_manager_obj:
 
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: In Tartube, there is a small set of' \
+                + '\'operations\', each with a unique name. Most operations' \
+                + ' use a separate Python file. Two or more operations never' \
+                + ' happen simultaneously. You can choose any name you like' \
+                + ' for each type of operation; for example, you don\'t need' \
+                + ' to translate the Process Operation literally'
+            )
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Download operations can download videos' \
+                + ' or fetch a list of downloadable videos (usually called' \
+                + ' \'checking\' the videos)'
+            )
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Update operations update youtube-dl,' \
+                + ' FFmpeg, etc'
+            )                
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Refresh operations examine the files' \
+                + ' in Tartube\'s data folder, and update the database' \
+                + ' accordingly'
+            )                                
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Info operations fetch a list of' \
+                + ' available formats/subtitles for a video'
+            )                                                
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Tidy operations remove or convert' \
+                + ' files in Tartube\'s data folder'
+            )              
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Process operations convert videos' \
+                + ' using FFmpeg or AVConv'
+            )                   
+            
             if self.download_manager_obj:
                 string = _('There is a download operation in progress.')
             elif self.update_manager_obj:
@@ -4369,7 +4418,20 @@ class TartubeApp(Gtk.Application):
         if version >= 1000029:  # v1.0.029
             self.results_list_reverse_flag \
             = json_dict['results_list_reverse_flag']
-
+        if version >= 2004244:  # v2.4.244
+            self.progress_list_remember_width_flag \
+            = json_dict['progress_list_remember_width_flag']
+            self.progress_list_width_source \
+            = json_dict['progress_list_width_source']
+            self.progress_list_width_incoming \
+            = json_dict['progress_list_width_incoming']
+            self.results_list_width_video \
+            = json_dict['results_list_width_video']
+            self.classic_progress_list_width_source \
+            = json_dict['classic_progress_list_width_source']
+            self.classic_progress_list_width_incoming \
+            = json_dict['classic_progress_list_width_incoming']
+            
         if version >= 1003069:  # v1.3.069
             self.system_error_show_flag = json_dict['system_error_show_flag']
         if version >= 6006:     # v0.6.006
@@ -5442,6 +5504,21 @@ class TartubeApp(Gtk.Application):
                 self.main_win_classic_slider_posn  \
                 = self.main_win_obj.classic_paned.get_position()
 
+        # Remember the size of various columns in the Progress List, Results
+        #   List and Classic Progress List, if required
+        if self.main_win_obj and self.progress_list_remember_width_flag:
+
+            self.progress_list_width_source, \
+            self.progress_list_width_incoming \
+            = self.main_win_obj.progress_list_get_column_widths()
+
+            self.results_list_width_video \
+            = self.main_win_obj.results_list_get_column_widths()
+            
+            self.classic_progress_list_width_source, \
+            self.classic_progress_list_width_incoming \
+            = self.main_win_obj.classic_mode_tab_get_column_widths()
+
         # If the user wants to recover undownloaded URLs from the Classic Mode
         #   tab when Tartube restarts, then compile that list of URLs now
         if self.classic_pending_flag:
@@ -5518,6 +5595,15 @@ class TartubeApp(Gtk.Application):
 
             'progress_list_hide_flag': self.progress_list_hide_flag,
             'results_list_reverse_flag': self.results_list_reverse_flag,
+            'progress_list_remember_width_flag': \
+            self.progress_list_remember_width_flag,
+            'progress_list_width_source': self.progress_list_width_source,
+            'progress_list_width_incoming': self.progress_list_width_incoming,
+            'results_list_width_video': self.results_list_width_video,
+            'classic_progress_list_width_source': \
+            self.classic_progress_list_width_source,
+            'classic_progress_list_width_incoming': \
+            self.classic_progress_list_width_incoming,
 
             'system_error_show_flag': self.system_error_show_flag,
             'system_warning_show_flag': self.system_warning_show_flag,
@@ -9355,26 +9441,35 @@ class TartubeApp(Gtk.Application):
 
         """Can be called by anything (initially called by self.setup_paths() ).
 
-        Tries to auto-detect the location of youtube-dl, and updates IVs
-        accordingly.
+        Tries to auto-detect the location of yt-dlp or youtube-dl, and updates
+        IVs accordingly.
         """
 
-        # (Doesn't apply to MS Windows, for which paths are fixed)
-        if os.name != 'nt':
+        # Auto-detection does not apply to MS Windows, for which paths are
+        #   fixed
+        if os.name == 'nt':
+            return
 
-            pypi_path = re.sub(
-                '^\~', os.path.expanduser('~'),
-                self.ytdl_path_pypi,
-            )
+        # Check for yt-dlp first (as of 2022, it is virtually abandoned)
+        pypi_path = re.sub(
+            '^\~', os.path.expanduser('~'),
+            re.sub('youtube-dl', 'yt-dlp', self.ytdl_path_pypi),
+        )
+        default_path = re.sub('youtube-dl', 'yt-dlp', self.ytdl_path_default)
+        bin_path = re.sub('youtube-dl', 'yt-dlp', self.ytdl_bin)
 
-            if os.path.isfile(pypi_path) \
-            or __main__.__pkg_install_flag__:
-                self.ytdl_path = self.ytdl_path_pypi
-            elif os.path.isfile(self.ytdl_path_default):
-                self.ytdl_path = self.ytdl_path_default
-            else:
-                self.ytdl_path = self.ytdl_bin
+        path = None        
+        if os.path.isfile(pypi_path):
+            path = pypi_path
+        elif os.path.isfile(default_path):
+            path = default_path
+        elif os.path.isfile(bin_path):
+            path = bin_path
 
+        if path is not None:
+
+            self.ytdl_path = path
+            
             if not __main__.__pkg_strict_install_flag__:
 
                 if self.ytdl_path == self.ytdl_path_pypi:
@@ -9383,6 +9478,31 @@ class TartubeApp(Gtk.Application):
                     self.ytdl_update_current = 'ytdl_update_default_path'
                 else:
                     self.ytdl_update_current = 'ytdl_update_local_path'
+
+            return
+
+        # Otherwise, assume youtube-dl
+        pypi_path = re.sub(
+            '^\~', os.path.expanduser('~'),
+            self.ytdl_path_pypi,
+        )
+
+        if os.path.isfile(pypi_path) \
+        or __main__.__pkg_install_flag__:
+            self.ytdl_path = self.ytdl_path_pypi
+        elif os.path.isfile(self.ytdl_path_default):
+            self.ytdl_path = self.ytdl_path_default
+        else:
+            self.ytdl_path = self.ytdl_bin
+
+        if not __main__.__pkg_strict_install_flag__:
+
+            if self.ytdl_path == self.ytdl_path_pypi:
+                self.ytdl_update_current = 'ytdl_update_pip3_recommend'
+            elif self.ytdl_path == self.ytdl_path_default:
+                self.ytdl_update_current = 'ytdl_update_default_path'
+            else:
+                self.ytdl_update_current = 'ytdl_update_local_path'
 
 
     def auto_delete_old_videos(self, update_flag=False):
@@ -26740,6 +26860,22 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.progress_list_check_hide_rows(True)
 
 
+    def set_progress_list_remember_width_flag(self, flag):
+
+        if not flag:
+            self.progress_list_remember_width_flag = False
+            self.progress_list_width_source = None
+            self.progress_list_width_incoming = None
+            self.results_list_width_video = None
+            self.classic_progress_list_width_source = None
+            self.classic_progress_list_width_incoming = None
+                    
+        else:
+            self.progress_list_remember_width_flag = True
+            # (self.progress_list_width_source, etc, are set by
+            #   self.save_config() )
+
+            
     def set_refresh_moviepy_timeout(self, value):
 
         self.refresh_moviepy_timeout = value
@@ -26760,7 +26896,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.refresh_output_videos_flag = True
 
-
+            
     def set_restore_posn_from_tray_flag(self, flag):
 
         if not flag:

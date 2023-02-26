@@ -2774,7 +2774,7 @@ msgstr "Cảnh báo"
 
 #: .././mainwin.py:15026
 msgid ""
-"There are not scheduled downloads that don't already contain the channel/"
+"There are no scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
 "Không có các bản tải xuống theo lịch trình chưa chứa kênh/danh sách phát/thư "

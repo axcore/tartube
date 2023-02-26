@@ -58,7 +58,7 @@ while locale_setup_list:
     LOCALE_LIST.append(key)
     LOCALE_DICT[key] = value
 
-# Some icons are different at Christmas/on national holidays
+# Some icons are different at Christmas and on national holidays
 today = datetime.date.today()
 day = today.strftime('%d')
 month = today.strftime('%m')
@@ -72,7 +72,8 @@ or (int(month) == 1 and int(day) <= 5):
 elif (int(month) == 2 and int(day) == 24) \
 or (int(month) == 8 and int(day) == 20):
     eesti_flag = True
-elif (int(month) == 4 and int(day) == 23):
+elif (int(month) == 4 and int(day) == 23) \
+or (int(month) == 11 and int(day) == 14):
     anglo_flag = True
 
 language_setup_list = [
@@ -1214,7 +1215,7 @@ def do_translate(config_flag=False):
 
         # File output templates use a combination of English words, each of
         #   which must be translated
-        translate_note = _(
+        ignore_me = _(
             'TRANSLATOR\'S NOTE: ID refers to a video\'s unique ID on the' \
             + ' website, e.g. on YouTube "CS9OO0S5w2k"',
         )

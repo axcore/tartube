@@ -572,6 +572,12 @@ class SetupWizWin(GenericWizWin):
 
     def __init__(self, app_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Setup wizard window starts here.' \
+            + ' This window is visible on startup, if there is no config' \
+            + ' file (settings.json)'
+        )
+        
         Gtk.Window.__init__(self, title=_('Tartube setup'))
 
         if self.is_duplicate(app_obj):
@@ -2261,6 +2267,12 @@ class ImportYTWizWin(GenericWizWin):
 
     def __init__(self, app_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Subscriptions wizard window starts here.' \
+            + ' In the menu, click Media > Export/Import > Import' \
+            + ' YouTube subscriptions...'
+        )
+        
         Gtk.Window.__init__(self, title=_('Import YouTube subscriptions'))
 
         if self.is_duplicate(app_obj):
@@ -3029,6 +3041,11 @@ class TutorialWizWin(GenericWizWin):
 
     def __init__(self, app_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Tutorial wizard window starts here.' \
+            + ' In the menu, click Help > Show tutorial...'
+        )
+        
         Gtk.Window.__init__(self, title=_('Tartube Tutorial'))
 
         if self.is_duplicate(app_obj):
@@ -3073,7 +3090,7 @@ class TutorialWizWin(GenericWizWin):
         # N.B. If more pages are added, mainwin.MainWin.tutorial_page_count
         #   must be updated with the new page count!
         self.page_list = ['setup_start_page']
-        for i in range(2, self.app_obj.main_win_obj.tutorial_page_count):
+        for i in range(1, self.app_obj.main_win_obj.tutorial_page_count):
             self.page_list.append('setup_page_' + str(i))
 
         self.page_list.append('setup_finish_page')
@@ -3088,7 +3105,37 @@ class TutorialWizWin(GenericWizWin):
 #   def is_duplicate():         # Inherited from GenericWizWin
 
 
-#   def setup():                # Inherited from GenericWizWin
+    def setup(self):
+
+        """Called by self.__init__().
+
+        Sets up the wizard window when it opens.
+        """
+
+        # Set the non-default size for this wizard window
+        self.set_default_size(750, 575)
+        
+        # Set the window's Gtk icon list
+        self.set_icon_list(self.app_obj.main_win_obj.win_pixbuf_list)
+
+        # Set up main widgets
+        self.setup_grid()
+        self.setup_button_strip()
+
+        # Set up the first page (a widget layout on self.inner_grid)
+        self.setup_page()
+
+        # Procedure complete
+        self.show_all()
+
+        # Inform the main window of this window's birth (so that Tartube
+        #   doesn't allow an operation to start until all configuration windows
+        #   have closed)
+        self.app_obj.main_win_obj.add_child_window(self)
+
+        # Add a callback so we can inform the main window of this window's
+        #   destruction
+        self.connect('destroy', self.close)
 
 
 #   def setup_grid():           # Inherited from GenericWizWin

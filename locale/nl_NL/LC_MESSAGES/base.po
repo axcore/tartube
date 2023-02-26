@@ -2775,7 +2775,7 @@ msgstr "Waarschuwingen"
 
 #: .././mainwin.py:15026
 msgid ""
-"There are not scheduled downloads that don't already contain the channel/"
+"There are no scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
 "Er zijn niet-ingeplande downloads die niet al de map/afspeellijst/het kanaal "

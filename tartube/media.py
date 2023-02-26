@@ -635,7 +635,7 @@ class GenericContainer(GenericMedia):
 
         if not isinstance(self, Folder):
 
-            translate_note = _(
+            ignore_me = _(
                 'TRANSLATOR\'S NOTE: Source = video/channel/playlist URL',
             )
 
@@ -2210,7 +2210,7 @@ class Video(GenericMedia):
 
         if not self.dummy_flag:
 
-            translate_note = _(
+            ignore_me = _(
                 'TRANSLATOR\'S NOTE: WAITING = livestream not started,' \
                 + ' LIVE = livestream started',
             )
@@ -2241,8 +2241,8 @@ class Video(GenericMedia):
 
                 text += self.parent_obj.name + '\n\n'
 
-            translate_note = _(
-                'TRANSLATOR\'S NOTE 2: Source = video/channel/playlist URL',
+            ignore_me = _(
+                'TRANSLATOR\'S NOTE: Source = video/channel/playlist URL',
             )
 
             text += _('Source:') + '\n'

@@ -2734,7 +2734,7 @@ msgstr "_경고"
 
 #: .././mainwin.py:15026
 msgid ""
-"There are not scheduled downloads that don't already contain the channel/"
+"There are no scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr "채널/플레이리스트/폴더가 포함하지 않은 예약된 다운로드가 없습니다"
 

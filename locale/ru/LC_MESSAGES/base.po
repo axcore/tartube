@@ -2794,7 +2794,7 @@ msgstr "Предупреждения"
 
 #: .././mainwin.py:15026
 msgid ""
-"There are not scheduled downloads that don't already contain the channel/"
+"There are no scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
 "Нет запланированных загрузок, которые еще не содержат канал/плейлист/папку"

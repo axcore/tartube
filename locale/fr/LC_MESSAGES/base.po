@@ -2833,7 +2833,7 @@ msgstr "Avertissements"
 
 #: .././mainwin.py:15026
 msgid ""
-"There are not scheduled downloads that don't already contain the channel/"
+"There are no scheduled downloads that don't already contain the channel/"
 "playlist/folder"
 msgstr ""
 "Il n'y a pas de téléchargements planifiés qui ne contiennent déjà la canal / "

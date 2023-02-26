@@ -10283,7 +10283,7 @@ class MiniJSONFetcher(object):
                     )
 
                 elif self.video_obj.live_mode == 2 \
-                and not json_dict['is_live']:
+                and (not 'is_live' in json_dict or not json_dict['is_live']):
 
                     # Broadcasting livestream has finished
                     GObject.timeout_add(

@@ -374,6 +374,9 @@ class MainWin(Gtk.ApplicationWindow):
         #   Wayland (according to the Gtk documentation)
         self.win_last_xpos = None
         self.win_last_ypos = None
+        # Standard minimum column width for the treeviews that are the Progress
+        #   List, Results List and Classic Progress List
+        self.min_column_width = 20
 
         # Paths to Tartube standard icon files. Dictionary in the form
         #   key - a string like 'video_both_large'
@@ -1303,6 +1306,10 @@ class MainWin(Gtk.ApplicationWindow):
         Sets up a Gtk.Menu at the top of the main window.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window menu starts here'
+        )
+        
         self.menubar = Gtk.MenuBar()
         self.grid.attach(self.menubar, 0, 0, 1, 1)
 
@@ -1480,6 +1487,9 @@ class MainWin(Gtk.ApplicationWindow):
         export_import_submenu.append(self.import_db_menu_item)
         self.import_db_menu_item.set_action_name('app.import_db_menu')
 
+        # Separator
+        export_import_submenu.append(Gtk.SeparatorMenuItem())
+        
         self.import_yt_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Import _YouTube subscriptions...'),
         )
@@ -1828,6 +1838,10 @@ class MainWin(Gtk.ApplicationWindow):
         replacing the previous one, if it exists.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window toolbar starts here' 
+        )
+        
         # If a toolbar already exists, destroy it to make room for the new one
         if self.main_toolbar:
             self.grid.remove(self.main_toolbar)
@@ -2120,6 +2134,10 @@ class MainWin(Gtk.ApplicationWindow):
         toolbar. Creates two tabs, the Videos tab and the Progress tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window tabs are defined here' 
+        )
+        
         self.notebook = Gtk.Notebook()
         self.grid.attach(self.notebook, 0, 2, 1, 1)
         self.notebook.set_border_width(self.spacing_size)
@@ -2185,6 +2203,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Videos tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         self.videos_paned = Gtk.HPaned()
         self.videos_tab.pack_start(self.videos_paned, True, True, 0)
         self.videos_paned.set_position(
@@ -2849,6 +2871,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Progress tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Progress tab' 
+        )
+        
         vbox = Gtk.VBox()
         self.progress_tab.pack_start(vbox, True, True, 0)
 
@@ -2885,7 +2911,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_progress_list_right_click,
         )
 
-        translate_note = _(
+        ignore_me = _(
             'TRANSLATOR\'S NOTE: Ext is short for a file extension, e.g. .EXE',
         )
 
@@ -2915,7 +2941,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
                 self.progress_list_treeview.append_column(column_text)
                 column_text.set_resizable(True)
-                column_text.set_min_width(20)
+                column_text.set_min_width(self.min_column_width)
                 if column_title == 'hide':
                     column_text.set_visible(False)
 
@@ -2926,13 +2952,27 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
-        # Limit the size of the 'Source' and 'Incoming file' columns. The
+        # Set the size of the 'Source' and 'Incoming file' columns. The
         #   others always contain few characters, so let them expand as they
         #   please
-        for column in [4, 7]:
-            column_obj = self.progress_list_treeview.get_column(column)
-            column_obj.set_fixed_width(200)
-
+        source_column = self.progress_list_treeview.get_column(4)
+        if self.app_obj.progress_list_width_source is not None \
+        and self.app_obj.progress_list_width_source >= self.min_column_width:
+            source_column.set_fixed_width(
+                self.app_obj.progress_list_width_source,
+            )
+        else:
+            source_column.set_fixed_width(200)
+            
+        incoming_column = self.progress_list_treeview.get_column(7)
+        if self.app_obj.progress_list_width_incoming is not None \
+        and self.app_obj.progress_list_width_incoming >= self.min_column_width:
+            incoming_column.set_fixed_width(
+                self.app_obj.progress_list_width_incoming,
+            )
+        else:
+            incoming_column.set_fixed_width(200)
+            
         # Lower half
         frame2 = Gtk.Frame()
         self.progress_paned.pack2(frame2, True, False)
@@ -3012,7 +3052,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
                 self.results_list_treeview.append_column(column_text)
                 column_text.set_resizable(True)
-                column_text.set_min_width(20)
+                column_text.set_min_width(self.min_column_width)
                 if column_title == 'hide':
                     column_text.set_visible(False)
 
@@ -3026,10 +3066,17 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.results_list_treeview.set_model(self.results_list_liststore)
 
-        # Limit the size of the 'New videos' column (the 'Downloaded to'
-        #   column)
-        column_obj = self.results_list_treeview.get_column(3)
-        column_obj.set_fixed_width(300)
+        # Set the size of the 'New videos' column. The others always contain
+        #   few characters, so let them expand as they please
+        videos_column = self.results_list_treeview.get_column(3)
+        if self.app_obj.results_list_width_video is not None \
+        and self.app_obj.results_list_width_video >= self.min_column_width:
+            videos_column.set_fixed_width(
+                self.app_obj.results_list_width_video,
+            )
+            
+        else:
+            videos_column.set_fixed_width(300)
 
         # Strip of widgets at the bottom, arranged in a grid
         grid = Gtk.Grid()
@@ -3164,6 +3211,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Classic Mode tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab' 
+        )
+        
         self.classic_paned = Gtk.VPaned()
         self.classic_tab.pack_start(self.classic_paned, True, True, 0)
         self.classic_paned.set_position(
@@ -3546,7 +3597,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
             self.classic_progress_treeview.append_column(column_text)
             column_text.set_resizable(True)
-            column_text.set_min_width(20)
+            column_text.set_min_width(self.min_column_width)
             if column_title == 'hide':
                 column_text.set_visible(False)
 
@@ -3557,12 +3608,30 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_progress_liststore,
         )
 
-        # Limit the size of the 'Source' and 'Incoming file' columns. The
+        # Set the size of the 'Source' and 'Incoming file' columns. The
         #   others always contain few characters, so let them expand as they
         #   please
-        for column in [2, 5]:
-            column_obj = self.classic_progress_treeview.get_column(column)
-            column_obj.set_fixed_width(200)
+        source_column = self.classic_progress_treeview.get_column(2)
+        if self.app_obj.classic_progress_list_width_source is not None \
+        and self.app_obj.classic_progress_list_width_source \
+        >= self.min_column_width:
+            source_column.set_fixed_width(
+                self.app_obj.classic_progress_list_width_source,
+            )
+            
+        else:
+            source_column.set_fixed_width(200)
+            
+        incoming_column = self.classic_progress_treeview.get_column(5)
+        if self.app_obj.classic_progress_list_width_incoming is not None \
+        and self.app_obj.classic_progress_list_width_incoming \
+        >= self.min_column_width:
+            incoming_column.set_fixed_width(
+                self.app_obj.classic_progress_list_width_incoming,
+            )
+            
+        else:
+            incoming_column.set_fixed_width(200)
 
         # Fifth row - a strip of buttons that apply to rows in the Classic
         #   Progress List. We use another new hbox to avoid messing up the
@@ -3804,6 +3873,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Drag and Drop tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Drag and Drop tab' 
+        )
+        
         grid = Gtk.Grid()
         self.drag_drop_tab.pack_start(grid, True, True, 0)
         grid.set_column_spacing(self.spacing_size)
@@ -3905,6 +3978,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Output tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Output tab' 
+        )
+        
         grid = Gtk.Grid()
         self.output_tab.pack_start(grid, True, True, 0)
         grid.set_column_spacing(self.spacing_size)
@@ -3968,6 +4045,10 @@ class MainWin(Gtk.ApplicationWindow):
         Creates widgets for the Errors/Warnings tab.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Errors / Warnings tab' 
+        )
+        
         vbox = Gtk.VBox()
         self.errors_tab.pack_start(vbox, True, True, 0)
 
@@ -4374,6 +4455,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         if not self.progress_bar and not skip_check_flag:
             return self.app_obj.system_error(
                 201,
@@ -4633,6 +4718,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         if operation_type is not None \
         and operation_type != 'ffmpeg' and operation_type != 'matplotlib' \
         and operation_type != 'streamlink' and operation_type != 'ytdl' \
@@ -5123,6 +5212,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         if self.progress_bar:
             return self.app_obj.system_error(
                 203,
@@ -5273,6 +5366,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Progress tab' 
+        )
+        
         if on_flag:
 
             self.alt_limits_image.set_from_pixbuf(
@@ -5330,6 +5427,10 @@ class MainWin(Gtk.ApplicationWindow):
         required.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         if not self.app_obj.catalogue_show_filter_flag:
 
             # Hide the second/third rows
@@ -5441,6 +5542,10 @@ class MainWin(Gtk.ApplicationWindow):
         required, set the reverse sort button to its correct state.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
+        
         if not self.app_obj.catalogue_reverse_sort_flag:
 
             if not self.app_obj.show_custom_icons_flag:
@@ -5506,6 +5611,10 @@ class MainWin(Gtk.ApplicationWindow):
         according to current settings.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab' 
+        )
+        
         if self.app_obj.classic_format_selection is None \
         or self.app_obj.classic_format_convert_flag:
 
@@ -5553,6 +5662,10 @@ class MainWin(Gtk.ApplicationWindow):
         for example, see the code in mainapp.TartubeApp.load_db().
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window menu'
+        )
+        
         if self.update_ytdl_menu_item is not None:
 
             downloader = self.app_obj.get_downloader()
@@ -5598,6 +5711,10 @@ class MainWin(Gtk.ApplicationWindow):
         the current setting of mainapp.TartubeApp.toolbar_system_hide_flag.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window toolbar'
+        )
+        
         # Update the appearance of the toolbar button
         if not self.app_obj.toolbar_system_hide_flag:
 
@@ -5699,6 +5816,10 @@ class MainWin(Gtk.ApplicationWindow):
                 button's label is reset to its default state
 
         """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+        )
 
         if self.check_media_button is None:
             return
@@ -5899,6 +6020,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Video Index popup menu starts here. In' \
+            + ' the Videos tab, right-click any channel/playlist/folder'
+        )
+        
         # Find the right-clicked media data object (and a string to describe
         #   its type)
         media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -6596,6 +6722,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Video Catalogue popup menu starts here. In' \
+            + ' the Videos tab, right-click any video'
+        )
+        
         # Use a different popup menu for multiple selected videos
         video_list = []
         if self.app_obj.catalogue_mode_type != 'grid':
@@ -6863,7 +6994,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
                 alt_submenu.append(watch_invidious_menu_item)
 
-                translate_note = _(
+                ignore_me = _(
                     'TRANSLATOR\'S NOTE: Watch on YouTube, Watch on' \
                     + ' HookTube, etc',
                 )
@@ -7440,6 +7571,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Video Catalogue popup menu starts here. In' \
+            + ' the Videos tab, select two or more videos, then righ-click' \
+            + ' them'
+        )
+        
         # So we can desensitise some menu items, work out in advance whether
         #   any of the selected videos are marked as downloaded, or have a
         #   source URL, or are in a temporary folder
@@ -7938,6 +8075,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Progress List popup menu starts here. In' \
+            + ' the Progress tab, in the list in the top half of the tab,' \
+            + ' right-click any row'
+        )
+        
         # Find the downloads.VideoDownloader which is currently handling the
         #   clicked media data object (if any)
         download_manager_obj = self.app_obj.download_manager_obj
@@ -8152,6 +8295,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Results List popup menu starts here. In' \
+            + ' the Progress tab, in the list in the bottom half of the tab,' \
+            + ' right-click any row'
+        )
+        
         # Get the selected media.Video object(s)
         video_list = self.get_selected_videos_in_treeview(
             self.results_list_treeview,
@@ -8209,6 +8358,16 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
 
+        show_location_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Open destination(s)'),
+        )
+        show_location_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_show_location_multi,
+            video_list,
+        )
+        popup_menu.append(show_location_menu_item)
+            
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8349,6 +8508,12 @@ class MainWin(Gtk.ApplicationWindow):
         shows a context-sensitive popup menu.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Classic Mode popup menu starts here. In' \
+            + ' the Classic Mode tab, click the button in the top-right' \
+            + ' corner'
+        )
+        
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -8496,6 +8661,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Classic Progress List popup menu starts' \
+            + ' here. In the Classic Mode tab, in the list in the bottom' \
+            + ' half of the tab, right-click any row'
+        )
+        
         # Get the selected dummy media.Video object(s)
         video_list = self.get_selected_videos_in_classic_treeview()
         # Because of Gtk weirdness, right-clicking a line might not select it
@@ -8690,6 +8861,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the popup menu in the' \
+            + ' Video Catalogue. In the videos tab, right-click any video'
+        )
+        
         # Watch video in player/download and watch
         if not_dl_flag or live_flag:
 
@@ -8801,7 +8977,7 @@ class MainWin(Gtk.ApplicationWindow):
                 )
                 alt_submenu.append(watch_invidious_menu_item)
 
-                translate_note = _(
+                ignore_me = _(
                     'TRANSLATOR\'S NOTE: Watch on YouTube, Watch on' \
                     + ' HookTube, etc',
                 )
@@ -8826,7 +9002,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download (may be an empty list)
 
         """
-
+                
         # Set up the popup menu
         popup_menu = self.custom_dl_popup_submenu(media_data_list)
 
@@ -8861,6 +9037,11 @@ class MainWin(Gtk.ApplicationWindow):
             The sub-menu created
 
         """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Popup menu for the \'Custom download all\'' \
+            + ' button in the Videos tab (not always visible)'
+        )
 
         # Set up the popup menu
         popup_menu = Gtk.Menu()
@@ -8942,6 +9123,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the main window menu,' \
+            + ' can be found in Media > Profiles > Delete profile > ...'
+        )
+        
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -9037,6 +9223,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the Video Index popup menu.' \
+            + ' In the Videos tab, right-click any channel/playlist/folder'
+        )
+        
         mark_archived_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Mark as _archived'),
         )
@@ -10007,11 +10198,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         else:
 
-            translate_note = _(
+            ignore_me = _(
                 'TRANSLATOR\'S NOTE: V = number of videos B = (number of' \
                 + ' videos) bookmarked D = downloaded F = favourite' \
                 + ' L = live/livestream M = missing N = new W = in waiting' \
-                + ' list E = (number of) errors W = warnings',
+                + ' list E = (number of) errors W = warnings. Choose any' \
+                + ' abbreviation you like.',
             )
 
             if media_data_obj.vid_count:
@@ -12475,6 +12667,38 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def progress_list_get_column_widths(self):
+
+        """Called by mainapp.TartubeApp.save_config().
+
+        Fetches the width of the 'Source' and 'Incoming file' columns in the
+        Progress List.
+
+        Return values:
+
+            The two widths, or None if the list doesn't exist yet
+            
+        """
+
+        if self.progress_list_treeview is None:
+            return None, None
+
+        else:
+            source_column = self.progress_list_treeview.get_column(4)
+            source_width = source_column.get_width()
+            # (Shouldn't be possible to reduce the width below the minimum,
+            #   but we'll check anyway)
+            if source_width < self.min_column_width:
+                source_width = self.min_column_width
+                
+            incoming_column = self.progress_list_treeview.get_column(7)
+            incoming_width = incoming_column.get_width()
+            if incoming_width < self.min_column_width:
+                incoming_width = self.min_column_width
+
+            return source_width, incoming_width
+        
+
     # (Results List)
 
 
@@ -12901,6 +13125,32 @@ class MainWin(Gtk.ApplicationWindow):
                 ),
             )
 
+
+    def results_list_get_column_widths(self):
+
+        """Called by mainapp.TartubeApp.save_config().
+
+        Fetches the width of the 'New videos' column in the Results List.
+        
+        Return values:
+
+            The width, or None if the list doesn't exist yet
+            
+        """
+
+        if self.results_list_treeview is None:
+            return None, None
+
+        else:
+            video_column = self.results_list_treeview.get_column(3)
+            video_width = video_column.get_width()
+            # (Shouldn't be possible to reduce the width below the minimum,
+            #   but we'll check anyway)
+            if video_width < self.min_column_width:
+                video_width = self.min_column_width
+
+            return video_width
+        
 
     # (Classic Mode tab)
 
@@ -13693,6 +13943,38 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def classic_mode_tab_get_column_widths(self):
+
+        """Called by mainapp.TartubeApp.save_config().
+
+        Fetches the width of the 'Source' and 'Incoming file' columns in the
+        Classic Progress List.
+
+        Return values:
+
+            The two widths, or None if the list doesn't exist yet
+            
+        """
+
+        if self.classic_progress_treeview is None:
+            return None, None
+
+        else:
+            source_column = self.classic_progress_treeview.get_column(2)
+            source_width = source_column.get_width()
+            # (Shouldn't be possible to reduce the width below the minimum,
+            #   but we'll check anyway)
+            if source_width < 20:
+                source_width = 20
+                
+            incoming_column = self.classic_progress_treeview.get_column(5)
+            incoming_width = incoming_column.get_width()
+            if incoming_width < 20:
+                incoming_width = 20
+
+            return source_width, incoming_width
+        
+
     # (Drag and Drop tab)
 
 
@@ -13950,7 +14232,7 @@ class MainWin(Gtk.ApplicationWindow):
                 notebook, showing what the threads are doing
 
         """
-
+        
         # Each page (except the summary page) corresponds to a single
         #   downloads.DownloadWorker object. The page number matches the
         #   worker's .worker_id. The first worker is numbered #1
@@ -13960,9 +14242,9 @@ class MainWin(Gtk.ApplicationWindow):
         # Add the new page
         tab = Gtk.Box()
 
-        translate_note = _(
-            'TRANSLATOR\'S NOTE: Thread means a computer processor thread.' \
-            + ' If you\'re not sure how to translate it, just use' \
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Thread\' means a computer processor' \
+            + ' thread. If you\'re not sure how to translate it, just use' \
             + ' \'Page #\', as in Page #1, Page #2, etc',
         )
 
@@ -14354,6 +14636,10 @@ class MainWin(Gtk.ApplicationWindow):
         making error/warning messages visible or not, depending on settings.
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the Errors/Warnings tab'
+        )
+        
         # Import the main application (for convenience)
         app_obj = self.app_obj
 
@@ -15013,6 +15299,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by a popup menu.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Downloads > Add to scheduled download...'
+        )
+        
         # Check that at least one scheduled download exists, that doesn't
         #   already contain the specified media data object
         available_list = []
@@ -15023,7 +15315,7 @@ class MainWin(Gtk.ApplicationWindow):
         if not available_list:
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _(
-                'There are not scheduled downloads that don\'t already' \
+                'There are no scheduled downloads that don\'t already' \
                 + ' contain the channel/playlist/folder',
                 ),
                 'error',
@@ -16541,6 +16833,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by a popup menu.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Downloads > Set download destination...'
+        )
+        
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 240,
@@ -18120,6 +18418,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by a popup menu.' \
+            + ' In the Videos tab, right-click a video and select' \
+            + ' Special > Process with FFmpeg...'
+        )
+        
         # Can't start a process operation if another operation has started
         #   since the popup menu was created
         if self.app_obj.current_manager_obj:
@@ -18354,6 +18658,12 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by a popup menu.' \
+            + ' In the Videos tab, right-click a video and select' \
+            + ' Special > Reload metadata...'
+        )
+        
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
                 256,
@@ -18544,6 +18854,37 @@ class MainWin(Gtk.ApplicationWindow):
         other_obj = self.app_obj.media_reg_dict[parent_obj.master_dbid]
         path = other_obj.get_actual_dir(self.app_obj)
         utils.open_file(self.app_obj, path)
+
+
+    def on_video_catalogue_show_location_multi(self, menu_item, \
+    media_data_list):
+
+        """Called from a callback in self.results_list_popup_menu().
+
+        Shows the actual sub-directory in which the specified videos are stored
+        (which might be different from the default sub-directory, if the media
+        data object's .master_dbid has been modified).
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        path_list = []
+        
+        for media_data_obj in media_data_list:
+                   
+            parent_obj = media_data_obj.parent_obj
+            other_obj = self.app_obj.media_reg_dict[parent_obj.master_dbid]
+            path = other_obj.get_actual_dir(self.app_obj)
+
+            # Don't show duplicate download locations
+            if not path in path_list:
+                utils.open_file(self.app_obj, path)
+                path_list.append(path)
 
 
     def on_video_catalogue_show_properties(self, menu_item, media_data_obj):
@@ -19869,7 +20210,6 @@ class MainWin(Gtk.ApplicationWindow):
 
     def on_classic_format_combo_changed(self, combo):
 
-
         """Called from callback in self.setup_classic_mode_tab().
 
         In the combobox displaying video/audio formats, if the user selects the
@@ -19886,6 +20226,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the \'Format\' drop-down' \
+            + ' box in the Classic Mode tab'
+        )
+        
         tree_iter = self.classic_format_combo.get_active_iter()
         model = self.classic_format_combo.get_model()
         text = model[tree_iter][0]
@@ -20095,6 +20440,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Extra items for the buttons at the bottom' \
+            + ' of the Classic Mode tab'
+        )
+        
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
@@ -20399,8 +20749,12 @@ class MainWin(Gtk.ApplicationWindow):
         tree_iter = self.classic_resolution_combo.get_active_iter()
         model = self.classic_resolution_combo.get_model()
         text = utils.strip_whitespace(model[tree_iter][0])
-
+        
         # (Dummy items in the combo)
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Highest video resolution'
+        )
+
         default_item = _('Highest')
 
         # (Update the IV)
@@ -20611,6 +20965,11 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by main window' \
+            + ' menu, Media > Profiles > Delete profile'
+        )
+        
         # Prompt for confirmation, before deleting
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
             _(
@@ -21469,6 +21828,11 @@ class MainWin(Gtk.ApplicationWindow):
                 # If any duplicates were found, inform the user
                 if duplicate_list:
 
+                    ignore_me = _(
+                        'TRANSLATOR\'S NOTE: Duplicate URLs dragged into' \
+                        + ' the main window\'s Videos tab'
+                    )
+        
                     msg = _('The following items are duplicates:')
                     for line in duplicate_list:
                         msg += '\n\n' + line
@@ -21920,6 +22284,13 @@ class SimpleCatalogueItem(object):
 
     def __init__(self, main_win_obj, video_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: This section specifies text used to' \
+            + ' display videos in the Videos tab. Videos are displayed in' \
+            + ' several different formats. To switch format, in the main' \
+            + ' menu click Media > Switch between views'
+        )
+        
         # IV list - class objects
         # -----------------------
         # The main window object
@@ -23652,7 +24023,7 @@ class ComplexCatalogueItem(object):
         and not self.main_win_obj.app_obj.refresh_manager_obj \
         and not self.main_win_obj.app_obj.process_manager_obj:
 
-            translate_note = _(
+            ignore_me = _(
                 'TRANSLATOR\'S NOTE: If you want to use &, use &amp;' \
                 + ' - if you want to use a different word (e.g. French et)' \
                 + ', then just use that word',
@@ -25963,7 +26334,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
 
         elif self.video_obj.live_mode == 2:
 
-            translate_note = _('TRANSLATOR\'S NOTE: D/L means download')
+            ignore_me = _('TRANSLATOR\'S NOTE: D/L means download')
 
             # Link clickable
             self.watch_player_label.set_markup(
@@ -25982,7 +26353,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         and not self.main_win_obj.app_obj.refresh_manager_obj \
         and not self.main_win_obj.app_obj.process_manager_obj:
 
-            translate_note = _(
+            ignore_me = _(
                 'TRANSLATOR\'S NOTE: If you want to use &, use &amp;' \
                 + ' - if you want to use a different word (e.g. French et)' \
                 + ', then just use that word',
@@ -26019,7 +26390,7 @@ class GridCatalogueItem(ComplexCatalogueItem):
         else:
             link_text = ''
 
-        translate_note = _(
+        ignore_me = _(
             'TRANSLATOR\'S NOTE: This section contains shortened' \
             + ' labels: Archive = Archived, B/Mark = Bookmarked,' \
             + ' Waiting: In waiting list',
@@ -27621,6 +27992,12 @@ class AddBulkDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, suggest_parent_dbid=None):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add many channels/playlists\' dialogue' \
+            + ' starts here. In the main window menu, click' \
+            + ' Media > Add many channels/playlists...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -28299,6 +28676,11 @@ class AddChannelDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, suggest_parent_dbid=None,
     dl_sim_flag=False, monitor_flag=False):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add channel\' dialogue starts here. In' \
+            + ' the main window toolbar, click the Channel button'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -28687,6 +29069,11 @@ class AddDropZoneDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add dropzone dialogue starts here. In the' \
+            + ' Drag and Drop tab, click the button in the top-right corner'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29015,6 +29402,11 @@ class AddFolderDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, suggest_parent_dbid=None):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add folder\' dialogue starts here. In' \
+            + ' the main window toolbar, click the Folder button'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29208,6 +29600,11 @@ class AddPlaylistDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, suggest_parent_dbid=None,
     dl_sim_flag=False, monitor_flag=False):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add playlist\' dialogue starts here. In' \
+            + ' the main window toolbar, click the Playlist button'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29517,6 +29914,12 @@ class AddStampDialogue(Gtk.Dialog):
 
     def __init__(self, parent_win_obj, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Reset timestamps\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a video and select Show Video' \
+            + ' > Properties... > Timestamps > Reset list using copied text'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29681,6 +30084,11 @@ class AddVideoDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add video\' dialogue starts here. In' \
+            + ' the main window toolbar, click the Video button'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30057,6 +30465,12 @@ class ApplyOptionsDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Apply download options\' dialogue starts' \
+            + ' here. In the Videos tab, right-click a channel, playlist or' \
+            + ' folder and select Downloads > Apply download options...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30346,6 +30760,12 @@ class CalendarDialogue(Gtk.Dialog):
 
     def __init__(self, parent_win_obj, date=None):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Select a date\' dialogue starts here. In' \
+            + ' the toolbar at the bottom of the Videos tab, click the' \
+            + ' \'Find date\' button'
+        )
+        
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -30419,6 +30839,12 @@ class ChangeThemeDialogue(Gtk.Dialog):
 
     def __init__(self, parent_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Change window theme\' dialogue starts' \
+            + ' here. In the main window menu, click System > Change theme.' \
+            + ' Available on MS Windows only'
+        )
+        
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -30623,6 +31049,12 @@ class CreateProfileDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Create profile\' dialogue starts here.' \
+            + ' In the main window menu, click Media > Profiles > Create' \
+            + ' profile...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30772,6 +31204,12 @@ class DeleteContainerDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj, empty_flag):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Delete channel\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a channel and select Delete' \
+            + ' channel'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31035,6 +31473,12 @@ class DeleteDropZoneDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, options_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Delete dropzone\' dialogue starts here.' \
+            + ' In the Drag and Drop tab, click a delete button in the' \
+            + ' bottom-right corner of any dropzone'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31154,6 +31598,11 @@ class DeleteVideoDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_list):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Delete videos\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a video and select Delete video'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31317,6 +31766,13 @@ class DuplicateVideoDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, duplicate_list):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Duplicate URLs\' dialogue starts here.' \
+            + ' In the main window toolbar, click the Video button. In the' \
+            + ' top half of the first dialogue window, add duplicate URLs' \
+            + ' and then click the OK button'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31408,6 +31864,12 @@ class ExportDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, whole_flag):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Export from database\' dialogue starts' \
+            + ' here. In the main window menu, click Media > Export/Import' \
+            + ' > Export from database...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31624,6 +32086,13 @@ class ExtractorCodeDialogue(Gtk.Dialog):
 
     def __init__(self, parent_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Type extractor code\' dialogue starts' \
+            + ' here. In the main window menu, click Edit > General download' \
+            + ' Options... > Formats > Preferred, then click the small' \
+            + ' button next to the \'Add format\' button'
+        )
+        
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -31772,6 +32241,13 @@ class FormatsSubsDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, video_obj, info_type):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Confirmation dialogue for fetching' \
+            + ' formats/subtitles. In the Videos tab, right-click a video' \
+            + ' and select Fetch > Available formats... or Fetch > Available' \
+            + ' subtitles'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31985,6 +32461,12 @@ class ImportDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, db_dict):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Import into database\' dialogue starts' \
+            + ' here. In the main window menu, click Media > Export/Import' \
+            + ' > Import into database...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32326,6 +32808,12 @@ class InsertVideoDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, parent_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Insert videos\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Channel actions > Insert videos...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32618,6 +33106,12 @@ class MountDriveDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, unwriteable_flag=False):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Mount drive\' dialogue starts here.' \
+            + ' Visible on startup, if Tartube\'s data folder does not' \
+            + ' exist'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32904,6 +33398,12 @@ class MSYS2Dialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'MSYS2 terminal\' dialogue starts here.' \
+            + ' In the main window menu, click System > Open MSYS2 terminal' \
+            + ' (MS Windows only)'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32926,7 +33426,7 @@ class MSYS2Dialogue(Gtk.Dialog):
         Gtk.Dialog.__init__(
             self,
             _('MSYS2 terminal'),
-            main_win_obj,
+            None,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
                 Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -33020,6 +33520,12 @@ class NewbieDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, classic_mode_flag):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Download failure dialogue starts here.' \
+            + ' Visible when the user tries to check/download videos, but' \
+            + ' no videos are checked/downloaded'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33303,6 +33809,12 @@ class PrepareClipDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, video_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Download/create video clip\' dialogue' \
+            + ' starts here. In the Videos tab, right-click a video and' \
+            + ' select Special > Download video clip...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33539,6 +34051,12 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, video_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Download/create sliced video\' dialogue' \
+            + ' starts here. In the Videos tab, right-click a video and' \
+            + ' select Special > Remove video slices...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33779,6 +34297,12 @@ class RecentVideosDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Set removal time\' dialogue starts here.' \
+            + ' In the Videos tab, right-click the \'Recent Videos\'' \
+            + ' folder and select Downloads > Set removal time...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33909,6 +34433,12 @@ class RemoveLockFileDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, switch_flag):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Stale lockfile\' dialogue starts here.' \
+            + ' Visible on startup if the Tartube database file is protected' \
+            + ' bu a lockfile'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34067,6 +34597,12 @@ class RenameContainerDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Rename container\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Channel actions > Rename channel...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34156,6 +34692,12 @@ class ResetContainerDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Create profile\' dialogue starts here.' \
+            + ' In the main window menu, click Media > Reset channel/' \
+            + '/playlist names...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34478,6 +35020,12 @@ class ScheduledDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj, available_list):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Add to scheduled download\' dialogue' \
+            + ' starts here. In the Videos tab, right-click a channel and' \
+            + ' select Downloads > Add to scheduled download...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34593,6 +35141,12 @@ class SetDestinationDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Set download destination\' dialogue' \
+            + ' starts here. In the Videos tab, right-click a channel and' \
+            + ' select Downloads > Set download destination...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35127,6 +35681,12 @@ class SetNicknameDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Set nickname\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Channel actions > Set nickname...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35222,6 +35782,12 @@ class SetURLDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Set URL\' dialogue starts here.' \
+            + ' In the Videos tab, right-click a channel and select' \
+            + ' Channel actions > Set URL...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35312,6 +35878,12 @@ class SystemCmdDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Show system command\' dialogue starts' \
+            + ' here. In the Videos tab, right-click a channel and select' \
+            + ' Downloads > Show system command...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35527,6 +36099,11 @@ class TestCmdDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, source_url=None):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Test youtube-dl\' dialogue starts here.' \
+            + ' In the main window menu, click Operations > Test youtube-dl'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35626,6 +36203,11 @@ class TidyDialogue(Gtk.Dialog):
 
     def __init__(self, main_win_obj, media_data_obj=None):
 
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Tidy up\' dialogue starts here.' \
+            + ' In the main window menu, click Operations > Tidy up files...'
+        )
+        
         # IV list - class objects
         # -----------------------
         # Tartube's main window
