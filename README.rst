@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.221 (9 Jan 2023)**
+Stable release: **v2.4.255 (1 Mar 2023)**
 
-Development release: **v2.4.245 (26 Feb 2023)**
+Development release: **v2.4.255 (1 Mar 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.221/install-tartube-2.4.221-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube-2.4.221-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.255/install-tartube-2.4.255-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.255/tartube-2.4.255-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.221/python3-tartube_2.4.221.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube-2.4.221.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.255/python3-tartube_2.4.255.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.255/tartube-2.4.255.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.221/tartube_v2.4.221.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.255/tartube_v2.4.255.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 

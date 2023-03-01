@@ -852,6 +852,10 @@ def convert_bytes_to_string(num_bytes):
 
     """
 
+    # Don't want to return '0.0 B', this string looks a lot nicer
+    if num_bytes == 0:
+        return '0 KiB'
+
     unit_step = 1024
     unit_step_thresh = unit_step - 0.05
     last_label = formats.FILESIZE_METRIC_LIST[-1]
@@ -1129,6 +1133,42 @@ def convert_seconds_to_string(seconds, short_flag=False):
 
     else:
         return str(datetime.timedelta(seconds=seconds))
+
+
+def convert_string_to_bytes(text):
+
+    """Can be called by anything.
+
+    The opposite of utils.convert_bytes_to_string(), converting a stringified
+    value (e.g. '25.2KiB/s' or '25.2 KiB/s') into a value in bytes.
+
+    Because of rounding errors (e.g. the value above has been rounded to 1
+    decimal place), the value in bytes will only approximate the
+    original argument passed to utils.convert_bytes_to_string().
+
+    Args:
+
+        text (str): The text to convert, the output of
+            utils.convert_bytes_to_string()
+
+    Return values:
+
+        A value in bytes (or 0 on error)
+
+    """
+
+    # (From '25.2KiB/s', extract '25.2' and 'KiB')
+    match = re.search('^([\d\.]+)\s*([\w]+)', text)
+    if match:
+        value = match.groups()[0]
+        unit = match.groups()[1]
+    else:
+        return 0
+
+    if unit in formats.FILESIZE_METRIC_DICT:
+        return int(float(value) * formats.FILESIZE_METRIC_DICT[unit])
+    else:
+        return 0
 
 
 def convert_slices_to_clips(app_obj, custom_dl_obj, slice_list, temp_flag):
@@ -2242,35 +2282,6 @@ def find_thumbnail_webp_strict(app_obj, video_obj):
 
     # No webp thumbnail found
     return None
-
-
-def format_bytes(num_bytes):
-
-    """Can be called by anything.
-
-    Based on the format_bytes() function in youtube-dl-gui.
-
-    Convert bytes into a formatted string, e.g. '23.5GiB'.
-
-    Args:
-
-        num_bytes (float): The number to convert
-
-    Return values:
-
-        The formatted string
-
-    """
-
-    if num_bytes == 0.0:
-        exponent = 0
-    else:
-        exponent = int(math.log(num_bytes, formats.KILO_SIZE))
-
-    suffix = formats.FILESIZE_METRIC_LIST[exponent]
-    output_value = num_bytes / (formats.KILO_SIZE ** exponent)
-
-    return "%.2f%s" % (output_value, suffix)
 
 
 def generate_ytdl_system_cmd(app_obj, media_data_obj, options_list,

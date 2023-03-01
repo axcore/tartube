@@ -286,13 +286,20 @@ class RefreshManager(threading.Thread):
             if not self.running_flag:
                 return
 
-            filename, ext = os.path.splitext(relative_path)
-            # (Remove the initial .)
-            ext = ext[1:]
-            if ext in formats.VIDEO_FORMAT_DICT \
-            or ext in formats.AUDIO_FORMAT_DICT:
+            # (Don't handle unwisely-named directories...)
+            if os.path.isfile(
+                os.path.abspath(
+                    os.path.join(dir_path, relative_path),
+                ),
+            ):
 
-                mod_list.append(relative_path)
+                filename, ext = os.path.splitext(relative_path)
+                # (Remove the initial .)
+                ext = ext[1:]
+                if ext in formats.VIDEO_FORMAT_DICT \
+                or ext in formats.AUDIO_FORMAT_DICT:
+
+                    mod_list.append(relative_path)
 
         # From the new list, filter out duplicate filenames (e.g. if the list
         #   contains both 'my_video.mp4' and 'my_video.webm', filter out the

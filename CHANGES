@@ -1,3 +1,67 @@
+v2.4.255 (1 Mar 2023)
+-------------------------------------------------------------------------------
+
+IMPORTANT INFORMATION
+- youtube-dl is now classed as 'not recommended for most users'. Note that, as
+    of February 2022, youtube-dl can no longer download any YouTube video (but
+    other video websites might still work)
+- Tartube's 'portable' installer (for MS Windows) is not working as intended,
+    due to an unresolved Python issue. You cannot move the installation folder
+    from one location to another, after you have used it to install yt-dlp
+    and/or FFmpeg. As a workaround, you can place multiple copies of the
+    original 'portable' installer on your filesystem; for each copy, you should
+    install yt-dlp and FFmpeg separately. (Each copy can still share the same
+    video download folder.)    
+
+MAJOR NEW FEATURES
+- While checking/downloading videos, the Progress tab now shows the average
+    download speed, total disk space consumed, and the total number of
+    checked/downloaded videos
+
+MINOR NEW FEATURES
+- In the Progress tab and Classic Mode tab, the width of columns can be
+    adjusted. For the benefit of users with very large monitors, it's now
+    possible for Tartube to remember the adjusted widths of some columns which
+    tend to contain a lot of text (but not those which contain very little
+    text). To enable the setting, select Edit > System preferences... >
+    Windows > Main window > In the Progress/Classic Mode tabs, remember the
+    width of (some) columns (Git 509)
+- In the Errors/Warnings tab, in multi-line error messages, empty lines are
+    now ignored (leaving just the lines that actually contain visible text)
+- In the Progress tab, in the bottom half of the window, you can now right-
+    click a video and select the new 'Show video location' option
+- Enlarged and updated the screenshots in the tutorial (Help >
+    Show tutorial...) so the detail is much easier to see
+- Added numerous translator's notes throughout the code; these are visible to
+    anyone working on a translation (such as users of weblate.org)
+- yt-dlp sometimes downloads videos from VK, whose file extension is set to
+    .unknown_video instead of .mp4. As temporary mitigation for this problem,
+    you can now auto-convert those videos (Operations > Tidy up files >
+    convert '.unknown_video' file extensions to .mp4), and then update
+    Tartube's database (Operations > Refresh database...) (Git #472)
+    
+MAJOR FIXES
+- Fixed auto-detection of yt-dlp installation location, when it has been
+    installed from PyPI. This issue did not affect MS Windows users
+- The Classic Mode tab was unable to download videos as .m4a files, fixed
+    (Git #506)
+- In the Progress tab, the column showing the number of videos downloads (e.g.
+    5/14) was not working again, due to another change in yt-dlp's behaviour.
+    Fixed it again (Git #504)
+- Fixed problems when looking for livestreams from websites whose metadata
+    doesn't specify an 'is_live' field
+- Fixed failure to load a Tartube config file from v.2.3.110 (Git #510)
+
+MINOR FIXES
+- The tutorial (Help > Show tutorial...) was missing its second page. Restored
+    it
+- Fixed incorrect version format in desktop file (Git #496)
+- Fixed rare failure to load database, because of change to its structure in
+    v2.4.213 (Git #498)
+- On MS Windows only, when opening the MSYS2 terminal from Tartube's menu,
+    the dialogue window, when closed by the user, caused the terminal window
+    itself to be hidden behind the main window. Fixed
+
 v2.4.221 (9 Jan 2023)
 -------------------------------------------------------------------------------
 

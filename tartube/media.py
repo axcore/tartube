@@ -3391,7 +3391,7 @@ class Video(GenericMedia):
         """
 
         if self.file_size:
-            return utils.format_bytes(self.file_size)
+            return utils.convert_bytes_to_string(self.file_size)
         else:
             return ""
 

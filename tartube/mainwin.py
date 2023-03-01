@@ -266,6 +266,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_res_combobox = None          # Gtk.ComboBox
         self.hide_finished_checkbutton = None   # Gtk.CheckButton
         self.reverse_results_checkbutton = None # Gtk.CheckButton
+        self.progress_update_label = None       # Gtk.Label
         # (from self.setup_classic_mode_tab)
         self.classic_paned = None               # Gtk.VPaned
         self.classic_banner_img = None          # Gtk.Image
@@ -641,6 +642,22 @@ class MainWin(Gtk.ApplicationWindow):
         # (The code assumes it is at least twice the value of
         #   mainapp.TartubeApp.dl_timer_time)
         self.progress_list_hide_time = 3
+        # Dictionay of download speeds for each active row in the Progress
+        #   List, used to produce a rolling average. Inactive (or finished)
+        #   rows are removed from the table
+        # Dictionary in the form
+        #   key = The downloads.DownloadItem.item_id for the download item
+        #       handling the media data object
+        #   value = a list of mini-lists. Each mini-list records an
+        #       instantaneous download speed (as reported by youtube-dl), and
+        #       the epoch time at which this speed was displayed
+        self.progress_list_average_speed_dict = {}
+        # The time (in seconds) after which instantaneous download speeds are
+        #   removed from the dictionary
+        # N.B. 10 seconds seems to be a reasonable value, given that youtube-dl
+        #   typically supplies an instaneous speed at least once a second, and
+        #   given that some videos might be downloaded faster than 10 seconds
+        self.progress_list_average_speed_length = 10
         # !!! DEBUG Git #479
         # Dictionary recording system errors in
         #   self.progress_list_receive_dl_stats() and
@@ -1309,7 +1326,7 @@ class MainWin(Gtk.ApplicationWindow):
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Main window menu starts here'
         )
-        
+
         self.menubar = Gtk.MenuBar()
         self.grid.attach(self.menubar, 0, 0, 1, 1)
 
@@ -1489,7 +1506,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Separator
         export_import_submenu.append(Gtk.SeparatorMenuItem())
-        
+
         self.import_yt_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Import _YouTube subscriptions...'),
         )
@@ -1839,9 +1856,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window toolbar starts here' 
+            'TRANSLATOR\'S NOTE: Main window toolbar starts here'
         )
-        
+
         # If a toolbar already exists, destroy it to make room for the new one
         if self.main_toolbar:
             self.grid.remove(self.main_toolbar)
@@ -2135,9 +2152,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window tabs are defined here' 
+            'TRANSLATOR\'S NOTE: Main window tabs are defined here'
         )
-        
+
         self.notebook = Gtk.Notebook()
         self.grid.attach(self.notebook, 0, 2, 1, 1)
         self.notebook.set_border_width(self.spacing_size)
@@ -2204,9 +2221,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         self.videos_paned = Gtk.HPaned()
         self.videos_tab.pack_start(self.videos_paned, True, True, 0)
         self.videos_paned.set_position(
@@ -2691,7 +2708,7 @@ class MainWin(Gtk.ApplicationWindow):
         = Gtk.ToggleButton(_('Regex'))
         toolitem12.add(self.catalogue_regex_togglebutton)
         self.catalogue_regex_togglebutton.set_sensitive(False)
-        if not self.app_obj.catologue_use_regex_flag:
+        if not self.app_obj.catalogue_use_regex_flag:
             self.catalogue_regex_togglebutton.set_active(False)
         else:
             self.catalogue_regex_togglebutton.set_active(True)
@@ -2872,9 +2889,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Progress tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Progress tab'
         )
-        
+
         vbox = Gtk.VBox()
         self.progress_tab.pack_start(vbox, True, True, 0)
 
@@ -2963,7 +2980,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
         else:
             source_column.set_fixed_width(200)
-            
+
         incoming_column = self.progress_list_treeview.get_column(7)
         if self.app_obj.progress_list_width_incoming is not None \
         and self.app_obj.progress_list_width_incoming >= self.min_column_width:
@@ -2972,7 +2989,7 @@ class MainWin(Gtk.ApplicationWindow):
             )
         else:
             incoming_column.set_fixed_width(200)
-            
+
         # Lower half
         frame2 = Gtk.Frame()
         self.progress_paned.pack2(frame2, True, False)
@@ -3074,7 +3091,7 @@ class MainWin(Gtk.ApplicationWindow):
             videos_column.set_fixed_width(
                 self.app_obj.results_list_width_video,
             )
-            
+
         else:
             videos_column.set_fixed_width(300)
 
@@ -3132,8 +3149,14 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_bandwidth_spinbutton_changed,
         )
 
+        # (To stop the remaining widgets on this line from constantly resizing
+        #   themselves during a download operation, place them inside an inner
+        #   grid)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 4, 0, 1, 1)
+
         self.alt_limits_frame = Gtk.Frame()
-        grid.attach(self.alt_limits_frame, 4, 0, 1, 1)
+        grid2.attach(self.alt_limits_frame, 0, 0, 1, 1)
         self.alt_limits_frame.set_tooltip_text(
             _('Alternative limits do not currently apply'),
         )
@@ -3145,7 +3168,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         self.video_res_checkbutton = Gtk.CheckButton()
-        grid.attach(self.video_res_checkbutton, 5, 0, 1, 1)
+        grid2.attach(self.video_res_checkbutton, 1, 0, 1, 1)
         self.video_res_checkbutton.set_label(_('Video resolution'))
         self.video_res_checkbutton.set_active(
             self.app_obj.video_res_apply_flag,
@@ -3160,7 +3183,7 @@ class MainWin(Gtk.ApplicationWindow):
             store.append( [string] )
 
         self.video_res_combobox = Gtk.ComboBox.new_with_model(store)
-        grid.attach(self.video_res_combobox, 6, 0, 1, 1)
+        grid2.attach(self.video_res_combobox, 2, 0, 1, 1)
         renderer_text = Gtk.CellRendererText()
         self.video_res_combobox.pack_start(renderer_text, True)
         self.video_res_combobox.add_attribute(renderer_text, 'text', 0)
@@ -3194,7 +3217,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.reverse_results_checkbutton = Gtk.CheckButton()
         grid.attach(self.reverse_results_checkbutton, 2, 1, 4, 1)
         self.reverse_results_checkbutton.set_label(
-            _('Add newest videos to the top of the list'))
+            _('Add newest videos to the top'))
         self.reverse_results_checkbutton.set_active(
             self.app_obj.results_list_reverse_flag,
         )
@@ -3202,6 +3225,11 @@ class MainWin(Gtk.ApplicationWindow):
             'toggled',
             self.on_reverse_results_checkbutton_changed,
         )
+
+        self.progress_update_label = Gtk.Label()
+        grid.attach(self.progress_update_label, 4, 1, 1, 1)
+        self.progress_update_label.set_alignment(0, 0.5)
+        self.progress_update_label.set_hexpand(False)
 
 
     def setup_classic_mode_tab(self):
@@ -3212,9 +3240,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab'
         )
-        
+
         self.classic_paned = Gtk.VPaned()
         self.classic_tab.pack_start(self.classic_paned, True, True, 0)
         self.classic_paned.set_position(
@@ -3618,10 +3646,10 @@ class MainWin(Gtk.ApplicationWindow):
             source_column.set_fixed_width(
                 self.app_obj.classic_progress_list_width_source,
             )
-            
+
         else:
             source_column.set_fixed_width(200)
-            
+
         incoming_column = self.classic_progress_treeview.get_column(5)
         if self.app_obj.classic_progress_list_width_incoming is not None \
         and self.app_obj.classic_progress_list_width_incoming \
@@ -3629,7 +3657,7 @@ class MainWin(Gtk.ApplicationWindow):
             incoming_column.set_fixed_width(
                 self.app_obj.classic_progress_list_width_incoming,
             )
-            
+
         else:
             incoming_column.set_fixed_width(200)
 
@@ -3874,9 +3902,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Drag and Drop tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Drag and Drop tab'
         )
-        
+
         grid = Gtk.Grid()
         self.drag_drop_tab.pack_start(grid, True, True, 0)
         grid.set_column_spacing(self.spacing_size)
@@ -3979,9 +4007,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Output tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Output tab'
         )
-        
+
         grid = Gtk.Grid()
         self.output_tab.pack_start(grid, True, True, 0)
         grid.set_column_spacing(self.spacing_size)
@@ -4046,9 +4074,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Errors / Warnings tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Errors / Warnings tab'
         )
-        
+
         vbox = Gtk.VBox()
         self.errors_tab.pack_start(vbox, True, True, 0)
 
@@ -4456,9 +4484,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         if not self.progress_bar and not skip_check_flag:
             return self.app_obj.system_error(
                 201,
@@ -4719,9 +4747,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         if operation_type is not None \
         and operation_type != 'ffmpeg' and operation_type != 'matplotlib' \
         and operation_type != 'streamlink' and operation_type != 'ytdl' \
@@ -5213,9 +5241,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         if self.progress_bar:
             return self.app_obj.system_error(
                 203,
@@ -5367,9 +5395,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Progress tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Progress tab'
         )
-        
+
         if on_flag:
 
             self.alt_limits_image.set_from_pixbuf(
@@ -5428,9 +5456,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         if not self.app_obj.catalogue_show_filter_flag:
 
             # Hide the second/third rows
@@ -5543,9 +5571,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
-        
+
         if not self.app_obj.catalogue_reverse_sort_flag:
 
             if not self.app_obj.show_custom_icons_flag:
@@ -5612,9 +5640,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Classic Mode tab'
         )
-        
+
         if self.app_obj.classic_format_selection is None \
         or self.app_obj.classic_format_convert_flag:
 
@@ -5665,7 +5693,7 @@ class MainWin(Gtk.ApplicationWindow):
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Main window menu'
         )
-        
+
         if self.update_ytdl_menu_item is not None:
 
             downloader = self.app_obj.get_downloader()
@@ -5714,7 +5742,7 @@ class MainWin(Gtk.ApplicationWindow):
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Main window toolbar'
         )
-        
+
         # Update the appearance of the toolbar button
         if not self.app_obj.toolbar_system_hide_flag:
 
@@ -5818,7 +5846,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Main window\'s Videos tab' 
+            'TRANSLATOR\'S NOTE: Main window\'s Videos tab'
         )
 
         if self.check_media_button is None:
@@ -6024,7 +6052,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Video Index popup menu starts here. In' \
             + ' the Videos tab, right-click any channel/playlist/folder'
         )
-        
+
         # Find the right-clicked media data object (and a string to describe
         #   its type)
         media_data_obj = self.app_obj.media_reg_dict[dbid]
@@ -6726,7 +6754,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Video Catalogue popup menu starts here. In' \
             + ' the Videos tab, right-click any video'
         )
-        
+
         # Use a different popup menu for multiple selected videos
         video_list = []
         if self.app_obj.catalogue_mode_type != 'grid':
@@ -7576,7 +7604,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' the Videos tab, select two or more videos, then righ-click' \
             + ' them'
         )
-        
+
         # So we can desensitise some menu items, work out in advance whether
         #   any of the selected videos are marked as downloaded, or have a
         #   source URL, or are in a temporary folder
@@ -8080,7 +8108,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' the Progress tab, in the list in the top half of the tab,' \
             + ' right-click any row'
         )
-        
+
         # Find the downloads.VideoDownloader which is currently handling the
         #   clicked media data object (if any)
         download_manager_obj = self.app_obj.download_manager_obj
@@ -8300,7 +8328,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' the Progress tab, in the list in the bottom half of the tab,' \
             + ' right-click any row'
         )
-        
+
         # Get the selected media.Video object(s)
         video_list = self.get_selected_videos_in_treeview(
             self.results_list_treeview,
@@ -8367,7 +8395,7 @@ class MainWin(Gtk.ApplicationWindow):
             video_list,
         )
         popup_menu.append(show_location_menu_item)
-            
+
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
 
@@ -8513,7 +8541,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' the Classic Mode tab, click the button in the top-right' \
             + ' corner'
         )
-        
+
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -8666,7 +8694,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' here. In the Classic Mode tab, in the list in the bottom' \
             + ' half of the tab, right-click any row'
         )
-        
+
         # Get the selected dummy media.Video object(s)
         video_list = self.get_selected_videos_in_classic_treeview()
         # Because of Gtk weirdness, right-clicking a line might not select it
@@ -8865,7 +8893,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Extra items for the popup menu in the' \
             + ' Video Catalogue. In the videos tab, right-click any video'
         )
-        
+
         # Watch video in player/download and watch
         if not_dl_flag or live_flag:
 
@@ -9002,7 +9030,7 @@ class MainWin(Gtk.ApplicationWindow):
                 download (may be an empty list)
 
         """
-                
+
         # Set up the popup menu
         popup_menu = self.custom_dl_popup_submenu(media_data_list)
 
@@ -9127,7 +9155,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Extra items for the main window menu,' \
             + ' can be found in Media > Profiles > Delete profile > ...'
         )
-        
+
         # Set up the popup menu
         popup_menu = Gtk.Menu()
 
@@ -9227,7 +9255,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Extra items for the Video Index popup menu.' \
             + ' In the Videos tab, right-click any channel/playlist/folder'
         )
-        
+
         mark_archived_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Mark as _archived'),
         )
@@ -12031,7 +12059,7 @@ class MainWin(Gtk.ApplicationWindow):
         # If filtering by name, filter out any videos that don't have an
         #   individual name set
         video_list = []
-        regex_flag = self.app_obj.catologue_use_regex_flag
+        regex_flag = self.app_obj.catalogue_use_regex_flag
         lower_text = search_text.lower()
 
         for child_obj in parent_obj.child_list:
@@ -12417,6 +12445,8 @@ class MainWin(Gtk.ApplicationWindow):
         function to display them.
         """
 
+        # Import some objects from downloads.py (for convenience)
+        dl_obj = self.app_obj.download_manager_obj
         # Import the contents of the IV (in case it gets updated during the
         #   call to this function), and use the imported copy
         temp_dict = self.progress_list_temp_dict
@@ -12447,7 +12477,36 @@ class MainWin(Gtk.ApplicationWindow):
                 # Don't try to update hidden rows
                 return
 
-            # Instead of overwriting the filename, when the download concludes,
+            # Any downloads.DownloadItem objects not in their
+            #   ACTIVE_STAGE_DOWNLOAD stage can be removed from the rolling
+            #   average data immediately
+            if 'status' in dl_stat_dict \
+            and dl_stat_dict['status'] != '' \
+            and dl_stat_dict['status'] != formats.ACTIVE_STAGE_DOWNLOAD \
+            and item_id in self.progress_list_average_speed_dict:
+                del self.progress_list_average_speed_dict[item_id]
+
+            # Otherwise, store the instantaneous download speed, so a rolling
+            #   average can be calculated
+            elif 'speed' in dl_stat_dict and dl_stat_dict['speed'] != '':
+
+                if item_id in self.progress_list_average_speed_dict:
+                    self.progress_list_average_speed_dict[item_id].append([
+                        utils.convert_string_to_bytes(
+                            dl_stat_dict['speed'],
+                        ),
+                        int(time.time()),
+                    ])
+
+                else:
+                    self.progress_list_average_speed_dict[item_id] = [[
+                        utils.convert_string_to_bytes(
+                            dl_stat_dict['speed'],
+                        ),
+                        int(time.time()),
+                    ]]
+
+            # When the download concludes, instead of overwriting the filename,
             #   show the video's name
             if 'filename' in dl_stat_dict \
             and dl_stat_dict['filename'] == '' \
@@ -12495,26 +12554,26 @@ class MainWin(Gtk.ApplicationWindow):
                     if key == 'playlist_index':
 
                         if dl_stat_dict['playlist_index'] == 0:
-                            string = ''
+                            msg = ''
 
                         elif 'dl_sim_flag' in dl_stat_dict \
                         and dl_stat_dict['dl_sim_flag']:
                             # (Don't know how many videos there are in a
                             #   channel/playlist, so ignore value of
                             #   'playlist_size')
-                            string = str(dl_stat_dict['playlist_index'])
+                            msg = str(dl_stat_dict['playlist_index'])
 
                         else:
-                            string = str(dl_stat_dict['playlist_index'])
+                            msg = str(dl_stat_dict['playlist_index'])
                             if 'playlist_size' in dl_stat_dict \
                             and dl_stat_dict['playlist_size'] > 0:
-                                string = string + '/' \
+                                msg = msg + '/' \
                                 + str(dl_stat_dict['playlist_size'])
                             else:
-                                string = string + '/1'
+                                msg = msg + '/1'
 
                     else:
-                        string = dl_stat_dict[key]
+                        msg = dl_stat_dict[key]
 
                     try:
                         tree_iter = self.progress_list_liststore.get_iter(
@@ -12524,11 +12583,37 @@ class MainWin(Gtk.ApplicationWindow):
                         self.progress_list_liststore.set(
                             tree_iter,
                             column,
-                            string,
+                            msg,
                         )
 
                     except:
                         return
+
+        # Display ongoing statistics, including the rolling average d/l speed
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: D/L = download'
+        )
+
+        if not dl_obj:
+            msg = ''
+        else:
+            msg = '<b>' + _('Check') + ':</b> ' \
+            + str(dl_obj.total_sim_count) \
+            + '   <b>' + _('D/L') + ':</b> ' \
+            + str(dl_obj.total_dl_count)
+
+            if dl_obj.total_clip_count or dl_obj.total_slice_count:
+                msg = msg + + '   <b>' + _('Other') + ':</b> ' \
+                + str(dl_obj.total_clip_count + dl_obj.total_slice_count)
+
+            msg = msg + '   <b>' + _('Size') + ':</b> ' \
+            + str(utils.convert_bytes_to_string(dl_obj.total_size_count)) \
+            + '   <b>' + _('Speed') + ':</b> ' \
+            + str(utils.convert_bytes_to_string(
+                self.progress_list_get_rolling_average(),
+            ) + '/s')
+
+        self.progress_update_label.set_markup(msg)
 
 
     def progress_list_check_hide_rows(self, force_flag=False):
@@ -12677,7 +12762,7 @@ class MainWin(Gtk.ApplicationWindow):
         Return values:
 
             The two widths, or None if the list doesn't exist yet
-            
+
         """
 
         if self.progress_list_treeview is None:
@@ -12690,14 +12775,75 @@ class MainWin(Gtk.ApplicationWindow):
             #   but we'll check anyway)
             if source_width < self.min_column_width:
                 source_width = self.min_column_width
-                
+
             incoming_column = self.progress_list_treeview.get_column(7)
             incoming_width = incoming_column.get_width()
             if incoming_width < self.min_column_width:
                 incoming_width = self.min_column_width
 
             return source_width, incoming_width
-        
+
+
+    def progress_list_get_rolling_average(self):
+
+        """Called by self.progress_list_display_dl_stats().
+
+        Calculates the rolling average download speed, and updates the
+        dictionary storing instantaneous download speed, removing older values.
+
+        Return values:
+
+            Returns the rolling average speed, in bytes
+
+        """
+
+        # Import some objects from downloads.py (for convenience)
+        dl_list_obj = self.app_obj.download_manager_obj.download_list_obj
+
+        # Update the data, and calculate a new rolling average
+        old_dict = self.progress_list_average_speed_dict
+        self.progress_list_average_speed_dict = {}
+
+        current_time = time.time()
+        total_speed = 0
+
+        for item_id in old_dict:
+            new_list = []
+            combined_speed = 0
+            combined_values = 0
+
+            for mini_list in old_dict[item_id]:
+
+                # List in the form [instantaneous d/l speed, time received]
+                if mini_list[1] \
+                >= current_time - self.progress_list_average_speed_length:
+                    new_list.append(mini_list)
+                    combined_speed += mini_list[0]
+                    combined_values += 1
+
+            self.progress_list_average_speed_dict[item_id] = new_list
+            # The total average speed is the sum of the average speed for
+            #   each channel/playlist/video
+            if combined_values:
+                total_speed += (combined_speed / combined_values)
+
+        return total_speed
+
+
+    def progress_list_reset_rolling_average(self):
+
+        """Called by mainapp.TartubeApp.download_manager_finished() at the end
+        of a download operation.
+
+        Resets our dictionary of instantaneous download speeds, used to
+        calculate the rolling average.
+
+        Also resets the Gtk.Label.
+        """
+
+        self.progress_list_average_speed_dict = {}
+        self.progress_update_label.set_markup('')
+
 
     # (Results List)
 
@@ -13131,11 +13277,11 @@ class MainWin(Gtk.ApplicationWindow):
         """Called by mainapp.TartubeApp.save_config().
 
         Fetches the width of the 'New videos' column in the Results List.
-        
+
         Return values:
 
             The width, or None if the list doesn't exist yet
-            
+
         """
 
         if self.results_list_treeview is None:
@@ -13150,7 +13296,7 @@ class MainWin(Gtk.ApplicationWindow):
                 video_width = self.min_column_width
 
             return video_width
-        
+
 
     # (Classic Mode tab)
 
@@ -13953,7 +14099,7 @@ class MainWin(Gtk.ApplicationWindow):
         Return values:
 
             The two widths, or None if the list doesn't exist yet
-            
+
         """
 
         if self.classic_progress_treeview is None:
@@ -13966,14 +14112,14 @@ class MainWin(Gtk.ApplicationWindow):
             #   but we'll check anyway)
             if source_width < 20:
                 source_width = 20
-                
+
             incoming_column = self.classic_progress_treeview.get_column(5)
             incoming_width = incoming_column.get_width()
             if incoming_width < 20:
                 incoming_width = 20
 
             return source_width, incoming_width
-        
+
 
     # (Drag and Drop tab)
 
@@ -14232,7 +14378,7 @@ class MainWin(Gtk.ApplicationWindow):
                 notebook, showing what the threads are doing
 
         """
-        
+
         # Each page (except the summary page) corresponds to a single
         #   downloads.DownloadWorker object. The page number matches the
         #   worker's .worker_id. The first worker is numbered #1
@@ -14639,7 +14785,7 @@ class MainWin(Gtk.ApplicationWindow):
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Extra items for the Errors/Warnings tab'
         )
-        
+
         # Import the main application (for convenience)
         app_obj = self.app_obj
 
@@ -15304,7 +15450,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Downloads > Add to scheduled download...'
         )
-        
+
         # Check that at least one scheduled download exists, that doesn't
         #   already contain the specified media data object
         available_list = []
@@ -16838,7 +16984,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Downloads > Set download destination...'
         )
-        
+
         if isinstance(media_data_obj, media.Video):
             return self.app_obj.system_error(
                 240,
@@ -17135,7 +17281,8 @@ class MainWin(Gtk.ApplicationWindow):
                 'del_video_flag': dialogue_win.checkbutton4.get_active(),
                 'del_others_flag': dialogue_win.checkbutton5.get_active(),
                 'remove_no_url_flag': dialogue_win.checkbutton6.get_active(),
-                'remove_dupe_flag': dialogue_win.checkbutton7.get_active(),
+                'remove_duplicate_flag': \
+                dialogue_win.checkbutton7.get_active(),
                 'del_archive_flag': dialogue_win.checkbutton8.get_active(),
                 'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
                 'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
@@ -17145,6 +17292,7 @@ class MainWin(Gtk.ApplicationWindow):
                 'del_descrip_flag': dialogue_win.checkbutton14.get_active(),
                 'del_json_flag': dialogue_win.checkbutton15.get_active(),
                 'del_xml_flag': dialogue_win.checkbutton16.get_active(),
+                'convert_ext_flag': dialogue_win.checkbutton17.get_active(),
             }
 
         # Now destroy the window
@@ -18423,7 +18571,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' In the Videos tab, right-click a video and select' \
             + ' Special > Process with FFmpeg...'
         )
-        
+
         # Can't start a process operation if another operation has started
         #   since the popup menu was created
         if self.app_obj.current_manager_obj:
@@ -18663,7 +18811,7 @@ class MainWin(Gtk.ApplicationWindow):
             + ' In the Videos tab, right-click a video and select' \
             + ' Special > Reload metadata...'
         )
-        
+
         if self.app_obj.current_manager_obj:
             return self.app_obj.system_error(
                 256,
@@ -18874,9 +19022,9 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         path_list = []
-        
+
         for media_data_obj in media_data_list:
-                   
+
             parent_obj = media_data_obj.parent_obj
             other_obj = self.app_obj.media_reg_dict[parent_obj.master_dbid]
             path = other_obj.get_actual_dir(self.app_obj)
@@ -20230,7 +20378,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Extra items for the \'Format\' drop-down' \
             + ' box in the Classic Mode tab'
         )
-        
+
         tree_iter = self.classic_format_combo.get_active_iter()
         model = self.classic_format_combo.get_model()
         text = model[tree_iter][0]
@@ -20444,7 +20592,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Extra items for the buttons at the bottom' \
             + ' of the Classic Mode tab'
         )
-        
+
         if self.app_obj.current_manager_obj:
 
             return self.app_obj.system_error(
@@ -20749,7 +20897,7 @@ class MainWin(Gtk.ApplicationWindow):
         tree_iter = self.classic_resolution_combo.get_active_iter()
         model = self.classic_resolution_combo.get_model()
         text = utils.strip_whitespace(model[tree_iter][0])
-        
+
         # (Dummy items in the combo)
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Highest video resolution'
@@ -20969,7 +21117,7 @@ class MainWin(Gtk.ApplicationWindow):
             'TRANSLATOR\'S NOTE: Dialogue window, generated by main window' \
             + ' menu, Media > Profiles > Delete profile'
         )
-        
+
         # Prompt for confirmation, before deleting
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
             _(
@@ -21832,7 +21980,7 @@ class MainWin(Gtk.ApplicationWindow):
                         'TRANSLATOR\'S NOTE: Duplicate URLs dragged into' \
                         + ' the main window\'s Videos tab'
                     )
-        
+
                     msg = _('The following items are duplicates:')
                     for line in duplicate_list:
                         msg += '\n\n' + line
@@ -22290,7 +22438,7 @@ class SimpleCatalogueItem(object):
             + ' several different formats. To switch format, in the main' \
             + ' menu click Media > Switch between views'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # The main window object
@@ -27997,7 +28145,7 @@ class AddBulkDialogue(Gtk.Dialog):
             + ' starts here. In the main window menu, click' \
             + ' Media > Add many channels/playlists...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -28680,7 +28828,7 @@ class AddChannelDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Add channel\' dialogue starts here. In' \
             + ' the main window toolbar, click the Channel button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29073,7 +29221,7 @@ class AddDropZoneDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Add dropzone dialogue starts here. In the' \
             + ' Drag and Drop tab, click the button in the top-right corner'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29406,7 +29554,7 @@ class AddFolderDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Add folder\' dialogue starts here. In' \
             + ' the main window toolbar, click the Folder button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29604,7 +29752,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Add playlist\' dialogue starts here. In' \
             + ' the main window toolbar, click the Playlist button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -29919,7 +30067,7 @@ class AddStampDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a video and select Show Video' \
             + ' > Properties... > Timestamps > Reset list using copied text'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30088,7 +30236,7 @@ class AddVideoDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Add video\' dialogue starts here. In' \
             + ' the main window toolbar, click the Video button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30470,7 +30618,7 @@ class ApplyOptionsDialogue(Gtk.Dialog):
             + ' here. In the Videos tab, right-click a channel, playlist or' \
             + ' folder and select Downloads > Apply download options...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -30765,7 +30913,7 @@ class CalendarDialogue(Gtk.Dialog):
             + ' the toolbar at the bottom of the Videos tab, click the' \
             + ' \'Find date\' button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -30844,7 +30992,7 @@ class ChangeThemeDialogue(Gtk.Dialog):
             + ' here. In the main window menu, click System > Change theme.' \
             + ' Available on MS Windows only'
         )
-        
+
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -30971,7 +31119,7 @@ class ChangeThemeDialogue(Gtk.Dialog):
         )
 
         try:
-            file_list = os.listdir(path=themes_path)
+            file_list = os.listdir(path = themes_path)
         except:
             file_list = []
 
@@ -31054,7 +31202,7 @@ class CreateProfileDialogue(Gtk.Dialog):
             + ' In the main window menu, click Media > Profiles > Create' \
             + ' profile...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31209,7 +31357,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a channel and select Delete' \
             + ' channel'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31478,7 +31626,7 @@ class DeleteDropZoneDialogue(Gtk.Dialog):
             + ' In the Drag and Drop tab, click a delete button in the' \
             + ' bottom-right corner of any dropzone'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31602,7 +31750,7 @@ class DeleteVideoDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Delete videos\' dialogue starts here.' \
             + ' In the Videos tab, right-click a video and select Delete video'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31772,7 +31920,7 @@ class DuplicateVideoDialogue(Gtk.Dialog):
             + ' top half of the first dialogue window, add duplicate URLs' \
             + ' and then click the OK button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -31869,7 +32017,7 @@ class ExportDialogue(Gtk.Dialog):
             + ' here. In the main window menu, click Media > Export/Import' \
             + ' > Export from database...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32092,7 +32240,7 @@ class ExtractorCodeDialogue(Gtk.Dialog):
             + ' Options... > Formats > Preferred, then click the small' \
             + ' button next to the \'Add format\' button'
         )
-        
+
         # IV list - class objects
         # -----------------------
         self.parent_win_obj = parent_win_obj
@@ -32247,7 +32395,7 @@ class FormatsSubsDialogue(Gtk.Dialog):
             + ' and select Fetch > Available formats... or Fetch > Available' \
             + ' subtitles'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32466,7 +32614,7 @@ class ImportDialogue(Gtk.Dialog):
             + ' here. In the main window menu, click Media > Export/Import' \
             + ' > Import into database...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -32813,7 +32961,7 @@ class InsertVideoDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Channel actions > Insert videos...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33111,7 +33259,7 @@ class MountDriveDialogue(Gtk.Dialog):
             + ' Visible on startup, if Tartube\'s data folder does not' \
             + ' exist'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33403,7 +33551,7 @@ class MSYS2Dialogue(Gtk.Dialog):
             + ' In the main window menu, click System > Open MSYS2 terminal' \
             + ' (MS Windows only)'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33525,7 +33673,7 @@ class NewbieDialogue(Gtk.Dialog):
             + ' Visible when the user tries to check/download videos, but' \
             + ' no videos are checked/downloaded'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -33814,7 +33962,7 @@ class PrepareClipDialogue(Gtk.Dialog):
             + ' starts here. In the Videos tab, right-click a video and' \
             + ' select Special > Download video clip...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34056,7 +34204,7 @@ class PrepareSliceDialogue(Gtk.Dialog):
             + ' starts here. In the Videos tab, right-click a video and' \
             + ' select Special > Remove video slices...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34302,7 +34450,7 @@ class RecentVideosDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click the \'Recent Videos\'' \
             + ' folder and select Downloads > Set removal time...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34438,7 +34586,7 @@ class RemoveLockFileDialogue(Gtk.Dialog):
             + ' Visible on startup if the Tartube database file is protected' \
             + ' bu a lockfile'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34602,7 +34750,7 @@ class RenameContainerDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Channel actions > Rename channel...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -34697,7 +34845,7 @@ class ResetContainerDialogue(Gtk.Dialog):
             + ' In the main window menu, click Media > Reset channel/' \
             + '/playlist names...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35025,7 +35173,7 @@ class ScheduledDialogue(Gtk.Dialog):
             + ' starts here. In the Videos tab, right-click a channel and' \
             + ' select Downloads > Add to scheduled download...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35146,7 +35294,7 @@ class SetDestinationDialogue(Gtk.Dialog):
             + ' starts here. In the Videos tab, right-click a channel and' \
             + ' select Downloads > Set download destination...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35686,7 +35834,7 @@ class SetNicknameDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Channel actions > Set nickname...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35787,7 +35935,7 @@ class SetURLDialogue(Gtk.Dialog):
             + ' In the Videos tab, right-click a channel and select' \
             + ' Channel actions > Set URL...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -35883,7 +36031,7 @@ class SystemCmdDialogue(Gtk.Dialog):
             + ' here. In the Videos tab, right-click a channel and select' \
             + ' Downloads > Show system command...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -36103,7 +36251,7 @@ class TestCmdDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Test youtube-dl\' dialogue starts here.' \
             + ' In the main window menu, click Operations > Test youtube-dl'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -36207,7 +36355,7 @@ class TidyDialogue(Gtk.Dialog):
             'TRANSLATOR\'S NOTE: \'Tidy up\' dialogue starts here.' \
             + ' In the main window menu, click Operations > Tidy up files...'
         )
-        
+
         # IV list - class objects
         # -----------------------
         # Tartube's main window
@@ -36232,6 +36380,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton14 = None               # Gtk.CheckButton
         self.checkbutton15 = None               # Gtk.CheckButton
         self.checkbutton16 = None               # Gtk.CheckButton
+        self.checkbutton17 = None               # Gtk.CheckButton
 
 
         # Code
@@ -36372,15 +36521,24 @@ class TidyDialogue(Gtk.Dialog):
         grid.attach(self.checkbutton16, 1, 7, 1, 1)
         self.checkbutton16.set_label(_('Delete all annotation files'))
 
+        # !!! DEBUG Git #472
+        self.checkbutton17 = Gtk.CheckButton()
+        grid.attach(self.checkbutton17, 0, 8, 2, 1)
+        self.checkbutton17.set_label(
+            _(
+            'EXPERIMENTAL: convert \'.unknown_video\' file extensions to .mp4'
+            ),
+        )
+
         # Bottom strip
 
         button = Gtk.Button.new_with_label(_('Select all'))
-        grid.attach(button, 0, 8, 1, 1)
+        grid.attach(button, 0, 9, 1, 1)
         button.set_hexpand(False)
         # (Signal connect appears below)
 
         button2 = Gtk.Button.new_with_label(_('Select none'))
-        grid.attach(button2, 1, 8, 1, 1)
+        grid.attach(button2, 1, 9, 1, 1)
         button2.set_hexpand(False)
         # (Signal connect appears below)
 
@@ -36573,6 +36731,7 @@ class TidyDialogue(Gtk.Dialog):
 #        self.checkbutton14.set_active(False)
 #        self.checkbutton15.set_active(False)
 #        self.checkbutton16.set_active(False)
+        self.checkbutton17.set_active(True)
 
 
     def on_select_none_clicked(self, button):
@@ -36602,6 +36761,7 @@ class TidyDialogue(Gtk.Dialog):
         self.checkbutton14.set_active(False)
         self.checkbutton15.set_active(False)
         self.checkbutton16.set_active(False)
+        self.checkbutton17.set_active(False)
 
         if not mainapp.HAVE_MOVIEPY_FLAG \
         or self.main_win_obj.app_obj.refresh_moviepy_timeout == 0:

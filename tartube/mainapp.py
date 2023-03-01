@@ -522,7 +522,7 @@ class TartubeApp(Gtk.Application):
         self.results_list_width_video = None
         self.classic_progress_list_width_source = None
         self.classic_progress_list_width_incoming = None
-        
+
         # Flag set to True if system error messages should be shown in the
         #   Errors/Warnings tab
         self.system_error_show_flag = True
@@ -2242,7 +2242,7 @@ class TartubeApp(Gtk.Application):
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Videos in the Videos tab can be displayed' \
             + ' in one of several formats'
-        )        
+        )
         self.catalogue_mode_list = [
             [
                 'simple_hide_parent',
@@ -2309,7 +2309,7 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if the 'Regex' button is toggled on, meaning that
         #   when the searching the catalogue, we match videos using a regex,
         #   rather than a simple string
-        self.catologue_use_regex_flag = False
+        self.catalogue_use_regex_flag = False
 
         # Two flags used for bulk-editing URLS of media data objects (in the
         #   config.SystemPrefWin window)
@@ -3901,25 +3901,25 @@ class TartubeApp(Gtk.Application):
             ignore_me = _(
                 'TRANSLATOR\'S NOTE: Update operations update youtube-dl,' \
                 + ' FFmpeg, etc'
-            )                
+            )
             ignore_me = _(
                 'TRANSLATOR\'S NOTE: Refresh operations examine the files' \
                 + ' in Tartube\'s data folder, and update the database' \
                 + ' accordingly'
-            )                                
+            )
             ignore_me = _(
                 'TRANSLATOR\'S NOTE: Info operations fetch a list of' \
                 + ' available formats/subtitles for a video'
-            )                                                
+            )
             ignore_me = _(
                 'TRANSLATOR\'S NOTE: Tidy operations remove or convert' \
                 + ' files in Tartube\'s data folder'
-            )              
+            )
             ignore_me = _(
                 'TRANSLATOR\'S NOTE: Process operations convert videos' \
                 + ' using FFmpeg or AVConv'
-            )                   
-            
+            )
+
             if self.download_manager_obj:
                 string = _('There is a download operation in progress.')
             elif self.update_manager_obj:
@@ -4285,9 +4285,9 @@ class TartubeApp(Gtk.Application):
         # Load and apply the locale
 
         # Removed v2.4.103
-#       if version >= 2000081:  # v2.0.081
+#       if version >= 2000081:
 #           self.custom_locale = json_dict['custom_locale']
-        if version >= 2004170:  # v2.4.170
+        if version >= 2004170 and 'override_locale' in json_dict:
             self.override_locale = json_dict['override_locale']
             if self.override_locale is None:
                 self.current_locale = self.system_locale
@@ -4299,126 +4299,129 @@ class TartubeApp(Gtk.Application):
 
         # Set IVs to their new values
 
-        if version >= 2002075:  # v2.2.075
+        if version >= 2002075 and 'thumb_size_custom' in json_dict:
             self.thumb_size_custom = json_dict['thumb_size_custom']
 
-        if version >= 1004040:  # v1.4.040
+        if version >= 1004040 and 'main_win_save_size_flag' in json_dict:
             self.main_win_save_size_flag = json_dict['main_win_save_size_flag']
-        if version >= 2003018:  # v2.3.018
+        if version >= 2003018 and 'main_win_save_slider_flag' in json_dict:
             self.main_win_save_slider_flag \
             = json_dict['main_win_save_slider_flag']
-        if version >= 1004040:  # v1.4.040
+        if version >= 1004040 and 'main_win_save_width' in json_dict:
             self.main_win_save_width = json_dict['main_win_save_width']
             self.main_win_save_height = json_dict['main_win_save_height']
 
-        if version >= 2003018: # v2.3.018
+        if version >= 2003018 and 'main_win_videos_slider_posn' in json_dict:
             self.main_win_videos_slider_posn \
             = json_dict['main_win_videos_slider_posn']
             self.main_win_progress_slider_posn \
             = json_dict['main_win_progress_slider_posn']
             self.main_win_classic_slider_posn \
             = json_dict['main_win_classic_slider_posn']
-        elif version >= 1004040:  # v1.4.040
+        elif version >= 1004040 and 'main_win_save_posn' in json_dict:
             # Renamed in v2.3.018
-            self.main_win_videos_slider_posn \
-            = json_dict['main_win_save_posn']
+            self.main_win_videos_slider_posn = json_dict['main_win_save_posn']
 
         # Removed v2.3.434
-#       if version >= 1003122:  # v1.3.122
+#       if version >= 1003122:
 #           self.gtk_emulate_broken_flag \
 #           = json_dict['gtk_emulate_broken_flag']
 
-        if version >= 2001024:  # v2.1.024
+        if version >= 2001024 and 'toolbar_hide_flag' in json_dict:
             self.toolbar_hide_flag = json_dict['toolbar_hide_flag']
-        if version >= 5024:     # v0.5.024
+        if version >= 5024 and 'toolbar_squeeze_flag' in json_dict:
             self.toolbar_squeeze_flag = json_dict['toolbar_squeeze_flag']
         # (Moved to database file)
-#       if version >= 2002109:  # v2.2.109
+#       if version >= 2002109:
 #           self.toolbar_system_hide_flag \
 #           = json_dict['toolbar_system_hide_flag']
-        if version >= 1001064:  # v1.1.064
+        if version >= 1001064 and 'show_tooltips_flag' in json_dict:
             self.show_tooltips_flag = json_dict['show_tooltips_flag']
-        if version >= 2003047:  # v2.3.047
+        if version >= 2003047 and 'show_tooltips_extra_flag' in json_dict:
             self.show_tooltips_extra_flag \
             = json_dict['show_tooltips_extra_flag']
-        if version >= 2001036:  # v2.1.036
+        if version >= 2001036 and 'show_custom_icons_flag' in json_dict:
             self.show_custom_icons_flag \
             = json_dict['show_custom_icons_flag']
-        if version >= 2003541:  # v2.3.541
+        if version >= 2003541 and 'show_marker_in_index_flag' in json_dict:
             self.show_marker_in_index_flag \
             = json_dict['show_marker_in_index_flag']
-        if version >= 2001036:  # v2.1.036
+        if version >= 2001036 \
+        and 'show_small_icons_in_index_flag' in json_dict:
             self.show_small_icons_in_index_flag \
             = json_dict['show_small_icons_in_index_flag']
-        elif version >= 1001075:  # v1.1.075
+        elif version >= 1001075 and 'show_small_icons_in_index' in json_dict:
             self.show_small_icons_in_index_flag \
             = json_dict['show_small_icons_in_index']
-        if version >= 1001077:  # v1.1.077
+        if version >= 1001077 and 'auto_expand_video_index_flag' in json_dict:
             self.auto_expand_video_index_flag \
             = json_dict['auto_expand_video_index_flag']
-        if version >= 2000014:  # v2.0.014
+        if version >= 2000014 and 'full_expand_video_index_flag' in json_dict:
             self.full_expand_video_index_flag \
             = json_dict['full_expand_video_index_flag']
-        if version >= 1001064:  # v1.1.064
+        if version >= 1001064 and 'disable_dl_all_flag' in json_dict:
             self.disable_dl_all_flag = json_dict['disable_dl_all_flag']
-        if version >= 2003192:  # v2.3.192
+        if version >= 2003192 and 'show_custom_dl_button_flag' in json_dict:
             self.show_custom_dl_button_flag \
             = json_dict['show_custom_dl_button_flag']
-        if version >= 2003560:  # v2.3.560
+        if version >= 2003560 and 'show_free_space_flag' in json_dict:
             self.show_free_space_flag = json_dict['show_free_space_flag']
-        if version >= 1004011:  # v1.4.011
+        if version >= 1004011 and 'show_pretty_dates_flag' in json_dict:
             self.show_pretty_dates_flag = json_dict['show_pretty_dates_flag']
 
-        if version >= 2003397:  # v2.3.397
+        if version >= 2003397 and 'catalogue_filter_name_flag' in json_dict:
             self.catalogue_filter_name_flag \
             = json_dict['catalogue_filter_name_flag']
             self.catalogue_filter_descrip_flag \
             = json_dict['catalogue_filter_descrip_flag']
             self.catalogue_filter_comment_flag \
             = json_dict['catalogue_filter_comment_flag']
-        if version >= 2002085:  # v2.2.185
+        if version >= 2002085 and 'catalogue_draw_frame_flag' in json_dict:
             self.catalogue_draw_frame_flag \
             = json_dict['catalogue_draw_frame_flag']
             self.catalogue_draw_icons_flag \
             = json_dict['catalogue_draw_icons_flag']
-        if version >= 2003612:  # v2.3.612
+        if version >= 2003612 \
+        and 'catalogue_draw_downloaded_flag' in json_dict:
             self.catalogue_draw_downloaded_flag \
             = json_dict['catalogue_draw_downloaded_flag']
             self.catalogue_draw_undownloaded_flag \
             = json_dict['catalogue_draw_undownloaded_flag']
-        if version >= 2003481:  # v2.3.481
+        if version >= 2003481 and 'catalogue_draw_blocked_flag' in json_dict:
             self.catalogue_draw_blocked_flag \
             = json_dict['catalogue_draw_blocked_flag']
-        if version >= 2003232:  # v2.3.232
+        if version >= 2003232 \
+        and 'catalogue_clickable_container_flag' in json_dict:
             self.catalogue_clickable_container_flag \
             = json_dict['catalogue_clickable_container_flag']
-        if version >= 2004025:  # v2.4.025
+        if version >= 2004025 and 'catalogue_show_nickname_flag' in json_dict:
             self.catalogue_show_nickname_flag \
             = json_dict['catalogue_show_nickname_flag']
 
-        if version >= 2002028:  # v2.2.128
+        if version >= 2002028 and 'drag_video_path_flag' in json_dict:
             self.drag_video_path_flag = json_dict['drag_video_path_flag']
             self.drag_video_source_flag = json_dict['drag_video_source_flag']
             self.drag_video_name_flag = json_dict['drag_video_name_flag']
-        if version >= 2002162:  # v2.2.162
+        if version >= 2002162 and 'drag_thumb_path_flag' in json_dict:
             self.drag_thumb_path_flag = json_dict['drag_thumb_path_flag']
 
-        if version >= 1003024:  # v1.3.024
+        if version >= 1003024 and 'show_status_icon_flag' in json_dict:
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
-        if version >= 2003504:  # v1.3.504
+        if version >= 2003504 and 'open_in_tray_flag' in json_dict:
             self.open_in_tray_flag = json_dict['open_in_tray_flag']
-        if version >= 1003024:  # v1.3.024
+        if version >= 1003024 and 'close_to_tray_flag' in json_dict:
             self.close_to_tray_flag = json_dict['close_to_tray_flag']
-        if version >= 2003125:  # v2.3.125
+        if version >= 2003125 and 'restore_posn_from_tray_flag' in json_dict:
             self.restore_posn_from_tray_flag \
             = json_dict['restore_posn_from_tray_flag']
 
-        if version >= 1003129:  # v1.3.129
+        if version >= 1003129 and 'progress_list_hide_flag' in json_dict:
             self.progress_list_hide_flag = json_dict['progress_list_hide_flag']
-        if version >= 1000029:  # v1.0.029
+        if version >= 1000029 and 'results_list_reverse_flag' in json_dict:
             self.results_list_reverse_flag \
             = json_dict['results_list_reverse_flag']
-        if version >= 2004244:  # v2.4.244
+        if version >= 2004244 \
+        and 'progress_list_remember_width_flag' in json_dict:
             self.progress_list_remember_width_flag \
             = json_dict['progress_list_remember_width_flag']
             self.progress_list_width_source \
@@ -4431,34 +4434,35 @@ class TartubeApp(Gtk.Application):
             = json_dict['classic_progress_list_width_source']
             self.classic_progress_list_width_incoming \
             = json_dict['classic_progress_list_width_incoming']
-            
-        if version >= 1003069:  # v1.3.069
+
+        if version >= 1003069 and 'system_error_show_flag' in json_dict:
             self.system_error_show_flag = json_dict['system_error_show_flag']
-        if version >= 6006:     # v0.6.006
+        if version >= 6006 and 'system_warning_show_flag' in json_dict:
             self.system_warning_show_flag \
             = json_dict['system_warning_show_flag']
-        if version >= 1003079:  # v1.3.079
+        if version >= 1003079 and 'operation_error_show_flag' in json_dict:
             self.operation_error_show_flag \
             = json_dict['operation_error_show_flag']
             self.operation_warning_show_flag \
             = json_dict['operation_warning_show_flag']
-        if version >= 2003116:  # v2.3.116
+        if version >= 2003116 and 'system_msg_show_date_flag' in json_dict:
             self.system_msg_show_date_flag \
             = json_dict['system_msg_show_date_flag']
-        if version >= 2003513:  # v2.3.513
+        if version >= 2003513 \
+        and 'system_msg_show_container_flag' in json_dict:
             self.system_msg_show_container_flag \
             = json_dict['system_msg_show_container_flag']
             self.system_msg_show_video_flag \
             = json_dict['system_msg_show_video_flag']
             self.system_msg_show_multi_line_flag \
             = json_dict['system_msg_show_multi_line_flag']
-        if version >= 1000007:  # v1.0.007
+        if version >= 1000007 and 'system_msg_keep_totals_flag' in json_dict:
             self.system_msg_keep_totals_flag \
             = json_dict['system_msg_keep_totals_flag']
 
         self.data_dir = json_dict['data_dir']
 
-        if version >= 1004069:  # v1.4.069:
+        if version >= 1004069 and 'data_dir_alt_list' in json_dict:
             self.data_dir_alt_list = json_dict['data_dir_alt_list']
             self.data_dir_use_first_flag = json_dict['data_dir_use_first_flag']
             self.data_dir_use_list_flag = json_dict['data_dir_use_list_flag']
@@ -4467,37 +4471,38 @@ class TartubeApp(Gtk.Application):
         else:
             self.data_dir_alt_list = [ self.data_dir ]
 
-        if version >= 2000069:  # v2.0.069:
+        if version >= 2000069 and 'sound_custom' in json_dict:
             self.sound_custom = json_dict['sound_custom']
 
-        if version >= 2003214:  # v2.3.214
+        if version >= 2003214 and 'export_csv_separator' in json_dict:
             self.export_csv_separator = json_dict['export_csv_separator']
-        if version >= 3014:     # v0.3.014
+        if version >= 3014:
             self.db_backup_mode = json_dict['db_backup_mode']
 
-        if version >= 2000029:  # v2.0.029
+        if version >= 2000029 \
+        and 'show_classic_tab_on_startup_flag' in json_dict:
             self.show_classic_tab_on_startup_flag \
             = json_dict['show_classic_tab_on_startup_flag']
-        if version >= 2002164:  # v2.2.164
+        if version >= 2002164 and 'classic_custom_dl_flag' in json_dict:
             self.classic_custom_dl_flag = json_dict['classic_custom_dl_flag']
-        if version >= 2000029:  # v2.0.029
+        if version >= 2000029 and 'classic_dir_list' in json_dict:
             self.classic_dir_list = json_dict['classic_dir_list']
             self.classic_dir_previous = json_dict['classic_dir_previous']
-        if version >= 2003190:  # v2.3.190
+        if version >= 2003190 and 'classic_format_selection' in json_dict:
             # (Before v2.3.369, this values was stored with leading zeroes)
             self.classic_format_selection \
             = utils.strip_whitespace(json_dict['classic_format_selection'])
             self.classic_format_convert_flag \
             = json_dict['classic_format_convert_flag']
-        if version >= 2003473:  # v2.3.473
+        if version >= 2003473 and 'classic_resolution_selection' in json_dict:
             self.classic_resolution_selection \
             = json_dict['classic_resolution_selection']
-        if version >= 2003586:  # v2.3.586
+        if version >= 2003586 and 'classic_livestream_flag' in json_dict:
             self.classic_livestream_flag = json_dict['classic_livestream_flag']
-        if version >= 2002129:  # v2.2.129
+        if version >= 2002129 and 'classic_pending_flag' in json_dict:
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
-        if version >= 2003046:  # v2.3.046
+        if version >= 2003046 and 'classic_duplicate_remove_flag' in json_dict:
             self.classic_duplicate_remove_flag \
             = json_dict['classic_duplicate_remove_flag']
 
@@ -4505,27 +4510,27 @@ class TartubeApp(Gtk.Application):
         #   update IVs were overhauled several times)
         self.load_config_ytdl_update(version, json_dict)
 
-        if version >= 2001086:  # v2.1.086:
+        if version >= 2001086 and 'auto_switch_output_flag' in json_dict:
             self.auto_switch_output_flag = json_dict['auto_switch_output_flag']
-        if version >= 2002043:  # v2.2.043:
+        if version >= 2002043 and 'output_size_default' in json_dict:
             self.output_size_default = json_dict['output_size_default']
             self.output_size_apply_flag = json_dict['output_size_apply_flag']
 
-        if version >= 2001117:  # v2.1.117:
+        if version >= 2001117 and 'ytdl_update_once_flag' in json_dict:
             self.ytdl_update_once_flag = json_dict['ytdl_update_once_flag']
         else:
             # Don't auto-detect youtube-dl if this installation is not the
             #   first one (as the user won't be expecting that)
             self.ytdl_update_once_flag = True
 
-        if version >= 2003182:  # v2.3.182:
+        if version >= 2003182 and 'ytdl_fork_no_dependency_flag' in json_dict:
             self.ytdl_fork_no_dependency_flag \
             = json_dict['ytdl_fork_no_dependency_flag']
 
-        if version >= 1003074:  # v1.3.074
+        if version >= 1003074 and 'ytdl_output_system_cmd_flag' in json_dict:
             self.ytdl_output_system_cmd_flag \
             = json_dict['ytdl_output_system_cmd_flag']
-        if version >= 1002030:  # v1.2.030
+        if version >= 1002030 and 'ytdl_output_stdout_flag' in json_dict:
             self.ytdl_output_stdout_flag = json_dict['ytdl_output_stdout_flag']
             self.ytdl_output_ignore_json_flag \
             = json_dict['ytdl_output_ignore_json_flag']
@@ -4534,82 +4539,83 @@ class TartubeApp(Gtk.Application):
             self.ytdl_output_stderr_flag = json_dict['ytdl_output_stderr_flag']
             self.ytdl_output_start_empty_flag \
             = json_dict['ytdl_output_start_empty_flag']
-        if version >= 1003064:  # v1.3.064
+        if version >= 1003064 and 'ytdl_output_show_summary_flag' in json_dict:
             self.ytdl_output_show_summary_flag \
             = json_dict['ytdl_output_show_summary_flag']
 
-        if version >= 1003074:  # v1.3.074
+        if version >= 1003074 and 'ytdl_write_system_cmd_flag' in json_dict:
             self.ytdl_write_system_cmd_flag \
             = json_dict['ytdl_write_system_cmd_flag']
         self.ytdl_write_stdout_flag = json_dict['ytdl_write_stdout_flag']
-        if version >= 5004:     # v0.5.004
+        if version >= 5004 and 'ytdl_write_ignore_json_flag' in json_dict:
             self.ytdl_write_ignore_json_flag \
             = json_dict['ytdl_write_ignore_json_flag']
-        if version >= 1002030:  # v1.2.030
+        if version >= 1002030 \
+        and 'ytdl_write_ignore_progress_flag' in json_dict:
             self.ytdl_write_ignore_progress_flag \
             = json_dict['ytdl_write_ignore_progress_flag']
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
 
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
         # Removed v2.3.565
-#       if version >= 2002179:  # v2.2.179
+#       if version >= 2002179:
 #           self.ytsc_write_verbose_flag = json_dict['ytsc_write_verbose_flag']
 
-        if version >= 1002024:  # v1.2.024
+        if version >= 1002024 and 'refresh_output_videos_flag' in json_dict:
             self.refresh_output_videos_flag \
             = json_dict['refresh_output_videos_flag']
-        if version >= 1002027:  # v1.2.027
+        if version >= 1002027 and 'refresh_output_verbose_flag' in json_dict:
             self.refresh_output_verbose_flag \
             = json_dict['refresh_output_verbose_flag']
-        if version >= 1003012:  # v1.3.012
+        if version >= 1003012 and 'refresh_moviepy_timeout' in json_dict:
             self.refresh_moviepy_timeout = json_dict['refresh_moviepy_timeout']
 
-        if version >= 1002030:  # v1.2.037
+        if version >= 1002030 and 'disk_space_warn_flag' in json_dict:
             self.disk_space_warn_flag = json_dict['disk_space_warn_flag']
             self.disk_space_warn_limit = json_dict['disk_space_warn_limit']
             self.disk_space_stop_flag = json_dict['disk_space_stop_flag']
             self.disk_space_stop_limit = json_dict['disk_space_stop_limit']
-            if version < 2003556:   # v2.3.556
+            if version < 2003556:
                 # (In this version, values changed from MB to GB)
                 self.disk_space_warn_limit \
                 = round((self.disk_space_warn_limit / 1000), 3)
                 self.disk_space_stop_limit \
                 = round((self.disk_space_stop_limit / 1000), 3)
 
-        if version >= 2001094:  # v2.1.094
+        if version >= 2001094 and 'custom_invidious_mirror' in json_dict:
             self.custom_invidious_mirror = json_dict['custom_invidious_mirror']
-        if version >= 2003236:  # v2.3.236
+        if version >= 2003236 and 'custom_sblock_mirror' in json_dict:
             self.custom_sblock_mirror = json_dict['custom_sblock_mirror']
 
         # (Moved to database file)
-#       if version >= 1004024:  # v1.4.024
+#       if version >= 1004024:
 #           self.custom_dl_by_video_flag \
 #           = json_dict['custom_dl_by_video_flag']
-#       if version >= 2003155:  # v2.3.155
+#       if version >= 2003155:
 #           self.custom_dl_split_flag = json_dict['custom_dl_split_flag']
-#       if version >= 2003240:  # v2.3.240
+#       if version >= 2003240:
 #           self.custom_dl_slice_flag = json_dict['custom_dl_slice_flag']
 #           self.custom_dl_slice_dict = json_dict['custom_dl_slice_dict']
         # (Moved to database file)
-#       if version >= 1004052:  # v1.4.052
+#       if version >= 1004052:
 #           self.custom_dl_divert_mode = json_dict['custom_dl_divert_mode']
-#       elif version >= 1004024:  # v1.4.024
+#       elif version >= 1004024:
 #           if json_dict['custom_dl_divert_hooktube_flag']:
 #               self.custom_dl_divert_mode = 'hooktube'
-#       if version >= 2001047:  # v2.1.047
+#       if version >= 2001047:
 #           self.custom_dl_divert_website \
 #           = json_dict['custom_dl_divert_website']
-#       if version >= 1004024:  # v1.4.024
+#       if version >= 1004024:
 #           self.custom_dl_delay_flag = json_dict['custom_dl_delay_flag']
 #           self.custom_dl_delay_max = json_dict['custom_dl_delay_max']
 #           self.custom_dl_delay_min = json_dict['custom_dl_delay_min']
 
-        if version >= 2003029:  # v2.3.029
+        if version >= 2003029 and 'dl_proxy_list' in json_dict:
             self.dl_proxy_list = json_dict['dl_proxy_list']
 
-        if version >= 1001054:  # v1.1.054
+        if version >= 1001054 and 'ffmpeg_path' in json_dict:
             self.ffmpeg_path = json_dict['ffmpeg_path']
-        if version >= 2001095:  # v2.1.095
+        if version >= 2001095 and 'avconv_path' in json_dict:
             self.avconv_path = json_dict['avconv_path']
         else:
             # (Before this version, .ffmpeg_path was used for the avconv binary
@@ -4618,18 +4624,18 @@ class TartubeApp(Gtk.Application):
             and re.search(r'avconv', self.ffmpeg_path):
                 self.avconv_path = self.ffmpeg_path
                 self.ffmpeg_path = None
-        if version >= 2001098:  # v2.1.098
+        if version >= 2001098 and 'ffmpeg_convert_webp_flag' in json_dict:
             self.ffmpeg_convert_webp_flag \
             = json_dict['ffmpeg_convert_webp_flag']
-        if version >= 2004148:  # v2.4.148
+        if version >= 2004148 and 'ffmpeg_retain_webp_flag' in json_dict:
             self.ffmpeg_retain_webp_flag \
             = json_dict['ffmpeg_retain_webp_flag']
 
-        if version >= 2003566:  # v2.3.566
+        if version >= 2003566 and 'livestream_dl_mode' in json_dict:
             self.livestream_dl_mode = json_dict['livestream_dl_mode']
-        if version >= 2003619:  # v2.3.619
+        if version >= 2003619 and 'livestream_dl_timeout' in json_dict:
             self.livestream_dl_timeout = json_dict['livestream_dl_timeout']
-        if version >= 2003582:  # v2.3.582
+        if version >= 2003582 and 'livestream_replace_flag' in json_dict:
             self.livestream_replace_flag = json_dict['livestream_replace_flag']
             self.livestream_stop_is_final_flag \
             = json_dict['livestream_stop_is_final_flag']
@@ -4637,19 +4643,19 @@ class TartubeApp(Gtk.Application):
             = json_dict['livestream_force_check_flag']
 
         # Removed v2.3.565
-#       if version >= 2002178:  # v2.2.178
+#       if version >= 2002178:
 #           self.ytsc_path = json_dict['ytsc_path']
-#       if version >= 2002181:  # v2.2.181
+#       if version >= 2002181:
 #           self.ytsc_path = json_dict['ytsc_path']
 #           self.ytsc_priority_flag = json_dict['ytsc_priority_flag']
 #           self.ytsc_wait_time = json_dict['ytsc_wait_time']
 #           self.ytsc_restart_max = json_dict['ytsc_restart_max']
 
-        if version >= 2003570:     # v2.3.570
+        if version >= 2003570 and 'streamlink_path' in json_dict:
             self.streamlink_path = json_dict['streamlink_path']
 
         # Removed v2.2.156
-#       if version >= 2001104:  # v2.1.104
+#       if version >= 2001104:
 #           self.ffmpeg_add_string = json_dict['ffmpeg_add_string']
 #           self.ffmpeg_regex_string = json_dict['ffmpeg_regex_string']
 #           self.ffmpeg_substitute_string \
@@ -4659,26 +4665,27 @@ class TartubeApp(Gtk.Application):
 #           self.ffmpeg_delete_flag = json_dict['ffmpeg_delete_flag']
 #           self.ffmpeg_keep_flag = json_dict['ffmpeg_keep_flag']
 
-        if version >= 2003067:     # v2.3.067
+        if version >= 2003067 and 'graph_data_type' in json_dict:
             self.graph_data_type = json_dict['graph_data_type']
             self.graph_plot_type = json_dict['graph_plot_type']
             self.graph_time_period_secs = json_dict['graph_time_period_secs']
             self.graph_time_unit_secs = json_dict['graph_time_unit_secs']
             self.graph_ink_colour = json_dict['graph_ink_colour']
 
-        if version >= 3029:     # v0.3.029
+        if version >= 3029 and 'operation_limit_flag' in json_dict:
             self.operation_limit_flag = json_dict['operation_limit_flag']
             self.operation_check_limit = json_dict['operation_check_limit']
             self.operation_download_limit \
             = json_dict['operation_download_limit']
 
-        if version >= 2003114:  # v2.3.114
+        if version >= 2003114 and 'show_newbie_dialogue_flag' in json_dict:
             self.show_newbie_dialogue_flag \
             = json_dict['show_newbie_dialogue_flag']
-        if version >= 2003376:  # v2.3.376
+        if version >= 2003376 and 'show_msys2_dialogue_flag' in json_dict:
             self.show_msys2_dialogue_flag \
             = json_dict['show_msys2_dialogue_flag']
-        if version >= 2004062:  # v2.4.062
+        if version >= 2004062 \
+        and 'show_delete_video_dialogue_flag' in json_dict:
             self.show_delete_video_dialogue_flag \
             = json_dict['show_delete_video_dialogue_flag']
             self.delete_video_files_flag \
@@ -4688,20 +4695,20 @@ class TartubeApp(Gtk.Application):
             self.delete_container_files_flag \
             = json_dict['delete_container_files_flag']
 
-        if version >= 2004013:  # v2.4.013
+        if version >= 2004013 and 'auto_switch_profile_flag' in json_dict:
             self.auto_switch_profile_flag \
             = json_dict['auto_switch_profile_flag']
 
-        if version >= 1003032:  # v1.3.032
+        if version >= 1003032 and 'auto_clone_options_flag' in json_dict:
             self.auto_clone_options_flag = json_dict['auto_clone_options_flag']
-        if version >= 2002116:  # v2.2.116
+        if version >= 2002116 and 'auto_delete_options_flag' in json_dict:
             self.auto_delete_options_flag \
             = json_dict['auto_delete_options_flag']
-        if version >= 1002013:  # v1.2.013
+        if version >= 1002013 and 'simple_options_flag' in json_dict:
             self.simple_options_flag = json_dict['simple_options_flag']
 
          # Removed  v2.2.015
-#        if version >= 1001067:  # v1.0.067
+#        if version >= 1001067:
 #            self.scheduled_dl_mode = json_dict['scheduled_dl_mode']
 #            self.scheduled_check_mode = json_dict['scheduled_check_mode']
 #
@@ -4736,7 +4743,7 @@ class TartubeApp(Gtk.Application):
 #                self.scheduled_shutdown_flag \
 #                = json_dict['scheduled_shutdown_flag']
 #
-#        if version >= 2001110:  # v2.1.110
+#        if version >= 2001110:
 #            self.scheduled_custom_mode = json_dict['scheduled_custom_mode']
 #            self.scheduled_custom_wait_value \
 #            = json_dict['scheduled_custom_wait_value']
@@ -4747,46 +4754,47 @@ class TartubeApp(Gtk.Application):
 
         # Import scheduled downloads created before v2.2.015, and convert them
         #   to the new media.Scheduled objects
-        if version < 2002015:   # v2.2.015
+        if version < 2002015:
             self.load_config_import_scheduled(version, json_dict)
 
-        if version >= 2004085:  # v2.4.085
+        if version >= 2004085 and 'block_livestreams_flag' in json_dict:
             self.block_livestreams_flag = json_dict['block_livestreams_flag']
-        if version >= 2000037:  # v2.0.037
+        if version >= 2000037 and 'enable_livestreams_flag' in json_dict:
             self.enable_livestreams_flag = json_dict['enable_livestreams_flag']
-        if version >= 2000047:  # v2.0.047
+        if version >= 2000047 and 'livestream_max_days' in json_dict:
             self.livestream_max_days = json_dict['livestream_max_days']
             self.livestream_use_colour_flag \
             = json_dict['livestream_use_colour_flag']
-        if version >= 2002204:  # v2.2.204
+        if version >= 2002204 and 'livestream_simple_colour_flag' in json_dict:
             self.livestream_simple_colour_flag \
             = json_dict['livestream_simple_colour_flag']
-        if version >= 2000052:  # v2.0.052
+        if version >= 2000052 and 'livestream_auto_notify_flag' in json_dict:
             self.livestream_auto_notify_flag \
             = json_dict['livestream_auto_notify_flag']
-        if version >= 2000068:  # v2.0.068
+        if version >= 2000068 and 'livestream_auto_alarm_flag' in json_dict:
             self.livestream_auto_alarm_flag \
             = json_dict['livestream_auto_alarm_flag']
-        if version >= 2000052:  # v2.0.052
+        if version >= 2000052 and 'livestream_auto_open_flag' in json_dict:
             self.livestream_auto_open_flag \
             = json_dict['livestream_auto_open_flag']
-        if version >= 2000054:  # v2.0.054
+        if version >= 2000054 and 'livestream_auto_dl_start_flag' in json_dict:
             self.livestream_auto_dl_start_flag \
             = json_dict['livestream_auto_dl_start_flag']
             self.livestream_auto_dl_stop_flag \
             = json_dict['livestream_auto_dl_stop_flag']
-        if version >= 2000037:  # v2.0.037
+        if version >= 2000037 and 'scheduled_livestream_flag' in json_dict:
             self.scheduled_livestream_flag \
             = json_dict['scheduled_livestream_flag']
             self.scheduled_livestream_wait_mins \
             = json_dict['scheduled_livestream_wait_mins']
             self.scheduled_livestream_last_time \
             = json_dict['scheduled_livestream_last_time']
-        if version >= 2002108:  # v2.2.108
+        if version >= 2002108 \
+        and 'scheduled_livestream_extra_flag' in json_dict:
             self.scheduled_livestream_extra_flag \
             = json_dict['scheduled_livestream_extra_flag']
 
-        if version >= 1003112:  # v1.3.112
+        if version >= 1003112 and 'autostop_time_flag' in json_dict:
             self.autostop_time_flag = json_dict['autostop_time_flag']
             self.autostop_time_value = json_dict['autostop_time_value']
             self.autostop_time_unit = json_dict['autostop_time_unit']
@@ -4799,28 +4807,28 @@ class TartubeApp(Gtk.Application):
         self.operation_auto_update_flag \
         = json_dict['operation_auto_update_flag']
         self.operation_save_flag = json_dict['operation_save_flag']
-        if version >= 1004003:  # v1.4.003
+        if version >= 1004003 and 'operation_sim_shortcut_flag' in json_dict:
             self.operation_sim_shortcut_flag \
             = json_dict['operation_sim_shortcut_flag']
 
-        if version >= 2002112:  # v2.2.112
+        if version >= 2002112 and 'operation_auto_restart_flag' in json_dict:
             self.operation_auto_restart_flag \
             = json_dict['operation_auto_restart_flag']
             self.operation_auto_restart_time \
             = json_dict['operation_auto_restart_time']
         # Removed v2.3.461
-#       if version >= 2003012:  # v2.3.012
+#       if version >= 2003012:
 #           self.operation_auto_restart_network_flag \
 #           = json_dict['operation_auto_restart_network_flag']
-        if version >= 2002169:  # v2.2.169
+        if version >= 2002169 and 'operation_auto_restart_max' in json_dict:
             self.operation_auto_restart_max \
             = json_dict['operation_auto_restart_max']
 
         # Removed v1.3.028
 #       self.operation_dialogue_flag = json_dict['operation_dialogue_flag']
-        if version >= 1003028:  # v1.3.028
+        if version >= 1003028 and 'operation_dialogue_mode' in json_dict:
             self.operation_dialogue_mode = json_dict['operation_dialogue_mode']
-        if version >= 1003060:  # v1.3.060
+        if version >= 1003060 and 'operation_convert_mode' in json_dict:
             self.operation_convert_mode = json_dict['operation_convert_mode']
 
         self.use_module_moviepy_flag = json_dict['use_module_moviepy_flag']
@@ -4828,7 +4836,7 @@ class TartubeApp(Gtk.Application):
 #       self.use_module_validators_flag \
 #       = json_dict['use_module_validators_flag']
 
-        if version >= 1000006:  # v1.0.006
+        if version >= 1000006 and 'dialogue_copy_clipboard_flag' in json_dict:
             self.dialogue_copy_clipboard_flag \
             = json_dict['dialogue_copy_clipboard_flag']
             self.dialogue_keep_open_flag \
@@ -4836,48 +4844,49 @@ class TartubeApp(Gtk.Application):
             # Removed v1.3.022
 #           self.dialogue_keep_container_flag \
 #           = json_dict['dialogue_keep_container_flag']
-        if version >= 2003130:  # v2.3.130
+        if version >= 2003130 and 'dialogue_yt_remind_flag' in json_dict:
             self.dialogue_yt_remind_flag = json_dict['dialogue_yt_remind_flag']
 
-        if version >= 2003371:  # v2.3.371
+        if version >= 2003371 and 'dialogue_disable_msg_flag' in json_dict:
             self.dialogue_disable_msg_flag \
             = json_dict['dialogue_disable_msg_flag']
 
-        if version >= 1003018:  # v1.3.018
+        if version >= 1003018 and 'allow_ytdl_archive_flag' in json_dict:
             self.allow_ytdl_archive_flag \
             = json_dict['allow_ytdl_archive_flag']
-        if version >= 2003401:  # v2.3.401
+        if version >= 2003401 and 'allow_ytdl_archive_mode' in json_dict:
             self.allow_ytdl_archive_mode \
             = json_dict['allow_ytdl_archive_mode']
             self.allow_ytdl_archive_path \
             = json_dict['allow_ytdl_archive_path']
-        if version >= 2001022:  # v2.1.022
+        if version >= 2001022 and 'classic_ytdl_archive_flag' in json_dict:
             self.classic_ytdl_archive_flag \
             = json_dict['classic_ytdl_archive_flag']
 
-        if version >= 5004:     # v0.5.004
+        if version >= 5004 and 'apply_json_timeout_flag' in json_dict:
             self.apply_json_timeout_flag \
             = json_dict['apply_json_timeout_flag']
-        if version >= 2003551:  # v2.3.551
+        if version >= 2003551 and 'json_timeout_no_comments_time' in json_dict:
             self.json_timeout_no_comments_time \
             = json_dict['json_timeout_no_comments_time']
             self.json_timeout_with_comments_time \
             = json_dict['json_timeout_with_comments_time']
-        if version >= 2001060:  # v2.1.060
+        if version >= 2001060 and 'track_missing_videos_flag' in json_dict:
             self.track_missing_videos_flag \
             = json_dict['track_missing_videos_flag']
             self.track_missing_time_flag \
             = json_dict['track_missing_time_flag']
             self.track_missing_time_days \
             = json_dict['track_missing_time_days']
-        if version >= 2003464:  # v2.3.464
+        if version >= 2003464 and 'add_blocked_videos_flag' in json_dict:
             self.add_blocked_videos_flag \
             = json_dict['add_blocked_videos_flag']
-        if version >= 2003382:  # v2.3.382
+        if version >= 2003382 and 'store_playlist_id_flag' in json_dict:
             self.store_playlist_id_flag \
             = json_dict['store_playlist_id_flag']
 
-        if version >= 2003181:  # v2.3.181
+        if version >= 2003181 \
+        and 'video_timestamps_extract_json_flag' in json_dict:
             self.video_timestamps_extract_json_flag \
             = json_dict['video_timestamps_extract_json_flag']
             self.video_timestamps_extract_descrip_flag \
@@ -4900,72 +4909,76 @@ class TartubeApp(Gtk.Application):
             self.split_video_auto_delete_flag \
             = json_dict['split_video_auto_delete_flag']
 
-        if version >= 2003236:  # v2.3.236
+        if version >= 2003236 and 'sblock_fetch_flag' in json_dict:
             self.sblock_fetch_flag = json_dict['sblock_fetch_flag']
             self.sblock_obfuscate_flag = json_dict['sblock_obfuscate_flag']
-        if version >= 2003257:  # v2.3.257
+        if version >= 2003257 and 'sblock_replace_flag' in json_dict:
             self.sblock_replace_flag = json_dict['sblock_replace_flag']
             self.sblock_re_extract_flag = json_dict['sblock_re_extract_flag']
-        if version >= 2003250:  # v2.3.250
+        if version >= 2003250 and 'slice_video_cleanup_flag' in json_dict:
             self.slice_video_cleanup_flag \
             = json_dict['slice_video_cleanup_flag']
 
-        if version < 2003552:  # v2.3.552
+        if version > 2003316 \
+        and version < 2003552 \
+        and 'comment_fetch_flag' in json_dict:
             self.check_comment_fetch_flag = json_dict['comment_fetch_flag']
             self.dl_comment_fetch_flag = json_dict['comment_fetch_flag']
-        else:
+        elif version >= 2003552 and 'check_comment_fetch_flag' in json_dict:
             self.check_comment_fetch_flag \
             = json_dict['check_comment_fetch_flag']
             self.dl_comment_fetch_flag = json_dict['dl_comment_fetch_flag']
-        if version >= 2003316:  # v2.3.316
+        if version >= 2003316 and 'comment_store_flag' in json_dict:
             self.comment_store_flag = json_dict['comment_store_flag']
-        if version >= 2003318:  # v2.3.318
+        if version >= 2003318 and 'comment_show_text_time_flag' in json_dict:
             self.comment_show_text_time_flag \
             = json_dict['comment_show_text_time_flag']
-        if version >= 2003319:  # v2.3.319
+        if version >= 2003319 and 'comment_show_formatted_flag' in json_dict:
             self.comment_show_formatted_flag \
             = json_dict['comment_show_formatted_flag']
 
-        if version >= 5004:     # v0.5.004
+        if version >= 5004 and 'ignore_child_process_exit_flag' in json_dict:
             self.ignore_child_process_exit_flag \
             = json_dict['ignore_child_process_exit_flag']
-        if version >= 1003088:  # v1.3.088
+        if version >= 1003088 and 'ignore_http_404_error_flag' in json_dict:
             self.ignore_http_404_error_flag \
             = json_dict['ignore_http_404_error_flag']
             self.ignore_data_block_error_flag \
             = json_dict['ignore_data_block_error_flag']
-        if version >= 1027:     # v0.1.028
+        if version >= 1027 and 'ignore_merge_warning_flag' in json_dict:
             self.ignore_merge_warning_flag \
             = json_dict['ignore_merge_warning_flag']
-        if version >= 1003088:  # v1.3.088
+        if version >= 1003088 \
+        and 'ignore_missing_format_error_flag' in json_dict:
             self.ignore_missing_format_error_flag \
             = json_dict['ignore_missing_format_error_flag']
-        if version >= 1001077:  # v1.1.077
+        if version >= 1001077 and 'ignore_no_annotations_flag' in json_dict:
             self.ignore_no_annotations_flag \
             = json_dict['ignore_no_annotations_flag']
-        if version >= 1002004:  # v1.2.004
+        if version >= 1002004 and 'ignore_no_subtitles_flag' in json_dict:
             self.ignore_no_subtitles_flag \
             = json_dict['ignore_no_subtitles_flag']
-        if version >= 2003340:  # v2.3.340
+        if version >= 2003340 and 'ignore_page_given_flag' in json_dict:
             self.ignore_page_given_flag = json_dict['ignore_page_given_flag']
             self.ignore_no_descrip_flag = json_dict['ignore_no_descrip_flag']
-        if version >= 2003403:  # v2.3.403
+        if version >= 2003403 and 'ignore_thumb_404_flag' in json_dict:
             self.ignore_thumb_404_flag = json_dict['ignore_thumb_404_flag']
 
-        if version >= 5004:     # v0.5.004
+        if version >= 5004 and 'ignore_yt_copyright_flag' in json_dict:
             self.ignore_yt_copyright_flag \
             = json_dict['ignore_yt_copyright_flag']
-        if version >= 1003084:  # v1.3.084
+        if version >= 1003084 and 'ignore_yt_age_restrict_flag' in json_dict:
             self.ignore_yt_age_restrict_flag \
             = json_dict['ignore_yt_age_restrict_flag']
-        if version >= 1003088:  # v1.3.088
+        if version >= 1003088 \
+        and 'ignore_yt_uploader_deleted_flag' in json_dict:
             self.ignore_yt_uploader_deleted_flag \
             = json_dict['ignore_yt_uploader_deleted_flag']
-        if version >= 2002025:  # v2.2.025
+        if version >= 2002025 and 'ignore_yt_payment_flag' in json_dict:
             self.ignore_yt_payment_flag \
             = json_dict['ignore_yt_payment_flag']
 
-        if version >= 1003090:  # v1.3.090
+        if version >= 1003090 and 'ignore_custom_msg_list' in json_dict:
             self.ignore_custom_msg_list \
             = json_dict['ignore_custom_msg_list']
             self.ignore_custom_regex_flag \
@@ -4973,17 +4986,17 @@ class TartubeApp(Gtk.Application):
 
         self.num_worker_default = json_dict['num_worker_default']
         self.num_worker_apply_flag = json_dict['num_worker_apply_flag']
-        if version >= 2002184:  # v2.2.184
+        if version >= 2002184 and 'num_worker_bypass_flag' in json_dict:
             self.num_worker_bypass_flag = json_dict['num_worker_bypass_flag']
 
         self.bandwidth_default = json_dict['bandwidth_default']
         self.bandwidth_apply_flag = json_dict['bandwidth_apply_flag']
 
-        if version >= 1002011:  # v1.2.011
+        if version >= 1002011 and 'video_res_default' in json_dict:
             self.video_res_default = json_dict['video_res_default']
             self.video_res_apply_flag = json_dict['video_res_apply_flag']
 
-        if version >= 2003117:  # v2.3.117
+        if version >= 2003117 and 'alt_num_worker' in json_dict:
             self.alt_num_worker = json_dict['alt_num_worker']
             self.alt_num_worker_apply_flag \
             = json_dict['alt_num_worker_apply_flag']
@@ -4997,64 +5010,69 @@ class TartubeApp(Gtk.Application):
         self.match_method = json_dict['match_method']
         self.match_first_chars = json_dict['match_first_chars']
         self.match_ignore_chars = json_dict['match_ignore_chars']
-        if version >= 2004169:  # v2.4.169
+        if version >= 2004169 and 'match_nickname_flag' in json_dict:
             self.match_nickname_flag = json_dict['match_nickname_flag']
 
-        if version >= 1001029:  # v1.1.029
+        if version >= 1001029 and 'auto_delete_flag' in json_dict:
             self.auto_delete_flag = json_dict['auto_delete_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
-        if version >= 2003609:  # v2.3.609
+        if version >= 2003609 and 'auto_remove_flag' in json_dict:
             self.auto_remove_flag = json_dict['auto_remove_flag']
             self.auto_remove_days = json_dict['auto_remove_days']
-        if version >= 1001029:  # v1.1.029
+        if version >= 1001029 and 'auto_delete_watched_flag' in json_dict:
             self.auto_delete_watched_flag \
             = json_dict['auto_delete_watched_flag']
-        if version >= 2003610:  # v2.3.610
+        if version >= 2003610 and 'auto_delete_asap_flag' in json_dict:
             self.auto_delete_asap_flag = json_dict['auto_delete_asap_flag']
 
-        if version >= 1002041:  # v1.2.041
+        if version >= 1002041 and 'delete_on_shutdown_flag' in json_dict:
             self.delete_on_shutdown_flag = json_dict['delete_on_shutdown_flag']
-        if version >= 1004027:  # v1.4.027
+        if version >= 1004027 and 'open_temp_on_desktop_flag' in json_dict:
             self.open_temp_on_desktop_flag \
             = json_dict['open_temp_on_desktop_flag']
 
         self.complex_index_flag = json_dict['complex_index_flag']
-        if version >= 3019:  # v0.3.019
+        if version >= 3019 and 'catalogue_mode' in json_dict:
             self.catalogue_mode = json_dict['catalogue_mode']
-        if version >= 2002069:  # v2.2.069
+        if version >= 2002069 and 'catalogue_mode_type' in json_dict:
             self.catalogue_mode_type = json_dict['catalogue_mode_type']
-        if version >= 3023:  # v0.3.023
+        if version >= 3023 and 'catalogue_page_size' in json_dict:
             self.catalogue_page_size = json_dict['catalogue_page_size']
-        if version >= 1004005:  # v1.4.005
+        if version >= 1004005 and 'catalogue_show_filter_flag' in json_dict:
             self.catalogue_show_filter_flag \
             = json_dict['catalogue_show_filter_flag']
         # Removed v2.4.194; now stored in the database file
-#       if version >= 1004005 and version < 2002159:  # v1.4.005, v2.2.159
+#       if version >= 1004005 and version < 2002159:
 #           catalogue_alpha_sort_flag = json_dict['catalogue_alpha_sort_flag']
 #           if not catalogue_alpha_sort_flag:
 #               self.catalogue_sort_mode = 'default'
 #           else:
 #               self.catalogue_sort_mode = 'alpha'
-#       elif version >= 2002159:  # v2.2.159
+#       elif version >= 2002159:
 #           self.catalogue_sort_mode = json_dict['catalogue_sort_mode']
-        if version >= 1004005:  # v1.4.005
-            self.catologue_use_regex_flag \
-            = json_dict['catologue_use_regex_flag']
+        if version >= 1004005:
+            if 'catologue_use_regex_flag' in json_dict:
+                self.catalogue_use_regex_flag \
+                = json_dict['catologue_use_regex_flag']
+            # (Typo corrected in v2.4.250)
+            elif 'catalogue_use_regex_flag' in json_dict:
+                self.catalogue_use_regex_flag \
+                = json_dict['catalogue_use_regex_flag']
 
-        if version >= 2003129:  # v2.3.129
+        if version >= 2003129 and 'url_change_confirm_flag' in json_dict:
             self.url_change_confirm_flag = json_dict['url_change_confirm_flag']
             self.url_change_regex_flag = json_dict['url_change_regex_flag']
 
-        if version >= 2003195:  # v2.3.195
+        if version >= 2003195 and 'custom_bg_table' in json_dict:
             self.custom_bg_table = json_dict['custom_bg_table']
-            if version < 2003537:   # v2.3.537
+            if version < 2003537:
                 # (New key-value pairs added)
                 for key in [
                     'drag_drop_notify', 'drag_drop_odd', 'drag_drop_even',
                 ]:
                     self.custom_bg_table[key] = self.default_bg_table[key]
 
-        if version >= 2003230:  # v2.3.230
+        if version >= 2003230 and 'ytdlp_filter_options_flag' in json_dict:
             self.ytdlp_filter_options_flag \
             = json_dict['ytdlp_filter_options_flag']
 
@@ -5108,7 +5126,7 @@ class TartubeApp(Gtk.Application):
         # (In version v0.5.027, the value of these IVs were overhauled. If
         #   loading from an earlier config file, replace those values with the
         #   new default values)
-        if version >= 5027:
+        if version >= 5027 and 'ytdl_bin' in json_dict:
             self.ytdl_bin = json_dict['ytdl_bin']
             self.ytdl_path_default = json_dict['ytdl_path_default']
             self.ytdl_path = json_dict['ytdl_path']
@@ -5118,7 +5136,7 @@ class TartubeApp(Gtk.Application):
 
         # (In version v1.3.903, these IVs were modified a little, but not
         #   on MS Windows)
-        if os.name != 'nt' and version <= 1003090:   # v1.3.090
+        if os.name != 'nt' and version <= 1003090:
             self.ytdl_update_dict['Update using pip3 (recommended)'] \
             = ['pip3', 'install', '--upgrade', '--user', 'youtube-dl']
             self.ytdl_update_dict['Update using pip3 (omit --user option)'] \
@@ -5138,7 +5156,7 @@ class TartubeApp(Gtk.Application):
 
         # (In version v1.5.012, these IVs were modified a little, but not on
         #   MS Windows)
-        if os.name != 'nt' and version <= 1005012:   # v1.5.012
+        if os.name != 'nt' and version <= 1005012:
             self.ytdl_update_dict['Update using PyPI youtube-dl path'] \
             = [self.ytdl_path_pypi, '-U']
             self.ytdl_update_list.append('Update using PyPI youtube-dl path')
@@ -5146,7 +5164,7 @@ class TartubeApp(Gtk.Application):
 
         # (In version v2.0.086, these IVs were completely overhauled on all
         #   operating systems)
-        if version < 2000096:  # v2.0.096
+        if version < 2000096:
 
             update_dict = {
                 'Update using default youtube-dl path':
@@ -5189,7 +5207,7 @@ class TartubeApp(Gtk.Application):
 
         # (In version v2.0.109, the directory location used by tartube_mswin.sh
         #   was changed)
-        if version < 2000109 and os.name == 'nt':  # v2.0.109
+        if version < 2000109 and os.name == 'nt':
 
             if 'PROGRAMFILES(X86)' in os.environ:
                 recommended = 'ytdl_update_win_64'
@@ -5205,13 +5223,13 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_dict[recommended] = mod_list
 
         # (In version v2.1.083, added support for youtube-dl forks)
-        if version >= 2001083:
+        if version >= 2001083 and 'ytdl_fork' in json_dict:
 
             self.ytdl_fork = json_dict['ytdl_fork']
 
         # (In version v2.3.082, these IVs were modified a little on all
         #   systems)
-        if version < 2003082:   # v2.3.082
+        if version < 2003082:
 
             self.ytdl_update_dict['ytdl_update_custom_path'] \
             = ['python3', self.ytdl_path, '-U']
@@ -5221,12 +5239,12 @@ class TartubeApp(Gtk.Application):
                 'ytdl_update_custom_path',
             )
 
-        else:
+        elif 'ytdl_path_custom_flag' in json_dict:
 
             self.ytdl_path_custom_flag = json_dict['ytdl_path_custom_flag']
 
         # (In version v2.3.183, self.ytdl_update_dict was modified again)
-        if version < 2003183:  # v2.3.183
+        if version < 2003183:
 
             self.ytdl_update_dict['ytdl_update_pip_no_dependencies'] = [
                 'pip', 'install', '--upgrade', '--no-dependencies',
@@ -5251,7 +5269,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_update_list = ytdl_update_list
 
         # (In version v2.3.277, self.ytdl_update_dict was modified yet again)
-        if version < 2003277:  # v2.3.277
+        if version < 2003277:
 
             if os.name == 'nt' and 'PROGRAMFILES(X86)' in os.environ:
 
@@ -5334,7 +5352,7 @@ class TartubeApp(Gtk.Application):
         scheduled_shutdown_flag = False
 
         # Now update those values from the config file
-        if version >= 1001067:  # v1.0.067
+        if version >= 1001067 and 'scheduled_dl_mode' in json_dict:
             scheduled_dl_mode = json_dict['scheduled_dl_mode']
             scheduled_check_mode = json_dict['scheduled_check_mode']
 
@@ -5346,7 +5364,7 @@ class TartubeApp(Gtk.Application):
                 = json_dict['scheduled_check_wait_value']
                 scheduled_check_wait_unit \
                 = json_dict['scheduled_check_wait_unit']
-            else:
+            elif 'scheduled_dl_wait_hours' in json_dict:
                 scheduled_dl_wait_value = json_dict['scheduled_dl_wait_hours']
                 scheduled_dl_wait_unit = 'hours'
                 scheduled_check_wait_value \
@@ -5359,10 +5377,10 @@ class TartubeApp(Gtk.Application):
             # Renamed in v1.3.120
             if 'scheduled_stop_flag' in json_dict:
                 scheduled_shutdown_flag = json_dict['scheduled_stop_flag']
-            else:
+            elif 'scheduled_shutdown_flag' in json_dict:
                 scheduled_shutdown_flag = json_dict['scheduled_shutdown_flag']
 
-        if version >= 2001110:  # v2.1.110
+        if version >= 2001110 and 'scheduled_custom_mode' in json_dict:
             scheduled_custom_mode = json_dict['scheduled_custom_mode']
             scheduled_custom_wait_value \
             = json_dict['scheduled_custom_wait_value']
@@ -5514,7 +5532,7 @@ class TartubeApp(Gtk.Application):
 
             self.results_list_width_video \
             = self.main_win_obj.results_list_get_column_widths()
-            
+
             self.classic_progress_list_width_source, \
             self.classic_progress_list_width_incoming \
             = self.main_win_obj.classic_mode_tab_get_column_widths()
@@ -5883,7 +5901,7 @@ class TartubeApp(Gtk.Application):
             'catalogue_mode_type': self.catalogue_mode_type,
             'catalogue_page_size': self.catalogue_page_size,
             'catalogue_show_filter_flag': self.catalogue_show_filter_flag,
-            'catologue_use_regex_flag': self.catologue_use_regex_flag,
+            'catalogue_use_regex_flag': self.catalogue_use_regex_flag,
 
             'url_change_confirm_flag': self.url_change_confirm_flag,
             'url_change_regex_flag': self.url_change_regex_flag,
@@ -7836,7 +7854,7 @@ class TartubeApp(Gtk.Application):
             # This version removes an IV from media.Channel, media.Playlist and
             #   media.Folder objects
             for media_data_obj in self.container_reg_dict.values():
-                if hasattr(media_data_obj, 'last_sort_mode'):                  
+                if hasattr(media_data_obj, 'last_sort_mode'):
                     del media_data_obj.last_sort_mode
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
@@ -9458,7 +9476,7 @@ class TartubeApp(Gtk.Application):
         default_path = re.sub('youtube-dl', 'yt-dlp', self.ytdl_path_default)
         bin_path = re.sub('youtube-dl', 'yt-dlp', self.ytdl_bin)
 
-        path = None        
+        path = None
         if os.path.isfile(pypi_path):
             path = pypi_path
         elif os.path.isfile(default_path):
@@ -9469,7 +9487,7 @@ class TartubeApp(Gtk.Application):
         if path is not None:
 
             self.ytdl_path = path
-            
+
             if not __main__.__pkg_strict_install_flag__:
 
                 if self.ytdl_path == self.ytdl_path_pypi:
@@ -10411,7 +10429,7 @@ class TartubeApp(Gtk.Application):
         """
 
         try:
-            file_list = os.listdir(path=self.data_dir)
+            file_list = os.listdir(path = self.data_dir)
         except:
             return
 
@@ -10427,7 +10445,9 @@ class TartubeApp(Gtk.Application):
                     os.path.join(self.backup_dir, filename),
                 )
 
-                utils.rename_file(self, old_path, new_path)
+                # (Don't handle unwisely-named directories...)
+                if os.path.isfile(old_path):
+                    utils.rename_file(self, old_path, new_path)
 
 
     def open_wiz_win(self):
@@ -11370,6 +11390,9 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.update_free_space_msg()
             self.main_win_obj.sensitise_progress_bar(True)
 
+        # Reset the update label in the Progress tab, and clear instantaneous
+        #   download speeds used to calculate the rolling average
+        self.main_win_obj.progress_list_reset_rolling_average()
         # (De)sensitise other widgets, as appropriate
         self.main_win_obj.sensitise_operation_widgets(True)
         # Make the widget changes visible (not necessary if the main window has
@@ -12456,8 +12479,8 @@ class TartubeApp(Gtk.Application):
                     is not set should be removed from the database (no files
                     are deleted)
 
-                remove_dupe_flag: True if any media.Video objects, which are
-                    not marked as downloaded and which share a URL with
+                remove_duplicate_flag: True if any media.Video objects, which
+                    are not marked as downloaded and which share a URL with
                     another media.Video object with the same parent and which
                     is marked as downloaded, should be removed from the
                     database (no files are deleted)
@@ -12486,6 +12509,9 @@ class TartubeApp(Gtk.Application):
                     deleted
 
                 del_xml_flag: True if all annotation files should be deleted
+
+                convert_ext_flag: True if .unknown_video file extensions should
+                    be converted to .mp4 (experimental; see Git #472)
 
         """
 
@@ -23471,9 +23497,9 @@ class TartubeApp(Gtk.Application):
             )
 
         if not self.main_win_obj.catalogue_regex_togglebutton.get_active():
-            self.catologue_use_regex_flag = False
+            self.catalogue_use_regex_flag = False
         else:
-            self.catologue_use_regex_flag = True
+            self.catalogue_use_regex_flag = True
 
 
     def on_menu_about(self, action, par):
@@ -25256,7 +25282,8 @@ class TartubeApp(Gtk.Application):
                 'del_video_flag': dialogue_win.checkbutton4.get_active(),
                 'del_others_flag': dialogue_win.checkbutton5.get_active(),
                 'remove_no_url_flag': dialogue_win.checkbutton6.get_active(),
-                'remove_dupe_flag': dialogue_win.checkbutton7.get_active(),
+                'remove_duplicate_flag': \
+                dialogue_win.checkbutton7.get_active(),
                 'del_archive_flag': dialogue_win.checkbutton8.get_active(),
                 'move_thumb_flag': dialogue_win.checkbutton9.get_active(),
                 'del_thumb_flag': dialogue_win.checkbutton10.get_active(),
@@ -25266,6 +25293,7 @@ class TartubeApp(Gtk.Application):
                 'del_descrip_flag': dialogue_win.checkbutton14.get_active(),
                 'del_json_flag': dialogue_win.checkbutton15.get_active(),
                 'del_xml_flag': dialogue_win.checkbutton16.get_active(),
+                'convert_ext_flag': dialogue_win.checkbutton17.get_active(),
             }
 
         # Now destroy the window
@@ -26869,13 +26897,13 @@ class TartubeApp(Gtk.Application):
             self.results_list_width_video = None
             self.classic_progress_list_width_source = None
             self.classic_progress_list_width_incoming = None
-                    
+
         else:
             self.progress_list_remember_width_flag = True
             # (self.progress_list_width_source, etc, are set by
             #   self.save_config() )
 
-            
+
     def set_refresh_moviepy_timeout(self, value):
 
         self.refresh_moviepy_timeout = value
@@ -26896,7 +26924,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.refresh_output_videos_flag = True
 
-            
+
     def set_restore_posn_from_tray_flag(self, flag):
 
         if not flag:

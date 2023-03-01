@@ -577,7 +577,7 @@ class SetupWizWin(GenericWizWin):
             + ' This window is visible on startup, if there is no config' \
             + ' file (settings.json)'
         )
-        
+
         Gtk.Window.__init__(self, title=_('Tartube setup'))
 
         if self.is_duplicate(app_obj):
@@ -2272,7 +2272,7 @@ class ImportYTWizWin(GenericWizWin):
             + ' In the menu, click Media > Export/Import > Import' \
             + ' YouTube subscriptions...'
         )
-        
+
         Gtk.Window.__init__(self, title=_('Import YouTube subscriptions'))
 
         if self.is_duplicate(app_obj):
@@ -3045,7 +3045,7 @@ class TutorialWizWin(GenericWizWin):
             'TRANSLATOR\'S NOTE: Tutorial wizard window starts here.' \
             + ' In the menu, click Help > Show tutorial...'
         )
-        
+
         Gtk.Window.__init__(self, title=_('Tartube Tutorial'))
 
         if self.is_duplicate(app_obj):
@@ -3114,7 +3114,7 @@ class TutorialWizWin(GenericWizWin):
 
         # Set the non-default size for this wizard window
         self.set_default_size(750, 575)
-        
+
         # Set the window's Gtk icon list
         self.set_icon_list(self.app_obj.main_win_obj.win_pixbuf_list)
 

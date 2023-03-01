@@ -87,8 +87,8 @@ class TidyManager(threading.Thread):
                 not set should be removed from the database (no files are
                 deleted)
 
-            remove_dupe_flag: True if any media.Video objects, which are not
-                marked as downloaded and which share a URL with another
+            remove_duplicate_flag: True if any media.Video objects, which are
+                not marked as downloaded and which share a URL with another
                 media.Video object with the same parent and which is marked as
                 downloaded, should be removed from the database (no files are
                 deleted)
@@ -114,6 +114,9 @@ class TidyManager(threading.Thread):
             del_json_flag: True if all metadata (JSON) files should be deleted
 
             del_xml_flag: True if all annotation files should be deleted
+
+            convert_ext_flag: True if .unknown_video file extensions should be
+                converted to .mp4 (experimental; see Git #472)
 
     """
 
@@ -170,7 +173,7 @@ class TidyManager(threading.Thread):
         #   and which share a URL with another media.Video object with the same
         #   parent and which is marked as downloaded, should be removed from
         #   the database (no files are deleted)
-        self.remove_dupe_flag = choices_dict['remove_dupe_flag']
+        self.remove_duplicate_flag = choices_dict['remove_duplicate_flag']
         # True if all youtube-dl archive files should be deleted
         self.del_archive_flag = choices_dict['del_archive_flag']
         # True if all thumbnail files should be moved into a subdirectory
@@ -191,6 +194,9 @@ class TidyManager(threading.Thread):
         self.del_json_flag = choices_dict['del_json_flag']
         # True if all annotation files should be deleted
         self.del_xml_flag = choices_dict['del_xml_flag']
+        # True if .unknown_video file extensions should be converted to .mp4
+        #   (experimental; see Git #472)
+        self.convert_ext_flag = choices_dict['convert_ext_flag']
 
         # The number of media data objects whose directories have been tidied
         #   so far...
@@ -207,7 +213,7 @@ class TidyManager(threading.Thread):
         self.video_deleted_count = 0
         self.other_deleted_count = 0
         self.remove_no_url_count = 0
-        self.remove_dupe_count = 0
+        self.remove_duplicate_count = 0
         self.archive_deleted_count = 0
         self.thumb_moved_count = 0
         self.thumb_deleted_count = 0
@@ -217,6 +223,7 @@ class TidyManager(threading.Thread):
         self.descrip_deleted_count = 0
         self.json_deleted_count = 0
         self.xml_deleted_count = 0
+        self.ext_converted_count = 0
 
 
         # Code
@@ -330,7 +337,7 @@ class TidyManager(threading.Thread):
             '   ' + _('Remove no_URL videos from database:') + ' ' + text,
         )
 
-        if self.remove_dupe_flag:
+        if self.remove_duplicate_flag:
             text = _('YES')
         else:
             text = _('NO')
@@ -432,6 +439,17 @@ class TidyManager(threading.Thread):
             '   ' + _('Delete all annotation files:') + ' ' + text,
         )
 
+        if self.convert_ext_flag:
+            text = _('YES')
+        else:
+            text = _('NO')
+
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            '   ' + _('Convert .unknown_video file extensions to .mp4:') \
+            + ' ' + text,
+        )
+
         # Compile a list of channels, playlists and folders to tidy up (each
         #   one has their own sub-directory inside Tartube's data directory)
         obj_list = []
@@ -519,13 +537,13 @@ class TidyManager(threading.Thread):
                 + str(self.remove_no_url_count),
             )
 
-        if self.remove_dupe_flag:
+        if self.remove_duplicate_flag:
 
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 '   ' \
                 + _('Undownloaded duplicate videos removed from database:') \
-                + ' ' + str(self.remove_dupe_count),
+                + ' ' + str(self.remove_duplicate_count),
             )
 
         if self.del_archive_flag:
@@ -600,6 +618,14 @@ class TidyManager(threading.Thread):
                 + str(self.xml_deleted_count),
             )
 
+        if self.convert_ext_flag:
+
+            self.app_obj.main_win_obj.output_tab_write_stdout(
+                1,
+                '   ' + _('File extensions converted:') + ' ' \
+                + str(self.ext_converted_count),
+            )
+
         # Let the timer run for a few more seconds to prevent Gtk errors
         GObject.timeout_add(
             0,
@@ -637,6 +663,9 @@ class TidyManager(threading.Thread):
             _('Checking:') + ' \'' + media_data_obj.name + '\'',
         )
 
+        if self.convert_ext_flag:
+            self.convert_file_ext(media_data_obj)
+
         if self.corrupt_flag:
             self.check_video_corrupt(media_data_obj)
 
@@ -649,8 +678,8 @@ class TidyManager(threading.Thread):
         if self.remove_no_url_flag:
             self.remove_no_url(media_data_obj)
 
-        if self.remove_dupe_flag:
-            self.remove_dupe(media_data_obj)
+        if self.remove_duplicate_flag:
+            self.remove_duplicate(media_data_obj)
 
         if self.del_archive_flag:
             self.delete_archive(media_data_obj)
@@ -678,6 +707,62 @@ class TidyManager(threading.Thread):
 
         if self.del_xml_flag:
             self.delete_xml(media_data_obj)
+
+
+    def convert_file_ext(self, media_data_obj):
+
+        """Called by self.tidy_directory().
+
+        Git #472: yt-dlp occasionally downloads .mp4 videos from VK (and
+        possibly other websites) whose file extension is mistakenly set to
+        .mp4. Convert any such files to .mp4.
+
+        This is an experimental/temporary feature.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The media data object whose directory must be tidied up
+
+        """
+
+        # Import the main window (for convenience)
+        main_win_obj = self.app_obj.main_win_obj
+
+        # Get a list of video files in the directory
+        container_path = media_data_obj.get_actual_dir(self.app_obj)
+        try:
+            init_list = os.listdir(container_path)
+        except:
+            # Can't read the directory
+            return
+
+        # Find all .unknown_video files
+        for relative_path in init_list:
+
+            # (If self.stop_tidy_operation() has been called, give up
+            #   immediately)
+            if not self.running_flag:
+                return
+
+            file_path = os.path.abspath(
+                os.path.join(container_path, relative_path),
+            )
+
+            if os.path.isfile(file_path):
+
+                filename, ext = os.path.splitext(relative_path)
+                if ext == '.unknown_video':
+                    mod_file_path = re.sub(
+                        r'\.unknown_video$',
+                        '.mp4',
+                        file_path,
+                    )
+                    self.app_obj.move_file_or_directory(
+                        file_path,
+                        mod_file_path,
+                    )
+                    self.ext_converted_count += 1
 
 
     def check_video_corrupt(self, media_data_obj):
@@ -944,7 +1029,7 @@ class TidyManager(threading.Thread):
                 self.remove_no_url_count += 1
 
 
-    def remove_dupe(self, media_data_obj):
+    def remove_duplicate(self, media_data_obj):
 
         """Called by self.tidy_directory().
 
@@ -989,7 +1074,7 @@ class TidyManager(threading.Thread):
                         duplicate_obj,
                     )
 
-                    self.remove_dupe_count += 1
+                    self.remove_duplicate_count += 1
 
 
     def delete_archive(self, media_data_obj):
