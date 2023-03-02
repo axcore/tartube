@@ -12709,8 +12709,7 @@ class MainWin(Gtk.ApplicationWindow):
                     'Cannot remove row in Progress List (row does not exist)',
                 )
 
-                self.progress_list_broken_dict[download_item_obj.item_id] \
-                = False
+                self.progress_list_broken_dict[item_id] = False
 
 
     def progress_list_update_video_name(self, download_item_obj, video_obj):

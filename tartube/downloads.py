@@ -5841,14 +5841,14 @@ class VideoDownloader(object):
                 # No matching media.Video found; assign the error/warning to
                 #   the parent channel/playlist instead
                 if mini_list[0] == 'warning':
-                    self.set_warning(
-                        self.download_item_obj.media_data_obj,
+                    self.set_return_code(self.WARNING)
+                    self.download_item_obj.media_data_obj.set_warning(
                         mini_list[1],
                     )
 
                 else:
-                    self.set_error(
-                        self.download_item_obj.media_data_obj,
+                    self.set_return_code(self.ERROR)
+                    self.download_item_obj.media_data_obj.set_error(
                         mini_list[1],
                     )
 

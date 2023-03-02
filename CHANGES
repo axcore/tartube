@@ -1,3 +1,18 @@
+v2.4.260 (2 Mar 2023)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- The previous version added code to intercept an unresolved Gtk issue, which
+    the user will see as a message in the Errors/Warnings tab,
+    '#271: Cannot remove row in Progress List (row does not exist)'. The new
+    code itself caused a crash, when activated. The crash is fixed, the Gtk
+    issue remains unresolved
+- During a download, error and warnings messages which could not be attached to
+    a particular video, and which were therefore attached to the parent channel
+    or playlist, were not visible in the Errors/Warnings tab. This bug has been
+    present since v2.3.471, so you may notice a dramatic increase in the number
+    of errors/warnings visible in the tab 
+
 v2.4.255 (1 Mar 2023)
 -------------------------------------------------------------------------------
 
