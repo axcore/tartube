@@ -5980,7 +5980,7 @@ msgid "WARNING: The filename length includes the length of the folder name!"
 msgstr "Attention : la longueur du nom de fichier inclue le nom du dossier !"
 
 #: .././config.py:6083
-msgid "WARNING: The filename length includes the length of the directory nam!e"
+msgid "WARNING: The filename length includes the length of the directory name!"
 msgstr "Attention : la longueur du nom de fichier inclue le nom du dossier !"
 
 #: .././config.py:6095
