@@ -6081,7 +6081,7 @@ class OptionsEditWin(GenericEditWin):
         else:
             msg = _(
                 'WARNING: The filename length includes the length of the' \
-                + ' directory nam!e',
+                + ' directory name!',
             )
 
         self.add_label(grid2,
