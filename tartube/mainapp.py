@@ -478,17 +478,42 @@ class TartubeApp(Gtk.Application):
         # Flags specifying what data should be transferred to an external
         #   application, if videos are dragged there from the Video Catalogue
         #   (and also from the Results List and Classic Progress List)
-        # All or any of the flags may be set. If none are set, no data is
-        #   transferred
+        # All or any of the flags may be set. If none are set, or if only
+        #   self.drag_video_separator_flag is set, no data is transferred
+        # Flag set to True if the transferred text should start with a
+        #   separator (line with -----)
+        self.drag_video_separator_flag = False
         # Flag set to True if the full file path should be transferred
         self.drag_video_path_flag = True
         # Flag set to True if the video's source URL should be transferred
         self.drag_video_source_flag = False
         # Flag set to True if the video's name should be transferred
         self.drag_video_name_flag = False
+        # Flag set to True if any errors/warnings produced the last time this
+        #   video was checked/downloaded should be transferred
+        self.drag_video_msg_flag = False
         # Flag set to True if the full file path to the thumbnail file should
         #   be transferred
         self.drag_thumb_path_flag = False
+
+        # Flags specifying what data should be transferred to an external
+        #   application, if messages in the Errors/Warnings tab are dragged
+        #   there
+        # All or any of the flags may be set. If none are set, or if only
+        #   self.drag_error_separator_flag is set, no data is transferred
+        # Flag set to True if the transferred text should start with a
+        #   separator (line with -----)
+        self.drag_error_separator_flag = False
+        # Flag set to True if the full file path should be transferred
+        self.drag_error_path_flag = True
+        # Flag set to True if the video/channel/playlist source URL should be
+        #   transferred
+        self.drag_error_source_flag = False
+        # Flag set to True if the video/channel/playlist name should be
+        #   transferred
+        self.drag_error_name_flag = False
+        # Flag set to True if any error/warning itself should be transferred
+        self.drag_error_msg_flag = True
 
         # Flag set to True if an icon should be displayed in the system tray
         self.show_status_icon_flag = True
@@ -992,9 +1017,31 @@ class TartubeApp(Gtk.Application):
         #   terminal window
         self.ytdl_write_stderr_flag = False
 
+        # Name of an optional downloader log, written in the downloads folder
+        if os.name != 'nt':
+            self.ytdl_log_name = 'ytdl-log.log'
+        else:
+            self.ytdl_log_name = 'ytdl-log.txt'
+        # Flag set to True if youtube-dl system commands should be written to
+        #   the downloader log
+        self.ytdl_log_system_cmd_flag = False
+        # Flag set to True if youtube-dl's STDOUT should be written to the
+        #   downloader log
+        self.ytdl_log_stdout_flag = False
+        # Flag set to True if we should ignore JSON output when writing to the
+        #   downloader log (ignored if self.ytdl_log_stdout_flag is False)
+        self.ytdl_log_ignore_json_flag = True
+        # Flag set to True if we should ignore download progress (as a
+        #   percentage) when writing to the downloader log (ignored if
+        #   self.ytdl_log_stdout_flag is False)
+        self.ytdl_log_ignore_progress_flag = True
+        # Flag set to True if youtube-dl's STDERR should be written to the
+        #   downloader log
+        self.ytdl_log_stderr_flag = False
+
         # Flag set to True if youtube-dl should show verbose output (using the
-        #   --verbose option). The setting applies to both the Output tab and
-        #   the terminal window
+        #   --verbose option). The setting applies to the Output tab, the
+        #   terminal window and/or the downloader log
         self.ytdl_write_verbose_flag = False
 
         # Flag set to True if, during a refresh operation, videos should be
@@ -4133,6 +4180,24 @@ class TartubeApp(Gtk.Application):
         )
 
 
+    def write_downloader_log(self, msg):
+
+        """Can be called by anything.
+
+        Writes a line of text to the downloader log (a file in Tartube's
+        data directory).
+
+        Args:
+
+            msg (str): The text to write
+
+        """
+
+        path = os.path.abspath(os.path.join(self.data_dir, self.ytdl_log_name))
+        with open(path, 'a') as outfile:
+            outfile.write(msg + '\n')
+
+
     # (Config/database files load/save)
 
 
@@ -4398,12 +4463,25 @@ class TartubeApp(Gtk.Application):
             self.catalogue_show_nickname_flag \
             = json_dict['catalogue_show_nickname_flag']
 
+        if version >= 2004265 and 'drag_video_separator_flag' in json_dict:
+            self.drag_video_separator_flag \
+            = json_dict['drag_video_separator_flag']
         if version >= 2002028 and 'drag_video_path_flag' in json_dict:
             self.drag_video_path_flag = json_dict['drag_video_path_flag']
             self.drag_video_source_flag = json_dict['drag_video_source_flag']
             self.drag_video_name_flag = json_dict['drag_video_name_flag']
+        if version >= 2004265 and 'drag_video_msg_flag' in json_dict:
+            self.drag_video_msg_flag = json_dict['drag_video_msg_flag']
         if version >= 2002162 and 'drag_thumb_path_flag' in json_dict:
             self.drag_thumb_path_flag = json_dict['drag_thumb_path_flag']
+
+        if version >= 2004265 and 'drag_error_separator_flag' in json_dict:
+            self.drag_error_separator_flag \
+            = json_dict['drag_error_separator_flag']
+            self.drag_error_path_flag = json_dict['drag_error_path_flag']
+            self.drag_error_source_flag = json_dict['drag_error_source_flag']
+            self.drag_error_name_flag = json_dict['drag_error_name_flag']
+            self.drag_error_msg_flag = json_dict['drag_error_msg_flag']
 
         if version >= 1003024 and 'show_status_icon_flag' in json_dict:
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
@@ -4555,6 +4633,16 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_ignore_progress_flag \
             = json_dict['ytdl_write_ignore_progress_flag']
         self.ytdl_write_stderr_flag = json_dict['ytdl_write_stderr_flag']
+
+        if version >= 2004266 and 'ytdl_log_system_cmd_flag' in json_dict:
+            self.ytdl_log_system_cmd_flag \
+            = json_dict['ytdl_log_system_cmd_flag']
+            self.ytdl_log_stdout_flag = json_dict['ytdl_log_stdout_flag']
+            self.ytdl_log_ignore_json_flag \
+            = json_dict['ytdl_log_ignore_json_flag']
+            self.ytdl_log_ignore_progress_flag \
+            = json_dict['ytdl_log_ignore_progress_flag']
+            self.ytdl_log_stderr_flag = json_dict['ytdl_log_stderr_flag']
 
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
         # Removed v2.3.565
@@ -5601,10 +5689,18 @@ class TartubeApp(Gtk.Application):
             self.catalogue_clickable_container_flag,
             'catalogue_show_nickname_flag': self.catalogue_show_nickname_flag,
 
+            'drag_video_separator_flag': self.drag_video_separator_flag,
             'drag_video_path_flag': self.drag_video_path_flag,
             'drag_video_source_flag': self.drag_video_source_flag,
             'drag_video_name_flag': self.drag_video_name_flag,
+            'drag_video_msg_flag': self.drag_video_msg_flag,
             'drag_thumb_path_flag': self.drag_thumb_path_flag,
+
+            'drag_error_separator_flag': self.drag_error_separator_flag,
+            'drag_error_path_flag': self.drag_error_path_flag,
+            'drag_error_source_flag': self.drag_error_source_flag,
+            'drag_error_name_flag': self.drag_error_name_flag,
+            'drag_error_msg_flag': self.drag_error_msg_flag,
 
             'show_status_icon_flag': self.show_status_icon_flag,
             'open_in_tray_flag': self.open_in_tray_flag,
@@ -5692,6 +5788,13 @@ class TartubeApp(Gtk.Application):
             'ytdl_write_ignore_progress_flag': \
             self.ytdl_write_ignore_progress_flag,
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
+
+            'ytdl_log_system_cmd_flag': self.ytdl_log_system_cmd_flag,
+            'ytdl_log_stdout_flag': self.ytdl_log_stdout_flag,
+            'ytdl_log_ignore_json_flag': self.ytdl_log_ignore_json_flag,
+            'ytdl_log_ignore_progress_flag': \
+            self.ytdl_log_ignore_progress_flag,
+            'ytdl_log_stderr_flag': self.ytdl_log_stderr_flag,
 
             'ytdl_write_verbose_flag': self.ytdl_write_verbose_flag,
 
@@ -11326,6 +11429,7 @@ class TartubeApp(Gtk.Application):
         clip_count = self.download_manager_obj.total_clip_count
         slice_count = self.download_manager_obj.total_slice_count
         other_count = self.download_manager_obj.other_video_count
+        size_count = self.download_manager_obj.total_size_count
 
         # For the 'custom_sim'/'classic_sim' operation, we need to use the same
         #   custom download manager
@@ -11444,6 +11548,12 @@ class TartubeApp(Gtk.Application):
                 if slice_count:
                     msg += '\n' + _('Video slices removed:') + ' ' \
                     + str(slice_count)
+
+                if size_count and (dl_count or other_count):
+
+                    msg += '\n\n' + _('Total download:') + ' ' + str(
+                        utils.convert_bytes_to_string(size_count)
+                    )
 
                 if time_num >= 10:
                     msg += '\n\n' + _('Time taken:') + ' ' \
@@ -19174,7 +19284,7 @@ class TartubeApp(Gtk.Application):
         }
 
         # Split text into separate lines
-        line_list = text.split('\n')
+        line_list = text.splitlines()
 
         # Extract fields from each line, and check they are valid
         # If any line is invalid, ignore that line and any subsequent lines,
@@ -19348,7 +19458,7 @@ class TartubeApp(Gtk.Application):
         }
 
         # Split text into separate lines
-        line_list = text.split('\n')
+        line_list = text.splitlines()
 
         # Extract each group of four lines, and check they are valid
         # If a group of four/six is invalid (or if we reach the end of the file
@@ -24139,7 +24249,7 @@ class TartubeApp(Gtk.Application):
             # Split text into a list of lines and filter out invalid URLs
             video_list = []
             duplicate_list = []
-            for line in text.split('\n'):
+            for line in text.splitlines():
 
                 # Remove leading/trailing whitespace
                 line = utils.strip_whitespace(line)
@@ -26271,12 +26381,60 @@ class TartubeApp(Gtk.Application):
         self.dl_proxy_list = proxy_list.copy()
 
 
+    def set_drag_error_msg_flag(self, flag):
+
+        if not flag:
+            self.drag_error_msg_flag = False
+        else:
+            self.drag_error_msg_flag = True
+
+
+    def set_drag_error_name_flag(self, flag):
+
+        if not flag:
+            self.drag_error_name_flag = False
+        else:
+            self.drag_error_name_flag = True
+
+
+    def set_drag_error_path_flag(self, flag):
+
+        if not flag:
+            self.drag_error_path_flag = False
+        else:
+            self.drag_error_path_flag = True
+
+
+    def set_drag_error_separator_flag(self, flag):
+
+        if not flag:
+            self.drag_error_separator_flag = False
+        else:
+            self.drag_error_separator_flag = True
+
+
+    def set_drag_error_source_flag(self, flag):
+
+        if not flag:
+            self.drag_error_source_flag = False
+        else:
+            self.drag_error_source_flag = True
+
+
     def set_drag_thumb_path_flag(self, flag):
 
         if not flag:
             self.drag_thumb_path_flag = False
         else:
             self.drag_thumb_path_flag = True
+
+
+    def set_drag_video_msg_flag(self, flag):
+
+        if not flag:
+            self.drag_video_msg_flag = False
+        else:
+            self.drag_video_msg_flag = True
 
 
     def set_drag_video_name_flag(self, flag):
@@ -26293,6 +26451,14 @@ class TartubeApp(Gtk.Application):
             self.drag_video_path_flag = False
         else:
             self.drag_video_path_flag = True
+
+
+    def set_drag_video_separator_flag(self, flag):
+
+        if not flag:
+            self.drag_video_separator_flag = False
+        else:
+            self.drag_video_separator_flag = True
 
 
     def set_drag_video_source_flag(self, flag):
@@ -27501,6 +27667,46 @@ class TartubeApp(Gtk.Application):
             self.ytdl_fork_no_dependency_flag = False
         else:
             self.ytdl_fork_no_dependency_flag = True
+
+
+    def set_ytdl_log_ignore_json_flag(self, flag):
+
+        if not flag:
+            self.ytdl_log_ignore_json_flag = False
+        else:
+            self.ytdl_log_ignore_json_flag = True
+
+
+    def set_ytdl_log_ignore_progress_flag(self, flag):
+
+        if not flag:
+            self.ytdl_log_ignore_progress_flag = False
+        else:
+            self.ytdl_log_ignore_progress_flag = True
+
+
+    def set_ytdl_log_stderr_flag(self, flag):
+
+        if not flag:
+            self.ytdl_log_stderr_flag = False
+        else:
+            self.ytdl_log_stderr_flag = True
+
+
+    def set_ytdl_log_stdout_flag(self, flag):
+
+        if not flag:
+            self.ytdl_log_stdout_flag = False
+        else:
+            self.ytdl_log_stdout_flag = True
+
+
+    def set_ytdl_log_system_cmd_flag(self, flag):
+
+        if not flag:
+            self.ytdl_log_system_cmd_flag = False
+        else:
+            self.ytdl_log_system_cmd_flag = True
 
 
     def set_ytdl_output_ignore_json_flag(self, flag):

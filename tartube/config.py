@@ -14181,7 +14181,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
             # Hopefully, 'text' contains one or more valid URLs or paths to
             #   video/audio files
-            line_list = text.split('\n')
+            line_list = text.splitlines()
             mod_list = []
 
             for line in line_list:
@@ -22419,7 +22419,7 @@ class SystemPrefWin(GenericPrefWin):
             '<i>' + _(
             'When dragging and dropping videos to an external application...',
             ) + '</i>',
-            0, 1, 1, 1,
+            0, 1, 2, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
@@ -22447,14 +22447,90 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.connect('toggled', self.on_drag_name_button_toggled)
 
         checkbutton4 = self.add_checkbutton(grid,
+            _('Transfer error/warning messages'),
+            self.app_obj.drag_video_msg_flag,
+            True,                   # Can be toggled by user
+            1, 2, 1, 1,
+        )
+        checkbutton4.connect('toggled', self.on_drag_msg_button_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
             _('Transfer the thumbnail\'s full file path'),
             self.app_obj.drag_thumb_path_flag,
             True,                   # Can be toggled by user
-            0, 5, 1, 1,
+            1, 3, 1, 1,
         )
-        checkbutton4.connect('toggled', self.on_drag_thumb_button_toggled)
+        checkbutton5.connect('toggled', self.on_drag_thumb_button_toggled)
 
+        checkbutton6 = self.add_checkbutton(grid,
+            _('Add a text separator before each item'),
+            self.app_obj.drag_video_separator_flag,
+            True,                   # Can be toggled by user
+            1, 4, 1, 1,
+        )
+        checkbutton6.connect('toggled', self.on_drag_separator_button_toggled)
 
+        self.add_label(grid,
+            '<i>' + _(
+            'When dragging and dropping messages from the Errors/Warnings' \
+            + ' tab to an external application...',
+            ) + '</i>',
+            0, 5, 2, 1,
+        )
+
+        checkbutton7 = self.add_checkbutton(grid,
+            _('Transfer the video/channel/playlist file path'),
+            self.app_obj.drag_error_path_flag,
+            True,                   # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton7.connect('toggled', self.on_drag_error_path_button_toggled)
+
+        checkbutton8 = self.add_checkbutton(grid,
+            _('Transfer the video/channel/playlist URL'),
+            self.app_obj.drag_error_source_flag,
+            True,                   # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton8.connect(
+            'toggled',
+            self.on_drag_error_source_button_toggled,
+        )
+
+        checkbutton9 = self.add_checkbutton(grid,
+            _('Transfer the video/channel/playlist name'),
+            self.app_obj.drag_error_name_flag,
+            True,                   # Can be toggled by user
+            0, 8, 1, 1,
+        )
+        checkbutton9.connect(
+            'toggled',
+            self.on_drag_error_name_button_toggled,
+        )
+
+        checkbutton10 = self.add_checkbutton(grid,
+            _('Transfer error/warning messages'),
+            self.app_obj.drag_error_msg_flag,
+            True,                   # Can be toggled by user
+            1, 6, 1, 1,
+        )
+        checkbutton10.connect(
+            'toggled',
+            self.on_drag_error_msg_button_toggled,
+        )
+
+        checkbutton11 = self.add_checkbutton(grid,
+            _('Add a text separator before each item'),
+            self.app_obj.drag_error_separator_flag,
+            True,                   # Can be toggled by user
+            1, 7, 1, 1,
+        )
+        checkbutton11.connect(
+            'toggled',
+            self.on_drag_error_separator_button_toggled,
+        )
+        
+                
     def setup_windows_system_tray_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
@@ -26793,9 +26869,52 @@ class SystemPrefWin(GenericPrefWin):
         inner_notebook = self.add_inner_notebook(grid)
 
         # ...with its own tabs
+        self.setup_output_general_tab(inner_notebook)
         self.setup_output_outputtab_tab(inner_notebook)
-        self.setup_output_terminal_window_tab(inner_notebook)
-        self.setup_output_both_tab(inner_notebook)
+        self.setup_output_terminal_tab(inner_notebook)
+        self.setup_output_log_tab(inner_notebook)
+
+
+    def setup_output_general_tab(self, inner_notebook):
+
+        """Called by self.setup_output_tab().
+
+        Sets up the 'General' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: System preferences > Output > General'
+        )
+
+        tab, grid = self.add_inner_notebook_tab(_('_General'), inner_notebook)
+
+        # General preferences (applies to both the Output tab, terminal window
+        #   and downloader log)
+        self.add_label(grid,
+            '<u>' + _('General preferences') + '</u>',
+            0, 0, 1, 1,
+        )
+        
+        self.add_label(grid,
+            '<i>' + _(
+                'Applies to Output tab, terminal window and downloader log',
+            ) + '</i>',
+            0, 1, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Downloader writes verbose output (youtube-dl debugging mode)'),
+            self.app_obj.ytdl_write_verbose_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
+        checkbutton.set_hexpand(False)
+        checkbutton.connect('toggled', self.on_ytdl_verbose_button_toggled)
 
 
     def setup_output_outputtab_tab(self, inner_notebook):
@@ -26970,7 +27089,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_output_terminal_window_tab(self, inner_notebook):
+    def setup_output_terminal_tab(self, inner_notebook):
 
         """Called by self.setup_output_tab().
 
@@ -27061,11 +27180,11 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_output_both_tab(self, inner_notebook):
+    def setup_output_log_tab(self, inner_notebook):
 
         """Called by self.setup_output_tab().
 
-        Sets up the 'Both' inner notebook tab.
+        Sets up the 'Log' inner notebook tab.
 
         Args:
 
@@ -27074,29 +27193,90 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: System preferences > Output > Both'
+            'TRANSLATOR\'S NOTE: System preferences > Output > Log'
         )
 
-        tab, grid = self.add_inner_notebook_tab(_('_Both'), inner_notebook)
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Downloader log'),
+            inner_notebook,
+        )
 
-        # Special preferences (applies to both the Output tab and the terminal
-        #   window)
+        # Downloader log preferences
         self.add_label(grid,
-            '<u>' + _(
-                'Special preferences (applies to both the Output tab and the' \
-                + ' terminal window)',
-            ) + '</u>',
+            '<u>' + _('Downloader log preferences') + '</u>',
             0, 0, 1, 1,
         )
 
-        checkbutton = self.add_checkbutton(grid,
-            _('Downloader writes verbose output (youtube-dl debugging mode)'),
-            self.app_obj.ytdl_write_verbose_flag,
-            True,               # Can be toggled by user
+        self.add_label(grid,
+            '<i>' + _(
+                'If enabled, the file \'{0}\' is written to Tartube\'s' \
+                + ' data folder',
+            ).format(self.app_obj.ytdl_log_name) + '</i>',
             0, 1, 1, 1,
         )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Write downloader system commands to the log'),
+            self.app_obj.ytdl_log_system_cmd_flag,
+            True,               # Can be toggled by user
+            0, 2, 1, 1,
+        )
         checkbutton.set_hexpand(False)
-        checkbutton.connect('toggled', self.on_ytdl_verbose_button_toggled)
+        checkbutton.connect('toggled', self.on_log_system_button_toggled)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Write output from downloader\'s STDOUT to the log'),
+            self.app_obj.ytdl_log_stdout_flag,
+            True,               # Can be toggled by user
+            0, 3, 1, 1,
+        )
+        checkbutton2.set_hexpand(False)
+        # (Signal connect appears below)
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('...but don\'t write each video\'s JSON data'),
+            self.app_obj.ytdl_log_ignore_json_flag,
+            True,               # Can be toggled by user
+            0, 4, 1, 1,
+        )
+        checkbutton3.set_hexpand(False)
+        checkbutton3.connect('toggled', self.on_log_json_button_toggled)
+        if not self.app_obj.ytdl_log_stdout_flag:
+            checkbutton3.set_sensitive(False)
+
+        checkbutton4 = self.add_checkbutton(grid,
+            _('...but don\'t write each video\'s download progress'),
+            self.app_obj.ytdl_log_ignore_progress_flag,
+            True,               # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        checkbutton4.connect(
+            'toggled',
+            self.on_log_progress_button_toggled,
+        )
+        if not self.app_obj.ytdl_log_stdout_flag:
+            checkbutton4.set_sensitive(False)
+
+        # (Signal connect from above)
+        checkbutton2.connect(
+            'toggled',
+            self.on_log_stdout_button_toggled,
+            checkbutton3,
+            checkbutton4,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Write output from downloader\'s STDERR to the log'),
+            self.app_obj.ytdl_log_stderr_flag,
+            True,               # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton5.set_hexpand(False)
+        checkbutton5.connect(
+            'toggled',
+            self.on_log_stderr_button_toggled,
+        )
 
 
     # Callback class methods
@@ -28869,7 +29049,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Filter out empty lines
-        line_list = text.split('\n')
+        line_list = text.splitlines()
         mod_list = []
         for line in line_list:
             if re.search(r'\S', line):
@@ -29704,6 +29884,157 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_download_limit(int(text))
 
 
+    def on_drag_error_msg_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the error/warning message when dragging
+        and dropping from the Errors/Warnings tab to an external application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_error_msg_flag:
+            self.app_obj.set_drag_error_msg_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_error_msg_flag:
+            self.app_obj.set_drag_error_msg_flag(False)
+
+
+    def on_drag_error_name_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the video/channel/playlist name when
+        dragging and dropping from the Errors/Warnings tab to an external
+        application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_error_name_flag:
+            self.app_obj.set_drag_error_name_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_error_name_flag:
+            self.app_obj.set_drag_error_name_flag(False)
+
+
+    def on_drag_error_path_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the video/channel/playlist path when
+        dragging and dropping from the Errors/Warnings tab to an external
+        application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_error_path_flag:
+            self.app_obj.set_drag_error_path_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_error_path_flag:
+            self.app_obj.set_drag_error_path_flag(False)
+
+
+    def on_drag_error_separator_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables adding a separator before each video/channel/playlsit
+        when dragging and dropping from the Errors/Warnings tab to an external
+        application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_error_separator_flag:
+            self.app_obj.set_drag_error_separator_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_error_separator_flag:
+            self.app_obj.set_drag_error_separator_flag(False)
+
+
+    def on_drag_error_source_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the video/channel/playlist URL when
+        dragging and dropping from the Errors/Warnings tab to an external
+        application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_error_source_flag:
+            self.app_obj.set_drag_error_source_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_error_source_flag:
+            self.app_obj.set_drag_error_source_flag(False)
+
+
+    def on_drag_msg_button_toggled(self, checkbutton): 
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring of any errors/warnings associated with
+        the video when dragging and dropping to an external application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_video_msg_flag:
+            self.app_obj.set_drag_video_msg_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_video_msg_flag:
+            self.app_obj.set_drag_video_msg_flag(False)
+
+
+    def on_drag_name_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables transferring the video's name when dragging and
+        dropping to an external application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_video_name_flag:
+            self.app_obj.set_drag_video_name_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_video_name_flag:
+            self.app_obj.set_drag_video_name_flag(False)
+
+
     def on_drag_name_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
@@ -29744,6 +30075,27 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.drag_video_path_flag:
             self.app_obj.set_drag_video_path_flag(False)
+
+
+    def on_drag_separator_button_toggled(self, checkbutton):  
+
+        """Called from callback in self.setup_windows_drag_tab().
+
+        Enables/disables adding a separator before each video, when dragging
+        video data into an external application.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.drag_video_separator_flag:
+            self.app_obj.set_drag_video_separator_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.drag_video_separator_flag:
+            self.app_obj.set_drag_video_separator_flag(False)
 
 
     def on_drag_source_button_toggled(self, checkbutton):
@@ -31064,6 +31416,121 @@ class SystemPrefWin(GenericPrefWin):
         self.show_all()
 
 
+    def on_log_json_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_log_tab().
+
+        Enables/disables writing output from youtube-dl's STDOUT to the
+        downloader log.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_log_ignore_json_flag:
+            self.app_obj.set_ytdl_log_ignore_json_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_log_ignore_json_flag:
+            self.app_obj.set_ytdl_log_ignore_json_flag(False)
+
+
+    def on_log_progress_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_log_tab().
+
+        Enables/disables writing output from youtube-dl's STDOUT to the
+        downloader log.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_log_ignore_progress_flag:
+            self.app_obj.set_ytdl_log_ignore_progress_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_log_ignore_progress_flag:
+            self.app_obj.set_ytdl_log_ignore_progress_flag(False)
+
+
+    def on_log_stderr_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_log_tab().
+
+        Enables/disables writing output from youtube-dl's STDERR to the
+        downloader log.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_log_stderr_flag:
+            self.app_obj.set_ytdl_log_stderr_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_log_stderr_flag:
+            self.app_obj.set_ytdl_log_stderr_flag(False)
+
+
+    def on_log_stdout_button_toggled(self, checkbutton, checkbutton2, \
+    checkbutton3):
+
+        """Called from a callback in self.setup_output_log_tab().
+
+        Enables/disables writing output from youtube-dl's STDOUT to the
+        downloader log.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2, checkbutton3 (Gtk.CheckButton): Additional
+                checkbuttons to sensitise/desensitise, according to the new
+                value of the flag
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_log_stdout_flag:
+            self.app_obj.set_ytdl_log_stdout_flag(True)
+            checkbutton2.set_sensitive(True)
+            checkbutton3.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_log_stdout_flag:
+            self.app_obj.set_ytdl_log_stdout_flag(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton3.set_sensitive(False)
+
+
+    def on_log_system_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_output_log_tab().
+
+        Enables/disables writing youtube-dl system commands to the downloader
+        log.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_log_system_cmd_flag:
+            self.app_obj.set_ytdl_log_system_cmd_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_log_system_cmd_flag:
+            self.app_obj.set_ytdl_log_system_cmd_flag(False)
+
+
     def on_match_button_toggled(self, radiobutton):
 
         """Called from callback in self.setup_files_video_deletion_tab().
@@ -32059,7 +32526,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Filter out empty lines
-        line_list = text.split('\n')
+        line_list = text.splitlines()
         mod_list = []
         for line in line_list:
             if re.search(r'\S', line):
@@ -33672,7 +34139,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_terminal_json_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_output_terminal_window_tab().
+        """Called from a callback in self.setup_output_terminal_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the
         terminal.
@@ -33693,7 +34160,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_terminal_progress_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_output_terminal_window_tab().
+        """Called from a callback in self.setup_output_terminal_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the
         terminal.
@@ -33714,7 +34181,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_terminal_stderr_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_output_terminal_window_tab().
+        """Called from a callback in self.setup_output_terminal_tab().
 
         Enables/disables writing output from youtube-dl's STDERR to the
         terminal.
@@ -33736,7 +34203,7 @@ class SystemPrefWin(GenericPrefWin):
     def on_terminal_stdout_button_toggled(self, checkbutton, checkbutton2, \
     checkbutton3):
 
-        """Called from a callback in self.setup_output_terminal_window_tab().
+        """Called from a callback in self.setup_output_terminal_tab().
 
         Enables/disables writing output from youtube-dl's STDOUT to the
         terminal.
@@ -33766,7 +34233,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_terminal_system_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_output_terminal_window_tab().
+        """Called from a callback in self.setup_output_terminal_tab().
 
         Enables/disables writing youtube-dl system commands to the terminal.
 
@@ -34342,7 +34809,7 @@ class SystemPrefWin(GenericPrefWin):
 
     def on_ytdl_verbose_button_toggled(self, checkbutton):
 
-        """Called from a callback in self.setup_output_both_tab().
+        """Called from a callback in self.setup_output_general_tab().
 
         Enables/disables writing verbose output (youtube-dl debugging mode).
 

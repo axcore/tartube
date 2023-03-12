@@ -1406,16 +1406,20 @@ class DownloadWorker(threading.Thread):
 
             else:
                 restart_count += 1
+                msg = _('Tartube is restarting a stalled download')
 
                 # Show confirmation of the restart
                 if app_obj.ytdl_output_stdout_flag:
                     app_obj.main_win_obj.output_tab_write_stdout(
                         self.worker_id,
-                        _('Tartube is restarting a stalled download'),
+                        msg,
                     )
 
                 if app_obj.ytdl_write_stdout_flag:
-                    print(_('Tartube is restarting a stalled download'))
+                    print(msg)
+
+                if app_obj.ytdl_log_stdout_flag:
+                    app_obj.write_downloader_log(msg)
 
         # If the downloads.VideoDownloader object collected any youtube-dl
         #   error/warning messages, display them in the Error List
@@ -3429,6 +3433,10 @@ class VideoDownloader(object):
         if app_obj.ytdl_write_system_cmd_flag:
             print(' '.join(cmd_list))
 
+        # ...and the downloader log (if required)
+        if app_obj.ytdl_log_system_cmd_flag:
+            app_obj.write_downloader_log(' '.join(cmd_list))
+
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
         # ...and set up the PipeReader objects to read from the child process
@@ -3515,7 +3523,7 @@ class VideoDownloader(object):
         if internal_msg:
 
             # (The message must be visible in the Errors/Warnings tab, the
-            #   Output tab and/or the terminal)
+            #   Output tab, terminal and/or downloader log)
             self.set_error(
                 self.download_item_obj.media_data_obj,
                 internal_msg,
@@ -3529,6 +3537,9 @@ class VideoDownloader(object):
 
             if app_obj.ytdl_write_stderr_flag:
                 print(internal_msg)
+
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(internal_msg)
 
         # For channels/playlists, detect missing videos (those downloaded by
         #   the user, but since deleted from the website by the creator)
@@ -3814,7 +3825,7 @@ class VideoDownloader(object):
                     app_obj,
                     video_obj,
                     self.download_worker_obj.worker_id,
-                    True,       # Write to terminal, if allowed
+                    True,       # Write to terminal/log, if allowed
                 )
 
             # Update the main window
@@ -3908,7 +3919,7 @@ class VideoDownloader(object):
                 app_obj,
                 dummy_obj,
                 self.download_worker_obj.worker_id,
-                True,       # Write to terminal, if allowed
+                True,       # Write to terminal/log, if allowed
             )
 
         # Deal with the video description, JSON data and thumbnail, according
@@ -4709,7 +4720,7 @@ class VideoDownloader(object):
                 app_obj,
                 video_obj,
                 self.download_worker_obj.worker_id,
-                True,       # Write to terminal, if allowed
+                True,       # Write to terminal/log, if allowed
             )
 
         # If a new media.Video object was created (or if a video whose name is
@@ -4740,9 +4751,9 @@ class VideoDownloader(object):
             )
 
         # For simulated downloads, self.do_download() has not displayed
-        #   anything in the Output tab/terminal window; so do that now (if
-        #   required)
-        if (app_obj.ytdl_output_stdout_flag):
+        #   anything in the Output tab/terminal window/downloader log; so do
+        #   that now (if required)
+        if app_obj.ytdl_output_stdout_flag:
 
             app_obj.main_win_obj.output_tab_write_stdout(
                 self.download_worker_obj.worker_id,
@@ -4750,7 +4761,7 @@ class VideoDownloader(object):
                 + _('Simulated download of:') + ' \'' + filename + '\'>',
             )
 
-        if (app_obj.ytdl_write_stdout_flag):
+        if app_obj.ytdl_write_stdout_flag:
 
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
@@ -4774,6 +4785,13 @@ class VideoDownloader(object):
                     'Simulated download of video with unprintable characters',
                     ) + '>',
                 )
+
+        if app_obj.ytdl_log_stdout_flag:
+
+            app_obj.write_downloader_log(
+                '[' + video_obj.parent_obj.name + '] <' \
+                + _('Simulated download of:') + ' \'' + filename + '\'>',
+            )
 
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), register the simulated download with
@@ -6006,6 +6024,22 @@ class VideoDownloader(object):
                 except:
                     print('STDOUT text with unprintable characters')
 
+            # Write output to the download log (if required). For simulated
+            #   downloads, a message is displayed by
+            #   self.confirm_sim_video() instead
+            if app_obj.ytdl_log_stdout_flag \
+            and (
+                not app_obj.ytdl_log_ignore_progress_flag \
+                or not re.search(
+                    r'^\[download\]\s+[0-9\.]+\%\sof\s.*\sat\s.*\sETA',
+                    data,
+                )
+            ) and (
+                not app_obj.ytdl_log_ignore_json_flag \
+                or data[:1] != '{'
+            ):
+                app_obj.write_downloader_log(data)
+
         # STDERR (ignoring any empty error messages)
         elif data != '':
 
@@ -6038,6 +6072,10 @@ class VideoDownloader(object):
                     print(data.encode(utils.get_encoding(), 'replace'))
                 except:
                     print('STDERR text with unprintable characters')
+
+            # Write output to the downloader log (if required)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(data)
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()
@@ -6737,6 +6775,10 @@ class ClipDownloader(object):
             if app_obj.ytdl_write_system_cmd_flag:
                 print(' '.join(cmd_list))
 
+            # ...and the downloader log (if required)
+            if app_obj.ytdl_log_system_cmd_flag:
+                app_obj.write_downloader_log(' '.join(cmd_list))
+
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
@@ -6996,6 +7038,10 @@ class ClipDownloader(object):
             if app_obj.ytdl_write_system_cmd_flag:
                 print(' '.join(cmd_list))
 
+            # ...and the downloader log (if required)
+            if app_obj.ytdl_log_system_cmd_flag:
+                app_obj.write_downloader_log(' '.join(cmd_list))
+
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
@@ -7160,6 +7206,10 @@ class ClipDownloader(object):
                 # ...and the terminal (if required)
                 if app_obj.ytdl_write_system_cmd_flag:
                     print(' '.join(cmd_list))
+
+                # ...and the downloader log (if required)
+                if app_obj.ytdl_log_system_cmd_flag:
+                    app_obj.write_downloader_log(' '.join(cmd_list))
 
                 # Create a new child process using that command...
                 self.create_child_process(cmd_list)
@@ -7946,6 +7996,10 @@ class ClipDownloader(object):
                         'STDOUT text with unprintable characters'
                     )
 
+            # Write output in the downloader log (if required)
+            if app_obj.ytdl_output_stdout_flag:
+                app_obj.write_downloader_log(data)
+
         # STDERR (ignoring any empty error messages)
         elif data != '':
 
@@ -7978,6 +8032,10 @@ class ClipDownloader(object):
                     print(data.encode(utils.get_encoding(), 'replace'))
                 except:
                     print('STDERR text with unprintable characters')
+
+            # Write output to the downloader log (if required)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(data)
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()
@@ -9232,6 +9290,10 @@ class StreamDownloader(object):
             except:
                 print('Command echoed in STDOUT with unprintable characters')
 
+        # Display the message in the downloader log, if allowed
+        if app_obj.ytdl_log_system_cmd_flag:
+            app_obj.write_downloader_log(cmd)
+
 
     def show_msg(self, msg):
 
@@ -9265,6 +9327,10 @@ class StreamDownloader(object):
                 )
             except:
                 print('Message echoed in STDOUT with unprintable characters')
+
+        # Write the message to the downloader log, if allowed
+        if app_obj.ytdl_log_stdout_flag:
+            app_obj.write_downloader_log(msg)
 
 
     def show_error(self, msg):
@@ -9300,6 +9366,10 @@ class StreamDownloader(object):
                 )
             except:
                 print('Message echoed in STDERR with unprintable characters')
+
+        # Write the message to the downloader log (if required)
+        if app_obj.ytdl_log_stderr_flag:
+            app_obj.write_downloader_log(msg)
 
 
     def stop(self):

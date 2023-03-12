@@ -873,6 +873,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   value: the corresponding Notify.Notification object
         self.notify_desktop_dict = {}
 
+        # Other IVs
+        # Separator used (optionally) when draggind and dropping into an
+        #   external application
+        self.drag_drop_separator = '-----'
+
 
         # Code
         # ----
@@ -13547,7 +13552,15 @@ class MainWin(Gtk.ApplicationWindow):
             False,
         )
 
-        url_list = url_string.splitlines()
+        # Split the string into lines, then split each line by whitespace. This
+        #   allows us to recognise multiple valid URLs on the same line, and
+        #   also to interpret a line containing a URL and miscellaneous text
+        url_list = []
+        line_list = url_string.splitlines()
+        for line in line_list:
+
+            for url in line.split():
+                url_list.append(url)
 
         # Remove initial/final whitespace, and ignore invalid/duplicate links
         mod_list = []
@@ -13787,7 +13800,15 @@ class MainWin(Gtk.ApplicationWindow):
             False,
         )
 
-        url_list = url_string.splitlines()
+        # Split the string into lines, then split each line by whitespace. This
+        #   allows us to recognise multiple valid URLs on the same line, and
+        #   also to interpret a line containing a URL and miscellaneous text
+        url_list = []
+        line_list = url_string.splitlines()
+        for line in line_list:
+
+            for url in line.split():
+                url_list.append(url)
 
         # Remove initial/final whitespace, and ignore invalid/duplicate links
         mod_list = []
@@ -16162,23 +16183,25 @@ class MainWin(Gtk.ApplicationWindow):
             # Split text into a list of lines and filter out invalid URLs
             video_list = []
             duplicate_list = []
-            for line in text.split('\n'):
+            for line in text.splitlines():
 
-                # Remove leading/trailing whitespace
-                line = utils.strip_whitespace(line)
+                for item in line.split():
 
-                # Perform checks on the URL. If it passes, remove leading/
-                #   trailing whitespace
-                if utils.check_url(line):
-                    video_list.append(utils.strip_whitespace(line))
+                    # Remove leading/trailing whitespace
+                    item = utils.strip_whitespace(item)
+
+                    # Perform checks on the URL. If it passes, remove leading/
+                    #   trailing whitespace
+                    if utils.check_url(item):
+                        video_list.append(utils.strip_whitespace(item))
 
             # Check everything in the list against other media.Video objects
             #   with the same parent folder
-            for line in video_list:
-                if media_data_obj.check_duplicate_video(line):
-                    duplicate_list.append(line)
+            for item in video_list:
+                if media_data_obj.check_duplicate_video(item):
+                    duplicate_list.append(item)
                 else:
-                    self.app_obj.add_video(media_data_obj, line)
+                    self.app_obj.add_video(media_data_obj, item)
 
             # In the Video Index, select the parent media data object, which
             #   updates both the Video Index and the Video Catalogue
@@ -20281,7 +20304,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         # For each selected line, retrieve values from the three hidden columns
-        string = ''
+        text = ''
 
         selection = treeview.get_selection()
         (model, path_list) = selection.get_selected_rows()
@@ -20293,20 +20316,50 @@ class MainWin(Gtk.ApplicationWindow):
                 file_path = model[tree_iter][0]
                 source = model[tree_iter][1]
                 name = model[tree_iter][2]
+                msg = model[tree_iter][9]
 
-                # If all three are empty strings, then it probably wasn't a
-                #   media data object that generated the message on this line
-                if file_path !=  '' \
-                or source != '' \
-                or name != '':
+                # If the path, source and name are all empty strings, then it
+                #   probably wasn't a media data object that generated the
+                #   message on this line
+                if file_path !=  '' or source != '' or name != '':
 
-                    string += file_path + '\n' + source + '\n' + name + '\n'
+                    if self.app_obj.drag_error_separator_flag:
+                        text += self.drag_drop_separator + '\n'
+
+                    if self.app_obj.drag_error_path_flag:
+                        if file_path == '':
+                            text += '(' + _('unknown path') + ')\n'
+                        else:
+                            text += file_path + '\n'
+
+                    if self.app_obj.drag_error_source_flag:
+                        if source  == '':
+                            text += '(' + _('unknown URL') + ')\n'
+                        else:
+                            text += source + '\n'
+
+                    if self.app_obj.drag_error_name_flag:
+                        if name == '':
+                            text += self.app_obj.default_video_name + '\n'
+                        else:
+                            text += name + '\n'
+
+                    if self.app_obj.drag_error_msg_flag:
+
+                        # Strip newline characters; we want the whole message
+                        #    on a single line, on this occasion
+                        # (name == '' should be impossible, but for
+                        #   completeness, we'll check it anyway)
+                        if name == '':
+                            text += '(' + _('unknown message') + ')\n'
+                        else:
+                            text += re.sub('\n+', ' ', msg) + '\n'
 
         # Transfer to the external application a single string, containing one
         #   or more full file paths/URLs/video names, separated by newline
         #   characters
         if info == 0:   # TARGET_ENTRY_TEXT
-            data.set_text(string, -1)
+            data.set_text(text, -1)
 
 
     def on_classic_convert_combo_changed(self, combo):
@@ -21876,33 +21929,35 @@ class MainWin(Gtk.ApplicationWindow):
             url_list = []
             duplicate_list = []
 
-            for line in text.split('\n'):
+            for line in text.splitlines():
 
-                # Remove leading/trailing whitespace
-                line = utils.strip_whitespace(line)
+                for item in line.split():
 
-                match = re.search('^file\:\/\/(.*)', line)
-                if match:
+                    # Remove leading/trailing whitespace
+                    item = utils.strip_whitespace(item)
 
-                    # (Only accept video/audio files with a supported file
-                    #   extension)
-                    path = urllib.parse.unquote(match.group(1))
-                    name, ext = os.path.splitext(path)
-                    # (Take account of the initial . in the extension)
-                    if ext[1:] in formats.VIDEO_FORMAT_LIST:
+                    match = re.search('^file\:\/\/(.*)', item)
+                    if match:
 
-                        if not path in path_list:
-                            path_list.append(path)
-                        else:
-                            duplicate_list.append(path)
+                        # (Only accept video/audio files with a supported file
+                        #   extension)
+                        path = urllib.parse.unquote(match.group(1))
+                        name, ext = os.path.splitext(path)
+                        # (Take account of the initial . in the extension)
+                        if ext[1:] in formats.VIDEO_FORMAT_LIST:
 
-                else:
+                            if not path in path_list:
+                                path_list.append(path)
+                            else:
+                                duplicate_list.append(path)
 
-                    if not line in url_list:
-                        if utils.check_url(line):
-                            url_list.append(line)
                     else:
-                        duplicate_list.append(line)
+
+                        if not item in url_list:
+                            if utils.check_url(item):
+                                url_list.append(item)
+                        else:
+                            duplicate_list.append(item)
 
             # Decide where to add the video(s)
             # If a suitable folder is selected in the Video Index, use
@@ -22260,41 +22315,62 @@ class MainWin(Gtk.ApplicationWindow):
         text = ''
         for video_obj in video_list:
 
+            if self.app_obj.drag_video_separator_flag:
+                text += self.drag_drop_separator + '\n'
+
             if self.app_obj.drag_video_path_flag:
 
                 if not dummy_flag and video_obj.file_name is not None:
-                    text += video_obj.get_actual_path(self.app_obj)
+                    text += video_obj.get_actual_path(self.app_obj) + '\n'
                 elif dummy_flag and video_obj.dummy_path is not None:
-                    text += video_obj.dummy_path
-
-                text += '\n'
+                    text += video_obj.dummy_path + '\n'
+                else:
+                    text += '(' + _('unknown path') + ')\n'
 
             if self.app_obj.drag_video_source_flag:
 
                 if video_obj.source is not None:
-                    text += video_obj.source
-
-                text += '\n'
+                    text += video_obj.source + '\n'
+                else:
+                    text += '(' + _('unknown URL') + ')\n'
 
             if self.app_obj.drag_video_name_flag:
 
                 if video_obj.name is not None:
-                    text += video_obj.name
+                    text += video_obj.name  + '\n'
+                else:
+                    text += self.app_obj.default_video_name + '\n'
 
-                text += '\n'
+            if self.app_obj.drag_video_msg_flag:
+
+                if not video_obj.error_list and not video_obj.warning_list:
+                    text += '(' + _('no errors/warnings') + ')\n'
+
+                else:
+                    for msg in video_obj.error_list:
+                        text += msg + '\n'
+                    for msg in video_obj.warning_list:
+                        text += msg + '\n'
 
             if self.app_obj.drag_thumb_path_flag:
 
-                thumb_path = utils.find_thumbnail(
-                    self.app_obj,
-                    video_obj,
-                    True,
-                )
+                if video_obj.file_name is None or dummy_flag:
+                    # (Existing code won't be able to find the thumbnail,
+                    #   even if the file has been downloaded)
+                    text += '(' + _('unknown thumbnail path') + ')\n'
 
-                if thumb_path is not None:
-                    text += thumb_path
+                else:
 
-                text += '\n'
+                    thumb_path = utils.find_thumbnail(
+                        self.app_obj,
+                        video_obj,
+                        True,
+                    )
+
+                    if thumb_path is not None:
+                        text += thumb_path + '\n'
+                    else:
+                        text += '(' + _('unknown thumbnail path') + ')\n'
 
         return text
 
@@ -23856,7 +23932,7 @@ class ComplexCatalogueItem(object):
 
                 # Work with a list of lines, displaying either the fist line,
                 #   or all of them, as the user clicks the More/Less button
-                line_list = self.video_obj.descrip.split('\n')
+                line_list = self.video_obj.descrip.splitlines()
 
                 if not self.expand_descrip_flag:
 
@@ -28540,18 +28616,20 @@ class AddBulkDialogue(Gtk.Dialog):
 
         # Split text into a list of lines and filter out invalid URLs
         new_list = []
-        for line in text.split('\n'):
+        for line in text.splitlines():
 
-            # Remove leading/trailing whitespace
-            line = utils.strip_whitespace(line)
+            for item in line.split():
 
-            # Perform checks on the URL. If it passes, remove leading/
-            #   trailing whitespace
-            if utils.check_url(line) \
-            and not line in self.url_list:
-                mod_line = utils.strip_whitespace(line)
-                new_list.append(mod_line)
-                self.url_list.append(mod_line)
+                # Remove leading/trailing whitespace
+                item = utils.strip_whitespace(item)
+
+                # Perform checks on the URL. If it passes, remove leading/
+                #   trailing whitespace
+                if utils.check_url(item) \
+                and not item in self.url_list:
+                    mod_item = utils.strip_whitespace(item)
+                    new_list.append(mod_item)
+                    self.url_list.append(mod_item)
 
         # Reset the clipboard...
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)

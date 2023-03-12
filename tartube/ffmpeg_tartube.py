@@ -466,7 +466,7 @@ class FFmpegManager(object):
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             stderr = stderr.decode(utils.get_encoding(), 'replace')
-            return [ False, stderr.strip().split('\n')[-1] ]
+            return [ False, stderr.strip().splitlines()[-1] ]
 
         else:
             return [ self.try_utime(out_path, oldest_mtime, oldest_mtime), '' ]
@@ -514,7 +514,7 @@ class FFmpegManager(object):
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             stderr = stderr.decode(utils.get_encoding(), 'replace')
-            return [ False, stderr.strip().split('\n')[-1] ]
+            return [ False, stderr.strip().splitlines()[-1] ]
 
         else:
             return [ self.try_utime(source_path, mod_time, mod_time), '' ]

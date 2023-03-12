@@ -2348,9 +2348,9 @@ class Video(GenericMedia):
         digit_count = 0
 
         if override_descrip is not None and override_descrip != '':
-            line_list = override_descrip.split('\n')
+            line_list = override_descrip.splitlines()
         else:
-            line_list = self.descrip.split('\n')
+            line_list = self.descrip.splitlines()
 
         temp_list = []
         stamp_list = []

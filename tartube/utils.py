@@ -106,17 +106,22 @@ drag_drop_text=None, no_modify_flag=None):
     # Use the first valid line that doesn't match the duplicate (if specified)
     if cliptext is not None and cliptext != Gdk.SELECTION_CLIPBOARD:
 
-        for line in cliptext.split('\n'):
-            if check_url(line):
+        for line in cliptext.splitlines():
 
-                line = strip_whitespace(line)
-                if re.search('\S', line) \
-                and (duplicate_text is None or line != duplicate_text):
+            # (Cope with multiple valid URLs on the same line, or a single
+            #   valid URL with arbitrary text before and afterwards)
+            for item in line.split():
+                
+                if check_url(item):
 
-                    if not no_modify_flag:
-                        entry.set_text(line)
+                    item = strip_whitespace(item)
+                    if re.search('\S', item) \
+                    and (duplicate_text is None or item != duplicate_text):
 
-                    return line
+                        if not no_modify_flag:
+                            entry.set_text(item)
+
+                        return item
 
     # No valid and non-duplicate URL found
     return None
@@ -153,17 +158,26 @@ mark_end=None, drag_drop_text=None):
 
     """
 
+    # Split each line by whitespace. This allows us to recognise multiple valid
+    #   URLs on the same line, and also to interpret a line containing a URL
+    #   and miscellaneous text
+    mod_link_list = []
+    for line in link_list:
+
+        for item in line.split():
+            mod_link_list.append(item)
+
     # Eliminate empty lines and any lines that are not valid URLs (we assume
     #   that it's one URL per line)
     # At the same time, trim initial/final whitespace
     valid_list = []
-    for line in link_list:
+    for line in mod_link_list:
         if check_url(line):
 
             line = strip_whitespace(line)
             if re.search('\S', line):
                 valid_list.append(line)
-
+                
     if valid_list:
 
         # Some URLs survived the cull
@@ -188,7 +202,7 @@ mark_end=None, drag_drop_text=None):
             )
 
         # Remove any URLs that already exist in the buffer
-        line_list = buffer_text.split('\n')
+        line_list = buffer_text.splitlines()
         mod_list = []
         for line in valid_list:
             if not line in line_list:
@@ -249,7 +263,7 @@ mark_end=None, drag_drop_text=None):
     if cliptext is not None:
         add_links_to_textview(
             app_obj,
-            cliptext.split('\n'),
+            cliptext.splitlines(),
             textbuffer,
             mark_start,
             mark_end,
@@ -1783,147 +1797,6 @@ def extract_path_components(path):
     return directory, filename, extension
 
 
-def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
-
-    """Called by functions in downloads.VideoDownloader,
-    downloads.ClipDownloader and process.ProcessManager.
-
-    Contacts the SponsorBlock API server to retrieve video slice data for the
-    speciffied video.
-
-    Args:
-
-        app_obj (mainapp.TartubeApp): The main application
-
-        video_obj (media.Video): The video for which SponsorBlock data should
-            should be retrieved. The calling code must check that its
-            .vid is set
-
-        page_num (int or None): The page number of the Output tab where output
-            can be displayed. If None, then no output is displayed in the
-            Output tab at all; otherwise, output is displayed (or not)
-            depending on the usual Tartube settings
-
-        terminal_flag (bool): If False, then no output is displayed in the
-            terminal at all; otherwise, output is displayed (or not) depending
-            on the usual Tartube settings
-
-    """
-
-    if not app_obj.sblock_obfuscate_flag:
-
-        # Don't hash the video's ID
-        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/'
-        payload = { 'videoID': video_obj.vid }
-
-    else:
-
-        # Hash the video's ID
-        vid = video_obj.vid
-        hashed = hashlib.sha256(vid.encode())
-        hex_str = hashed.hexdigest()
-
-        short_str = hex_str[0:4]
-
-        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/' \
-        + short_str
-        payload = {}
-
-    # Write to the Output tab and/or terminal, if required
-    msg = '[SponsorBlock] Contacting ' + url + '...'
-    if page_num is not None and app_obj.ytdl_output_stdout_flag:
-        app_obj.main_win_obj.output_tab_write_stdout(page_num, msg)
-    if terminal_flag and app_obj.ytdl_write_stdout_flag:
-        print(msg)
-
-    # Contact the server
-    try:
-        request_obj = requests.get(
-            url,
-            params = payload,
-            timeout = app_obj.request_get_timeout,
-        )
-
-    except:
-
-        msg = '[SponsorBlock] Could not contact server'
-        if page_num is not None and app_obj.ytdl_output_stderr_flag:
-            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
-        if terminal_flag and app_obj.ytdl_write_stderr_flag:
-            print(msg)
-
-        return
-
-    # 400 = bad request, 404 = not found
-    if request_obj.status_code == 400:
-
-        msg = '[SponsorBlock] Server returned error 400: bad request'
-        if page_num is not None and app_obj.ytdl_output_stderr_flag:
-            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
-        if terminal_flag and app_obj.ytdl_write_stderr_flag:
-            print(msg)
-
-        return
-
-    elif request_obj.status_code == 404:
-
-        msg = '[SponsorBlock] Server returned error 404: video ID not found'
-        if page_num is not None and app_obj.ytdl_output_stderr_flag:
-            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
-        if terminal_flag and app_obj.ytdl_write_stderr_flag:
-            print(msg)
-
-        return
-
-    # (Conversion to JSON might produce an exception)
-    try:
-        json_table = request_obj.json()
-
-    except:
-
-        msg = '[SponsorBlock] Server returned invalid data'
-        if page_num is not None and app_obj.ytdl_output_stderr_flag:
-            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
-        if terminal_flag and app_obj.ytdl_write_stderr_flag:
-            print(msg)
-
-        return
-
-    # Only use the data matching the video (since the video ID may have
-    #   been obfuscated just above)
-    for mini_dict in json_table:
-
-        if not 'videoID' in mini_dict or not 'segments' in mini_dict:
-
-            msg = '[SponsorBlock] Server returned invalid data'
-            if page_num is not None and app_obj.ytdl_output_stderr_flag:
-                app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
-            if terminal_flag and app_obj.ytdl_write_stderr_flag:
-                print(msg)
-
-            return
-
-        elif mini_dict['videoID'] == video_obj.vid:
-
-            video_obj.convert_slices(mini_dict['segments'])
-
-            if page_num is not None:
-
-                msg = '[SponsorBlock] Video slices retrieved: ' \
-                + str(len(video_obj.slice_list))
-
-                if page_num is not None and app_obj.ytdl_output_stdout_flag:
-                    app_obj.main_win_obj.output_tab_write_stdout(
-                        page_num,
-                        msg,
-                    )
-
-                if terminal_flag and app_obj.ytdl_write_stdout_flag:
-                    print(msg)
-
-            return
-
-
 def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
 
     """Can be called by anything.
@@ -2007,6 +1880,169 @@ def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
             new_name = old_name + '_'  + str(n)
             if not new_name in check_dict:
                 return new_name
+
+
+def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
+
+    """Called by functions in downloads.VideoDownloader,
+    downloads.ClipDownloader and process.ProcessManager.
+
+    Contacts the SponsorBlock API server to retrieve video slice data for the
+    speciffied video.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video for which SponsorBlock data should
+            should be retrieved. The calling code must check that its
+            .vid is set
+
+        page_num (int or None): The page number of the Output tab where output
+            can be displayed. If None, then no output is displayed in the
+            Output tab at all; otherwise, output is displayed (or not)
+            depending on the usual Tartube settings
+
+        terminal_flag (bool): If False, then no output is displayed in the
+            terminal at all, and no text is written to the downloader log at
+            all; otherwise, output is displayed/written (or not) depending
+            on the usual Tartube settings
+
+    """
+
+    if not app_obj.sblock_obfuscate_flag:
+
+        # Don't hash the video's ID
+        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/'
+        payload = { 'videoID': video_obj.vid }
+
+    else:
+
+        # Hash the video's ID
+        vid = video_obj.vid
+        hashed = hashlib.sha256(vid.encode())
+        hex_str = hashed.hexdigest()
+
+        short_str = hex_str[0:4]
+
+        url = 'https://' + app_obj.custom_sblock_mirror + '/skipSegments/' \
+        + short_str
+        payload = {}
+
+    # Write to the Output tab and/or terminal, if required
+    msg = '[SponsorBlock] Contacting ' + url + '...'
+    if page_num is not None and app_obj.ytdl_output_stdout_flag:
+        app_obj.main_win_obj.output_tab_write_stdout(page_num, msg)
+    if terminal_flag:
+        if app_obj.ytdl_write_stdout_flag:
+            print(msg)
+        if app_obj.ytdl_log_stdout_flag:
+            app_obj.write_downloader_log(msg)
+
+    # Contact the server
+    try:
+        request_obj = requests.get(
+            url,
+            params = payload,
+            timeout = app_obj.request_get_timeout,
+        )
+
+    except:
+
+        msg = '[SponsorBlock] Could not contact server'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag:
+            if app_obj.ytdl_write_stderr_flag:
+                print(msg)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(msg)
+            
+        return
+
+    # 400 = bad request, 404 = not found
+    if request_obj.status_code == 400:
+
+        msg = '[SponsorBlock] Server returned error 400: bad request'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag:
+            if app_obj.ytdl_write_stderr_flag:
+                print(msg)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(msg)
+                
+        return
+
+    elif request_obj.status_code == 404:
+
+        msg = '[SponsorBlock] Server returned error 404: video ID not found'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag:
+            if app_obj.ytdl_write_stderr_flag:
+                print(msg)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(msg)
+                
+        return
+
+    # (Conversion to JSON might produce an exception)
+    try:
+        json_table = request_obj.json()
+
+    except:
+
+        msg = '[SponsorBlock] Server returned invalid data'
+        if page_num is not None and app_obj.ytdl_output_stderr_flag:
+            app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+        if terminal_flag:
+            if app_obj.ytdl_write_stderr_flag:
+                print(msg)
+            if app_obj.ytdl_log_stderr_flag:
+                app_obj.write_downloader_log(msg)
+                
+        return
+
+    # Only use the data matching the video (since the video ID may have
+    #   been obfuscated just above)
+    for mini_dict in json_table:
+
+        if not 'videoID' in mini_dict or not 'segments' in mini_dict:
+
+            msg = '[SponsorBlock] Server returned invalid data'
+            if page_num is not None and app_obj.ytdl_output_stderr_flag:
+                app_obj.main_win_obj.output_tab_write_stderr(page_num, msg)
+            if terminal_flag:
+                if app_obj.ytdl_write_stderr_flag:
+                    print(msg)
+                if app_obj.ytdl_log_stderr_flag:
+                    app_obj.write_downloader_log(msg)
+                
+            return
+
+        elif mini_dict['videoID'] == video_obj.vid:
+
+            video_obj.convert_slices(mini_dict['segments'])
+
+            if page_num is not None:
+
+                msg = '[SponsorBlock] Video slices retrieved: ' \
+                + str(len(video_obj.slice_list))
+
+                if page_num is not None and app_obj.ytdl_output_stdout_flag:
+                    app_obj.main_win_obj.output_tab_write_stdout(
+                        page_num,
+                        msg,
+                    )
+
+                if terminal_flag:
+                    if app_obj.ytdl_write_stdout_flag:
+                        print(msg)
+                    if app_obj.ytdl_log_stdout_flag:
+                        app_obj.write_downloader_log(msg)
+                    
+            return
 
 
 def find_thumbnail(app_obj, video_obj, temp_dir_flag=False):
@@ -3640,7 +3676,7 @@ def strip_whitespace_multiline(string):
 
     """Can be called by anything.
 
-    An extended version of utils.strip_whitepspace.
+    An extended version of utils.strip_whitespace().
 
     Divides a string into lines, removes empty lines, removes any leading/
     trailing whitespace from each line, then combines the lines back into a
@@ -3766,7 +3802,7 @@ def tidy_up_long_descrip(string, max_length=80):
 
         line_list = []
 
-        for line in string.split('\n'):
+        for line in string.splitlines():
 
             if line == '':
                 # Preserve empty lines
@@ -3843,7 +3879,7 @@ split_words_flag=False):
             string = re.sub(r'\s+', ' ', string)
 
         line_list = []
-        for line in string.split('\n'):
+        for line in string.splitlines():
 
             if line == '':
                 # Preserve empty lines
