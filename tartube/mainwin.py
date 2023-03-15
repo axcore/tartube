@@ -12608,7 +12608,7 @@ class MainWin(Gtk.ApplicationWindow):
             + str(dl_obj.total_dl_count)
 
             if dl_obj.total_clip_count or dl_obj.total_slice_count:
-                msg = msg + + '   <b>' + _('Other') + ':</b> ' \
+                msg = msg + '   <b>' + _('Other') + ':</b> ' \
                 + str(dl_obj.total_clip_count + dl_obj.total_slice_count)
 
             msg = msg + '   <b>' + _('Size') + ':</b> ' \
@@ -13560,7 +13560,7 @@ class MainWin(Gtk.ApplicationWindow):
         for line in line_list:
 
             for url in line.split():
-                url_list.append(url)
+                url_list.append(url)        
 
         # Remove initial/final whitespace, and ignore invalid/duplicate links
         mod_list = []
@@ -13808,7 +13808,7 @@ class MainWin(Gtk.ApplicationWindow):
         for line in line_list:
 
             for url in line.split():
-                url_list.append(url)
+                url_list.append(url)    
 
         # Remove initial/final whitespace, and ignore invalid/duplicate links
         mod_list = []
@@ -20322,7 +20322,7 @@ class MainWin(Gtk.ApplicationWindow):
                 #   probably wasn't a media data object that generated the
                 #   message on this line
                 if file_path !=  '' or source != '' or name != '':
-
+                    
                     if self.app_obj.drag_error_separator_flag:
                         text += self.drag_drop_separator + '\n'
 
@@ -20331,7 +20331,7 @@ class MainWin(Gtk.ApplicationWindow):
                             text += '(' + _('unknown path') + ')\n'
                         else:
                             text += file_path + '\n'
-
+                            
                     if self.app_obj.drag_error_source_flag:
                         if source  == '':
                             text += '(' + _('unknown URL') + ')\n'
@@ -20343,7 +20343,7 @@ class MainWin(Gtk.ApplicationWindow):
                             text += self.app_obj.default_video_name + '\n'
                         else:
                             text += name + '\n'
-
+                            
                     if self.app_obj.drag_error_msg_flag:
 
                         # Strip newline characters; we want the whole message
@@ -20354,7 +20354,7 @@ class MainWin(Gtk.ApplicationWindow):
                             text += '(' + _('unknown message') + ')\n'
                         else:
                             text += re.sub('\n+', ' ', msg) + '\n'
-
+                            
         # Transfer to the external application a single string, containing one
         #   or more full file paths/URLs/video names, separated by newline
         #   characters
@@ -22317,7 +22317,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             if self.app_obj.drag_video_separator_flag:
                 text += self.drag_drop_separator + '\n'
-
+                        
             if self.app_obj.drag_video_path_flag:
 
                 if not dummy_flag and video_obj.file_name is not None:
@@ -22326,7 +22326,7 @@ class MainWin(Gtk.ApplicationWindow):
                     text += video_obj.dummy_path + '\n'
                 else:
                     text += '(' + _('unknown path') + ')\n'
-
+                    
             if self.app_obj.drag_video_source_flag:
 
                 if video_obj.source is not None:
@@ -22351,7 +22351,7 @@ class MainWin(Gtk.ApplicationWindow):
                         text += msg + '\n'
                     for msg in video_obj.warning_list:
                         text += msg + '\n'
-
+                    
             if self.app_obj.drag_thumb_path_flag:
 
                 if video_obj.file_name is None or dummy_flag:
@@ -22360,7 +22360,7 @@ class MainWin(Gtk.ApplicationWindow):
                     text += '(' + _('unknown thumbnail path') + ')\n'
 
                 else:
-
+                        
                     thumb_path = utils.find_thumbnail(
                         self.app_obj,
                         video_obj,
@@ -22371,7 +22371,7 @@ class MainWin(Gtk.ApplicationWindow):
                         text += thumb_path + '\n'
                     else:
                         text += '(' + _('unknown thumbnail path') + ')\n'
-
+                    
         return text
 
 
@@ -28619,7 +28619,7 @@ class AddBulkDialogue(Gtk.Dialog):
         for line in text.splitlines():
 
             for item in line.split():
-
+                
                 # Remove leading/trailing whitespace
                 item = utils.strip_whitespace(item)
 
