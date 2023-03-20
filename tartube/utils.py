@@ -111,7 +111,7 @@ drag_drop_text=None, no_modify_flag=None):
             # (Cope with multiple valid URLs on the same line, or a single
             #   valid URL with arbitrary text before and afterwards)
             for item in line.split():
-                
+
                 if check_url(item):
 
                     item = strip_whitespace(item)
@@ -177,7 +177,7 @@ mark_end=None, drag_drop_text=None):
             line = strip_whitespace(line)
             if re.search('\S', line):
                 valid_list.append(line)
-                
+
     if valid_list:
 
         # Some URLs survived the cull
@@ -1957,7 +1957,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-            
+
         return
 
     # 400 = bad request, 404 = not found
@@ -1971,7 +1971,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     elif request_obj.status_code == 404:
@@ -1984,7 +1984,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     # (Conversion to JSON might produce an exception)
@@ -2001,7 +2001,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     # Only use the data matching the video (since the video ID may have
@@ -2018,7 +2018,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                     print(msg)
                 if app_obj.ytdl_log_stderr_flag:
                     app_obj.write_downloader_log(msg)
-                
+
             return
 
         elif mini_dict['videoID'] == video_obj.vid:
@@ -2041,7 +2041,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                         print(msg)
                     if app_obj.ytdl_log_stdout_flag:
                         app_obj.write_downloader_log(msg)
-                    
+
             return
 
 

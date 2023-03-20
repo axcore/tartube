@@ -4190,14 +4190,14 @@ class TartubeApp(Gtk.Application):
         Args:
 
             msg (str): The text to write
-            
+
         """
 
         path = os.path.abspath(os.path.join(self.data_dir, self.ytdl_log_name))
         with open(path, 'a') as outfile:
             outfile.write(msg + '\n')
 
-    
+
     # (Config/database files load/save)
 
 
@@ -4482,7 +4482,7 @@ class TartubeApp(Gtk.Application):
             self.drag_error_source_flag = json_dict['drag_error_source_flag']
             self.drag_error_name_flag = json_dict['drag_error_name_flag']
             self.drag_error_msg_flag = json_dict['drag_error_msg_flag']
-            
+
         if version >= 1003024 and 'show_status_icon_flag' in json_dict:
             self.show_status_icon_flag = json_dict['show_status_icon_flag']
         if version >= 2003504 and 'open_in_tray_flag' in json_dict:
@@ -4643,7 +4643,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_log_ignore_progress_flag \
             = json_dict['ytdl_log_ignore_progress_flag']
             self.ytdl_log_stderr_flag = json_dict['ytdl_log_stderr_flag']
-            
+
         self.ytdl_write_verbose_flag = json_dict['ytdl_write_verbose_flag']
         # Removed v2.3.565
 #       if version >= 2002179:
@@ -5695,7 +5695,7 @@ class TartubeApp(Gtk.Application):
             'drag_video_name_flag': self.drag_video_name_flag,
             'drag_video_msg_flag': self.drag_video_msg_flag,
             'drag_thumb_path_flag': self.drag_thumb_path_flag,
-            
+
             'drag_error_separator_flag': self.drag_error_separator_flag,
             'drag_error_path_flag': self.drag_error_path_flag,
             'drag_error_source_flag': self.drag_error_source_flag,
@@ -5788,7 +5788,7 @@ class TartubeApp(Gtk.Application):
             'ytdl_write_ignore_progress_flag': \
             self.ytdl_write_ignore_progress_flag,
             'ytdl_write_stderr_flag': self.ytdl_write_stderr_flag,
-            
+
             'ytdl_log_system_cmd_flag': self.ytdl_log_system_cmd_flag,
             'ytdl_log_stdout_flag': self.ytdl_log_stdout_flag,
             'ytdl_log_ignore_json_flag': self.ytdl_log_ignore_json_flag,
@@ -10874,12 +10874,6 @@ class TartubeApp(Gtk.Application):
                     error_msg = str(e)
 
         if LOCALE is None:
-
-            self.system_error(
-                197,
-                'Cannot use locale \'' + str(self.current_locale) + '\': ' \
-                + error_msg
-            )
 
             self.current_locale = formats.LOCALE_DEFAULT
 
@@ -26388,7 +26382,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.drag_error_msg_flag = True
 
-            
+
     def set_drag_error_name_flag(self, flag):
 
         if not flag:
@@ -26396,7 +26390,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.drag_error_name_flag = True
 
-            
+
     def set_drag_error_path_flag(self, flag):
 
         if not flag:
@@ -26404,7 +26398,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.drag_error_path_flag = True
 
-            
+
     def set_drag_error_separator_flag(self, flag):
 
         if not flag:
@@ -26419,8 +26413,8 @@ class TartubeApp(Gtk.Application):
             self.drag_error_source_flag = False
         else:
             self.drag_error_source_flag = True
-            
-            
+
+
     def set_drag_thumb_path_flag(self, flag):
 
         if not flag:
@@ -26436,7 +26430,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.drag_video_msg_flag = True
 
-            
+
     def set_drag_video_name_flag(self, flag):
 
         if not flag:
@@ -26460,7 +26454,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.drag_video_separator_flag = True
 
-            
+
     def set_drag_video_source_flag(self, flag):
 
         if not flag:
@@ -27669,7 +27663,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_fork_no_dependency_flag = True
 
 
-    def set_ytdl_log_ignore_json_flag(self, flag): 
+    def set_ytdl_log_ignore_json_flag(self, flag):
 
         if not flag:
             self.ytdl_log_ignore_json_flag = False
@@ -27677,7 +27671,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_log_ignore_json_flag = True
 
 
-    def set_ytdl_log_ignore_progress_flag(self, flag): 
+    def set_ytdl_log_ignore_progress_flag(self, flag):
 
         if not flag:
             self.ytdl_log_ignore_progress_flag = False
@@ -27685,7 +27679,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_log_ignore_progress_flag = True
 
 
-    def set_ytdl_log_stderr_flag(self, flag): 
+    def set_ytdl_log_stderr_flag(self, flag):
 
         if not flag:
             self.ytdl_log_stderr_flag = False
@@ -27693,7 +27687,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_log_stderr_flag = True
 
 
-    def set_ytdl_log_stdout_flag(self, flag): 
+    def set_ytdl_log_stdout_flag(self, flag):
 
         if not flag:
             self.ytdl_log_stdout_flag = False
@@ -27701,7 +27695,7 @@ class TartubeApp(Gtk.Application):
             self.ytdl_log_stdout_flag = True
 
 
-    def set_ytdl_log_system_cmd_flag(self, flag): 
+    def set_ytdl_log_system_cmd_flag(self, flag):
 
         if not flag:
             self.ytdl_log_system_cmd_flag = False
